@@ -57,37 +57,44 @@ export const updateRuleActions = (
   return rules.map((item, idx) => (idx === ruleIdx ? { ...item, actions } : item));
 };
 
-/** What the Add logic menu starts a rule as. */
-export type TNewRuleKind = "jump" | "calculate";
+/**
+ * What the Add logic menu starts a rule as: a jump rule, a calculation (a condition, then a formula),
+ * or a Set value step (ENG-6935), which always runs: its condition group is an empty `and` group
+ * (ADR 0025).
+ */
+export type TNewRuleKind = "jump" | "calculate" | "setValue";
 
 export interface TNewRuleOptions {
-  /** The first condition, without an id. */
+  /** The first condition, without an id. A Set value step has none. */
   condition: Omit<TSingleCondition, "id">;
   /** The computed field a calculation sets; empty when the survey has none yet. */
   variableId?: string;
 }
+
+/** An empty formula: the step is saved only once the formula box holds one. */
+const EMPTY_FORMULA = { type: "expression", value: { type: "static", value: "" } } as const;
 
 export const createRule = (
   kind: TNewRuleKind,
   { condition, variableId }: TNewRuleOptions
 ): TSurveyBlockLogic => {
   const action: TSurveyBlockLogicAction =
-    kind === "calculate"
-      ? {
+    kind === "jump"
+      ? { id: createId(), objective: "jumpToBlock", target: "" }
+      : {
           id: createId(),
           objective: "calculate",
           variableId: variableId ?? "",
           operator: "assign",
-          value: { type: "static", value: "" },
-        }
-      : { id: createId(), objective: "jumpToBlock", target: "" };
+          value: { ...EMPTY_FORMULA, value: { ...EMPTY_FORMULA.value } },
+        };
 
   return {
     id: createId(),
     conditions: {
       id: createId(),
       connector: "and",
-      conditions: [{ id: createId(), ...condition }],
+      conditions: kind === "setValue" ? [] : [{ id: createId(), ...condition }],
     },
     actions: [action],
   };

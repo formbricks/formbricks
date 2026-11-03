@@ -1,0 +1,257 @@
+"use client";
+
+import { AtSignIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import { EXPRESSION_FUNCTIONS, type TExpression } from "@formbricks/types/surveys/expressions";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  FORMULA_MAX_LENGTH,
+  type TFormulaError,
+  type TFormulaReference,
+  formatFormula,
+  formatReferenceToken,
+  getFormulaIssues,
+  getFormulaReferences,
+  getFunctionSnippet,
+  insertIntoFormula,
+  parseFormula,
+} from "@/modules/survey/editor/lib/expression-formula";
+import { getSampleResult } from "@/modules/survey/editor/lib/expression-sample";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
+import { Textarea } from "@/modules/ui/components/textarea";
+
+interface SetValueFormulaProps {
+  readonly id: string;
+  readonly localSurvey: TSurvey;
+  readonly variableId: string;
+  readonly expression: TExpression;
+  /** The block the step runs after; answers from later blocks are not offered by `@`. */
+  readonly scopeBlockIdx: number;
+  readonly onExpressionChange: (expression: TExpression) => void;
+}
+
+const isEmptyFormula = (expression: TExpression) => expression.type === "static" && expression.value === "";
+
+/**
+ * The formula box of a Set value step or calculation (ENG-6935): typed text parsed into the expression
+ * tree (the parser lives in the web app only), function chips and `@` to insert an answer or field at
+ * the cursor, the problems a save would refuse, and the result for a sample response.
+ */
+export function SetValueFormula({
+  id,
+  localSurvey,
+  variableId,
+  expression,
+  scopeBlockIdx,
+  onExpressionChange,
+}: SetValueFormulaProps) {
+  const { t } = useTranslation();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const references = useMemo(() => getFormulaReferences(localSurvey), [localSurvey]);
+
+  const formatted = isEmptyFormula(expression) ? "" : formatFormula(expression, references);
+  const [text, setText] = useState(formatted);
+  const [parseError, setParseError] = useState<TFormulaError | null>(null);
+  const [isReferenceMenuOpen, setIsReferenceMenuOpen] = useState(false);
+  // The tree this box last wrote: a change from anywhere else (undo, another row) resets the text.
+  const lastWritten = useRef(JSON.stringify(expression));
+
+  useEffect(() => {
+    const incoming = JSON.stringify(expression);
+    if (incoming === lastWritten.current) return;
+    lastWritten.current = incoming;
+    setText(formatted);
+    setParseError(null);
+  }, [expression, formatted]);
+
+  const targetDataType: TEmbeddedDataType | undefined = getSurveyEmbeddedFields(localSurvey).find(
+    ({ field, link }) => field.source === "computed" && link.storageKey === variableId
+  )?.field.dataType;
+
+  const applyText = (nextText: string) => {
+    setText(nextText);
+    const parsed = parseFormula(nextText, references);
+    const next: TExpression | null = parsed.ok
+      ? parsed.expression
+      : parsed.error.code === "empty"
+        ? { type: "static", value: "" }
+        : null;
+    setParseError(parsed.ok || parsed.error.code === "empty" ? null : parsed.error);
+    if (!next) return;
+    const serialized = JSON.stringify(next);
+    if (serialized === lastWritten.current) return;
+    lastWritten.current = serialized;
+    onExpressionChange(next);
+  };
+
+  const insertAtCursor = (
+    insert: string,
+    options: { cursorOffset?: number; replaceTypedAt?: boolean } = {}
+  ) => {
+    const textarea = textareaRef.current;
+    const selection = {
+      start: textarea?.selectionStart ?? text.length,
+      end: textarea?.selectionEnd ?? text.length,
+    };
+    const result = insertIntoFormula(text, selection, insert, options);
+    applyText(result.text);
+    requestAnimationFrame(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(result.cursor, result.cursor);
+    });
+  };
+
+  const formulaIssues = useMemo(
+    () =>
+      !parseError && !isEmptyFormula(expression) ? getFormulaIssues(expression, variableId, localSurvey) : [],
+    [parseError, expression, variableId, localSurvey]
+  );
+
+  const sampleResult =
+    !parseError && formulaIssues.length === 0 && !isEmptyFormula(expression) && targetDataType
+      ? getSampleResult(expression, targetDataType, localSurvey)
+      : null;
+
+  const describeParseError = (error: TFormulaError): string => {
+    switch (error.code) {
+      case "unexpected_token":
+        return t("workspace.surveys.edit.flow.formula_error_unexpected_token", {
+          detail: error.detail ?? "",
+          position: error.position + 1,
+        });
+      case "unexpected_character":
+        return t("workspace.surveys.edit.flow.formula_error_unexpected_character", {
+          detail: error.detail ?? "",
+        });
+      case "unexpected_end":
+        return t("workspace.surveys.edit.flow.formula_error_unexpected_end");
+      case "unclosed_text":
+        return t("workspace.surveys.edit.flow.formula_error_unclosed_text");
+      case "unknown_function":
+        return t("workspace.surveys.edit.flow.formula_error_unknown_function", { name: error.detail ?? "" });
+      case "unknown_reference":
+        return t("workspace.surveys.edit.flow.formula_error_unknown_reference", { name: error.detail ?? "" });
+      case "too_long":
+      case "text_too_long":
+        return t("workspace.surveys.edit.flow.formula_error_too_long", { max: FORMULA_MAX_LENGTH });
+      case "empty":
+        return "";
+    }
+  };
+
+  const groups: { label: string; items: TFormulaReference[] }[] = [
+    {
+      label: t("common.questions"),
+      items: references.filter(
+        (reference) =>
+          reference.group === "question" && reference.usable && (reference.blockIdx ?? 0) <= scopeBlockIdx
+      ),
+    },
+    {
+      label: t("common.embedded_data"),
+      items: references.filter((reference) => reference.group === "field" && reference.usable),
+    },
+    {
+      label: t("common.auto_captured"),
+      items: references.filter((reference) => reference.group === "reserved"),
+    },
+  ].filter((group) => group.items.length > 0);
+
+  const problem = parseError
+    ? describeParseError(parseError)
+    : (formulaIssues[0]?.message.replace(/^Expression: /, "") ?? null);
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex items-start gap-2">
+        <Textarea
+          id={id}
+          ref={textareaRef}
+          value={text}
+          maxLength={FORMULA_MAX_LENGTH}
+          rows={2}
+          spellCheck={false}
+          className="min-h-10 bg-white font-mono"
+          placeholder={t("workspace.surveys.edit.flow.formula_placeholder")}
+          aria-label={t("workspace.surveys.edit.flow.formula")}
+          aria-invalid={problem ? true : undefined}
+          isInvalid={Boolean(problem)}
+          onChange={(event) => {
+            const nextText = event.target.value;
+            applyText(nextText);
+            const cursor = event.target.selectionStart;
+            if (nextText.length > text.length && nextText[cursor - 1] === "@") setIsReferenceMenuOpen(true);
+          }}
+        />
+        <DropdownMenu open={isReferenceMenuOpen} onOpenChange={setIsReferenceMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              title={t("workspace.surveys.edit.flow.formula_insert_reference")}
+              aria-label={t("workspace.surveys.edit.flow.formula_insert_reference")}>
+              <AtSignIcon />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+            {groups.map((group) => (
+              <div key={group.label}>
+                <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+                {group.items.map((reference) => (
+                  <DropdownMenuItem
+                    key={`${reference.leaf.type}:${reference.leaf.value}`}
+                    onClick={() =>
+                      insertAtCursor(formatReferenceToken(reference.token), { replaceTypedAt: true })
+                    }>
+                    <span className="font-mono text-xs">{formatReferenceToken(reference.token)}</span>
+                  </DropdownMenuItem>
+                ))}
+              </div>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.formula_functions")}</span>
+        {EXPRESSION_FUNCTIONS.filter((fn) => !["add", "subtract", "multiply", "divide"].includes(fn)).map(
+          (fn) => (
+            <button
+              key={fn}
+              type="button"
+              className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 hover:bg-slate-100"
+              onClick={() => {
+                const snippet = getFunctionSnippet(fn);
+                insertAtCursor(snippet.text, { cursorOffset: snippet.cursorOffset });
+              }}>
+              {fn}()
+            </button>
+          )
+        )}
+      </div>
+
+      {problem ? (
+        <p className="text-xs text-red-600" role="alert">
+          {problem}
+        </p>
+      ) : sampleResult !== null ? (
+        <p className="text-xs text-slate-600" title={t("workspace.surveys.edit.flow.formula_sample_hint")}>
+          {sampleResult === ""
+            ? t("workspace.surveys.edit.flow.formula_sample_empty")
+            : t("workspace.surveys.edit.flow.formula_sample_result", { result: String(sampleResult) })}
+        </p>
+      ) : null}
+    </div>
+  );
+}

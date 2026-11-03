@@ -83,18 +83,46 @@ describe("new rules from the Add logic menu", () => {
     expect(rule.actions).toEqual([{ id: expect.any(String), objective: "jumpToBlock", target: "" }]);
   });
 
-  test("a calculation starts with the first computed field, set to a value", () => {
+  test("a calculation starts with one condition and the first computed field, set by an empty formula", () => {
     const rule = createRule("calculate", { condition, variableId: ids.variables.score });
 
+    expect(rule.conditions).toMatchObject({ connector: "and", conditions: [condition] });
     expect(rule.actions).toEqual([
       {
         id: expect.any(String),
         objective: "calculate",
         variableId: ids.variables.score,
         operator: "assign",
-        value: { type: "static", value: "" },
+        value: { type: "expression", value: { type: "static", value: "" } },
       },
     ]);
+  });
+
+  test("a Set value step always runs: an empty and group, and an empty formula (ENG-6935)", () => {
+    const rule = createRule("setValue", { condition, variableId: ids.variables.score });
+
+    expect(rule.conditions).toEqual({ id: expect.any(String), connector: "and", conditions: [] });
+    expect(rule.actions).toEqual([
+      {
+        id: expect.any(String),
+        objective: "calculate",
+        variableId: ids.variables.score,
+        operator: "assign",
+        value: { type: "expression", value: { type: "static", value: "" } },
+      },
+    ]);
+  });
+
+  test("a rule that always runs keeps running when it gets its first condition, and loses it again", () => {
+    const step = createRule("setValue", { condition, variableId: ids.variables.score });
+    const withCondition = updateRuleConditions([step], 0, (group) => ({
+      ...group,
+      conditions: [{ id: "c1", ...condition }],
+    }));
+
+    expect(withCondition[0].conditions.conditions).toHaveLength(1);
+    // Removing the condition again from a calculation removes the rule, as the editor always did.
+    expect(updateRuleConditions(withCondition, 0, (group) => ({ ...group, conditions: [] }))).toEqual([]);
   });
 });
 
@@ -104,7 +132,7 @@ describe("a block's rules on the survey", () => {
 
     expect(survey.blocks[1].logic).toEqual([]);
     expect(survey.blocks[0]).toBe(surveyFlowFixture.blocks[0]);
-    expect(surveyFlowFixture.blocks[1].logic).toHaveLength(1);
+    expect(surveyFlowFixture.blocks[1].logic).toHaveLength(2);
   });
 
   test("removing a block's last rule also removes its fallback, leaving no empty key behind", () => {

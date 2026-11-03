@@ -130,6 +130,19 @@ export const ZExpression = z.union([ZExpressionStatic, ZDynamicLogicFieldValue, 
 type TPath = (string | number)[];
 
 /**
+ * Whether an expression reads a reference anywhere in its tree, e.g. `{ type: "element", value: id }`.
+ * What "is this question or field used in logic" asks before it lets someone delete it.
+ */
+export const expressionReferences = (
+  expression: TExpression,
+  type: "element" | "variable" | "hiddenField" | "reserved",
+  value: string
+): boolean =>
+  expression.type === "call"
+    ? expression.args.some((arg) => expressionReferences(arg, type, value))
+    : expression.type === type && expression.value === value;
+
+/**
  * The tree limits, checked once over the whole tree. Depth is reported on the first node past it and
  * the node count on the root, each with its path, so a caller sees exactly where the tree goes too far.
  */

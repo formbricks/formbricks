@@ -19,7 +19,7 @@ type TReferenceValidationInput = {
   variables: TSurveyVariables;
   welcomeCard?: unknown;
   /** ENG-6930's typed fields, when the document carries them: a computed date is declared only here. */
-  embeddedFields?: { storageKey: string; source: string; dataType: TEmbeddedDataType }[];
+  embeddedFields?: { storageKey?: string; source?: string; dataType?: TEmbeddedDataType }[];
 };
 
 type TNamedReference = {
@@ -285,14 +285,22 @@ function validateExpressionValue(
   }
 }
 
+/** The typed fields of one source, by storage key; a `dataType` left out is the default `string`. */
+function getTypedFields(
+  embeddedFields: NonNullable<TReferenceValidationInput["embeddedFields"]>,
+  source: "computed" | "ingested"
+): [string, TEmbeddedDataType][] {
+  return embeddedFields.flatMap((field) =>
+    field.source === source && field.storageKey !== undefined
+      ? [[field.storageKey, field.dataType ?? "string"] as [string, TEmbeddedDataType]]
+      : []
+  );
+}
+
 /** Computed fields by storage key: the typed rows when sent (a computed date lives only there), else `variables`. */
 function getComputedFieldDataTypes(input: TReferenceValidationInput): Map<string, TEmbeddedDataType> {
   if (input.embeddedFields !== undefined) {
-    return new Map(
-      input.embeddedFields
-        .filter((field) => field.source === "computed")
-        .map((field) => [field.storageKey, field.dataType])
-    );
+    return new Map(getTypedFields(input.embeddedFields, "computed"));
   }
   return new Map(
     input.variables.map((variable) => [variable.id, variable.type === "number" ? "number" : "string"])
@@ -306,9 +314,7 @@ function getTypeContext(input: TReferenceValidationInput): TExpressionTypeContex
   const computed = getComputedFieldDataTypes(input);
   const ingested = new Map<string, TEmbeddedDataType>(
     input.embeddedFields !== undefined
-      ? input.embeddedFields
-          .filter((field) => field.source === "ingested")
-          .map((field) => [field.storageKey, field.dataType])
+      ? getTypedFields(input.embeddedFields, "ingested")
       : (input.hiddenFields.fieldIds ?? []).map((id) => [id, "string"])
   );
 
@@ -372,9 +378,9 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   }));
   const variableIds = input.variables.map((variable) => variable.id);
   // A computed date (ENG-6935) is declared only in the typed `embeddedFields`, never in `variables`.
-  const computedOnlyIds = (input.embeddedFields ?? [])
-    .filter((field) => field.source === "computed" && !variableIds.includes(field.storageKey))
-    .map((field) => field.storageKey);
+  const computedOnlyIds = getTypedFields(input.embeddedFields ?? [], "computed")
+    .map(([storageKey]) => storageKey)
+    .filter((storageKey) => !variableIds.includes(storageKey));
   const variableIdEntries = variableIds.map((id, index) => ({
     id,
     path: `variables.${index}.id`,

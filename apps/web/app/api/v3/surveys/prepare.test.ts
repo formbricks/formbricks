@@ -1631,7 +1631,9 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
 
   test("GET returns the expression trees and the computed date, and its output patches back unchanged", () => {
     const fixtureRules = surveyFlowFixture.blocks.flatMap((block) => block.logic ?? []);
-    const resourceRules = resource.blocks.flatMap((block) => block.logic ?? []);
+    const resourceRules = (resource.blocks as unknown as typeof surveyFlowFixture.blocks).flatMap(
+      (block) => block.logic ?? []
+    );
     const scoreStep = (rules: typeof fixtureRules) =>
       rules.find((rule) => rule.id === SURVEY_FLOW_FIXTURE_IDS.setValue.scoreRule);
 

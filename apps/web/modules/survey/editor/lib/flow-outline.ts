@@ -107,6 +107,8 @@ export interface TFlowOutline {
 
 const EDITABLE_ACTION_OBJECTIVES = new Set(["jumpToBlock", "requireAnswer", "calculate"]);
 const EDITABLE_VALUE_TYPES = new Set(["static", "element", "variable", "hiddenField", "reserved"]);
+// ENG-6935: a calculation's value may also be a Set value expression, edited in the formula box.
+const EDITABLE_CALCULATE_VALUE_TYPES = new Set([...EDITABLE_VALUE_TYPES, "expression"]);
 const EDITABLE_OPERAND_TYPES = new Set(["element", "variable", "hiddenField", "reserved"]);
 
 type TLooseRecord = Record<string, unknown>;
@@ -137,7 +139,11 @@ const getReadOnlyReason = (rule: TSurveyBlockLogic): TFlowReadOnlyReason | undef
     if (!EDITABLE_ACTION_OBJECTIVES.has(action.objective)) return "unsupportedAction";
     if (action.objective === "calculate") {
       const value = action.value;
-      if (!isRecord(value) || typeof value.type !== "string" || !EDITABLE_VALUE_TYPES.has(value.type)) {
+      if (
+        !isRecord(value) ||
+        typeof value.type !== "string" ||
+        !EDITABLE_CALCULATE_VALUE_TYPES.has(value.type)
+      ) {
         return "unsupportedValue";
       }
     }

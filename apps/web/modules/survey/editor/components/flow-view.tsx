@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   BinaryIcon,
   CopyIcon,
+  EqualIcon,
   EyeIcon,
   EyeOffIcon,
   FlagIcon,
@@ -315,7 +316,9 @@ export const FlowView = ({
           ) : null
         }>
         <span className="text-sm text-slate-700">
-          {t("workspace.surveys.edit.flow.if")} {describeConditionGroup(row.rule.conditions, localSurvey, t)}
+          {row.rule.conditions.conditions.length === 0
+            ? t("workspace.surveys.edit.flow.always_runs")
+            : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(row.rule.conditions, localSurvey, t)}`}
         </span>
         <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
         {actions.map((action, idx) => renderActionText(action, `${row.id}-${idx}`))}
@@ -471,6 +474,11 @@ export const FlowView = ({
                           icon={<BinaryIcon className="size-4" />}
                           onClick={() => addRule(block, "calculate")}>
                           {t("workspace.surveys.edit.flow.calculation")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          icon={<EqualIcon className="size-4" />}
+                          onClick={() => addRule(block, "setValue")}>
+                          {t("workspace.surveys.edit.flow.set_a_value")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

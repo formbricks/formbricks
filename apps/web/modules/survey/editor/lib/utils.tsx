@@ -14,6 +14,7 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { expressionReferences } from "@formbricks/types/surveys/expressions";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -543,6 +544,10 @@ export const getConditionOperatorOptions = (
   t: TFunction
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
+    // ENG-6935: a computed date compares by time, like an ingested date (`isBefore` / `isAfter`).
+    if (getOperandDataType(condition, localSurvey) === "date") {
+      return getLogicRules(t)["field.date"].options;
+    }
     const variables = getComputedFieldOptions(localSurvey);
     const variableType =
       variables.find((variable) => variable.id === condition.leftOperand.value)?.type || "text";
@@ -1169,6 +1174,15 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
       return true;
     }
 
+    // ENG-6935: an answer a Set value formula reads.
+    if (
+      action.objective === "calculate" &&
+      action.value.type === "expression" &&
+      expressionReferences(action.value.value, "element", elementId)
+    ) {
+      return true;
+    }
+
     return action.objective === "jumpToBlock" && action.target === block.id;
   };
 
@@ -1436,10 +1450,13 @@ const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable",
   const isUsedInAction = (action: TSurveyBlockLogicAction): boolean => {
     if (action.objective !== "calculate") return false;
 
-    // Only a variable can be a calculation's target; both types can be its input.
+    // Only a variable can be a calculation's target; both types can be its input, also inside a
+    // Set value formula (ENG-6935).
     return (
       (type === "variable" && action.variableId === id) ||
-      (action.value.type === type && action.value.value === id)
+      (action.value.type === "expression"
+        ? expressionReferences(action.value.value, type, id)
+        : action.value.type === type && action.value.value === id)
     );
   };
 
