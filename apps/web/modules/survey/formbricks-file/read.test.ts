@@ -80,6 +80,38 @@ const refusalOf = (read: () => unknown): SurveyImportInputError => {
   throw new Error("Expected the read to refuse the file");
 };
 
+describe("a question a Formbricks file gets wrong", () => {
+  const withElements = (elements: unknown[]) => {
+    const base = survey();
+    return file({ survey: { ...base, blocks: [{ ...base.blocks[0], elements }] } });
+  };
+  const openText = (id: string) => ({
+    id,
+    type: "openText",
+    headline: { "en-US": "Q", "de-DE": "F" },
+    required: true,
+    inputType: "text",
+  });
+
+  test("a question ID used twice in one block: duplicate_identifier, at the second question's id", () => {
+    expect(
+      refusalOf(() => readFormbricksFile(withElements([openText("q1"), openText("q1")]))).invalidParams
+    ).toEqual([
+      expect.objectContaining({ name: "file.survey.blocks.0.elements.1.id", code: "duplicate_identifier" }),
+    ]);
+  });
+
+  test("a question without a headline: missing_required_field", () => {
+    const { headline: _headline, ...withoutHeadline } = openText("q1");
+    expect(refusalOf(() => readFormbricksFile(withElements([withoutHeadline]))).invalidParams).toContainEqual(
+      expect.objectContaining({
+        name: "file.survey.blocks.0.elements.0.headline",
+        code: "missing_required_field",
+      })
+    );
+  });
+});
+
 describe("each string a Formbricks file's envelope and references carry", () => {
   /** A text of `length` characters. */
   const text = (length: number) => "x".repeat(length);
