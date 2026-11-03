@@ -23,7 +23,7 @@ import {
 } from "./limits";
 
 /**
- * Reading a Formbricks file (ADR 0020): the format probe, the upgrade steps up to the current format,
+ * Reading a Formbricks file (ADR 0023): the format probe, the upgrade steps up to the current format,
  * and the first two of the import's three validation tiers (ENG-6850):
  *
  * 1. malformed input — a shape the format does not allow, a broken logic or recall reference, a format

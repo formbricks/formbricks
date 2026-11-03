@@ -19,7 +19,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 
 /**
- * A block's logic in plain words, for the Excel export's Logic column (ADR 0021): one sentence per rule
+ * A block's logic in plain words, for the Excel export's Logic column (ADR 0024): one sentence per rule
  * ("If question nps is less than 7, then jump to question why."), then the fallback ("Otherwise, jump
  * to …"). Written in the exporting user's locale; the values quoted from the survey (choice labels,
  * ending headlines) are its default-language texts, as the editor's logic panel shows them.

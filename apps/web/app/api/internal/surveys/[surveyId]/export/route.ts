@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * `GET /api/internal/surveys/{surveyId}/export?format=json|xlsx` — the survey as a Formbricks file
- * (`<name>.formbricks.json`, ADR 0020) or an Excel export (`<name>.xlsx`, ADR 0021), from the survey
+ * (`<name>.formbricks.json`, ADR 0023) or an Excel export (`<name>.xlsx`, ADR 0024), from the survey
  * card's Export menu.
  *
  * Internal (Internal API RFC, ENG-1668): session-only, no OpenAPI entry and no stability promise, with

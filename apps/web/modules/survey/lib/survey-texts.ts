@@ -64,7 +64,7 @@ export type TSurveyTextOwner =
 
 export interface TSurveyText {
   /**
-   * Stable across reorders, built from ids only (ADR 0021): `element.<elementId>.choice.<choiceId>.label`,
+   * Stable across reorders, built from ids only (ADR 0024): `element.<elementId>.choice.<choiceId>.label`,
    * `block.<blockId>.buttonLabel`, `ending.<endingId>.headline`, `welcomeCard.headline`. Ids are
    * percent-encoded, dots included, so a key always splits back into its segments.
    */

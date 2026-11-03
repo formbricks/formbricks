@@ -139,7 +139,7 @@ const collectLanguageAliases = (survey: TSurvey): TFormbricksFileLanguage[] =>
   );
 
 /**
- * Write a survey as a Formbricks file in the current format (ADR 0020).
+ * Write a survey as a Formbricks file in the current format (ADR 0023).
  *
  * The `survey` part is the v3 GET resource minus every server-owned field, which is the create body
  * without `workspaceId`, with element, block, ending and choice ids kept so a later import can match

@@ -27,7 +27,7 @@ import {
 } from "./limits";
 
 /**
- * The Formbricks file (ADR 0020): a survey's content in a versioned envelope, so a file keeps
+ * The Formbricks file (ADR 0023): a survey's content in a versioned envelope, so a file keeps
  * importing after the v3 survey document it wraps changes. `format` is the file's own integer,
  * independent of the v3 API version; a reader takes every format up to the current one through
  * explicit upgrade steps and refuses newer ones.
