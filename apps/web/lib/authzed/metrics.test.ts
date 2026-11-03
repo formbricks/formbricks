@@ -4,10 +4,23 @@ import { AUTHZED_ERROR_CODES } from "./errors";
 const counters = new Map<string, { add: ReturnType<typeof vi.fn> }>();
 const gauges = new Map<string, { record: ReturnType<typeof vi.fn> }>();
 const histograms = new Map<string, { record: ReturnType<typeof vi.fn> }>();
+const observableGauges = new Map<string, { name: string }>();
+const batchCallbacks: ((result: { observe: ReturnType<typeof vi.fn> }) => Promise<void>)[] = [];
+const mockLoggerWarn = vi.fn();
+
+vi.mock("@formbricks/logger", () => ({ logger: { warn: mockLoggerWarn } }));
 
 vi.mock("@opentelemetry/api", () => ({
   metrics: {
     getMeter: vi.fn(() => ({
+      addBatchObservableCallback: vi.fn((callback: (typeof batchCallbacks)[number]) => {
+        batchCallbacks.push(callback);
+      }),
+      createObservableGauge: vi.fn((name: string) => {
+        const instrument = { name };
+        observableGauges.set(name, instrument);
+        return instrument;
+      }),
       createCounter: vi.fn((name: string) => {
         const instrument = { add: vi.fn() };
         counters.set(name, instrument);
@@ -28,8 +41,9 @@ vi.mock("@opentelemetry/api", () => ({
 }));
 
 const {
+  observeAuthzedOutboxStatus,
   recordAuthzedOutboxDelivery,
-  recordAuthzedOutboxStatus,
+  recordAuthzedOutboxDrain,
   recordAuthzedProjection,
   recordAuthzedReconciliationAudit,
   recordAuthzedReconciliationRepair,
@@ -133,26 +147,79 @@ describe("recordAuthzedRequestRetry", () => {
   });
 });
 
-describe("recordAuthzedOutboxStatus", () => {
-  test("records point-in-time queue state without identifier attributes", () => {
-    recordAuthzedOutboxStatus({
-      deadLettered: 2,
-      oldestPendingAgeSeconds: 47,
-      pending: 11,
-      revocationsPastCritical: 1,
-      revocationsPastWarning: 3,
-    });
-
-    const status = gauges.get("formbricks_authzed_projection_outbox_status")!;
-    expect(status.record.mock.calls).toEqual([
-      [11, { state: "pending" }],
-      [2, { state: "dead_lettered" }],
-      [3, { state: "revocation_warning" }],
-      [1, { state: "revocation_critical" }],
+describe("observeAuthzedOutboxStatus", () => {
+  const status = {
+    deadLettered: 2,
+    oldestPendingAgeSeconds: 47,
+    overdueRevocations: 1,
+    pending: 11,
+    revocationsPastCritical: 1,
+    revocationsPastWarning: 3,
+  };
+  const readStatus = vi.fn();
+  const collect = async () => {
+    const result = { observe: vi.fn() };
+    for (const callback of batchCallbacks) await callback(result);
+    return result.observe.mock.calls.map(([instrument, value, attributes]) => [
+      (instrument as { name: string }).name,
+      value,
+      attributes,
     ]);
+  };
+
+  // Registered once for the whole file: the module keeps one callback however often it is asked to.
+  observeAuthzedOutboxStatus(readStatus);
+  observeAuthzedOutboxStatus(readStatus);
+
+  test("registers a single collection callback however often it is called", () => {
+    expect(batchCallbacks).toHaveLength(1);
+  });
+
+  // ENG-3764: these were recorded only when a delivery run finished, so a stalled delivery froze them at
+  // their last value. Read at collection time, a second collection sees the outbox as it is now.
+  test("reports the outbox as it is at each collection, not as the last delivery left it", async () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+    readStatus.mockResolvedValueOnce({ ...status, oldestPendingAgeSeconds: 0, revocationsPastWarning: 0 });
+    await collect();
+    readStatus.mockResolvedValueOnce(status);
+
+    expect(await collect()).toEqual([
+      ["formbricks_authzed_projection_outbox_status", 11, { state: "pending" }],
+      ["formbricks_authzed_projection_outbox_status", 2, { state: "dead_lettered" }],
+      ["formbricks_authzed_projection_outbox_status", 3, { state: "revocation_warning" }],
+      ["formbricks_authzed_projection_outbox_status", 1, { state: "revocation_critical" }],
+      ["formbricks_authzed_projection_outbox_oldest_pending_age_seconds", 47, undefined],
+      ["formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds", 1_700_000_000, undefined],
+    ]);
+    now.mockRestore();
+  });
+
+  // Observing nothing leaves the last values exported, so the read timestamp must not advance either.
+  test("observes nothing, read timestamp included, when the status read fails", async () => {
+    readStatus.mockRejectedValueOnce(new Error("database unavailable"));
+
+    expect(await collect()).toEqual([]);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error", operation: "outbox_status_metrics" }),
+      "Could not read AuthZed outbox status for metrics"
+    );
+    // The message can quote query input; only the name and frames are logged.
+    expect(JSON.stringify(mockLoggerWarn.mock.calls)).not.toContain("database unavailable");
+  });
+});
+
+describe("recordAuthzedOutboxDrain", () => {
+  test("records when the drain completed, in Unix seconds", () => {
+    vi.useFakeTimers({ now: 1_700_000_000_500 });
+    try {
+      recordAuthzedOutboxDrain();
+    } finally {
+      vi.useRealTimers();
+    }
+
     expect(
-      gauges.get("formbricks_authzed_projection_outbox_oldest_pending_age_seconds")!.record
-    ).toHaveBeenCalledWith(47);
+      gauges.get("formbricks_authzed_projection_outbox_last_drain_timestamp_seconds")!.record
+    ).toHaveBeenCalledWith(1_700_000_000.5);
   });
 });
 
@@ -192,23 +259,17 @@ describe("direct-authority recovery metrics", () => {
     counter("formbricks_authzed_projection_outbox_delivery_total").add.mockImplementationOnce(() => {
       throw new Error("exporter unavailable");
     });
-    gauges.get("formbricks_authzed_projection_outbox_status")!.record.mockImplementationOnce(() => {
-      throw new Error("exporter unavailable");
-    });
+    gauges
+      .get("formbricks_authzed_projection_outbox_last_drain_timestamp_seconds")!
+      .record.mockImplementationOnce(() => {
+        throw new Error("exporter unavailable");
+      });
     counter("formbricks_authzed_reconciliation_audit_total").add.mockImplementationOnce(() => {
       throw new Error("exporter unavailable");
     });
 
     expect(() => recordAuthzedOutboxDelivery({ count: 1, durationMs: 2, status: "delivered" })).not.toThrow();
-    expect(() =>
-      recordAuthzedOutboxStatus({
-        deadLettered: 0,
-        oldestPendingAgeSeconds: 1,
-        pending: 1,
-        revocationsPastCritical: 0,
-        revocationsPastWarning: 0,
-      })
-    ).not.toThrow();
+    expect(() => recordAuthzedOutboxDrain()).not.toThrow();
     expect(() =>
       recordAuthzedReconciliationAudit({ drift: 0, failures: 0, status: "reconciled" })
     ).not.toThrow();
@@ -231,13 +292,6 @@ describe("attribute cardinality", () => {
       operation: "write_relationships",
       retryable: false,
     });
-    recordAuthzedOutboxStatus({
-      deadLettered: 0,
-      oldestPendingAgeSeconds: null,
-      pending: 1,
-      revocationsPastCritical: 0,
-      revocationsPastWarning: 0,
-    });
     recordAuthzedReconciliationRepair({ failed: 1, repaired: 2 });
     recordAuthzedRevocationDelivery(1);
 
@@ -245,7 +299,6 @@ describe("attribute cardinality", () => {
       ...counter("formbricks_authzed_projection_total").add.mock.calls,
       ...counter("formbricks_authzed_request_failures_total").add.mock.calls,
       ...counter("formbricks_authzed_reconciliation_repair_total").add.mock.calls,
-      ...gauges.get("formbricks_authzed_projection_outbox_status")!.record.mock.calls,
     ].flatMap(([, attributes]) => Object.keys(attributes as object));
 
     expect([...new Set(recordedAttributes)].sort()).toEqual([
@@ -253,7 +306,6 @@ describe("attribute cardinality", () => {
       "operation",
       "projection",
       "retryable",
-      "state",
       "status",
     ]);
   });
