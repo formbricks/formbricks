@@ -244,16 +244,19 @@ reviews:
     - path: "apps/web/app/api/v1/**"
       instructions: |
         API v1 is the legacy public contract used by self-hosted deployments and existing
-        integrations. Treat any change to a request or response shape, status code, or default as
-        breaking once a release carries the shape: it must be intentional, and the PR's "Breaking
-        changes" table must document it. Prefer adding to v3 over changing v1.
+        integrations. Treat a released shape as breaking when it breaks a consumer that cannot
+        update: renaming, removing or retyping a field, requiring one that was optional, or
+        changing a default or the status code for an existing case — it must be intentional, and
+        the PR's "Breaking changes" table must document it. A new optional field or endpoint is
+        additive and stays unticked. Prefer adding to v3 over changing v1.
 
     - path: "apps/web/{app/api/v2,modules/api/v2}/**"
       instructions: |
         Public API v2. Route handlers stay thin; logic lives in `apps/web/modules/api/v2/`. Any
         change to a request or response shape must be mirrored in the endpoint's `lib/openapi.ts`,
-        or the published `openapi.yml` silently goes stale. Once a release carries them,
-        response-shape changes are breaking.
+        or the published `openapi.yml` silently goes stale. Once a release carries the shape,
+        renaming, removing or retyping a field, or requiring one that was optional, is breaking; a
+        new optional field is additive and stays unticked.
 
     - path: "apps/web/app/api/v3/**"
       instructions: |
@@ -320,8 +323,9 @@ reviews:
       instructions: |
         Ships to end users' websites as an embedded bundle. Be strict about added dependencies and
         bundle size, browser compatibility, and anything that leaks respondent data. No Node-only
-        APIs. Public SDK signatures are a compatibility contract — changes are breaking once a
-        release publishes them.
+        APIs. A published SDK signature is a compatibility contract: renaming, removing or
+        retyping an export, or requiring a parameter that was optional, is breaking once a release
+        publishes it; a new optional export is additive and stays unticked.
         The host page is hostile (CODING_STANDARDS.md "Survey Bundles"): flag global CSS (`*`,
         `:root`, `@property`), buttons without `type="button"`, code that needs `eval`, and reliance
         on host globals.
@@ -443,7 +447,8 @@ reviews:
 
           Return inconclusive rather than failing when the diff alone does not let you determine
           an API response shape — for example when the shape comes from a serializer or type that
-          this PR does not touch — or whether a published release already carries the shape.
+          this PR does not touch — or whether a published release already carries the shape, config
+          key, environment variable or SDK signature the change alters.
 
       - name: Only the ticket line carries a magic word
         mode: warning
