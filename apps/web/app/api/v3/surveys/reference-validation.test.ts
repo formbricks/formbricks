@@ -949,3 +949,80 @@ describe("ordering rules (ENG-3069)", () => {
     });
   });
 });
+
+describe("Set value expressions (ENG-6935)", () => {
+  const COMPUTED_DATE_KEY = "clsignup1234567890123456789";
+
+  /** `validSurvey` with its calculate action replaced by `<variableId> = <expression>`. */
+  const withSetValue = (expression: unknown, variableId = "clvar123456789012345678901") =>
+    ({
+      ...validSurvey,
+      embeddedFields: [
+        { storageKey: "clvar123456789012345678901", source: "computed", dataType: "number" },
+        { storageKey: COMPUTED_DATE_KEY, source: "computed", dataType: "date" },
+        { storageKey: "account_id", source: "ingested", dataType: "string" },
+      ],
+      blocks: [
+        {
+          ...validSurvey.blocks[0],
+          logic: [
+            {
+              ...validSurvey.blocks[0].logic![0],
+              actions: [
+                {
+                  id: "clact123456789012345678901",
+                  objective: "calculate",
+                  variableId,
+                  operator: "assign",
+                  value: { type: "expression", value: expression },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }) as unknown as typeof validSurvey;
+
+  const valuePath = "blocks.0.logic.0.actions.0.value.value";
+  const call = (fn: string, ...args: unknown[]) => ({ type: "call", fn, args });
+
+  test("accepts a tree whose references exist, including a computed date only the typed fields declare", () => {
+    expect(validateV3SurveyReferences(withSetValue(call("now"), COMPUTED_DATE_KEY))).toEqual({
+      ok: true,
+      invalidParams: [],
+    });
+    expect(
+      validateV3SurveyReferences(
+        withSetValue(call("daysBetween", { type: "variable", value: COMPUTED_DATE_KEY }, call("now")))
+      ).ok
+    ).toBe(true);
+  });
+
+  test("names a dangling reference inside the tree by its exact path", () => {
+    const result = validateV3SurveyReferences(
+      withSetValue(call("add", { type: "static", value: 1 }, { type: "element", value: "gone" }))
+    );
+
+    expect(result.invalidParams).toEqual([
+      expect.objectContaining({
+        name: `${valuePath}.args.1.value`,
+        code: "dangling_reference",
+        referenceType: "element",
+        missingId: "gone",
+      }),
+    ]);
+  });
+
+  test("names text in arithmetic and a result the field can't hold by their exact paths", () => {
+    // `satisfaction` is a text open question.
+    expect(
+      validateV3SurveyReferences(
+        withSetValue(call("add", { type: "static", value: 1 }, { type: "element", value: "satisfaction" }))
+      ).invalidParams
+    ).toEqual([{ name: `${valuePath}.args.1`, reason: "Expression: + needs numbers, got text" }]);
+
+    expect(validateV3SurveyReferences(withSetValue(call("now"))).invalidParams).toEqual([
+      { name: valuePath, reason: "Expression: the result is date, but the field holds number" },
+    ]);
+  });
+});

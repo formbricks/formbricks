@@ -185,4 +185,59 @@ describe("rules before the first question", () => {
       [["startLogic", 0, "actions", 1, "value"], "answer"],
     ]);
   });
+
+  test("a Set value formula (ENG-6935) may set a computed date and read fields, but not an answer", () => {
+    const setValue = (id: string, variableId: string, value: unknown) =>
+      ({
+        id,
+        objective: "calculate",
+        variableId,
+        operator: "assign",
+        value: { type: "expression", value },
+      }) as TSurveyBlockLogicAction;
+
+    expect(
+      issuesOf(
+        withStartLogic([
+          rule([
+            setValue("startaction0000000000001", ids.variables.signedUpAt, {
+              type: "call",
+              fn: "now",
+              args: [],
+            }),
+            setValue("startaction0000000000002", ids.variables.tenureDays, {
+              type: "call",
+              fn: "daysBetween",
+              args: [
+                { type: "hiddenField", value: ids.hiddenFields.signupDate },
+                { type: "variable", value: ids.variables.signedUpAt },
+              ],
+            }),
+          ]),
+        ])
+      )
+    ).toEqual([]);
+
+    expectIssues(
+      issuesOf(
+        withStartLogic([
+          rule([
+            setValue("startaction0000000000001", ids.variables.score, {
+              type: "call",
+              fn: "add",
+              args: [
+                { type: "static", value: 1 },
+                { type: "element", value: "overall" },
+              ],
+            }),
+            setValue("startaction0000000000002", ids.variables.score, { type: "call", fn: "now", args: [] }),
+          ]),
+        ])
+      ),
+      [
+        [["startLogic", 0, "actions", 0, "value", "value", "args", 1, "value"], "answer"],
+        [["startLogic", 0, "actions", 1, "value", "value"], "the result is date"],
+      ]
+    );
+  });
 });

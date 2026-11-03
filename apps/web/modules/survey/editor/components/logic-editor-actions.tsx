@@ -11,6 +11,8 @@ import {
 } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
+import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
+import { oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
 import { getAllowedActionObjectives, getNextActionObjective } from "@/modules/survey/editor/lib/rule-list";
 import {
   getActionObjectiveOptions,
@@ -28,6 +30,9 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { cn } from "@/modules/ui/lib/utils";
+
+/** The operator-list entry that turns a one-step calculation into a formula; never stored. */
+const USE_FORMULA = "useFormula";
 
 interface LogicEditorActionsProps {
   readonly localSurvey: TSurvey;
@@ -172,7 +177,45 @@ export function LogicEditorActions({
                   </div>
                 )}
 
-                {action.objective === "calculate" && (
+                {action.objective === "calculate" && action.value.type === "expression" && (
+                  <>
+                    <div className="col-span-3">
+                      <InputCombobox
+                        id={`action-${idx}-variableId`}
+                        key={`variableId-${action.id}`}
+                        showSearch={false}
+                        options={getActionVariableOptions(localSurvey)}
+                        value={action.variableId}
+                        onChangeValue={(val: string | number | string[]) => {
+                          // The formula stays: a field of another type shows what no longer fits.
+                          handleValuesChange(idx, { variableId: String(val) });
+                        }}
+                        comboboxClasses="grow"
+                        emptyDropdownText={t("workspace.surveys.edit.add_a_variable_to_calculate")}
+                      />
+                    </div>
+                    <div className="col-span-6 flex items-center text-sm text-slate-600">
+                      {t("workspace.surveys.edit.flow.set_to_formula")}
+                    </div>
+                    <div className="col-span-12 mt-2">
+                      <SetValueFormula
+                        id={`action-${idx}-formula`}
+                        localSurvey={localSurvey}
+                        variableId={action.variableId}
+                        expression={action.value.value}
+                        scopeBlockIdx={scopeBlockIdx}
+                        onExpressionChange={(expression) =>
+                          handleValuesChange(idx, {
+                            operator: "assign",
+                            value: { type: "expression", value: expression },
+                          })
+                        }
+                      />
+                    </div>
+                  </>
+                )}
+
+                {action.objective === "calculate" && action.value.type !== "expression" && (
                   <>
                     <div className="col-span-3">
                       <InputCombobox
@@ -200,9 +243,20 @@ export function LogicEditorActions({
                         id={`action-${idx}-operator`}
                         key={`operator-${action.id}`}
                         showSearch={false}
-                        options={getActionOperatorOptions(t, getCalculateFieldType(action.variableId))}
+                        options={[
+                          ...getActionOperatorOptions(t, getCalculateFieldType(action.variableId)),
+                          // ENG-6935: any calculation can become a formula.
+                          { label: t("workspace.surveys.edit.flow.use_a_formula"), value: USE_FORMULA },
+                        ]}
                         value={action.operator}
                         onChangeValue={(val: string | number | string[]) => {
+                          if (val === USE_FORMULA) {
+                            handleValuesChange(idx, {
+                              operator: "assign",
+                              value: { type: "expression", value: oneStepToFormula(action) },
+                            });
+                            return;
+                          }
                           handleValuesChange(idx, {
                             operator: val as
                               | TActionTextVariableCalculateOperator

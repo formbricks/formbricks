@@ -122,7 +122,10 @@ const runBlockLogic = (
       continue;
     }
 
-    const actions = performActions(survey, logic.actions, data, variables);
+    const actions = performActions(survey, logic.actions, data, variables, {
+      selectedLanguage,
+      embeddedValues,
+    });
     // The first rule that jumps wins, but later rules still run for their calculations and requires.
     if (actions.jumpTarget && !jumpTarget) jumpTarget = actions.jumpTarget;
     requiredQuestionIds.push(...actions.requiredQuestionIds);
@@ -367,7 +370,11 @@ export const startSurvey = (input: TStartSurveyInput): TStartSurveyResult => {
     if (!evaluateLogic(survey, responseData, variables, rule.conditions, selectedLanguage, embeddedValues)) {
       continue;
     }
-    const actions = performActions(survey, rule.actions, responseData, variables);
+    // ENG-6935: a Set value step here reads the same language and reserved values as after a block.
+    const actions = performActions(survey, rule.actions, responseData, variables, {
+      selectedLanguage,
+      embeddedValues,
+    });
     if (actions.jumpTarget && !jumpTarget) jumpTarget = actions.jumpTarget;
     variables = { ...variables, ...actions.calculations };
   }

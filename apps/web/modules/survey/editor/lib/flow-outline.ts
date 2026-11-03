@@ -107,6 +107,9 @@ export interface TFlowOutline {
 
 const EDITABLE_ACTION_OBJECTIVES = new Set(["jumpToBlock", "requireAnswer", "calculate"]);
 const EDITABLE_VALUE_TYPES = new Set(["static", "element", "variable", "hiddenField", "reserved"]);
+// ENG-6935: a calculation's value may also be a Set value expression, edited in the formula box, in a
+// block's rules and before the first question alike.
+const EDITABLE_CALCULATE_ONLY_VALUE_TYPES = new Set(["expression"]);
 const EDITABLE_OPERAND_TYPES = new Set(["element", "variable", "hiddenField", "reserved"]);
 
 /**
@@ -156,7 +159,11 @@ const getReadOnlyReason = (
     if (!editable.objectives.has(action.objective)) return "unsupportedAction";
     if (action.objective === "calculate") {
       const value = action.value;
-      if (!isRecord(value) || typeof value.type !== "string" || !editable.valueTypes.has(value.type)) {
+      const isEditableValue =
+        isRecord(value) &&
+        typeof value.type === "string" &&
+        (editable.valueTypes.has(value.type) || EDITABLE_CALCULATE_ONLY_VALUE_TYPES.has(value.type));
+      if (!isEditableValue) {
         return "unsupportedValue";
       }
     }

@@ -70,9 +70,10 @@ const DEFAULT_VALUE_TYPE_BY_DATA_TYPE = {
  *
  * The one place this rule lives, so a new computed type is one edit here: the row schema below, the
  * v3 survey document (`apps/web/app/api/v3/surveys/embedded-fields.ts`) and every other writer read
- * it. ENG-6935 adds `date` when Set value learns to compute dates.
+ * it. ENG-6935 added `date`: Set value computes dates (`now()`), stored in `response.variables` as
+ * ISO 8601 UTC strings, and the legacy `variables` projection leaves them out (json-shapes §6).
  */
-export const COMPUTED_EMBEDDED_DATA_TYPES: readonly TEmbeddedDataType[] = ["string", "number"];
+export const COMPUTED_EMBEDDED_DATA_TYPES: readonly TEmbeddedDataType[] = ["string", "number", "date"];
 
 /** One broken definition rule, keyed by the field it is about. */
 export interface TEmbeddedFieldDefinitionIssue {
@@ -104,7 +105,7 @@ export const getEmbeddedFieldDefinitionIssues = (field: {
   if (field.source === "computed" && !COMPUTED_EMBEDDED_DATA_TYPES.includes(field.dataType)) {
     issues.push({
       path: "dataType",
-      message: `Computed fields support only ${COMPUTED_EMBEDDED_DATA_TYPES.join(" or ")}`,
+      message: `Computed fields support only ${COMPUTED_EMBEDDED_DATA_TYPES.slice(0, -1).join(", ")} or ${COMPUTED_EMBEDDED_DATA_TYPES[COMPUTED_EMBEDDED_DATA_TYPES.length - 1]}`,
     });
   }
 

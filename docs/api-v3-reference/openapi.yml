@@ -9088,9 +9088,104 @@ components:
         Survey element/question inside a block. Element ids are stable public identifiers used by
         logic, recall strings, response data, quotas, integrations, and analysis. `type` selects the
         allowed shape; unsupported fields are rejected instead of ignored.
+    SurveyExpression:
+      description: |
+        One node of a Set value expression: a fixed value, a reference, or a function call.
+
+        **Leaves.** `static` is a number or text (a text `2026-03-01` counts as a date where one is expected). `element` is an answer, by element id: rating, NPS, CSAT, CES and number open text are numbers; other open text is text; a date question is a date; a single select yields its answer code as text. Other question types can't be used. `variable` is a computed field and `hiddenField` an ingested field, by storage key, typed by their `dataType`; `reserved` is a reserved field by name.
+
+        **Functions** (`call`): `add`, `multiply`, `min`, `max` take 2–50 numbers; `subtract` and `divide` exactly 2 (÷ 0 gives empty); `round` a number and optional fixed decimals (0–10, rounding half away from zero); `abs` 1 number; `ifEmpty` a value and a fallback of the same type; `concat` 2–50 values of any type (numbers and dates become text); `now` none (the device clock as a UTC ISO timestamp); `daysBetween` 2 dates (UTC calendar days from the first to the second, negative allowed).
+
+        **Empty values.** An unanswered question or unset field is empty, and so is a value that isn't a number where a number is needed; every function except `ifEmpty` then gives empty.
+      oneOf:
+        - type: object
+          required:
+            - type
+            - value
+          properties:
+            type:
+              type: string
+              enum:
+                - static
+            value:
+              oneOf:
+                - type: number
+                - type: string
+                  maxLength: 5000
+          additionalProperties: false
+        - $ref: '#/components/schemas/SurveyDynamicReference'
+        - type: object
+          required:
+            - type
+            - fn
+            - args
+          properties:
+            type:
+              type: string
+              enum:
+                - call
+            fn:
+              type: string
+              enum:
+                - add
+                - subtract
+                - multiply
+                - divide
+                - round
+                - min
+                - max
+                - abs
+                - ifEmpty
+                - concat
+                - now
+                - daysBetween
+            args:
+              type: array
+              maxItems: 50
+              items:
+                $ref: '#/components/schemas/SurveyExpression'
+          additionalProperties: false
+    SurveyExpressionValue:
+      type: object
+      description: |
+        The value of a Set value step: an expression tree, evaluated in the respondent's browser without `eval`. Validation refuses text in arithmetic, unknown functions, wrong argument counts, references that don't exist and a result type that doesn't match the target field, each at its exact path (`…value.value.args.1`). Trees are at most 12 levels deep and 200 nodes.
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - expression
+        value:
+          $ref: '#/components/schemas/SurveyExpression'
+      additionalProperties: false
+      example:
+        type: expression
+        value:
+          type: call
+          fn: round
+          args:
+            - type: call
+              fn: add
+              args:
+                - type: element
+                  value: q1
+                - type: call
+                  fn: multiply
+                  args:
+                    - type: element
+                      value: q2
+                    - type: static
+                      value: 2
     SurveyCalculateAction:
       type: object
-      description: Updates a survey variable when the logic rule matches.
+      description: |
+        Updates a computed Embedded Data field when the logic rule matches.
+
+        **One-step calculations** apply `operator` to the field's current value and `value` (a fixed value or a reference). An empty current value counts as `0` (number) or `""` (text).
+
+        **Set value** (`operator: "assign"` with `value: { "type": "expression", "value": <tree> }`) sets the field to the result of an expression tree (see `SurveyExpression`), of any computed type including `date`. Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a default), dividing by zero gives empty, and an empty result clears the field. A step that always runs is a rule whose `conditions` is an empty `and` group.
       required:
         - id
         - objective
@@ -9108,7 +9203,7 @@ components:
         variableId:
           type: string
           format: cuid2
-          description: Variable id for `calculate`.
+          description: The computed field's `storageKey` (a legacy variable id).
         operator:
           type: string
           enum:
@@ -9118,8 +9213,11 @@ components:
             - subtract
             - multiply
             - divide
+          description: An `expression` value takes `assign` only.
         value:
-          $ref: '#/components/schemas/SurveyLogicOperand'
+          oneOf:
+            - $ref: '#/components/schemas/SurveyLogicOperand'
+            - $ref: '#/components/schemas/SurveyExpressionValue'
       additionalProperties: false
     SurveyRequireAnswerAction:
       type: object
@@ -9411,7 +9509,7 @@ components:
 
         **A library field** is linked by its `key` alone: the server fills in the definition the workspace library holds, and replaces any definition sent with it, because the workspace owns it. Its `storageKey` defaults to the address the survey already links it at, else to a new cuid2 (computed) or the key (ingested). A `key` the workspace library does not have is refused with **400** at `embeddedFields.<i>.key`; a `source` that contradicts the library's at `.source`.
 
-        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string` or `number`; `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`).
+        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`, `number` or `date` (a computed date is stored as an ISO 8601 UTC string and is left out of the legacy `variables`); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`).
       properties:
         storageKey:
           type: string
