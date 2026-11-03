@@ -289,72 +289,99 @@ const outcomeOfFailedAttempt = (error: unknown): TCallOutcome | null => {
   return null;
 };
 
-async function callOnce<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+/**
+ * The prompt for `refs` and its size, or why no call is sent: the import's budget or time is spent, or
+ * the prompt is too big for one call (smaller calls then) or for what is left of the import's total.
+ */
+function preparePrompt<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
   context: TPlanContext<TFailure, TPlan>,
   refs: string[],
   timeout: number,
   failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
-): Promise<TCallOutcome> {
+): { prompt: string; size: number } | TCallOutcome {
   const { lane } = context;
   if (isPastBudget(context, 0)) return { kind: "budget" };
   if (timeout < SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS) {
     context.ranOutOfTime = true;
     return { kind: "budget" };
   }
-
   const prompt = lane.buildPrompt(refs, failures);
-  // Never send an over-budget prompt: too big for one call means smaller calls; past the import's
-  // total, what is left goes unplanned.
   const size = lane.system.length + prompt.length;
   if (size > lane.maxCallChars) return { kind: "too_long" };
   if (isPastBudget(context, size)) return { kind: "budget" };
+  return { prompt, size };
+}
+
+/**
+ * One attempt at the call: its outcome, or how long to wait before the next attempt. The import's own
+ * abort, and a failure past retrying, propagate.
+ */
+async function attemptCall<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  { refs, prompt, size }: { refs: string[]; prompt: string; size: number },
+  { attempt, timeout, callEnd }: { attempt: number; timeout: number; callEnd: number }
+): Promise<TCallOutcome | { kind: "retry"; delayMs: number }> {
+  const { lane } = context;
+  context.promptChars += size;
+  context.calls += 1;
+  try {
+    const result = await context.generate({
+      system: lane.system,
+      prompt,
+      schema: lane.schema,
+      schemaName: lane.schemaName,
+      schemaDescription: lane.schemaDescription,
+      temperature: 0,
+      maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+      timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
+      maxRetries: 0,
+      abortSignal: context.signal,
+    });
+    addUsage(context, result.usage);
+    return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
+  } catch (error) {
+    // A call that failed still spent tokens — one that ran out of them spent all 8,192.
+    addUsage(context, usageOfFailure(error));
+    // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
+    // route's to classify. Any other abort is this attempt's own timeout.
+    if (context.signal.aborted) throw error;
+    const outcome = outcomeOfFailedAttempt(error);
+    if (outcome) return outcome;
+
+    const decision = decideImportCallRetry({
+      error,
+      attempt,
+      remainingMs: callEnd - performance.now(),
+      minAttemptMs: SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS,
+    });
+    if (decision.kind === "timed_out") return { kind: "timed_out" };
+    // Not retryable, out of retries, or a quota wait that does not fit: the failure stands, as the
+    // SDK's own retries ending would have left it.
+    if (decision.kind === "propagate") throw error;
+    // Retryable, but past the import's call cap or budgets: like any call the import cannot afford,
+    // its units are dropped as `ai_budget`, and the calls beside it carry on.
+    if (isPastBudget(context, size)) return { kind: "budget" };
+    return { kind: "retry", delayMs: decision.delayMs };
+  }
+}
+
+async function callOnce<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  refs: string[],
+  timeout: number,
+  failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
+): Promise<TCallOutcome> {
+  const prepared = preparePrompt(context, refs, timeout, failures);
+  if ("kind" in prepared) return prepared;
 
   // The call's time spans its retries: each attempt gets what is left of it.
   const callEnd = performance.now() + timeout;
   for (let attempt = 0; ; attempt += 1) {
-    context.promptChars += size;
-    context.calls += 1;
-    try {
-      const result = await context.generate({
-        system: lane.system,
-        prompt,
-        schema: lane.schema,
-        schemaName: lane.schemaName,
-        schemaDescription: lane.schemaDescription,
-        temperature: 0,
-        maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
-        timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
-        maxRetries: 0,
-        abortSignal: context.signal,
-      });
-      addUsage(context, result.usage);
-      return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
-    } catch (error) {
-      // A call that failed still spent tokens — one that ran out of them spent all 8,192.
-      addUsage(context, usageOfFailure(error));
-      // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
-      // route's to classify. Any other abort is this attempt's own timeout.
-      if (context.signal.aborted) throw error;
-      const outcome = outcomeOfFailedAttempt(error);
-      if (outcome) return outcome;
-
-      const decision = decideImportCallRetry({
-        error,
-        attempt,
-        remainingMs: callEnd - performance.now(),
-        minAttemptMs: SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS,
-      });
-      if (decision.kind === "timed_out") return { kind: "timed_out" };
-      // Not retryable, out of retries, or a quota wait that does not fit: the failure stands, as the
-      // SDK's own retries ending would have left it.
-      if (decision.kind === "propagate") throw error;
-      // Retryable, but past the import's call cap or budgets: like any call the import cannot afford,
-      // its units are dropped as `ai_budget`, and the calls beside it carry on.
-      if (isPastBudget(context, size)) return { kind: "budget" };
-      // Waited by design: the retry must not be sent before the provider said to. Abortable by the
-      // import's signal, whose reason then propagates.
-      await waitForRetry(decision.delayMs, context.signal); // NOSONAR(typescript:S9382) -- a backoff
-    }
+    const result = await attemptCall(context, { refs, ...prepared }, { attempt, timeout, callEnd }); // NOSONAR(typescript:S9382) -- attempts are sequential
+    if (result.kind !== "retry") return result;
+    // Waited by design: the retry must not be sent before the provider said to. Abortable by the
+    // import's signal, whose reason then propagates.
+    await waitForRetry(result.delayMs, context.signal); // NOSONAR(typescript:S9382) -- a backoff
   }
 }
 
