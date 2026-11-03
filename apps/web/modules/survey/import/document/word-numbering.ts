@@ -15,6 +15,11 @@ import type { Element, Node } from "@xmldom/xmldom";
 
 const ELEMENT_NODE = 1;
 const MAX_LEVELS = 9;
+/**
+ * The largest number written as letters or numerals: Word's own limit on a list's start. A file can
+ * claim any start; past this a number is written in digits, so a huge one costs nothing to label.
+ */
+const MAX_FORMATTED_NUMBER = 32_767;
 
 interface TLevel {
   start: number;
@@ -115,8 +120,9 @@ const ordinal = (value: number): string => {
 };
 
 const formatNumber = (value: number, format: string): string => {
-  // Letters and numerals have no zero or negatives; Word writes those as decimals too.
-  if (value < 1) return String(value);
+  // Letters and numerals have no zero or negatives; Word writes those as decimals too. Past the cap,
+  // numerals and letters would grow with the number (one "m" per thousand), so it is digits as well.
+  if (value < 1 || value > MAX_FORMATTED_NUMBER) return String(value);
   switch (format) {
     case "decimalZero":
       return String(value).padStart(2, "0");

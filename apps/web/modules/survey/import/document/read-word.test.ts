@@ -232,6 +232,35 @@ describe("readWordDocument: list numbering", () => {
     ]);
   });
 
+  test("writes a list started past Word's limit in digits, so a huge start costs nothing to label", () => {
+    const huge = numbering(
+      { 7: [["lowerRoman", "%1."]], 8: [["lowerLetter", "%1)"]] },
+      {
+        9: {
+          abstract: 7,
+          overrides: `<w:lvlOverride w:ilvl="0"><w:startOverride w:val="32767"/></w:lvlOverride>`,
+        },
+        10: {
+          abstract: 8,
+          overrides: `<w:lvlOverride w:ilvl="0"><w:startOverride w:val="9007199254740991"/></w:lvlOverride>`,
+        },
+      }
+    );
+    const body = [
+      p("At the limit", { num: [9, 0] }),
+      p("Past it", { num: [9, 0] }),
+      p("Far past it", { num: [10, 0] }),
+    ].join("");
+
+    const started = performance.now();
+    expect(textOf(docx({ body, numbering: huge }))).toEqual([
+      `P1: ${"m".repeat(32)}dcclxvii. At the limit`,
+      "P2: 32768. Past it",
+      "P3: 9007199254740991) Far past it",
+    ]);
+    expect(performance.now() - started).toBeLessThan(1_000);
+  });
+
   test("takes a paragraph's numbering from its style, or from the style that style is based on", () => {
     const listStyles = styles({
       Question: { name: "Question", pPr: `<w:numPr><w:numId w:val="2"/></w:numPr>` },
