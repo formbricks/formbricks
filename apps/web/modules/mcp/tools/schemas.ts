@@ -15,6 +15,7 @@ import {
   ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import { V3_SURVEY_MAX_EMBEDDED_FIELDS, ZV3SurveyEmbeddedField } from "@/app/api/v3/surveys/embedded-fields";
 import {
   V3_SURVEY_MAX_BLOCKS,
   V3_SURVEY_MAX_ENDINGS,
@@ -246,6 +247,33 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   `Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
 ].join(" ");
 
+/**
+ * Typed Embedded Data (ENG-6930), described once for create, patch and validate. The legacy
+ * `variables` / `hiddenFields` stay accepted and are derived from these when both are absent.
+ */
+export const SURVEY_EMBEDDED_FIELDS_DESCRIPTION = [
+  "Typed Embedded Data fields: `{ storageKey?, key?, name, source, dataType?, defaultValue?, locked? }`.",
+  "`source` is `computed` (set by logic: `variable` operands and calculate actions name its storageKey, a cuid2",
+  "generated when omitted; dataType string or number) or `ingested` (arrives by URL parameter or SDK:",
+  "`hiddenField` operands name its storageKey, which defaults to its name; dataType string, number, boolean",
+  "or date; only these can be `locked`). Link a workspace library field by sending `{ key }` alone: the",
+  "server fills in its definition. This list is the survey's complete set and the legacy",
+  "`variables` / `hiddenFields` are derived from it; send either format, or both describing the same",
+  "fields — a mismatch is refused with 400 naming the path.",
+].join(" ");
+
+/**
+ * `confirm` on every tool that changes or deletes an existing survey (ENG-6930). A survey that is not a
+ * draft and has responses is left untouched without it, and the call answers 428 with the editor's
+ * caution text — so the agent asks the user, then retries.
+ */
+const ZMcpSurveyWriteConfirm = z
+  .boolean()
+  .optional()
+  .describe(
+    "Set true only after the user agreed. Required to change or delete a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
+  );
+
 export const ZMcpCreateSurveyInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID where the survey should be created."),
@@ -290,6 +318,11 @@ export const ZMcpCreateSurveyInput = z
       max: V3_SURVEY_MAX_VARIABLES,
       description: "Survey variables using the v3 survey document contract.",
     }).optional(),
+    // The v3 entry schema itself (strict), so the advertised shape is the accepted one.
+    embeddedFields: lengthBoundedArray(ZV3SurveyEmbeddedField, {
+      max: V3_SURVEY_MAX_EMBEDDED_FIELDS,
+      description: SURVEY_EMBEDDED_FIELDS_DESCRIPTION,
+    }).optional(),
     customCss: ZV3SurveyCustomCss.optional(),
   })
   .strict();
@@ -300,8 +333,9 @@ export const ZMcpPatchSurveyInput = z
     data: z
       .record(z.string(), z.unknown())
       .describe(
-        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. ${SURVEY_BLOCKS_DESCRIPTION}`
+        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION}`
       ),
+    confirm: ZMcpSurveyWriteConfirm,
   })
   .strict();
 
@@ -324,11 +358,13 @@ const ZMcpBlockResponseFormat = z
 export const ZMcpEditSurveyBlocksInput = ZV3EditSurveyBlocksBody.extend({
   surveyId: z.cuid2().describe("Survey ID whose blocks should be edited."),
   response_format: ZMcpBlockResponseFormat.optional(),
+  confirm: ZMcpSurveyWriteConfirm,
 }).strict();
 
 export const ZMcpSetSurveyBlockOrderInput = ZV3SetSurveyBlockOrderBody.extend({
   surveyId: z.cuid2().describe("Survey ID whose block order should be set."),
   response_format: ZMcpBlockResponseFormat.optional(),
+  confirm: ZMcpSurveyWriteConfirm,
 }).strict();
 
 export const ZMcpValidateSurveyInput = z
@@ -351,7 +387,7 @@ export const ZMcpValidateSurveyInput = z
       "customCss validation only: `workspace` (shared survey CSS) or `survey` (one survey's CSS)."
     ),
     data: ZMcpObjectInput.describe(
-      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. ${SURVEY_BLOCKS_DESCRIPTION}`
+      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION}`
     ),
   })
   .strict();
@@ -369,6 +405,7 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
 export const ZMcpDeleteSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to delete."),
+    confirm: ZMcpSurveyWriteConfirm,
   })
   .strict();
 

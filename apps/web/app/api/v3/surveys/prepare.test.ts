@@ -1,4 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
+import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "./prepare";
 import { type TV3SurveyDocument, ZV3CreateSurveyBody } from "./schemas";
@@ -643,7 +647,6 @@ describe("v3 survey preparation", () => {
 
     expect(preparation.ok).toBe(true);
     if (!preparation.ok) {
-      expect(preparation.validation.invalidParams).toEqual([]);
     }
   });
 
@@ -739,7 +742,6 @@ describe("v3 survey preparation", () => {
 
     expect(preparation.ok).toBe(true);
     if (!preparation.ok) {
-      expect(preparation.validation.invalidParams).toEqual([]);
     }
   });
 
@@ -1378,5 +1380,242 @@ describe("prepareV3SurveyPatchInput published lock (ENG-6783)", () => {
     });
 
     expect(preparation.ok).toBe(true);
+  });
+});
+
+describe("typed Embedded Data on the v3 document (ENG-6930)", () => {
+  const scoreId = "clvar1234567890123456789012";
+  const scoreField = {
+    storageKey: scoreId,
+    key: null,
+    name: "score",
+    source: "computed",
+    dataType: "number",
+    defaultValue: 0,
+    locked: false,
+  } as const;
+  const planField = {
+    storageKey: "plan",
+    key: null,
+    name: "plan",
+    source: "ingested",
+    dataType: "string",
+    defaultValue: null,
+    locked: true,
+  } as const;
+
+  test("a patch carrying only embeddedFields keeps them, and derives the legacy format from them", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, { embeddedFields: [scoreField, planField] });
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) return;
+    expect(preparation.document.embeddedFields).toEqual([scoreField, planField]);
+    expect(preparation.document.variables).toEqual([
+      { id: scoreId, name: "score", type: "number", value: 0 },
+    ]);
+    expect(preparation.document.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+  });
+
+  test("a patch carrying only the legacy format carries no embeddedFields, so the stored typing survives", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) return;
+    expect(preparation.document.embeddedFields).toBeUndefined();
+    expect(preparation.document.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+  });
+
+  test("accepts both formats when they describe the same fields", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      embeddedFields: [scoreField, planField],
+      variables: [{ id: scoreId, name: "score", type: "number", value: 0 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+
+  test("refuses both formats when they disagree, naming the paths, as an Embedded Data error", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      embeddedFields: [scoreField, planField],
+      variables: [{ id: scoreId, name: "total", type: "number", value: 0 }],
+      hiddenFields: { enabled: true, fieldIds: ["plan", "region"] },
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.origin).toBe("embeddedFields");
+    expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual([
+      "variables.0.name",
+      "hiddenFields.fieldIds.1",
+    ]);
+  });
+
+  test("refuses a computed field the legacy variables leave out, at its embeddedFields entry", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, { embeddedFields: [scoreField], variables: [] });
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual(["embeddedFields.0"]);
+  });
+
+  test("create derives the legacy format from embeddedFields, filling defaults and storage keys", () => {
+    const preparation = prepareV3SurveyCreate(
+      ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [
+          { name: "tier", source: "computed" },
+          { name: "utm_source", source: "ingested", locked: true },
+        ],
+      })
+    );
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) return;
+    const [tier, utm] = preparation.document.embeddedFields ?? [];
+    expect(tier).toMatchObject({ key: null, name: "tier", dataType: "string", defaultValue: null });
+    expect(tier.storageKey).toMatch(/^[a-z0-9]{24,}$/);
+    expect(utm).toEqual({
+      storageKey: "utm_source",
+      key: null,
+      name: "utm_source",
+      source: "ingested",
+      dataType: "string",
+      defaultValue: null,
+      locked: true,
+    });
+    expect(preparation.document.variables).toEqual([
+      { id: tier.storageKey, name: "tier", type: "text", value: "" },
+    ]);
+    expect(preparation.document.hiddenFields).toEqual({ enabled: true, fieldIds: ["utm_source"] });
+  });
+
+  test("create refuses a disagreeing legacy format too", () => {
+    const preparation = prepareV3SurveyCreate(
+      ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [planField],
+        hiddenFields: { enabled: true, fieldIds: ["region"] },
+      })
+    );
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.origin).toBe("embeddedFields");
+    expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual([
+      "hiddenFields.fieldIds.0",
+      "embeddedFields.0",
+    ]);
+  });
+
+  test("refuses a field the legacy format could not store, at its entry", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      embeddedFields: [{ ...scoreField, storageKey: "not-a-cuid" }],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.origin).toBe("embeddedFields");
+    expect(preparation.validation.invalidParams[0]?.name).toBe("embeddedFields.0");
+  });
+
+  test("refuses two fields at one storage key", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      embeddedFields: [planField, { ...planField, name: "plan copy" }],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.validation.invalidParams).toEqual([
+      expect.objectContaining({ name: "embeddedFields.1.storageKey", code: "duplicate_identifier" }),
+    ]);
+  });
+});
+
+describe("embeddedFields schema rules (ENG-6930)", () => {
+  const parseCreate = (embeddedFields: unknown[]) =>
+    ZV3CreateSurveyBody.safeParse({ ...rawCreateBody, embeddedFields });
+  const issuePaths = (result: ReturnType<typeof parseCreate>) =>
+    result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
+
+  test("a computed field takes only the types the logic engine computes today", () => {
+    const result = parseCreate([{ name: "due", source: "computed", dataType: "date" }]);
+
+    expect(issuePaths(result)).toEqual(["embeddedFields.0.dataType"]);
+  });
+
+  test("an ingested field may be a date, with an ISO default", () => {
+    expect(
+      parseCreate([{ name: "signup", source: "ingested", dataType: "date", defaultValue: "2026-01-31" }])
+        .success
+    ).toBe(true);
+    expect(
+      issuePaths(parseCreate([{ name: "signup", source: "ingested", dataType: "date", defaultValue: 3 }]))
+    ).toEqual(["embeddedFields.0.defaultValue"]);
+  });
+
+  test("only ingested fields can be locked", () => {
+    expect(issuePaths(parseCreate([{ name: "tier", source: "computed", locked: true }]))).toEqual([
+      "embeddedFields.0.locked",
+    ]);
+  });
+
+  test("a local field needs its name and source; a library field needs only its key", () => {
+    expect(issuePaths(parseCreate([{ dataType: "string" }]))).toEqual([
+      "embeddedFields.0.name",
+      "embeddedFields.0.source",
+    ]);
+    expect(parseCreate([{ key: "plan_tier" }]).success).toBe(true);
+  });
+
+  test("rejects an unknown key inside an entry", () => {
+    expect(issuePaths(parseCreate([{ name: "tier", source: "computed", id: "x" }]))).toContain(
+      "embeddedFields.0.id"
+    );
+  });
+});
+
+describe("the shared flow fixture's Embedded Data through v3 (ENG-6930)", () => {
+  // Visibility fields are dropped as the route drops an exact echo of them; that is not under test here.
+  const {
+    visibility: _visibility,
+    owner: _owner,
+    access: _access,
+    ...resource
+  } = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+
+  test("GET returns every field typed, the library link by its key, and its output patches back unchanged", () => {
+    expect(resource.embeddedFields).toContainEqual({
+      storageKey: SURVEY_FLOW_FIXTURE_IDS.hiddenFields.planTier,
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+      dataType: "string",
+      defaultValue: "free",
+      locked: true,
+    });
+
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, resource);
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) return;
+    expect(preparation.document.embeddedFields).toEqual(resource.embeddedFields);
+    expect(preparation.document.variables).toEqual(surveyFlowFixture.variables);
+    expect(preparation.document.hiddenFields).toEqual(surveyFlowFixture.hiddenFields);
+  });
+
+  test("an echo that edits one format and not the other is refused, naming the path", () => {
+    const variables = surveyFlowFixture.variables.map((variable) =>
+      variable.id === SURVEY_FLOW_FIXTURE_IDS.variables.segment ? { ...variable, name: "audience" } : variable
+    );
+
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, { ...resource, variables });
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.origin).toBe("embeddedFields");
+    expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual(["variables.2.name"]);
   });
 });

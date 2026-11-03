@@ -8,6 +8,7 @@ import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
+import { settleV3EmbeddedFieldFormats } from "./embedded-fields";
 import { getV3SurveyDefaultLanguage, getV3SurveyLanguages } from "./language";
 import { type TV3SurveyLanguageRequest, deriveV3SurveyLanguageRequests } from "./languages";
 import {
@@ -47,15 +48,18 @@ type TV3SurveyPrepareFailure = {
    * satisfies the v3 document contract fails every patch, including one that never touches the
    * offending field — and reporting that as `invalid_params` on paths the caller never sent reads as
    * a client error when it is a state error.
+   *
+   * `embeddedFields` (ENG-6930): the request's Embedded Data cannot be taken as sent — its two formats
+   * disagree, or a field could never be stored. Decided from the body alone, so it answers 400.
    */
-  origin?: "request" | "storedSurvey";
+  origin?: "request" | "storedSurvey" | "embeddedFields";
 };
 
 export type TV3SurveyPrepareResult<TDocument> = TV3SurveyPrepareSuccess<TDocument> | TV3SurveyPrepareFailure;
 
 function invalidPreparation(
   invalidParams: InvalidParam[],
-  origin: "request" | "storedSurvey" = "request"
+  origin: NonNullable<TV3SurveyPrepareFailure["origin"]> = "request"
 ): TV3SurveyPrepareFailure {
   return {
     ok: false,
@@ -545,9 +549,52 @@ function splitLanguageAliases(
   return { issues, rest: { ...body, languages: stripped } };
 }
 
+/**
+ * ENG-6930: a document carrying `embeddedFields` takes its legacy `variables` / `hiddenFields` from
+ * them, so everything after this reads the fields the survey will have. `sent` says which legacy keys
+ * the request itself carried; only those are held to agreeing with `embeddedFields`.
+ */
+function settleDocumentEmbeddedFields<TDocument extends Partial<TV3SurveyDocument>>(
+  document: TDocument,
+  sent: { variables: boolean; hiddenFields: boolean }
+): { ok: true; document: TDocument } | TV3SurveyPrepareFailure {
+  if (document.embeddedFields === undefined) {
+    return { ok: true, document };
+  }
+
+  const settled = settleV3EmbeddedFieldFormats(document.embeddedFields, {
+    ...(sent.variables ? { variables: document.variables } : {}),
+    ...(sent.hiddenFields ? { hiddenFields: document.hiddenFields } : {}),
+  });
+  if (!settled.ok) {
+    return invalidPreparation(settled.invalidParams, "embeddedFields");
+  }
+
+  return {
+    ok: true,
+    document: {
+      ...document,
+      embeddedFields: settled.embeddedFields,
+      variables: settled.variables,
+      hiddenFields: settled.hiddenFields,
+    },
+  };
+}
+
 export function prepareV3SurveyCreate<TDocument extends TV3CreateSurveyBody>(
-  document: TDocument
+  input: TDocument
 ): TV3SurveyPrepareResult<TDocument> {
+  // A create body has the legacy keys whether or not they were sent (they default to empty), so an
+  // empty one counts as not sent: there is nothing in it that could disagree with `embeddedFields`.
+  const settled = settleDocumentEmbeddedFields(input, {
+    variables: input.variables.length > 0,
+    hiddenFields: (input.hiddenFields.fieldIds?.length ?? 0) > 0,
+  });
+  if (!settled.ok) {
+    return settled;
+  }
+  const document = settled.document;
+
   // `skip`, not `enforce`, and deliberately so. Turning the ordering rule on here would reject create
   // payloads that succeeded yesterday — a breaking change to a public endpoint, which by the ENG-1652
   // convention needs an info.version bump, a release note and the breaking-change label. That rollout
@@ -617,7 +664,17 @@ export function prepareV3SurveyPatchInput(
     return invalidPreparation(formatV3ZodInvalidParams(parsedPatch.error, "data"));
   }
 
-  const patchedDocument = mergeV3SurveyPatch(currentDocument.document, parsedPatch.data);
+  // The patch alone decides which legacy keys were sent: the merge below fills the rest from the
+  // stored survey, which says nothing about whether this request agrees with itself.
+  const settledPatch = settleDocumentEmbeddedFields(parsedPatch.data, {
+    variables: parsedPatch.data.variables !== undefined,
+    hiddenFields: parsedPatch.data.hiddenFields !== undefined,
+  });
+  if (!settledPatch.ok) {
+    return settledPatch;
+  }
+
+  const patchedDocument = mergeV3SurveyPatch(currentDocument.document, settledPatch.document);
   const immutableElementIdIssues = getImmutableElementIdIssues(currentDocument.document, patchedDocument);
   if (immutableElementIdIssues.length > 0) {
     return invalidPreparation(immutableElementIdIssues);

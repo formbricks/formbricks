@@ -182,6 +182,67 @@ describe("serializeV3SurveyResource", () => {
     ).toMatchObject({ showLanguageSwitch: null, autoSelectLanguage: null });
   });
 
+  test("returns typed embeddedFields next to the legacy format they derive (ENG-6930)", () => {
+    const resource = serializeV3SurveyResource(
+      {
+        ...baseSurvey,
+        variables: [{ id: "clnpslink000000000000000001", name: "nps_score", type: "number", value: 0 }],
+        hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        embeddedFields: [
+          {
+            field: {
+              id: "clnpsscore00000000000000001",
+              key: "nps_score",
+              name: "NPS score",
+              source: "computed",
+              dataType: "number",
+              defaultValue: 0,
+              locked: false,
+            },
+            link: { storageKey: "clnpslink000000000000000001" },
+          },
+          {
+            field: {
+              id: "clplan000000000000000000001",
+              key: null,
+              name: "plan",
+              source: "ingested",
+              dataType: "string",
+              defaultValue: null,
+              locked: true,
+            },
+            link: { storageKey: "plan" },
+          },
+        ],
+      } as TSurvey,
+      TEST_VISIBILITY
+    );
+
+    // No row ids: a library field is addressed by its key, a local one by its storage key.
+    expect(resource.embeddedFields).toEqual([
+      {
+        storageKey: "clnpslink000000000000000001",
+        key: "nps_score",
+        name: "NPS score",
+        source: "computed",
+        dataType: "number",
+        defaultValue: 0,
+        locked: false,
+      },
+      {
+        storageKey: "plan",
+        key: null,
+        name: "plan",
+        source: "ingested",
+        dataType: "string",
+        defaultValue: null,
+        locked: true,
+      },
+    ]);
+    expect(resource.hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+    expect(serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY).embeddedFields).toEqual([]);
+  });
+
   test("omits distribution and targeting for link surveys", () => {
     const resource = serializeV3SurveyResource(baseSurvey, TEST_VISIBILITY);
 
