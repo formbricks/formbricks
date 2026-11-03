@@ -9,6 +9,7 @@ import type {
   TResponseData,
   TResponseDataValue,
   TResponseMeta,
+  TResponseOutcome,
   TResponseTtc,
   TResponseVariables,
 } from "@formbricks/types/responses";
@@ -16,7 +17,10 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
+import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
+import { enqueueResponseOutcomeCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
@@ -533,6 +537,8 @@ export type TV3UpdateResponsePersist = {
     finished?: boolean;
     endingId?: string | null;
     language?: string | null;
+    /** `null` restores — see `ResponseOutcome`. */
+    outcome?: TResponseOutcome | null;
     data?: TResponseData;
     variables?: Record<string, TResponseDataValue>;
     tagIds?: string[];
@@ -562,7 +568,7 @@ export async function updateScopedResponse({
   const quotaContext = await loadQuotaEvaluationContext(survey.id);
 
   try {
-    return await prisma.$transaction(async (tx) => {
+    const written = await prisma.$transaction(async (tx) => {
       const { issues } = await collectReferenceIssues(tx, {
         workspaceId,
         surveyId: survey.id,
@@ -574,6 +580,11 @@ export async function updateScopedResponse({
         return { ok: false as const, issues };
       }
 
+      // Read in the transaction that writes it, so the change the cleanup follows is the change made here.
+      const outcomeChanged =
+        patch.outcome !== undefined &&
+        (await readStoredOutcome(tx, responseId, workspaceId)) !== patch.outcome;
+
       // Scoped `where`, never a bare id — a response outside the workspace matches nothing and
       // Prisma raises P2025, which the operation renders as the same 403 as a pre-flight rejection.
       const updated = await tx.response.update({
@@ -582,6 +593,7 @@ export async function updateScopedResponse({
           ...(patch.finished === undefined ? {} : { finished: patch.finished }),
           ...(patch.endingId === undefined ? {} : { endingId: patch.endingId }),
           ...(patch.language === undefined ? {} : { language: patch.language }),
+          ...(patch.outcome === undefined ? {} : { outcome: patch.outcome }),
           ...(patch.data === undefined ? {} : { data: patch.data }),
           ...(patch.ttc === undefined ? {} : { ttc: patch.ttc }),
           ...(patch.variables === undefined ? {} : { variables: patch.variables }),
@@ -617,8 +629,16 @@ export async function updateScopedResponse({
         quotaContext,
       });
 
-      return { ok: true as const, responseId: updated.id };
+      const { drainNowIds } = outcomeChanged
+        ? await enqueueOutcomeCleanup(tx, workspaceId, [{ id: updated.id, surveyId: survey.id }])
+        : { drainNowIds: [] };
+
+      return { ok: true as const, responseId: updated.id, drainNowIds };
     });
+    if (!written.ok) return written;
+
+    await drainOutcomeCleanups(written.drainNowIds, workspaceId);
+    return { ok: true, responseId: written.responseId };
   } catch (error) {
     const raceIssues = raceIssuesFromUniqueViolation(error);
     if (raceIssues) return { ok: false, issues: raceIssues };
@@ -626,6 +646,174 @@ export async function updateScopedResponse({
     rethrowScopedNotFound(error);
     throw error;
   }
+}
+
+const readStoredOutcome = async (
+  tx: Prisma.TransactionClient,
+  responseId: string,
+  workspaceId: string
+): Promise<TResponseOutcome | null | undefined> =>
+  (
+    await tx.response.findFirst({
+      where: { id: responseId, survey: { workspaceId } },
+      select: { outcome: true },
+    })
+  )?.outcome;
+
+/**
+ * Queue the Hub cleanup for responses whose outcome changed, in the transaction that wrote it (ENG-6785):
+ * a write that commits always gets it, and one that rolls back queues nothing.
+ */
+const enqueueOutcomeCleanup = async (
+  tx: Prisma.TransactionClient,
+  workspaceId: string,
+  changes: { id: string; surveyId: string }[]
+): Promise<{ drainNowIds: string[] }> => {
+  const { organizationId } = await tx.workspace.findUniqueOrThrow({
+    where: { id: workspaceId },
+    select: { organizationId: true },
+  });
+  return enqueueResponseOutcomeCleanups(tx, { organizationId, workspaceId, changes });
+};
+
+/**
+ * How long a request waits for the first attempt at the Hub cleanup. The Hub's client waits up to a minute
+ * per attempt, so a Hub that accepts the connection and never answers would hold the request that much
+ * longer for an outcome that is already committed (seen against the real Hub, ENG-6785). The drain keeps
+ * running past this; it just stops being waited for, and its row backs off if it fails.
+ */
+export const INLINE_DRAIN_WAIT_MS = 5000;
+
+/**
+ * The first attempt at the Hub cleanup, straight after commit. A Hub outage, or any failure here, only
+ * delays it to the drain job with its backoff: the outcome is already committed, so it must never fail the
+ * request that set it, nor hold it for long.
+ */
+const drainOutcomeCleanups = async (drainNowIds: string[], workspaceId: string): Promise<void> => {
+  if (drainNowIds.length === 0) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const drain = drainDeletionCleanups({ ids: drainNowIds }).catch((error: unknown) => {
+    logger.error(
+      { err: error, workspaceId, responseCount: drainNowIds.length },
+      "Deferred the Feedback Record cleanup of an outcome change to the drain job"
+    );
+  });
+  try {
+    await Promise.race([
+      drain,
+      new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, INLINE_DRAIN_WAIT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+type TOutcomeScope = {
+  /** ENG-3282: responses of a survey the caller cannot see are scope-filtered out, like foreign ids. */
+  visibleSurveyWhere?: Prisma.SurveyWhereInput;
+  workspaceId: string;
+};
+
+const outcomeScopeWhere = (
+  ids: string[],
+  { visibleSurveyWhere = {}, workspaceId }: TOutcomeScope
+): Prisma.ResponseWhereInput => ({
+  id: { in: ids },
+  survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
+});
+
+/**
+ * Which of `ids` are in scope, and the survey each belongs to — what a batch authorizes against before it
+ * writes anything. One query for up to a batch of ids; the caller checks one response per distinct survey.
+ */
+export async function listScopedResponseSurveyRefs(
+  ids: string[],
+  scope: TOutcomeScope
+): Promise<{ id: string; surveyId: string }[]> {
+  return prisma.response.findMany({
+    where: outcomeScopeWhere(ids, scope),
+    select: { id: true, surveyId: true },
+  });
+}
+
+export type TV3OutcomeChange = { id: string; surveyId: string; previous: TResponseOutcome | null };
+
+export type TV3BatchOutcomeResult = {
+  /** Responses in scope, including those that already carried the outcome: a retry reports the same number. */
+  matched: number;
+  /** Only the responses whose outcome actually changed, with what it was — the audit trail and the events. */
+  changes: TV3OutcomeChange[];
+  /** The changed responses as the pipeline needs them, read back after commit. */
+  rows: TV3WriteReadbackRow[];
+};
+
+/**
+ * Set `outcome` on every response of `ids` that is in scope, in one transaction.
+ *
+ * Scope-filters rather than rejecting, like the batch delete: the workspace (and the caller's visible
+ * surveys) sit in every statement's `where`, so a foreign or missing id matches nothing. Only responses
+ * whose outcome differs are written — a retry, or a batch that overlaps an earlier one, neither churns
+ * `updatedAt` nor re-fires `responseUpdated` for rows that did not change.
+ *
+ * The read-back runs after commit and is scoped the same way; a row that vanished in between simply
+ * drops out of `rows`.
+ */
+export async function setScopedResponsesOutcome(
+  ids: string[],
+  outcome: TResponseOutcome | null,
+  scope: TOutcomeScope
+): Promise<TV3BatchOutcomeResult> {
+  let matched = 0;
+  let changes: TV3OutcomeChange[] = [];
+  let drainNowIds: string[] = [];
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const inScope = await tx.response.findMany({
+        where: outcomeScopeWhere(ids, scope),
+        select: { id: true, surveyId: true, outcome: true },
+      });
+      matched = inScope.length;
+      changes = inScope
+        .filter((row) => row.outcome !== outcome)
+        .map((row) => ({ id: row.id, surveyId: row.surveyId, previous: row.outcome }));
+
+      if (changes.length === 0) return;
+
+      await tx.response.updateMany({
+        where: outcomeScopeWhere(
+          changes.map(({ id }) => id),
+          scope
+        ),
+        data: { outcome },
+      });
+
+      ({ drainNowIds } = await enqueueOutcomeCleanup(
+        tx,
+        scope.workspaceId,
+        changes.map(({ id, surveyId }) => ({ id, surveyId }))
+      ));
+    });
+  } catch (error) {
+    rethrowScopedNotFound(error);
+    throw error;
+  }
+
+  if (changes.length === 0) return { matched, changes, rows: [] };
+
+  await drainOutcomeCleanups(drainNowIds, scope.workspaceId);
+
+  const rows = await prisma.response.findMany({
+    where: outcomeScopeWhere(
+      changes.map(({ id }) => id),
+      scope
+    ),
+    select: v3WriteReadbackSelect,
+  });
+
+  return { matched, changes, rows };
 }
 
 /**
@@ -667,6 +855,7 @@ export function toV3PipelineResponse(row: TV3WriteReadbackRow): TResponse {
     meta: (row.meta ?? {}) as TResponse["meta"],
     singleUseId: row.singleUseId,
     language: row.language,
+    outcome: row.outcome,
   };
 }
 

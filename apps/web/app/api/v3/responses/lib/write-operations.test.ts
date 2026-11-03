@@ -1,6 +1,7 @@
 import { mockValidateFileUploads } from "./__mocks__/storage-utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import { can } from "@/lib/authorization";
 import { createV3Response, updateV3Response } from "./operations";
 
 // Exercise response writes with an authorized actor; denial behavior is covered in visibility.test.ts.
@@ -346,6 +347,79 @@ describe("updateV3Response", () => {
     await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
 
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ alsoFinished: true }));
+  });
+
+  /**
+   * Marking and restoring go through the patch the response already has: the same workspace gate
+   * (`readWrite`) and the same per-response `response.write` check, so a read-only seat is refused.
+   */
+  test.each(["lowQuality", null] as const)("outcome %s is handed to the write", async (outcome) => {
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome } as never });
+
+    expect(mockUpdate.mock.calls[0][0].patch.outcome).toBe(outcome);
+  });
+
+  test("an outcome-only patch leaves every other key out of the write", async () => {
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome: "lowQuality" } as never });
+
+    const { patch } = mockUpdate.mock.calls[0][0];
+    expect(patch.finished).toBeUndefined();
+    expect(patch.tagIds).toBeUndefined();
+  });
+
+  test("a caller without response.write is refused before anything is written", async () => {
+    vi.mocked(can).mockResolvedValueOnce(false);
+
+    const response = await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { outcome: "lowQuality" } as never,
+    });
+
+    expect(response.status).toBe(403);
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+    expect(can).toHaveBeenCalledWith(expect.anything(), "response.write", {
+      type: "response",
+      id: RESPONSE_ID,
+    });
+  });
+
+  test("the audit record carries the old and the new outcome", async () => {
+    const auditLog = {} as never;
+    mockGetScoped.mockResolvedValueOnce(row({ outcome: null }));
+    mockReadback.mockResolvedValueOnce(row({ outcome: "lowQuality" }));
+
+    await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { outcome: "lowQuality" } as never,
+      auditLog,
+    });
+
+    expect(auditLog).toMatchObject({
+      targetId: RESPONSE_ID,
+      oldObject: { id: RESPONSE_ID, outcome: null },
+      newObject: { id: RESPONSE_ID, outcome: "lowQuality" },
+    });
+  });
+
+  test.each([
+    ["marking", null, "lowQuality"],
+    ["restoring", "lowQuality", null],
+  ] as const)("%s sends responseUpdated with the read-back row", async (_label, before, after) => {
+    mockGetScoped.mockResolvedValueOnce(row({ outcome: before }));
+    mockReadback.mockResolvedValueOnce(row({ outcome: after }));
+
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome: after } as never });
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "responseUpdated",
+        response: expect.objectContaining({ outcome: after }),
+        alsoFinished: false,
+      })
+    );
   });
 
   /** An absent key must not reach Prisma as `undefined` — for a nullable column that is a null-out. */

@@ -1,7 +1,7 @@
 "use client";
 
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/cn";
 
@@ -17,7 +17,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxPrimitive.CheckboxPr
       )}
       {...props}>
       <CheckboxPrimitive.Indicator className={cn("flex items-center justify-center")}>
-        <Check className="size-4" />
+        {props.checked === "indeterminate" ? <Minus className="size-4" /> : <Check className="size-4" />}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )
