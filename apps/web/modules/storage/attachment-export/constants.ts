@@ -19,10 +19,20 @@ export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024 * 1024;
  */
 export const ATTACHMENT_EXPORT_RETENTION_MONTHS = 3;
 
-/** When an archive built at `finishedAt` expires: the same day of the month, three months later. */
+/**
+ * When an archive built at `finishedAt` expires: the same day of the month, three months later, at the
+ * same UTC time. A day the target month lacks is clamped to its last day, so 31 January expires on 30
+ * April rather than overflowing into May.
+ */
 export const getAttachmentExportExpiry = (finishedAt: Date): Date => {
   const expiresAt = new Date(finishedAt);
+  const day = expiresAt.getUTCDate();
+  expiresAt.setUTCDate(1);
   expiresAt.setUTCMonth(expiresAt.getUTCMonth() + ATTACHMENT_EXPORT_RETENTION_MONTHS);
+  const lastDayOfMonth = new Date(
+    Date.UTC(expiresAt.getUTCFullYear(), expiresAt.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  expiresAt.setUTCDate(Math.min(day, lastDayOfMonth));
   return expiresAt;
 };
 

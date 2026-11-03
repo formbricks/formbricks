@@ -140,19 +140,3 @@ export const getAttachmentExport = async ({
     where: { id, ...scope },
     select: attachmentExportSelect,
   });
-
-/**
- * Where the emailed download link of an export points: found by id, but only for the user who started
- * it. Survey read access is checked again by the download route, so losing access also loses the link.
- */
-export const getRequesterAttachmentExport = async ({
-  id,
-  requestedById,
-}: {
-  id: string;
-  requestedById: string;
-}): Promise<Pick<TAttachmentExportRow, "id" | "surveyId" | "workspaceId" | "status"> | null> =>
-  prisma.attachmentExport.findFirst({
-    where: { id, requestedById },
-    select: { id: true, surveyId: true, workspaceId: true, status: true },
-  });

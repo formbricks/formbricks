@@ -2,15 +2,16 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
-import { getRequesterAttachmentExport } from "@/modules/storage/attachment-export/service";
+import { getRequesterAttachmentExport } from "@/modules/storage/attachment-export/requester-export";
 import { AttachmentExportDownload } from "./components/AttachmentExportDownload";
 
 /**
  * `/attachment-exports/{exportId}`: where the "your attachments are ready" email points (ENG-6862).
  *
  * Kept outside `/workspaces/…`, whose layout sends a signed-out visitor to login without a way back; this
- * page keeps the link as the callback, so signing in lands here again. The download itself goes through
- * the audited download route, which checks survey access again and mints a fresh presigned URL.
+ * page keeps the link as the callback, so signing in lands here again. The export shows only to its
+ * requester while they can read the survey; the download goes through the audited download route, which
+ * mints a fresh presigned URL.
  */
 const Page = async ({ params }: Readonly<{ params: Promise<{ exportId: string }> }>) => {
   const { exportId } = await params;
@@ -21,7 +22,7 @@ const Page = async ({ params }: Readonly<{ params: Promise<{ exportId: string }>
 
   const t = await getTranslate();
   const attachmentExport = z.cuid2().safeParse(exportId).success
-    ? await getRequesterAttachmentExport({ id: exportId, requestedById: session.user.id })
+    ? await getRequesterAttachmentExport({ id: exportId, userId: session.user.id })
     : null;
 
   return (

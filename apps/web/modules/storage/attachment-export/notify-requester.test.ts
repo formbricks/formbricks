@@ -2,7 +2,11 @@ import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { sendAttachmentExportFailedEmail, sendAttachmentExportReadyEmail } from "@/modules/email";
-import { notifyAttachmentExportFailed, notifyAttachmentExportReady } from "./notify-requester";
+import {
+  NOTIFY_RETRY_DELAYS_MS,
+  notifyAttachmentExportFailed,
+  notifyAttachmentExportReady,
+} from "./notify-requester";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/logger", () => ({
@@ -78,24 +82,63 @@ describe("notifyAttachmentExportReady", () => {
     expect(mockedReady).not.toHaveBeenCalled();
   });
 
-  test("logs a failed send instead of failing the finished export", async () => {
+  test("retries a send that threw, so a mail server hiccup still delivers the link", async () => {
+    vi.useFakeTimers();
+    prisma.attachmentExport.findFirst.mockResolvedValue(row(requester) as never);
+    mockedReady.mockRejectedValueOnce(new Error("Connection timeout")).mockResolvedValueOnce(true);
+
+    const run = notifyAttachmentExportReady({
+      ...scope,
+      archiveBytes: 1,
+      expiresAt: new Date(),
+      truncated: false,
+      timeZone: "UTC",
+    });
+    await vi.runAllTimersAsync();
+    await run;
+    vi.useRealTimers();
+
+    expect(mockedReady).toHaveBeenCalledTimes(2);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  test("logs a send that keeps failing instead of failing the finished export", async () => {
+    vi.useFakeTimers();
     prisma.attachmentExport.findFirst.mockResolvedValue(row(requester) as never);
     mockedReady.mockRejectedValue(new Error("Incorrect SMTP credentials"));
 
-    await expect(
-      notifyAttachmentExportReady({
-        ...scope,
-        archiveBytes: 1,
-        expiresAt: new Date(),
-        truncated: false,
-        timeZone: "UTC",
-      })
-    ).resolves.toBeUndefined();
+    const run = notifyAttachmentExportReady({
+      ...scope,
+      archiveBytes: 1,
+      expiresAt: new Date(),
+      truncated: false,
+      timeZone: "UTC",
+    });
+    await vi.runAllTimersAsync();
+    await expect(run).resolves.toBeUndefined();
+    vi.useRealTimers();
 
+    // The first try plus one per retry delay.
+    expect(mockedReady).toHaveBeenCalledTimes(NOTIFY_RETRY_DELAYS_MS.length + 1);
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ attachmentExportId: EXPORT_ID, outcome: "ready" }),
       "Failed to send attachment export email"
     );
+  });
+
+  test("does not retry when SMTP is not configured", async () => {
+    prisma.attachmentExport.findFirst.mockResolvedValue(row(requester) as never);
+    mockedReady.mockResolvedValue(false);
+
+    await notifyAttachmentExportReady({
+      ...scope,
+      archiveBytes: 1,
+      expiresAt: new Date(),
+      truncated: false,
+      timeZone: "UTC",
+    });
+
+    expect(mockedReady).toHaveBeenCalledOnce();
   });
 });
 
