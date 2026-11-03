@@ -45,47 +45,50 @@ const draftElementsById = (draftBlocks: unknown): Map<string, Record<string, unk
   return elements;
 };
 
+/** The options of a stored question that the draft's version of it no longer has, one issue each. */
+const removedOptions = (
+  stored: Record<string, unknown>,
+  draftElement: Record<string, unknown>,
+  questionTag: string
+): TSurveyImportPipelineIssue[] => {
+  const keptOptions = optionIdsOf(draftElement);
+  const issues: TSurveyImportPipelineIssue[] = [];
+  for (const option of OPTION_LISTS.flatMap((list) => arrayOf(stored[list]))) {
+    const optionId = idOf(option);
+    if (optionId === null || keptOptions.has(optionId)) continue;
+    // A picture choice has no label; its id is what the editor shows for it.
+    const label = isPlainObject(option) ? defaultText(option.label) : "";
+    issues.push({
+      code: "option_removed",
+      severity: "warning",
+      questionTag,
+      params: { option: label || optionId },
+    });
+  }
+  return issues;
+};
+
 export const getFormbricksFileRemovals = (
   storedBlocks: unknown,
   draftBlocks: unknown
 ): TSurveyImportPipelineIssue[] => {
   const kept = draftElementsById(draftBlocks);
-  const issues: TSurveyImportPipelineIssue[] = [];
+  const storedElements = arrayOf(storedBlocks).flatMap((block) =>
+    isPlainObject(block) ? arrayOf(block.elements) : []
+  );
 
-  for (const block of arrayOf(storedBlocks)) {
-    if (!isPlainObject(block)) continue;
-    for (const stored of arrayOf(block.elements)) {
-      if (!isPlainObject(stored) || typeof stored.id !== "string") continue;
-      const questionTag = stored.id;
-
-      const draftElement = kept.get(questionTag);
-      if (!draftElement) {
-        issues.push({
-          code: "question_removed",
-          severity: "warning",
-          questionTag,
-          params: { headline: defaultText(stored.headline) },
-        });
-        continue;
-      }
-
-      const keptOptions = optionIdsOf(draftElement);
-      for (const list of OPTION_LISTS) {
-        for (const option of arrayOf(stored[list])) {
-          const optionId = idOf(option);
-          if (optionId === null || keptOptions.has(optionId)) continue;
-          // A picture choice has no label; its id is what the editor shows for it.
-          const label = isPlainObject(option) ? defaultText(option.label) : "";
-          issues.push({
-            code: "option_removed",
-            severity: "warning",
-            questionTag,
-            params: { option: label || optionId },
-          });
-        }
-      }
-    }
-  }
-
-  return issues;
+  return storedElements.flatMap((stored): TSurveyImportPipelineIssue[] => {
+    if (!isPlainObject(stored) || typeof stored.id !== "string") return [];
+    const questionTag = stored.id;
+    const draftElement = kept.get(questionTag);
+    if (draftElement) return removedOptions(stored, draftElement, questionTag);
+    return [
+      {
+        code: "question_removed",
+        severity: "warning",
+        questionTag,
+        params: { headline: defaultText(stored.headline) },
+      },
+    ];
+  });
 };

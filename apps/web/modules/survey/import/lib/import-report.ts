@@ -108,126 +108,109 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
 };
 
 /**
- * The generic line. Its code is typed `never`: every code the types know is handled in
- * `getSurveyImportIssueMessage`, so a new code fails the build until it has a line of its own.
+ * One report line per code, in the user's language. Literal `t()` calls per code, so the translation
+ * scanner sees every key; typed over every code, so a new code fails the build until it has a line.
  */
-const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
-  t("workspace.surveys.import.issues.unknown");
+const ISSUE_MESSAGES: Record<
+  TSurveyImportIssue["code"],
+  (issue: TSurveyImportIssue, t: TTranslate) => string
+> = {
+  logic_not_imported: (issue, t) => {
+    const description = param(issue, "description");
+    return description
+      ? t("workspace.surveys.import.issues.logic_not_imported", { description })
+      : t("workspace.surveys.import.issues.logic_not_imported_no_description");
+  },
+  question_skipped: (issue, t) => getSkippedQuestionMessage(issue, t),
+  image_dropped: (_issue, t) => t("workspace.surveys.import.issues.image_dropped"),
+  script_dropped: (_issue, t) => t("workspace.surveys.import.issues.script_dropped"),
+  formatting_dropped: (_issue, t) => t("workspace.surveys.import.issues.formatting_dropped"),
+  headline_fallback: (_issue, t) => t("workspace.surveys.import.issues.headline_fallback"),
+  field_renamed: (issue, t) =>
+    t("workspace.surveys.import.issues.field_renamed", {
+      from: param(issue, "from"),
+      to: param(issue, "to"),
+    }),
+  external_url_removed: (_issue, t) => t("workspace.surveys.import.issues.external_url_removed"),
+  field_dropped: (issue, t) => t("workspace.surveys.import.issues.field_dropped", { count: count(issue) }),
+  language_skipped: (issue, t) => getSkippedLanguageMessage(issue, t),
+  translation_missing: (issue, t) =>
+    t("workspace.surveys.import.issues.translation_missing", {
+      count: count(issue),
+      language: param(issue, "language"),
+    }),
+  piped_text_removed: (issue, t) =>
+    t("workspace.surveys.import.issues.piped_text_removed", { count: count(issue) }),
+  choice_label_renamed: (_issue, t) => t("workspace.surveys.import.issues.choice_label_renamed"),
+  choice_dropped: (_issue, t) => t("workspace.surveys.import.issues.choice_dropped"),
+  text_too_long: (_issue, t) => t("workspace.surveys.import.issues.text_too_long"),
+  markup_escaped: (_issue, t) => t("workspace.surveys.import.issues.markup_escaped"),
+  matrix_single_answer: (_issue, t) => t("workspace.surveys.import.issues.matrix_single_answer"),
+  options_left_out: (issue, t) =>
+    t("workspace.surveys.import.issues.options_left_out", {
+      count: count(issue),
+      options: param(issue, "options"),
+    }),
+  scale_changed: (issue, t) =>
+    t("workspace.surveys.import.issues.scale_changed", {
+      from: param(issue, "from"),
+      to: param(issue, "to"),
+    }),
+  ending_added: (_issue, t) => t("workspace.surveys.import.issues.ending_added"),
+  ending_not_translated: (issue, t) =>
+    t("workspace.surveys.import.issues.ending_not_translated", {
+      languages: param(issue, "languages"),
+    }),
+  // Past the first fifty, one line counts the rest instead of naming each.
+  unknown_key_dropped: (issue, t) =>
+    issue.params?.field === undefined
+      ? t("workspace.surveys.import.issues.unknown_keys_dropped", { count: count(issue) })
+      : t("workspace.surveys.import.issues.unknown_key_dropped", { field: param(issue, "field") }),
+  custom_css_removed: (_issue, t) => t("workspace.surveys.import.issues.custom_css_removed"),
+  targeting_removed: (_issue, t) => t("workspace.surveys.import.issues.targeting_removed"),
+  targeting_filter_removed: (issue, t) =>
+    t("workspace.surveys.import.issues.targeting_filter_removed", { count: count(issue) }),
+  action_class_created: (issue, t) =>
+    t("workspace.surveys.import.issues.action_class_created", { name: param(issue, "name") }),
+  attribute_key_created: (issue, t) =>
+    t("workspace.surveys.import.issues.attribute_key_created", { key: param(issue, "key") }),
+  content_only: (_issue, t) => t("workspace.surveys.import.issues.content_only"),
+  logic_imported: (issue, t) => {
+    const description = param(issue, "description");
+    return description
+      ? t("workspace.surveys.import.issues.logic_imported", { description })
+      : t("workspace.surveys.import.issues.logic_imported_no_description");
+  },
+  text_not_split: (issue, t) =>
+    t("workspace.surveys.import.issues.text_not_split", { cell: param(issue, "cell") }),
+  file_encoding: (issue, t) =>
+    t("workspace.surveys.import.issues.file_encoding", {
+      encoding: getEncodingName(param(issue, "encoding"), t),
+    }),
+  sheets_skipped: (issue, t) =>
+    t("workspace.surveys.import.issues.sheets_skipped", { sheets: param(issue, "sheets") }),
+  table_as_matrix: (_issue, t) => t("workspace.surveys.import.issues.table_as_matrix"),
+  images_not_imported: (issue, t) =>
+    t("workspace.surveys.import.issues.images_not_imported", { count: count(issue) }),
+  question_removed: (issue, t) => {
+    const headline = param(issue, "headline");
+    return headline
+      ? t("workspace.surveys.import.issues.question_removed", { headline })
+      : t("workspace.surveys.import.issues.question_removed_no_headline");
+  },
+  option_removed: (issue, t) =>
+    t("workspace.surveys.import.issues.option_removed", { option: param(issue, "option") }),
+};
 
 /**
- * One report line in the user's language. Literal `t()` calls per code, so the translation scanner
- * sees every key. `params` come from the file or the AI: callers render the result as text only.
+ * One report line in the user's language. `params` come from the file or the AI: callers render the
+ * result as text only.
  */
-export const getSurveyImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
-  switch (issue.code) {
-    case "logic_not_imported": {
-      const description = param(issue, "description");
-      return description
-        ? t("workspace.surveys.import.issues.logic_not_imported", { description })
-        : t("workspace.surveys.import.issues.logic_not_imported_no_description");
-    }
-    case "question_skipped":
-      return getSkippedQuestionMessage(issue, t);
-    case "image_dropped":
-      return t("workspace.surveys.import.issues.image_dropped");
-    case "script_dropped":
-      return t("workspace.surveys.import.issues.script_dropped");
-    case "formatting_dropped":
-      return t("workspace.surveys.import.issues.formatting_dropped");
-    case "headline_fallback":
-      return t("workspace.surveys.import.issues.headline_fallback");
-    case "field_renamed":
-      return t("workspace.surveys.import.issues.field_renamed", {
-        from: param(issue, "from"),
-        to: param(issue, "to"),
-      });
-    case "external_url_removed":
-      return t("workspace.surveys.import.issues.external_url_removed");
-    case "field_dropped":
-      return t("workspace.surveys.import.issues.field_dropped", { count: count(issue) });
-    case "language_skipped":
-      return getSkippedLanguageMessage(issue, t);
-    case "translation_missing":
-      return t("workspace.surveys.import.issues.translation_missing", {
-        count: count(issue),
-        language: param(issue, "language"),
-      });
-    case "piped_text_removed":
-      return t("workspace.surveys.import.issues.piped_text_removed", { count: count(issue) });
-    case "choice_label_renamed":
-      return t("workspace.surveys.import.issues.choice_label_renamed");
-    case "choice_dropped":
-      return t("workspace.surveys.import.issues.choice_dropped");
-    case "text_too_long":
-      return t("workspace.surveys.import.issues.text_too_long");
-    case "markup_escaped":
-      return t("workspace.surveys.import.issues.markup_escaped");
-    case "matrix_single_answer":
-      return t("workspace.surveys.import.issues.matrix_single_answer");
-    case "options_left_out":
-      return t("workspace.surveys.import.issues.options_left_out", {
-        count: count(issue),
-        options: param(issue, "options"),
-      });
-    case "scale_changed":
-      return t("workspace.surveys.import.issues.scale_changed", {
-        from: param(issue, "from"),
-        to: param(issue, "to"),
-      });
-    case "ending_added":
-      return t("workspace.surveys.import.issues.ending_added");
-    case "ending_not_translated":
-      return t("workspace.surveys.import.issues.ending_not_translated", {
-        languages: param(issue, "languages"),
-      });
-    case "unknown_key_dropped":
-      // Past the first fifty, one line counts the rest instead of naming each.
-      return issue.params?.field === undefined
-        ? t("workspace.surveys.import.issues.unknown_keys_dropped", { count: count(issue) })
-        : t("workspace.surveys.import.issues.unknown_key_dropped", { field: param(issue, "field") });
-    case "custom_css_removed":
-      return t("workspace.surveys.import.issues.custom_css_removed");
-    case "targeting_removed":
-      return t("workspace.surveys.import.issues.targeting_removed");
-    case "targeting_filter_removed":
-      return t("workspace.surveys.import.issues.targeting_filter_removed", { count: count(issue) });
-    case "action_class_created":
-      return t("workspace.surveys.import.issues.action_class_created", { name: param(issue, "name") });
-    case "attribute_key_created":
-      return t("workspace.surveys.import.issues.attribute_key_created", { key: param(issue, "key") });
-    case "content_only":
-      return t("workspace.surveys.import.issues.content_only");
-    case "logic_imported": {
-      const description = param(issue, "description");
-      return description
-        ? t("workspace.surveys.import.issues.logic_imported", { description })
-        : t("workspace.surveys.import.issues.logic_imported_no_description");
-    }
-    case "text_not_split":
-      return t("workspace.surveys.import.issues.text_not_split", { cell: param(issue, "cell") });
-    case "file_encoding":
-      return t("workspace.surveys.import.issues.file_encoding", {
-        encoding: getEncodingName(param(issue, "encoding"), t),
-      });
-    case "sheets_skipped":
-      return t("workspace.surveys.import.issues.sheets_skipped", { sheets: param(issue, "sheets") });
-    case "table_as_matrix":
-      return t("workspace.surveys.import.issues.table_as_matrix");
-    case "images_not_imported":
-      return t("workspace.surveys.import.issues.images_not_imported", { count: count(issue) });
-    case "question_removed": {
-      const headline = param(issue, "headline");
-      return headline
-        ? t("workspace.surveys.import.issues.question_removed", { headline })
-        : t("workspace.surveys.import.issues.question_removed_no_headline");
-    }
-    case "option_removed":
-      return t("workspace.surveys.import.issues.option_removed", { option: param(issue, "option") });
-    default:
-      // A server newer than this client can still send a code it does not know.
-      return getUnknownIssueMessage(issue.code, t);
-  }
-};
+export const getSurveyImportIssueMessage = (issue: TSurveyImportIssue, t: TTranslate): string =>
+  // A server newer than this client can still send a code it does not know.
+  Object.hasOwn(ISSUE_MESSAGES, issue.code)
+    ? ISSUE_MESSAGES[issue.code](issue, t)
+    : t("workspace.surveys.import.issues.unknown");
 
 /**
  * The line with what it is about, e.g. `Q12: Logic not imported: …`: the Qualtrics question, the end

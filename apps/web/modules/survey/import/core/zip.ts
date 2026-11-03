@@ -239,6 +239,16 @@ const localHeaderAgrees = (reader: ZipReader, entry: TZipEntry, encodedName: Uin
   );
 };
 
+/** Hold one entry to the limits on what it declares: its compression ratio, and an XML part's size. */
+const assertEntryWithinLimits = (entry: TZipEntry): void => {
+  if (entry.uncompressedSize > entry.compressedSize * SURVEY_IMPORT_ZIP_MAX_COMPRESSION_RATIO) {
+    throw refuseTooLarge("zip_compression_ratio");
+  }
+  if (XML_PART.test(entry.name) && entry.uncompressedSize > SURVEY_IMPORT_ZIP_MAX_PART_BYTES) {
+    throw refuseTooLarge("zip_part_size");
+  }
+};
+
 const nameDecoder = new TextDecoder();
 
 /** Walk the central directory, holding each entry to the limits on what it declares. */
@@ -281,12 +291,7 @@ const readDirectory = (reader: ZipReader, directory: TDirectoryLocation): Map<st
     if (!localHeaderAgrees(reader, entry, reader.bytes.subarray(nameStart, extraStart))) {
       throw unreadable("An entry of the archive is damaged");
     }
-    if (entry.uncompressedSize > entry.compressedSize * SURVEY_IMPORT_ZIP_MAX_COMPRESSION_RATIO) {
-      throw refuseTooLarge("zip_compression_ratio");
-    }
-    if (XML_PART.test(name) && entry.uncompressedSize > SURVEY_IMPORT_ZIP_MAX_PART_BYTES) {
-      throw refuseTooLarge("zip_part_size");
-    }
+    assertEntryWithinLimits(entry);
     declaredTotal += entry.uncompressedSize;
     if (declaredTotal > SURVEY_IMPORT_ZIP_MAX_INFLATED_BYTES) throw refuseTooLarge("zip_inflated_size");
 

@@ -60,10 +60,57 @@ export interface TXmlBudget {
   attributes: number;
 }
 
-export const createXmlBudget = (): TXmlBudget => ({
+const XML_BUDGET_MAX = {
   elements: SURVEY_IMPORT_XML_MAX_ELEMENTS,
   attributes: SURVEY_IMPORT_XML_MAX_ATTRIBUTES,
-});
+} as const;
+
+export const createXmlBudget = (): TXmlBudget => ({ ...XML_BUDGET_MAX });
+
+/** Take one element or attribute from the file's budget, refusing the file once it is spent. */
+const spend = (budget: TXmlBudget, kind: keyof TXmlBudget, part: string): void => {
+  budget[kind] -= 1;
+  if (budget[kind] < 0) {
+    throw documentLimitExceeded(
+      `xml_${kind}`,
+      `file.${part}`,
+      `A file's XML must not have more than ${XML_BUDGET_MAX[kind]} ${kind} in all`
+    );
+  }
+};
+
+/** Markup read past whole, as an opening and the closing that ends it. */
+const SKIPPED_MARKUP = [
+  ["<?", "?>"],
+  ["<!--", "-->"],
+  ["<![CDATA[", "]]>"],
+] as const;
+
+/**
+ * Where the processing instruction, comment or CDATA section at `position` ends (its last character),
+ * or -1 when it never does. Any other `<!` is a DTD, or a declaration that can only appear inside one.
+ */
+const endOfSkippedMarkup = (text: string, position: number): number => {
+  for (const [open, close] of SKIPPED_MARKUP) {
+    if (text.startsWith(open, position)) {
+      const end = text.indexOf(close, position + open.length);
+      return end === -1 ? -1 : end + close.length - 1;
+    }
+  }
+  throw refuseDtd();
+};
+
+/** One level deeper, refusing the part past the XML depth limit. */
+const deeper = (depth: number, part: string): number => {
+  if (depth + 1 > SURVEY_IMPORT_XML_MAX_DEPTH) {
+    throw documentLimitExceeded(
+      "xml_depth",
+      `file.${part}`,
+      `An XML part must not nest more than ${SURVEY_IMPORT_XML_MAX_DEPTH} levels`
+    );
+  }
+  return depth + 1;
+};
 
 /**
  * Hold the part's raw text to the XML limits. Only markup is read: comments, CDATA sections and
@@ -73,16 +120,7 @@ export const createXmlBudget = (): TXmlBudget => ({
  */
 const checkShape = (text: string, part: string, budget: TXmlBudget): void => {
   let depth = 0;
-  const countAttribute = () => {
-    budget.attributes -= 1;
-    if (budget.attributes < 0) {
-      throw documentLimitExceeded(
-        "xml_attributes",
-        `file.${part}`,
-        `A file's XML must not have more than ${SURVEY_IMPORT_XML_MAX_ATTRIBUTES} attributes in all`
-      );
-    }
-  };
+  const countAttribute = () => spend(budget, "attributes", part);
   let position = text.indexOf("<");
 
   while (position !== -1) {
@@ -93,40 +131,13 @@ const checkShape = (text: string, part: string, budget: TXmlBudget): void => {
       if (depth === 0) throw unclosed();
       depth -= 1;
       end = text.indexOf(">", position);
-    } else if (next === QUESTION) {
-      end = text.indexOf("?>", position + 2);
-      if (end !== -1) end += 1;
-    } else if (next === BANG) {
-      if (text.startsWith("<!--", position)) {
-        end = text.indexOf("-->", position + 4);
-        if (end !== -1) end += 2;
-      } else if (text.startsWith("<![CDATA[", position)) {
-        end = text.indexOf("]]>", position + 9);
-        if (end !== -1) end += 2;
-      } else {
-        // `<!DOCTYPE`, or a declaration that can only appear inside one.
-        throw refuseDtd();
-      }
+    } else if (next === QUESTION || next === BANG) {
+      end = endOfSkippedMarkup(text, position);
     } else {
-      budget.elements -= 1;
-      if (budget.elements < 0) {
-        throw documentLimitExceeded(
-          "xml_elements",
-          `file.${part}`,
-          `A file's XML must not have more than ${SURVEY_IMPORT_XML_MAX_ELEMENTS} elements in all`
-        );
-      }
+      spend(budget, "elements", part);
       end = endOfStartTag(text, position, countAttribute);
-      if (end !== -1 && text.codePointAt(end - 1) !== SLASH) {
-        depth += 1;
-        if (depth > SURVEY_IMPORT_XML_MAX_DEPTH) {
-          throw documentLimitExceeded(
-            "xml_depth",
-            `file.${part}`,
-            `An XML part must not nest more than ${SURVEY_IMPORT_XML_MAX_DEPTH} levels`
-          );
-        }
-      }
+      // A start tag that isn't self-closing opens a level.
+      if (end !== -1 && text.codePointAt(end - 1) !== SLASH) depth = deeper(depth, part);
     }
     if (end === -1) throw unclosed();
     position = text.indexOf("<", end + 1);

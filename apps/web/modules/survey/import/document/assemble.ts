@@ -131,6 +131,33 @@ const group = (connector: "and" | "or", conditions: readonly TCondition[]): TCon
   conditions: conditions.map(withFreshIds),
 });
 
+/** A single-select question's condition: equal to one choice, one of several, or not a given one. */
+const singleChoiceCondition = (
+  elementId: string,
+  operator: TDocumentPlanRule["operator"],
+  ids: string[]
+): TCondition | null => {
+  if (operator === "doesNotEqual") {
+    return ids.length === 1 ? singleCondition(elementId, "doesNotEqual", ids[0]) : null;
+  }
+  if (operator !== "equals" && operator !== "isAnyOf") return null;
+  return ids.length === 1
+    ? singleCondition(elementId, "equals", ids[0])
+    : singleCondition(elementId, "equalsOneOf", ids);
+};
+
+/** A multi-select question's condition: includes one of the choices, or none of them. */
+const multiChoiceCondition = (
+  elementId: string,
+  operator: TDocumentPlanRule["operator"],
+  ids: string[]
+): TCondition | null => {
+  if (operator === "doesNotEqual") return singleCondition(elementId, "doesNotIncludeOneOf", ids);
+  if (operator === "equals" || operator === "isAnyOf")
+    return singleCondition(elementId, "includesOneOf", ids);
+  return null;
+};
+
 function withFreshIds(condition: TCondition): TCondition {
   return "conditions" in condition
     ? group(condition.connector, condition.conditions)
@@ -487,23 +514,11 @@ class DocumentDraftBuilder {
     switch (question.kind) {
       case "multipleChoiceSingle": {
         const ids = this.choicesNamed(question, values);
-        if (!ids) return null;
-        if (operator === "doesNotEqual")
-          return ids.length === 1 ? singleCondition(elementId, "doesNotEqual", ids[0]) : null;
-        if (operator === "equals" || operator === "isAnyOf") {
-          return ids.length === 1
-            ? singleCondition(elementId, "equals", ids[0])
-            : singleCondition(elementId, "equalsOneOf", ids);
-        }
-        return null;
+        return ids ? singleChoiceCondition(elementId, operator, ids) : null;
       }
       case "multipleChoiceMulti": {
         const ids = this.choicesNamed(question, values);
-        if (!ids) return null;
-        if (operator === "doesNotEqual") return singleCondition(elementId, "doesNotIncludeOneOf", ids);
-        if (operator === "equals" || operator === "isAnyOf")
-          return singleCondition(elementId, "includesOneOf", ids);
-        return null;
+        return ids ? multiChoiceCondition(elementId, operator, ids) : null;
       }
       case "nps":
       case "rating":
@@ -550,16 +565,7 @@ class DocumentDraftBuilder {
           sourceAt !== undefined && (rule.kind === "skipTo" ? sourceAt <= at : sourceAt < at);
         const condition = source && readsEarlier ? this.buildCondition(source, rule) : null;
 
-        let target: TResolvedRule["target"] = null;
-        if (rule.kind === "skipTo") {
-          const named = rule.target ?? undefined;
-          if (named !== undefined && routingKey(named) === "end") target = "end";
-          else if (named !== undefined) {
-            const found = this.findQuestion(questions, named);
-            const foundAt = found ? position.get(found.ref) : undefined;
-            target = found && foundAt !== undefined && foundAt > at ? found : null;
-          }
-        }
+        const target = rule.kind === "skipTo" ? this.jumpTarget(questions, position, rule, at) : null;
 
         const usable = condition !== null && (rule.kind === "showIf" || target !== null);
         if (usable && source) {
@@ -577,6 +583,24 @@ class DocumentDraftBuilder {
       });
     });
     return resolved;
+  }
+
+  /**
+   * Where a jump from the question at `at` lands: the ending, or a question after it. `null` when the
+   * rule names no target, or one that is not a later question.
+   */
+  private jumpTarget(
+    questions: readonly TDocumentPlannedEntry[],
+    position: ReadonlyMap<string, number>,
+    rule: TDocumentPlanRule,
+    at: number
+  ): TResolvedRule["target"] {
+    const named = rule.target ?? undefined;
+    if (named === undefined) return null;
+    if (routingKey(named) === "end") return "end";
+    const found = this.findQuestion(questions, named);
+    const foundAt = found ? position.get(found.ref) : undefined;
+    return found && foundAt !== undefined && foundAt > at ? found : null;
   }
 
   /** Where routing needs blocks to start or end. */
@@ -602,44 +626,37 @@ class DocumentDraftBuilder {
     rules: readonly TResolvedRule[],
     endingId: string | null
   ): TSurveyImportDraftBlock[] {
-    const { startsBlock, endsBlock } = this.boundaries(rules);
-    const blocks: (TSurveyImportDraftBlock & { refs: string[]; section: string | null })[] = [];
-    let previous: TDocumentPlannedEntry | null = null;
-    for (const { entry, element } of elements) {
-      const current = blocks.at(-1);
-      const joins =
-        current !== undefined &&
-        previous !== null &&
-        entry.section !== null &&
-        entry.section === previous.section &&
-        !startsBlock.has(entry.ref) &&
-        !endsBlock.has(previous.ref);
-      if (joins) {
-        current.elements.push(element);
-        current.refs.push(entry.ref);
-      } else {
-        blocks.push({
-          id: createId(),
-          name: entry.section ?? `Block ${blocks.length + 1}`,
-          elements: [element],
-          refs: [entry.ref],
-          section: entry.section,
-        });
-      }
-      previous = entry;
-    }
+    const blocks = groupIntoBlocks(elements, this.boundaries(rules));
 
     const blockOf = new Map<string, number>();
     blocks.forEach((block, index) => block.refs.forEach((ref) => blockOf.set(ref, index)));
     const logic = blocks.map((): TSurveyBlockLogic[] => []);
     const fallback: (string | undefined)[] = blocks.map(() => undefined);
 
+    this.buildJumps(blocks, blockOf, rules, logic, endingId);
+    this.buildGates(blocks, blockOf, rules, logic, fallback, endingId);
+    numberRepeatedNames(blocks);
+
+    return blocks.map(({ refs: _refs, section: _section, ...block }, index) => ({
+      ...block,
+      ...(logic[index].length > 0 ? { logic: logic[index] } : {}),
+      ...(logic[index].length > 0 && fallback[index] ? { logicFallback: fallback[index] } : {}),
+    }));
+  }
+
+  /** `skipTo` rules as jumps from the block their question is in, each reported as imported or not. */
+  private buildJumps(
+    blocks: readonly TSurveyImportDraftBlock[],
+    blockOf: ReadonlyMap<string, number>,
+    rules: readonly TResolvedRule[],
+    logic: TSurveyBlockLogic[][],
+    endingId: string | null
+  ): void {
     for (const rule of rules) {
       if (rule.kind !== "skipTo") continue;
       const at = blockOf.get(rule.entry.ref);
-      let target: string | null | undefined = null;
-      if (rule.target === "end") target = endingId;
-      else if (rule.target) target = blocks[blockOf.get(rule.target.ref) ?? -1]?.id;
+      const target =
+        rule.target === "end" ? endingId : rule.target && blocks[blockOf.get(rule.target.ref) ?? -1]?.id;
       if (at === undefined || !target) {
         this.reportRule(rule.entry, rule.index, false);
         continue;
@@ -651,22 +668,6 @@ class DocumentDraftBuilder {
       });
       this.reportRule(rule.entry, rule.index, true);
     }
-
-    this.buildGates(blocks, blockOf, rules, logic, fallback, endingId);
-
-    // A section split by routing keeps its name on every part, numbered: "Journey", "Journey (2)".
-    const nameCount = new Map<string, number>();
-    for (const block of blocks) {
-      const seen = (nameCount.get(block.name) ?? 0) + 1;
-      nameCount.set(block.name, seen);
-      if (seen > 1) block.name = `${block.name} (${seen})`;
-    }
-
-    return blocks.map(({ refs: _refs, section: _section, ...block }, index) => ({
-      ...block,
-      ...(logic[index].length > 0 ? { logic: logic[index] } : {}),
-      ...(logic[index].length > 0 && fallback[index] ? { logicFallback: fallback[index] } : {}),
-    }));
   }
 
   /**
@@ -695,18 +696,20 @@ class DocumentDraftBuilder {
     const gates = new Map<number, { conditions: TCondition[]; rules: TResolvedRule[] }>();
     for (const rule of showIf) {
       const at = blockOf.get(rule.entry.ref);
+      // The condition must read a block before the run, which is where it is tested.
       const sourceAt = blockOf.get(rule.sourceRef);
-      if (at === undefined || sourceAt === undefined || at === 0 || sourceAt >= runStart(at)) {
+      const testable = at !== undefined && at > 0 && sourceAt !== undefined && sourceAt < runStart(at);
+      if (testable) {
+        const gate = gates.get(at) ?? { conditions: [], rules: [] };
+        gate.conditions.push(...rule.conditions);
+        gate.rules.push(rule);
+        gates.set(at, gate);
+      } else {
         this.reportRule(rule.entry, rule.index, false);
-        continue;
       }
-      const gate = gates.get(at) ?? { conditions: [], rules: [] };
-      gate.conditions.push(...rule.conditions);
-      gate.rules.push(rule);
-      gates.set(at, gate);
     }
-    for (const gate of gates.values()) {
-      for (const rule of gate.rules) this.reportRule(rule.entry, rule.index, true);
+    for (const rule of [...gates.values()].flatMap((gate) => gate.rules)) {
+      this.reportRule(rule.entry, rule.index, true);
     }
 
     const jump = (to: number): TSurveyBlockLogic => ({
@@ -716,8 +719,7 @@ class DocumentDraftBuilder {
     });
     for (let at = 0; at < blocks.length; at += 1) {
       if (!gates.has(at + 1)) continue;
-      let past = at + 1;
-      while (gates.has(past)) past += 1;
+      const past = firstUngatedAfter(gates, at);
       // The block after the run, or the ending when the run ends the survey.
       const after = blocks[past]?.id ?? endingId ?? undefined;
       for (let next = at + 1; next < past; next += 1) logic[at].push(jump(next));
@@ -725,6 +727,60 @@ class DocumentDraftBuilder {
     }
   }
 }
+
+type TGroupedBlock = TSurveyImportDraftBlock & { refs: string[]; section: string | null };
+
+/**
+ * The questions in blocks: one per section, a question starting a new block wherever routing needs one
+ * to start or the one before it to end, and a question with no section a block of its own.
+ */
+const groupIntoBlocks = (
+  elements: readonly { entry: TDocumentPlannedEntry; element: TSurveyImportDraftElement }[],
+  { startsBlock, endsBlock }: TBoundaries
+): TGroupedBlock[] => {
+  const blocks: TGroupedBlock[] = [];
+  let previous: TDocumentPlannedEntry | null = null;
+  for (const { entry, element } of elements) {
+    const current = blocks.at(-1);
+    const joins =
+      current !== undefined &&
+      previous?.section === entry.section &&
+      entry.section !== null &&
+      !startsBlock.has(entry.ref) &&
+      !endsBlock.has(previous.ref);
+    if (joins) {
+      current.elements.push(element);
+      current.refs.push(entry.ref);
+    } else {
+      blocks.push({
+        id: createId(),
+        name: entry.section ?? `Block ${blocks.length + 1}`,
+        elements: [element],
+        refs: [entry.ref],
+        section: entry.section,
+      });
+    }
+    previous = entry;
+  }
+  return blocks;
+};
+
+/** A section split by routing keeps its name on every part, numbered: "Journey", "Journey (2)". */
+const numberRepeatedNames = (blocks: TSurveyImportDraftBlock[]): void => {
+  const nameCount = new Map<string, number>();
+  for (const block of blocks) {
+    const seen = (nameCount.get(block.name) ?? 0) + 1;
+    nameCount.set(block.name, seen);
+    if (seen > 1) block.name = `${block.name} (${seen})`;
+  }
+};
+
+/** The first block after `at` that no gate leads to: where its run of conditional blocks ends. */
+const firstUngatedAfter = (gates: ReadonlyMap<number, unknown>, at: number): number => {
+  let past = at + 1;
+  while (gates.has(past)) past += 1;
+  return past;
+};
 
 /** Assemble the draft from the checked plan's entries, in document order. */
 export function assembleDocumentDraft(params: TAssembleDocumentDraftParams): Promise<TSurveyImportAssembly> {

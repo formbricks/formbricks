@@ -260,6 +260,30 @@ function addUsage<TFailure extends string, TPlan extends TImportCheckedPlan<TFai
   context.usage.outputTokens += outputTokensOf(usage);
 }
 
+/**
+ * Whether the import can't afford another call of `chars` prompt characters: its call cap, its output
+ * tokens or its total prompt characters are spent.
+ */
+function isPastBudget<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  chars: number
+): boolean {
+  const { lane } = context;
+  return (
+    context.calls >= lane.callCap ||
+    context.usage.outputTokens >= lane.outputBudget ||
+    context.promptChars + chars > lane.maxTotalChars
+  );
+}
+
+/** What a failed attempt means for its chunk, when it is not one to retry: out of time, too long, invalid. */
+const outcomeOfFailedAttempt = (error: unknown): TCallOutcome | null => {
+  if (isCallTimeout(error)) return { kind: "timed_out" };
+  if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
+  if (isInvalidOutput(error)) return { kind: "invalid" };
+  return null;
+};
+
 async function callOnce<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
   context: TPlanContext<TFailure, TPlan>,
   refs: string[],
@@ -267,9 +291,7 @@ async function callOnce<TFailure extends string, TPlan extends TImportCheckedPla
   failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
 ): Promise<TCallOutcome> {
   const { lane } = context;
-  if (context.calls >= lane.callCap || context.usage.outputTokens >= lane.outputBudget) {
-    return { kind: "budget" };
-  }
+  if (isPastBudget(context, 0)) return { kind: "budget" };
   if (timeout < SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS) {
     context.ranOutOfTime = true;
     return { kind: "budget" };
@@ -280,7 +302,7 @@ async function callOnce<TFailure extends string, TPlan extends TImportCheckedPla
   // total, what is left goes unplanned.
   const size = lane.system.length + prompt.length;
   if (size > lane.maxCallChars) return { kind: "too_long" };
-  if (context.promptChars + size > lane.maxTotalChars) return { kind: "budget" };
+  if (isPastBudget(context, size)) return { kind: "budget" };
 
   // The call's time spans its retries: each attempt gets what is left of it.
   const callEnd = performance.now() + timeout;
@@ -308,9 +330,8 @@ async function callOnce<TFailure extends string, TPlan extends TImportCheckedPla
       // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
       // route's to classify. Any other abort is this attempt's own timeout.
       if (context.signal.aborted) throw error;
-      if (isCallTimeout(error)) return { kind: "timed_out" };
-      if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
-      if (isInvalidOutput(error)) return { kind: "invalid" };
+      const outcome = outcomeOfFailedAttempt(error);
+      if (outcome) return outcome;
 
       const decision = decideImportCallRetry({
         error,
@@ -324,13 +345,7 @@ async function callOnce<TFailure extends string, TPlan extends TImportCheckedPla
       if (decision.kind === "propagate") throw error;
       // Retryable, but past the import's call cap or budgets: like any call the import cannot afford,
       // its units are dropped as `ai_budget`, and the calls beside it carry on.
-      if (
-        context.calls >= lane.callCap ||
-        context.usage.outputTokens >= lane.outputBudget ||
-        context.promptChars + size > lane.maxTotalChars
-      ) {
-        return { kind: "budget" };
-      }
+      if (isPastBudget(context, size)) return { kind: "budget" };
       // Waited by design: the retry must not be sent before the provider said to. Abortable by the
       // import's signal, whose reason then propagates.
       await waitForRetry(decision.delayMs, context.signal); // NOSONAR(typescript:S9382) -- a backoff

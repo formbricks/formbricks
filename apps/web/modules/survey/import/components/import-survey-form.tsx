@@ -1,7 +1,8 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { ArrowUpRightIcon, FileIcon } from "lucide-react";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, type RefObject, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
@@ -91,6 +92,118 @@ const getReview = ({ report, match, choice, draft }: TImportSurvey, isReviewing:
   };
 };
 
+/** The drop zone, before a file is chosen: what it takes, and where a very large survey goes instead. */
+const ImportFilePicker = ({
+  canReadWithAI,
+  onFileSelect,
+}: Readonly<{ canReadWithAI: boolean; onFileSelect: TImportSurvey["selectFile"] }>) => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col gap-2">
+      <FileDropZone
+        id="import-survey-file"
+        accept={getSurveyImportFileExtensions(canReadWithAI).join(",")}
+        onFileSelect={onFileSelect}
+        primaryText={t("workspace.surveys.import.dropzone_primary")}
+        helpText={
+          canReadWithAI
+            ? t("workspace.surveys.import.dropzone_help")
+            : t("workspace.surveys.import.dropzone_help_json_only")
+        }
+        loadingText={t("workspace.surveys.import.reading_file")}
+      />
+      {canReadWithAI ? (
+        <p className="flex items-center gap-1.5 text-xs text-slate-500">
+          <AiIcon className="size-3.5 shrink-0" aria-hidden="true" />
+          {t("workspace.surveys.import.ai_note")}
+        </p>
+      ) : null}
+      <p className="text-xs text-slate-500">
+        {t("workspace.surveys.import.mcp_hint")}{" "}
+        <a
+          href={MCP_DOCS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-0.5 text-slate-600 underline underline-offset-4 hover:text-slate-800">
+          {t("workspace.surveys.import.mcp_hint_link")}
+          <ArrowUpRightIcon className="size-3" aria-hidden="true" />
+        </a>
+      </p>
+    </div>
+  );
+};
+
+/**
+ * On a Match the primary button says what it does: Update, "Update anyway" once the survey turned out
+ * to have changed since the export, or the usual Save and continue for a new survey.
+ */
+const getPrimaryAction = (importer: TImportSurvey, t: TFunction): { label: string; testId: string } => {
+  if (importer.match === null || importer.choice !== "update") {
+    return { label: t("workspace.surveys.ai_create.open_in_editor"), testId: "survey-import-save" };
+  }
+  return importer.conflict === "stale"
+    ? { label: t("workspace.surveys.import.match.update_anyway"), testId: "survey-import-update-anyway" }
+    : { label: t("workspace.surveys.import.match.update_survey"), testId: "survey-import-update" };
+};
+
+/** The dialog's buttons: Stop while importing; Cancel, another file and the primary action in review. */
+const ImportFooter = ({
+  importer,
+  isImporting,
+  isReviewing,
+  isHostNavigating,
+  onCancel,
+  stopButtonRef,
+}: Readonly<{
+  importer: TImportSurvey;
+  isImporting: boolean;
+  isReviewing: boolean;
+  isHostNavigating: boolean;
+  onCancel: () => void;
+  stopButtonRef: RefObject<HTMLButtonElement | null>;
+}>) => {
+  const { t } = useTranslation();
+
+  if (isImporting) {
+    return (
+      <Button ref={stopButtonRef} type="button" variant="secondary" onClick={importer.handleStop}>
+        {t("workspace.surveys.ai_create.stop")}
+      </Button>
+    );
+  }
+
+  if (!isReviewing) {
+    return (
+      <Button type="button" variant="secondary" onClick={onCancel}>
+        {t("common.cancel")}
+      </Button>
+    );
+  }
+
+  const primary = getPrimaryAction(importer, t);
+  return (
+    <>
+      <Button type="button" variant="secondary" disabled={importer.isCreatingSurvey} onClick={onCancel}>
+        {t("common.cancel")}
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={importer.isCreatingSurvey}
+        onClick={importer.pickAnotherFile}>
+        {t("workspace.surveys.import.pick_another_file")}
+      </Button>
+      <Button
+        type="button"
+        loading={importer.isCreatingSurvey || isHostNavigating}
+        onClick={importer.handleOpenInEditor}
+        data-testid={primary.testId}>
+        {primary.label}
+      </Button>
+    </>
+  );
+};
+
 export const ImportSurveyForm = ({
   workspaceId,
   isAIAvailable,
@@ -134,7 +247,6 @@ export const ImportSurveyForm = ({
   // place of the drop zone: it offers .json only and leaves the AI note out. AI going off after the page
   // loaded refuses the .qsf it was asked to read, with an error line like any other refusal.
   const canReadWithAI = isAIAvailable && !importer.aiUnavailableReason;
-  const fileExtensions = getSurveyImportFileExtensions(canReadWithAI);
 
   const errorMessage = importer.errorCode
     ? getSurveyImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
@@ -158,59 +270,6 @@ export const ImportSurveyForm = ({
       onEdit={importer.pickAnotherFile}
     />
   ) : null;
-
-  // On a Match the primary button says what it does: Update, "Update anyway" once the survey turned out
-  // to have changed since the export, or the usual Save and continue for a new survey.
-  const getPrimaryLabel = () => {
-    if (!isUpdating) return t("workspace.surveys.ai_create.open_in_editor");
-    return importer.conflict === "stale"
-      ? t("workspace.surveys.import.match.update_anyway")
-      : t("workspace.surveys.import.match.update_survey");
-  };
-  const getPrimaryTestId = () => {
-    if (!isUpdating) return "survey-import-save";
-    return importer.conflict === "stale" ? "survey-import-update-anyway" : "survey-import-update";
-  };
-
-  const buildFooter = () => {
-    if (isImporting) {
-      return (
-        <Button ref={stopButtonRef} type="button" variant="secondary" onClick={importer.handleStop}>
-          {t("workspace.surveys.ai_create.stop")}
-        </Button>
-      );
-    }
-
-    if (isReviewing) {
-      return (
-        <>
-          <Button type="button" variant="secondary" disabled={importer.isCreatingSurvey} onClick={onCancel}>
-            {t("common.cancel")}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={importer.isCreatingSurvey}
-            onClick={importer.pickAnotherFile}>
-            {t("workspace.surveys.import.pick_another_file")}
-          </Button>
-          <Button
-            type="button"
-            loading={importer.isCreatingSurvey || isHostNavigating}
-            onClick={importer.handleOpenInEditor}
-            data-testid={getPrimaryTestId()}>
-            {getPrimaryLabel()}
-          </Button>
-        </>
-      );
-    }
-
-    return (
-      <Button type="button" variant="secondary" onClick={onCancel}>
-        {t("common.cancel")}
-      </Button>
-    );
-  };
 
   return (
     // A fixed height once the review shows: the question list scrolls inside it, so the dialog does
@@ -267,42 +326,23 @@ export const ImportSurveyForm = ({
           />
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          <FileDropZone
-            id="import-survey-file"
-            accept={fileExtensions.join(",")}
-            onFileSelect={importer.selectFile}
-            primaryText={t("workspace.surveys.import.dropzone_primary")}
-            helpText={
-              canReadWithAI
-                ? t("workspace.surveys.import.dropzone_help")
-                : t("workspace.surveys.import.dropzone_help_json_only")
-            }
-            loadingText={t("workspace.surveys.import.reading_file")}
-          />
-          {canReadWithAI ? (
-            <p className="flex items-center gap-1.5 text-xs text-slate-500">
-              <AiIcon className="size-3.5 shrink-0" aria-hidden="true" />
-              {t("workspace.surveys.import.ai_note")}
-            </p>
-          ) : null}
-          <p className="text-xs text-slate-500">
-            {t("workspace.surveys.import.mcp_hint")}{" "}
-            <a
-              href={MCP_DOCS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-0.5 text-slate-600 underline underline-offset-4 hover:text-slate-800">
-              {t("workspace.surveys.import.mcp_hint_link")}
-              <ArrowUpRightIcon className="size-3" aria-hidden="true" />
-            </a>
-          </p>
-        </div>
+        <ImportFilePicker canReadWithAI={canReadWithAI} onFileSelect={importer.selectFile} />
       )}
 
       {reviewReport ? <SwitchedOffLanguagesAlert report={reviewReport} /> : null}
 
-      <div className="mt-auto">{renderFooter(buildFooter())}</div>
+      <div className="mt-auto">
+        {renderFooter(
+          <ImportFooter
+            importer={importer}
+            isImporting={isImporting}
+            isReviewing={isReviewing}
+            isHostNavigating={isHostNavigating}
+            onCancel={onCancel}
+            stopButtonRef={stopButtonRef}
+          />
+        )}
+      </div>
     </div>
   );
 };

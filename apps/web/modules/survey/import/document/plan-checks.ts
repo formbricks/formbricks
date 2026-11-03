@@ -256,24 +256,28 @@ const readOptions = (
     return { code: hasCode ? code : null, isOther: option.isOther, text };
   });
 
+/** Whether the entry uses a role its kind has no place for: options, columns, labels, an "Other". */
+const usesRoleNotForKind = (kind: TDocumentPlanKind, entry: TDocumentPlanEntry): boolean => {
+  const usesOptions = CHOICE_KINDS.has(kind) || kind === "matrix";
+  const takesOther = kind === "multipleChoiceSingle" || kind === "multipleChoiceMulti";
+  return (
+    (!usesOptions && entry.options.length > 0) ||
+    (kind !== "matrix" && entry.columns.length > 0) ||
+    (!LABEL_KINDS.has(kind) && (entry.lowerLabel.length > 0 || entry.upperLabel.length > 0)) ||
+    (!takesOther && entry.options.some((option) => option.isOther))
+  );
+};
+
+/** Whether the entry has fewer options, or rows and columns, than its kind needs. */
+const hasTooFewOptions = (kind: TDocumentPlanKind, entry: TDocumentPlanEntry): boolean =>
+  (CHOICE_KINDS.has(kind) && entry.options.length < 2) ||
+  (kind === "matrix" && (entry.options.length < 1 || entry.columns.length < 2));
+
 /** The kind's own rules on its options, ranges and labels. */
 function checkShape(kind: TDocumentPlanKind, entry: TDocumentPlanEntry, fail: TFail): number | null {
-  const usesOptions = CHOICE_KINDS.has(kind) || kind === "matrix";
-  if (!usesOptions && entry.options.length > 0) fail("role_not_for_type");
-  if (kind !== "matrix" && entry.columns.length > 0) fail("role_not_for_type");
-  if (!LABEL_KINDS.has(kind) && (entry.lowerLabel.length > 0 || entry.upperLabel.length > 0)) {
-    fail("role_not_for_type");
-  }
-  if (CHOICE_KINDS.has(kind) && entry.options.length < 2) fail("too_few_options");
+  if (usesRoleNotForKind(kind, entry)) fail("role_not_for_type");
+  if (hasTooFewOptions(kind, entry)) fail("too_few_options");
   if (kind === "ranking" && entry.options.length > MAX_RANKING_OPTIONS) fail("too_many_options");
-  if (kind === "matrix" && (entry.options.length < 1 || entry.columns.length < 2)) fail("too_few_options");
-  if (
-    kind !== "multipleChoiceSingle" &&
-    kind !== "multipleChoiceMulti" &&
-    entry.options.some((o) => o.isOther)
-  ) {
-    fail("role_not_for_type");
-  }
 
   if (kind === "rating" || kind === "csat" || kind === "ces") {
     const range = entry.range === null ? null : Number(entry.range);
@@ -402,26 +406,34 @@ export function checkDocumentPlanResponses(
     plan.failures.set(ref, reasons);
   };
 
+  const failAll = (refs: ReadonlySet<string>, reason: TDocumentPlanFailure) => {
+    for (const ref of refs) addFailure(ref, reason);
+  };
+
   // The languages are settled by the answer about the earliest lines, so the choice does not depend on
   // which call came back first.
   const ordered = [...responses].sort((a, b) => firstLine(context, a.refs) - firstLine(context, b.refs));
   for (const response of ordered) {
     const envelope = ZDocumentImportPlanEnvelope.safeParse(response.object);
     if (!envelope.success) {
-      for (const ref of response.refs) addFailure(ref, "invalid_output");
+      failAll(response.refs, "invalid_output");
       continue;
     }
     if (!context.settleLanguages(envelope.data.defaultLanguage, envelope.data.languages)) {
-      for (const ref of response.refs) addFailure(ref, "invalid_languages");
+      failAll(response.refs, "invalid_languages");
       continue;
     }
-    if (context.titleCell === null && envelope.data.titleCell !== null) {
-      context.titleCell = context.model.cells.has(envelope.data.titleCell) ? envelope.data.titleCell : null;
-    }
+    settleTitleCell(context, envelope.data.titleCell);
     judgeResponse(context, plan, envelope.data, response.refs, round, addFailure);
   }
   return plan;
 }
+
+/** The first answer to name a title cell the file has sets it; later answers can't move it. */
+const settleTitleCell = (context: DocumentPlanContext, titleCell: string | null): void => {
+  if (context.titleCell !== null || titleCell === null) return;
+  context.titleCell = context.model.cells.has(titleCell) ? titleCell : null;
+};
 
 const firstLine = (context: DocumentPlanContext, refs: ReadonlySet<string>): number =>
   Math.min(...[...refs].map((ref) => context.lineAt(ref) ?? Number.MAX_SAFE_INTEGER));
@@ -434,20 +446,8 @@ function judgeResponse(
   round: { retry: boolean },
   addFailure: (ref: string, reason: TDocumentPlanFailure) => void
 ): void {
-  const entries = new Map<string, TDocumentPlanEntry[]>();
-  for (const raw of envelope.questions) {
-    const ref = readRef(raw);
-    if (ref === null || !refs.has(ref)) continue;
-    const parsed = ZDocumentPlanEntry.safeParse(raw);
-    if (parsed.success) entries.set(ref, [...(entries.get(ref) ?? []), parsed.data]);
-    else addFailure(ref, "invalid_entry");
-  }
-  const skips = new Map<string, string[]>();
-  for (const raw of envelope.skipped) {
-    const parsed = ZDocumentPlanSkip.safeParse(raw);
-    if (!parsed.success || !refs.has(parsed.data.ref)) continue;
-    skips.set(parsed.data.ref, [...(skips.get(parsed.data.ref) ?? []), parsed.data.reason]);
-  }
+  const entries = collectEntries(envelope.questions, refs, addFailure);
+  const skips = collectSkips(envelope.skipped, refs);
 
   // A line that is no entry's start — a header, a continuation, a comment — is not a failure: the AI
   // decides which lines are questions.
@@ -457,16 +457,52 @@ function judgeResponse(
     const skipList = skips.get(ref) ?? [];
     if (entryList.length > 1 || skipList.length > 1) addFailure(ref, "duplicate_ref");
     else if (entryList.length === 1 && skipList.length === 1) addFailure(ref, "placed_and_skipped");
-    else if (skipList.length === 1) {
-      const reason = cleanNote(skipList[0]);
-      plan.skipped.set(ref, reason.length > 0 ? reason : null);
-    } else {
-      const result = checkEntry(context, entryList[0], round);
-      if (result.ok) plan.entries.set(ref, result.entry);
-      else for (const reason of result.reasons) addFailure(ref, reason);
-    }
+    else if (skipList.length === 1) plan.skipped.set(ref, cleanNote(skipList[0]) || null);
+    else judgeEntry(context, plan, ref, entryList[0], round, addFailure);
   }
 }
+
+/** The answer's entries by the line they start on, each line asked about; one that doesn't parse fails. */
+const collectEntries = (
+  questions: unknown[],
+  refs: ReadonlySet<string>,
+  addFailure: (ref: string, reason: TDocumentPlanFailure) => void
+): Map<string, TDocumentPlanEntry[]> => {
+  const entries = new Map<string, TDocumentPlanEntry[]>();
+  for (const raw of questions) {
+    const ref = readRef(raw);
+    if (ref === null || !refs.has(ref)) continue;
+    const parsed = ZDocumentPlanEntry.safeParse(raw);
+    if (parsed.success) entries.set(ref, [...(entries.get(ref) ?? []), parsed.data]);
+    else addFailure(ref, "invalid_entry");
+  }
+  return entries;
+};
+
+/** The answer's skip reasons by line, for the lines asked about. */
+const collectSkips = (skipped: unknown[], refs: ReadonlySet<string>): Map<string, string[]> => {
+  const skips = new Map<string, string[]>();
+  for (const raw of skipped) {
+    const parsed = ZDocumentPlanSkip.safeParse(raw);
+    if (!parsed.success || !refs.has(parsed.data.ref)) continue;
+    skips.set(parsed.data.ref, [...(skips.get(parsed.data.ref) ?? []), parsed.data.reason]);
+  }
+  return skips;
+};
+
+/** Check one placed entry, keeping it or recording why it fails. */
+const judgeEntry = (
+  context: DocumentPlanContext,
+  plan: TDocumentCheckedPlan,
+  ref: string,
+  entry: TDocumentPlanEntry,
+  round: { retry: boolean },
+  addFailure: (ref: string, reason: TDocumentPlanFailure) => void
+): void => {
+  const result = checkEntry(context, entry, round);
+  if (result.ok) plan.entries.set(ref, result.entry);
+  else for (const reason of result.reasons) addFailure(ref, reason);
+};
 
 /** Merge a retry round into the first one: the retry's verdicts replace the first round's failures. */
 export function mergeDocumentPlans(

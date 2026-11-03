@@ -123,6 +123,29 @@ const retargetJumpsToCutBlocks = (document: TSurveyImportDraft, cutBlockIds: Rea
   }
 };
 
+/** The report line for a question cut to fit the draft, named by its label where the lane has one. */
+const cutForSize = (
+  elementId: string,
+  ref: string | undefined,
+  questionLabel: TQuestionLabel
+): TSurveyImportPipelineIssue => {
+  if (!ref) {
+    return {
+      code: "question_skipped",
+      severity: "warning",
+      questionTag: elementId,
+      params: { cause: "draft_too_large" },
+    };
+  }
+  return {
+    code: "question_skipped",
+    severity: "warning",
+    questionTag: questionLabel(ref) ?? elementId,
+    questionRef: ref,
+    params: { cause: "draft_too_large" },
+  };
+};
+
 /**
  * Drop trailing questions, and a block once it empties, until the draft fits. Each step weighs only
  * what it removes: the element and its comma, or the emptied block and its comma.
@@ -146,19 +169,14 @@ function dropTrailingQuestions(
     const element = block.elements.pop();
     const ref = elementRefs[blockIndex]?.pop();
     if (element) {
-      remaining -= jsonBytes(element) + (block.elements.length > 0 ? 1 : 0);
+      // The element, and the comma before it when one is left in front.
+      remaining -= jsonBytes(element) + Math.min(block.elements.length, 1);
       if (ref) droppedRefs.add(ref);
       elementIds.add(element.id);
-      issues.push({
-        code: "question_skipped",
-        severity: "warning",
-        questionTag: (ref ? questionLabel(ref) : undefined) ?? element.id,
-        ...(ref ? { questionRef: ref } : {}),
-        params: { cause: "draft_too_large" },
-      });
+      issues.push(cutForSize(element.id, ref, questionLabel));
     }
     if (block.elements.length === 0) {
-      remaining -= jsonBytes(block) + (document.blocks.length > 1 ? 1 : 0);
+      remaining -= jsonBytes(block) + Math.min(document.blocks.length - 1, 1);
       cutBlockIds.add(block.id);
       document.blocks.pop();
       elementRefs.pop();

@@ -278,14 +278,9 @@ class WordWalker {
           if (carried.length > 0) blocks.push({ type: "paragraph", text: carried, isHeading: false });
           carried = "";
           blocks.push(this.readTable(child));
-        } else if (isW(child, "sdt")) {
-          const content = wChild(child, "sdtContent");
-          if (content) visit(content);
-        } else if (isW(child, "customXml") || isW(child, "ins") || isW(child, "moveTo")) {
-          visit(child);
-        } else if (isAlternateContent(child)) {
-          const choice = alternateChoice(child);
-          if (choice) visit(choice);
+        } else {
+          const wrapped = wrappedBlocks(child);
+          if (wrapped) visit(wrapped);
         }
       }
     };
@@ -386,30 +381,30 @@ class WordWalker {
 
     const rows: TTableBlock["rows"] = [];
     for (const row of this.tableRows(table)) {
-      const rowProperties = wChild(row, "trPr");
       // A row deleted as a tracked change is not in the accepted table.
-      if (rowProperties && wChild(rowProperties, "del")) continue;
-      const cells: TTableBlock["rows"][number] = [];
-      let column = 1;
-      for (const cell of this.rowCells(row)) {
-        this.cells += 1;
-        if (this.cells > SURVEY_IMPORT_WORD_MAX_TABLE_CELLS) {
-          throw documentLimitExceeded(
-            "table_cells",
-            "file",
-            `The document's tables must not have more than ${SURVEY_IMPORT_WORD_MAX_TABLE_CELLS} cells`
-          );
-        }
-        const cellProperties = wChild(cell, "tcPr");
-        const span = cellProperties ? wChild(cellProperties, "gridSpan") : null;
-        const spanValue = span ? Number(wAttr(span, "val")) : 1;
-        const text = this.cellText(cell);
-        if (text.trim() !== "") cells.push({ column, text });
-        column += Number.isInteger(spanValue) && spanValue > 1 ? spanValue : 1;
-      }
-      rows.push(cells);
+      if (!isDeletedRow(row)) rows.push(this.readRow(row));
     }
     return { type: "table", rows };
+  }
+
+  /** A row's cells that hold text, each at the grid column it starts in. */
+  private readRow(row: Element): TTableBlock["rows"][number] {
+    const cells: TTableBlock["rows"][number] = [];
+    let column = 1;
+    for (const cell of this.rowCells(row)) {
+      this.cells += 1;
+      if (this.cells > SURVEY_IMPORT_WORD_MAX_TABLE_CELLS) {
+        throw documentLimitExceeded(
+          "table_cells",
+          "file",
+          `The document's tables must not have more than ${SURVEY_IMPORT_WORD_MAX_TABLE_CELLS} cells`
+        );
+      }
+      const text = this.cellText(cell);
+      if (text.trim() !== "") cells.push({ column, text });
+      column += gridSpan(cell);
+    }
+    return cells;
   }
 
   /** A table's rows, inside content controls and custom XML too. */
@@ -446,6 +441,32 @@ class WordWalker {
       .join("\n");
   }
 }
+
+/**
+ * The element whose blocks a wrapper holds, read as if they stood in its place: a content control's
+ * content, custom XML, an inserted or moved-to range, an AlternateContent's choice. `null` for anything
+ * else, which holds no blocks the import reads.
+ */
+const wrappedBlocks = (child: Element): Element | null => {
+  if (isW(child, "sdt")) return wChild(child, "sdtContent");
+  if (isW(child, "customXml") || isW(child, "ins") || isW(child, "moveTo")) return child;
+  if (isAlternateContent(child)) return alternateChoice(child);
+  return null;
+};
+
+/** Whether a table row was deleted as a tracked change. */
+const isDeletedRow = (row: Element): boolean => {
+  const rowProperties = wChild(row, "trPr");
+  return rowProperties !== null && wChild(rowProperties, "del") !== null;
+};
+
+/** How many grid columns a cell spans: its `gridSpan`, or 1 when it has none or a bad one. */
+const gridSpan = (cell: Element): number => {
+  const cellProperties = wChild(cell, "tcPr");
+  const span = cellProperties ? wChild(cellProperties, "gridSpan") : null;
+  const value = span ? Number(wAttr(span, "val")) : 1;
+  return Number.isInteger(value) && value > 1 ? value : 1;
+};
 
 /** The body's blocks as the model's lines: a paragraph `P<n>`, a table row `T<t>R<r>`. */
 const toLines = (blocks: readonly TBlock[]): TDocumentLine[] => {

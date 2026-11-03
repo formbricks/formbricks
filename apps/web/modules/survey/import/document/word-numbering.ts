@@ -137,6 +137,22 @@ const formatNumber = (value: number, format: string): string => {
   }
 };
 
+/** A list instance's level overrides, by level: a new start, a level of its own, or both. */
+const readOverrides = (num: Element): TListInstance["overrides"] => {
+  const overrides: TListInstance["overrides"] = new Map();
+  for (const override of elements(num)) {
+    if (override.localName !== "lvlOverride") continue;
+    const ilvl = integer(attr(override, "ilvl"));
+    if (ilvl === null || ilvl < 0 || ilvl >= MAX_LEVELS) continue;
+    const level = child(override, "lvl");
+    overrides.set(ilvl, {
+      start: integer(attr(child(override, "startOverride"), "val")),
+      level: level ? readLevel(level) : null,
+    });
+  }
+  return overrides;
+};
+
 export class WordNumbering {
   private readonly abstracts = new Map<string, Map<number, TLevel>>();
   private readonly instances = new Map<string, TListInstance>();
@@ -154,19 +170,9 @@ export class WordNumbering {
       } else if (node.localName === "num") {
         const id = attr(node, "numId");
         const abstractId = attr(child(node, "abstractNumId"), "val");
-        if (id === null || abstractId === null) continue;
-        const overrides: TListInstance["overrides"] = new Map();
-        for (const override of elements(node)) {
-          const ilvl = integer(attr(override, "ilvl"));
-          if (override.localName !== "lvlOverride" || ilvl === null || ilvl < 0 || ilvl >= MAX_LEVELS)
-            continue;
-          const level = child(override, "lvl");
-          overrides.set(ilvl, {
-            start: integer(attr(child(override, "startOverride"), "val")),
-            level: level ? readLevel(level) : null,
-          });
+        if (id !== null && abstractId !== null) {
+          this.instances.set(id, { abstractId, overrides: readOverrides(node) });
         }
-        this.instances.set(id, { abstractId, overrides });
       }
     }
   }
