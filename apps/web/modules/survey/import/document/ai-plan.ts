@@ -40,6 +40,11 @@ export interface TDocumentPlanResult {
   issues: TSurveyImportPipelineIssue[];
   usage: TImportPlanUsage;
   calls: number;
+  /**
+   * Whether the plan settles what the file holds: nothing failed on the way and every unit was
+   * answered, so an empty plan means the file has nothing to import rather than a failed import.
+   */
+  conclusive: boolean;
 }
 
 /**

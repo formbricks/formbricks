@@ -87,6 +87,11 @@ export interface TQsfPlanResult {
   issues: TSurveyImportPipelineIssue[];
   usage: TImportPlanUsage;
   calls: number;
+  /**
+   * Whether the plan settles what the file holds: nothing failed on the way and every unit was
+   * answered, so an empty plan means the file has nothing to import rather than a failed import.
+   */
+  conclusive: boolean;
 }
 
 /** What chunking reads: the survey, its texts and the prompt's limits. */
