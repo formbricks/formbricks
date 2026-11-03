@@ -22,6 +22,7 @@ import {
   TSingleCondition,
   TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
+import { getOptionLists } from "@formbricks/types/surveys/show-if";
 import {
   TSurvey,
   TSurveyEndings,
@@ -1157,6 +1158,11 @@ const findElementIndexByShowIf = (
   getElementsFromBlocks(survey.blocks).findIndex((element) => {
     if (element.id === skipElementId) return false;
     if (element.showIf && isUsedInGroup(element.showIf)) return true;
+    // ENG-6937: an option, matrix row or matrix column show-if depends on things the same way.
+    const usedByOption = getOptionLists(element).some(({ items }) =>
+      items.some((item) => item.showIf && isUsedInGroup(item.showIf))
+    );
+    if (usedByOption) return true;
     const { block } = findElementLocation(survey, element.id);
     return Boolean(block?.showIf && isUsedInGroup(block.showIf));
   });
