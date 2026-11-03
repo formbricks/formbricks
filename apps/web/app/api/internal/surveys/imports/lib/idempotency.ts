@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { type CacheKey, createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { cache } from "@/lib/cache";
 import {
   SURVEY_IMPORT_IDEMPOTENCY_IN_FLIGHT_MS,
@@ -23,7 +24,7 @@ import {
  * - a request that fails gives its key back, so the dialog can retry with it.
  *
  * Fails open: without Redis the create runs unprotected rather than not at all, as every limit here does
- * (docs/adr/0015-abuse-limits-fail-closed.md), and logs that it did.
+ * (docs/adr/0016-abuse-limits-fail-closed.md), and logs that it did.
  */
 
 const ZIdempotencyRecord = z.discriminatedUnion("state", [
@@ -125,7 +126,7 @@ export const claimSurveyImportIdempotencyKey = async ({
 
     return { kind: "in_flight" };
   } catch (error) {
-    logger.warn({ error }, "Survey import idempotency unavailable; creating without it");
+    logger.warn({ ...loggableError(error) }, "Survey import idempotency unavailable; creating without it");
     return { kind: "unavailable" };
   }
 };

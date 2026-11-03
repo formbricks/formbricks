@@ -105,7 +105,7 @@ type TDraft = {
 
 type TDone = {
   payload: TDraft & Record<string, unknown>;
-  references: Record<string, unknown>;
+  references?: Record<string, unknown>;
   report: {
     source: { kind: string; fileName: string };
     summary: Record<string, unknown>;
@@ -147,7 +147,12 @@ const commit = (done: TDone, idempotencyKey = createId()) => {
       headers: { "Idempotency-Key": `"${idempotencyKey}"` },
     }),
     authentication: owner(),
-    body: { workspaceId: fixture.workspaceId, survey, references: done.references },
+    // As the dialog sends it: references only when the import returned some.
+    body: {
+      workspaceId: fixture.workspaceId,
+      survey,
+      ...(done.references ? { references: done.references } : {}),
+    },
     requestId: "req_commit",
     instance: "/api/internal/surveys/imports",
   });

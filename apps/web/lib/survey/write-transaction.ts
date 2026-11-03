@@ -39,12 +39,27 @@ export type TSurveyWriteTransaction = Readonly<{
 }>;
 
 /**
+ * The work registered with `afterCommit` failed, after the write itself had committed: `result` is what
+ * the write returned, and `cause` what the work threw. A caller must not answer this as "nothing was
+ * written", nor give back what it reserved for the write (an idempotency key): the data is there.
+ */
+export class SurveyWriteAfterCommitError<T = unknown> extends Error {
+  readonly result: T;
+
+  constructor(result: T, cause: unknown) {
+    super("The survey write committed, but the work after its commit failed", { cause });
+    this.name = "SurveyWriteAfterCommitError";
+    this.result = result;
+  }
+}
+
+/**
  * Run `write` in one interactive transaction and, only once it has committed, the work the survey
  * writes inside it registered with `afterCommit`, in registration order — the order those writes would
  * have run it in on their own. A throw from `write` rolls everything back and runs none of it.
  *
- * A failure in that after-commit work propagates, exactly as it does from a write that commits by
- * itself: the data has committed by then, so a caller must not answer it as "nothing was written".
+ * A failure in that after-commit work stops the rest of it and throws a `SurveyWriteAfterCommitError`
+ * carrying the write's result, so the caller can tell it from a failed write.
  */
 export const runInSurveyWriteTransaction = async <T>(
   write: (transaction: TSurveyWriteTransaction) => Promise<T>
@@ -62,8 +77,12 @@ export const runInSurveyWriteTransaction = async <T>(
     SURVEY_WRITE_TRANSACTION_OPTIONS
   );
 
-  for (const effect of afterCommitEffects) {
-    await effect();
+  try {
+    for (const effect of afterCommitEffects) {
+      await effect();
+    }
+  } catch (error) {
+    throw new SurveyWriteAfterCommitError(result, error);
   }
 
   return result;

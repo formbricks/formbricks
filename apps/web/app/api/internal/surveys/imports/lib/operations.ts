@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import {
   createdResponse,
   problemBadRequest,
@@ -14,6 +15,7 @@ import { getSessionUserId, mapV3SurveyCreateError } from "@/app/api/v3/surveys/l
 import { serializeV3SurveyResource } from "@/app/api/v3/surveys/serializers";
 import { resolveV3SurveyResourceVisibility } from "@/app/api/v3/surveys/visibility-context";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { createSurveyFromFormbricksFile } from "@/modules/survey/formbricks-file/import";
 import type { TFormbricksFileCreatedReferences } from "@/modules/survey/formbricks-file/resolve";
 import { createSurveyFromImportDraft } from "@/modules/survey/import/core/create-draft";
@@ -59,6 +61,40 @@ const created = (surveyId: string, requestId: string): Response =>
  * 409. The audit entry is the wrapper's `created` on the survey, written once the create committed; a
  * replay writes none, since it created nothing.
  */
+type TImportedSurvey = { survey: TSurvey; createdReferences: TFormbricksFileCreatedReferences | null };
+
+/** Create the reviewed survey: a Formbricks file's with its references, any other lane's as a draft. */
+const createImportedSurvey = async ({
+  body,
+  ...context
+}: {
+  body: TSurveyImportCreateBody;
+  workspaceId: string;
+  organizationId: string;
+  authentication: TV3Authentication;
+  requestId: string;
+}): Promise<TImportedSurvey> => {
+  const { references } = body;
+  if (references) {
+    return createSurveyFromFormbricksFile({ body: { survey: body.survey, references }, ...context });
+  }
+  try {
+    return {
+      survey: await createSurveyFromImportDraft({ survey: body.survey, ...context }),
+      createdReferences: null,
+    };
+  } catch (error) {
+    // The draft create's result is the survey alone; carried on in the import's own shape.
+    if (error instanceof SurveyWriteAfterCommitError) {
+      throw new SurveyWriteAfterCommitError<TImportedSurvey>(
+        { survey: error.result as TSurvey, createdReferences: null },
+        error.cause
+      );
+    }
+    throw error;
+  }
+};
+
 export async function createSurveyImport({
   req,
   authentication,
@@ -126,44 +162,43 @@ export async function createSurveyImport({
   let survey: TSurvey;
   let createdReferences: TFormbricksFileCreatedReferences | null = null;
   try {
-    const { references } = body;
-    const result = references
-      ? await createSurveyFromFormbricksFile({
-          body: { survey: body.survey, references },
-          workspaceId,
-          organizationId,
-          authentication,
-          requestId,
-        })
-      : {
-          survey: await createSurveyFromImportDraft({
-            survey: body.survey,
-            workspaceId,
-            organizationId,
-            authentication,
-            requestId,
-          }),
-          createdReferences: null,
-        };
-    survey = result.survey;
-    createdReferences = result.createdReferences;
+    ({ survey, createdReferences } = await createImportedSurvey({
+      body,
+      workspaceId,
+      organizationId,
+      authentication,
+      requestId,
+    }));
   } catch (error) {
-    if (claim.kind === "claimed") {
-      await claim.release().catch((releaseError: unknown) => {
-        log.warn({ error: releaseError }, "Survey import could not give its Idempotency-Key back");
-      });
+    if (!(error instanceof SurveyWriteAfterCommitError)) {
+      if (claim.kind === "claimed") {
+        await claim.release().catch((releaseError: unknown) => {
+          log.warn(
+            { ...loggableError(releaseError) },
+            "Survey import could not give its Idempotency-Key back"
+          );
+        });
+      }
+      return (
+        toRefusalResponse(error, requestId, instance) ??
+        mapV3SurveyCreateError(error, { log, requestId, instance })
+      );
     }
-    return (
-      toRefusalResponse(error, requestId, instance) ??
-      mapV3SurveyCreateError(error, { log, requestId, instance })
+    // The survey committed; only the work after it failed (the creator's response alerts, scheduling,
+    // caches). It is created, so it is answered as created and its key kept, or a retry would make a
+    // second one.
+    log.error(
+      { ...loggableError(error.cause), operation: OPERATION },
+      "Survey import's work after the create failed"
     );
+    ({ survey, createdReferences } = error.result as TImportedSurvey);
   }
 
   const surveyId = survey.id;
   if (claim.kind === "claimed") {
     // The survey exists now: a failure here must not answer as if nothing was created.
     await claim.complete(surveyId).catch((completeError: unknown) => {
-      log.warn({ error: completeError }, "Survey import could not record its Idempotency-Key");
+      log.warn({ ...loggableError(completeError) }, "Survey import could not record its Idempotency-Key");
     });
   }
 

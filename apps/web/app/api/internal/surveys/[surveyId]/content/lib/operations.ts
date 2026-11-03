@@ -1,11 +1,13 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
 import { mapV3SurveyPatchError } from "@/app/api/v3/surveys/lib/operations";
 import { serializeV3SurveyResource } from "@/app/api/v3/surveys/serializers";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import {
   SurveyImportUpdateActiveError,
   updateSurveyFromFormbricksFile,
@@ -82,6 +84,15 @@ export async function updateSurveyContent({
       authentication,
       visibleSurveyWhere: buildVisibleSurveyWhere(visibility.actorContext),
       requestId,
+    }).catch((error: unknown) => {
+      if (!(error instanceof SurveyWriteAfterCommitError)) throw error;
+      // The update committed; only the work after it failed (scheduling, caches). It is answered as
+      // done, since the survey has changed and a retry would be refused as stale.
+      log.error(
+        { ...loggableError(error.cause), workspaceId },
+        "Survey update's work after the commit failed"
+      );
+      return error.result as Awaited<ReturnType<typeof updateSurveyFromFormbricksFile>>;
     });
 
     if (auditLog) {

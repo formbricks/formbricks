@@ -259,10 +259,9 @@ export async function runDocumentImport(
   );
 
   return {
+    // No `references`: a document points at nothing outside itself, so the dialog creates it through
+    // `createSurveyFromImportDraft`, not the Formbricks file's create.
     payload: assembly.document,
-    // A document points at nothing outside itself; the dialog creates it through the import's own create,
-    // which names it and makes a repeat create one survey.
-    references: { actionClasses: [], attributeKeys: [], embeddedFields: [] },
     report: buildSurveyImportReport({
       source: { kind: prepared.model.kind, fileName: prepared.fileName },
       document: assembly.document,

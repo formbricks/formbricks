@@ -4,6 +4,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { createV3Survey } from "@/app/api/v3/surveys/create";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
+import { runInSurveyWriteTransaction } from "@/lib/survey/write-transaction";
 import { SurveyImportInputError, nameFromSurvey } from "./errors";
 import { getImportedSurveyName, getImporterTranslate } from "./imported-survey-name";
 
@@ -19,6 +20,7 @@ import { getImportedSurveyName, getImporterTranslate } from "./imported-survey-n
  *
  * @throws SurveyImportInputError — a 422 naming each field the create body refuses, nothing created.
  * @throws whatever the v3 create throws, mapped by its caller like `POST /api/v3/surveys`.
+ * @throws SurveyWriteAfterCommitError — the survey was created, but the work after its commit failed.
  */
 export const createSurveyFromImportDraft = async ({
   survey,
@@ -45,5 +47,9 @@ export const createSurveyFromImportDraft = async ({
     );
   }
 
-  return createV3Survey(parsed.data, authentication, requestId, organizationId);
+  // In a transaction of its own, so the work the create runs after its commit tells its failure apart
+  // (`SurveyWriteAfterCommitError`) from a failed create, as the Formbricks file's create does.
+  return runInSurveyWriteTransaction((transaction) =>
+    createV3Survey(parsed.data, authentication, requestId, organizationId, { transaction })
+  );
 };

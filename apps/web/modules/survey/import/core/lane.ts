@@ -63,7 +63,8 @@ export interface TSurveyImportRunParams<TPrepared> {
 export interface TSurveyImportResult<TPayload extends TSurveyImportPayload = TSurveyImportPayload> {
   /**
    * The draft in the shape `POST /api/v3/surveys` takes — locale-keyed texts, not the internal `default`
-   * key — because the dialog sends it there unchanged.
+   * key — because the dialog sends it back unchanged to `POST /api/internal/surveys/imports`, which
+   * creates it through the v3 create.
    */
   payload: TPayload;
   report: TSurveyImportReport;

@@ -55,6 +55,23 @@ vi.mock("@/lib/survey/visibility/limit", async (importOriginal) => {
 // i18next-icu's ESM build cannot construct IntlMessageFormat under Node's own module loader, so outside
 // Next's bundler `t` returns messages uninterpolated. The import's names are checked in English with
 // the en-US strings, interpolated as ICU would.
+// The creator's response-alert subscription runs after the survey's commit; a test makes it fail once.
+const afterCommit = vi.hoisted(() => ({ fail: false }));
+vi.mock("@/lib/organization/service", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/organization/service")>();
+  return {
+    ...original,
+    subscribeOrganizationMembersToSurveyResponses: async (
+      ...args: Parameters<typeof original.subscribeOrganizationMembersToSurveyResponses>
+    ) => {
+      if (afterCommit.fail) {
+        afterCommit.fail = false;
+        throw new Error("subscription failed");
+      }
+      return original.subscribeOrganizationMembersToSurveyResponses(...args);
+    },
+  };
+});
 vi.mock("@/lingodotdev/server", async () => {
   const { default: enUS } = await import("@/locales/en-US.json");
   const lookup = (key: string): unknown =>
@@ -658,31 +675,31 @@ describe("the action classes a Formbricks file brings", () => {
   });
 });
 
-describe("a reviewed draft that carries no references (Qualtrics, Word, Excel, CSV)", () => {
-  /** A draft as a document lane's preview returns it, named "(imported)" when it was previewed. */
-  const documentDraft = (workspaceId: string) => ({
-    workspaceId,
-    name: "Visit survey (imported)",
-    status: "inProgress",
-    defaultLanguage: "en-US",
-    blocks: [
-      {
-        id: createId(),
-        name: "Block 1",
-        elements: [
-          {
-            id: "visit_day",
-            type: "openText",
-            headline: { "en-US": "Which day did you visit?" },
-            required: true,
-            inputType: "text",
-            charLimit: { enabled: false },
-          },
-        ],
-      },
-    ],
-  });
+/** A draft as a document lane's preview returns it, named "(imported)" when it was previewed. */
+const documentDraft = (workspaceId: string) => ({
+  workspaceId,
+  name: "Visit survey (imported)",
+  status: "inProgress",
+  defaultLanguage: "en-US",
+  blocks: [
+    {
+      id: createId(),
+      name: "Block 1",
+      elements: [
+        {
+          id: "visit_day",
+          type: "openText",
+          headline: { "en-US": "Which day did you visit?" },
+          required: true,
+          inputType: "text",
+          charLimit: { enabled: false },
+        },
+      ],
+    },
+  ],
+});
 
+describe("a reviewed draft that carries no references (Qualtrics, Word, Excel, CSV)", () => {
   test("is created through the import, named against the workspace as it is now, as a draft", async () => {
     const target = fixture.otherWorkspaceId;
     // Another import took the previewed name in the meantime.
@@ -793,6 +810,35 @@ describe("POST /api/internal/surveys/imports is idempotent per Idempotency-Key",
     const retried = await commit({ workspaceId: target, ...done, idempotencyKey });
     expect(retried.status).toBe(201);
   });
+
+  test.each([
+    ["a Formbricks file", true],
+    ["a draft with no references", false],
+  ])(
+    "a create of %s whose work after the commit fails is still created once: 201, and a retry replays it",
+    async (_label, withReferences) => {
+      const target = fixture.otherWorkspaceId;
+      // A Formbricks file comes back with its references; a document lane's draft is the survey alone.
+      const done = withReferences ? await previewDone(target, exportedFile) : null;
+      const idempotencyKey = createId();
+      const request = {
+        workspaceId: target,
+        payload: done ? done.payload : documentDraft(target),
+        ...(done ? { references: done.references } : {}),
+        idempotencyKey,
+      };
+      const before = await prisma.survey.count({ where: { workspaceId: target } });
+
+      afterCommit.fail = true;
+      const first = await commit(request);
+      const retried = await commit(request);
+
+      expect(first.status).toBe(201);
+      expect(retried.status).toBe(201);
+      expect(retried.headers.get("Location")).toBe(first.headers.get("Location"));
+      expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before + 1);
+    }
+  );
 
   test("refuses a create without a key", async () => {
     const response = await createSurveyImport({

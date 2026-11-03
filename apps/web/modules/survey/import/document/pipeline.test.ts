@@ -215,7 +215,9 @@ describe("runDocumentImport, on files shaped like the ones it was built for", ()
 
     expect(onProgress.mock.calls.map(([stage]) => stage)).toEqual(["ai", "assembling"]);
     expect(result.report.source).toEqual({ kind: "xlsx", fileName: "library-short.xlsx" });
-    expect(result.references).toEqual({ actionClasses: [], attributeKeys: [], embeddedFields: [] });
+    // A document points at nothing outside itself, so the dialog creates it through the draft create, not
+    // the Formbricks file's.
+    expect(result).not.toHaveProperty("references");
     expect(result.usage?.inputTokens).toBeGreaterThan(0);
     expect(result.usage?.outputTokens).toBeGreaterThan(0);
   });
