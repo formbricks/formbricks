@@ -13,7 +13,7 @@ export const getQuestionCodes = (blocks: readonly TSurveyBlock[]): Record<string
 };
 
 /**
- * Same values as `data`, keyed by question code instead of Question ID (ADR 0016), so a receiver that
+ * Same values as `data`, keyed by question code instead of Question ID (ADR 0021), so a receiver that
  * can only read the response object's root (Make, Zapier) still gets the public names. Every coded question
  * is listed, `null` when nothing is stored; a question without a code has no entry and hidden fields stay in
  * `data` only. Null-prototype because a code may be `constructor` or `toString`.

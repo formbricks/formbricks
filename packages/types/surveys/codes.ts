@@ -1,5 +1,5 @@
 /**
- * Question codes and answer codes (ADR 0016, GLOSSARY "Recoding and exports").
+ * Question codes and answer codes (ADR 0021, GLOSSARY "Recoding and exports").
  *
  * A pure module: no Zod, no survey schema imports. It runs from `surveyRefinement` (editor, v1, v3
  * create) and from `validateV3SurveyDocument` (v3 PATCH, block routes, MCP), so both gates share one

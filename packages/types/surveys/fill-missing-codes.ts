@@ -1,5 +1,5 @@
 /**
- * Default question codes and answer codes (ADR 0016, GLOSSARY "Recoding and exports").
+ * Default question codes and answer codes (ADR 0021, GLOSSARY "Recoding and exports").
  *
  * Pure and Zod-free, like `./codes`, so the editor, every server write path and the backfill can
  * share one definition of "what a survey that has no code yet gets". `code` stays optional in the

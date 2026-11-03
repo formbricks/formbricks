@@ -1,5 +1,5 @@
 /**
- * The published lock (ADR 0015, GLOSSARY "Published").
+ * The published lock (ADR 0020, GLOSSARY "Published").
  *
  * Once a survey has left draft (active, paused or completed; a scheduled survey is paused until its
  * publish date, so it counts) its question codes, answer codes, question types and option text are

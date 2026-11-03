@@ -74,7 +74,7 @@ export const ZSurveyElementBase = z.object({
 
 /**
  * The code an exported file, webhook, prefill and start-at link use instead of the Question ID
- * (ADR 0016). Optional on purpose: surveys stored before codes existed have none and must keep
+ * (ADR 0021). Optional on purpose: surveys stored before codes existed have none and must keep
  * loading. The character rules live in `./codes` and run from `surveyRefinement`, not here, so a
  * stored survey with a bad code is reported rather than made unreadable.
  */

@@ -488,7 +488,7 @@ export const updateSurveyInternal = async (
       throw new InvalidInputError("This survey is archived. Restore it before editing.");
     }
 
-    // ENG-6783: once published, codes, question types and option text are locked (ADR 0015). The
+    // ENG-6783: once published, codes, question types and option text are locked (ADR 0020). The
     // comparison is against the stored survey, so a client cannot unlock an element by flagging it
     // `isDraft`. Covers the editor save and v1 PUT; v3 PATCH runs the same function in its own path.
     if (currentSurvey.status !== "draft") {

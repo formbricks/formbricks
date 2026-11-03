@@ -305,7 +305,7 @@ const PUBLISHED_LOCK_INVALID_PARAM_CODES = {
 } as const satisfies Record<TPublishedLockViolationKind, InvalidParam["code"]>;
 
 /**
- * ENG-6783: the published lock (ADR 0015) as v3 invalid params. Unlike `getImmutableElementIdIssues`
+ * ENG-6783: the published lock (ADR 0020) as v3 invalid params. Unlike `getImmutableElementIdIssues`
  * this matches by element id and option id against the stored document, so it holds for reordered and
  * moved elements, and it covers codes, question types and option text, not just element ids.
  */

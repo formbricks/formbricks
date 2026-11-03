@@ -4,7 +4,7 @@ import { TSurveyElementChoice } from "@formbricks/types/surveys/elements";
  * Match a value against element choices, in this order:
  * 1. the option ID
  * 2. the label in the current language
- * 3. the answer code (`choice.code`, ADR 0016)
+ * 3. the answer code (`choice.code`, ADR 0021)
  *
  * The first rule that finds an option wins, so an existing ID or label link never changes meaning:
  * a label that looks like another option's code is the label. The code is an exact, case-sensitive

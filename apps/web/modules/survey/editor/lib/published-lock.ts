@@ -1,7 +1,7 @@
 import type { TOptionListKey } from "./element-codes";
 
 /**
- * What the editor locks on a published survey (ADR 0015, GLOSSARY "Published").
+ * What the editor locks on a published survey (ADR 0020, GLOSSARY "Published").
  *
  * This mirrors `getPublishedLockViolations` in `@formbricks/types/surveys/published-lock`, which is
  * what the server enforces: the same stored survey is the reference, matched by question id and

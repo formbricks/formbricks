@@ -2,7 +2,7 @@
  * Turns a survey into the Analysis export's columns, and each response into one row of cells.
  *
  * Pure: no I/O. The survey is read once to build the column plan; `buildRow` then runs per response
- * in a single pass, reporting every Unmapped value as it meets it. See ADR 0015 for why codes come
+ * in a single pass, reporting every Unmapped value as it meets it. See ADR 0020 for why codes come
  * from label text, and `types.ts` for the output contract.
  */
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";

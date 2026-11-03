@@ -32,7 +32,7 @@ const DEFAULT_BATCH_SIZE = 1000;
 const MAX_BATCH_SIZE = 5000;
 
 /**
- * The response filter with Low quality handled the way the Analysis export wants it (ADR 0017): left
+ * The response filter with Low quality handled the way the Analysis export wants it (ADR 0022): left
  * out unless the filter selects Low quality or the export asks for them (`includeLowQuality`, the
  * dialog's checkbox). Done here, not in `buildWhereClause`, because that builder also feeds Summary,
  * where Low quality responses keep counting.
@@ -55,7 +55,7 @@ export const buildAnalysisWhere = (
 
 /**
  * The Low quality responses the filter reaches, whether or not the export includes them: the dialog's "(N)".
- * `null` when the filter itself selects an outcome: the filter then decides alone (ADR 0017), so the dialog
+ * `null` when the filter itself selects an outcome: the filter then decides alone (ADR 0022), so the dialog
  * has no Low quality choice to offer and leaves nothing out.
  */
 export const buildLowQualityScopeWhere = (

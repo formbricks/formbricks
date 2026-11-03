@@ -1,5 +1,5 @@
 /**
- * Matches a stored answer text to the option it picked (ADR 0015).
+ * Matches a stored answer text to the option it picked (ADR 0020).
  *
  * A response stores the label text the respondent saw, in their language, not an option id. The
  * match is exact on that text: response language first, then any language. Nothing fuzzy decides a

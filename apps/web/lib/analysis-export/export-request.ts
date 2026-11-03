@@ -99,7 +99,7 @@ export const ZExportRequest = z
     excludedColumns: z.array(z.string().min(1).max(300)).max(2000).default([]),
     /**
      * Whether Low quality responses are in the file. Left out, the export decides: the Standard export keeps
-     * them (today's file), an Analysis export leaves them out (ADR 0017).
+     * them (today's file), an Analysis export leaves them out (ADR 0022).
      */
     includeLowQuality: z.boolean().optional(),
     /** The Responses filter, or `{ responseIds }` for a selection of rows. */

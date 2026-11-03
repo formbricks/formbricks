@@ -2,7 +2,7 @@ type TNamedElement = { id: string; code?: string };
 
 /**
  * Resolves the name a link carries (prefill key, `startAt`) to an element: the Question ID first, then
- * the question code (ADR 0016). The ID wins so a legacy survey whose ID equals another question's code
+ * the question code (ADR 0021). The ID wins so a legacy survey whose ID equals another question's code
  * keeps resolving exactly as it did before codes existed.
  */
 export const findElementByIdOrCode = <T extends TNamedElement>(

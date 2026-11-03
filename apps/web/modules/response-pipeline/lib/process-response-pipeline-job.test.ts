@@ -288,7 +288,7 @@ describe("processResponsePipelineJob", () => {
       await processResponsePipelineJob(finished, baseContext);
 
       expect(mockHandleFeedbackSourcePipeline).not.toHaveBeenCalled();
-      // Nothing else is held back: Low quality changes only Feedback Records (ADR 0017).
+      // Nothing else is held back: Low quality changes only Feedback Records (ADR 0022).
       expect(mockEnqueueResponseCompletedWorkflowRuns).toHaveBeenCalledTimes(1);
       expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
     });

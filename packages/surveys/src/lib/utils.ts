@@ -394,7 +394,7 @@ export const getElementsFromSurveyBlocks = (blocks: TSurveyBlock[]): TSurveyElem
  */
 export const findBlockByElementId = (blocks: TSurveyBlock[], elementId: string) =>
   blocks.find((block) => block.elements.some((e) => e.id === elementId)) ??
-  // A question code is accepted next to the Question ID (ADR 0016); the ID wins on a clash.
+  // A question code is accepted next to the Question ID (ADR 0021); the ID wins on a clash.
   blocks.find((block) => block.elements.some((e) => "code" in e && e.code === elementId));
 
 /**

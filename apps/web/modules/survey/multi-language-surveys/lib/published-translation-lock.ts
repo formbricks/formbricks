@@ -2,7 +2,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 
 /**
- * What the published lock leaves of the translations (ADR 0015). Answers are stored as the option text, so
+ * What the published lock leaves of the translations (ADR 0020). Answers are stored as the option text, so
  * on a survey that has left draft the text of an option in a language it already had cannot change or go;
  * filling an empty translation stays open. The editor-side mirror of `option_text_changed` in
  * `@formbricks/types/surveys/published-lock`, which is what the server enforces on save.

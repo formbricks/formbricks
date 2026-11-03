@@ -60,7 +60,7 @@ export const getPrefillValue = (
       }
 
       // Find matching element
-      // The name is a Question ID first, then a question code (ADR 0016). A code never captures a
+      // The name is a Question ID first, then a question code (ADR 0021). A code never captures a
       // link system param such as `?lang=`.
       const isId = elements.some((el) => el.id === key);
       if (!isId && LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key)) {

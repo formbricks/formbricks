@@ -325,7 +325,7 @@ export const validateNewElementIdClashes = ({
 
 /**
  * Refuses a name that an Embedded Data field (hidden field or variable) and a question code would
- * share after the write — unless the survey already holds that exact clash (ENG-6778, ADR 0016).
+ * share after the write — unless the survey already holds that exact clash (ENG-6778, ADR 0021).
  *
  * Question codes are the public name of a question in exports, webhooks and prefill links, next to
  * the Embedded Data names, so one name for both would be ambiguous. Grandfathered and per-save like

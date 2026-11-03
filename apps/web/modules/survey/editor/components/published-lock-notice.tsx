@@ -20,7 +20,7 @@ interface PublishedLockNoticeProps {
 
 /**
  * The lock icon of a field that cannot change once the survey is published. Hovering or focusing it
- * explains why, including that a scheduled survey locks when it is scheduled (ADR 0015).
+ * explains why, including that a scheduled survey locks when it is scheduled (ADR 0020).
  */
 export const PublishedLockNotice = ({ kind, className }: Readonly<PublishedLockNoticeProps>) => {
   const { t } = useTranslation();

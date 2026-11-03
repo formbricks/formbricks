@@ -7,7 +7,7 @@
  * ENG-6782) rather than an import of code that will keep changing. `utils.test.ts` runs both on the
  * same fixtures so the two cannot drift silently while this migration is still unreleased.
  *
- * Rules (ADR 0016, GLOSSARY "Recoding and exports"):
+ * Rules (ADR 0021, GLOSSARY "Recoding and exports"):
  * - Question code: the next unused `q<n>`, `n` being the highest `q` number among the survey's codes
  *   plus one, in block order then element order. Names equal (ignoring case) to an Embedded Data name
  *   or to another question's Question ID are skipped. Existing codes are never touched. A CTA gets none.

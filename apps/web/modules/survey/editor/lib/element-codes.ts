@@ -10,7 +10,7 @@ import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
- * Editor-side view of question codes and answer codes (ADR 0016, GLOSSARY "Recoding and exports").
+ * Editor-side view of question codes and answer codes (ADR 0021, GLOSSARY "Recoding and exports").
  * The rules live in `@formbricks/types/surveys/codes`; this module only places each issue on the
  * field, question and block that shows it, and builds the updates the Recode section sends.
  */
