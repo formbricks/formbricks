@@ -77,6 +77,7 @@ import {
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
+import { loggableError } from "../utils/loggable-error";
 import { validateInputs } from "../utils/validate";
 import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE, isAppSurveyMissingTriggersToPublish } from "./publish-rule";
 import {
@@ -357,7 +358,7 @@ export const getSurveysWithCustomCssAndOwnerName = async (
     }));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting surveys by id");
+      logger.error(loggableError(error), "Error getting surveys by id");
       throw new DatabaseError(error.message);
     }
     throw error;
