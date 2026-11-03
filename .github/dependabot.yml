@@ -131,9 +131,27 @@ updates:
           - version-update:semver-minor
           - version-update:semver-patch
     groups:
+      # Every package carrying a version-pinned patch in pnpm-workspace.yaml (`patchedDependencies`) moves in
+      # its own PR. A bump the patch does not match makes `pnpm install` fail, and inside the group that
+      # failure would block every unrelated update with it; alone, the red PR is the signal to bump the
+      # package and re-check its patch by hand (each entry there names its ticket). Deliberately not an
+      # `ignore`: a bare one suppresses security updates too, for exactly the packages sitting under a
+      # hand-applied mitigation — and with no PR raised, nothing would ask for the patch to be re-checked
+      # when Next moves.
+      patched-dependencies:
+        patterns:
+          - "next"
+          - "better-auth"
+          - "@better-auth/oauth-provider"
+          - "pg-pool"
       npm-minor-and-patch:
         patterns:
           - "*"
+        exclude-patterns:
+          - "next"
+          - "better-auth"
+          - "@better-auth/oauth-provider"
+          - "pg-pool"
     labels:
       - dependencies
       - javascript
