@@ -263,7 +263,7 @@ export const SettingsSidebarContent = ({
 }: SettingsSidebarContentProps) => {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { isMember, isBilling, isOwner, isManager } = getAccessFlags(membershipRole);
+  const { isMember, isBilling, isOwner, isManager, isDashboardViewer } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
   const iconClassName = "h-4 w-4 shrink-0";
 
@@ -426,9 +426,15 @@ export const SettingsSidebarContent = ({
       label: t("common.authorized_apps"),
       href: accountSettingsPath("authorized-apps"),
       icon: <UnplugIcon className={iconClassName} />,
+      hidden: isDashboardViewer,
       disabled: isBilling,
     },
   ];
+
+  // A Dashboard viewer (ADR-0018) keeps the organization switcher, Profile and Notifications, and none of
+  // the workspace or organization settings.
+  const visibleOrganizationItems = isDashboardViewer ? [] : organizationItems;
+  const isWorkspaceSectionHidden = hideWorkspaceSection || isDashboardViewer;
 
   const disabledMessage = t("common.you_are_not_authorized_to_perform_this_action");
 
@@ -452,7 +458,7 @@ export const SettingsSidebarContent = ({
 
   return (
     <div className="flex flex-col overflow-y-auto">
-      {!hideWorkspaceSection && (
+      {!isWorkspaceSectionHidden && (
         <div>
           <SectionHeader
             label={t("common.workspace")}
@@ -487,7 +493,7 @@ export const SettingsSidebarContent = ({
           onSwitcherChange={onOrganizationChange}
           onSwitcherOpen={onOrganizationDropdownOpen}
         />
-        {renderSection(organizationItems)}
+        {renderSection(visibleOrganizationItems)}
       </div>
 
       <div>

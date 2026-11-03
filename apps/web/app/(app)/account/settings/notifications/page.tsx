@@ -41,8 +41,10 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
+      // Neither role reads responses: billing sees billing only, and a Dashboard viewer only dashboards
+      // (ADR-0018), so neither is offered response alerts.
       role: {
-        not: "billing",
+        notIn: ["billing", "dashboard_viewer"],
       },
       OR: [
         {

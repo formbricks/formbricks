@@ -228,6 +228,8 @@ export const getWorkspaceMembers = reactCache(async (workspaceId: string): Promi
       where: {
         organization: { workspaces: { some: { id: workspaceId } } },
         user: { isActive: true },
+        // A Dashboard viewer may not read the response data a workflow email carries (ADR-0018).
+        role: { not: "dashboard_viewer" },
         OR: [
           { role: { in: ["owner", "manager"] } },
           { user: { teamUsers: { some: { team: { workspaceTeams: { some: { workspaceId } } } } } } },

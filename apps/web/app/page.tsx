@@ -10,6 +10,11 @@ import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import {
+  getDashboardViewerUnavailablePath,
+  listDashboardViewerOrganizations,
+  listDashboardViewerWorkspaces,
+} from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 
 const Page = async () => {
@@ -29,9 +34,14 @@ const Page = async () => {
     return <ClientLogout />;
   }
 
-  const userOrganizations = await getOrganizationsByUserId(session.user.id);
+  // A Dashboard viewer's organizations hold no SpiceDB relation (ADR-0018), so they come from its
+  // memberships; its workspaces are the ones its teams are granted.
+  const [userOrganizations, viewerOrganizations] = await Promise.all([
+    getOrganizationsByUserId(session.user.id),
+    listDashboardViewerOrganizations(session.user.id),
+  ]);
 
-  if (userOrganizations.length === 0) {
+  if (userOrganizations.length === 0 && viewerOrganizations.length === 0) {
     return redirect("/setup/organization/create");
   }
 
@@ -42,6 +52,22 @@ const Page = async () => {
     for (const ws of workspaces) {
       allWorkspaceIds.push(ws.id);
     }
+  }
+  for (const org of viewerOrganizations) {
+    const workspaces = await listDashboardViewerWorkspaces(user.id, org.id);
+    for (const ws of workspaces) {
+      allWorkspaceIds.push(ws.id);
+    }
+  }
+
+  if (userOrganizations.length === 0) {
+    // Only a Dashboard viewer: the last-used granted workspace's dashboards (the workspace page sends a
+    // viewer there), or the page explaining why there are none.
+    return allWorkspaceIds.length === 0 ? (
+      redirect(getDashboardViewerUnavailablePath(viewerOrganizations[0].id))
+    ) : (
+      <ClientWorkspaceRedirect userWorkspaceIds={allWorkspaceIds} />
+    );
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(

@@ -10,6 +10,7 @@ import { getUser } from "@/lib/user/service";
 import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import { getDashboardViewerWorkspaceState } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -47,6 +48,9 @@ vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId
 vi.mock("@/lib/membership/navigation", () => ({ getBillingFallbackPath: vi.fn() }));
 vi.mock("@/lingodotdev/server", () => ({ getTranslate: vi.fn(() => Promise.resolve((k: string) => k)) }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  getDashboardViewerWorkspaceState: vi.fn(async () => "none"),
+}));
 vi.mock("@/modules/ee/teams/lib/roles", () => ({ getWorkspacePermissionByUserId: vi.fn() }));
 
 const workspaceId = "workspace-1";
@@ -102,6 +106,26 @@ describe("getWorkspaceAuth billing gate (ENG-1763)", () => {
       expect(result.isBilling).toBe(false);
     }
   );
+});
+
+describe("getWorkspaceAuth Dashboard viewer gate (ADR-0018)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("sends a Dashboard viewer to the workspace's dashboard list before any product data is read", async () => {
+    primeAuth("dashboard_viewer");
+    vi.mocked(redirect).mockImplementation(() => {
+      throw new Error("NEXT_REDIRECT");
+    });
+
+    await expect(getWorkspaceAuth(workspaceId)).rejects.toThrow("NEXT_REDIRECT");
+
+    expect(redirect).toHaveBeenCalledWith(`/workspaces/${workspaceId}/dashboards`);
+    expect(can).not.toHaveBeenCalled();
+    expect(getWorkspacePermissionByUserId).not.toHaveBeenCalled();
+    vi.mocked(redirect).mockReset();
+  });
 });
 
 describe("getWorkspaceAuth workspace-access gate + isReadOnly (ENG-1769)", () => {
@@ -260,6 +284,15 @@ describe("layout navigation gates (ENG-1737)", () => {
       await expect(workspaceIdLayoutChecks(layoutWorkspaceId)).rejects.toThrow("NEXT_NOT_FOUND");
     });
 
+    test("sends a Dashboard viewer of the workspace to its dashboards instead of the editor", async () => {
+      vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);
+      vi.mocked(getDashboardViewerWorkspaceState).mockResolvedValueOnce("granted");
+
+      await workspaceIdLayoutChecks(layoutWorkspaceId);
+
+      expect(redirect).toHaveBeenCalledWith(`/workspaces/${layoutWorkspaceId}/dashboards`);
+    });
+
     // Existence is answered before access, so a missing workspace 404s without an access decision —
     // matching getWorkspaceAuth.
     test("404s for a workspace that does not exist", async () => {
@@ -312,6 +345,42 @@ describe("layout navigation gates (ENG-1737)", () => {
 
     test("404s when the user may not navigate there", async () => {
       vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);
+
+      await expect(getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId)).rejects.toThrow("NEXT_NOT_FOUND");
+      // Only a Dashboard viewer's membership consults the viewer grant.
+      expect(getDashboardViewerWorkspaceState).not.toHaveBeenCalled();
+    });
+
+    test.each(["granted", "lapsed"] as const)(
+      "renders the shell for a Dashboard viewer whose team is granted the workspace (%s)",
+      async (state) => {
+        vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);
+        mocks.workspaceFindUnique.mockResolvedValue({
+          id: layoutWorkspaceId,
+          organizationId: layoutOrganizationId,
+          organization: {
+            ...organizationRelation,
+            memberships: [{ userId: layoutUserId, role: "dashboard_viewer" }],
+          },
+        });
+        vi.mocked(getDashboardViewerWorkspaceState).mockResolvedValueOnce(state);
+
+        const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+        expect(data.membership.role).toBe("dashboard_viewer");
+      }
+    );
+
+    test("404s for a Dashboard viewer none of whose teams is granted the workspace", async () => {
+      vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);
+      mocks.workspaceFindUnique.mockResolvedValue({
+        id: layoutWorkspaceId,
+        organizationId: layoutOrganizationId,
+        organization: {
+          ...organizationRelation,
+          memberships: [{ userId: layoutUserId, role: "dashboard_viewer" }],
+        },
+      });
 
       await expect(getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId)).rejects.toThrow("NEXT_NOT_FOUND");
     });

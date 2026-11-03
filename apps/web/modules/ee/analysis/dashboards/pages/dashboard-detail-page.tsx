@@ -5,10 +5,10 @@ import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
+import { getDashboardsPageAuth } from "@/modules/ee/analysis/lib/dashboards-page-auth";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDateFilterCookieName, readStoredDateFilterFromCookie } from "../lib/dashboard-date-filter";
 
@@ -27,10 +27,10 @@ export async function DashboardDetailPage({
     cookieStore.get(getDateFilterCookieName(dashboardId))?.value
   );
 
-  const { isReadOnly, organization, session } = await getWorkspaceAuth(workspaceId);
+  const { isReadOnly, organizationId, userId, isDashboardViewer } = await getDashboardsPageAuth(workspaceId);
 
   const [isDashboardsAllowed, dashboardRow] = await Promise.all([
-    getIsDashboardsEnabled(organization.id),
+    getIsDashboardsEnabled(organizationId),
     getDashboardWorkspaceRow(dashboardId),
   ]);
   // The page belongs to the workspace in its URL: its role, chart list and "create chart" all come from
@@ -48,7 +48,7 @@ export async function DashboardDetailPage({
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/organizations/${organization.id}/settings/billing`
+                  ? `/organizations/${organizationId}/settings/billing`
                   : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
@@ -62,9 +62,24 @@ export async function DashboardDetailPage({
     );
   }
 
+  // A Dashboard viewer only views (ADR-0018): the datasets and AI feed chart creation and editing, which
+  // the page never offers them, and SpiceDB would refuse them the datasets anyway.
+  if (isDashboardViewer) {
+    return (
+      <DashboardDetailClient
+        workspaceId={workspaceId}
+        dashboardId={dashboardId}
+        storedDateFilter={storedDateFilter}
+        directories={[]}
+        isReadOnly
+        isAIAvailable={false}
+      />
+    );
+  }
+
   const [directories, aiConfig] = await Promise.all([
-    getAuthorizedWorkspaceFeedbackDirectories(session.user.id, workspaceId),
-    getOrganizationAIConfig(organization.id),
+    getAuthorizedWorkspaceFeedbackDirectories(userId, workspaceId),
+    getOrganizationAIConfig(organizationId),
   ]);
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
   const isAIAvailable = !aiUnavailableReason;

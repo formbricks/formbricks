@@ -101,3 +101,53 @@ export const listDashboardViewerWorkspaces = async (
     orderBy: { name: "asc" },
   });
 };
+
+/**
+ * Where a Dashboard viewer stands on a workspace, for the pages: `granted` reads its dashboards,
+ * `lapsed` holds a team grant but the organization lost Access Control or Dashboards (the viewer keeps
+ * the role and sees the "not available on this plan" page), and `none` is anyone else: not a viewer
+ * there, or a viewer none of whose teams is granted the workspace.
+ */
+export type TDashboardViewerWorkspaceState = "granted" | "lapsed" | "none";
+
+export const getDashboardViewerWorkspaceState = async (
+  userId: string,
+  workspaceId: string
+): Promise<TDashboardViewerWorkspaceState> => {
+  const grant = await prisma.workspaceTeam.findFirst({
+    where: viewerWorkspaceGrantWhere(userId, workspaceId),
+    select: { workspace: { select: { organizationId: true } } },
+  });
+  if (!grant) return "none";
+
+  return (await getIsDashboardViewerRoleEnabled(grant.workspace.organizationId)) ? "granted" : "lapsed";
+};
+
+/** The organizations where `userId` holds the Dashboard viewer role, entitled or not, by name. */
+export const listDashboardViewerOrganizations = async (
+  userId: string
+): Promise<Array<{ id: string; name: string }>> =>
+  prisma.organization.findMany({
+    where: { memberships: { some: { userId, role: "dashboard_viewer" } } },
+    select: { id: true, name: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+
+/** The page a Dashboard viewer can't reach a workspace from: no granted workspace, or a lapsed plan. */
+export const getDashboardViewerUnavailablePath = (organizationId: string): string =>
+  `/organizations/${organizationId}/dashboards-unavailable`;
+
+/**
+ * Where a Dashboard viewer lands in an organization: the dashboard list of `preferredWorkspaceId` when
+ * they may read it (the last-used workspace), else of their first granted workspace, else the
+ * unavailable page, which explains a lapsed plan or a missing team grant.
+ */
+export const getDashboardViewerHomePath = async (
+  userId: string,
+  organizationId: string,
+  preferredWorkspaceId?: string
+): Promise<string> => {
+  const workspaces = await listDashboardViewerWorkspaces(userId, organizationId);
+  const target = workspaces.find(({ id }) => id === preferredWorkspaceId) ?? workspaces[0];
+  return target ? `/workspaces/${target.id}/dashboards` : getDashboardViewerUnavailablePath(organizationId);
+};

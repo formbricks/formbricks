@@ -16,6 +16,8 @@ const mocks = {
   getOrganizationWorkspacesLimit: vi.fn(),
   getPublicDomain: vi.fn(),
   cookieGet: vi.fn(),
+  listDashboardViewerOrganizations: vi.fn(),
+  listDashboardViewerWorkspaces: vi.fn(),
 };
 
 vi.mock("next/headers", () => ({
@@ -42,6 +44,13 @@ vi.mock("@/lib/organization/service", () => ({
 }));
 vi.mock("@/lib/user/service", () => ({ getUser: (...a: unknown[]) => mocks.getUser(...a) }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspace: (...a: unknown[]) => mocks.getWorkspace(...a) }));
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  listDashboardViewerOrganizations: (...a: unknown[]) =>
+    mocks.listDashboardViewerOrganizations(...a) ?? Promise.resolve([]),
+  listDashboardViewerWorkspaces: (...a: unknown[]) => mocks.listDashboardViewerWorkspaces(...a),
+  getDashboardViewerUnavailablePath: (organizationId: string) =>
+    `/organizations/${organizationId}/dashboards-unavailable`,
+}));
 vi.mock("@/modules/ee/license-check/lib/license", () => ({
   getEnterpriseLicense: (...a: unknown[]) => mocks.getEnterpriseLicense(...a),
 }));
@@ -67,7 +76,10 @@ const seedSuccess = () => {
 };
 
 describe("getSettingsLayoutData", () => {
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    mocks.listDashboardViewerOrganizations.mockResolvedValue([]);
+  });
 
   test("returns null when there is no session", async () => {
     mocks.getSession.mockResolvedValue(null);
@@ -103,6 +115,32 @@ describe("getSettingsLayoutData", () => {
 
     expect(data?.currentWorkspace).toBeNull();
     expect(data?.backUrl).toBe("/organizations/org-1/landing");
+  });
+
+  test("resolves a Dashboard viewer's organization from its membership, with its granted workspaces", async () => {
+    seedSuccess();
+    mocks.getOrganizationsByUserId.mockResolvedValue([]);
+    mocks.listDashboardViewerOrganizations.mockResolvedValue([{ id: "org-1", name: "Org" }]);
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "dashboard_viewer" });
+    mocks.listDashboardViewerWorkspaces.mockResolvedValue([{ id: "ws-granted", name: "Granted" }]);
+    mocks.getWorkspace.mockResolvedValue({ id: "ws-granted", name: "Granted" });
+
+    const data = await getSettingsLayoutData("user-1");
+
+    expect(data?.organization.id).toBe("org-1");
+    expect(mocks.getWorkspacesByUserId).not.toHaveBeenCalled();
+    expect(data?.backUrl).toBe("/workspaces/ws-granted/dashboards");
+    expect(data?.isOwnerOrManager).toBe(false);
+  });
+
+  test("sends a Dashboard viewer with no granted workspace back to the unavailable page", async () => {
+    seedSuccess();
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "dashboard_viewer" });
+    mocks.listDashboardViewerWorkspaces.mockResolvedValue([]);
+
+    const data = await getSettingsLayoutData("user-1", "org-1");
+
+    expect(data?.backUrl).toBe("/organizations/org-1/dashboards-unavailable");
   });
 
   test("uses the active-workspace cookie when it is in the accessible list", async () => {

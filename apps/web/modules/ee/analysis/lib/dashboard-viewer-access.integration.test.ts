@@ -34,10 +34,14 @@ import { getV3Survey, listV3Surveys } from "@/app/api/v3/surveys/lib/operations"
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { can } from "@/lib/authorization";
+import { getWorkspaceMembers } from "@/lib/workspace/service";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import {
   canDashboardViewerReadFeedbackDataset,
   canDashboardViewerReadWorkspace,
+  getDashboardViewerHomePath,
+  getDashboardViewerWorkspaceState,
+  listDashboardViewerOrganizations,
   listDashboardViewerWorkspaces,
 } from "./dashboard-viewer-access";
 
@@ -509,6 +513,61 @@ describe("role changes are projected at once", () => {
       })
     ).resolves.toBe(true);
     await expect(canDashboardViewerReadWorkspace(ids.promoted, fixture.workspaceId)).resolves.toBe(false);
+  });
+});
+
+describe("what the pages decide for a viewer (ENG-6902)", () => {
+  test("a granted workspace is granted; a lapsed plan is lapsed, not none; anything else is none", async () => {
+    await expect(getDashboardViewerWorkspaceState(ids.viewer, fixture.workspaceId)).resolves.toBe("granted");
+    await expect(getDashboardViewerWorkspaceState(ids.viewer, fixture.otherWorkspaceId)).resolves.toBe(
+      "none"
+    );
+    await expect(getDashboardViewerWorkspaceState(fixture.users.viewer, fixture.workspaceId)).resolves.toBe(
+      "none"
+    );
+
+    entitlement.viewerRole = false;
+    await expect(getDashboardViewerWorkspaceState(ids.viewer, fixture.workspaceId)).resolves.toBe("lapsed");
+  });
+
+  test("lands on the last-used granted workspace, else the first, else the unavailable page", async () => {
+    await expect(
+      getDashboardViewerHomePath(ids.viewer, fixture.organizationId, ids.emptyDashboardWorkspace)
+    ).resolves.toBe(`/workspaces/${ids.emptyDashboardWorkspace}/dashboards`);
+    // A remembered workspace the viewer may not read is ignored.
+    const fallback = await getDashboardViewerHomePath(
+      ids.viewer,
+      fixture.organizationId,
+      fixture.otherWorkspaceId
+    );
+    expect([
+      `/workspaces/${fixture.workspaceId}/dashboards`,
+      `/workspaces/${ids.emptyDashboardWorkspace}/dashboards`,
+    ]).toContain(fallback);
+    await expect(getDashboardViewerHomePath(ids.ungrantedViewer, fixture.organizationId)).resolves.toBe(
+      `/organizations/${fixture.organizationId}/dashboards-unavailable`
+    );
+
+    entitlement.viewerRole = false;
+    await expect(getDashboardViewerHomePath(ids.viewer, fixture.organizationId)).resolves.toBe(
+      `/organizations/${fixture.organizationId}/dashboards-unavailable`
+    );
+  });
+
+  test("lists the organizations a user is a viewer of, entitled or not", async () => {
+    entitlement.viewerRole = false;
+    const organizations = await listDashboardViewerOrganizations(ids.viewer);
+    expect(organizations.map(({ id }) => id)).toEqual([fixture.organizationId]);
+    await expect(listDashboardViewerOrganizations(fixture.users.owner)).resolves.toEqual([]);
+  });
+
+  test("a viewer is never a workflow email recipient for the workspace", async () => {
+    const recipients = await getWorkspaceMembers(fixture.workspaceId);
+    const emails = recipients.map(({ email }) => email);
+
+    expect(emails).toContain("viewer@dashboards.test");
+    expect(emails).not.toContain("viewer@viewer.test");
+    expect(emails).not.toContain("manage-viewer@viewer.test");
   });
 });
 

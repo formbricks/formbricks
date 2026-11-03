@@ -557,6 +557,7 @@ describe("Workspace Service", () => {
         where: {
           organization: { workspaces: { some: { id: workspaceId } } },
           user: { isActive: true },
+          role: { not: "dashboard_viewer" },
           OR: [
             { role: { in: ["owner", "manager"] } },
             { user: { teamUsers: { some: { team: { workspaceTeams: { some: { workspaceId } } } } } } },

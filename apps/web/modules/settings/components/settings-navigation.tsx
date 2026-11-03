@@ -70,12 +70,16 @@ export const SettingsNavigation = ({
   const handleOrganizationChange = useCallback(
     (id: string) => {
       startTransition(() => {
+        // A Dashboard viewer has no organization settings: the organization's redirect route lands it on
+        // its dashboards there.
         router.push(
-          id === organizationId ? `/organizations/${id}/settings/general` : `/organizations/${id}/`
+          id === organizationId && membershipRole !== "dashboard_viewer"
+            ? `/organizations/${id}/settings/general`
+            : `/organizations/${id}/`
         );
       });
     },
-    [router, organizationId]
+    [router, organizationId, membershipRole]
   );
 
   return (

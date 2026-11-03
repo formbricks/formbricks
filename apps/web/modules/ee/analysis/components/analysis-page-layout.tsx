@@ -7,6 +7,8 @@ interface AnalysisPageLayoutProps {
   pageTitle: string;
   workspaceId: string;
   cta?: ReactNode;
+  /** Hides the Dashboards / Charts tabs: a Dashboard viewer has no Charts (ADR-0018). */
+  hideSecondaryNavigation?: boolean;
   children: ReactNode;
 }
 
@@ -14,12 +16,13 @@ export function AnalysisPageLayout({
   pageTitle,
   workspaceId,
   cta,
+  hideSecondaryNavigation = false,
   children,
 }: Readonly<AnalysisPageLayoutProps>) {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={pageTitle} cta={cta}>
-        <AnalysisSecondaryNavigation workspaceId={workspaceId} />
+        {!hideSecondaryNavigation && <AnalysisSecondaryNavigation workspaceId={workspaceId} />}
       </PageHeader>
       {children}
     </PageContentWrapper>

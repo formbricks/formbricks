@@ -12,6 +12,11 @@ import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/orga
 import { getUser } from "@/lib/user/service";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import {
+  getDashboardViewerUnavailablePath,
+  listDashboardViewerOrganizations,
+  listDashboardViewerWorkspaces,
+} from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import {
   getAccessControlPermission,
@@ -42,6 +47,16 @@ export interface TSettingsLayoutData {
   backUrl: string;
 }
 
+/** Where the settings' back arrow returns to: a Dashboard viewer goes back to its dashboards. */
+const getBackUrl = (organizationId: string, workspaceId: string | undefined, isDashboardViewer: boolean) => {
+  if (isDashboardViewer) {
+    return workspaceId
+      ? `/workspaces/${workspaceId}/dashboards`
+      : getDashboardViewerUnavailablePath(organizationId);
+  }
+  return workspaceId ? `/workspaces/${workspaceId}/surveys` : `/organizations/${organizationId}/landing`;
+};
+
 /**
  * Resolves the organization for the routes that carry none in the URL (account settings), so opening
  * a profile/notifications page — and the reload after changing the language there — keeps the
@@ -61,7 +76,13 @@ const resolveActiveOrganizationId = async (
   activeWorkspaceId: string | undefined,
   activeOrganizationId: string | undefined
 ): Promise<string | undefined> => {
-  const organizations = await getOrganizationsByUserId(userId);
+  // A Dashboard viewer's organizations hold no SpiceDB relation (ADR-0018), so they are read from its
+  // memberships; without them a viewer's Profile and Notifications would have no organization to render in.
+  const [projectedOrganizations, viewerOrganizations] = await Promise.all([
+    getOrganizationsByUserId(userId),
+    listDashboardViewerOrganizations(userId),
+  ]);
+  const organizations = [...projectedOrganizations, ...viewerOrganizations];
 
   if (activeOrganizationId && organizations.some((org) => org.id === activeOrganizationId)) {
     return activeOrganizationId;
@@ -113,11 +134,14 @@ export const getSettingsLayoutData = async (
   ]);
   if (!user || !organization || !membership) return null;
 
+  const isDashboardViewer = membership.role === "dashboard_viewer";
   const [isAccessControlAllowed, license, organizationWorkspacesLimit, workspaces] = await Promise.all([
     getAccessControlPermission(organization.id),
     getEnterpriseLicense(),
     getOrganizationWorkspacesLimit(organization.id),
-    getWorkspacesByUserId(userId, organization.id),
+    isDashboardViewer
+      ? listDashboardViewerWorkspaces(userId, organization.id)
+      : getWorkspacesByUserId(userId, organization.id),
   ]);
 
   const responseCount = IS_FORMBRICKS_CLOUD ? await getMonthlyOrganizationResponseCount(organization.id) : 0;
@@ -149,8 +173,6 @@ export const getSettingsLayoutData = async (
     currentWorkspace,
     // Without a workspace, "/" would root-redirect into the user's first organization; the landing
     // page keeps the user in the organization these settings were resolved for.
-    backUrl: currentWorkspace
-      ? `/workspaces/${currentWorkspace.id}/surveys`
-      : `/organizations/${organization.id}/landing`,
+    backUrl: getBackUrl(organization.id, currentWorkspace?.id, isDashboardViewer),
   };
 };
