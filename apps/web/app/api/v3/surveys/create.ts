@@ -13,7 +13,7 @@ import { createSurvey, getSurveyWithCustomCss, selectSurveyWithCustomCss } from 
 import { getElementsFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
-import type { TSurveyWriteTransaction } from "@/lib/survey/write-transaction";
+import { SurveyWriteAfterCommitError, type TSurveyWriteTransaction } from "@/lib/survey/write-transaction";
 import { resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { buildV3SurveyCreateInput, getV3SurveyCreateInputInvalidParams } from "./create-input";
@@ -330,12 +330,23 @@ export async function executeV3SurveyCreate(params: {
   // App targeting filters are created atomically with the survey's private segment inside
   // `createSurvey` (a single transaction), so a failed targeting write can't leave a partial survey.
   const privateSegmentFilters = input.type === "app" ? (input.targeting?.filters ?? []) : [];
-  const survey = await createSurvey(input.workspaceId, surveyCreateInput, {
-    creationFacts,
-    privateSegmentFilters,
-    customCss,
-    ...(transaction ? { transaction } : {}),
-  });
+  let survey: TSurvey;
+  try {
+    survey = await createSurvey(input.workspaceId, surveyCreateInput, {
+      creationFacts,
+      privateSegmentFilters,
+      customCss,
+      ...(transaction ? { transaction } : {}),
+    });
+  } catch (error) {
+    if (!(error instanceof SurveyWriteAfterCommitError)) throw error;
+    // The survey committed and is answered as created: with the same re-read a create that finished
+    // gets, so an app survey's `displayPercentage` is a number, not Prisma's `Decimal`.
+    const created = error.result as TSurvey;
+    // Best effort: the re-read failing must not turn a created survey into a 500.
+    const finalized = await finalizeV3AppSurveyCreate(created, input, transaction).catch(() => created);
+    throw new SurveyWriteAfterCommitError(finalized, error.cause);
+  }
 
   return await finalizeV3AppSurveyCreate(survey, input, transaction);
 }
@@ -360,7 +371,13 @@ export async function createV3Survey(
     authentication
   );
 
-  const survey = await executeV3SurveyCreate({
+  // Before the create: a create that commits and then fails its after-commit work is still answered
+  // as created, with these warnings.
+  if (options.report && customCss.warnings) {
+    options.report.customCssWarnings = customCss.warnings;
+  }
+
+  return executeV3SurveyCreate({
     input: preparation.document,
     authentication,
     languageRequests: preparation.languageRequests,
@@ -370,10 +387,4 @@ export async function createV3Survey(
     customCss: customCss.stored,
     ...(options.transaction ? { transaction: options.transaction } : {}),
   });
-
-  if (options.report && customCss.warnings) {
-    options.report.customCssWarnings = customCss.warnings;
-  }
-
-  return survey;
 }

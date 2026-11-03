@@ -13,6 +13,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { previewCustomCss } from "@/modules/custom-css/lib/service";
@@ -479,6 +480,39 @@ describe("createV3SurveyResponse", () => {
       newObject: serializedSurvey,
     });
     expect(await readJson(response)).toEqual({ data: serializedSurvey });
+  });
+
+  test("answers 201 for a survey that committed when only the work after its commit failed", async () => {
+    vi.mocked(createV3Survey).mockRejectedValue(
+      new SurveyWriteAfterCommitError(survey, new Error("response alert subscription failed"))
+    );
+    const auditLog = {} as any;
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+    // The survey exists: a 500 here would have the client create a second one on retry.
+    expect(response.status).toBe(201);
+    expect(response.headers.get("Location")).toBe("/api/v3/surveys/survey_1");
+    expect(auditLog).toMatchObject({ targetId: "survey_1" });
+  });
+
+  test("still answers a create that failed before committing with its error", async () => {
+    vi.mocked(createV3Survey).mockRejectedValue(new V3SurveyInputValidationError([]));
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
   });
 
   test.each(["template", "import"] as const)(

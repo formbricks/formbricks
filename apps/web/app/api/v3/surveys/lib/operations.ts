@@ -19,6 +19,7 @@ import {
   isCustomCssValidationRequest,
 } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import {
   type InvalidParam,
   createdResponse,
@@ -40,6 +41,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
 import { getCreativeCssRoot } from "@/modules/ee/creatives/lib/custom-css";
 import {
@@ -460,7 +462,8 @@ export function mapV3SurveyCreateError(
     // malformed → 422, in line with the reference-validation branch above. Deliberately keyed on
     // this typed error rather than on `ValidationError`: the latter is also thrown from work
     // `createSurvey` does *after* its transaction commits, where a 4xx would wrongly tell the
-    // caller nothing was written. Those fall through to the shared mapper's 500.
+    // caller nothing was written. Those arrive wrapped in `SurveyWriteAfterCommitError` and are
+    // answered as created (`createdEvenIfAfterCommitFailed`).
     log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey input validation failed");
     return problemUnprocessableContent(requestId, "Survey document failed validation", {
       invalid_params: err.invalidParams,
@@ -468,6 +471,27 @@ export function mapV3SurveyCreateError(
     });
   }
   return mapV3ThrownError(err, { log, requestId, instance, operation: "surveys.create" });
+}
+
+/**
+ * The survey a create made, also when only the work after its commit failed (the creator's response
+ * alerts, scheduling, caches): the survey exists, so it is answered as created, or a client retrying
+ * the 500 would make a second one. The failure is logged; anything else the create throws propagates.
+ */
+async function createdEvenIfAfterCommitFailed(
+  create: () => Promise<TInternalSurvey>,
+  log: ReturnType<typeof logger.withContext>
+): Promise<TInternalSurvey> {
+  try {
+    return await create();
+  } catch (error) {
+    if (!(error instanceof SurveyWriteAfterCommitError)) throw error;
+    log.error(
+      { ...loggableError(error.cause), operation: "surveys.create" },
+      "Survey create's work after the commit failed"
+    );
+    return error.result as TInternalSurvey;
+  }
 }
 
 export async function createV3SurveyResponse({
@@ -500,15 +524,19 @@ export async function createV3SurveyResponse({
     }
 
     const report: TV3SurveyWriteReport = {};
-    const survey = await createV3Survey(
-      {
-        ...createBody,
-        workspaceId: authResult.workspaceId,
-      },
-      authentication,
-      requestId,
-      authResult.organizationId,
-      { ...createOptions, report }
+    const survey = await createdEvenIfAfterCommitFailed(
+      () =>
+        createV3Survey(
+          {
+            ...createBody,
+            workspaceId: authResult.workspaceId,
+          },
+          authentication,
+          requestId,
+          authResult.organizationId,
+          { ...createOptions, report }
+        ),
+      log
     );
     const resource = serializeV3SurveyResource(
       survey,
