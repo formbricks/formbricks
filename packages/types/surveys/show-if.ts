@@ -13,6 +13,39 @@ import type { TConditionGroup } from "./logic";
 
 type TShowIfItem = { showIf?: TConditionGroup };
 
+/** Where an element keeps the items a respondent picks from (ENG-6937). */
+export type TOptionListKey = "choices" | "rows" | "columns";
+
+/** An option, a matrix row or a matrix column, as far as show-if and Hidden read it (json-shapes §2). */
+export interface TOptionLike {
+  id: string;
+  showIf?: TConditionGroup;
+  hidden?: boolean;
+}
+
+const OPTION_LISTS_BY_TYPE: Record<string, readonly TOptionListKey[]> = {
+  multipleChoiceSingle: ["choices"],
+  multipleChoiceMulti: ["choices"],
+  ranking: ["choices"],
+  pictureSelection: ["choices"],
+  matrix: ["rows", "columns"],
+};
+
+/**
+ * The option lists of an element that option show-if and Hidden apply to (P2): the choices of single
+ * select, multi select, ranking and picture selection, and a matrix's rows and columns. Any other
+ * element type has none.
+ */
+export const getOptionLists = (element: {
+  type: string;
+}): { listKey: TOptionListKey; items: readonly TOptionLike[] }[] => {
+  const record = element as unknown as Record<string, unknown>;
+  return (OPTION_LISTS_BY_TYPE[element.type] ?? []).flatMap((listKey) => {
+    const items = record[listKey];
+    return Array.isArray(items) ? [{ listKey, items: items as TOptionLike[] }] : [];
+  });
+};
+
 /**
  * Whether an item's show-if lets it be shown. A missing show-if and an empty group both mean "always
  * shown" (json-shapes §1). The empty case is decided here, not by the engine: an empty `or` group

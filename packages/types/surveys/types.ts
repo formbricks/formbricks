@@ -67,6 +67,7 @@ import {
   ZConditionGroupDeprecated,
   ZDynamicLogicFieldValueDeprecated,
 } from "./logic";
+import { getOptionLists } from "./show-if";
 import { validateStartLogic } from "./start-logic-validation";
 import {
   FORBIDDEN_IDS,
@@ -3316,7 +3317,18 @@ const isInvalidOperatorsForElementType = (
       }
       break;
     case TSurveyElementTypeEnum.Ranking:
-      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+      // T21 (ENG-6937): both engines map a ranking's stored labels back to option ids, so "was ranked"
+      // conditions match. Equality is left out: a ranking is an order, not a set.
+      if (
+        ![
+          "includesAllOf",
+          "includesOneOf",
+          "doesNotIncludeAllOf",
+          "doesNotIncludeOneOf",
+          "isSubmitted",
+          "isSkipped",
+        ].includes(operator)
+      ) {
         isInvalidOperator = true;
       }
       break;
@@ -3992,8 +4004,36 @@ const validateShowIf = (
     );
   });
 
+  // Option show-if (ENG-6937): an option, a matrix row or a matrix column follows its element's rule.
+  block.elements.forEach((element, elementIndex) => {
+    for (const { listKey, items } of getOptionLists(element)) {
+      items.forEach((item, itemIndex) => {
+        if (!item.showIf) return;
+        const path = ["blocks", blockIndex, "elements", elementIndex, listKey, itemIndex, "showIf"];
+        const owner = `${OPTION_LIST_NOUN[listKey]} ${String(itemIndex + 1)} of question ${String(elementIndex + 1)} of ${blockLabel}`;
+        issues.push(
+          ...validateConditionGroupOperands(survey, blockIndex, item.showIf, allElements, {
+            path,
+            where: `the show-if of ${owner}`,
+            checkLaterBlock: false,
+          })
+        );
+        checkReferences(
+          item.showIf,
+          path,
+          (target) =>
+            target.block < blockIndex || (target.block === blockIndex && target.element < elementIndex),
+          owner,
+          element.id
+        );
+      });
+    }
+  });
+
   return issues;
 };
+
+const OPTION_LIST_NOUN = { choices: "option", rows: "row", columns: "column" } as const;
 
 /** How a logic error names a block: its editable title, or its position when the title is blank. */
 const getBlockLabel = (block: TSurveyBlock, blockIndex: number): string =>

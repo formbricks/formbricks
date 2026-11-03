@@ -88,6 +88,20 @@ const nextId = (prefix: "rule" | "group" | "cond" | "action" | "showif"): string
 
 const choice = (id: string, label: string, code: string) => ({ id, label: i18n(label), code });
 
+/** ENG-6937: an option, row or column show-if "shown only if `elementId` includes `optionId`". */
+const pickedIn = (elementId: string, optionId: string) => ({
+  id: nextId("showif"),
+  connector: "and" as const,
+  conditions: [
+    {
+      id: nextId("showif"),
+      leftOperand: { type: "element" as const, value: elementId },
+      operator: "includesOneOf" as const,
+      rightOperand: { type: "static" as const, value: [optionId] },
+    },
+  ],
+});
+
 const contactField = (placeholder: string) => ({
   show: true,
   required: false,
@@ -528,7 +542,8 @@ const overallBlock: TSurveyBlock = {
         choice("netflix", "Netflix", "1"),
         choice("disney", "Disney+", "2"),
         choice("prime", "Prime Video", "3"),
-        choice("apple", "Apple TV+", "4"),
+        // ENG-6937: option show-if on a single select, from an earlier block.
+        { ...choice("apple", "Apple TV+", "4"), showIf: pickedIn("services", "apple") },
       ],
     },
     {
@@ -563,6 +578,23 @@ const overallBlock: TSurveyBlock = {
         choice("netflix_disney", "Netflix + Disney+", "1"),
         choice("netflix_prime", "Netflix + Prime Video", "2"),
         choice("no_bundle", "No bundle", "3"),
+        // ENG-6937: a Hidden option, retired on the live survey. It wins over its show-if.
+        {
+          ...choice("netflix_apple", "Netflix + Apple TV+", "4"),
+          hidden: true,
+          showIf: {
+            id: nextId("showif"),
+            connector: "and",
+            conditions: [
+              {
+                id: nextId("showif"),
+                leftOperand: { type: "element", value: "fav" },
+                operator: "equals",
+                rightOperand: { type: "static", value: "apple" },
+              },
+            ],
+          },
+        },
       ],
     },
     {
@@ -730,8 +762,16 @@ const profileBlock: TSurveyBlock = {
       headline: i18n("How do you rate each service?"),
       required: false,
       shuffleOption: "none",
-      rows: [choice("row_netflix", "Netflix", "1"), choice("row_disney", "Disney+", "2")],
-      columns: [choice("col_poor", "Poor", "1"), choice("col_good", "Good", "2")],
+      // ENG-6937: a row shown only to who uses the service, and a Hidden column.
+      rows: [
+        choice("row_netflix", "Netflix", "1"),
+        { ...choice("row_disney", "Disney+", "2"), showIf: pickedIn("services", "disney") },
+      ],
+      columns: [
+        choice("col_poor", "Poor", "1"),
+        choice("col_good", "Good", "2"),
+        { ...choice("col_fair", "Fair", "3"), hidden: true },
+      ],
     },
     {
       id: "brand_rank",
@@ -742,7 +782,8 @@ const profileBlock: TSurveyBlock = {
       choices: [
         choice("netflix", "Netflix", "1"),
         choice("disney", "Disney+", "2"),
-        choice("prime", "Prime Video", "3"),
+        // ENG-6937: option show-if on a ranking.
+        { ...choice("prime", "Prime Video", "3"), showIf: pickedIn("services", "prime") },
       ],
     },
     {
@@ -754,7 +795,23 @@ const profileBlock: TSurveyBlock = {
       allowMulti: false,
       choices: [
         { id: "poster_a", code: "1", imageUrl: "https://example.com/poster-a.png" },
-        { id: "poster_b", code: "2", imageUrl: "https://example.com/poster-b.png" },
+        // ENG-6937: option show-if on a picture choice, from a question above it on the same page.
+        {
+          id: "poster_b",
+          code: "2",
+          imageUrl: "https://example.com/poster-b.png",
+          showIf: {
+            id: nextId("showif"),
+            connector: "and",
+            conditions: [
+              {
+                id: nextId("showif"),
+                leftOperand: { type: "element", value: "brand_rank" },
+                operator: "isSubmitted",
+              },
+            ],
+          },
+        },
       ],
     },
     {

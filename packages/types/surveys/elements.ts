@@ -152,11 +152,27 @@ export const ZSurveyConsentElement = ZSurveyQuestionElementBase.extend({
 
 export type TSurveyConsentElement = z.infer<typeof ZSurveyConsentElement>;
 
+/**
+ * Option show-if and Hidden (ENG-6937, json-shapes §2), on every item a respondent picks from: the
+ * choices of single select, multi select and ranking, picture choices, and matrix rows and columns.
+ *
+ * - `showIf`: the item is shown only when this group matches, re-evaluated live. It may use what its
+ *   element's show-if may use: earlier blocks plus elements above the element on its block.
+ * - `hidden: true` retires the item on a live survey instead of deleting it (P1, P9). It wins over
+ *   `showIf`: the item is never shown and is recorded as not shown, but keeps its id, answer code and
+ *   earlier answers. Both stay allowed on published surveys (ADR 0020).
+ */
+export const ZOptionVisibility = {
+  showIf: ZConditionGroup.optional(),
+  hidden: z.boolean().optional(),
+};
+
 // Multiple Choice Elements
 export const ZSurveyElementChoice = z.object({
   id: z.string(),
   label: ZI18nString,
   code: ZElementCode,
+  ...ZOptionVisibility,
 });
 
 export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
@@ -290,6 +306,7 @@ export const ZSurveyPictureChoice = z.object({
   code: ZElementCode,
   imageUrl: ZStorageUrl,
   imageAltText: ZI18nString.optional(),
+  ...ZOptionVisibility,
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
@@ -342,6 +359,7 @@ export const ZSurveyMatrixElementChoice = z.object({
   id: z.string(),
   label: ZI18nString,
   code: ZElementCode,
+  ...ZOptionVisibility,
 });
 
 export type TSurveyMatrixElementChoice = z.infer<typeof ZSurveyMatrixElementChoice>;
