@@ -52,6 +52,12 @@ export const FORMBRICKS_FILE_V1_SCHEMA_URL = "https://formbricks.com/docs/schema
 const ZFormbricksFileKey = z.string().min(1).max(FORMBRICKS_FILE_MAX_KEY_CHARS);
 const ZFormbricksFileName = z.string().min(1).max(FORMBRICKS_FILE_MAX_NAME_CHARS);
 const ZFormbricksFileDescription = z.string().max(FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS);
+/**
+ * An action class's name and key as `ZActionClass` holds them: trimmed first, so a value of spaces alone
+ * is refused as empty rather than trimmed to an empty string after the length check passed.
+ */
+const ZFormbricksFileActionName = z.string().trim().min(1).max(FORMBRICKS_FILE_MAX_NAME_CHARS);
+const ZFormbricksFileActionKey = z.string().trim().min(1).max(FORMBRICKS_FILE_MAX_KEY_CHARS);
 
 /**
  * Where the file came from. The survey id is what a later import matches on; the source instance's URL
@@ -92,9 +98,9 @@ export const ZFormbricksFileActionClass = ZActionClass.pick({
 })
   .extend({
     // The action class's own rules, each string capped.
-    name: ZFormbricksFileName.trim(),
+    name: ZFormbricksFileActionName,
     description: ZFormbricksFileDescription.nullable(),
-    key: ZFormbricksFileKey.trim().nullable(),
+    key: ZFormbricksFileActionKey.nullable(),
     noCodeConfig: ZActionClass.shape.noCodeConfig.refine(
       (config) =>
         config === null || JSON.stringify(config).length <= FORMBRICKS_FILE_MAX_NO_CODE_CONFIG_CHARS,
@@ -109,7 +115,8 @@ export const ZFormbricksFileActionClass = ZActionClass.pick({
  */
 const requireActionClassIdentity = (actionClasses: TFormbricksFileActionClass[], ctx: z.RefinementCtx) => {
   actionClasses.forEach((actionClass, index) => {
-    if (actionClass.type === "code" && !actionClass.key) {
+    // A blank key is refused by its own (trimmed) length check; a missing one only here.
+    if (actionClass.type === "code" && actionClass.key === null) {
       ctx.addIssue({ code: "custom", path: [index, "key"], message: "A code action needs its key" });
     }
     if (actionClass.type === "noCode" && actionClass.noCodeConfig === null) {

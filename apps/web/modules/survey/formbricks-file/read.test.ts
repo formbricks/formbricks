@@ -152,6 +152,22 @@ describe("each string a Formbricks file's envelope and references carry", () => 
   const withMeta = (overrides: Record<string, unknown>) =>
     file({ formbricks: { ...file().formbricks, ...overrides } });
 
+  test.each(["name", "key"])("an action class whose %s is only spaces is refused as empty", (field) => {
+    const refusal = refusalOf(() =>
+      readFormbricksFile(withReferences({ actionClasses: [actionClass({ [field]: "   " })] }))
+    );
+    expect(refusal.invalidParams).toContainEqual(
+      expect.objectContaining({ name: `file.references.actionClasses.0.${field}` })
+    );
+  });
+
+  test("an action class's name and key are kept trimmed", () => {
+    const read = readFormbricksFile(
+      withReferences({ actionClasses: [actionClass({ name: "  Checkout  ", key: " checkout " })] })
+    );
+    expect(read.content.references.actionClasses[0]).toMatchObject({ name: "Checkout", key: "checkout" });
+  });
+
   // Each case: the field the refusal names, its cap, and the file with that field at a given length.
   const cases: [string, number, (length: number) => Record<string, unknown>][] = [
     ["file.$schema", FORMBRICKS_FILE_MAX_SCHEMA_URL_CHARS, (length) => file({ $schema: text(length) })],
