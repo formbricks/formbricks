@@ -16,9 +16,9 @@ import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface FileUploadSummaryProps {
-  elementSummary: TSurveyElementSummaryFileUpload;
-  survey: TSurvey;
-  locale: TUserLocale;
+  readonly elementSummary: TSurveyElementSummaryFileUpload;
+  readonly survey: TSurvey;
+  readonly locale: TUserLocale;
 }
 
 export const FileUploadSummary = ({ elementSummary, survey, locale }: FileUploadSummaryProps) => {

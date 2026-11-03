@@ -42,6 +42,8 @@ export const react = ({ tsconfigRootDir }) => [
   unusedVarsConvention,
   reactPlugin.configs.flat.recommended,
   reactPlugin.configs.flat["jsx-runtime"],
+  // Same rule as the `next` tier: component props are read-only.
+  { rules: { "react/prefer-read-only-props": "error" } },
   // Accessibility rules (parity with the old @vercel/style-guide/react config; eslint-config-next
   // already provides these for the app, so this brings the react-library tier in line).
   jsxA11y.flatConfigs.recommended,

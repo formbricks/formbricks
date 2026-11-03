@@ -46,6 +46,7 @@ export const ZOrganizationBilling = z.object({
       lastSyncedAt: z.string().nullable().optional(),
       lastSyncedEventId: z.string().nullable().optional(),
       trialEnd: z.string().nullable().optional(),
+      trialEndsOnHobby: z.boolean().optional(),
       pendingChange: z
         .object({
           type: z.literal("plan_change"),

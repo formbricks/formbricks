@@ -13,7 +13,7 @@ import { SelectPlanOnboarding } from "./components/select-plan-onboarding";
 const PAID_PLANS = new Set<TCloudBillingPlan>(["pro", "scale", "custom"]);
 
 interface PlanPageProps {
-  params: Promise<{
+  readonly params: Promise<{
     organizationId: string;
   }>;
 }

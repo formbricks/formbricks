@@ -5,11 +5,11 @@ export interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   "crossOrigin" | "dangerouslySetInnerHTML"
 > {
-  crossOrigin?: "" | "anonymous" | "use-credentials" | undefined;
-  dangerouslySetInnerHTML?: {
+  readonly crossOrigin?: "" | "anonymous" | "use-credentials" | undefined;
+  readonly dangerouslySetInnerHTML?: {
     __html: string;
   };
-  isInvalid?: boolean;
+  readonly isInvalid?: boolean;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, isInvalid, ...props }, ref) => {

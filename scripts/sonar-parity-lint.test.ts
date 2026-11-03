@@ -6,11 +6,12 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 const root = fileURLToPath(new URL("..", import.meta.url));
 
 // Fixtures live beside real sources so the packages' own ESLint configs (type-aware, jsx-a11y)
-// resolve them; they are written for the test and removed afterwards.
-const typesFixture = "packages/types/src/sonar-parity-fixture.ts";
-const typesTestFixture = "packages/types/src/sonar-parity-fixture.test.ts";
+// resolve them; they are written for the test and removed afterwards. `packages/types` keeps its
+// sources at the package root (its tsconfig includes "."), `packages/survey-ui` under `src/`.
+const typesFixture = "packages/types/sonar-parity-fixture.ts";
+const typesTestFixture = "packages/types/sonar-parity-fixture.test.ts";
 const uiFixture = "packages/survey-ui/src/sonar-parity-fixture.tsx";
-const cleanFixture = "packages/types/src/sonar-parity-clean-fixture.ts";
+const cleanFixture = "packages/types/sonar-parity-clean-fixture.ts";
 const fixtures = [typesFixture, typesTestFixture, uiFixture, cleanFixture];
 
 const complexFunction = `function complex(a: number[], b: boolean) {
@@ -80,15 +81,37 @@ describe("Sonar-parity lint rules", () => {
   }, 120_000);
 
   test("the whole-repo lint leaves the backlog rules off", () => {
-    const { ESLINT_SONAR_PARITY: _ignored, ...env } = process.env;
-    const result = spawnSync(
-      process.execPath,
-      [`${root}node_modules/eslint/bin/eslint.js`, "src/sonar-parity-fixture.ts"],
-      { cwd: `${root}packages/types`, encoding: "utf8", env }
-    );
+    const mirroredRules = [
+      "sonarjs/cognitive-complexity",
+      "sonarjs/no-nested-functions",
+      "sonarjs/no-nested-conditional",
+      "sonarjs/no-nested-template-literals",
+      "unicorn/prefer-string-raw",
+      "@typescript-eslint/prefer-optional-chain",
+    ];
+    // The effective config of the fixture, rather than the output of a lint run: a run that fails
+    // before reporting would also contain none of the rule names.
+    const effectiveRules = (parity?: string) => {
+      const { ESLINT_SONAR_PARITY: _ignored, ...env } = process.env;
+      const result = spawnSync(
+        process.execPath,
+        [`${root}node_modules/eslint/bin/eslint.js`, "--print-config", "sonar-parity-fixture.ts"],
+        {
+          cwd: `${root}packages/types`,
+          encoding: "utf8",
+          env: parity ? { ...env, ESLINT_SONAR_PARITY: parity } : env,
+        }
+      );
+      expect(result.status, result.stderr).toBe(0);
+      return (JSON.parse(result.stdout) as { rules: Record<string, unknown[] | undefined> }).rules;
+    };
+    const severityOf = (rules: Record<string, unknown[] | undefined>, rule: string) => rules[rule]?.[0];
 
-    // The same file the staged run rejected: other rules may still report, the mirrored ones may not.
-    const output = `${result.stdout}${result.stderr}`;
-    expect(output).not.toMatch(/sonarjs\/|unicorn\/|prefer-optional-chain/);
+    // Positive control: the same lookup sees the rules once the staged runner turns them on.
+    const staged = effectiveRules("error");
+    for (const rule of mirroredRules) expect(severityOf(staged, rule), `${rule} (staged)`).toBe(2);
+
+    const wholeRepo = effectiveRules();
+    for (const rule of mirroredRules) expect(severityOf(wholeRepo, rule), rule).toBe(0);
   }, 120_000);
 });

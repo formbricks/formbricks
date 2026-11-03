@@ -5,7 +5,6 @@ Read before committing, or opening, updating, or reviewing a pull request.
 ## Commits
 
 Use Conventional Commits (`fix:`, `chore:`, `feat:`), keep commits scoped, and run the relevant checks.
-The rule against publishing agent session links lives in `AGENTS.md` and applies to every commit.
 
 ## Pull requests
 
@@ -14,7 +13,8 @@ It owns the structure, word budget, ticket syntax, coverage evidence, breaking-c
 migration/env reporting. Update the description with every scope change or review fix.
 
 Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
-and names unverified behavior under Open gaps; reviewers challenge that evidence. Release review checks
+and names unverified behavior under Open gaps; reviewers challenge that evidence. A failure called
+pre-existing, flaky or noise names the run on `main` that shows it; without one it goes under Open gaps. Release review checks
 interactions between changes rather than repeating each PR's QA.
 
 ## Reviews

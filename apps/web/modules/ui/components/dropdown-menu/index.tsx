@@ -63,8 +63,8 @@ const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.Dropdown
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
 
 type DropdownMenuContentProps = {
-  className?: string;
-  sideOffset?: number;
+  readonly className?: string;
+  readonly sideOffset?: number;
 } & Omit<React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>, "ref">;
 
 const DropdownMenuContent: React.ComponentType<DropdownMenuPrimitive.DropdownMenuContentProps> =
@@ -93,8 +93,8 @@ const DropdownMenuItem: React.ForwardRefExoticComponent<
 > = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
-    inset?: boolean;
-    icon?: React.ReactNode;
+    readonly inset?: boolean;
+    readonly icon?: React.ReactNode;
   }
 >(({ className, children, inset, icon, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
@@ -165,7 +165,7 @@ const DropdownMenuLabel: React.ComponentType<
 > = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
-    inset?: boolean;
+    readonly inset?: boolean;
   }
 >(({ className, inset, ...props }, ref) => (
   <DropdownMenuPrimitive.Label
@@ -191,7 +191,7 @@ const DropdownMenuSeparator: React.ComponentType<
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
 type DropdownMenuShortcutProps = React.HTMLAttributes<HTMLSpanElement> & {
-  dangerouslySetInnerHTML?: {
+  readonly dangerouslySetInnerHTML?: {
     __html: string;
   };
 };

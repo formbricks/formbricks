@@ -11,9 +11,9 @@ import { Dialog, DialogContent } from "@/modules/ui/components/dialog";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 interface TrialResponseWarningModalProps {
-  threshold: "200" | "250";
-  billingHref: string;
-  responseCount: number;
+  readonly threshold: "200" | "250";
+  readonly billingHref: string;
+  readonly responseCount: number;
 }
 
 export const TrialResponseWarningModal = ({

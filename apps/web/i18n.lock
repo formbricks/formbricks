@@ -660,6 +660,10 @@ checksums:
     common/your_license_has_expired_please_renew: 3f21ae4a7deab351b143b407ece58254
     common/your_profile: 955b66d0455e28c805cc462b8f8d1f11
     emails/accept: f8cc1de4f5e3c850cfdbbc0ec831ade7
+    emails/account_deleted_email_did_not_request: 25d9b22890b15739e812ac2203935f47
+    emails/account_deleted_email_heading: 804400728b6c442c746b32ee02d1795a
+    emails/account_deleted_email_subject: 319a26159c27fd95d550e191267fa289
+    emails/account_deleted_email_text: ba688f66632dfe24d65de4cbe3f49853
     emails/click_or_drag_to_upload_files: 64f59bc339568d52b8464b82546b70ea
     emails/delete_account_email_confirm_deletion: 2981b97792984be2c76286881cdd8ad1
     emails/delete_account_email_did_not_request: 0dbe7e2e9df8451b1eab8242970fd3c2
@@ -3235,10 +3239,12 @@ checksums:
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
     workspace/settings/billing/trial_alert_description: bd1374047e8bde3771cec7a8cfc45c42
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
-    workspace/settings/billing/trial_cancels_automatically: a6805d9b040b561f50e6deae244a600b
-    workspace/settings/billing/trial_ending_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
-    workspace/settings/billing/trial_ending_description: 58ef54fe4179fd2d46150d2e0c2a13f7
+    workspace/settings/billing/trial_cancels_automatically: 6e7b13535744b416c8a78afbda2b2b70
+    workspace/settings/billing/trial_ending_description: 77d65d1af4d82ba0eb53e6f8da58e2b7
+    workspace/settings/billing/trial_ending_description_upgrade: 66e4aa9449fbadd14f2e61f6a638e389
     workspace/settings/billing/trial_ending_title: 3c2b88e6693450a7f38255076414eed5
+    workspace/settings/billing/trial_ending_upgrade: 63c3b52882e0d779859307d672c178c2
+    workspace/settings/billing/trial_ends_on: 1136e2970e79363a2563f9889825379f
     workspace/settings/billing/trial_warning_200_description: 4549a97c1dc6f0a6764076a90e706311
     workspace/settings/billing/trial_warning_200_title: d4e7da79a479619108b585d9736dbc3d
     workspace/settings/billing/trial_warning_250_description: da984b1877c9ef7a6eb989b18275079d

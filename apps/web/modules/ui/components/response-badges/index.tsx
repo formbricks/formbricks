@@ -3,10 +3,10 @@ import { cn } from "@/lib/cn";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 
 interface ResponseBadgesProps {
-  items: { value: string | number; id?: string }[];
-  isExpanded?: boolean;
-  icon?: React.ReactNode;
-  showId: boolean;
+  readonly items: { value: string | number; id?: string }[];
+  readonly isExpanded?: boolean;
+  readonly icon?: React.ReactNode;
+  readonly showId: boolean;
 }
 
 export const ResponseBadges: React.FC<ResponseBadgesProps> = ({

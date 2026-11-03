@@ -61,10 +61,10 @@ const formatRecontactDaysString = (days: number, t: ReturnType<typeof useTransla
 };
 
 interface DisplayCriteriaItemProps {
-  icon: ReactNode;
-  title: ReactNode;
-  titleSuffix?: ReactNode;
-  description: ReactNode;
+  readonly icon: ReactNode;
+  readonly title: ReactNode;
+  readonly titleSuffix?: ReactNode;
+  readonly description: ReactNode;
 }
 
 const DisplayCriteriaItem = ({ icon, title, titleSuffix, description }: DisplayCriteriaItemProps) => {

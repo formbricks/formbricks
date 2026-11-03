@@ -99,6 +99,8 @@ export const sonarParityTyped = ({ severity = stagedSeverity(), ownProject = fal
  */
 export const a11yParity = (severity = "error") => ({
   name: "formbricks/a11y-parity",
+  // Like the other mirrored rules, not applied to tests (Sonar excludes them from its sources).
+  ignores: TEST_FILES,
   rules: {
     "jsx-a11y/no-aria-hidden-on-focusable": severity,
   },

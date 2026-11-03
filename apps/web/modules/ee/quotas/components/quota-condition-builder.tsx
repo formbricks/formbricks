@@ -18,11 +18,11 @@ import type {
 } from "@/modules/ui/components/conditions-editor/types";
 
 interface QuotaConditionBuilderProps {
-  survey: TSurvey;
-  conditions: TSurveyQuotaLogic;
-  onChange: (conditions: TSurveyQuotaLogic) => void;
-  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
-  isSubmitted?: boolean;
+  readonly survey: TSurvey;
+  readonly conditions: TSurveyQuotaLogic;
+  readonly onChange: (conditions: TSurveyQuotaLogic) => void;
+  readonly quotaErrors?: FieldErrors<TSurveyQuotaInput>;
+  readonly isSubmitted?: boolean;
 }
 
 export const QuotaConditionBuilder = ({

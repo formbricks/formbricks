@@ -6,10 +6,10 @@ import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import FilterButton from "./filter-button";
 
 interface AttributeTabContentProps {
-  contactAttributeKeys: TContactAttributeKey[];
-  onAddFilter: (filter: TBaseFilter) => void;
-  setOpen: (open: boolean) => void;
-  handleAddFilter: (args: {
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly onAddFilter: (filter: TBaseFilter) => void;
+  readonly setOpen: (open: boolean) => void;
+  readonly handleAddFilter: (args: {
     type: "attribute" | "person";
     onAddFilter: (filter: TBaseFilter) => void;
     setOpen: (open: boolean) => void;
@@ -30,21 +30,21 @@ function FilterButtonWithHandler({
   contactAttributeKey,
   attributeDataType,
 }: {
-  dataTestId: string;
-  icon: React.ReactNode;
-  label: React.ReactNode;
-  type: "attribute" | "person";
-  onAddFilter: (filter: TBaseFilter) => void;
-  setOpen: (open: boolean) => void;
-  handleAddFilter: (args: {
+  readonly dataTestId: string;
+  readonly icon: React.ReactNode;
+  readonly label: React.ReactNode;
+  readonly type: "attribute" | "person";
+  readonly onAddFilter: (filter: TBaseFilter) => void;
+  readonly setOpen: (open: boolean) => void;
+  readonly handleAddFilter: (args: {
     type: "attribute" | "person";
     onAddFilter: (filter: TBaseFilter) => void;
     setOpen: (open: boolean) => void;
     contactAttributeKey?: string;
     attributeDataType?: TContactAttributeDataType;
   }) => void;
-  contactAttributeKey?: string;
-  attributeDataType?: TContactAttributeDataType;
+  readonly contactAttributeKey?: string;
+  readonly attributeDataType?: TContactAttributeDataType;
 }) {
   return (
     <FilterButton

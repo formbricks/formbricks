@@ -9,7 +9,13 @@ interface RatingResponseProps {
   variant?: "default" | "individual" | "aggregated" | "scale";
 }
 
-const NumberBox = ({ answer, size }: { answer: number; size: "small" | "medium" | "large" }) => {
+const NumberBox = ({
+  answer,
+  size,
+}: {
+  readonly answer: number;
+  readonly size: "small" | "medium" | "large";
+}) => {
   const sizeClasses = {
     small: "h-6 w-6 text-xs",
     medium: "h-7 w-7 text-xs",

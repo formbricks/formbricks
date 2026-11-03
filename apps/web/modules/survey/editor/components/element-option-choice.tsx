@@ -20,20 +20,20 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
-  choice: TSurveyElementChoice;
-  choiceIdx: number;
-  elementIdx: number;
-  updateChoice: (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => void;
-  deleteChoice: (choiceIdx: number) => void;
-  addChoice: (choiceIdx: number) => void;
-  isInvalid: boolean;
-  localSurvey: TSurvey;
-  surveyLanguages: TSurveyLanguage[];
-  element: TSurveyMultipleChoiceElement | TSurveyRankingElement;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  surveyLanguageCodes: string[];
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
+  readonly choice: TSurveyElementChoice;
+  readonly choiceIdx: number;
+  readonly elementIdx: number;
+  readonly updateChoice: (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => void;
+  readonly deleteChoice: (choiceIdx: number) => void;
+  readonly addChoice: (choiceIdx: number) => void;
+  readonly isInvalid: boolean;
+  readonly localSurvey: TSurvey;
+  readonly surveyLanguages: TSurveyLanguage[];
+  readonly element: TSurveyMultipleChoiceElement | TSurveyRankingElement;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly surveyLanguageCodes: string[];
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
 }
 
 export const ElementOptionChoice = ({

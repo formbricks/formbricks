@@ -9,9 +9,9 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 let isInit = false;
 
 interface I18nProviderProps {
-  children: ReactNode;
-  language: string;
-  defaultLanguage: string;
+  readonly children: ReactNode;
+  readonly language: string;
+  readonly defaultLanguage: string;
 }
 
 export const I18nProvider = ({ children, language, defaultLanguage }: I18nProviderProps) => {

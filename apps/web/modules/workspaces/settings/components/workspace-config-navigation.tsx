@@ -7,8 +7,8 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface WorkspaceConfigNavigationProps {
-  activeId: string;
-  loading?: boolean;
+  readonly activeId: string;
+  readonly loading?: boolean;
 }
 
 export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfigNavigationProps) => {

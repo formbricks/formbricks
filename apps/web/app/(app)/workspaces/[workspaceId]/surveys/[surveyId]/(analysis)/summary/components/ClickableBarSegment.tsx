@@ -5,10 +5,10 @@ import { useTranslation } from "react-i18next";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface ClickableBarSegmentProps {
-  children: ReactNode;
-  onClick: () => void;
-  className?: string;
-  style?: CSSProperties;
+  readonly children: ReactNode;
+  readonly onClick: () => void;
+  readonly className?: string;
+  readonly style?: CSSProperties;
 }
 
 export const ClickableBarSegment = ({

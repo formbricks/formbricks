@@ -12,9 +12,9 @@ import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 
 interface DeleteContactButtonProps {
-  contactId: string;
-  isReadOnly: boolean;
-  isQuotasAllowed: boolean;
+  readonly contactId: string;
+  readonly isReadOnly: boolean;
+  readonly isQuotasAllowed: boolean;
 }
 
 export const DeleteContactButton = ({ contactId, isReadOnly, isQuotasAllowed }: DeleteContactButtonProps) => {

@@ -13,7 +13,7 @@ const SelectValue: React.ComponentType<SelectPrimitive.SelectValueProps> = Selec
 
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & { hideArrow?: boolean }
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & { readonly hideArrow?: boolean }
 >(({ className, hideArrow, children, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}

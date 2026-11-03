@@ -19,11 +19,11 @@ import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/compon
 import { PasswordInput } from "@/modules/ui/components/password-input";
 
 interface PasswordConfirmationModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  oldEmail: string;
-  newEmail: string;
-  onConfirm: (password: string) => Promise<void>;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly oldEmail: string;
+  readonly newEmail: string;
+  readonly onConfirm: (password: string) => Promise<void>;
 }
 
 const PasswordConfirmationSchema = z.object({

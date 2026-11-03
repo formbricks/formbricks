@@ -9,8 +9,8 @@ function RadioGroup({
   dir,
   ...props
 }: React.ComponentProps<typeof RadioGroupPrimitive.Root> & {
-  errorMessage?: string;
-  dir?: "ltr" | "rtl";
+  readonly errorMessage?: string;
+  readonly dir?: "ltr" | "rtl";
 }): React.JSX.Element {
   return (
     <RadioGroupPrimitive.Root
