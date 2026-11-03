@@ -20,7 +20,11 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
+import {
+  assertDashboardViewerRoleAvailable,
+  canManagerAssignRole,
+  checkRoleManagementPermission,
+} from "@/modules/ee/role-management/lib/permission";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
@@ -344,13 +348,14 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       parsedInput.teamIds
     );
 
-    if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
+    if (currentUserMembership.role === "manager" && !canManagerAssignRole(parsedInput.role)) {
       throw new OperationNotAllowedError("Managers can only invite users as members");
     }
 
     if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
+    await assertDashboardViewerRoleAvailable(parsedInput.organizationId, [parsedInput.role]);
 
     const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
 
@@ -458,13 +463,20 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new ValidationError("Billing role is not allowed");
     }
 
-    if (currentUserMembership.role === "manager" && invitees.some((invitee) => invitee.role !== "member")) {
+    if (
+      currentUserMembership.role === "manager" &&
+      invitees.some((invitee) => !canManagerAssignRole(invitee.role))
+    ) {
       throw new OperationNotAllowedError("Managers can only invite users as members");
     }
 
     if (invitees.some((invitee) => invitee.role !== "owner" || (invitee.teamIds ?? []).length > 0)) {
       await checkRoleManagementPermission(organizationId);
     }
+    await assertDashboardViewerRoleAvailable(
+      organizationId,
+      invitees.map((invitee) => invitee.role)
+    );
 
     const rateLimitReservation = await reserveInviteRateLimit(organizationId, ctx.user.id, invitees.length);
 

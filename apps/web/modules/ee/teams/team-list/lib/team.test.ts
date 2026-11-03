@@ -313,6 +313,25 @@ describe("updateTeamDetails", () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
     await expect(updateTeamDetails("t1", data)).rejects.toThrow(ResourceNotFoundError);
   });
+  test("refuses to make a Dashboard viewer a team admin, and writes nothing", async () => {
+    vi.mocked(prisma.team.findUnique)
+      .mockResolvedValueOnce({
+        id: "t1",
+        organizationId: "org1",
+        name: "Team 1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .mockResolvedValueOnce(mockTeamDetails);
+    vi.mocked(prisma.membership.count).mockResolvedValueOnce(1).mockResolvedValueOnce(1);
+    vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+
+    await expect(updateTeamDetails("t1", data)).rejects.toThrow("A Dashboard viewer can't be a team admin");
+    expect(prisma.membership.count).toHaveBeenLastCalledWith({
+      where: { userId: { in: ["u1"] }, organizationId: "org1", role: "dashboard_viewer" },
+    });
+    expect(prisma.team.update).not.toHaveBeenCalled();
+  });
   test("throws error if getTeamDetails returns null", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
       id: "t1",

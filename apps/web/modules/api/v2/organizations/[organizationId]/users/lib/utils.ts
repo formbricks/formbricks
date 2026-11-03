@@ -98,7 +98,7 @@ export const getMembershipRoleByEmail = async (
 
 /**
  * Mirrors the role clamp enforced on the settings/session path
- * (modules/ee/role-management/actions.ts): an owner may assign any role, a manager may only assign
+ * (modules/ee/role-management/actions.ts): an owner may assign any role but the Dashboard viewer, a manager may only assign
  * the member role and may not change the role of an existing owner (no demoting owners). Anyone
  * else — including an unresolved creator — may not assign a role at all. This prevents privilege
  * escalation (e.g. a manager promoting a user to owner) through the management API, matching the
@@ -109,6 +109,9 @@ export const canAssignOrganizationRole = (
   targetRole: TOrganizationRole,
   targetCurrentRole?: TOrganizationRole | null
 ): boolean => {
+  // The Dashboard viewer (ADR-0018) is given only in the app, where its entitlement and the rule that it
+  // can't be a team admin are enforced; this legacy API never gives it.
+  if (targetRole === OrganizationRole.dashboard_viewer) return false;
   if (assignerRole === OrganizationRole.owner) return true;
   if (targetCurrentRole === OrganizationRole.owner) return false;
   if (assignerRole === OrganizationRole.manager) return targetRole === OrganizationRole.member;

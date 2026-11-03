@@ -100,6 +100,8 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 vi.mock("@/modules/ee/role-management/lib/permission", () => ({
+  assertDashboardViewerRoleAvailable: vi.fn(async () => undefined),
+  canManagerAssignRole: (role: string) => role === "member" || role === "dashboard_viewer",
   checkRoleManagementPermission: mocks.checkRoleManagementPermission,
 }));
 

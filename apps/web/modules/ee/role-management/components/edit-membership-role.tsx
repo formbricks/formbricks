@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags, getOrganizationRoleLabels } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getAssignableOrganizationRoles } from "@/modules/ee/role-management/lib/assignable-roles";
 import { isRoleEditDisabled } from "@/modules/ee/role-management/lib/role-edit-rules";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -30,6 +31,7 @@ interface Role {
   readonly inviteId?: string;
   readonly doesOrgHaveMoreThanOneOwner?: boolean;
   readonly isFormbricksCloud: boolean;
+  readonly isDashboardViewerRoleEnabled: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
 }
 
@@ -43,6 +45,7 @@ export function EditMembershipRole({
   inviteId,
   doesOrgHaveMoreThanOneOwner,
   isFormbricksCloud,
+  isDashboardViewerRoleEnabled,
   isUserManagementDisabledFromUi,
 }: Role) {
   const { t } = useTranslation();
@@ -96,18 +99,12 @@ export function EditMembershipRole({
     handleMemberRoleUpdate(role);
   };
 
-  const getMembershipRoles = () => {
-    const roles: TOrganizationRole[] = ["member"];
-
-    if (isOwner) {
-      roles.push("manager", "owner");
-
-      if (isFormbricksCloud) {
-        roles.push("billing");
-      }
-    }
-    return roles;
-  };
+  const getMembershipRoles = () =>
+    getAssignableOrganizationRoles({
+      assignerRole: currentUserRole,
+      isFormbricksCloud,
+      isDashboardViewerRoleEnabled,
+    });
 
   if (isOwnerOrManager) {
     return (

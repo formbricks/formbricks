@@ -29,6 +29,7 @@ interface IndividualInviteTabProps {
   readonly organizationId: string;
   readonly isAccessControlAllowed: boolean;
   readonly isFormbricksCloud: boolean;
+  readonly isDashboardViewerRoleEnabled: boolean;
   readonly membershipRole?: TOrganizationRole;
   readonly showTeamAdminRestrictions: boolean;
   readonly enterpriseLicenseRequestFormUrl: string;
@@ -41,6 +42,7 @@ export const IndividualInviteTab = ({
   organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
+  isDashboardViewerRoleEnabled,
   membershipRole,
   showTeamAdminRestrictions,
   enterpriseLicenseRequestFormUrl,
@@ -136,9 +138,10 @@ export const IndividualInviteTab = ({
                 control={control}
                 isAccessControlAllowed={isAccessControlAllowed}
                 isFormbricksCloud={isFormbricksCloud}
+                isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
                 membershipRole={membershipRole}
               />
-              {watch("role") === "member" && (
+              {(watch("role") === "member" || watch("role") === "dashboard_viewer") && (
                 <Alert className="mt-2" variant="info">
                   <AlertDescription>
                     {t("workspace.settings.teams.member_role_info_message")}

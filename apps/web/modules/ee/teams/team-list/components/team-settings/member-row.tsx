@@ -56,6 +56,8 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
       ? !canEditWhenNoMember
       : chosenMember.role === "owner" ||
         chosenMember.role === "manager" ||
+        // A Dashboard viewer is always a contributor: it can't be a team admin (ADR-0018).
+        chosenMember.role === "dashboard_viewer" ||
         isTeamContributorMember ||
         chosenMember.id === currentUserId;
 

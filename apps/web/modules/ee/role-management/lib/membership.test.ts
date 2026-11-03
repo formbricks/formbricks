@@ -119,6 +119,27 @@ describe("updateMembership", () => {
     });
   });
 
+  test("demotes a Dashboard viewer's team admin roles to contributor, keeping the teams", async () => {
+    vi.mocked(prisma.membership.update).mockResolvedValue({
+      userId: "user1",
+      organizationId: "org1",
+      role: "dashboard_viewer",
+      accepted: true,
+    } as never);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([{ teamId: "team1" }] as never);
+
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" });
+
+    expect(prisma.teamUser.updateMany).toHaveBeenCalledTimes(1);
+    expect(prisma.teamUser.updateMany).toHaveBeenCalledWith({
+      where: { userId: "user1", role: "admin", team: { organizationId: "org1" } },
+      data: { role: "contributor" },
+    });
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId: "team1", userId: "user1" }],
+    });
+  });
+
   test("includes memberships added while team roles are being updated in reconciliation", async () => {
     const mockMembership = {
       id: "1",

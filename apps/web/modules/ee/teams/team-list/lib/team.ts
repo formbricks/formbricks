@@ -4,7 +4,12 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { validateInputs } from "@/lib/utils/validate";
@@ -333,6 +338,17 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       });
       if (orgUsersCount !== userIds.length) {
         throw new Error("Some specified users do not belong to the organization's membership.");
+      }
+    }
+
+    // A Dashboard viewer can't be a team admin (ADR-0018): admins manage the team and invite people.
+    const adminIds = members.filter((m) => m.role === "admin").map((m) => m.userId);
+    if (adminIds.length > 0) {
+      const viewerAdminCount = await prisma.membership.count({
+        where: { userId: { in: adminIds }, organizationId: team.organizationId, role: "dashboard_viewer" },
+      });
+      if (viewerAdminCount > 0) {
+        throw new OperationNotAllowedError("A Dashboard viewer can't be a team admin");
       }
     }
 

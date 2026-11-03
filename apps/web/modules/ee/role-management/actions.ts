@@ -16,7 +16,11 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
+import {
+  assertDashboardViewerRoleAvailable,
+  canManagerAssignRole,
+  checkRoleManagementPermission,
+} from "@/modules/ee/role-management/lib/permission";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
@@ -47,11 +51,12 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
       throw new ValidationError("Billing role is not allowed");
     }
 
-    if (currentUserMembership.role === "manager" && parsedInput.data.role !== "member") {
+    if (currentUserMembership.role === "manager" && !canManagerAssignRole(parsedInput.data.role)) {
       throw new OperationNotAllowedError("Managers can only invite members");
     }
 
     await checkRoleManagementPermission(organizationId);
+    await assertDashboardViewerRoleAvailable(organizationId, [parsedInput.data.role]);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
@@ -104,7 +109,7 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
       throw new ValidationError("Billing role is not allowed");
     }
 
-    if (currentUserMembership.role === "manager" && parsedInput.data.role !== "member") {
+    if (currentUserMembership.role === "manager" && !canManagerAssignRole(parsedInput.data.role)) {
       throw new OperationNotAllowedError("Managers can only assign users to the member role");
     }
 
@@ -117,6 +122,7 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     }
 
     await checkRoleManagementPermission(parsedInput.organizationId);
+    await assertDashboardViewerRoleAvailable(parsedInput.organizationId, [parsedInput.data.role]);
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
