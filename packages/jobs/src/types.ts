@@ -85,6 +85,18 @@ export type TUsageTelemetryJobData = TGlobalScopeJobData;
 export const ZWorkflowsUsageSnapshotJobData = ZGlobalScopeJobData;
 export type TWorkflowsUsageSnapshotJobData = TGlobalScopeJobData;
 
+export const ZAttachmentExportJobData = z.object({
+  attachmentExportId: z.cuid2(),
+  workspaceId: z.cuid2(),
+});
+
+export type TAttachmentExportJobData = z.infer<typeof ZAttachmentExportJobData>;
+
+// A global sweep over every export, like the workflow run reconciler; it carries no export ids.
+export const ZAttachmentExportReconcileJobData = ZGlobalScopeJobData;
+
+export type TAttachmentExportReconcileJobData = TGlobalScopeJobData;
+
 export const ZWorkflowRunJobData = z.object({
   workflowRunId: z.cuid2(),
   workflowId: z.cuid2(),

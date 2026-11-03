@@ -6,36 +6,23 @@ import { StorageErrorCode } from "@formbricks/storage";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { type TAttachmentEntry } from "@/modules/storage/lib/collect-response-attachments";
 import { getFileStreamForDownload } from "@/modules/storage/service";
+import { MAX_ATTACHMENT_BYTES } from "./constants";
 import { buildAttachmentManifestCsv } from "./manifest";
 
 /**
- * Streams a survey's response attachments as a ZIP (ENG-1256).
+ * Writes a survey's response attachments into a ZIP (ENG-1256, ENG-6862).
  *
- * Synchronous by design. `output: "standalone"` means a long-lived node server, so there is no
- * serverless time cap, and a ZIP stream emits bytes continuously, so proxy idle timeouts do not fire
- * either. The download begins about a second after the click because the route streams while it
- * collects, rather than assembling an archive first.
+ * Two consumers share {@link writeAttachmentArchive}:
  *
- * A background job would not shorten that wait — the same objects still have to be fetched — it would
- * only move it out of sight, and it would need an export-status table, an S3 round trip for the archive,
- * a notify channel, TTL cleanup and an authenticated link to an archive of respondent data sitting at
- * rest. What it would buy is resumability when a connection drops mid-download, and exports too large
- * for one request to hold. Revisit it when real surveys need either.
- *
- * Not because the worker is unavailable: `BULLMQ_WORKER_ENABLED` defaults on outside tests and
- * `REDIS_URL` is required, so a job would run on essentially every install. An earlier version of this
- * comment claimed otherwise.
+ * - The background job (`process-attachment-export-job.ts`) pipes the archive into a multipart upload,
+ *   and the browser downloads the finished object through a presigned URL. Storage serves `Range`, so a
+ *   dropped connection resumes instead of starting over, and the download never passes through our load
+ *   balancer or pods. This is the default path.
+ * - {@link streamAttachmentsAsZip} streams the archive as the HTTP response itself. A dropped connection
+ *   loses the whole transfer, and a proxy that caps total response time (GCP's backend timeout does)
+ *   cuts it. Kept for one release as the fallback while a rolling upgrade still has pods that cannot run
+ *   the job; remove it after.
  */
-
-/** Above this the export is refused outright: narrowing the filter is the intended remedy. */
-export const MAX_ATTACHMENT_FILES = 5000;
-
-/**
- * The archive stops before crossing this, and says so in `_TRUNCATED.txt`. Enforced mid-stream rather
- * than pre-flighted: object sizes are not in the database, so checking first would mean thousands of S3
- * HEAD requests.
- */
-export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024 * 1024;
 
 const TRUNCATION_NOTE_PATH = "_TRUNCATED.txt";
 const MANIFEST_PATH = "manifest.csv";
@@ -50,7 +37,7 @@ export const buildAttachmentArchiveFileName = (survey: TSurvey, now: Date): stri
  * archive does not reach through it either — so a client that cancels a multi-gigabyte download would
  * leave the in-flight S3 stream open. Whoever tears the archive down destroys this instead.
  */
-interface ActiveSource {
+export interface ActiveSource {
   stream: Readable | null;
 }
 
@@ -108,11 +95,24 @@ const statusForStorageError = (code: StorageErrorCode): TAttachmentEntry["status
 const buildTruncationNote = (fileCount: number): string =>
   `This archive was truncated after ${fileCount} files because the export reached the ${MAX_ATTACHMENT_BYTES} byte limit.\nNarrow the response filter and download again to get the rest.\n`;
 
-const streamArchive = async (
+export interface AttachmentArchiveSummary {
+  /** Attachments written into the archive. */
+  appendedFiles: number;
+  /** Their combined size, as storage reported it. Not the archive's size: see `archive.pointer()`. */
+  attachmentBytes: number;
+  /** The byte ceiling stopped the archive early; `_TRUNCATED.txt` and the manifest say so. */
+  truncated: boolean;
+}
+
+/**
+ * Appends every entry, the truncation note and the manifest, then finalizes the archive. Resolves once
+ * the last byte is queued; the consumer of the archive stream decides when it is actually delivered.
+ */
+export const writeAttachmentArchive = async (
   entries: TAttachmentEntry[],
   archive: Archiver,
   activeSource: ActiveSource
-): Promise<void> => {
+): Promise<AttachmentArchiveSummary> => {
   // Mirrors the collector's report, with a row's status overwritten when storage cannot produce the
   // object and each row's size filled in as storage reports it. It stays a full mirror even after a
   // truncation: a row saying a file was dropped is the only thing in the archive that names it, and
@@ -136,8 +136,9 @@ const streamArchive = async (
     );
 
     if (!streamResult.ok) {
-      // The response is already committed with a 200, so a storage failure cannot become an error
-      // status. Record it in the manifest instead of leaving the file silently absent.
+      // One unreadable object must not sink the whole archive (and once a streamed response has sent
+      // its 200 it could not become an error status anyway). Record it in the manifest instead of
+      // leaving the file silently absent.
       const status = statusForStorageError(streamResult.error.code);
       logger.warn(
         { zipPath: entry.zipPath, error: streamResult.error },
@@ -177,19 +178,21 @@ const streamArchive = async (
   archive.append(await buildAttachmentManifestCsv(manifestRows), { name: MANIFEST_PATH });
 
   await archive.finalize();
+
+  return { appendedFiles, attachmentBytes: totalBytes, truncated: truncatedFrom !== null };
 };
 
-export const streamAttachmentsAsZip = ({
-  entries,
-  survey,
-  now,
-}: {
-  entries: TAttachmentEntry[];
-  survey: TSurvey;
-  now: Date;
-}): Response => {
+export interface AttachmentArchive {
+  archive: Archiver;
+  activeSource: ActiveSource;
+  /** Tears down the storage stream being read, which closing the archive does not reach. */
+  destroyActiveSource: () => void;
+}
+
+/** A ZIP archive configured for attachments, with its in-flight storage stream wired for teardown. */
+export const createAttachmentArchive = (): AttachmentArchive => {
   // level 0: photos and PDFs — what a file-upload element collects — do not compress, so deflating them
-  // would burn CPU on the request path for nothing. zip64 because the archive can exceed 4 GB.
+  // would burn CPU for nothing. zip64 because the archive can exceed 4 GB.
   // archiver 8 dropped the `archiver("zip", …)` factory in favour of the format classes.
   const archive = new ZipArchive({ zlib: { level: 0 }, forceZip64: true });
   const activeSource: ActiveSource = { stream: null };
@@ -204,13 +207,27 @@ export const streamAttachmentsAsZip = ({
     logger.warn({ warning }, "Attachment export: archiver warning");
   });
 
-  // A cancelled download closes the archive without draining what was appended to it, so the storage
+  // A cancelled consumer closes the archive without draining what was appended to it, so the storage
   // stream in flight has to be torn down here.
   archive.on("close", destroyActiveSource);
   archive.on("error", destroyActiveSource);
 
+  return { archive, activeSource, destroyActiveSource };
+};
+
+export const streamAttachmentsAsZip = ({
+  entries,
+  survey,
+  now,
+}: {
+  entries: TAttachmentEntry[];
+  survey: TSurvey;
+  now: Date;
+}): Response => {
+  const { archive, activeSource, destroyActiveSource } = createAttachmentArchive();
+
   // Not awaited: the Response must be returned before the archive drains, or no bytes ever flow.
-  void streamArchive(entries, archive, activeSource).catch((error: unknown) => {
+  void writeAttachmentArchive(entries, archive, activeSource).catch((error: unknown) => {
     logger.error({ error, surveyId: survey.id }, "Attachment export failed mid-stream");
     destroyActiveSource();
     archive.abort();

@@ -69,7 +69,7 @@ cat > /tmp/formbricks-policy.json << EOF
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+      "Action": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
       "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME/*"]
     },
     {
