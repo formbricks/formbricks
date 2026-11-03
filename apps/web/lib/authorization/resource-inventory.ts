@@ -57,6 +57,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Organization: "direct_authorization_resource",
   OrganizationBilling: "authentication_or_application",
   OutboundEmailAudit: "authentication_or_application",
+  OutboundEmailAuditErasureIntent: "authentication_or_application",
   // This is a Prisma model name and a classification label, not a credential or credential value.
   PasswordResetToken: "authentication_or_application", // NOSONAR
   Response: "direct_authorization_resource",
