@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   DEFAULT_PRO_TRIAL_DAYS,
   addOptimisticBillingFeature,
@@ -527,6 +527,65 @@ describe("organization-billing", () => {
     expect(result).toEqual(billing);
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
   });
+
+  // ENG-4035: copy promising "no charge" at trial end is gated on this flag, so it must mirror Stripe.
+  test.each([
+    { cancelAt: 1742515200, expected: true, label: "cancels at the exact trial end" },
+    { cancelAt: null, expected: false, label: "has no cancellation (created before ENG-4035)" },
+    { cancelAt: 1742601600, expected: false, label: "cancels after the trial end, leaving a billable gap" },
+  ])(
+    "syncOrganizationBillingFromStripe records trialEndsOnHobby=$expected when the trial $label",
+    async ({ cancelAt, expected }) => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date(),
+        stripe: { lastSyncedEventId: null },
+      });
+      mocks.subscriptionsList.mockResolvedValue({
+        data: [
+          {
+            id: "sub_trial",
+            status: "trialing",
+            billing_cycle_anchor: 1739923200,
+            cancel_at_period_end: false,
+            cancel_at: cancelAt,
+            trial_end: 1742515200,
+            schedule: null,
+            items: {
+              data: [
+                {
+                  id: "si_pro_base",
+                  current_period_end: 1742515200,
+                  price: {
+                    id: "price_pro_monthly",
+                    metadata: {
+                      formbricks_plan: "pro",
+                      formbricks_price_kind: "base",
+                      formbricks_interval: "monthly",
+                    },
+                    product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                    recurring: { usage_type: "licensed", interval: "month" },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+      await syncOrganizationBillingFromStripe("org_1");
+
+      expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            stripe: expect.objectContaining({ subscriptionStatus: "trialing", trialEndsOnHobby: expected }),
+          }),
+        })
+      );
+    }
+  );
 
   test("syncOrganizationBillingFromStripe stores hobby plan when customer has no active subscription", async () => {
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
@@ -1106,6 +1165,7 @@ describe("organization-billing", () => {
         { price: "price_hobby_monthly", quantity: 1 },
       ],
       trial_end: "now",
+      cancel_at: "",
       proration_behavior: "none",
       trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
     });
@@ -1190,6 +1250,7 @@ describe("organization-billing", () => {
         { price: "price_hobby_monthly", quantity: 1 },
       ],
       trial_end: "now",
+      cancel_at: "",
       proration_behavior: "none",
       trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
     });
@@ -1334,6 +1395,7 @@ describe("organization-billing", () => {
         { price: "price_hobby_monthly", quantity: 1 },
       ],
       trial_end: "now",
+      cancel_at: "",
       proration_behavior: "none",
       trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
     });
@@ -1573,6 +1635,88 @@ describe("organization-billing", () => {
     );
   });
 
+  test("a declined upgrade keeps a trial's cancel flag, so its Hobby fallback survives", async () => {
+    // Sending cancel_at_period_end false also clears cancel_at on Stripe. Only the conversion update may
+    // clear it: error_if_incomplete rolls that back on a decline, a separate earlier update would not.
+    // A trial carrying a pending downgrade tracked via cancel_at_period_end (no schedule). Adding a
+    // card and upgrading to paid Pro must supersede that pending downgrade, otherwise the Hobby card
+    // keeps showing a stale "Scheduled" badge after the upgrade.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          automatic_tax: { enabled: true },
+          billing_cycle_anchor: 1739923200,
+          // The pending hobby downgrade is tracked here, not via a schedule.
+          cancel_at_period_end: true,
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: "2026-08-11T00:00:00.000Z",
+        },
+      },
+    });
+
+    mocks.subscriptionsUpdate.mockImplementation(async (_id: string, args: Record<string, unknown>) => {
+      if (args.trial_end === "now") throw new Error("card_declined");
+      return {};
+    });
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("card_declined");
+
+    const cancelFlagClears = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([, args]) => "cancel_at_period_end" in args || ("cancel_at" in args && args.trial_end !== "now")
+    );
+    expect(cancelFlagClears).toHaveLength(0);
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({ trial_end: "now", cancel_at: "", payment_behavior: "error_if_incomplete" })
+    );
+  });
+
   // Shared fixture: a card-backed Pro trial with `remaining` days left on the trial.
   const setupCardBackedProTrial = (remainingDays: number) => {
     const trialEnd = Math.floor(Date.now() / 1000) + remainingDays * 86_400;
@@ -1635,12 +1779,13 @@ describe("organization-billing", () => {
     });
 
     expect(result.mode).toBe("immediate");
-    // Single update: ends the trial and charges the full plan price synchronously; no credits,
-    // coupons, or balance mutations ride along.
+    // Single update: ends the trial, drops the trial's cancel_at Hobby fallback, and charges the full
+    // plan price synchronously; no credits, coupons, or balance mutations ride along.
     expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
       "sub_trial",
       expect.objectContaining({
         trial_end: "now",
+        cancel_at: "",
         proration_behavior: "always_invoice",
         payment_behavior: "error_if_incomplete",
       })
@@ -1671,6 +1816,15 @@ describe("organization-billing", () => {
       ([id, args]) => id === "sub_trial" && args.trial_end === "now"
     );
     expect(conversionUpdates).toHaveLength(1);
+    // Nothing outside the rolled-back conversion cleared cancel_at (sending cancel_at_period_end false
+    // clears it too), so the trial still ends on Hobby instead of a paid invoice.
+    const fallbackClears = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id, args]) =>
+        id === "sub_trial" &&
+        args.trial_end !== "now" &&
+        ("cancel_at" in args || "cancel_at_period_end" in args)
+    );
+    expect(fallbackClears).toHaveLength(0);
   });
 
   test("previewImmediateUpgradeCharge quotes Stripe's full invoice total for a trial conversion", async () => {
@@ -1767,7 +1921,7 @@ describe("organization-billing", () => {
     });
 
     const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
-    expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now" });
+    expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now", cancel_at: "" });
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {
@@ -2362,6 +2516,124 @@ describe("organization-billing", () => {
     ).rejects.toThrow("current phase has no end date");
 
     expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
+  });
+
+  test("undoPendingOrganizationPlanChange on a trial keeps its Hobby fallback while dropping the flag", async () => {
+    // Clearing cancel_at_period_end would also clear cancel_at, so a saved card would be billed at trial end.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: true,
+          cancel_at: 1742515200,
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+      },
+    });
+
+    await undoPendingOrganizationPlanChange("org_1", "cus_1");
+
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", { cancel_at: 1742515200 });
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", { cancel_at_period_end: false });
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { stripe: expect.objectContaining({ pendingChange: null }) },
+      })
+    );
+  });
+
+  test("undoPendingOrganizationPlanChange on a trial with a schedule re-applies the fallback after releasing it", async () => {
+    // Releasing the schedule can drop its cancellation, so cancel_at is set again at the exact trial end.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          cancel_at: 1742515200,
+          trial_end: 1742515200,
+          schedule: "sched_trial",
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+      },
+    });
+
+    await undoPendingOrganizationPlanChange("org_1", "cus_1");
+
+    expect(mocks.subscriptionSchedulesRelease).toHaveBeenCalledWith("sched_trial", {
+      preserve_cancel_date: false,
+    });
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", { cancel_at: 1742515200 });
+    expect(mocks.subscriptionSchedulesRelease.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.subscriptionsUpdate.mock.invocationCallOrder[0]
+    );
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", { cancel_at_period_end: false });
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { stripe: expect.objectContaining({ pendingChange: null }) },
+      })
+    );
   });
 
   test("undoPendingOrganizationPlanChange clears the pending snapshot", async () => {
@@ -3323,29 +3595,94 @@ describe("organization-billing", () => {
       });
     });
 
-    // The trial length only reaches Stripe through `trial_period_days`. Assert on the Stripe call
-    // itself: every other test mocks this function away, so a hardcoded value here would be the
-    // A/B test silently running a 14-day trial for both arms while PostHog reports 7.
-    test("sends the resolved trial length to Stripe as trial_period_days", async () => {
-      await createProTrialSubscription("org_1", "cus_1", 7);
+    // The trial length only reaches Stripe through `trial_end`. Assert on the Stripe call itself:
+    // every other test mocks this function away, so a hardcoded value here would be the A/B test
+    // silently running a 14-day trial for both arms while PostHog reports 7.
+    describe("trial end", () => {
+      const nowMs = Date.UTC(2026, 9, 23, 15, 41, 2);
+      const nowUnix = Math.floor(nowMs / 1000);
 
-      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customer: "cus_1",
-          trial_period_days: 7,
-          metadata: { organizationId: "org_1" },
-        }),
-        { idempotencyKey: "create-pro-trial-org_1" }
-      );
+      beforeEach(() => {
+        vi.useFakeTimers({ now: nowMs, toFake: ["Date"] });
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      test("sends the resolved trial length to Stripe as trial_end", async () => {
+        await createProTrialSubscription("org_1", "cus_1", 7);
+
+        expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            customer: "cus_1",
+            trial_end: nowUnix + 7 * 86_400,
+            metadata: { organizationId: "org_1" },
+          }),
+          { idempotencyKey: "create-pro-trial-org_1" }
+        );
+      });
+
+      test("defaults to the 14-day trial when no trial length is passed", async () => {
+        await createProTrialSubscription("org_1", "cus_1");
+
+        expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ trial_end: nowUnix + DEFAULT_PRO_TRIAL_DAYS * 86_400 }),
+          { idempotencyKey: "create-pro-trial-org_1" }
+        );
+      });
+
+      // ENG-4035: a card on file must not turn the free trial into a paid invoice. The subscription
+      // cancels at the exact second the trial ends (any gap is billed), so Stripe never invoices Pro.
+      test("cancels the subscription at the exact trial end so expiry never bills Pro", async () => {
+        await createProTrialSubscription("org_1", "cus_1", 7);
+
+        const [createArgs] = mocks.subscriptionsCreate.mock.calls[0];
+        expect(createArgs).toMatchObject({
+          trial_end: nowUnix + 7 * 86_400,
+          cancel_at: nowUnix + 7 * 86_400,
+          proration_behavior: "none",
+          trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+        });
+        expect(createArgs.trial_period_days).toBeUndefined();
+      });
     });
 
-    test("defaults to the 14-day trial when no trial length is passed", async () => {
-      await createProTrialSubscription("org_1", "cus_1");
+    describe("a repeated call on the same idempotency key", () => {
+      // No email means the trial-already-used check is skipped, so a second call reaches Stripe again,
+      // now with a later trial_end on the same key — Stripe rejects it instead of replaying the first.
+      const idempotencyConflict = () =>
+        new Stripe.errors.StripeIdempotencyError({
+          type: "idempotency_error",
+          message:
+            "Keys for idempotent requests can only be used with the same parameters they were first used with.",
+        });
 
-      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ trial_period_days: DEFAULT_PRO_TRIAL_DAYS }),
-        { idempotencyKey: "create-pro-trial-org_1" }
-      );
+      beforeEach(() => {
+        mocks.customersRetrieve.mockResolvedValue({ id: "cus_1", deleted: false, email: null });
+        mocks.subscriptionsCreate.mockRejectedValueOnce(idempotencyConflict());
+      });
+
+      test("returns the trial the first call created", async () => {
+        mocks.subscriptionsList.mockResolvedValue({
+          data: [{ id: "sub_trial", status: "trialing", metadata: { organizationId: "org_1" } }],
+        });
+
+        await expect(createProTrialSubscription("org_1", "cus_1", 7)).resolves.toBeUndefined();
+        expect(mocks.subscriptionsList).toHaveBeenCalledWith(
+          expect.objectContaining({ customer: "cus_1", status: "trialing" })
+        );
+      });
+
+      test("still fails when no trial exists for the organization", async () => {
+        mocks.subscriptionsList.mockResolvedValue({
+          data: [{ id: "sub_other", status: "trialing", metadata: { organizationId: "org_2" } }],
+        });
+
+        await expect(createProTrialSubscription("org_1", "cus_1", 7)).rejects.toBeInstanceOf(
+          Stripe.errors.StripeIdempotencyError
+        );
+      });
     });
 
     test("does not create a trial subscription when the email already used a Pro trial", async () => {

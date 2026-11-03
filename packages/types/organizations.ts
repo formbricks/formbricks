@@ -36,6 +36,8 @@ export const ZOrganizationStripeBilling = z.object({
   lastSyncedAt: z.string().nullable().optional(),
   lastSyncedEventId: z.string().nullable().optional(),
   trialEnd: z.string().nullable().optional(),
+  // The trial cancels at its exact end on Stripe, so it ends on Hobby without a charge (ENG-4035).
+  trialEndsOnHobby: z.boolean().optional(),
   pendingChange: ZOrganizationStripePendingChange.nullable().optional(),
   paymentAttemptError: z
     .object({
