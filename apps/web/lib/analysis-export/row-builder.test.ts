@@ -106,6 +106,12 @@ describe("response columns", () => {
     expect(names).not.toContain("timestamp");
   });
 
+  test("the metadata fields do not add a second language column", () => {
+    const { names } = run([colors], [response({ e1: "Red" })], { fields: { metadata: true } });
+    expect(names.filter((name) => name.endsWith("language"))).toEqual(["language"]);
+    expect(names).toContain("country");
+  });
+
   test("selected fields add timestamp, finished, tags, contact and quotas columns", () => {
     const builder = createAnalysisRowBuilder({
       survey: surveyWith([colors]),

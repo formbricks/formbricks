@@ -665,7 +665,11 @@ const buildEmbeddedColumns = ({
   };
 
   if (fields.metadata) {
-    for (const entry of getReservedExportEntries(survey as TSurvey)) {
+    // The response's own `language` column is always there; the metadata field is the same fact again.
+    const metadataEntries = getReservedExportEntries(survey as TSurvey).filter(
+      (entry) => entry.name !== "language"
+    );
+    for (const entry of metadataEntries) {
       add(snakeCase(entry.name), entry.name, entry.dataType, "metadata", (_r, reserved) =>
         toCell(coerceToEmbeddedDataType(reserved[entry.name], entry.dataType))
       );
