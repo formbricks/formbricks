@@ -89,7 +89,14 @@ describe("POST /api/internal/onboarding-invites", () => {
     expect(mocks.checkSetupInviteAuthorization).toHaveBeenCalledWith(USER_ID, ORG_ID);
     expect(mocks.reserveInviteRateLimit).toHaveBeenCalledWith(ORG_ID, USER_ID);
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
-    expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(INVITE_ID, BODY.email, "Inviter", "", ORG_ID);
+    expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+      INVITE_ID,
+      BODY.email,
+      "Inviter",
+      "",
+      ORG_ID,
+      USER_ID
+    );
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "created",

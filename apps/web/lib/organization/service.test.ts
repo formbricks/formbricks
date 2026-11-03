@@ -15,6 +15,7 @@ import {
   cleanupStripeCustomer,
   ensureCloudStripeSetupForOrganization,
 } from "@/modules/ee/billing/lib/organization-billing";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import {
   createOrganization,
@@ -92,11 +93,16 @@ vi.mock("@/modules/hub/service", () => ({
 vi.mock("@/modules/storage/service", () => ({
   deleteWorkspaceFilesBestEffort: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe("Organization Service", () => {
   beforeEach(() => {
     vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined);
     vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue(["org1"]);
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+    vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -424,6 +430,13 @@ describe("Organization Service", () => {
   });
 
   describe("deleteOrganization", () => {
+    test("does not delete the organization when the audit erasure request fails", async () => {
+      vi.mocked(requestEmailAuditErasureRequired).mockRejectedValueOnce(new Error("audit store unavailable"));
+
+      await expect(deleteOrganization("org1")).rejects.toThrow("audit store unavailable");
+      expect(prisma.organization.delete).not.toHaveBeenCalled();
+    });
+
     test("should call cleanupStripeCustomer when cloud and stripeCustomerId exists", async () => {
       vi.mocked(prisma.organization.delete).mockResolvedValue({
         id: "org1",

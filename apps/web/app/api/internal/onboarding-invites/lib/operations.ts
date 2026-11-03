@@ -80,7 +80,7 @@ export async function createOnboardingInviteOperation({
   // Best-effort, like the other invite paths: the invite already exists and can be shared by link, so a
   // failed or rate-limited email must not strand it behind "Invite already exists" on a retry.
   try {
-    await sendInviteMemberEmail(inviteId, body.email, user.name, "", body.organizationId);
+    await sendInviteMemberEmail(inviteId, body.email, user.name, "", body.organizationId, user.id);
   } catch (error) {
     logger.error({ err: error }, "Failed to send onboarding invite email");
   }

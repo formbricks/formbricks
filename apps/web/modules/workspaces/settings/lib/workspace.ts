@@ -18,6 +18,7 @@ import { DEFAULT_LOCALE } from "@/lib/constants";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteFile, deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import { parseStorageFileUrl } from "@/modules/storage/utils";
 
@@ -472,13 +473,14 @@ export const createWorkspace = async (
   return workspace;
 };
 
-type TWorkspaceDeletionDbClient = typeof prisma | Prisma.TransactionClient;
+type TWorkspaceDeletionDbClient = Prisma.TransactionClient;
 
 const deleteWorkspaceRecord = async (db: TWorkspaceDeletionDbClient, workspaceId: string) => {
   const feedbackDirectoryAssignments = await db.feedbackDirectoryWorkspace.findMany({
     where: { workspaceId },
     select: { feedbackDirectoryId: true, workspaceId: true },
   });
+  await requestEmailAuditErasureRequired({ workspaceId }, db);
   const workspace = await db.workspace.delete({
     where: {
       id: workspaceId,
@@ -517,7 +519,10 @@ const throwWorkspaceDeletionError = (error: unknown): never => {
 
 export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> => {
   try {
-    return await completeWorkspaceDeletion(workspaceId, await deleteWorkspaceRecord(prisma, workspaceId));
+    const deletion = await prisma.$transaction((tx) => deleteWorkspaceRecord(tx, workspaceId), {
+      timeout: 60_000,
+    });
+    return await completeWorkspaceDeletion(workspaceId, deletion);
   } catch (error) {
     return throwWorkspaceDeletionError(error);
   }

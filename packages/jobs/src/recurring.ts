@@ -71,6 +71,11 @@ export const defineRecurringJob = ({
 
 /** Every recurring job in the system. Adding one here wires the registry, the producer and the exports. */
 export const recurringJobDescriptors = {
+  emailAuditMaintenance: defineRecurringJob({
+    label: "email audit maintenance",
+    name: JOB_NAMES.emailAuditMaintenance,
+    scheduleId: "email-audit-maintenance",
+  }),
   // Its own queue: a delivery stuck behind a long job (the nightly archive purge, a cleanup drain)
   // makes every authorization check fail closed.
   authzedProjectionDelivery: defineRecurringJob({

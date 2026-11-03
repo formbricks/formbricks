@@ -6,6 +6,7 @@ import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import {
   type TRetentionTargetState,
   getDueRetentionStep,
@@ -197,6 +198,7 @@ export const deleteDueResponses = async (
         surveyId: survey.id,
         id: { in: due.map((row) => row.id) },
       });
+      await requestEmailAuditErasureRequired({ responseIds: deletedIds }, tx);
       // Oldest first, so the last of `due` still in `deletedIds` is the newest. `deletedIds` are the rows
       // the helper read just before its delete, not a record of what the delete removed: a row a person
       // deletes in between can still be among them, or be missing from them if it went earlier. What keeps
