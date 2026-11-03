@@ -153,6 +153,8 @@ interface StepOutcome {
 
 /** The survey/response/branding context, loaded once per run, that every step renders against. */
 interface RunEmailContext {
+  workflowId?: string;
+  configuredByUserId?: string;
   survey: TSurvey;
   response: TResponse;
   logoUrl: string;
@@ -223,6 +225,15 @@ const sendResolvedEmail = async (
     // is only used to derive the stable Message-ID domain, never as the actual sender.
     const sent = await sendEmail({
       emailType: "workflow_email",
+      auditContext: {
+        trigger: "workflow",
+        organizationId: emailContext.rateLimit.organizationId,
+        surveyId: emailContext.survey.id,
+        responseId: emailContext.response.id,
+        workflowRunId,
+        workflowId: emailContext.workflowId,
+        configuredByUserId: emailContext.configuredByUserId,
+      },
       to: recipient.email,
       replyTo: config.replyTo.length > 0 ? config.replyTo.join(", ") : undefined,
       subject,
@@ -528,6 +539,7 @@ const loadRunEmailContext = async (
     response,
     logoUrl,
     allowedRecipientEmails,
+    configuredByUserId: actorUserId ?? undefined,
     rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },
   };
 };
@@ -577,12 +589,10 @@ const executeClaimedRun = async (
   const definition = resolveExecutableDefinition(run);
   const steps = planExecutableSteps(definition);
 
-  const emailContext = await loadRunEmailContext(
-    triggerPayload,
-    workspaceId,
-    steps,
-    run.workflow.createdBy ?? null
-  );
+  const emailContext = {
+    ...(await loadRunEmailContext(triggerPayload, workspaceId, steps, run.workflow.createdBy ?? null)),
+    workflowId: logContext.workflowId,
+  };
   const outcome = await runSteps(steps, run.id, emailContext, logContext);
 
   if (outcome.bail) {

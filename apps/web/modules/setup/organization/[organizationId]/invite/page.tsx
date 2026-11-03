@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 interface InvitePageProps {
-  params: Promise<{ organizationId: string }>;
+  readonly params: Promise<{ organizationId: string }>;
 }
 
 export const InvitePage = async (props: InvitePageProps) => {

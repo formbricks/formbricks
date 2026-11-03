@@ -493,6 +493,11 @@ describe("createV3Creative", () => {
     ]);
   });
 
+  test("stores Use browser language by default as sent, and never chosen when omitted", async () => {
+    expect((await created(feedbackButton())).autoSelectLanguage).toBeNull();
+    expect((await created(feedbackButton({ autoSelectLanguage: true }))).autoSelectLanguage).toBe(true);
+  });
+
   test("a banner without a button is a notice only and can't open anything", async () => {
     const notice = await created(banner({ status: "inProgress" }));
     const response = await createV3Creative({
@@ -713,6 +718,15 @@ describe("patchV3Creative", () => {
     expect(data.schedule).toEqual(original.schedule);
     expect(data.content).toEqual(original.content);
     expect(data.destination).toEqual(original.destination);
+  });
+
+  test("changes Use browser language by default only when it is sent", async () => {
+    const { id } = await created(feedbackButton({ autoSelectLanguage: true }));
+    const patchAndRead = async (body: Record<string, unknown>) =>
+      (await readBody(await patchV3Creative({ ...base, creativeId: id, body: patch(body) }))).data;
+
+    expect((await patchAndRead({ name: "Renamed" })).autoSelectLanguage).toBe(true);
+    expect((await patchAndRead({ autoSelectLanguage: false })).autoSelectLanguage).toBe(false);
   });
 
   test("refuses content or styling of the other type: a creative's type never changes", async () => {

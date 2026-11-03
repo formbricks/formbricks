@@ -4,8 +4,9 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import type { TRendererCustomCss } from "@formbricks/types/custom-css";
-import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-fields";
 import { TResponseData } from "@formbricks/types/responses";
+import { findElementByIdOrCode } from "@formbricks/types/surveys/element-lookup";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
@@ -25,32 +26,32 @@ import { getSurveyLanguageTag, getWebAppLocale, isRTLLanguage } from "@/modules/
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
-  survey: TSurvey;
-  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
-  styling: TWorkspaceStyling | TSurveyStyling;
-  publicDomain: string;
-  responseCount?: number;
-  languageCode: string;
-  isEmbed: boolean;
-  singleUseId?: string;
-  singleUseResponseId?: string;
-  contactId?: string;
-  canReadUserIdFromUrl?: boolean;
-  recaptchaSiteKey?: string;
-  isSpamProtectionEnabled: boolean;
-  isPreview: boolean;
-  verifiedEmail?: string;
-  IMPRINT_URL?: string;
-  PRIVACY_URL?: string;
-  TERMS_URL?: string;
-  IS_FORMBRICKS_CLOUD: boolean;
-  pinAuthToken?: string;
+  readonly survey: TSurvey;
+  readonly workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  readonly styling: TWorkspaceStyling | TSurveyStyling;
+  readonly publicDomain: string;
+  readonly responseCount?: number;
+  readonly languageCode: string;
+  readonly isEmbed: boolean;
+  readonly singleUseId?: string;
+  readonly singleUseResponseId?: string;
+  readonly contactId?: string;
+  readonly canReadUserIdFromUrl?: boolean;
+  readonly recaptchaSiteKey?: string;
+  readonly isSpamProtectionEnabled: boolean;
+  readonly isPreview: boolean;
+  readonly verifiedEmail?: string;
+  readonly IMPRINT_URL?: string;
+  readonly PRIVACY_URL?: string;
+  readonly TERMS_URL?: string;
+  readonly IS_FORMBRICKS_CLOUD: boolean;
+  readonly pinAuthToken?: string;
   /** Compiled workspace + survey custom CSS, resolved server-side (ENG-3552). Never the source. */
-  customCss?: TRendererCustomCss;
+  readonly customCss?: TRendererCustomCss;
   /** The creative that opened this survey, already checked server-side from `?creativeId=` (ENG-4001). */
-  creativeId?: string;
+  readonly creativeId?: string;
   /** The app's release version, which the survey renderer is loaded under. */
-  rendererVersion?: string;
+  readonly rendererVersion?: string;
 }
 
 let setBlockId = (_: string) => {};
@@ -103,12 +104,18 @@ export const SurveyClientWrapper = ({
   // Extract survey properties outside useMemo to create stable references
   const welcomeCardEnabled = survey.welcomeCard.enabled;
 
+  // `startAt` is a Question ID or a question code; the survey runtime is handed the resolved Question ID.
+  const startAtElementId = useMemo(
+    () => (startAt ? findElementByIdOrCode(elements, startAt)?.id : undefined),
+    [elements, startAt]
+  );
+
   // Validate startAt parameter against survey elements
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
     if (welcomeCardEnabled && startAt === "start") return true;
 
-    const isValid = elements.some((element) => element.id === startAt);
+    const isValid = startAtElementId !== undefined;
 
     // Clean up invalid startAt from URL to prevent confusion
     if (!isValid && globalThis.window !== undefined) {
@@ -118,7 +125,7 @@ export const SurveyClientWrapper = ({
     }
 
     return isValid;
-  }, [welcomeCardEnabled, elements, startAt]);
+  }, [welcomeCardEnabled, startAtElementId, startAt]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
   const [autoFocus, setAutoFocus] = useState(false);
@@ -295,7 +302,7 @@ export const SurveyClientWrapper = ({
           getSetResponseData={(f: (value: TResponseData) => void) => {
             setResponseData = f;
           }}
-          startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
+          startAtQuestionId={startAt && isStartAtValid ? (startAtElementId ?? startAt) : undefined}
           fullSizeCards={isEmbed}
           hiddenFieldsRecord={{
             ...hiddenFieldsRecord,

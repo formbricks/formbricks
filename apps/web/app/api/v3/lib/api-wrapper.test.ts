@@ -1237,6 +1237,33 @@ describe("per-route concurrency limit", () => {
     if (mine.ok) mine.release();
   });
 
+  test("takes no slot, and is never refused for one, when appliesTo says the request is cheap", async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    const held = limiter.tryAcquire("someone_else");
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const route = withV3ApiWrapper({
+      auth: "session",
+      schemas: { body: z.object({ a: z.string() }) },
+      concurrency: {
+        limiter,
+        retryAfterSeconds: 7,
+        appliesTo: (req) => req.nextUrl.searchParams.get("cheap") !== "true",
+      },
+      handler,
+    });
+    const post = (query: string) =>
+      new NextRequest(`http://localhost/api/internal/surveys/import/stream${query}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: '{"a":"x"}',
+      });
+
+    expect((await route(post("?cheap=true"), {} as never)).status).toBe(200);
+    expect(limiter.inFlight).toBe(1);
+    expect((await route(post(""), {} as never)).status).toBe(503);
+    if (held.ok) held.release();
+  });
+
   test("does not take a slot for an unauthenticated or rate-limited request", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const limiter = new ConcurrencyLimiter(1);

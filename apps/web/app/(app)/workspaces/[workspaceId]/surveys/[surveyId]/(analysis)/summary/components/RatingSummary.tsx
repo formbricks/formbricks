@@ -9,9 +9,9 @@ import { TSurvey, TSurveyElementSummaryRating } from "@formbricks/types/surveys/
 import { RatingLikeSummary } from "./RatingLikeSummary";
 
 interface RatingSummaryProps {
-  elementSummary: TSurveyElementSummaryRating;
-  survey: TSurvey;
-  setFilter: (
+  readonly elementSummary: TSurveyElementSummaryRating;
+  readonly survey: TSurvey;
+  readonly setFilter: (
     elementId: string,
     label: TI18nString,
     elementType: TSurveyElementTypeEnum,

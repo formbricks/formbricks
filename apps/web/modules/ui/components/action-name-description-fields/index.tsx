@@ -5,10 +5,10 @@ import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/module
 import { Input } from "@/modules/ui/components/input";
 
 interface ActionNameDescriptionFieldsProps {
-  control: Control<TActionClassInput>;
-  isReadOnly?: boolean;
-  nameInputId?: string;
-  descriptionInputId?: string;
+  readonly control: Control<TActionClassInput>;
+  readonly isReadOnly?: boolean;
+  readonly nameInputId?: string;
+  readonly descriptionInputId?: string;
 }
 
 export const ActionNameDescriptionFields = ({

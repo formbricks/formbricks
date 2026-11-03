@@ -37,7 +37,7 @@ export { DateElement, type DateElementProps } from "@/components/elements/date";
 export { getDateFnsLocale } from "@/lib/locale";
 export { FB_PART, FB_PART_ATTRIBUTE, FB_PARTS, type TFbPart } from "@/lib/parts";
 export { SurveyPortalContainerContext } from "@/lib/portal-container";
-export { sanitizeSurveyHtml } from "@/lib/utils";
+export { sanitizeSurveyHtml, stripInlineStyles } from "@/lib/utils";
 export { isSafeMediaUrl } from "@/lib/video";
 export { isSafeLinkUrl } from "@/lib/url";
 export {

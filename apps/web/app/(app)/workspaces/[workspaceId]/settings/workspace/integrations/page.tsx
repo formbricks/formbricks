@@ -31,7 +31,7 @@ const getStatusText = (count: number, t: TFunction, type: string) => {
   return `${count} ${type}s`;
 };
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: { readonly params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

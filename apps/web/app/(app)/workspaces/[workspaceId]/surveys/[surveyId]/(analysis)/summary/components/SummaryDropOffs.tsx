@@ -10,8 +10,8 @@ import { getElementIcon } from "@/modules/survey/lib/elements";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SummaryDropOffsProps {
-  dropOff: TSurveySummary["dropOff"];
-  survey: TSurvey;
+  readonly dropOff: TSurveySummary["dropOff"];
+  readonly survey: TSurvey;
 }
 
 export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {

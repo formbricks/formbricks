@@ -117,6 +117,7 @@ describe("rateLimitConfigs", () => {
         "v1",
         "v2",
         "v3",
+        "v3StateMutation",
         "mcpAuth",
         "v3SurveyGenerate",
         "v3SurveyVisibility",
@@ -131,6 +132,12 @@ describe("rateLimitConfigs", () => {
         "clientEnvironment",
         "clientCreativeEvents",
       ]);
+      // The API twin of `actions.stateMutation`, per principal, for writes that fan out to the pipeline.
+      expect(rateLimitConfigs.api.v3StateMutation).toEqual({
+        interval: 60,
+        allowedPerInterval: 120,
+        namespace: "api:v3:state-mutation",
+      });
       // Chart data, preview and field values share one bucket sized for dashboards (ENG-6586).
       // One LLM-backed chart generation per user per minute bounds AI spend; looser is a cost regression.
       expect(rateLimitConfigs.api.internalChartGeneration).toEqual({
@@ -227,7 +234,13 @@ describe("rateLimitConfigs", () => {
 
     test("should have all storage configurations", () => {
       const storageConfigs = Object.keys(rateLimitConfigs.storage);
-      expect(storageConfigs).toEqual(["upload", "uploadPerWorkspace", "delete", "attachmentsExport"]);
+      expect(storageConfigs).toEqual([
+        "upload",
+        "uploadPerWorkspace",
+        "delete",
+        "attachmentsExport",
+        "responsesExport",
+      ]);
     });
   });
 
@@ -260,7 +273,7 @@ describe("rateLimitConfigs", () => {
       expect(uniqueNamespaces.size).toBe(allNamespaces.length);
     });
 
-    // docs/adr/0015-abuse-limits-fail-closed.md: abuse limits refuse while Redis is down, throughput
+    // docs/adr/0016-abuse-limits-fail-closed.md: abuse limits refuse while Redis is down, throughput
     // limits never do, or a Redis blip would take the whole app down.
     test("abuse limits fail closed and throughput limits fail open", () => {
       const { auth, api, actions } = rateLimitConfigs;

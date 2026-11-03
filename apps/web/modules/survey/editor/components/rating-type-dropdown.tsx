@@ -10,10 +10,10 @@ type Option = {
 };
 
 type DropdownProps = {
-  options: Option[];
-  disabled?: boolean;
-  defaultValue: string | number;
-  onSelect: (option: Option) => any;
+  readonly options: Option[];
+  readonly disabled?: boolean;
+  readonly defaultValue: string | number;
+  readonly onSelect: (option: Option) => any;
 };
 
 export const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: DropdownProps) => {

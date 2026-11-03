@@ -39,6 +39,15 @@ properties:
     items:
       $ref: ./CreativeLanguageInput.yml
     description: Other languages the texts are written in. Omit for none.
+  autoSelectLanguage:
+    type:
+      - boolean
+      - "null"
+    default: null
+    description: >-
+      Show the texts in the visitor's browser language when the site sets none with `setLanguage`
+      and it matches the default or an enabled language; otherwise the default language is used.
+      `null` (never chosen) and `false` both mean off.
   destination:
     anyOf:
       - $ref: ./CreativeDestinationInput.yml

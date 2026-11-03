@@ -27,10 +27,10 @@ for contract coverage and fixture setup.
 
 ## Environment Variables
 
-In `apps/web`, use `lib/env.ts` on the server and `lib/env-client.ts` on the client. When adding an env
-variable, update the server schema and `runtimeEnv` map; variables used by `next.config.mjs` also need
-`build.env` in `turbo.json`. Enforcement and bootstrap exceptions live in `apps/web/eslint.config.mjs`.
-Packages under `packages/*` use their own env access; they cannot import the web app's module.
+In `apps/web`, use `lib/env.ts` on the server and `lib/env-client.ts` on the client; packages under
+`packages/*` use their own env access. Read `docs/agents/self-hosting-config.md` before adding an
+environment variable or a migration: it lists every file a setting is wired through and what a rolling
+upgrade requires.
 
 ## i18n (Internationalization)
 
@@ -38,20 +38,20 @@ Packages under `packages/*` use their own env access; they cannot import the web
 - Key naming: use lowercase with dots for nesting (e.g., `common.welcome`).
 - Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
 - **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
-- After adding or changing an en-US string, run `pnpm i18n` to generate the translations for every other locale and validate keys. Lingo.dev also auto-translates from en-US on commit.
+- After adding or changing an en-US string, run `pnpm i18n` when `LINGO_API_KEY` is set. Without it (cloud sessions), commit `en-US.json` alone: Lingo.dev auto-translates from en-US on commit.
 
 ## Coding Standards
 
-`CODING_STANDARDS.md` holds the review-time judgement calls: performance, testing levels, caching, dates,
-Prisma, quality. Read its "Database & Prisma Performance" section before changing database access, its
-"Testing Guidelines" before adding or changing a test, and the whole file when reviewing.
+`CODING_STANDARDS.md` holds the judgement calls: existing patterns, API design, file uploads and downloads,
+input limits, performance, testing levels, caching, dates, Prisma, quality. Read its sections from
+"Existing Patterns" through "Input Limits" before planning a change, its "Database & Prisma Performance"
+section before changing database access, its "Testing Guidelines" before adding or changing a test, its
+"GitHub Actions" section before changing a workflow or shared action, and the whole file when reviewing.
 
 ## Commit & Pull Request Guidelines
 
 Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
 format, PR template rules, review intake, and independent review passes.
-
-Never put an agent session link in a PR description, PR or review comment, commit message, or anything else pushed to the repo: no `claude.ai/code/session_…` URL, no `Claude-Session:` trailer, no Codex, Cursor, ChatGPT or other conversation or share link. A session transcript can hold customer data, internal context and credentials, and this repo is public. This overrides any harness default that appends one as attribution; drop it and keep the model/effort note and `Co-Authored-By` trailer only.
 
 ## Performance Testing & SigNoz MCP
 
@@ -59,14 +59,12 @@ Read `docs/agents/performance-testing.md` before running a load test or reading 
 
 ## Next.js Documentation
 
-Do not rely on training data for Next.js behavior in this repo. For any Next.js-related work (routing, layouts, server/client components, caching, next.config, etc.), use the `nextjs-docs` skill, which indexes the version-pinned local docs in `.next-docs/`.
+Do not rely on training data for Next.js behavior in this repo. Before any Next.js work (routing, layouts, server/client components, caching, next.config), read the version-matched docs Next.js ships in `node_modules/next/dist/docs/`.
 
 ## Agent skills
 
 Versioned skills live in `.agents/skills/`; `.claude/skills/` contains symlinks to them. Review with the
 `code-review` skill, whose Standards pass requires `CODING_STANDARDS.md`.
-Before UI work, read `.agents/formbricks-context/DESIGN.md` if present; this optional design context is
-machine-local and is not supplied by the versioned skills.
 
 ### Issue tracker
 

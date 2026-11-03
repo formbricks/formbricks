@@ -66,6 +66,7 @@ get:
                   finished: true
                   endingId: cmpthankyou00000000000000
                   language: de
+                  outcome: null
                   durationSeconds: 8.2
                   resolution:
                     labelPolicy: currentSurveyDefinition
@@ -200,6 +201,7 @@ get:
                   finished: false
                   endingId: null
                   language: null
+                  outcome: null
                   resolution:
                     labelPolicy: currentSurveyDefinition
                     labelsLanguage: null
@@ -249,6 +251,12 @@ patch:
     Every patch emits `responseUpdated` and runs the response pipeline, including Hub ingestion.
     Transitioning `finished` to `true` additionally emits `responseFinished`; patching a response that
     is already finished does not re-emit it.
+
+
+    `outcome` marks a response **Low quality** (`"lowQuality"`) or clears the mark (`null`). Nothing is
+    deleted: the response keeps counting in summaries, counts, lists, webhooks and integrations, and the
+    mark only changes the Analysis export default, the Outcome column and filter, and Feedback Records.
+    A mark or a restore emits `responseUpdated` like any other patch.
   tags:
     - V3 Responses
   parameters:
@@ -273,6 +281,14 @@ patch:
               data:
                 nps_score: 8
                 what_could_be_better: Etwas schneller wäre gut.
+          markLowQuality:
+            summary: Mark a response Low quality
+            value:
+              outcome: lowQuality
+          restoreOutcome:
+            summary: Clear the outcome again
+            value:
+              outcome: null
           retagResponse:
             summary: Replace the response's tags
             value:

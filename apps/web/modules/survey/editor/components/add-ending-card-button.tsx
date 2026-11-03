@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AddEndingCardButtonProps {
-  localSurvey: TSurvey;
-  addEndingCard: (index: number) => void;
+  readonly localSurvey: TSurvey;
+  readonly addEndingCard: (index: number) => void;
 }
 
 export const AddEndingCardButton = ({ localSurvey, addEndingCard }: AddEndingCardButtonProps) => {

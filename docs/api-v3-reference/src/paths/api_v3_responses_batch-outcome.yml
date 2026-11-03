@@ -1,0 +1,101 @@
+post:
+  operationId: batchSetResponsesOutcomeV3
+  summary: Mark responses Low quality in bulk
+  description: >
+    Sets `outcome` on up to 100 responses in one transaction: `lowQuality` marks them, `null` restores
+    them. Nothing is deleted. Requires read-write access to the workspace and write access to every
+    survey the responses belong to.
+
+
+    **It scope-filters rather than rejecting**, exactly like `batch-delete`. Ids belonging to another
+    workspace, ids that no longer exist, and responses of a survey the caller cannot see are ignored,
+    and `updated` reports how many responses in the caller's scope now carry the requested outcome —
+    including ones that already did, so a client can safely retry the same batch. If the batch reaches
+    a survey the caller can see but may not write to, the whole call answers **403** and nothing is
+    changed.
+
+
+    Each response whose outcome actually changed emits `responseUpdated`, so webhooks and integrations
+    hear about a mark and a restore. A response that already carried the outcome is left untouched and
+    emits nothing.
+
+
+    **`workspaceId` is the scope, and it is required**, for the reason `batch-delete` explains.
+  tags:
+    - V3 Responses
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/BatchSetResponsesOutcomeRequest.yml
+        examples:
+          markThree:
+            summary: Mark three responses Low quality
+            value:
+              ids:
+                - clrs1234567890123456789012
+                - clrs2234567890123456789012
+                - clrs3234567890123456789012
+              outcome: lowQuality
+          restoreOne:
+            summary: Clear the mark on one response
+            value:
+              ids:
+                - clrs1234567890123456789012
+              outcome: null
+  responses:
+    "200":
+      description: >-
+        Batch processed. `updated` counts the responses in scope that now carry the requested outcome,
+        which may be fewer than the ids submitted.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - updated
+                properties:
+                  updated:
+                    type: integer
+                    minimum: 0
+                    description: >-
+                      How many responses in scope now carry the requested outcome. Lower than
+                      `ids.length` when some ids were gone, foreign or of a survey the caller cannot see.
+                additionalProperties: false
+    "400":
+      description: >-
+        Bad Request — malformed body, an empty `ids` array, more than 100 ids, duplicate ids, a missing
+        or unknown `outcome`, or an unsupported field.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

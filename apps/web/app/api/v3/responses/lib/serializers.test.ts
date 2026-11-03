@@ -80,6 +80,14 @@ describe("the envelope", () => {
     });
   });
 
+  /** Always present, `null` when unset: a consumer branches on the value without checking the key. */
+  test.each([null, "lowQuality"] as const)("carries the outcome %s on both views", (outcome) => {
+    const serializer = createV3ResponseSerializer();
+
+    expect(serializer.toListItem(row({ outcome }), survey()).outcome).toBe(outcome);
+    expect(serializer.toResource(row({ outcome }), survey()).outcome).toBe(outcome);
+  });
+
   /** Machine-facing timestamps are ISO-8601, never a `Date` and never localized. */
   test("timestamps serialize as ISO strings", () => {
     const item = listItem();

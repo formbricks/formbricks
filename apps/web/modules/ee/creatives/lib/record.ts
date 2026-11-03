@@ -41,6 +41,7 @@ export const toCreativeState = (record: TCreativeRecord): TCreativeState => {
       .filter((language) => !language.default)
       .map((language) => ({ code: language.language.code, enabled: language.enabled }))
       .sort((left, right) => left.code.localeCompare(right.code)),
+    autoSelectLanguage: record.autoSelectLanguage,
     destination: getDestination(record),
     distribution: {
       showOn: record.showOn,
@@ -60,6 +61,7 @@ export const toCreativeRowData = (state: TCreativeState): TCreativeRowData => ({
   archivedAt: state.archivedAt,
   content: state.content,
   styling: state.styling,
+  autoSelectLanguage: state.autoSelectLanguage,
   surveyId: state.destination?.type === "survey" ? state.destination.surveyId : null,
   linkUrl: state.destination?.type === "link" ? state.destination.url : null,
   showOn: state.distribution.showOn,

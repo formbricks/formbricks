@@ -21,7 +21,7 @@ interface IconAction {
 }
 
 interface IconBarProps {
-  actions: IconAction[];
+  readonly actions: IconAction[];
 }
 
 export const IconBar = ({ actions }: IconBarProps) => {

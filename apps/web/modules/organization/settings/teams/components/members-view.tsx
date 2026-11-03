@@ -13,11 +13,11 @@ import { OrganizationActions } from "@/modules/organization/settings/teams/compo
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
 
 interface MembersViewProps {
-  membershipRole?: TOrganizationRole;
-  organization: TOrganization;
-  currentUserId: string;
-  isAccessControlAllowed: boolean;
-  isUserManagementDisabledFromUi: boolean;
+  readonly membershipRole?: TOrganizationRole;
+  readonly organization: TOrganization;
+  readonly currentUserId: string;
+  readonly isAccessControlAllowed: boolean;
+  readonly isUserManagementDisabledFromUi: boolean;
 }
 
 // Carries its own gutter for the same reason the controls above do: the card body is flush.

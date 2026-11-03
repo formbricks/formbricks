@@ -122,8 +122,8 @@ const smallVariants = cva("text-sm leading-none", {
 });
 
 interface SmallProps extends React.HTMLAttributes<HTMLParagraphElement> {
-  color?: "default" | "muted";
-  margin?: "default" | "headerDescription";
+  readonly color?: "default" | "muted";
+  readonly margin?: "default" | "headerDescription";
 }
 
 const Small = forwardRef<HTMLParagraphElement, SmallProps>((props, ref) => {

@@ -80,6 +80,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
     updatedAt: new Date("2024-01-02"),
     contactId: "contact123",
     ingestFlags: null,
+    outcome: null,
     contact: mockResponse.contact,
     tags: mockResponse.tags,
   };

@@ -99,6 +99,19 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    // A survey that is not collecting responses gets no upload URL (ENG-4044): the response API refuses
+    // its writes (ENG-872), so the file would be an orphan an anonymous caller could keep adding to the
+    // bucket. Same answer as the response API. `archivedAt` is checked too, so the gate does not rely on
+    // archiving having paused the survey. This runs before the workspace upload quota, so a refused
+    // request does not spend it.
+    if (survey.status !== "inProgress" || survey.archivedAt) {
+      return {
+        response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+          surveyId: survey.id,
+        }),
+      };
+    }
+
     // Same gates the client response APIs apply: an upload URL is only useful to someone who could
     // go on to submit, so a caller without the PIN token or a valid single-use link gets neither.
     if (survey.pin && !verifyLinkSurveyPinToken(pinAuthToken, survey.id)) {

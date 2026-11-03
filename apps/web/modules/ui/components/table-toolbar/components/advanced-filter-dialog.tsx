@@ -45,6 +45,7 @@ const groupProperties = (properties: readonly TFilterProperty[], defaultGroup: s
     options: members.map((property) => ({
       label: property.label,
       value: property.id,
+      icon: property.icon,
       meta: { type: "property" },
     })),
   }));
@@ -127,6 +128,7 @@ export const AdvancedFilterDialog = ({
     },
     getDefaultOperator: () => "",
     showWhenLabel: false,
+    wideLeftOperandDropdown: true,
     formatLeftOperandValue: (condition) => condition.leftOperand.value,
   };
 

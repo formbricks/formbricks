@@ -4,12 +4,12 @@ import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 
 export type OTPInputProps = {
-  value: string;
-  valueLength: number;
-  onChange: (value: string) => void;
-  containerClassName?: string;
-  inputBoxClassName?: string;
-  disabled?: boolean;
+  readonly value: string;
+  readonly valueLength: number;
+  readonly onChange: (value: string) => void;
+  readonly containerClassName?: string;
+  readonly inputBoxClassName?: string;
+  readonly disabled?: boolean;
 };
 
 const RE_DIGIT = /^\d+$/;

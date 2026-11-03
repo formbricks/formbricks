@@ -18,6 +18,13 @@ import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/su
 import { ResponseDataView } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { OutcomeQueryClientProvider } from "@/modules/analysis/response-outcome/components/outcome-query-client-provider";
+import {
+  type TOutcomeActions,
+  type TOutcomeChanges,
+  patchOutcomes,
+  shouldDropAfterOutcome,
+} from "@/modules/analysis/response-outcome/lib/outcome";
 import { Button } from "@/modules/ui/components/button";
 
 interface ResponsePageProps {
@@ -123,6 +130,25 @@ export const ResponsePage = ({
     setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
+  // Patches the page's own list. Stable, so the table and the card do not re-render for it.
+  const applyOutcomes = useCallback((changes: TOutcomeChanges) => {
+    setResponses((prev) => patchOutcomes(prev, changes));
+  }, []);
+
+  const responseStatus = selectedFilter.responseStatus;
+  const outcomeActions: TOutcomeActions = useMemo(
+    () => ({
+      applyOutcomes,
+      // A restored response no longer matches a Low quality filter, so it leaves the list.
+      onSaved: (ids, outcome) => {
+        if (shouldDropAfterOutcome(responseStatus, outcome)) {
+          setResponses((prev) => prev.filter((r) => !ids.includes(r.id)));
+        }
+      },
+    }),
+    [applyOutcomes, responseStatus]
+  );
+
   const refetchResponses = useCallback(async () => {
     if (!isReady) return;
     setIsFetchingFirstPage(true);
@@ -211,7 +237,7 @@ export const ResponsePage = ({
   }, [filtersKey, isReady, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
-    <>
+    <OutcomeQueryClientProvider>
       {filterState.isFilterDataError && (
         // The rules in the URL could not be resolved, so the list stays hidden rather than unfiltered.
         <div
@@ -239,7 +265,8 @@ export const ResponsePage = ({
         quotas={quotas}
         isOpenedByCreatives={isOpenedByCreatives}
         toolbar={{ filterState, matchCount: matchCountQuery.data ?? null }}
+        outcomeActions={outcomeActions}
       />
-    </>
+    </OutcomeQueryClientProvider>
   );
 };
