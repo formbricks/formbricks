@@ -198,7 +198,7 @@ Generate both it and `AUTHZED_TOKEN` with `openssl rand -hex 32`. With the
 `SPICEDB_DATASTORE_CONN_URI` instead and omit `AUTHZED_DATABASE_PASSWORD`. The full PostgreSQL URI, including
 TLS options such as `sslmode=verify-full`, reaches both the migration and runtime services. A private CA file
 referenced by `sslrootcert` must be mounted read-only into both containers. `SPICEDB_IMAGE_REF` can override the
-bundled `authzed/spicedb:v1.56.2` image for an explicitly reviewed upgrade; the migration and server services
+bundled `authzed/spicedb:v1.57.0` image for an explicitly reviewed upgrade; the migration and server services
 always use the same reference.
 
 The v6 server requires `AUTHZED_ENABLED=true` or `1`; unset, `false`, and `0` are rejected before it accepts
