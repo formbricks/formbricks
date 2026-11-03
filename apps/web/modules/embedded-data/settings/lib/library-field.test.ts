@@ -27,7 +27,7 @@ describe("getDataTypesForSource", () => {
   });
 
   test("a calculated field is narrowed to what survey logic can calculate", () => {
-    expect(getDataTypesForSource("computed")).toEqual(["string", "number"]);
+    expect(getDataTypesForSource("computed")).toEqual(["string", "number", "date"]);
   });
 });
 
@@ -137,8 +137,8 @@ describe("describeRowIssues", () => {
    * sentence an author reads inline is the one a refused write would have returned.
    */
   test("forwards the schema's own sentence, on the column it complained about", () => {
-    expect(describeRowIssues(candidate({ source: "computed", dataType: "date" }), draftColumns)).toEqual([
-      { message: "Computed fields support only string or number", path: ["dataType"] },
+    expect(describeRowIssues(candidate({ source: "computed", dataType: "boolean" }), draftColumns)).toEqual([
+      { message: "Computed fields support only string, number or date", path: ["dataType"] },
     ]);
     expect(describeRowIssues(candidate({ key: "country" }), draftColumns)).toEqual([
       { message: "Key is reserved", path: ["key"] },

@@ -41,6 +41,23 @@ export const SURVEY_FLOW_FIXTURE_IDS = {
     score: "flowvarscore000000000001",
     tenureDays: "flowvartenuredays0000001",
     segment: "flowvarsegment0000000001",
+    // ENG-6935: a computed date field, set with now().
+    signedUpAt: "flowvarsignedupat0000001",
+  },
+  /** ENG-6935: Set value steps and expression calculations, with fixed ids. */
+  setValue: {
+    scoreRule: "flowsetvaluescorerule0001",
+    scoreGroup: "flowsetvaluescoregroup001",
+    scoreAction: "flowsetvaluescoreaction01",
+    hoursRule: "flowsetvaluehoursrule0001",
+    hoursGroup: "flowsetvaluehoursgroup001",
+    hoursCondition: "flowsetvaluehourscond0001",
+    hoursAction: "flowsetvaluehoursaction01",
+    segmentAction: "flowsetvaluesegaction0001",
+    tenureRule: "flowsetvaluetenurerule001",
+    tenureGroup: "flowsetvaluetenuregroup01",
+    signedUpAction: "flowsetvaluesignedupact01",
+    tenureAction: "flowsetvaluetenureact0001",
   },
   hiddenFields: {
     panelId: "panel_id",
@@ -105,6 +122,18 @@ const embeddedFields: TLinkedEmbeddedField[] = [
       locked: false,
     },
     link: { storageKey: ids.variables.segment },
+  },
+  // ENG-6935: a computed date. Not in the legacy `variables` (json-shapes §6).
+  {
+    field: {
+      key: null,
+      name: "signed_up_at",
+      source: "computed",
+      dataType: "date",
+      defaultValue: null,
+      locked: false,
+    },
+    link: { storageKey: ids.variables.signedUpAt },
   },
   {
     field: {
@@ -779,13 +808,152 @@ const profileBlock: TSurveyBlock = {
   ],
 };
 
+// ENG-6935: Set value with expressions (ADR 0024, 0025). Kept apart from the blocks above and given
+// fixed ids, so the sequential ids of the earlier rules don't move.
+const always = (id: string) => ({ id, connector: "and" as const, conditions: [] });
+const answer = (elementId: string) => ({ type: "element" as const, value: elementId });
+const num = (value: number) => ({ type: "static" as const, value });
+
+/** An always-run Set value step: score = round(ifEmpty(sat_netflix, 0) + ifEmpty(sat_disney, 0) * 2, 1). */
+const scoreStep: TSurveyBlockLogic = {
+  id: ids.setValue.scoreRule,
+  conditions: always(ids.setValue.scoreGroup),
+  actions: [
+    {
+      id: ids.setValue.scoreAction,
+      objective: "calculate",
+      variableId: ids.variables.score,
+      operator: "assign",
+      value: {
+        type: "expression",
+        value: {
+          type: "call",
+          fn: "round",
+          args: [
+            {
+              type: "call",
+              fn: "add",
+              args: [
+                { type: "call", fn: "ifEmpty", args: [answer("sat_netflix"), num(0)] },
+                {
+                  type: "call",
+                  fn: "multiply",
+                  args: [{ type: "call", fn: "ifEmpty", args: [answer("sat_disney"), num(0)] }, num(2)],
+                },
+              ],
+            },
+            num(1),
+          ],
+        },
+      },
+    },
+  ],
+};
+
+/**
+ * A conditional calculation: when hours > 20, score = max(min(abs(hours − 40), 100), hours ÷ 2), and
+ * segment = concat("heavy-", fav), where `fav` (a single select) yields its answer code.
+ */
+const hoursCalculation: TSurveyBlockLogic = {
+  id: ids.setValue.hoursRule,
+  conditions: {
+    id: ids.setValue.hoursGroup,
+    connector: "and",
+    conditions: [
+      {
+        id: ids.setValue.hoursCondition,
+        leftOperand: answer("hours"),
+        operator: "isGreaterThan",
+        rightOperand: { type: "static", value: 20 },
+      },
+    ],
+  },
+  actions: [
+    {
+      id: ids.setValue.hoursAction,
+      objective: "calculate",
+      variableId: ids.variables.score,
+      operator: "assign",
+      value: {
+        type: "expression",
+        value: {
+          type: "call",
+          fn: "max",
+          args: [
+            {
+              type: "call",
+              fn: "min",
+              args: [
+                {
+                  type: "call",
+                  fn: "abs",
+                  args: [{ type: "call", fn: "subtract", args: [answer("hours"), num(40)] }],
+                },
+                num(100),
+              ],
+            },
+            { type: "call", fn: "divide", args: [answer("hours"), num(2)] },
+          ],
+        },
+      },
+    },
+    {
+      id: ids.setValue.segmentAction,
+      objective: "calculate",
+      variableId: ids.variables.segment,
+      operator: "assign",
+      value: {
+        type: "expression",
+        value: { type: "call", fn: "concat", args: [{ type: "static", value: "heavy-" }, answer("fav")] },
+      },
+    },
+  ],
+};
+
+/** signed_up_at = now(), then tenure_days = daysBetween(@signup_date, signed_up_at). */
+const tenureStep: TSurveyBlockLogic = {
+  id: ids.setValue.tenureRule,
+  conditions: always(ids.setValue.tenureGroup),
+  actions: [
+    {
+      id: ids.setValue.signedUpAction,
+      objective: "calculate",
+      variableId: ids.variables.signedUpAt,
+      operator: "assign",
+      value: { type: "expression", value: { type: "call", fn: "now", args: [] } },
+    },
+    {
+      id: ids.setValue.tenureAction,
+      objective: "calculate",
+      variableId: ids.variables.tenureDays,
+      operator: "assign",
+      value: {
+        type: "expression",
+        value: {
+          type: "call",
+          fn: "daysBetween",
+          args: [
+            { type: "hiddenField", value: ids.hiddenFields.signupDate },
+            { type: "variable", value: ids.variables.signedUpAt },
+          ],
+        },
+      },
+    },
+  ],
+};
+
+const withRules = (block: TSurveyBlock, rules: TSurveyBlockLogic[]): TSurveyBlock => ({
+  ...block,
+  logic: [...(block.logic ?? []), ...rules],
+});
+
 const blocks: TSurveyBlock[] = [
   servicesBlock,
-  ratingsBlock,
-  heavyUsersBlock,
+  withRules(ratingsBlock, [scoreStep]),
+  withRules(heavyUsersBlock, [hoursCalculation]),
   conceptBlock,
   overallBlock,
-  profileBlock,
+  withRules(profileBlock, [tenureStep]),
 ];
 
 export const surveyFlowFixture: TSurvey = {

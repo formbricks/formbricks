@@ -12,8 +12,9 @@ import {
 } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { ZCustomCssStored } from "../custom-css";
-import { ZLinkedEmbeddedField } from "../embedded-data";
+import { type TEmbeddedDataType, ZLinkedEmbeddedField } from "../embedded-data";
 import { linkedToDesiredEmbeddedFields, toLegacyEmbeddedFields } from "../embedded-data-mapping";
+import { RESERVED_FIELD_CATALOG } from "../embedded-data-resolver";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZOverlayColor, ZOverlayOpacity } from "../overlay";
 import { isLegacyIdCharset, isLegacyVariableName } from "../safe-identifier";
@@ -46,6 +47,7 @@ import {
   ZSurveyRatingElement,
 } from "./elements";
 import { validateElementLabels } from "./elements-validation";
+import { type TExpressionTypeContext, getSetValueExpressionIssues } from "./expression-types";
 import { ZSurveyFollowUp } from "./follow-up";
 import {
   type TConditionGroup,
@@ -3480,7 +3482,7 @@ const validateBlockConditions = (
           }
         } else if (rightOperand?.type === "variable") {
           const variableId = rightOperand.value;
-          const variable = survey.variables.find((v) => v.id === variableId);
+          const variable = findLogicComputedField(survey, variableId);
 
           if (!variable) {
             issues.push({
@@ -3603,7 +3605,7 @@ const validateBlockConditions = (
       ) {
         if (rightOperand?.type === "variable") {
           const variableId = rightOperand.value;
-          const variable = survey.variables.find((v) => v.id === variableId);
+          const variable = findLogicComputedField(survey, variableId);
 
           if (!variable) {
             issues.push({
@@ -3673,7 +3675,7 @@ const validateBlockConditions = (
           }
         } else if (rightOperand?.type === "variable") {
           const variableId = rightOperand.value;
-          const variable = survey.variables.find((v) => v.id === variableId);
+          const variable = findLogicComputedField(survey, variableId);
 
           if (!variable) {
             issues.push({
@@ -3762,7 +3764,7 @@ const validateBlockConditions = (
       }
     } else if (leftOperand.type === "variable") {
       const variableId = leftOperand.value;
-      const variable = survey.variables.find((v) => v.id === variableId);
+      const variable = findLogicComputedField(survey, variableId);
 
       if (!variable) {
         issues.push({
@@ -3775,7 +3777,7 @@ const validateBlockConditions = (
 
       if (rightOperand?.type === "variable") {
         const rightVariableId = rightOperand.value;
-        const rightVariable = survey.variables.find((v) => v.id === rightVariableId);
+        const rightVariable = findLogicComputedField(survey, rightVariableId);
 
         if (!rightVariable) {
           issues.push({
@@ -3858,9 +3860,11 @@ const validateBlockActions = (
   currentBlock: TSurveyBlock,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
 ): z.core.$ZodIssue[] => {
-  const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action) => {
+  const expressionIssues: z.core.$ZodIssue[] = [];
+
+  const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action, actionIndex) => {
     if (action.objective === "calculate") {
-      const variable = survey.variables.find((v) => v.id === action.variableId);
+      const variable = findLogicComputedField(survey, action.variableId);
 
       if (!variable) {
         return {
@@ -3870,8 +3874,44 @@ const validateBlockActions = (
         };
       }
 
+      // Set value (ENG-6935): the expression's types and its result against the field, each issue at
+      // its exact path into the tree.
+      if (action.value.type === "expression") {
+        const valuePath = [
+          "blocks",
+          blockIndex,
+          "logic",
+          logicIndex,
+          "actions",
+          actionIndex,
+          "value",
+          "value",
+        ];
+        for (const issue of getSetValueExpressionIssues(
+          action.value.value,
+          variable.dataType,
+          getExpressionTypeContext(survey, allElements)
+        )) {
+          expressionIssues.push({
+            code: "custom",
+            message: issue.message,
+            path: [...valuePath, ...issue.path],
+          });
+        }
+        return undefined;
+      }
+
+      // The one-step operators predate dates; a computed date is set with a formula.
+      if (variable.type === "date") {
+        return {
+          code: "custom",
+          message: `Conditional Logic: A date field is set with a formula in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
+        };
+      }
+
       if (action.value.type === "variable") {
-        const selectedVariable = survey.variables.find((v) => v.id === action.value.value);
+        const selectedVariable = findLogicComputedField(survey, action.value.value);
 
         if (selectedVariable?.type !== variable.type) {
           return {
@@ -4007,8 +4047,50 @@ const validateBlockActions = (
   }
 
   const filteredActionIssues = actionIssues.filter((issue): issue is z.core.$ZodIssue => issue !== undefined);
-  return filteredActionIssues;
+  return [...filteredActionIssues, ...expressionIssues];
 };
+
+/**
+ * The computed field a logic reference names, with its type. Read from the rows when the payload has
+ * them, because a computed date (ENG-6935) lives only there; the legacy `variables` otherwise.
+ */
+const findLogicComputedField = (
+  survey: TSurvey,
+  storageKey: string
+): { type: "number" | "text" | "date"; dataType: TEmbeddedDataType } | undefined => {
+  const row = survey.embeddedFields?.find(
+    ({ field, link }) => field.source === "computed" && link.storageKey === storageKey
+  );
+  if (row) {
+    const { dataType } = row.field;
+    return { type: dataType === "number" || dataType === "date" ? dataType : "text", dataType };
+  }
+  const variable = survey.variables.find((v) => v.id === storageKey);
+  if (!variable) return undefined;
+  return { type: variable.type, dataType: variable.type === "number" ? "number" : "string" };
+};
+
+/** What the expression type check resolves references against: this survey's elements and fields. */
+const getExpressionTypeContext = (
+  survey: TSurvey,
+  allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
+): TExpressionTypeContext => ({
+  getElement: (elementId) => {
+    const element = allElements.get(elementId)?.data;
+    if (!element) return undefined;
+    return { type: element.type, inputType: "inputType" in element ? element.inputType : undefined };
+  },
+  getComputedFieldType: (storageKey) => findLogicComputedField(survey, storageKey)?.dataType,
+  getIngestedFieldType: (storageKey) => {
+    if (survey.embeddedFields !== undefined) {
+      return survey.embeddedFields.find(
+        ({ field, link }) => field.source === "ingested" && link.storageKey === storageKey
+      )?.field.dataType;
+    }
+    return survey.hiddenFields.fieldIds?.includes(storageKey) ? "string" : undefined;
+  },
+  getReservedFieldType: (name) => RESERVED_FIELD_CATALOG.find((entry) => entry.name === name)?.dataType,
+});
 
 const validateBlockLogicFallback = (
   survey: TSurvey,

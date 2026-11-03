@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ZId } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZSurveyElementId, ZSurveyElements } from "./elements";
+import { ZExpressionValue } from "./expressions";
 import {
   ZActionNumberVariableCalculateOperator,
   ZActionTextVariableCalculateOperator,
@@ -54,7 +55,23 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   }
 });
 
-export const ZActionCalculate = z.union([ZActionCalculateText, ZActionCalculateNumber]);
+/**
+ * Set value (ENG-6935, ADR 0025): assigns the result of an expression tree (ADR 0024) to a computed
+ * field of any computed type. A third member of the union, so the one-step operators above keep
+ * today's behaviour ("empty counts as 0") and this one has its own ("empty in, empty out").
+ */
+export const ZActionCalculateExpression = ZActionCalculateBase.extend({
+  operator: z.literal("assign"),
+  value: ZExpressionValue,
+});
+
+export type TActionCalculateExpression = z.infer<typeof ZActionCalculateExpression>;
+
+export const ZActionCalculate = z.union([
+  ZActionCalculateText,
+  ZActionCalculateNumber,
+  ZActionCalculateExpression,
+]);
 
 export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 

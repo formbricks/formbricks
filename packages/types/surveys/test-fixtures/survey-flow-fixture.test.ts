@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { ZSurveyBlockLogicAction } from "../blocks";
 import { TSurveyElementTypeEnum } from "../constants";
+import { EXPRESSION_FUNCTIONS, type TExpression } from "../expressions";
 import { type TConditionGroup, type TSingleCondition, ZDynamicLogicFieldValue } from "../logic";
 import { ZSurvey, ZSurveyEnding } from "../types";
 import { isConditionGroup } from "../validation";
@@ -71,7 +72,27 @@ describe("the survey flow fixture", () => {
     const calculateValueTypes = new Set(
       actions.flatMap((action) => (action.objective === "calculate" ? [action.value.type] : []))
     );
-    expect(calculateValueTypes).toEqual(new Set([...operandTypes, "static"]));
+    expect(calculateValueTypes).toEqual(new Set([...operandTypes, "static", "expression"]));
+  });
+
+  test("uses every expression function, an always-run step and a computed date field (ENG-6935)", () => {
+    const usedFunctions = new Set<string>();
+    const walk = (node: TExpression): void => {
+      if (node.type !== "call") return;
+      usedFunctions.add(node.fn);
+      node.args.forEach(walk);
+    };
+    for (const action of actions) {
+      if (action.objective === "calculate" && action.value.type === "expression") walk(action.value.value);
+    }
+
+    expect(usedFunctions).toEqual(new Set(EXPRESSION_FUNCTIONS));
+    expect(rules.some((rule) => rule.conditions.conditions.length === 0)).toBe(true);
+    expect(
+      surveyFlowFixture.embeddedFields?.some(
+        ({ field }) => field.source === "computed" && field.dataType === "date"
+      )
+    ).toBe(true);
   });
 
   test("calculates on both a number and a text field", () => {

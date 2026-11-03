@@ -58,7 +58,10 @@ const runBlockLogic = (
       continue;
     }
 
-    const actions = performActions(survey, logic.actions, data, variables);
+    const actions = performActions(survey, logic.actions, data, variables, {
+      selectedLanguage,
+      embeddedValues,
+    });
     // The first rule that jumps wins, but later rules still run for their calculations and requires.
     if (actions.jumpTarget && !jumpTarget) jumpTarget = actions.jumpTarget;
     requiredQuestionIds.push(...actions.requiredQuestionIds);
