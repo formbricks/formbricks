@@ -64,8 +64,8 @@ const discardUnreadyInstance = (): void => {
   if (client) {
     discardClient(client);
   } else {
-    resetCacheInstance();
-    recordCacheFailure();
+    // The shared client may already have been discarded; do not count another failure.
+    singleton = null;
   }
 };
 
