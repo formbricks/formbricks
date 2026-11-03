@@ -133,6 +133,7 @@ get:
                   hiddenFields:
                     enabled: false
                   variables: []
+                  startLogic: []
                   customCss: null
             filtered:
               summary: Language-filtered projection with ?lang=de-DE
@@ -181,6 +182,7 @@ get:
                   hiddenFields:
                     enabled: false
                   variables: []
+                  startLogic: []
                   customCss: null
     "400":
       description: >-

@@ -19,6 +19,7 @@ import {
   V3_SURVEY_MAX_BLOCKS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_START_LOGIC_RULES,
   V3_SURVEY_MAX_VARIABLES,
   ZV3EditSurveyBlocksBody,
   ZV3SetSurveyBlockOrderBody,
@@ -219,6 +220,25 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   `retrying. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
 ].join(" ");
 
+/**
+ * Rules before the first question (ENG-6932, json-shapes.md section 4). Spelled out because the tool
+ * surface otherwise never says what a rule is, and these differ from block rules in what they may do.
+ */
+const START_LOGIC_DESCRIPTION = [
+  "Rules before the first question (`startLogic`): run as soon as the survey loads, before the welcome card,",
+  "and also when a start-at link skips ahead. Same rule shape as `blocks[].logic`:",
+  "`{ id, conditions: { id, connector: and|or, conditions[] }, actions[] }`, ids cuid2.",
+  "Allowed actions: `jumpToBlock` to a block id, or to an ending id to screen the respondent out (they see only",
+  "that ending, and a finished response is stored that counts as completed), and `calculate` to set a",
+  "computed field (variable). `requireAnswer` and any other action are refused, with the exact path.",
+  "Conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only:",
+  "nothing has been answered yet, so an `element` operand is refused. The first jump wins; every calculate",
+  "runs; with no jump the respondent goes to the first block (or the start-at target).",
+  'Example: [{ "id": "<cuid2>", "conditions": { "id": "<cuid2>", "connector": "and", "conditions": [{ "id": "<cuid2>",',
+  '"leftOperand": { "type": "hiddenField", "value": "panel_id" }, "operator": "isNotSet" }] },',
+  '"actions": [{ "id": "<cuid2>", "objective": "jumpToBlock", "target": "<ending id>" }] }].',
+].join(" ");
+
 export const ZMcpCreateSurveyInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID where the survey should be created."),
@@ -263,6 +283,10 @@ export const ZMcpCreateSurveyInput = z
       max: V3_SURVEY_MAX_VARIABLES,
       description: "Survey variables using the v3 survey document contract.",
     }).optional(),
+    startLogic: lengthBoundedArray(ZMcpObjectInput, {
+      max: V3_SURVEY_MAX_START_LOGIC_RULES,
+      description: START_LOGIC_DESCRIPTION,
+    }).optional(),
     customCss: ZV3SurveyCustomCss.optional(),
   })
   .strict();
@@ -273,7 +297,7 @@ export const ZMcpPatchSurveyInput = z
     data: z
       .record(z.string(), z.unknown())
       .describe(
-        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. ${SURVEY_BLOCKS_DESCRIPTION}`
+        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. \`startLogic\` replaces every rule before the first question; null or [] removes them. ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
       ),
   })
   .strict();
@@ -324,7 +348,7 @@ export const ZMcpValidateSurveyInput = z
       "customCss validation only: `workspace` (shared survey CSS) or `survey` (one survey's CSS)."
     ),
     data: ZMcpObjectInput.describe(
-      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. ${SURVEY_BLOCKS_DESCRIPTION}`
+      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
     ),
   })
   .strict();

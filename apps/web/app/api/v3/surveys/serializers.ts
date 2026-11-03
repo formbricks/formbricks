@@ -303,6 +303,9 @@ export function serializeV3SurveyResource(
     endings: serializeValue(survey.endings),
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    // ENG-6932: rules before the first question, always an array (`[]` when the survey has none). They
+    // hold no translatable text, so they are emitted as stored.
+    startLogic: survey.startLogic ?? [],
     // App-only runtime/distribution + targeting, via the shared survey→public mappers. Omitted
     // entirely for link surveys to keep the contract clean.
     ...(survey.type === "app"

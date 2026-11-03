@@ -679,6 +679,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
       },
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
       requestId: "req_1",
@@ -736,6 +737,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
       } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
       requestId: "req_1",
@@ -748,6 +750,42 @@ describe("patchV3Survey", () => {
     expect(single.code).toBe("age");
     expect(single.choices?.map((choice) => choice.code)).toEqual(["1", "2", "3"]);
     expect(added.code).toBe("q1");
+  });
+
+  test("writes the rules before the first question, and none as a database null (ENG-6932)", async () => {
+    const rule = {
+      id: "clrule12345678901234567890",
+      conditions: { id: "clgrp123456789012345678901", connector: "and" as const, conditions: [] },
+      actions: [{ id: "clact123456789012345678901", objective: "jumpToBlock" as const, target: "block-1" }],
+    };
+    const documentWith = (startLogic: (typeof rule)[]) =>
+      ({
+        name: currentSurvey.name,
+        status: currentSurvey.status,
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        showLanguageSwitch: null,
+        autoSelectLanguage: null,
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: currentSurvey.blocks,
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+        startLogic,
+      }) as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"];
+
+    for (const startLogic of [[rule], []]) {
+      await executeV3SurveyPatch({
+        currentSurvey: currentSurvey as TSurvey,
+        document: documentWith(startLogic),
+        languageRequests: [{ code: "en-US", default: true, enabled: true }],
+        requestId: "req_1",
+      });
+    }
+
+    const writes = vi.mocked(prisma.survey.update).mock.calls.map((call) => call[0].data.startLogic);
+    expect(writes).toEqual([[rule], Prisma.DbNull]);
   });
 
   test("rejects setting a non-draft status on an app survey with no triggers", async () => {
@@ -765,6 +803,7 @@ describe("patchV3Survey", () => {
           endings: currentSurvey.endings,
           hiddenFields: currentSurvey.hiddenFields,
           variables: currentSurvey.variables,
+          startLogic: [],
         } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
         languageRequests: [{ code: "en-US", default: true, enabled: true }],
         requestId: "req_1",
@@ -794,6 +833,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
       } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
       requestId: "req_1",
@@ -824,6 +864,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
         ...overrides,
       }) as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"];
 

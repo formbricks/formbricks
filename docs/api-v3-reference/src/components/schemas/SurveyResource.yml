@@ -19,6 +19,7 @@ allOf:
       - endings
       - hiddenFields
       - variables
+      - startLogic
       - customCss
     properties:
       id:
@@ -98,6 +99,8 @@ allOf:
         type: array
         items:
           $ref: ./SurveyVariable.yml
+      startLogic:
+        $ref: ./SurveyStartLogic.yml
       distribution:
         allOf:
           - $ref: ./SurveyDistribution.yml

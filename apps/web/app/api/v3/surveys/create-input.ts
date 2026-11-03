@@ -34,6 +34,8 @@ export function buildV3SurveyCreateInput(
     endings: input.endings,
     hiddenFields: input.hiddenFields,
     variables: input.variables,
+    // ENG-6932: no rules before the first question is stored as `null`, the column's "none".
+    startLogic: input.startLogic.length > 0 ? input.startLogic : null,
     languages: fields.languages,
     questions: [],
     createdBy: fields.createdBy,
