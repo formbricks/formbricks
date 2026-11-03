@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
   ORIGIN,
@@ -25,13 +25,13 @@ const VIEWER_GRANT = ["openid", "profile", "email", "offline_access", "dashboard
 
 const scopesOf = (scope: string) => scope.split(" ").filter(Boolean).sort();
 
-let seq = 0;
+const EMAIL = "oauth-viewer@example.com";
+
+/** The one account of a test: sign-up is only open on an instance with no users yet. */
 const userWithRole = async (role: "dashboard_viewer" | "member") => {
-  seq += 1;
-  const email = `oauth-viewer-${seq}@example.com`;
-  await createUser(email, PASSWORD, "Viewer");
-  const organization = await prisma.organization.create({ data: { name: `Org ${seq}` } });
-  const { cookie, userId } = await signIn(email, PASSWORD);
+  await createUser(EMAIL, PASSWORD, "Viewer");
+  const organization = await prisma.organization.create({ data: { name: "Viewer org" } });
+  const { cookie, userId } = await signIn(EMAIL, PASSWORD);
   await prisma.membership.create({
     data: { userId, organizationId: organization.id, role, accepted: true },
   });
@@ -48,10 +48,9 @@ const consentWith = (cookie: string, oauthQuery: string, scope?: string) =>
 let clientId = "";
 
 describe("a Dashboard viewer's OAuth grant", () => {
-  // One client for the file: registration is rate limited, and each test signs in its own user, whose
-  // consents and tokens are theirs alone.
-  beforeAll(async () => {
+  beforeEach(async () => {
     await resetDb();
+    // Instance-level, so resetDb clears it; inserted atomically for the reason the revocation suite gives.
     await prisma.oauthResource.createMany({
       data: [
         { identifier: getMcpResourceUrl(), name: "Formbricks MCP", allowedScopes: [...MCP_OAUTH_SCOPES] },
