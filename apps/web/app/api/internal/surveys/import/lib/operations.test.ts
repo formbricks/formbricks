@@ -602,7 +602,9 @@ describe("streamSurveyImport", () => {
       expect(problem.invalid_params).toEqual([
         expect.objectContaining({ name: "file", code: "file_limit_exceeded", identifier: "file_size" }),
       ]);
-    });
+      // Two 15 MiB bodies through the streaming route; the default 5 s is a per-test budget for
+      // ordinary fixtures and the CI runner under coverage takes longer than that.
+    }, 30_000);
 
     test("refuses a .doc or .xls with a 415 that says to save it as .docx or .xlsx, before any AI", async () => {
       const legacy = new Uint8Array(512);

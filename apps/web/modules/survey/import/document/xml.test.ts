@@ -142,7 +142,9 @@ describe("checkDocumentXml", () => {
         parseDocumentXml(encode(attributes(SURVEY_IMPORT_XML_MAX_ATTRIBUTES + 1, 1_000)), "word/document.xml")
       )
     ).toMatchObject({ identifier: "xml_attributes" });
-  });
+    // Each of the four parts here is a ~20 MB string; the default 5 s per-test budget is sized for
+    // ordinary fixtures and the CI runner under coverage needs longer than that.
+  }, 30_000);
 
   // A lenient reader such as SheetJS reads on past markup that never closes, so the limits must not
   // stop being counted there: a part that never closes a tag, comment or instruction is unreadable.
