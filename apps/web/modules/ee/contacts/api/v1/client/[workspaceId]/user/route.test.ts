@@ -60,8 +60,9 @@ describe("POST /api/v1/client/[workspaceId]/user attribute cap", () => {
     expect(mocks.updateUser).not.toHaveBeenCalled();
   });
 
+  // One entry, far under the attribute cap, so only the array check can refuse it.
   test("refuses attributes sent as an array before reading them", async () => {
-    const { response } = await identify(Array.from({ length: 1_000 }, () => "value"));
+    const { response } = await identify(["value"]);
 
     expect(response.status).toBe(400);
     expect(mocks.updateUser).not.toHaveBeenCalled();
