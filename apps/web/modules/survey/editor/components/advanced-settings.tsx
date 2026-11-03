@@ -1,4 +1,3 @@
-import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
@@ -12,8 +11,6 @@ interface AdvancedSettingsProps {
   readonly localSurvey: TSurvey;
   readonly lock: TElementLock;
   readonly updateElement: (elementIdx: number, updatedAttributes: any) => void;
-  readonly updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
-  readonly updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
   readonly workspace?: TWorkspaceWithoutCustomCss;
   readonly isFormbricksCloud?: boolean;
 }

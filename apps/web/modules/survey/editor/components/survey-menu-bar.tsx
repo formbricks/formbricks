@@ -387,8 +387,9 @@ export const SurveyMenuBar = ({
             }
             firstInvalidScrollId ??= block?.id ?? null;
           } else if (issue.path[2] === "logic" && typeof issue.path[3] === "number") {
-            // Conditional logic error: flag the offending rule so the block card
-            // surfaces it. Uses the logic rule id (a CUID, distinct from element ids).
+            // Conditional logic error: flag the offending rule so its row on the Flow tab
+            // (ENG-6929) surfaces it. Uses the logic rule id (a CUID, distinct from element ids),
+            // which is also the row's DOM id.
             const logicIdx = issue.path[3];
             const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
             const logicItem = block?.logic?.[logicIdx];
@@ -396,17 +397,17 @@ export const SurveyMenuBar = ({
             if (logicItem && !newInvalidIds.includes(logicItem.id)) {
               newInvalidIds.push(logicItem.id);
             }
-            firstInvalidScrollId ??= block?.id ?? null;
+            firstInvalidScrollId ??= logicItem?.id ?? null;
           } else if (issue.path[2] === "logic") {
             // Block-scope logic error (e.g. a cyclic jump) with no specific rule index: flag every
-            // rule in the block so the Conditional Logic section still surfaces and auto-expands.
+            // rule in the block so each row on the Flow tab shows it.
             const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
             for (const logicItem of block?.logic ?? []) {
               if (!newInvalidIds.includes(logicItem.id)) {
                 newInvalidIds.push(logicItem.id);
               }
             }
-            firstInvalidScrollId ??= block?.id ?? null;
+            firstInvalidScrollId ??= block?.logic?.[0]?.id ?? null;
           }
         } else if (issue.path[0] === "welcomeCard") {
           if (!newInvalidIds.includes("start")) {
@@ -441,6 +442,14 @@ export const SurveyMenuBar = ({
       }
 
       const firstError = issues[0];
+
+      // Rules and fallbacks live on the Flow tab (ENG-6929): open it, so the flagged row is on screen.
+      if (
+        firstError.path[0] === "blocks" &&
+        (firstError.path[2] === "logic" || firstError.path[2] === "logicFallback")
+      ) {
+        setActiveId("flow");
+      }
 
       // A show condition still missing its value: the schema's own message is technical English, so
       // say where to look instead, and open the tab that holds the Survey Trigger card.

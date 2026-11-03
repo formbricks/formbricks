@@ -1,11 +1,9 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TConditionGroup } from "@formbricks/types/surveys/logic";
+import { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { createSharedConditionsFactory } from "@/modules/survey/editor/lib/shared-conditions-factory";
-import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
 import type {
   TConditionsEditorCallbacks,
@@ -14,52 +12,38 @@ import type {
 
 interface LogicEditorConditionsProps {
   readonly conditions: TConditionGroup;
-  readonly updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  readonly block: TSurveyBlock;
   readonly localSurvey: TSurvey;
-  readonly blockIdx: number;
-  readonly logicIdx: number;
+  /**
+   * Where the rule runs: the index of the block it follows. Conditions may use that block and the
+   * ones before it. `-1` is before the first question (start logic, ENG-6932): no answers yet.
+   */
+  readonly scopeBlockIdx: number;
+  readonly getDefaultOperator: () => TSurveyLogicConditionsOperator;
+  readonly onConditionsChange: (updater: (conditions: TConditionGroup) => TConditionGroup) => void;
   readonly depth?: number;
 }
 
 export function LogicEditorConditions({
   conditions,
-  logicIdx,
-  block,
   localSurvey,
-  blockIdx,
-  updateBlockLogic,
+  scopeBlockIdx,
+  getDefaultOperator,
+  onConditionsChange,
   depth = 0,
 }: LogicEditorConditionsProps) {
   const { t } = useTranslation();
-
-  const blockLogic = block.logic ?? [];
-  const firstElement = block.elements[0];
 
   const { config, callbacks } = createSharedConditionsFactory(
     {
       survey: localSurvey,
       t,
-      blockIdx,
-      getDefaultOperator: () => (firstElement ? getDefaultOperatorForElement(firstElement, t) : "equals"),
+      blockIdx: scopeBlockIdx,
+      getDefaultOperator,
       includeCreateGroup: true,
       // Block logic runs in the renderer, which projects the client-available reserved values.
       includeReservedFields: true,
     },
-    {
-      onConditionsChange: (updater) => {
-        const logicCopy = structuredClone(blockLogic);
-        const logicItem = logicCopy[logicIdx];
-        if (!logicItem) return;
-        logicItem.conditions = updater(logicItem.conditions);
-
-        if (logicItem.conditions.conditions.length === 0) {
-          logicCopy.splice(logicIdx, 1);
-        }
-
-        updateBlockLogic(blockIdx, logicCopy);
-      },
-    }
+    { onConditionsChange }
   );
 
   return (
