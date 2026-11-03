@@ -336,6 +336,8 @@ What to do:
 3. If a script has to change a locked field, revert the survey to `draft` first, make the change, and publish again. The lock protects the meaning of exported data and is not a security control, so it does not stop a client that is allowed to edit the survey from doing this. Do this with care: responses already collected keep the old text, and the Analysis export lists any answer that no longer matches an option as an unmapped value.
 4. If your client sends the whole survey back on every save, make sure it sends the stored text and codes unchanged. A code you leave out is not treated as a change.
 
+The Excel file of the **Standard export** now names its single sheet `Response Data` instead of `Sheet1`. A script that reads the file by sheet name (for example `sheet_name="Sheet1"` in pandas) must switch to the new name; scripts that read the first sheet or a CSV file are not affected.
+
 Webhook payloads also gain two keys, `dataByQuestionCode` and `outcome`. They are additive and existing keys stay, but a receiver that validates the payload against a strict schema must allow unknown keys. See [Webhooks](/platform/features/integrations/webhooks#reading-answers-by-question-code).
 
 ### Bundled TEI log level

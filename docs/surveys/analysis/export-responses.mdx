@@ -17,7 +17,7 @@ There are two kinds of export:
 | Files | A CSV file, or an Excel file with one sheet named `Response Data` | An Excel workbook with several sheets, or a zip of CSV files and an SPSS syntax file |
 | Low quality responses | Included by default | Left out by default |
 
-The Standard export is the file Formbricks has always produced, so pipelines that read it keep working. It is plain UTF-8 text without a byte-order mark and with `\n` line breaks.
+The Standard export is the file Formbricks has always produced, with one change: the Excel sheet is now named `Response Data` instead of `Sheet1`. A pipeline that reads the Excel file by sheet name must use the new name, and one that reads the first sheet or a CSV file is not affected. It is plain UTF-8 text without a byte-order mark and with `\n` line breaks.
 
 <Note>
   Anyone who can read a survey can export it, including read-only seats.
