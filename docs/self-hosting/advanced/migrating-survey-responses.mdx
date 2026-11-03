@@ -135,7 +135,7 @@ fb() {
     args=(-sS -g -o "$tmp" -w '%{http_code}' -X "$method"
       -H "x-api-key: ${key}" -H 'content-type: application/json')
     if [ -n "$body" ]; then args+=(--data-binary "$body"); fi
-    code=$(curl "${args[@]}" "$url" || echo 000)
+    code=$(curl "${args[@]}" "$url") || code=000
     case "$code" in
       429 | 000 | 5??)
         attempt=$((attempt + 1))
@@ -187,7 +187,7 @@ fi
 
 # 3. Translate the resource into a create document and post it.
 body=$(jq -c --arg ws "$TARGET_WORKSPACE_ID" --argjson ac "$trigger_map" '
-  del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .targeting)
+  del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .visibility, .owner, .access, .targeting)
   | .workspaceId = $ws
   | .metadata = (.metadata // {})
   | .type = (if .type == "link" then "link" else "app" end)
@@ -296,7 +296,7 @@ fb_get() {
   local url="$1" attempt=0 tmp code
   tmp=$(mktemp)
   while :; do
-    code=$(curl -sS -g -o "$tmp" -w '%{http_code}' -H "x-api-key: ${SOURCE_API_KEY}" "$url" || echo 000)
+    code=$(curl -sS -g -o "$tmp" -w '%{http_code}' -H "x-api-key: ${SOURCE_API_KEY}" "$url") || code=000
     case "$code" in
       429 | 000 | 5??)
         attempt=$((attempt + 1))
@@ -373,9 +373,10 @@ The endpoints used to create surveys are strict: they accept a survey **document
 you just read. The `jq` filter in the script does the translation, and each line of it exists because
 the API rejects the request without it:
 
-- `del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt)` — read-only fields. The document
-  endpoint rejects unknown keys rather than ignoring them, so leaving them in returns
-  `400` with `invalid_params`.
+- `del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .visibility, .owner, .access)` —
+  read-only fields: the survey's identity and timestamps, and who can see it and why, which the server
+  works out for each reader. The document endpoint rejects unknown keys rather than ignoring them, so
+  leaving them in returns `400` with `invalid_params`.
 - `.languages |= map({code, default, enabled})` — `GET` returns an extra `alias` per language that
   `POST` rejects.
 - `.type = (if .type == "link" then "link" else "app" end)` — older instances still store the legacy
@@ -406,7 +407,7 @@ fb_post() {
   while :; do
     code=$(curl -sS -g -o "$tmp" -w '%{http_code}' -X POST \
       -H "x-api-key: ${TARGET_API_KEY}" -H 'content-type: application/json' \
-      --data-binary "$body" "$url" || echo 000)
+      --data-binary "$body" "$url") || code=000
     case "$code" in
       429 | 000 | 5??)
         attempt=$((attempt + 1))
@@ -443,7 +444,7 @@ for file in "$IN_DIR"/surveys/*.json; do
       jq -R 'split("\t") | {(.[0]): .[1]}' "$IN_DIR/action-class-map.tsv" | jq -s 'add // {}'
     ) '
     ($acmap[0] // {}) as $ac
-    | del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .targeting)
+    | del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .visibility, .owner, .access, .targeting)
     | .workspaceId = $ws
     | .metadata = (.metadata // {})
     # POST accepts only link and app; legacy website/web surveys are app surveys.
