@@ -1,5 +1,6 @@
 import type { RedisClientType } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createCacheKey } from "@formbricks/cache";
 import { cache } from "@/lib/cache";
 import {
   claimCountedCreatives,
@@ -52,7 +53,7 @@ describe("creative counter Redis commands", () => {
       deviceRows: [{ creativeId: CREATIVE_ID, date: DAY, deviceType: "phone", impressions: 2, clicks: 1 }],
       pageRows: [{ creativeId: CREATIVE_ID, date: DAY, page: "example.com/", impressions: 2, clicks: 1 }],
     });
-    expect(cache.runRedisOperation).toHaveBeenCalledTimes(4);
+    expect(removeCommand).toHaveBeenCalledWith(createCacheKey.creativeStats.flushing(DAY), [CREATIVE_ID]);
   });
 
   test("does not report a successful count when the bounded Redis command fails", async () => {

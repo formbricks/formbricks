@@ -370,6 +370,7 @@ describe("getWorkspaceState", () => {
       expect.objectContaining({ errName: "Error" }),
       "Workspace state cache read threw; using outage fallback"
     );
+    expect(JSON.stringify(vi.mocked(logger.debug).mock.calls)).not.toContain("cache read failed");
   });
 
   test("returns fresh state and logs safely when the cache write throws", async () => {
@@ -381,6 +382,7 @@ describe("getWorkspaceState", () => {
       expect.objectContaining({ errName: "Error" }),
       "Workspace state cache write threw"
     );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("cache write failed");
   });
 
   test("evicts the oldest fallback state when a Redis outage exceeds the local entry limit", async () => {
