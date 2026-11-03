@@ -86,10 +86,9 @@ before it fails in Kubernetes.
 3. Reset `REVISION` to `1`, update the three image references above, and read the Cube changelog for
    breaking changes that reach `apps/web/modules/ee/analysis` or `docker/cube`.
 
-4. Check whether the `overrides` entry in `package.json` is still needed. It moves `gaxios` (pulled in
-   through `@google-cloud/storage`) from `uuid` 9, which scanners report for CVE-2026-41907, onto the
-   `uuid` 11.1.1 Cube already uses. `gaxios` only calls `uuid.v4()`, which the CVE does not affect. Drop
-   the override once `gaxios` requires `uuid` 11 or later itself.
+4. Check whether the `overrides` entries in `package.json` are still needed. The `gaxios` → `uuid` one
+   was dropped at 1.8.17: `gaxios` 8 no longer depends on `uuid`, so the tree resolves to the `uuid`
+   11.1.1 Cube uses without help. CVE-2026-41907 was the reason it existed.
 
 ## Trivy gate and `.trivyignore.yaml`
 
