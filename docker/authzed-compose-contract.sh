@@ -12,7 +12,7 @@ readonly POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-authzed-compose-contract-postgr
 readonly AUTHZED_TOKEN="${AUTHZED_TOKEN:-0000000000000000000000000000000000000000000000000000000000000001}"
 readonly AUTHZED_DATABASE_PASSWORD="${AUTHZED_DATABASE_PASSWORD:-0000000000000000000000000000000000000000000000000000000000000002}"
 readonly EXTERNAL_DATABASE_URI="postgresql://scoped:contract-password@external-db:5432/spicedb?sslmode=verify-full&sslrootcert=/certs/ca.pem"
-readonly SPICEDB_IMAGE_REF="authzed/spicedb:v1.56.2"
+readonly SPICEDB_IMAGE_REF="authzed/spicedb:v1.57.0"
 readonly SPICEDB_GRPC_PORT="50051"
 readonly AUTHZED_GRPCUI_PORT="50052"
 readonly GRPCUI_IMAGE_REF="fullstorydev/grpcui:v1.5.2"
@@ -43,7 +43,7 @@ env -u AUTHZED_DATABASE_PASSWORD -u SPICEDB_DATASTORE_CONN_URI \
 docker compose --file "${DEV_COMPOSE_FILE}" --profile authzed-ui --profile authzed-tools config --format json >"${temp_dir}/development.json"
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" --arg password "${AUTHZED_DATABASE_PASSWORD}" '
-  .services.spicedb.image == "authzed/spicedb:v1.56.2" and
+  .services.spicedb.image == "authzed/spicedb:v1.57.0" and
   .services["spicedb-migrate"].image == .services.spicedb.image and
   (.services | has("authzed-db-bootstrap")) and
   .services["authzed-db-bootstrap"].environment.POSTGRES_ADMIN_URL != null and
@@ -136,7 +136,7 @@ if grep --fixed-strings --line-regexp "authzed-ops" "${temp_dir}/production-serv
 fi
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" '
-  .services.spicedb.image == "authzed/spicedb:v1.56.2" and
+  .services.spicedb.image == "authzed/spicedb:v1.57.0" and
   .services["spicedb-migrate"].image == .services.spicedb.image and
   .services.spicedb.mem_limit == "536870912" and
   (.services.spicedb | has("cpus") | not) and
