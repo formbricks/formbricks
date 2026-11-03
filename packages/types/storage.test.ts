@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { ALLOWED_FILE_EXTENSIONS, ZUploadPrivateFileRequest, ZUploadPublicFileRequest } from "./storage";
+import {
+  ALLOWED_FILE_EXTENSIONS,
+  MAX_RAW_ALLOWED_FILE_EXTENSIONS,
+  ZUploadPrivateFileRequest,
+  ZUploadPublicFileRequest,
+} from "./storage";
 
 const uploads = {
   private: (allowedFileExtensions: unknown[]) =>
@@ -27,7 +32,9 @@ describe.each(Object.entries(uploads))("%s upload allowedFileExtensions", (_, up
 
   // A survey can save its element's list with repeats; the upload must still go through.
   test("accepts a list that repeats allowed extensions, up to a thousand entries", () => {
-    const result = upload(Array.from({ length: 1_000 }, (_unused, index) => (index % 2 ? "pdf" : "png")));
+    const result = upload(
+      Array.from({ length: MAX_RAW_ALLOWED_FILE_EXTENSIONS }, (_unused, index) => (index % 2 ? "pdf" : "png"))
+    );
 
     expect(result.success && result.data.allowedFileExtensions).toEqual(["png", "pdf"]);
   });
@@ -41,9 +48,16 @@ describe.each(Object.entries(uploads))("%s upload allowedFileExtensions", (_, up
     }
   });
 
-  test("refuses more than a thousand entries without deduplicating them, even if all repeat", () => {
-    const result = upload(Array.from({ length: 1_001 }, () => "pdf"));
+  // The issue names the limit that was crossed, not the allowed-set size the list never got to.
+  test("refuses a list past the raw cap, even if every entry repeats, naming that cap", () => {
+    const result = upload(Array.from({ length: MAX_RAW_ALLOWED_FILE_EXTENSIONS + 1 }, () => "pdf"));
 
-    expect(result.success ? [] : result.error.issues).toHaveLength(1);
+    expect(result.success ? [] : result.error.issues).toEqual([
+      expect.objectContaining({
+        code: "too_big",
+        maximum: MAX_RAW_ALLOWED_FILE_EXTENSIONS,
+        path: ["allowedFileExtensions"],
+      }),
+    ]);
   });
 });
