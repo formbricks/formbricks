@@ -539,6 +539,40 @@ describe("a Formbricks file imported into another organization", () => {
     expect(created.triggers.map(({ actionClass }) => actionClass.id)).not.toContain(sourceCheckoutId);
   });
 
+  test("two imports racing to create the same action class create it once, and both link it", async () => {
+    const target = fixture.otherWorkspaceId;
+    const done = await previewDone(target, exportedFile);
+    // An action class the target does not have yet, so both imports plan to create it.
+    const key = `race_${createId()}`;
+    const references = done.references as {
+      actionClasses: { type: string; key: string | null; name: string }[];
+    };
+    const raced = {
+      ...references,
+      actionClasses: references.actionClasses.map((actionClass) =>
+        actionClass.type === "code" ? { ...actionClass, key, name: key } : actionClass
+      ),
+    };
+
+    const [first, second] = await Promise.all([
+      commit({ workspaceId: target, payload: done.payload, references: raced }),
+      commit({ workspaceId: target, payload: done.payload, references: raced }),
+    ]);
+
+    expect([first.status, second.status]).toEqual([201, 201]);
+    const created = await prisma.actionClass.findMany({
+      where: { workspaceId: target, key },
+      select: { id: true },
+    });
+    expect(created).toHaveLength(1);
+    const linked = await prisma.surveyTrigger.findMany({
+      where: { surveyId: { in: [surveyIdOf(first), surveyIdOf(second)] }, actionClass: { key } },
+      select: { surveyId: true, actionClassId: true },
+    });
+    expect(new Set(linked.map(({ surveyId }) => surveyId)).size).toBe(2);
+    expect(linked.every(({ actionClassId }) => actionClassId === created[0].id)).toBe(true);
+  });
+
   test("leaves nothing behind when the create fails after its references were written", async () => {
     const organization = await prisma.workspace.findUniqueOrThrow({
       where: { id: fixture.foreignWorkspaceId },

@@ -668,3 +668,29 @@ describe("upgradeFormbricksFile", () => {
     );
   });
 });
+
+describe("readFormbricksFile: an action class says what identifies it", () => {
+  const withActionClass = (actionClass: Record<string, unknown>) =>
+    file({
+      references: {
+        ...references(),
+        actionClasses: [{ id: ACTION_CLASS_ID, name: "Checkout", description: null, ...actionClass }],
+      },
+    });
+
+  test.each([
+    ["a code action without a key", { type: "code", key: null, noCodeConfig: null }, "key"],
+    ["a code action with an empty key", { type: "code", key: "  ", noCodeConfig: null }, "key"],
+    [
+      "a no-code action without a configuration",
+      { type: "noCode", key: null, noCodeConfig: null },
+      "noCodeConfig",
+    ],
+  ])("refuses %s, which an import could not tell from another", (_what, actionClass, field) => {
+    const refusal = refusalOf(() => readFormbricksFile(withActionClass(actionClass)));
+
+    expect(refusal.invalidParams).toEqual([
+      expect.objectContaining({ name: `file.references.actionClasses.0.${field}` }),
+    ]);
+  });
+});

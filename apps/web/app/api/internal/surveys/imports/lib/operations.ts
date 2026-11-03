@@ -50,17 +50,6 @@ const surveyLocation = (surveyId: string): string => `/api/v3/surveys/${surveyId
 const created = (surveyId: string, requestId: string): Response =>
   createdResponse({ id: surveyId }, { requestId, location: surveyLocation(surveyId) });
 
-/**
- * `POST /api/internal/surveys/imports` (ENG-6850): create the survey a reviewed import became, for every
- * kind of file. A Formbricks file's draft comes with its references, created with the survey in one
- * transaction; any other import's draft comes alone. The body is what the preview returned and is
- * read, checked, named and resolved again: nothing the client resolved is trusted.
- *
- * Idempotent per `Idempotency-Key` (see `idempotency.ts`): a repeat of a finished request gets the
- * same 201 and creates nothing; the same key with another body is a 422, and with one still running a
- * 409. The audit entry is the wrapper's `created` on the survey, written once the create committed; a
- * replay writes none, since it created nothing.
- */
 type TImportedSurvey = { survey: TSurvey; createdReferences: TFormbricksFileCreatedReferences | null };
 
 /** Create the reviewed survey: a Formbricks file's with its references, any other lane's as a draft. */
@@ -95,6 +84,17 @@ const createImportedSurvey = async ({
   }
 };
 
+/**
+ * `POST /api/internal/surveys/imports` (ENG-6850): create the survey a reviewed import became, for every
+ * kind of file. A Formbricks file's draft comes with its references, created with the survey in one
+ * transaction; any other import's draft comes alone. The body is what the preview returned and is
+ * read, checked, named and resolved again: nothing the client resolved is trusted.
+ *
+ * Idempotent per `Idempotency-Key` (see `idempotency.ts`): a repeat of a finished request gets the
+ * same 201 and creates nothing; the same key with another body is a 422, and with one still running a
+ * 409. The audit entry is the wrapper's `created` on the survey, written once the create committed; a
+ * replay writes none, since it created nothing.
+ */
 export async function createSurveyImport({
   req,
   authentication,

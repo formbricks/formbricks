@@ -103,6 +103,25 @@ export const ZFormbricksFileActionClass = ZActionClass.pick({
   })
   .strict();
 
+/**
+ * What an import finds an action class by in the target workspace: a code action's key, a no-code
+ * action's configuration. Without it, two such actions in one file would be one.
+ */
+const requireActionClassIdentity = (actionClasses: TFormbricksFileActionClass[], ctx: z.RefinementCtx) => {
+  actionClasses.forEach((actionClass, index) => {
+    if (actionClass.type === "code" && !actionClass.key) {
+      ctx.addIssue({ code: "custom", path: [index, "key"], message: "A code action needs its key" });
+    }
+    if (actionClass.type === "noCode" && actionClass.noCodeConfig === null) {
+      ctx.addIssue({
+        code: "custom",
+        path: [index, "noCodeConfig"],
+        message: "A no-code action needs its configuration",
+      });
+    }
+  });
+};
+
 /** A contact attribute key the survey's targeting filters name. Matched by `key`, else created. */
 export const ZFormbricksFileAttributeKey = ZContactAttributeKey.pick({ dataType: true })
   .extend({
@@ -146,7 +165,10 @@ export const ZFormbricksFileLanguage = z
 
 const ZFormbricksFileReferences = z
   .object({
-    actionClasses: z.array(ZFormbricksFileActionClass).max(FORMBRICKS_FILE_MAX_ACTION_CLASSES),
+    actionClasses: z
+      .array(ZFormbricksFileActionClass)
+      .max(FORMBRICKS_FILE_MAX_ACTION_CLASSES)
+      .superRefine(requireActionClassIdentity),
     attributeKeys: z.array(ZFormbricksFileAttributeKey).max(FORMBRICKS_FILE_MAX_ATTRIBUTE_KEYS),
     embeddedFields: z.array(ZFormbricksFileEmbeddedField).max(FORMBRICKS_FILE_MAX_EMBEDDED_FIELDS),
     // Optional: only the languages with an alias are listed, and a file may have none.

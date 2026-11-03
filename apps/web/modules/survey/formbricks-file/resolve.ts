@@ -255,6 +255,19 @@ const assertAttributeKeyCap = (count: number, adding: number, fieldPrefix: strin
 };
 
 /**
+ * Rows in the order of their unique key, so two imports inserting overlapping rows take the key's locks in
+ * the same order and one waits for the other, instead of each holding a row the other needs (a deadlock,
+ * answered with a 500).
+ */
+const inUniqueKeyOrder = <T>(rows: readonly T[], keyOf: (row: T) => string): T[] =>
+  [...rows].sort((a, b) => {
+    const left = keyOf(a);
+    const right = keyOf(b);
+    if (left === right) return 0;
+    return left < right ? -1 : 1;
+  });
+
+/**
  * Serializes the imports that create attribute keys in one workspace, so two cannot both pass the cap's
  * count and together go past it. Taken in the import's transaction, released when it ends.
  */
@@ -467,7 +480,7 @@ const createAttributeKeys = async (
     null
   );
   return tx.contactAttributeKey.createManyAndReturn({
-    data: attributeKeys.map((attributeKey) => ({
+    data: inUniqueKeyOrder(attributeKeys, ({ key }) => key).map((attributeKey) => ({
       workspaceId,
       ...attributeKey,
       name: attributeKey.name ?? formatSnakeCaseToTitleCase(attributeKey.key),
@@ -487,7 +500,7 @@ const createMissingReferences = async (
   const [actionClasses, attributeKeys, languages] = await Promise.all([
     creates.length > 0
       ? tx.actionClass.createManyAndReturn({
-          data: creates.map((actionClass) => ({
+          data: inUniqueKeyOrder(creates, (actionClass) => actionClass.name).map((actionClass) => ({
             workspaceId,
             name: actionClass.name,
             description: actionClass.description,
@@ -505,7 +518,11 @@ const createMissingReferences = async (
       : Promise.resolve([]),
     plan.languagesToCreate.length > 0
       ? tx.language.createManyAndReturn({
-          data: plan.languagesToCreate.map(({ code, alias }) => ({ workspaceId, code, alias })),
+          data: inUniqueKeyOrder(plan.languagesToCreate, ({ code }) => code).map(({ code, alias }) => ({
+            workspaceId,
+            code,
+            alias,
+          })),
           select: { code: true },
           skipDuplicates: true,
         })
