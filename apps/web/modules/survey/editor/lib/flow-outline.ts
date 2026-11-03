@@ -13,7 +13,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * **Everything the survey holds produces a row or a badge** (D2, Javier's ENG-3651 rule): whatever
  * the v3 API or MCP can write is shown, so nothing an AI wrote is hidden from the person checking
  * it. A construct the Flow tab cannot edit yet comes out with `editable: false` and is rendered
- * read-only. The keys this module reads beyond `TSurvey` (`startLogic`, `showIf`, `hidden`,
+ * read-only. The keys this module reads beyond `TSurvey` (`startLogic`, `hidden`,
  * `optionsCopiedFrom`, and rule actions or values the editor doesn't know) are the approved shapes
  * of the later Survey Flow Editor tickets; each of those tickets makes its construct editable.
  *
@@ -53,16 +53,16 @@ export interface TFlowFallbackRow {
 }
 
 /**
- * A badge on a block or a question. None of these are editable on the Flow tab yet; they are shown
- * so a survey written through the API never hides them.
+ * A badge on a block or a question, shown so a survey written through the API never hides them.
  *
- * - `showIf`: the item is shown only when its condition group matches
+ * - `showIf`: the item is shown only when its condition group matches. Edited in place (ENG-6931),
+ *   unless a condition uses an operand type the conditions editor doesn't know
  * - `optionsShowIf`: `count` options (or matrix rows and columns) carry their own show-if
  * - `hiddenOptions`: `count` options are hidden
  * - `optionsCopiedFrom`: the options are copied from the question `sourceId`
  */
 export type TFlowBadge =
-  | { kind: "showIf"; conditions: TConditionGroup; editable: false }
+  | { kind: "showIf"; conditions: TConditionGroup; editable: boolean }
   | { kind: "optionsShowIf"; count: number; editable: false }
   | { kind: "hiddenOptions"; count: number; editable: false }
   | { kind: "optionsCopiedFrom"; sourceId: string; editable: false };
@@ -169,7 +169,13 @@ const toRuleRow = (rule: TSurveyBlockLogic, ruleIdx: number, owner: TFlowRuleOwn
 
 const getShowIfBadge = (item: unknown): TFlowBadge[] =>
   isRecord(item) && isGroup(item.showIf)
-    ? [{ kind: "showIf", conditions: item.showIf as unknown as TConditionGroup, editable: false }]
+    ? [
+        {
+          kind: "showIf",
+          conditions: item.showIf as unknown as TConditionGroup,
+          editable: areConditionsEditable(item.showIf),
+        },
+      ]
     : [];
 
 /** The options of an element, wherever its type keeps them: choices, or matrix rows and columns. */
