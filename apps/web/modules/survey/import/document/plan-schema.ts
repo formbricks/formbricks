@@ -76,6 +76,7 @@ const ZPieceForAI = z.object({
   text: z
     .string()
     .nullable()
+    .default(null)
     .describe(
       "null for the whole cell; else the exact part of the cell this text is, copied character for character"
     ),
@@ -85,9 +86,13 @@ const ZOptionForAI = z.object({
   code: z
     .string()
     .nullable()
+    .default(null)
     .describe('The code the file gives the option ("1" in "1 = Yes"), copied exactly, or null'),
-  isOther: z.boolean().describe('Whether the option is an "Other" that asks the respondent to say what'),
-  texts: z.array(ZPieceForAI).describe("The option's text, one piece per language"),
+  isOther: z
+    .boolean()
+    .default(false)
+    .describe('Whether the option is an "Other" that asks the respondent to say what'),
+  texts: z.array(ZPieceForAI).nullable().default([]).describe("The option's text, one piece per language"),
 });
 
 const ZRuleForAI = z.object({
@@ -100,10 +105,13 @@ const ZRuleForAI = z.object({
   operator: z.enum(DOCUMENT_PLAN_OPERATORS),
   values: z
     .array(z.string())
+    .nullable()
+    .default([])
     .describe("The answers compared with: option codes or option texts as the file writes them, or numbers"),
   target: z
     .string()
     .nullable()
+    .default(null)
     .describe('skipTo only: the question jumped to, by ID or line key, or "end"; null for showIf'),
 });
 
@@ -113,37 +121,81 @@ const ZRuleForAI = z.object({
  */
 export const ZDocumentImportPlanForAI = z.object({
   defaultLanguage: z.string().describe("The BCP-47 code of the file's main language, e.g. en-US"),
-  languages: z.array(z.string()).describe("Every language the file's texts are in, default first"),
-  titleCell: z.string().nullable().describe("The key of the cell holding the survey's title, or null"),
+  languages: z
+    .array(z.string())
+    .nullable()
+    .default([])
+    .describe("Every language the file's texts are in, default first"),
+  titleCell: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe("The key of the cell holding the survey's title, or null"),
   questions: z
     .array(
       z.object({
         ref: z.string().describe("The key of the line the entry starts on, e.g. R5"),
         kind: z.enum(DOCUMENT_PLAN_KINDS),
-        idCell: z.string().nullable().describe("The key of the cell holding the question's ID or number"),
+        idCell: z
+          .string()
+          .nullable()
+          .default(null)
+          .describe("The key of the cell holding the question's ID or number"),
         sectionCell: z
           .string()
           .nullable()
+          .default(null)
           .describe("The key of the cell naming the section or block the question is in"),
-        required: z.boolean(),
-        headline: z.array(ZPieceForAI).describe("The question's text, one piece per language"),
-        subheader: z.array(ZPieceForAI).describe("A description under the question, one piece per language"),
-        options: z.array(ZOptionForAI).describe("Choices, ranking items or matrix rows"),
-        columns: z.array(ZOptionForAI).describe("A matrix's columns"),
-        lowerLabel: z.array(ZPieceForAI).describe("A scale's low-end label, one piece per language"),
-        upperLabel: z.array(ZPieceForAI).describe("A scale's high-end label, one piece per language"),
-        dropdown: z.boolean().describe("Whether the file says the choices show as a dropdown"),
-        inputType: z.enum(DOCUMENT_PLAN_INPUT_TYPES).nullable(),
-        scale: z.enum(DOCUMENT_PLAN_SCALES).nullable(),
-        range: z.enum(DOCUMENT_PLAN_RANGES).nullable(),
-        format: z.enum(DOCUMENT_PLAN_DATE_FORMATS).nullable(),
-        rules: z.array(ZRuleForAI),
-        logicNotes: z.array(z.string()).describe("One sentence per rule, in the file's language"),
+        required: z.boolean().default(false),
+        headline: z
+          .array(ZPieceForAI)
+          .nullable()
+          .default([])
+          .describe("The question's text, one piece per language"),
+        subheader: z
+          .array(ZPieceForAI)
+          .nullable()
+          .default([])
+          .describe("A description under the question, one piece per language"),
+        options: z
+          .array(ZOptionForAI)
+          .nullable()
+          .default([])
+          .describe("Choices, ranking items or matrix rows"),
+        columns: z.array(ZOptionForAI).nullable().default([]).describe("A matrix's columns"),
+        lowerLabel: z
+          .array(ZPieceForAI)
+          .nullable()
+          .default([])
+          .describe("A scale's low-end label, one piece per language"),
+        upperLabel: z
+          .array(ZPieceForAI)
+          .nullable()
+          .default([])
+          .describe("A scale's high-end label, one piece per language"),
+        dropdown: z.boolean().default(false).describe("Whether the file says the choices show as a dropdown"),
+        inputType: z.enum(DOCUMENT_PLAN_INPUT_TYPES).nullable().default(null),
+        scale: z.enum(DOCUMENT_PLAN_SCALES).nullable().default(null),
+        range: z
+          .union([z.enum(DOCUMENT_PLAN_RANGES), z.number()])
+          .nullable()
+          .default(null),
+        format: z.enum(DOCUMENT_PLAN_DATE_FORMATS).nullable().default(null),
+        rules: z.array(ZRuleForAI).nullable().default([]),
+        logicNotes: z
+          .array(z.string())
+          .nullable()
+          .default([])
+          .describe("One sentence per rule, in the file's language"),
       })
     )
+    .nullable()
+    .default([])
     .describe("Every question, and the welcome and closing texts, that start on the lines asked about"),
   skipped: z
     .array(z.object({ ref: z.string(), reason: z.string().describe("Why, in one short sentence") }))
+    .nullable()
+    .default([])
     .describe("Questions on the lines asked about that Formbricks cannot represent"),
 });
 
@@ -173,10 +225,22 @@ const ZOption = z.object({ code: ZLabel.nullable(), isOther: z.boolean(), texts:
  */
 export const ZDocumentImportPlanEnvelope = z.object({
   defaultLanguage: z.string().max(64),
-  languages: z.array(z.string().max(64)).max(MAX_PIECES),
-  titleCell: ZKey.nullable(),
-  questions: z.array(z.unknown()).max(MAX_PLAN_ENTRIES),
-  skipped: z.array(z.unknown()).max(MAX_PLAN_ENTRIES),
+  languages: z
+    .array(z.string().max(64))
+    .max(MAX_PIECES)
+    .nullish()
+    .transform((languages) => languages ?? []),
+  titleCell: ZKey.nullish().transform((cell) => cell ?? null),
+  questions: z
+    .array(z.unknown())
+    .max(MAX_PLAN_ENTRIES)
+    .nullish()
+    .transform((questions) => questions ?? []),
+  skipped: z
+    .array(z.unknown())
+    .max(MAX_PLAN_ENTRIES)
+    .nullish()
+    .transform((skipped) => skipped ?? []),
 });
 
 export const ZDocumentPlanRule = z.object({
@@ -193,19 +257,38 @@ export const ZDocumentPlanEntry = z.object({
   idCell: ZKey.nullable(),
   sectionCell: ZKey.nullable(),
   required: z.boolean(),
-  headline: ZPieces,
-  subheader: ZPieces,
-  options: z.array(ZOption).max(MAX_OPTIONS),
-  columns: z.array(ZOption).max(MAX_OPTIONS),
-  lowerLabel: ZPieces,
-  upperLabel: ZPieces,
+  headline: ZPieces.nullish().transform((pieces) => pieces ?? []),
+  subheader: ZPieces.nullish().transform((pieces) => pieces ?? []),
+  options: z
+    .array(ZOption)
+    .max(MAX_OPTIONS)
+    .nullish()
+    .transform((options) => options ?? []),
+  columns: z
+    .array(ZOption)
+    .max(MAX_OPTIONS)
+    .nullish()
+    .transform((columns) => columns ?? []),
+  lowerLabel: ZPieces.nullish().transform((pieces) => pieces ?? []),
+  upperLabel: ZPieces.nullish().transform((pieces) => pieces ?? []),
   dropdown: z.boolean(),
   inputType: z.enum(DOCUMENT_PLAN_INPUT_TYPES).nullable(),
   scale: z.enum(DOCUMENT_PLAN_SCALES).nullable(),
-  range: z.enum(DOCUMENT_PLAN_RANGES).nullable(),
+  range: z
+    .union([z.enum(DOCUMENT_PLAN_RANGES), z.number().int()])
+    .nullable()
+    .transform((range) => (range === null ? null : String(range))),
   format: z.enum(DOCUMENT_PLAN_DATE_FORMATS).nullable(),
-  rules: z.array(ZDocumentPlanRule).max(MAX_RULES),
-  logicNotes: z.array(z.string().max(MAX_RAW_NOTE_CHARS)).max(MAX_RULES),
+  rules: z
+    .array(ZDocumentPlanRule)
+    .max(MAX_RULES)
+    .nullish()
+    .transform((rules) => rules ?? []),
+  logicNotes: z
+    .array(z.string().max(MAX_RAW_NOTE_CHARS))
+    .max(MAX_RULES)
+    .nullish()
+    .transform((notes) => notes ?? []),
 });
 
 export const ZDocumentPlanSkip = z.object({

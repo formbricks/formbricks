@@ -60,33 +60,53 @@ export const ZQsfImportPlanForAI = z.object({
       z.object({
         ref: z.string().describe("The question's ref, e.g. QID3"),
         type: z.enum(QSF_PLAN_ELEMENT_TYPES),
-        required: z.boolean(),
-        choicesFrom: ZOptionSource.nullable(),
-        rowsFrom: ZOptionSource.nullable(),
-        columnsFrom: ZOptionSource.nullable(),
-        otherChoiceKey: z.string().nullable(),
-        noneChoiceKey: z.string().nullable(),
-        labelKey: z.string().nullable(),
-        excludedKeys: z.array(z.string()),
-        contactFields: z.array(z.object({ field: z.enum(QSF_PLAN_CONTACT_FIELDS), key: z.string() })),
-        inputType: z.enum(QSF_PLAN_INPUT_TYPES).nullable(),
-        scale: z.enum(QSF_PLAN_SCALES).nullable(),
-        range: z.enum(QSF_PLAN_RANGES).nullable(),
-        format: z.enum(QSF_PLAN_DATE_FORMATS).nullable(),
-        logicNotes: z.array(z.string()).describe("One sentence per logic rule of the question"),
+        required: z.boolean().default(false),
+        choicesFrom: ZOptionSource.nullable().default(null),
+        rowsFrom: ZOptionSource.nullable().default(null),
+        columnsFrom: ZOptionSource.nullable().default(null),
+        otherChoiceKey: z.string().nullable().default(null),
+        noneChoiceKey: z.string().nullable().default(null),
+        labelKey: z.string().nullable().default(null),
+        excludedKeys: z.array(z.string()).nullable().default([]),
+        contactFields: z
+          .array(z.object({ field: z.enum(QSF_PLAN_CONTACT_FIELDS), key: z.string() }))
+          .nullable()
+          .default([]),
+        inputType: z.enum(QSF_PLAN_INPUT_TYPES).nullable().default(null),
+        scale: z.enum(QSF_PLAN_SCALES).nullable().default(null),
+        range: z
+          .union([z.enum(QSF_PLAN_RANGES), z.number()])
+          .nullable()
+          .default(null),
+        format: z.enum(QSF_PLAN_DATE_FORMATS).nullable().default(null),
+        logicNotes: z
+          .array(z.string())
+          .nullable()
+          .default([])
+          .describe("One sentence per logic rule of the question"),
       })
     )
+    .nullable()
+    .default([])
     .describe("Every question that becomes a Formbricks question"),
   skipped: z
     .array(z.object({ ref: z.string(), reason: z.string().describe("Why, in one short sentence") }))
+    .nullable()
+    .default([])
     .describe("Questions Formbricks cannot represent"),
   pages: z
     .array(
       z.object({
         id: z.string().describe("The page's id, e.g. p3"),
-        logicNotes: z.array(z.string()).describe("One sentence per branch or randomizer rule of the page"),
+        logicNotes: z
+          .array(z.string())
+          .nullable()
+          .default([])
+          .describe("One sentence per branch or randomizer rule of the page"),
       })
     )
+    .nullable()
+    .default([])
     .describe("Only pages that have logic rules"),
 });
 
@@ -108,10 +128,23 @@ const ZRawNotes = z
  * including a provider without structured output, or a response that skipped schema validation.
  */
 export const ZQsfImportPlanEnvelope = z.object({
-  questions: z.array(z.unknown()).max(MAX_PLAN_ENTRIES),
-  skipped: z.array(z.unknown()).max(MAX_PLAN_ENTRIES),
+  questions: z
+    .array(z.unknown())
+    .max(MAX_PLAN_ENTRIES)
+    .nullish()
+    .transform((questions) => questions ?? []),
+  skipped: z
+    .array(z.unknown())
+    .max(MAX_PLAN_ENTRIES)
+    .nullish()
+    .transform((skipped) => skipped ?? []),
   // Optional here: a plan for questions with no page rules has nothing to say about pages.
-  pages: z.array(z.unknown()).max(MAX_PLAN_ENTRIES).optional(),
+  pages: z
+    .array(z.unknown())
+    .max(MAX_PLAN_ENTRIES)
+    .nullish()
+    .transform((pages) => pages ?? [])
+    .optional(),
 });
 
 export const ZQsfPlanQuestion = z.object({
@@ -124,20 +157,29 @@ export const ZQsfPlanQuestion = z.object({
   otherChoiceKey: ZKey.nullable(),
   noneChoiceKey: ZKey.nullable(),
   labelKey: ZKey.nullable(),
-  excludedKeys: z.array(ZKey).max(MAX_KEYS_PER_QUESTION),
+  excludedKeys: z
+    .array(ZKey)
+    .max(MAX_KEYS_PER_QUESTION)
+    .nullish()
+    .transform((keys) => keys ?? []),
   contactFields: z
     .array(z.object({ field: z.enum(QSF_PLAN_CONTACT_FIELDS), key: ZKey }))
-    .max(QSF_PLAN_CONTACT_FIELDS.length),
+    .max(QSF_PLAN_CONTACT_FIELDS.length)
+    .nullish()
+    .transform((fields) => fields ?? []),
   inputType: z.enum(QSF_PLAN_INPUT_TYPES).nullable(),
   scale: z.enum(QSF_PLAN_SCALES).nullable(),
-  range: z.enum(QSF_PLAN_RANGES).nullable(),
+  range: z
+    .union([z.enum(QSF_PLAN_RANGES), z.number().int()])
+    .nullable()
+    .transform((range) => (range === null ? null : String(range))),
   format: z.enum(QSF_PLAN_DATE_FORMATS).nullable(),
-  logicNotes: ZRawNotes,
+  logicNotes: ZRawNotes.nullish().transform((notes) => notes ?? []),
 });
 
 export const ZQsfPlanPage = z.object({
   id: ZRef,
-  logicNotes: ZRawNotes,
+  logicNotes: ZRawNotes.nullish().transform((notes) => notes ?? []),
 });
 
 export const ZQsfPlanSkip = z.object({
