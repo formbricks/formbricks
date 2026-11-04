@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
  * respondent moves. Blocks are rows; what runs after a block sits indented under it; endings come
  * last. Presentational only — the Flow tab builds the rows from its outline model.
  *
- * Tones: white for a block, `ENDING_TONE` for an ending, and one colour per rule type — blue for a
+ * Tones: white for a block, pink (`ENDING_TONE`) for an ending, and one colour per rule type — blue for a
  * jump, green for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
  */
 
@@ -66,61 +66,27 @@ export const FlowOutlineNote = ({
   </div>
 );
 
-/** Every colour an ending shows in, on its own row and on a chip that jumps to it. */
-export interface TEndingTone {
-  /** The row's outline and background tint. */
-  readonly card: string;
-  /** The icon tile's background (the icon is white). */
-  readonly tile: string;
-  /** The line under an open row's header. */
-  readonly divider: string;
-  /** The header's hover tint. */
-  readonly hover: string;
-  /** The row's title ("End: …"). */
-  readonly title: string;
-  /** Secondary text on the row, e.g. a redirect's URL. */
-  readonly detail: string;
-  /** A jump-target chip that points to an ending: its background and text. */
-  readonly pill: string;
-}
-
 /**
- * The ending colours to choose from. Every place an ending is coloured reads `ENDING_TONE`, so
- * switching colour is changing that one identifier. Slate is a solid tile with full-strength text so
- * it never reads as disabled.
+ * Every colour an ending shows in, on its own row and on a chip that jumps to it: pink, in the rule
+ * types' pattern of one colour for the outline and tile and a lighter tint for the row. Change an
+ * ending's colour here only.
  */
-export const ENDING_TONES = {
-  red: {
-    card: "border-red-300 bg-red-50",
-    tile: "bg-red-600",
-    divider: "border-red-300",
-    hover: "hover:bg-white/60",
-    title: "text-red-700",
-    detail: "text-red-700/80",
-    pill: "bg-red-600 text-white",
-  },
-  pink: {
-    card: "border-pink-500 bg-pink-50",
-    tile: "bg-pink-500",
-    divider: "border-pink-500",
-    hover: "hover:bg-pink-100/70",
-    title: "text-pink-700",
-    detail: "text-pink-700",
-    pill: "bg-pink-500 text-white",
-  },
-  slate: {
-    card: "border-slate-600 bg-slate-50",
-    tile: "bg-slate-600",
-    divider: "border-slate-600",
-    hover: "hover:bg-slate-100/70",
-    title: "text-slate-900",
-    detail: "text-slate-700",
-    pill: "bg-slate-600 text-white",
-  },
-} as const satisfies Record<string, TEndingTone>;
-
-/** The colour endings use. Switch it here (red, pink or slate). */
-export const ENDING_TONE: TEndingTone = ENDING_TONES.red;
+export const ENDING_TONE = {
+  /** The row's outline and background tint. */
+  card: "border-pink-500 bg-pink-50",
+  /** The icon tile's background (the icon is white). */
+  tile: "bg-pink-500",
+  /** The line under an open row's header. */
+  divider: "border-pink-500",
+  /** The header's hover tint. */
+  hover: "hover:bg-pink-100/70",
+  /** The row's title ("End: …"), dark enough to read on the tint. */
+  title: "text-pink-700",
+  /** Secondary text on the row, e.g. a redirect's URL. */
+  detail: "text-pink-700",
+  /** A jump-target chip that points to an ending: its background and text. */
+  pill: "bg-pink-500 text-white",
+} as const;
 
 /**
  * A rule type's one colour is its outline and its icon tile; a lighter tint of it is the row's
