@@ -57,7 +57,12 @@ export function ShowIfPopover({
             type="gray"
             size="tiny"
             icon={<EyeIcon />}
-            text={t("workspace.surveys.edit.flow.show_if", { conditions: summary })}
+            text={t(
+              target.type === "block"
+                ? "workspace.surveys.edit.flow.show_block_if_chip"
+                : "workspace.surveys.edit.flow.show_question_if_chip",
+              { conditions: summary }
+            )}
           />
         </button>
       </PopoverTrigger>

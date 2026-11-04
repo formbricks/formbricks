@@ -182,13 +182,13 @@ test.describe("Survey flow @slow", () => {
       }
 
       // Block show-if, question show-if, option show-if, a Hidden option and copied options.
-      await expect(page.locator(`[id="flow-${ids.blocks.heavyUsers}"]`)).toContainText("Show if:");
+      await expect(page.locator(`[id="flow-${ids.blocks.heavyUsers}"]`)).toContainText("Show block if ");
       const question = (blockId: string, elementId: string) =>
         page
           .locator(`[id="flow-${blockId}"]`)
           .getByRole("listitem")
           .filter({ hasText: headline(elementId) });
-      await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show if:");
+      await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show question if ");
       await expect(question(ids.blocks.overall, "fav")).toContainText("Show-if on 1 option");
       await expect(question(ids.blocks.overall, "bundle")).toContainText("1 hidden option");
       await expect(question(ids.blocks.profile, "recommend")).toContainText("Options copied from services");

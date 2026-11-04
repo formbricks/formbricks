@@ -336,9 +336,14 @@ export const FlowView = ({
             type="gray"
             size="tiny"
             icon={<EyeIcon />}
-            text={t("workspace.surveys.edit.flow.show_if", {
-              conditions: describeConditionGroup(badge.conditions, localSurvey, t, textFormat),
-            })}
+            text={t(
+              target?.showIf.type === "block"
+                ? "workspace.surveys.edit.flow.show_block_if_chip"
+                : "workspace.surveys.edit.flow.show_question_if_chip",
+              {
+                conditions: describeConditionGroup(badge.conditions, localSurvey, t, textFormat),
+              }
+            )}
             title={t("workspace.surveys.edit.flow.read_only_hint")}
           />
         );
