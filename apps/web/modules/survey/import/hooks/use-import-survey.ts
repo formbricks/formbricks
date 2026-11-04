@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import type { ProblemCode } from "@/app/api/v3/lib/response";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
 import { type TV3InvalidParam, V3ApiError } from "@/modules/api/lib/v3-client";
@@ -214,7 +215,9 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
                       ...(event.references ? { references: event.references } : {}),
                       match: event.match ?? null,
                       // One key per review: a new file, or the same file again, is a new review.
-                      idempotencyKey: crypto.randomUUID(),
+                      // `uuid`, not `crypto.randomUUID()`: that exists only in secure contexts, and a
+                      // self-hosted instance may be served over plain HTTP.
+                      idempotencyKey: uuidv4(),
                     },
                   });
                   break;
