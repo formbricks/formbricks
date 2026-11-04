@@ -4261,6 +4261,7 @@
           "logic_moved_title": "Logic has moved to the Flow tab",
           "no_calculated_fields": "No calculated fields yet",
           "no_destination": "Choose where to jump",
+          "no_field_to_set": "Choose a field to set",
           "not_copied": "Not copied",
           "only_calculated_fields_hint": "Set value writes to an Embedded Data field whose source is Calculated. A Passed in field gets its value from the link or the website, so it isn't listed here.",
           "open_flow": "Open Flow",
