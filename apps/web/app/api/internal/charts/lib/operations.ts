@@ -18,16 +18,11 @@ import { RedactedAIError } from "@/lib/ai/loggable-error";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
-import { getAnswerQuestions } from "@/modules/ee/analysis/charts/lib/answer-questions";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
 import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
-import type {
-  TInternalAnswerQuestionsQuery,
-  TInternalChartGenerateBody,
-  TInternalMatrixQuestionsQuery,
-} from "./schemas";
+import type { TInternalChartGenerateBody, TInternalMatrixQuestionsQuery } from "./schemas";
 
 /**
  * The chart operations only the app's chart builder calls: describing a chart to the AI, and the
@@ -235,43 +230,5 @@ export async function listInternalMatrixQuestions({
     return successResponse(await getMatrixQuestions(access.workspaceId, query.datasetId), { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.matrixQuestions" });
-  }
-}
-
-/**
- * `GET /api/internal/answer-questions?workspaceId=…&datasetId=…` → 200 `{ data }`: the questions of a
- * Feedback Dataset an answer filter may name (ENG-6637), with their kind and options, for the chart
- * builder's "Answer to question…" filter.
- */
-export async function listInternalAnswerQuestions({
-  query,
-  ...context
-}: TV3ChartOperationContext & { query: TInternalAnswerQuestionsQuery }): Promise<Response> {
-  const { authentication, requestId, instance } = context;
-  const log = logger.withContext({ requestId, workspaceId: query.workspaceId });
-
-  try {
-    const access = await requireDashboardsAccess(
-      authentication,
-      query.workspaceId,
-      "read",
-      requestId,
-      instance
-    );
-    if (access instanceof Response) return access;
-
-    const refused = await refuseUnlessFeedbackDatasetAccess(
-      authentication,
-      access,
-      query.datasetId,
-      "read",
-      requestId,
-      instance
-    );
-    if (refused) return refused;
-
-    return successResponse(await getAnswerQuestions(access.workspaceId, query.datasetId), { requestId });
-  } catch (error) {
-    return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.answerQuestions" });
   }
 }
