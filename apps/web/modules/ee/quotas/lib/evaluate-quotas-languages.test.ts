@@ -26,7 +26,7 @@ const quota = (id: string, conditions: TConditionGroup): TSurveyQuota => ({
   surveyId: "survey1",
   name: id,
   limit: 10,
-  logic: { connector: "and", conditions: conditions.conditions },
+  logic: { connector: "and", conditions: conditions.conditions as TSurveyQuota["logic"]["conditions"] },
   action: "endSurvey",
   endingCardId: null,
   countPartialSubmissions: false,
