@@ -195,7 +195,9 @@ test.describe("Survey flow @slow", () => {
       await expect(page.locator(`[id="${ids.setValue.scoreRule}"]`)).toContainText(
         "score = round(ifEmpty(@sat_netflix, 0) + ifEmpty(@sat_disney, 0) * 2, 1)"
       );
-      await expect(page.locator(`[id="${ids.lowQuality.rule}"]`)).toContainText("Mark as low quality");
+      await expect(page.locator(`[id="${ids.lowQuality.rule}"]`)).toContainText(
+        "Mark response as Low quality"
+      );
 
       // Endings, the redirect one by its label.
       for (const ending of fixture.endings) {

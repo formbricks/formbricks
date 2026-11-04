@@ -2,16 +2,12 @@
 
 import {
   ArrowRightIcon,
-  BinaryIcon,
-  EqualIcon,
   EyeIcon,
   EyeOffIcon,
   HandshakeIcon,
   LayersIcon,
   PlusIcon,
   Rows3Icon,
-  ShieldAlertIcon,
-  SplitIcon,
   Undo2Icon,
 } from "lucide-react";
 import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo, useState } from "react";
@@ -57,6 +53,7 @@ import {
   setBlockRules,
   setStartRules,
 } from "@/modules/survey/editor/lib/rule-list";
+import { RuleTypeIcon, RuleTypeTile, getRuleTypeLabel } from "@/modules/survey/editor/lib/rule-types";
 import {
   type TShowIfTarget,
   canAddShowIf,
@@ -106,7 +103,9 @@ interface FlowViewProps {
   readonly handledInvalidRef: RefObject<string[] | null>;
 }
 
-const RULE_ICON = { rule: <SplitIcon />, embeddedData: <BinaryIcon /> };
+/** What Add logic starts, in the rule types' order: before the first question only a jump or Set value. */
+const START_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue"];
+const BLOCK_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "markLowQuality"];
 
 /** The Questions tab's ending icons: a handshake for an ending card, a turned arrow for a redirect. */
 const EndingTypeIcon = ({
@@ -269,8 +268,8 @@ export const FlowView = ({
     if (action.kind === "markLowQuality") {
       return (
         <span key={key} className="inline-flex items-center gap-1 text-sm font-medium text-slate-900">
-          <ShieldAlertIcon className="size-4 text-amber-600" aria-hidden="true" />
-          {t("workspace.surveys.edit.mark_as_low_quality")}
+          <RuleTypeIcon type="markLowQuality" className="size-4 text-orange-500" />
+          {getRuleTypeLabel("markLowQuality", t)}
         </span>
       );
     }
@@ -428,8 +427,8 @@ export const FlowView = ({
       <FlowOutlineRow
         key={row.id}
         id={row.id}
-        tone={row.tone}
-        icon={RULE_ICON[row.tone]}
+        tone={row.type}
+        icon={<RuleTypeIcon type={row.type} />}
         isInvalid={invalidElements?.includes(row.id) ?? false}
         readOnlyLabel={row.editable ? undefined : t("workspace.surveys.edit.flow.read_only")}
         onToggle={row.editable ? () => toggleRow(row.id) : undefined}
@@ -527,16 +526,14 @@ export const FlowView = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    icon={<SplitIcon className="size-4" />}
-                    onClick={() => addStartRule("jump")}>
-                    {t("workspace.surveys.edit.flow.jump_rule")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    icon={<EqualIcon className="size-4" />}
-                    onClick={() => addStartRule("setValue")}>
-                    {t("workspace.surveys.edit.flow.set_value")}
-                  </DropdownMenuItem>
+                  {START_RULE_KINDS.map((kind) => (
+                    <DropdownMenuItem
+                      key={kind}
+                      icon={<RuleTypeTile type={kind} />}
+                      onClick={() => addStartRule(kind)}>
+                      {getRuleTypeLabel(kind, t)}
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
               <InfoTooltip label={t("workspace.surveys.edit.flow.about_before_first_question")}>
@@ -678,21 +675,14 @@ export const FlowView = ({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                          <DropdownMenuItem
-                            icon={<SplitIcon className="size-4" />}
-                            onClick={() => addRule(block, "jump")}>
-                            {t("workspace.surveys.edit.flow.jump_rule")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            icon={<EqualIcon className="size-4" />}
-                            onClick={() => addRule(block, "setValue")}>
-                            {t("workspace.surveys.edit.flow.set_value")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            icon={<ShieldAlertIcon className="size-4" />}
-                            onClick={() => addRule(block, "markLowQuality")}>
-                            {t("workspace.surveys.edit.mark_as_low_quality")}
-                          </DropdownMenuItem>
+                          {BLOCK_RULE_KINDS.map((kind) => (
+                            <DropdownMenuItem
+                              key={kind}
+                              icon={<RuleTypeTile type={kind} />}
+                              onClick={() => addRule(block, kind)}>
+                              {getRuleTypeLabel(kind, t)}
+                            </DropdownMenuItem>
+                          ))}
                           <DropdownMenuItem
                             icon={<EyeIcon className="size-4" />}
                             disabled={

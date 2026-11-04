@@ -9,11 +9,11 @@ import { cn } from "@/lib/cn";
  * respondent moves. Blocks are rows; what runs after a block sits indented under it; endings come
  * last. Presentational only — the Flow tab builds the rows from its outline model.
  *
- * Tones follow the UI mock: blue for a rule (jump, require answer), green for an Embedded Data step
- * (a calculation), red for an ending, white for a block.
+ * Tones: white for a block, red for an ending, and one colour per rule type — blue for a jump, green
+ * for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
  */
 
-export type TFlowOutlineTone = "block" | "rule" | "embeddedData" | "ending";
+export type TFlowOutlineTone = "block" | "jump" | "setValue" | "requireAnswer" | "markLowQuality" | "ending";
 
 interface FlowOutlineProps {
   /** Left of the header: e.g. the Expand / Collapse toggle and an info button saying how to read it. */
@@ -66,25 +66,35 @@ export const FlowOutlineNote = ({
   </div>
 );
 
+/**
+ * A rule type's one colour is its outline and its icon tile; a lighter tint of it is the row's
+ * background, and a little more of that tint its header's hover.
+ */
 const TONE_CARD: Record<TFlowOutlineTone, string> = {
   block: "border-slate-200 bg-white shadow-xs",
-  rule: "border-blue-200 bg-blue-50/60",
-  embeddedData: "border-emerald-200 bg-emerald-50/60",
+  jump: "border-blue-500 bg-blue-50",
+  setValue: "border-emerald-500 bg-emerald-50",
+  requireAnswer: "border-violet-500 bg-violet-50",
+  markLowQuality: "border-orange-500 bg-orange-50",
   ending: "border-red-300 bg-red-50",
 };
 
 const TONE_ICON: Record<TFlowOutlineTone, string> = {
   block: "size-6 bg-slate-700",
-  rule: "size-5 bg-blue-600",
-  embeddedData: "size-5 bg-emerald-600",
+  jump: "size-5 bg-blue-500",
+  setValue: "size-5 bg-emerald-500",
+  requireAnswer: "size-5 bg-violet-500",
+  markLowQuality: "size-5 bg-orange-500",
   ending: "size-6 bg-red-600",
 };
 
 /** The header's hover tint: a block card is white, so a white wash on it would not show. */
 const TONE_HOVER: Record<TFlowOutlineTone, string> = {
   block: "hover:bg-slate-50",
-  rule: "hover:bg-white/60",
-  embeddedData: "hover:bg-white/60",
+  jump: "hover:bg-blue-100/70",
+  setValue: "hover:bg-emerald-100/70",
+  requireAnswer: "hover:bg-violet-100/70",
+  markLowQuality: "hover:bg-orange-100/70",
   ending: "hover:bg-white/60",
 };
 

@@ -1099,7 +1099,7 @@ export const editEmbeddedField = async (
 
 /**
  * Adds a rule to block `blockNumber` (1-based) on the Flow tab, where logic lives since ENG-6929, and
- * waits for its editor: a "Jump rule" with a condition on the block's first question, as "Add logic"
+ * waits for its editor: a "Jump to block" rule with a condition on the block's first question, as "Add logic"
  * on the block card used to start one. Only the new rule's editor is open, so its ids
  * (`condition-0-0-…`, `action-0-…`) are the ones the steps after it fill in.
  */
@@ -1108,7 +1108,7 @@ export const addFlowRule = async (page: Page, blockNumber: number): Promise<void
     .locator('[id^="flow-add-logic-"]:not([id="flow-add-logic-start"])')
     .nth(blockNumber - 1)
     .click();
-  await page.getByRole("menuitem", { name: "Jump rule", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Jump to block", exact: true }).click();
   await expect(page.locator("#condition-0-0-conditionValue")).toBeVisible();
 };
 
@@ -1244,7 +1244,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#actions-0-dropdown").first().click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Require Answer" }).click();
+  await page.getByRole("option", { name: "Require answer" }).click();
   await page.locator("#action-1-target").click();
   await page.getByRole("option", { name: params.singleSelectQuestion.question }).click();
   await page.locator("#actions-1-dropdown").click();
@@ -1322,7 +1322,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Require Answer" }).click();
+  await page.getByRole("option", { name: "Require answer" }).click();
   await page.locator("#action-1-target").click();
   await page.getByRole("option", { name: params.pictureSelectQuestion.question }).click();
   await page.locator("#actions-1-dropdown").click();
@@ -1515,7 +1515,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#actions-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
-  await page.getByRole("option", { name: "Require Answer" }).click();
+  await page.getByRole("option", { name: "Require answer" }).click();
   await page.locator("#action-2-target").click();
   await page.getByRole("option", { name: params.ctaQuestion.question }).click();
 
