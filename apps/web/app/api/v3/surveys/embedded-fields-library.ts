@@ -22,7 +22,8 @@ const linksLibraryKey = (entry: unknown): entry is Record<string, unknown> & { k
  *
  * Runs on the request before it is validated, because what the document then says about the field —
  * its source, type and default, and so the legacy projection it is held to — is the library's. The
- * input is otherwise left as it came: a malformed entry stays malformed for the schema to report.
+ * input is otherwise left as it came: a malformed entry stays malformed for the schema to report, and
+ * a key the caller sent beside the library key stays for the strict schema to refuse.
  *
  * The survey's address for the field is the payload's `storageKey` when it sends one; else the one
  * the survey already links the field at (`currentFields`), so echoing a field back never moves the
@@ -89,7 +90,10 @@ export async function resolveV3EmbeddedFieldLibraryKeys<TInput>(
         ? entry.storageKey
         : (currentStorageKeyById.get(row.id) ?? (row.source === "computed" ? createId() : entry.key));
 
+    // The caller's other keys stay, so the strict schema still refuses a typo'd or unknown one; the
+    // library's definition keys win over the ones it sent.
     return {
+      ...entry,
       storageKey,
       key: entry.key,
       name: row.name,
@@ -97,7 +101,7 @@ export async function resolveV3EmbeddedFieldLibraryKeys<TInput>(
       dataType: row.dataType,
       defaultValue: row.defaultValue as TEmbeddedDataDefaultValue,
       locked: row.locked,
-    } satisfies TV3SurveyEmbeddedField;
+    } satisfies TV3SurveyEmbeddedField & Record<string, unknown>;
   });
 
   if (invalidParams.length > 0) {

@@ -1130,6 +1130,16 @@ describe("patchV3Survey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
+    test("refuses a key the caller sent beside a library key, at its path, and writes nothing", async () => {
+      await expect(
+        patchV3Survey(currentSurvey, { embeddedFields: [{ key: "plan_tier", foo: 1 }] })
+      ).rejects.toMatchObject({
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.foo" })],
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
     test("refuses both formats when they disagree, and writes nothing", async () => {
       await expect(
         patchV3Survey(currentSurvey, {
