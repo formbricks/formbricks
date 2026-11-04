@@ -180,6 +180,24 @@ describe("readSheetDocument", () => {
     }
   });
 
+  test("refuses text past the row limit that the sheet's dimension leaves out", () => {
+    // 4,000 rows, a gap, and one more row at 6,000, under a dimension of A1.
+    const rows = Array.from({ length: 6_000 }, (_, index) =>
+      index < 4_000 || index === 5_999 ? [`Q${index + 1}`] : []
+    );
+    const understated = patched(
+      workbook({ Sheet1: rows }),
+      '<dimension ref="A1:A6000"/>',
+      '<dimension ref="A1"/>'
+    );
+    expect(strFromU8(unzipSync(understated)["xl/worksheets/sheet1.xml"])).toContain('<dimension ref="A1"/>');
+
+    expect(refusal(() => read(understated))).toMatchObject({
+      code: "document_limit_exceeded",
+      identifier: "rows",
+    });
+  });
+
   test("allows empty cells past the column limit, and refuses text there wherever the dimension ends", () => {
     const pastTheLimit = columnName(SURVEY_IMPORT_SHEET_MAX_COLUMNS);
     // The dimension stops before the cell: the cell is still read, and still counts.

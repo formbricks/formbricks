@@ -61,8 +61,9 @@ const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
       dense: true,
       // The first sheet only; the others are named from the workbook's sheet list, never parsed.
       sheets: 0,
-      // One row past the limit: SheetJS stops reading there and keeps the sheet's full range.
-      sheetRows: SURVEY_IMPORT_SHEET_MAX_ROWS + 1,
+      // No `sheetRows`: SheetJS would stop reading there, and a row past it that the sheet's
+      // `<dimension>` leaves out would be lost without a word. Read whole, the range covers every cell
+      // read, so the row check below sees it; the XML limits bound what is read.
       cellFormula: false,
       cellHTML: false,
       cellStyles: false,
@@ -75,9 +76,9 @@ const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
   }
 };
 
-/** The rows the sheet declares, whether or not they were read. */
+/** The rows the sheet's range spans: what its `<dimension>` declares, widened to every cell read. */
 const declaredRowCount = (sheet: XLSX.WorkSheet): number => {
-  const range = sheet["!fullref"] ?? sheet["!ref"];
+  const range = sheet["!ref"];
   return range ? XLSX.utils.decode_range(range).e.r + 1 : 0;
 };
 
