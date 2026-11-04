@@ -292,7 +292,9 @@ function OptionRow({
   const isHidden = item.hidden === true;
   const showIf: TConditionGroup | undefined = item.showIf;
   const switchId = `option-hidden-${item.id}`;
-  const onCardClick = showIf ? onToggleEditing : onAddCondition;
+  // A Hidden option without a condition offers none to add (its card says only "Hidden").
+  const addOnClick = isHidden ? undefined : onAddCondition;
+  const onCardClick = showIf ? onToggleEditing : addOnClick;
 
   return (
     <li className="flex flex-col">
