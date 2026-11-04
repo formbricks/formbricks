@@ -8,6 +8,7 @@ import { integrationKeys } from "../lib/query";
 /**
  * One integration settings page's integration. Seeded from the server-rendered page so the first paint
  * needs no request; the add/edit/remove flows invalidate `integrationKeys.byType` to refetch the list.
+ * `staleTime: Infinity` is safe because the provider lives in `template.tsx`, which remounts per navigation.
  */
 export const useIntegration = <T extends TIntegrationType>(
   workspaceId: string,
