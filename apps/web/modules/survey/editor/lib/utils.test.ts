@@ -669,6 +669,8 @@ describe("removal guards also see show-if (ENG-6931)", () => {
 
   test("a question a block's show-if depends on is reported as used", () => {
     const survey = withoutLogic();
+    // "recommend" copies "services", which a removal guard names first (ENG-6938); unlinked here.
+    delete (survey.blocks[5].elements[12] as { optionsCopiedFrom?: string }).optionsCopiedFrom;
 
     expect(findElementUsedInLogic(survey, "services")).toBe(flatIndexOf(survey, "hours"));
   });
@@ -741,6 +743,28 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     recommend.optionsCopiedFrom = "brand_rank";
 
     expect(findElementUsedInLogic(survey, "brand_rank")).toBe(flatIndexOf(survey, "recommend"));
+  });
+
+  test("a real copy reports its source as copied, not as a show-if, though its options' show-ifs read it", () => {
+    const survey = withoutLogic();
+    // Every show-if of the survey's own goes; the ones a copy writes on its options stay: "recommend"
+    // copies "services", each option shown only if it was picked there.
+    survey.blocks.forEach((block) => {
+      delete block.showIf;
+      block.elements.forEach((element) => {
+        delete element.showIf;
+        if (element.id === "recommend") return;
+        const choices = (element as { choices?: { showIf?: unknown }[] }).choices ?? [];
+        choices.forEach((choice) => delete choice.showIf);
+      });
+    });
+    const recommend = survey.blocks[5].elements[12] as unknown as { choices: { showIf?: unknown }[] };
+    expect(recommend.choices.filter((choice) => choice.showIf)).toHaveLength(4);
+
+    expect(findElementUse(survey, "services")).toEqual({
+      kind: "copiedOptions",
+      elementIndex: flatIndexOf(survey, "recommend"),
+    });
   });
 });
 
