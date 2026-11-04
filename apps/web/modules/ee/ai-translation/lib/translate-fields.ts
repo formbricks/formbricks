@@ -2,7 +2,6 @@ import "server-only";
 import { z } from "zod";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
-import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { redactAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
@@ -18,7 +17,7 @@ export const ZAITranslationField = z.object({
 
 export type TAITranslationField = z.infer<typeof ZAITranslationField>;
 
-const AI_TRANSLATION_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
+const AI_TRANSLATION_TIMEOUT_MS = 60_000;
 const AI_TRANSLATION_MIN_OUTPUT_TOKENS = 1024;
 const AI_TRANSLATION_MAX_OUTPUT_TOKENS = 8192;
 const AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD = 160;
