@@ -22,7 +22,8 @@ import { type HubRecord, createHubRecords, deleteHubTenant, isHubAndCubeReachabl
 // dashboard with their values, the server applies them to every chart read, and a Dashboard viewer sees them
 // as locked chips it cannot remove.
 
-const lockedChip = (page: Page, name: RegExp) => filterChips(page).getByLabel(name);
+// A locked chip says so in screen-reader text: "<filter>, locked".
+const lockedChip = (page: Page, name: RegExp) => filterChips(page).getByText(name);
 
 /** The filters a page URL pins, as `<operator>:<field>` → picked values. */
 const urlFilters = (page: Page) => {

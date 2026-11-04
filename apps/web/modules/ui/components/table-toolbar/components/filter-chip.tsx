@@ -75,16 +75,20 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
         )}>
         {lockedHint ? (
           <span
-            role="group"
             title={lockedHint}
-            aria-label={t("common.table_toolbar.locked_filter", { filter: accessibleName })}
             className={cn(
               "flex h-full min-w-0 items-center gap-1.5 py-0.5",
               onRemove ? "pr-1" : "pr-2",
               size === "sm" ? "pl-2" : "pl-3"
             )}>
             <LockIcon className="size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
-            {body}
+            {/* Read as "<filter>, locked": the visible text alone would not say it cannot be changed. */}
+            <span aria-hidden="true" className="flex min-w-0 items-center gap-1.5">
+              {body}
+            </span>
+            <span className="sr-only">
+              {t("common.table_toolbar.locked_filter", { filter: accessibleName })}
+            </span>
           </span>
         ) : (
           <button
