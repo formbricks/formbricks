@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { InvalidInputError, TooManyRequestsError } from "@formbricks/types/errors";
 import {
+  AI_TRANSLATION_BATCH_TOO_LARGE,
   AI_TRANSLATION_OUTPUT_TOO_LONG,
   type TAITranslationField,
   translateFields,
@@ -138,7 +139,7 @@ describe("translateFields", () => {
   });
 
   test("never runs more than three model batches at once", async () => {
-    const largeBatchFields = makeFields(60);
+    const largeBatchFields = makeFields(24);
     let active = 0;
     let maxActive = 0;
     mockGenerateOrganizationAIObject.mockImplementation(async () => {
@@ -155,9 +156,16 @@ describe("translateFields", () => {
 
     const result = await translateFields({ ...baseInput, fields: largeBatchFields });
 
-    expect(Object.keys(result)).toHaveLength(60);
-    expect(mockGenerateOrganizationAIObject).toHaveBeenCalledTimes(8);
+    expect(Object.keys(result)).toHaveLength(24);
+    expect(mockGenerateOrganizationAIObject).toHaveBeenCalledTimes(3);
     expect(maxActive).toBe(3);
+  });
+
+  test("rejects a fourth model batch before making any AI calls", async () => {
+    await expect(translateFields({ ...baseInput, fields: makeFields(25) })).rejects.toThrow(
+      new InvalidInputError(AI_TRANSLATION_BATCH_TOO_LARGE)
+    );
+    expect(mockGenerateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
   test("returns empty object without calling the model when no fields are provided", async () => {

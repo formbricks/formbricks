@@ -24,6 +24,7 @@ const AI_TRANSLATION_MAX_OUTPUT_TOKENS = 8192;
 const AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD = 160;
 
 export const AI_TRANSLATION_OUTPUT_TOO_LONG = "ai_output_too_long";
+export const AI_TRANSLATION_BATCH_TOO_LARGE = "ai_translation_batch_too_large";
 
 interface TranslateFieldsInput {
   organizationId: string;
@@ -138,13 +139,12 @@ Rules:
   };
 
   const modelBatches = createTranslationBatches(translatableFields);
-  const translations: Record<string, string> = {};
-  for (let index = 0; index < modelBatches.length; index += AI_TRANSLATION_MODEL_BATCHES_PER_ACTION) {
-    const results = await Promise.all(
-      modelBatches.slice(index, index + AI_TRANSLATION_MODEL_BATCHES_PER_ACTION).map(translateBatch)
-    );
-    for (const result of results) Object.assign(translations, result);
+  if (modelBatches.length > AI_TRANSLATION_MODEL_BATCHES_PER_ACTION) {
+    throw new InvalidInputError(AI_TRANSLATION_BATCH_TOO_LARGE);
   }
+  const results = await Promise.all(modelBatches.map(translateBatch));
+  const translations: Record<string, string> = {};
+  for (const result of results) Object.assign(translations, result);
 
   return { ...passthroughTranslations, ...translations };
 };
