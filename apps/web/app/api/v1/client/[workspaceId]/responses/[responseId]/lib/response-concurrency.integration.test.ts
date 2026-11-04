@@ -35,7 +35,10 @@ const seedUnfinishedResponse = async () => {
   return { surveyId: survey.id, responseId: response.id };
 };
 
-/** Writes the row inside a transaction and keeps it open, so the row lock is held until `commit()`. */
+/**
+ * Writes the row inside a transaction and keeps it open, so the row lock is held until `commit()`.
+ * `holderPid` is that transaction's backend, so the wait below can look for writers blocked on it alone.
+ */
 const writeInOpenTransaction = async (
   responseId: string,
   data: { finished?: boolean; data: Record<string, string> }
@@ -44,37 +47,62 @@ const writeInOpenTransaction = async (
   const commitSignal = new Promise<void>((resolve) => {
     commit = resolve;
   });
-  let markWritten!: () => void;
-  const written = new Promise<void>((resolve) => {
+  let markWritten!: (pid: number) => void;
+  const written = new Promise<number>((resolve) => {
     markWritten = resolve;
   });
 
   const committed = prisma.$transaction(
     async (tx) => {
+      const [{ pid }] = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS "pid"`;
       await tx.response.update({ where: { id: responseId }, data });
-      markWritten();
+      markWritten(pid);
       await commitSignal;
     },
     { timeout: 20_000 }
   );
 
-  await written;
-  return { commit, committed };
+  // A failed write rejects here instead of leaving the caller waiting on `written` forever.
+  const holderPid = await Promise.race([written, committed.then(() => -1)]);
+  return { holderPid, commit, committed };
 };
 
-/** Resolves once another backend is waiting on a row lock, i.e. the update under test has reached it. */
-const waitForBlockedWriter = async () => {
+/** Resolves once another backend is blocked on the holder's lock, i.e. the update under test reached it. */
+const waitForBlockedWriter = async (holderPid: number) => {
   const deadline = Date.now() + 10_000;
   while (Date.now() < deadline) {
     const [{ waiting }] = await prisma.$queryRaw<{ waiting: number }[]>`
       SELECT count(*)::int AS "waiting"
       FROM pg_stat_activity
-      WHERE datname = current_database() AND wait_event_type = 'Lock'
+      WHERE ${holderPid}::int = ANY(pg_blocking_pids(pid))
     `;
     if (waiting > 0) return;
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   throw new Error("The client update never blocked on the row lock");
+};
+
+/**
+ * Starts `update` while `holder` keeps its write open, commits once the update is blocked on it, and
+ * returns the update's outcome. Commits in `finally`, so a failure here never leaves the row locked for the
+ * next test's reset.
+ */
+const raceAgainst = async <T>(
+  holder: Awaited<ReturnType<typeof writeInOpenTransaction>>,
+  update: () => Promise<T>
+): Promise<T | unknown> => {
+  // Settled into a value straight away, so a rejection is never unhandled while we wait.
+  const outcome = update().then(
+    (value) => value,
+    (error: unknown) => error
+  );
+  try {
+    await waitForBlockedWriter(holder.holderPid);
+  } finally {
+    holder.commit();
+    await holder.committed;
+  }
+  return outcome;
 };
 
 const readResponse = (responseId: string) =>
@@ -88,20 +116,11 @@ describe("updateResponseWithQuotaEvaluation with a concurrent write (ENG-6869)",
     const { surveyId, responseId } = await seedUnfinishedResponse();
     const finishing = await writeInOpenTransaction(responseId, { finished: true, data: { q1: "A" } });
 
-    const racing = updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: false,
-      data: { q1: "B" },
-    });
-    // Settle the race outcome into a value now, so a rejection is never left unhandled while we wait.
-    const outcome = racing.then(
-      () => "written",
-      (error: unknown) => error
+    const outcome = await raceAgainst(finishing, () =>
+      updateResponseWithQuotaEvaluation(responseId, surveyId, { finished: false, data: { q1: "B" } })
     );
-    await waitForBlockedWriter();
-    finishing.commit();
-    await finishing.committed;
 
-    expect(await outcome).toBeInstanceOf(ResponseAlreadyFinishedError);
+    expect(outcome).toBeInstanceOf(ResponseAlreadyFinishedError);
     expect(await readResponse(responseId)).toEqual({ finished: true, data: { q1: "A" } });
   });
 
@@ -109,15 +128,11 @@ describe("updateResponseWithQuotaEvaluation with a concurrent write (ENG-6869)",
     const { surveyId, responseId } = await seedUnfinishedResponse();
     const finishing = await writeInOpenTransaction(responseId, { finished: true, data: { q1: "A" } });
 
-    const outcome = updateResponseWithQuotaEvaluation(responseId, surveyId, { data: { q1: "B" } }).then(
-      () => "written",
-      (error: unknown) => error
+    const outcome = await raceAgainst(finishing, () =>
+      updateResponseWithQuotaEvaluation(responseId, surveyId, { data: { q1: "B" } })
     );
-    await waitForBlockedWriter();
-    finishing.commit();
-    await finishing.committed;
 
-    expect(await outcome).toBeInstanceOf(ResponseAlreadyFinishedError);
+    expect(outcome).toBeInstanceOf(ResponseAlreadyFinishedError);
     expect(await readResponse(responseId)).toEqual({ finished: true, data: { q1: "A" } });
   });
 
@@ -125,15 +140,11 @@ describe("updateResponseWithQuotaEvaluation with a concurrent write (ENG-6869)",
     const { surveyId, responseId } = await seedUnfinishedResponse();
     const first = await writeInOpenTransaction(responseId, { data: { q1: "A" } });
 
-    const second = updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: true,
-      data: { q2: "B" },
-    });
-    await waitForBlockedWriter();
-    first.commit();
-    await first.committed;
+    const outcome = await raceAgainst(first, () =>
+      updateResponseWithQuotaEvaluation(responseId, surveyId, { finished: true, data: { q2: "B" } })
+    );
 
-    await expect(second).resolves.toMatchObject({ finished: true, data: { q1: "A", q2: "B" } });
+    expect(outcome).toMatchObject({ finished: true, data: { q1: "A", q2: "B" } });
     expect(await readResponse(responseId)).toEqual({ finished: true, data: { q1: "A", q2: "B" } });
   });
 });

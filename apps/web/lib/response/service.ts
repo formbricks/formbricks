@@ -569,15 +569,6 @@ export const getResponsesByWorkspaceId = reactCache(
 );
 
 /**
- * `ingestFlags` is the Embedded Data ingest contract's verdict on `responseInput.data` (ENG-1845),
- * computed server-side by the caller and passed separately so it can never arrive from the client.
- *
- * Omitting it leaves the stored column untouched — the authenticated management routes update a
- * response without running the contract, and must not clear what a client ingest wrote. Passing it
- * unions by key: a key this payload rewrote takes its new verdict, including none at all, so a value
- * corrected on a later block stops being flagged.
- */
-/**
  * Locks a response row for the rest of `tx` and returns its `finished` flag, or `null` when there is no such
  * response. A check that guards a response write belongs on this result: under the lock, no other write can
  * commit between the check and the write, and the read in `updateResponse` that follows sees the latest
@@ -599,6 +590,15 @@ export const lockResponseForUpdate = async (
   return locked ?? null;
 };
 
+/**
+ * `ingestFlags` is the Embedded Data ingest contract's verdict on `responseInput.data` (ENG-1845),
+ * computed server-side by the caller and passed separately so it can never arrive from the client.
+ *
+ * Omitting it leaves the stored column untouched — the authenticated management routes update a
+ * response without running the contract, and must not clear what a client ingest wrote. Passing it
+ * unions by key: a key this payload rewrote takes its new verdict, including none at all, so a value
+ * corrected on a later block stops being flagged.
+ */
 export const updateResponse = async (
   responseId: string,
   responseInput: TResponseUpdateInput,
