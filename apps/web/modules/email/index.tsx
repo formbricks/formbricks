@@ -1,8 +1,11 @@
 import {
+  type TAttachmentExportFailureReason,
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
   renderAccountDeletedEmail,
   renderAccountDeletionEmail,
+  renderAttachmentExportFailedEmail,
+  renderAttachmentExportReadyEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderForgotPasswordEmail,
@@ -50,6 +53,7 @@ import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-su
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export { IS_SMTP_CONFIGURED } from "@/lib/constants";
+export type { TAttachmentExportFailureReason };
 export { sendEmail } from "@/modules/email/lib/send-email";
 
 const legalProps: TEmailTemplateLegalProps = {
@@ -356,6 +360,108 @@ export const sendSurveyRetentionNoticeEmail = async ({
     auditContext: { trigger: "system", organizationId },
     to: email,
     subject: t("emails.retention_notice_email_subject", { organizationName }),
+    html,
+  });
+};
+
+/**
+ * An attachment export finished building (ENG-6862). The link opens an app page that checks the reader is
+ * the requester, then starts the download, so it outlives any presigned URL. Size and date arrive
+ * formatted for the reader. Returns false when SMTP isn't configured; throws when sending fails.
+ */
+export const sendAttachmentExportReadyEmail = async ({
+  email,
+  locale,
+  userId,
+  organizationId,
+  surveyId,
+  surveyName,
+  attachmentExportId,
+  archiveSize,
+  fileCount,
+  includedFileCount,
+  sizeLimit,
+  retentionMonths,
+  expiryDate,
+  truncated,
+}: {
+  email: string;
+  locale: TUserLocale;
+  userId: string;
+  organizationId: string;
+  surveyId: string;
+  surveyName: string;
+  attachmentExportId: string;
+  archiveSize: string;
+  fileCount: string;
+  includedFileCount: string;
+  sizeLimit: string;
+  retentionMonths: string;
+  expiryDate: string;
+  truncated: boolean;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderAttachmentExportReadyEmail({
+    surveyName,
+    archiveSize,
+    fileCount,
+    includedFileCount,
+    sizeLimit,
+    retentionMonths,
+    expiryDate,
+    truncated,
+    downloadLink: `${WEBAPP_URL}/attachment-exports/${attachmentExportId}`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "attachment_export",
+    auditContext: { trigger: "user", actorUserId: userId, organizationId, surveyId },
+    to: email,
+    subject: t("emails.attachment_export_ready_email_subject", { surveyName }),
+    html,
+  });
+};
+
+/**
+ * An attachment export could not be built (ENG-6862); the link opens the survey's Responses page to
+ * start again. Returns false when SMTP isn't configured; throws when sending fails.
+ */
+export const sendAttachmentExportFailedEmail = async ({
+  email,
+  locale,
+  userId,
+  organizationId,
+  workspaceId,
+  surveyId,
+  surveyName,
+  reason,
+  maxFiles,
+}: {
+  email: string;
+  locale: TUserLocale;
+  userId: string;
+  organizationId: string;
+  workspaceId: string;
+  surveyId: string;
+  surveyName: string;
+  reason: TAttachmentExportFailureReason;
+  maxFiles: string;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderAttachmentExportFailedEmail({
+    surveyName,
+    reason,
+    maxFiles,
+    responsesLink: `${WEBAPP_URL}/workspaces/${workspaceId}/surveys/${surveyId}/responses`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "attachment_export",
+    auditContext: { trigger: "user", actorUserId: userId, organizationId, surveyId },
+    to: email,
+    subject: t("emails.attachment_export_failed_email_subject", { surveyName }),
     html,
   });
 };

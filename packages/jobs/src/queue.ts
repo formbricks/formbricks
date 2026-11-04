@@ -3,6 +3,7 @@ import type IORedis from "ioredis";
 import { logger } from "@formbricks/logger";
 import { closeRedisConnection, createProducerConnection, getRedisUrlFromEnv } from "@/src/connection";
 import {
+  ATTACHMENT_EXPORT_JOB_OPTIONS,
   JOBS_DEFAULT_JOB_OPTIONS,
   JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
   JOBS_PREFIX,
@@ -24,6 +25,7 @@ import {
   toBullMQRepeatOptions,
 } from "@/src/schedules";
 import {
+  type TAttachmentExportJobData,
   type TResponsePipelineJobData,
   type TTestLogJobData,
   type TWebhookDeliveryJobData,
@@ -292,6 +294,28 @@ export const enqueueResponsePipelineJob = async (data: TResponsePipelineJobData)
   }
 };
 
+export const enqueueAttachmentExportJob = async (
+  data: TAttachmentExportJobData,
+  options: { jobId: string }
+): Promise<Job> => {
+  try {
+    // The jobId is mandatory: `{exportId}-{dispatchCount}` (BullMQ rejects `:` in custom ids). Within
+    // one dispatch a re-enqueue is a no-op; a re-dispatch by the reconciler gets a fresh id, so it is not
+    // swallowed by a job an older release completed without running (unknown names are dropped, see
+    // `processJob`).
+    return await enqueueBackgroundJob(JOB_NAMES.attachmentExport, data, {
+      ...ATTACHMENT_EXPORT_JOB_OPTIONS,
+      jobId: options.jobId,
+    });
+  } catch (error) {
+    logger.error(
+      { err: error, jobName: JOB_NAMES.attachmentExport, attachmentExportId: data.attachmentExportId },
+      "Failed to enqueue BullMQ attachment export job"
+    );
+    throw error;
+  }
+};
+
 export const enqueueWorkflowRunJob = async (
   data: TWorkflowRunJobData,
   options?: { jobId: string }
@@ -451,6 +475,7 @@ export const recurringJobs = Object.freeze(
  * override map off this module instead of re-typing the strings; the JOB_NAMES registry stays internal.
  */
 export const ONE_SHOT_JOB_NAMES = Object.freeze({
+  attachmentExport: JOB_NAMES.attachmentExport,
   responsePipeline: JOB_NAMES.responsePipeline,
   webhookDelivery: JOB_NAMES.webhookDelivery,
   workflowRun: JOB_NAMES.workflowRun,

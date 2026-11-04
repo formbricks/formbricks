@@ -35,6 +35,19 @@ vi.mock("@aws-sdk/s3-request-presigner", () => ({
   getSignedUrl: vi.fn(),
 }));
 
+const mockUpload = vi.hoisted(() => ({
+  instances: [] as { params: Record<string, unknown>; options: Record<string, unknown> }[],
+  done: vi.fn(),
+  abort: vi.fn(),
+}));
+
+vi.mock("@aws-sdk/lib-storage", () => ({
+  Upload: vi.fn(function Upload(this: unknown, options: Record<string, unknown>) {
+    mockUpload.instances.push({ params: options.params as Record<string, unknown>, options });
+    return { done: mockUpload.done, abort: mockUpload.abort };
+  }),
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: mockLogger,
 }));
@@ -647,6 +660,140 @@ describe("service.ts", () => {
         },
         "Failed to get file stream"
       );
+    });
+  });
+
+  describe("getSignedDownloadUrl options", () => {
+    test("signs the requested expiry and content disposition into the URL", async () => {
+      vi.doMock("./constants", () => ({ ...mockConstants }));
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => ({ send: vi.fn().mockResolvedValue({}) })),
+      }));
+      mockGetSignedUrl.mockResolvedValueOnce("https://example.com/export.zip?signature=abc");
+
+      const { getSignedDownloadUrl } = await import("./service");
+      const result = await getSignedDownloadUrl("ws/private/surveys/s/exports/e.zip", {
+        expiresIn: 6 * 60 * 60,
+        responseContentDisposition: 'attachment; filename="s-attachments.zip"',
+      });
+
+      expect(result).toEqual({ ok: true, data: "https://example.com/export.zip?signature=abc" });
+      expect(mockGetObjectCommand).toHaveBeenCalledWith({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Key: "ws/private/surveys/s/exports/e.zip",
+        ResponseContentDisposition: 'attachment; filename="s-attachments.zip"',
+      });
+      expect(mockGetSignedUrl).toHaveBeenCalledWith(expect.any(Object), expect.any(Object), {
+        expiresIn: 6 * 60 * 60,
+      });
+    });
+  });
+
+  describe("uploadFileStream", () => {
+    beforeEach(() => {
+      mockUpload.instances.length = 0;
+      mockUpload.done.mockReset();
+      mockUpload.abort.mockReset().mockResolvedValue(undefined);
+    });
+
+    const makeBody = async () => {
+      const { Readable } = await import("node:stream");
+      return Readable.from([Buffer.from("zip-bytes")]);
+    };
+
+    test("uploads the stream as a multipart upload with the object metadata", async () => {
+      vi.doMock("./constants", () => ({ ...mockConstants }));
+      mockUpload.done.mockResolvedValueOnce({});
+
+      const { uploadFileStream, UPLOAD_PART_SIZE_BYTES } = await import("./service");
+      const body = await makeBody();
+      const result = await uploadFileStream("ws/private/surveys/s/exports/e.zip", body, {
+        contentType: "application/zip",
+        contentDisposition: 'attachment; filename="e.zip"',
+      });
+
+      expect(result).toEqual({ ok: true, data: undefined });
+      expect(mockUpload.instances).toHaveLength(1);
+      expect(mockUpload.instances[0].params).toEqual({
+        Bucket: mockConstants.S3_BUCKET_NAME,
+        Key: "ws/private/surveys/s/exports/e.zip",
+        Body: body,
+        ContentType: "application/zip",
+        ContentDisposition: 'attachment; filename="e.zip"',
+        CacheControl: "no-store",
+      });
+      expect(mockUpload.instances[0].options).toMatchObject({
+        partSize: UPLOAD_PART_SIZE_BYTES,
+        leavePartsOnError: false,
+      });
+    });
+
+    test("returns an error and destroys the body when the upload fails", async () => {
+      vi.doMock("./constants", () => ({ ...mockConstants }));
+      mockUpload.done.mockRejectedValueOnce(
+        Object.assign(new Error("Access Denied"), {
+          name: "AccessDenied",
+          $metadata: { httpStatusCode: 403 },
+        })
+      );
+
+      const { uploadFileStream } = await import("./service");
+      const body = await makeBody();
+      const result = await uploadFileStream("k.zip", body, { contentType: "application/zip" });
+
+      expect(result).toEqual({ ok: false, error: { code: "unknown" } });
+      expect(body.destroyed).toBe(true);
+      const [loggedContext, loggedMessage] = mockLogger.error.mock.calls[0] as [
+        { error: Record<string, unknown> },
+        string,
+      ];
+      expect(loggedMessage).toBe("Failed to upload file stream");
+      expect(loggedContext.error).not.toHaveProperty("message");
+    });
+
+    test("aborts the multipart upload when the signal fires", async () => {
+      vi.doMock("./constants", () => ({ ...mockConstants }));
+      const controller = new AbortController();
+      mockUpload.done.mockImplementationOnce(() => {
+        controller.abort();
+        return Promise.reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+      });
+
+      const { uploadFileStream } = await import("./service");
+      const result = await uploadFileStream("k.zip", await makeBody(), {
+        contentType: "application/zip",
+        signal: controller.signal,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not start an upload when the signal is already aborted", async () => {
+      vi.doMock("./constants", () => ({ ...mockConstants }));
+      const controller = new AbortController();
+      controller.abort();
+
+      const { uploadFileStream } = await import("./service");
+      const body = await makeBody();
+      const result = await uploadFileStream("k.zip", body, {
+        contentType: "application/zip",
+        signal: controller.signal,
+      });
+
+      expect(result.ok).toBe(false);
+      expect(mockUpload.instances).toHaveLength(0);
+      expect(body.destroyed).toBe(true);
+    });
+
+    test("returns an error when the bucket is not configured", async () => {
+      vi.doMock("./constants", () => ({ ...mockConstants, S3_BUCKET_NAME: undefined }));
+
+      const { uploadFileStream } = await import("./service");
+      const result = await uploadFileStream("k.zip", await makeBody(), { contentType: "application/zip" });
+
+      expect(result).toEqual({ ok: false, error: { code: "s3_credentials_error" } });
+      expect(mockUpload.instances).toHaveLength(0);
     });
   });
 

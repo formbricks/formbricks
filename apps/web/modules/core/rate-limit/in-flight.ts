@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { type CommandParser, defineScript } from "redis";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { RATE_LIMITING_DISABLED } from "@/lib/constants";
+import { runRateLimitScript } from "./redis-script";
 import type { TRateLimitConfig } from "./types/rate-limit";
 
 /**
@@ -35,6 +37,16 @@ const ACQUIRE_SCRIPT = `
   return 1
 `;
 
+const acquireScript = defineScript({
+  NUMBER_OF_KEYS: 1,
+  SCRIPT: ACQUIRE_SCRIPT,
+  parseCommand(parser: CommandParser, key: string, limit: string, leaseMs: string, member: string) {
+    parser.pushKey(key);
+    parser.push(limit, leaseMs, member);
+  },
+  transformReply: (reply: unknown) => reply,
+});
+
 /**
  * Take one of `identifier`'s slots, or learn that all are taken. Fails open — `allowed` with no slot to
  * release — when limiting is off or Redis cannot answer, like every limit here.
@@ -51,10 +63,14 @@ export const acquireInFlightSlot = async (
 
     const key = createCacheKey.rateLimit.inFlight(config.namespace, identifier);
     const member = randomUUID();
-    const acquired = await redis.eval(ACQUIRE_SCRIPT, {
-      keys: [key],
-      arguments: [String(config.allowedPerInterval), String(config.interval * 1000), member],
-    });
+    const acquired = await cache.runRedisOperation((client) =>
+      runRateLimitScript(
+        client,
+        acquireScript,
+        [key],
+        [String(config.allowedPerInterval), String(config.interval * 1000), member]
+      )
+    );
     return acquired === 1 ? { allowed: true, slot: { key, member, released: false } } : { allowed: false };
   } catch (error) {
     logger.error({ error, namespace: config.namespace }, "In-flight limit check failed; allowing");
@@ -69,7 +85,9 @@ export const releaseInFlightSlot = async (slot: TInFlightSlot): Promise<void> =>
 
   try {
     const redis = await cache.getRedisClient();
-    await redis?.zRem(slot.key, slot.member);
+    if (redis) {
+      await cache.runRedisOperation((client) => client.zRem(slot.key, slot.member));
+    }
   } catch (error) {
     logger.warn({ error }, "In-flight slot release failed; it frees itself when its lease runs out");
   }

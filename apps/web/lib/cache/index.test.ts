@@ -11,6 +11,7 @@ const mockCacheService = {
   withCache: vi.fn(),
   withCacheNullable: vi.fn(),
   getRedisClient: vi.fn(),
+  runRedisOperation: vi.fn(),
 };
 
 const mockGetCacheService = vi.fn();
@@ -296,6 +297,16 @@ describe("Cache Index", () => {
 
       expect(result).toBeNull();
       expect(mockCacheService.getRedisClient).not.toHaveBeenCalled();
+    });
+
+    test("runs a raw Redis operation through the cache service", async () => {
+      const redis = { ping: vi.fn().mockResolvedValue("PONG") };
+      mockCacheService.runRedisOperation.mockImplementation((operation) => operation(redis));
+
+      const result = await cache.runRedisOperation((client: typeof redis) => client.ping());
+
+      expect(result).toBe("PONG");
+      expect(mockCacheService.runRedisOperation).toHaveBeenCalledOnce();
     });
 
     test("should handle getRedisClient when cache service throws error", async () => {

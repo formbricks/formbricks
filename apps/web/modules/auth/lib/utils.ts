@@ -223,15 +223,16 @@ export const shouldLogAuthFailure = async (
     }
 
     // Use Redis for distributed rate limiting
-    const multi = redis.multi();
+    const results = await cache.runRedisOperation((client) => {
+      const multi = client.multi();
 
-    // Remove expired entries and count recent failures
-    multi.zRemRangeByScore(rateLimitKey, 0, bucketStart);
-    multi.zCard(rateLimitKey);
-    multi.zAdd(rateLimitKey, { score: now, value: `${now}:${randomUUID()}` });
-    multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
-
-    const results = await multi.exec();
+      // Remove expired entries and count recent failures
+      multi.zRemRangeByScore(rateLimitKey, 0, bucketStart);
+      multi.zCard(rateLimitKey);
+      multi.zAdd(rateLimitKey, { score: now, value: `${now}:${randomUUID()}` });
+      multi.expire(rateLimitKey, Math.ceil(RATE_LIMIT_WINDOW / 1000));
+      return multi.exec();
+    });
     if (!results) {
       throw new Error("Redis transaction failed");
     }
@@ -244,7 +245,7 @@ export const shouldLogAuthFailure = async (
     }
 
     // Check if we should log (every 10th or after 1 minute gap)
-    const recentEntries = await redis.zRange(rateLimitKey, -10, -1);
+    const recentEntries = await cache.runRedisOperation((client) => client.zRange(rateLimitKey, -10, -1));
     if (recentEntries.length === 0) return true;
 
     const lastLogTime = Number.parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
