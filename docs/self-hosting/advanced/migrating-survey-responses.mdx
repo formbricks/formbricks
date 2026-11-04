@@ -137,8 +137,8 @@ fb() {
   while :; do
     args=(-sS -g -o "$tmp" -w '%{http_code}' -X "$method"
       -H "x-api-key: ${key}" -H 'content-type: application/json')
-    if [ -n "$body" ]; then args+=(--data-binary "$body"); fi
-    code=$(curl "${args[@]}" "$url") || code=000
+    if [ -n "$body" ]; then args+=(--data-binary @-); fi
+    code=$(printf '%s' "$body" | curl "${args[@]}" "$url") || code=000
     case "$code" in
       429 | 000 | 5??)
         attempt=$((attempt + 1))
@@ -163,7 +163,7 @@ fb_action_classes() { # <base-url> <api-key> <workspace-id>
   while :; do
     fb GET "${url}/api/v3/action-classes?workspaceId=${ws}&limit=100${cursor:+&cursor=${cursor}}" "$key" ||
       die "could not list action classes for ${ws} (HTTP ${FB_CODE}): ${FB_BODY}"
-    acc=$(jq -c --argjson acc "$acc" '$acc + .data' <<<"$FB_BODY")
+    acc=$(jq -c --slurpfile acc <(printf '%s' "$acc") '$acc[0] + .data' <<<"$FB_BODY")
     cursor=$(jq -r '.meta.nextCursor // empty' <<<"$FB_BODY")
     [ -n "$cursor" ] || break
   done
@@ -182,15 +182,17 @@ trigger_map='{}'
 if [ "$(jq -r '.type' <<<"$survey")" != "link" ]; then
   source_actions=$(fb_action_classes "$SOURCE_URL" "$SOURCE_API_KEY" "$(jq -r '.workspaceId' <<<"$survey")")
   target_actions=$(fb_action_classes "$TARGET_URL" "$TARGET_API_KEY" "$TARGET_WORKSPACE_ID")
-  trigger_map=$(jq -n --argjson src "$source_actions" --argjson dst "$target_actions" '
-    ($dst | map({key: .name, value: .id}) | from_entries) as $byName
-    | $src | map(select($byName[.name])) | map({key: .id, value: $byName[.name]}) | from_entries')
+  trigger_map=$(jq -n --slurpfile src <(printf '%s' "$source_actions") \
+    --slurpfile dst <(printf '%s' "$target_actions") '
+    ($dst[0] | map({key: .name, value: .id}) | from_entries) as $byName
+    | $src[0] | map(select($byName[.name])) | map({key: .id, value: $byName[.name]}) | from_entries')
   echo "triggers: mapped $(jq 'length' <<<"$trigger_map") of $(jq 'length' <<<"$source_actions") action classes by name"
 fi
 
 # 3. Translate the resource into a create document and post it.
-body=$(jq -c --arg ws "$TARGET_WORKSPACE_ID" --argjson ac "$trigger_map" '
-  del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .visibility, .owner, .access, .targeting)
+body=$(jq -c --arg ws "$TARGET_WORKSPACE_ID" --slurpfile acmap <(printf '%s' "$trigger_map") '
+  $acmap[0] as $ac
+  | del(.id, .workspaceId, .createdAt, .updatedAt, .archivedAt, .visibility, .owner, .access, .targeting)
   | .workspaceId = $ws
   | .metadata = (.metadata // {})
   | .type = (if .type == "link" then "link" else "app" end)
@@ -389,6 +391,9 @@ the API rejects the request without it:
 - `.metadata = (.metadata // {})` — `metadata` may be `null` on read but must be an object on write.
 - Trigger rewriting and the app-survey `status` fallback — see [App surveys](#app-surveys).
 
+The scripts hand JSON to `curl` on stdin (`--data-binary @-`) and to `jq` through `--slurpfile`, never as
+one argument: Linux caps a single argument at 128 KiB, and a large survey is past that.
+
 A survey's [custom CSS](/surveys/general-features/custom-css) (`customCss`) is **not** stripped: it
 carries over with the survey. Self-hosted targets take it on every plan. A Formbricks Cloud target
 needs the Scale plan to add it, and without it refuses the survey with `403`
@@ -416,9 +421,9 @@ fb_post() {
   local url="$1" body="$2" attempt=0 tmp code
   tmp=$(mktemp)
   while :; do
-    code=$(curl -sS -g -o "$tmp" -w '%{http_code}' -X POST \
+    code=$(printf '%s' "$body" | curl -sS -g -o "$tmp" -w '%{http_code}' -X POST \
       -H "x-api-key: ${TARGET_API_KEY}" -H 'content-type: application/json' \
-      --data-binary "$body" "$url") || code=000
+      --data-binary @- "$url") || code=000
     case "$code" in
       429 | 000 | 5??)
         attempt=$((attempt + 1))
@@ -667,8 +672,8 @@ for survey in "$IN_DIR"/surveys/*.json; do
   [ -s "$responses" ] || continue
   elements=$(jq -c '[.blocks[].elements[] | select(.choices) | {id, labels: [.choices[].label | to_entries[].value]}]' "$survey")
   if [ "$elements" = "[]" ]; then continue; fi
-  offenders=$(jq -r --argjson els "$elements" '
-    . as $r | $els[] | . as $el
+  offenders=$(jq -r --slurpfile els <(printf '%s' "$elements") '
+    . as $r | $els[0][] | . as $el
     | ($r.data[$el.id] // empty)
     | (if type == "array" then .[] else . end)
     | . as $v
