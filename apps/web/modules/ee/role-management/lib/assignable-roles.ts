@@ -10,7 +10,7 @@ export type TAssignableRolesContext = Readonly<{
 
 /**
  * The organization roles a person may give in an invite, a CSV bulk invite or a role edit, in the order
- * the pickers list them (least access first).
+ * every picker lists them: most access first, Dashboard viewer last.
  *
  * - Owners give every role; Billing only on Formbricks Cloud.
  * - Managers give the roles below their own: Member and, like Member, Dashboard viewer.
@@ -28,13 +28,12 @@ export const getAssignableOrganizationRoles = ({
   if (assignerRole !== "owner" && assignerRole !== "manager") return [];
 
   const roles: TOrganizationRole[] = [];
-  if (isDashboardViewerRoleEnabled) roles.push("dashboard_viewer");
-  roles.push("member");
-
   if (assignerRole === "owner") {
-    roles.push("manager", "owner");
     if (isFormbricksCloud) roles.push("billing");
+    roles.push("owner", "manager");
   }
+  roles.push("member");
+  if (isDashboardViewerRoleEnabled) roles.push("dashboard_viewer");
 
   return roles;
 };

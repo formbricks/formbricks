@@ -3,10 +3,10 @@ import { canAssignOrganizationRole, getAssignableOrganizationRoles } from "./ass
 
 describe("getAssignableOrganizationRoles", () => {
   test.each([
-    ["owner", true, true, ["dashboard_viewer", "member", "manager", "owner", "billing"]],
-    ["owner", false, true, ["dashboard_viewer", "member", "manager", "owner"]],
-    ["owner", false, false, ["member", "manager", "owner"]],
-    ["manager", false, true, ["dashboard_viewer", "member"]],
+    ["owner", true, true, ["billing", "owner", "manager", "member", "dashboard_viewer"]],
+    ["owner", false, true, ["owner", "manager", "member", "dashboard_viewer"]],
+    ["owner", false, false, ["owner", "manager", "member"]],
+    ["manager", false, true, ["member", "dashboard_viewer"]],
     ["manager", true, false, ["member"]],
     ["member", true, true, []],
     ["billing", true, true, []],
@@ -48,7 +48,7 @@ describe("canAssignOrganizationRole", () => {
   });
 });
 
-describe("canAssignOrganizationRole on an existing membership (C10)", () => {
+describe("canAssignOrganizationRole on an existing membership", () => {
   const context = { isFormbricksCloud: false, isDashboardViewerRoleEnabled: false } as const;
 
   test("only an Owner changes an existing Owner's role", () => {
