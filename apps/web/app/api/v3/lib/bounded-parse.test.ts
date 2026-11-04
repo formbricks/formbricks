@@ -349,11 +349,45 @@ describe("boundedSchema", () => {
         z.looseRecord(z.enum(["a"]), z.string()),
         () => ({ a: "x", other: { items: entries(300, (index) => index) } }),
       ],
+      [
+        "a refined record whose keys Zod reads as numbers",
+        z.record(z.number(), z.string()).refine((record) => Object.keys(record).length >= 2),
+        () => Object.fromEntries(entries(300, (index) => [String(index), "x"])),
+      ],
       ["a value that contains itself", withPad({ a: z.string() }), cyclic],
       ["a value that contains itself, under a recursive schema", loop, looped],
     ])("%s", (_name, schema, build) => {
       expect(boundedSchema(schema).safeParse(build()).success).toBe(schema.safeParse(build()).success);
     });
+  });
+
+  // A field wrapper (exactOptional) and a codec's input side are split like anything else, not parsed
+  // whole with a big value under them.
+  test.each<[string, (inner: z.ZodType) => z.ZodType]>([
+    ["exactOptional", (inner) => z.object({ list: inner.exactOptional() })],
+    [
+      "a codec's input side",
+      (inner) =>
+        z.object({
+          list: z.codec(inner, z.array(z.string()), {
+            decode: (value) => value as string[],
+            encode: (value) => value,
+          }),
+        }),
+    ],
+  ])("stops checking a big value under %s at the cap", (_name, build) => {
+    let checks = 0;
+    const leaf = z.string().superRefine((_value, ctx) => {
+      checks += 1;
+      ctx.addIssue({ code: "custom", message: "bad" });
+    });
+
+    const issues = issuesOf(
+      boundedSchema(build(z.array(leaf))).safeParse({ list: entries(5000, () => "x") })
+    );
+
+    expect(issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+    expect(checks).toBeLessThan(500);
   });
 
   // A refused key is judged on its own: the big value under it is not parsed whole.

@@ -28,8 +28,9 @@ import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
  * checks, and a big `z.union` reports the branch the value plausibly belongs to rather than one
  * `invalid_union`.
  *
- * Above the threshold the walk is stricter than Zod in one known case: an enum-keyed record inside an
- * intersection, whose extra keys Zod lets the other side accept. None of the v3 request schemas has one.
+ * Above the threshold the walk is stricter than Zod in one known case: a record inside an intersection,
+ * whose keys its own key schema refuses but the other side accepts (Zod reconciles the two). None of the
+ * v3 request schemas has one.
  */
 
 /** Nodes (objects, arrays and values) a subtree may hold to be checked whole. */
@@ -157,6 +158,7 @@ function unwrap(schema: z.ZodType): z.ZodType {
   }
   if (
     schema instanceof z.ZodOptional ||
+    schema instanceof z.ZodExactOptional ||
     schema instanceof z.ZodNullable ||
     schema instanceof z.ZodDefault ||
     schema instanceof z.ZodPrefault ||
@@ -270,8 +272,15 @@ function walkEach(
 
 /** A big value: walk its children against the matching part of the schema. */
 function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: IssueSink, ctx: TWalk): void {
-  // A codec is a pipe with its own transform between the sides, which the walk would skip.
+  // A codec is a pipe with its own transform between the sides. Its input side is walked like any
+  // other; only an input that passes is parsed whole, decode and output side included.
   if (schema instanceof z.ZodCodec) {
+    const before = sink.issues.length;
+    walk(schema.def.in as z.ZodType, value, path, sink, ctx);
+    if (sink.issues.length !== before || sink.full) {
+      sink.partial = true;
+      return;
+    }
     checkWhole(schema, value, path, sink);
     return;
   }
@@ -363,16 +372,23 @@ function splitObject(
   walkEach(entries, (key) => shape[key as string] ?? catchall, path, sink, ctx);
 }
 
-const keysOnlyCache = new WeakMap<z.ZodRecord, z.ZodType>();
+const entryJudges = new WeakMap<z.ZodRecord, { entry: z.ZodType; key: z.ZodType }>();
 
-/** The record with any value allowed, so a parse of it judges keys and nothing else. */
-function keysOnly(schema: z.ZodRecord): z.ZodType {
-  let checker = keysOnlyCache.get(schema);
-  if (!checker) {
-    checker = schema.clone({ ...schema.def, valueType: z.unknown() });
-    keysOnlyCache.set(schema, checker);
+/**
+ * The record without its own refinements, as it judges one entry (`entry`) or one key with any value
+ * (`key`). A refinement over the whole record would misjudge a one-entry object; it runs in the schema's
+ * own parse instead.
+ */
+function recordJudges(schema: z.ZodRecord): { entry: z.ZodType; key: z.ZodType } {
+  let judges = entryJudges.get(schema);
+  if (!judges) {
+    judges = {
+      entry: schema.clone({ ...schema.def, checks: [] }),
+      key: schema.clone({ ...schema.def, valueType: z.unknown(), checks: [] }),
+    };
+    entryJudges.set(schema, judges);
   }
-  return checker;
+  return judges;
 }
 
 function splitRecord(
@@ -394,10 +410,10 @@ function splitRecord(
     } else if (subtreeSize(entry, ctx.sizes) <= SMALL_SUBTREE_NODES) {
       // Zod may still take it (a numeric key it reads as a number, a loose record, `__proto__`), so the
       // record judges the one entry.
-      checkWhole(schema, { [key]: entry }, path, sink);
+      checkWhole(recordJudges(schema).entry, { [key]: entry }, path, sink);
     } else {
       // A big entry: Zod's verdict on the key alone, then the value walked like any other.
-      const keyVerdict = keysOnly(schema).safeParse({ [key]: null });
+      const keyVerdict = recordJudges(schema).key.safeParse({ [key]: null });
       if (!keyVerdict.success) {
         sink.add(keyVerdict.error.issues, path);
       } else if (schema.def.mode !== "loose") {
