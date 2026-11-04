@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
+import { zPostgresText } from "@/lib/utils/postgres-text";
 import { splitPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import {
   MAX_DASHBOARD_FILTERS,
@@ -196,13 +197,15 @@ export const ZV3DashboardChartParams = z.object({ dashboardId: z.cuid2(), chartI
 /** `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`. */
 export const ZV3DashboardFilterParams = z.object({ dashboardId: z.cuid2(), filterId: z.cuid2() }).strict();
 
-const ZV3PickValue = z.string().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH);
+const ZV3PickValue = zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH);
 
 /**
  * A person's dashboard filter picks, sent as `picks[<filterId>]=value`, repeated for several values. Picks
- * for a filter the dashboard does not have are ignored, as the page drops them.
+ * for a filter the dashboard does not have are ignored, as the page drops them. THE picks schema: the v3
+ * routes and the MCP tools both take picks through it (C15). The total size is checked by the operations
+ * (`MAX_DASHBOARD_FILTER_PICKS_CHARS`, 422), so both answer it the same way.
  */
-const ZV3DashboardPicks = z
+export const ZDashboardFilterPicks = z
   .record(z.cuid2(), z.array(ZV3PickValue).min(1).max(MAX_DASHBOARD_FILTER_PICK_VALUES))
   .refine((picks) => Object.keys(picks).length <= MAX_DASHBOARD_FILTERS, {
     message: `At most ${MAX_DASHBOARD_FILTERS} filters can be picked.`,
@@ -218,7 +221,7 @@ const dashboardDateRange = {
 /** The date range and the picks a dashboard-bound chart read is narrowed by. */
 export const ZV3DashboardChartDataQuery = z.preprocess(
   splitPickParams,
-  z.object({ ...dashboardDateRange, picks: ZV3DashboardPicks.optional() }).strict()
+  z.object({ ...dashboardDateRange, picks: ZDashboardFilterPicks.optional() }).strict()
 );
 export type TV3DashboardChartDataQuery = z.infer<typeof ZV3DashboardChartDataQuery>;
 
@@ -228,8 +231,8 @@ export const ZV3DashboardFilterValuesQuery = z.preprocess(
   z
     .object({
       ...dashboardDateRange,
-      picks: ZV3DashboardPicks.optional(),
-      search: z.string().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),
+      picks: ZDashboardFilterPicks.optional(),
+      search: zPostgresText().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),
     })
     .strict()
 );

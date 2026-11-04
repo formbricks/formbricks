@@ -98,6 +98,32 @@ const getMemberLabels = (
   );
 };
 
+/** The query with `extraFilters` added to its filters, as far as an unvalidated query has any. */
+const withExtraFilters = (query: unknown, extraFilters: readonly TCubeFilter[]): unknown => {
+  if (typeof query !== "object" || query === null) return query;
+  const saved = (query as { filters?: unknown }).filters;
+  return { ...query, filters: [...(Array.isArray(saved) ? saved : []), ...extraFilters] };
+};
+
+/**
+ * Validate a dashboard's picks as filters of the query they narrow: alone, under the name `picks`, so a
+ * problem is named as the caller's pick rather than as the saved chart's filter.
+ */
+const validatePicks = (
+  query: TChartQuery,
+  extraFilters: readonly TCubeFilter[],
+  dataset: TDatasetChartFields | undefined
+): { ok: true; filters: TCubeFilter[] } | { ok: false; issues: InvalidParam[] } => {
+  if (extraFilters.length === 0) return { ok: true, filters: [] };
+  const checked = validateChartQuery(
+    { ...query, filters: extraFilters },
+    { path: "picks", timeBuckets: false, legacyDateRanges: true, dataset }
+  );
+  return checked.ok
+    ? { ok: true, filters: checked.query.filters ?? [] }
+    : { ok: false, issues: checked.issues };
+};
+
 /**
  * Validate, narrow to the requested date range, shape for the chart type, and run — the part preview and
  * data share once the caller is authorized for the dataset. `query` is caller input for a preview and
@@ -134,7 +160,13 @@ export async function runV3ChartQuery({
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
   // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.
-  const dataset = await loadDatasetChartFields(context.authentication, access, datasetId, query);
+  // The picks name fields too: a pick on an embedded key outside the dataset's top keys must be known.
+  const dataset = await loadDatasetChartFields(
+    context.authentication,
+    access,
+    datasetId,
+    extraFilters.length === 0 ? query : withExtraFilters(query, extraFilters)
+  );
   const validated = validateChartQuery(query, { timeBuckets: false, legacyDateRanges: true, dataset });
   // The data route takes the range as query parameters; the preview takes it as one body field.
   const requested = parseRequestedDateRange(dateRange, dateRangeNames);
@@ -145,11 +177,16 @@ export async function runV3ChartQuery({
   if (!validated.ok) return refuseChartQuery(invalidParams, context);
   if (!requested.ok) return refuseChartQuery(invalidParams, context, "The date range is not valid");
 
+  // A dashboard's picks are caller input too: they go through the same validator, against the same
+  // dataset, so a pick Cube would reject answers 422 here rather than 502 from Cube (C6).
+  const picks = validatePicks(validated.query, extraFilters, dataset);
+  if (!picks.ok) return refuseChartQuery(picks.issues, context, "The filter picks are not valid");
+
   const actor = getV3AuthorizationActor(context.authentication);
   if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
 
   const narrowed = applyDashboardDateFilter(
-    narrowWithFilters(validated.query, extraFilters),
+    narrowWithFilters(validated.query, picks.filters),
     requested.filter,
     { timeZone: await getOrganizationReportingTimeZone(access.organizationId) }
   );

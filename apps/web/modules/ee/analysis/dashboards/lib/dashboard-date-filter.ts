@@ -7,6 +7,7 @@ import {
   resolveDateRangePreset,
 } from "@/lib/date-ranges";
 import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
+import { writeDashboardCookie } from "./dashboard-cookies";
 
 // The dashboard-level date filter only ever narrows the "Collected at" time dimension (ADR-0024).
 // Other time dimensions (e.g. createdAt) are left untouched.
@@ -274,20 +275,16 @@ export const readStoredDateFilterFromCookie = (
 };
 
 /**
- * Persist (or clear, when null) the dashboard date filter in a cookie. Client-only and defensive:
- * no-ops during SSR. `SameSite=Lax` keeps the cookie on top-level navigations (shared links) without
- * exposing it cross-site.
+ * Persist (or clear, when null) the dashboard date filter in a cookie scoped to the dashboard's page
+ * (C2). Client-only and defensive: no-ops during SSR. `SameSite=Lax` keeps the cookie on top-level
+ * navigations (shared links) without exposing it cross-site.
  */
-export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDateFilter | null): void => {
-  if (typeof document === "undefined") return;
-  const name = getDateFilterCookieName(dashboardId);
-  if (filter) {
-    const value = encodeURIComponent(JSON.stringify(filter));
-    document.cookie = `${name}=${value}; path=/; max-age=${DATE_FILTER_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
-  } else {
-    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
-  }
-};
+export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDateFilter | null): void =>
+  writeDashboardCookie(
+    getDateFilterCookieName(dashboardId),
+    filter ? encodeURIComponent(JSON.stringify(filter)) : null,
+    DATE_FILTER_COOKIE_MAX_AGE_SECONDS
+  );
 
 /**
  * The dashboard filter as the chart data API takes it, or `null` when the charts keep their own ranges.

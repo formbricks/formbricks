@@ -1,5 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { MAX_DASHBOARD_WIDGETS, MAX_WIDGETS_PER_WRITE, ZV3DashboardReplaceBody } from "./schemas";
+import {
+  MAX_DASHBOARD_WIDGETS,
+  MAX_WIDGETS_PER_WRITE,
+  ZDashboardFilterPicks,
+  ZV3DashboardChartDataQuery,
+  ZV3DashboardFilterValuesQuery,
+  ZV3DashboardFilters,
+  ZV3DashboardReplaceBody,
+} from "./schemas";
 
 const body = (widgets: { widgetId: string; order: number }[]) => ({
   name: "Board",
@@ -43,5 +51,34 @@ describe("ZV3DashboardReplaceBody", () => {
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_DASHBOARD_WIDGETS + 10))).success).toBe(true);
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_WIDGETS_PER_WRITE))).success).toBe(true);
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_WIDGETS_PER_WRITE + 1))).success).toBe(false);
+  });
+});
+
+describe("dashboard filter picks (C6, C15)", () => {
+  const A = "clfi000000000000000000001";
+
+  test("one exported picks schema: a filter id to one to 100 values of up to 1000 characters", () => {
+    expect(ZDashboardFilterPicks.safeParse({ [A]: ["Web", "App"] }).success).toBe(true);
+    expect(ZDashboardFilterPicks.safeParse({ [A]: [] }).success).toBe(false);
+    expect(ZDashboardFilterPicks.safeParse({ [A]: Array.from({ length: 101 }, () => "x") }).success).toBe(
+      false
+    );
+    expect(ZDashboardFilterPicks.safeParse({ [A]: ["x".repeat(1001)] }).success).toBe(false);
+    expect(ZDashboardFilterPicks.safeParse({ "not-an-id": ["x"] }).success).toBe(false);
+  });
+
+  test("refuses a NUL byte in a pick value and in a value-list search", () => {
+    expect(ZDashboardFilterPicks.safeParse({ [A]: ["We\u0000b"] }).success).toBe(false);
+    expect(ZV3DashboardChartDataQuery.safeParse({ [`picks[${A}]`]: "We\u0000b" }).success).toBe(false);
+    expect(ZV3DashboardFilterValuesQuery.safeParse({ search: "a\u0000" }).success).toBe(false);
+    expect(ZV3DashboardFilterValuesQuery.safeParse({ search: "web" }).success).toBe(true);
+  });
+
+  test("refuses a NUL byte in a filter label", () => {
+    expect(
+      ZV3DashboardFilters.safeParse([
+        { id: A, field: "FeedbackRecords.sourceName", operator: "equals", label: "So\u0000urce" },
+      ]).success
+    ).toBe(false);
   });
 });

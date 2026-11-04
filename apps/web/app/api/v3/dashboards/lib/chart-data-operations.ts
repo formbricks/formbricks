@@ -20,11 +20,15 @@ import {
   problemForbidden,
   problemNotFound,
   problemUnauthorized,
+  problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { resolvePicksForDataset } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import {
+  findPickIssues,
+  resolvePicksForDataset,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { parseStoredDashboardFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import type { TV3DashboardChartData } from "./resources";
@@ -111,6 +115,15 @@ export async function getV3DashboardChartData({
     if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
 
     const dashboardFilters = parseStoredDashboardFilters(row.filters);
+    // Picks are checked before any query: a value its field cannot hold, or more than the total budget,
+    // is the caller's to fix (422), not a Cube failure (C6, C9).
+    const pickIssues = findPickIssues(dashboardFilters, query.picks ?? {});
+    if (pickIssues.length > 0) {
+      return problemUnprocessableContent(context.requestId, "The filter picks are not valid", {
+        instance: context.instance,
+        invalid_params: pickIssues,
+      });
+    }
     const { rules, unfilterable } = resolvePicksForDataset(
       dashboardFilters,
       query.picks ?? {},

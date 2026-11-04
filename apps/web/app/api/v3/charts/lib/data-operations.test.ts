@@ -12,7 +12,7 @@ import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { REQUESTED_DATE_RANGE_REASON } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { loadAuthorizedChart } from "./access";
-import { getV3ChartData, previewV3Chart } from "./data-operations";
+import { getV3ChartData, previewV3Chart, runV3ChartQuery } from "./data-operations";
 import { loadDatasetChartFields } from "./dataset-fields";
 import { listV3ChartFieldValues } from "./field-operations";
 import { ZV3ChartData } from "./resources";
@@ -375,6 +375,53 @@ describe("chart queries within budget", () => {
 
       expect(response.status).toBe(500);
       expect(JSON.stringify(await response.json())).not.toContain("secret_table");
+    });
+  });
+
+  describe("runV3ChartQuery with dashboard picks (C6)", () => {
+    const run = (extraFilters: unknown[]) =>
+      runV3ChartQuery({
+        access: access as never,
+        datasetId,
+        type: "bar",
+        query: BY_SOURCE,
+        dateRange: undefined,
+        source: "v3.dashboards.chartData",
+        extraFilters: extraFilters as never,
+        context,
+      });
+
+    test("runs the picks through the validator: a field the dataset lacks answers 422 naming picks, not 502", async () => {
+      const response = await run([
+        { member: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] },
+      ]);
+
+      expect(response.status).toBe(422);
+      const body = (await response.json()) as { invalid_params: { name: string }[] };
+      expect(body.invalid_params[0].name).toMatch(/^picks/);
+      expect(runChartQuery).not.toHaveBeenCalled();
+    });
+
+    test("loads the dataset's fields for the picks too, so a pick on a rarer embedded key is known", async () => {
+      const pick = { member: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] };
+      await run([pick]);
+
+      expect(loadDatasetChartFields).toHaveBeenCalledWith(
+        context.authentication,
+        access,
+        datasetId,
+        expect.objectContaining({ filters: [pick] })
+      );
+    });
+
+    test("runs valid picks ANDed onto the saved filters", async () => {
+      const pick = { member: "FeedbackRecords.sourceName", operator: "equals", values: ["Web"] };
+      const response = await run([pick]);
+
+      expect(response.status).toBe(200);
+      expect(runChartQuery).toHaveBeenCalledWith(
+        expect.objectContaining({ query: expect.objectContaining({ filters: [pick] }) })
+      );
     });
   });
 

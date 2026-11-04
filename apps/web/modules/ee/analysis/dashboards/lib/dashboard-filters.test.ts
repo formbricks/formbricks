@@ -76,6 +76,28 @@ describe("isListDashboardFilter", () => {
     expect(isListDashboardFilter(filter(1, { operator: "contains" }))).toBe(false);
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.collectedAt" }))).toBe(false);
   });
+
+  test("lists only fields the catalog has a value lookup for: free text is typed (C1)", () => {
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.language" }))).toBe(true);
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueText" }))).toBe(false);
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.userId" }))).toBe(false);
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.metadataUrl" }))).toBe(false);
+  });
+
+  test("free-text fields remain valid filters, typed", () => {
+    expect(findDashboardFilterIssues([filter(1, { field: "FeedbackRecords.valueText" })])).toEqual([]);
+    expect(findDashboardFilterIssues([filter(1, { field: "FeedbackRecords.userId" })])).toEqual([]);
+  });
+});
+
+describe("filter-only fields (S3)", () => {
+  test("the answer filter is not a dashboard filter field", () => {
+    expect(getDashboardFilterField("FeedbackRecords.answer")).toBeUndefined();
+    expect(getDashboardFilterOperators("FeedbackRecords.answer")).toEqual([]);
+    expect(findDashboardFilterIssues([filter(1, { field: "FeedbackRecords.answer" })])).toEqual([
+      expect.objectContaining({ path: [0, "field"] }),
+    ]);
+  });
 });
 
 describe("parseStoredDashboardFilters", () => {

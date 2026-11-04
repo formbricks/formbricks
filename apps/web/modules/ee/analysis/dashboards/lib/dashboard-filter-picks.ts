@@ -1,7 +1,9 @@
 import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/analysis";
+import { writeDashboardCookie } from "./dashboard-cookies";
 import {
   type TDashboardFilter,
   type TDashboardFilterPicks,
+  getDashboardFilterField,
   isListDashboardFilter,
 } from "./dashboard-filters";
 
@@ -9,6 +11,72 @@ import {
  * How a person's dashboard filter picks reach a chart query (ADR-0024). Pure functions over the Cube query
  * JSON, so any field the catalog lists — embedded-data members included — narrows the same way.
  */
+
+/**
+ * The most characters a person's picks may hold, summed over every value of every filter (C9). Each value
+ * may be up to 1000 characters and a list pick up to 100 values, so without a total the picks of 10
+ * filters could reach a megabyte in a GET's query string; 4000 keeps every read's URL well inside what
+ * servers and proxies accept. The API answers 422 past it, and the dashboard page stops adding values.
+ */
+export const MAX_DASHBOARD_FILTER_PICKS_CHARS = 4000;
+
+/** How many characters a set of picks holds, summed over every value. */
+export const countPickChars = (picks: TDashboardFilterPicks): number =>
+  Object.values(picks).reduce(
+    (total, values) => total + values.reduce((sum, value) => sum + value.length, 0),
+    0
+  );
+
+/** Whether picks hold more than `MAX_DASHBOARD_FILTER_PICKS_CHARS`. */
+export const exceedsPicksBudget = (picks: TDashboardFilterPicks): boolean =>
+  countPickChars(picks) > MAX_DASHBOARD_FILTER_PICKS_CHARS;
+
+/** A problem with a person's picks, shaped as a v3 `invalid_params` entry. */
+export type TPickIssue = { name: string; reason: string; code?: "limit_exceeded" };
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+/** Why a picked value cannot be compared with the field, or `null` when it can. */
+const pickValueProblem = (type: string | undefined, value: string): string | null => {
+  if (type === "number") {
+    return value.trim() !== "" && Number.isFinite(Number(value)) ? null : "Must be a number.";
+  }
+  if (type === "time") {
+    return ISO_DATE.test(value) && !Number.isNaN(Date.parse(value))
+      ? null
+      : "Must be a date (YYYY-MM-DD or an ISO 8601 timestamp).";
+  }
+  if (type === "boolean") return value === "true" || value === "false" ? null : "Must be true or false.";
+  return null;
+};
+
+/**
+ * What is wrong with a person's picks before any of them reaches a chart query (C6, C9): more characters
+ * in all than `MAX_DASHBOARD_FILTER_PICKS_CHARS`, or a value a filter's field cannot hold (a number field
+ * picked with a word), named by the filter it was picked for. Picks for filters the dashboard does not
+ * have are ignored, as the operations drop them.
+ */
+export const findPickIssues = (
+  filters: readonly TDashboardFilter[],
+  picks: TDashboardFilterPicks
+): TPickIssue[] => {
+  if (exceedsPicksBudget(picks)) {
+    return [
+      {
+        name: "picks",
+        reason: `Picks may hold at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all (MAX_DASHBOARD_FILTER_PICKS_CHARS).`,
+        code: "limit_exceeded",
+      },
+    ];
+  }
+  return filters.flatMap((filter) => {
+    const values = pickValuesOf(filter, picks[filter.id]);
+    if (!values) return [];
+    const type = getDashboardFilterField(filter.field)?.type;
+    const problem = values.map((value) => pickValueProblem(type, value)).find((reason) => reason !== null);
+    return problem ? [{ name: `picks[${filter.id}]`, reason: problem }] : [];
+  });
+};
 
 /**
  * AND `filters` onto a query's saved filters. Cube ANDs the entries of the top-level `filters` array, so
@@ -128,9 +196,6 @@ export const getFilterPicksCookieName = (dashboardId: string): string =>
 /** Remembered picks live as long as a remembered date range: 30 days, refreshed on every change. */
 const FILTER_PICKS_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
-/** Browsers drop a cookie over 4 KB; picks that would not fit are kept in the URL only. */
-const MAX_FILTER_PICKS_COOKIE_LENGTH = 3500;
-
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
 
@@ -151,17 +216,16 @@ export const deserializeFilterPicks = (raw: string | null | undefined): TDashboa
   return picks;
 };
 
-/** Remember (or forget, when empty) a person's picks on one dashboard. Client-only; a no-op on the server. */
-export const writeStoredFilterPicks = (dashboardId: string, picks: TDashboardFilterPicks): void => {
-  if (typeof document === "undefined") return;
-  const name = getFilterPicksCookieName(dashboardId);
-  const value = encodeURIComponent(JSON.stringify(picks));
-  if (Object.keys(picks).length === 0 || value.length > MAX_FILTER_PICKS_COOKIE_LENGTH) {
-    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
-    return;
-  }
-  document.cookie = `${name}=${value}; path=/; max-age=${FILTER_PICKS_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
-};
+/**
+ * Remember (or forget, when empty) a person's picks on one dashboard, in a cookie scoped to the dashboard's
+ * page (C2). Picks too long for a cookie are kept in the URL only. Client-only; a no-op on the server.
+ */
+export const writeStoredFilterPicks = (dashboardId: string, picks: TDashboardFilterPicks): void =>
+  writeDashboardCookie(
+    getFilterPicksCookieName(dashboardId),
+    Object.keys(picks).length === 0 ? null : encodeURIComponent(JSON.stringify(picks)),
+    FILTER_PICKS_COOKIE_MAX_AGE_SECONDS
+  );
 
 /** The picks pinned in a page URL, or `null` when the URL pins none, so remembered ones apply. */
 export const readFilterPicksFromUrl = (searchParams: URLSearchParams): TDashboardFilterPicks | null => {
