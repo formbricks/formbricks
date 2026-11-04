@@ -26,6 +26,7 @@ import {
   parseFormula,
 } from "@/modules/survey/editor/lib/expression-formula";
 import { formatSampleResult, getSampleResult } from "@/modules/survey/editor/lib/expression-sample";
+import { type TCaretCoordinates, getCaretCoordinates } from "@/modules/survey/editor/lib/textarea-caret";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -50,6 +51,27 @@ interface SetValueFormulaProps {
 }
 
 const isEmptyFormula = (expression: TExpression) => expression.type === "static" && expression.value === "";
+
+/** The answers and fields `@` offers, grouped; the same list at the caret and at the @ button. */
+const ReferenceMenuItems = ({
+  groups,
+  onPick,
+}: {
+  groups: { label: string; items: TFormulaReference[] }[];
+  onPick: (reference: TFormulaReference) => void;
+}) =>
+  groups.map((group) => (
+    <div key={group.label}>
+      <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+      {group.items.map((reference) => (
+        <DropdownMenuItem
+          key={`${reference.leaf.type}:${reference.leaf.value}`}
+          onClick={() => onPick(reference)}>
+          <span className="font-mono text-xs">{formatReferenceToken(reference.token)}</span>
+        </DropdownMenuItem>
+      ))}
+    </div>
+  ));
 
 /** How long typing has to pause before the box shows what is wrong with the formula. */
 const FORMULA_PROBLEM_DELAY_MS = 800;
@@ -77,7 +99,11 @@ export function SetValueFormula({
   const formatted = isEmptyFormula(expression) ? "" : formatFormula(expression, references);
   const [text, setText] = useState(formatted);
   const [parseError, setParseError] = useState<TFormulaError | null>(null);
-  const [isReferenceMenuOpen, setIsReferenceMenuOpen] = useState(false);
+  // Which reference menu is open: the one at the caret (an `@` typed) or the one at the @ button.
+  const [referenceMenu, setReferenceMenu] = useState<"caret" | "button" | null>(null);
+  const isReferenceMenuOpen = referenceMenu !== null;
+  // Where the caret menu opens, relative to the box: the line the `@` was typed on.
+  const [caretAnchor, setCaretAnchor] = useState<TCaretCoordinates>({ top: 0, left: 0, height: 0 });
   // True from a keystroke until a short pause or a blur: problems wait until then, so the box doesn't
   // flash an error at every character of a formula still being typed.
   const [isTyping, setIsTyping] = useState(false);
@@ -135,9 +161,28 @@ export function SetValueFormula({
     });
   };
 
-  const openReferenceMenu = (open: boolean) => {
-    if (open) caretAfterMenuRef.current = null;
-    setIsReferenceMenuOpen(open);
+  const openReferenceMenu = (menu: "caret" | "button" | null) => {
+    if (menu) caretAfterMenuRef.current = null;
+    setReferenceMenu(menu);
+  };
+
+  /** Opens the menu at the caret, just after the `@` typed at `position`. */
+  const openReferenceMenuAtCaret = (textarea: HTMLTextAreaElement, position: number) => {
+    const caret = getCaretCoordinates(textarea, position);
+    // Kept inside the box: a caret at the far right of a line would otherwise sit past its edge.
+    setCaretAnchor({ ...caret, left: Math.min(caret.left, textarea.clientWidth) });
+    openReferenceMenu("caret");
+  };
+
+  /** Back to the formula, not the @ button: typing carries on where it left off. */
+  const returnFocusToFormula = (event: Event) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    event.preventDefault();
+    const caret = caretAfterMenuRef.current ?? textarea.selectionEnd;
+    caretAfterMenuRef.current = null;
+    textarea.focus();
+    textarea.setSelectionRange(caret, caret);
   };
 
   const formulaIssues = useMemo(
@@ -288,36 +333,65 @@ export function SetValueFormula({
       ? formatSampleResult(sampleResult, targetDataType, locale)
       : null;
 
+  const pickReference = (reference: TFormulaReference) =>
+    insertAtCursor(formatReferenceToken(reference.token), { replaceTypedAt: true });
+
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex items-start gap-2">
-        <Textarea
-          id={id}
-          ref={textareaRef}
-          value={text}
-          maxLength={FORMULA_MAX_LENGTH}
-          rows={2}
-          spellCheck={false}
-          className="min-h-10 bg-white font-mono"
-          placeholder={t("workspace.surveys.edit.flow.formula_placeholder", {
-            example: getFormulaExample(references, scopeBlockIdx),
-          })}
-          aria-describedby={`${id}-hint`}
-          aria-label={t("workspace.surveys.edit.flow.formula")}
-          aria-invalid={problem ? true : undefined}
-          isInvalid={Boolean(problem)}
-          onBlur={settleTyping}
-          onChange={(event) => {
-            const nextText = event.target.value;
-            setIsTyping(true);
-            clearTimeout(typingTimer.current);
-            typingTimer.current = setTimeout(() => setIsTyping(false), FORMULA_PROBLEM_DELAY_MS);
-            applyText(nextText);
-            const cursor = event.target.selectionStart;
-            if (nextText.length > text.length && nextText[cursor - 1] === "@") openReferenceMenu(true);
-          }}
-        />
-        <DropdownMenu open={isReferenceMenuOpen} onOpenChange={openReferenceMenu}>
+        <div className="relative w-full">
+          <Textarea
+            id={id}
+            ref={textareaRef}
+            value={text}
+            maxLength={FORMULA_MAX_LENGTH}
+            rows={2}
+            spellCheck={false}
+            className="min-h-10 bg-white font-mono"
+            placeholder={t("workspace.surveys.edit.flow.formula_placeholder", {
+              example: getFormulaExample(references, scopeBlockIdx),
+            })}
+            aria-describedby={`${id}-hint`}
+            aria-label={t("workspace.surveys.edit.flow.formula")}
+            aria-invalid={problem ? true : undefined}
+            isInvalid={Boolean(problem)}
+            onBlur={settleTyping}
+            onChange={(event) => {
+              const nextText = event.target.value;
+              setIsTyping(true);
+              clearTimeout(typingTimer.current);
+              typingTimer.current = setTimeout(() => setIsTyping(false), FORMULA_PROBLEM_DELAY_MS);
+              applyText(nextText);
+              const cursor = event.target.selectionStart;
+              if (nextText.length > text.length && nextText[cursor - 1] === "@") {
+                openReferenceMenuAtCaret(event.target, cursor);
+              }
+            }}
+          />
+          {/* A typed `@` opens the menu where it was typed: this invisible trigger sits on the caret's
+              line, so the menu opens under it rather than at the box's edge. */}
+          <DropdownMenu
+            open={referenceMenu === "caret"}
+            onOpenChange={(open) => openReferenceMenu(open ? "caret" : null)}>
+            <DropdownMenuTrigger asChild>
+              <span
+                aria-hidden="true"
+                tabIndex={-1}
+                className="pointer-events-none absolute w-0"
+                style={{ top: caretAnchor.top, left: caretAnchor.left, height: caretAnchor.height }}
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="max-h-72 overflow-y-auto"
+              onCloseAutoFocus={returnFocusToFormula}>
+              <ReferenceMenuItems groups={groups} onPick={pickReference} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <DropdownMenu
+          open={referenceMenu === "button"}
+          onOpenChange={(open) => openReferenceMenu(open ? "button" : null)}>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
@@ -328,34 +402,13 @@ export function SetValueFormula({
               <AtSignIcon />
             </Button>
           </DropdownMenuTrigger>
+          {/* Closing returns to the formula rather than the button, so a space typed next doesn't
+              reopen the menu. */}
           <DropdownMenuContent
             align="end"
             className="max-h-72 overflow-y-auto"
-            onCloseAutoFocus={(event) => {
-              // Back to the formula, not the @ button: typing carries on where it left off, and a
-              // space typed next doesn't reopen the menu.
-              const textarea = textareaRef.current;
-              if (!textarea) return;
-              event.preventDefault();
-              const caret = caretAfterMenuRef.current ?? textarea.selectionEnd;
-              caretAfterMenuRef.current = null;
-              textarea.focus();
-              textarea.setSelectionRange(caret, caret);
-            }}>
-            {groups.map((group) => (
-              <div key={group.label}>
-                <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
-                {group.items.map((reference) => (
-                  <DropdownMenuItem
-                    key={`${reference.leaf.type}:${reference.leaf.value}`}
-                    onClick={() =>
-                      insertAtCursor(formatReferenceToken(reference.token), { replaceTypedAt: true })
-                    }>
-                    <span className="font-mono text-xs">{formatReferenceToken(reference.token)}</span>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-            ))}
+            onCloseAutoFocus={returnFocusToFormula}>
+            <ReferenceMenuItems groups={groups} onPick={pickReference} />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
