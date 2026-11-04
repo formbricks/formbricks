@@ -48,6 +48,8 @@ services:
   # PostgreSQL must load the vector library so Hub (and Formbricks) can use the pgvector extension.
   postgres:
     image: pgvector/pgvector:pg18
+    # Docker's 64 MB /dev/shm is too small for parallel query workers on large analytics charts.
+    shm_size: 512mb
     volumes:
       - postgres:/var/lib/postgresql
     environment:
@@ -427,6 +429,8 @@ services:
       CUBEJS_JWT_AUDIENCE: ${CUBEJS_JWT_AUDIENCE:-formbricks-cube}
       CUBEJS_DEFAULT_API_SCOPES: meta,data
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
+      # Cube sets it as each query's Postgres statement_timeout (Cube's default is 10 minutes).
+      CUBEJS_DB_QUERY_TIMEOUT: ${CUBEJS_DB_QUERY_TIMEOUT:-60s}
     volumes:
       - ./docker/cube/cube.js:/cube/conf/cube.js:ro
       - ./docker/cube/schema:/cube/conf/model:ro
