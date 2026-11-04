@@ -9,18 +9,20 @@ import {
   EqualIcon,
   EyeIcon,
   EyeOffIcon,
-  FlagIcon,
+  HandshakeIcon,
   LayersIcon,
   PlusIcon,
   Rows3Icon,
   ShieldAlertIcon,
   SplitIcon,
   TrashIcon,
+  Undo2Icon,
 } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options-show-if-popover";
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
@@ -91,6 +93,14 @@ interface FlowViewProps {
 }
 
 const RULE_ICON = { rule: <SplitIcon />, embeddedData: <BinaryIcon /> };
+
+/** The Questions tab's ending icons: a handshake for an ending card, a turned arrow for a redirect. */
+const EndingTypeIcon = ({ type, className }: { type: TSurveyEnding["type"]; className?: string }) =>
+  type === "redirectToUrl" ? (
+    <Undo2Icon className={cn("rotate-180", className)} aria-hidden="true" />
+  ) : (
+    <HandshakeIcon className={className} aria-hidden="true" />
+  );
 
 /**
  * The Flow tab (ENG-6929): the whole survey flow on one outline, built by `buildFlowOutline`, with
@@ -213,7 +223,7 @@ export const FlowView = ({
           <span
             key={key}
             className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white">
-            <FlagIcon className="size-3" aria-hidden="true" />
+            <EndingTypeIcon type={action.endingType} className="size-3" />
             {action.label}
           </span>
         );
@@ -729,7 +739,7 @@ export const FlowView = ({
                 key={row.id}
                 id={`flow-${row.id}`}
                 tone="ending"
-                icon={<FlagIcon />}
+                icon={<EndingTypeIcon type={ending.type} />}
                 isInvalid={invalidElements?.includes(row.id) ?? false}
                 onToggle={() => toggleRow(rowId)}
                 isOpen={openRowId === rowId}
