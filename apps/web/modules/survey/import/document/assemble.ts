@@ -470,18 +470,24 @@ class DocumentDraftBuilder {
     return [];
   }
 
-  /** A question of the draft named by a rule: by the ID the file gives it, or by its line. */
+  /**
+   * A question of the draft named by a rule: by its line, or by the ID the file gives it when only one
+   * question has that ID. An ID two questions share names neither: the rule is reported as not imported
+   * rather than routed to whichever came first.
+   */
   private findQuestion(
     questions: readonly TDocumentPlannedEntry[],
     name: string
   ): TDocumentPlannedEntry | undefined {
     const key = routingKey(name);
-    return (
-      questions.find((entry) => entry.ref.toLowerCase() === key && this.elementIds.has(entry.ref)) ??
-      questions.find(
-        (entry) => entry.label !== null && routingKey(entry.label) === key && this.elementIds.has(entry.ref)
-      )
+    const byLine = questions.find(
+      (entry) => entry.ref.toLowerCase() === key && this.elementIds.has(entry.ref)
     );
+    if (byLine) return byLine;
+    const byLabel = questions.filter(
+      (entry) => entry.label !== null && routingKey(entry.label) === key && this.elementIds.has(entry.ref)
+    );
+    return byLabel.length === 1 ? byLabel[0] : undefined;
   }
 
   /** The choice ids a rule's values name on the question it reads, or `null` when one names none. */

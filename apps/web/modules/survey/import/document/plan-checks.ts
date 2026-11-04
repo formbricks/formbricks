@@ -230,12 +230,21 @@ function readText(
   return text;
 }
 
-/** A label cell's text, when it is a cell of the entry's lines (or, for a section, any line before). */
-const labelText = (context: DocumentPlanContext, key: string | null, maxLine: number): string | null => {
+/**
+ * A label cell's text, when its line is within `lines`: the entry's own lines for its ID, which names the
+ * question and routes to it, never a line before the question starts (an ID two questions still share is
+ * not routed by, `assemble.ts`); any line up to the entry's first for its section, which a heading above
+ * it names.
+ */
+const labelText = (
+  context: DocumentPlanContext,
+  key: string | null,
+  lines: { first: number; last: number }
+): string | null => {
   if (key === null) return null;
   const line = context.cellLineAt(key);
   const text = context.model.cells.get(key);
-  if (line === undefined || text === undefined || line > maxLine) return null;
+  if (line === undefined || text === undefined || line < lines.first || line > lines.last) return null;
   const collapsed = collapseWhitespace(text);
   return collapsed.length > 0 ? collapsed.slice(0, SURVEY_IMPORT_MAX_NAME_CHARS) : null;
 };
@@ -346,8 +355,8 @@ export function checkEntry(
   const planned: TDocumentPlannedEntry = {
     ref: entry.ref,
     kind,
-    label: labelText(context, entry.idCell, span.last),
-    section: labelText(context, entry.sectionCell, first),
+    label: labelText(context, entry.idCell, span),
+    section: labelText(context, entry.sectionCell, { first: 0, last: first }),
     required: kind === "welcome" || kind === "ending" ? false : entry.required,
     headline: headline ?? new Map(),
     subheader,

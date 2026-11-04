@@ -107,6 +107,16 @@ describe("checkDocumentPlanResponses", () => {
     expect([...(retried?.cells ?? [])]).toEqual(["B3"]);
   });
 
+  test("takes a question's ID only from its own lines, never from a line before it starts", () => {
+    const idFrom = (idCell: string) =>
+      check([answer(["R3"], [entry("R3", { headline: [piece("en", "B3")], idCell })])]).plan.entries.get("R3")
+        ?.label;
+
+    expect(idFrom("A3")).toBe("Q2");
+    // A2 is Q1's ID, on the line before: taken, it would route Q1's rules to this question.
+    expect(idFrom("A2")).toBeNull();
+  });
+
   test("refuses a piece naming a cell before the line its entry starts on", () => {
     const reaching = entry("R3", { headline: [piece("en", "B2"), piece("de", "C3")] });
 

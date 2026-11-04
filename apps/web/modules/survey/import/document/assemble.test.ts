@@ -500,6 +500,25 @@ describe("assembleDocumentDraft: blocks", () => {
   });
 });
 
+describe("assembleDocumentDraft: an ID two questions share", () => {
+  test("routes no rule by it, and reports the rule as not imported", async () => {
+    const { document, issues } = await assemble([
+      entry("R2", { label: "Q1" }),
+      entry("R3", {
+        label: "Q2",
+        rules: [rule({ question: "Q2", operator: "isSubmitted", values: [], target: "Q4" })],
+        notes: ["If answered, go to Q4."],
+      }),
+      // Q2 again: which question "Q2" names is unclear, so the rule reads neither.
+      entry("R4", { label: "Q2" }),
+      entry("R5", { label: "Q4" }),
+    ]);
+
+    expect(document.blocks.flatMap((block) => block.logic ?? [])).toEqual([]);
+    expect(issues).toContainEqual(expect.objectContaining({ code: "logic_not_imported", questionRef: "R3" }));
+  });
+});
+
 describe("assembleDocumentDraft: skips", () => {
   const skipping = (sourceFields: Partial<TDocumentPlannedEntry>, skip: Partial<TDocumentPlanRule>) => [
     entry("R2", { label: "Q1", ...sourceFields }),
