@@ -548,7 +548,7 @@ class DocumentDraftBuilder {
   ): TCondition | null {
     // An empty value is no number: `Number("")` is 0, which would turn the rule into "equals 0".
     const texts = values.map((value) => collapseWhitespace(value));
-    if (texts.length === 0 || texts.some((text) => text === "")) return null;
+    if (texts.length === 0 || texts.includes("")) return null;
     const numbers = texts.map(Number);
     if (numbers.some((value) => !Number.isFinite(value))) return null;
     if (operator === "isAnyOf") {
