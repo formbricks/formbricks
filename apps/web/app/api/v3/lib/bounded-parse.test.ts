@@ -354,6 +354,14 @@ describe("boundedSchema", () => {
         z.record(z.number(), z.string()).refine((record) => Object.keys(record).length >= 2),
         () => Object.fromEntries(entries(300, (index) => [String(index), "x"])),
       ],
+      [
+        "a union branch whose exactOptional literal is absent",
+        z.union([
+          z.object({ kind: z.literal("a").exactOptional(), list: z.array(z.string()) }),
+          z.object({ other: z.string().optional(), list: z.array(z.number()) }),
+        ]),
+        () => ({ list: entries(300, () => "x") }),
+      ],
       ["a value that contains itself", withPad({ a: z.string() }), cyclic],
       ["a value that contains itself, under a recursive schema", loop, looped],
     ])("%s", (_name, schema, build) => {

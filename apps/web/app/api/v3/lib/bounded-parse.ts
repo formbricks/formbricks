@@ -29,8 +29,9 @@ import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
  * `invalid_union`.
  *
  * Above the threshold the walk is stricter than Zod in one known case: a record inside an intersection,
- * whose keys its own key schema refuses but the other side accepts (Zod reconciles the two). None of the
- * v3 request schemas has one.
+ * whose keys its own key schema refuses but the other side accepts (Zod reconciles the two). And a
+ * codec's output side, behind its decode, is parsed whole once its input side passes, so it is not
+ * bounded. None of the v3 request schemas has either.
  */
 
 /** Nodes (objects, arrays and values) a subtree may hold to be checked whole. */
@@ -172,13 +173,12 @@ function unwrap(schema: z.ZodType): z.ZodType {
 
 const requiredKeysCache = new WeakMap<z.ZodObject, string[]>();
 
-/** Keys an object needs on input: those whose schema refuses `undefined`. */
+/** Keys an object needs on input: those it may not leave out. */
 function requiredKeys(schema: z.ZodObject): string[] {
   let keys = requiredKeysCache.get(schema);
   if (!keys) {
-    keys = Object.entries(schema.shape)
-      .filter(([, field]) => !(field as z.ZodType).validate(undefined))
-      .map(([key]) => key);
+    const shape = schema.shape as Record<string, z.ZodType>;
+    keys = Object.keys(shape).filter((key) => !absenceAllowed(shape, key));
     requiredKeysCache.set(schema, keys);
   }
   return keys;
@@ -195,8 +195,16 @@ function branchScore(branch: z.ZodType, value: Record<string, unknown>): number 
 
   if (schema instanceof z.ZodObject) {
     for (const [key, field] of Object.entries(schema.shape)) {
-      // The field as declared, so an optional literal still accepts a missing key.
-      if (unwrap(field as z.ZodType) instanceof z.ZodLiteral && !(field as z.ZodType).validate(value[key])) {
+      // Only literal fields decide: anything else here would validate a whole (possibly big) subtree.
+      if (!(unwrap(field as z.ZodType) instanceof z.ZodLiteral)) {
+        continue;
+      }
+      // The field as declared, and a missing key judged by its absence (not as `undefined`, which an
+      // exactOptional literal refuses), so a branch the value fits is never ruled out.
+      const fits = Object.hasOwn(value, key)
+        ? (field as z.ZodType).validate(value[key])
+        : absenceAllowed(schema.shape as Record<string, z.ZodType>, key);
+      if (!fits) {
         return null;
       }
     }
