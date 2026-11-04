@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, SparklesIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -28,6 +28,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { isTranslationPathLocked } from "../lib/published-translation-lock";
+import { AI_TRANSLATION_BATCHES_PER_RUN, createTranslationBatches } from "../lib/translation-batches";
 import { type TranslatableString } from "../lib/types";
 import {
   extractTranslatableStrings,
@@ -73,6 +74,8 @@ export const ManageTranslationsModal = ({
   const [missingFirst, setMissingFirst] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
+  const translationRunId = useRef(0);
+  const translationToastId = useRef<string | undefined>(undefined);
 
   // Initialize drafts when modal opens
   useEffect(() => {
@@ -170,43 +173,80 @@ export const ManageTranslationsModal = ({
   const handleTranslateWithAI = async () => {
     if (emptyFields.length === 0) return;
 
-    const paths = new Set(emptyFields.map((s) => s.path));
+    const batches = createTranslationBatches(
+      emptyFields.map((s) => ({
+        path: s.path,
+        defaultText: s.value.default || "",
+        isRichText: s.isRichText,
+      }))
+    );
+    const selectedBatches = batches.slice(0, AI_TRANSLATION_BATCHES_PER_RUN);
+    const paths = new Set(selectedBatches.flatMap((batch) => batch.map((field) => field.path)));
+    const runId = ++translationRunId.current;
     setIsTranslating(true);
     setTranslatingPaths(paths);
 
     const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
+    translationToastId.current = toastId;
+    let nextBatch = 0;
+    let failedMessage: string | undefined;
+    let translatedCount = 0;
 
     try {
-      const result = await translateSurveyFieldsAction({
-        workspaceId,
-        fields: emptyFields.map((s) => ({
-          path: s.path,
-          defaultText: s.value.default || "",
-          isRichText: s.isRichText,
-        })),
-        sourceLanguage: defaultLanguageName,
-        targetLanguage: languageName,
-      });
+      const translateNextBatch = async () => {
+        while (nextBatch < selectedBatches.length && !failedMessage && runId === translationRunId.current) {
+          const batch = selectedBatches[nextBatch++];
+          try {
+            const result = await translateSurveyFieldsAction({
+              workspaceId,
+              fields: batch,
+              sourceLanguage: defaultLanguageName,
+              targetLanguage: languageName,
+            });
+            if (runId !== translationRunId.current) return;
 
-      if (!result?.data?.translations) {
-        const errorMessage = getFormattedErrorMessage(result);
+            const translations = result?.data?.translations;
+            if (!translations) {
+              const errorMessage = getFormattedErrorMessage(result);
+              failedMessage = errorMessage
+                ? getAIErrorMessage(errorMessage)
+                : t("workspace.surveys.edit.ai_translation_failed");
+              return;
+            }
+
+            translatedCount += batch.length;
+            setDraftTranslations((prev) => ({ ...prev, ...translations }));
+          } catch {
+            if (runId !== translationRunId.current) return;
+            failedMessage = t("workspace.surveys.edit.ai_translation_failed");
+            return;
+          }
+        }
+      };
+
+      await Promise.all(Array.from({ length: Math.min(3, selectedBatches.length) }, translateNextBatch));
+      if (runId !== translationRunId.current) return;
+
+      if (failedMessage || batches.length > selectedBatches.length) {
         toast.error(
-          errorMessage ? getAIErrorMessage(errorMessage) : t("workspace.surveys.edit.ai_translation_failed"),
+          translatedCount > 0
+            ? t("workspace.surveys.edit.ai_translation_partial")
+            : (failedMessage ?? t("workspace.surveys.edit.ai_translation_failed")),
           { id: toastId }
         );
-        return;
+      } else {
+        toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
       }
-
-      setDraftTranslations((prev) => ({ ...prev, ...result.data?.translations }));
-      toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
     } catch {
-      // The action surfaces server-side failures via result.serverError (handled above). This catch
-      // only fires on genuine client-side throws (e.g. network) whose messages aren't error codes,
-      // so show the generic failure message.
-      toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
+      if (runId === translationRunId.current) {
+        toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
+      }
     } finally {
-      setIsTranslating(false);
-      setTranslatingPaths(new Set());
+      if (runId === translationRunId.current) {
+        translationToastId.current = undefined;
+        setIsTranslating(false);
+        setTranslatingPaths(new Set());
+      }
     }
   };
 
@@ -225,6 +265,11 @@ export const ManageTranslationsModal = ({
   };
 
   const handleCancel = () => {
+    translationRunId.current++;
+    if (translationToastId.current) toast.dismiss(translationToastId.current);
+    translationToastId.current = undefined;
+    setIsTranslating(false);
+    setTranslatingPaths(new Set());
     setOpen(false);
   };
 
@@ -232,7 +277,7 @@ export const ManageTranslationsModal = ({
   const progressTextColor = getProgressTextColor(progress.percentage);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? setOpen(true) : handleCancel())}>
       <DialogContent width="wide" className="max-h-[85dvh]" disableCloseOnOutsideClick>
         <DialogHeader>
           <DialogTitle>{t("workspace.surveys.edit.manage_translations")}</DialogTitle>
@@ -330,7 +375,7 @@ export const ManageTranslationsModal = ({
           <Button variant="secondary" size="sm" onClick={handleCancel}>
             {t("common.cancel")}
           </Button>
-          <Button size="sm" onClick={handleSave}>
+          <Button size="sm" onClick={handleSave} disabled={isTranslating}>
             {t("common.save")}
           </Button>
         </DialogFooter>
