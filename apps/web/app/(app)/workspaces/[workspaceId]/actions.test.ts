@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { listDashboardViewerOrganizations } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { createWorkspaceAction, getOrganizationsForSwitcherAction } from "./actions";
 import { getOrganizationsByUserId } from "./lib/organization";
@@ -20,6 +21,7 @@ vi.mock("@/lib/utils/action-client", () => ({
     inputSchema: vi.fn(() => ({
       action: vi.fn((fn) => fn),
     })),
+    action: vi.fn((fn) => fn),
   },
 }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -48,6 +50,9 @@ vi.mock("./lib/workspace", () => ({
   getWorkspacesByUserId: vi.fn(),
   getWritableWorkspacesByUserId: vi.fn(),
 }));
+
+// Read before `beforeEach` clears the mocks: which actions were defined without an input schema.
+const actionsWithoutInput = vi.mocked(authenticatedActionClient.action).mock.calls.map(([fn]) => fn);
 
 const ORGANIZATION_ID = "org-1";
 
@@ -99,12 +104,16 @@ describe("createWorkspaceAction", () => {
   });
 });
 
-describe("getOrganizationsForSwitcherAction (C19)", () => {
-  const run = (organizationId: string) =>
+describe("getOrganizationsForSwitcherAction", () => {
+  const run = () =>
     (getOrganizationsForSwitcherAction as unknown as (a: unknown) => Promise<unknown>)({
       ctx: { user: { id: "user-1" } },
-      parsedInput: { organizationId },
     });
+
+  test("takes no input: the list is scoped by the signed-in user alone", () => {
+    // Defined through `.action` directly, without an input schema.
+    expect(actionsWithoutInput).toContain(getOrganizationsForSwitcherAction);
+  });
 
   test("answers the caller's own organizations, viewer ones included, with no role-based gate", async () => {
     vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org-1", name: "A" }]);
@@ -113,13 +122,13 @@ describe("getOrganizationsForSwitcherAction (C19)", () => {
       { id: "org-2", name: "B" },
     ]);
 
-    await expect(run("org-2")).resolves.toEqual([
+    await expect(run()).resolves.toEqual([
       { id: "org-1", name: "A" },
       { id: "org-2", name: "B" },
     ]);
     expect(getOrganizationsByUserId).toHaveBeenCalledWith("user-1");
     expect(listDashboardViewerOrganizations).toHaveBeenCalledWith("user-1");
-    // Scoped by the user, so the organization in the input grants nothing and is not gated by role.
+    // Scoped by the user, so nothing is gated by role.
     expect(mocks.assertCan).not.toHaveBeenCalled();
   });
 });

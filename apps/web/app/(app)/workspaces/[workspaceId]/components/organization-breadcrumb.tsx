@@ -55,7 +55,7 @@ export const OrganizationBreadcrumb = ({
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }),
+    () => getOrganizationsForSwitcherAction(),
     t("common.failed_to_load_organizations"),
     (message) => {
       const error = new Error(message);

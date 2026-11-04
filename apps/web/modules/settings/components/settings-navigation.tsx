@@ -53,7 +53,7 @@ export const SettingsNavigation = ({
     workspaceName
   );
   const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction({ organizationId }),
+    () => getOrganizationsForSwitcherAction(),
     t("common.failed_to_load_organizations"),
     undefined,
     organizationName

@@ -105,28 +105,21 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
   })
 );
 
-const ZGetOrganizationsForSwitcherAction = z.object({
-  organizationId: ZId, // Changed from workspaceId to avoid extra query
-});
-
 /**
  * Fetches organizations list for switcher dropdown.
  * Called on-demand when user opens the organization switcher.
  */
-export const getOrganizationsForSwitcherAction = authenticatedActionClient
-  .inputSchema(ZGetOrganizationsForSwitcherAction)
-  .action(async ({ ctx }) => {
-    // The list is the caller's own organizations: those SpiceDB grants them `organization.read` on, plus
-    // those where they are a Dashboard viewer (ADR-0023), whose relation reaches dashboard reads only.
-    // Scoped by the user, it reveals nothing about `organizationId`, so no gate on it is needed, and none
-    // that skips by role (C19).
-    const [organizations, viewerOrganizations] = await Promise.all([
-      getOrganizationsByUserId(ctx.user.id),
-      listDashboardViewerOrganizations(ctx.user.id),
-    ]);
-    const known = new Set(organizations.map(({ id }) => id));
-    return [...organizations, ...viewerOrganizations.filter(({ id }) => !known.has(id))];
-  });
+export const getOrganizationsForSwitcherAction = authenticatedActionClient.action(async ({ ctx }) => {
+  // The list is the caller's own organizations: those SpiceDB grants them `organization.read` on, plus
+  // those where they are a Dashboard viewer (ADR-0023), whose relation reaches dashboard reads only.
+  // Scoped by the user alone, so it needs no gate, and none that skips by role.
+  const [organizations, viewerOrganizations] = await Promise.all([
+    getOrganizationsByUserId(ctx.user.id),
+    listDashboardViewerOrganizations(ctx.user.id),
+  ]);
+  const known = new Set(organizations.map(({ id }) => id));
+  return [...organizations, ...viewerOrganizations.filter(({ id }) => !known.has(id))];
+});
 
 const ZGetWorkspacesForSwitcherAction = z.object({
   organizationId: ZId, // Changed from workspaceId to avoid extra query

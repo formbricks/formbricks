@@ -40,7 +40,7 @@ export const LandingSidebar = ({
   const { t } = useTranslation();
 
   const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
+    () => getOrganizationsForSwitcherAction(),
     t("common.failed_to_load_organizations"),
     undefined,
     organization.name
