@@ -26,12 +26,22 @@ const SNIFF_RECORDS = 50;
  */
 const SNIFF_CHARS = 64 * 1024;
 
-/** The start of the text to sniff: up to `SNIFF_CHARS`, ending at a line break when it is cut. */
+/**
+ * The start of the text to sniff: up to `SNIFF_CHARS`, ending at the last line break outside a quoted
+ * field when it is cut. A break inside one is the field's own text: cut there, the sample would end in
+ * an open quote, which no delimiter parses, and the sniff would fall back to a comma. A `""` inside a
+ * field toggles the state twice, so the count holds.
+ */
 const sniffSample = (text: string): string => {
   if (text.length <= SNIFF_CHARS) return text;
-  const cut = text.slice(0, SNIFF_CHARS);
-  const lastBreak = cut.lastIndexOf("\n");
-  return lastBreak > 0 ? cut.slice(0, lastBreak) : cut;
+  let inQuote = false;
+  let lastBreak = -1;
+  for (let index = 0; index < SNIFF_CHARS; index += 1) {
+    const char = text[index];
+    if (char === '"') inQuote = !inQuote;
+    else if (char === "\n" && !inQuote) lastBreak = index;
+  }
+  return lastBreak > 0 ? text.slice(0, lastBreak) : text.slice(0, SNIFF_CHARS);
 };
 
 type TCsvRecords = string[][];

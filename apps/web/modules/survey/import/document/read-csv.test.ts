@@ -75,6 +75,17 @@ describe("readCsvDocument", () => {
     expect(model.lines.every((line) => line.cells.length === 3)).toBe(true);
   });
 
+  test("sniffs a long list's delimiter from a sample cut outside a quoted cell", () => {
+    // Every cell after the header holds a line break, and the 64 KiB sample would end inside one.
+    const half = "a".repeat(3_000);
+    const rows = ["Q;Text"];
+    for (let index = 1; index <= 15; index += 1) rows.push(`Q${index};"${half}\n${half}"`);
+    const model = readCsvDocument(rows.join("\n"));
+
+    expect(model.cells.get("B1")).toBe("Text");
+    expect(model.cells.get("B2")).toBe(`${half}\n${half}`);
+  });
+
   test("refuses text after a blank line past the row limit, and takes blank lines there", () => {
     const full = Array.from(
       { length: SURVEY_IMPORT_SHEET_MAX_ROWS },
