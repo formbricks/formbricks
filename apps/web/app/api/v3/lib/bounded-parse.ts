@@ -90,6 +90,38 @@ type TWalk = {
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+type TSizeFrame = { node: object; children: unknown[]; next: number; total: number };
+
+const openSizeFrame = (node: object): TSizeFrame => ({
+  node,
+  children: Array.isArray(node) ? node : Object.values(node),
+  next: 0,
+  total: 1,
+});
+
+/** Adds one child to its frame's count, or opens a frame for it when it has no count yet. */
+function countChild(
+  child: unknown,
+  frame: TSizeFrame,
+  stack: TSizeFrame[],
+  sizes: WeakMap<object, number>
+): void {
+  if (typeof child !== "object" || child === null) {
+    frame.total += 1;
+    return;
+  }
+  const childSize = sizes.get(child);
+  if (childSize !== undefined) {
+    frame.total += childSize;
+  } else if (stack.length > SMALL_SUBTREE_NODES) {
+    // Each open frame is a node of its own, so this subtree is big already; stopping here also ends
+    // a value that contains itself.
+    frame.total += SMALL_SUBTREE_NODES + 1;
+  } else {
+    stack.push(openSizeFrame(child));
+  }
+}
+
 /**
  * Nodes (objects, arrays and values) under `value`, itself included, counted up to one past
  * `SMALL_SUBTREE_NODES`. Every container's count is kept for the parse, so however often the walk asks
@@ -106,34 +138,14 @@ function subtreeSize(value: unknown, sizes: WeakMap<object, number>): number {
   }
 
   // Post-order without recursion: a frame sums its children once each has a count.
-  type TFrame = { node: object; children: unknown[]; next: number; total: number };
-  const open = (node: object): TFrame => ({
-    node,
-    children: Array.isArray(node) ? node : Object.values(node),
-    next: 0,
-    total: 1,
-  });
-  const stack: TFrame[] = [open(value)];
+  const stack: TSizeFrame[] = [openSizeFrame(value)];
   let finished = 0;
 
   for (let frame = stack.at(-1); frame !== undefined; frame = stack.at(-1)) {
     if (frame.next < frame.children.length && frame.total <= SMALL_SUBTREE_NODES) {
       const child = frame.children[frame.next];
       frame.next += 1;
-      if (typeof child !== "object" || child === null) {
-        frame.total += 1;
-        continue;
-      }
-      const childSize = sizes.get(child);
-      if (childSize !== undefined) {
-        frame.total += childSize;
-      } else if (stack.length > SMALL_SUBTREE_NODES) {
-        // Each open frame is a node of its own, so this subtree is big already; stopping here also ends
-        // a value that contains itself.
-        frame.total += SMALL_SUBTREE_NODES + 1;
-      } else {
-        stack.push(open(child));
-      }
+      countChild(child, frame, stack, sizes);
       continue;
     }
 
@@ -192,6 +204,26 @@ function requiredKeys(schema: z.ZodObject): string[] {
   return keys;
 }
 
+/** `branchScore` for an object branch. */
+function objectBranchScore(schema: z.ZodObject, value: Record<string, unknown>): number | null {
+  for (const [key, field] of Object.entries(schema.shape)) {
+    // Only literal fields decide: anything else here would validate a whole (possibly big) subtree.
+    if (key === "__proto__" || !(unwrap(field as z.ZodType) instanceof z.ZodLiteral)) {
+      continue;
+    }
+    // The field as declared, and a missing key judged by its absence (not as `undefined`, which an
+    // exactOptional literal refuses), so a branch the value fits is never ruled out.
+    const fits = Object.hasOwn(value, key)
+      ? (field as z.ZodType).validate(value[key])
+      : absenceAllowed(schema.shape as Record<string, z.ZodType>, key);
+    if (!fits) {
+      return null;
+    }
+  }
+  const keys = requiredKeys(schema);
+  return keys.length === 0 ? 1 : keys.filter((key) => value[key] !== undefined).length / keys.length;
+}
+
 /**
  * How well `value` fits a union branch: `null` only when a literal field (a discriminator,
  * `objective: "calculate"`) rules it out, else the share of the branch's required keys present. A value
@@ -202,22 +234,7 @@ function branchScore(branch: z.ZodType, value: Record<string, unknown>): number 
   const schema = unwrap(branch);
 
   if (schema instanceof z.ZodObject) {
-    for (const [key, field] of Object.entries(schema.shape)) {
-      // Only literal fields decide: anything else here would validate a whole (possibly big) subtree.
-      if (key === "__proto__" || !(unwrap(field as z.ZodType) instanceof z.ZodLiteral)) {
-        continue;
-      }
-      // The field as declared, and a missing key judged by its absence (not as `undefined`, which an
-      // exactOptional literal refuses), so a branch the value fits is never ruled out.
-      const fits = Object.hasOwn(value, key)
-        ? (field as z.ZodType).validate(value[key])
-        : absenceAllowed(schema.shape as Record<string, z.ZodType>, key);
-      if (!fits) {
-        return null;
-      }
-    }
-    const keys = requiredKeys(schema);
-    return keys.length === 0 ? 1 : keys.filter((key) => value[key] !== undefined).length / keys.length;
+    return objectBranchScore(schema, value);
   }
   if (schema instanceof z.ZodIntersection) {
     const left = branchScore(schema.def.left as z.ZodType, value);
@@ -325,18 +342,46 @@ function walkEach(
   }
 }
 
+/**
+ * A codec is a pipe with its own transform between the sides. Its input side is walked like any other;
+ * only an input that passes is parsed whole, decode and output side included.
+ */
+function splitCodec(
+  schema: z.ZodCodec,
+  value: unknown,
+  path: PropertyKey[],
+  sink: IssueSink,
+  ctx: TWalk
+): void {
+  const before = sink.issues.length;
+  walk(schema.def.in as z.ZodType, value, path, sink, ctx);
+  if (sink.issues.length !== before || sink.full) {
+    sink.partial = true;
+    return;
+  }
+  checkWhole(schema, value, path, sink);
+}
+
+/**
+ * Each side through the trial cache: a recursive intersection would otherwise walk the value once per
+ * side at every level, 2^depth.
+ */
+function splitIntersection(
+  schema: z.ZodIntersection,
+  value: object,
+  path: PropertyKey[],
+  sink: IssueSink,
+  ctx: TWalk
+): void {
+  for (const side of [schema.def.left, schema.def.right] as z.ZodType[]) {
+    sink.absorb(trial(side, value, sink.max, ctx), path);
+  }
+}
+
 /** A big value: walk its children against the matching part of the schema. */
 function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: IssueSink, ctx: TWalk): void {
-  // A codec is a pipe with its own transform between the sides. Its input side is walked like any
-  // other; only an input that passes is parsed whole, decode and output side included.
   if (schema instanceof z.ZodCodec) {
-    const before = sink.issues.length;
-    walk(schema.def.in as z.ZodType, value, path, sink, ctx);
-    if (sink.issues.length !== before || sink.full) {
-      sink.partial = true;
-      return;
-    }
-    checkWhole(schema, value, path, sink);
+    splitCodec(schema, value, path, sink, ctx);
     return;
   }
 
@@ -368,11 +413,7 @@ function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: Iss
   }
 
   if (schema instanceof z.ZodIntersection && typeof value === "object" && value !== null) {
-    // Each side through the trial cache: a recursive intersection would otherwise walk the value once
-    // per side at every level, 2^depth.
-    for (const side of [schema.def.left, schema.def.right] as z.ZodType[]) {
-      sink.absorb(trial(side, value, sink.max, ctx), path);
-    }
+    splitIntersection(schema, value, path, sink, ctx);
     return;
   }
 
