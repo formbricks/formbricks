@@ -198,7 +198,7 @@ export const FlowOutlineRow = ({
           {children}
           {(readOnlyLabel || actions) && (
             // Clicks and keys here act on the control, never open or close the row.
-            // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
             <div
               className="ml-auto flex shrink-0 items-center gap-2"
               onClick={(event) => event.stopPropagation()}

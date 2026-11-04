@@ -57,13 +57,19 @@ export const getRuleTypeLabel = (type: TFlowRuleType, t: TFunction): string => {
 };
 
 /** The type's icon, uncoloured: the row's tile colours it. */
-export const RuleTypeIcon = ({ type, className }: { type: TFlowRuleType; className?: string }) => {
+export const RuleTypeIcon = ({
+  type,
+  className,
+}: {
+  readonly type: TFlowRuleType;
+  readonly className?: string;
+}) => {
   const Icon = RULE_TYPE_ICON[type];
   return <Icon className={className} aria-hidden="true" />;
 };
 
 /** The row's tile at menu size: the type's icon, white on its colour. */
-export const RuleTypeTile = ({ type }: { type: TFlowRuleType }) => (
+export const RuleTypeTile = ({ type }: { readonly type: TFlowRuleType }) => (
   <span
     className={cn(
       "inline-flex size-5 shrink-0 items-center justify-center rounded-md text-white [&_svg]:size-3.5",
