@@ -17,15 +17,9 @@ const DASHBOARDS_PAGE_SIZE = 25;
 interface DashboardsTableProps {
   workspaceId: string;
   isReadOnly: boolean;
-  /** A Dashboard viewer can't create a dashboard, so the empty state tells them who can. */
-  isDashboardViewer?: boolean;
 }
 
-export const DashboardsTable = ({
-  workspaceId,
-  isReadOnly,
-  isDashboardViewer = false,
-}: Readonly<DashboardsTableProps>) => {
+export const DashboardsTable = ({ workspaceId, isReadOnly }: Readonly<DashboardsTableProps>) => {
   const { t } = useTranslation();
   const { dashboards, isPending, isError, error, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useDashboards({ workspaceId, limit: DASHBOARDS_PAGE_SIZE });
@@ -54,20 +48,20 @@ export const DashboardsTable = ({
       </div>
       {dashboards.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-6 py-8 text-center">
-          {isDashboardViewer ? (
-            <p className="text-sm text-slate-500">
-              {t("workspace.analysis.dashboards.no_dashboards_viewer")}
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-slate-900">
+              {t("workspace.analysis.dashboards.no_dashboards_found")}
             </p>
-          ) : (
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-slate-900">
-                {t("workspace.analysis.dashboards.no_dashboards_found")}
-              </p>
-              <p className="text-sm text-slate-500">
-                {t("workspace.analysis.dashboards.no_dashboards_found_description")}
-              </p>
-            </div>
-          )}
+            <p className="text-sm text-slate-500">
+              {
+                // Someone who can't create a dashboard (a Dashboard viewer, a read-only member) is told
+                // who can instead (U10).
+                isReadOnly
+                  ? t("workspace.analysis.dashboards.no_dashboards_read_only_description")
+                  : t("workspace.analysis.dashboards.no_dashboards_found_description")
+              }
+            </p>
+          </div>
           {!isReadOnly && (
             <CreateDashboardButton workspaceId={workspaceId} buttonProps={{ variant: "secondary" }} />
           )}

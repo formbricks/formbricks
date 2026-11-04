@@ -426,7 +426,8 @@ export const SettingsSidebarContent = ({
       label: t("common.authorized_apps"),
       href: accountSettingsPath("authorized-apps"),
       icon: <UnplugIcon className={iconClassName} />,
-      hidden: isDashboardViewer,
+      // Kept for a Dashboard viewer (U2): it can grant an app dashboard reads over OAuth, so it must be
+      // able to see and revoke what it granted.
       disabled: isBilling,
     },
   ];

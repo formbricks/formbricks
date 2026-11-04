@@ -12,6 +12,7 @@ import {
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { getOrganizationSwitchPath } from "@/modules/settings/lib/organization-switch";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 
 interface SettingsNavigationProps {
@@ -70,12 +71,12 @@ export const SettingsNavigation = ({
   const handleOrganizationChange = useCallback(
     (id: string) => {
       startTransition(() => {
-        // A Dashboard viewer has no organization settings: the organization's redirect route lands it on
-        // its dashboards there.
         router.push(
-          id === organizationId && membershipRole !== "dashboard_viewer"
-            ? `/organizations/${id}/settings/general`
-            : `/organizations/${id}/`
+          getOrganizationSwitchPath({
+            organizationId: id,
+            currentOrganizationId: organizationId,
+            membershipRole,
+          })
         );
       });
     },

@@ -1,13 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
-import { IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
+import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
+import { IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
 import { listDashboardViewerWorkspaces } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
-import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsDashboardViewerRoleEnabled, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 
 /**
@@ -32,7 +33,10 @@ export const DashboardsUnavailablePage = async ({
   ]);
   if (membership?.role !== "dashboard_viewer" || !organization || !user) return notFound();
 
-  const isRoleEnabled = await getIsDashboardViewerRoleEnabled(organizationId);
+  const [isRoleEnabled, isMultiOrgEnabled] = await Promise.all([
+    getIsDashboardViewerRoleEnabled(organizationId),
+    getIsMultiOrgEnabled(),
+  ]);
   if (isRoleEnabled) {
     const [firstWorkspace] = await listDashboardViewerWorkspaces(session.user.id, organizationId);
     if (firstWorkspace) return redirect(`/workspaces/${firstWorkspace.id}/dashboards`);
@@ -45,18 +49,39 @@ export const DashboardsUnavailablePage = async ({
         organization={organization}
         isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
       />
-      <div className="flex flex-1 flex-col items-center justify-center p-6">
-        {isRoleEnabled ? (
-          <Header
-            title={t("workspace.analysis.dashboards.viewer_no_access_title")}
-            subtitle={t("workspace.analysis.dashboards.viewer_no_access_subtitle")}
-          />
-        ) : (
-          <Header
-            title={t("workspace.analysis.dashboards.viewer_plan_unavailable_title")}
-            subtitle={t("workspace.analysis.dashboards.viewer_plan_unavailable_subtitle")}
-          />
-        )}
+      <div className="flex-1">
+        <div className="flex h-full flex-col">
+          <div className="p-6">
+            {/* The onboarding landing page's switcher, so a viewer with dashboards in another organization
+                can get there (U8). Organizations and workspaces are lazy-loaded. */}
+            <WorkspaceAndOrgSwitch
+              currentOrganizationId={organization.id}
+              currentOrganizationName={organization.name}
+              isMultiOrgEnabled={isMultiOrgEnabled}
+              organizationWorkspacesLimit={0}
+              isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+              isLicenseActive={false}
+              isNoLicense={false}
+              isOwnerOrManager={false}
+              isAccessControlAllowed={false}
+              isMembershipPending={false}
+              membershipRole={membership.role}
+            />
+          </div>
+          <div className="flex h-full flex-col items-center justify-center p-6">
+            {isRoleEnabled ? (
+              <Header
+                title={t("workspace.analysis.dashboards.viewer_no_access_title")}
+                subtitle={t("workspace.analysis.dashboards.viewer_no_access_subtitle")}
+              />
+            ) : (
+              <Header
+                title={t("workspace.analysis.dashboards.viewer_plan_unavailable_title")}
+                subtitle={t("workspace.analysis.dashboards.viewer_plan_unavailable_subtitle")}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

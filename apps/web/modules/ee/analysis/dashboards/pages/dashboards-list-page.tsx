@@ -53,7 +53,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
         pageTitle={t("common.dashboards")}
         workspaceId={workspaceId}
         hideSecondaryNavigation>
-        <DashboardsTable workspaceId={workspaceId} isReadOnly isDashboardViewer />
+        <DashboardsTable workspaceId={workspaceId} isReadOnly />
       </AnalysisPageLayout>
     );
   }

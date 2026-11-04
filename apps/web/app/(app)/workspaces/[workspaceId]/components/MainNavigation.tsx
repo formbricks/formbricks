@@ -38,6 +38,7 @@ import {
 } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { getOrganizationSwitchPath } from "@/modules/settings/lib/organization-switch";
 import { Badge } from "@/modules/ui/components/badge";
 import {
   DropdownMenu,
@@ -180,6 +181,11 @@ export const MainNavigation = ({
     return () => clearTimeout(timeoutId);
   }, [isCollapsed]);
 
+  // Billing and Dashboard viewer both lose most of the navigation, differently on purpose (U17). Billing
+  // keeps the items disabled with a tooltip: it is a full organization member whose access is paused
+  // while it only manages billing, and the greyed items say what the organization has. A Dashboard viewer
+  // never had any of it — no route behind those items is reachable for it (ADR-0023) — so they are hidden,
+  // and a section left with nothing loses its header too.
   const mainNavigationSections = useMemo(
     () => [
       {
@@ -331,12 +337,11 @@ export const MainNavigation = ({
   };
 
   const handleOrganizationChange = (organizationId: string) => {
-    // A Dashboard viewer has no organization settings; the organization's redirect route lands them on
-    // their dashboards there.
-    const targetPath =
-      organizationId === organization.id && !isDashboardViewer
-        ? `/organizations/${organization.id}/settings/general`
-        : `/organizations/${organizationId}/`;
+    const targetPath = getOrganizationSwitchPath({
+      organizationId,
+      currentOrganizationId: organization.id,
+      membershipRole,
+    });
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
       router.push(targetPath);
@@ -396,14 +401,16 @@ export const MainNavigation = ({
   const handleSettingsOrganizationChange = useCallback(
     (id: string) => {
       startTransition(() => {
-        if (id === organization.id) {
-          router.push(`/organizations/${organization.id}/settings/general`);
-        } else {
-          router.push(`/organizations/${id}/`);
-        }
+        router.push(
+          getOrganizationSwitchPath({
+            organizationId: id,
+            currentOrganizationId: organization.id,
+            membershipRole,
+          })
+        );
       });
     },
-    [router, organization.id]
+    [router, organization.id, membershipRole]
   );
 
   const switcherTriggerClasses = cn(
