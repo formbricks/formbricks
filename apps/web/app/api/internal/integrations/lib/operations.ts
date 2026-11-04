@@ -2,6 +2,7 @@ import "server-only";
 import { AuthenticationError, OperationNotAllowedError, UnknownError } from "@formbricks/types/errors";
 import type { TIntegrationInput } from "@formbricks/types/integration";
 import type { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -109,10 +110,8 @@ export async function putIntegrationOperation({
   if (!parsed.success) {
     return problemBadRequest(requestId, "Invalid integration configuration", {
       instance,
-      invalid_params: parsed.error.issues.map((issue) => ({
-        name: issue.path.join("."),
-        reason: issue.message,
-      })),
+      // Bounded like every other producer: one issue per bad mapping entry is caller-shaped (ENG-3384).
+      invalid_params: formatZodIssues(parsed.error, "config"),
     });
   }
 
