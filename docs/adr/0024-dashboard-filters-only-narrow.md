@@ -12,3 +12,4 @@ A dashboard filter, and the dashboard's date range, is ANDed onto each chart's s
 - Charts can come back empty under a filter pick; the chart says why instead of showing all data.
 - `GET /api/v3/charts/{id}/data` with a date range narrows the saved range rather than replacing it.
 - Narrowing does not hide what a filter reveals inside a chart's scope: a `contains` filter on a free-text field can expose matching counts. Editors choose which fields become dashboard filters.
+- Accepted risk: embedded-data keys keep value lists, so a filter on a key such as `email` lists those values to everyone who can open the dashboard, Dashboard viewers included. Free-text fields get no value list; embedded keys do because they are usually categorical, and an editor who adds a filter on one chooses to show its values. The dashboards docs warn about it.
