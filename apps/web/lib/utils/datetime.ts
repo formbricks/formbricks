@@ -9,6 +9,9 @@ const DEFAULT_DATE_DISPLAY_OPTIONS: Intl.DateTimeFormatOptions = {
   day: "numeric",
 };
 
+/** The app's day format: the date picker's and Embedded Data's ("Nov 4, 2026", "4 Nov 2026"). */
+export const DATE_DISPLAY_OPTIONS: Intl.DateTimeFormatOptions = DEFAULT_DATE_DISPLAY_OPTIONS;
+
 const DEFAULT_DATE_TIME_DISPLAY_OPTIONS: Intl.DateTimeFormatOptions = {
   year: "numeric",
   month: "long",
@@ -37,6 +40,37 @@ export const formatDateTimeForDisplay = (
   options: Intl.DateTimeFormatOptions = DEFAULT_DATE_TIME_DISPLAY_OPTIONS
 ): string => {
   return new Intl.DateTimeFormat(locale, options).format(date);
+};
+
+const STORED_CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const STORED_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?$/;
+
+/**
+ * A stored date value as people read it (P65): a calendar date (`2026-11-04`) as that day only, in
+ * the app's day format; a timestamp (`now()`, `2026-11-04T10:12:30.000Z`) as the same day format
+ * plus the time, in the viewer's time zone (`timeZone`, else the runtime's). `null` for anything
+ * else, so the caller shows the value as it is. Callers keep the stored value as a tooltip.
+ */
+export const formatStoredDateValue = (
+  value: string,
+  locale: string = DEFAULT_LOCALE,
+  timeZone?: string
+): string | null => {
+  if (STORED_CALENDAR_DATE.test(value)) {
+    // Read as UTC midnight and shown in UTC: the day named, not the day it is somewhere else.
+    const day = new Date(`${value}T00:00:00.000Z`);
+    if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== value) return null;
+    return formatDateForDisplay(day, locale, { ...DATE_DISPLAY_OPTIONS, timeZone: "UTC" });
+  }
+  if (!STORED_TIMESTAMP.test(value)) return null;
+  const instant = new Date(value);
+  if (Number.isNaN(instant.getTime())) return null;
+  return formatDateTimeForDisplay(instant, locale, {
+    ...DATE_DISPLAY_OPTIONS,
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
 };
 
 export const formatDateWithOrdinal = (date: Date, locale: string = DEFAULT_LOCALE): string => {

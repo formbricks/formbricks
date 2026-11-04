@@ -36,11 +36,13 @@ export function ShowIfPopover({
   isOpen,
   onOpenChange,
 }: ShowIfPopoverProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const showIf = getShowIf(localSurvey, target);
   if (!showIf) return null;
 
-  const summary = describeConditionGroup(showIf, localSurvey, t);
+  const summary = describeConditionGroup(showIf, localSurvey, t, {
+    locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
+  });
 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>

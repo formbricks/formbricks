@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
+import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import {
+  SURVEY_FLOW_FIXTURE_IDS as ids,
+  surveyFlowFixture,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { describeAction, describeConditionGroup, describeRuleActions } from "./flow-outline-text";
 
 // Every key reads as its last segment, so the operator labels below are the i18n keys' names.
@@ -55,6 +59,55 @@ describe("describeConditionGroup", () => {
       "always"
     );
   });
+
+  describe("dates read in the app's date format (P65)", () => {
+    const group = (condition: Omit<TSingleCondition, "id">): TConditionGroup => ({
+      id: "g",
+      connector: "and",
+      conditions: [{ id: "c", ...condition }],
+    });
+
+    test("a date question's calendar date reads as the day, in the viewer's locale", () => {
+      const lapsed = rule(5, 0).conditions;
+      expect(describeConditionGroup(lapsed, surveyFlowFixture, t)).toContain(
+        "“last_purchase” is_before Jan 1, 2026"
+      );
+      expect(describeConditionGroup(lapsed, surveyFlowFixture, t, { locale: "en-GB" })).toContain(
+        "“last_purchase” is_before 1 Jan 2026"
+      );
+    });
+
+    test("a timestamp on a date field reads as the day plus the time, in the viewer's time zone", () => {
+      const condition = group({
+        leftOperand: { type: "variable", value: ids.variables.signedUpAt },
+        operator: "isAfter",
+        rightOperand: { type: "static", value: "2026-11-04T10:12:00.000Z" },
+      });
+      expect(
+        describeConditionGroup(condition, surveyFlowFixture, t, { locale: "en-GB", timeZone: "UTC" })
+      ).toBe("signed_up_at is_after 4 Nov 2026, 10:12");
+    });
+
+    test("a passed-in date field's value reads as a date too", () => {
+      const condition = group({
+        leftOperand: { type: "hiddenField", value: ids.hiddenFields.signupDate },
+        operator: "isBefore",
+        rightOperand: { type: "static", value: "2026-03-01" },
+      });
+      expect(describeConditionGroup(condition, surveyFlowFixture, t)).toBe(
+        "@signup_date is_before Mar 1, 2026"
+      );
+    });
+
+    test("text that looks like a date stays text when what it is compared with isn't a date", () => {
+      const condition = group({
+        leftOperand: { type: "hiddenField", value: ids.hiddenFields.panelId },
+        operator: "equals",
+        rightOperand: { type: "static", value: "2026-03-01" },
+      });
+      expect(describeConditionGroup(condition, surveyFlowFixture, t)).toBe("@panel_id equals “2026-03-01”");
+    });
+  });
 });
 
 describe("describeAction", () => {
@@ -78,6 +131,20 @@ describe("describeAction", () => {
       kind: "jump",
       target: "block",
       label: "Profile",
+    });
+  });
+
+  test("a date set on a date field reads as that day (P65)", () => {
+    const setDate: TSurveyBlockLogicAction = {
+      id: "a",
+      objective: "calculate",
+      variableId: ids.variables.signedUpAt,
+      operator: "assign",
+      value: { type: "static", value: "2026-11-04" },
+    };
+    expect(describeAction(setDate, surveyFlowFixture, t, { locale: "en-GB" })).toEqual({
+      kind: "calculate",
+      label: "signed_up_at = 4 Nov 2026",
     });
   });
 

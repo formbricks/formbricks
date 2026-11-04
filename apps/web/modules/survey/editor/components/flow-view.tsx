@@ -95,7 +95,13 @@ interface FlowViewProps {
 const RULE_ICON = { rule: <SplitIcon />, embeddedData: <BinaryIcon /> };
 
 /** The Questions tab's ending icons: a handshake for an ending card, a turned arrow for a redirect. */
-const EndingTypeIcon = ({ type, className }: { type: TSurveyEnding["type"]; className?: string }) =>
+const EndingTypeIcon = ({
+  type,
+  className,
+}: {
+  readonly type: TSurveyEnding["type"];
+  readonly className?: string;
+}) =>
   type === "redirectToUrl" ? (
     <Undo2Icon className={cn("rotate-180", className)} aria-hidden="true" />
   ) : (
@@ -115,7 +121,9 @@ export const FlowView = ({
   onEditOnQuestionsTab,
   persistedSurvey,
 }: FlowViewProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Dates on the rows read in the viewer's language (P65).
+  const textFormat = { locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US" };
   const outline = useMemo(() => buildFlowOutline(localSurvey), [localSurvey]);
 
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
@@ -313,7 +321,7 @@ export const FlowView = ({
             size="tiny"
             icon={<EyeIcon />}
             text={t("workspace.surveys.edit.flow.show_if", {
-              conditions: describeConditionGroup(badge.conditions, localSurvey, t),
+              conditions: describeConditionGroup(badge.conditions, localSurvey, t, textFormat),
             })}
             title={t("workspace.surveys.edit.flow.read_only_hint")}
           />
@@ -400,7 +408,7 @@ export const FlowView = ({
 
   const renderRuleRow = (row: TFlowRuleRow, rules: TSurveyBlockLogic[], scopeBlockIdx: number) => {
     const isOpen = openRowId === row.id;
-    const steps = describeRuleActions(row.rule.actions, localSurvey, t);
+    const steps = describeRuleActions(row.rule.actions, localSurvey, t, textFormat);
     const onRulesChange = (next: TSurveyBlockLogic[]) => updateRules(scopeBlockIdx, next);
 
     return (
@@ -468,7 +476,7 @@ export const FlowView = ({
         <span className="text-sm text-slate-700">
           {row.rule.conditions.conditions.length === 0
             ? t("workspace.surveys.edit.flow.always_runs")
-            : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(row.rule.conditions, localSurvey, t)}`}
+            : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(row.rule.conditions, localSurvey, t, textFormat)}`}
         </span>
         <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
         {steps.map((step, idx) => renderActionStep(step, `${row.id}-${idx}`))}

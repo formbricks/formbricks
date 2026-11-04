@@ -1,10 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
+  DATE_DISPLAY_OPTIONS,
   diffInDays,
   formatDateForDisplay,
   formatDateTimeForDisplay,
   formatDateWithOrdinal,
   formatLocalDay,
+  formatStoredDateValue,
   getDateFnsLocale,
   getFormattedDateTimeString,
   isValidDateString,
@@ -221,4 +223,36 @@ describe("getDateFnsLocale", () => {
     expect(getDateFnsLocale("de").code).toBe("de");
     expect(getDateFnsLocale("ja").code).toBe("ja");
   });
+});
+
+describe("formatStoredDateValue: a stored date in the app's date format (P65)", () => {
+  test("a calendar date reads as that day only, whatever the viewer's time zone", () => {
+    expect(formatStoredDateValue("2026-11-04", "en-US", "Pacific/Honolulu")).toBe("Nov 4, 2026");
+    expect(formatStoredDateValue("2026-11-04", "en-GB", "Asia/Tokyo")).toBe("4 Nov 2026");
+  });
+
+  test("a timestamp reads as the same day format plus the time, in the viewer's time zone", () => {
+    expect(formatStoredDateValue("2026-11-04T10:12:30.000Z", "en-GB", "UTC")).toBe("4 Nov 2026, 10:12");
+    expect(formatStoredDateValue("2026-11-04T10:12:30.000Z", "en-US", "UTC")).toMatch(
+      /^Nov 4, 2026, 10:12\sAM$/
+    );
+    // 23:30 UTC is already the next morning in Tokyo.
+    expect(formatStoredDateValue("2026-11-04T23:30:00Z", "en-GB", "Asia/Tokyo")).toBe("5 Nov 2026, 8:30");
+  });
+
+  test("the day format is the date picker's, so the two read alike", () => {
+    expect(formatStoredDateValue("2026-11-04", "en-US")).toBe(
+      formatDateForDisplay(new Date(Date.UTC(2026, 10, 4)), "en-US", {
+        ...DATE_DISPLAY_OPTIONS,
+        timeZone: "UTC",
+      })
+    );
+  });
+
+  test.each(["", "gold", "2026-13-45", "04/11/2026", "2026-11-04Tnoon", "1730700000000"])(
+    "returns null for %j, which is not a stored date",
+    (value) => {
+      expect(formatStoredDateValue(value, "en-US")).toBeNull();
+    }
+  );
 });
