@@ -106,12 +106,25 @@ interface SignatureProps {
   imageAltText?: string;
 }
 
-const CONTROL_CLASSES = cn(
+const CONTROL_BASE_CLASSES = cn(
   "inline-flex items-center justify-center gap-1.5 border px-3 py-1.5 transition-colors",
-  "rounded-input border-input-border bg-input-bg text-input-text font-input-weight",
+  "border-input-border bg-input-bg text-input-text font-input-weight",
   "[font-size:var(--fb-input-font-size)]",
   "disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0"
 );
+
+const CONTROL_CLASSES = cn(CONTROL_BASE_CLASSES, "rounded-input");
+
+/**
+ * Draw and Type are one segmented control, not two buttons: the tabs touch and share one outline, so they
+ * read as a switch and apart from Clear. `-ms-px` overlaps the shared border; the selected tab is raised so
+ * its brand border shows whole. Logical corners keep the outline right in RTL.
+ */
+const SEGMENT_CLASSES = cn(CONTROL_BASE_CLASSES, "relative");
+const SEGMENT_CORNER_CLASSES: Record<SignatureMode, string> = {
+  draw: "rounded-s-input",
+  type: "-ms-px rounded-e-input",
+};
 
 const getStatusText = (
   { isUploading, isSigned }: { isUploading: boolean; isSigned: boolean },
@@ -318,8 +331,11 @@ function Signature({
           selectMode(tabMode);
         }}
         className={cn(
-          CONTROL_CLASSES,
-          selected ? "border-brand-readable bg-input-selected-bg font-semibold" : "hover:bg-input-selected-bg"
+          SEGMENT_CLASSES,
+          SEGMENT_CORNER_CLASSES[tabMode],
+          selected
+            ? "border-brand-readable bg-input-selected-bg z-10 font-semibold"
+            : "hover:bg-input-selected-bg"
         )}>
         {label}
       </button>
@@ -365,7 +381,7 @@ function Signature({
               empty row above it. */}
           {showModeToggle ? (
             <div className="flex items-center justify-between gap-2">
-              <div role="tablist" aria-label={text.method} className="flex items-center gap-1">
+              <div role="tablist" aria-label={text.method} className="flex items-center">
                 {renderTab("draw", text.draw)}
                 {renderTab("type", text.type)}
               </div>
