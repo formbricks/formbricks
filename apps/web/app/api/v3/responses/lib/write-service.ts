@@ -17,14 +17,19 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
-import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
-import { enqueueResponseOutcomeCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  type TOutcomeScope,
+  type TV3OutcomeChange,
+  enqueueOutcomeCleanup,
+  outcomeScopeWhere,
+  writeResponsesOutcomeInTx,
+} from "./outcome-write";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
 /**
@@ -661,23 +666,6 @@ const readStoredOutcome = async (
   )?.outcome;
 
 /**
- * Queue the Hub cleanup for responses whose outcome changed, in the transaction that wrote it (ENG-6785):
- * a write that commits always gets it, and one that rolls back queues nothing.
- */
-const enqueueOutcomeCleanup = async (
-  tx: Prisma.TransactionClient,
-  workspaceId: string,
-  changes: { id: string; surveyId: string }[]
-): Promise<{ drainNowIds: string[]; organizationId: string }> => {
-  const { organizationId } = await tx.workspace.findUniqueOrThrow({
-    where: { id: workspaceId },
-    select: { organizationId: true },
-  });
-  const { drainNowIds } = await enqueueResponseOutcomeCleanups(tx, { organizationId, workspaceId, changes });
-  return { drainNowIds, organizationId };
-};
-
-/**
  * How long a request waits for the first attempt at the Hub cleanup. The Hub's client waits up to a minute
  * per attempt, so a Hub that accepts the connection and never answers would hold the request that much
  * longer for an outcome that is already committed (seen against the real Hub, ENG-6785). The drain keeps
@@ -711,20 +699,6 @@ const drainOutcomeCleanups = async (drainNowIds: string[], workspaceId: string):
   }
 };
 
-type TOutcomeScope = {
-  /** ENG-3282: responses of a survey the caller cannot see are scope-filtered out, like foreign ids. */
-  visibleSurveyWhere?: Prisma.SurveyWhereInput;
-  workspaceId: string;
-};
-
-const outcomeScopeWhere = (
-  ids: string[],
-  { visibleSurveyWhere = {}, workspaceId }: TOutcomeScope
-): Prisma.ResponseWhereInput => ({
-  id: { in: ids },
-  survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
-});
-
 /**
  * Which of `ids` are in scope, and the survey each belongs to — what a batch authorizes against before it
  * writes anything. One query for up to a batch of ids; the caller checks one response per distinct survey.
@@ -737,58 +711,6 @@ export async function listScopedResponseSurveyRefs(
     where: outcomeScopeWhere(ids, scope),
     select: { id: true, surveyId: true },
   });
-}
-
-export type TV3OutcomeChange = { id: string; surveyId: string; previous: TResponseOutcome | null };
-
-/**
- * The one outcome write (ENG-6785): sets `outcome` on the in-scope responses of `ids` that don't carry
- * it yet, inside `tx`, and queues the Hub cleanup for exactly those in the same transaction. A response
- * already carrying it is left alone, so a retry neither churns `updatedAt` nor queues anything.
- * `onlyWhenUnset` changes only responses with no outcome at all: the survey's one-way Low quality
- * mark (ENG-6933) never overrides a reviewer's outcome.
- *
- * `drainNowIds` is for the caller to drain after commit, or to leave to the drain job.
- */
-export async function writeResponsesOutcomeInTx(
-  tx: Prisma.TransactionClient,
-  ids: string[],
-  outcome: TResponseOutcome | null,
-  scope: TOutcomeScope,
-  { onlyWhenUnset = false }: { onlyWhenUnset?: boolean } = {}
-): Promise<{
-  matched: number;
-  changes: TV3OutcomeChange[];
-  drainNowIds: string[];
-  organizationId?: string;
-}> {
-  const inScope = await tx.response.findMany({
-    where: outcomeScopeWhere(ids, scope),
-    select: { id: true, surveyId: true, outcome: true },
-  });
-  const changes = inScope
-    .filter((row) => row.outcome !== outcome && (!onlyWhenUnset || row.outcome === null))
-    .map((row) => ({ id: row.id, surveyId: row.surveyId, previous: row.outcome }));
-  if (changes.length === 0) return { matched: inScope.length, changes, drainNowIds: [] };
-
-  await tx.response.updateMany({
-    where: {
-      ...outcomeScopeWhere(
-        changes.map(({ id }) => id),
-        scope
-      ),
-      // Re-checked in the write itself, so a reviewer's outcome landing in between is never overridden.
-      ...(onlyWhenUnset ? { outcome: null } : {}),
-    },
-    data: { outcome },
-  });
-
-  const { drainNowIds, organizationId } = await enqueueOutcomeCleanup(
-    tx,
-    scope.workspaceId,
-    changes.map(({ id, surveyId }) => ({ id, surveyId }))
-  );
-  return { matched: inScope.length, changes, drainNowIds, organizationId };
 }
 
 export type TV3BatchOutcomeResult = {
