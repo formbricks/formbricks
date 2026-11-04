@@ -1,12 +1,20 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import {
   EMBEDDED_DATA_KEY_DIMENSION,
   EMBEDDED_KEYS_STALE_MS,
+  FAILED_SCAN_RETRY_MS,
   getDatasetEmbeddedKeys,
   getEmbeddedKeysForQuery,
+  groupRareEmbeddedKeys,
   resolveEmbeddedMemberKeys,
 } from "./dataset-embedded-keys";
-import { MAX_EMBEDDED_KEYS } from "./embedded-data-fields";
+import {
+  MAX_EMBEDDED_KEYS,
+  MAX_RARE_EMBEDDED_KEYS,
+  MAX_RARE_EMBEDDED_KEYS_CHARS,
+  MAX_TOKEN_EMBEDDED_KEYS,
+} from "./embedded-data-fields";
 import { getEmbeddedMemberName } from "./embedded-member-name";
 
 const { mockCache, mockExecute } = vi.hoisted(() => ({
@@ -128,6 +136,30 @@ describe("getDatasetEmbeddedKeys (ENG-6893)", () => {
     await expect(getDatasetEmbeddedKeys(scope)).resolves.toEqual([]);
     expect(mockExecute).toHaveBeenCalledTimes(1);
   });
+
+  test("remembers a failed discovery briefly, so the next requests do not rescan (C4)", async () => {
+    mockCache.get.mockResolvedValue({ ok: true, data: null });
+    mockExecute.mockRejectedValue(new Error("cube down"));
+
+    await getDatasetEmbeddedKeys(scope);
+    expect(mockCache.set).toHaveBeenCalledWith(
+      "fb:analytics:frd-1:embedded-keys",
+      { keys: [], refreshedAt: Date.now() },
+      FAILED_SCAN_RETRY_MS
+    );
+  });
+
+  test("logs a failed discovery by error name and frames, never Cube's message (C18)", async () => {
+    mockCache.get.mockResolvedValue({ ok: true, data: null });
+    mockExecute.mockRejectedValue(new Error("relation feedback_records: secret column detail"));
+
+    await getDatasetEmbeddedKeys(scope);
+
+    const [fields] = vi.mocked(logger.warn).mock.calls[0] as [Record<string, unknown>];
+    expect(fields).toMatchObject({ datasetId: "frd-1", errName: "Error" });
+    expect(fields).not.toHaveProperty("err");
+    expect(JSON.stringify(fields)).not.toContain("secret column detail");
+  });
 });
 
 describe("a saved query's keys outside the top keys (ENG-6893)", () => {
@@ -205,7 +237,56 @@ describe("a saved query's keys outside the top keys (ENG-6893)", () => {
     vi.setSystemTime(Date.now() + EMBEDDED_KEYS_STALE_MS + 1);
     stored[KEYS_KEY] = { keys: topKeys, refreshedAt: Date.now() };
     await resolveEmbeddedMemberKeys(scope, [gone]);
+    await flush();
+    await flush();
     expect(mockExecute).toHaveBeenCalledTimes(2);
+  });
+
+  test("answers from a stale scan at once and rescans in the background under the lock (C4)", async () => {
+    stored[MEMBERS_KEY] = {
+      members: { [member("rare plan")]: "rare plan" },
+      scannedAt: Date.now() - EMBEDDED_KEYS_STALE_MS - 1,
+    };
+    let finishScan: (value: unknown) => void = () => undefined;
+    mockExecute.mockReturnValue(new Promise((resolve) => (finishScan = resolve)));
+
+    // The request does not wait on the rescan: it answers what the stale scan knows.
+    await expect(
+      resolveEmbeddedMemberKeys(scope, [member("rare plan"), member("brand new")])
+    ).resolves.toEqual(new Map([[member("rare plan"), "rare plan"]]));
+    await flush();
+    expect(mockCache.tryLock).toHaveBeenCalledWith(
+      "fb:analytics:frd-1:embedded-key-members-lock",
+      "1",
+      expect.any(Number)
+    );
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+
+    finishScan(rows("rare plan", "brand new"));
+    await flush();
+    await flush();
+    await expect(resolveEmbeddedMemberKeys(scope, [member("brand new")])).resolves.toEqual(
+      new Map([[member("brand new"), "brand new"]])
+    );
+  });
+
+  test("leaves the background rescan to whoever holds the lock", async () => {
+    stored[MEMBERS_KEY] = { members: {}, scannedAt: Date.now() - EMBEDDED_KEYS_STALE_MS - 1 };
+    mockCache.tryLock.mockResolvedValue({ ok: true, data: false });
+
+    await resolveEmbeddedMemberKeys(scope, [member("rare plan")]);
+    await flush();
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  test("scans once for concurrent first resolutions in this process", async () => {
+    mockExecute.mockResolvedValue(rows("rare plan"));
+
+    await Promise.all([
+      resolveEmbeddedMemberKeys(scope, [member("rare plan")]),
+      resolveEmbeddedMemberKeys(scope, [member("rare plan")]),
+    ]);
+    expect(mockExecute).toHaveBeenCalledTimes(1);
   });
 
   test("resolves only the top keys when the cache is down, and never scans", async () => {
@@ -215,32 +296,83 @@ describe("a saved query's keys outside the top keys (ENG-6893)", () => {
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
-  test("a failed scan resolves nothing past the top keys rather than failing", async () => {
+  test("a failed scan resolves nothing past the top keys, and is remembered briefly (C4)", async () => {
     mockExecute.mockRejectedValue(new Error("cube down"));
 
     await expect(resolveEmbeddedMemberKeys(scope, [member("rare plan"), member("top_2")])).resolves.toEqual(
       new Map([[member("top_2"), "top_2"]])
     );
+    expect(mockCache.set).toHaveBeenCalledWith(
+      MEMBERS_KEY,
+      { members: {}, scannedAt: Date.now() },
+      FAILED_SCAN_RETRY_MS
+    );
+    await resolveEmbeddedMemberKeys(scope, [member("rare plan")]);
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+    const [fields] = vi.mocked(logger.warn).mock.calls[0] as [Record<string, unknown>];
+    expect(fields).toMatchObject({ errName: "Error" });
+    expect(fields).not.toHaveProperty("err");
   });
 
-  test("a token carries the top keys for a query naming none outside them", async () => {
+  test("a token carries the top keys, in one canonical order, for a query naming none outside them", async () => {
+    const sorted = [...topKeys].sort();
     await expect(getEmbeddedKeysForQuery(scope, { measures: ["FeedbackRecords.count"] })).resolves.toEqual(
-      topKeys
+      sorted
     );
-    await expect(getEmbeddedKeysForQuery(scope, { dimensions: [member("top_5")] })).resolves.toEqual(topKeys);
+    await expect(getEmbeddedKeysForQuery(scope, { dimensions: [member("top_5")] })).resolves.toEqual(sorted);
     expect(mockExecute).not.toHaveBeenCalled();
   });
 
-  test("a token puts a saved query's rarer key first and stays within the cap", async () => {
-    mockExecute.mockResolvedValue(rows(...topKeys, "rare plan"));
+  describe("rare keys a saved query names (S5)", () => {
+    const rare = Array.from({ length: 35 }, (_, index) => `rare_${index}`);
+    const buckets = groupRareEmbeddedKeys(rare);
+    const keysFor = (...keys: string[]) =>
+      getEmbeddedKeysForQuery(scope, { measures: ["FeedbackRecords.count"], dimensions: keys.map(member) });
 
-    const keys = await getEmbeddedKeysForQuery(scope, {
-      dimensions: [member("rare plan")],
-      filters: [{ member: member("top_3"), operator: "equals", values: ["x"] }],
+    beforeEach(() => {
+      mockExecute.mockResolvedValue(rows(...topKeys, ...rare));
     });
 
-    expect(keys).toHaveLength(MAX_EMBEDDED_KEYS);
-    expect(keys.slice(0, 2)).toEqual(["rare plan", "top_3"]);
-    expect(keys).not.toContain("top_99");
+    test("group into fixed buckets: deterministic, bounded, every key in exactly one", () => {
+      expect(groupRareEmbeddedKeys([])).toEqual([]);
+      expect(groupRareEmbeddedKeys([...rare].reverse())).toEqual(buckets);
+      expect(buckets.flat().sort()).toEqual([...rare].sort());
+      for (const bucket of buckets) {
+        expect(bucket.length).toBeLessThanOrEqual(MAX_RARE_EMBEDDED_KEYS);
+        expect(bucket.reduce((sum, key) => sum + JSON.stringify(key).length, 0)).toBeLessThanOrEqual(
+          MAX_RARE_EMBEDDED_KEYS_CHARS
+        );
+      }
+    });
+
+    test("cap each bucket by characters too, for long keys", () => {
+      const long = Array.from({ length: 30 }, (_, index) => `${index}`.padEnd(128, "x"));
+      for (const bucket of groupRareEmbeddedKeys(long)) {
+        expect(bucket.reduce((sum, key) => sum + JSON.stringify(key).length, 0)).toBeLessThanOrEqual(
+          MAX_RARE_EMBEDDED_KEYS_CHARS
+        );
+      }
+    });
+
+    test("add the named key's whole bucket and keep every top key, so the model is one per bucket", async () => {
+      const [first, second] = buckets[0];
+      const tokenA = await keysFor(first);
+      const tokenB = await keysFor(second);
+      const tokenAB = await keysFor(second, first, "top_7");
+
+      expect(tokenA).toEqual([...topKeys, ...buckets[0]].sort());
+      expect(tokenB).toEqual(tokenA);
+      expect(tokenAB).toEqual(tokenA);
+      expect(tokenA.length).toBeLessThanOrEqual(MAX_TOKEN_EMBEDDED_KEYS);
+    });
+
+    test("keys of another bucket compile another model", async () => {
+      expect(await keysFor(buckets[1][0])).toEqual([...topKeys, ...buckets[1]].sort());
+    });
+
+    test("a query naming keys of several buckets carries just its own rare keys", async () => {
+      const token = await keysFor(buckets[0][0], buckets[1][0], buckets[2][0]);
+      expect(token).toEqual([...topKeys, buckets[0][0], buckets[1][0], buckets[2][0]].sort());
+    });
   });
 });

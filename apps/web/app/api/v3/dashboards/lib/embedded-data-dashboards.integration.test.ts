@@ -215,10 +215,11 @@ describe("a saved chart on an embedded-data key", () => {
     expect(response.status, await response.clone().text()).toBe(200);
     const { data } = (await response.json()) as { data: { memberLabels: Record<string, string> } };
     expect(data.memberLabels).toEqual({ [rare]: "Rare plan" });
-    // The token carries the saved chart's key first, and stays within the cap.
+    // The token keeps every top key and adds the saved chart's key's rare-key bucket (S5), in canonical
+    // order: here the only rarer key is "Rare plan".
     const edKeys = cubeFake.calls[0].claims.edKeys as string[];
-    expect(edKeys[0]).toBe("Rare plan");
-    expect(edKeys).toHaveLength(MAX_EMBEDDED_KEYS);
+    expect(edKeys).toEqual([...top, "Rare plan"].sort());
+    expect(edKeys).toHaveLength(MAX_EMBEDDED_KEYS + 1);
   });
 
   test("still refuses a member whose key the dataset does not have", async () => {

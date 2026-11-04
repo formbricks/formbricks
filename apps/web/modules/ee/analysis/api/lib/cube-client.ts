@@ -64,8 +64,10 @@ type TScopedCubeQueryInput = {
   actor: TCubeQueryActor;
   source: TCubeQuerySource;
   /**
-   * The dataset's embedded-data keys for the token. Omitted, they are read from the dataset's cached key
-   * list — every query on a dataset must name the same list, or it compiles a model without its fields.
+   * The embedded-data keys for the token. Omitted, `getEmbeddedKeysForQuery` picks them: the dataset's
+   * top keys, plus the fixed bucket of any rarer key the query names. Cube compiles one model per key
+   * set, so the set is kept stable per dataset rather than built per query (S5). Key discovery passes
+   * `[]` to run on the plain model.
    */
   embeddedKeys?: readonly string[];
 };
