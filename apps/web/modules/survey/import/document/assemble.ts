@@ -173,6 +173,8 @@ class DocumentDraftBuilder {
   private readonly elementIds = new Map<string, string>();
   private readonly choiceIds = new Map<string, string[]>();
   private readonly elementsByRef = new Map<string, TSurveyImportDraftElement>();
+  /** The source questions each logic rule was written for (`TSurveyImportAssembly.ruleOwners`). */
+  private readonly ruleOwners = new Map<string, string[]>();
   private texts: TSanitizedTexts = { byKey: new Map(), plainDefault: new Map(), issues: [] };
   private readonly missingTranslations = new Map<string, number>();
 
@@ -255,6 +257,7 @@ class DocumentDraftBuilder {
       elementRefs: blocks.map((block) =>
         block.elements.map((element) => refByElement.get(element.id) ?? element.id)
       ),
+      ruleOwners: this.ruleOwners,
     };
   }
 
@@ -661,11 +664,13 @@ class DocumentDraftBuilder {
         this.reportRule(rule.entry, rule.index, false);
         continue;
       }
+      const id = createId();
       logic[at].push({
-        id: createId(),
+        id,
         conditions: group("and", rule.conditions),
         actions: [{ id: createId(), objective: "jumpToBlock", target }],
       });
+      this.ruleOwners.set(id, [rule.entry.ref]);
       this.reportRule(rule.entry, rule.index, true);
     }
   }
@@ -712,11 +717,15 @@ class DocumentDraftBuilder {
       this.reportRule(rule.entry, rule.index, true);
     }
 
-    const jump = (to: number): TSurveyBlockLogic => ({
-      id: createId(),
-      conditions: group("and", gates.get(to)?.conditions ?? []),
-      actions: [{ id: createId(), objective: "jumpToBlock", target: blocks[to].id }],
-    });
+    const jump = (to: number): TSurveyBlockLogic => {
+      const id = createId();
+      this.ruleOwners.set(id, gates.get(to)?.rules.map((rule) => rule.entry.ref) ?? []);
+      return {
+        id,
+        conditions: group("and", gates.get(to)?.conditions ?? []),
+        actions: [{ id: createId(), objective: "jumpToBlock", target: blocks[to].id }],
+      };
+    };
     for (let at = 0; at < blocks.length; at += 1) {
       if (!gates.has(at + 1)) continue;
       const past = firstUngatedAfter(gates, at);

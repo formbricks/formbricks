@@ -82,4 +82,91 @@ describe("fitDraftToCreateLimit", () => {
     ]);
     expect(built.document.blocks[0].logicFallback).toBe("ending_1");
   });
+  test("drops a rule that reads a question cut to fit, and the block's fallback once no rule is left", () => {
+    const built = assembly([{ code: "en-US", default: true, enabled: true }]);
+    const block = built.document.blocks[0];
+    block.elements.push(element("q2", "x".repeat(2_000)));
+    built.elementRefs[0].push("R2");
+    // A jump that tests its own question: the cut takes q2, the block keeps q1.
+    block.logic = [
+      {
+        id: "logic_1",
+        conditions: {
+          id: "group_1",
+          connector: "and",
+          conditions: [
+            {
+              id: "condition_1",
+              leftOperand: { type: "element", value: "q2" },
+              operator: "isSubmitted",
+            },
+          ],
+        },
+        actions: [{ id: "action_1", objective: "jumpToBlock", target: "ending_1" }],
+      },
+    ] as never;
+    block.logicFallback = "ending_1";
+
+    fitDraftToCreateLimit(built, () => undefined, measureDraftBytes(built.document) - 100);
+
+    expect(block.elements.map((kept) => kept.id)).toEqual(["q1"]);
+    expect(block.logic).toBeUndefined();
+    expect(block.logicFallback).toBeUndefined();
+  });
+  test("drops a rule written for a cut question, though it reads one that stays, as its report line goes", () => {
+    const built = assembly([{ code: "en-US", default: true, enabled: true }]);
+    const block = built.document.blocks[0];
+    block.elements.push(element("q2", "x".repeat(2_000)));
+    built.elementRefs[0].push("R2");
+    // q2's own jump, testing the answer to q1: the cut takes q2, the block keeps q1.
+    block.logic = [
+      {
+        id: "logic_1",
+        conditions: {
+          id: "group_1",
+          connector: "and",
+          conditions: [
+            { id: "condition_1", leftOperand: { type: "element", value: "q1" }, operator: "isSubmitted" },
+          ],
+        },
+        actions: [{ id: "action_1", objective: "jumpToBlock", target: "ending_1" }],
+      },
+    ] as never;
+    built.ruleOwners = new Map([["logic_1", ["R2"]]]);
+    built.issues.push({ code: "logic_imported", severity: "info", questionRef: "R2", params: {} });
+
+    const { keepIssue } = fitDraftToCreateLimit(
+      built,
+      () => undefined,
+      measureDraftBytes(built.document) - 100
+    );
+
+    expect(block.logic).toBeUndefined();
+    expect(built.issues.filter(keepIssue)).toEqual([]);
+  });
+
+  test("keeps a rule that reads a kept question and was written for one", () => {
+    const built = assembly([{ code: "en-US", default: true, enabled: true }]);
+    const block = built.document.blocks[0];
+    block.elements.push(element("q2", "x".repeat(2_000)));
+    built.elementRefs[0].push("R2");
+    block.logic = [
+      {
+        id: "logic_1",
+        conditions: {
+          id: "group_1",
+          connector: "and",
+          conditions: [
+            { id: "condition_1", leftOperand: { type: "element", value: "q1" }, operator: "isSubmitted" },
+          ],
+        },
+        actions: [{ id: "action_1", objective: "jumpToBlock", target: "ending_1" }],
+      },
+    ] as never;
+    built.ruleOwners = new Map([["logic_1", ["R1"]]]);
+
+    fitDraftToCreateLimit(built, () => undefined, measureDraftBytes(built.document) - 100);
+
+    expect(block.logic).toHaveLength(1);
+  });
 });

@@ -123,6 +123,45 @@ const retargetJumpsToCutBlocks = (document: TSurveyImportDraft, cutBlockIds: Rea
   }
 };
 
+/** Whether a rule's conditions read any of the elements: an operand `{ type: "element", value }`. */
+const readsAnyElement = (value: unknown, elementIds: ReadonlySet<string>): boolean => {
+  if (Array.isArray(value)) return value.some((item) => readsAnyElement(item, elementIds));
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  if (record.type === "element" && typeof record.value === "string" && elementIds.has(record.value)) {
+    return true;
+  }
+  return Object.values(record).some((item) => readsAnyElement(item, elementIds));
+};
+
+/**
+ * The rules of cut questions go with them. A rule that reads a cut question must: a jump can test its
+ * own question, which may be the one cut from a block that is kept, and the create refuses the draft
+ * otherwise. So does a rule written for questions that were all cut, though it reads one that stays,
+ * as its report lines go (`keepIssue`); everything after a cut question is cut, so its jump changed
+ * nothing. A block left with no rule loses its fallback, which only ever stands beside rules: alone it
+ * would jump every time, and the create refuses it.
+ */
+const dropRulesOfCutQuestions = (
+  { document, ruleOwners }: TSurveyImportAssembly,
+  cut: { elementIds: ReadonlySet<string>; refs: ReadonlySet<string> }
+): void => {
+  const ownedByCut = (ruleId: string) => {
+    const owners = ruleOwners?.get(ruleId);
+    return owners !== undefined && owners.length > 0 && owners.every((ref) => cut.refs.has(ref));
+  };
+  for (const block of document.blocks) {
+    if (!block.logic) continue;
+    block.logic = block.logic.filter(
+      (rule) => !readsAnyElement(rule.conditions, cut.elementIds) && !ownedByCut(rule.id)
+    );
+    if (block.logic.length === 0) {
+      delete block.logic;
+      delete block.logicFallback;
+    }
+  }
+};
+
 /** The report line for a question cut to fit the draft, named by its label where the lane has one. */
 const cutForSize = (
   elementId: string,
@@ -253,6 +292,7 @@ export function fitDraftToCreateLimit(
   const dropped: TSurveyImportPipelineIssue[] = [];
   const languagesBefore = assembly.document.languages.map((language) => language.code);
   const droppedRefs = new Set<string>();
+  const cutElementIds = new Set<string>();
 
   // The weights are exact, but the result is measured again rather than trusted, and cut further if
   // it is still over.
@@ -261,6 +301,8 @@ export function fitDraftToCreateLimit(
     if (overBy > 0) {
       const cut = dropTrailingQuestions(assembly, questionLabel, overBy, dropped);
       cut.refs.forEach((ref) => droppedRefs.add(ref));
+      cut.elementIds.forEach((id) => cutElementIds.add(id));
+      dropRulesOfCutQuestions(assembly, { elementIds: cutElementIds, refs: droppedRefs });
       replaceRecallsOf(assembly, questionLabel, cut.elementIds, dropped);
     }
     overBy = measureDraftBytes(assembly.document) - maxBytes;

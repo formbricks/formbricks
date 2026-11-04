@@ -138,4 +138,9 @@ export interface TSurveyImportAssembly {
    * problem with an element back to the question.
    */
   elementRefs: string[][];
+  /**
+   * The source questions each logic rule was written for, by rule id: a rule whose questions are all
+   * cut to fit the draft goes with them, as its report lines do. A lane that writes no logic has none.
+   */
+  ruleOwners?: ReadonlyMap<string, readonly string[]>;
 }

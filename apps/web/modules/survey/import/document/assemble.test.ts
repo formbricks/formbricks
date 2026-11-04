@@ -513,13 +513,15 @@ describe("assembleDocumentDraft: skips", () => {
   ];
 
   test("a jump becomes logic on its question's block, to the target's block, reported for checking", async () => {
-    const { document, issues } = await assemble(
+    const { document, issues, ruleOwners } = await assemble(
       skipping(yesNo("R2", "Q1"), { values: ["No"] }) // by the option's text
     );
 
     const source = blockOf(document, "Q2");
     const target = blockOf(document, "Q4");
     expect(source.block.logic).toHaveLength(1);
+    // The rule is Q2's: it goes with Q2 if the draft must be cut.
+    expect(ruleOwners?.get(source.block.logic![0].id)).toEqual(["R3"]);
     expect(conditionsOf(source.block.logic![0])).toEqual([["Q1", "equals", choiceId(document, "Q1", "No")]]);
     expect(source.block.logic![0].actions).toEqual([
       { id: expect.any(String), objective: "jumpToBlock", target: target.block.id },
