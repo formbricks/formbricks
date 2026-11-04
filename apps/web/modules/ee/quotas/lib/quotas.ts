@@ -87,26 +87,34 @@ const withQuotaMatrixIds = async (
 };
 
 /**
- * ENG-6934: a survey save that reorders matrix rows or columns rewrites the positions its own
- * conditions store; this does the same for its quotas, which live in their own rows. Readers use the
- * ids, but the previous release's pods read positions during a rolling upgrade, and positions are
- * what a later release drops. Runs inside the save's transaction; quotas already in sync are left
- * alone, and an id the matrix no longer has stays as it is (it never matches).
+ * Whether a survey's blocks hold a matrix. Most surveys have none: no quota condition can point into
+ * one, so a save needs neither the quota read nor the license check that gates it.
  */
-export const syncQuotaMatrixConditions = async (
-  tx: Prisma.TransactionClient,
-  surveyId: string,
-  blocks: readonly unknown[]
-): Promise<void> => {
-  // Most surveys have no matrix: no quota condition can point into one, so no read either.
-  const hasMatrix = blocks.some(
+export const hasMatrixElement = (blocks: readonly unknown[]): boolean =>
+  blocks.some(
     (block) =>
       typeof block === "object" &&
       block !== null &&
       Array.isArray((block as { elements?: unknown }).elements) &&
       (block as { elements: { type?: unknown }[] }).elements.some((element) => element?.type === "matrix")
   );
-  if (!hasMatrix) return;
+
+/**
+ * ENG-6934: a survey save that reorders matrix rows or columns rewrites the positions its own
+ * conditions store; this does the same for its quotas, which live in their own rows. Readers use the
+ * ids, but the previous release's pods read positions during a rolling upgrade, and positions are
+ * what a later release drops. Runs inside the save's transaction; quotas already in sync are left
+ * alone, and an id the matrix no longer has stays as it is (it never matches).
+ *
+ * Callers run it only where quotas are licensed (`getIsQuotasEnabled`), resolved before the
+ * transaction.
+ */
+export const syncQuotaMatrixConditions = async (
+  tx: Prisma.TransactionClient,
+  surveyId: string,
+  blocks: readonly unknown[]
+): Promise<void> => {
+  if (!hasMatrixElement(blocks)) return;
 
   const quotas = await tx.surveyQuota.findMany({ where: { surveyId }, select: { id: true, logic: true } });
   const findMatrix = getMatrixLookup(blocks);

@@ -23,7 +23,8 @@ import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
-import { syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasMatrixElement, syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -312,6 +313,8 @@ export async function executeV3SurveyPatch(params: {
   customCss?: { stored: TCustomCssStored | null };
   /** Whether the request sent `distribution`, which replaces the stored one whole. */
   replacesDistribution?: boolean;
+  /** The survey's organization, when the caller already has it; else it is read from the workspace. */
+  organizationId?: string;
 }): Promise<TSurvey> {
   const {
     currentSurvey,
@@ -322,6 +325,7 @@ export async function executeV3SurveyPatch(params: {
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
     customCss,
     replacesDistribution = false,
+    organizationId,
   } = params;
   // Same rule as prepare's validation (ENG-3975): media the stored survey already had does not block a
   // patch that leaves it untouched.
@@ -416,6 +420,15 @@ export async function executeV3SurveyPatch(params: {
         })
       : null;
 
+  // ENG-6934: the quotas' matrix conditions follow a row or column reorder only where quotas are
+  // licensed, as every other quota write is. The license is resolved here, outside the transaction.
+  const quotaMatrixBlocks =
+    Array.isArray(data.blocks) &&
+    hasMatrixElement(data.blocks) &&
+    (await getIsV3QuotasEnabled(currentSurvey.workspaceId, organizationId))
+      ? data.blocks
+      : undefined;
+
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
     client.survey.update({
       // ENG-3069: compare-and-set. `updatedAt` is legal in a unique where (extendedWhereUnique), and
@@ -456,7 +469,7 @@ export async function executeV3SurveyPatch(params: {
 
         await runSurveyUpdate(tx);
         // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
-        if (Array.isArray(data.blocks)) await syncQuotaMatrixConditions(tx, currentSurvey.id, data.blocks);
+        if (quotaMatrixBlocks) await syncQuotaMatrixConditions(tx, currentSurvey.id, quotaMatrixBlocks);
 
         // ENG-6930: typed Embedded Data, when the request sent it, is the complete set and wins over
         // the legacy keys (which prepare derived from it). Library entries link the workspace's row,
@@ -532,6 +545,12 @@ export async function executeV3SurveyPatch(params: {
 
     throw error;
   }
+}
+
+/** Whether the survey's organization is licensed for quotas; a workspace with none is not. */
+async function getIsV3QuotasEnabled(workspaceId: string, organizationId: string | undefined) {
+  const resolvedOrganizationId = organizationId ?? (await getOrganizationByWorkspaceId(workspaceId))?.id;
+  return resolvedOrganizationId ? getIsQuotasEnabled(resolvedOrganizationId) : false;
 }
 
 /**
@@ -646,6 +665,7 @@ export async function patchV3Survey(
     visibleSurveyWhere,
     ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
     replacesDistribution: typeof input === "object" && input !== null && "distribution" in input,
+    organizationId,
   });
 
   if (report && customCss.changed) {

@@ -69,7 +69,8 @@ import {
   getDestinationSettingTurnedOn,
 } from "@/modules/ee/creatives/lib/linked-creatives";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
-import { syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasMatrixElement, syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -462,6 +463,12 @@ export type TUpdateSurveyOptions = {
    * spends, so the editor's save and autosave cannot run the processor outside it.
    */
   customCssPrincipal?: string;
+};
+
+/** Whether the workspace's organization is licensed for quotas; a workspace with none is not. */
+const getIsQuotasEnabledForWorkspace = async (workspaceId: string): Promise<boolean> => {
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
+  return organization ? getIsQuotasEnabled(organization.id) : false;
 };
 
 export const updateSurveyInternal = async (
@@ -934,6 +941,13 @@ export const updateSurveyInternal = async (
       data.startLogic = Prisma.DbNull;
     }
 
+    // ENG-6934: the quotas' matrix conditions follow a row or column reorder only where quotas are
+    // licensed, as every other quota write is. The license is resolved here, outside the transaction.
+    const syncsQuotaMatrix =
+      Array.isArray(data.blocks) &&
+      hasMatrixElement(data.blocks) &&
+      (await getIsQuotasEnabledForWorkspace(currentSurvey.workspaceId));
+
     delete data.createdBy;
     const persistedSurvey = await prisma.$transaction(
       async (tx) => {
@@ -955,7 +969,7 @@ export const updateSurveyInternal = async (
         });
 
         // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
-        if (Array.isArray(data.blocks)) await syncQuotaMatrixConditions(tx, surveyId, data.blocks);
+        if (syncsQuotaMatrix) await syncQuotaMatrixConditions(tx, surveyId, data.blocks);
 
         // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
         // survey never commits without them. ENG-2412: from the PAYLOAD — the rows are the only place
