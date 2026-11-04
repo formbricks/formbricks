@@ -43,6 +43,11 @@ export type TChartField = {
   granularities: readonly TimeGranularity[];
   /** Whether `GET /api/v3/charts/fields/{field}/values` can list this field's stored values. */
   valueLookup: boolean;
+  /**
+   * An embedded-data field's key, exactly as collected (ENG-6893). Callers read the key here rather than
+   * from `label`, which is display text and free to change. Absent on every other field.
+   */
+  key?: string;
 };
 
 /** `all-time` is not a preset the app resolves; it means "no date range" and removes one. */
@@ -126,6 +131,7 @@ export const toEmbeddedChartField = ({ name, key }: TEmbeddedChartField): TChart
   filterOperators: FILTER_OPERATORS.string,
   granularities: [],
   valueLookup: true,
+  key,
 });
 
 /** The catalog for one Feedback Dataset: the shared fields, then its embedded-data keys. */

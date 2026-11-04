@@ -213,6 +213,14 @@ describe("listV3ChartFieldValues", () => {
     expect(executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 
+  test("reads the dataset's fields only for a well-formed embedded member name (C16)", async () => {
+    // Shaped like the prefix but not a member any key compiles to: no dataset scan for it.
+    const response = await lookup("FeedbackRecords.ed_Not-A-Member");
+
+    expect(response.status).toBe(422);
+    expect(getDatasetChartFields).not.toHaveBeenCalled();
+  });
+
   test("stops at 429 when the chart-query budget is spent, before checking access", async () => {
     vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Maximum number of requests", 12));
 

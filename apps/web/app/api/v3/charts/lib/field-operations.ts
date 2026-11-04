@@ -19,6 +19,7 @@ import {
   buildDimensionValueQuery,
   collectDimensionValues,
 } from "@/modules/ee/analysis/lib/dimension-value-lookup";
+import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
   CHART_DATE_PRESETS,
   type TChartField,
@@ -140,7 +141,7 @@ export async function listV3ChartFieldValues({
     if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
     // A dataset's embedded-data fields are looked up like any low-cardinality dimension.
-    const lookupField = field.startsWith("FeedbackRecords.ed_")
+    const lookupField = isEmbeddedMemberName(field)
       ? createChartFieldLookup(
           await getDatasetChartFields({
             datasetId: query.datasetId,

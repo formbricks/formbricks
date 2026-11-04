@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { ZV3ChartField } from "@/app/api/v3/charts/lib/resources";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { ANSWER_MEMBER } from "./answer-filter";
 import {
@@ -106,6 +107,16 @@ describe("a dataset's field catalog (ENG-6893)", () => {
     expect(catalog[CHART_FIELD_CATALOG.length].filterOperators).toEqual(
       getChartField("FeedbackRecords.sourceName")?.filterOperators
     );
+  });
+
+  test("names each embedded field's key as its own property, not only as its label (C16)", () => {
+    const catalog = getChartFieldCatalog(dataset);
+
+    expect(catalog.slice(CHART_FIELD_CATALOG.length).map((field) => field.key)).toEqual(["plan", "区域"]);
+    // Every other field has no key.
+    expect(CHART_FIELD_CATALOG.every((field) => field.key === undefined)).toBe(true);
+    // The public catalog schema carries it.
+    expect(ZV3ChartField.parse(catalog[CHART_FIELD_CATALOG.length]).key).toBe("plan");
   });
 
   test("finds a dataset's embedded field only in that dataset", () => {

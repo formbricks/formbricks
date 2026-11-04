@@ -16,6 +16,7 @@ export const ZV3ChartField = z
     filterOperators: z.array(z.string()),
     granularities: z.array(z.string()),
     valueLookup: z.boolean(),
+    key: z.string().optional(),
   })
   .strict();
 
