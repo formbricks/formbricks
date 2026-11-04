@@ -98,6 +98,15 @@ describe("exceedsAuthRequestBounds", () => {
       expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ oauth_query: signed }))).toBe(false);
     });
 
+    // Commas separate items as spaces do, and an item outside the BMP is still one item.
+    test.each([
+      ["commas", (count: number) => Array.from({ length: count }, (_, index) => `s${index}`).join(",")],
+      ["emoji items", (count: number) => Array.from({ length: count }, () => "😀").join(" ")],
+    ])("a scope list split by %s is held to the cap", (_, build) => {
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ scope: build(MAX + 1) }))).toBe(true);
+      expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ scope: build(MAX) }))).toBe(false);
+    });
+
     test("a scope list of empty items counts each one, as split(' ') does", () => {
       expect(exceedsAuthRequestBounds(URL_BASE, "json", json({ scope: " ".repeat(MAX) }))).toBe(true);
     });

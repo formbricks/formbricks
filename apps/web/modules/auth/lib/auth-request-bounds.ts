@@ -49,15 +49,20 @@ export const AUTH_REQUEST_MAX_JSON_TEXTS = 10;
  * reading, the one the guard checks. The charset itself is not checked: every consumer decodes UTF-8
  * whatever it says.
  */
-const AUTH_BODY_CONTENT_TYPE =
-  /^[\t ]*application\/(json|x-www-form-urlencoded)[\t ]*(?:;[\t ]*charset[\t ]*=[\t ]*(?:[a-z0-9!#$%&'*+.^_`|~-]+|"[a-z0-9!#$%&'*+.^_`|~ -]+")[\t ]*)?$/i;
+const AUTH_BODY_MEDIA_TYPE = /^[\t ]*application\/(json|x-www-form-urlencoded)[\t ]*(?:;(.*))?$/i;
+
+// The one parameter allowed after the media type: `charset`, as a token or a quoted string.
+const AUTH_BODY_CHARSET_PARAMETER =
+  /^[\t ]*charset[\t ]*=[\t ]*(?:[a-z0-9!#$%&'*+.^_`|~-]+|"[a-z0-9!#$%&'*+.^_`|~ -]+")[\t ]*$/i;
 
 export type TAuthBodyKind = "json" | "form";
 
 /** How an `/api/auth` body is read, or `null` for a `Content-Type` the routes must refuse. */
 export const authBodyKindOf = (contentType: string | null): TAuthBodyKind | null => {
-  const match = contentType === null ? null : AUTH_BODY_CONTENT_TYPE.exec(contentType);
+  const match = contentType === null ? null : AUTH_BODY_MEDIA_TYPE.exec(contentType);
   if (!match) return null;
+  const parameter = match[2];
+  if (parameter !== undefined && !AUTH_BODY_CHARSET_PARAMETER.test(parameter)) return null;
   if (match[1].toLowerCase() === "x-www-form-urlencoded") return "form";
   // oauth-provider would read this one as a form: `charset=x-www-form-urlencoded`.
   return /x-www-form-urlencoded/i.test(contentType as string) ? null : "json";
@@ -115,8 +120,8 @@ const hasMoreFieldsThan = (text: string, max: number): boolean => {
 /** Whether `text` splits into more than `max` items on spaces or commas, empty items included. */
 const hasMoreListItemsThan = (text: string, max: number): boolean => {
   let separators = 0;
-  for (let index = 0; index < text.length; index++) {
-    if ((text[index] === " " || text[index] === ",") && ++separators >= max) return true;
+  for (const char of text) {
+    if ((char === " " || char === ",") && ++separators >= max) return true;
   }
   return false;
 };
@@ -130,6 +135,68 @@ const isOversizedNamedValue = (name: string, value: string): boolean => {
   if (name === "oauth_query") return hasMoreFieldsThan(value, OAUTH_QUERY_MAX_FIELDS);
   if (name === "scope" || name === "prompt") return hasMoreListItemsThan(value, AUTH_REQUEST_MAX_ENTRIES);
   return false;
+};
+
+/** A value still to visit on the walk, and how deeply it sits. */
+type TPendingValue = { value: unknown; depth: number };
+
+/** Parses a string that looks like a JSON collection onto the walk, spending `budget`; past it, oversized. */
+const pushJsonText = (
+  text: string,
+  depth: number,
+  pending: TPendingValue[],
+  budget: TJsonTextBudget
+): boolean => {
+  if (!looksLikeJsonCollection(text)) return false;
+  if (--budget.remaining < 0) return true;
+  pending.push({ value: parseJson(text), depth });
+  return false;
+};
+
+const pushArrayEntries = (
+  array: unknown[],
+  depth: number,
+  maxEntries: number,
+  pending: TPendingValue[]
+): boolean => {
+  if (array.length > maxEntries) return true;
+  for (const entry of array) pending.push({ value: entry, depth: depth + 1 });
+  return false;
+};
+
+/** Counts an object's keys as it goes, so an oversized one is refused before its values are collected. */
+const pushObjectEntries = (
+  record: Record<string, unknown>,
+  depth: number,
+  maxEntries: number,
+  pending: TPendingValue[]
+): boolean => {
+  let count = 0;
+  for (const name in record) {
+    if (!Object.hasOwn(record, name)) continue;
+    if (++count > maxEntries) return true;
+    const entry = record[name];
+    if (typeof entry === "string" && isOversizedNamedValue(name, entry)) return true;
+    pending.push({ value: entry, depth: depth + 1 });
+  }
+  return false;
+};
+
+/**
+ * One step of {@link hasOversizedJsonCollection}: whether this value is oversized, and otherwise what it
+ * holds pushed onto `pending` for later steps.
+ */
+const isOversizedStep = (
+  { value, depth }: TPendingValue,
+  maxEntries: number,
+  pending: TPendingValue[],
+  budget: TJsonTextBudget
+): boolean => {
+  if (typeof value === "string") return pushJsonText(value, depth, pending, budget);
+  if (typeof value !== "object" || value === null) return false;
+  if (depth >= AUTH_REQUEST_MAX_DEPTH) return true;
+  if (Array.isArray(value)) return pushArrayEntries(value, depth, maxEntries, pending);
+  return pushObjectEntries(value as Record<string, unknown>, depth, maxEntries, pending);
 };
 
 /**
@@ -146,32 +213,9 @@ export const hasOversizedJsonCollection = (
   maxEntries: number,
   budget: TJsonTextBudget = newJsonTextBudget()
 ): boolean => {
-  const pending: { value: unknown; depth: number }[] = [{ value, depth: 0 }];
+  const pending: TPendingValue[] = [{ value, depth: 0 }];
   while (pending.length > 0) {
-    const { value: current, depth } = pending.pop() as { value: unknown; depth: number };
-    if (typeof current === "string") {
-      if (looksLikeJsonCollection(current)) {
-        if (--budget.remaining < 0) return true;
-        pending.push({ value: parseJson(current), depth });
-      }
-      continue;
-    }
-    if (typeof current !== "object" || current === null) continue;
-    if (depth >= AUTH_REQUEST_MAX_DEPTH) return true;
-    if (Array.isArray(current)) {
-      if (current.length > maxEntries) return true;
-      for (const entry of current) pending.push({ value: entry, depth: depth + 1 });
-      continue;
-    }
-    const record = current as Record<string, unknown>;
-    let count = 0;
-    for (const name in record) {
-      if (!Object.hasOwn(record, name)) continue;
-      if (++count > maxEntries) return true;
-      const entry = record[name];
-      if (typeof entry === "string" && isOversizedNamedValue(name, entry)) return true;
-      pending.push({ value: entry, depth: depth + 1 });
-    }
+    if (isOversizedStep(pending.pop() as TPendingValue, maxEntries, pending, budget)) return true;
   }
   return false;
 };

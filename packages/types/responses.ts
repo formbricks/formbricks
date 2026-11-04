@@ -120,6 +120,25 @@ export const checkFlatMap =
 
 const isTextOrNumber = (value: unknown) => typeof value === "string" || typeof value === "number";
 
+const NO_ITEMS: readonly unknown[] = [];
+
+/**
+ * What one answer carries: an array's items or a matrix's row values, and nothing for a scalar. An answer
+ * over its cap, or of a shape no element stores, is refused with the message for it.
+ */
+const itemsOfAnswer = (value: unknown): readonly unknown[] | { refused: string } => {
+  if (Array.isArray(value)) {
+    return value.length > MAX_RESPONSE_DATA_VALUES ? { refused: RESPONSE_DATA_LIMIT_MESSAGES.values } : value;
+  }
+  if (isPlainRecord(value)) {
+    const rows = Object.values(value);
+    return rows.length > MAX_RESPONSE_DATA_VALUES ? { refused: RESPONSE_DATA_LIMIT_MESSAGES.rows } : rows;
+  }
+  return value === undefined || isTextOrNumber(value)
+    ? NO_ITEMS
+    : { refused: RESPONSE_DATA_LIMIT_MESSAGES.shape };
+};
+
 /**
  * The caps on a submitted answer map, checked before Zod reads it, shared by every API version that writes
  * one. Each answer is checked too: it is text, a number, a list of text or a map of text, and one wrong
@@ -138,23 +157,13 @@ export const checkResponseDataSize = (
   // the map is under the cap.
   const keyCount = Object.keys(data).length;
   if (keyCount > MAX_RESPONSE_DATA_KEYS) return RESPONSE_DATA_LIMIT_MESSAGES.keys;
+  // The budget counts the keys too, so a map with more keys than it allows is refused before any answer.
   let entries = keyCount;
+  if (entries > maxEntries) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
   for (const key in data) {
-    const value = data[key];
-    let items: unknown[];
-    if (Array.isArray(value)) {
-      if (value.length > MAX_RESPONSE_DATA_VALUES)
-        return { message: RESPONSE_DATA_LIMIT_MESSAGES.values, path: [key] };
-      items = value;
-    } else if (isPlainRecord(value)) {
-      items = Object.values(value);
-      if (items.length > MAX_RESPONSE_DATA_VALUES)
-        return { message: RESPONSE_DATA_LIMIT_MESSAGES.rows, path: [key] };
-    } else if (value === undefined || isTextOrNumber(value)) {
-      continue;
-    } else {
-      return { message: RESPONSE_DATA_LIMIT_MESSAGES.shape, path: [key] };
-    }
+    const items = itemsOfAnswer(data[key]);
+    if ("refused" in items) return { message: items.refused, path: [key] };
+    if (items.length === 0) continue;
     entries += items.length;
     if (entries > maxEntries) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
     if (!items.every((item) => typeof item === "string")) {

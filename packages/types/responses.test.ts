@@ -10,6 +10,7 @@ import {
   ZResponseMeta,
   ZResponseUpdate,
   ZResponseUpdateInput,
+  checkResponseDataSize,
   pickAutoCapturedResponseMeta,
 } from "./responses";
 
@@ -278,6 +279,25 @@ describe("response input caps", () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0].path).toEqual([field]);
+  });
+
+  // The budget counts keys as well as items, so it holds whatever the answers are.
+  test.each([
+    ["scalars", "text"],
+    ["empty lists", []],
+  ])("an entry budget smaller than the key count refuses a map of %s", (_, value) => {
+    expect(
+      checkResponseDataSize(
+        keyed(3, () => value),
+        2
+      )
+    ).toBe(RESPONSE_DATA_LIMIT_MESSAGES.entries);
+    expect(
+      checkResponseDataSize(
+        keyed(2, () => value),
+        2
+      )
+    ).toBeUndefined();
   });
 
   test("bounds the update input the same way", () => {
