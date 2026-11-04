@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 import type { TConditionGroup } from "./logic";
-import { getBlockVisibility, getOptionList, getOptionListKeys, isShownByShowIf } from "./show-if";
+import {
+  getBlockVisibility,
+  getOptionList,
+  getOptionListKeys,
+  isShownByShowIf,
+  withOptionsShown,
+} from "./show-if";
 import { SURVEY_FLOW_FIXTURE_IDS as ids, surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
 import { type TSurvey, ZSurvey } from "./types";
 
@@ -243,5 +249,40 @@ describe("option lists by element type (one table for every reader)", () => {
     expect(getOptionList({ type: "openText", choices } as { type: string }, "choices")).toEqual([]);
     expect(getOptionList({ type: "matrix", choices } as { type: string }, "choices")).toEqual([]);
     expect(getOptionList(undefined, "rows")).toEqual([]);
+  });
+});
+
+/** What a respondent is offered: an element's option lists without the items it does not offer (ENG-6937). */
+describe("withOptionsShown", () => {
+  const items = (prefix: string) => [{ id: `${prefix}1` }, { id: `${prefix}2` }, { id: `${prefix}3` }];
+
+  test.each(["multipleChoiceSingle", "multipleChoiceMulti", "ranking", "pictureSelection"])(
+    "a %s question offers its choices less those not shown, in order",
+    (type) => {
+      const element = { id: "q", type, choices: items("c") };
+
+      expect(withOptionsShown(element, { choices: ["c2"] }).choices).toEqual([{ id: "c1" }, { id: "c3" }]);
+      // The element itself is left as it was.
+      expect(element.choices).toHaveLength(3);
+    }
+  );
+
+  test("a matrix offers its rows and its columns less those not shown, each list on its own", () => {
+    const matrix = { id: "m", type: "matrix", rows: items("r"), columns: items("k") };
+
+    const shown = withOptionsShown(matrix, { rows: ["r1"], columns: ["k3"] });
+
+    expect(shown.rows).toEqual([{ id: "r2" }, { id: "r3" }]);
+    expect(shown.columns).toEqual([{ id: "k1" }, { id: "k2" }]);
+    expect(withOptionsShown(matrix, { columns: ["k1"] }).rows).toEqual(matrix.rows);
+  });
+
+  test("nothing not shown, or a type without option lists, is the element unchanged", () => {
+    const element = { id: "q", type: "multipleChoiceSingle", choices: items("c") };
+    const openText = { id: "t", type: "openText", choices: items("c") };
+
+    expect(withOptionsShown(element, undefined)).toBe(element);
+    expect(withOptionsShown(element, {})).toBe(element);
+    expect(withOptionsShown(openText, { choices: ["c1"] }).choices).toEqual(openText.choices);
   });
 });
