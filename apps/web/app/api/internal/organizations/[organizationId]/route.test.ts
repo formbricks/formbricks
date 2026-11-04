@@ -134,7 +134,10 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).data.displayTimeZone).toBe("Europe/Lisbon");
     expect(checkedActions()).toEqual(["organization.manage"]);
-    expect(mocks.can).toHaveBeenCalledWith(actor, "organization.manage", { type: "organization", id: ORG_ID });
+    expect(mocks.can).toHaveBeenCalledWith(actor, "organization.manage", {
+      type: "organization",
+      id: ORG_ID,
+    });
   });
 
   test("resets the display time zone to the UTC default with null", async () => {

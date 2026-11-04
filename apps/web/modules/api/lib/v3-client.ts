@@ -97,12 +97,21 @@ export const v3RetryDelay = (failureCount: number, error: unknown): number =>
     ? (error.retryAfter as number) * 1000 + Math.floor(Math.random() * 500)
     : Math.min(1000 * 2 ** failureCount, 30_000);
 
+/** The wrapper's schema-validation details (`api-wrapper.ts`): they name no field, so the field's reason says more. */
+const GENERIC_VALIDATION_DETAILS = new Set([
+  "Invalid request body",
+  "Invalid query parameters",
+  "Invalid route parameters",
+]);
+
 export function getV3ApiErrorMessage(error: unknown, fallbackMessage: string): string {
   if (error instanceof V3ApiError) {
-    // A 400 from schema validation says only "Invalid request body"; the field's own reason is what helps.
-    const fieldReason = error.status === 400 ? error.invalid_params?.[0]?.reason : undefined;
+    if (GENERIC_VALIDATION_DETAILS.has(error.detail)) {
+      const fieldReason = error.invalid_params?.[0]?.reason;
+      if (fieldReason) return fieldReason;
+    }
     // A failure with nothing to say (no problem body, a network error) gets the caller's translated text.
-    return fieldReason || error.detail || fallbackMessage;
+    return error.detail || fallbackMessage;
   }
 
   if (error instanceof Error && error.message) {

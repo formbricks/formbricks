@@ -81,6 +81,16 @@ describe("parseV3ApiError", () => {
     expect(getV3ApiErrorMessage(invalid, "fallback")).toBe("Team name is required");
   });
 
+  test("keeps an operation's own message even when it lists invalid params", () => {
+    const specific = new V3ApiError({
+      status: 400,
+      detail: "Template not found",
+      invalid_params: [{ name: "templateId", reason: "Unknown template for the requested source" }],
+    });
+
+    expect(getV3ApiErrorMessage(specific, "fallback")).toBe("Template not found");
+  });
+
   test("shows the fallback for a failure with no detail", () => {
     expect(getV3ApiErrorMessage(new V3ApiError({ status: 0, detail: "" }), "fallback")).toBe("fallback");
   });
