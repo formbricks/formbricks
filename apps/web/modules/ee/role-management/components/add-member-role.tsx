@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags, getOrganizationRoleLabels } from "@/lib/membership/utils";
 import { getAssignableOrganizationRoles } from "@/modules/ee/role-management/lib/assignable-roles";
+import { toRolePickerOrder } from "@/modules/ee/role-management/lib/role-picker-order";
 import { Label } from "@/modules/ui/components/label";
 import {
   Select,
@@ -78,8 +79,8 @@ export function AddMemberRole({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup className="flex flex-col-reverse">
-                {roles.map((role) => (
+              <SelectGroup>
+                {toRolePickerOrder(roles).map((role) => (
                   <SelectItem key={role} value={role}>
                     <P>{roleLabels[role]}</P>
                     <Muted className="text-slate-500">{rolesDescription[role]}</Muted>

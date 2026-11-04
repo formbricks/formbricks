@@ -10,6 +10,7 @@ import { getAccessFlags, getOrganizationRoleLabels } from "@/lib/membership/util
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getAssignableOrganizationRoles } from "@/modules/ee/role-management/lib/assignable-roles";
 import { isRoleEditDisabled } from "@/modules/ee/role-management/lib/role-edit-rules";
+import { toRolePickerOrder } from "@/modules/ee/role-management/lib/role-picker-order";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -126,9 +127,8 @@ export function EditMembershipRole({
               onValueChange={(value) => {
                 handleRoleChange(value.toLowerCase() as TOrganizationRole);
               }}
-              value={memberRole}
-              className="flex flex-col-reverse">
-              {getMembershipRoles().map((role) => (
+              value={memberRole}>
+              {toRolePickerOrder(getMembershipRoles()).map((role) => (
                 <DropdownMenuRadioItem key={role} value={role}>
                   {roleLabels[role]}
                 </DropdownMenuRadioItem>

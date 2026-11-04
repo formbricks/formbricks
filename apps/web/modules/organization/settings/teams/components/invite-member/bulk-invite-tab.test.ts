@@ -76,3 +76,25 @@ describe("parseRoleCell", () => {
     expect(parsed.success).toBe(true);
   });
 });
+
+describe("the downloadable members template", () => {
+  test("has a Dashboard viewer row, and every role in it is one the invite schema accepts (U19)", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { resolve } = await import("node:path");
+    const csv = await readFile(
+      resolve(__dirname, "../../../../../../public/sample-csv/formbricks-organization-members-template.csv"),
+      "utf8"
+    );
+    const roles = csv
+      .trim()
+      .split("\n")
+      .slice(1)
+      .map((line) => parseRoleCell(line.split(",")[2] ?? "", true));
+
+    expect(roles).toContain("dashboard_viewer");
+    const parsed = ZInvitees.safeParse(
+      roles.map((role, index) => ({ name: "Ada", email: `ada${index}@example.com`, role, teamIds: [] }))
+    );
+    expect(parsed.success).toBe(true);
+  });
+});
