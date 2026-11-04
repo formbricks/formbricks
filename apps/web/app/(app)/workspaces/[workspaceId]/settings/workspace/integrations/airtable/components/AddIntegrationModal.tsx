@@ -11,7 +11,6 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
-  TIntegrationAirtableInput,
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -19,7 +18,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { BaseSelectDropdown } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/lib/airtable";
-import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
+import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import AirtableLogo from "@/images/airtableLogo.svg";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -201,14 +200,7 @@ export const AddIntegrationModal = ({
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
-  const airtableIntegrationData: TIntegrationAirtableInput = {
-    type: "airtable",
-    config: {
-      key: airtableIntegration?.config?.key,
-      data: airtableIntegration.config.data ?? [],
-      email: airtableIntegration?.config?.email,
-    },
-  };
+  const existingMappings = airtableIntegration.config.data ?? [];
 
   useEffect(() => {
     if (isEditMode) {
@@ -280,18 +272,13 @@ export const AddIntegrationModal = ({
       };
 
       // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
-
-      const updated = structuredClone(airtableIntegrationData);
-
+      const mappings = [...existingMappings];
       if (isEditMode) {
-        // update action
-        updated.config.data[defaultData.index] = integrationData;
+        mappings[defaultData.index] = integrationData;
       } else {
-        // create action
-        updated.config.data.push(integrationData);
+        mappings.push(integrationData);
       }
-
-      await saveIntegration(workspaceId, updated.type, updated.config);
+      await saveIntegrationMappings(workspaceId, "airtable", mappings);
 
       router.refresh();
       if (isEditMode) {
@@ -326,10 +313,8 @@ export const AddIntegrationModal = ({
 
   const handleDelete = async (index: number) => {
     try {
-      const integrationData = structuredClone(airtableIntegrationData);
-      integrationData.config.data.splice(index, 1);
-
-      await saveIntegration(workspaceId, integrationData.type, integrationData.config);
+      const mappings = existingMappings.filter((_, mappingIndex) => mappingIndex !== index);
+      await saveIntegrationMappings(workspaceId, "airtable", mappings);
       handleClose();
       router.refresh();
 

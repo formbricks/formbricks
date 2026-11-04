@@ -13,7 +13,6 @@ import {
   getComputedEmbeddedFields,
   getIngestedEmbeddedFields,
 } from "@formbricks/types/embedded-data-resolver";
-import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
@@ -22,7 +21,7 @@ import {
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
+import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import {
   MappingRow,
   TMapping,
@@ -102,13 +101,7 @@ export const AddIntegrationModal = ({
     [selectedSurvey]
   );
 
-  const notionIntegrationData: TIntegrationInput = {
-    type: "notion",
-    config: {
-      key: notionIntegration?.config?.key,
-      data: notionIntegration.config?.data || [],
-    },
-  };
+  const existingMappings = notionIntegration.config?.data ?? [];
 
   const hasMatchingId = notionIntegration.config.data.some((configData) => {
     if (!selectedDatabase) {
@@ -253,18 +246,13 @@ export const AddIntegrationModal = ({
       integrationData.createdAt = new Date();
 
       // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
-
-      const updated = structuredClone(notionIntegrationData);
-
+      const mappings = [...existingMappings];
       if (selectedIntegration) {
-        // update action
-        updated.config.data[selectedIntegration.index] = integrationData;
+        mappings[selectedIntegration.index] = integrationData;
       } else {
-        // create action
-        updated.config.data.push(integrationData);
+        mappings.push(integrationData);
       }
-
-      await saveIntegration(workspaceId, updated.type, updated.config);
+      await saveIntegrationMappings(workspaceId, "notion", mappings);
 
       router.refresh();
       if (selectedIntegration) {
@@ -282,11 +270,10 @@ export const AddIntegrationModal = ({
   };
 
   const deleteLink = async () => {
-    const updated = structuredClone(notionIntegrationData);
-    updated.config.data.splice(selectedIntegration!.index, 1);
+    const mappings = existingMappings.filter((_, index) => index !== selectedIntegration!.index);
     try {
       setIsDeleting(true);
-      await saveIntegration(workspaceId, updated.type, updated.config);
+      await saveIntegrationMappings(workspaceId, "notion", mappings);
       router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);

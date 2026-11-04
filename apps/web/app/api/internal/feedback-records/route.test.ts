@@ -169,6 +169,24 @@ describe("GET /api/internal/feedback-records/{recordId}", () => {
     expect(unconfigured.status).toBe(503);
   });
 
+  // Only "not found" is about the record's existence. Any other Hub answer goes through the shared Hub
+  // mapping rather than being read as a 403 about the record.
+  test.each([
+    [
+      "a malformed id, relaying the Hub's field-level reason",
+      { status: 400, message: "bad", problemDetail: "id must be a UUID" },
+      400,
+    ],
+    ["the Hub refusing our own credentials", { status: 403, message: "forbidden" }, 502],
+    ["the Hub rate limiting", { status: 429, message: "slow down" }, 429],
+  ])("maps %s", async (_label, error, status) => {
+    mocks.retrieveFeedbackRecord.mockResolvedValue({ data: null, error });
+    const response = await retrieve();
+
+    expect(response.status).toBe(status);
+    expect(JSON.stringify(await response.json())).not.toContain("forbidden");
+  });
+
   test("refuses a caller without access to the record's dataset in this workspace", async () => {
     refuse("feedbackDirectoryAssignment.read");
     expect((await retrieve()).status).toBe(403);
@@ -229,6 +247,12 @@ describe("DELETE /api/internal/feedback-records/{recordId}", () => {
 
     expect(response.status).toBe(502);
     expect((await response.json()).detail).toBe("The feedback records could not be deleted.");
+  });
+
+  // The record was just shown reachable from the workspace, so a 404 now (deleted meanwhile) leaks nothing.
+  test("answers 404 when the record is gone by the time the Hub deletes it", async () => {
+    mocks.deleteFeedbackRecord.mockResolvedValue({ data: null, error: { status: 404, message: "gone" } });
+    expect((await remove()).status).toBe(404);
   });
 
   test("refuses a cross-site request (CSRF)", async () => {

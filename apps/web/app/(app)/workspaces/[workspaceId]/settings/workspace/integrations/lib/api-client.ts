@@ -1,7 +1,9 @@
 import type { TIntegrationItem } from "@formbricks/types/integration";
-import type {
-  TIntegrationConnectionResource,
-  TIntegrationTypeParam,
+import {
+  type TIntegrationConnectionResource,
+  type TIntegrationMappingsByType,
+  type TIntegrationTypeParam,
+  toIntegrationMappingBody,
 } from "@/app/api/internal/integrations/schemas";
 import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
 
@@ -17,15 +19,18 @@ const integrationUrl = (workspaceId: string, type: TIntegrationTypeParam, suffix
   buildApiUrl(`${BASE_PATH}/${type}${suffix}`, { workspaceId });
 
 /**
- * Store an integration's mappings and settings. The credentials in `config.key` are ignored — the stored
- * ones are kept — so the redacted integration the page holds can be sent back as it is.
+ * Replace an integration's mappings. Only the mappings are sent: the credentials and the connected
+ * account stay as the OAuth callback stored them.
  */
-export const saveIntegration = (
+export const saveIntegrationMappings = <T extends TIntegrationTypeParam>(
   workspaceId: string,
-  type: TIntegrationTypeParam,
-  config: object
+  type: T,
+  mappings: TIntegrationMappingsByType[T][]
 ): Promise<{ id: string }> =>
-  sendApiRequest<{ id: string }>(integrationUrl(workspaceId, type), { method: "PUT", body: { config } });
+  sendApiRequest<{ id: string }>(integrationUrl(workspaceId, type), {
+    method: "PUT",
+    body: { config: { data: mappings.map((mapping) => toIntegrationMappingBody(type, mapping)) } },
+  });
 
 export const disconnectIntegration = (workspaceId: string, type: TIntegrationTypeParam) =>
   sendApiRequest<void>(integrationUrl(workspaceId, type), { method: "DELETE" });

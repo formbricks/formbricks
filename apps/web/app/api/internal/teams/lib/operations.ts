@@ -1,5 +1,4 @@
 import "server-only";
-import { InvalidInputError } from "@formbricks/types/errors";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
@@ -8,6 +7,7 @@ import {
   problemConflict,
   problemForbidden,
   problemUnauthorized,
+  problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
@@ -15,6 +15,10 @@ import { can } from "@/lib/authorization";
 import { getTeam } from "@/lib/utils/services";
 import { requireRoleManagementEntitlement } from "@/modules/ee/role-management/lib/api-access";
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
+import {
+  TeamAssignmentOutsideOrganizationError,
+  TeamNameTakenError,
+} from "@/modules/ee/teams/team-list/lib/errors";
 import {
   createTeam,
   deleteTeam,
@@ -39,6 +43,10 @@ type TRequestContext = {
 };
 
 export const TEAMS_BASE_PATH = "/api/internal/teams";
+
+/** The organization already has a team by this name: 409, from a create or a rename alike. */
+const teamNameTaken = (error: TeamNameTakenError, { requestId, instance }: TRequestContext) =>
+  problemConflict(requestId, error.message, instance);
 
 /**
  * Authorize `action` on one team, then the licence. The organization is read off the team, never taken
@@ -98,7 +106,7 @@ export async function createTeamOperation({
     teamId = await createTeam(organizationId, body.name);
   } catch (error) {
     // The only refusal reachable past the schema: a team with this name already exists here.
-    if (error instanceof InvalidInputError) return problemConflict(requestId, error.message, instance);
+    if (error instanceof TeamNameTakenError) return teamNameTaken(error, context);
     throw error;
   }
 
@@ -135,7 +143,9 @@ export async function getTeamOperation({
 
 /**
  * `PATCH /api/internal/teams/{teamId}`: rename the team and replace its members and workspace grants.
- * Owners, managers and the team's admins; changing workspace grants is owners' and managers' only.
+ * Owners, managers and the team's admins; changing workspace grants is owners' and managers' only. A name
+ * another team of the organization has is a 409, as on create; a member or workspace from outside the
+ * organization is a 422 naming the field.
  */
 export async function updateTeamOperation({
   teamId,
@@ -161,7 +171,18 @@ export async function updateTeamOperation({
     if (orgAccess instanceof Response) return orgAccess;
   }
 
-  await updateTeamDetails(teamId, body);
+  try {
+    await updateTeamDetails(teamId, body);
+  } catch (error) {
+    if (error instanceof TeamNameTakenError) return teamNameTaken(error, context);
+    if (error instanceof TeamAssignmentOutsideOrganizationError) {
+      return problemUnprocessableContent(requestId, error.message, {
+        instance,
+        invalid_params: [{ name: error.field, reason: error.message }],
+      });
+    }
+    throw error;
+  }
   const after = await getTeamDetails(teamId);
   if (!after) return problemForbidden(requestId, undefined, instance);
 

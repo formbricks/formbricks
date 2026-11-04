@@ -128,7 +128,7 @@ describe("PATCH /api/internal/members/{userId}", () => {
       expect(mocks.updateMembership).not.toHaveBeenCalled();
     });
 
-    test("demotes an owner while the organization has another, counting and writing in one transaction", async () => {
+    test("demotes an owner while the organization has another, counting and writing in one Read Committed transaction", async () => {
       const response = await setRole("member");
 
       expect(response.status).toBe(200);
@@ -137,9 +137,9 @@ describe("PATCH /api/internal/members/{userId}", () => {
         organizationId: ORG_ID,
         role: "member",
       });
-      expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), {
-        isolationLevel: "Serializable",
-      });
+      // Read Committed: the count after the lock must see a racing demotion that just committed. Under
+      // Serializable the waiting transaction fails with a serialization error instead (a 500).
+      expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function));
       expect(mocks.getOrganizationOwnerCount).toHaveBeenCalledWith(ORG_ID, TX);
       expect(mocks.updateMembership).toHaveBeenCalledWith(TARGET_USER_ID, ORG_ID, { role: "member" }, TX);
     });
@@ -197,14 +197,22 @@ describe("PATCH /api/internal/members/{userId}", () => {
     });
   });
 
-  test("refuses a caller without user management with 403 and the reason, and asks nothing further", async () => {
+  test("refuses a caller without user management with 403 and its reason, and writes nothing", async () => {
     allow("organization.manage");
     const response = await setRole("member");
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("User management is not allowed for your role");
-    expect(checkedActions()).toEqual(["organization.manage_access"]);
+    expect(mocks.getOrganizationOwnerCount).not.toHaveBeenCalled();
     expect(mocks.updateMembership).not.toHaveBeenCalled();
+  });
+
+  test("answers user management's reason even when organization.manage is refused too", async () => {
+    allow();
+    const response = await setRole("member");
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("User management is not allowed for your role");
   });
 
   test("refuses a caller without organization.manage, and audits the refusal against the membership", async () => {

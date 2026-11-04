@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import {
+  TeamAssignmentOutsideOrganizationError,
+  TeamNameTakenError,
+} from "@/modules/ee/teams/team-list/lib/errors";
 import { DELETE, GET, PATCH } from "./[teamId]/route";
 import { POST } from "./route";
 
@@ -213,7 +217,7 @@ describe("POST /api/internal/teams", () => {
   });
 
   test("answers 409 with the reason when a team with that name already exists", async () => {
-    mocks.createTeam.mockRejectedValue(new InvalidInputError("Team name already exists"));
+    mocks.createTeam.mockRejectedValue(new TeamNameTakenError());
     const response = await create({ name: "Team" });
 
     expect(response.status).toBe(409);
@@ -369,6 +373,26 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
     expect(mocks.updateTeamDetails).not.toHaveBeenCalled();
   });
 
+  test("answers 409 with the reason for a name another team of the organization has, as create does", async () => {
+    mocks.updateTeamDetails.mockRejectedValue(new TeamNameTakenError());
+    const response = await update(updateBody());
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toBe("Team name already exists");
+  });
+
+  test.each(["members", "workspaces"] as const)(
+    "answers 422 naming %s from outside the organization",
+    async (field) => {
+      mocks.updateTeamDetails.mockRejectedValue(new TeamAssignmentOutsideOrganizationError(field));
+      const response = await update(updateBody());
+      const body = await response.json();
+
+      expect(response.status).toBe(422);
+      expect(body.invalid_params).toEqual([{ name: field, reason: body.detail }]);
+    }
+  );
+
   test("answers 403 when the team is gone by the time it is written", async () => {
     mocks.updateTeamDetails.mockRejectedValue(new ResourceNotFoundError("Team", TEAM_ID));
     expect((await update(updateBody())).status).toBe(403);
@@ -380,6 +404,14 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
     ["a blank name", updateBody({ name: " " })],
     ["an unknown team role", updateBody({ members: [{ userId: USER_ID, role: "owner" }] })],
     ["an unknown field", { ...updateBody(), organizationId: OTHER_ORG_ID }],
+    [
+      "an unknown key in a member entry",
+      updateBody({ members: [{ userId: USER_ID, role: "admin", name: "User" }] }),
+    ],
+    [
+      "an unknown key in a workspace entry",
+      updateBody({ workspaces: [{ workspaceId: WORKSPACE_ID, permission: "read", workspaceName: "W" }] }),
+    ],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await update(body)).status).toBe(400);
     expect(mocks.updateTeamDetails).not.toHaveBeenCalled();

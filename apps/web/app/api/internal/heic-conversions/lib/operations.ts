@@ -1,6 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import { loggableError } from "@/lib/utils/loggable-error";
 import type { THeicConversionBody } from "../schemas";
 import { serializeHeicConversion } from "../serializers";
 import { HEIC_CONVERSION_JPEG_QUALITY } from "./constants";
@@ -31,7 +32,7 @@ export async function convertHeicToJpegOperation({
       quality: HEIC_CONVERSION_JPEG_QUALITY,
     });
   } catch (error) {
-    logger.withContext({ requestId }).warn({ err: error }, "HEIC conversion failed");
+    logger.withContext({ requestId }).warn(loggableError(error), "HEIC conversion failed");
     return problemUnprocessableContent(requestId, "The image is not a HEIC image that can be converted.", {
       instance,
     });

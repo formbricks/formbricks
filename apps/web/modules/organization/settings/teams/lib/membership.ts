@@ -123,9 +123,10 @@ const getOrganizationOwnerCountCached = reactCache((organizationId: string) =>
 );
 
 /**
- * Pass `tx` when this must be read inside the same transaction as the mutation it's guarding
- * (see `applyRoleChange` in `app/api/internal/members/[userId]/lib/operations.ts`) so a Serializable transaction can catch concurrent demotions;
- * without `tx` the result is request-cached like the rest of this module's reads.
+ * Pass `tx` when this must be read inside the same transaction as the mutation it's guarding, after
+ * locking the owner memberships (see `applyRoleChange` in `app/api/internal/members/[userId]/lib/operations.ts`),
+ * so the count sees a concurrent demotion that committed while this one waited on the lock; without `tx`
+ * the result is request-cached like the rest of this module's reads.
  */
 export const getOrganizationOwnerCount = async (
   organizationId: string,

@@ -4,16 +4,19 @@ import {
   AuthenticationError,
   AuthorizationError,
   OperationNotAllowedError,
+  ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
 import { V3_INVALID_PARAMS_MAX } from "@/app/api/v3/lib/invalid-params";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SlackApiError } from "@/lib/slack/errors";
 import { SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE } from "@/lib/survey/visibility/outbound";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { GET as CHANNELS } from "./[type]/channels/route";
 import { GET as CONNECTION } from "./[type]/connection/route";
 import { DELETE, PUT } from "./[type]/route";
 import { GET as SPREADSHEET } from "./[type]/spreadsheets/[spreadsheetId]/route";
+import { INTEGRATION_MAPPING_TEXT_MAX_LENGTH } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
@@ -143,10 +146,39 @@ beforeEach(() => {
   mocks.getSlackChannels.mockResolvedValue([{ id: "C123", name: "feedback" }]);
 });
 
+const GOOGLE_KEY = {
+  scope: "https://www.googleapis.com/auth/spreadsheets",
+  token_type: "Bearer",
+  expiry_date: 1,
+  access_token: "stored-google-access",
+  refresh_token: "stored-google-refresh",
+};
+const sheetsMapping = {
+  createdAt: "2026-10-01T10:00:00.000Z",
+  elementIds: ["q1"],
+  elements: "All questions",
+  surveyId: SURVEY_ID,
+  surveyName: "Onboarding",
+  spreadsheetId: "sheet-1",
+  spreadsheetName: "Q4 feedback",
+};
+const notionMapping = {
+  createdAt: "2026-10-01T10:00:00.000Z",
+  surveyId: SURVEY_ID,
+  surveyName: "Onboarding",
+  databaseId: "db-1",
+  databaseName: "Feedback",
+  mapping: [
+    {
+      element: { id: "q1", name: "What did you like?", type: "openText" },
+      column: { id: "c1", name: "Liked", type: "rich_text" },
+    },
+  ],
+};
+
 describe("PUT /api/internal/integrations/{type}", () => {
-  test("stores the mappings with the stored credentials, whatever key the client sent, and answers only the id", async () => {
-    // What the settings page echoes back: the stored key with its secrets blanked, or here a forgery.
-    const response = await put({ config: { key: { access_token: "forged" }, data: [slackMapping] } });
+  test("stores the mappings on the stored integration, keeping its credentials, and answers only the id", async () => {
+    const response = await put({ config: { data: [slackMapping] } });
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -158,10 +190,10 @@ describe("PUT /api/internal/integrations/{type}", () => {
     });
     const [workspaceId, input] = mocks.createOrUpdateIntegration.mock.calls[0];
     expect(workspaceId).toBe(WORKSPACE_ID);
-    expect(input.type).toBe("slack");
-    expect(input.config.key).toEqual(STORED_KEY);
-    // The mapping's ISO timestamp is revived into the Date the integration schemas expect.
-    expect(input.config.data[0].createdAt).toEqual(new Date(slackMapping.createdAt));
+    expect(input).toEqual({
+      type: "slack",
+      config: { key: STORED_KEY, data: [{ ...slackMapping, createdAt: new Date(slackMapping.createdAt) }] },
+    });
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.integrationMutation, USER_ID);
     expect(lastAudit()).toMatchObject({
       action: "createdUpdated",
@@ -172,32 +204,114 @@ describe("PUT /api/internal/integrations/{type}", () => {
     });
   });
 
-  test("refuses to configure an integration that was never connected, even with a well-formed key", async () => {
-    // A complete Slack credential: it would pass the schema, so only the "connect first" rule stops it.
-    mocks.getIntegrationByType.mockResolvedValue(null);
-    const response = await put({
-      config: { key: { ...STORED_KEY, access_token: "attacker-token" }, data: [] },
+  test("keeps the connected account of a Google Sheets integration, and its key exactly as stored", async () => {
+    const storedKey = { ...GOOGLE_KEY, id_token: "unnamed-by-the-schema" };
+    mocks.getIntegrationByType.mockResolvedValue({
+      id: INTEGRATION_ID,
+      type: "googleSheets",
+      workspaceId: WORKSPACE_ID,
+      config: { key: storedKey, email: "owner@example.com", data: [] },
     });
+
+    expect((await put({ config: { data: [sheetsMapping] } }, "googleSheets")).status).toBe(200);
+    expect(mocks.createOrUpdateIntegration.mock.calls[0][1].config).toEqual({
+      key: storedKey,
+      email: "owner@example.com",
+      data: [{ ...sheetsMapping, createdAt: new Date(sheetsMapping.createdAt) }],
+    });
+  });
+
+  test("accepts a Notion mapping with its element-to-column pairs", async () => {
+    mocks.getIntegrationByType.mockResolvedValue({
+      id: INTEGRATION_ID,
+      type: "notion",
+      workspaceId: WORKSPACE_ID,
+      config: { key: { access_token: "stored-notion" }, data: [] },
+    });
+
+    expect((await put({ config: { data: [notionMapping] } }, "notion")).status).toBe(200);
+    expect(mocks.createOrUpdateIntegration.mock.calls[0][1].config.data[0].mapping).toEqual(
+      notionMapping.mapping
+    );
+  });
+
+  // Credentials and the connected account come from the OAuth callback alone. Silently dropping a sent
+  // key would tell a caller it was taken; a 400 says it never is.
+  test.each([
+    ["slack", "the credentials", { key: { access_token: "forged" }, data: [slackMapping] }, "config.key"],
+    [
+      "googleSheets",
+      "the connected account",
+      { email: "attacker@example.com", data: [sheetsMapping] },
+      "config.email",
+    ],
+  ])("refuses a %s body that sets %s, naming the field", async (type, _label, config, field) => {
+    const response = await put({ config }, type);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.invalid_params.map((param: { name: string }) => param.name)).toContain(field);
+    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    [
+      "an unknown field on a mapping",
+      "slack",
+      { ...slackMapping, channelID: "C999" },
+      "config.data.0.channelID",
+    ],
+    [
+      "an unknown field inside a Notion pair",
+      "notion",
+      {
+        ...notionMapping,
+        mapping: [{ ...notionMapping.mapping[0], column: { ...notionMapping.mapping[0].column, extra: 1 } }],
+      },
+      "config.data.0.mapping.0.column.extra",
+    ],
+    [
+      "a timestamp that isn't ISO 8601",
+      "slack",
+      { ...slackMapping, createdAt: "yesterday" },
+      "config.data.0.createdAt",
+    ],
+    ["a NULL byte", "slack", { ...slackMapping, surveyName: "On\u0000boarding" }, "config.data.0.surveyName"],
+    [
+      "text past its limit",
+      "slack",
+      { ...slackMapping, channelName: "c".repeat(INTEGRATION_MAPPING_TEXT_MAX_LENGTH + 1) },
+      "config.data.0.channelName",
+    ],
+  ])("answers 400 for %s", async (_label, type, mapping, field) => {
+    const response = await put({ config: { data: [mapping] } }, type);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.invalid_params.map((param: { name: string }) => param.name)).toContain(field);
+    expect(mocks.getIntegrationByType).not.toHaveBeenCalled();
+    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+  });
+
+  test("accepts text right at its limit", async () => {
+    const channelName = "c".repeat(INTEGRATION_MAPPING_TEXT_MAX_LENGTH);
+    expect((await put({ config: { data: [{ ...slackMapping, channelName }] } })).status).toBe(200);
+  });
+
+  test("refuses to configure an integration that was never connected", async () => {
+    mocks.getIntegrationByType.mockResolvedValue(null);
+    const response = await put({ config: { data: [] } });
 
     expect(response.status).toBe(409);
     expect((await response.json()).details).toEqual({ reason: "not_connected" });
     expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
   });
 
-  test("writes the stored key back exactly as stored, including fields the schema doesn't name", async () => {
-    const storedKey = { ...STORED_KEY, scope: "chat:write", enterprise: null };
-    mocks.getIntegrationByType.mockResolvedValue(storedSlack({ config: { key: storedKey, data: [] } }));
-
-    await put({ config: { key: { access_token: "" }, data: [slackMapping] } });
-
-    expect(mocks.createOrUpdateIntegration.mock.calls[0][1].config.key).toEqual(storedKey);
-  });
-
   test("refuses a mapping to a survey restricted to some members (ENG-3283), with its own message", async () => {
     mocks.createOrUpdateIntegration.mockRejectedValue(
       new OperationNotAllowedError(SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE)
     );
-    const response = await put({ config: { key: {}, data: [slackMapping] } });
+    const response = await put({ config: { data: [slackMapping] } });
     const body = await response.json();
 
     expect(response.status).toBe(403);
@@ -206,7 +320,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
   });
 
   test("records the integration_connected event", async () => {
-    await put({ config: { key: {}, data: [slackMapping] } });
+    await put({ config: { data: [slackMapping] } });
 
     expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
       USER_ID,
@@ -218,12 +332,12 @@ describe("PUT /api/internal/integrations/{type}", () => {
 
   test("refuses a caller without write access to the workspace, and stores nothing", async () => {
     mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
-    expect((await put({ config: { key: {}, data: [] } })).status).toBe(403);
+    expect((await put({ config: { data: [] } })).status).toBe(403);
     expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
   });
 
-  test("answers 400 naming the field for a configuration the type's schema refuses", async () => {
-    const response = await put({ config: { key: {}, data: [{ ...slackMapping, channelId: 42 }] } });
+  test("answers 400 naming the field for a mapping of the wrong shape", async () => {
+    const response = await put({ config: { data: [{ ...slackMapping, channelId: 42 }] } });
     const body = await response.json();
 
     expect(response.status).toBe(400);
@@ -235,22 +349,22 @@ describe("PUT /api/internal/integrations/{type}", () => {
 
   test("bounds the invalid_params list however many mappings are wrong", async () => {
     const data = Array.from({ length: 500 }, () => ({ ...slackMapping, channelId: 42 }));
-    const body = await (await put({ config: { key: {}, data } })).json();
+    const body = await (await put({ config: { data } })).json();
 
     expect(body.invalid_params.length).toBeLessThanOrEqual(V3_INVALID_PARAMS_MAX + 1);
     expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
   });
 
   test.each([
-    ["an integration type it doesn't manage", () => put({ config: {} }, "n8n")],
-    ["a body that isn't a configuration", () => put({ type: "slack", config: {} })],
+    ["an integration type it doesn't manage", () => put({ config: { data: [] } }, "n8n")],
+    ["a body that isn't a configuration", () => put({ type: "slack", config: { data: [] } })],
   ])("answers 400 for %s", async (_label, call) => {
     expect((await call()).status).toBe(400);
     expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
   });
 
   test("refuses a cross-site request (CSRF)", async () => {
-    const response = await put({ config: { key: {}, data: [] } }, "slack", {
+    const response = await put({ config: { data: [] } }, "slack", {
       headers: { "sec-fetch-site": "cross-site" },
     });
     expect(response.status).toBe(403);
@@ -368,6 +482,19 @@ describe("GET /api/internal/integrations/googleSheets/spreadsheets/{spreadsheetI
     expect(mocks.getSpreadsheetNameById).not.toHaveBeenCalled();
   });
 
+  test("answers 404 for a spreadsheet Google doesn't know", async () => {
+    mocks.getSpreadsheetNameById.mockRejectedValue(new ResourceNotFoundError("Spreadsheet", "sheet-1"));
+    const response = await spreadsheet();
+
+    expect(response.status).toBe(404);
+    expect((await response.json()).details).toEqual({ resource_type: "Spreadsheet", resource_id: "sheet-1" });
+  });
+
+  test("answers 500, not 502, for an error of ours", async () => {
+    mocks.getSpreadsheetNameById.mockRejectedValue(new TypeError("Cannot read properties of undefined"));
+    expect((await spreadsheet()).status).toBe(500);
+  });
+
   test("answers 502 when Google fails, without relaying its text", async () => {
     mocks.getSpreadsheetNameById.mockRejectedValue(
       new UnknownError("Error while fetching spreadsheet data: boom")
@@ -387,17 +514,28 @@ describe("GET /api/internal/integrations/slack/channels", () => {
     expect((await response.json()).data).toEqual([{ id: "C123", name: "feedback" }]);
   });
 
-  test.each(["invalid_auth", "missing_scope"])("asks for a reconnect when Slack answers %s", async (code) => {
-    mocks.getSlackChannels.mockRejectedValue(new UnknownError(code));
-    const response = await channels();
+  test.each(["invalid_auth", "missing_scope", "token_expired", "token_revoked"])(
+    "asks for a reconnect when Slack answers %s",
+    async (code) => {
+      mocks.getSlackChannels.mockRejectedValue(new SlackApiError(code));
+      const response = await channels();
 
-    expect(response.status).toBe(409);
-    expect((await response.json()).details).toEqual({ reason: "reauthorization_required" });
-  });
+      expect(response.status).toBe(409);
+      expect((await response.json()).details).toEqual({ reason: "reauthorization_required" });
+    }
+  );
 
-  test("answers 502 for any other Slack failure", async () => {
-    mocks.getSlackChannels.mockRejectedValue(new UnknownError("ratelimited"));
-    expect((await channels()).status).toBe(502);
+  test.each(["ratelimited", "http_503", "network_error"])(
+    "answers 502 for the Slack failure %s",
+    async (code) => {
+      mocks.getSlackChannels.mockRejectedValue(new SlackApiError(code));
+      expect((await channels()).status).toBe(502);
+    }
+  );
+
+  test("answers 500, not 502, for an error of ours", async () => {
+    mocks.getSlackChannels.mockRejectedValue(new TypeError("Cannot read properties of undefined"));
+    expect((await channels()).status).toBe(500);
   });
 
   test("refuses a caller without write access to the workspace", async () => {

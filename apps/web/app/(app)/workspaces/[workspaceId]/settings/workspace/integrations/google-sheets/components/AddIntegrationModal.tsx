@@ -9,7 +9,6 @@ import { useTranslation } from "react-i18next";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
-  TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -20,7 +19,7 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/lib/util";
 import {
   getSpreadsheet,
-  saveIntegration,
+  saveIntegrationMappings,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
@@ -29,7 +28,7 @@ import {
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
+import { V3ApiError, getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -90,20 +89,12 @@ export const AddIntegrationModal = ({
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const existingIntegrationData = googleSheetIntegration?.config?.data;
+  const existingMappings = googleSheetIntegration?.config?.data ?? [];
   const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
-  const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
-    type: "googleSheets",
-    config: {
-      key: googleSheetIntegration?.config?.key,
-      email: googleSheetIntegration.config.email,
-      data: existingIntegrationData || [],
-    },
-  };
 
   const surveyElements = useMemo(
     () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
@@ -139,6 +130,11 @@ export const AddIntegrationModal = ({
   }, [selectedIntegration, surveys]);
 
   const showErrorMessageToast = (error: unknown) => {
+    // Google knows no spreadsheet by the id the pasted URL carries: a typo, or one since deleted.
+    if (error instanceof V3ApiError && error.status === 404) {
+      toast.error(t("workspace.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"));
+      return;
+    }
     const errorMessage = getV3ApiErrorReason(error, "");
     // Disconnected in another tab, or the grant expired: either way the way out is to reconnect.
     if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT || errorMessage === "not_connected") {
@@ -189,15 +185,13 @@ export const AddIntegrationModal = ({
       integrationData.includeCreatedAt = includeCreatedAt;
       integrationData.includeContactAttributes = includeContactAttributes;
       // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
-      const updated = structuredClone(googleSheetIntegrationData);
+      const mappings = [...existingMappings];
       if (selectedIntegration) {
-        // update action
-        updated.config.data[selectedIntegration.index] = integrationData;
+        mappings[selectedIntegration.index] = integrationData;
       } else {
-        // create action
-        updated.config.data.push(integrationData);
+        mappings.push(integrationData);
       }
-      await saveIntegration(workspaceId, updated.type, updated.config);
+      await saveIntegrationMappings(workspaceId, "googleSheets", mappings);
       router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
@@ -235,11 +229,10 @@ export const AddIntegrationModal = ({
   };
 
   const deleteLink = async () => {
-    const updated = structuredClone(googleSheetIntegrationData);
-    updated.config.data.splice(selectedIntegration!.index, 1);
+    const mappings = existingMappings.filter((_, index) => index !== selectedIntegration!.index);
     try {
       setIsDeleting(true);
-      await saveIntegration(workspaceId, updated.type, updated.config);
+      await saveIntegrationMappings(workspaceId, "googleSheets", mappings);
       router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);

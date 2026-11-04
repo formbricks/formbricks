@@ -4,7 +4,7 @@ import { AuthorizationError, InvalidInputError, TooManyRequestsError } from "@fo
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
 import {
-  problemBadRequest,
+  problemConflict,
   problemForbidden,
   problemUnauthorized,
   successResponse,
@@ -71,8 +71,9 @@ export async function createOnboardingInviteOperation({
     });
   } catch (error) {
     await settleInviteRateLimit(reservation, 0);
-    // "Invite already exists", "User is already a member of this organization": the form shows them.
-    if (error instanceof InvalidInputError) return problemBadRequest(requestId, error.message, { instance });
+    // "Invite already exists", "User is already a member of this organization": the request is valid, but
+    // the organization's current state refuses it — a conflict, whose reason the form shows.
+    if (error instanceof InvalidInputError) return problemConflict(requestId, error.message, instance);
     throw error;
   }
   await settleInviteRateLimit(reservation, 1);
@@ -89,5 +90,7 @@ export async function createOnboardingInviteOperation({
     auditLog.targetId = inviteId;
     auditLog.newObject = { invitedUserId: inviteId, email: body.email, name: body.name };
   }
+  // No `Location`: the invite's own path, `/api/internal/invites/{inviteId}`, answers PATCH only, and a
+  // `Location` should be somewhere the client can read what was created.
   return successResponse({ id: inviteId }, { requestId, status: 201 });
 }

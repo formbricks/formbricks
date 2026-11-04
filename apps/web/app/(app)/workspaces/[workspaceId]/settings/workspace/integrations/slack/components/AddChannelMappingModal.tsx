@@ -9,14 +9,10 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TIntegrationItem } from "@formbricks/types/integration";
-import {
-  TIntegrationSlack,
-  TIntegrationSlackConfigData,
-  TIntegrationSlackInput,
-} from "@formbricks/types/integration/slack";
+import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
+import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import SlackLogo from "@/images/slacklogo.png";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -77,14 +73,7 @@ export const AddChannelMappingModal = ({
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
-  const existingIntegrationData = slackIntegration?.config?.data;
-  const slackIntegrationData: TIntegrationSlackInput = {
-    type: "slack",
-    config: {
-      key: slackIntegration?.config?.key,
-      data: existingIntegrationData || [],
-    },
-  };
+  const existingMappings = slackIntegration?.config?.data ?? [];
 
   const surveyElements = useMemo(
     () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
@@ -153,15 +142,13 @@ export const AddChannelMappingModal = ({
         includeContactAttributes,
       };
       // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
-      const updated = structuredClone(slackIntegrationData);
+      const mappings = [...existingMappings];
       if (selectedIntegration) {
-        // update action
-        updated.config.data[selectedIntegration.index] = integrationData;
+        mappings[selectedIntegration.index] = integrationData;
       } else {
-        // create action
-        updated.config.data.push(integrationData);
+        mappings.push(integrationData);
       }
-      await saveIntegration(workspaceId, updated.type, updated.config);
+      await saveIntegrationMappings(workspaceId, "slack", mappings);
       router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
@@ -196,11 +183,10 @@ export const AddChannelMappingModal = ({
   };
 
   const deleteLink = async () => {
-    const updated = structuredClone(slackIntegrationData);
-    updated.config.data.splice(selectedIntegration!.index, 1);
+    const mappings = existingMappings.filter((_, index) => index !== selectedIntegration!.index);
     try {
       setIsDeleting(true);
-      await saveIntegration(workspaceId, updated.type, updated.config);
+      await saveIntegrationMappings(workspaceId, "slack", mappings);
       router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);

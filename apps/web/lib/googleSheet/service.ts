@@ -7,6 +7,7 @@ import {
   AuthenticationError,
   DatabaseError,
   OperationNotAllowedError,
+  ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
 import {
@@ -115,6 +116,17 @@ export const validateGoogleSheetsConnection = async (
   await authorize(integrationData);
 };
 
+/** The HTTP status Google answered with, from a googleapis (gaxios) error. */
+const getGoogleHttpStatus = (error: unknown): number | undefined => {
+  const { status, response } = error as { status?: unknown; response?: { status?: unknown } };
+  if (typeof status === "number") return status;
+  return typeof response?.status === "number" ? response.status : undefined;
+};
+
+/**
+ * A spreadsheet's title. Rejects with a `ResourceNotFoundError` when Google knows no spreadsheet by that
+ * id, an `OperationNotAllowedError` when the grant can't open it, and an `UnknownError` when Google fails.
+ */
 export const getSpreadsheetNameById = async (
   googleSheetIntegrationData: TIntegrationGoogleSheets,
   spreadsheetId: string
@@ -143,7 +155,9 @@ export const getSpreadsheetNameById = async (
               msg.includes("caller does not have") ||
               msg.includes("insufficient permission") ||
               msg.includes("access denied");
-            if (isScopeError) {
+            if (getGoogleHttpStatus(err) === 404) {
+              reject(new ResourceNotFoundError("Spreadsheet", spreadsheetId));
+            } else if (isScopeError) {
               reject(new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES));
             } else if (isPermissionError) {
               reject(new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION));

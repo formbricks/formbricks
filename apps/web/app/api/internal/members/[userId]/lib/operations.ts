@@ -1,6 +1,5 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import type { TMembership } from "@formbricks/types/memberships";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
@@ -29,14 +28,16 @@ export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organi
 class LastOwnerDemotionError extends Error {}
 
 /**
- * Change the role, demoting an owner only while another active owner remains. The owner count and the
- * update are one Serializable transaction: read then act in two statements would let two owners demoting
- * each other concurrently both see "more than one owner", leaving none. Postgres aborts one of the two.
+ * Change the role, demoting an owner only while another active owner remains. Read then act in two
+ * unguarded statements would let two owners demoting each other concurrently both see "more than one
+ * owner", leaving none.
  *
- * The organization's owner memberships are locked first, in `userId` order, the same lock the data
- * retention members sweep takes before deactivating an owner (`deactivateDueMember`). Serializable alone
- * doesn't order this against that sweep, so a self-demotion racing the deactivation of the other owner could
- * leave no active owner.
+ * So the organization's owner memberships are locked first, in `userId` order — the same lock the data
+ * retention members sweep takes before deactivating an owner (`deactivateDueMember`) — and only then
+ * counted. The transaction is Read Committed on purpose: the second of two racing demotions waits on the
+ * lock, and once the first commits, its count is a fresh statement that sees the first one's demotion, so
+ * it finds the last owner and answers 409. Under Serializable (or Repeatable Read) that waiting transaction
+ * would instead fail with a serialization error (40001 / P2034) on the row the first one changed: a 500.
  */
 const applyRoleChange = (
   target: TMembership,
@@ -48,19 +49,16 @@ const applyRoleChange = (
   }
 
   return prisma
-    .$transaction(
-      async (tx) => {
-        await tx.$queryRaw`
-          SELECT 1 FROM "Membership"
-          WHERE "organizationId" = ${organizationId} AND "role" = 'owner'
-          ORDER BY "userId"
-          FOR UPDATE
-        `;
-        if ((await getOrganizationOwnerCount(organizationId, tx)) <= 1) throw new LastOwnerDemotionError();
-        return updateMembership(userId, organizationId, body, tx);
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-    )
+    .$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT 1 FROM "Membership"
+        WHERE "organizationId" = ${organizationId} AND "role" = 'owner'
+        ORDER BY "userId"
+        FOR UPDATE
+      `;
+      if ((await getOrganizationOwnerCount(organizationId, tx)) <= 1) throw new LastOwnerDemotionError();
+      return updateMembership(userId, organizationId, body, tx);
+    })
     .catch((error: unknown) => {
       if (error instanceof LastOwnerDemotionError) return error;
       throw error;
@@ -128,19 +126,22 @@ export async function updateMemberRoleOperation({
   if (!callerMembership) return problemForbidden(requestId, undefined, instance);
 
   // `organization.manage_access` *is* the user-management decision in the central vocabulary; SpiceDB maps
-  // `USER_MANAGEMENT_MINIMUM_ROLE` onto it. `organization.manage` below is a different capability, also
-  // required, so both stay. The caller is a member, so naming the reason reveals nothing new.
-  if (!(await can(actor, "organization.manage_access", { type: "organization", id: organizationId }))) {
+  // `USER_MANAGEMENT_MINIMUM_ROLE` onto it. `organization.manage` is a different capability, also
+  // required, so both stay. Neither depends on the other, so both are asked at once; a missing user
+  // management still answers first, with its reason — the caller is a member, so naming it reveals nothing.
+  const [canManageAccess, access] = await Promise.all([
+    can(actor, "organization.manage_access", { type: "organization", id: organizationId }),
+    requireOrgActionAccess({
+      authentication,
+      organizationId,
+      action: "organization.manage",
+      requestId,
+      instance,
+    }),
+  ]);
+  if (!canManageAccess) {
     return problemForbidden(requestId, "User management is not allowed for your role", instance);
   }
-
-  const access = await requireOrgActionAccess({
-    authentication,
-    organizationId,
-    action: "organization.manage",
-    requestId,
-    instance,
-  });
   if (access instanceof Response) return access;
 
   const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.stateMutation, organizationId, {

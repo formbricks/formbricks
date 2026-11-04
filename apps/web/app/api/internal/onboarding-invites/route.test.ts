@@ -120,16 +120,19 @@ describe("POST /api/internal/onboarding-invites", () => {
     );
   });
 
-  test("hands the unit back when the invite can't be created, and shows why", async () => {
-    mocks.inviteUser.mockRejectedValue(new InvalidInputError("Invite already exists"));
+  test.each(["Invite already exists", "User is already a member of this organization"])(
+    "answers 409 with the reason, and hands the unit back, when the organization refuses: %s",
+    async (reason) => {
+      mocks.inviteUser.mockRejectedValue(new InvalidInputError(reason));
 
-    const response = await invite();
+      const response = await invite();
 
-    expect(response.status).toBe(400);
-    expect((await response.json()).detail).toBe("Invite already exists");
-    expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 0);
-    expect(mocks.sendInviteMemberEmail).not.toHaveBeenCalled();
-  });
+      expect(response.status).toBe(409);
+      expect((await response.json()).detail).toBe(reason);
+      expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 0);
+      expect(mocks.sendInviteMemberEmail).not.toHaveBeenCalled();
+    }
+  );
 
   test.each([new Error("smtp unavailable"), new TooManyRequestsError("Maximum number of requests")])(
     "keeps the invite and its unit when the email fails with %s (ENG-3823)",

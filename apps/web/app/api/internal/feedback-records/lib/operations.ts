@@ -1,9 +1,11 @@
 import "server-only";
+import { getV3SessionUserId } from "@/app/api/v3/lib/auth";
+import { hubErrorToProblemResponse } from "@/app/api/v3/lib/hub-errors";
 import {
   noContentResponse,
   problemBadGateway,
   problemForbidden,
-  problemServiceUnavailable,
+  problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
@@ -17,7 +19,6 @@ import {
 } from "@/modules/ee/unify-feedback/lib/access";
 import { getContactIdsByUserIds } from "@/modules/ee/unify-feedback/lib/contacts";
 import { deleteFeedbackRecord, retrieveFeedbackRecord } from "@/modules/hub/service";
-import { type HubError, isHubNotConfigured } from "@/modules/hub/utils";
 
 /**
  * Feedback records live in the Hub, one tenant per dataset. They are reached through a workspace: a
@@ -33,35 +34,22 @@ type TRequestContext = {
   auditLog?: TV3AuditLog;
 };
 
-const FORBIDDEN = "You are not authorized to access this resource";
-
-const sessionUserId = (authentication: TV3Authentication): string | null =>
-  authentication && "user" in authentication ? (authentication.user?.id ?? null) : null;
-
-/**
- * A Hub failure, naming what could not be done. The Hub's own error text is never relayed — it can carry
- * internal Hub URLs; it is logged in `@/modules/hub/service` and correlated by `requestId`.
- */
-const hubFailure = (
-  error: HubError | null | undefined,
-  { requestId, instance }: Pick<TRequestContext, "requestId" | "instance">,
-  failed: "loaded" | "deleted"
-): Response =>
-  error && isHubNotConfigured(error)
-    ? problemServiceUnavailable(
-        requestId,
-        "The Hub integration is not configured on this deployment.",
-        instance
-      )
-    : problemBadGateway(requestId, `The feedback records could not be ${failed}.`, instance);
-
-/** The Hub answered about the record itself (absent, malformed id), rather than failing to answer. */
-const isAnswerAboutRecord = (error: HubError): boolean => error.status >= 400 && error.status < 500;
+/** The session's user, or the 401 a session-only route answers without one. */
+const requireSessionUser = ({
+  authentication,
+  requestId,
+  instance,
+}: TRequestContext): { userId: string } | Response => {
+  const userId = getV3SessionUserId(authentication);
+  return userId ? { userId } : problemUnauthorized(requestId, "Session required", instance);
+};
 
 /**
  * The record, once it is known to be reachable from the workspace and its dataset assignment is
- * readable. A record outside the workspace answers 403 like one that does not exist; a Hub that could not
- * answer is a 502 or 503, not a claim about the record.
+ * readable. A record outside the workspace answers 403 like one the Hub doesn't know, so ids can't be
+ * walked. Any other Hub answer goes through the shared mapping: a malformed id is the caller's 400, a Hub
+ * that could not answer (or refused our credentials) a 502 or 503 — never a claim about the record. The
+ * Hub's own text is never relayed beyond what that mapping allows.
  */
 async function getReachableRecord(context: TRequestContext, userId: string, recordId: string) {
   const { workspaceId, requestId, instance } = context;
@@ -69,10 +57,12 @@ async function getReachableRecord(context: TRequestContext, userId: string, reco
     getWorkspaceDirectoryIds(workspaceId),
     retrieveFeedbackRecord(recordId),
   ]);
-  if (recordResult.error && !isAnswerAboutRecord(recordResult.error)) {
-    return hubFailure(recordResult.error, context, "loaded");
+  if (recordResult.error && recordResult.error.status !== 404) {
+    return hubErrorToProblemResponse(recordResult.error, requestId, instance ?? "", {
+      badGatewayDetail: "The feedback records could not be loaded.",
+    });
   }
-  if (!recordResult.data || recordResult.error) return problemForbidden(requestId, FORBIDDEN, instance);
+  if (!recordResult.data || recordResult.error) return problemForbidden(requestId, undefined, instance);
 
   assertRecordBelongsToWorkspace(workspaceDatasetIds, recordResult.data.tenant_id, recordId);
   await assertFeedbackDirectoryAssignmentAccess(userId, recordResult.data.tenant_id, workspaceId);
@@ -84,9 +74,10 @@ export async function getFeedbackRecordOperation({
   recordId,
   ...context
 }: TRequestContext & { recordId: string }): Promise<Response> {
-  const { authentication, workspaceId, requestId, instance } = context;
-  const userId = sessionUserId(authentication);
-  if (!userId) return problemForbidden(requestId, FORBIDDEN, instance);
+  const { workspaceId, requestId } = context;
+  const session = requireSessionUser(context);
+  if (session instanceof Response) return session;
+  const { userId } = session;
   await ensureReadAccess(userId, workspaceId);
 
   const record = await getReachableRecord(context, userId, recordId);
@@ -105,11 +96,12 @@ export async function deleteFeedbackRecordOperation({
   recordId,
   ...context
 }: TRequestContext & { recordId: string }): Promise<Response> {
-  const { authentication, workspaceId, requestId, instance, auditLog } = context;
+  const { workspaceId, requestId, instance, auditLog } = context;
   // Set before the access check so a refused or failed attempt is still attributable.
   if (auditLog) auditLog.targetId = recordId;
-  const userId = sessionUserId(authentication);
-  if (!userId) return problemForbidden(requestId, FORBIDDEN, instance);
+  const session = requireSessionUser(context);
+  if (session instanceof Response) return session;
+  const { userId } = session;
 
   const organizationId = await ensureDeleteAccess(userId, workspaceId);
   if (auditLog) auditLog.organizationId = organizationId;
@@ -118,7 +110,17 @@ export async function deleteFeedbackRecordOperation({
   if (record instanceof Response) return record;
 
   const deleted = await deleteFeedbackRecord(recordId);
-  if (!deleted.data || deleted.error) return hubFailure(deleted.error, context, "deleted");
+  if (deleted.error) {
+    // The record was just proven reachable from this workspace, so a 404 here (deleted meanwhile) leaks
+    // nothing and is answered as one.
+    return hubErrorToProblemResponse(deleted.error, requestId, instance ?? "", {
+      badGatewayDetail: "The feedback records could not be deleted.",
+      notFound: { resourceType: "Feedback record", resourceId: recordId },
+    });
+  }
+  if (!deleted.data) {
+    return problemBadGateway(requestId, "The feedback records could not be deleted.", instance);
+  }
 
   // Identify what was deleted without copying it: the value_* fields are end-user feedback, which has
   // no business being duplicated into the audit trail.
@@ -146,9 +148,10 @@ export async function lookupFeedbackRecordContactsOperation({
   userIds,
   ...context
 }: TRequestContext & { userIds: string[] }): Promise<Response> {
-  const { authentication, workspaceId, requestId, instance } = context;
-  const userId = sessionUserId(authentication);
-  if (!userId) return problemForbidden(requestId, FORBIDDEN, instance);
+  const { workspaceId, requestId } = context;
+  const session = requireSessionUser(context);
+  if (session instanceof Response) return session;
+  const { userId } = session;
 
   await assertCan({ type: "user", id: userId }, "workspace.read", { type: "workspace", id: workspaceId });
   return successResponse(await getContactIdsByUserIds(workspaceId, userIds), { requestId });

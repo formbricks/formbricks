@@ -2,7 +2,7 @@ import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { deleteIntegrationOperation, putIntegrationOperation } from "../lib/operations";
 import { ZIntegrationParams, ZIntegrationPutBody, ZIntegrationWorkspaceQuery } from "../schemas";
 
-/** `PUT /api/internal/integrations/{type}?workspaceId=`: store an integration's mappings and settings. */
+/** `PUT /api/internal/integrations/{type}?workspaceId=`: replace an integration's mappings. */
 export const PUT = withV3ApiWrapper({
   auth: "session",
   schemas: { params: ZIntegrationParams, query: ZIntegrationWorkspaceQuery, body: ZIntegrationPutBody },
