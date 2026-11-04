@@ -21,8 +21,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
-  assertDashboardViewerRoleAvailable,
-  canManagerAssignRole,
+  assertCanAssignRole,
   checkRoleManagementPermission,
 } from "@/modules/ee/role-management/lib/permission";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
@@ -348,14 +347,19 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       parsedInput.teamIds
     );
 
-    if (currentUserMembership.role === "manager" && !canManagerAssignRole(parsedInput.role)) {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
+    // Owners and Managers give roles by the one shared rule (C10); a team admin's invite was held to
+    // Member by `validateTeamAdminInvitePermissions` above.
+    if (isOrgOwnerOrManager) {
+      await assertCanAssignRole({
+        organizationId: parsedInput.organizationId,
+        assignerRole: currentUserMembership.role,
+        roles: [parsedInput.role],
+      });
     }
 
     if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
-    await assertDashboardViewerRoleAvailable(parsedInput.organizationId, [parsedInput.role]);
 
     const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
 
@@ -458,25 +462,16 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new OperationNotAllowedError("Bulk invite is not available on your current plan");
     }
 
-    // Validate roles for the whole batch up front.
-    if (!IS_FORMBRICKS_CLOUD && invitees.some((invitee) => invitee.role === OrganizationRole.billing)) {
-      throw new ValidationError("Billing role is not allowed");
-    }
-
-    if (
-      currentUserMembership.role === "manager" &&
-      invitees.some((invitee) => !canManagerAssignRole(invitee.role))
-    ) {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
-    }
+    // Validate roles for the whole batch up front, by the one shared rule (C10).
+    await assertCanAssignRole({
+      organizationId,
+      assignerRole: currentUserMembership.role,
+      roles: invitees.map((invitee) => invitee.role),
+    });
 
     if (invitees.some((invitee) => invitee.role !== "owner" || (invitee.teamIds ?? []).length > 0)) {
       await checkRoleManagementPermission(organizationId);
     }
-    await assertDashboardViewerRoleAvailable(
-      organizationId,
-      invitees.map((invitee) => invitee.role)
-    );
 
     const rateLimitReservation = await reserveInviteRateLimit(organizationId, ctx.user.id, invitees.length);
 

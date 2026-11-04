@@ -1,5 +1,5 @@
 import "server-only";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
@@ -22,29 +22,58 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
 };
 
 /**
- * The Dashboard viewer gate for every path that gives a role: single and bulk invites, invite edits and
- * membership edits. The role is given only while Access Control and Dashboards are both entitled
- * (ADR-0023); the entitlement is read only when a viewer is actually being given.
+ * The one rule every path that gives an organization role runs (C10): single and bulk invites, invite
+ * edits, membership edits, and the management API's user create and update.
+ *
+ * - Billing only on Formbricks Cloud.
+ * - What the assigner may give (`canAssignOrganizationRole`): Owners every role, Managers Member and
+ *   Dashboard viewer, nobody else anything; only an Owner changes an existing Owner's role.
+ * - The Dashboard viewer only while Access Control and Dashboards are both entitled (ADR-0023), read once
+ *   and only when a viewer is being given — and never through the management API (`channel`), which
+ *   cannot enforce the role's rules (no team admin, team-granted workspaces).
+ *
+ * Team admins invite Members through `inviteUserAction`'s own rule and never reach this.
  */
-export const assertDashboardViewerRoleAvailable = async (
-  organizationId: string,
-  roles: ReadonlyArray<TOrganizationRole>
-): Promise<void> => {
-  if (!roles.includes("dashboard_viewer")) return;
+export const assertCanAssignRole = async ({
+  organizationId,
+  assignerRole,
+  roles,
+  targetCurrentRole,
+  channel = "app",
+}: {
+  organizationId: string;
+  assignerRole: TOrganizationRole | null | undefined;
+  roles: ReadonlyArray<TOrganizationRole>;
+  targetCurrentRole?: TOrganizationRole | null;
+  channel?: "app" | "managementApi";
+}): Promise<void> => {
+  const requested = [...new Set(roles)];
+  if (!IS_FORMBRICKS_CLOUD && requested.includes("billing")) {
+    throw new ValidationError("Billing role is not allowed");
+  }
 
-  if (!(await getIsDashboardViewerRoleEnabled(organizationId))) {
+  const givesViewer = requested.includes("dashboard_viewer");
+  const isDashboardViewerRoleEnabled =
+    givesViewer && channel === "app" && (await getIsDashboardViewerRoleEnabled(organizationId));
+  if (givesViewer && channel === "app" && !isDashboardViewerRoleEnabled) {
     throw new OperationNotAllowedError("The Dashboard viewer role is not available on this plan");
   }
-};
 
-/**
- * Whether a Manager may give `role`: the roles below their own, Member and Dashboard viewer. The viewer's
- * entitlement is checked separately by `assertDashboardViewerRoleAvailable`, so it is assumed here.
- */
-export const canManagerAssignRole = (role: TOrganizationRole): boolean =>
-  canAssignOrganizationRole({
-    assignerRole: "manager",
-    role,
-    isFormbricksCloud: IS_FORMBRICKS_CLOUD,
-    isDashboardViewerRoleEnabled: true,
-  });
+  const refused = requested.find(
+    (role) =>
+      !canAssignOrganizationRole({
+        assignerRole,
+        role,
+        targetCurrentRole,
+        isFormbricksCloud: IS_FORMBRICKS_CLOUD,
+        isDashboardViewerRoleEnabled,
+      })
+  );
+  if (refused) {
+    throw new OperationNotAllowedError(
+      assignerRole === "manager"
+        ? "Managers can only give the Member and Dashboard viewer roles"
+        : "You are not allowed to give this role"
+    );
+  }
+};

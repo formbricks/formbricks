@@ -341,17 +341,6 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       }
     }
 
-    // A Dashboard viewer can't be a team admin (ADR-0023): admins manage the team and invite people.
-    const adminIds = members.filter((m) => m.role === "admin").map((m) => m.userId);
-    if (adminIds.length > 0) {
-      const viewerAdminCount = await prisma.membership.count({
-        where: { userId: { in: adminIds }, organizationId: team.organizationId, role: "dashboard_viewer" },
-      });
-      if (viewerAdminCount > 0) {
-        throw new OperationNotAllowedError("A Dashboard viewer can't be a team admin");
-      }
-    }
-
     // Check that all specified workspaces belong to the same organization.
     const workspaceIds = workspaces.map((p) => p.workspaceId);
     if (workspaceIds.length > 0) {
@@ -411,9 +400,27 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       },
     };
 
-    await prisma.team.update({
-      where: { id: teamId },
-      data: payload,
+    const adminIds = members.filter((m) => m.role === "admin").map((m) => m.userId);
+    await prisma.$transaction(async (tx) => {
+      // A Dashboard viewer can't be a team admin (ADR-0023): admins manage the team and invite people.
+      // Checked in the write's transaction with the admins' memberships locked, so a concurrent change
+      // of one of them to Dashboard viewer either commits first and is seen here, or waits and then
+      // demotes the admin row this writes (`updateMembership`) (C10).
+      if (adminIds.length > 0) {
+        const adminMemberships = await tx.$queryRaw<Array<{ role: string }>>(
+          Prisma.sql`SELECT "role"::text AS "role" FROM "Membership"
+            WHERE "organizationId" = ${team.organizationId} AND "userId" IN (${Prisma.join(adminIds)})
+            FOR UPDATE`
+        );
+        if (adminMemberships.some(({ role }) => role === "dashboard_viewer")) {
+          throw new OperationNotAllowedError("A Dashboard viewer can't be a team admin");
+        }
+      }
+
+      await tx.team.update({
+        where: { id: teamId },
+        data: payload,
+      });
     });
 
     const membershipUserIds = new Set([

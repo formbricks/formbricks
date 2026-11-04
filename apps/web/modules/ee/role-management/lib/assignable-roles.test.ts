@@ -47,3 +47,34 @@ describe("canAssignOrganizationRole", () => {
     ).toBe(false);
   });
 });
+
+describe("canAssignOrganizationRole on an existing membership (C10)", () => {
+  const context = { isFormbricksCloud: false, isDashboardViewerRoleEnabled: false } as const;
+
+  test("only an Owner changes an existing Owner's role", () => {
+    expect(
+      canAssignOrganizationRole({
+        ...context,
+        assignerRole: "owner",
+        role: "member",
+        targetCurrentRole: "owner",
+      })
+    ).toBe(true);
+    expect(
+      canAssignOrganizationRole({
+        ...context,
+        assignerRole: "manager",
+        role: "member",
+        targetCurrentRole: "owner",
+      })
+    ).toBe(false);
+  });
+
+  test("a Manager gives Member to an existing non-owner", () => {
+    for (const targetCurrentRole of ["member", "manager", null] as const) {
+      expect(
+        canAssignOrganizationRole({ ...context, assignerRole: "manager", role: "member", targetCurrentRole })
+      ).toBe(true);
+    }
+  });
+});

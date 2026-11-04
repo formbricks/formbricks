@@ -109,7 +109,9 @@ describe("single invites", () => {
 
   test("a Manager still can't invite a Manager", async () => {
     as(ids.manager);
-    expect((await invite("manager"))?.serverError).toBe("Managers can only invite users as members");
+    expect((await invite("manager"))?.serverError).toBe(
+      "Managers can only give the Member and Dashboard viewer roles"
+    );
   });
 
   test("a team admin can't invite a Dashboard viewer", async () => {

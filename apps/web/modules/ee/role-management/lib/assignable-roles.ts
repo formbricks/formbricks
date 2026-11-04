@@ -39,6 +39,14 @@ export const getAssignableOrganizationRoles = ({
   return roles;
 };
 
+/**
+ * Whether `role` may be given. On an existing membership, `targetCurrentRole` is its role now: only an
+ * Owner changes an Owner's role, so a Manager can never demote one.
+ */
 export const canAssignOrganizationRole = (
-  context: TAssignableRolesContext & Readonly<{ role: TOrganizationRole }>
-): boolean => getAssignableOrganizationRoles(context).includes(context.role);
+  context: TAssignableRolesContext &
+    Readonly<{ role: TOrganizationRole; targetCurrentRole?: TOrganizationRole | null }>
+): boolean => {
+  if (context.targetCurrentRole === "owner" && context.assignerRole !== "owner") return false;
+  return getAssignableOrganizationRoles(context).includes(context.role);
+};
