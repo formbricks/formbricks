@@ -913,6 +913,17 @@ describe("ZV3CreateSurveyBody", () => {
       }
     });
 
+    // The guard looks a catchall's extra keys up by own key: `metadata.constructor` once resolved to
+    // `Object` and threw, a 500 for a valid body.
+    test("takes big metadata with keys named like prototype members", () => {
+      const metadata = {
+        ...(JSON.parse('{"constructor":1,"toString":"x","__proto__":{"a":1}}') as Record<string, unknown>),
+        pad: repeat(300, () => 1),
+      };
+
+      expect(ZV3CreateSurveyBody.safeParse({ ...validCreateBody, metadata }).success).toBe(true);
+    });
+
     // One bad leaf under a deep chain of condition groups with big valid levels: a guard that checks a
     // level's whole subtree at every level spent ~9 s here for one issue. The timeout is a complexity
     // guard, not a benchmark: the linear walk needs well under 100 ms.

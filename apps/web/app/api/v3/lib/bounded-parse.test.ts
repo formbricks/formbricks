@@ -362,6 +362,50 @@ describe("boundedSchema", () => {
         ]),
         () => ({ list: entries(300, () => "x") }),
       ],
+      [
+        "a loose object's extra keys named like prototype members",
+        z.looseObject({ pad: z.array(z.number()) }),
+        () => ({
+          ...padding,
+          ...JSON.parse('{"constructor":1,"toString":2,"hasOwnProperty":3,"__proto__":4}'),
+        }),
+      ],
+      [
+        "a union branch whose pipe input merges a conflicting intersection",
+        z.union([
+          z.any(),
+          z.object({
+            items: z
+              .array(
+                z.object({ a: z.string().transform((value) => `${value}!`) }).and(z.object({ a: z.string() }))
+              )
+              .pipe(z.any()),
+          }),
+        ]),
+        () => ({ items: entries(300, () => ({ a: "x" })) }),
+      ],
+      [
+        "a discriminated union whose discriminator several branches may omit",
+        z.discriminatedUnion(
+          "kind",
+          [
+            z.object({ kind: z.literal("a").optional(), x: z.array(z.number()) }),
+            z.object({ kind: z.literal("b").optional(), y: z.array(z.number()) }),
+          ],
+          { unionFallback: true }
+        ),
+        () => ({ y: entries(300, (index) => index) }),
+      ],
+      [
+        "a loose record over an enum, with extra keys",
+        z.looseRecord(z.enum(["k1"]), z.string()),
+        () => ({ k1: "ok", ...Object.fromEntries(entries(300, (index) => [`x${index}`, "ok"])) }),
+      ],
+      [
+        "an exhaustive record over a literal union",
+        z.record(z.union([z.literal("a"), z.literal("b")]), z.array(z.number())),
+        () => ({ a: entries(150, (index) => index), b: entries(150, (index) => index) }),
+      ],
       ["a value that contains itself", withPad({ a: z.string() }), cyclic],
       ["a value that contains itself, under a recursive schema", loop, looped],
     ])("%s", (_name, schema, build) => {
@@ -443,6 +487,21 @@ describe("boundedSchema", () => {
     const schema = z.object({ items: z.array(z.object({ c: conflict })) });
 
     const result = boundedSchema(schema).safeParse({ items: entries(300, () => ({ c: { a: "x" } })) });
+
+    expect(result.success).toBe(false);
+  });
+
+  // A big intersection at a pipe's input: each side passes on its own, and only parsing the input to feed
+  // the output side reaches the merge, which Zod throws on.
+  test("reports a conflicting merge at a pipe's input instead of throwing", () => {
+    const schema = z.object({
+      x: z
+        .array(z.number().transform((value) => value + 1))
+        .and(z.array(z.number()))
+        .pipe(z.any()),
+    });
+
+    const result = boundedSchema(schema).safeParse({ x: entries(300, (index) => index) });
 
     expect(result.success).toBe(false);
   });

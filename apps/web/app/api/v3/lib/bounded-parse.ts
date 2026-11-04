@@ -225,30 +225,53 @@ function branchScore(branch: z.ZodType, value: Record<string, unknown>): number 
   return 0;
 }
 
+const isMergeConflict = (error: unknown): boolean =>
+  error instanceof Error && error.message.startsWith("Unmergable intersection");
+
 /**
- * A subtree checked whole: `validate` first, and its issues only when that fails.
- *
- * Checked on its own, a subtree can reach an intersection merge that the whole parse never reaches (it
- * stopped at a sibling's failure), and Zod throws on an unmergeable result. That one throw is reported as
- * the subtree's problem, so the reply stays a 400; any other error is a bug and is rethrown.
+ * `schema.safeParse(value)` for a part of the input. Checked on its own, a part can reach an intersection
+ * merge that the whole parse never reaches (it stopped at a sibling's failure), and Zod throws on an
+ * unmergeable result. That one throw comes back as the part's problem, so the reply stays a 400; any
+ * other error is a bug and is rethrown. Every parse the walk makes goes through here or `checkWhole`.
  */
-function checkWhole(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: IssueSink): void {
+function parsePart(schema: z.ZodType, value: unknown): z.ZodSafeParseResult<unknown> {
   try {
-    if (schema.validate(value)) {
-      return;
-    }
-    const result = schema.safeParse(value);
-    if (!result.success) {
-      sink.add(result.error.issues, path);
-    }
+    return schema.safeParse(value);
   } catch (error) {
-    if (!(error instanceof Error) || !error.message.startsWith("Unmergable intersection")) {
+    if (!isMergeConflict(error)) {
       throw error;
     }
-    sink.add(
-      [{ code: "custom", message: "Invalid input: the intersection's sides conflict", path: [] }],
-      path
-    );
+    return {
+      success: false,
+      error: new z.ZodError([
+        {
+          code: "custom",
+          message: "Invalid input: the intersection's sides conflict",
+          path: [],
+          input: value,
+        },
+      ]),
+    };
+  }
+}
+
+/** A subtree checked whole: `validate` first, and its issues only when that fails. */
+function checkWhole(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: IssueSink): void {
+  let valid: boolean;
+  try {
+    valid = schema.validate(value);
+  } catch (error) {
+    if (!isMergeConflict(error)) {
+      throw error;
+    }
+    valid = false;
+  }
+  if (valid) {
+    return;
+  }
+  const result = parsePart(schema, value);
+  if (!result.success) {
+    sink.add(result.error.issues, path);
   }
 }
 
@@ -400,7 +423,14 @@ function splitObject(
       }
     }
   }
-  walkEach(entries, (key) => shape[key as string] ?? catchall, path, sink, ctx);
+  // Own keys only: `shape.constructor` would otherwise be `Object`, not the catchall.
+  walkEach(
+    entries,
+    (key) => (Object.hasOwn(shape, key as string) ? shape[key as string] : (catchall as z.ZodType)),
+    path,
+    sink,
+    ctx
+  );
 }
 
 const entryJudges = new WeakMap<z.ZodRecord, { entry: z.ZodType; key: z.ZodType }>();
@@ -422,6 +452,28 @@ function recordJudges(schema: z.ZodRecord): { entry: z.ZodType; key: z.ZodType }
   return judges;
 }
 
+/** The keys an enum, a literal or a union of them allows, or `null` when the set is not finite. */
+function finiteKeys(keyType: z.ZodType): string[] | null {
+  if (keyType instanceof z.ZodEnum) {
+    return keyType.options.map(String);
+  }
+  if (keyType instanceof z.ZodLiteral) {
+    return [...keyType.values].map(String);
+  }
+  if (keyType instanceof z.ZodUnion) {
+    const keys: string[] = [];
+    for (const option of keyType.def.options as z.ZodType[]) {
+      const optionKeys = finiteKeys(option);
+      if (!optionKeys) {
+        return null;
+      }
+      keys.push(...optionKeys);
+    }
+    return keys;
+  }
+  return null;
+}
+
 function splitRecord(
   schema: z.ZodRecord,
   value: Record<string, unknown>,
@@ -431,6 +483,22 @@ function splitRecord(
 ): void {
   const keyType = schema.def.keyType as z.ZodType;
   const valueType = schema.def.valueType as z.ZodType;
+
+  // A record over a finite key set (unless partial) is one Zod reads like an object: every declared key's
+  // value, and the extra keys only as the record's own check (passed through when loose, one
+  // `unrecognized_keys` otherwise), which the schema's parse makes.
+  const declared = (schema.def as { partial?: boolean }).partial === true ? null : finiteKeys(keyType);
+  if (declared) {
+    walkEach(
+      declared.filter((key) => key !== "__proto__").map((key): [PropertyKey, unknown] => [key, value[key]]),
+      () => valueType,
+      path,
+      sink,
+      ctx
+    );
+    return;
+  }
+
   for (const [key, entry] of Object.entries(value)) {
     if (sink.full) {
       sink.truncated = true;
@@ -444,7 +512,7 @@ function splitRecord(
       checkWhole(recordJudges(schema).entry, { [key]: entry }, path, sink);
     } else {
       // A big entry: Zod's verdict on the key alone, then the value walked like any other.
-      const keyVerdict = recordJudges(schema).key.safeParse({ [key]: null });
+      const keyVerdict = parsePart(recordJudges(schema).key, { [key]: null });
       if (!keyVerdict.success) {
         sink.add(keyVerdict.error.issues, path);
       } else if (schema.def.mode !== "loose") {
@@ -464,7 +532,7 @@ function splitPipe(
   const input = schema.def.in as z.ZodType;
   const before = sink.issues.length;
   // A transform is one function call (a length check, a normalizer); its parse is how its output is had.
-  const transformed = input instanceof z.ZodTransform ? input.safeParse(value) : null;
+  const transformed = input instanceof z.ZodTransform ? parsePart(input, value) : null;
   if (transformed && !transformed.success) {
     sink.add(transformed.error.issues, path);
   } else if (!transformed) {
@@ -480,7 +548,7 @@ function splitPipe(
   // The walk leaves a big container's own checks (unknown keys, a length, a refinement) to the schema's
   // parse, but a pipe only runs its output side once its input side passed. Its children did, so this
   // parse can only add those own checks: a few issues, never one per entry.
-  const output = transformed ?? input.safeParse(value);
+  const output = transformed ?? parsePart(input, value);
   if (!output.success) {
     sink.add(output.error.issues, path);
     sink.partial = true;
@@ -524,26 +592,46 @@ function splitUnion(
 
   if (schema instanceof z.ZodDiscriminatedUnion) {
     const discriminator = schema.def.discriminator;
-    const branch = options.find((option) => {
+    const matching = options.filter((option) => {
       const branchSchema = unwrap(option);
       if (!(branchSchema instanceof z.ZodObject)) {
         return false;
       }
       const shape = branchSchema.shape as Record<string, z.ZodType>;
-      const field = shape[discriminator] as z.ZodType | undefined;
+      if (!Object.hasOwn(shape, discriminator)) {
+        return false;
+      }
       // An absent discriminator is judged by its absence, as Zod does, not as `undefined`.
       return Object.hasOwn(value, discriminator)
-        ? field?.validate(value[discriminator]) === true
-        : field !== undefined && absenceAllowed(shape, discriminator);
+        ? shape[discriminator].validate(value[discriminator])
+        : absenceAllowed(shape, discriminator);
     });
-    if (branch) {
-      walk(branch, value, path, sink, ctx);
-    } else {
-      checkWhole(schema, value, path, sink);
+    if (matching.length === 1) {
+      walk(matching[0], value, path, sink, ctx);
+      return;
     }
+    // No branch claims it: Zod's own refusal costs nothing, as it stops at the discriminator, unless the
+    // union falls back to trying every branch. Several claimants are tried like a plain union's.
+    const fallsBack = (schema.def as { unionFallback?: boolean }).unionFallback === true;
+    if (matching.length === 0 && !fallsBack) {
+      checkWhole(schema, value, path, sink);
+      return;
+    }
+    splitAmong(matching.length > 0 ? matching : options, value, path, sink, ctx);
     return;
   }
 
+  splitAmong(options, value, path, sink, ctx);
+}
+
+/** The union's branches, best-fitting first, walked until one comes back clean; else the best one's issues. */
+function splitAmong(
+  options: z.ZodType[],
+  value: Record<string, unknown>,
+  path: PropertyKey[],
+  sink: IssueSink,
+  ctx: TWalk
+): void {
   const ranked = options
     .map((option) => ({ option, score: branchScore(option, value) }))
     .filter((entry): entry is { option: z.ZodType; score: number } => entry.score !== null)
