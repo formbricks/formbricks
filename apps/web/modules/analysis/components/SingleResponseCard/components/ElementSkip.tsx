@@ -40,6 +40,27 @@ export const ElementSkip = ({
 }: Readonly<ElementSkipProps>) => {
   const { t } = useTranslation();
   const dateFormats = getSurveyDateFormatMap(elements);
+  /** One line per listed question, its headline with recall resolved. Shared by every status that lists questions. */
+  const renderHeadlines = (questionIds: string[]) =>
+    questionIds.map((questionId) => (
+      <p className="my-2" key={questionId}>
+        {getTextContent(
+          parseRecallInfo(
+            getLocalizedValue(
+              elements.find((question) => question.id === questionId)?.headline ?? {
+                default: "",
+              },
+              "default"
+            ),
+            recallValues,
+            variables,
+            false,
+            locale,
+            dateFormats
+          )
+        )}
+      </p>
+    ));
   return (
     <div>
       {skippedElements && (
@@ -84,29 +105,7 @@ export const ElementSkip = ({
                   </TooltipProvider>
                 )}
               </div>
-              <div className="ml-6 flex flex-col">
-                {skippedElements?.map((questionId) => {
-                  return (
-                    <p className="my-2" key={questionId}>
-                      {getTextContent(
-                        parseRecallInfo(
-                          getLocalizedValue(
-                            elements.find((question) => question.id === questionId)?.headline ?? {
-                              default: "",
-                            },
-                            "default"
-                          ),
-                          recallValues,
-                          variables,
-                          false,
-                          locale,
-                          dateFormats
-                        )
-                      )}
-                    </p>
-                  );
-                })}
-              </div>
+              <div className="ml-6 flex flex-col">{renderHeadlines(skippedElements)}</div>
             </div>
           )}
           {status === "notShown" && (
@@ -134,25 +133,7 @@ export const ElementSkip = ({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                {skippedElements.map((questionId) => (
-                  <p className="my-2" key={questionId}>
-                    {getTextContent(
-                      parseRecallInfo(
-                        getLocalizedValue(
-                          elements.find((question) => question.id === questionId)?.headline ?? {
-                            default: "",
-                          },
-                          "default"
-                        ),
-                        recallValues,
-                        variables,
-                        false,
-                        locale,
-                        dateFormats
-                      )
-                    )}
-                  </p>
-                ))}
+                {renderHeadlines(skippedElements)}
               </div>
             </div>
           )}
@@ -174,28 +155,7 @@ export const ElementSkip = ({
                   className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
                   {t("workspace.surveys.responses.survey_closed")}
                 </p>
-                {skippedElements &&
-                  skippedElements.map((questionId) => {
-                    return (
-                      <p className="my-2" key={questionId}>
-                        {getTextContent(
-                          parseRecallInfo(
-                            getLocalizedValue(
-                              elements.find((question) => question.id === questionId)?.headline ?? {
-                                default: "",
-                              },
-                              "default"
-                            ),
-                            recallValues,
-                            variables,
-                            false,
-                            locale,
-                            dateFormats
-                          )
-                        )}
-                      </p>
-                    );
-                  })}
+                {renderHeadlines(skippedElements)}
               </div>
             </div>
           )}
