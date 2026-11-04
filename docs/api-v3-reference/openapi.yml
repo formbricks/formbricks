@@ -10514,7 +10514,7 @@ components:
             - number
             - boolean
             - date
-          description: The type the value is read and coerced as. A computed field is `string` or `number` today.
+          description: The type the value is read and coerced as. A computed field is `string`, `number` or `date`.
         defaultValue:
           type:
             - string
