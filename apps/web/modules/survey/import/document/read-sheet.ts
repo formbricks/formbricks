@@ -62,8 +62,8 @@ const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
       // The first sheet only; the others are named from the workbook's sheet list, never parsed.
       sheets: 0,
       // No `sheetRows`: SheetJS would stop reading there, and a row past it that the sheet's
-      // `<dimension>` leaves out would be lost without a word. Read whole, the range covers every cell
-      // read, so the row check below sees it; the XML limits bound what is read.
+      // `<dimension>` leaves out would be lost without a word. Read whole, every cell reaches the row
+      // check in `textExtentOf`; the XML limits bound what is read.
       cellFormula: false,
       cellHTML: false,
       cellStyles: false,
@@ -74,12 +74,6 @@ const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
   } catch {
     throw surveyImportFileUnreadable("The workbook could not be read");
   }
-};
-
-/** The rows the sheet's range spans: what its `<dimension>` declares, widened to every cell read. */
-const declaredRowCount = (sheet: XLSX.WorkSheet): number => {
-  const range = sheet["!ref"];
-  return range ? XLSX.utils.decode_range(range).e.r + 1 : 0;
 };
 
 /** Where the sheet's used range starts, zero-based: the first row and column of `readRows`. */
@@ -93,8 +87,9 @@ const originOf = (sheet: XLSX.WorkSheet): { row: number; column: number } => {
 /**
  * The last row and column holding text, zero-based, from the cells SheetJS read — never from the range
  * the file declares, which its `<dimension>` sets to any width: one cell under `A1:XFD5000` would
- * otherwise be read as 82 million empty ones. Refuses a row with text at or past the column limit;
- * cells past it that hold nothing are allowed, as Excel leaves formatted empty ones there. `null` for a
+ * otherwise be read as 82 million empty ones, and one that understates it would hide rows. Refuses text
+ * at or past the row limit, and a row with text at or past the column limit; cells past either that
+ * hold nothing are allowed, as Excel leaves formatted empty ones there. `null` for a
  * sheet with no text. Costs one pass over the cells read, which the XML limits bound.
  */
 const textExtentOf = (sheet: XLSX.WorkSheet): { row: number; column: number } | null => {
@@ -105,6 +100,13 @@ const textExtentOf = (sheet: XLSX.WorkSheet): { row: number; column: number } | 
     row?.forEach((cell, columnIndex) => {
       // An error cell (`#N/A`) reads as empty, as `sheet_to_json` reads it.
       if (!cell || cell.t === "e" || XLSX.utils.format_cell(cell).trim() === "") return;
+      if (rowIndex >= SURVEY_IMPORT_SHEET_MAX_ROWS) {
+        throw documentLimitExceeded(
+          "rows",
+          "file",
+          `The sheet must not have more than ${SURVEY_IMPORT_SHEET_MAX_ROWS} rows`
+        );
+      }
       if (columnIndex >= SURVEY_IMPORT_SHEET_MAX_COLUMNS) {
         throw documentLimitExceeded(
           "columns",
@@ -169,14 +171,6 @@ export const readSheetDocument = (archive: TZipArchive): TDocumentModel => {
   const firstName = book.SheetNames[0];
   const sheet = firstName === undefined ? undefined : book.Sheets[firstName];
   if (!sheet) throw surveyImportFileUnreadable("The workbook has no sheet");
-
-  if (declaredRowCount(sheet) > SURVEY_IMPORT_SHEET_MAX_ROWS) {
-    throw documentLimitExceeded(
-      "rows",
-      "file",
-      `The sheet must not have more than ${SURVEY_IMPORT_SHEET_MAX_ROWS} rows`
-    );
-  }
 
   const origin = originOf(sheet);
   let rows: string[][];

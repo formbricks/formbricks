@@ -180,6 +180,18 @@ describe("readSheetDocument", () => {
     }
   });
 
+  test("takes a sheet whose dimension covers formatted empty rows past the limit", () => {
+    // Excel stretches the dimension over cells that only carry formatting, such as a table style.
+    const stretched = patched(
+      workbook({ Sheet1: [["Q1", "How old are you?"]] }),
+      '<dimension ref="A1:B1"/>',
+      '<dimension ref="A1:F10000"/>'
+    );
+    expect(strFromU8(unzipSync(stretched)["xl/worksheets/sheet1.xml"])).toContain("A1:F10000");
+
+    expect(read(stretched).lines).toHaveLength(1);
+  });
+
   test("refuses text past the row limit that the sheet's dimension leaves out", () => {
     // 4,000 rows, a gap, and one more row at 6,000, under a dimension of A1.
     const rows = Array.from({ length: 6_000 }, (_, index) =>
