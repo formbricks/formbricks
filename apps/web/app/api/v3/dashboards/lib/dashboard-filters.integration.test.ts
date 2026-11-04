@@ -14,7 +14,14 @@ import {
   type TMemoryRecord,
   runMemoryDimensionQuery,
 } from "@/modules/ee/analysis/dashboards/lib/cube-memory-test-utils";
-import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import {
+  type TFilterSpec,
+  toRequestFilters,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
+import type {
+  TDashboardFilter,
+  TLockedDashboardFilter,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getV3DashboardChartData } from "./chart-data-operations";
 import { listV3DashboardFilterValues } from "./filter-values-operations";
 import { duplicateV3Dashboard, getV3Dashboard, replaceV3Dashboard } from "./operations";
@@ -54,16 +61,28 @@ let unreadableDatasetId = "";
 let sequence = 0;
 
 const filterId = (n: number) => `clfi${String(n).padStart(21, "0")}`;
+/** A filter an editor locks on the dashboard, saved with its values. */
 const filterOf = (
   n: number,
   field: string,
-  operator: TDashboardFilter["operator"] = "equals"
-): TDashboardFilter => ({
+  operator: TDashboardFilter["operator"] = "equals",
+  values: string[] = ["en"]
+): TLockedDashboardFilter => ({
   id: filterId(n),
   field,
   operator,
   label: `Filter ${n}`,
+  values,
 });
+
+/** A read's own filters as query parameters: `filter[f1]=<operator>:<field>` and `picks[f1]=<value>`, … */
+const requestFilters = (specs: TFilterSpec[]): Record<string, string | string[]> => {
+  const { rules, picks } = toRequestFilters(specs);
+  return {
+    ...Object.fromEntries(Object.entries(rules).map(([id, rule]) => [`filter[${id}]`, rule])),
+    ...Object.fromEntries(Object.entries(picks).map(([id, values]) => [`picks[${id}]`, values])),
+  };
+};
 
 const ctx = (userId?: string) => ({
   authentication: sessionOf(userId ?? fixture.users.editor),
@@ -84,8 +103,8 @@ const createChart = (query: TChartQuery, datasetId = fixture.datasetId) =>
     select: { id: true },
   });
 
-/** A dashboard holding `charts` side by side, with `filters` pinned to it. */
-const createDashboard = async (chartIds: string[], filters: TDashboardFilter[] = []) =>
+/** A dashboard holding `charts` side by side, with `filters` locked on it. */
+const createDashboard = async (chartIds: string[], filters: TLockedDashboardFilter[] = []) =>
   prisma.dashboard.create({
     data: {
       name: `Board ${++sequence}`,
@@ -163,13 +182,13 @@ beforeEach(() => {
 afterEach(() => resetCubeFake());
 
 describe("saving dashboard filters (ENG-6900)", () => {
-  test("saves filters in order with the one-call save, reads them back, and keeps them on a save without", async () => {
+  test("saves filters with their values in order with the one-call save, reads them back, and keeps them on a save without", async () => {
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
     const dashboard = await createDashboard([chart.id]);
     const filters = [
       filterOf(2, LANGUAGE),
-      filterOf(1, SOURCE, "notEquals"),
-      filterOf(3, ACCOUNT, "contains"),
+      filterOf(1, SOURCE, "notEquals", ["Web", "App"]),
+      filterOf(3, ACCOUNT, "contains", ["acme"]),
     ];
 
     const saved = await replaceV3Dashboard({
@@ -228,7 +247,7 @@ describe("saving dashboard filters (ENG-6900)", () => {
     expect(row.filters).toEqual([filterOf(1, LANGUAGE)]);
   });
 
-  test("takes exactly 10 filters and refuses an 11th, an unknown field and a repeated id before saving", () => {
+  test("takes exactly 10 filters and refuses an 11th, an unknown field, a repeated id and no values before saving", () => {
     const body = (filters: unknown[]) => ({
       name: "Board",
       expectedUpdatedAt: new Date().toISOString(),
@@ -244,6 +263,8 @@ describe("saving dashboard filters (ENG-6900)", () => {
     expect(
       ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE), filterOf(1, LANGUAGE)])).success
     ).toBe(false);
+    // A locked filter applies its values to every read, so it cannot be saved without any.
+    expect(ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "equals", [])])).success).toBe(false);
   });
 
   test("a copy of the dashboard keeps its filters", async () => {
@@ -312,19 +333,24 @@ describe("GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data (ENG-6898, 
     expect(cubeFake.calls).toHaveLength(0);
   });
 
-  test("ANDs a pick onto a saved top-level rule on the same field, keeping the saved rule", async () => {
+  test("ANDs a request's filter onto a saved top-level rule on the same field, keeping the saved rule", async () => {
     const saved = { member: SOURCE, operator: "equals", values: ["Web", "Email"] };
     const chart = await createChart({ measures: ["FeedbackRecords.count"], filters: [saved] });
-    const dashboard = await createDashboard([chart.id], [filterOf(1, SOURCE)]);
+    const dashboard = await createDashboard([chart.id]);
 
-    expect((await readData(dashboard.id, chart.id, { [`picks[${filterId(1)}]`]: "App" })).status).toBe(200);
+    const response = await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([{ field: SOURCE, operator: "equals", values: ["App"] }])
+    );
+    expect(response.status).toBe(200);
 
     expect(cubeFake.calls[0].query.filters).toEqual(
       expect.arrayContaining([saved, { member: SOURCE, operator: "equals", values: ["App"] }])
     );
   });
 
-  test("keeps a nested saved OR group whole and ANDs every pick beside it", async () => {
+  test("keeps a nested saved OR group whole and ANDs every request filter beside it", async () => {
     const nested = {
       or: [
         { member: LANGUAGE, operator: "equals", values: ["en"] },
@@ -337,12 +363,16 @@ describe("GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data (ENG-6898, 
       ],
     };
     const chart = await createChart({ measures: ["FeedbackRecords.count"], filters: [nested] });
-    const dashboard = await createDashboard([chart.id], [filterOf(1, SOURCE), filterOf(2, LANGUAGE)]);
+    const dashboard = await createDashboard([chart.id]);
 
-    await readData(dashboard.id, chart.id, {
-      [`picks[${filterId(1)}]`]: ["Web", "App"],
-      [`picks[${filterId(2)}]`]: "de",
-    });
+    await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([
+        { field: SOURCE, operator: "equals", values: ["Web", "App"] },
+        { field: LANGUAGE, operator: "equals", values: ["de"] },
+      ])
+    );
 
     const sent = cubeFake.calls[0].query.filters ?? [];
     expect(sent).toContainEqual(nested);
@@ -370,36 +400,135 @@ describe("GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data (ENG-6898, 
 
   test("answers an empty chart naming the filter when the dataset lacks a picked field, and ignores unpicked ones", async () => {
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
-    const missing: TDashboardFilter = {
+    const dashboard = await createDashboard([chart.id]);
+    const missing = "FeedbackRecords.ed_area_manager";
+
+    const unpicked = await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([
+        { field: SOURCE, operator: "equals", values: ["Web"] },
+        { field: missing, operator: "equals" },
+      ])
+    );
+    expect((await dataOf(unpicked)).unfilterableFilters).toEqual([]);
+
+    const picked = await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([
+        { field: SOURCE, operator: "equals" },
+        { field: missing, operator: "equals", values: ["Bianchi"] },
+      ])
+    );
+    const data = await dataOf(picked);
+    expect(data.rows).toEqual([]);
+    // A request's filter has no label of its own: it is named by its field.
+    expect(data.unfilterableFilters).toEqual([{ id: "f2", label: missing }]);
+    expect(cubeFake.calls).toHaveLength(1);
+  });
+
+  test("ignores a pick for a filter the request does not name", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id]);
+
+    await readData(dashboard.id, chart.id, { "picks[f1]": "Web" });
+    expect(cubeFake.calls[0].query.filters ?? []).toEqual([]);
+  });
+
+  test("refuses a request filter on a field outside the catalog without asking Cube", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id]);
+
+    const response = await readData(dashboard.id, chart.id, {
+      "filter[f1]": "equals:FeedbackRecords.nope",
+      "picks[f1]": "x",
+    });
+    expect(await outcomeOf(response)).toEqual({ status: 422, code: "unprocessable_content" });
+    expect(cubeFake.calls).toHaveLength(0);
+  });
+});
+
+describe("filters locked on the dashboard (ENG-6900)", () => {
+  test("narrow every chart read, a viewer's included, under the request's own filters", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id], [filterOf(1, SOURCE, "equals", ["Web"])]);
+
+    expect((await readData(dashboard.id, chart.id, {}, fixture.users.viewer)).status).toBe(200);
+    expect(cubeFake.calls[0].query.filters).toEqual([
+      { member: SOURCE, operator: "equals", values: ["Web"] },
+    ]);
+
+    await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([{ field: LANGUAGE, operator: "equals", values: ["de"] }]),
+      fixture.users.viewer
+    );
+    expect(cubeFake.calls[1].query.filters).toEqual([
+      { member: SOURCE, operator: "equals", values: ["Web"] },
+      { member: LANGUAGE, operator: "equals", values: ["de"] },
+    ]);
+  });
+
+  test("cannot be replaced by a request filter of the same field: both apply", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id], [filterOf(1, SOURCE, "equals", ["Web"])]);
+
+    await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([{ field: SOURCE, operator: "equals", values: ["App"] }])
+    );
+    expect(cubeFake.calls[0].query.filters).toEqual([
+      { member: SOURCE, operator: "equals", values: ["Web"] },
+      { member: SOURCE, operator: "equals", values: ["App"] },
+    ]);
+  });
+
+  test("answer an empty chart naming the saved label when the dataset lacks the locked field", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const missing: TLockedDashboardFilter = {
       id: filterId(9),
       field: "FeedbackRecords.ed_area_manager",
       operator: "equals",
       label: "Area Manager",
+      values: ["Bianchi"],
     };
-    const dashboard = await createDashboard([chart.id], [filterOf(1, SOURCE), missing]);
+    const dashboard = await createDashboard([chart.id], [missing]);
 
-    const unpicked = await readData(dashboard.id, chart.id, { [`picks[${filterId(1)}]`]: "Web" });
-    expect((await dataOf(unpicked)).unfilterableFilters).toEqual([]);
-
-    const picked = await readData(dashboard.id, chart.id, { [`picks[${filterId(9)}]`]: "Bianchi" });
-    const data = await dataOf(picked);
+    const data = await dataOf(await readData(dashboard.id, chart.id, {}, fixture.users.viewer));
     expect(data.rows).toEqual([]);
-    expect(data.unfilterableFilters).toEqual([{ id: filterId(9), label: "Area Manager" }]);
-    expect(cubeFake.calls).toHaveLength(1);
+    expect(data.unfilterableFilters).toEqual([{ id: "locked.0", label: "Area Manager" }]);
+    expect(cubeFake.calls).toHaveLength(0);
   });
 
-  test("drops picks for filters the dashboard no longer has", async () => {
+  test("narrow a value list for a viewer as they narrow the charts", async () => {
+    records[fixture.datasetId] = [
+      { [ACCOUNT]: "it", [COUNTRY]: "IT" },
+      { [ACCOUNT]: "de", [COUNTRY]: "DE" },
+    ];
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
-    const dashboard = await createDashboard([chart.id]);
+    const dashboard = await createDashboard([chart.id], [filterOf(1, COUNTRY, "equals", ["IT"])]);
+    answerFromRecords();
 
-    await readData(dashboard.id, chart.id, { [`picks[${filterId(1)}]`]: "Web" });
-    expect(cubeFake.calls[0].query.filters ?? []).toEqual([]);
+    const response = await readValues(
+      dashboard.id,
+      "f1",
+      requestFilters([{ field: ACCOUNT, operator: "equals" }]),
+      fixture.users.viewer
+    );
+    expect(response.status).toBe(200);
+    expect(await valuesOf(response)).toEqual(["it"]);
   });
 });
 
 describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-6927)", () => {
-  const ACCOUNT_FILTER = filterOf(1, ACCOUNT);
-  const COUNTRY_FILTER = filterOf(2, COUNTRY);
+  // The read names its own filters: "account" is the one whose values are listed, "country" narrows it.
+  const RULES = {
+    "filter[account]": `equals:${ACCOUNT}`,
+    "filter[country]": `equals:${COUNTRY}`,
+  };
 
   test("equals the union of what each chart lets through, and never a value outside every chart's rules", async () => {
     // Chart 1 lets country IT through; chart 2 lets source Web through. "leak" is DE + App: each of its
@@ -417,10 +546,10 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
       measures: ["FeedbackRecords.count"],
       filters: [{ member: SOURCE, operator: "equals", values: ["Web"] }],
     });
-    const dashboard = await createDashboard([one.id, two.id], [ACCOUNT_FILTER, COUNTRY_FILTER]);
+    const dashboard = await createDashboard([one.id, two.id], []);
     answerFromRecords();
 
-    const response = await readValues(dashboard.id, ACCOUNT_FILTER.id);
+    const response = await readValues(dashboard.id, "account", RULES);
 
     expect(response.status).toBe(200);
     expect(await valuesOf(response)).toEqual(["de-web", "it-app"]);
@@ -436,22 +565,18 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
     ];
     const one = await createChart({ measures: ["FeedbackRecords.count"] });
     const two = await createChart({ measures: ["FeedbackRecords.count"] }, secondDatasetId);
-    const dashboard = await createDashboard([one.id, two.id], [ACCOUNT_FILTER, COUNTRY_FILTER]);
+    const dashboard = await createDashboard([one.id, two.id], []);
     answerFromRecords();
 
-    expect(await valuesOf(await readValues(dashboard.id, ACCOUNT_FILTER.id))).toEqual(["a1", "b1", "b2"]);
+    expect(await valuesOf(await readValues(dashboard.id, "account", RULES))).toEqual(["a1", "b1", "b2"]);
     expect(cubeFake.calls).toHaveLength(2);
 
     expect(
-      await valuesOf(
-        await readValues(dashboard.id, ACCOUNT_FILTER.id, { [`picks[${COUNTRY_FILTER.id}]`]: "IT" })
-      )
+      await valuesOf(await readValues(dashboard.id, "account", { ...RULES, "picks[country]": "IT" }))
     ).toEqual(["a1", "b1"]);
     // Its own pick never narrows it.
     expect(
-      await valuesOf(
-        await readValues(dashboard.id, ACCOUNT_FILTER.id, { [`picks[${ACCOUNT_FILTER.id}]`]: "a1" })
-      )
+      await valuesOf(await readValues(dashboard.id, "account", { ...RULES, "picks[account]": "a1" }))
     ).toEqual(["a1", "b1", "b2"]);
   });
 
@@ -460,17 +585,17 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
       [ACCOUNT]: `account-${String(i).padStart(5, "0")}`,
     }));
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
-    const dashboard = await createDashboard([chart.id], [ACCOUNT_FILTER]);
+    const dashboard = await createDashboard([chart.id]);
     answerFromRecords();
 
     const all = ZV3DashboardFilterValues.parse(
-      (await (await readValues(dashboard.id, ACCOUNT_FILTER.id)).json()).data
+      (await (await readValues(dashboard.id, "account", RULES)).json()).data
     );
     expect(all.values).toHaveLength(100);
     expect(all.hasMore).toBe(true);
 
     const searched = ZV3DashboardFilterValues.parse(
-      (await (await readValues(dashboard.id, ACCOUNT_FILTER.id, { search: "ACCOUNT-1999" })).json()).data
+      (await (await readValues(dashboard.id, "account", { ...RULES, search: "ACCOUNT-1999" })).json()).data
     );
     expect(searched.values.map((v) => v.value)).toEqual(
       Array.from({ length: 10 }, (_, i) => `account-1999${i}`)
@@ -481,47 +606,42 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
   test("answers a repeated ask from the cache without Cube, and asks again for other picks", async () => {
     records[fixture.datasetId] = [{ [ACCOUNT]: "a", [COUNTRY]: "IT" }];
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
-    const dashboard = await createDashboard([chart.id], [ACCOUNT_FILTER, COUNTRY_FILTER]);
+    const dashboard = await createDashboard([chart.id], []);
     answerFromRecords();
 
-    await readValues(dashboard.id, ACCOUNT_FILTER.id);
-    await readValues(dashboard.id, ACCOUNT_FILTER.id, {}, fixture.users.viewer);
+    await readValues(dashboard.id, "account", RULES);
+    await readValues(dashboard.id, "account", RULES, fixture.users.viewer);
     expect(cubeFake.calls).toHaveLength(1);
 
-    await readValues(dashboard.id, ACCOUNT_FILTER.id, { [`picks[${COUNTRY_FILTER.id}]`]: "IT" });
+    await readValues(dashboard.id, "account", { ...RULES, "picks[country]": "IT" });
     expect(cubeFake.calls).toHaveLength(2);
   });
 
-  test("answers 422 for a filter the dashboard does not have and for one that takes a typed value", async () => {
+  test("answers 422 for a filter the request does not name and for one that takes a typed value", async () => {
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
-    const typed = filterOf(3, ACCOUNT, "contains");
-    // Free text with equals is still typed: listing it would hand readers every record's text (D1).
-    const freeText = filterOf(4, FREE_TEXT);
-    const dashboard = await createDashboard([chart.id], [typed, freeText]);
+    const dashboard = await createDashboard([chart.id]);
+    const params = {
+      "filter[typed]": `contains:${ACCOUNT}`,
+      // Free text with equals is still typed: listing it would hand readers every record's text (D1).
+      "filter[free]": `equals:${FREE_TEXT}`,
+    };
 
-    expect(await outcomeOf(await readValues(dashboard.id, freeText.id))).toEqual({
-      status: 422,
-      code: "unprocessable_content",
-    });
-
-    expect(await outcomeOf(await readValues(dashboard.id, filterId(7)))).toEqual({
-      status: 422,
-      code: "unprocessable_content",
-    });
-    expect(await outcomeOf(await readValues(dashboard.id, typed.id))).toEqual({
-      status: 422,
-      code: "unprocessable_content",
-    });
+    for (const id of ["free", "unnamed", "typed"]) {
+      expect(await outcomeOf(await readValues(dashboard.id, id, params))).toEqual({
+        status: 422,
+        code: "unprocessable_content",
+      });
+    }
     expect(cubeFake.calls).toHaveLength(0);
   });
 
   test("asks Cube again once a widget's chart is edited, though the dashboard is not (S7)", async () => {
     records[fixture.datasetId] = [{ [ACCOUNT]: "a", [COUNTRY]: "IT" }];
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
-    const dashboard = await createDashboard([chart.id], [ACCOUNT_FILTER]);
+    const dashboard = await createDashboard([chart.id]);
     answerFromRecords();
 
-    await readValues(dashboard.id, ACCOUNT_FILTER.id);
+    await readValues(dashboard.id, "account", RULES);
     await prisma.chart.update({
       where: { id: chart.id },
       data: {
@@ -531,7 +651,7 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
         },
       },
     });
-    const after = await readValues(dashboard.id, ACCOUNT_FILTER.id);
+    const after = await readValues(dashboard.id, "account", RULES);
 
     expect(cubeFake.calls).toHaveLength(2);
     expect(await valuesOf(after)).toEqual([]);
@@ -548,26 +668,26 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
       order: [["FeedbackRecords.count", "desc"]],
       limit: 1,
     });
-    const dashboard = await createDashboard([topOne.id], [ACCOUNT_FILTER]);
+    const dashboard = await createDashboard([topOne.id]);
     // The chart's own query is answered with its one shown group.
     cubeFake.respond = ({ query }) =>
       (query.measures ?? []).length > 0 ? [{ [ACCOUNT]: "b", "FeedbackRecords.count": 1 }] : [];
 
-    const response = await readValues(dashboard.id, ACCOUNT_FILTER.id);
+    const response = await readValues(dashboard.id, "account", RULES);
 
     expect(await valuesOf(response)).toEqual(["b"]);
     expect(cubeFake.calls).toHaveLength(1);
   });
 
   test("answers an empty list without Cube for a dashboard with no charts, and refuses an outsider", async () => {
-    const dashboard = await createDashboard([], [ACCOUNT_FILTER]);
-    const response = await readValues(dashboard.id, ACCOUNT_FILTER.id);
+    const dashboard = await createDashboard([]);
+    const response = await readValues(dashboard.id, "account", RULES);
     expect(ZV3DashboardFilterValues.parse((await response.json()).data)).toEqual({
       values: [],
       hasMore: false,
     });
     expect(cubeFake.calls).toHaveLength(0);
 
-    expect((await readValues(dashboard.id, ACCOUNT_FILTER.id, {}, fixture.users.outsider)).status).toBe(403);
+    expect((await readValues(dashboard.id, "account", RULES, fixture.users.outsider)).status).toBe(403);
   });
 });

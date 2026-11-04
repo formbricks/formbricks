@@ -179,7 +179,16 @@ beforeAll(async () => {
       name: "Visit NPS",
       workspaceId: fixture.workspaceId,
       createdBy: fixture.users.owner,
-      filters: [{ id: FILTER_ID, field: "FeedbackRecords.sourceName", operator: "equals", label: "Source" }],
+      // Locked by an editor: applies to every read, the viewer's included.
+      filters: [
+        {
+          id: FILTER_ID,
+          field: "FeedbackRecords.sourceName",
+          operator: "equals",
+          label: "Source",
+          values: ["Web"],
+        },
+      ],
     },
   });
   ids.dashboard = dashboard.id;
@@ -388,8 +397,8 @@ describe("dashboard-bound reads: allowed on a granted workspace, refused elsewhe
   const filterValues = (userId: string) =>
     listV3DashboardFilterValues({
       dashboardId: ids.dashboard,
-      filterId: FILTER_ID,
-      query: ZV3DashboardFilterValuesQuery.parse({}),
+      filterId: "f1",
+      query: ZV3DashboardFilterValuesQuery.parse({ "filter[f1]": "equals:FeedbackRecords.sourceName" }),
       ...ctx(userId, "/api/v3/dashboards/filters/values"),
     });
 

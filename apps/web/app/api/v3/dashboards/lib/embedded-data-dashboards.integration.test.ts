@@ -6,7 +6,7 @@ import { ZV3ChartDataQuery } from "@/app/api/v3/charts/lib/schemas";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { cubeFake, resetCubeFake } from "@/integration/cube-fake";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
-import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { MAX_EMBEDDED_KEYS } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
 import { getV3DashboardChartData } from "./chart-data-operations";
@@ -75,7 +75,7 @@ const createChart = async (datasetId: string, query: TChartQuery) =>
     })
   ).id;
 
-const createDashboard = async (chartIds: string[], filters: TDashboardFilter[]) =>
+const createDashboard = async (chartIds: string[], filters: TLockedDashboardFilter[]) =>
   prisma.dashboard.create({
     data: {
       name: `Board ${++sequence}`,
@@ -92,7 +92,14 @@ const createDashboard = async (chartIds: string[], filters: TDashboardFilter[]) 
     select: { id: true, updatedAt: true },
   });
 
-const planFilter: TDashboardFilter = { id: FILTER_ID, field: PLAN, operator: "equals", label: "Plan" };
+/** Locked on the dashboard with its value, so it narrows every read. */
+const planFilter: TLockedDashboardFilter = {
+  id: FILTER_ID,
+  field: PLAN,
+  operator: "equals",
+  label: "Plan",
+  values: ["Pro"],
+};
 
 beforeAll(async () => {
   fixture = await seedDashboardsFixture();
@@ -108,7 +115,7 @@ beforeEach(() => {
 const syncDatasets = () => synchronizeAuthzedIntegrationFixture();
 
 describe("a dashboard filter on an embedded-data key", () => {
-  test("is saved, and narrows only the charts whose dataset has the key", async () => {
+  test("is saved locked, and narrows every read of only the charts whose dataset has the key", async () => {
     const withPlan = await createDataset(["Plan", "Region"]);
     const withoutPlan = await createDataset(["Region"]);
     await syncDatasets();
@@ -137,7 +144,8 @@ describe("a dashboard filter on an embedded-data key", () => {
       getV3DashboardChartData({
         dashboardId: dashboard.id,
         chartId,
-        query: ZV3DashboardChartDataQuery.parse({ [`picks[${FILTER_ID}]`]: "Pro" }),
+        // No filter in the request: the saved one applies on its own.
+        query: ZV3DashboardChartDataQuery.parse({}),
         ...ctx(),
       });
 
@@ -152,12 +160,13 @@ describe("a dashboard filter on an embedded-data key", () => {
 
     const unfilterable = ZV3DashboardChartData.parse((await (await read(otherChart)).json()).data);
     expect(unfilterable.rows).toEqual([]);
-    expect(unfilterable.unfilterableFilters).toEqual([{ id: FILTER_ID, label: "Plan" }]);
+    // A locked filter goes by its place on the dashboard within a read, and keeps its saved label.
+    expect(unfilterable.unfilterableFilters).toEqual([{ id: "locked.0", label: "Plan" }]);
     // The chart that cannot be narrowed never reaches Cube.
     expect(cubeFake.calls).toHaveLength(1);
   });
 
-  const saveFilters = async (dashboard: { id: string; updatedAt: Date }, filters: TDashboardFilter[]) =>
+  const saveFilters = async (dashboard: { id: string; updatedAt: Date }, filters: TLockedDashboardFilter[]) =>
     replaceV3Dashboard({
       dashboardId: dashboard.id,
       body: ZV3DashboardReplaceBody.parse({
@@ -212,7 +221,7 @@ describe("a dashboard filter on an embedded-data key", () => {
         await createChart(withPlan, { measures: [COUNT], dimensions: [SOURCE] }),
         await createChart(withoutPlan, { measures: [COUNT], dimensions: [SOURCE] }),
       ],
-      [planFilter]
+      []
     );
     cubeFake.respond = ({ query }) =>
       (query.measures ?? []).length === 0
@@ -221,8 +230,8 @@ describe("a dashboard filter on an embedded-data key", () => {
 
     const response = await listV3DashboardFilterValues({
       dashboardId: dashboard.id,
-      filterId: FILTER_ID,
-      query: ZV3DashboardFilterValuesQuery.parse({}),
+      filterId: "plan",
+      query: ZV3DashboardFilterValuesQuery.parse({ "filter[plan]": `equals:${PLAN}` }),
       ...ctx(),
     });
 

@@ -68,7 +68,13 @@ beforeAll(async () => {
         workspaceId: fixture.workspaceId,
         createdBy: fixture.users.owner,
         filters: [
-          { id: FILTER_ID, field: "FeedbackRecords.sourceName", operator: "equals", label: "Source" },
+          {
+            id: FILTER_ID,
+            field: "FeedbackRecords.sourceName",
+            operator: "equals",
+            label: "Source",
+            values: ["Web"],
+          },
         ],
       },
     })
@@ -116,8 +122,8 @@ const reads = (userId: string) => ({
   filterValues: () =>
     listV3DashboardFilterValues({
       dashboardId: ids.dashboard,
-      filterId: FILTER_ID,
-      query: ZV3DashboardFilterValuesQuery.parse({}),
+      filterId: "f1",
+      query: ZV3DashboardFilterValuesQuery.parse({ "filter[f1]": "equals:FeedbackRecords.sourceName" }),
       ...ctx(userId),
     }),
 });

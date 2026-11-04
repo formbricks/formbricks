@@ -119,7 +119,13 @@ beforeAll(async () => {
         workspaceId: fixture.workspaceId,
         createdBy: fixture.users.owner,
         filters: [
-          { id: FILTER_ID, field: "FeedbackRecords.sourceName", operator: "equals", label: "Source" },
+          {
+            id: FILTER_ID,
+            field: "FeedbackRecords.sourceName",
+            operator: "equals",
+            label: "Source",
+            values: ["Web"],
+          },
         ],
       },
     })
@@ -158,7 +164,7 @@ describe("a Dashboard viewer's MCP token", () => {
   test("lists a dashboard filter's values with dashboards:read alone", async () => {
     const result = await call("list_dashboard_filter_values", {
       dashboardId: ids.dashboard,
-      filterId: FILTER_ID,
+      field: "FeedbackRecords.sourceName",
     });
     expect(result.isError, JSON.stringify(result).slice(0, 300)).toBeFalsy();
     expect(result.structuredContent).toMatchObject({ data: { values: expect.any(Array), hasMore: false } });

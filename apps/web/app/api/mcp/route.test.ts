@@ -583,6 +583,7 @@ describe("POST /api/mcp", () => {
       "create_chart",
       "update_chart",
       "get_chart_data",
+      "list_dashboard_filter_values",
       "list_chart_field_values",
       "list_dashboards",
       "get_dashboard",
