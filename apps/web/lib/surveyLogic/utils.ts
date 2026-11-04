@@ -218,6 +218,19 @@ export const updateCondition = (
   }
 };
 
+/**
+ * A new Set value step: an empty formula (ENG-6935), saved only once the formula box holds one. The
+ * one shape every place that starts a calculation uses, so the Add logic menu and switching an
+ * action to Set value open the same editor (one-step operators stay one click away).
+ */
+export const createEmptyCalculateAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
+  id,
+  objective: "calculate",
+  variableId,
+  operator: "assign",
+  value: { type: "expression", value: { type: "static", value: "" } },
+});
+
 export const getUpdatedActionBody = (
   action: TSurveyBlockLogicAction,
   objective: TSurveyBlockLogicActionObjective
@@ -225,13 +238,7 @@ export const getUpdatedActionBody = (
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":
-      return {
-        id: action.id,
-        objective: "calculate",
-        variableId: "",
-        operator: "assign",
-        value: { type: "static", value: "" },
-      };
+      return createEmptyCalculateAction(action.id);
     case "requireAnswer":
       return {
         id: action.id,

@@ -8,7 +8,7 @@ import type {
 } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { duplicateLogicItem } from "@/lib/surveyLogic/utils";
+import { createEmptyCalculateAction, duplicateLogicItem } from "@/lib/surveyLogic/utils";
 
 /**
  * Operations on a list of logic rules (ENG-6929). The rule editor used to be wired to one block's
@@ -73,9 +73,6 @@ export interface TNewRuleOptions {
   variableId?: string;
 }
 
-/** An empty formula: the step is saved only once the formula box holds one. */
-const EMPTY_FORMULA = { type: "expression", value: { type: "static", value: "" } } as const;
-
 const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): TSurveyBlockLogicAction => {
   switch (kind) {
     case "jump":
@@ -85,13 +82,7 @@ const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): 
       return { id: createId(), objective: "markLowQuality" };
     case "calculate":
     case "setValue":
-      return {
-        id: createId(),
-        objective: "calculate",
-        variableId: variableId ?? "",
-        operator: "assign",
-        value: { ...EMPTY_FORMULA, value: { ...EMPTY_FORMULA.value } },
-      };
+      return createEmptyCalculateAction(createId(), variableId);
   }
 };
 
