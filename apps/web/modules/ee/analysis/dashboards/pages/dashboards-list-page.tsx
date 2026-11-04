@@ -46,7 +46,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
   }
 
   // A Dashboard viewer sees the workspace's dashboards and nothing about its Feedback Datasets, which
-  // they may not read (ADR-0018): no data-source empty states, no Create, no Charts tab.
+  // they may not read (ADR-0023): no data-source empty states, no Create, no Charts tab.
   if (isDashboardViewer) {
     return (
       <AnalysisPageLayout

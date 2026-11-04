@@ -1,5 +1,5 @@
 /**
- * The OAuth scopes a Dashboard viewer may grant an MCP client (ADR-0018, ENG-6889): reading dashboards,
+ * The OAuth scopes a Dashboard viewer may grant an MCP client (ADR-0023, ENG-6889): reading dashboards,
  * plus the identity and refresh scopes every token needs. Whatever else a client asks for is left out,
  * at consent and again by the MCP resource server, so a viewer's token never opens another tool.
  */

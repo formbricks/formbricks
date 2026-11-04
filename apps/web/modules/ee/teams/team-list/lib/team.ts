@@ -341,7 +341,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       }
     }
 
-    // A Dashboard viewer can't be a team admin (ADR-0018): admins manage the team and invite people.
+    // A Dashboard viewer can't be a team admin (ADR-0023): admins manage the team and invite people.
     const adminIds = members.filter((m) => m.role === "admin").map((m) => m.userId);
     if (adminIds.length > 0) {
       const viewerAdminCount = await prisma.membership.count({

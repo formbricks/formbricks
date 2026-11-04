@@ -8,7 +8,7 @@ import {
 } from "@/lib/date-ranges";
 import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
 
-// The dashboard-level date filter only ever narrows the "Collected at" time dimension (ADR-0019).
+// The dashboard-level date filter only ever narrows the "Collected at" time dimension (ADR-0024).
 // Other time dimensions (e.g. createdAt) are left untouched.
 export const COLLECTED_AT_DIMENSION = "FeedbackRecords.collectedAt";
 
@@ -123,7 +123,7 @@ export const toDateRangeRule = (
 };
 
 /**
- * Narrow a chart query to the dashboard's date range (ADR-0019): the requested range is ANDed with the one
+ * Narrow a chart query to the dashboard's date range (ADR-0024): the requested range is ANDed with the one
  * saved on the chart's "Collected at" time dimension, never replacing it. Other time dimensions are left
  * untouched.
  *

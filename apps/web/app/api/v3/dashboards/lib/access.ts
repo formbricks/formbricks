@@ -14,7 +14,7 @@ export type TV3DashboardOperationContext = TV3ChartOperationContext;
  * Authorize the caller against the workspace a loaded dashboard lives in — taken from the row, never from
  * the request, so a dashboard id cannot be paired with a workspace the caller happens to reach. A
  * dashboard that does not exist answers the same 403 as one the caller may not see. Reads that a Dashboard
- * viewer may make pass `{ allowDashboardViewer: true }` (ADR-0018); writes never do.
+ * viewer may make pass `{ allowDashboardViewer: true }` (ADR-0023); writes never do.
  */
 export async function authorizeLoadedDashboard<TRow extends { workspaceId: string }>(
   row: TRow | null,

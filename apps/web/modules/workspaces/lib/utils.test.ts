@@ -108,7 +108,7 @@ describe("getWorkspaceAuth billing gate (ENG-1763)", () => {
   );
 });
 
-describe("getWorkspaceAuth Dashboard viewer gate (ADR-0018)", () => {
+describe("getWorkspaceAuth Dashboard viewer gate (ADR-0023)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

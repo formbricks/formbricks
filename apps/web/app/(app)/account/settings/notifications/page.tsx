@@ -42,7 +42,7 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
     where: {
       userId,
       // Neither role reads responses: billing sees billing only, and a Dashboard viewer only dashboards
-      // (ADR-0018), so neither is offered response alerts.
+      // (ADR-0023), so neither is offered response alerts.
       role: {
         notIn: ["billing", "dashboard_viewer"],
       },

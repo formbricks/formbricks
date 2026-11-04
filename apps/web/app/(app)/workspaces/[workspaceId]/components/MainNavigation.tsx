@@ -231,7 +231,7 @@ export const MainNavigation = ({
             disabled: isMembershipPending || isBilling,
           },
           {
-            // A Dashboard viewer has Dashboards and nothing else of Analysis (ADR-0018).
+            // A Dashboard viewer has Dashboards and nothing else of Analysis (ADR-0023).
             name: isDashboardViewer ? t("common.dashboards") : t("common.analysis"),
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,

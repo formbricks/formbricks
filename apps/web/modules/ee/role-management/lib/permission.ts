@@ -24,7 +24,7 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
 /**
  * The Dashboard viewer gate for every path that gives a role: single and bulk invites, invite edits and
  * membership edits. The role is given only while Access Control and Dashboards are both entitled
- * (ADR-0018); the entitlement is read only when a viewer is actually being given.
+ * (ADR-0023); the entitlement is read only when a viewer is actually being given.
  */
 export const assertDashboardViewerRoleAvailable = async (
   organizationId: string,

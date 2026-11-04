@@ -561,7 +561,7 @@ async function authenticateMcpOAuthBearer(
     });
   }
 
-  // ADR-0018 / ENG-6889: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the
+  // ADR-0023 / ENG-6889: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the
   // token carries. Consent already narrows new grants; this bounds a token minted before the user became
   // a viewer, for the up-to-15 minutes it stays valid, and any grant a revocation missed.
   if (await isDashboardViewerOnly(sessionAuthentication.user.id)) {

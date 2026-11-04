@@ -391,13 +391,13 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
-      // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
-      // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
-      // leave the tokens live. See oauth-grant-revocation.ts.
-      // ADR-0018 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
+      // ADR-0023 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);
       if (viewerConsent) return viewerConsent;
+      // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
+      // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
+      // leave the tokens live. See oauth-grant-revocation.ts.
       return await revokeOAuthConsentBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),

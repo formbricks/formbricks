@@ -147,7 +147,7 @@ export async function getV3DashboardWidget({
       getDashboardWorkspaceRow(dashboardId),
       getWidgetResourceRow(dashboardId, widgetId),
     ]);
-    // Reading a widget is reading the dashboard, so a Dashboard viewer may (ADR-0018).
+    // Reading a widget is reading the dashboard, so a Dashboard viewer may (ADR-0023).
     const loaded = await authorizeLoadedDashboard(dashboard, "read", context, { allowDashboardViewer: true });
     if (loaded instanceof Response) return loaded;
     if (!widget) return problemForbidden(requestId, undefined, instance);

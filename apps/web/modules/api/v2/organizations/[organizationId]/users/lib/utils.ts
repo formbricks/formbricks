@@ -109,7 +109,7 @@ export const canAssignOrganizationRole = (
   targetRole: TOrganizationRole,
   targetCurrentRole?: TOrganizationRole | null
 ): boolean => {
-  // The Dashboard viewer (ADR-0018) is given only in the app, where its entitlement and the rule that it
+  // The Dashboard viewer (ADR-0023) is given only in the app, where its entitlement and the rule that it
   // can't be a team admin are enforced; this legacy API never gives it.
   if (targetRole === OrganizationRole.dashboard_viewer) return false;
   if (assignerRole === OrganizationRole.owner) return true;

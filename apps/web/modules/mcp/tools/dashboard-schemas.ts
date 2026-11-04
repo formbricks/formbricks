@@ -97,7 +97,7 @@ export const ZMcpChartQuery = z
 
 /**
  * A date range the read is for. It narrows the chart's own range on collectedAt, the way the dashboard
- * date filter does (ADR-0019).
+ * date filter does (ADR-0024).
  */
 export const ZMcpChartDateRange = z
   .union([

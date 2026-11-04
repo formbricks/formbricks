@@ -337,7 +337,7 @@ describe("authenticateMcpRequest", () => {
     }
   });
 
-  test("bounds a Dashboard viewer's OAuth token to dashboards:read, whatever it carries (ADR-0018)", async () => {
+  test("bounds a Dashboard viewer's OAuth token to dashboards:read, whatever it carries (ADR-0023)", async () => {
     isDashboardViewerOnlyMock.mockResolvedValueOnce(true);
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,

@@ -157,7 +157,7 @@ describe("canAssignOrganizationRole", () => {
     expect(canAssignOrganizationRole("owner", "member")).toBe(true);
   });
 
-  test("nobody gives the Dashboard viewer role through this API; the app does (ADR-0018)", () => {
+  test("nobody gives the Dashboard viewer role through this API; the app does (ADR-0023)", () => {
     expect(canAssignOrganizationRole("owner", "dashboard_viewer")).toBe(false);
     expect(canAssignOrganizationRole("manager", "dashboard_viewer")).toBe(false);
   });

@@ -7,7 +7,7 @@ interface AnalysisPageLayoutProps {
   pageTitle: string;
   workspaceId: string;
   cta?: ReactNode;
-  /** Hides the Dashboards / Charts tabs: a Dashboard viewer has no Charts (ADR-0018). */
+  /** Hides the Dashboards / Charts tabs: a Dashboard viewer has no Charts (ADR-0023). */
   hideSecondaryNavigation?: boolean;
   children: ReactNode;
 }

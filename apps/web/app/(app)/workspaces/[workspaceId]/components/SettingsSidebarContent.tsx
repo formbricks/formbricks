@@ -431,7 +431,7 @@ export const SettingsSidebarContent = ({
     },
   ];
 
-  // A Dashboard viewer (ADR-0018) keeps the organization switcher, Profile and Notifications, and none of
+  // A Dashboard viewer (ADR-0023) keeps the organization switcher, Profile and Notifications, and none of
   // the workspace or organization settings.
   const visibleOrganizationItems = isDashboardViewer ? [] : organizationItems;
   const isWorkspaceSectionHidden = hideWorkspaceSection || isDashboardViewer;
