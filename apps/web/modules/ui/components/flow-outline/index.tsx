@@ -44,9 +44,12 @@ export const FlowOutlineGroup = ({ children }: { readonly children: ReactNode })
   <div className="space-y-2">{children}</div>
 );
 
-/** The rows that run after a block, indented under it. */
+/**
+ * The rows that run after a block, indented under it. No top padding: the group's own gap sits above
+ * it, so "Add logic" is as far from its block as from the next one.
+ */
 export const FlowOutlineChildren = ({ children }: { readonly children: ReactNode }) => (
-  <div className="ml-5 space-y-2 border-l-2 border-slate-200 pt-2 pl-3">{children}</div>
+  <div className="ml-5 space-y-2 border-l-2 border-slate-200 pl-3">{children}</div>
 );
 
 /** A quiet line on the spine, e.g. where everyone else goes after a block. */
