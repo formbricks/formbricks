@@ -31,7 +31,7 @@ import {
   getShuffleOptionAfterAddingSpecialChoice,
   getShuffleOptionAfterRemovingSpecialChoice,
 } from "@/modules/survey/editor/lib/special-choices";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -156,12 +156,13 @@ export const MultipleChoiceElementForm = ({
     if (lock.isOptionLocked("choices", choiceToDelete)) return;
 
     if (choiceToDelete !== "other" && choiceToDelete !== "none") {
-      const idx = findOptionUsedInLogic(localSurvey, element.id, choiceToDelete);
-      if (idx !== -1) {
+      const use = findOptionUse(localSurvey, element.id, choiceToDelete);
+      if (use) {
+        const questionIndex = use.elementIndex + 1;
         toast.error(
-          t("workspace.surveys.edit.option_used_in_logic_error", {
-            questionIndex: idx + 1,
-          })
+          use.kind === "showIf"
+            ? t("workspace.surveys.edit.option_used_in_show_if_error", { questionIndex })
+            : t("workspace.surveys.edit.option_used_in_logic_error", { questionIndex })
         );
         return;
       }

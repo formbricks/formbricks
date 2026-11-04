@@ -45,8 +45,9 @@ import {
   withFilledCodes,
 } from "@/modules/survey/editor/lib/blocks";
 import {
+  type TUseKind,
   findBlockUsedInLogic,
-  findElementUsedInLogic,
+  findElementUse,
   isUsedInQuota,
   isUsedInRecall,
   scrollElementCardIntoView,
@@ -112,11 +113,24 @@ export const ElementsView = ({
   onOpenFlow,
 }: Readonly<ElementsViewProps>) => {
   const { t } = useTranslation();
+  /** The warning's text. Literal keys, so the translation scan sees them. */
+  const getDeletionWarningText = (useKind: TUseKind | undefined): string => {
+    switch (useKind) {
+      case "showIf":
+        return t("workspace.surveys.edit.question_used_in_show_if_warning_text");
+      case "copiedOptions":
+        return t("workspace.surveys.edit.question_options_copied_warning_text");
+      default:
+        return t("workspace.surveys.edit.question_used_in_logic_warning_text");
+    }
+  };
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
     open: boolean;
     elementIdx: number;
     type: "element" | "block";
     blockId?: string;
+    /** What uses the question: a rule (the default), a show-if, or another question's copied options. */
+    useKind?: TUseKind;
   }>({
     open: false,
     elementIdx: 0,
@@ -338,9 +352,9 @@ export const ElementsView = ({
       return;
     }
 
-    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
-    if (usedElementIdx !== -1) {
-      setLogicDeletionWarning({ open: true, elementIdx, type: "element" });
+    const use = findElementUse(localSurvey, elementId);
+    if (use) {
+      setLogicDeletionWarning({ open: true, elementIdx, type: "element", useKind: use.kind });
       return;
     }
 
@@ -871,7 +885,7 @@ export const ElementsView = ({
         open={logicDeletionWarning.open}
         setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
         title={t("workspace.surveys.edit.question_used_in_logic_warning_title")}
-        body={t("workspace.surveys.edit.question_used_in_logic_warning_text")}
+        body={getDeletionWarningText(logicDeletionWarning.useKind)}
         buttonText={t("workspace.surveys.edit.delete_anyways")}
         onConfirm={() => {
           if (logicDeletionWarning.type === "element") {

@@ -16,7 +16,7 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { isLabelValidForAllLanguages } from "../lib/validation";
@@ -76,22 +76,24 @@ export const MatrixElementForm = ({
 
     // check if the label is used in logic
     if (type === "column") {
-      const elementIdx = findOptionUsedInLogic(localSurvey, element.id, index.toString());
-      if (elementIdx !== -1) {
+      const use = findOptionUse(localSurvey, element.id, index.toString());
+      if (use) {
+        const questionIndex = use.elementIndex + 1;
         toast.error(
-          t("workspace.surveys.edit.column_used_in_logic_error", {
-            questionIndex: elementIdx + 1,
-          })
+          use.kind === "showIf"
+            ? t("workspace.surveys.edit.column_used_in_show_if_error", { questionIndex })
+            : t("workspace.surveys.edit.column_used_in_logic_error", { questionIndex })
         );
         return;
       }
     } else {
-      const elementIdx = findOptionUsedInLogic(localSurvey, element.id, index.toString(), true);
-      if (elementIdx !== -1) {
+      const use = findOptionUse(localSurvey, element.id, index.toString(), true);
+      if (use) {
+        const questionIndex = use.elementIndex + 1;
         toast.error(
-          t("workspace.surveys.edit.row_used_in_logic_error", {
-            questionIndex: elementIdx + 1,
-          })
+          use.kind === "showIf"
+            ? t("workspace.surveys.edit.row_used_in_show_if_error", { questionIndex })
+            : t("workspace.surveys.edit.row_used_in_logic_error", { questionIndex })
         );
         return;
       }
