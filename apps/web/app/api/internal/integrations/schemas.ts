@@ -122,19 +122,23 @@ export type TIntegrationMappingsByType = {
   slack: TIntegrationSlackConfigData;
 };
 
+type TMappingBodyMatchesStoredType = {
+  [K in TIntegrationTypeParam]: z.output<
+    (typeof ZIntegrationMappingBody)[K]
+  > extends TIntegrationMappingsByType[K]
+    ? true
+    : false;
+};
+type TAllTrue<T extends true> = T;
+
 /**
  * Compile-time tie between these body schemas and the shared integration types: a mapping the PUT
  * accepts must be a valid stored mapping, so a field the shared type adds or makes required fails the
  * build here instead of drifting.
  */
-const MAPPING_BODIES_MATCH_STORED_TYPES: {
-  [K in TIntegrationTypeParam]: z.output<
-    (typeof ZIntegrationMappingBody)[K]
-  > extends TIntegrationMappingsByType[K]
-    ? true
-    : never;
-} = { googleSheets: true, airtable: true, notion: true, slack: true };
-void MAPPING_BODIES_MATCH_STORED_TYPES;
+export type TIntegrationMappingBodiesMatchStoredTypes = TAllTrue<
+  TMappingBodyMatchesStoredType[TIntegrationTypeParam]
+>;
 
 const pickShape = (schema: z.ZodObject, value: object): Record<string, unknown> =>
   Object.fromEntries(
