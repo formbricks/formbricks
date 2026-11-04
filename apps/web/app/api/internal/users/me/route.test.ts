@@ -239,6 +239,16 @@ describe("PATCH /api/internal/users/me", () => {
     expect(mocks.updateUser).not.toHaveBeenCalled();
   });
 
+  test("still reports any other send failure: an email that never went out is not a 204", async () => {
+    mocks.sendVerificationNewEmail.mockRejectedValue(new Error("smtp down"));
+
+    const response = await patchProfile({ email: "new@example.com", password: "Correct-horse-1" });
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("smtp down");
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
   test("answers 429 once the email-change rate limit is hit", async () => {
     mocks.applyRateLimit.mockImplementation(async (config: { namespace: string }) => {
       if (config.namespace === "action:email")

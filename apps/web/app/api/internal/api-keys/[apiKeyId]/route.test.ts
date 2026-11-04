@@ -176,6 +176,7 @@ describe("DELETE /api/internal/api-keys/{apiKeyId}", () => {
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "deleted",
+        targetType: "apiKey",
         status: "success",
         organizationId: ORG_ID,
         targetId: KEY_ID,

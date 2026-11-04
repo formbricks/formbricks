@@ -339,7 +339,12 @@ describe("DELETE /api/internal/feedback-sources/{feedbackSourceId}", () => {
 
     expect(response.status).toBe(204);
     expect(mocks.deleteFeedbackSource).toHaveBeenCalledWith(SOURCE_ID, WORKSPACE_ID);
-    expect(lastAudit()).toMatchObject({ action: "deleted", status: "success", oldObject: { id: SOURCE_ID } });
+    expect(lastAudit()).toMatchObject({
+      action: "deleted",
+      targetType: "feedbackSource",
+      status: "success",
+      oldObject: { id: SOURCE_ID },
+    });
   });
 
   test("refuses a caller without access to the source's dataset, and deletes nothing", async () => {

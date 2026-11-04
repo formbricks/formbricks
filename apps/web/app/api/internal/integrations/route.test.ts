@@ -6,6 +6,7 @@ import {
   OperationNotAllowedError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { V3_INVALID_PARAMS_MAX } from "@/app/api/v3/lib/invalid-params";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE } from "@/lib/survey/visibility/outbound";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -116,6 +117,12 @@ const channels = (type = "slack") =>
   CHANNELS(send("GET", `${base}/${type}/channels${query}`), typeProps(type));
 
 const lastAudit = () => mocks.queueAuditEvent.mock.calls.at(-1)?.[0];
+/** Every route asks for write access to the workspace named in the query, and only that one. */
+const expectWorkspaceWriteChecked = () =>
+  expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "workspace.write", {
+    type: "workspace",
+    id: WORKSPACE_ID,
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -226,6 +233,14 @@ describe("PUT /api/internal/integrations/{type}", () => {
     expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
   });
 
+  test("bounds the invalid_params list however many mappings are wrong", async () => {
+    const data = Array.from({ length: 500 }, () => ({ ...slackMapping, channelId: 42 }));
+    const body = await (await put({ config: { key: {}, data } })).json();
+
+    expect(body.invalid_params.length).toBeLessThanOrEqual(V3_INVALID_PARAMS_MAX + 1);
+    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+  });
+
   test.each([
     ["an integration type it doesn't manage", () => put({ config: {} }, "n8n")],
     ["a body that isn't a configuration", () => put({ type: "slack", config: {} })],
@@ -251,7 +266,12 @@ describe("DELETE /api/internal/integrations/{type}", () => {
     expect(mocks.getIntegrationByType).toHaveBeenCalledWith(WORKSPACE_ID, "slack");
     expect(mocks.deleteIntegration).toHaveBeenCalledWith(INTEGRATION_ID);
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.integrationMutation, USER_ID);
-    expect(lastAudit()).toMatchObject({ action: "deleted", status: "success", targetId: INTEGRATION_ID });
+    expect(lastAudit()).toMatchObject({
+      action: "deleted",
+      targetType: "integration",
+      status: "success",
+      targetId: INTEGRATION_ID,
+    });
   });
 
   test("answers 404 when the workspace has no such integration", async () => {
@@ -263,7 +283,9 @@ describe("DELETE /api/internal/integrations/{type}", () => {
   test("refuses a caller without write access, before looking anything up", async () => {
     mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
     expect((await remove()).status).toBe(403);
+    expectWorkspaceWriteChecked();
     expect(mocks.getIntegrationByType).not.toHaveBeenCalled();
+    expect(mocks.deleteIntegration).not.toHaveBeenCalled();
   });
 });
 
@@ -282,6 +304,14 @@ describe("GET /api/internal/integrations/googleSheets/connection", () => {
 
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual({ status });
+  });
+
+  test("refuses a caller without write access to the workspace, before reading the integration", async () => {
+    mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
+    expect((await connection()).status).toBe(403);
+    expectWorkspaceWriteChecked();
+    expect(mocks.getIntegrationByType).not.toHaveBeenCalled();
+    expect(mocks.validateGoogleSheetsConnection).not.toHaveBeenCalled();
   });
 
   test("is only for Google Sheets", async () => {
@@ -330,6 +360,14 @@ describe("GET /api/internal/integrations/googleSheets/spreadsheets/{spreadsheetI
     expect((await response.json()).details).toEqual({ reason });
   });
 
+  test("refuses a caller without write access to the workspace, before reading the integration", async () => {
+    mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
+    expect((await spreadsheet()).status).toBe(403);
+    expectWorkspaceWriteChecked();
+    expect(mocks.getIntegrationByType).not.toHaveBeenCalled();
+    expect(mocks.getSpreadsheetNameById).not.toHaveBeenCalled();
+  });
+
   test("answers 502 when Google fails, without relaying its text", async () => {
     mocks.getSpreadsheetNameById.mockRejectedValue(
       new UnknownError("Error while fetching spreadsheet data: boom")
@@ -365,6 +403,7 @@ describe("GET /api/internal/integrations/slack/channels", () => {
   test("refuses a caller without write access to the workspace", async () => {
     mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
     expect((await channels()).status).toBe(403);
+    expectWorkspaceWriteChecked();
     expect(mocks.getSlackChannels).not.toHaveBeenCalled();
   });
 

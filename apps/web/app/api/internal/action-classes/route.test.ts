@@ -199,12 +199,24 @@ describe("DELETE /api/internal/action-classes/{actionClassId}", () => {
     const response = await remove();
 
     expect(response.status).toBe(204);
+    expect(mocks.assertCan).toHaveBeenCalledWith(actor, "workspace.write", {
+      type: "workspace",
+      id: WORKSPACE_ID,
+    });
     expect(mocks.deleteActionClass).toHaveBeenCalledWith(ACTION_ID);
-    expect(lastAudit()).toMatchObject({ action: "deleted", status: "success", oldObject: actionClass() });
+    expect(lastAudit()).toMatchObject({
+      action: "deleted",
+      targetType: "actionClass",
+      status: "success",
+      oldObject: actionClass(),
+    });
   });
 
   test("refuses a read-only member with 403", async () => {
-    mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
+    // A read-only member: reading the workspace is allowed, writing it is not.
+    mocks.assertCan.mockImplementation(async (_actor: unknown, action: string) => {
+      if (action === "workspace.write") throw new AuthorizationError("Not authorized");
+    });
     expect((await remove()).status).toBe(403);
     expect(mocks.deleteActionClass).not.toHaveBeenCalled();
   });

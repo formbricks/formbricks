@@ -176,6 +176,12 @@ describe("rateLimitConfigs", () => {
         allowedPerInterval: 20,
         namespace: "api:internal:heic-conversions",
       });
+      // One call per target language, each up to 8192 output tokens: a loosened quota is a cost regression.
+      expect(rateLimitConfigs.api.internalAiTranslate).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:ai-translations",
+      });
     });
 
     test("should have all action configurations", () => {

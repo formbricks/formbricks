@@ -304,7 +304,12 @@ describe("writes", () => {
 
     expect(response.status).toBe(204);
     expect(mocks.library.deleteSharedEmbeddedData).toHaveBeenCalledWith(FIELD_ID, WORKSPACE_ID);
-    expect(lastAudit()).toMatchObject({ action: "deleted", status: "success", oldObject: row() });
+    expect(lastAudit()).toMatchObject({
+      action: "deleted",
+      targetType: "embeddedData",
+      status: "success",
+      oldObject: row(),
+    });
   });
 
   test("promote sends only the library key and records the local row it was before", async () => {

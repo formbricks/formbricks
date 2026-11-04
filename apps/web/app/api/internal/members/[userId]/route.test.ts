@@ -281,6 +281,11 @@ describe("PATCH /api/internal/members/{userId}", () => {
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("Role management is not allowed for this organization");
     expect(mocks.updateMembership).not.toHaveBeenCalled();
+    // Both authorization checks ran, and both before the licence: a caller who may not manage the
+    // organization never learns whether it holds the entitlement.
+    expect(checkedActions()).toEqual(["organization.manage_access", "organization.manage"]);
+    const [licenceCheck] = mocks.checkRoleManagementPermission.mock.invocationCallOrder;
+    expect(Math.max(...mocks.can.mock.invocationCallOrder)).toBeLessThan(licenceCheck);
   });
 
   test("answers 403 for a user who isn't a member of the organization", async () => {

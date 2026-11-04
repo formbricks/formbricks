@@ -225,6 +225,7 @@ describe("PATCH /api/internal/feedback-datasets/{datasetId}", () => {
     expect(mocks.updateFeedbackDirectory).toHaveBeenCalledWith(DATASET_ID, ORG_ID, { isArchived: true });
     expect(lastAudit()).toMatchObject({
       action: "updated",
+      targetType: "feedbackDirectory",
       status: "success",
       organizationId: ORG_ID,
       targetId: DATASET_ID,

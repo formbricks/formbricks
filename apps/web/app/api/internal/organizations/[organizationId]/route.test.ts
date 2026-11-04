@@ -41,6 +41,7 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("server-only", () => ({}));
 
 const ORG_ID = "clorg11111111111111111111";
+const OTHER_ORG_ID = "clorg22222222222222222222";
 const USER_ID = "cluser1111111111111111111";
 
 const organization = (overrides: Record<string, unknown> = {}) => ({
@@ -74,9 +75,15 @@ const patch = (
 const remove = ({ id = ORG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
   DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id) as never);
 
-/** Grant exactly these organization actions. */
-const allow = (...actions: string[]) =>
-  mocks.can.mockImplementation(async (_actor: unknown, action: string) => actions.includes(action));
+/** Grant exactly these actions, on that organization only. */
+const allowOn = (organizationId: string, ...actions: string[]) =>
+  mocks.can.mockImplementation(
+    async (_actor: unknown, action: string, resource: { type: string; id: string }) =>
+      resource.type === "organization" && resource.id === organizationId && actions.includes(action)
+  );
+/** Grant exactly these actions on the organization under test. */
+const allow = (...actions: string[]) => allowOn(ORG_ID, ...actions);
+const actor = { type: "user", id: USER_ID };
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action]) => action);
 
@@ -105,6 +112,7 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
       displayTimeZone: null,
     });
     expect(checkedActions()).toEqual(["organization.write"]);
+    expect(mocks.can).toHaveBeenCalledWith(actor, "organization.write", { type: "organization", id: ORG_ID });
     expect(mocks.updateOrganization).toHaveBeenCalledWith(ORG_ID, { name: "Acme Inc." });
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -126,6 +134,7 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).data.displayTimeZone).toBe("Europe/Lisbon");
     expect(checkedActions()).toEqual(["organization.manage"]);
+    expect(mocks.can).toHaveBeenCalledWith(actor, "organization.manage", { type: "organization", id: ORG_ID });
   });
 
   test("resets the display time zone to the UTC default with null", async () => {
@@ -152,6 +161,14 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ status: "failure", organizationId: ORG_ID, targetId: ORG_ID })
     );
+  });
+
+  test("refuses an owner of another organization with 403, and changes nothing", async () => {
+    allowOn(OTHER_ORG_ID, "organization.write", "organization.manage");
+    expect((await patch({ name: "Taken over", displayTimeZone: "Europe/Lisbon" })).status).toBe(403);
+    expect(mocks.can).toHaveBeenCalledWith(actor, "organization.write", { type: "organization", id: ORG_ID });
+    expect(mocks.getOrganization).not.toHaveBeenCalled();
+    expect(mocks.updateOrganization).not.toHaveBeenCalled();
   });
 
   test("answers 403 for an organization that is gone, the same as for one the caller can't see", async () => {
@@ -221,6 +238,7 @@ describe("DELETE /api/internal/organizations/{organizationId}", () => {
 
     expect(response.status).toBe(204);
     expect(checkedActions()).toEqual(["organization.write"]);
+    expect(mocks.can).toHaveBeenCalledWith(actor, "organization.write", { type: "organization", id: ORG_ID });
     expect(mocks.deleteOrganization).toHaveBeenCalledWith(ORG_ID);
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -246,6 +264,13 @@ describe("DELETE /api/internal/organizations/{organizationId}", () => {
         targetId: ORG_ID,
       })
     );
+  });
+
+  test("refuses an owner of another organization with 403, and deletes nothing", async () => {
+    allowOn(OTHER_ORG_ID, "organization.write", "organization.manage");
+    expect((await remove()).status).toBe(403);
+    expect(mocks.can).toHaveBeenCalledWith(actor, "organization.write", { type: "organization", id: ORG_ID });
+    expect(mocks.deleteOrganization).not.toHaveBeenCalled();
   });
 
   test("refuses when the licence allows only one organization, after authorizing the caller", async () => {
