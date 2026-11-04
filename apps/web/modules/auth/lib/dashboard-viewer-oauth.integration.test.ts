@@ -12,6 +12,7 @@ import {
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 /**
@@ -123,6 +124,21 @@ describe("a Dashboard viewer's OAuth grant", () => {
     // Authorizing again goes through consent, which now offers only dashboards:read.
     const again = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(again.scope)).toEqual([...VIEWER_GRANT].sort());
+  });
+
+  test("a Member's wide grant ends when their last other membership is removed and they stay a viewer (S13)", async () => {
+    const { cookie, userId, organizationId } = await userWithRole("member");
+    const viewerOrganization = await prisma.organization.create({ data: { name: "Viewer elsewhere" } });
+    await prisma.membership.create({
+      data: { userId, organizationId: viewerOrganization.id, role: "dashboard_viewer", accepted: true },
+    });
+    const tokens = await grant(cookie, clientId, EVERYTHING);
+    expect(scopesOf(tokens.scope)).toContain("surveys:read");
+
+    await deleteMembership(userId, organizationId);
+
+    expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+    expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
   });
 
   test("a Member is unaffected", async () => {
