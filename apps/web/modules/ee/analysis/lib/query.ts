@@ -39,11 +39,20 @@ export const dashboardKeys = {
   options: (workspaceId: string) => [...dashboardKeys.lists(), "options", workspaceId] as const,
   details: () => [...dashboardKeys.all, "detail"] as const,
   detail: (dashboardId: string) => [...dashboardKeys.details(), dashboardId] as const,
-  /** A dashboard filter's value list; under the chart data keys so a chart edit refreshes it too. */
+  /**
+   * One search of a dashboard filter's value list; under the chart data keys so a chart edit refreshes
+   * it too. The field and operator are in the key: editing a filter keeps its id but changes its list.
+   */
   filterValues: (
     dashboardId: string,
     filterId: string,
-    context: { dateRange: TChartDateRangeInput | null; picks: TDashboardFilterPicks; search: string }
+    context: {
+      dateRange: TChartDateRangeInput | null;
+      picks: TDashboardFilterPicks;
+      search: string;
+      field: string;
+      operator: string;
+    }
   ) => [...chartKeys.allData(), "filterValues", dashboardId, filterId, context] as const,
 };
 

@@ -1,3 +1,4 @@
+import type { QueryKey } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import type { TDateRangePreset } from "@/lib/date-ranges";
 
@@ -82,10 +83,17 @@ export type TFilterProperty = {
    */
   suggestions?: readonly string[];
   /**
-   * Values loaded on demand, for value lists too long or too dynamic to ship with the page. A loader that
-   * returns only the first values of a longer list says so with `hasMore`, and the list asks for a search.
+   * Values loaded on demand, for value lists too long or too dynamic to ship with the page. A loader
+   * that returns only the first values of a longer list says so with `hasMore`, and the list asks for
+   * a search. `signal` aborts when the search is superseded.
    */
-  loadOptions?: (search: string) => Promise<TFilterOption[] | TFilterOptionsPage>;
+  loadOptions?: (search: string, signal?: AbortSignal) => Promise<TFilterOptionsPage>;
+  /**
+   * Where one search of `loadOptions` is cached. Absent: a key of the property's id. A property whose
+   * values follow other data gives its own, under that data's keys, so invalidating the data
+   * refreshes the list too.
+   */
+  queryKey?: (search: string) => QueryKey;
   /** Shown before the label in Advanced filter's picker, so kinds of property read apart at a glance. */
   icon?: LucideIcon;
   /** Heading the property sits under in Advanced filter's picker. Absent: the table's one list. */

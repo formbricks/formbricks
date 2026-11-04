@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FilterDateInput } from "@/modules/ee/analysis/charts/components/filter-date-input";
 import { getFilterOperatorLabel } from "@/modules/ee/analysis/charts/lib/filter-conditions";
-import { type TChartDateRangeInput, listDashboardFilterValues } from "@/modules/ee/analysis/lib/api-client";
+import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components
 import { FilterChip } from "@/modules/ui/components/table-toolbar/components/filter-chip";
 import { FilterValueList } from "@/modules/ui/components/table-toolbar/components/filter-value-list";
 import { summarizePickedValues, toTypedPick, withoutOwnPick } from "../lib/dashboard-filter-editing";
+import { getDashboardFilterValueProperty } from "../lib/dashboard-filter-values";
 import {
   type TDashboardFilter,
   type TDashboardFilterPicks,
@@ -106,22 +107,7 @@ export const DashboardFilterControl = ({
       <PopoverContent align="start" className="w-auto p-1">
         {isList ? (
           <FilterValueList
-            property={{
-              // The list depends on the other picks and the date range, so they are part of its identity.
-              id: JSON.stringify(["dashboard-filter", dashboardId, filter.id, otherPicks, dateRange]),
-              label: filter.label,
-              valueType: "enum",
-              loadOptions: async (search) => {
-                const { values, hasMore } = await listDashboardFilterValues({
-                  dashboardId,
-                  filterId: filter.id,
-                  dateRange: dateRange ?? undefined,
-                  picks: otherPicks,
-                  search: search || undefined,
-                });
-                return { options: values.map(({ value }) => ({ value, label: value })), hasMore };
-              },
-            }}
+            property={getDashboardFilterValueProperty({ dashboardId, filter, otherPicks, dateRange })}
             selected={selected}
             onToggle={toggle}
           />

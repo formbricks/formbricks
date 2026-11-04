@@ -6,7 +6,7 @@ import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { toFilterOptionsPage } from "../lib/options-page";
+import { getFilterValuesQuery } from "../lib/filter-values-query";
 import type { TFilterOption, TFilterProperty } from "../lib/types";
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -39,8 +39,7 @@ export const FilterValueList = ({
 
   const loadOptions = property.loadOptions;
   const loaded = useQuery({
-    queryKey: ["table-filter-values", property.id, debouncedSearch],
-    queryFn: async () => toFilterOptionsPage(await loadOptions!(debouncedSearch)),
+    ...getFilterValuesQuery(property, debouncedSearch),
     enabled: Boolean(loadOptions),
     staleTime: 30_000,
   });
