@@ -192,7 +192,6 @@ export const ManageTranslationsModal = ({
     const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
     translationToastId.current = toastId;
     let failedMessage: string | undefined;
-    let translatedCount = 0;
 
     try {
       for (const batch of selectedBatches) {
@@ -213,29 +212,20 @@ export const ManageTranslationsModal = ({
           break;
         }
 
-        translatedCount += batch.length;
         setDraftTranslations((prev) => ({ ...prev, ...translations }));
       }
       if (runId !== translationRunId.current) return;
 
       if (failedMessage || batches.length > selectedBatches.length) {
-        toast.error(
-          translatedCount > 0
-            ? t("workspace.surveys.edit.ai_translation_partial")
-            : (failedMessage ?? t("workspace.surveys.edit.ai_translation_failed")),
-          { id: toastId }
-        );
+        toast.error(failedMessage ?? t("workspace.surveys.edit.ai_translation_output_too_long"), {
+          id: toastId,
+        });
       } else {
         toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
       }
     } catch {
       if (runId === translationRunId.current) {
-        toast.error(
-          translatedCount > 0
-            ? t("workspace.surveys.edit.ai_translation_partial")
-            : t("workspace.surveys.edit.ai_translation_failed"),
-          { id: toastId }
-        );
+        toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
       }
     } finally {
       if (runId === translationRunId.current) {
