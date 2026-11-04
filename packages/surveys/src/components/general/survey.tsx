@@ -82,7 +82,12 @@ import {
 } from "@/lib/offline-storage";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
-import { getPreviousBlockId, getRestorableHistory, isFinishedBlockId } from "@/lib/survey-navigation";
+import {
+  getEntryBlockId,
+  getPreviousBlockId,
+  getRestorableHistory,
+  isFinishedBlockId,
+} from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
 import { useOnlineStatus } from "@/lib/use-online-status";
@@ -480,8 +485,9 @@ export function Survey({
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  // The block the survey opened on after passing over blocks hidden by show-if (ENG-6931). Nothing
-  // precedes it, so it shows no Back button, like the first block.
+  // The block the survey opened on after passing over blocks hidden by show-if (ENG-6931), or that a
+  // start-logic jump opened (ENG-6932). Nothing precedes it, so it shows no Back button, like the
+  // first block. See `getEntryBlockId`.
   const [entryBlockId, setEntryBlockId] = useState<string | undefined>(undefined);
   /**
    * What the survey kept from the respondent, one step per submitted card, next to `history` (ENG-6936).
@@ -1175,6 +1181,16 @@ export function Survey({
       selectedLanguage,
       reservedFieldValues: reservedValues,
     });
+    // Back hides on the block the survey opened on when a start-logic jump opened it, or when blocks
+    // before it were passed over (ENG-6932, ENG-6931): the respondent saw no page before it.
+    setEntryBlockId(
+      getEntryBlockId({
+        openedBlockId: blockId,
+        startBlockId: startOutcome.startBlockId,
+        nextCardId: entry.nextCardId,
+        skippedBlockIds: entry.skippedBlockIds,
+      })
+    );
     if (entry.skippedBlockIds.length === 0) return;
 
     const entryStep: TNotShownStep = {
@@ -1195,7 +1211,6 @@ export function Survey({
         notShown: buildNotShownRecord(localSurvey, [entryStep]),
       });
     }
-    setEntryBlockId(entry.nextCardId);
     setBlockId(entry.nextCardId);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on the card the survey opened on
   }, []);
