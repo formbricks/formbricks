@@ -35,9 +35,19 @@ export const duplicateRule = (rules: TSurveyBlockLogic[], ruleIdx: number): TSur
   return next;
 };
 
+/** Actions that may run for everyone: setting a value and marking the response Low quality. */
+const ALWAYS_RUNNABLE = new Set<TSurveyBlockLogicActionObjective>(["calculate", "markLowQuality"]);
+
+/** Whether a rule may stand with no condition, shown as "Always runs" (ADR 0026). */
+export const canRuleAlwaysRun = (actions: TSurveyBlockLogicAction[]): boolean =>
+  actions.every((action) => ALWAYS_RUNNABLE.has(action.objective));
+
 /**
- * Changes a rule's conditions. A rule left with no condition stays, with its actions: an empty group
- * always runs (ADR 0026), which the editor shows as "Always runs". Removing the rule is its own action.
+ * Changes a rule's conditions. When the last condition goes, a rule that only sets values or marks
+ * the response Low quality stays and always runs (ADR 0026); its group becomes an `and` group, since
+ * an empty group reads and runs as "all". Any other rule (a jump, a required answer) is removed with
+ * its last condition, as before the Flow tab: a jump for everyone is never what removing a condition
+ * meant.
  */
 export const updateRuleConditions = (
   rules: TSurveyBlockLogic[],
@@ -46,7 +56,12 @@ export const updateRuleConditions = (
 ): TSurveyBlockLogic[] => {
   const rule = rules[ruleIdx];
   if (!rule) return rules;
-  const conditions = updater(structuredClone(rule.conditions));
+  const updated = updater(structuredClone(rule.conditions));
+  if (updated.conditions.length > 0) {
+    return rules.map((item, idx) => (idx === ruleIdx ? { ...item, conditions: updated } : item));
+  }
+  if (!canRuleAlwaysRun(rule.actions)) return removeRule(rules, ruleIdx);
+  const conditions: TConditionGroup = { ...updated, connector: "and" };
   return rules.map((item, idx) => (idx === ruleIdx ? { ...item, conditions } : item));
 };
 
@@ -164,6 +179,12 @@ export const getAllowedActionObjectives = (scopeBlockIdx: number): TSurveyBlockL
     ? ["calculate", "jumpToBlock"]
     : ["calculate", "requireAnswer", "jumpToBlock", "markLowQuality"];
 
+/** What an action's choices depend on besides its list: whether the rule has no condition. */
+export interface TRuleShape {
+  /** The rule has no condition, so it runs for everyone ("Always"). */
+  alwaysRuns?: boolean;
+}
+
 /** Objectives a rule holds at most once: one jump, and one Mark as low quality (ENG-6933). */
 const ONCE_PER_RULE = new Set<TSurveyBlockLogicActionObjective>(["jumpToBlock", "markLowQuality"]);
 
@@ -174,21 +195,29 @@ const ONCE_PER_RULE = new Set<TSurveyBlockLogicActionObjective>(["jumpToBlock", 
 export const getObjectivesForAction = (
   actions: TSurveyBlockLogicAction[],
   actionIdx: number,
-  scopeBlockIdx: number
+  scopeBlockIdx: number,
+  { alwaysRuns = false }: TRuleShape = {}
 ): TSurveyBlockLogicActionObjective[] => {
   const takenElsewhere = new Set(
     actions.filter((_, idx) => idx !== actionIdx).map((action) => action.objective)
   );
   return getAllowedActionObjectives(scopeBlockIdx).filter(
-    (objective) => !ONCE_PER_RULE.has(objective) || !takenElsewhere.has(objective)
+    (objective) =>
+      (!alwaysRuns || ALWAYS_RUNNABLE.has(objective)) &&
+      (!ONCE_PER_RULE.has(objective) || !takenElsewhere.has(objective))
   );
 };
 
-/** The objective of an action added below: a jump first, then whatever else the scope allows. */
+/**
+ * The objective of an action added below: a jump first, then whatever else the scope allows. A rule
+ * with no condition runs for everyone, so it only adds another Set value.
+ */
 export const getNextActionObjective = (
   actions: TSurveyBlockLogicAction[],
-  scopeBlockIdx: number
+  scopeBlockIdx: number,
+  { alwaysRuns = false }: TRuleShape = {}
 ): TSurveyBlockLogicActionObjective => {
+  if (alwaysRuns) return "calculate";
   if (!actions.some((action) => action.objective === "jumpToBlock")) return "jumpToBlock";
   return scopeBlockIdx === START_SCOPE_BLOCK_IDX ? "calculate" : "requireAnswer";
 };

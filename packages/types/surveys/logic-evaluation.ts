@@ -13,11 +13,15 @@ import type { TConditionGroup, TSingleCondition } from "./logic";
  * Only the *grouping* is shared. How an individual condition resolves stays with each engine, which
  * is where they legitimately differ — the renderer sees a mid-survey response, the server a persisted
  * one.
+ *
+ * An empty group is true whatever its connector: the editor shows it as "Always", so an empty `or`
+ * group runs like an empty `and` group instead of never (ADR 0026).
  */
 export const evaluateConditionGroup = (
   group: TConditionGroup,
   evaluateCondition: (condition: TSingleCondition) => boolean
 ): boolean => {
+  if (group.conditions.length === 0) return true;
   const results = group.conditions.map((condition) =>
     "conditions" in condition
       ? evaluateConditionGroup(condition, evaluateCondition)
