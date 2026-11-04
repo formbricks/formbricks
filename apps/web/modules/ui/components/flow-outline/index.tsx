@@ -77,6 +77,14 @@ const TONE_ICON: Record<TFlowOutlineTone, string> = {
   ending: "size-6 bg-red-600",
 };
 
+/** The header's hover tint: a block card is white, so a white wash on it would not show. */
+const TONE_HOVER: Record<TFlowOutlineTone, string> = {
+  block: "hover:bg-slate-50",
+  rule: "hover:bg-white/60",
+  embeddedData: "hover:bg-white/60",
+  ending: "hover:bg-white/60",
+};
+
 interface FlowOutlineRowProps {
   readonly tone: TFlowOutlineTone;
   readonly icon: ReactNode;
@@ -122,6 +130,8 @@ export const FlowOutlineRow = ({
   };
 
   const Chevron = isOpen ? ChevronDownIcon : ChevronRightIcon;
+  // With content under it, the header's tint keeps the card's top corners only.
+  const hasContentBelow = Boolean(body) || (isOpen && Boolean(details));
 
   return (
     <div className="flex items-start gap-1.5" id={id}>
@@ -143,9 +153,12 @@ export const FlowOutlineRow = ({
           onClick={onToggle}
           onKeyDown={handleKeyDown}
           className={cn(
-            "flex flex-wrap items-center gap-2 rounded-lg px-3 py-2",
-            onToggle &&
-              "cursor-pointer hover:bg-white/60 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+            "flex flex-wrap items-center gap-2 px-3 py-2",
+            hasContentBelow ? "rounded-t-[calc(0.5rem-1px)]" : "rounded-[calc(0.5rem-1px)]",
+            onToggle && [
+              "cursor-pointer focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden",
+              TONE_HOVER[tone],
+            ]
           )}>
           {showChevron && <Chevron className="size-4 shrink-0 text-slate-400" aria-hidden="true" />}
           <span
