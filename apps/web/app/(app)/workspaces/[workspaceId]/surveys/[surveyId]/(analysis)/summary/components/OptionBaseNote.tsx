@@ -7,15 +7,18 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 interface OptionBaseNoteProps {
   /** Respondents shown the option, set only when fewer than everyone who answered (ENG-6937). */
   readonly shownCount?: number;
+  /** The question's base the card already shows: everyone who answered it. */
+  readonly base: number;
   /** The option is Hidden: retired on a live survey, kept in results (P1). */
   readonly hidden?: boolean;
 }
 
 /**
- * An option's base in the summary (ENG-6937): "Hidden" for a retired option, and "Shown to N" when
- * its percentage is over fewer respondents than answered the question. Renders nothing otherwise.
+ * An option's base in the summary (ENG-6937): "Hidden" for a retired option, and "Shown to N out of M"
+ * when its percentage is over fewer respondents than the M who answered the question (jobenjada
+ * review #34). Renders nothing otherwise.
  */
-export function OptionBaseNote({ shownCount, hidden }: OptionBaseNoteProps) {
+export function OptionBaseNote({ shownCount, base, hidden }: OptionBaseNoteProps) {
   const { t } = useTranslation();
   if (shownCount === undefined && !hidden) return null;
 
@@ -30,9 +33,10 @@ export function OptionBaseNote({ shownCount, hidden }: OptionBaseNoteProps) {
         </TooltipRenderer>
       )}
       {shownCount !== undefined && (
-        <TooltipRenderer tooltipContent={t("workspace.surveys.summary.shown_to_count_tooltip")}>
+        <TooltipRenderer
+          tooltipContent={t("workspace.surveys.summary.shown_to_count_tooltip", { count: shownCount, base })}>
           <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-slate-600">
-            {t("workspace.surveys.summary.shown_to_count", { count: shownCount })}
+            {t("workspace.surveys.summary.shown_to_count", { count: shownCount, base })}
           </span>
         </TooltipRenderer>
       )}

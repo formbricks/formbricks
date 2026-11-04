@@ -189,7 +189,7 @@ test.describe("Survey flow @slow", () => {
           .getByRole("listitem")
           .filter({ hasText: headline(elementId) });
       await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show question if ");
-      await expect(question(ids.blocks.overall, "fav")).toContainText("Show-if on 1 option");
+      await expect(question(ids.blocks.overall, "fav")).toContainText("Show options if … (1 option)");
       await expect(question(ids.blocks.overall, "bundle")).toContainText("1 hidden option");
       await expect(question(ids.blocks.profile, "recommend")).toContainText("Options copied from services");
 

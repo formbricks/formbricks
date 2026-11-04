@@ -4,7 +4,6 @@ import {
   getCopiedOptionIds,
   getOptionsCopiedFrom,
   getPickedInSourceShowIf,
-  withoutOptionsCopiedFrom,
 } from "./copied-options";
 import { fillMissingCodes } from "./fill-missing-codes";
 import { surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
@@ -400,13 +399,10 @@ describe("codes of copied options", () => {
 });
 
 describe("typed access to optionsCopiedFrom", () => {
-  test("reads the link off any element, and drops it without touching the rest", () => {
+  test("reads the link off any element", () => {
     const linked = { id: "fav", type: "multipleChoiceSingle", optionsCopiedFrom: "services" };
     expect(getOptionsCopiedFrom(linked)).toBe("services");
     expect(getOptionsCopiedFrom({ id: "q", type: "openText" })).toBeUndefined();
     expect(getOptionsCopiedFrom(undefined)).toBeUndefined();
-    expect(withoutOptionsCopiedFrom(linked)).toEqual({ id: "fav", type: "multipleChoiceSingle" });
-    const plain = { id: "q", type: "openText" };
-    expect(withoutOptionsCopiedFrom(plain)).toBe(plain);
   });
 });

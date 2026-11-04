@@ -17,16 +17,18 @@ import {
 } from "@formbricks/types/surveys/date-comparison";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
+import { findByLocalizedLabel, findMatrixRowKey } from "@formbricks/types/surveys/localized-label";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
-import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
+import {
+  evaluateConditionGroup,
+  evaluateUnansweredCondition,
+} from "@formbricks/types/surveys/logic-evaluation";
 import {
   isMatrixRowCondition,
   namesUnknownMatrixId,
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
-import { getLocalizedValue } from "@/lib/i18n";
-import { findByLocalizedLabel, getAllLocalizedLabels } from "@/lib/localized-label";
 import { getElementsFromSurveyBlocks } from "./utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -53,6 +55,32 @@ export const evaluateLogic = (
 ): boolean =>
   evaluateConditionGroup(conditions, (condition) =>
     evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  );
+
+/**
+ * A show-if: whether a block, a question or an option is shown (P71, show-if only). Like
+ * `evaluateLogic`, except that a condition on a question without an answer is false, "does not equal"
+ * included, so nothing shows and then disappears as the answer comes in. Only "is skipped" (and a
+ * CTA's "is not clicked") holds for it, once the respondent has passed the question. Rules, start
+ * logic and quotas keep `evaluateLogic`.
+ *
+ * @param notPassedElementIds The elements the respondent has not moved past yet: those of the page
+ *   being shown.
+ */
+export const evaluateShowIf = (
+  localSurvey: TJsWorkspaceStateSurvey,
+  data: TResponseData,
+  variablesData: TResponseVariables,
+  conditions: TConditionGroup,
+  selectedLanguage: string,
+  embeddedValues: TResponseData,
+  notPassedElementIds: ReadonlySet<string>
+): boolean =>
+  evaluateConditionGroup(
+    conditions,
+    (condition) =>
+      evaluateUnansweredCondition(condition, data, (elementId) => !notPassedElementIds.has(elementId)) ??
+      evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
   );
 
 /**
@@ -181,13 +209,7 @@ const getLeftOperandValue = (
           const rowIndex = resolveMatrixRowIndex(currentQuestion, leftOperand.meta);
           if (rowIndex === undefined) return undefined;
 
-          // The row's label in the current language first, then in any other (a language switch
-          // after the matrix was answered keeps its keys in the language it was answered in).
-          const rowLabel = currentQuestion.rows[rowIndex].label;
-          const row = [
-            getLocalizedValue(rowLabel, selectedLanguage),
-            ...getAllLocalizedLabels(rowLabel),
-          ].find((label) => label in responseValue);
+          const row = findMatrixRowKey(currentQuestion.rows[rowIndex].label, responseValue, selectedLanguage);
 
           const rowValue = row === undefined ? undefined : responseValue[row];
           if (rowValue === "") return "";

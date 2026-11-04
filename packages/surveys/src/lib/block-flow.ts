@@ -7,7 +7,7 @@ import {
   dropAnswers,
   getBlockVisibility,
 } from "@formbricks/types/surveys/show-if";
-import { evaluateLogic, performActions } from "@/lib/logic";
+import { evaluateLogic, evaluateShowIf, performActions } from "@/lib/logic";
 import { createDropOptionAnswers } from "@/lib/option-answers";
 import { END_BLOCK_ID, START_BLOCK_ID, getForwardTargetFromOffBlockId } from "@/lib/survey-navigation";
 
@@ -91,17 +91,21 @@ const getVisibility = (
   block: TSurveyBlock
 ): TPageVisibility => {
   const { survey, variables, selectedLanguage, reservedFieldValues } = input;
+  // The page's own questions are not passed yet while it is shown (P71): a show-if on one of them
+  // waits for its answer, and "is skipped" can't hold before the respondent leaves the page.
+  const onThisPage = new Set(block.elements.map((element) => element.id));
   return getBlockVisibility(
     block,
     input.responseData,
     (group, data) =>
-      evaluateLogic(
+      evaluateShowIf(
         survey,
         data,
         variables,
         group,
         selectedLanguage,
-        buildEmbeddedLookup(survey, reservedFieldValues, data)
+        buildEmbeddedLookup(survey, reservedFieldValues, data),
+        onThisPage
       ),
     createDropOptionAnswers(selectedLanguage)
   );

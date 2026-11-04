@@ -410,6 +410,8 @@ export const getConditionValueOptions = (
         value: element.id,
         meta: {
           type: "element",
+          // jobenjada review #27: the code starts the label, so say what kind of question it is.
+          badge: t("workspace.surveys.edit.matrix_badge"),
         },
         children: [
           {
@@ -418,7 +420,8 @@ export const getConditionValueOptions = (
             children: rows,
           },
           {
-            label: t("workspace.surveys.edit.matrix_all_fields", "All fields"),
+            // Reads like a row's choice, "Editor (grid · …)", once picked.
+            label: `${t("workspace.surveys.edit.matrix_all_fields")} (${elementHeadline})`,
             value: element.id,
             meta: {
               type: "element",

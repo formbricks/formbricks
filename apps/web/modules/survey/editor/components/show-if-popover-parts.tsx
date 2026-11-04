@@ -8,6 +8,7 @@ import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { type TShowIfTarget, getShowIfScope } from "@/modules/survey/editor/lib/show-if-editing";
 import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
+import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { PopoverContent } from "@/modules/ui/components/popover";
 
 /**
@@ -24,6 +25,8 @@ export const ShowIfPopoverBoundary = createContext<Element | null>(null);
 interface ShowIfPopoverFrameProps {
   readonly title: string;
   readonly help: string;
+  /** The longer explanation, behind an (i) next to the title, and that (i)'s accessible name. */
+  readonly info?: { readonly label: string; readonly content: ReactNode };
   /** Scrolls when the content is taller than the space left. */
   readonly children: ReactNode;
   /** Pinned below the scrolling content, so Done is always in reach. */
@@ -34,7 +37,7 @@ interface ShowIfPopoverFrameProps {
  * The popover itself: as wide as the editor column allows (44rem at most) and as tall as the space
  * below or above the badge, with the content scrolling between a fixed heading and a fixed footer.
  */
-export function ShowIfPopoverFrame({ title, help, children, footer }: ShowIfPopoverFrameProps) {
+export function ShowIfPopoverFrame({ title, help, info, children, footer }: ShowIfPopoverFrameProps) {
   const boundary = useContext(ShowIfPopoverBoundary);
   return (
     <PopoverContent
@@ -48,7 +51,10 @@ export function ShowIfPopoverFrame({ title, help, children, footer }: ShowIfPopo
       // not close the popover it just opened. Escape, a click outside and Done still close it.
       onFocusOutside={(event) => event.preventDefault()}>
       <div className="px-4 pt-4 pb-2">
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          {info && <InfoTooltip label={info.label}>{info.content}</InfoTooltip>}
+        </div>
         <p className="text-xs text-slate-500">{help}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-1">{children}</div>

@@ -894,3 +894,32 @@ describe("matrix conditions by id in the editor", () => {
     expect(operators).toContain("isAnyOf");
   });
 });
+
+/**
+ * jobenjada review #27: a matrix in the condition picker says it is a Matrix, so its code isn't read
+ * as its type, and its whole-question choice reads "Any row (…)" next to rows that read "Editor (…)".
+ */
+describe("a matrix in the condition picker", () => {
+  const matrixOption = () =>
+    getConditionValueOptions(surveyFlowFixture, t)
+      .flatMap((group) => group.options)
+      .find((option) => option.value === "brand_grid");
+
+  test("carries a Matrix hint", () => {
+    expect(matrixOption()?.meta?.badge).toBe("workspace.surveys.edit.matrix_badge");
+  });
+
+  test("offers its rows, then any row, each naming the question", () => {
+    const [rows, anyRow] = matrixOption()?.children ?? [];
+    const question = matrixOption()?.label;
+
+    expect(rows.children?.map((row) => [row.value, row.label])).toEqual([
+      ["brand_grid.0", `Netflix (${question})`],
+      ["brand_grid.1", `Disney+ (${question})`],
+    ]);
+    expect([anyRow.value, anyRow.label]).toEqual([
+      "brand_grid",
+      `workspace.surveys.edit.matrix_all_fields (${question})`,
+    ]);
+  });
+});

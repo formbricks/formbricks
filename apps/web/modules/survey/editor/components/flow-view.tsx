@@ -5,7 +5,6 @@ import {
   EyeIcon,
   EyeOffIcon,
   HandshakeIcon,
-  LayersIcon,
   PlusIcon,
   Rows3Icon,
   Undo2Icon,
@@ -92,8 +91,6 @@ interface FlowViewProps {
   readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   readonly invalidElements: string[] | null;
   readonly setInvalidElements: Dispatch<SetStateAction<string[] | null>>;
-  /** The saved survey, for the published lock: copying options keeps the options that existed at launch. */
-  readonly persistedSurvey?: TSurvey;
   /**
    * The blocks open on the Flow tab. Kept by the survey editor: this tab unmounts on every tab switch,
    * and coming back keeps what the person opened and closed. Empty at first: every block collapsed.
@@ -141,7 +138,6 @@ export const FlowView = ({
   setLocalSurvey,
   invalidElements,
   setInvalidElements,
-  persistedSurvey,
   expandedBlockIds,
   setExpandedBlockIds,
   handledInvalidRef,
@@ -308,7 +304,7 @@ export const FlowView = ({
 
   /**
    * Whether a question gets the "Options shown if" popover (ENG-6937): it has option lists, and no
-   * option show-if is read-only. Its option badges and its copied-options badge are drawn inside it.
+   * option show-if is read-only. Its option badges are drawn inside it.
    */
   const hasOptionsPopover = (item: TFlowElementItem | undefined): item is TFlowElementItem =>
     item !== undefined &&
@@ -317,12 +313,7 @@ export const FlowView = ({
       (badge) => (badge.kind === "optionsShowIf" || badge.kind === "hiddenOptions") && !badge.editable
     );
 
-  const renderBadge = (
-    badge: TFlowBadge,
-    key: string,
-    target?: { showIf: TShowIfTarget; key: string },
-    item?: TFlowElementItem
-  ) => {
+  const renderBadge = (badge: TFlowBadge, key: string, target?: { showIf: TShowIfTarget; key: string }) => {
     switch (badge.kind) {
       case "showIf":
         if (badge.editable && target) {
@@ -376,25 +367,6 @@ export const FlowView = ({
             title={t("workspace.surveys.edit.flow.read_only_hint")}
           />
         );
-      case "optionsCopiedFrom": {
-        // ENG-6938: an editable link opens the question's "Options shown if" popover, rendered with it.
-        if (badge.editable && hasOptionsPopover(item)) return null;
-        const source = localSurvey.blocks
-          .flatMap((block) => block.elements)
-          .find((element) => element.id === badge.sourceId);
-        return (
-          <Badge
-            key={key}
-            type="gray"
-            size="tiny"
-            icon={<LayersIcon />}
-            text={t("workspace.surveys.edit.flow.options_copied_from", {
-              question: source ? getElementBadgeText(source) : badge.sourceId,
-            })}
-            title={t("workspace.surveys.edit.flow.read_only_hint")}
-          />
-        );
-      }
     }
   };
 
@@ -408,7 +380,6 @@ export const FlowView = ({
     const optionBadges = item.badges.filter(
       (badge) => badge.kind === "optionsShowIf" || badge.kind === "hiddenOptions"
     );
-    const copiedFrom = item.badges.find((badge) => badge.kind === "optionsCopiedFrom");
     const countOf = (kind: "optionsShowIf" | "hiddenOptions") => {
       const badge = optionBadges.find((candidate) => candidate.kind === kind);
       return badge && "count" in badge ? badge.count : 0;
@@ -423,8 +394,6 @@ export const FlowView = ({
         optionLists={item.optionLists}
         showIfCount={countOf("optionsShowIf")}
         hiddenCount={countOf("hiddenOptions")}
-        copiedFromId={copiedFrom?.kind === "optionsCopiedFrom" ? copiedFrom.sourceId : undefined}
-        persistedSurvey={persistedSurvey}
         isOpen={openShowIfKey === key}
         onOpenChange={(open) => setOpenShowIfKey(open ? key : null)}
       />
@@ -602,12 +571,10 @@ export const FlowView = ({
                                   getElementBadgeText(element)}
                               </span>
                               {block.elements[elementIdx]?.badges.map((badge, idx) =>
-                                renderBadge(
-                                  badge,
-                                  `${element.id}-${idx}`,
-                                  { showIf: showIfTarget, key: showIfKey },
-                                  block.elements[elementIdx]
-                                )
+                                renderBadge(badge, `${element.id}-${idx}`, {
+                                  showIf: showIfTarget,
+                                  key: showIfKey,
+                                })
                               )}
                               {renderOptionsShowIf(block.elements[elementIdx], block.blockIdx)}
                               {!element.showIf && canAddShowIf(localSurvey, showIfTarget) && (

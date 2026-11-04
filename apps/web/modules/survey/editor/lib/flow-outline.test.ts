@@ -116,9 +116,8 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
     expect(outline.blocks[4].elements[3].badges).toEqual([]);
   });
 
-  test("a question with copied options comes out with an editable copied-options badge (ENG-6938)", () => {
+  test("a question with copied options gets no badge for the copy, only its options' show-if (P70)", () => {
     expect(outline.blocks[5].elements[12].badges).toEqual([
-      { kind: "optionsCopiedFrom", sourceId: "services", editable: true },
       { kind: "optionsShowIf", count: 4, editable: true },
     ]);
   });
@@ -301,7 +300,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     ]);
   });
 
-  test("option show-if, hidden options, matrix rows and columns, and copied options", () => {
+  test("option show-if, hidden options, matrix rows and columns", () => {
     const survey = withUnknown((draft) => {
       const fav = draft.blocks[4].elements[0];
       fav.optionsCopiedFrom = "services";
@@ -321,7 +320,6 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
 
     // ENG-6937: option show-if and Hidden are edited in the "Options shown if" popover.
     expect(outline.blocks[4].elements[0].badges).toEqual([
-      { kind: "optionsCopiedFrom", sourceId: "services", editable: true },
       { kind: "optionsShowIf", count: 3, editable: true },
       { kind: "hiddenOptions", count: 1, editable: true },
     ]);

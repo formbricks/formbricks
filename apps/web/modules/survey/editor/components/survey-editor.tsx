@@ -423,7 +423,6 @@ export const SurveyEditor = ({
               setLocalSurvey={setLocalSurveyNonNull}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
-              persistedSurvey={survey}
               expandedBlockIds={flowExpandedBlockIds}
               handledInvalidRef={flowHandledInvalidRef}
               onAddCalculatedField={openEmbeddedDataCard}
