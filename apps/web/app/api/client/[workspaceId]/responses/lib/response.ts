@@ -11,7 +11,11 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
-import { markResponseLowQualityFromSurvey } from "./mark-low-quality";
+import {
+  type TLowQualityMark,
+  auditLowQualityMark,
+  markResponseLowQualityFromSurvey,
+} from "./mark-low-quality";
 
 type TQuotaEvaluationResponseInput = {
   surveyId: string;
@@ -90,15 +94,17 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
   // canonicalizes the stored value via the same helper). Keeps a request internally consistent.
   const canonicalLanguage = normalizeResponseLanguage(responseInput.language) ?? undefined;
 
+  let lowQualityMark: TLowQualityMark | undefined;
   const create = async (
     txClient: Prisma.TransactionClient,
     quotaContext: TQuotaEvaluationContext | null,
     responseContext: TClientResponseCreateContext
   ) => {
     const created = await createResponse(responseInput, responseContext, txClient, ingestFlags);
-    const response = responseInput.markLowQuality
+    lowQualityMark = responseInput.markLowQuality
       ? await markResponseLowQualityFromSurvey(txClient, created)
-      : created;
+      : undefined;
+    const response = lowQualityMark?.response ?? created;
 
     const quotaResult = await evaluateResponseQuotas({
       surveyId: response.surveyId,
@@ -120,7 +126,10 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
   };
 
   if (txContext) {
-    return await create(txContext.tx, txContext.quotaContext, txContext.responseContext);
+    // The caller owns the commit; the mark's audit entry is filed with the write it belongs to.
+    const result = await create(txContext.tx, txContext.quotaContext, txContext.responseContext);
+    if (lowQualityMark) await auditLowQualityMark(lowQualityMark);
+    return result;
   }
 
   // Independent reads, so in parallel. The quota load never rejects (it logs and returns null), so a
@@ -129,5 +138,8 @@ export const createResponseWithQuotaEvaluation = async <TInput extends TQuotaEva
     resolveContext(responseInput),
     loadQuotaEvaluationContext(responseInput.surveyId),
   ]);
-  return await prisma.$transaction((txClient) => create(txClient, quotaContext, responseContext));
+  const result = await prisma.$transaction((txClient) => create(txClient, quotaContext, responseContext));
+  // After commit: a rolled-back mark files no audit entry.
+  if (lowQualityMark) await auditLowQualityMark(lowQualityMark);
+  return result;
 };

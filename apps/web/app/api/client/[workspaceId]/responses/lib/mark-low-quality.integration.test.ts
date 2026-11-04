@@ -5,6 +5,7 @@ import { createResponseWithQuotaEvaluation as createV1Response } from "@/app/api
 import { POST as postV2 } from "@/app/api/v2/client/[workspaceId]/responses/route";
 import { setScopedResponsesOutcome } from "@/app/api/v3/responses/lib/write-service";
 import { resetDb } from "@/integration/reset-db";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
  * Mark as low quality from the survey (ENG-6933, ADR 0022/0023), against a real Postgres. A rule's action
@@ -19,6 +20,10 @@ vi.mock("@/app/lib/pipelines", () => ({ sendToPipeline: vi.fn(async () => undefi
 // The v3 restore drains its row inline; the Hub itself is not part of this test.
 vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({
   drainDeletionCleanups: vi.fn(async () => ({ done: 0, again: 0, failed: 0 })),
+}));
+// The audit entry the mark files after commit; the audit log's own storage is not part of this test.
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEvent: vi.fn(async () => undefined),
 }));
 
 beforeEach(async () => {
@@ -172,6 +177,34 @@ describe("Mark as low quality from the survey (ENG-6933)", () => {
     expect(v1.outcome).toBe("lowQuality");
     expect(await outcomeOf(v1.id)).toBe("lowQuality");
     expect((await queuedReconciles()).map((row) => row.responseIds).sort()).toEqual([[v1.id], [v2Id]].sort());
+  });
+
+  test("files one audit entry per mark, as the system, like the v3 outcome write; none when nothing changed", async () => {
+    const { workspaceId, surveyId } = await seed();
+    const responseId = await createUnfinished(workspaceId, surveyId);
+    vi.mocked(queueAuditEvent).mockClear();
+
+    expect((await update(workspaceId, responseId, { finished: false, markLowQuality: true })).status).toBe(
+      200
+    );
+    expect(queueAuditEvent).toHaveBeenCalledTimes(1);
+    expect(queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "updated",
+        targetType: "response",
+        targetId: responseId,
+        userType: "system",
+        status: "success",
+        oldObject: { id: responseId, outcome: null },
+        newObject: { id: responseId, outcome: "lowQuality" },
+      })
+    );
+
+    // Already Low quality: the mark changes nothing and files nothing.
+    expect((await update(workspaceId, responseId, { finished: false, markLowQuality: true })).status).toBe(
+      200
+    );
+    expect(queueAuditEvent).toHaveBeenCalledTimes(1);
   });
 
   test("responses without the flag are unchanged: no outcome, nothing queued", async () => {
