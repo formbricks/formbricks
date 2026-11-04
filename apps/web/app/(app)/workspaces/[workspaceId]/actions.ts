@@ -115,7 +115,7 @@ const ZGetOrganizationsForSwitcherAction = z.object({
  */
 export const getOrganizationsForSwitcherAction = authenticatedActionClient
   .inputSchema(ZGetOrganizationsForSwitcherAction)
-  .action(async ({ ctx, parsedInput }) => {
+  .action(async ({ ctx }) => {
     // The list is the caller's own organizations: those SpiceDB grants them `organization.read` on, plus
     // those where they are a Dashboard viewer (ADR-0023), whose relation reaches dashboard reads only.
     // Scoped by the user, it reveals nothing about `organizationId`, so no gate on it is needed, and none
