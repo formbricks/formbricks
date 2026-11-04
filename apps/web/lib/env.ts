@@ -127,7 +127,11 @@ type TEnvironmentIssuePath =
   | keyof TAIConfigurationEnv
   | keyof TAuthzedConfigurationEnv
   | keyof TAuthConfigurationEnv
-  | keyof TSesConfigurationEnv;
+  | keyof TSesConfigurationEnv
+  | "EMAIL_SEND_AUDIT_ENABLED"
+  | "EMAIL_SEND_AUDIT_BUCKET"
+  | "EMAIL_SEND_AUDIT_KMS_KEY_ARN"
+  | "EMAIL_SEND_AUDIT_HMAC_KEY_ARN";
 
 const addEnvIssue = (ctx: z.RefinementCtx, path: TEnvironmentIssuePath, message: string): void => {
   ctx.addIssue({
@@ -556,6 +560,35 @@ const validateSesConfiguration = (values: TSesConfigurationEnv, ctx: z.Refinemen
   }
 };
 
+const ZEmailSendAuditEnv = z.object({
+  EMAIL_SEND_AUDIT_ENABLED: z.enum(["1", "0"]).optional(),
+  EMAIL_SEND_AUDIT_BUCKET: z.string().min(1).optional(),
+  EMAIL_SEND_AUDIT_KMS_KEY_ARN: z.string().min(1).optional(),
+  EMAIL_SEND_AUDIT_HMAC_KEY_ARN: z.string().min(1).optional(),
+  SES_EMAIL_ENVIRONMENT: ZSesConfigurationEnv.shape.SES_EMAIL_ENVIRONMENT,
+});
+
+const validateEmailSendAuditConfiguration = (
+  values: z.infer<typeof ZEmailSendAuditEnv>,
+  ctx: z.RefinementCtx
+): void => {
+  if (values.EMAIL_SEND_AUDIT_ENABLED !== "1") return;
+  if (values.SES_EMAIL_ENVIRONMENT !== "production_eu" && values.SES_EMAIL_ENVIRONMENT !== "staging") {
+    addEnvIssue(
+      ctx,
+      "EMAIL_SEND_AUDIT_ENABLED",
+      "Email send auditing is limited to EU production and staging"
+    );
+  }
+  for (const key of [
+    "EMAIL_SEND_AUDIT_BUCKET",
+    "EMAIL_SEND_AUDIT_KMS_KEY_ARN",
+    "EMAIL_SEND_AUDIT_HMAC_KEY_ARN",
+  ] as const) {
+    if (!values[key]) addEnvIssue(ctx, key, `${key} is required when email send auditing is enabled`);
+  }
+};
+
 const parsedEnv = createEnv({
   onValidationError: throwEnvValidationError,
   /*
@@ -762,6 +795,7 @@ const parsedEnv = createEnv({
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_AUTHENTICATED: z.enum(["1", "0"]).optional(),
     SMTP_REJECT_UNAUTHORIZED_TLS: z.enum(["1", "0"]).optional(),
+    SMTP_REQUIRE_TLS: z.enum(["1", "0"]).optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_PUBLISHABLE_KEY: z.string().optional(),
@@ -797,6 +831,10 @@ const parsedEnv = createEnv({
     PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
     USER_MANAGEMENT_MINIMUM_ROLE: z.enum(["owner", "manager", "disabled"]).optional(),
     AUDIT_LOG_ENABLED: z.enum(["1", "0"]).optional(),
+    EMAIL_SEND_AUDIT_ENABLED: z.enum(["1", "0"]).optional(),
+    EMAIL_SEND_AUDIT_BUCKET: z.string().min(1).optional(),
+    EMAIL_SEND_AUDIT_KMS_KEY_ARN: z.string().min(1).optional(),
+    EMAIL_SEND_AUDIT_HMAC_KEY_ARN: z.string().min(1).optional(),
     AUDIT_LOG_GET_USER_IP: z.enum(["1", "0"]).optional(),
     SESSION_MAX_AGE: z
       .string()
@@ -966,6 +1004,7 @@ const parsedEnv = createEnv({
     SMTP_SECURE_ENABLED: process.env.SMTP_SECURE_ENABLED,
     SMTP_USER: process.env.SMTP_USER,
     SMTP_REJECT_UNAUTHORIZED_TLS: process.env.SMTP_REJECT_UNAUTHORIZED_TLS,
+    SMTP_REQUIRE_TLS: process.env.SMTP_REQUIRE_TLS,
     SMTP_AUTHENTICATED: process.env.SMTP_AUTHENTICATED,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
@@ -983,6 +1022,10 @@ const parsedEnv = createEnv({
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
     USER_MANAGEMENT_MINIMUM_ROLE: process.env.USER_MANAGEMENT_MINIMUM_ROLE,
     AUDIT_LOG_ENABLED: process.env.AUDIT_LOG_ENABLED,
+    EMAIL_SEND_AUDIT_ENABLED: process.env.EMAIL_SEND_AUDIT_ENABLED,
+    EMAIL_SEND_AUDIT_BUCKET: process.env.EMAIL_SEND_AUDIT_BUCKET,
+    EMAIL_SEND_AUDIT_KMS_KEY_ARN: process.env.EMAIL_SEND_AUDIT_KMS_KEY_ARN,
+    EMAIL_SEND_AUDIT_HMAC_KEY_ARN: process.env.EMAIL_SEND_AUDIT_HMAC_KEY_ARN,
     AUDIT_LOG_GET_USER_IP: process.env.AUDIT_LOG_GET_USER_IP,
     SESSION_MAX_AGE: process.env.SESSION_MAX_AGE,
     SENTRY_ENVIRONMENT: process.env.SENTRY_ENVIRONMENT,
@@ -991,9 +1034,11 @@ const parsedEnv = createEnv({
 
 const ZPostParseEnv = ZAIConfigurationEnv.extend(ZAuthzedConfigurationEnv.shape)
   .extend(ZSesConfigurationEnv.shape)
+  .extend(ZEmailSendAuditEnv.shape)
   .superRefine(validateActiveAIProviderConfiguration)
   .superRefine(validateAuthzedConfiguration)
-  .superRefine(validateSesConfiguration);
+  .superRefine(validateSesConfiguration)
+  .superRefine(validateEmailSendAuditConfiguration);
 const postParseResult = ZPostParseEnv.safeParse(parsedEnv);
 
 if (!postParseResult.success) {

@@ -40,6 +40,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const localesDir = resolve(__dirname, "locales");
+const fontsDir = resolve(__dirname, "assets/fonts");
 
 /**
  * Code-unit order, deliberately not `localeCompare`.
@@ -55,21 +56,33 @@ const byCodeUnit = (left: string, right: string): number => {
 };
 
 /**
+ * Content hash of the files in `dir` that `include` accepts: each file's name, then its bytes, in
+ * code-unit order. Both `/js/*` hashes below are this one function, so they cannot drift apart.
+ */
+const computeDirHash = (dir: string, include: (name: string) => boolean): string => {
+  const hash = createHash("sha256");
+  const files = readdirSync(dir).filter(include);
+  files.sort(byCodeUnit);
+  for (const file of files) {
+    hash.update(file);
+    hash.update(readFileSync(resolve(dir, file)));
+  }
+  return hash.digest("hex").slice(0, 12);
+};
+
+/**
  * Content hash of every shipped locale, injected as `__FB_LOCALES_HASH__` and appended to each
  * on-demand locale fetch as `?v=`. `/js/*` is served with a 30-day `s-maxage`, so without a token that
  * moves with the strings a fresh bundle could be handed a month-old bundle of them; with one, the URL
  * changes only when a translation actually does.
  */
-const computeLocalesHash = (): string => {
-  const hash = createHash("sha256");
-  const files = readdirSync(localesDir).filter((name) => name.endsWith(".json"));
-  files.sort(byCodeUnit);
-  for (const file of files) {
-    hash.update(file);
-    hash.update(readFileSync(resolve(localesDir, file)));
-  }
-  return hash.digest("hex").slice(0, 12);
-};
+const computeLocalesHash = (): string => computeDirHash(localesDir, (name) => name.endsWith(".json"));
+
+/**
+ * Content hash of the shipped font files, injected as `__FB_FONTS_HASH__` and appended to the on-demand
+ * font fetch as `?v=`, for the same reason as the locales hash: `/js/*` is cached for 30 days.
+ */
+const computeFontsHash = (): string => computeDirHash(fontsDir, (name) => name.endsWith(".woff2"));
 
 const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -87,6 +100,7 @@ const config = ({ mode }) => {
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),
       __FB_LOCALES_HASH__: JSON.stringify(computeLocalesHash()),
+      __FB_FONTS_HASH__: JSON.stringify(computeFontsHash()),
     },
     plugins: [preact(), tsconfigPaths()],
   };
@@ -114,7 +128,12 @@ const config = ({ mode }) => {
       },
       plugins: [
         ...sharedConfig.plugins,
-        copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist"), localesDir }),
+        copyCompiledAssetsPlugin({
+          filename: "surveys",
+          distDir: resolve(__dirname, "dist"),
+          localesDir,
+          fontsDir,
+        }),
       ],
     });
   }
@@ -181,7 +200,12 @@ const config = ({ mode }) => {
     plugins: [
       ...sharedConfig.plugins,
       stubSurveyUiStylesForVitest(),
-      copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist"), localesDir }),
+      copyCompiledAssetsPlugin({
+        filename: "surveys",
+        distDir: resolve(__dirname, "dist"),
+        localesDir,
+        fontsDir,
+      }),
       process.env.ANALYZE === "true" &&
         visualizer({
           filename: resolve(__dirname, "stats.html"),

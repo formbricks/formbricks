@@ -6,12 +6,12 @@ import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-co
 import { getDistinctAttributeValuesAction } from "../actions";
 
 interface AttributeValueInputProps {
-  attributeKeyId: string;
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  className?: string;
-  valueError?: string;
+  readonly attributeKeyId: string;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly disabled?: boolean;
+  readonly className?: string;
+  readonly valueError?: string;
 }
 
 export const AttributeValueInput = ({

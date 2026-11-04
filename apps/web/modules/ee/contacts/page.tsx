@@ -7,7 +7,11 @@ import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-c
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
 
-export const ContactsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {
+export const ContactsPage = async ({
+  params: paramsProps,
+}: {
+  readonly params: Promise<{ workspaceId: string }>;
+}) => {
   const params = await paramsProps;
 
   const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);

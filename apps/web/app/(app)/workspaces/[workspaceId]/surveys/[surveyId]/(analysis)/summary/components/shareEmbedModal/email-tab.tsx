@@ -15,8 +15,8 @@ import { TabBar } from "@/modules/ui/components/tab-bar";
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 
 interface EmailTabProps {
-  surveyId: string;
-  email: string;
+  readonly surveyId: string;
+  readonly email: string;
 }
 
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {

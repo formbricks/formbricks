@@ -9,7 +9,7 @@ interface StoryOptions {
   numberOfTabs?: number;
   tabTexts?: string;
   width?: "fill" | "fit";
-  variant?: "default" | "disabled";
+  variant?: "default" | "underline" | "disabled";
 }
 
 type StoryProps = React.ComponentProps<typeof Tabs> & StoryOptions;
@@ -88,7 +88,7 @@ const meta: Meta<StoryProps> = {
     // Story Options - Behaviour Category
     variant: {
       control: "select",
-      options: ["default", "disabled"],
+      options: ["default", "underline", "disabled"],
       description: "Variant of the tabs",
       table: {
         category: "Behaviour",
@@ -143,6 +143,7 @@ const renderTabs = (args: StoryProps) => {
                 value={tabValues[index]}
                 layout={layout}
                 size={size}
+                variant={variant}
                 icon={showIcons ? <IconComponent /> : undefined}
                 showIcon={showIcons}>
                 {label}
@@ -244,6 +245,10 @@ export const BigSize: Story = {
       },
     },
   },
+};
+
+export const Underline: Story = {
+  args: { variant: "underline", width: "fill" },
 };
 
 export const Disabled: Story = {

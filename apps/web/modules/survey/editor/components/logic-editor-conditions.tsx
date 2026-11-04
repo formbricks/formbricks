@@ -13,13 +13,13 @@ import type {
 } from "@/modules/ui/components/conditions-editor/types";
 
 interface LogicEditorConditionsProps {
-  conditions: TConditionGroup;
-  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  block: TSurveyBlock;
-  localSurvey: TSurvey;
-  blockIdx: number;
-  logicIdx: number;
-  depth?: number;
+  readonly conditions: TConditionGroup;
+  readonly updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  readonly block: TSurveyBlock;
+  readonly localSurvey: TSurvey;
+  readonly blockIdx: number;
+  readonly logicIdx: number;
+  readonly depth?: number;
 }
 
 export function LogicEditorConditions({

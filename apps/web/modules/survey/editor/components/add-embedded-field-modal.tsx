@@ -23,8 +23,10 @@ interface AddEmbeddedFieldModalProps {
   embeddedFields: readonly TLinkedEmbeddedField[];
   /** The survey's fields as stored — the baseline the clash guard grandfathers names against. */
   persistedFields: readonly TLinkedEmbeddedField[];
-  /** Ids already spoken for in the survey's namespace: its elements and ending cards. */
+  /** Ids already spoken for in the survey's namespace: its elements' ids and codes, and ending cards. */
   takenIds: string[];
+  /** The refusal for a name that is a question's code, naming that question. */
+  describeQuestionCodeClash: (name: string) => string | undefined;
   /** The addresses this survey's fields occupy. */
   takenStorageKeys: string[];
   /** Every declared name — what makes a repeat a duplicate. */
@@ -56,6 +58,7 @@ export const AddEmbeddedFieldModal = ({
   embeddedFields,
   persistedFields,
   takenIds,
+  describeQuestionCodeClash,
   takenStorageKeys,
   otherDeclaredNames,
   otherDisplayNames,
@@ -86,6 +89,7 @@ export const AddEmbeddedFieldModal = ({
         <EmbeddedFieldForm
           entry={null}
           takenIds={takenIds}
+          describeQuestionCodeClash={describeQuestionCodeClash}
           takenStorageKeys={takenStorageKeys}
           otherDeclaredNames={otherDeclaredNames}
           otherDisplayNames={otherDisplayNames}

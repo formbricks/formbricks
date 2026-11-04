@@ -32,10 +32,10 @@ function CommandDialog({
   showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof Dialog> & {
-  title?: string;
-  description?: string;
-  className?: string;
-  showCloseButton?: boolean;
+  readonly title?: string;
+  readonly description?: string;
+  readonly className?: string;
+  readonly showCloseButton?: boolean;
 }) {
   return (
     <Dialog {...props}>
@@ -57,7 +57,7 @@ function CommandDialog({
 function CommandInput({
   className,
   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Input> & { hidden?: boolean }) {
+}: React.ComponentProps<typeof CommandPrimitive.Input> & { readonly hidden?: boolean }) {
   return (
     <CommandPrimitive.Input
       data-slot="command-input"
@@ -75,7 +75,7 @@ function CommandList({
   ref,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List> & {
-  ref?: React.Ref<React.ComponentRef<typeof CommandPrimitive.List>>;
+  readonly ref?: React.Ref<React.ComponentRef<typeof CommandPrimitive.List>>;
 }) {
   return (
     <CommandPrimitive.List

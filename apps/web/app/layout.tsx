@@ -1,7 +1,6 @@
 import { Metadata } from "next";
 import React from "react";
 import { NoScriptWarning } from "@/app/components/NoScriptWarning";
-import { DEFAULT_LOCALE } from "@/lib/constants";
 import { SentryClientConfigScript } from "@/lib/sentry/SentryClientConfigScript";
 import { I18nProvider } from "@/lingodotdev/client";
 import { getLocale } from "@/lingodotdev/language";
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
   description: "Open-Source Survey Suite",
 };
 
-const RootLayout = async ({ children }: { children: React.ReactNode }) => {
+const RootLayout = async ({ children }: { readonly children: React.ReactNode }) => {
   const locale = await getLocale();
 
   return (
@@ -25,7 +24,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
         {/* First in the document so instrumentation-client.ts can start Sentry as early as possible. */}
         <SentryClientConfigScript />
         <NoScriptWarning locale={locale} />
-        <I18nProvider language={locale} defaultLanguage={DEFAULT_LOCALE}>
+        <I18nProvider language={locale}>
           {children}
           {/* After the page, so keyboard users reach the notices by tabbing on from its content. */}
           <ServerActionNotices />

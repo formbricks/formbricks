@@ -315,6 +315,15 @@ describe("processWorkflowRunJob", () => {
       replyTo: "support@example.com",
       subject: "Thanks for your response",
       html: "<html>branded</html>",
+      auditContext: {
+        trigger: "workflow",
+        organizationId: "org1",
+        surveyId: mockSurvey.id,
+        responseId: mockResponse.id,
+        workflowRunId: data.workflowRunId,
+        workflowId: data.workflowId,
+        configuredByUserId: "creator-1",
+      },
     });
     // No `from` — the deployment MAIL_FROM default applies (Follow-Ups parity).
     expect(sendArgs.from).toBeUndefined();

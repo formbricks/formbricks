@@ -41,6 +41,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
+import { summarizeSignatureAnswers } from "./signature-summary";
 import { convertFloatTo2Decimal } from "./utils";
 
 interface TSurveySummaryResponse {
@@ -760,6 +761,15 @@ export const getElementSummary = async (
         });
 
         values = [];
+        break;
+      }
+      case TSurveyElementTypeEnum.Signature: {
+        summary.push({
+          type: element.type,
+          element,
+          ...summarizeSignatureAnswers(element.id, responses),
+        });
+
         break;
       }
       case TSurveyElementTypeEnum.Cal: {

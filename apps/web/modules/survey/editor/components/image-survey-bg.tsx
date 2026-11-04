@@ -1,10 +1,10 @@
 import { FileInput } from "@/modules/ui/components/file-input";
 
 interface UploadImageSurveyBgProps {
-  workspaceId: string;
-  handleBgChange: (url: string, bgType: string) => void;
-  background: string;
-  isStorageConfigured: boolean;
+  readonly workspaceId: string;
+  readonly handleBgChange: (url: string, bgType: string) => void;
+  readonly background: string;
+  readonly isStorageConfigured: boolean;
 }
 
 export const UploadImageSurveyBg = ({

@@ -36,8 +36,15 @@ export default defineConfig({
      going above one per core only adds contention; 4 workers on the 4 vCPU GitHub runner and 8 on
      an 8 vCPU runner both measured well. PW_WORKERS overrides it (see parseWorkers above). */
   workers: parseWorkers(process.env.PW_WORKERS) ?? (process.env.CI ? "100%" : undefined),
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
+  /* Stop before the CI step's 15-minute limit (e2e.yml "Run E2E Tests"): a run killed by the
+     runner never writes its HTML report, so a hang leaves nothing to read. Stopping here fails
+     the run normally and keeps the report and the failing test names. */
+  globalTimeout: process.env.CI ? 13 * 60 * 1000 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters. On CI the line reporter also
+     names each failing test in the job log, which the HTML report alone does not. */
+  reporter: process.env.CI
+    ? [["line"], ["html", { outputFolder: "playwright-report", open: "never" }]]
+    : [["html", { outputFolder: "playwright-report", open: "never" }]],
   /* Shared settings for all the workspaces below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

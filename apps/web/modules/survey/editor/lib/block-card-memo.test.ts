@@ -4,8 +4,11 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { updateElementInBlock } from "@/modules/survey/editor/lib/blocks";
 import { TBlockCardMemoProps, areBlockCardPropsEqual, getReferencedElementIds } from "./block-card-memo";
 
+// Coded like a saved survey: an uncoded one would get every element coded on the first edit, which
+// is correct (ENG-6782) but not what these tests are about.
 const element = (id: string, headline: string) => ({
   id,
+  code: id,
   type: "openText",
   headline: { default: headline },
   required: true,
@@ -66,6 +69,25 @@ describe("areBlockCardPropsEqual", () => {
     block("b", [element("qb1", "Colour?")]),
     block("c", [element("qc1", "Why?")]),
   ]);
+
+  describe("question codes", () => {
+    const coded = (b: string, id: string, code: string) =>
+      block(b, [{ ...element(id, id), code } as ReturnType<typeof element>]);
+
+    test("re-renders an idle block whose question code now clashes with another block's", () => {
+      const before = makeSurvey([coded("a", "qa1", "q1"), coded("b", "qb1", "q2")]);
+      const after = { ...before, blocks: [coded("a", "qa1", "q2"), before.blocks[1]] } as TSurvey;
+
+      expect(areBlockCardPropsEqual(propsFor(before, "b"), propsFor(after, "b"))).toBe(false);
+    });
+
+    test("skips an idle block when another block's code changes to something unrelated", () => {
+      const before = makeSurvey([coded("a", "qa1", "q1"), coded("b", "qb1", "q2")]);
+      const after = { ...before, blocks: [coded("a", "qa1", "q3"), before.blocks[1]] } as TSurvey;
+
+      expect(areBlockCardPropsEqual(propsFor(before, "b"), propsFor(after, "b"))).toBe(true);
+    });
+  });
 
   test("skips a block when an unreferenced element in another block is edited", () => {
     const next = typeHeadline(base, "a", "qa1", "Name please?");

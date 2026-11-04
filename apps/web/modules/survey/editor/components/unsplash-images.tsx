@@ -14,7 +14,7 @@ import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { getImagesFromUnsplashAction, triggerDownloadUnsplashImageAction } from "../actions";
 
 interface ImageFromUnsplashSurveyBgProps {
-  handleBgChange: (url: string, bgType: TSurveyBackgroundBgType) => void;
+  readonly handleBgChange: (url: string, bgType: TSurveyBackgroundBgType) => void;
 }
 
 interface UnsplashImage {

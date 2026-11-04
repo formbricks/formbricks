@@ -10,10 +10,10 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface DisableLinkModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  type: "multi-use" | "single-use";
-  onDisable: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly type: "multi-use" | "single-use";
+  readonly onDisable: () => void;
 }
 
 export const DisableLinkModal = ({ open, onOpenChange, type, onDisable }: DisableLinkModalProps) => {

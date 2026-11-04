@@ -8,7 +8,7 @@ import { EnableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/en
 import { Switch } from "@/modules/ui/components/switch";
 
 interface AccountSecurityProps {
-  user: TUser;
+  readonly user: TUser;
 }
 
 export const AccountSecurity = ({ user }: AccountSecurityProps) => {

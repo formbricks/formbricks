@@ -93,6 +93,20 @@ describe("assembleQsfDraft", () => {
     expect(generated.every((choice) => /^[a-z0-9]{24,}$/.test(choice.id))).toBe(true);
   });
 
+  test("codes every imported question and answer option (ENG-6782)", async () => {
+    const { document } = await assembleFixture("simple.qsf");
+    const imported = elements(document);
+    expect(imported.map((draft) => (draft as { code?: string }).code)).toEqual(
+      imported.map((_, index) => `q${index + 1}`)
+    );
+    const q1 = element(document, "Q1");
+    if (q1.type !== "multipleChoiceSingle") throw new Error("type");
+    expect(q1.choices.map((choice) => (choice as { code?: string }).code)).toEqual(
+      q1.choices.map((_, index) => String(index + 1))
+    );
+    expect(checkQsfDraft(document)).toEqual([]);
+  });
+
   test("gives a file with no end message the editor's default ending, and says so", async () => {
     const { document, issues } = await assembleFixture("pages-and-blocks.qsf");
 
@@ -454,6 +468,25 @@ describe("assembleQsfDraft", () => {
       firstName: { show: true, placeholder: { "en-US": "First name" } },
       email: { show: false, placeholder: { "en-US": "" } },
     });
+    expect(checkQsfDraft(document)).toEqual([]);
+  });
+});
+
+describe("assembleQsfDraft: Signature", () => {
+  test("builds a Signature element that allows typing, required as Qualtrics forced it", async () => {
+    const { document, issues } = await assembleFixture("signature.qsf");
+
+    expect(element(document, "Q1")).toEqual({
+      id: "Q1",
+      type: "signature",
+      code: "q1",
+      headline: { "en-US": "Sign to confirm you accept the terms" },
+      required: true,
+      isDraft: true,
+      allowTypedSignature: true,
+    });
+    expect(element(document, "Q2")).toMatchObject({ type: "signature", required: false });
+    expect(issues.filter((issue) => issue.code === "question_skipped")).toEqual([]);
     expect(checkQsfDraft(document)).toEqual([]);
   });
 });

@@ -20,10 +20,12 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import {
   collectResponseFileUrls,
-  getSurveyFileUploadElementIds,
+  getSurveyUploadElementIds,
   resolveStorageUrlsInObject,
 } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
@@ -35,6 +37,7 @@ import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
 import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "./pagination";
+import { standardColumnGroups, standardHeaders } from "./standard-columns";
 import {
   calculateTtcTotal,
   extractSurveyDetails,
@@ -65,6 +68,7 @@ export const responseSelection = {
   contactAttributes: true,
   singleUseId: true,
   language: true,
+  outcome: true,
   displayId: true,
   contact: {
     select: {
@@ -101,7 +105,7 @@ export const getResponseContact = (
   };
 };
 
-const mapResponsePrismaToResponse = (
+export const mapResponsePrismaToResponse = (
   responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
 ): TResponse => ({
   ...responsePrisma,
@@ -429,7 +433,9 @@ export const getResponses = reactCache(
 export const getResponseDownloadFile = async (
   surveyId: string,
   format: "csv" | "xlsx",
-  filterCriteria?: TResponseFilterCriteria
+  filterCriteria?: TResponseFilterCriteria,
+  /** Include columns groups switched off in the Export modal. None: today's file, every column. */
+  excludedColumns: readonly string[] = []
 ): Promise<{ fileContents: string; fileName: string }> => {
   validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
   try {
@@ -478,26 +484,15 @@ export const getResponseDownloadFile = async (
     }
     const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
-    const headers = [
-      "No.",
-      "Response ID",
-      "Timestamp",
-      "Finished",
-      ...(isQuotasAllowed ? ["Quotas"] : []),
-      "Survey ID",
-      "Formbricks ID (internal)",
-      "User ID",
-      "Tags",
-      ...metaDataFields,
-      ...elements.flat(),
-      ...variables,
-      ...hiddenFields,
-      ...userAttributes.map((attribute) => `person.${attribute}`),
-    ];
+    const headers = standardHeaders(
+      standardColumnGroups({
+        survey,
+        details: { metaDataFields, elements, hiddenFields, variables, userAttributes },
+        isQuotasAllowed,
+      }),
+      excludedColumns
+    );
 
-    if (survey.isVerifyEmailEnabled) {
-      headers.push("Verified Email");
-    }
     const resolvedResponses = responses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }));
     const jsonData = getResponsesJson(
       survey,
@@ -653,6 +648,17 @@ export const updateResponse = async (
       select: responseSelection,
     });
 
+    // After the write, on the same client: in the callers' transaction a failed update queues nothing,
+    // and a failed queueing rolls the update back, as for a delete. `currentResponse` is the row this
+    // update read, so a signature it replaces is compared against what was really stored.
+    if (responseInput.data) {
+      await enqueueReplacedSignatureFileCleanup(
+        prismaClient,
+        { surveyId: currentResponse.surveyId, previousData: currentResponse.data, nextData: data },
+        { bestEffort: !tx }
+      );
+    }
+
     const response: TResponse = {
       ...responsePrisma,
       contact: getResponseContact(responsePrisma),
@@ -677,7 +683,7 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey), survey.id);
+  const fileUrls = collectResponseFileUrls(response.data, getSurveyUploadElementIds(survey), survey.id);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };
@@ -726,6 +732,8 @@ export const deleteResponse = async (
         const quotaIds = quotaLinks?.map((link) => link.quota.id) ?? [];
         await reduceQuotaLimits(quotaIds, tx);
       }
+
+      await requestEmailAuditErasureRequired({ responseId }, tx);
 
       return response;
     });

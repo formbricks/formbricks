@@ -19,6 +19,7 @@ const mockUpsertAuthzedReconciliationAudit = vi.fn();
 const mockUpsertDeletionCleanupDrain = vi.fn();
 const mockUpsertDataRetentionSweep = vi.fn();
 const mockUpsertCreativeStatsFlush = vi.fn();
+const mockUpsertEmailAuditMaintenance = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -32,10 +33,12 @@ const mockProcessWorkflowRunJob = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
 const mockProcessWorkflowsUsageSnapshotJob = vi.fn();
 const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
+const mockObserveAuthzedOutboxHealth = vi.fn();
 const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const mockProcessDeletionCleanupDrainJob = vi.fn();
 const mockProcessDataRetentionSweepJob = vi.fn();
 const mockProcessCreativeStatsFlushJob = vi.fn();
+const mockProcessEmailAuditMaintenanceJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -46,11 +49,24 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
 // handles, so the env-derived timing it pairs with each job stays under test.
 vi.mock("@formbricks/jobs", () => ({
   ONE_SHOT_JOB_NAMES: {
+    attachmentExport: "attachment-export.process",
     responsePipeline: "response-pipeline.process",
     webhookDelivery: "webhook-delivery.process",
     workflowRun: "workflow-run.process",
   },
   recurringJobs: {
+    attachmentExportReconcile: {
+      name: "attachment-export.reconcile",
+      scheduleId: "attachment-export-reconcile",
+      scope: "global",
+      upsert: vi.fn(),
+    },
+    emailAuditMaintenance: {
+      name: "email-audit.maintain",
+      scheduleId: "email-audit-maintenance",
+      scope: "global",
+      upsert: mockUpsertEmailAuditMaintenance,
+    },
     authzedProjectionDelivery: {
       name: "authzed-projection.deliver",
       scheduleId: "authzed-projection-delivery",
@@ -140,6 +156,12 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
+vi.mock("@/modules/storage/attachment-export/process-attachment-export-job", () => ({
+  processAttachmentExportJob: vi.fn(),
+}));
+vi.mock("@/modules/storage/attachment-export/process-attachment-export-reconcile-job", () => ({
+  processAttachmentExportReconcileJob: vi.fn(),
+}));
 vi.mock("@/modules/response-pipeline/lib/process-response-pipeline-job", () => ({
   processResponsePipelineJob: mockProcessResponsePipelineJob,
 }));
@@ -181,7 +203,12 @@ vi.mock("@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job", () 
   processDeletionCleanupDrainJob: mockProcessDeletionCleanupDrainJob,
 }));
 
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  processEmailAuditMaintenanceJob: mockProcessEmailAuditMaintenanceJob,
+}));
+
 vi.mock("@/lib/authzed/outbox-processor", () => ({
+  observeAuthzedOutboxHealth: mockObserveAuthzedOutboxHealth,
   processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
 }));
 
@@ -257,6 +284,7 @@ describe("instrumentation-jobs", () => {
     expect(result).toBeNull();
     expect(mockStartJobsRuntime).not.toHaveBeenCalled();
     expect(mockUpsertSurveyScheduling).not.toHaveBeenCalled();
+    expect(mockObserveAuthzedOutboxHealth).not.toHaveBeenCalled();
     expect(mockDebug).toHaveBeenCalledWith("BullMQ worker startup skipped");
   });
 
@@ -290,12 +318,15 @@ describe("instrumentation-jobs", () => {
       manageSignals: true,
       concurrency: 4,
       jobHandlerOverrides: {
+        "attachment-export.process": expect.any(Function),
+        "attachment-export.reconcile": expect.any(Function),
         "authzed-projection.deliver": expect.any(Function),
         "authzed-reconciliation.audit": expect.any(Function),
         "authzed-survey.audit": expect.any(Function),
         "creative-stats.flush": expect.any(Function),
         "data-retention.sweep": expect.any(Function),
         "deletion-cleanup.drain": expect.any(Function),
+        "email-audit.maintain": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),
@@ -497,6 +528,9 @@ describe("instrumentation-jobs", () => {
       { retryDelayMs: 30_000 },
       "BullMQ worker registration retry scheduled"
     );
+    // Outbox health keeps reporting from PostgreSQL even though the runtime never reached Redis
+    // (ENG-3764): a Redis outage is one of the ways delivery stops.
+    expect(mockObserveAuthzedOutboxHealth).toHaveBeenCalled();
   });
 
   slowTest("retries worker startup after a transient failure", async () => {
@@ -547,12 +581,14 @@ describe("instrumentation-jobs", () => {
     const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
     const sweep = RECURRING_JOB_REGISTRATIONS_BY_KEY.dataRetentionSweep.job.upsert;
     const drain = RECURRING_JOB_REGISTRATIONS_BY_KEY.deletionCleanupDrain.job.upsert;
+    const emailAudit = RECURRING_JOB_REGISTRATIONS_BY_KEY.emailAuditMaintenance.job.upsert;
     const creativeStats = RECURRING_JOB_REGISTRATIONS_BY_KEY.creativeStatsFlush.job.upsert;
     const delivery = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedProjectionDelivery.job.upsert;
 
     await registerRecurringJobs();
     expect(sweep).not.toHaveBeenCalled();
     expect(drain).not.toHaveBeenCalled();
+    expect(emailAudit).not.toHaveBeenCalled();
     // Replicas of the previous release have no handler for the creative counter flush.
     expect(creativeStats).not.toHaveBeenCalled();
     // Revocations must keep reaching SpiceDB throughout the upgrade, or every check fails closed.
@@ -562,6 +598,7 @@ describe("instrumentation-jobs", () => {
     await vi.advanceTimersByTimeAsync(30_000);
     expect(sweep).toHaveBeenCalledOnce();
     expect(drain).toHaveBeenCalledOnce();
+    expect(emailAudit).toHaveBeenCalledOnce();
     expect(creativeStats).toHaveBeenCalledOnce();
   });
 
@@ -629,6 +666,11 @@ describe("instrumentation-jobs", () => {
       expect(mockUpsertDeletionCleanupDrain).toHaveBeenCalledOnce();
       expect(mockUpsertDeletionCleanupDrain).toHaveBeenCalledWith({
         everyMs: DELETION_CLEANUP_DRAIN_INTERVAL_MS,
+        kind: "every",
+      });
+      expect(mockUpsertEmailAuditMaintenance).toHaveBeenCalledOnce();
+      expect(mockUpsertEmailAuditMaintenance).toHaveBeenCalledWith({
+        everyMs: 5 * 60_000,
         kind: "every",
       });
       // Creative counts reach the stats operation within about a minute (ENG-4000).

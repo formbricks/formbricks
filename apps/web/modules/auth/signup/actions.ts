@@ -242,7 +242,9 @@ async function handleInviteAcceptance(
       invite.creator.name ?? "",
       user.name,
       invite.creator.email,
-      invite.creator.locale
+      invite.creator.locale,
+      user.id,
+      invite.organizationId
     );
   } catch (error) {
     logger.error({ err: error }, "Failed to send invite accepted email");

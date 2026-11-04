@@ -1,4 +1,5 @@
 import { render } from "react-email";
+import { AccountDeletedEmail } from "../../emails/auth/account-deleted-email";
 import { DeleteAccountEmail } from "../../emails/auth/delete-account-email";
 import { ForgotPasswordEmail } from "../../emails/auth/forgot-password-email";
 import { NewEmailVerification } from "../../emails/auth/new-email-verification";
@@ -15,6 +16,11 @@ import {
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
 } from "../../emails/retention/survey-retention-notice-email";
+import {
+  AttachmentExportFailedEmail,
+  type TAttachmentExportFailureReason,
+} from "../../emails/survey/attachment-export-failed-email";
+import { AttachmentExportReadyEmail } from "../../emails/survey/attachment-export-ready-email";
 import { EmbedSurveyPreviewEmail } from "../../emails/survey/embed-survey-preview-email";
 import { FollowUpEmail, FollowUpEmailProps } from "../../emails/survey/follow-up-email";
 import { LinkSurveyEmail } from "../../emails/survey/link-survey-email";
@@ -70,6 +76,12 @@ export async function renderPasswordResetNotifyEmail(
   return await render(PasswordResetNotifyEmail(props));
 }
 
+export async function renderAccountDeletedEmail(
+  props: { t: TFunction } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(AccountDeletedEmail(props));
+}
+
 export async function renderSsoRecoveryFactorsRemovedEmail(
   props: {
     passwordRemoved: boolean;
@@ -113,6 +125,35 @@ export async function renderMemberRetentionNoticeEmail(
   } & TEmailTemplateLegalProps
 ): Promise<string> {
   return await render(MemberRetentionNoticeEmail(props));
+}
+
+export async function renderAttachmentExportReadyEmail(
+  props: {
+    surveyName: string;
+    archiveSize: string;
+    fileCount: string;
+    includedFileCount: string;
+    sizeLimit: string;
+    retentionMonths: string;
+    expiryDate: string;
+    truncated: boolean;
+    downloadLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(AttachmentExportReadyEmail(props));
+}
+
+export async function renderAttachmentExportFailedEmail(
+  props: {
+    surveyName: string;
+    reason: TAttachmentExportFailureReason;
+    maxFiles: string;
+    responsesLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
+): Promise<string> {
+  return await render(AttachmentExportFailedEmail(props));
 }
 
 export async function renderInviteEmail(

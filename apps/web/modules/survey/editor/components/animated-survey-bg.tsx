@@ -5,8 +5,8 @@ import { cn } from "@/lib/cn";
 import { debounce } from "@/lib/utils/debounce";
 
 interface AnimatedSurveyBgProps {
-  handleBgChange: (bg: string, bgType: string) => void;
-  background: string;
+  readonly handleBgChange: (bg: string, bgType: string) => void;
+  readonly background: string;
 }
 
 export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyBgProps) => {

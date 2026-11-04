@@ -1,5 +1,5 @@
 interface FormbricksLogoProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export const FormbricksLogo = ({ className }: FormbricksLogoProps) => {

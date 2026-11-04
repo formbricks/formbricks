@@ -6,9 +6,9 @@ import { cn } from "@/lib/cn";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateFiltersProps {
-  selectedFilter: TTemplateFilter[];
-  setSelectedFilter: (filter: TTemplateFilter[]) => void;
-  templateSearch?: string;
+  readonly selectedFilter: TTemplateFilter[];
+  readonly setSelectedFilter: (filter: TTemplateFilter[]) => void;
+  readonly templateSearch?: string;
 }
 
 export const TemplateFilters = ({

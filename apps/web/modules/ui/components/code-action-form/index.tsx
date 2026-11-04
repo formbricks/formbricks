@@ -7,8 +7,8 @@ import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/module
 import { Input } from "@/modules/ui/components/input";
 
 interface CodeActionFormProps {
-  form: any;
-  isReadOnly: boolean;
+  readonly form: any;
+  readonly isReadOnly: boolean;
 }
 
 export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {

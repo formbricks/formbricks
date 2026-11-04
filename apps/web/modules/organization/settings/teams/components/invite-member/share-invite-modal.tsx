@@ -16,9 +16,9 @@ import {
 import { Input } from "@/modules/ui/components/input";
 
 interface ShareInviteModalProps {
-  inviteToken: string;
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  readonly inviteToken: string;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
 }
 
 export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModalProps) => {

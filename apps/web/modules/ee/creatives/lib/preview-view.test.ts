@@ -4,7 +4,7 @@ import type { TCreativeEditorForm } from "./editor-form";
 import { toPreviewView } from "./preview-view";
 
 const schedule = { startAt: null, endAt: null };
-const languages = { defaultLanguage: "en-US", others: [], texts: {} };
+const languages = { defaultLanguage: "en-US", others: [], texts: {}, autoSelectLanguage: null };
 const distribution = {
   showOn: "pageView" as const,
   actionClassIds: [],

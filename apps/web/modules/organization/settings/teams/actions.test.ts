@@ -225,7 +225,8 @@ describe("invite rate-limit settlement", () => {
       "invitee@example.com",
       "Inviter",
       "Invitee",
-      organizationId
+      organizationId,
+      ctx.user.id
     );
   });
 
@@ -305,7 +306,8 @@ describe("invite rate-limit settlement", () => {
         "invitee@example.com",
         "",
         "",
-        organizationId
+        organizationId,
+        ctx.user.id
       );
     });
 
@@ -320,7 +322,8 @@ describe("invite rate-limit settlement", () => {
         "invitee@example.com",
         "",
         "",
-        organizationId
+        organizationId,
+        nameless.user.id
       );
     });
 
@@ -338,7 +341,8 @@ describe("invite rate-limit settlement", () => {
         "first@example.com",
         "",
         "",
-        organizationId
+        organizationId,
+        nameless.user.id
       );
     });
   });

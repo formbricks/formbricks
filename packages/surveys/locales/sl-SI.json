@@ -102,5 +102,18 @@
     "value_must_equal": "Vrednost mora biti enaka {value}",
     "value_must_not_contain": "Vrednost ne sme vsebovati {value}",
     "value_must_not_equal": "Vrednost ne sme biti enaka {value}"
+  },
+  "signature": {
+    "clear": "Počisti",
+    "draw": "Nariši",
+    "method": "Način podpisa",
+    "not_signed": "Ni podpisano",
+    "pad_label": "Polje za podpis. Svoj podpis nariši s prstom, pisalom ali miško.",
+    "pad_label_with_type": "Polje za podpis. Svoj podpis nariši s prstom, pisalom ali miško ali pa preklopi na možnost Vnesi in svoje ime vpiši s tipkovnico.",
+    "saved": "Tvoj podpis je shranjen. Počisti ga, če se želiš podpisati znova.",
+    "sign_here": "Podpiši se tukaj",
+    "signed": "Podpisano",
+    "type": "Vnesi",
+    "type_your_name": "Vpiši svoje ime"
   }
 }

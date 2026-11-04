@@ -2,8 +2,8 @@ import { cn } from "@/lib/cn";
 import { Input } from "@/modules/ui/components/input";
 
 interface SurveyLinkDisplayProps {
-  surveyUrl: string;
-  enforceSurveyUrlWidth?: boolean;
+  readonly surveyUrl: string;
+  readonly enforceSurveyUrlWidth?: boolean;
 }
 
 export const SurveyLinkDisplay = ({ surveyUrl, enforceSurveyUrlWidth = false }: SurveyLinkDisplayProps) => {

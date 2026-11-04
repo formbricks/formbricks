@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import type { TCreativeEditorForm, TCreativeLanguagesForm } from "./editor-form";
 import {
   addCreativeLanguage,
+  applyAutoSelectLanguageRule,
+  canAutoSelectLanguage,
   getLanguagesMissingFromSurvey,
   getTranslationProgress,
   makeDefaultLanguage,
@@ -16,6 +18,7 @@ const englishGerman: TCreativeLanguagesForm = {
   defaultLanguage: "en-US",
   others: [{ code: "de-DE", enabled: true }],
   texts: { "de-DE": { ...NO_TEXTS, label: "Feedback geben" } },
+  autoSelectLanguage: true,
 };
 
 /** The texts of the editor form, all the Language tab reads. */
@@ -39,6 +42,7 @@ const bannerForm = (): TTextsForm => ({
     defaultLanguage: "en-US",
     others: [{ code: "de-DE", enabled: true }],
     texts: { "de-DE": { ...NO_TEXTS, message: [{ text: "Heute Nacht offline." }] } },
+    autoSelectLanguage: true,
   },
 });
 
@@ -61,7 +65,7 @@ describe("languages in the Language tab", () => {
 
     expect(hidden.others).toEqual([{ code: "de-DE", enabled: false }]);
     expect(hidden.texts["de-DE"].label).toBe("Feedback geben");
-    expect(removed).toEqual({ defaultLanguage: "en-US", others: [], texts: {} });
+    expect(removed).toEqual({ defaultLanguage: "en-US", others: [], texts: {}, autoSelectLanguage: true });
   });
 
   test("a translation is edited field by field", () => {
@@ -80,6 +84,7 @@ describe("languages in the Language tab", () => {
       defaultLanguage: "de-DE",
       others: [{ code: "en-US", enabled: true }],
       texts: { "en-US": { ...NO_TEXTS, message: [{ text: "Down tonight." }], buttonLabel: "Status" } },
+      autoSelectLanguage: true,
     });
   });
 
@@ -90,6 +95,59 @@ describe("languages in the Language tab", () => {
     const named = bannerForm();
     if (named.content.type === "banner") named.content.accessibleName = "Service notice";
     expect(getTranslationProgress(named, "de-DE")).toEqual({ translated: 1, total: 3 });
+  });
+});
+
+describe("Use browser language by default, kept in step with the languages", () => {
+  const englishOnly: TCreativeLanguagesForm = {
+    defaultLanguage: "en-US",
+    others: [],
+    texts: {},
+    autoSelectLanguage: null,
+  };
+  const afterChange = (
+    previous: TCreativeLanguagesForm,
+    change: (languages: TCreativeLanguagesForm) => TCreativeLanguagesForm
+  ) => applyAutoSelectLanguageRule(previous, change(previous)).autoSelectLanguage;
+
+  test("turns on when a visitor can first get a second language, if it was never chosen", () => {
+    expect(afterChange(englishOnly, (languages) => addCreativeLanguage(languages, "de-DE"))).toBe(true);
+
+    const hiddenGerman = {
+      ...englishGerman,
+      others: [{ code: "de-DE", enabled: false }],
+      autoSelectLanguage: null,
+    };
+    expect(
+      afterChange(hiddenGerman, (languages) => setCreativeLanguageEnabled(languages, "de-DE", true))
+    ).toBe(true);
+  });
+
+  test("keeps the author's choice otherwise", () => {
+    const optedOut = { ...englishOnly, autoSelectLanguage: false };
+    expect(afterChange(optedOut, (languages) => addCreativeLanguage(languages, "de-DE"))).toBe(false);
+
+    // A hidden language offers visitors nothing yet.
+    const addHidden = (languages: TCreativeLanguagesForm) =>
+      setCreativeLanguageEnabled(addCreativeLanguage(languages, "de-DE"), "de-DE", false);
+    expect(afterChange(englishOnly, addHidden)).toBeNull();
+
+    const germanOff = { ...englishGerman, autoSelectLanguage: false };
+    expect(afterChange(germanOff, (languages) => addCreativeLanguage(languages, "fr-FR"))).toBe(false);
+  });
+
+  test("removing the last other language resets it, so adding one again turns it on", () => {
+    const germanOff = { ...englishGerman, autoSelectLanguage: false };
+    const removed = applyAutoSelectLanguageRule(germanOff, removeCreativeLanguage(germanOff, "de-DE"));
+
+    expect(removed.autoSelectLanguage).toBeNull();
+    expect(afterChange(removed, (languages) => addCreativeLanguage(languages, "fr-FR"))).toBe(true);
+  });
+
+  test("can change something only while a visitor can get more than one language", () => {
+    expect(canAutoSelectLanguage(englishGerman)).toBe(true);
+    expect(canAutoSelectLanguage(setCreativeLanguageEnabled(englishGerman, "de-DE", false))).toBe(false);
+    expect(canAutoSelectLanguage(englishOnly)).toBe(false);
   });
 });
 

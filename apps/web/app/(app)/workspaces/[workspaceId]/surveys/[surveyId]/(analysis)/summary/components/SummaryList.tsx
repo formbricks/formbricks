@@ -27,6 +27,7 @@ import { OpenTextSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[s
 import { PictureChoiceSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/PictureChoiceSummary";
 import { RankingSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RankingSummary";
 import { RatingSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/RatingSummary";
+import { SignatureSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SignatureSummary";
 import { constructToastMessage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -197,6 +198,17 @@ export const SummaryList = ({
                 elementSummary={elementSummary}
                 survey={survey}
                 locale={locale}
+              />
+            );
+          }
+          if (elementSummary.type === TSurveyElementTypeEnum.Signature) {
+            return (
+              <SignatureSummary
+                key={elementSummary.element.id}
+                elementSummary={elementSummary}
+                survey={survey}
+                locale={locale}
+                isReadOnly={isReadOnly}
               />
             );
           }

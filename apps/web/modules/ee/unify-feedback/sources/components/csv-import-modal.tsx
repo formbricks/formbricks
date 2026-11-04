@@ -28,15 +28,15 @@ import { createFeedbackCSVDataSchema, getTranslatedFeedbackSourceError } from ".
 import { validateCsvFile } from "../utils";
 
 interface CsvImportModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  feedbackSourceId: string;
-  workspaceId: string;
-  fieldMappings: TFeedbackSourceFieldMapping[];
-  onOpenEditFeedbackSource?: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly feedbackSourceId: string;
+  readonly workspaceId: string;
+  readonly fieldMappings: TFeedbackSourceFieldMapping[];
+  readonly onOpenEditFeedbackSource?: () => void;
   /** Called after a successful import, in addition to closing the dialog — e.g. so a caller rendered
    * next to a stale records list or enrichment-status read can refresh/invalidate it. */
-  onImportComplete?: () => void;
+  readonly onImportComplete?: () => void;
 }
 
 export function CsvImportModal({

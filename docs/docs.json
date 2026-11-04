@@ -106,7 +106,12 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["surveys/overview", "surveys/analysis/reading-results"]
+            "pages": [
+              "surveys/overview",
+              "surveys/analysis/reading-results",
+              "surveys/analysis/export-responses",
+              "surveys/analysis/question-codes"
+            ]
           },
           {
             "group": "Surveys",
@@ -221,6 +226,7 @@
                   "surveys/question-type/select-multiple",
                   "surveys/question-type/select-picture",
                   "surveys/question-type/select-single",
+                  "surveys/question-type/signature",
                   "surveys/question-type/statement-cta",
                   "surveys/question-type/thank-you-card"
                 ]

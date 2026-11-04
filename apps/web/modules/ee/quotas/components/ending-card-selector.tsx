@@ -15,9 +15,9 @@ import {
 } from "@/modules/ui/components/select";
 
 interface EndingCardSelectorProps {
-  survey: TSurvey;
-  value: string;
-  onChange: (value: string) => void;
+  readonly survey: TSurvey;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
 }
 
 export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelectorProps) => {

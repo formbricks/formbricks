@@ -27,6 +27,7 @@ const isValidHTML = (str: string): boolean => {
   if (!str) return false;
 
   try {
+    // eslint-disable-next-line no-restricted-syntax -- callers pass stripInlineStyles output
     const doc = new DOMParser().parseFromString(str, "text/html");
     const errorNode = doc.querySelector("parsererror");
     if (errorNode) return false;
@@ -68,6 +69,7 @@ function Label({
           htmlFor={htmlFor}
           form={form}
           {...restProps}
+          // eslint-disable-next-line no-restricted-syntax -- safeHtml is sanitizeSurveyHtml output
           dangerouslySetInnerHTML={{ __html: safeHtml }}
         />
       );
@@ -79,6 +81,7 @@ function Label({
         data-variant={variant}
         className={cn(baseClasses, className)}
         {...restProps}
+        // eslint-disable-next-line no-restricted-syntax -- safeHtml is sanitizeSurveyHtml output
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
     );

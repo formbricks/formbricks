@@ -19,12 +19,12 @@ import { ColorField, DimensionInput } from "@/modules/ui/components/styling-fiel
 import { Switch } from "@/modules/ui/components/switch";
 
 type CardStylingSettingsProps = {
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isSettingsPage?: boolean;
-  surveyType?: TSurveyType;
-  disabled?: boolean;
-  form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly isSettingsPage?: boolean;
+  readonly surveyType?: TSurveyType;
+  readonly disabled?: boolean;
+  readonly form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
 };
 
 export const CardStylingSettings = ({

@@ -15,7 +15,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { PricingTable } from "./components/pricing-table";
 
-export const PricingPage = async (props: { params: Promise<{ organizationId: string }> }) => {
+export const PricingPage = async (props: { readonly params: Promise<{ organizationId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 

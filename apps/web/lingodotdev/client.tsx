@@ -1,66 +1,28 @@
 "use client";
 
-import i18n from "i18next";
-import ICU from "i18next-icu";
-import resourcesToBackend from "i18next-resources-to-backend";
-import { ReactNode, useEffect, useState } from "react";
-import { I18nextProvider, initReactI18next } from "react-i18next";
-import { logger } from "@formbricks/logger";
-
-let isInit = false;
+import { ReactNode, use, useState } from "react";
+import { I18nextProvider } from "react-i18next";
+import { createI18n } from "./create-i18n";
+import { loadLocaleMessages } from "./load-locale-messages";
 
 interface I18nProviderProps {
-  children: ReactNode;
-  language: string;
-  defaultLanguage: string;
+  readonly children: ReactNode;
+  readonly language: string;
 }
 
-export const I18nProvider = ({ children, language, defaultLanguage }: I18nProviderProps) => {
-  const locale = language || defaultLanguage;
-  const [isReady, setIsReady] = useState(false);
+/**
+ * Waits for the locale's messages with `use()` instead of rendering nothing until an effect has run.
+ * On the server that means the page renders into the HTML; in the browser the server HTML stays on
+ * screen while hydration waits for the cached catalogue chunk (ENG-3771).
+ */
+export const I18nProvider = ({ children, language }: Readonly<I18nProviderProps>) => {
+  const messages = use(loadLocaleMessages(language));
+  const [state, setState] = useState(() => ({ language, i18n: createI18n(language, messages) }));
 
-  useEffect(() => {
-    const initializeI18n = async () => {
-      if (isInit) {
-        if (i18n.language !== locale) {
-          await i18n.changeLanguage(locale);
-        }
-        setIsReady(true);
-      } else {
-        try {
-          await i18n
-            .use(ICU)
-            .use(initReactI18next)
-            .use(
-              resourcesToBackend((language: string) => {
-                return import(`../locales/${language}.json`);
-              })
-            )
-            .init({
-              lng: locale,
-              fallbackLng: defaultLanguage,
-              interpolation: { escapeValue: false },
-            });
-          isInit = true;
-          setIsReady(true);
-        } catch (error) {
-          logger.error(error);
-          setIsReady(true);
-        }
-      }
-    };
-
-    initializeI18n();
-  }, [locale, defaultLanguage]);
-
-  // Don't render children until i18n is ready to prevent race conditions
-  if (!isReady) {
-    return null;
+  // A language switch re-renders the root layout with the new locale.
+  if (state.language !== language) {
+    setState({ language, i18n: createI18n(language, messages) });
   }
 
-  return (
-    <I18nextProvider data-testid="i18next-provider" i18n={i18n}>
-      {children}
-    </I18nextProvider>
-  );
+  return <I18nextProvider i18n={state.i18n}>{children}</I18nextProvider>;
 };

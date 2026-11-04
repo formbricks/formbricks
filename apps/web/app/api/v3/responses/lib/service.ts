@@ -13,8 +13,9 @@ import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context"
 import { andVisibleSurveys, visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
-import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
+import { collectResponseFileUrls, getSurveyUploadElementIds } from "@/modules/storage/utils";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
 
 /**
@@ -169,7 +170,7 @@ export async function deleteScopedResponse(
       });
 
       // The survey outlives the response, so this reads correctly after the delete. Both shapes:
-      // `getSurveyFileUploadElementIds` documents the union as mandatory and v1/v2 pass both.
+      // `getSurveyUploadElementIds` documents the union as mandatory and v1/v2 pass both.
       const survey = await tx.survey.findUnique({
         where: { id: deletedRow.surveyId },
         select: { blocks: true, questions: true },
@@ -178,6 +179,8 @@ export async function deleteScopedResponse(
       if (deletedRow.displayId) {
         await deleteDisplay(deletedRow.displayId, tx);
       }
+
+      await requestEmailAuditErasureRequired({ responseId }, tx);
 
       // Deliberately no `reduceQuotaLimits` here. `ON DELETE CASCADE` drops the `ResponseQuotaLink`
       // rows, and the only fullness predicate in the repo is `screenedInCount >= quota.limit`
@@ -195,7 +198,7 @@ export async function deleteScopedResponse(
         row: deletedRow,
         fileUrls: collectResponseFileUrls(
           deletedRow.data,
-          getSurveyFileUploadElementIds({ blocks: survey?.blocks, questions: survey?.questions }),
+          getSurveyUploadElementIds({ blocks: survey?.blocks, questions: survey?.questions }),
           deletedRow.surveyId
         ),
       };
@@ -273,6 +276,7 @@ export async function deleteScopedResponses(
         id: { in: responseIds },
         survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
       });
+      await requestEmailAuditErasureRequired({ responseIds: deletedIds }, tx);
       if (bySurvey.length === 0) return { deleted, deletedIds, drainNowIds: [] };
 
       const { organizationId } = await tx.workspace.findUniqueOrThrow({
@@ -329,6 +333,7 @@ export const v3ResponseReadSelect = {
   finished: true,
   endingId: true,
   language: true,
+  outcome: true,
   data: true,
   variables: true,
   ttc: true,
