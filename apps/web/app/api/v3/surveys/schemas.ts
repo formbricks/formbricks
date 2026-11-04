@@ -643,11 +643,41 @@ const CALCULATE_ACTION_KEYS = new Set(["id", "objective", "variableId", "operato
 const REQUIRE_ANSWER_ACTION_KEYS = new Set(["id", "objective", "target"]);
 const JUMP_TO_BLOCK_ACTION_KEYS = REQUIRE_ANSWER_ACTION_KEYS;
 
+/**
+ * The pre-pass's problems, with the distinct locale keys it has looked up: both bounded per document.
+ * A new locale key costs a lookup here and again in the normalizer, and a cap per field alone let a body
+ * spread 150k distinct keys over 600 fields: ~6 s of CPU on a body that then parsed (ENG-4100).
+ */
+class SurveyDocumentProblems extends BoundedInvalidParams {
+  private readonly localeKeys = new Set<string>();
+  private localeKeysRefused = false;
+
+  /** Whether `key` may be looked up: one already seen, or a new one under the cap. Refused once, at `path`. */
+  admitLocaleKey(key: string, path: string): boolean {
+    if (this.localeKeys.has(key)) {
+      return true;
+    }
+    if (this.localeKeys.size < V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS) {
+      this.localeKeys.add(key);
+      return true;
+    }
+    if (!this.localeKeysRefused) {
+      this.localeKeysRefused = true;
+      this.push(() => ({
+        name: path,
+        reason: `Too big: expected at most ${V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS} distinct translation keys in the survey`,
+        code: "limit_exceeded",
+      }));
+    }
+    return false;
+  }
+}
+
 function addUnknownKeyIssues(
   value: unknown,
   allowedKeys: Set<string>,
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   context?: string
 ): void {
   if (!isPlainObject(value)) {
@@ -673,7 +703,7 @@ function addMissingRequiredKeyIssues(
   value: unknown,
   requiredKeys: readonly string[],
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   context: string
 ): void {
   if (!isPlainObject(value)) {
@@ -710,7 +740,7 @@ function addInvalidParamZodIssue(ctx: z.RefinementCtx, issue: InvalidParam): voi
 function validateTranslatableField(
   value: unknown,
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -742,6 +772,9 @@ function validateTranslatableField(
   for (const key of keys) {
     if (key === "default") {
       continue;
+    }
+    if (!issues.admitLocaleKey(key, path)) {
+      return;
     }
 
     const normalizedKey = normalizeV3SurveyWriteLanguageCode(key, options?.allowedLanguageCodes);
@@ -782,7 +815,7 @@ function validateTranslatableField(
 function validateChoice(
   value: unknown,
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   allowedKeys: Set<string>,
   options?: TV3LanguageCompatibilityOptions
@@ -798,7 +831,7 @@ function validateChoice(
 function validateToggleInput(
   value: unknown,
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -808,7 +841,7 @@ function validateToggleInput(
   }
 }
 
-function validateValidation(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateValidation(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, VALIDATION_KEYS, path, issues);
   if (!isPlainObject(value) || !Array.isArray(value.rules)) {
     return;
@@ -820,11 +853,11 @@ function validateValidation(value: unknown, path: string, issues: BoundedInvalid
   });
 }
 
-function validateDynamicReference(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateDynamicReference(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, DYNAMIC_REFERENCE_KEYS, path, issues);
 }
 
-function validateLogicOperand(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateLogicOperand(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   if (!isPlainObject(value)) {
     return;
   }
@@ -837,7 +870,7 @@ function validateLogicOperand(value: unknown, path: string, issues: BoundedInval
   validateDynamicReference(value, path, issues);
 }
 
-function validateConditionGroup(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateConditionGroup(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, CONDITION_GROUP_KEYS, path, issues);
   if (!isPlainObject(value) || !Array.isArray(value.conditions)) {
     return;
@@ -858,7 +891,7 @@ function validateConditionGroup(value: unknown, path: string, issues: BoundedInv
   });
 }
 
-function validateAction(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateAction(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   if (!isPlainObject(value)) {
     return;
   }
@@ -879,7 +912,7 @@ function validateAction(value: unknown, path: string, issues: BoundedInvalidPara
   }
 }
 
-function validateBlockLogic(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateBlockLogic(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, LOGIC_KEYS, path, issues);
   if (!isPlainObject(value)) {
     return;
@@ -895,7 +928,7 @@ function validateBlockLogic(value: unknown, path: string, issues: BoundedInvalid
 function validateElement(
   value: unknown,
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -950,7 +983,7 @@ function validateElement(
 function validateBlock(
   value: unknown,
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -982,7 +1015,7 @@ function validateBlock(
 function validateEnding(
   value: unknown,
   path: string,
-  issues: BoundedInvalidParams,
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -1001,19 +1034,19 @@ function validateEnding(
   );
 }
 
-function validateTrigger(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateTrigger(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addMissingRequiredKeyIssues(value, ["actionClassId"], path, issues, "survey trigger");
   addUnknownKeyIssues(value, TRIGGER_KEYS, path, issues, "survey trigger");
 }
 
-function validateDistribution(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateDistribution(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, DISTRIBUTION_KEYS, path, issues, "survey distribution");
   if (isPlainObject(value) && Array.isArray(value.triggers)) {
     value.triggers.forEach((trigger, index) => validateTrigger(trigger, `${path}.triggers.${index}`, issues));
   }
 }
 
-function validateTargeting(value: unknown, path: string, issues: BoundedInvalidParams): void {
+function validateTargeting(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, TARGETING_KEYS, path, issues, "survey targeting");
 }
 
@@ -1032,7 +1065,7 @@ function getUnsupportedV3SurveyDocumentFields(
   fallbackDefaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE,
   options?: TV3LanguageCompatibilityOptions
 ): InvalidParam[] {
-  const issues = new BoundedInvalidParams();
+  const issues = new SurveyDocumentProblems();
   // Include the allowed top-level fields in the error so agents/clients can self-correct from the
   // message alone (mirrors the per-element/block unknown-key errors).
   addUnknownKeyIssues(value, rootKeys, "", issues, "the survey document");
@@ -1167,6 +1200,12 @@ export const V3_SURVEY_MAX_TRIGGERS = 50;
  * field could hold every key a 2 MB body fits, each one a locale lookup: ~2.7 s of CPU for 150k keys.
  */
 export const V3_SURVEY_MAX_TRANSLATIONS = 256;
+
+/**
+ * Distinct locale keys a whole document may carry across its translatable fields (ENG-4100). In practice
+ * that is one per survey language, at most 50 from the same 208-code catalog, so the same generous 256.
+ */
+export const V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS = 256;
 
 /**
  * A document array, capped for request input or plain for the stored document. Typed on the output

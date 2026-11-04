@@ -8,6 +8,7 @@ import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
   V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_HIDDEN_FIELDS,
   V3_SURVEY_MAX_LANGUAGES,
@@ -1007,6 +1008,48 @@ describe("ZV3CreateSurveyBody", () => {
           },
         ]);
       }
+    });
+
+    // ENG-4100: a cap per field alone let 600 fields of 255 distinct keys through, ~6 s of locale lookups
+    // on a body that then parsed. Distinct keys are capped across the whole document.
+    test("refuses distinct translation keys spread over many fields, in one problem", () => {
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const locale = (index: number) => `aa-${letters[Math.floor(index / 26) % 26]}${letters[index % 26]}`;
+      const field = (offset: number) =>
+        translations(["en-US", ...Array.from({ length: 200 }, (_unused, index) => locale(offset + index))]);
+      const elements = [0, 200].map((offset, index) => ({
+        ...validCreateBody.blocks[0].elements[0],
+        id: `q${index}`,
+        headline: field(offset),
+      }));
+
+      const result = ZV3CreateSurveyBody.safeParse({
+        ...validCreateBody,
+        blocks: [{ ...validCreateBody.blocks[0], elements }],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        // Some generated region codes canonicalize onto others and add their own `duplicate_locale`
+        // problems; what matters is the one refusal of the count.
+        expect(
+          formatV3ZodInvalidParams(result.error, "body").filter((param) => param.code === "limit_exceeded")
+        ).toEqual([
+          {
+            name: "blocks.0.elements.1.headline",
+            reason: `Too big: expected at most ${V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS} distinct translation keys in the survey`,
+            code: "limit_exceeded",
+          },
+        ]);
+      }
+    });
+
+    test("takes a field with exactly the cap's translations", () => {
+      const keys = Array.from({ length: V3_SURVEY_MAX_TRANSLATIONS }, (_unused, index) => `k${index}`);
+      const result = ZV3CreateSurveyBody.safeParse(withHeadline(translations(keys)));
+      const params = result.success ? [] : formatV3ZodInvalidParams(result.error, "body");
+
+      expect(params.filter((param) => param.code === "limit_exceeded")).toEqual([]);
     });
 
     // The cap must never refuse a stored survey: a field holds one key per survey language, and every

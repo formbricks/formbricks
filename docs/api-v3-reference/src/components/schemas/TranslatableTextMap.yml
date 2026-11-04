@@ -1,7 +1,10 @@
 type: object
 description: >-
   Multilingual text map keyed by the emitted `languages[].code` values for this
-  survey.
+  survey. A request may carry at most 256 keys per map and at most 256 distinct
+  keys across the whole survey document; past either, the write is refused with
+  `limit_exceeded`.
+maxProperties: 256
 propertyNames:
   type: string
   description: Survey language code/tag, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
