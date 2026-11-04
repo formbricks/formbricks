@@ -7,6 +7,7 @@ import {
   getPreviewStartKey,
   getTestValueFields,
   getTestValuesKey,
+  restartsPreviewOnFinish,
   toHiddenFieldsRecord,
 } from "./test-values";
 
@@ -54,5 +55,13 @@ describe("preview test values", () => {
     expect(getPreviewStartKey({ seg: "heavy" }, structuredClone(startLogic))).toBe(key);
     expect(getPreviewStartKey({ seg: "heavy" }, startLogic.slice(1))).not.toBe(key);
     expect(getPreviewStartKey({ seg: "light" }, startLogic)).not.toBe(key);
+  });
+
+  test("an app survey without endings starts over after a finish, with a new key so start logic runs again", () => {
+    const startLogic = surveyFlowFixture.startLogic ?? [];
+    expect(restartsPreviewOnFinish({ type: "app", endings: [] })).toBe(true);
+    expect(restartsPreviewOnFinish({ type: "app", endings: [{}] })).toBe(false);
+    expect(restartsPreviewOnFinish({ type: "link", endings: [] })).toBe(false);
+    expect(getPreviewStartKey({}, startLogic, 1)).not.toBe(getPreviewStartKey({}, startLogic, 0));
   });
 });
