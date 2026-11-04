@@ -200,7 +200,8 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       updatedInvite.email,
       invite?.creator?.name ?? "",
       updatedInvite.name ?? "",
-      parsedInput.organizationId
+      parsedInput.organizationId,
+      ctx.user.id
     );
 
     return updatedInvite;
@@ -390,7 +391,8 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
           parsedInput.email,
           ctx.user.name ?? "",
           parsedInput.name ?? "",
-          parsedInput.organizationId
+          parsedInput.organizationId,
+          ctx.user.id
         );
       } catch (error) {
         logger.error(error, "Failed to send invite email");
@@ -488,7 +490,8 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
                 email,
                 ctx.user.name ?? "",
                 invitee.name ?? "",
-                organizationId
+                organizationId,
+                ctx.user.id
               );
             } catch (error) {
               logger.error(error, "Failed to send bulk invite email");

@@ -37,6 +37,7 @@ import { processWorkflowsUsageSnapshotJob } from "@/modules/ee/workflows/lib/ana
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
+import { processEmailAuditMaintenanceJob } from "@/modules/email/lib/email-audit-maintenance";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 import { processWebhookDeliveryJob } from "@/modules/response-pipeline/lib/process-webhook-delivery-job";
 import {
@@ -82,6 +83,12 @@ interface RecurringJobRegistration {
  * registered at all). A test pins the pairing instead.
  */
 export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, RecurringJobRegistration> = {
+  emailAuditMaintenance: {
+    requiresReleaseActivation: true,
+    handler: processEmailAuditMaintenanceJob,
+    job: recurringJobs.emailAuditMaintenance,
+    schedule: { everyMs: 5 * 60_000, kind: "every" },
+  },
   authzedProjectionDelivery: {
     handler: processAuthzedProjectionDeliveryJob,
     job: recurringJobs.authzedProjectionDelivery,

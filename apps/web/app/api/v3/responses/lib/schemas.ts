@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   zBatchDeleteResponsesRequest,
   zBatchDeleteResponsesV3Query,
+  zBatchSetResponsesOutcomeRequest,
+  zBatchSetResponsesOutcomeV3Query,
   zCreateResponseRequest,
   zGetResponseV3Path,
   zPatchResponseRequest,
@@ -73,15 +75,30 @@ export const ZV3BatchDeleteResponsesBody = zBatchDeleteResponsesRequest.extend({
 export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponsesBody>;
 
 /**
+ * `POST /api/v3/responses/batch-outcome`: the same cap, uniqueness rule and required scope as
+ * `batch-delete`, for the same reasons. `outcome` is required by the contract so that leaving it out
+ * can never be read as a restore.
+ */
+export const ZV3BatchSetResponsesOutcomeQuery = z.strictObject(zBatchSetResponsesOutcomeV3Query.shape);
+export type TV3BatchSetResponsesOutcomeQuery = z.infer<typeof ZV3BatchSetResponsesOutcomeQuery>;
+
+export const ZV3BatchSetResponsesOutcomeBody = zBatchSetResponsesOutcomeRequest.extend({
+  ids: zBatchSetResponsesOutcomeRequest.shape.ids.refine(hasUniqueItems, {
+    message: RESPONSE_IDS_UNIQUE_MESSAGE,
+  }),
+});
+export type TV3BatchSetResponsesOutcomeBody = z.infer<typeof ZV3BatchSetResponsesOutcomeBody>;
+
+/**
  * `ResponseDataMapInput`: the stored answer map with the write-side bounds.
  *
  * The key and per-answer caps are the ones the v1/v2 client and v1 management writes use
  * (`@formbricks/types/responses`), per the ENG-1652 input policy; those writes also cap the whole map at
- * 10,000 entries, which the v3 contract does not. Here they also guard later readers: without them a single request
- * could store an array of tens of thousands of entries, and every reader pays for it per entry — the
- * serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter
- * emits (ENG-3161), whose window is sized from the survey's choice count rather than from the stored
- * array.
+ * 10,000 entries, which the v3 contract does not. Here they also guard later readers: without them a
+ * single request could store an array of tens of thousands of entries, and every reader pays for it per
+ * entry — the serializer's per-answer mapping, export columns, and the positional probe the "Other"
+ * response filter emits (ENG-3161), whose window is sized from the survey's choice count rather than
+ * from the stored array.
  *
  * The contract caps each value with `if/then` — an array at most 1000 items, a matrix at most 1000
  * rows — and the map with `maxProperties`. The value caps refine the generated value union. The key

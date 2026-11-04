@@ -55,6 +55,7 @@ export function Headline({
             data-testid="fb__surveys__headline-text-test"
             data-fb-part={FB_PART.headline}
             className="label-headline htmlbody leading-6"
+            // eslint-disable-next-line no-restricted-syntax -- safeHtml is sanitizeSurveyHtml output
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (

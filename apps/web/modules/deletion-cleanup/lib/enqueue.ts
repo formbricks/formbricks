@@ -1,6 +1,6 @@
 import "server-only";
 import type { DeletionCleanupCreateManyInput, Prisma } from "@formbricks/database/prisma";
-import { IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import { EMAIL_SEND_AUDIT_BUCKET, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import type { TDeletedSurveyResponses } from "@/lib/response/delete-responses";
 import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
 
@@ -36,6 +36,12 @@ export const enqueueSurveyDeletionCleanups = async (
   tx: Prisma.TransactionClient,
   { organizationId, workspaceId, surveyId, fileUrls }: TSurveyDeletionCleanupInput
 ): Promise<{ drainNowIds: string[] }> => {
+  if (EMAIL_SEND_AUDIT_BUCKET) {
+    await tx.outboundEmailAudit.updateMany({
+      where: { surveyId },
+      data: { erasureRequestedAt: new Date() },
+    });
+  }
   const tenantIds = await readTenantIds(tx, organizationId);
   const scope = { organizationId, workspaceId, surveyId };
   const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
@@ -75,6 +81,12 @@ export const enqueueResponsesDeletionCleanups = async (
 ): Promise<{ drainNowIds: string[] }> => {
   const deleted = surveys.filter((survey) => survey.responseIds.length > 0);
   if (deleted.length === 0) return { drainNowIds: [] };
+  if (EMAIL_SEND_AUDIT_BUCKET) {
+    await tx.outboundEmailAudit.updateMany({
+      where: { responseId: { in: deleted.flatMap((survey) => survey.responseIds) } },
+      data: { erasureRequestedAt: new Date() },
+    });
+  }
   const tenantIds = await readTenantIds(tx, organizationId);
   const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
 
@@ -94,6 +106,58 @@ export const enqueueResponsesDeletionCleanups = async (
     }
   }
   return insertCleanups(tx, drainNow, drainLater);
+};
+
+export type TResponseOutcomeCleanupInput = {
+  organizationId: string;
+  workspaceId: string;
+  /** The responses whose outcome just changed, with their survey; the caller passes only real changes. */
+  changes: readonly { id: string; surveyId: string }[];
+};
+
+/**
+ * Queue the Hub cleanup for responses whose outcome changed (ENG-6785): one `hubResponseOutcome` row per
+ * response, due at once. The row says only which response to look at; the drain reads its CURRENT outcome and
+ * removes or rebuilds the Feedback Records to match, so it is the same row for a mark and for a restore.
+ *
+ * Call it inside the transaction that writes the outcome: a write that commits always gets its cleanup, and
+ * one that rolls back queues nothing. Whatever is still pending for these responses is cancelled first: a
+ * restore must not be undone by the older row of the mark before it, and a fresh row reads the same outcome
+ * anyway. A row a drain already holds is not waited for: that drain re-reads the outcome after its Hub
+ * writes (`reconcileResponseOutcomes`), so it corrects itself.
+ *
+ * Returns the ids to drain straight after commit. A Hub outage then only delays the cleanup, with the drain's
+ * backoff: it never reaches the request that changed the outcome.
+ *
+ * An organisation with no feedback directory has no Hub tenant, so nothing is queued.
+ */
+export const enqueueResponseOutcomeCleanups = async (
+  tx: Prisma.TransactionClient,
+  { organizationId, workspaceId, changes }: TResponseOutcomeCleanupInput
+): Promise<{ drainNowIds: string[] }> => {
+  if (changes.length === 0) return { drainNowIds: [] };
+  const tenantIds = await readTenantIds(tx, organizationId);
+  if (tenantIds.length === 0) return { drainNowIds: [] };
+
+  await tx.deletionCleanup.deleteMany({
+    where: {
+      kind: "hubResponseOutcome",
+      workspaceId,
+      responseIds: { hasSome: changes.map(({ id }) => id) },
+    },
+  });
+  return insertCleanups(
+    tx,
+    changes.map(({ id, surveyId }) => ({
+      organizationId,
+      workspaceId,
+      surveyId,
+      kind: "hubResponseOutcome" as const,
+      tenantIds,
+      responseIds: [id],
+    })),
+    []
+  );
 };
 
 /** Every feedback directory of the organisation: a Hub tenant that may hold the deleted data's records. */

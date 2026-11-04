@@ -65,6 +65,6 @@ export const convertToXlsxBuffer = (
 
   const wb = xlsx.utils.book_new();
   const ws = xlsx.utils.aoa_to_sheet([headerRow, ...dataRows]);
-  xlsx.utils.book_append_sheet(wb, ws, "Sheet1");
+  xlsx.utils.book_append_sheet(wb, ws, "Response Data");
   return xlsx.write(wb, { type: "buffer", bookType: "xlsx" });
 };

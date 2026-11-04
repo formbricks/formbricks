@@ -319,7 +319,7 @@ describe("ZV3CreateSurveyBody", () => {
     expect(
       result.error?.issues.find((issue) => issue.path.join(".") === "blocks.0.elements.0.choices.0.imageUrl")
     ).toMatchObject({
-      message: expect.stringContaining("Allowed fields: id, label"),
+      message: expect.stringContaining("Allowed fields: code, id, label"),
     });
   });
 
