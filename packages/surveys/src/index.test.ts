@@ -140,7 +140,8 @@ describe("renderSurvey custom CSS teardown", () => {
     const closeOlder = renderModal(vi.fn());
     const closeNewer = renderModal(vi.fn(), { survey: { light: "@layer fb-survey{#fbjs{color:green}}" } });
 
-    closeOlder?.();
+    expect(closeOlder).toBeTypeOf("function");
+    closeOlder!();
     expect(getCustomStyle()?.textContent).toContain("green");
 
     closeNewer?.();
@@ -165,7 +166,8 @@ describe("renderSurvey custom CSS teardown", () => {
     const onClose = renderModal(undefined);
     expect(getCustomStyle()?.textContent).toContain("fb-survey");
 
-    onClose?.();
+    expect(onClose).toBeTypeOf("function");
+    onClose!();
 
     expect(getCustomStyle()).toBeNull();
   });
@@ -213,7 +215,8 @@ describe("renderSurvey inline onClose", () => {
     } as unknown as Partial<SurveyContainerProps>);
     expect(document.getElementById("formbricks__custom-css")).not.toBeNull();
 
-    seen.onClose?.();
+    expect(seen.onClose).toBeTypeOf("function");
+    seen.onClose!();
 
     expect(document.getElementById("formbricks__custom-css")).toBeNull();
   });
