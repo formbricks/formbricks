@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Frage übersprungen: Der Import hat das KI-Limit vor dieser Frage erreicht.",
           "question_skipped_ai_timeout": "Frage übersprungen: Die KI hat zu lange für die Zuordnung gebraucht.",
           "question_skipped_by_ai": "Frage übersprungen: {description}",
+          "question_skipped_cells_taken": "Frage übersprungen: Ihr Text ist bereits Teil der vorherigen Frage.",
           "question_skipped_draft_too_large": "Frage übersprungen: Die Umfrage war zu groß, um sie mit dieser Frage zu erstellen, daher wurden die letzten Fragen ausgelassen.",
           "question_skipped_invalid_id": "Frage übersprungen: Ihre ID in der Datei konnte nicht gelesen werden.",
           "question_skipped_not_in_flow": "Frage übersprungen: Sie wird an keiner Stelle im Umfrageablauf angezeigt.",

@@ -71,6 +71,7 @@ describe("getSurveyImportIssueLine", () => {
     [{ cause: "not_in_flow" }, "question_skipped_not_in_flow"],
     [{ cause: "invalid_id" }, "question_skipped_invalid_id"],
     [{ cause: "validation_failed" }, "question_skipped_validation_failed"],
+    [{ cause: "cells_taken" }, "question_skipped_cells_taken"],
     [{ cause: "something_new" }, "question_skipped"],
   ])("says why a question was skipped: %j", (params, expected) => {
     expect(getSurveyImportIssueLine({ code: "question_skipped", severity: "warning", params }, t)).toBe(

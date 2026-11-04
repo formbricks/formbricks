@@ -144,7 +144,9 @@ describe("checkDocumentPlanResponses", () => {
     const claiming = entry("R2", { headline: [piece("en", "B3"), piece("de", "C3")] });
     const { context, plan } = check([answer(["R2"], [claiming]), answer(["R3"], [entry("R3")])]);
 
-    expect(orderedEntries(context, plan).map((planned) => planned.ref)).toEqual(["R2"]);
+    const { entries, overlapping } = orderedEntries(context, plan);
+    expect(entries.map((planned) => planned.ref)).toEqual(["R2"]);
+    expect(overlapping).toEqual(["R3"]);
   });
 
   test("settles the file's languages from the answer about its first lines, whichever came back first", () => {

@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "質問をスキップしました: この質問に到達する前に、インポートがAIの上限に達しました。",
           "question_skipped_ai_timeout": "質問をスキップしました: AIによるマッピングに時間がかかりすぎました。",
           "question_skipped_by_ai": "質問をスキップしました: {description}",
+          "question_skipped_cells_taken": "質問をスキップしました:このテキストは直前の質問にすでに含まれています。",
           "question_skipped_draft_too_large": "質問をスキップしました: この質問を含めて作成するにはアンケートが大きすぎたため、最後の質問を除外しました。",
           "question_skipped_invalid_id": "質問をスキップしました: ファイル内のIDを読み取れませんでした。",
           "question_skipped_not_in_flow": "質問をスキップしました: アンケートのフローのどこにも表示されません。",

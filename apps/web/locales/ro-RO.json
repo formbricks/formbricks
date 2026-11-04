@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Întrebare omisă: importul a atins limita de AI înainte de această întrebare.",
           "question_skipped_ai_timeout": "Întrebare omisă: AI-ul a durat prea mult să o asocieze.",
           "question_skipped_by_ai": "Întrebare omisă: {description}",
+          "question_skipped_cells_taken": "Întrebare omisă: textul ei face deja parte din întrebarea anterioară.",
           "question_skipped_draft_too_large": "Întrebare omisă: sondajul era prea mare pentru a fi creat împreună cu ea, așa că ultimele întrebări au fost omise.",
           "question_skipped_invalid_id": "Întrebare omisă: ID-ul ei din fișier nu a putut fi citit.",
           "question_skipped_not_in_flow": "Întrebare omisă: nu apare nicăieri în fluxul sondajului.",

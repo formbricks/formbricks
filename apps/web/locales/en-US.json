@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Question skipped: the import reached its AI limit before this question.",
           "question_skipped_ai_timeout": "Question skipped: the AI took too long to map it.",
           "question_skipped_by_ai": "Question skipped: {description}",
+          "question_skipped_cells_taken": "Question skipped: its text is already part of the question before it.",
           "question_skipped_draft_too_large": "Question skipped: the survey was too large to create with it, so the last questions were left out.",
           "question_skipped_invalid_id": "Question skipped: its ID in the file could not be read.",
           "question_skipped_not_in_flow": "Question skipped: it is not shown anywhere in the survey flow.",

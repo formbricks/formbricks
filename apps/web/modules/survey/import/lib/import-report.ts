@@ -100,6 +100,8 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
       return t("workspace.surveys.import.issues.question_skipped_invalid_id");
     case "validation_failed":
       return t("workspace.surveys.import.issues.question_skipped_validation_failed");
+    case "cells_taken":
+      return t("workspace.surveys.import.issues.question_skipped_cells_taken");
     default:
       return t("workspace.surveys.import.issues.question_skipped");
   }

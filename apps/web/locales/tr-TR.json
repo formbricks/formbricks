@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Soru atlandı: içe aktarma, bu sorudan önce yapay zeka sınırına ulaştı.",
           "question_skipped_ai_timeout": "Soru atlandı: yapay zeka bu soruyu eşlemek için çok uzun sürdü.",
           "question_skipped_by_ai": "Soru atlandı: {description}",
+          "question_skipped_cells_taken": "Soru atlandı: Metni zaten kendisinden önceki sorunun bir parçası.",
           "question_skipped_draft_too_large": "Soru atlandı: anket bu soruyla oluşturulamayacak kadar büyüktü, bu yüzden son sorular dışarıda bırakıldı.",
           "question_skipped_invalid_id": "Soru atlandı: dosyadaki kimliği okunamadı.",
           "question_skipped_not_in_flow": "Soru atlandı: anket akışında hiçbir yerde gösterilmiyor.",

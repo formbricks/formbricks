@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Frågan hoppades över: importen nådde sin AI-gräns före den här frågan.",
           "question_skipped_ai_timeout": "Frågan hoppades över: AI:n tog för lång tid på sig att mappa den.",
           "question_skipped_by_ai": "Frågan hoppades över: {description}",
+          "question_skipped_cells_taken": "Frågan hoppades över: texten ingår redan i frågan före.",
           "question_skipped_draft_too_large": "Frågan hoppades över: enkäten var för stor för att skapas med den, så de sista frågorna utelämnades.",
           "question_skipped_invalid_id": "Frågan hoppades över: dess ID i filen kunde inte läsas.",
           "question_skipped_not_in_flow": "Frågan hoppades över: den visas inte någonstans i enkätflödet.",

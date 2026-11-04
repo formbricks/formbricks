@@ -207,7 +207,7 @@ export async function runDocumentImport(
 
   signal.throwIfAborted();
   onProgress("assembling");
-  const entries = orderedEntries(planned.context, planned.plan);
+  const { entries, overlapping } = orderedEntries(planned.context, planned.plan);
   // The AI ceiling on questions (decision 18): a survey this large is imported through MCP instead.
   // Planning already stopped once its answers held more (`questionCeiling`); this holds it to the plan
   // as checked.
@@ -260,6 +260,16 @@ export async function runDocumentImport(
     ...skippedSheets,
     ...notes,
     ...planned.issues,
+    // An entry whose cells an earlier one read: reported like any other dropped question.
+    ...overlapping.map(
+      (ref): TSurveyImportPipelineIssue => ({
+        code: "question_skipped",
+        severity: "warning",
+        questionTag: ref,
+        questionRef: ref,
+        params: { cause: "cells_taken" },
+      })
+    ),
     ...dropped,
     ...assembly.issues,
   ].map((issue) =>

@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Vraag overgeslagen: de import bereikte zijn AI-limiet vóór deze vraag.",
           "question_skipped_ai_timeout": "Vraag overgeslagen: de AI had te veel tijd nodig om de vraag te koppelen.",
           "question_skipped_by_ai": "Vraag overgeslagen: {description}",
+          "question_skipped_cells_taken": "Vraag overgeslagen: de tekst maakt al deel uit van de vorige vraag.",
           "question_skipped_draft_too_large": "Vraag overgeslagen: de enquête was te groot om met deze vraag aan te maken, dus de laatste vragen zijn weggelaten.",
           "question_skipped_invalid_id": "Vraag overgeslagen: de ID in het bestand kon niet worden gelezen.",
           "question_skipped_not_in_flow": "Vraag overgeslagen: de vraag wordt nergens in de enquêteflow getoond.",

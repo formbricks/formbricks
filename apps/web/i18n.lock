@@ -4791,6 +4791,7 @@ checksums:
     workspace/surveys/import/issues/question_skipped_ai_budget: 6f3b25489741e96c01a235805d40ef4e
     workspace/surveys/import/issues/question_skipped_ai_timeout: e0e83bcea5cbf0108a09b1fb5e61844c
     workspace/surveys/import/issues/question_skipped_by_ai: c254ce3d8c102b563231a6439b78d628
+    workspace/surveys/import/issues/question_skipped_cells_taken: 1961869769749271ce1a00f2ac8c8a9d
     workspace/surveys/import/issues/question_skipped_draft_too_large: fdc8b15031b8028a482854edae0ae4b8
     workspace/surveys/import/issues/question_skipped_invalid_id: 2d338eb25bb45de7bbc8b51922fcf43f
     workspace/surveys/import/issues/question_skipped_not_in_flow: 746d8c95dee9ee0fd2876f88392e822a

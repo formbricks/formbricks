@@ -292,6 +292,29 @@ describe("runDocumentImport: the AI's plan", () => {
     });
   });
 
+  test("an entry whose cells an earlier entry read is dropped with a report line, not silently", async () => {
+    const file = {
+      fileName: "two.csv",
+      model: buildGridModel("csv", [["Q1"], ["How old are you?"], ["Q3"]]),
+    };
+    // R1 reads its own line and R2's; R2 is also planned on its own, reading the same cell.
+    const plan = planOf([
+      { ...openTextEntry("R1", "A1"), subheader: [{ language: "en-US", cell: "A2", text: null }] },
+      openTextEntry("R2", "A2"),
+      openTextEntry("R3", "A3"),
+    ]);
+
+    const { payload, report } = await run(file, recordedDocumentGenerate(plan));
+
+    expect(elementsOf(payload).map((element) => element.headline)).toEqual([
+      { "en-US": "Q1" },
+      { "en-US": "Q3" },
+    ]);
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({ code: "question_skipped", params: { cause: "cells_taken" } })
+    );
+  });
+
   test("a skip with no reason left after cleaning is reported without one", async () => {
     const { report } = await run(
       {

@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "问题已跳过：导入在处理该问题之前已达到 AI 使用上限。",
           "question_skipped_ai_timeout": "问题已跳过：AI 映射该问题耗时过长。",
           "question_skipped_by_ai": "问题已跳过：{description}",
+          "question_skipped_cells_taken": "已跳过该问题：其文本已包含在前一个问题中。",
           "question_skipped_draft_too_large": "问题已跳过：问卷过大，无法包含该问题一并创建，因此最后几个问题已被省略。",
           "question_skipped_invalid_id": "问题已跳过：无法读取文件中该问题的 ID。",
           "question_skipped_not_in_flow": "问题已跳过：该问题未显示在问卷流程的任何位置。",

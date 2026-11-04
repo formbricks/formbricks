@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Question ignorée : l'import a atteint sa limite d'IA avant cette question.",
           "question_skipped_ai_timeout": "Question ignorée : l'IA a mis trop de temps à la faire correspondre.",
           "question_skipped_by_ai": "Question ignorée : {description}",
+          "question_skipped_cells_taken": "Question ignorée : son texte fait déjà partie de la question précédente.",
           "question_skipped_draft_too_large": "Question ignorée : l'enquête était trop volumineuse pour être créée avec elle, les dernières questions ont donc été omises.",
           "question_skipped_invalid_id": "Question ignorée : son ID dans le fichier n'a pas pu être lu.",
           "question_skipped_not_in_flow": "Question ignorée : elle n'apparaît nulle part dans le déroulé de l'enquête.",

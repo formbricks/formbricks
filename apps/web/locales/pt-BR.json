@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Pergunta ignorada: a importação atingiu o limite de IA antes dessa pergunta.",
           "question_skipped_ai_timeout": "Pergunta ignorada: a IA demorou demais para mapeá-la.",
           "question_skipped_by_ai": "Pergunta ignorada: {description}",
+          "question_skipped_cells_taken": "Pergunta ignorada: o texto dela já faz parte da pergunta anterior.",
           "question_skipped_draft_too_large": "Pergunta ignorada: a pesquisa ficou grande demais para ser criada com ela, então as últimas perguntas foram deixadas de fora.",
           "question_skipped_invalid_id": "Pergunta ignorada: não foi possível ler o ID dela no arquivo.",
           "question_skipped_not_in_flow": "Pergunta ignorada: ela não é exibida em nenhum ponto do fluxo da pesquisa.",

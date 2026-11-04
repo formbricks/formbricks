@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "已略過題目：匯入作業在處理此題目之前已達到 AI 使用上限。",
           "question_skipped_ai_timeout": "已略過題目：AI 對應此題目的時間過長。",
           "question_skipped_by_ai": "已略過題目：{description}",
+          "question_skipped_cells_taken": "已略過此題:題目內容已包含在前一題中。",
           "question_skipped_draft_too_large": "已略過題目：問卷內容過大，無法包含此題目，因此最後幾題已被略過。",
           "question_skipped_invalid_id": "已略過題目：無法讀取檔案中的題目 ID。",
           "question_skipped_not_in_flow": "已略過題目：此題目不會顯示在問卷流程中的任何位置。",

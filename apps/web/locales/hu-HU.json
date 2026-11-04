@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "A kérdés kimaradt: az importálás elérte az MI-korlátját, mielőtt erre a kérdésre sor kerülhetett volna.",
           "question_skipped_ai_timeout": "A kérdés kimaradt: az MI számára túl hosszú ideig tartott a leképezése.",
           "question_skipped_by_ai": "A kérdés kimaradt: {description}",
+          "question_skipped_cells_taken": "A kérdés kihagyásra került: a szövege már az előző kérdés részét képezi.",
           "question_skipped_draft_too_large": "A kérdés kimaradt: a kérdőív túl nagy volt ahhoz, hogy ezzel együtt létrehozható legyen, ezért az utolsó kérdések kimaradtak.",
           "question_skipped_invalid_id": "A kérdés kimaradt: a fájlban szereplő azonosítója nem olvasható.",
           "question_skipped_not_in_flow": "A kérdés kimaradt: a kérdőív menetében sehol sem jelenik meg.",

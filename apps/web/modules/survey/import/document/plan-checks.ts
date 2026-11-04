@@ -510,18 +510,26 @@ export function mergeDocumentPlans(
 /**
  * The planned entries in document order, each cell claimed once: an entry reading a cell an earlier
  * entry already read — a call that took the next lines, which it was shown as context, for its own
- * question's — loses to the earlier one.
+ * question's — loses to the earlier one. The lines of the entries that lost are returned too, so the
+ * report names each one.
  */
 export function orderedEntries(
   context: DocumentPlanContext,
   plan: TDocumentCheckedPlan
-): TDocumentPlannedEntry[] {
+): { entries: TDocumentPlannedEntry[]; overlapping: string[] } {
   const claimed = new Set<string>();
-  return [...plan.entries.values()]
-    .sort((a, b) => (context.lineAt(a.ref) ?? 0) - (context.lineAt(b.ref) ?? 0))
-    .filter((entry) => {
-      if ([...entry.cells].some((cell) => claimed.has(cell))) return false;
-      for (const cell of entry.cells) claimed.add(cell);
-      return true;
-    });
+  const entries: TDocumentPlannedEntry[] = [];
+  const overlapping: string[] = [];
+  const inOrder = [...plan.entries.values()].sort(
+    (a, b) => (context.lineAt(a.ref) ?? 0) - (context.lineAt(b.ref) ?? 0)
+  );
+  for (const entry of inOrder) {
+    if ([...entry.cells].some((cell) => claimed.has(cell))) {
+      overlapping.push(entry.ref);
+      continue;
+    }
+    for (const cell of entry.cells) claimed.add(cell);
+    entries.push(entry);
+  }
+  return { entries, overlapping };
 }

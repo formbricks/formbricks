@@ -4965,6 +4965,7 @@
           "question_skipped_ai_budget": "Pregunta omitida: la importación alcanzó su límite de IA antes de llegar a esta pregunta.",
           "question_skipped_ai_timeout": "Pregunta omitida: la IA tardó demasiado en asignarla.",
           "question_skipped_by_ai": "Pregunta omitida: {description}",
+          "question_skipped_cells_taken": "Pregunta omitida: su texto ya forma parte de la pregunta anterior.",
           "question_skipped_draft_too_large": "Pregunta omitida: la encuesta era demasiado grande para crearla con ella, así que se han omitido las últimas preguntas.",
           "question_skipped_invalid_id": "Pregunta omitida: no se pudo leer su ID en el archivo.",
           "question_skipped_not_in_flow": "Pregunta omitida: no se muestra en ningún punto del flujo de la encuesta.",
