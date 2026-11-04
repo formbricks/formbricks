@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import type { TExpressionTypeIssue } from "@formbricks/types/surveys/expression-types";
 import { EXPRESSION_FUNCTIONS, type TExpression } from "@formbricks/types/surveys/expressions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -43,6 +44,9 @@ interface SetValueFormulaProps {
 
 const isEmptyFormula = (expression: TExpression) => expression.type === "static" && expression.value === "";
 
+/** How long typing has to pause before the box shows what is wrong with the formula. */
+const FORMULA_PROBLEM_DELAY_MS = 800;
+
 /**
  * The formula box of a Set value step or calculation (ENG-6935): typed text parsed into the expression
  * tree (the parser lives in the web app only), function chips and `@` to insert an answer or field at
@@ -67,6 +71,15 @@ export function SetValueFormula({
   const [text, setText] = useState(formatted);
   const [parseError, setParseError] = useState<TFormulaError | null>(null);
   const [isReferenceMenuOpen, setIsReferenceMenuOpen] = useState(false);
+  // True from a keystroke until a short pause or a blur: problems wait until then, so the box doesn't
+  // flash an error at every character of a formula still being typed.
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const settleTyping = () => {
+    clearTimeout(typingTimer.current);
+    setIsTyping(false);
+  };
+  useEffect(() => () => clearTimeout(typingTimer.current), []);
   // The tree this box last wrote: a change from anywhere else (undo, another row) resets the text.
   const lastWritten = useRef(JSON.stringify(expression));
 
@@ -161,6 +174,62 @@ export function SetValueFormula({
     }
   };
 
+  /** A type name in the author's language. Literal keys, so the translation scan sees them. */
+  const describeValueType = (type: string | undefined): string => {
+    switch (type) {
+      case "number":
+        return t("workspace.surveys.edit.flow.formula_type_number");
+      case "date":
+        return t("workspace.surveys.edit.flow.formula_type_date");
+      case "boolean":
+        return t("workspace.surveys.edit.flow.formula_type_boolean");
+      default:
+        return t("workspace.surveys.edit.flow.formula_type_text");
+    }
+  };
+
+  /** The save check's problem (the shared validator's), worded in the author's language. */
+  const describeFormulaIssue = (issue: TExpressionTypeIssue): string => {
+    const params = issue.params ?? {};
+    switch (issue.code) {
+      case "unknown_question":
+        return t("workspace.surveys.edit.flow.formula_issue_unknown_question", { id: params.id ?? "" });
+      case "unusable_question":
+        return t("workspace.surveys.edit.flow.formula_issue_unusable_question", {
+          questionType: params.questionType ?? "",
+        });
+      case "unknown_field":
+        return t("workspace.surveys.edit.flow.formula_issue_unknown_field", { id: params.id ?? "" });
+      case "needs_numbers":
+        return t("workspace.surveys.edit.flow.formula_issue_needs_numbers", {
+          fn: params.fn ?? "",
+          got: describeValueType(params.got),
+        });
+      case "needs_type":
+        return t("workspace.surveys.edit.flow.formula_issue_needs_type", {
+          fn: params.fn ?? "",
+          wanted: describeValueType(params.wanted),
+          got: describeValueType(params.got),
+        });
+      case "fallback_mismatch":
+        return t("workspace.surveys.edit.flow.formula_issue_fallback_mismatch", {
+          wanted: describeValueType(params.wanted),
+          got: describeValueType(params.got),
+        });
+      case "empty":
+        return t("workspace.surveys.edit.flow.formula_issue_empty");
+      case "target_not_formula":
+        return t("workspace.surveys.edit.flow.formula_issue_target_not_formula", {
+          fieldType: describeValueType(params.fieldType),
+        });
+      case "result_mismatch":
+        return t("workspace.surveys.edit.flow.formula_issue_result_mismatch", {
+          got: describeValueType(params.got),
+          wanted: describeValueType(params.wanted),
+        });
+    }
+  };
+
   const groups: { label: string; items: TFormulaReference[] }[] = [
     {
       label: t("common.questions"),
@@ -180,10 +249,15 @@ export function SetValueFormula({
   ].filter((group) => group.items.length > 0);
 
   // A reference being picked (the menu open, or an `@` just typed) is not a mistake yet.
-  const shownParseError = parseError ? getShownFormulaError(parseError, { text, isReferenceMenuOpen }) : null;
+  const shownParseError = parseError
+    ? getShownFormulaError(parseError, { text, isReferenceMenuOpen, isTyping })
+    : null;
+  const shownIssue = isTyping ? undefined : formulaIssues[0];
   const problem = parseError
     ? shownParseError && describeParseError(shownParseError)
-    : (formulaIssues[0]?.message.replace(/^Expression: /, "") ?? null);
+    : shownIssue
+      ? describeFormulaIssue(shownIssue)
+      : null;
   const shownSample =
     sampleResult !== null && sampleResult !== "" && targetDataType
       ? formatSampleResult(sampleResult, targetDataType, locale)
@@ -204,8 +278,12 @@ export function SetValueFormula({
           aria-label={t("workspace.surveys.edit.flow.formula")}
           aria-invalid={problem ? true : undefined}
           isInvalid={Boolean(problem)}
+          onBlur={settleTyping}
           onChange={(event) => {
             const nextText = event.target.value;
+            setIsTyping(true);
+            clearTimeout(typingTimer.current);
+            typingTimer.current = setTimeout(() => setIsTyping(false), FORMULA_PROBLEM_DELAY_MS);
             applyText(nextText);
             const cursor = event.target.selectionStart;
             if (nextText.length > text.length && nextText[cursor - 1] === "@") openReferenceMenu(true);
