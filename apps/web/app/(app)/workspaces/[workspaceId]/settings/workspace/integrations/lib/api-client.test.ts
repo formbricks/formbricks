@@ -13,8 +13,7 @@ describe("reviveIntegrationDates", () => {
       },
     });
 
-    expect(revived.config.data[0].createdAt).toBeInstanceOf(Date);
-    expect((revived.config.data[0].createdAt as Date).toISOString()).toBe("2026-01-01T00:00:00.000Z");
+    expect(revived.config.data[0].createdAt).toEqual(new Date("2026-01-01T00:00:00.000Z"));
     expect(revived.config.data[0].spreadsheetName).toBe("Responses");
     expect(revived.config.email).toBe("sheets@example.com");
   });
@@ -26,16 +25,14 @@ describe("getIntegration", () => {
   });
 
   test("fetches the workspace's integration of that type with revived dates", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            data: { id: "int_1", config: { data: [{ createdAt: "2026-01-01T00:00:00.000Z" }] } },
-          }),
-          { status: 200 }
-        )
-      );
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { id: "int_1", config: { data: [{ createdAt: "2026-01-01T00:00:00.000Z" }] } },
+        }),
+        { status: 200 }
+      )
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const integration = await getIntegration({ workspaceId: WORKSPACE_ID, type: "googleSheets" });

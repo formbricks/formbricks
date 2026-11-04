@@ -94,4 +94,11 @@ describe("GET /api/workspaces/[workspaceId]/integrations/[type]", () => {
     expect(response.status).toBe(400);
     expect(mockGetIntegrationByType).not.toHaveBeenCalled();
   });
+
+  test("rejects n8n, which no integration settings page stores", async () => {
+    const response = await get("n8n");
+
+    expect(response.status).toBe(400);
+    expect(mockGetIntegrationByType).not.toHaveBeenCalled();
+  });
 });

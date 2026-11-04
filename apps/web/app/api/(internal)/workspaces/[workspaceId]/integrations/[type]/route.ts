@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZIntegrationType } from "@formbricks/types/integration";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import { can } from "@/lib/authorization";
@@ -21,7 +20,8 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 
 const paramsSchema = z.object({
   workspaceId: z.cuid2(),
-  type: ZIntegrationType,
+  // `n8n` is in `ZIntegrationType` but not the database `IntegrationType` enum — no page stores it.
+  type: z.enum(["googleSheets", "airtable", "notion", "slack"]),
 });
 
 export const GET = withV3ApiWrapper({
