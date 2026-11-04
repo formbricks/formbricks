@@ -64,7 +64,11 @@ export const MatrixElementSummary = ({ elementSummary, survey, setFilter }: Matr
                   <TooltipRenderer tooltipContent={getTooltipContent(rowLabel)} shouldRender={true}>
                     <p className="max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{rowLabel}</p>
                   </TooltipRenderer>
-                  <OptionBaseNote shownCount={shownCount} hidden={hidden} />
+                  <OptionBaseNote
+                    shownCount={shownCount}
+                    base={elementSummary.responseCount}
+                    hidden={hidden}
+                  />
                 </td>
                 {columnPercentages.map(({ column, percentage }) => (
                   <td

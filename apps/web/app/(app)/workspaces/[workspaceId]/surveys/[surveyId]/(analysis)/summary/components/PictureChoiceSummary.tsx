@@ -75,7 +75,11 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
                   </div>
                   <div className="flex items-center gap-x-2 self-end">
                     {choiceId && <IdBadge id={choiceId} />}
-                    <OptionBaseNote shownCount={result.shownCount} hidden={result.hidden} />
+                    <OptionBaseNote
+                      shownCount={result.shownCount}
+                      base={elementSummary.responseCount}
+                      hidden={result.hidden}
+                    />
                   </div>
                 </div>
                 <div className="flex w-full gap-x-2">

@@ -37,7 +37,11 @@ export const RankingSummary = ({ elementSummary, surveyType, survey }: RankingSu
                       <span className="mr-2 text-slate-400">#{resultsIdx + 1}</span>
                       <div className="rounded-sm bg-slate-100 px-2 py-1">{result.value}</div>
                       {choiceId && <IdBadge id={choiceId} />}
-                      <OptionBaseNote shownCount={result.shownCount} hidden={result.hidden} />
+                      <OptionBaseNote
+                        shownCount={result.shownCount}
+                        base={elementSummary.responseCount}
+                        hidden={result.hidden}
+                      />
                     </div>
                     <span className="ml-auto flex items-center gap-x-1">
                       <span className="font-bold text-slate-600">

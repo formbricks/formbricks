@@ -109,7 +109,11 @@ export const MultipleChoiceSummary = ({
                           <IdBadge id={choiceId} />
                         </span>
                       )}
-                      <OptionBaseNote shownCount={result.shownCount} hidden={result.hidden} />
+                      <OptionBaseNote
+                        shownCount={result.shownCount}
+                        base={elementSummary.responseCount}
+                        hidden={result.hidden}
+                      />
                     </div>
                     <div className="flex w-full gap-x-2 sm:w-auto sm:shrink-0">
                       <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0 sm:whitespace-nowrap">
