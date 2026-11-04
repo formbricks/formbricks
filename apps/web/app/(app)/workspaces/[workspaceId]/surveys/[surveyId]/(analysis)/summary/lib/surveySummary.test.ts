@@ -5610,4 +5610,26 @@ describe("option bases (ENG-6937)", () => {
     });
     expect(matrix.data.find((row: any) => row.rowLabel === "Netflix")).not.toHaveProperty("shownCount");
   });
+
+  test("a stored pick of an option the respondent wasn't shown is left out, as the export blanks it (P51)", async () => {
+    // The record says Apple TV+ was not shown, yet the stored answer still names it.
+    const stalePick = response({ fav: "Apple TV+" }, { options: { fav: ["apple"] } });
+    const fav = await summaryOf([stalePick, appleUser], "fav");
+    const apple = fav.choices.find((entry: any) => entry.value === "Apple TV+");
+
+    expect(apple.count).toBe(1);
+    expect(apple.percentage).toBeLessThanOrEqual(100);
+
+    const picture = await summaryOf(
+      [response({ ad_pick: ["poster_b"] }, { options: { ad_pick: ["poster_b"] } })],
+      "ad_pick"
+    );
+    expect(picture.choices.find((entry: any) => entry.id === "poster_b").count).toBe(0);
+
+    const matrix = await summaryOf(
+      [response({ brand_grid: { "Disney+": "Good" } }, { rows: { brand_grid: ["row_disney"] } })],
+      "brand_grid"
+    );
+    expect(matrix.data.find((row: any) => row.rowLabel === "Disney+").totalResponsesForRow).toBe(0);
+  });
 });

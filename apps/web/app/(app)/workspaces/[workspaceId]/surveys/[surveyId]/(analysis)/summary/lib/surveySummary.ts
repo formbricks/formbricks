@@ -93,6 +93,20 @@ const countOptionsNotShown = (
 };
 
 /**
+ * Whether the response's record lists an option, row or column of an element as not shown. A pick of
+ * one that survives in the stored answer (an answer given before a language switch, or kept by an
+ * older bundle) is left out of the counts, as the export leaves it blank (P51): otherwise an option's
+ * count could exceed the respondents it was shown to.
+ */
+const wasOptionNotShown = (
+  response: TSurveySummaryResponse,
+  recordKey: "options" | "rows" | "columns",
+  elementId: string,
+  optionId: string | undefined
+): boolean =>
+  optionId !== undefined && (response.notShown?.[recordKey]?.[elementId] ?? []).includes(optionId);
+
+/**
  * An option's share over the respondents shown it: `base` (who answered the element) less those not
  * shown it. `shownCount` is set only when that base is smaller than the element's, so a survey without
  * option show-if reads exactly as before. A Hidden option carries `hidden`, so results label it.
@@ -451,6 +465,9 @@ export const getElementSummary = async (
         let totalSelectionCount = 0;
         let totalResponseCount = 0;
         const answered: TSurveySummaryResponse[] = [];
+        const choiceByLabel = new Map(
+          element.choices.map((choice) => [getLocalizedValue(choice.label, "default"), choice])
+        );
         responses.forEach((response) => {
           const responseLanguageCode = getLanguageCode(survey.languages, response.language);
 
@@ -460,10 +477,19 @@ export const getElementSummary = async (
               : checkForI18n(response.data, element.id, elements, responseLanguageCode);
 
           let hasValidAnswer = false;
+          // The option a pick names: a choice by label, "none", else the "other" text (P51).
+          const pickNotShown = (value: string) => {
+            const optionId = elementChoices.includes(value)
+              ? choiceByLabel.get(value)?.id
+              : noneLabel && value === noneLabel
+                ? "none"
+                : "other";
+            return wasOptionNotShown(response, "options", element.id, optionId);
+          };
 
           if (Array.isArray(answer) && element.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             answer.forEach((value) => {
-              if (value) {
+              if (value && !pickNotShown(value)) {
                 totalSelectionCount++;
                 if (elementChoices.includes(value)) {
                   choiceCountMap[value]++;
@@ -483,7 +509,7 @@ export const getElementSummary = async (
             typeof answer === "string" &&
             element.type === TSurveyElementTypeEnum.MultipleChoiceSingle
           ) {
-            if (answer) {
+            if (answer && !pickNotShown(answer)) {
               totalSelectionCount++;
               if (elementChoices.includes(answer)) {
                 choiceCountMap[answer]++;
@@ -508,9 +534,6 @@ export const getElementSummary = async (
 
         // ENG-6937: each option's base is who answered less who wasn't shown it.
         const notShownCounts = countOptionsNotShown(answered, "options", element.id);
-        const choiceByLabel = new Map(
-          element.choices.map((choice) => [getLocalizedValue(choice.label, "default"), choice])
-        );
 
         Object.entries(choiceCountMap).forEach(([label, count]) => {
           const choice = choiceByLabel.get(label);
@@ -567,6 +590,7 @@ export const getElementSummary = async (
             totalResponseCount++;
             answered.push(response);
             answer.forEach((value) => {
+              if (wasOptionNotShown(response, "options", element.id, value)) return;
               totalSelectionCount++;
               choiceCountMap[value]++;
             });
@@ -909,6 +933,12 @@ export const getElementSummary = async (
                 );
               });
               const colValueInDefaultLanguage = getLocalizedValue(colValue?.label, "default");
+              if (
+                wasOptionNotShown(response, "rows", element.id, row.id) ||
+                wasOptionNotShown(response, "columns", element.id, colValue?.id)
+              ) {
+                return;
+              }
               if (colValueInDefaultLanguage && columns.includes(colValueInDefaultLanguage)) {
                 countMap[getLocalizedValue(row.label, "default")][colValueInDefaultLanguage] += 1;
               }
@@ -1036,6 +1066,10 @@ export const getElementSummary = async (
             answered.push(response);
             answer.forEach((value, index) => {
               const ranking = index + 1; // Calculate ranking based on index
+              const rankedChoiceId = elementChoices.includes(value)
+                ? element.choices.find((choice) => getLocalizedValue(choice.label, "default") === value)?.id
+                : "other";
+              if (wasOptionNotShown(response, "options", element.id, rankedChoiceId)) return;
               if (elementChoices.includes(value)) {
                 choiceRankSums[value] += ranking;
                 choiceCountMap[value]++;
