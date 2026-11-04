@@ -236,6 +236,8 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
 
     await openCombobox(page, "action-0-objective");
     await page.getByRole("option", { name: "Set value", exact: true }).click();
+    // Set value starts as an expression (ENG-6935); one step shows the typed value input checked below.
+    await page.locator("#action-0-formula-toggle").click();
     const variablesBeforeEdit = await openCombobox(page, "action-0-variableId");
     await variablesBeforeEdit.getByRole("option", { name: rowEditedName, exact: true }).click();
     // The row says number while the legacy column still says text, so this is the row's answer.
