@@ -2,6 +2,7 @@ import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { isCalBooked } from "@formbricks/types/cal-booking";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import { getIngestedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
@@ -769,7 +770,7 @@ export const getElementSummary = async (
 
         responses.forEach((response) => {
           const value = response.data[element.id];
-          if (value === "booked") {
+          if (isCalBooked(value)) {
             data.booked++;
           } else if (response.ttc && response.ttc[element.id] > 0) {
             data.skipped++;

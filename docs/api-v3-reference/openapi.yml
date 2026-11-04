@@ -11380,10 +11380,14 @@ components:
               type: boolean
               description: Whether the respondent completed a booking.
             rawValue:
-              type: string
-              description: The token as stored, verbatim — conventionally `booked`. Required, like the equivalent field on `consent` and `cta`, because `booked` is a derivation and this is the underlying value a client needs to rebuild the stored map.
+              oneOf:
+                - type: string
+                - type: object
+                  additionalProperties:
+                    type: string
+              description: 'The value as stored, verbatim. Required, like the equivalent field on `consent` and `cta`, because `booked` is a derivation and this is the underlying value a client needs to rebuild the stored map. A string (`booked`) for a response recorded before 6.2; afterwards a map holding `status: booked` plus the booking details Cal reported (`uid`, `title`, `startTime`, `endTime`, `eventTypeId`, `bookingStatus`, `paymentRequired`, `isRecurring`, `videoCallUrl`), each present only when Cal sent it.'
       unevaluatedProperties: false
-      description: Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
+      description: Scheduling answer for a `cal` element. The response records that the booking happened and the details Cal reported at that moment; the meeting itself lives in the scheduling provider, so a later change there is not reflected.
     ResponseAnswerMatrix:
       allOf:
         - $ref: '#/components/schemas/ResponseAnswerBase'

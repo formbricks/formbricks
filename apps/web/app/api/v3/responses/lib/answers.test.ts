@@ -116,6 +116,13 @@ describe("serializeAnswers — one branch per element type", () => {
     expect(answer([el], { q1: raw })).toMatchObject({ booked: expected, rawValue: raw });
   });
 
+  test("cal booking record reports booked=true and the record verbatim", () => {
+    const el = element({ id: "q1", type: "cal", calUserName: "someone" });
+    const raw = { status: "booked", startTime: "2026-11-05T10:00:00.000Z", title: "Intro call" };
+
+    expect(answer([el], { q1: raw })).toMatchObject({ booked: true, rawValue: raw });
+  });
+
   /** Older clients wrote the element's display format; reformatting without knowing which moves the date. */
   test.each(["2026-09-09", "09-09-2026"])("date %s is returned verbatim", (raw) => {
     const el = element({ id: "q1", type: "date", format: "d-M-y" });

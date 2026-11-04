@@ -298,7 +298,7 @@ export const zResponseAnswerFileUpload = z.strictObject({
 export type ResponseAnswerFileUploadZodType = z.infer<typeof zResponseAnswerFileUpload>;
 
 /**
- * Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
+ * Scheduling answer for a `cal` element. The response records that the booking happened and the details Cal reported at that moment; the meeting itself lives in the scheduling provider, so a later change there is not reflected.
  */
 export const zResponseAnswerBooking = z.strictObject({
   position: z.int().gte(1),
@@ -307,7 +307,7 @@ export const zResponseAnswerBooking = z.strictObject({
   elementLabel: z.string(),
   durationSeconds: z.number().gte(0).lte(86400).optional(),
   booked: z.boolean(),
-  rawValue: z.string(),
+  rawValue: z.union([z.string(), z.record(z.string(), z.string())]),
 });
 
 export type ResponseAnswerBookingZodType = z.infer<typeof zResponseAnswerBooking>;

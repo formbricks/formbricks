@@ -1,6 +1,7 @@
 import { useCallback, useState } from "preact/hooks";
 import { FB_PART } from "@formbricks/survey-ui/parts";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TCalBooking } from "@formbricks/types/cal-booking";
+import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { CalEmbed } from "@/components/general/cal-embed";
 import { ElementMedia } from "@/components/general/element-media";
@@ -11,7 +12,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CalElementProps {
   element: TSurveyCalElement;
-  value: string;
+  value: TResponseDataValue;
   onChange: (responseData: TResponseData) => void;
   languageCode: string;
   ttc: TResponseTtc;
@@ -34,11 +35,14 @@ export function CalElement({
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
-  const onSuccessfulBooking = useCallback(() => {
-    onChange({ [element.id]: "booked" });
-    const updatedttc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
-    setTtc(updatedttc);
-  }, [onChange, element.id, setTtc, startTime, ttc]);
+  const onSuccessfulBooking = useCallback(
+    (booking: TCalBooking) => {
+      onChange({ [element.id]: booking });
+      const updatedttc = getUpdatedTtc(ttc, element.id, performance.now() - startTime);
+      setTtc(updatedttc);
+    },
+    [onChange, element.id, setTtc, startTime, ttc]
+  );
 
   return (
     <form

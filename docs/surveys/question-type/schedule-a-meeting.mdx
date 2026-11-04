@@ -37,3 +37,28 @@ Add an input box where users can enter their [`cal.com`](https://cal.com/) usern
 ### Custom Hostname (Optional)
 
 Enable an input box for adding a custom hostname, which is necessary if using a self-hosted instance of [`cal.com`](https://cal.com/docs/self-hosting/installation).
+
+## Response data
+
+When a respondent books a slot, the response stores the booking Cal.com reported, so a webhook, export or API consumer knows when the meeting is. In a webhook payload, `data` holds this for the question's ID:
+
+```json
+{
+  "status": "booked",
+  "uid": "mWd8k2xYpQ",
+  "title": "Intro call between Alex and Sam",
+  "startTime": "2026-11-05T10:00:00.000Z",
+  "endTime": "2026-11-05T10:30:00.000Z",
+  "eventTypeId": "42",
+  "bookingStatus": "ACCEPTED",
+  "paymentRequired": "false",
+  "isRecurring": "false",
+  "videoCallUrl": "https://app.cal.com/video/mWd8k2xYpQ"
+}
+```
+
+All values are strings. A field is left out when Cal.com did not send it, and `status` is always `booked`. A respondent who skips the question has no value for it. Responses recorded before this change hold the plain string `booked` instead; treat both forms as a booking.
+
+The record reflects the booking at the moment it was made. A later reschedule or cancellation in Cal.com is not reflected on the response.
+
+A self-hosted Cal.com that predates the current embed only reports the start time and duration, so `startTime` and `endTime` are all you get from it.

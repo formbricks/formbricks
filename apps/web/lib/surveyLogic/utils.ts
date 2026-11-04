@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { isCalBooked } from "@formbricks/types/cal-booking";
 import {
   RESERVED_FIELD_CATALOG,
   type TEmbeddedFieldsSurvey,
@@ -524,7 +525,7 @@ const evaluateSingleCondition = (
       case "isBefore":
         return new Date(String(leftValue)) < new Date(String(rightValue));
       case "isBooked":
-        return leftValue === "booked" || !!(leftValue && leftValue !== "");
+        return isCalBooked(leftValue) || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":
         if (typeof leftValue === "object") {
           return Object.values(leftValue).includes("");
