@@ -3,7 +3,7 @@ import { logger } from "@formbricks/logger";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
+import { isPlainRecord, pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
 import { findRecentDuplicateResponse } from "@/app/api/client/[workspaceId]/responses/lib/duplicate-response";
 import { checkSurveyValidity } from "@/app/api/v2/client/[workspaceId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
@@ -57,9 +57,8 @@ const parseAndValidateResponseInput = async (
     // Set on the parsed body rather than spread into a copy: a copy is a pass over every key the caller
     // sent, before the schema has bounded any of them.
     buildInput: (jsonInput) => {
-      if (jsonInput === null || typeof jsonInput !== "object" || Array.isArray(jsonInput))
-        return { workspaceId };
-      (jsonInput as Record<string, unknown>).workspaceId = workspaceId;
+      if (!isPlainRecord(jsonInput)) return { workspaceId };
+      jsonInput.workspaceId = workspaceId;
       return jsonInput;
     },
     malformedJsonMessage: "Invalid JSON in request body",

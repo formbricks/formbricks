@@ -3,6 +3,7 @@ import {
   MAX_RESPONSE_DATA_ENTRIES,
   MAX_RESPONSE_DATA_KEYS,
   MAX_RESPONSE_DATA_VALUES,
+  MAX_RESPONSE_VARIABLE_KEYS,
   RESPONSE_DATA_LIMIT_MESSAGES,
   ZResponseFilterCriteria,
   ZResponseInput,
@@ -203,7 +204,7 @@ describe("response input caps", () => {
 
     const result = create({
       data,
-      variables: keyed(MAX_RESPONSE_DATA_KEYS, (index) => index),
+      variables: keyed(MAX_RESPONSE_VARIABLE_KEYS, (index) => index),
       ttc: keyed(MAX_RESPONSE_DATA_KEYS, () => 1200),
     });
 
@@ -268,7 +269,7 @@ describe("response input caps", () => {
   });
 
   test.each([
-    ["variables", MAX_RESPONSE_DATA_KEYS + 1],
+    ["variables", MAX_RESPONSE_VARIABLE_KEYS + 1],
     ["variables", 100_000],
     ["ttc", MAX_RESPONSE_DATA_KEYS + 1],
     ["ttc", 100_000],

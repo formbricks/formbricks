@@ -17,6 +17,7 @@ import {
   MAX_RESPONSE_DATA_KEYS,
   MAX_RESPONSE_DATA_VALUES,
   RESPONSE_DATA_LIMIT_MESSAGES,
+  type TSizeCheckFailure,
   isPlainRecord,
   maxKeys,
   withSizeCheck,
@@ -102,7 +103,7 @@ export type TV3BatchSetResponsesOutcomeBody = z.infer<typeof ZV3BatchSetResponse
  *
  * The contract caps each value with `if/then` — an array at most 1000 items, a matrix at most 1000
  * rows — and the map with `maxProperties`. The value caps refine the generated value union. The key
- * cap is checked before the map is parsed, so a map over 500 keys is refused with that one issue
+ * cap is checked before the map is parsed, so a map over the cap is refused with that one issue
  * whatever its values hold, instead of one issue per bad value. The array cap raises Zod's own
  * `too_big` issue, so its `reason` reads the way a `.max()` would.
  */
@@ -117,7 +118,7 @@ const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value,
         input: value,
       });
     }
-  } else if (typeof value === "object" && Object.keys(value).length > MAX_RESPONSE_DATA_VALUES) {
+  } else if (isPlainRecord(value) && Object.keys(value).length > MAX_RESPONSE_DATA_VALUES) {
     ctx.addIssue({
       code: "custom",
       input: value,
@@ -128,36 +129,34 @@ const ZV3ResponseDataValue = zResponseDataMapInput.valueType.superRefine((value,
 
 /**
  * Checked before the map is parsed, so neither an oversized map nor an oversized matrix has its entries
- * parsed one by one. Arrays are already bounded by the wrapper's array budget before any schema runs, so
- * they keep the `too_big` issue above; a matrix has no such budget. Each issue keeps the path the
- * refinement would report.
+ * parsed one by one, and the first one found is the one issue reported, at its own path. Arrays are
+ * already bounded by the wrapper's array budget before any schema runs, so they keep the `too_big` issue
+ * above; a matrix has no such budget. v3 has no total across answers (see the contract).
  */
-const ZV3ResponseDataInput = z.preprocess(
-  (value, ctx) => {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
-    if (Object.keys(value).length > MAX_RESPONSE_DATA_KEYS) {
-      ctx.addIssue({
-        code: "custom",
-        message: RESPONSE_DATA_LIMIT_MESSAGES.keys,
-      });
-      return value;
+const checkV3ResponseDataSize = (data: Record<string, unknown>): TSizeCheckFailure | undefined => {
+  if (Object.keys(data).length > MAX_RESPONSE_DATA_KEYS) return RESPONSE_DATA_LIMIT_MESSAGES.keys;
+  for (const key in data) {
+    const answer = data[key];
+    if (isPlainRecord(answer) && Object.keys(answer).length > MAX_RESPONSE_DATA_VALUES) {
+      return { message: RESPONSE_DATA_LIMIT_MESSAGES.rows, path: [key] };
     }
-    for (const [key, answer] of Object.entries(value)) {
-      if (isPlainRecord(answer) && Object.keys(answer).length > MAX_RESPONSE_DATA_VALUES) {
-        ctx.addIssue({
-          code: "custom",
-          path: [key],
-          message: RESPONSE_DATA_LIMIT_MESSAGES.rows,
-        });
-      }
-    }
-    return value;
-  },
-  z.record(zResponseDataMapInput.keyType, ZV3ResponseDataValue)
+  }
+  return undefined;
+};
+
+const ZV3ResponseDataInput = withSizeCheck(
+  z.record(zResponseDataMapInput.keyType, ZV3ResponseDataValue),
+  checkV3ResponseDataSize
 );
 
 /**
- * The same key cap `data` carries, for the other two element-keyed maps on this body.
+ * Names `embeddedData` may set: one per hidden field (a survey may declare 200) or variable (100), so 500
+ * leaves room for both. `ttc` is keyed per element like `data` and shares its cap.
+ */
+export const V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS = 500;
+
+/**
+ * A key cap for the other two maps on this body, checked before Zod reads them.
  *
  * `embeddedData` needs it for a second reason beyond storage: every name that matches no declared
  * field becomes its own `invalid_params` entry, and the entry repeats the name in both `name` and
@@ -165,18 +164,22 @@ const ZV3ResponseDataInput = z.preprocess(
  * size — the request is rejected, and the rejection is the expensive part. Only Hub-relayed
  * `invalid_params` are bounded (`hub-errors.ts`); locally generated ones are not.
  */
-const withKeyCap = <T extends z.ZodType<Record<string, unknown>>>(schema: T, what: string) =>
-  withSizeCheck(schema, maxKeys(MAX_RESPONSE_DATA_KEYS, what));
+const withKeyCap = <T extends z.ZodType<Record<string, unknown>>>(schema: T, max: number, what: string) =>
+  withSizeCheck(schema, maxKeys(max, what));
 
 /** Embedded Data accepts scalars only, plus `null` to clear a field — per `ResponseEmbeddedDataInput`. */
-const ZV3EmbeddedDataInput = withKeyCap(zResponseEmbeddedDataInput, "Embedded Data fields");
+const ZV3EmbeddedDataInput = withKeyCap(
+  zResponseEmbeddedDataInput,
+  V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS,
+  "Embedded Data fields"
+);
 
 /**
  * Per-element timing, in milliseconds. Values are not bounded on purpose — the contract clamps rather
  * than rejects, because noisy client telemetry should never cost a caller their response. The clamp
  * lives in the service.
  */
-const ZV3TtcInput = withKeyCap(zResponseTtcMap, "timing entries");
+const ZV3TtcInput = withKeyCap(zResponseTtcMap, MAX_RESPONSE_DATA_KEYS, "timing entries");
 
 const createShape = zCreateResponseRequest.shape;
 const patchShape = zPatchResponseRequest.shape;

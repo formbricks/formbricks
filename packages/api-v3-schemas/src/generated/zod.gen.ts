@@ -592,7 +592,7 @@ export type ResponseDataMapInputZodType = z.infer<typeof zResponseDataMapInput>;
  *
  * Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
  *
- * **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; the same bound as on `data`.
+ * **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A survey declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
  *
  */
 export const zResponseEmbeddedDataInput = z.record(
@@ -607,7 +607,7 @@ export type ResponseEmbeddedDataInputZodType = z.infer<typeof zResponseEmbeddedD
  *
  * This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite *value* is therefore accepted, and none is declared out of range.
  *
- * The number of **entries** is capped at 500, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
+ * The number of **entries** is capped at 2,000, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
  *
  * **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and writes its own when the response is finished, by summing the element entries. Sending one therefore changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed from the element entries regardless.
  *

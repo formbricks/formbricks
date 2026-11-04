@@ -14,6 +14,7 @@ import {
 } from "@formbricks/api-v3-schemas/testing";
 import { MAX_RESPONSE_DATA_KEYS, MAX_RESPONSE_DATA_VALUES } from "@formbricks/types/responses";
 import {
+  V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS,
   ZV3BatchDeleteResponsesBody,
   ZV3BatchDeleteResponsesQuery,
   ZV3BatchSetResponsesOutcomeBody,
@@ -78,12 +79,23 @@ describe("ZV3CreateResponseBody", () => {
     expect(create({ data: { q1: rows(1_001) } }).success).toBe(false);
   });
 
-  test("a response is capped at 500 answered fields", () => {
+  test("a response is capped at the answered-field limit", () => {
     const fields = (count: number) =>
       Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`q${i}`, "text"]));
 
-    expect(create({ data: fields(500) }).success).toBe(true);
-    expect(create({ data: fields(501) }).success).toBe(false);
+    expect(create({ data: fields(MAX_RESPONSE_DATA_KEYS) }).success).toBe(true);
+    expect(create({ data: fields(MAX_RESPONSE_DATA_KEYS + 1) }).success).toBe(false);
+  });
+
+  // Every oversized matrix is checked before parsing, and the first one is the one issue reported.
+  test("several oversized matrices are refused with one issue, at the first", () => {
+    const rows = (count: number) =>
+      Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`r${i}`, "c"]));
+    const result = create({ data: { a: rows(1_001), b: rows(1_001), c: rows(1_001) } });
+
+    expect(result.success ? [] : result.error.issues).toEqual([
+      expect.objectContaining({ code: "custom", path: ["data", "a"] }),
+    ]);
   });
 
   // The key cap runs before Zod reads a value, so bad values past it add no issues of their own.
@@ -177,7 +189,9 @@ describe("ZV3PatchResponseBody", () => {
   // The patch body reuses the create body's capped `data` schema, so the caps must come with it — a
   // separate schema here would be the obvious way to lose them.
   test("inherits the create body's data caps", () => {
-    const wide = Object.fromEntries(Array.from({ length: 501 }, (_unused, i) => [`q${i}`, "text"]));
+    const wide = Object.fromEntries(
+      Array.from({ length: MAX_RESPONSE_DATA_KEYS + 1 }, (_unused, i) => [`q${i}`, "text"])
+    );
 
     expect(ZV3PatchResponseBody.safeParse({ data: wide }).success).toBe(false);
     expect(
@@ -323,10 +337,10 @@ describe("ResponseDataMap contract bounds match the schema", () => {
    * `$ref` it), so the bound sits on them directly rather than needing an input split.
    */
   test.each([
-    ["ResponseEmbeddedDataInput", "embeddedData"],
-    ["ResponseTtcMap", "ttc"],
-  ])("%s publishes the same key cap the schema enforces on %s", (file) => {
-    expect(declared(file, "maxProperties")).toEqual([MAX_RESPONSE_DATA_KEYS]);
+    ["ResponseEmbeddedDataInput", "embeddedData", V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS],
+    ["ResponseTtcMap", "ttc", MAX_RESPONSE_DATA_KEYS],
+  ])("%s publishes the key cap the schema enforces on %s", (file, _field, cap) => {
+    expect(declared(file, "maxProperties")).toEqual([cap]);
   });
 
   test("the input map bounds the read map without re-declaring its value union", () => {
@@ -359,11 +373,11 @@ describe("the other element-keyed maps carry the same key cap", () => {
     Object.fromEntries(Array.from({ length: n }, (_, i) => [`k${i}`, value]));
 
   test.each([
-    ["embeddedData", "v"],
-    ["ttc", 1],
-  ])("%s accepts the cap and refuses one more", (field, value) => {
-    const at = ZV3CreateResponseBody.safeParse(body({ [field]: keys(MAX_RESPONSE_DATA_KEYS, value) }));
-    const over = ZV3CreateResponseBody.safeParse(body({ [field]: keys(MAX_RESPONSE_DATA_KEYS + 1, value) }));
+    ["embeddedData", "v", V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS],
+    ["ttc", 1, MAX_RESPONSE_DATA_KEYS],
+  ])("%s accepts the cap and refuses one more", (field, value, cap) => {
+    const at = ZV3CreateResponseBody.safeParse(body({ [field]: keys(cap, value) }));
+    const over = ZV3CreateResponseBody.safeParse(body({ [field]: keys(cap + 1, value) }));
 
     expect(at.success).toBe(true);
     expect(over.success).toBe(false);
@@ -417,7 +431,7 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "CreateResponseRequest $.embeddedData maxProperties": [
       {
         schema: ZV3CreateResponseBody,
-        input: createBody({ embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") }),
+        input: createBody({ embeddedData: keys(V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS + 1, "v") }),
         path: ["embeddedData"],
       },
     ],
@@ -446,7 +460,7 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "PatchResponseRequest $.embeddedData maxProperties": [
       {
         schema: ZV3PatchResponseBody,
-        input: { embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") },
+        input: { embeddedData: keys(V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS + 1, "v") },
         path: ["embeddedData"],
       },
     ],
@@ -456,7 +470,7 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "ResponseEmbeddedDataInput $ maxProperties": [
       {
         schema: ZV3CreateResponseBody,
-        input: createBody({ embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") }),
+        input: createBody({ embeddedData: keys(V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS + 1, "v") }),
         path: ["embeddedData"],
       },
     ],

@@ -55,14 +55,17 @@ export type TResponseVariables = z.infer<typeof ZResponseVariables>;
  * update inputs, one request at a time: the stored schemas (`ZResponseData`, `ZResponseVariables`,
  * `ZResponseTtc`) stay unbounded, so rows written before the caps still parse.
  *
- * All are far past any real survey: a response holds at most one entry per element, a multi-select
- * answer at most one entry per choice, and a matrix answer one entry per row. The entry budget counts
- * the whole `data` map — its keys plus every array item and matrix row — and allows an average of 20
- * per key, the key included: a survey of 500 multi-selects with 19 choices each, every choice ticked.
+ * Each is derived from what a survey can hold. `data` and `ttc` have one key per element or hidden field:
+ * a survey may have 1,000 blocks and 200 hidden fields, so 2,000 keys covers one element per block at
+ * that limit, and the largest survey in production has 31 blocks. A multi-select answer holds at most one
+ * entry per choice and a matrix one per row, both far under 1,000. `variables` has one key per survey
+ * variable, of which a survey may define 100. The entry budget counts the whole `data` map — its keys
+ * plus every array item and matrix row — so 2,000 answers can still carry 8,000 selections between them.
  */
-export const MAX_RESPONSE_DATA_KEYS = 500;
+export const MAX_RESPONSE_DATA_KEYS = 2_000;
 export const MAX_RESPONSE_DATA_VALUES = 1_000;
 export const MAX_RESPONSE_DATA_ENTRIES = 10_000;
+export const MAX_RESPONSE_VARIABLE_KEYS = 500;
 
 export const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -145,7 +148,7 @@ export const ZResponseDataInput = withSizeCheck(
 
 export const ZResponseVariablesInput = withSizeCheck(
   ZResponseVariables,
-  maxKeys(MAX_RESPONSE_DATA_KEYS, "variables")
+  maxKeys(MAX_RESPONSE_VARIABLE_KEYS, "variables")
 );
 
 export const ZResponseTtc = z.record(z.string(), z.number());
