@@ -8,7 +8,7 @@ import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
-import { settleV3EmbeddedFieldFormats } from "./embedded-fields";
+import { settleV3EmbeddedFieldFormats, toV3SurveyEmbeddedFields } from "./embedded-fields";
 import { getV3SurveyDefaultLanguage, getV3SurveyLanguages } from "./language";
 import { type TV3SurveyLanguageRequest, deriveV3SurveyLanguageRequests } from "./languages";
 import {
@@ -23,6 +23,7 @@ import {
   formatV3ZodInvalidParams,
 } from "./schemas";
 import {
+  type TV3SurveyDocumentValidationOptions,
   type TV3SurveyDocumentValidationResult,
   type TV3SurveyPrecedencePolicy,
   validateV3SurveyDocument,
@@ -219,7 +220,8 @@ function getValueAtPath(document: TV3SurveyDocument, path: string): unknown {
 function getIntroducedIssues(
   invalidParams: InvalidParam[],
   storedDocument: TV3SurveyDocument,
-  patchedDocument: TV3SurveyDocument
+  patchedDocument: TV3SurveyDocument,
+  validationOptions: TV3SurveyDocumentValidationOptions
 ): InvalidParam[] {
   // The stored document is validated under the *same* policy shape the caller judges the patched one
   // with, and that matters. `introduced` filters precedence violations on `violation.key`, which is
@@ -234,10 +236,11 @@ function getIntroducedIssues(
   // `preExisting` at all. That is the correct set: an `introduced`-mode precedence finding is by
   // definition the request's doing. Language and reference issues are unaffected by the policy and
   // still appear on both sides, which is what ENG-3070 actually needed.
-  const storedValidation = validateV3SurveyDocument(storedDocument, {
-    mode: "introduced",
-    baseline: storedDocument,
-  });
+  const storedValidation = validateV3SurveyDocument(
+    storedDocument,
+    { mode: "introduced", baseline: storedDocument },
+    validationOptions
+  );
   const preExisting = new Set(storedValidation.invalidParams.map(invalidParamSignature));
 
   return invalidParams.filter(
@@ -693,17 +696,30 @@ export function prepareV3SurveyPatchInput(
   // recall is refused exactly as a reorder is, and the PATCH 422 contract lists `misordered_reference`.
   // (v3 is not publicly released, so this tightening ships without a version bump; create stays on
   // `skip` as `prepareV3SurveyCreate` explains.)
-  const validation = validateV3SurveyDocument(patchedDocument, {
-    mode: "introduced",
-    baseline: currentDocument.document,
-  });
+  // ENG-6935: a patch without `embeddedFields` is checked against the stored typed rows, so a computed
+  // date, which the legacy `variables` cannot carry, is still declared.
+  const validationOptions: TV3SurveyDocumentValidationOptions = {
+    storedEmbeddedFields: toV3SurveyEmbeddedFields(survey.embeddedFields ?? []),
+  };
+  const validation = validateV3SurveyDocument(
+    patchedDocument,
+    { mode: "introduced", baseline: currentDocument.document },
+    validationOptions
+  );
 
   if (!validation.valid) {
     // ENG-3975: issues the stored survey already had, at values this patch leaves untouched, are not the
     // request's to fix. Refusing them blocked every edit to such a survey — a rename from the survey
     // list included — while the merge writes those values back exactly as stored. One introduced issue
     // makes the whole response the caller's, since a partial repair still leaves them responsible.
-    if (getIntroducedIssues(validation.invalidParams, currentDocument.document, patchedDocument).length > 0) {
+    if (
+      getIntroducedIssues(
+        validation.invalidParams,
+        currentDocument.document,
+        patchedDocument,
+        validationOptions
+      ).length > 0
+    ) {
       return invalidPreparation(validation.invalidParams);
     }
 
