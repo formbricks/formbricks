@@ -285,7 +285,7 @@ describe("chart and dashboard MCP tools", () => {
     expect(getV3DashboardChartData).toHaveBeenCalledTimes(1);
   });
 
-  test("get_chart_data reads a saved chart through its dashboard under dashboards:read alone for a Dashboard viewer (ADR-0023)", async () => {
+  test("get_chart_data reads a saved chart through its dashboard under dashboards:read alone for a Dashboard viewer (ADR-0025)", async () => {
     vi.mocked(getV3DashboardChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
 
     const result = await call(

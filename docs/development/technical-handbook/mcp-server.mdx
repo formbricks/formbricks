@@ -1486,7 +1486,7 @@ writes the chart query itself.
   `get_chart_data` declares the same two, with one exception through `registerScopedTool`'s `{ byInput }` form:
   given a `dashboardId` it reads the chart as that dashboard shows it, and a Dashboard viewer's token (trimmed to
   `dashboards:read`, flagged `dashboardViewerOnly` at authentication) may do that on `dashboards:read` alone
-  (ADR-0023). Without `dashboardId` it is the chart-only read it always was. Each operation also checks read
+  (ADR-0025). Without `dashboardId` it is the chart-only read it always was. Each operation also checks read
   access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read` for a viewer. They spend from
   the same 600/min budget as the REST data routes, and share their limit of 20 queries running at once, both
   charged inside the operation.

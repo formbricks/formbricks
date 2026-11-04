@@ -36,7 +36,7 @@ const parseAction = (
  * is deliberately absent — it has no workspace equivalent. `dashboard.read` stays the workspace `read`,
  * so no caller of it depends on the `dashboard_read` permission the Dashboard viewer schema adds: a
  * viewer's dashboard-bound reads ask `workspace.dashboard_read` explicitly, and only in
- * `app/api/v3/lib/dashboards-access.ts` (ADR-0023).
+ * `app/api/v3/lib/dashboards-access.ts` (ADR-0025).
  */
 const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "dashboard.read": "read",

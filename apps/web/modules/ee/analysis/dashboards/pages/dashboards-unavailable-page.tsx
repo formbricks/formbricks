@@ -6,7 +6,7 @@ import { getDashboardsUnavailable } from "@/modules/ee/analysis/dashboards/lib/d
 import { Header } from "@/modules/ui/components/header";
 
 /**
- * Where a Dashboard viewer lands when it can't see any dashboard in an organization (ADR-0023): the
+ * Where a Dashboard viewer lands when it can't see any dashboard in an organization (ADR-0025): the
  * organization lost Access Control or Dashboards (the viewer keeps the role and is never made a Member),
  * or none of its teams is granted a workspace yet. Anyone else is answered 404, and a viewer who can see
  * dashboards again is sent to them.

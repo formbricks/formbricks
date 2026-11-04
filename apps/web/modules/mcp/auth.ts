@@ -117,7 +117,7 @@ export type TMcpAuthInfo = AuthInfo & {
     requestId: string;
     authMethod: "apiKey" | "oauth";
     /**
-     * Set on an OAuth token whose user holds only the Dashboard viewer role (ADR-0023). Such a token is
+     * Set on an OAuth token whose user holds only the Dashboard viewer role (ADR-0025). Such a token is
      * trimmed to `dashboards:read`, and the dashboard-bound chart read accepts it on that scope alone.
      */
     dashboardViewerOnly?: boolean;
@@ -576,7 +576,7 @@ async function authenticateMcpOAuthBearer(
     });
   }
 
-  // ADR-0023: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the token
+  // ADR-0025: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the token
   // carries. Consent already narrows new grants; this bounds a token minted before the user became a
   // viewer, for the up-to-15 minutes it stays valid, and any grant a revocation missed. Trimming applies
   // to a user who is a viewer in every organization they belong to. A user who is a viewer in one

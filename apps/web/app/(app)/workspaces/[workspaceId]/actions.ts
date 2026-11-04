@@ -111,7 +111,7 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
  */
 export const getOrganizationsForSwitcherAction = authenticatedActionClient.action(async ({ ctx }) => {
   // The list is the caller's own organizations: those SpiceDB grants them `organization.read` on, plus
-  // those where they are a Dashboard viewer (ADR-0023), whose relation reaches dashboard reads only.
+  // those where they are a Dashboard viewer (ADR-0025), whose relation reaches dashboard reads only.
   // Scoped by the user alone, so it needs no gate, and none that skips by role.
   const [organizations, viewerOrganizations] = await Promise.all([
     getOrganizationsByUserId(ctx.user.id),

@@ -5,7 +5,7 @@ import { getSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
 import { getDashboardsUnavailable } from "./dashboards-unavailable";
 
 /**
- * A Dashboard viewer sees dashboards and nothing of the organization's plan (ADR-0023). These layouts
+ * A Dashboard viewer sees dashboards and nothing of the organization's plan (ADR-0025). These layouts
  * render client components, so whatever their data carries reaches the viewer's browser: the props are
  * read here against real PostgreSQL to show no Stripe id, subscription, limit or response count is in
  * them.

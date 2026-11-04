@@ -5,7 +5,7 @@ import { addDashboardViewer, dashboardUrl, setupDashboard } from "./utils/dashbo
 
 // ENG-6896 user stories, "Dashboard viewer role": a Dashboard viewer lands on the dashboards of the
 // workspaces its teams can access, is kept out of the rest of the product, reads charts and cannot edit a
-// dashboard. ADR-0023 decides the role in SpiceDB. Filtering, and locked filters, are in
+// dashboard. ADR-0025 decides the role in SpiceDB. Filtering, and locked filters, are in
 // dashboard-filters.spec.ts.
 
 test.describe("Dashboard viewer", () => {

@@ -166,7 +166,7 @@ describe("mayAssignOrganizationRole: the app's one role rule, on the management 
     await expect(may("owner", "member")).resolves.toBe(true);
   });
 
-  test("nobody gives the Dashboard viewer role through this API, even when it is entitled (ADR-0023)", async () => {
+  test("nobody gives the Dashboard viewer role through this API, even when it is entitled (ADR-0025)", async () => {
     await expect(may("owner", "dashboard_viewer")).resolves.toBe(false);
     await expect(may("manager", "dashboard_viewer")).resolves.toBe(false);
   });

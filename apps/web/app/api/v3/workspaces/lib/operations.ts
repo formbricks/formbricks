@@ -44,7 +44,7 @@ async function fetchSessionWorkspaces(
 ): Promise<TResolvedWorkspaceList> {
   const [workspaceIds, viewerWorkspaces] = await Promise.all([
     lookupAuthorizedWorkspaceIds(actor),
-    // A Dashboard viewer holds no workspace `read` (ADR-0023); the workspaces whose dashboards it may
+    // A Dashboard viewer holds no workspace `read` (ADR-0025); the workspaces whose dashboards it may
     // read come from `workspace#dashboard_read`, so its client can find the ids the dashboard tools take.
     listDashboardViewerWorkspacesForUser(userId),
   ]);

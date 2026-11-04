@@ -24,7 +24,7 @@ import {
 
 /**
  * `Membership.role` → `organization#<relation>@user`. Exactly one applies to a given membership.
- * `dashboard_viewer` (ADR-0023) reaches only `workspace#dashboard_read` through its team grants.
+ * `dashboard_viewer` (ADR-0025) reaches only `workspace#dashboard_read` through its team grants.
  */
 export const ORGANIZATION_RELATIONS = {
   [OrganizationRole.billing]: "billing",

@@ -6,7 +6,7 @@ import {
 } from "./dashboard-filters";
 
 /**
- * The filters a person puts on a dashboard (ADR-0024): a field and an operator each, with the values
+ * The filters a person puts on a dashboard (ADR-0026): a field and an operator each, with the values
  * picked beside them under the same id. They travel with every read as `filter[<id>]=<operator>:<field>`
  * next to `picks[<id>]=<value>`, so the server holds no list of them: any dimension of the charts'
  * datasets, or an embedded-data field, can be filtered by. An id only names a filter within one request;

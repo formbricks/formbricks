@@ -204,7 +204,7 @@ export const getIsDashboardsEnabled = async (organizationId: string): Promise<bo
 /**
  * Whether the Dashboard viewer role is available: it needs both Access Control (it is a role) and
  * Dashboards (the only thing it can see). The role is offered, assigned and honored only while both
- * are entitled; a lapse locks existing viewers out without changing their role (ADR-0023).
+ * are entitled; a lapse locks existing viewers out without changing their role (ADR-0025).
  */
 export const getIsDashboardViewerRoleEnabled = async (organizationId: string): Promise<boolean> => {
   const [isAccessControlAllowed, isDashboardsEnabled] = await Promise.all([

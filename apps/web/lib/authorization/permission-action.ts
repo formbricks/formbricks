@@ -21,7 +21,7 @@ export type TAuthorizationHttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELET
  */
 /**
  * A workspace access level: the WorkspaceTeam ladder, or `dashboardRead`, the dashboard-bound reads that
- * also admit the workspace's Dashboard viewers (ADR-0023).
+ * also admit the workspace's Dashboard viewers (ADR-0025).
  */
 export type TWorkspaceAccessLevel = TTeamPermission | "dashboardRead";
 

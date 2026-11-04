@@ -111,7 +111,7 @@ const runMutation = (
  *
  * Definitions and the field catalog need `dashboards:read`. Reading a chart's numbers also needs
  * `feedbackRecords:read`, so a dashboards grant never becomes a way into respondents' answers. The one
- * exception is a Dashboard viewer's token reading a chart through its dashboard (ADR-0023): that token is
+ * exception is a Dashboard viewer's token reading a chart through its dashboard (ADR-0025): that token is
  * trimmed to `dashboards:read`, and the dashboard is exactly what the role may see.
  */
 const hasDashboardId = (input: unknown): boolean =>
@@ -260,7 +260,7 @@ export function registerDashboardTools(server: McpServer): void {
       annotations: READ_ANNOTATIONS,
     },
     // The rows are respondents' answers in aggregate, so reading them needs feedback-record access too.
-    // The one exception is a Dashboard viewer reading through a dashboard (ADR-0023): its token is
+    // The one exception is a Dashboard viewer reading through a dashboard (ADR-0025): its token is
     // trimmed to `dashboards:read`, and the dashboard is the only data it may see (S1).
     {
       byInput: (input, authInfo) =>

@@ -14,7 +14,7 @@ import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/int
 import { getAuthzedClient } from "@/lib/authzed/client";
 
 /**
- * S2 (ADR-0023, D3): between deploying this release and applying its AuthZed schema, SpiceDB still holds
+ * S2 (ADR-0025, D3): between deploying this release and applying its AuthZed schema, SpiceDB still holds
  * the 6.1 schema, which has no `dashboard_read` permission and no `dashboard_viewer` relation. Owners and
  * members must read dashboards, widgets, chart data and filter value lists exactly as before; only the
  * Dashboard viewer may depend on the new schema. This suite writes the 6.1 schema

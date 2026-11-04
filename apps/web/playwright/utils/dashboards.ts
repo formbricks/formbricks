@@ -5,7 +5,7 @@ import { prisma } from "@formbricks/database";
 import { type UserFixture, type UsersFixture, login } from "../fixtures/users";
 
 /**
- * A filter an editor locked on the dashboard, as the dashboard stores it (`Dashboard.filters`, ADR-0024):
+ * A filter an editor locked on the dashboard, as the dashboard stores it (`Dashboard.filters`, ADR-0026):
  * saved with its values, so the server applies it to every chart read, whoever reads it.
  */
 export interface SeedLockedFilter {

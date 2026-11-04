@@ -21,7 +21,7 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   if (!session) throw new AuthenticationError("Not authenticated");
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
-  // A Dashboard viewer has no `organization.read` (ADR-0023); it lands on its dashboards here, or on the
+  // A Dashboard viewer has no `organization.read` (ADR-0025); it lands on its dashboards here, or on the
   // page explaining why there are none.
   if (currentUserMembership?.role === "dashboard_viewer") {
     const lastWorkspaceId = (await cookies()).get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value;

@@ -16,7 +16,7 @@ export type TDashboardsPageAuth = Readonly<{
   userId: string;
   isReadOnly: boolean;
   isOwnerOrManager: boolean;
-  /** A Dashboard viewer (ADR-0023): dashboards only, read-only, no charts, no Feedback Datasets. */
+  /** A Dashboard viewer (ADR-0025): dashboards only, read-only, no charts, no Feedback Datasets. */
   isDashboardViewer: boolean;
 }>;
 

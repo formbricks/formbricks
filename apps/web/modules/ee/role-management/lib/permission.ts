@@ -28,7 +28,7 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
  * - Billing only on Formbricks Cloud.
  * - What the assigner may give (`canAssignOrganizationRole`): Owners every role, Managers Member and
  *   Dashboard viewer, nobody else anything; only an Owner changes an existing Owner's role.
- * - The Dashboard viewer only while Access Control and Dashboards are both entitled (ADR-0023), read once
+ * - The Dashboard viewer only while Access Control and Dashboards are both entitled (ADR-0025), read once
  *   and only when a viewer is being given — and never through the management API (`channel`), which
  *   cannot enforce the role's rules (no team admin, team-granted workspaces).
  *

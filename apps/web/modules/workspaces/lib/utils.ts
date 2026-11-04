@@ -73,7 +73,7 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
     currentUserMembership.role
   );
 
-  // A Dashboard viewer (ADR-0023) only ever sees dashboards. Every product page funnels through here, so
+  // A Dashboard viewer (ADR-0025) only ever sees dashboards. Every product page funnels through here, so
   // sending the role to the dashboard list closes them all at once, the way the billing redirect below
   // does. The dashboard pages don't come through here: they use `getDashboardsPageAuth`, which decides
   // whether the viewer may read this workspace or must see the unavailable page.
@@ -382,7 +382,7 @@ const resolveWorkspaceLayoutData = async (
       id: workspace.id,
       organizationId: organization.id,
     })) ||
-    // A Dashboard viewer has no workspace `read` (ADR-0023), so the navigation gate denies it. The shell
+    // A Dashboard viewer has no workspace `read` (ADR-0025), so the navigation gate denies it. The shell
     // still renders for a workspace one of its teams is granted, entitled or lapsed: the dashboard pages
     // inside decide between the dashboards and the "not available on this plan" page.
     (membership?.role === "dashboard_viewer" &&

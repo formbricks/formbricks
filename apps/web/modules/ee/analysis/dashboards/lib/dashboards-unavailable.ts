@@ -20,7 +20,7 @@ export type TDashboardsUnavailable =
     };
 
 /**
- * What a Dashboard viewer's unavailable page shows (ADR-0023): anyone who is not a viewer of
+ * What a Dashboard viewer's unavailable page shows (ADR-0025): anyone who is not a viewer of
  * `organizationId` gets a 404, a viewer who can see dashboards again is sent to them, and otherwise the
  * page explains a lapsed plan (`isRoleEnabled` false) or a missing team grant.
  */

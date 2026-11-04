@@ -127,7 +127,7 @@ describe("refuseUnlessFeedbackDatasetAccess", () => {
   });
 });
 
-describe("dashboard-bound reads admit a Dashboard viewer through SpiceDB (ADR-0023)", () => {
+describe("dashboard-bound reads admit a Dashboard viewer through SpiceDB (ADR-0025)", () => {
   const allow = { allowDashboardViewer: true } as const;
   const asRole = (role: string | null) =>
     vi

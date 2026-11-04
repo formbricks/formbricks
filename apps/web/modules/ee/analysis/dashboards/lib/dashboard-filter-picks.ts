@@ -9,7 +9,7 @@ import {
 } from "./dashboard-filters";
 
 /**
- * How a person's dashboard filter picks reach a chart query (ADR-0024). Pure functions over the Cube query
+ * How a person's dashboard filter picks reach a chart query (ADR-0026). Pure functions over the Cube query
  * JSON, so any field the catalog lists — embedded-data members included — narrows the same way.
  */
 

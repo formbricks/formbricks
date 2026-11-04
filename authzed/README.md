@@ -479,7 +479,7 @@ contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-roll
 | Application concept                                                  | Schema element                                                                           |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `Membership.role` (`owner`/`manager`/`member`/`billing`)             | `organization` relations `owner`/`manager`/`member`/`billing`                            |
-| `Membership.role = dashboard_viewer` (ADR-0023)                      | `organization` relation `dashboard_viewer`                                               |
+| `Membership.role = dashboard_viewer` (ADR-0025)                      | `organization` relation `dashboard_viewer`                                               |
 | `TeamUser.role` (`admin`/`contributor`)                              | `team` relations `admin`/`contributor`                                                   |
 | `WorkspaceTeam.permission` (`read`/`readWrite`/`manage`)             | `workspace` relations `reader_team`/`writer_team`/`manager_team` (subject `team#member`) |
 | `ApiKeyWorkspace.permission` (`read`/`write`/`manage`)               | `workspace` relations `reader`/`writer`/`manager` (subject `api_key`)                    |
@@ -540,7 +540,7 @@ doc comments):
    their granted workspace at their granted level; organization-level
    `accessControl` rights grant access to organization access-control resources
    but no product data.
-7. **Dashboard viewer reads dashboards only** (ADR-0023) — `dashboard_viewer`
+7. **Dashboard viewer reads dashboards only** (ADR-0025) — `dashboard_viewer`
    reaches `workspace#dashboard_read` (and `dashboard#read`, and the
    dashboard-bound `feedback_directory_assignment#dashboard_read`) through the
    team grants of its teams' workspaces, at any grant level, and nothing else:

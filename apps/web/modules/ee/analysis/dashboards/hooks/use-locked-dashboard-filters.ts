@@ -26,7 +26,7 @@ const sameFilter = (a: TDashboardFilterState, b: TDashboardFilterState): boolean
   a.field === b.field && a.operator === b.operator && a.values.join("\u0000") === b.values.join("\u0000");
 
 /**
- * The filters an editor locks on a dashboard (ADR-0024): saved on it with their values, applied by the
+ * The filters an editor locks on a dashboard (ADR-0026): saved on it with their values, applied by the
  * server to every read whoever reads it, and shown locked before each person's own. An editor locks the
  * filters they have set, which then leave their own; a locked one comes off only by an editor's unlock.
  */

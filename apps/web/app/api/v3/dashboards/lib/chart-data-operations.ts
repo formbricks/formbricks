@@ -49,7 +49,7 @@ type TReadDashboard = { id: string; workspaceId: string; updatedAt: Date };
 
 /**
  * Read access to a dashboard's workspace, with the Dashboards entitlement. A dashboard-bound read, so a
- * Dashboard viewer of the workspace is admitted too (ADR-0023). A dashboard that does not exist answers
+ * Dashboard viewer of the workspace is admitted too (ADR-0025). A dashboard that does not exist answers
  * the same 403 as one the caller may not see. An allowed decision is reused for 30 seconds for the same
  * caller and dashboard version (`withCachedDashboardDecision`): every widget and value list asks it.
  */
@@ -109,7 +109,7 @@ const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartO
  * A widget's data, read through the dashboard it sits on: what every dashboard widget and the MCP chart
  * data tool load. The dashboard date range replaces the chart's saved range, and each of the person's
  * filters (`filter[<id>]`, with its values in `picks[<id>]`) is ANDed onto the chart's saved filters
- * (ADR-0024) — a saved rule on the same field is kept — and so is every filter an editor locked on the
+ * (ADR-0026) — a saved rule on the same field is kept — and so is every filter an editor locked on the
  * dashboard, whoever reads it. A filter on a field the chart's Feedback Dataset
  * lacks leaves the chart empty, naming the filter.
  *

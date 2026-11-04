@@ -53,7 +53,7 @@ import {
 } from "./dashboard-viewer-access";
 
 /**
- * The Dashboard viewer (ADR-0023, ENG-6899 / ENG-6903) against real PostgreSQL and SpiceDB: what a viewer
+ * The Dashboard viewer (ADR-0025, ENG-6899 / ENG-6903) against real PostgreSQL and SpiceDB: what a viewer
  * may and may not reach, operation by operation. The role is the `organization#dashboard_viewer`
  * relation; SpiceDB grants it `workspace#dashboard_read` (and the dashboard-bound Feedback Dataset read)
  * on the workspaces its teams are granted, and denies it everything else.

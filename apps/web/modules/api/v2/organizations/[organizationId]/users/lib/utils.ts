@@ -102,7 +102,7 @@ export const getMembershipRoleByEmail = async (
  * Whether the API key's creator may give `targetRole` (to a member whose role is now `targetCurrentRole`),
  * by the app's one role rule (`assertCanAssignRole`, C10) on the management API path: an owner gives
  * Member, Manager or Owner, a manager gives Member and never touches an owner, anyone else gives nothing,
- * and this API never gives the Dashboard viewer (ADR-0023) or, off Cloud, Billing. This prevents
+ * and this API never gives the Dashboard viewer (ADR-0025) or, off Cloud, Billing. This prevents
  * privilege escalation (e.g. a manager promoting a user to owner) through the management API.
  */
 export const mayAssignOrganizationRole = async (

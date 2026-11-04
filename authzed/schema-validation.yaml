@@ -45,7 +45,7 @@
 #     workspace:foreign belongs to organization:globex (owner user:gary). Documents why the projector
 #     must derive that edge from `Survey.workspaceId` alone: the edge alone hands another tenant read.
 #   dashboard:insights (workspace:main)
-#   ADR-0023 Dashboard viewers of acme (`dashboard_viewer` relation):
+#   ADR-0025 Dashboard viewers of acme (`dashboard_viewer` relation):
 #     user:vera  contributor on team:analysts (read on workspace:main)
 #     user:vic   contributor on team:ops (manage on workspace:main): a Manage grant does not widen
 #                the role (the app never makes a viewer a team admin)
@@ -230,7 +230,7 @@ assertions:
     - dashboard:insights#read@api_key:ci_reader
 
     # ------------------------------------------------------------------
-    # Scenario 8 (ADR-0023) — a Dashboard viewer reads the dashboards of
+    # Scenario 8 (ADR-0025) — a Dashboard viewer reads the dashboards of
     # the workspaces its teams are granted, at any grant level, and the
     # dataset data behind them through the dashboard-bound permission.
     # Everyone who reads the workspace keeps reading its dashboards.
@@ -451,7 +451,7 @@ assertions:
     # `api_key_reader`/`api_key_writer` relations on the organization, which ci_reader lacks.
     - organization:acme#read_access@api_key:ci_reader
 
-    # Scenario 8 (ADR-0023) — a Dashboard viewer holds nothing but dashboard
+    # Scenario 8 (ADR-0025) — a Dashboard viewer holds nothing but dashboard
     # reads: no organization, team, workspace, survey, response, Feedback
     # Dataset or dashboard write permission, whatever its team's grant level.
     - organization:acme#read@user:vera
@@ -570,7 +570,7 @@ validation:
     - "[user:tina] is <organization:acme#member>"
     - "[user:tom] is <organization:acme#member>"
     - "[user:uma] is <organization:acme#member>"
-  # ADR-0023: who reads workspace:main's dashboards. Exact, so a viewer path that widens (or a
+  # ADR-0025: who reads workspace:main's dashboards. Exact, so a viewer path that widens (or a
   # billing or teamless arm that appears) shows up as a diff.
   workspace:main#dashboard_read:
     - "[api_key:ci_reader] is <workspace:main#reader>"

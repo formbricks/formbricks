@@ -10,7 +10,7 @@ import type { TDashboardFilterState } from "../lib/dashboard-filter-state";
 /**
  * One widget's data, read through its dashboard. Each widget asks on its own, so a slow or failing chart
  * never holds up the rest of the dashboard; the dashboard's date range replaces the chart's own and the
- * person's filters narrow its saved query (ADR-0024).
+ * person's filters narrow its saved query (ADR-0026).
  */
 export const useChartData = ({
   dashboardId,

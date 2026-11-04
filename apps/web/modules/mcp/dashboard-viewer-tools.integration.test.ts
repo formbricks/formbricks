@@ -155,7 +155,7 @@ describe("a Dashboard viewer's MCP token", () => {
     expect(read.isError).toBeFalsy();
   });
 
-  test("reads a saved chart's data through its dashboard with dashboards:read alone (ADR-0023)", async () => {
+  test("reads a saved chart's data through its dashboard with dashboards:read alone (ADR-0025)", async () => {
     const result = await call("get_chart_data", { dashboardId: ids.dashboard, chartId: ids.chart });
     expect(result.isError, JSON.stringify(result).slice(0, 300)).toBeFalsy();
     expect(result.structuredContent).toMatchObject({ data: { rows: expect.any(Array) } });

@@ -183,7 +183,7 @@ export const deleteMembership = async (
 
       // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
       // just lost: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
-      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0023).
+      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025).
       if (removed.role !== "dashboard_viewer") {
         if (await isOnlyDashboardViewer(tx, userId)) {
           await revokeAllUserOAuthGrants(tx, userId);

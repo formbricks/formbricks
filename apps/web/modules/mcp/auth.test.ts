@@ -331,7 +331,7 @@ describe("authenticateMcpRequest", () => {
     }
   });
 
-  test("bounds a Dashboard viewer's OAuth token to dashboards:read, whatever it carries (ADR-0023)", async () => {
+  test("bounds a Dashboard viewer's OAuth token to dashboards:read, whatever it carries (ADR-0025)", async () => {
     userFindUniqueMock.mockResolvedValueOnce({
       isActive: true,
       memberships: [{ role: "dashboard_viewer" }, { role: "dashboard_viewer" }],

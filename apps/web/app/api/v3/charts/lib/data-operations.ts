@@ -129,7 +129,7 @@ const validatePicks = (
  * data share once the caller is authorized for the dataset. `query` is caller input for a preview and
  * the stored query for a saved chart; both go through the validator, so a stored query that no longer
  * passes it answers 422 rather than reaching Cube. A requested range takes the place of the saved
- * one (ADR-0024). The time-bucket limit is checked once, on the query that will run, and a requested range
+ * one (ADR-0026). The time-bucket limit is checked once, on the query that will run, and a requested range
  * too wide for the chart's granularity is named as `dateRange`. `extraFilters` (a dashboard's filter picks) are ANDed onto the saved filters the same way,
  * and `respond` shapes the success body.
  */
@@ -299,7 +299,7 @@ export const requestedDateRangeOf = (
  * `GET /api/v3/charts/{chartId}/data` → 200 `{ data: { rows, optionLabels, fieldLabels, query } }`.
  *
  * A requested date range replaces the chart's own on `collectedAt` — the dashboard date filter's rule
- * (ADR-0024) — so the numbers match what a person sees on a dashboard filtered the same way; no range
+ * (ADR-0026) — so the numbers match what a person sees on a dashboard filtered the same way; no range
  * leaves the saved range as it is. Needs read access to the chart's workspace and to its Feedback
  * Dataset: a dashboards grant alone never reaches respondents' answers.
  */

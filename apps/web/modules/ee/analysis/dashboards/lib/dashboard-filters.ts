@@ -10,7 +10,7 @@ import {
 import type { FilterOperator } from "@/modules/ee/analysis/lib/schema-definition";
 
 /**
- * Dashboard filters (ADR-0024, glossary "Dashboard filter"): a field, an operator and the values compared
+ * Dashboard filters (ADR-0026, glossary "Dashboard filter"): a field, an operator and the values compared
  * against. A person's own filters travel with each read; the ones an editor locks are saved on the
  * dashboard and apply to everyone who opens it, on top of their own. Either kind narrows every chart,
  * never widens one.

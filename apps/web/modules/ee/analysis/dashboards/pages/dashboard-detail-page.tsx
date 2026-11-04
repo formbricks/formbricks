@@ -65,7 +65,7 @@ export async function DashboardDetailPage({
     );
   }
 
-  // A Dashboard viewer only views (ADR-0023): the datasets and AI feed chart creation and editing, which
+  // A Dashboard viewer only views (ADR-0025): the datasets and AI feed chart creation and editing, which
   // the page never offers them, and SpiceDB would refuse them the datasets anyway.
   if (isDashboardViewer) {
     return (

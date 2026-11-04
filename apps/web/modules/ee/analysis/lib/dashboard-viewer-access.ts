@@ -7,7 +7,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
- * Where the pages and lists find a Dashboard viewer's dashboards (ADR-0023).
+ * Where the pages and lists find a Dashboard viewer's dashboards (ADR-0025).
  *
  * The role is a SpiceDB relation (`organization#dashboard_viewer`), and every decision here comes from
  * SpiceDB: `workspace.dashboard_read`, which a viewer holds through the team grants of the workspaces
@@ -100,7 +100,7 @@ export const getDashboardViewerHomePath = async (
  * Whether every organization membership `userId` holds is the Dashboard viewer role. Such a user can
  * only ever read dashboards, so an OAuth grant they give is limited to `dashboards:read`. A user who is
  * a viewer in one organization and holds another role elsewhere grants as before: SpiceDB still
- * refuses them everything but dashboard reads in the viewer organization (ADR-0023).
+ * refuses them everything but dashboard reads in the viewer organization (ADR-0025).
  */
 export const isDashboardViewerOnly = async (userId: string): Promise<boolean> =>
   isOnlyDashboardViewer(prisma, userId);

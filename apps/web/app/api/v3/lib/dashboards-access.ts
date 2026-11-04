@@ -15,7 +15,7 @@ import type { TV3Authentication } from "./types";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
 
 /**
- * Opt-in for the dashboard-bound reads a Dashboard viewer may make (ADR-0023): the dashboard list and
+ * Opt-in for the dashboard-bound reads a Dashboard viewer may make (ADR-0025): the dashboard list and
  * read, a saved chart's data through its dashboard, and a dashboard filter's value list. They are decided
  * by `workspace.dashboard_read` and `feedbackDirectoryAssignment.dashboard_read` in SpiceDB, which admit
  * the workspace's viewers; without the option the caller is asked for `read`, which viewers never hold.
@@ -150,7 +150,7 @@ export async function refuseUnlessFeedbackDatasetAccess(
     return problemUnauthorized(requestId, "Not authenticated", instance);
   }
 
-  // Only a dashboard-bound read (`allowDashboardViewer`, ADR-0023) by a caller admitted as a Dashboard
+  // Only a dashboard-bound read (`allowDashboardViewer`, ADR-0025) by a caller admitted as a Dashboard
   // viewer asks `dashboard_read`; everyone else is asked the `read` they always were, so they never
   // depend on the permission this release adds (S2). The free-form chart query and the field-value lookup
   // never opt in, so a viewer can only read a dataset through a saved chart on a dashboard.

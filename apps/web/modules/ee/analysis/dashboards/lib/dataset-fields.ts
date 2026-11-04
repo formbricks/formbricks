@@ -7,7 +7,7 @@ import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fi
 import { getDashboardFilterField } from "./dashboard-filters";
 
 /**
- * Whether a Feedback Dataset has the field a dashboard filter names (ADR-0024: a filter matches a chart by
+ * Whether a Feedback Dataset has the field a dashboard filter names (ADR-0026: a filter matches a chart by
  * field name in the chart's dataset). Every dataset has the shared catalog's fields. An embedded-data field
  * is the dataset's when one of its keys compiles to that member, which is the case exactly when
  * the dataset has the key, by its original name: the member name is derived from the key alone. A key

@@ -391,7 +391,7 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
-      // ADR-0023 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
+      // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);
       if (viewerConsent) return viewerConsent;

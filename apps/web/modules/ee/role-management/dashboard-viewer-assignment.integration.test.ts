@@ -8,7 +8,7 @@ import { bulkInviteUsersAction, inviteUserAction } from "@/modules/organization/
 import { updateInviteAction, updateMembershipAction } from "./actions";
 
 /**
- * Who may make someone a Dashboard viewer (ENG-6901, ADR-0023), through the real server actions against
+ * Who may make someone a Dashboard viewer (ENG-6901, ADR-0025), through the real server actions against
  * real PostgreSQL and SpiceDB: Owners and Managers, in single invites, CSV bulk invites, invite edits and
  * role edits, only while Access Control and Dashboards are both entitled. A team admin can't, and a viewer
  * can't be a team admin.

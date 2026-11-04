@@ -4,7 +4,7 @@ import { formatLocalDay } from "@/lib/utils/datetime";
 import { writeDashboardCookie } from "./dashboard-cookies";
 
 // The dashboard-level date filter sets the range of the "Collected at" time dimension, in place of the one
-// saved on the chart (ADR-0024). Other time dimensions (e.g. createdAt) are left untouched.
+// saved on the chart (ADR-0026). Other time dimensions (e.g. createdAt) are left untouched.
 export const COLLECTED_AT_DIMENSION = "FeedbackRecords.collectedAt";
 
 // URL search-param keys + reserved values for the dashboard date filter. The custom-range keys are
@@ -98,7 +98,7 @@ export const toDateRangeRule = (
 };
 
 /**
- * Set a chart query's "Collected at" range to the dashboard's date range (ADR-0024), in place of the one the
+ * Set a chart query's "Collected at" range to the dashboard's date range (ADR-0026), in place of the one the
  * chart was saved with: the person looking at the dashboard chooses the period. Other time dimensions are
  * left untouched.
  *

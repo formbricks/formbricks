@@ -50,7 +50,7 @@ export const updateMembership = async (
     }
 
     // A Dashboard viewer can't be a team admin: a team admin manages the team's members and invites
-    // others, which the role must never do (ADR-0023). The teams themselves stay, since they are what
+    // others, which the role must never do (ADR-0025). The teams themselves stay, since they are what
     // grants the viewer its workspaces.
     if (data.role === "dashboard_viewer") {
       await client.teamUser.updateMany({

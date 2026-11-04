@@ -25,7 +25,7 @@ export const getAccessFlags = (role?: TOrganizationRole) => {
   const isManager = role === "manager";
   const isBilling = role === "billing";
   const isMember = role === "member";
-  // Projects to `organization#dashboard_viewer` (ADR-0023): SpiceDB grants it the dashboard reads of the
+  // Projects to `organization#dashboard_viewer` (ADR-0025): SpiceDB grants it the dashboard reads of the
   // workspaces its teams are granted (`workspace#dashboard_read`) and denies every other permission.
   const isDashboardViewer = role === "dashboard_viewer";
 

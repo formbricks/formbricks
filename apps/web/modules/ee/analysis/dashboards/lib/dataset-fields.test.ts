@@ -17,7 +17,7 @@ const scope = {
 const PLAN = "FeedbackRecords.ed_plan_64879f7d";
 const TIER = "FeedbackRecords.ed_tier_0a1b2c3d";
 
-describe("getDatasetFieldMatcher (ADR-0024)", () => {
+describe("getDatasetFieldMatcher (ADR-0026)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockResolve.mockResolvedValue(new Map([[PLAN, "Plan"]]));

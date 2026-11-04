@@ -402,7 +402,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
 
     const adminIds = members.filter((m) => m.role === "admin").map((m) => m.userId);
     await prisma.$transaction(async (tx) => {
-      // A Dashboard viewer can't be a team admin (ADR-0023): admins manage the team and invite people.
+      // A Dashboard viewer can't be a team admin (ADR-0025): admins manage the team and invite people.
       // Checked in the write's transaction with the admins' memberships locked, so a concurrent change
       // of one of them to Dashboard viewer either commits first and is seen here, or waits and then
       // demotes the admin row this writes (`updateMembership`) (C10).

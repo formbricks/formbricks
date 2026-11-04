@@ -228,7 +228,7 @@ export const getWorkspaceMembers = reactCache(async (workspaceId: string): Promi
       where: {
         organization: { workspaces: { some: { id: workspaceId } } },
         user: { isActive: true },
-        // Neither a Dashboard viewer (ADR-0023) nor a billing member holds `workspace.read`, even on a
+        // Neither a Dashboard viewer (ADR-0025) nor a billing member holds `workspace.read`, even on a
         // granted team, so neither may receive the response data a workflow email carries.
         role: { notIn: ["dashboard_viewer", "billing"] },
         OR: [

@@ -184,7 +184,7 @@ export const MainNavigation = ({
   // Billing and Dashboard viewer both lose most of the navigation, differently on purpose (U17). Billing
   // keeps the items disabled with a tooltip: it is a full organization member whose access is paused
   // while it only manages billing, and the greyed items say what the organization has. A Dashboard viewer
-  // never had any of it — no route behind those items is reachable for it (ADR-0023) — so they are hidden,
+  // never had any of it — no route behind those items is reachable for it (ADR-0025) — so they are hidden,
   // and a section left with nothing loses its header too.
   const mainNavigationSections = useMemo(
     () => [
@@ -237,7 +237,7 @@ export const MainNavigation = ({
             disabled: isMembershipPending || isBilling,
           },
           {
-            // A Dashboard viewer has Dashboards and nothing else of Analysis (ADR-0023).
+            // A Dashboard viewer has Dashboards and nothing else of Analysis (ADR-0025).
             name: isDashboardViewer ? t("common.dashboards") : t("common.analysis"),
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,

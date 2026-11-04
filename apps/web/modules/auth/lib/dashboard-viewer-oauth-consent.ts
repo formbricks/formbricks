@@ -19,7 +19,7 @@ const refuse = (): never => {
 };
 
 /**
- * `hooks.before` for `POST /oauth2/consent` and `POST /oauth2/update-consent` (ADR-0023, ENG-6889).
+ * `hooks.before` for `POST /oauth2/consent` and `POST /oauth2/update-consent` (ADR-0025, ENG-6889).
  *
  * A user who is only ever a Dashboard viewer approves at most `dashboards:read` (plus identity and
  * refresh), whatever the client asked for and whatever the consent page sent: the approval is rewritten

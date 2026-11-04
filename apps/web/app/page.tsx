@@ -49,7 +49,7 @@ const Page = async () => {
     return <ClientLogout />;
   }
 
-  // A Dashboard viewer has no `organization.read` (ADR-0023), so its organizations come from its
+  // A Dashboard viewer has no `organization.read` (ADR-0025), so its organizations come from its
   // memberships; its workspaces are the ones its teams are granted.
   const [userOrganizations, viewerOrganizations] = await Promise.all([
     getOrganizationsByUserId(session.user.id),

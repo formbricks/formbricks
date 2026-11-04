@@ -79,7 +79,7 @@ const resolveActiveOrganizationId = async (
   activeWorkspaceId: string | undefined,
   activeOrganizationId: string | undefined
 ): Promise<string | undefined> => {
-  // A Dashboard viewer has no `organization.read` (ADR-0023), so its organizations are read from its
+  // A Dashboard viewer has no `organization.read` (ADR-0025), so its organizations are read from its
   // memberships; without them a viewer's Profile and Notifications would have no organization to render in.
   const [projectedOrganizations, viewerOrganizations] = await Promise.all([
     getOrganizationsByUserId(userId),

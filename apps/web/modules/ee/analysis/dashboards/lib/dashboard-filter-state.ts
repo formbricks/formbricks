@@ -11,7 +11,7 @@ import {
 import { MAX_DASHBOARD_FILTERS } from "./dashboard-filters";
 
 /**
- * The filters a person has put on a dashboard (ADR-0024): an ordered list, kept in the page URL so the view
+ * The filters a person has put on a dashboard (ADR-0026): an ordered list, kept in the page URL so the view
  * can be shared and in a per-dashboard cookie so a revisit starts from it. The URL and every read carry
  * them the same way, as `filter[f1]=<operator>:<field>` with the values in `picks[f1]`, numbered in order.
  */
