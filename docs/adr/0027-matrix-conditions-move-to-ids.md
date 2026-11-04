@@ -1,6 +1,6 @@
 # Matrix conditions move from positions to ids, keeping positions for one release
 
-A matrix condition stores its row as an index (`leftOperand.meta.row`) and its column as an index in the right operand, so reordering rows or columns on a live survey silently points it at another cell (deleting and renaming are already locked, ADR 0020). Conditions switch to row and column ids. Upgrades are rolling, and the previous release's pods re-validate every survey they serve, so a data migration adds the ids next to the positions in every stored condition (block logic, quota conditions and follow-up conditions) rather than replacing them. 6.2 writes both and reads ids first; positions are dropped in a later release. New show-if conditions are written the same way from day one.
+A matrix condition stores its row as an index (`leftOperand.meta.row`) and its column as an index in the right operand, so reordering rows or columns on a live survey silently points it at another cell (deleting and renaming are already locked, ADR 0020). Conditions switch to row and column ids. Upgrades are rolling, and the previous release's pods re-validate every survey they serve, so a data migration adds the ids next to the positions in every stored condition (block logic, show-if and quota conditions; follow-ups store no conditions) rather than replacing them. 6.2 writes both and reads ids first; positions are dropped in a later release. New show-if conditions are written the same way from day one.
 
 ## Considered Options
 
