@@ -137,6 +137,8 @@ export const getResponsesByContactId = reactCache(
         },
         select: {
           ...responseSelection,
+          // The contact page's response cards mark what the respondent was not shown (ENG-6936).
+          notShown: true,
           quotaLinks: {
             where: {
               status: "screenedIn",
