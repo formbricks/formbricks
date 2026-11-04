@@ -43,7 +43,8 @@ export const formatDateTimeForDisplay = (
 };
 
 const STORED_CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const STORED_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?$/;
+// The shape of an ISO timestamp; `Date` decides the rest (a value it can't read is not one).
+const STORED_TIMESTAMP_START = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
 
 /**
  * A stored date value as people read it (P65): a calendar date (`2026-11-04`) as that day only, in
@@ -62,7 +63,7 @@ export const formatStoredDateValue = (
     if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== value) return null;
     return formatDateForDisplay(day, locale, { ...DATE_DISPLAY_OPTIONS, timeZone: "UTC" });
   }
-  if (!STORED_TIMESTAMP.test(value)) return null;
+  if (!STORED_TIMESTAMP_START.test(value)) return null;
   const instant = new Date(value);
   if (Number.isNaN(instant.getTime())) return null;
   return formatDateTimeForDisplay(instant, locale, {
