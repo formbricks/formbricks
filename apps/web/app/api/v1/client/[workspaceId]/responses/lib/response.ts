@@ -21,6 +21,7 @@ import { handleClientResponseCreateError } from "@/app/api/client/[workspaceId]/
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
+import { withoutNotShownAnswers } from "@/lib/response/not-shown-answers";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
@@ -123,14 +124,21 @@ export const createResponse = async (
       );
     }
 
+    const prismaClient = tx ?? prisma;
+    // ENG-6936: an answer to anything the not-shown record lists is not stored, as on an update.
+    const data = await withoutNotShownAnswers(
+      prismaClient,
+      responseInput.surveyId,
+      responseInput.notShown,
+      responseInput.data
+    );
+
     const prismaData = buildPrismaResponseData(
-      { ...responseInput, createdAt: undefined, updatedAt: undefined },
+      { ...responseInput, data, createdAt: undefined, updatedAt: undefined },
       contact,
       ttc,
       ingestFlags
     );
-
-    const prismaClient = tx ?? prisma;
 
     const responsePrisma = await prismaClient.response.create({
       data: prismaData,

@@ -86,6 +86,35 @@ describe("client response create", () => {
     await expect(readStored(created.id)).resolves.toMatchObject({ notShown: surveyFlowFixtureNotShown });
   });
 
+  test("v1 and v2 remove the answers the record lists on create, as an update does", async () => {
+    const { workspaceId, surveyId } = await seed();
+    // `hours` sits in the skipped block and `apple_reason` is hidden in the fixture's record.
+    const data = { services: ["Netflix"], hours: "12", apple_reason: "Price", panel_id: "p-1" };
+
+    const v1 = await createV1Response({
+      ...createInput(workspaceId, surveyId),
+      data,
+      userId: null,
+      notShown: surveyFlowFixtureNotShown,
+    });
+    const v2 = await createV2Response(
+      ZResponseInputV2.parse({
+        ...createInput(workspaceId, surveyId),
+        data,
+        contactId: null,
+        notShown: surveyFlowFixtureNotShown,
+      })
+    );
+
+    for (const created of [v1, v2]) {
+      await expect(readStored(created.id)).resolves.toMatchObject({
+        data: { services: ["Netflix"], panel_id: "p-1" },
+      });
+      expect((await readStored(created.id)).data).not.toHaveProperty("hours");
+      expect((await readStored(created.id)).data).not.toHaveProperty("apple_reason");
+    }
+  });
+
   test("a create without a record (an older bundle) leaves it unknown", async () => {
     const { workspaceId, surveyId } = await seed();
 
