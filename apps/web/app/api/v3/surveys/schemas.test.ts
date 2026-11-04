@@ -216,6 +216,56 @@ describe("ZV3CreateSurveyBody", () => {
     );
   });
 
+  test("accepts a signature element and defaults allowTypedSignature to true", () => {
+    const body = (extra: Record<string, unknown> = {}) => ({
+      ...validCreateBody,
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [
+            { id: "sign", type: "signature", headline: { "en-US": "Sign here" }, required: true, ...extra },
+          ],
+        },
+      ],
+    });
+
+    const parsed = ZV3CreateSurveyBody.parse(body());
+    expect(parsed.blocks[0].elements[0]).toMatchObject({ type: "signature", allowTypedSignature: true });
+
+    const withoutTyping = ZV3CreateSurveyBody.parse(body({ allowTypedSignature: false }));
+    expect(withoutTyping.blocks[0].elements[0]).toMatchObject({ allowTypedSignature: false });
+  });
+
+  test("rejects allowTypedSignature on an element that is not a signature, and file fields on a signature", () => {
+    const withElement = (element: Record<string, unknown>) => ({
+      ...validCreateBody,
+      blocks: [{ ...validCreateBody.blocks[0], elements: [element] }],
+    });
+
+    const onText = ZV3CreateSurveyBody.safeParse(
+      withElement({ ...validCreateBody.blocks[0].elements[0], allowTypedSignature: true })
+    );
+    expect(onText.success).toBe(false);
+    expect(onText.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.0.elements.0.allowTypedSignature"
+    );
+
+    const fileFieldsOnSignature = ZV3CreateSurveyBody.safeParse(
+      withElement({
+        id: "sign",
+        type: "signature",
+        headline: { "en-US": "Sign here" },
+        required: true,
+        allowedFileExtensions: ["pdf"],
+        maxSizeInMB: 5,
+      })
+    );
+    expect(fileFieldsOnSignature.success).toBe(false);
+    expect(fileFieldsOnSignature.error?.issues.map((issue) => issue.path.join("."))).toEqual(
+      expect.arrayContaining(["blocks.0.elements.0.allowedFileExtensions", "blocks.0.elements.0.maxSizeInMB"])
+    );
+  });
+
   test("rejects element fields that do not belong to the selected element type", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,

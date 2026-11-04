@@ -102,5 +102,18 @@
     "value_must_equal": "값은 {value}이(가) 되어야 해요",
     "value_must_not_contain": "값에 {value}이(가) 포함되면 안 돼요",
     "value_must_not_equal": "값은 {value}이(가) 아니어야 해요"
+  },
+  "signature": {
+    "clear": "지우기",
+    "draw": "그리기",
+    "method": "서명 방법",
+    "not_signed": "서명 안 됨",
+    "pad_label": "서명 패드입니다. 손가락, 스타일러스 또는 마우스로 서명을 그려 주세요.",
+    "pad_label_with_type": "서명 패드입니다. 손가락, 스타일러스 또는 마우스로 서명을 그리거나, '입력'으로 전환해 키보드로 이름을 입력해 주세요.",
+    "saved": "서명이 저장되었어요. 다시 서명하려면 지우기를 눌러 주세요.",
+    "sign_here": "여기에 서명하세요",
+    "signed": "서명 완료",
+    "type": "입력",
+    "type_your_name": "이름을 입력하세요"
   }
 }

@@ -13,7 +13,8 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
-import { getErrorResponseFromStorageError, validateSurveyAllowsFileUpload } from "@/modules/storage/utils";
+import { getSurveyUploadElementMaxFileSize } from "@/modules/storage/survey-upload-elements";
+import { getErrorResponseFromStorageError, validateSurveyAllowsUpload } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -140,19 +141,21 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const fileUploadPermission = validateSurveyAllowsFileUpload({
+    const uploadPermission = validateSurveyAllowsUpload({
       fileName,
       elementId,
       blocks: survey.blocks,
       questions: survey.questions,
     });
 
-    if (!fileUploadPermission.ok) {
+    if (!uploadPermission.ok) {
       let responseString: string = "";
-      if (fileUploadPermission.reason === "no_file_upload_element") {
+      if (uploadPermission.reason === "no_file_upload_element") {
         responseString = "Survey does not allow file uploads";
-      } else if (fileUploadPermission.reason === "file_upload_element_not_found") {
+      } else if (uploadPermission.reason === "file_upload_element_not_found") {
         responseString = "Element does not allow file uploads";
+      } else if (uploadPermission.reason === "file_name_not_allowed") {
+        responseString = "File name is not allowed for this element";
       } else {
         responseString = "File extension is not allowed for this element";
       }
@@ -163,9 +166,20 @@ export const POST = withV1ApiWrapper({
     }
 
     const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.id);
-    const maxFileUploadSize = isBiggerFileUploadAllowed
+    const generalMaxFileUploadSize = isBiggerFileUploadAllowed
       ? MAX_FILE_UPLOAD_SIZES.big
       : MAX_FILE_UPLOAD_SIZES.standard;
+    // An element's kind may cap its file below the general limit (a Signature is a ~35 KB PNG). The
+    // lower one goes into the presigned POST policy, so storage itself refuses a larger body.
+    const elementMaxFileSize = getSurveyUploadElementMaxFileSize({
+      elementId,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    });
+    const maxFileUploadSize =
+      elementMaxFileSize === undefined
+        ? generalMaxFileUploadSize
+        : Math.min(elementMaxFileSize, generalMaxFileUploadSize);
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,
