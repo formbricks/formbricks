@@ -39,15 +39,18 @@ export const AUTH_REQUEST_MAX_DEPTH = 32;
 export const AUTH_REQUEST_MAX_JSON_TEXTS = 10;
 
 /**
- * The only request bodies `/api/auth` accepts: JSON or a form, with at most a UTF-8 charset. Better Auth's
- * routes take nothing else (better-call refuses other types with 415), but its consumers classify a body
- * loosely: better-call matches the allow-list by substring and parses JSON on an unanchored regex, and
- * oauth-provider re-reads any body whose `Content-Type` merely contains the form type as a form. A header
- * such as `application/x-www-form-urlencoded+json` would be read as JSON by one and as a form by another.
- * Holding the header to these two exact shapes leaves one reading, the one the guard checks.
+ * The only request bodies `/api/auth` accepts: JSON or a form, with at most a `charset` parameter. Better
+ * Auth's routes take nothing else (better-call refuses other types with 415, and a body with no
+ * `Content-Type` too), but its consumers classify a body loosely: better-call matches the allow-list by
+ * substring and parses JSON on an unanchored regex, and oauth-provider re-reads any body whose
+ * `Content-Type` merely contains the form type as a form. A header such as
+ * `application/x-www-form-urlencoded+json` would be read as JSON by one and as a form by another. Holding
+ * the header to these two shapes, and a JSON header to not naming the form type anywhere, leaves one
+ * reading, the one the guard checks. The charset itself is not checked: every consumer decodes UTF-8
+ * whatever it says.
  */
 const AUTH_BODY_CONTENT_TYPE =
-  /^[\t ]*application\/(json|x-www-form-urlencoded)[\t ]*(?:;[\t ]*charset[\t ]*=[\t ]*"?utf-?8"?[\t ]*)?$/i;
+  /^[\t ]*application\/(json|x-www-form-urlencoded)[\t ]*(?:;[\t ]*charset[\t ]*=[\t ]*(?:[a-z0-9!#$%&'*+.^_`|~-]+|"[a-z0-9!#$%&'*+.^_`|~ -]+")[\t ]*)?$/i;
 
 export type TAuthBodyKind = "json" | "form";
 
@@ -55,7 +58,9 @@ export type TAuthBodyKind = "json" | "form";
 export const authBodyKindOf = (contentType: string | null): TAuthBodyKind | null => {
   const match = contentType === null ? null : AUTH_BODY_CONTENT_TYPE.exec(contentType);
   if (!match) return null;
-  return match[1].toLowerCase() === "json" ? "json" : "form";
+  if (match[1].toLowerCase() === "x-www-form-urlencoded") return "form";
+  // oauth-provider would read this one as a form: `charset=x-www-form-urlencoded`.
+  return /x-www-form-urlencoded/i.test(contentType as string) ? null : "json";
 };
 
 // A value `JSON.parse` would read as an array or object: JSON allows these four whitespace characters

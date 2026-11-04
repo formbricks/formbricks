@@ -38,14 +38,19 @@ const LIMITED = Symbol.for("formbricks.authRequestBodyLimited");
 // `error` / `error_description` are what an OAuth client reads (RFC 6749 §5.2, RFC 7591 §3.2.2);
 // `message` / `code` are what Better Auth's own client reads. `no-store` because a token-endpoint response
 // must never be cached (RFC 6749 §5.1).
-export const errorResponse = (status: number, error: string, code: string, description: string): Response =>
+export const authErrorResponse = (
+  status: number,
+  error: string,
+  code: string,
+  description: string
+): Response =>
   Response.json(
     { error, error_description: description, code, message: description },
     { status, headers: { "cache-control": "no-store" } }
   );
 
 const bodyTooLargeResponse = (limitBytes: number): Response =>
-  errorResponse(
+  authErrorResponse(
     413,
     "payload_too_large",
     "PAYLOAD_TOO_LARGE",
@@ -61,7 +66,7 @@ const TOO_MANY_ENTRIES_MESSAGE =
 // client registration gets the error RFC 7591 §3.2.2 defines for bad metadata; anything else the generic
 // OAuth one (RFC 6749 §5.2).
 const tooManyEntriesResponse = (request: Request): Response =>
-  errorResponse(
+  authErrorResponse(
     400,
     new URL(request.url).pathname.endsWith("/oauth2/register")
       ? "invalid_client_metadata"
@@ -73,11 +78,11 @@ const tooManyEntriesResponse = (request: Request): Response =>
 // A body outside the two shapes `/api/auth` takes (see `authBodyKindOf`): its consumers would disagree on
 // how to read it, so it is refused rather than guessed at.
 const unsupportedMediaTypeResponse = (): Response =>
-  errorResponse(
+  authErrorResponse(
     415,
     "invalid_request",
     "UNSUPPORTED_MEDIA_TYPE",
-    "Content-Type must be application/json or application/x-www-form-urlencoded, with at most a UTF-8 charset"
+    "Content-Type must be application/json or application/x-www-form-urlencoded, with no parameter but charset"
   );
 
 /**

@@ -252,6 +252,9 @@ describe("authBodyKindOf", () => {
     ["application/json; charset=utf-8", "json"],
     ["application/json;charset=UTF-8", "json"],
     ['application/json; charset="utf-8"', "json"],
+    // Every consumer decodes UTF-8 whatever the charset says, so another one reads the same way.
+    ["application/json; charset=latin1", "json"],
+    ["application/x-www-form-urlencoded; charset=ISO-8859-1", "form"],
     ["application/x-www-form-urlencoded", "form"],
     ["application/x-www-form-urlencoded; charset=UTF-8", "form"],
   ])("reads %s as %s", (contentType, kind) => {
@@ -272,7 +275,8 @@ describe("authBodyKindOf", () => {
     "multipart/form-data/application/x-www-form-urlencoded",
     'application/json; p="application/x-www-form-urlencoded"',
     "application/json; charset=x-www-form-urlencoded",
-    "application/json; charset=latin1",
+    'application/json; charset="x-www-form-urlencoded"',
+    "application/json; charset=utf-8; boundary=x",
     "text/plain, application/x-www-form-urlencoded",
     "application/x-www-form-urlencoded; a=b, multipart/form-data; boundary=x",
   ])("refuses %s", (contentType) => {
@@ -305,6 +309,8 @@ const ACCEPTED = [
   'application/json; charset="UTF-8"',
   "application/x-www-form-urlencoded",
   "application/x-www-form-urlencoded;charset=UTF-8",
+  "application/json; charset=latin1",
+  "application/x-www-form-urlencoded; charset=ISO-8859-1",
 ];
 
 describe("accepted content types, against what reads them downstream", async () => {
