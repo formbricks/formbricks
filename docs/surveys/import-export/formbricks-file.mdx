@@ -105,7 +105,7 @@ Anything under `survey`. Some rules keep the file importable:
 - **`name`** is used for a new survey, with "(imported)" added. An Update keeps the survey's own name.
 - **`status`** is ignored. An import always creates a draft, and an Update keeps the survey's status.
 
-Leave `formbricks` as it was exported. `source.surveyId` is how Formbricks finds the survey to update, and `source.updatedAt` is how it notices the survey changed after the export. With another `surveyId`, the file always becomes a new survey.
+Leave `formbricks` as it was exported. `source.surveyId` is how Formbricks finds the survey to update, and `source.updatedAt` is how it notices the survey changed after the export. Changing it doesn't make the file a new survey by itself: if it matches another survey in the workspace, the import offers to update that one. For a new survey, use an ID that matches none, or choose **Create new** when the import finds a match, and check which survey a match names before you choose **Update**.
 
 Keys the format doesn't know are dropped with a warning each in the import report, so a key an assistant invents doesn't block the import. A file exported before the share preview was left out still carries `survey.metadata`: it is dropped the same way, with one warning, and never written to a survey.
 
