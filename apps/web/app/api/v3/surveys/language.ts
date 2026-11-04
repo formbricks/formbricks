@@ -64,11 +64,79 @@ function normalizeV3SurveyLanguageCode(
   }
 }
 
-const canonicalKey = (value: string): string | null => normalizeLanguageCode(value)?.toLowerCase() ?? null;
+/**
+ * A locale lookup costs a few microseconds, and a survey body repeats a handful of codes thousands of
+ * times (every translatable field carries them, in the pre-pass and again in the normalizer), so the
+ * results are remembered. Bounded: a body of distinct junk keys refills the cache rather than growing it.
+ */
+const LOCALE_LOOKUP_CACHE_MAX = 1024;
+const LOCALE_LOOKUP_KEY_MAX_CHARS = 64;
+
+function memoizeLocaleLookup(compute: (value: string) => string | null): (value: string) => string | null {
+  const cache = new Map<string, string | null>();
+  return (value) => {
+    if (value.length > LOCALE_LOOKUP_KEY_MAX_CHARS) {
+      return compute(value);
+    }
+    const cached = cache.get(value);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const result = compute(value);
+    if (cache.size >= LOCALE_LOOKUP_CACHE_MAX) {
+      cache.clear();
+    }
+    cache.set(value, result);
+    return result;
+  };
+}
+
+const canonicalKey = memoizeLocaleLookup((value) => normalizeLanguageCode(value)?.toLowerCase() ?? null);
+
+const newLanguageCode = memoizeLocaleLookup((value) => {
+  const normalizedLocale = normalizeV3SurveyLocaleCode(value);
+  return normalizedLocale ? (normalizeLanguageCode(normalizedLocale) ?? normalizedLocale) : null;
+});
+
+/** A survey's configured codes by lowercase form and by canonical key; where two match, the first listed. */
+type TAllowedLanguageIndex = {
+  codes: string[];
+  byKey: Map<string, number>;
+  byCanonical: Map<string, number>;
+};
+
+// Built once per list rather than once per translation key: a PATCH used to canonicalize every configured
+// code again for every key in the body. Lists are the stored survey's and never change after the fact.
+const allowedLanguageIndexes = new WeakMap<object, TAllowedLanguageIndex>();
+
+function indexAllowedLanguageCodes(allowedLanguageCodes: readonly string[]): TAllowedLanguageIndex {
+  const cached = allowedLanguageIndexes.get(allowedLanguageCodes);
+  if (cached) {
+    return cached;
+  }
+
+  const index: TAllowedLanguageIndex = {
+    codes: [...allowedLanguageCodes],
+    byKey: new Map(),
+    byCanonical: new Map(),
+  };
+  index.codes.forEach((code, position) => {
+    const key = code.toLowerCase();
+    if (!index.byKey.has(key)) {
+      index.byKey.set(key, position);
+    }
+    const canonical = canonicalKey(code);
+    if (canonical && !index.byCanonical.has(canonical)) {
+      index.byCanonical.set(canonical, position);
+    }
+  });
+  allowedLanguageIndexes.set(allowedLanguageCodes, index);
+  return index;
+}
 
 export function normalizeV3SurveyWriteLanguageCode(
   value: string,
-  allowedLanguageCodes?: Iterable<string>
+  allowedLanguageCodes?: readonly string[]
 ): string | null {
   // PATCH: if the request resolves to a language ALREADY configured on the survey, write that survey's
   // STORED code as-is — its content i18n keys are keyed by exactly that code. Post-migration the stored
@@ -76,28 +144,21 @@ export function normalizeV3SurveyWriteLanguageCode(
   // equivalence. Never rewrite it here (even for a canonical/script-complete input), or the write would
   // orphan the survey's existing content keys. This match runs BEFORE canonicalization so preserve wins.
   if (allowedLanguageCodes) {
-    const requestedKey = value.trim().toLowerCase();
+    const { codes, byKey, byCanonical } = indexAllowedLanguageCodes(allowedLanguageCodes);
+    const keyMatch = byKey.get(value.trim().toLowerCase());
     const requestedCanonical = canonicalKey(value);
-
-    for (const allowedLanguageCode of allowedLanguageCodes) {
-      if (
-        requestedKey === allowedLanguageCode.toLowerCase() ||
-        (requestedCanonical && requestedCanonical === canonicalKey(allowedLanguageCode))
-      ) {
-        return allowedLanguageCode;
-      }
+    const canonicalMatch = requestedCanonical ? byCanonical.get(requestedCanonical) : undefined;
+    // The first configured code that matches either way, as a scan in list order would find.
+    const match = Math.min(keyMatch ?? Infinity, canonicalMatch ?? Infinity);
+    if (match !== Infinity) {
+      return codes[match];
     }
   }
 
   // CREATE (or a genuinely new language added via PATCH): accept a full locale and canonicalize it, so a
   // newly stored code is always canonical (`zh-CN` -> `zh-Hans-CN`) while legitimate non-default regions
   // are preserved (`de-AT` stays `de-AT`, `en-GB` stays `en-GB`). Bare/invalid codes stay rejected (null).
-  const normalizedLocale = normalizeV3SurveyLocaleCode(value);
-  if (normalizedLocale) {
-    return normalizeLanguageCode(normalizedLocale) ?? normalizedLocale;
-  }
-
-  return null;
+  return newLanguageCode(value);
 }
 
 function getLanguageSelectorKey(value: string): string {
