@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, createContext, useContext, useMemo } from "react";
+import { type ReactNode, createContext, useContext, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -39,12 +39,21 @@ interface ShowIfPopoverFrameProps {
  */
 export function ShowIfPopoverFrame({ title, help, info, children, footer }: ShowIfPopoverFrameProps) {
   const boundary = useContext(ShowIfPopoverBoundary);
+  const contentRef = useRef<HTMLDivElement>(null);
   return (
     <PopoverContent
+      ref={contentRef}
+      tabIndex={-1}
+      // Focus the popover itself, not its first control: that is the heading's (i), whose tooltip would
+      // open on its own and cover the subtitle and the first rows.
+      onOpenAutoFocus={(event) => {
+        event.preventDefault();
+        contentRef.current?.focus();
+      }}
       align="start"
       collisionBoundary={boundary ?? undefined}
       collisionPadding={8}
-      className="flex max-h-[min(36rem,var(--radix-popover-content-available-height))] w-[min(44rem,var(--radix-popover-content-available-width))] flex-col p-0"
+      className="flex max-h-[min(36rem,var(--radix-popover-content-available-height))] w-[min(44rem,var(--radix-popover-content-available-width))] flex-col p-0 outline-none"
       // The popover sits inside the block row in the React tree: keep its clicks off the row.
       onClick={(event) => event.stopPropagation()}
       // Opened from the Add logic menu, which hands focus back to its button as it closes; that must
