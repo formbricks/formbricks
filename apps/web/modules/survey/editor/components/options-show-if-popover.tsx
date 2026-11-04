@@ -214,6 +214,11 @@ function OptionsShowIfEditor({
     setEditingKey(key);
   };
 
+  const removeCondition = (target: TOptionTarget) => {
+    setLocalSurvey((survey) => updateShowIf(survey, target, () => undefined));
+    setEditingKey(null);
+  };
+
   return (
     <ShowIfPopoverFrame
       title={t("workspace.surveys.edit.flow.options_shown_if")}
@@ -289,10 +294,7 @@ function OptionsShowIfEditor({
                                 type="button"
                                 size="sm"
                                 variant="secondary"
-                                onClick={() => {
-                                  setLocalSurvey((survey) => updateShowIf(survey, target, () => undefined));
-                                  setEditingKey(null);
-                                }}>
+                                onClick={() => removeCondition(target)}>
                                 <TrashIcon />
                                 {t("workspace.surveys.edit.flow.remove_condition")}
                               </Button>
