@@ -14,7 +14,7 @@ const TENANTS = {
   "smoke-tenant-b": { sourceName: "smoke-source-b", npsValues: [0, 6], actor: { apiKeyId: "smoke-api-key" } },
 };
 const TENANT_FILTER_REJECTION = "tenant filters are enforced by Cube";
-// Chart fields (ENG-6893, ENG-6894): one submission per row, each with an NPS answer, a delivery answer,
+// Chart fields: one submission per row, each with an NPS answer, a delivery answer,
 // the options picked on a multi-select (one record per option, `<question>__<option>`) and an embedded
 // `region`, so an embedded filter, an embedded grouping and answer filters of every kind can each be
 // checked against numbers worked out from this table.
@@ -27,13 +27,22 @@ const FIELDS_SUBMISSIONS = [
 ];
 const FIELDS_KEY = "Area 'region' $1$";
 const FIELDS_ANSWER_KINDS = { q_delivery: "choice", q_feat: "multi", q_nps: "number" };
-// The answer-filter benchmark (C13): a large tenant where every submission answers 25 single-select
+// The answer-filter benchmark: a large tenant where every submission answers 25 single-select
 // questions, timed with 1 to 25 answer rules (one AnswerFilterN self-join each).
 const BENCH_TENANT = "bench-tenant-joins";
+const ANSWER_MEMBER_NAME = "FeedbackRecords.answer";
 const BENCH_QUESTIONS = 25;
 const BENCH_OPTIONS = 4;
 const BENCH_DEFAULT_SUBMISSIONS = 20_000;
 const CONTINUE_WAIT_ATTEMPTS = 60;
+// Correctness against hand-written SQL: a generated tenant whose every submission answers an NPS
+// question, a single-select delivery question (skipped by every seventh), a multi-select (option a on
+// even submissions, b on every third) and five single-selects, and carries three embedded keys. Each
+// check runs one chart query through Cube and the same question as plain SQL against Postgres.
+const TRUTH_TENANT = "smoke-tenant-truth";
+const TRUTH_DEFAULT_SUBMISSIONS = 3000;
+const TRUTH_SINGLE_SELECTS = 5;
+const TRUTH_KEYS = { region: "region", plan: "Plan (billing)", tier: "Kundenstufe" };
 
 const fail = (message) => {
   console.error(`FAIL: ${message}`);
@@ -287,7 +296,10 @@ const checkChartFields = async (environment, baseUrl) => {
   const groupedCounts = grouped.map((row) => [row[region], Number(row["FeedbackRecords.count"])]);
   const recordsPerRegion = new Map();
   for (const { region: value, delivery, features } of FIELDS_SUBMISSIONS) {
-    recordsPerRegion.set(value, (recordsPerRegion.get(value) ?? 0) + 1 + (delivery ? 1 : 0) + features.length);
+    recordsPerRegion.set(
+      value,
+      (recordsPerRegion.get(value) ?? 0) + 1 + (delivery ? 1 : 0) + features.length
+    );
   }
   const expectedGrouping = [...recordsPerRegion].sort(([a], [b]) => a.localeCompare(b));
   if (JSON.stringify(groupedCounts) !== JSON.stringify(expectedGrouping)) {
@@ -353,7 +365,9 @@ const checkChartFields = async (environment, baseUrl) => {
   const expectNps = (actual, submissions, label) => {
     const average = submissions.reduce((sum, { nps }) => sum + nps, 0) / submissions.length;
     if (actual.count !== submissions.length || Math.abs(actual.average - average) > 1e-9) {
-      fail(`${label} returned ${JSON.stringify(actual)}; expected ${submissions.length} records averaging ${average}`);
+      fail(
+        `${label} returned ${JSON.stringify(actual)}; expected ${submissions.length} records averaging ${average}`
+      );
     }
     pass(label);
   };
@@ -411,6 +425,229 @@ const checkChartFields = async (environment, baseUrl) => {
   pass("an embedded-data key is not listed in another tenant's /meta");
 };
 
+const printTruthSeedSql = (submissions) => {
+  const tenant = sqlString(TRUTH_TENANT);
+  const metadata =
+    "jsonb_build_object('embedded_data', jsonb_build_object(" +
+    `${sqlString(TRUTH_KEYS.region)}, (ARRAY['North','South','East'])[s % 3 + 1], ` +
+    `${sqlString(TRUTH_KEYS.plan)}, (ARRAY['free','pro','team','enterprise'])[s % 4 + 1], ` +
+    `${sqlString(TRUTH_KEYS.tier)}, CASE WHEN s % 5 = 0 THEN 'gold' ELSE 'silver' END))`;
+  const insert = (columns, select) =>
+    console.log(
+      `INSERT INTO feedback_records (source_type, tenant_id, submission_id, metadata, ${columns})\n` +
+        `SELECT 'formbricks', ${tenant}, 'truth-' || s, ${metadata}, ${select};`
+    );
+  insert(
+    "field_id, field_type, value_number",
+    `'q_nps', 'nps', s % 11 FROM generate_series(1, ${submissions}) s`
+  );
+  insert(
+    "field_id, field_type, value_id",
+    `'q_delivery', 'categorical', CASE WHEN s % 2 = 0 THEN 'late' ELSE 'on_time' END ` +
+      `FROM generate_series(1, ${submissions}) s WHERE s % 7 <> 0`
+  );
+  insert(
+    "field_id, field_group_id, field_type, value_id",
+    `'q_feat__opt_a', 'q_feat', 'categorical', 'opt_a' FROM generate_series(1, ${submissions}) s WHERE s % 2 = 0`
+  );
+  insert(
+    "field_id, field_group_id, field_type, value_id",
+    `'q_feat__opt_b', 'q_feat', 'categorical', 'opt_b' FROM generate_series(1, ${submissions}) s WHERE s % 3 = 0`
+  );
+  insert(
+    "field_id, field_type, value_id",
+    `'q_s' || q, 'categorical', 'opt_' || ((s * q + q) % 3) ` +
+      `FROM generate_series(1, ${submissions}) s, generate_series(1, ${TRUTH_SINGLE_SELECTS}) q`
+  );
+  console.log("ANALYZE feedback_records;");
+};
+
+/** Rows of a plain SQL query against the smoke Postgres, as arrays of strings. */
+const sqlRows = (postgresContainer, sql) => {
+  const result = spawnSync(
+    "docker",
+    [
+      "exec",
+      "-i",
+      postgresContainer,
+      "psql",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-At",
+      "-F",
+      "|",
+      "-U",
+      "postgres",
+      "-d",
+      "formbricks",
+    ],
+    { input: sql, encoding: "utf8" }
+  );
+  if (result.status !== 0) fail(`ground-truth SQL failed: ${result.stderr}`);
+  return result.stdout
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.split("|"));
+};
+
+const checkCorrectness = async (composeJsonPath, baseUrl, postgresContainer) => {
+  const environment = serviceEnvironment(readService(composeJsonPath, "cube"));
+  const answerKinds = {
+    q_delivery: "choice",
+    q_feat: "multi",
+    ...Object.fromEntries(
+      Array.from({ length: TRUTH_SINGLE_SELECTS }, (_, index) => [`q_s${index + 1}`, "choice"])
+    ),
+  };
+  const token = createToken(
+    environment,
+    TRUTH_TENANT,
+    { userId: "smoke-user" },
+    { edKeys: Object.values(TRUTH_KEYS).sort(), answerKinds }
+  );
+  const member = (name) => embeddedMember(TRUTH_KEYS[name]);
+  const tenant = sqlString(TRUTH_TENANT);
+  const answered = (where) =>
+    `EXISTS (SELECT 1 FROM feedback_records a WHERE a.tenant_id = r.tenant_id ` +
+    `AND a.submission_id = r.submission_id AND ${where})`;
+  const ed = (name) => `r.metadata->'embedded_data'->>${sqlString(TRUTH_KEYS[name])}`;
+  const timed = async (label, query) => {
+    const started = performance.now();
+    const { status, body } = await load(baseUrl, token, query);
+    const elapsed = performance.now() - started;
+    if (status !== 200) fail(`${label}: HTTP ${status} ${JSON.stringify(body)}`);
+    return { rows: body.data ?? [], elapsed };
+  };
+  const nps = { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] };
+  const npsTruth = (where) =>
+    sqlRows(
+      postgresContainer,
+      `SELECT count(*), coalesce(round(avg(r.value_number)::numeric, 9), 0) FROM feedback_records r ` +
+        `WHERE r.tenant_id = ${tenant} AND r.field_id = 'q_nps' AND ${where};`
+    )[0].map(Number);
+  const expectSame = (label, actual, expected, elapsed) => {
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      fail(`${label}: Cube returned ${JSON.stringify(actual)}; SQL says ${JSON.stringify(expected)}`);
+    }
+    pass(`${label}: ${JSON.stringify(actual)} matches SQL (${elapsed.toFixed(0)} ms)`);
+  };
+  const npsResult = (rows) => {
+    const [row] = rows;
+    const count = Number(row?.["FeedbackRecords.count"] ?? 0);
+    const average = row?.["FeedbackRecords.npsAverage"];
+    return [count, count === 0 || average == null ? 0 : Math.round(Number(average) * 1e9) / 1e9];
+  };
+  const npsQuery = (filters) => ({
+    measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+    filters: [nps, ...filters],
+  });
+
+  // An OR group of answer rules: late deliveries, or option b picked on the multi-select.
+  {
+    const { rows, elapsed } = await timed(
+      "answer OR group",
+      npsQuery([
+        {
+          or: [
+            { member: ANSWER_MEMBER_NAME, operator: "equals", values: ["q_delivery:late"] },
+            { member: ANSWER_MEMBER_NAME, operator: "equals", values: ["q_feat:opt_b"] },
+          ],
+        },
+      ])
+    );
+    expectSame(
+      "an OR group of answer rules",
+      npsResult(rows),
+      npsTruth(
+        `(${answered("a.field_id = 'q_delivery' AND a.value_id = 'late'")} OR ` +
+          `${answered("a.field_group_id = 'q_feat' AND a.field_id = 'q_feat__opt_b'")})`
+      ),
+      elapsed
+    );
+  }
+
+  // Five answer rules, all applied: each single-select keeps two of its three options, one "is not".
+  {
+    const rules = Array.from({ length: TRUTH_SINGLE_SELECTS }, (_, index) => {
+      const question = `q_s${index + 1}`;
+      return index === 0
+        ? { member: ANSWER_MEMBER_NAME, operator: "notEquals", values: [`${question}:opt_2`] }
+        : {
+            member: ANSWER_MEMBER_NAME,
+            operator: "equals",
+            values: [`${question}:opt_0`, `${question}:opt_1`],
+          };
+    });
+    const where = Array.from({ length: TRUTH_SINGLE_SELECTS }, (_, index) => {
+      const question = `q_s${index + 1}`;
+      return answered(
+        `a.field_id = '${question}' AND ` +
+          (index === 0 ? "a.value_id <> 'opt_2'" : "a.value_id IN ('opt_0', 'opt_1')")
+      );
+    }).join(" AND ");
+    const { rows, elapsed } = await timed("five answer rules", npsQuery(rules));
+    expectSame("five answer rules", npsResult(rows), npsTruth(where), elapsed);
+  }
+
+  // Two embedded filters (an equals moved onto the containment twin, and a notEquals) and an embedded
+  // grouping, in one query.
+  {
+    const { rows, elapsed } = await timed("embedded filters and grouping", {
+      measures: ["FeedbackRecords.count"],
+      dimensions: [member("region")],
+      filters: [
+        nps,
+        { member: member("plan"), operator: "equals", values: ["pro", "team"] },
+        { member: member("tier"), operator: "notEquals", values: ["gold"] },
+      ],
+      order: [[member("region"), "asc"]],
+    });
+    const actual = rows.map((row) => [row[member("region")], Number(row["FeedbackRecords.count"])]);
+    const expected = sqlRows(
+      postgresContainer,
+      `SELECT ${ed("region")}, count(*) FROM feedback_records r WHERE r.tenant_id = ${tenant} ` +
+        `AND r.field_id = 'q_nps' AND ${ed("plan")} IN ('pro', 'team') AND ${ed("tier")} <> 'gold' ` +
+        `GROUP BY 1 ORDER BY 1;`
+    ).map(([region, count]) => [region, Number(count)]);
+    if (expected.length === 0) fail("the embedded ground truth is empty; the seed is wrong");
+    expectSame("two embedded filters and an embedded grouping", actual, expected, elapsed);
+  }
+
+  // Disjoint picks: a dashboard pick that contradicts the chart's own filter narrows to nothing.
+  {
+    const { rows, elapsed } = await timed("disjoint embedded picks", {
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        nps,
+        { member: member("region"), operator: "equals", values: ["North"] },
+        { member: member("region"), operator: "equals", values: ["South"] },
+      ],
+    });
+    expectSame(
+      "disjoint embedded picks",
+      npsResult(rows)[0],
+      npsTruth(`${ed("region")} = 'North' AND ${ed("region")} = 'South'`)[0],
+      elapsed
+    );
+  }
+  {
+    const { rows, elapsed } = await timed(
+      "disjoint answer picks",
+      npsQuery([
+        { member: ANSWER_MEMBER_NAME, operator: "equals", values: ["q_s1:opt_0"] },
+        { member: ANSWER_MEMBER_NAME, operator: "equals", values: ["q_s1:opt_1"] },
+      ])
+    );
+    const truth = npsTruth(
+      `${answered("a.field_id = 'q_s1' AND a.value_id = 'opt_0'")} AND ` +
+        `${answered("a.field_id = 'q_s1' AND a.value_id = 'opt_1'")}`
+    );
+    if (truth[0] !== 0) fail(`disjoint answer picks: SQL counted ${truth[0]}; the seed is wrong`);
+    expectSame("disjoint answer picks", npsResult(rows), truth, elapsed);
+  }
+};
+
 // Times a chart query with 0, 1, 5, 10 and 25 answer rules over the benchmark tenant and checks every
 // count against the seeded data. A filter on a source type no record has makes each run's SQL unique, so
 // Cube's result cache never answers it; the second run shows Postgres with warm buffers. One line per run.
@@ -419,8 +656,7 @@ const benchJoins = async (composeJsonPath, baseUrl, submissions) => {
   const answerKinds = Object.fromEntries(
     Array.from({ length: BENCH_QUESTIONS }, (_, index) => [`q_c${index + 1}`, "choice"])
   );
-  const token = () =>
-    createToken(environment, BENCH_TENANT, { userId: "bench-user" }, { answerKinds });
+  const token = () => createToken(environment, BENCH_TENANT, { userId: "bench-user" }, { answerKinds });
   // Each rule keeps opt_0..opt_2 ("is any of" three values) and drops the rare opt_3.
   const kept = Array.from({ length: BENCH_OPTIONS - 1 }, (_, option) => option);
   for (const ruleCount of [0, 1, 5, 10, 25]) {
@@ -471,6 +707,12 @@ switch (command) {
     break;
   case "check-queries":
     await checkQueries(args[0], args[1]);
+    break;
+  case "truth-seed-sql":
+    printTruthSeedSql(Number(args[0] ?? TRUTH_DEFAULT_SUBMISSIONS));
+    break;
+  case "check-correctness":
+    await checkCorrectness(args[0], args[1], args[2]);
     break;
   case "bench-seed-sql":
     printBenchSeedSql(Number(args[0] ?? BENCH_DEFAULT_SUBMISSIONS));

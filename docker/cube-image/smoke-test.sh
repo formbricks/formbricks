@@ -8,7 +8,8 @@
 #   docker/cube-image/smoke-test.sh formbricks-cube:dev
 #
 # Needs docker with the compose plugin, curl, and Node >= 20. HUB_IMAGE_TAG overrides the Hub image used
-# to apply the schema.
+# to apply the schema, CUBE_SMOKE_PORT pins the host port Cube is published on (a free one by default),
+# and CUBE_SMOKE_TRUTH_SUBMISSIONS sizes the tenant the correctness checks run on (3000 by default).
 set -euo pipefail
 
 if [ "$#" -ne 1 ]; then
@@ -92,12 +93,14 @@ node "$helper" run "$work_dir/compose.json" postgres \
 wait_for "Postgres to accept connections" 60 docker exec "$postgres" pg_isready -h 127.0.0.1 -U postgres -d formbricks
 node "$helper" run "$work_dir/compose.json" hub-migrate --rm --network "$network"
 node "$helper" seed-sql | docker exec -i "$postgres" psql -v ON_ERROR_STOP=1 -q -U postgres -d formbricks
+node "$helper" truth-seed-sql "${CUBE_SMOKE_TRUTH_SUBMISSIONS:-3000}" |
+  docker exec -i "$postgres" psql -v ON_ERROR_STOP=1 -q -U postgres -d formbricks
 
 # As the Helm chart's default cube.containerSecurityContext runs it: uid 1000, a read-only root
 # filesystem, no capabilities and no privilege escalation. Cube must need no writable path of its own.
 echo "Starting $image as uid 1000 with a read-only root filesystem"
 node "$helper" run "$work_dir/compose.json" cube --image "$image" \
-  --detach --name "$cube" --network "$network" --publish 127.0.0.1::4000 \
+  --detach --name "$cube" --network "$network" --publish "127.0.0.1:${CUBE_SMOKE_PORT:-}:4000" \
   --user 1000 --read-only --cap-drop ALL --security-opt no-new-privileges >/dev/null
 cube_url="http://$(docker port "$cube" 4000/tcp | head -n 1)"
 
@@ -117,6 +120,9 @@ echo "PASS: /readyz answers 200"
 
 node "$helper" healthcheck "$work_dir/compose.json" cube "$cube"
 node "$helper" check-queries "$work_dir/compose.json" "$cube_url"
+# Answer OR groups, five answer rules, embedded filters with a grouping and disjoint picks, each checked
+# against the same question asked of Postgres in plain SQL.
+node "$helper" check-correctness "$work_dir/compose.json" "$cube_url" "$postgres"
 
 # Opt-in (CUBE_SMOKE_BENCH_SUBMISSIONS=20000): times 1-25 answer-rule self-joins over a large tenant.
 if [ -n "${CUBE_SMOKE_BENCH_SUBMISSIONS:-}" ]; then
