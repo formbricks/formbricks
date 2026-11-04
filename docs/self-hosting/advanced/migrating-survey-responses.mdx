@@ -380,6 +380,8 @@ the API rejects the request without it:
   read-only fields: the survey's identity and timestamps, and who can see it and why, which the server
   works out for each reader. The document endpoint rejects unknown keys rather than ignoring them, so
   leaving them in returns `400` with `invalid_params`.
+- `del(.targeting)` — an app survey's segment filters reference contact-attribute keys, segments and
+  other surveys that don't exist under the same IDs on the target; see [App surveys](#app-surveys).
 - `.languages |= map({code, default, enabled})` — `GET` returns an extra `alias` per language that
   `POST` rejects.
 - `.type = (if .type == "link" then "link" else "app" end)` — older instances still store the legacy
@@ -794,7 +796,7 @@ their own management endpoints (`/api/v2/management/contacts`,
 
 | Response                                                                          | Cause                                                                       | Fix                                                                        |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `400` `invalid_params` naming a field you did not touch                            | A read-only or unknown field left in the survey document — the endpoint rejects unknown keys rather than ignoring them | Check the `jq` filter is applied. The document accepts only `workspaceId`, `name`, `type`, `status`, `metadata`, `defaultLanguage`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables`, `distribution`, `targeting` |
+| `400` `invalid_params` naming a field you did not touch                            | A read-only or unknown field left in the survey document — the endpoint rejects unknown keys rather than ignoring them | Check the `jq` filter is applied. The document accepts only `workspaceId`, `name`, `type`, `status`, `metadata`, `defaultLanguage`, `languages`, `showLanguageSwitch`, `autoSelectLanguage`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables`, `distribution`, `targeting`, `customCss` |
 | `400` `unsupported_locale`                                                         | A translation uses a locale that is not declared in `languages`             | Add the locale to `languages`, or drop the translation                     |
 | `400` `invalid_reference`                                                          | Logic jumps to a block or ending ID that is not in the same request         | Import the whole survey document at once, never block by block             |
 | `400` on a response, `field: "response"`                                           | The response does not validate against the target survey — usually a file upload, or element IDs that were not carried over | See [File-upload answers](#file-upload-answers-are-rejected); confirm the survey was imported with its original element IDs |
