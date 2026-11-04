@@ -18,7 +18,20 @@ const emptyReader = () => ({
 const surveyTargeting = (key: string) => ({
   type: "app",
   defaultLanguage: "en-US",
-  targeting: { filters: [{ resource: { root: { type: "attribute", contactAttributeKey: key } } }] },
+  targeting: {
+    filters: [
+      {
+        id: "clfilter0000000000000001",
+        connector: null,
+        resource: {
+          id: "clresource00000000000001",
+          root: { type: "attribute", contactAttributeKey: key },
+          qualifier: { operator: "equals" },
+          value: "pro",
+        },
+      },
+    ],
+  },
 });
 
 const references = (attributeKeys: { key: string; name: string | null }[]): TFormbricksFileReferences => ({

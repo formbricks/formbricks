@@ -3,8 +3,10 @@ import { Prisma } from "@formbricks/database/prisma";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { ZSegmentFilters } from "@formbricks/types/segment";
 import type { TSurveyHiddenFields, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
+import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting-references";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import {
@@ -88,23 +90,14 @@ const getTriggerActionClassIds = (survey: Record<string, unknown>): string[] => 
   return [...new Set(ids)];
 };
 
-/** The attribute keys the survey's targeting filters name, from a filter tree of any depth. */
-const getTargetingAttributeKeys = (filters: unknown, keys = new Set<string>()): Set<string> => {
-  if (!Array.isArray(filters)) return keys;
-  for (const node of filters) {
-    if (!isPlainObject(node)) continue;
-    const { resource } = node;
-    if (Array.isArray(resource)) {
-      getTargetingAttributeKeys(resource, keys);
-      continue;
-    }
-    const root = isPlainObject(resource) && isPlainObject(resource.root) ? resource.root : {};
-    if (root.type === "attribute" && typeof root.contactAttributeKey === "string") {
-      keys.add(root.contactAttributeKey);
-    }
-    if (root.type === "person" && root.personIdentifier === "userId") keys.add("userId");
-  }
-  return keys;
+/**
+ * The attribute keys the survey's targeting filters name, as the file's reader and writer collect them.
+ * The draft was read against the v3 schema already; filters that still do not parse name none, and the
+ * create refuses them.
+ */
+const getTargetingAttributeKeys = (filters: unknown): Set<string> => {
+  const parsed = ZSegmentFilters.safeParse(filters ?? []);
+  return new Set(parsed.success ? collectV3TargetingAttributeKeys(parsed.data) : []);
 };
 
 /** The workspace's no-code actions with one of these configurations, the oldest per configuration. */
