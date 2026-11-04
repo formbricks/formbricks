@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import {
   MAX_EMBEDDED_KEYS,
   MAX_EMBEDDED_KEYS_BYTES,
+  collectEmbeddedMemberNames,
   isEmbeddedMemberName,
   selectEmbeddedKeys,
 } from "./embedded-data-fields";
@@ -93,5 +94,42 @@ describe("selectEmbeddedKeys", () => {
   test("selects the same keys the Cube model compiles", () => {
     const ranked = [...AWKWARD_KEYS, "", "   ", "z".repeat(129)];
     expect([...selectEmbeddedKeys(ranked)].sort()).toEqual(cubeConfig.getEmbeddedKeys({ edKeys: ranked }));
+  });
+});
+
+describe("collectEmbeddedMemberNames", () => {
+  const plan = "FeedbackRecords.ed_plan_64879f7d";
+  const tier = "FeedbackRecords.ed_tier_0a1b2c3d";
+  const region = "FeedbackRecords.ed_region_99887766";
+
+  test("names none for an empty or non-object query", () => {
+    expect(collectEmbeddedMemberNames({})).toEqual([]);
+    expect(collectEmbeddedMemberNames(null)).toEqual([]);
+    expect(collectEmbeddedMemberNames("FeedbackRecords.ed_plan_64879f7d")).toEqual([]);
+  });
+
+  test("collects every place a query names a member, nested filters included, once each", () => {
+    expect(
+      collectEmbeddedMemberNames({
+        measures: ["FeedbackRecords.count"],
+        dimensions: [plan, "FeedbackRecords.sourceName"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt" }],
+        filters: [
+          { member: tier, operator: "equals", values: [region] },
+          { or: [{ and: [{ member: region, operator: "set" }] }, { member: plan, operator: "set" }] },
+        ],
+        order: [[plan, "asc"]],
+      }).sort()
+    ).toEqual([plan, region, tier].sort());
+  });
+
+  test("never reads a filter value as a member", () => {
+    expect(
+      collectEmbeddedMemberNames({ filters: [{ member: "FeedbackRecords.sourceName", values: [plan] }] })
+    ).toEqual([]);
+  });
+
+  test("reads an order given as an object", () => {
+    expect(collectEmbeddedMemberNames({ order: { [tier]: "desc" } })).toEqual([tier]);
   });
 });

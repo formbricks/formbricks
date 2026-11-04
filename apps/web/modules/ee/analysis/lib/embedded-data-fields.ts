@@ -43,3 +43,42 @@ export const selectEmbeddedKeys = (rankedKeys: readonly unknown[]): string[] => 
   }
   return keys;
 };
+
+const collectFilterMembers = (filters: unknown, into: Set<string>): void => {
+  if (!Array.isArray(filters)) return;
+  for (const filter of filters) {
+    if (typeof filter !== "object" || filter === null) continue;
+    const { member, and, or } = filter as { member?: unknown; and?: unknown; or?: unknown };
+    if (typeof member === "string") into.add(member);
+    collectFilterMembers(and, into);
+    collectFilterMembers(or, into);
+  }
+};
+
+/**
+ * The embedded-data members a chart query names, wherever it names one: measures, dimensions, time
+ * dimensions, filters (nested `and`/`or` included) and order. Filter values are never read, so a value
+ * that happens to look like a member name is not mistaken for one. Read defensively: a stored query is
+ * JSON and could hold anything.
+ */
+export const collectEmbeddedMemberNames = (query: unknown): string[] => {
+  if (typeof query !== "object" || query === null) return [];
+  const { measures, dimensions, timeDimensions, filters, order } = query as Record<string, unknown>;
+  const members = new Set<string>();
+  for (const list of [measures, dimensions]) {
+    if (Array.isArray(list)) list.forEach((name) => typeof name === "string" && members.add(name));
+  }
+  if (Array.isArray(timeDimensions)) {
+    for (const timeDimension of timeDimensions) {
+      const dimension = (timeDimension as { dimension?: unknown } | null)?.dimension;
+      if (typeof dimension === "string") members.add(dimension);
+    }
+  }
+  collectFilterMembers(filters, members);
+  if (Array.isArray(order)) {
+    order.forEach((entry) => Array.isArray(entry) && typeof entry[0] === "string" && members.add(entry[0]));
+  } else if (typeof order === "object" && order !== null) {
+    Object.keys(order).forEach((name) => members.add(name));
+  }
+  return [...members].filter(isEmbeddedMemberName);
+};

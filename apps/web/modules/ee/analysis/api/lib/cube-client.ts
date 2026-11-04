@@ -9,7 +9,7 @@ import { getOrganization } from "@/lib/organization/service";
 import { getAnswerQuestions } from "@/modules/ee/analysis/charts/lib/answer-questions";
 import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
 import { type TAnswerKind, collectAnswerQuestionIds } from "@/modules/ee/analysis/lib/answer-filter";
-import { getDatasetEmbeddedKeys } from "@/modules/ee/analysis/lib/dataset-embedded-keys";
+import { getEmbeddedKeysForQuery } from "@/modules/ee/analysis/lib/dataset-embedded-keys";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import {
@@ -234,13 +234,17 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
   try {
     const [embeddedKeys, answerKinds] = await Promise.all([
+      // The dataset's top keys, plus any key the query names outside them (a saved chart's), ENG-6893.
       input.embeddedKeys ??
-        getDatasetEmbeddedKeys({
-          datasetId: input.feedbackDirectoryId,
-          workspaceId: input.workspaceId,
-          organizationId: input.organizationId,
-          actor: input.actor,
-        }),
+        getEmbeddedKeysForQuery(
+          {
+            datasetId: input.feedbackDirectoryId,
+            workspaceId: input.workspaceId,
+            organizationId: input.organizationId,
+            actor: input.actor,
+          },
+          input.query
+        ),
       resolveAnswerKinds(input),
     ]);
     ({ apiUrl, requestId, token } = getCubeApiConfig({

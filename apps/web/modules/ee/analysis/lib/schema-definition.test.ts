@@ -232,6 +232,15 @@ describe("schema-definition", () => {
     test("handles key with no dots", () => {
       expect(formatCubeColumnHeader("singleKey")).toBe("Single Key");
     });
+
+    test("heads an embedded-data member with its key's own name when the server named it", () => {
+      const plan = "FeedbackRecords.ed_plan_64879f7d";
+      expect(formatCubeColumnHeader(plan, undefined, { [plan]: "Plan (EU)" })).toBe("Plan (EU)");
+      // Other keys are untouched by the map.
+      expect(formatCubeColumnHeader("FeedbackRecords.count", undefined, { [plan]: "Plan" })).toBe(
+        "Feedback Records"
+      );
+    });
   });
 
   describe("FEEDBACK_FIELDS", () => {

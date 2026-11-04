@@ -117,17 +117,19 @@ export type TAppChartData = {
   /** Absent rather than empty, as the renderers expect: an empty map would still read as "present". */
   optionLabels?: Record<string, string>;
   fieldLabels?: Record<string, string>;
+  memberLabels?: Record<string, string>;
   /** The query as it ran, after option grouping: what the rows' keys follow. */
   query: TChartQuery;
 };
 
-const presentOrUndefined = (labels: Record<string, string>) =>
-  Object.keys(labels).length > 0 ? labels : undefined;
+const presentOrUndefined = (labels: Record<string, string> | undefined) =>
+  labels && Object.keys(labels).length > 0 ? labels : undefined;
 
 const toAppChartData = (data: TV3ChartData): TAppChartData => ({
   rows: data.rows,
   optionLabels: presentOrUndefined(data.optionLabels),
   fieldLabels: presentOrUndefined(data.fieldLabels),
+  memberLabels: presentOrUndefined(data.memberLabels),
   query: data.query as TChartQuery,
 });
 

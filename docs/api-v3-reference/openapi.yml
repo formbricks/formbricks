@@ -13853,6 +13853,7 @@ components:
         - rows
         - optionLabels
         - fieldLabels
+        - memberLabels
         - query
       properties:
         rows:
@@ -13878,6 +13879,13 @@ components:
           description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
           additionalProperties:
             type: string
+        memberLabels:
+          type: object
+          description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
+          additionalProperties:
+            type: string
+          example:
+            FeedbackRecords.ed_plan_64879f7d: Plan
         query:
           type: object
           description: 'The query as it ran: after the requested date range narrowed the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
@@ -14223,6 +14231,13 @@ components:
       description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
       additionalProperties:
         type: string
+    memberLabels:
+      type: object
+      description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
+      additionalProperties:
+        type: string
+      example:
+        FeedbackRecords.ed_plan_64879f7d: Plan
     query:
       type: object
       description: 'The query as it ran: after the requested date range narrowed the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
@@ -14233,6 +14248,7 @@ components:
         - rows
         - optionLabels
         - fieldLabels
+        - memberLabels
         - query
         - unfilterableFilters
       properties:
@@ -14242,6 +14258,8 @@ components:
           $ref: '#/components/schemas/optionLabels'
         fieldLabels:
           $ref: '#/components/schemas/fieldLabels'
+        memberLabels:
+          $ref: '#/components/schemas/memberLabels'
         query:
           $ref: '#/components/schemas/query'
         unfilterableFilters:

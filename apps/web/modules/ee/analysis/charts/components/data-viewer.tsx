@@ -18,6 +18,8 @@ interface DataViewerProps {
   optionLabels?: Record<string, string>;
   /** Matrix row field_id → statement map, present when the query groups by fieldId. */
   fieldLabels?: Record<string, string>;
+  /** Embedded-data member → key name map, so those columns are headed by the key. */
+  memberLabels?: Record<string, string>;
   /**
    * Drop the card, the heading and the fixed scroll height, and fill the parent instead. For a
    * dashboard widget, whose title bar already names the chart and whose body already scrolls —
@@ -32,6 +34,7 @@ export function DataViewer({
   data,
   optionLabels,
   fieldLabels,
+  memberLabels,
   bare = false,
   query,
 }: Readonly<DataViewerProps>) {
@@ -78,7 +81,7 @@ export function DataViewer({
                   key={key}
                   scope="col"
                   className="border-b border-gray-200 px-3 py-2 text-left font-semibold">
-                  {formatCubeColumnHeader(key, t)}
+                  {formatCubeColumnHeader(key, t, memberLabels)}
                 </th>
               ))}
             </tr>

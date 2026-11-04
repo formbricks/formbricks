@@ -13,6 +13,7 @@ import { REQUESTED_DATE_RANGE_REASON } from "@/modules/ee/analysis/lib/chart-que
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { loadAuthorizedChart } from "./access";
 import { getV3ChartData, previewV3Chart } from "./data-operations";
+import { loadDatasetChartFields } from "./dataset-fields";
 import { listV3ChartFieldValues } from "./field-operations";
 import { ZV3ChartData } from "./resources";
 import type { TChartResourceRow } from "./service";
@@ -183,6 +184,25 @@ describe("chart queries within budget", () => {
       expect(acquireInFlightSlot).not.toHaveBeenCalled();
     });
 
+    test("names each embedded-data member the query groups by with its key's own name", async () => {
+      const plan = "FeedbackRecords.ed_plan_64879f7d";
+      vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
+        embeddedFields: [
+          { name: plan, key: "Plan" },
+          { name: "FeedbackRecords.ed_tier_0a1b2c3d", key: "Tier" },
+        ],
+      });
+
+      const response = await preview({
+        query: { measures: ["FeedbackRecords.count"], dimensions: [plan] },
+      });
+
+      expect(response.status).toBe(200);
+      const { data } = (await response.json()) as { data: { memberLabels: unknown } };
+      // Only the members the query names: the dataset's other keys stay out.
+      expect(data.memberLabels).toEqual({ [plan]: "Plan" });
+    });
+
     test("runs the query in the authorized workspace's tenant and returns rows, labels and the query run", async () => {
       const response = await preview();
 
@@ -192,6 +212,7 @@ describe("chart queries within budget", () => {
         rows: [{ "FeedbackRecords.sourceName": "Web", "FeedbackRecords.count": 3 }],
         optionLabels: {},
         fieldLabels: { "FeedbackRecords.count": "Responses" },
+        memberLabels: {},
         query: BY_SOURCE,
       });
       expect(requireDashboardsAccess).toHaveBeenCalledWith(

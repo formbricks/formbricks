@@ -378,6 +378,8 @@ interface ChartRendererProps {
   optionLabels?: Record<string, string>;
   /** Matrix row field_id → statement map, present when the query groups by fieldId. */
   fieldLabels?: Record<string, string>;
+  /** Embedded-data member → key name map, so a legend names the key rather than the member. */
+  memberLabels?: Record<string, string>;
   /** Saved display settings. Charts saved before these existed have an empty config and keep
    * the previous behavior (vertical bars). */
   config?: TChartConfig;
@@ -391,6 +393,7 @@ function SeriesChartRenderer({
   data,
   query,
   optionLabels,
+  memberLabels,
   config,
 }: Readonly<Omit<ChartRendererProps, "fieldLabels">>) {
   const responseBase = resolveResponseBase(query, data);
@@ -400,6 +403,7 @@ function SeriesChartRenderer({
       data={data}
       query={query}
       optionLabels={optionLabels}
+      memberLabels={memberLabels}
       config={config}
       responseBase={responseBase}
     />
@@ -431,6 +435,7 @@ function SeriesChart({
   data,
   query,
   optionLabels,
+  memberLabels,
   config,
   responseBase,
 }: Readonly<Omit<ChartRendererProps, "fieldLabels"> & { responseBase?: TResponseBase }>) {
@@ -502,7 +507,7 @@ function SeriesChart({
     dataKeys.map((key, i) => [
       key,
       {
-        label: formatCubeColumnHeader(key, t),
+        label: formatCubeColumnHeader(key, t, memberLabels),
         color: getSemanticMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
       },
     ])

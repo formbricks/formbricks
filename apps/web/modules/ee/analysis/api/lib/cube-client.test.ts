@@ -20,10 +20,10 @@ const {
   mockLoggerWarn,
   mockQueueAuditEventWithoutRequest,
   mockTablePivot,
-  mockGetDatasetEmbeddedKeys,
+  mockGetEmbeddedKeysForQuery,
   mockGetAnswerQuestions,
 } = vi.hoisted(() => ({
-  mockGetDatasetEmbeddedKeys: vi.fn(),
+  mockGetEmbeddedKeysForQuery: vi.fn(),
   mockGetAnswerQuestions: vi.fn(),
   auditFlags: { enabled: true },
   mockGetOrganization: vi.fn(),
@@ -63,7 +63,7 @@ vi.mock("@/lib/organization/service", () => ({
 }));
 
 vi.mock("@/modules/ee/analysis/lib/dataset-embedded-keys", () => ({
-  getDatasetEmbeddedKeys: mockGetDatasetEmbeddedKeys,
+  getEmbeddedKeysForQuery: mockGetEmbeddedKeysForQuery,
 }));
 
 vi.mock("@/modules/ee/analysis/charts/lib/answer-questions", () => ({
@@ -115,7 +115,7 @@ describe("executeTenantScopedQuery", () => {
     mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
-    mockGetDatasetEmbeddedKeys.mockResolvedValue([]);
+    mockGetEmbeddedKeysForQuery.mockResolvedValue([]);
     mockGetAnswerQuestions.mockResolvedValue([]);
   });
 
@@ -867,7 +867,7 @@ describe("executeTenantScopedQuery token claims (ENG-6893, ENG-6894)", () => {
     mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([]);
-    mockGetDatasetEmbeddedKeys.mockResolvedValue(["plan", "région"]);
+    mockGetEmbeddedKeysForQuery.mockResolvedValue(["plan", "région"]);
     mockGetAnswerQuestions.mockResolvedValue([
       { id: "q_delivery", label: "Delivery", kind: "choice", options: [] },
       { id: "q_feat", label: "Features", kind: "multi", options: [] },
@@ -891,12 +891,15 @@ describe("executeTenantScopedQuery token claims (ENG-6893, ENG-6894)", () => {
     const claims = await signedClaims();
     expect(claims.edKeys).toEqual(["plan", "région"]);
     expect(claims).not.toHaveProperty("answerKinds");
-    expect(mockGetDatasetEmbeddedKeys).toHaveBeenCalledWith({
-      datasetId: "frd-1",
-      workspaceId: "workspace-1",
-      organizationId: "organization-1",
-      actor: { type: "user", id: "user-1" },
-    });
+    expect(mockGetEmbeddedKeysForQuery).toHaveBeenCalledWith(
+      {
+        datasetId: "frd-1",
+        workspaceId: "workspace-1",
+        organizationId: "organization-1",
+        actor: { type: "user", id: "user-1" },
+      },
+      scopedInput.query
+    );
     expect(mockGetAnswerQuestions).not.toHaveBeenCalled();
   });
 
@@ -922,6 +925,6 @@ describe("executeTenantScopedQuery token claims (ENG-6893, ENG-6894)", () => {
     await executeTenantScopedQuery({ ...scopedInput, embeddedKeys: [] });
 
     expect(await signedClaims()).not.toHaveProperty("edKeys");
-    expect(mockGetDatasetEmbeddedKeys).not.toHaveBeenCalled();
+    expect(mockGetEmbeddedKeysForQuery).not.toHaveBeenCalled();
   });
 });

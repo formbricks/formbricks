@@ -88,6 +88,7 @@ describe("POST /api/v3/charts/preview", () => {
       ],
       optionLabels: {},
       fieldLabels: {},
+      memberLabels: {},
       query: { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.sourceName"] },
     });
 

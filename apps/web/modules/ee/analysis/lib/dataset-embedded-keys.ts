@@ -3,7 +3,13 @@ import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import type { TCubeQueryActor } from "@/modules/ee/analysis/api/lib/cube-config";
-import { MAX_EMBEDDED_KEYS, selectEmbeddedKeys } from "./embedded-data-fields";
+import {
+  MAX_EMBEDDED_KEYS,
+  MAX_EMBEDDED_KEY_LENGTH,
+  collectEmbeddedMemberNames,
+  selectEmbeddedKeys,
+} from "./embedded-data-fields";
+import { getEmbeddedMemberName } from "./embedded-member-name";
 
 /**
  * A Feedback Dataset's embedded-data keys (ENG-6893), most frequent first. Discovery scans the whole
@@ -125,4 +131,118 @@ export const getDatasetEmbeddedKeys = async (scope: TEmbeddedKeysScope): Promise
     logger.warn({ err: error, datasetId: scope.datasetId }, "Embedded-key discovery failed");
     return [];
   }
+};
+
+/**
+ * Most keys a saved query's members are looked for among, once one names a key outside the dataset's
+ * top `MAX_EMBEDDED_KEYS`: such a key still exists, it is just less frequent now than when the chart was
+ * built. Only the builder's catalog is capped, so a saved chart keeps working.
+ */
+const RESOLUTION_ROW_LIMIT = 2000;
+
+type TCachedKeyResolution = { members: Record<string, string>; scannedAt: number };
+
+const resolutionCacheKey = (datasetId: string) =>
+  createCacheKey.custom("analytics", datasetId, "embedded-key-members");
+
+const isCachedKeyResolution = (value: unknown): value is TCachedKeyResolution =>
+  typeof value === "object" &&
+  value !== null &&
+  typeof (value as TCachedKeyResolution).members === "object" &&
+  (value as TCachedKeyResolution).members !== null &&
+  typeof (value as TCachedKeyResolution).scannedAt === "number";
+
+/** Every key of the dataset (up to `RESOLUTION_ROW_LIMIT`), by the member it compiles to. */
+const scanKeyMembers = async (scope: TEmbeddedKeysScope): Promise<Record<string, string>> => {
+  const { executeTenantScopedQuery } = await import("@/modules/ee/analysis/api/lib/cube-client");
+  const rows = await executeTenantScopedQuery({
+    query: {
+      measures: ["FeedbackRecords.count"],
+      dimensions: [EMBEDDED_DATA_KEY_DIMENSION],
+      order: [
+        ["FeedbackRecords.count", "desc"],
+        [EMBEDDED_DATA_KEY_DIMENSION, "asc"],
+      ],
+      limit: RESOLUTION_ROW_LIMIT,
+    },
+    feedbackDirectoryId: scope.datasetId,
+    workspaceId: scope.workspaceId,
+    organizationId: scope.organizationId,
+    actor: scope.actor,
+    source: "charts.embeddedKeyDiscovery",
+    embeddedKeys: [],
+  });
+  const members: Record<string, string> = {};
+  for (const row of rows) {
+    const key = row[EMBEDDED_DATA_KEY_DIMENSION];
+    if (typeof key !== "string" || key.trim().length === 0 || key.length > MAX_EMBEDDED_KEY_LENGTH) continue;
+    members[getEmbeddedMemberName(key)] ??= key;
+  }
+  return members;
+};
+
+/**
+ * The keys behind `memberNames`, by member: each member a key of the dataset compiles to, whether or not
+ * it is among the top keys. A member no key of the dataset compiles to is left out. Looking past the top
+ * keys scans the dataset once, kept in Valkey: a member still unknown after a scan younger than
+ * `EMBEDDED_KEYS_STALE_MS` is not scanned for again.
+ */
+export const resolveEmbeddedMemberKeys = async (
+  scope: TEmbeddedKeysScope,
+  memberNames: readonly string[]
+): Promise<Map<string, string>> => {
+  const resolved = new Map<string, string>();
+  if (memberNames.length === 0) return resolved;
+
+  const wanted = new Set(memberNames);
+  for (const key of await getDatasetEmbeddedKeys(scope)) {
+    const member = getEmbeddedMemberName(key);
+    if (wanted.has(member)) resolved.set(member, key);
+  }
+  if (resolved.size === wanted.size) return resolved;
+
+  const cached = await cache.get<unknown>(resolutionCacheKey(scope.datasetId));
+  // Without Valkey every request would rescan, so nothing past the top keys resolves, as no key does then.
+  if (!cached.ok) return resolved;
+  let members = isCachedKeyResolution(cached.data) ? cached.data : undefined;
+  const missing = () => [...wanted].filter((member) => !resolved.has(member) && !members?.members[member]);
+  if (!members || (missing().length > 0 && Date.now() - members.scannedAt > EMBEDDED_KEYS_STALE_MS)) {
+    try {
+      members = { members: await scanKeyMembers(scope), scannedAt: Date.now() };
+      const stored = await cache.set(resolutionCacheKey(scope.datasetId), members, EMBEDDED_KEYS_TTL_MS);
+      if (!stored.ok) logger.warn({ datasetId: scope.datasetId }, "Could not cache a dataset's key members");
+    } catch (error) {
+      logger.warn({ err: error, datasetId: scope.datasetId }, "Embedded-key resolution failed");
+    }
+  }
+  for (const member of wanted) {
+    const key = members?.members[member];
+    if (!resolved.has(member) && key !== undefined) resolved.set(member, key);
+  }
+  return resolved;
+};
+
+/**
+ * The keys a Cube token carries for `query`: the dataset's top keys, unless the query names a key outside
+ * them (a saved chart whose key grew rarer, or a dashboard filter on one). Then the named keys go first and
+ * the top keys fill the rest, within the token's caps, so every member the query names compiles.
+ */
+export const getEmbeddedKeysForQuery = async (
+  scope: TEmbeddedKeysScope,
+  query: unknown
+): Promise<string[]> => {
+  const topKeys = await getDatasetEmbeddedKeys(scope);
+  const named = collectEmbeddedMemberNames(query);
+  if (named.length === 0) return topKeys;
+
+  const topMembers = new Set(topKeys.map(getEmbeddedMemberName));
+  const outside = named.filter((member) => !topMembers.has(member));
+  if (outside.length === 0) return topKeys;
+
+  const resolved = await resolveEmbeddedMemberKeys(scope, named);
+  const namedKeys = named.flatMap((member) => {
+    const key = resolved.get(member);
+    return key === undefined ? [] : [key];
+  });
+  return selectEmbeddedKeys([...namedKeys, ...topKeys]);
 };

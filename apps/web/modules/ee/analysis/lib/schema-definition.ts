@@ -1021,7 +1021,14 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
  * Format a Cube.js column key for display (e.g. FeedbackRecords.collectedAt.day → "Day").
  * When `t` is provided, returns translated labels.
  */
-export function formatCubeColumnHeader(key: string, t?: TFunction): string {
+export function formatCubeColumnHeader(
+  key: string,
+  t?: TFunction,
+  memberLabels?: Record<string, string>
+): string {
+  // An embedded-data member reads as its key's own name (ENG-6893), which only the server knows.
+  const memberLabel = memberLabels?.[key];
+  if (memberLabel !== undefined) return memberLabel;
   const granularity = TIME_GRANULARITIES.find((g) => key.endsWith(`.${g}`));
   if (granularity) {
     return t

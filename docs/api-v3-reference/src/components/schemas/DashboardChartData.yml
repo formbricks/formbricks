@@ -8,6 +8,7 @@ required:
   - rows
   - optionLabels
   - fieldLabels
+  - memberLabels
   - query
   - unfilterableFilters
 properties:
@@ -17,6 +18,8 @@ properties:
     $ref: ./ChartData.yml#/properties/optionLabels
   fieldLabels:
     $ref: ./ChartData.yml#/properties/fieldLabels
+  memberLabels:
+    $ref: ./ChartData.yml#/properties/memberLabels
   query:
     $ref: ./ChartData.yml#/properties/query
   unfilterableFilters:

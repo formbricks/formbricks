@@ -32,6 +32,8 @@ import {
   parseRequestedDateRange,
   validateChartQuery,
 } from "@/modules/ee/analysis/lib/chart-query-validator";
+import { collectEmbeddedMemberNames } from "@/modules/ee/analysis/lib/embedded-data-fields";
+import type { TDatasetChartFields } from "@/modules/ee/analysis/lib/field-catalog";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { type TV3ChartOperationContext, loadAuthorizedChart } from "./access";
@@ -78,15 +80,30 @@ export const emptyChartData = (query: TChartQuery): TV3ChartData => ({
   rows: [],
   optionLabels: {},
   fieldLabels: {},
+  memberLabels: {},
   query: query as TV3ChartData["query"],
 });
+
+/**
+ * The embedded-data members the rows are keyed by, to each key's own name (ENG-6893), so a column or
+ * legend reads `Plan` rather than `FeedbackRecords.ed_plan_64879f7d`.
+ */
+const getMemberLabels = (
+  query: unknown,
+  dataset: TDatasetChartFields | undefined
+): Record<string, string> => {
+  const named = new Set(collectEmbeddedMemberNames(query));
+  return Object.fromEntries(
+    (dataset?.embeddedFields ?? []).filter(({ name }) => named.has(name)).map(({ name, key }) => [name, key])
+  );
+};
 
 /**
  * Validate, narrow to the requested date range, shape for the chart type, and run — the part preview and
  * data share once the caller is authorized for the dataset. `query` is caller input for a preview and
  * the stored query for a saved chart; both go through the validator, so a stored query that no longer
  * passes it answers 422 rather than reaching Cube. A requested range is ANDed with the saved one
- * (ADR-0019); ranges that do not overlap answer an empty chart. The time-bucket limit is checked once, on
+ * (ADR-0024); ranges that do not overlap answer an empty chart. The time-bucket limit is checked once, on
  * the query that will run, and a narrowed range too wide for the chart's granularity is named as
  * `dateRange`. `extraFilters` (a dashboard's filter picks) are ANDed onto the saved filters the same way,
  * and `respond` shapes the success body.
@@ -117,11 +134,8 @@ export async function runV3ChartQuery({
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
   // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.
-  const validated = validateChartQuery(query, {
-    timeBuckets: false,
-    legacyDateRanges: true,
-    dataset: await loadDatasetChartFields(context.authentication, access, datasetId, query),
-  });
+  const dataset = await loadDatasetChartFields(context.authentication, access, datasetId, query);
+  const validated = validateChartQuery(query, { timeBuckets: false, legacyDateRanges: true, dataset });
   // The data route takes the range as query parameters; the preview takes it as one body field.
   const requested = parseRequestedDateRange(dateRange, dateRangeNames);
   const invalidParams: InvalidParam[] = [
@@ -165,6 +179,7 @@ export async function runV3ChartQuery({
         rows: run.rows as TV3ChartData["rows"],
         optionLabels: run.optionLabels ?? {},
         fieldLabels: run.fieldLabels ?? {},
+        memberLabels: getMemberLabels(run.effectiveQuery, dataset),
         query: run.effectiveQuery as TV3ChartData["query"],
       };
       return successResponse(respond(data), { requestId: context.requestId });
@@ -252,7 +267,7 @@ export const requestedDateRangeOf = (
  * `GET /api/v3/charts/{chartId}/data` → 200 `{ data: { rows, optionLabels, fieldLabels, query } }`.
  *
  * A requested date range narrows the chart's own on `collectedAt` — the dashboard date filter's rule
- * (ADR-0019) — so the numbers match what a person sees on a dashboard filtered the same way; `all-time` and
+ * (ADR-0024) — so the numbers match what a person sees on a dashboard filtered the same way; `all-time` and
  * no range leave the saved range as it is. Needs read access to the chart's workspace and to its Feedback
  * Dataset: a dashboards grant alone never reaches respondents' answers.
  */
