@@ -52,7 +52,7 @@ export interface TFormulaReference {
   blockIdx?: number;
 }
 
-const PLAIN_TOKEN = /^[A-Za-z0-9_]+$/;
+const PLAIN_TOKEN = /^\w+$/;
 
 /** How a token reads after `@`: bare when it is a plain identifier, braced otherwise. */
 export const formatReferenceToken = (token: string): string =>
@@ -383,7 +383,7 @@ const tokenize = (text: string): TToken[] => {
         idx = end + 1;
         continue;
       }
-      const reference = /^[A-Za-z0-9_]+/.exec(text.slice(idx + 1));
+      const reference = /^\w+/.exec(text.slice(idx + 1));
       // An `@` with no name after it: one being picked from the menu, or left behind.
       if (!reference) throw new FormulaError({ code: "incomplete_reference", position: idx });
       tokens.push({ kind: "reference", value: reference[0], position: idx });
@@ -391,7 +391,7 @@ const tokenize = (text: string): TToken[] => {
       continue;
     }
 
-    const name = /^[A-Za-z_][A-Za-z0-9_]*/.exec(text.slice(idx));
+    const name = /^[A-Za-z_]\w*/.exec(text.slice(idx));
     if (name) {
       tokens.push({ kind: "name", value: name[0], position: idx });
       idx += name[0].length;
