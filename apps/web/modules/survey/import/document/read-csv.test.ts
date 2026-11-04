@@ -75,6 +75,19 @@ describe("readCsvDocument", () => {
     expect(model.lines.every((line) => line.cells.length === 3)).toBe(true);
   });
 
+  test("refuses text after a blank line past the row limit, and takes blank lines there", () => {
+    const full = Array.from(
+      { length: SURVEY_IMPORT_SHEET_MAX_ROWS },
+      (_, index) => `Q${index + 1},Text`
+    ).join("\n");
+
+    expect(readCsvDocument(`${full}\n\n\n`).lines).toHaveLength(SURVEY_IMPORT_SHEET_MAX_ROWS);
+    expect(refusal(() => readCsvDocument(`${full}\n\nQ,Text`))).toMatchObject({
+      code: "document_limit_exceeded",
+      identifier: "rows",
+    });
+  });
+
   test("takes exactly the row limit and refuses one row more", () => {
     const rows = (count: number) => Array.from({ length: count }, (_, index) => `q${index},text`).join("\n");
 

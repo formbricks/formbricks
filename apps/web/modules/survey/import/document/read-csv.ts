@@ -1,5 +1,5 @@
 import { CsvError, parse } from "csv-parse/sync";
-import { surveyImportFileUnreadable } from "../core/errors";
+import { SurveyImportInputError, surveyImportFileUnreadable } from "../core/errors";
 import type { TSurveyImportTextEncoding } from "../core/sniff";
 import {
   SURVEY_IMPORT_SHEET_MAX_CELL_CHARS,
@@ -51,7 +51,11 @@ const MAX_RECORD_CHARS = SURVEY_IMPORT_SHEET_MAX_COLUMNS * (SURVEY_IMPORT_SHEET_
 const parseRecords = (
   text: string,
   delimiter: string,
-  { to, relaxQuotes }: { to?: number; relaxQuotes: boolean }
+  {
+    to,
+    relaxQuotes,
+    onRecord,
+  }: { to?: number; relaxQuotes: boolean; onRecord?: (record: string[]) => string[] | null }
 ): TCsvRecords =>
   parse(text, {
     delimiter,
@@ -61,7 +65,30 @@ const parseRecords = (
     skip_empty_lines: false,
     max_record_size: MAX_RECORD_CHARS,
     ...(to === undefined ? {} : { to }),
+    ...(onRecord === undefined ? {} : { on_record: onRecord }),
   });
+
+const tooManyRows = () =>
+  documentLimitExceeded(
+    "rows",
+    "file",
+    `The list must not have more than ${SURVEY_IMPORT_SHEET_MAX_ROWS} rows`
+  );
+
+/**
+ * Past the row limit, blank records are dropped and the first with text refuses the list: the limit
+ * counts empty rows up to the last row with text, so text after a blank line past it is never lost.
+ * Nothing past the limit is kept, so the rest of the file costs only its parse.
+ */
+const holdToRowLimit = (): ((record: string[]) => string[] | null) => {
+  let seen = 0;
+  return (record) => {
+    seen += 1;
+    if (seen <= SURVEY_IMPORT_SHEET_MAX_ROWS) return record;
+    if (record.some((field) => field.trim() !== "")) throw tooManyRows();
+    return null;
+  };
+};
 
 /**
  * How well `delimiter` splits the first records: the share of them with the most common field count,
@@ -157,9 +184,9 @@ export const readCsvDocument = (
 
   let records: TCsvRecords;
   try {
-    // One record past the limit is enough to know the list is past it.
-    records = parseRecords(text, delimiter, { to: SURVEY_IMPORT_SHEET_MAX_ROWS + 1, relaxQuotes: true });
+    records = parseRecords(text, delimiter, { relaxQuotes: true, onRecord: holdToRowLimit() });
   } catch (error) {
+    if (error instanceof SurveyImportInputError) throw error;
     if (error instanceof CsvError && error.code === "CSV_MAX_RECORD_SIZE") {
       throw documentLimitExceeded(
         "cell_size",
@@ -173,13 +200,6 @@ export const readCsvDocument = (
 
   // Trailing empty records (a final line break) are not rows of the list.
   while (records.length > 0 && records.at(-1)?.every((field) => field.trim() === "")) records.pop();
-  if (records.length > SURVEY_IMPORT_SHEET_MAX_ROWS) {
-    throw documentLimitExceeded(
-      "rows",
-      "file",
-      `The list must not have more than ${SURVEY_IMPORT_SHEET_MAX_ROWS} rows`
-    );
-  }
   checkRecords(records);
 
   const model = buildGridModel("csv", records, { encoding });
