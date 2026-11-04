@@ -8,8 +8,10 @@ import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { type TOptionLike, type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import {
+  InfoTooltip,
   ShowIfConditionsEditor,
   ShowIfPopoverFrame,
   useShowIfScope,
@@ -177,9 +179,9 @@ function OptionsShowIfEditor({
     <ShowIfPopoverFrame
       title={t("workspace.surveys.edit.flow.options_shown_if")}
       help={t("workspace.surveys.edit.flow.options_shown_if_help")}
+      info={t("workspace.surveys.edit.flow.options_shown_if_info")}
       footer={
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.hidden_option_help")}</p>
+        <div className="flex items-center justify-end gap-3">
           <Button type="button" size="sm" onClick={onClose}>
             {t("common.done")}
           </Button>
@@ -271,7 +273,11 @@ interface OptionRowProps {
   readonly conditionsEditor: ReactNode;
 }
 
-/** One option: its label, how it is shown (Hidden, "Shown if …" or "Always shown"), and the toggle. */
+/**
+ * One option: its label, how it is shown (Hidden, "Shown if …" or "Always shown"), and the toggle.
+ * A click anywhere on the card opens its condition, or adds one when it has none; the Hidden toggle
+ * and its (i) keep their clicks to themselves.
+ */
 function OptionRow({
   label,
   item,
@@ -286,10 +292,19 @@ function OptionRow({
   const isHidden = item.hidden === true;
   const showIf: TConditionGroup | undefined = item.showIf;
   const switchId = `option-hidden-${item.id}`;
+  const onCardClick = showIf ? onToggleEditing : onAddCondition;
 
   return (
-    <li className="flex flex-col gap-2 px-3 py-2">
-      <div className="flex items-start justify-between gap-3">
+    <li className="flex flex-col">
+      {/* The card is a mouse shortcut for the "Shown if …" and "Add condition" buttons inside it,
+          which keyboard users reach on their own. */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- see above */}
+      <div
+        className={cn(
+          "flex items-start justify-between gap-3 px-3 py-2",
+          onCardClick && "cursor-pointer hover:bg-slate-50"
+        )}
+        onClick={onCardClick}>
         <div className="flex min-w-0 flex-col gap-1">
           <span
             className={`truncate text-sm font-medium ${isHidden ? "text-slate-400 line-through" : "text-slate-800"}`}>
@@ -309,7 +324,10 @@ function OptionRow({
                 type="button"
                 className={`rounded-sm text-left underline-offset-2 hover:underline focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden ${isHidden ? "text-slate-400" : "text-slate-700"}`}
                 aria-expanded={isEditing}
-                onClick={onToggleEditing}>
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleEditing();
+                }}>
                 {t("workspace.surveys.edit.flow.shown_if", {
                   conditions: describeConditionGroup(showIf, localSurvey, t, {
                     locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
@@ -326,7 +344,10 @@ function OptionRow({
                       <button
                         type="button"
                         className="rounded-sm text-slate-700 underline-offset-2 hover:underline focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
-                        onClick={onAddCondition}>
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onAddCondition();
+                        }}>
                         {t("workspace.surveys.edit.flow.add_condition")}
                       </button>
                     </>
@@ -336,14 +357,16 @@ function OptionRow({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- only keeps the card's mouse shortcut off the toggle */}
+        <div className="flex shrink-0 items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
           <label htmlFor={switchId} className="text-xs text-slate-600">
             {t("workspace.surveys.edit.flow.hide_option")}
           </label>
+          <InfoTooltip>{t("workspace.surveys.edit.flow.hidden_option_help")}</InfoTooltip>
           <Switch id={switchId} checked={isHidden} onCheckedChange={onHiddenChange} />
         </div>
       </div>
-      {isEditing && conditionsEditor}
+      {isEditing && <div className="px-3 pb-2">{conditionsEditor}</div>}
     </li>
   );
 }

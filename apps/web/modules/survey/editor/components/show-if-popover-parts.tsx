@@ -1,5 +1,6 @@
 "use client";
 
+import { InfoIcon } from "lucide-react";
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
@@ -9,6 +10,7 @@ import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-
 import { type TShowIfTarget, getShowIfScope } from "@/modules/survey/editor/lib/show-if-editing";
 import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { PopoverContent } from "@/modules/ui/components/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 /**
  * What the Flow tab's two show-if popovers share (ENG-6931, ENG-6937): where they may open, their
@@ -24,6 +26,8 @@ export const ShowIfPopoverBoundary = createContext<Element | null>(null);
 interface ShowIfPopoverFrameProps {
   readonly title: string;
   readonly help: string;
+  /** The longer explanation, behind an (i) next to the title. */
+  readonly info?: ReactNode;
   /** Scrolls when the content is taller than the space left. */
   readonly children: ReactNode;
   /** Pinned below the scrolling content, so Done is always in reach. */
@@ -34,7 +38,7 @@ interface ShowIfPopoverFrameProps {
  * The popover itself: as wide as the editor column allows (44rem at most) and as tall as the space
  * below or above the badge, with the content scrolling between a fixed heading and a fixed footer.
  */
-export function ShowIfPopoverFrame({ title, help, children, footer }: ShowIfPopoverFrameProps) {
+export function ShowIfPopoverFrame({ title, help, info, children, footer }: ShowIfPopoverFrameProps) {
   const boundary = useContext(ShowIfPopoverBoundary);
   return (
     <PopoverContent
@@ -48,12 +52,39 @@ export function ShowIfPopoverFrame({ title, help, children, footer }: ShowIfPopo
       // not close the popover it just opened. Escape, a click outside and Done still close it.
       onFocusOutside={(event) => event.preventDefault()}>
       <div className="px-4 pt-4 pb-2">
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          {info && <InfoTooltip>{info}</InfoTooltip>}
+        </div>
         <p className="text-xs text-slate-500">{help}</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-1">{children}</div>
       <div className="border-t border-slate-100 px-4 py-3">{footer}</div>
     </PopoverContent>
+  );
+}
+
+/**
+ * An (i) that explains on hover or keyboard focus, in the editor's white tooltip. Its clicks stay off
+ * the option card and the block row it sits in.
+ */
+export function InfoTooltip({ children }: { readonly children: ReactNode }) {
+  const { t } = useTranslation();
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={t("workspace.surveys.edit.flow.more_info")}
+            className="inline-flex shrink-0 items-center rounded-full text-slate-400 hover:text-slate-600 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+            onClick={(event) => event.stopPropagation()}>
+            <InfoIcon className="size-4" aria-hidden="true" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs text-xs leading-relaxed">{children}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
