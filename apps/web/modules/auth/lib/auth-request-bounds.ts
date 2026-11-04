@@ -119,9 +119,11 @@ const hasMoreFieldsThan = (text: string, max: number): boolean => {
 
 /** Whether `text` splits into more than `max` items on spaces or commas, empty items included. */
 const hasMoreListItemsThan = (text: string, max: number): boolean => {
+  // A native scan: far faster than stepping through a long value one character at a time.
+  const separator = /[ ,]/g;
   let separators = 0;
-  for (const char of text) {
-    if ((char === " " || char === ",") && ++separators >= max) return true;
+  while (separator.exec(text) !== null) {
+    if (++separators >= max) return true;
   }
   return false;
 };

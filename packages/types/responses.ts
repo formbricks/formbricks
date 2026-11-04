@@ -126,17 +126,15 @@ const NO_ITEMS: readonly unknown[] = [];
  * What one answer carries: an array's items or a matrix's row values, and nothing for a scalar. An answer
  * over its cap, or of a shape no element stores, is refused with the message for it.
  */
-const itemsOfAnswer = (value: unknown): readonly unknown[] | { refused: string } => {
+const itemsOfAnswer = (value: unknown): readonly unknown[] | string => {
   if (Array.isArray(value)) {
-    return value.length > MAX_RESPONSE_DATA_VALUES ? { refused: RESPONSE_DATA_LIMIT_MESSAGES.values } : value;
+    return value.length > MAX_RESPONSE_DATA_VALUES ? RESPONSE_DATA_LIMIT_MESSAGES.values : value;
   }
   if (isPlainRecord(value)) {
     const rows = Object.values(value);
-    return rows.length > MAX_RESPONSE_DATA_VALUES ? { refused: RESPONSE_DATA_LIMIT_MESSAGES.rows } : rows;
+    return rows.length > MAX_RESPONSE_DATA_VALUES ? RESPONSE_DATA_LIMIT_MESSAGES.rows : rows;
   }
-  return value === undefined || isTextOrNumber(value)
-    ? NO_ITEMS
-    : { refused: RESPONSE_DATA_LIMIT_MESSAGES.shape };
+  return value === undefined || isTextOrNumber(value) ? NO_ITEMS : RESPONSE_DATA_LIMIT_MESSAGES.shape;
 };
 
 /**
@@ -162,7 +160,7 @@ export const checkResponseDataSize = (
   if (entries > maxEntries) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
   for (const key in data) {
     const items = itemsOfAnswer(data[key]);
-    if ("refused" in items) return { message: items.refused, path: [key] };
+    if (typeof items === "string") return { message: items, path: [key] };
     if (items.length === 0) continue;
     entries += items.length;
     if (entries > maxEntries) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
