@@ -101,6 +101,8 @@ interface FlowViewProps {
   readonly setExpandedBlockIds: Dispatch<SetStateAction<Set<string>>>;
   /** The validation pass whose flagged rule was last opened; kept by the editor for the same reason. */
   readonly handledInvalidRef: RefObject<string[] | null>;
+  /** Switches to the Questions tab with the Embedded Data card open, to add a Calculated field. */
+  readonly onAddCalculatedField?: () => void;
 }
 
 /** What Add logic starts, in the rule types' order: before the first question only a jump or Set value. */
@@ -135,6 +137,7 @@ export const FlowView = ({
   expandedBlockIds,
   setExpandedBlockIds,
   handledInvalidRef,
+  onAddCalculatedField,
 }: FlowViewProps) => {
   const { t, i18n } = useTranslation();
   // Dates on the rows read in the viewer's language (P65).
@@ -458,6 +461,7 @@ export const FlowView = ({
               ruleIdx={row.ruleIdx}
               onRulesChange={onRulesChange}
               scopeBlockIdx={scopeBlockIdx}
+              onAddCalculatedField={onAddCalculatedField}
             />
           ) : null
         }>

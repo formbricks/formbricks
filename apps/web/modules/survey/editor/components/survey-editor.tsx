@@ -41,6 +41,7 @@ import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/ty
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
+import { EMBEDDED_DATA_CARD_ID } from "@/modules/survey/editor/components/embedded-data-card";
 import { FlowView } from "@/modules/survey/editor/components/flow-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
@@ -48,6 +49,7 @@ import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { hasSeenFlowTab, markFlowTabSeen } from "@/modules/survey/editor/lib/flow-tab-notice";
+import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { type TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
@@ -177,6 +179,12 @@ export const SurveyEditor = ({
     if (activeView === "flow") markFlowTabSeen();
   }, [activeView]);
   const showLogicMovedNotice = !hasSeenFlowInBrowser && !hasOpenedFlow;
+  // Set value's field picker, when the survey has no Calculated field: the card where one is added.
+  const openEmbeddedDataCard = useCallback(() => {
+    setActiveView("elements");
+    setActiveElementId(EMBEDDED_DATA_CARD_ID);
+    scrollElementCardIntoView(EMBEDDED_DATA_CARD_ID);
+  }, []);
   // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
   // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
   // prompt, and that comparison short-circuits on differing key counts. The inlined
@@ -418,6 +426,7 @@ export const SurveyEditor = ({
               persistedSurvey={survey}
               expandedBlockIds={flowExpandedBlockIds}
               handledInvalidRef={flowHandledInvalidRef}
+              onAddCalculatedField={openEmbeddedDataCard}
               setExpandedBlockIds={setFlowExpandedBlockIds}
             />
           )}

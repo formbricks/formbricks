@@ -11,6 +11,7 @@ import {
 } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
+import { CalculatedFieldPicker } from "@/modules/survey/editor/components/calculated-field-picker";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
 import { oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
 import { getNextActionObjective, getObjectivesForAction } from "@/modules/survey/editor/lib/rule-list";
@@ -48,6 +49,8 @@ interface LogicEditorActionsProps {
   readonly isLast?: boolean;
   /** The rule has no condition: it runs for everyone, so it only sets values or marks Low quality. */
   readonly alwaysRuns?: boolean;
+  /** Opens the Embedded Data card to add a Calculated field, from Set value's empty field picker. */
+  readonly onAddCalculatedField?: () => void;
 }
 
 /** A Set value action written as a formula (ENG-6935), shown with the formula box. */
@@ -61,6 +64,7 @@ export function LogicEditorActions({
   scopeBlockIdx,
   isLast,
   alwaysRuns = false,
+  onAddCalculatedField,
 }: LogicEditorActionsProps) {
   const { t } = useTranslation();
 
@@ -229,18 +233,14 @@ export function LogicEditorActions({
                     {/* The field takes the width its name needs, up to the row's, before the text. */}
                     <div className="col-span-9 flex min-w-0 items-center gap-x-2">
                       <div className="max-w-full min-w-0">
-                        <InputCombobox
+                        <CalculatedFieldPicker
                           id={`action-${idx}-variableId`}
                           key={`variableId-${action.id}`}
-                          showSearch={false}
                           options={getActionVariableOptions(localSurvey)}
                           value={action.variableId}
-                          onChangeValue={(val: string | number | string[]) => {
-                            // The formula stays: a field of another type shows what no longer fits.
-                            handleValuesChange(idx, { variableId: String(val) });
-                          }}
-                          comboboxClasses="grow"
-                          emptyDropdownText={t("workspace.surveys.edit.add_a_variable_to_calculate")}
+                          // The formula stays: a field of another type shows what no longer fits.
+                          onChange={(variableId) => handleValuesChange(idx, { variableId })}
+                          onAddCalculatedField={onAddCalculatedField}
                         />
                       </div>
                       <span className="shrink-0 text-sm whitespace-nowrap text-slate-600">
@@ -269,23 +269,15 @@ export function LogicEditorActions({
                 {action.objective === "calculate" && action.value.type !== "expression" && (
                   <>
                     <div className="col-span-3">
-                      <InputCombobox
+                      <CalculatedFieldPicker
                         id={`action-${idx}-variableId`}
                         key={`variableId-${action.id}`}
-                        showSearch={false}
                         options={getActionVariableOptions(localSurvey)}
                         value={action.variableId}
-                        onChangeValue={(val: string | number | string[]) => {
-                          handleValuesChange(idx, {
-                            variableId: String(val),
-                            value: {
-                              type: "static",
-                              value: "",
-                            },
-                          });
-                        }}
-                        comboboxClasses="grow"
-                        emptyDropdownText={t("workspace.surveys.edit.add_a_variable_to_calculate")}
+                        onChange={(variableId) =>
+                          handleValuesChange(idx, { variableId, value: { type: "static", value: "" } })
+                        }
+                        onAddCalculatedField={onAddCalculatedField}
                       />
                     </div>
 
