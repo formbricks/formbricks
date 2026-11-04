@@ -112,6 +112,14 @@ export const claimSurveyImportIdempotencyKey = async ({
   const key = getSurveyImportIdempotencyCacheKey(userId, idempotencyKey);
   const inFlightRecord: TIdempotencyRecord = { state: "in_flight", fingerprint, token: randomUUID() };
   const inFlight = JSON.stringify(inFlightRecord);
+  const release = async (): Promise<void> => {
+    await cache.runRedisOperation((redis) =>
+      redis.eval(RELEASE_SCRIPT, { keys: [key], arguments: [inFlight] })
+    );
+  };
+  // The deadline stops the wait, not the command: a claim that missed it can still land, and nothing
+  // would give it back until it expired.
+  let pendingClaim: Promise<string | null> | undefined;
 
   try {
     if (!(await cache.getRedisClient())) {
@@ -121,9 +129,10 @@ export const claimSurveyImportIdempotencyKey = async ({
 
     // Twice at most: a record can expire between the failed claim and the read.
     for (let attempt = 0; attempt < 2; attempt++) {
-      const claimed = await cache.runRedisOperation((redis) =>
-        redis.set(key, inFlight, { NX: true, PX: SURVEY_IMPORT_IDEMPOTENCY_IN_FLIGHT_MS })
-      );
+      const claimed = await cache.runRedisOperation((redis) => {
+        pendingClaim = redis.set(key, inFlight, { NX: true, PX: SURVEY_IMPORT_IDEMPOTENCY_IN_FLIGHT_MS });
+        return pendingClaim;
+      });
       if (claimed === "OK") {
         return {
           kind: "claimed",
@@ -141,11 +150,7 @@ export const claimSurveyImportIdempotencyKey = async ({
               );
             }
           },
-          release: async () => {
-            await cache.runRedisOperation((redis) =>
-              redis.eval(RELEASE_SCRIPT, { keys: [key], arguments: [inFlight] })
-            );
-          },
+          release,
         };
       }
 
@@ -157,6 +162,17 @@ export const claimSurveyImportIdempotencyKey = async ({
     return { kind: "in_flight" };
   } catch (error) {
     logger.warn({ ...loggableError(error) }, "Survey import idempotency unavailable; creating without it");
+    // This request runs unprotected now, so a claim that lands late must not hold the key against its
+    // retry. The release only deletes this request's own record; a claim that never lands has nothing
+    // to give back, and one whose release fails expires with the in-flight record.
+    void pendingClaim
+      ?.then((claimed) => (claimed === "OK" ? release() : undefined))
+      .catch((releaseError: unknown) => {
+        logger.warn(
+          { ...loggableError(releaseError) },
+          "Survey import could not give back an Idempotency-Key it claimed after the deadline"
+        );
+      });
     return { kind: "unavailable" };
   }
 };

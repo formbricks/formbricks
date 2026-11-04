@@ -53,6 +53,49 @@ describe("claimSurveyImportIdempotencyKey", () => {
     expect(await claim()).toEqual({ kind: "unavailable" });
   });
 
+  test("gives back a claim that lands after the deadline, once it lands", async () => {
+    let landClaim: (reply: string | null) => void = () => {};
+    mocks.client.set.mockImplementationOnce(
+      () => new Promise<string | null>((resolve) => (landClaim = resolve)) as never
+    );
+    // The deadline gives up on the SET it started; the SET itself stays pending.
+    mocks.runRedisOperation.mockImplementationOnce(async (operation) => {
+      void operation(mocks.client);
+      throw new Error("Redis operation timed out");
+    });
+
+    expect(await claim()).toEqual({ kind: "unavailable" });
+    expect(mocks.client.eval).not.toHaveBeenCalled();
+
+    landClaim("OK");
+    await vi.waitFor(() => expect(mocks.client.eval).toHaveBeenCalledTimes(1));
+    const [script, { keys, arguments: args }] = mocks.client.eval.mock.calls[0] as unknown as [
+      string,
+      { keys: string[]; arguments: string[] },
+    ];
+    expect(script).toContain("DEL");
+    expect(keys).toHaveLength(1);
+    expect(JSON.parse(args[0])).toMatchObject({ state: "in_flight", fingerprint: "the request" });
+  });
+
+  test("gives nothing back when a claim that missed the deadline never lands", async () => {
+    let landClaim: (reply: string | null) => void = () => {};
+    mocks.client.set.mockImplementationOnce(
+      () => new Promise<string | null>((resolve) => (landClaim = resolve)) as never
+    );
+    mocks.runRedisOperation.mockImplementationOnce(async (operation) => {
+      void operation(mocks.client);
+      throw new Error("Redis operation timed out");
+    });
+
+    expect(await claim()).toEqual({ kind: "unavailable" });
+    landClaim(null);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mocks.runRedisOperation).toHaveBeenCalledTimes(1);
+    expect(mocks.client.eval).not.toHaveBeenCalled();
+  });
+
   test("creates without the guarantee when Redis misses the deadline on the read after a lost claim", async () => {
     mocks.client.set.mockResolvedValueOnce(null as never);
     mocks.runRedisOperation
