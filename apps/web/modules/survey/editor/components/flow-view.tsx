@@ -9,18 +9,20 @@ import {
   EqualIcon,
   EyeIcon,
   EyeOffIcon,
-  FlagIcon,
+  HandshakeIcon,
   LayersIcon,
   PlusIcon,
   Rows3Icon,
   ShieldAlertIcon,
   SplitIcon,
   TrashIcon,
+  Undo2Icon,
 } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options-show-if-popover";
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
@@ -92,6 +94,20 @@ interface FlowViewProps {
 
 const RULE_ICON = { rule: <SplitIcon />, embeddedData: <BinaryIcon /> };
 
+/** The Questions tab's ending icons: a handshake for an ending card, a turned arrow for a redirect. */
+const EndingTypeIcon = ({
+  type,
+  className,
+}: {
+  readonly type: TSurveyEnding["type"];
+  readonly className?: string;
+}) =>
+  type === "redirectToUrl" ? (
+    <Undo2Icon className={cn("rotate-180", className)} aria-hidden="true" />
+  ) : (
+    <HandshakeIcon className={className} aria-hidden="true" />
+  );
+
 /**
  * The Flow tab (ENG-6929): the whole survey flow on one outline, built by `buildFlowOutline`, with
  * each rule edited in place by today's rule editor. It edits the same in-memory survey as the other
@@ -105,7 +121,9 @@ export const FlowView = ({
   onEditOnQuestionsTab,
   persistedSurvey,
 }: FlowViewProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Dates on the rows read in the viewer's language (P65).
+  const textFormat = { locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US" };
   const outline = useMemo(() => buildFlowOutline(localSurvey), [localSurvey]);
 
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
@@ -213,7 +231,7 @@ export const FlowView = ({
           <span
             key={key}
             className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white">
-            <FlagIcon className="size-3" aria-hidden="true" />
+            <EndingTypeIcon type={action.endingType} className="size-3" />
             {action.label}
           </span>
         );
@@ -303,7 +321,7 @@ export const FlowView = ({
             size="tiny"
             icon={<EyeIcon />}
             text={t("workspace.surveys.edit.flow.show_if", {
-              conditions: describeConditionGroup(badge.conditions, localSurvey, t),
+              conditions: describeConditionGroup(badge.conditions, localSurvey, t, textFormat),
             })}
             title={t("workspace.surveys.edit.flow.read_only_hint")}
           />
@@ -390,7 +408,7 @@ export const FlowView = ({
 
   const renderRuleRow = (row: TFlowRuleRow, rules: TSurveyBlockLogic[], scopeBlockIdx: number) => {
     const isOpen = openRowId === row.id;
-    const steps = describeRuleActions(row.rule.actions, localSurvey, t);
+    const steps = describeRuleActions(row.rule.actions, localSurvey, t, textFormat);
     const onRulesChange = (next: TSurveyBlockLogic[]) => updateRules(scopeBlockIdx, next);
 
     return (
@@ -458,7 +476,7 @@ export const FlowView = ({
         <span className="text-sm text-slate-700">
           {row.rule.conditions.conditions.length === 0
             ? t("workspace.surveys.edit.flow.always_runs")
-            : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(row.rule.conditions, localSurvey, t)}`}
+            : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(row.rule.conditions, localSurvey, t, textFormat)}`}
         </span>
         <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
         {steps.map((step, idx) => renderActionStep(step, `${row.id}-${idx}`))}
@@ -528,14 +546,9 @@ export const FlowView = ({
                     {t("workspace.surveys.edit.flow.jump_rule")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    icon={<BinaryIcon className="size-4" />}
-                    onClick={() => addStartRule("calculate")}>
-                    {t("workspace.surveys.edit.flow.calculation")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     icon={<EqualIcon className="size-4" />}
                     onClick={() => addStartRule("setValue")}>
-                    {t("workspace.surveys.edit.flow.set_a_value")}
+                    {t("workspace.surveys.edit.flow.set_value")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -683,14 +696,9 @@ export const FlowView = ({
                             {t("workspace.surveys.edit.flow.jump_rule")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            icon={<BinaryIcon className="size-4" />}
-                            onClick={() => addRule(block, "calculate")}>
-                            {t("workspace.surveys.edit.flow.calculation")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
                             icon={<EqualIcon className="size-4" />}
                             onClick={() => addRule(block, "setValue")}>
-                            {t("workspace.surveys.edit.flow.set_a_value")}
+                            {t("workspace.surveys.edit.flow.set_value")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             icon={<ShieldAlertIcon className="size-4" />}
@@ -729,7 +737,7 @@ export const FlowView = ({
                 key={row.id}
                 id={`flow-${row.id}`}
                 tone="ending"
-                icon={<FlagIcon />}
+                icon={<EndingTypeIcon type={ending.type} />}
                 isInvalid={invalidElements?.includes(row.id) ?? false}
                 onToggle={() => toggleRow(rowId)}
                 isOpen={openRowId === rowId}

@@ -418,7 +418,7 @@ function OptionRow({
   onHiddenChange,
   conditionsEditor,
 }: OptionRowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isHidden = item.hidden === true;
   const showIf: TConditionGroup | undefined = item.showIf;
   const switchId = `option-hidden-${item.id}`;
@@ -447,7 +447,9 @@ function OptionRow({
                 aria-expanded={isEditing}
                 onClick={onToggleEditing}>
                 {t("workspace.surveys.edit.flow.shown_if", {
-                  conditions: describeConditionGroup(showIf, localSurvey, t),
+                  conditions: describeConditionGroup(showIf, localSurvey, t, {
+                    locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
+                  }),
                 })}
               </button>
             ) : (

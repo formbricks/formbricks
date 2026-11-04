@@ -5,9 +5,12 @@ import {
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import {
+  FORMULA_CHIP_FUNCTIONS,
+  FORMULA_FUNCTION_EXAMPLES,
   FORMULA_MAX_LENGTH,
   formatFormula,
   formatReferenceToken,
+  getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
   getFunctionSnippet,
@@ -192,6 +195,47 @@ describe("chips and @ insert at the cursor", () => {
       text: "1 + @score",
       cursor: 10,
     });
+  });
+});
+
+describe("formula box help: the placeholder and the function chips", () => {
+  test("the placeholder's example uses the first number question answered by the time the step runs", () => {
+    // Ratings is the second block: from there on, its first rating is the example.
+    expect(getFormulaExample(references, 1)).toBe("round(@sat_netflix * 20)");
+    expect(getFormulaExample(references, 4)).toBe("round(@sat_netflix * 20)");
+  });
+
+  test("with no number question answered yet, the example is a generic one", () => {
+    expect(getFormulaExample(references, 0)).toBe("round(@q1 * 20)");
+    expect(getFormulaExample(references, -1)).toBe("round(@q1 * 20)");
+    expect(getFormulaExample([], 3)).toBe("round(@q1 * 20)");
+  });
+
+  test("the chips offer every function but the four the operators write", () => {
+    expect(FORMULA_CHIP_FUNCTIONS).toEqual([
+      "round",
+      "min",
+      "max",
+      "abs",
+      "ifEmpty",
+      "concat",
+      "now",
+      "daysBetween",
+    ]);
+  });
+
+  test("every chip's example is a formula that calls that function", () => {
+    const generic = (["q1", "q2"] as const).map((token, blockIdx) => ({
+      token,
+      leaf: { type: "element" as const, value: token },
+      group: "question" as const,
+      usable: true,
+      blockIdx,
+    }));
+    for (const fn of FORMULA_CHIP_FUNCTIONS) {
+      const parsed = parseFormula(FORMULA_FUNCTION_EXAMPLES[fn], generic);
+      expect(parsed.ok && parsed.expression).toMatchObject({ type: "call", fn });
+    }
   });
 });
 

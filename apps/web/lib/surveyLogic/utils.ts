@@ -21,6 +21,7 @@ import {
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
+import { compareDateValues } from "@formbricks/types/surveys/date-comparison";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
@@ -221,7 +222,7 @@ export const updateCondition = (
 /**
  * The two empty calculations, side by side so they are chosen on purpose (they deliberately differ):
  *
- * - A **new rule** from the Add logic menu ("Calculation", "Set a value") starts with an empty formula
+ * - A **new rule** from the Add logic menu ("Set value") starts with an empty formula
  *   (ENG-6935, P39), saved only once the formula box holds one.
  * - **Switching an action** of an existing rule to Calculate keeps the one-step editor (`score + 1`),
  *   so one-step calculations can still be written; its operator list offers "Use a formula".
@@ -410,8 +411,16 @@ const evaluateSingleCondition = (
       }
     }
 
+    // ENG-6935: a computed date field (one `now()` set holds a timestamp) equals a day when it falls
+    // on that day; see `compareDateValues`.
+    const isComputedDate =
+      condition.leftOperand.type === "variable" &&
+      getComputedFieldDataType(computedFields, condition.leftOperand.value) === "date";
+    const dateOrder = isComputedDate ? compareDateValues(leftValue, rightValue) : undefined;
+
     switch (condition.operator) {
       case "equals":
+        if (dateOrder !== undefined) return dateOrder === 0;
         if (condition.leftOperand.type === "element") {
           if (
             (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
@@ -446,6 +455,7 @@ const evaluateSingleCondition = (
           leftValue === rightValue
         );
       case "doesNotEqual":
+        if (dateOrder !== undefined) return dateOrder !== 0;
         // when left value is of picture selection element and right value is its option
         if (
           condition.leftOperand.type === "element" &&
@@ -563,10 +573,16 @@ const evaluateSingleCondition = (
         return leftValue === "accepted";
       case "isClicked":
         return leftValue === "clicked";
-      case "isAfter":
-        return new Date(String(leftValue)) > new Date(String(rightValue));
-      case "isBefore":
-        return new Date(String(leftValue)) < new Date(String(rightValue));
+      // ISO dates by `compareDateValues` (a day against a timestamp compares days); anything else as
+      // `Date` reads it, as before.
+      case "isAfter": {
+        const order = compareDateValues(leftValue, rightValue);
+        return order === undefined ? new Date(String(leftValue)) > new Date(String(rightValue)) : order > 0;
+      }
+      case "isBefore": {
+        const order = compareDateValues(leftValue, rightValue);
+        return order === undefined ? new Date(String(leftValue)) < new Date(String(rightValue)) : order < 0;
+      }
       case "isBooked":
         return leftValue === "booked" || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":

@@ -99,21 +99,6 @@ describe("new rules from the Add logic menu", () => {
     expect(rule.actions).toEqual([{ id: expect.any(String), objective: "markLowQuality" }]);
   });
 
-  test("a calculation starts with one condition and the first computed field, set by an empty formula", () => {
-    const rule = createRule("calculate", { condition, variableId: ids.variables.score });
-
-    expect(rule.conditions).toMatchObject({ connector: "and", conditions: [condition] });
-    expect(rule.actions).toEqual([
-      {
-        id: expect.any(String),
-        objective: "calculate",
-        variableId: ids.variables.score,
-        operator: "assign",
-        value: { type: "expression", value: { type: "static", value: "" } },
-      },
-    ]);
-  });
-
   test("a Set value step always runs: an empty and group, and an empty formula (ENG-6935)", () => {
     const rule = createRule("setValue", { condition, variableId: ids.variables.score });
 

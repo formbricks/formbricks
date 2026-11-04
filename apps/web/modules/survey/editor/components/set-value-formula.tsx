@@ -1,19 +1,23 @@
 "use client";
 
 import { AtSignIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import type { TExpressionTypeIssue } from "@formbricks/types/surveys/expression-types";
-import { EXPRESSION_FUNCTIONS, type TExpression } from "@formbricks/types/surveys/expressions";
+import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
+  FORMULA_CHIP_FUNCTIONS,
+  FORMULA_FUNCTION_EXAMPLES,
   FORMULA_MAX_LENGTH,
+  type TFormulaChipFunction,
   type TFormulaError,
   type TFormulaReference,
   formatFormula,
   formatReferenceToken,
+  getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
   getFunctionSnippet,
@@ -22,6 +26,7 @@ import {
   parseFormula,
 } from "@/modules/survey/editor/lib/expression-formula";
 import { formatSampleResult, getSampleResult } from "@/modules/survey/editor/lib/expression-sample";
+import { type TCaretCoordinates, getCaretCoordinates } from "@/modules/survey/editor/lib/textarea-caret";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -31,6 +36,9 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Textarea } from "@/modules/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+
+const SET_VALUE_DOCS_URL = "https://formbricks.com/docs/surveys/general-features/set-value";
 
 interface SetValueFormulaProps {
   readonly id: string;
@@ -40,9 +48,32 @@ interface SetValueFormulaProps {
   /** The block the step runs after; answers from later blocks are not offered by `@`. */
   readonly scopeBlockIdx: number;
   readonly onExpressionChange: (expression: TExpression) => void;
+  /** The action's ⋮ menu, beside the @ button on the box's top line. */
+  readonly actionMenu?: ReactNode;
 }
 
 const isEmptyFormula = (expression: TExpression) => expression.type === "static" && expression.value === "";
+
+/** The answers and fields `@` offers, grouped; the same list at the caret and at the @ button. */
+const ReferenceMenuItems = ({
+  groups,
+  onPick,
+}: {
+  groups: { label: string; items: TFormulaReference[] }[];
+  onPick: (reference: TFormulaReference) => void;
+}) =>
+  groups.map((group) => (
+    <div key={group.label}>
+      <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+      {group.items.map((reference) => (
+        <DropdownMenuItem
+          key={`${reference.leaf.type}:${reference.leaf.value}`}
+          onClick={() => onPick(reference)}>
+          <span className="font-mono text-xs">{formatReferenceToken(reference.token)}</span>
+        </DropdownMenuItem>
+      ))}
+    </div>
+  ));
 
 /** How long typing has to pause before the box shows what is wrong with the formula. */
 const FORMULA_PROBLEM_DELAY_MS = 800;
@@ -59,6 +90,7 @@ export function SetValueFormula({
   expression,
   scopeBlockIdx,
   onExpressionChange,
+  actionMenu,
 }: SetValueFormulaProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -70,7 +102,11 @@ export function SetValueFormula({
   const formatted = isEmptyFormula(expression) ? "" : formatFormula(expression, references);
   const [text, setText] = useState(formatted);
   const [parseError, setParseError] = useState<TFormulaError | null>(null);
-  const [isReferenceMenuOpen, setIsReferenceMenuOpen] = useState(false);
+  // Which reference menu is open: the one at the caret (an `@` typed) or the one at the @ button.
+  const [referenceMenu, setReferenceMenu] = useState<"caret" | "button" | null>(null);
+  const isReferenceMenuOpen = referenceMenu !== null;
+  // Where the caret menu opens, relative to the box: the line the `@` was typed on.
+  const [caretAnchor, setCaretAnchor] = useState<TCaretCoordinates>({ top: 0, left: 0, height: 0 });
   // True from a keystroke until a short pause or a blur: problems wait until then, so the box doesn't
   // flash an error at every character of a formula still being typed.
   const [isTyping, setIsTyping] = useState(false);
@@ -128,9 +164,28 @@ export function SetValueFormula({
     });
   };
 
-  const openReferenceMenu = (open: boolean) => {
-    if (open) caretAfterMenuRef.current = null;
-    setIsReferenceMenuOpen(open);
+  const openReferenceMenu = (menu: "caret" | "button" | null) => {
+    if (menu) caretAfterMenuRef.current = null;
+    setReferenceMenu(menu);
+  };
+
+  /** Opens the menu at the caret, just after the `@` typed at `position`. */
+  const openReferenceMenuAtCaret = (textarea: HTMLTextAreaElement, position: number) => {
+    const caret = getCaretCoordinates(textarea, position);
+    // Kept inside the box: a caret at the far right of a line would otherwise sit past its edge.
+    setCaretAnchor({ ...caret, left: Math.min(caret.left, textarea.clientWidth) });
+    openReferenceMenu("caret");
+  };
+
+  /** Back to the formula, not the @ button: typing carries on where it left off. */
+  const returnFocusToFormula = (event: Event) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    event.preventDefault();
+    const caret = caretAfterMenuRef.current ?? textarea.selectionEnd;
+    caretAfterMenuRef.current = null;
+    textarea.focus();
+    textarea.setSelectionRange(caret, caret);
   };
 
   const formulaIssues = useMemo(
@@ -183,6 +238,28 @@ export function SetValueFormula({
         return t("workspace.surveys.edit.flow.formula_type_boolean");
       default:
         return t("workspace.surveys.edit.flow.formula_type_text");
+    }
+  };
+
+  /** What a function chip does, for its tooltip. Literal keys, so the translation scan sees them. */
+  const describeFunction = (fn: TFormulaChipFunction): string => {
+    switch (fn) {
+      case "round":
+        return t("workspace.surveys.edit.flow.formula_function_round");
+      case "min":
+        return t("workspace.surveys.edit.flow.formula_function_min");
+      case "max":
+        return t("workspace.surveys.edit.flow.formula_function_max");
+      case "abs":
+        return t("workspace.surveys.edit.flow.formula_function_abs");
+      case "ifEmpty":
+        return t("workspace.surveys.edit.flow.formula_function_if_empty");
+      case "concat":
+        return t("workspace.surveys.edit.flow.formula_function_concat");
+      case "now":
+        return t("workspace.surveys.edit.flow.formula_function_now");
+      case "daysBetween":
+        return t("workspace.surveys.edit.flow.formula_function_days_between");
     }
   };
 
@@ -259,92 +336,122 @@ export function SetValueFormula({
       ? formatSampleResult(sampleResult, targetDataType, locale)
       : null;
 
+  const pickReference = (reference: TFormulaReference) =>
+    insertAtCursor(formatReferenceToken(reference.token), { replaceTypedAt: true });
+
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex items-start gap-2">
-        <Textarea
-          id={id}
-          ref={textareaRef}
-          value={text}
-          maxLength={FORMULA_MAX_LENGTH}
-          rows={2}
-          spellCheck={false}
-          className="min-h-10 bg-white font-mono"
-          placeholder={t("workspace.surveys.edit.flow.formula_placeholder")}
-          aria-label={t("workspace.surveys.edit.flow.formula")}
-          aria-invalid={problem ? true : undefined}
-          isInvalid={Boolean(problem)}
-          onBlur={settleTyping}
-          onChange={(event) => {
-            const nextText = event.target.value;
-            setIsTyping(true);
-            clearTimeout(typingTimer.current);
-            typingTimer.current = setTimeout(() => setIsTyping(false), FORMULA_PROBLEM_DELAY_MS);
-            applyText(nextText);
-            const cursor = event.target.selectionStart;
-            if (nextText.length > text.length && nextText[cursor - 1] === "@") openReferenceMenu(true);
-          }}
-        />
-        <DropdownMenu open={isReferenceMenuOpen} onOpenChange={openReferenceMenu}>
+        <div className="relative w-full">
+          <Textarea
+            id={id}
+            ref={textareaRef}
+            value={text}
+            maxLength={FORMULA_MAX_LENGTH}
+            rows={2}
+            spellCheck={false}
+            className="min-h-10 bg-white font-mono"
+            placeholder={t("workspace.surveys.edit.flow.formula_placeholder", {
+              example: getFormulaExample(references, scopeBlockIdx),
+            })}
+            aria-describedby={`${id}-hint`}
+            aria-label={t("workspace.surveys.edit.flow.formula")}
+            aria-invalid={problem ? true : undefined}
+            isInvalid={Boolean(problem)}
+            onBlur={settleTyping}
+            onChange={(event) => {
+              const nextText = event.target.value;
+              setIsTyping(true);
+              clearTimeout(typingTimer.current);
+              typingTimer.current = setTimeout(() => setIsTyping(false), FORMULA_PROBLEM_DELAY_MS);
+              applyText(nextText);
+              const cursor = event.target.selectionStart;
+              if (nextText.length > text.length && nextText[cursor - 1] === "@") {
+                openReferenceMenuAtCaret(event.target, cursor);
+              }
+            }}
+          />
+          {/* A typed `@` opens the menu where it was typed: this invisible trigger sits on the caret's
+              line, so the menu opens under it rather than at the box's edge. */}
+          <DropdownMenu
+            open={referenceMenu === "caret"}
+            onOpenChange={(open) => openReferenceMenu(open ? "caret" : null)}>
+            <DropdownMenuTrigger asChild>
+              <span
+                aria-hidden="true"
+                tabIndex={-1}
+                className="pointer-events-none absolute w-0"
+                style={{ top: caretAnchor.top, left: caretAnchor.left, height: caretAnchor.height }}
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="max-h-72 overflow-y-auto"
+              onCloseAutoFocus={returnFocusToFormula}>
+              <ReferenceMenuItems groups={groups} onPick={pickReference} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <DropdownMenu
+          open={referenceMenu === "button"}
+          onOpenChange={(open) => openReferenceMenu(open ? "button" : null)}>
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
               variant="secondary"
-              size="sm"
+              className="size-10 shrink-0"
               title={t("workspace.surveys.edit.flow.formula_insert_reference")}
               aria-label={t("workspace.surveys.edit.flow.formula_insert_reference")}>
               <AtSignIcon />
             </Button>
           </DropdownMenuTrigger>
+          {/* Closing returns to the formula rather than the button, so a space typed next doesn't
+              reopen the menu. */}
           <DropdownMenuContent
             align="end"
             className="max-h-72 overflow-y-auto"
-            onCloseAutoFocus={(event) => {
-              // Back to the formula, not the @ button: typing carries on where it left off, and a
-              // space typed next doesn't reopen the menu.
-              const textarea = textareaRef.current;
-              if (!textarea) return;
-              event.preventDefault();
-              const caret = caretAfterMenuRef.current ?? textarea.selectionEnd;
-              caretAfterMenuRef.current = null;
-              textarea.focus();
-              textarea.setSelectionRange(caret, caret);
-            }}>
-            {groups.map((group) => (
-              <div key={group.label}>
-                <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
-                {group.items.map((reference) => (
-                  <DropdownMenuItem
-                    key={`${reference.leaf.type}:${reference.leaf.value}`}
-                    onClick={() =>
-                      insertAtCursor(formatReferenceToken(reference.token), { replaceTypedAt: true })
-                    }>
-                    <span className="font-mono text-xs">{formatReferenceToken(reference.token)}</span>
-                  </DropdownMenuItem>
-                ))}
-              </div>
-            ))}
+            onCloseAutoFocus={returnFocusToFormula}>
+            <ReferenceMenuItems groups={groups} onPick={pickReference} />
           </DropdownMenuContent>
         </DropdownMenu>
+        {actionMenu}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.formula_functions")}</span>
-        {EXPRESSION_FUNCTIONS.filter((fn) => !["add", "subtract", "multiply", "divide"].includes(fn)).map(
-          (fn) => (
-            <button
-              key={fn}
-              type="button"
-              className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 hover:bg-slate-100"
-              onClick={() => {
-                const snippet = getFunctionSnippet(fn);
-                insertAtCursor(snippet.text, { cursorOffset: snippet.cursorOffset });
-              }}>
-              {fn}()
-            </button>
-          )
-        )}
-      </div>
+      <p id={`${id}-hint`} className="text-xs text-slate-500">
+        {t("workspace.surveys.edit.flow.formula_hint")}{" "}
+        <a
+          href={SET_VALUE_DOCS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">
+          {t("common.learn_more")}
+        </a>
+      </p>
+
+      <TooltipProvider delayDuration={300}>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.formula_functions")}</span>
+          {FORMULA_CHIP_FUNCTIONS.map((fn) => (
+            <Tooltip key={fn}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 hover:bg-slate-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+                  onClick={() => {
+                    const snippet = getFunctionSnippet(fn);
+                    insertAtCursor(snippet.text, { cursorOffset: snippet.cursorOffset });
+                  }}>
+                  {fn}()
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64 text-xs">
+                <p>{describeFunction(fn)}</p>
+                <p className="mt-1 font-mono text-slate-500">{FORMULA_FUNCTION_EXAMPLES[fn]}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
 
       {problem && (
         <p className="text-xs text-red-600" role="alert">

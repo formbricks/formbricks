@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import { RESERVED_FIELD_CATALOG, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -19,6 +19,7 @@ import type { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
+import { formatStoredDateValue } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { formatFormula, getFormulaReferences } from "@/modules/survey/editor/lib/expression-formula";
@@ -34,12 +35,42 @@ import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 
 const quote = (text: string) => `“${text}”`;
 
+/** How dates read on a row (P65): the viewer's locale, and their time zone for a timestamp's time. */
+export interface TFlowTextFormat {
+  locale?: string;
+  timeZone?: string;
+}
+
+/** A value of a date operand: in the app's date format when it is a stored date, else quoted text. */
+const describeDateValue = (value: string, format: TFlowTextFormat): string =>
+  formatStoredDateValue(value, format.locale ?? "en-US", format.timeZone) ?? quote(value);
+
 const findElement = (survey: TSurvey, elementId: string): TSurveyElement | undefined =>
   getElementsFromBlocks(survey.blocks).find((element) => element.id === elementId);
 
 const getFieldName = (survey: TSurvey, storageKey: string): string =>
   getSurveyEmbeddedFields(survey).find(({ link }) => link.storageKey === storageKey)?.field.name ??
   storageKey;
+
+const isDateField = (survey: TSurvey, storageKey: string): boolean =>
+  getSurveyEmbeddedFields(survey).find(({ link }) => link.storageKey === storageKey)?.field.dataType ===
+  "date";
+
+/** Whether a condition's left side holds a date, so a fixed value compared with it is one too. */
+const isDateOperand = (operand: TLeftOperand, survey: TSurvey): boolean => {
+  switch (operand.type) {
+    case "element":
+      return findElement(survey, operand.value)?.type === TSurveyElementTypeEnum.Date;
+    case "variable":
+    case "hiddenField":
+      return isDateField(survey, operand.value);
+    default:
+      return (
+        RESERVED_FIELD_CATALOG.find((entry) => entry.name === (operand as { value?: unknown }).value)
+          ?.dataType === "date"
+      );
+  }
+};
 
 type TOptionItem = { id: string; label?: Record<string, string> };
 
@@ -77,7 +108,11 @@ const describeOperand = (
 };
 
 /** A fixed right-hand value: option ids read as their labels, a matrix column index as its column. */
-const describeStaticValue = (condition: TSingleCondition, survey: TSurvey): string => {
+const describeStaticValue = (
+  condition: TSingleCondition,
+  survey: TSurvey,
+  format: TFlowTextFormat
+): string => {
   const value = condition.rightOperand?.value;
   const element =
     condition.leftOperand.type === "element" ? findElement(survey, condition.leftOperand.value) : undefined;
@@ -93,6 +128,11 @@ const describeStaticValue = (condition: TSingleCondition, survey: TSurvey): stri
     const toColumnLabel = (position: string | number) =>
       getOptionLabel(columns[Number(position)]) ?? String(position);
     return Array.isArray(resolved) ? resolved.map(toColumnLabel).join(", ") : toColumnLabel(resolved);
+  }
+
+  if (isDateOperand(condition.leftOperand, survey)) {
+    if (typeof value === "string") return describeDateValue(value, format);
+    if (Array.isArray(value)) return value.map((item) => describeDateValue(String(item), format)).join(", ");
   }
 
   const choices = getOptionItems(element, "choices");
@@ -113,26 +153,38 @@ const describeOperator = (condition: TSingleCondition, survey: TSurvey, t: TFunc
   return label.charAt(0).toLowerCase() + label.slice(1);
 };
 
-const describeCondition = (condition: TSingleCondition, survey: TSurvey, t: TFunction): string => {
+const describeCondition = (
+  condition: TSingleCondition,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat
+): string => {
   const parts = [describeOperand(condition.leftOperand, survey), describeOperator(condition, survey, t)];
   const right = condition.rightOperand;
   if (right) {
     parts.push(
-      right.type === "static" ? describeStaticValue(condition, survey) : describeOperand(right, survey)
+      right.type === "static"
+        ? describeStaticValue(condition, survey, format)
+        : describeOperand(right, survey)
     );
   }
   return parts.filter((part) => part !== "").join(" ");
 };
 
-export const describeConditionGroup = (group: TConditionGroup, survey: TSurvey, t: TFunction): string => {
+export const describeConditionGroup = (
+  group: TConditionGroup,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): string => {
   if (group.conditions.length === 0) return t("workspace.surveys.edit.flow.always");
   const connector =
     group.connector === "or" ? t("workspace.surveys.edit.flow.or") : t("workspace.surveys.edit.flow.and");
   return group.conditions
     .map((item) =>
       isConditionGroup(item)
-        ? `(${describeConditionGroup(item, survey, t)})`
-        : describeCondition(item, survey, t)
+        ? `(${describeConditionGroup(item, survey, t, format)})`
+        : describeCondition(item, survey, t, format)
     )
     .join(` ${connector} `);
 };
@@ -149,7 +201,9 @@ export const getEndingLabel = (ending: TSurveyEnding, survey: TSurvey, t: TFunct
 };
 
 export type TFlowActionText =
-  | { kind: "jump"; target: "block" | "ending" | "missing"; label: string }
+  | { kind: "jump"; target: "block" | "missing"; label: string }
+  /** An ending names its type, so its chip carries the same icon as the ending on the Questions tab. */
+  | { kind: "jump"; target: "ending"; endingType: TSurveyEnding["type"]; label: string }
   | { kind: "requireAnswer"; label: string }
   | { kind: "calculate"; label: string }
   /** ENG-6933: names nothing, so the row reads "Mark as low quality". */
@@ -168,7 +222,8 @@ const CALCULATE_SYMBOLS: Record<string, string> = {
 export const describeAction = (
   action: TSurveyBlockLogicAction,
   survey: TSurvey,
-  t: TFunction
+  t: TFunction,
+  format: TFlowTextFormat = {}
 ): TFlowActionText => {
   switch (action.objective) {
     case "jumpToBlock": {
@@ -181,7 +236,14 @@ export const describeAction = (
         };
       }
       const ending = survey.endings.find((item) => item.id === action.target);
-      if (ending) return { kind: "jump", target: "ending", label: getEndingLabel(ending, survey, t) };
+      if (ending) {
+        return {
+          kind: "jump",
+          target: "ending",
+          endingType: ending.type,
+          label: getEndingLabel(ending, survey, t),
+        };
+      }
       return { kind: "jump", target: "missing", label: "" };
     }
     case "requireAnswer": {
@@ -202,6 +264,7 @@ export const describeAction = (
       let value: string;
       if (action.value.type !== "static") value = describeOperand(action.value, survey);
       else if (typeof action.value.value === "number") value = String(action.value.value);
+      else if (isDateField(survey, action.variableId)) value = describeDateValue(action.value.value, format);
       else value = quote(action.value.value);
       const symbol = CALCULATE_SYMBOLS[action.operator] ?? action.operator;
       return { kind: "calculate", label: `${getFieldName(survey, action.variableId)} ${symbol} ${value}` };
@@ -232,9 +295,10 @@ export interface TFlowActionStep {
 export const describeRuleActions = (
   actions: TSurveyBlockLogicAction[],
   survey: TSurvey,
-  t: TFunction
+  t: TFunction,
+  format: TFlowTextFormat = {}
 ): TFlowActionStep[] => {
-  const described = actions.map((action) => describeAction(action, survey, t));
+  const described = actions.map((action) => describeAction(action, survey, t, format));
   const ordered = [
     ...described.filter((action) => action.kind !== "jump"),
     ...described.filter((action) => action.kind === "jump"),

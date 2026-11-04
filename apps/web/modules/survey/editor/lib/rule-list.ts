@@ -62,16 +62,17 @@ export const updateRuleActions = (
 };
 
 /**
- * What the Add logic menu starts a rule as: a jump rule, a calculation (a condition, then a formula),
- * a Set value step (ENG-6935), which always runs: its condition group is an empty `and` group
- * (ADR 0025), or a Mark as low quality rule (ENG-6933).
+ * What the Add logic menu starts a rule as: a jump rule, a Set value step (ENG-6935), which always
+ * runs: its condition group is an empty `and` group (ADR 0025), or a Mark as low quality rule
+ * (ENG-6933). A Set value that runs only sometimes is the same step with "Add a condition" used on it,
+ * so the menu offers no separate calculation.
  */
-export type TNewRuleKind = "jump" | "calculate" | "setValue" | "markLowQuality";
+export type TNewRuleKind = "jump" | "setValue" | "markLowQuality";
 
 export interface TNewRuleOptions {
   /** The first condition, without an id. A Set value step has none. */
   condition: Omit<TSingleCondition, "id">;
-  /** The computed field a calculation sets; empty when the survey has none yet. */
+  /** The computed field a Set value step sets; empty when the survey has none yet. */
   variableId?: string;
 }
 
@@ -82,7 +83,6 @@ const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): 
     // ENG-6933: complete as it is; the respondent sees nothing when it fires.
     case "markLowQuality":
       return { id: createId(), objective: "markLowQuality" };
-    case "calculate":
     case "setValue":
       return createEmptyFormulaAction(createId(), variableId);
   }
