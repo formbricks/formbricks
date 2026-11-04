@@ -42,6 +42,27 @@ describe("CacheService", () => {
     cacheService = new CacheService(mockRedis as unknown as RedisClient);
   });
 
+  test("bounds a raw Redis operation before discarding a stalled client", async () => {
+    vi.useFakeTimers();
+    try {
+      const onTimeout = vi.fn();
+      cacheService = new CacheService(mockRedis as unknown as RedisClient, onTimeout);
+      mockRedis.get.mockReturnValue(new Promise<string>(() => {}));
+
+      const operation = cacheService.runRedisOperation((redis) => redis.get("test:key"));
+      const assertion = expect(operation).rejects.toThrow("Redis operation timed out");
+      await vi.advanceTimersByTimeAsync(500);
+      await assertion;
+
+      expect(onTimeout).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(onTimeout).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   describe("get", () => {
     test("should return parsed JSON value when found", async () => {
       const key = "test:key" as CacheKey;

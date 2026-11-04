@@ -11,6 +11,8 @@ import {
   render,
   renderAccountDeletedEmail,
   renderAccountDeletionEmail,
+  renderAttachmentExportFailedEmail,
+  renderAttachmentExportReadyEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderFollowUpEmail,
@@ -80,6 +82,14 @@ const renderers: [string, () => Promise<string>][] = [
   [
     "renderSurveyRetentionNoticeEmail",
     () => renderSurveyRetentionNoticeEmail({ ...exampleData.surveyRetentionNoticeEmail, ...legal, t }),
+  ],
+  [
+    "renderAttachmentExportReadyEmail",
+    () => renderAttachmentExportReadyEmail({ ...exampleData.attachmentExportReadyEmail, ...legal, t }),
+  ],
+  [
+    "renderAttachmentExportFailedEmail",
+    () => renderAttachmentExportFailedEmail({ ...exampleData.attachmentExportFailedEmail, ...legal, t }),
   ],
   [
     "renderMemberRetentionNoticeEmail",
