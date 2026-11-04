@@ -1,6 +1,6 @@
 import type { TEmbeddedDataType } from "../embedded-data";
 import { TSurveyElementTypeEnum } from "./constants";
-import type { TExpression, TExpressionFunction } from "./expressions";
+import { type TExpression, type TExpressionFunction, isExpressionTooDeep } from "./expressions";
 
 /**
  * The types of Set value expressions (ENG-6935): what each leaf and each function yields, and the
@@ -234,6 +234,8 @@ export const getSetValueExpressionIssues = (
   if (expression.type === "static" && expression.value === "") {
     return [{ path: [], message: "Expression: enter a formula" }];
   }
+  // Refused by the schema at its path; checking its types would descend the whole hostile tree.
+  if (isExpressionTooDeep(expression)) return [];
 
   const { type, dateLiteral, issues } = checkExpressionTypes(expression, ctx);
   if (issues.length > 0 || type === undefined) return issues;

@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { EXPRESSION_MAX_DEPTH } from "@formbricks/types/surveys/expressions";
 import {
   SURVEY_FLOW_FIXTURE_IDS,
   surveyFlowFixture,
@@ -1924,6 +1925,14 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
         })
       )
     ).toEqual(expect.arrayContaining([`${valuePath}.label`, `${valuePath}.args.0.note`]));
+  });
+
+  test("a tree thousands of levels deep is a 400 at the first node past the limit, not a 500", () => {
+    let tree: unknown = { type: "static", value: 1 };
+    for (let level = 0; level < 20_000; level++) tree = { type: "call", fn: "abs", args: [tree] };
+    const tooDeep = `${valuePath}${".args.0".repeat(EXPRESSION_MAX_DEPTH)}`;
+
+    expect(failedNames(createWithExpression(tree))).toEqual([tooDeep]);
   });
 
   test("a wrong argument count and text in arithmetic are refused at their paths", () => {

@@ -108,6 +108,19 @@ describe("Set value expression validation", () => {
     expect(issuesOf(withScoreExpression(allowed))).toEqual([]);
   });
 
+  test("refuses a hostile tree thousands of levels deep with one issue at its path, before parsing it", () => {
+    let tree: unknown = num(1);
+    for (let level = 0; level < 20_000; level++) tree = call("abs", tree);
+    const tooDeepPath = [
+      ...scorePath,
+      ...Array.from({ length: EXPRESSION_MAX_DEPTH }, () => ["args", 0]).flat(),
+    ];
+
+    expect(issuesOf(withScoreExpression(tree))).toEqual([
+      { path: tooDeepPath, message: `Expression: nested deeper than ${String(EXPRESSION_MAX_DEPTH)} levels` },
+    ]);
+  });
+
   test(`refuses more than ${String(EXPRESSION_MAX_NODES)} nodes at the root`, () => {
     const wide = (count: number) =>
       call(

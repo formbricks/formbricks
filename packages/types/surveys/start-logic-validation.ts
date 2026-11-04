@@ -3,7 +3,7 @@ import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
 import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
 import { getSetValueExpressionIssues } from "./expression-types";
-import type { TExpression } from "./expressions";
+import { type TExpression, isExpressionTooDeep } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 
 /**
@@ -156,6 +156,8 @@ const validateExpressionAction = (
   }
 
   const valuePath = [...path, "value", "value"];
+  // Refused by the schema at its path; the walks below would descend the whole hostile tree.
+  if (isExpressionTooDeep(expression)) return undefined;
   const answerPath = findElementLeafPath(expression, valuePath);
   if (answerPath) {
     return {
