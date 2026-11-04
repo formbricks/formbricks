@@ -3,9 +3,9 @@ import { prisma } from "@formbricks/database";
 import { toDesiredEmbeddedFields } from "@formbricks/types/embedded-data-mapping";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { type TSurvey } from "@formbricks/types/surveys/types";
+import { type TSurvey, ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
-import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
+import { getLegacyWriteEmbeddedFields, reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { selectSurvey, updateSurvey, updateSurveyInternal } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { copySurveyToOtherWorkspace } from "@/modules/survey/list/lib/survey";
@@ -805,6 +805,90 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
     expect((await readLegacyShape(survey.id)).variables).toEqual([
       { id: VARIABLE_ID, name: "score", type: "number", value: 0 },
     ]);
+  });
+
+  describe("a v1 PUT of a survey whose logic sets a computed date (ENG-6935)", () => {
+    const DATE_KEY = "clvar123456789012345678903";
+    const setDate = (variableId: string) => [
+      {
+        ...BLOCKS[0],
+        logic: [
+          {
+            id: "clrule12345678901234567890",
+            conditions: { id: "clgroup1234567890123456789", connector: "and", conditions: [] },
+            actions: [
+              {
+                id: "clact123456789012345678901",
+                objective: "calculate",
+                variableId,
+                operator: "assign",
+                value: { type: "expression", value: { type: "call", fn: "now", args: [] } },
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    /** The v1 PUT's round-trip: the loaded survey merged with the body, through the v1 boundary. */
+    const putV1 = (loaded: TSurvey, body: Partial<TSurvey>) => {
+      const merged = { ...loaded, ...body };
+      return updateSurvey({
+        ...ZSurveyUpdateInput.parse({
+          ...merged,
+          embeddedFields: getLegacyWriteEmbeddedFields(loaded.embeddedFields ?? [], merged),
+        }),
+        id: loaded.id,
+      } as TSurvey);
+    };
+
+    const seedWithDate = async () => {
+      const { survey } = await seedEditableSurvey({
+        variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 0 }],
+      });
+      await updateSurvey({
+        ...survey,
+        blocks: setDate(DATE_KEY) as never,
+        embeddedFields: [
+          ...(survey.embeddedFields ?? []),
+          {
+            field: {
+              key: null,
+              name: "signed_up_at",
+              source: "computed",
+              dataType: "date",
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: DATE_KEY },
+          },
+        ],
+      });
+      return loadSurvey(survey.id);
+    };
+
+    test("validates against the stored rows and leaves them as they are", async () => {
+      const loaded = await seedWithDate();
+      const before = await readFields(loaded.id);
+      expect(loaded.variables.map((variable) => variable.id)).toEqual([VARIABLE_ID]);
+
+      await putV1(loaded, { name: "Renamed via PUT" });
+
+      expect((await loadSurvey(loaded.id)).name).toBe("Renamed via PUT");
+      expect(await readFields(loaded.id)).toEqual(before);
+      expect(await readOrder(loaded.id)).toEqual([
+        [VARIABLE_ID, 0],
+        [DATE_KEY, 1],
+      ]);
+    });
+
+    test("still refuses a reference to a computed field the survey doesn't have", async () => {
+      const loaded = await seedWithDate();
+
+      expect(() => putV1(loaded, { blocks: setDate("clvar123456789012345678909") as never })).toThrow(
+        /Variable ID clvar123456789012345678909 does not exist/
+      );
+    });
   });
 
   test("a computed storage key the derived variables could not hold is a 400", async () => {

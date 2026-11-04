@@ -46,6 +46,7 @@ import { lockSurveyVisibility } from "@/lib/authzed/survey";
 import {
   assertLinkableEmbeddedFields,
   assertWritableEmbeddedFields,
+  getLegacyWriteEmbeddedFields,
   reconcileEmbeddedData,
 } from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
@@ -476,7 +477,11 @@ export const updateSurveyInternal = async (
   skipValidation = false,
   options: TUpdateSurveyOptions = {}
 ): Promise<TSurvey> => {
-  if (!skipValidation) {
+  // A legacy write (only `variables` / `hiddenFields`, the v1 PUT) is validated once the stored rows
+  // are read, against the rows it will leave the survey with: logic may set or read a computed date
+  // the legacy keys can't say (ENG-6935).
+  const isLegacyWrite = updatedSurvey.embeddedFields === undefined;
+  if (!skipValidation && !isLegacyWrite) {
     validateInputs([updatedSurvey, ZSurvey]);
   }
 
@@ -488,6 +493,16 @@ export const updateSurveyInternal = async (
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    if (!skipValidation && isLegacyWrite) {
+      validateInputs([
+        {
+          ...updatedSurvey,
+          embeddedFields: getLegacyWriteEmbeddedFields(currentSurvey.embeddedFields ?? [], updatedSurvey),
+        },
+        ZSurvey,
+      ]);
     }
 
     // Archived surveys are read-only. This covers every write path that flows through here

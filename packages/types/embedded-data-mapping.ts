@@ -204,11 +204,16 @@ const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
  * a value sent on write is ignored now, so a caller that relied on `enabled: false` removes the fields
  * instead.
  */
+/**
+ * Whether a computed field of this type is a legacy variable. A variable is a number or text, so a
+ * computed date (ENG-6935) lives only in the typed rows (json-shapes §6): a legacy reader would
+ * otherwise take it for a text variable, and a legacy write keeps it as stored.
+ */
+export const isLegacySayableComputedType = (dataType: TEmbeddedDataType): boolean => dataType !== "date";
+
 export const toLegacyEmbeddedFields = (desired: readonly TDesiredEmbeddedField[]): TLegacyEmbeddedColumns => {
-  // A variable is a number or text, so a computed date (ENG-6935) lives only in the typed rows
-  // (json-shapes §6); a legacy reader would otherwise take it for a text variable.
   const variables = desired
-    .filter((field) => field.source === "computed" && field.dataType !== "date")
+    .filter((field) => field.source === "computed" && isLegacySayableComputedType(field.dataType))
     .map(toLegacyVariable);
   const fieldIds = desired.filter((field) => field.source === "ingested").map((field) => field.storageKey);
 

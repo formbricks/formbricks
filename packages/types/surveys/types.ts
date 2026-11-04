@@ -1129,8 +1129,10 @@ export const ZSurveyBase = z.object({
  * field in logic — or as a follow-up recipient — would fail `ZSurvey` on publish, both in the
  * editor's own pre-flight and again as the server action's input schema.
  *
- * A payload with no `embeddedFields` is untouched, so every legacy caller (the v1 management PUT,
- * whose schema omits the key outright) validates exactly as before.
+ * A payload with no `embeddedFields` is untouched. The legacy writes (the v1 management PUT, and
+ * `updateSurvey` given only `variables` / `hiddenFields`) validate with the rows the write will leave
+ * the survey with (`getLegacyWriteEmbeddedFields` in apps/web), which are the legacy keys plus the
+ * stored fields those keys can't say, such as a computed date (ENG-6935).
  */
 const withDerivedLegacyColumns = <T extends z.infer<typeof ZSurveyBase>>(survey: T): T => {
   if (survey.embeddedFields === undefined) return survey;
@@ -4379,15 +4381,7 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
   createdAt: true,
   updatedAt: true,
   followUps: true,
-  // Omitted deliberately, and it stays omitted after ENG-3228 made `embeddedFields` accepted input
-  // elsewhere: this schema is the v1 `PUT /api/v1/management/surveys/{id}` boundary, which re-parses
-  // the loaded survey merged with the caller's patch. Admitting the key would hand `updateSurvey` the
-  // survey's OWN inlined rows as a desired set on every legacy PUT, turning what the columns say into
-  // a no-op. Omitting STRIPS rather than rejects, so a caller that sends it simply takes the legacy
-  // path. Callers that hand `updateSurvey` a raw `TSurvey` (the editor's save actions) never go
-  // through this schema and keep the V2 carrier.
-  embeddedFields: true,
-  // ENG-2949: stripped, like `embeddedFields`. This is the legacy v1 PUT boundary, which ignores a
+  // ENG-2949: stripped. This is the legacy v1 PUT boundary, which ignores a
   // `customCss` key like any other unknown one; omitting it here means the merged round-trip never hands
   // the stored value to `updateSurvey`, which then leaves the survey's CSS untouched.
   customCss: true,
@@ -4413,7 +4407,15 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
       updatedAt: z.coerce.date(),
     })
   )
-  .superRefine(surveyRefinement);
+  .superRefine(surveyRefinement)
+  // `embeddedFields` is read by the refinement and never output. This schema is the v1
+  // `PUT /api/v1/management/surveys/{id}` boundary, which re-parses the loaded survey merged with the
+  // caller's patch. Output, the key would hand `updateSurvey` a desired set on every legacy PUT, turning
+  // what the legacy columns say into a no-op, so the PUT stays a legacy write. Read, it is what logic
+  // resolves against that the legacy columns can't say (a computed date, ENG-6935): the route sets it
+  // to the rows the write will leave the survey with (`getLegacyWriteEmbeddedFields`), over whatever
+  // the caller sent.
+  .transform(({ embeddedFields: _validatedOnly, ...survey }) => survey);
 
 // Helper function to make all properties of a Zod object schema optional
 const makeSchemaOptional = <T extends z.ZodRawShape>(
