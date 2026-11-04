@@ -50,6 +50,8 @@
 #     user:vic   contributor on team:ops (manage on workspace:main): a Manage grant does not widen
 #                the role (the app never makes a viewer a team admin)
 #     user:val   on no team: reaches no dashboard at all
+#     user:vance admin of team:ops (manage on workspace:main): an admin row the app should never
+#                write for a viewer, so the schema refuses it team management itself (S8)
 #     user:viola contributor on team:globex_team, a team of organization:globex granted
 #                workspace:foreign, while viola is acme's viewer, not globex's: reaches nothing
 #   response:r1 (survey:onboarding), response:r2 (survey:draft)
@@ -115,6 +117,8 @@ relationships: |-
   organization:acme#dashboard_viewer@user:vic
   organization:acme#dashboard_viewer@user:val
   organization:acme#dashboard_viewer@user:viola
+  organization:acme#dashboard_viewer@user:vance
+  team:ops#admin@user:vance
   team:analysts#contributor@user:vera
   team:ops#contributor@user:vic
   team:globex_team#organization@organization:globex
@@ -238,6 +242,9 @@ assertions:
     - feedback_directory_assignment:fdwa_main#dashboard_read@user:vera
     - feedback_directory_assignment:fdwa_main#dashboard_read@user:vic
     - team:analysts#dashboard_member@user:vera
+    # A viewer admin row still carries the team's dashboard reads, nothing more (S8).
+    - workspace:main#dashboard_read@user:vance
+    - team:ops#dashboard_member@user:vance
     - workspace:main#dashboard_read@user:uma
     - workspace:main#dashboard_read@user:tina
     - workspace:main#dashboard_read@user:olivia
@@ -460,6 +467,11 @@ assertions:
     - team:analysts#manage@user:vera
     - team:ops#member@user:vic
     - team:ops#read@user:vic
+    # S8: team management needs a product membership; a viewer (or billing) admin row grants none.
+    - team:ops#manage@user:vance
+    - team:ops#member@user:vance
+    - workspace:main#read@user:vance
+    - workspace:main#manage@user:vance
     - workspace:main#read@user:vera
     - workspace:main#write@user:vera
     - workspace:main#manage@user:vera
@@ -574,6 +586,7 @@ validation:
     - "[user:tom] is <organization:acme#member>/<team:product#admin>"
     - "[user:uma] is <organization:acme#member>/<team:analysts#contributor>"
     - "[user:vera] is <organization:acme#dashboard_viewer>/<team:analysts#contributor>"
+    - "[user:vance] is <organization:acme#dashboard_viewer>/<team:ops#admin>"
     - "[user:vic] is <organization:acme#dashboard_viewer>/<team:ops#contributor>"
   organization:acme#manage_billing:
     - "[user:bella] is <organization:acme#billing>"

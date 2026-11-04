@@ -173,8 +173,12 @@ definition team {
      */
     permission read: user | api_key = member + organization->read_access
 
-    /** Who can manage the team (rename, membership): team admins plus organization access-control writers. */
-    permission manage: user | api_key = admin + organization->manage_access
+    /**
+     * Who can manage the team (rename, membership): team admins who are product members of the
+     * organization, plus organization access-control writers. The intersection keeps an admin row
+     * that a Dashboard viewer or billing member should never hold from granting team management (S8).
+     */
+    permission manage: user | api_key = (admin & organization->product_member) + organization->manage_access
 
     /**
      * Who can delete the team. Unlike other team mutations, deletion is limited
