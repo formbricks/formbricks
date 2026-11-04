@@ -30,8 +30,11 @@ export interface TNotShownStep {
   optionsNotShown?: TOptionsNotShown;
 }
 
-/** Where each option list goes in the record (json-shapes §8). */
-const RECORD_KEY_OF: Record<TOptionListKey, "options" | "rows" | "columns"> = {
+/** The record's keys for what shown elements did not offer (json-shapes §8). */
+type TRecordOptionKey = "options" | "rows" | "columns";
+
+/** Where each option list goes in the record. */
+const RECORD_KEY_OF: Record<TOptionListKey, TRecordOptionKey> = {
   choices: "options",
   rows: "rows",
   columns: "columns",
@@ -89,8 +92,8 @@ const foldNotShownSteps = (survey: TRecordSurvey, steps: readonly TNotShownStep[
 const getOrderedOptionsNotShown = (
   survey: TRecordSurvey,
   fold: TNotShownFold
-): Pick<TResponseNotShown, "options" | "rows" | "columns"> => {
-  const maps: Pick<TResponseNotShown, "options" | "rows" | "columns"> = {};
+): Pick<TResponseNotShown, TRecordOptionKey> => {
+  const maps: Pick<TResponseNotShown, TRecordOptionKey> = {};
   for (const element of survey.blocks.flatMap((block) => block.elements)) {
     const notShown = fold.options.get(element.id);
     if (!notShown || fold.elements.has(element.id)) continue;
