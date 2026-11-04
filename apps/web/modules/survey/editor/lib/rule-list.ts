@@ -8,7 +8,7 @@ import type {
 } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { createEmptyCalculateAction, duplicateLogicItem } from "@/lib/surveyLogic/utils";
+import { createEmptyFormulaAction, duplicateLogicItem } from "@/lib/surveyLogic/utils";
 
 /**
  * Operations on a list of logic rules (ENG-6929). The rule editor used to be wired to one block's
@@ -82,7 +82,7 @@ const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): 
       return { id: createId(), objective: "markLowQuality" };
     case "calculate":
     case "setValue":
-      return createEmptyCalculateAction(createId(), variableId);
+      return createEmptyFormulaAction(createId(), variableId);
   }
 };
 

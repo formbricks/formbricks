@@ -10,7 +10,8 @@ import { TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   buildServerEmbeddedValues,
-  createEmptyCalculateAction,
+  createEmptyFormulaAction,
+  createEmptyOneStepAction,
   createGroupFromResource,
   deleteEmptyGroups,
   duplicateCondition,
@@ -227,9 +228,12 @@ describe("surveyLogic", () => {
     const base: TSurveyBlockLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     const calc = getUpdatedActionBody(base, "calculate");
     expect(calc.objective).toBe("calculate");
-    // The same empty Set value step the Add logic menu starts (rule-list `createRule`).
-    expect(calc).toEqual(createEmptyCalculateAction("A"));
-    expect(calc).toMatchObject({ value: { type: "expression", value: { type: "static", value: "" } } });
+    // Switching an action keeps the one-step editor; a new rule from the Add logic menu starts a
+    // formula instead (rule-list `createRule`, P39). The two are chosen on purpose.
+    expect(calc).toEqual(createEmptyOneStepAction("A"));
+    expect(createEmptyFormulaAction("B")).toMatchObject({
+      value: { type: "expression", value: { type: "static", value: "" } },
+    });
     const req = getUpdatedActionBody(calc, "requireAnswer");
     expect(req.objective).toBe("requireAnswer");
     const jump = getUpdatedActionBody(req, "jumpToBlock");
