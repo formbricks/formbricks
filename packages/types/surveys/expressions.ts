@@ -38,6 +38,7 @@ export type TExpressionFunction = z.infer<typeof ZExpressionFunction>;
 export const EXPRESSION_MAX_DEPTH = 12;
 const DEPTH_MESSAGE_TEXT = `Expression: nested deeper than ${String(EXPRESSION_MAX_DEPTH)} levels`;
 export const EXPRESSION_MAX_NODES = 200;
+const NODES_MESSAGE_TEXT = `Expression: more than ${String(EXPRESSION_MAX_NODES)} nodes`;
 /** The most arguments a variadic function (`add`, `multiply`, `min`, `max`, `concat`) takes. */
 export const EXPRESSION_MAX_ARGS = 50;
 export const EXPRESSION_MAX_STATIC_TEXT_LENGTH = 5000;
@@ -172,17 +173,22 @@ export const getExpressionLimitIssues = (expression: TExpression): { path: TPath
   walk(expression, 1, []);
 
   if (nodes > EXPRESSION_MAX_NODES) {
-    issues.push({ path: [], message: `Expression: more than ${String(EXPRESSION_MAX_NODES)} nodes` });
+    issues.push({ path: [], message: NODES_MESSAGE_TEXT });
   }
   return issues;
 };
 
+/** Why a raw tree is refused before it is parsed, with the path the issue is reported at. */
+type TUnparsedLimitViolation = { path: TPath; message: string };
+
 /**
- * The path of the first node past the depth limit in a raw (unparsed) tree, or `undefined`. Walks no
- * deeper than the limit and no more nodes than the node limit, so a hostile tree (thousands of levels)
- * is refused before the recursive schema descends into it: a 400 at its path, never a stack overflow.
+ * The first limit a raw (unparsed) tree breaks, or `undefined`: the first node past the depth limit, at
+ * its path, else the node count, at the root, once the walk runs out of its node budget. Walks no
+ * deeper than the depth limit and no more nodes than the node limit, so a hostile tree (thousands of
+ * levels, or a wide prefix hiding a deep tail) is refused before the recursive schema descends into
+ * it: a 400 at its path, never a stack overflow.
  */
-const findTooDeepPath = (root: unknown): TPath | undefined => {
+const findUnparsedLimitViolation = (root: unknown): TUnparsedLimitViolation | undefined => {
   let visited = 0;
   const walk = (value: unknown, depth: number, path: TPath): TPath | undefined => {
     visited += 1;
@@ -198,22 +204,27 @@ const findTooDeepPath = (root: unknown): TPath | undefined => {
     }
     return undefined;
   };
-  return walk(root, 1, []);
+  const tooDeepPath = walk(root, 1, []);
+  if (tooDeepPath) return { path: tooDeepPath, message: DEPTH_MESSAGE_TEXT };
+  // The budget ran out before the walk was done: what it didn't see may be thousands of levels deep.
+  if (visited > EXPRESSION_MAX_NODES) return { path: [], message: NODES_MESSAGE_TEXT };
+  return undefined;
 };
 
 /**
- * Whether a raw tree goes past the depth limit. The survey refinements still see a tree the schema
- * refused (the issue is already reported); their recursive checks skip it rather than descend into it.
+ * Whether a raw tree goes past the depth or the node limit. The survey refinements still see a tree
+ * the schema refused (the issue is already reported); their recursive checks skip it rather than
+ * descend into it.
  */
-export const isExpressionTooDeep = (expression: unknown): boolean =>
-  findTooDeepPath(expression) !== undefined;
+export const isExpressionOverLimits = (expression: unknown): boolean =>
+  findUnparsedLimitViolation(expression) !== undefined;
 
-/** A tree, refused on depth before it is parsed (see {@link findTooDeepPath}). */
+/** A tree, refused on depth or node count before it is parsed (see {@link findUnparsedLimitViolation}). */
 const ZDepthBoundedExpression = z
   .unknown()
   .superRefine((value, ctx) => {
-    const path = findTooDeepPath(value);
-    if (path) ctx.addIssue({ code: "custom", message: DEPTH_MESSAGE_TEXT, path });
+    const violation = findUnparsedLimitViolation(value);
+    if (violation) ctx.addIssue({ code: "custom", message: violation.message, path: violation.path });
   })
   .pipe(ZExpression);
 
@@ -224,8 +235,8 @@ export const ZExpressionValue = z
     value: ZDepthBoundedExpression,
   })
   .superRefine((value, ctx) => {
-    // Depth is refused (once, at its path) before the tree is parsed.
-    if (isExpressionTooDeep(value.value)) return;
+    // Depth and node count are refused (once, at their path) before the tree is parsed.
+    if (isExpressionOverLimits(value.value)) return;
     for (const issue of getExpressionLimitIssues(value.value)) {
       ctx.addIssue({ code: "custom", message: issue.message, path: ["value", ...issue.path] });
     }

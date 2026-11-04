@@ -17,6 +17,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
   isSurveySchedulingDue,
@@ -123,6 +124,10 @@ vi.mock("./targeting", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByWorkspaceId: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsQuotasEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/permission", () => ({
@@ -328,6 +333,7 @@ describe("patchV3Survey", () => {
       whitelabel: undefined,
     });
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
     vi.mocked(getActionClasses).mockResolvedValue([]);
     vi.mocked(resolveV3ContactsEntitlement).mockResolvedValue({
       resolvedOrganizationId: "org_1",
@@ -1130,6 +1136,16 @@ describe("patchV3Survey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
+    test("refuses a key the caller sent beside a library key, at its path, and writes nothing", async () => {
+      await expect(
+        patchV3Survey(currentSurvey, { embeddedFields: [{ key: "plan_tier", foo: 1 }] })
+      ).rejects.toMatchObject({
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.foo" })],
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
     test("refuses both formats when they disagree, and writes nothing", async () => {
       await expect(
         patchV3Survey(currentSurvey, {
@@ -1852,6 +1868,21 @@ describe("patchV3Survey", () => {
           data: { logic: { connector: "and", conditions: [quotaCondition("1")] } },
         })
       );
+    });
+
+    test("leaves the quotas alone where quotas are not licensed", async () => {
+      vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
+      const blocks = blocksWith(
+        grid(["disney", "netflix"], ["good", "poor"]),
+        { row: "1", rowId: "netflix" },
+        { value: "0", columnId: "good" }
+      );
+
+      await patchV3Survey(currentSurvey, { blocks }, "req_matrix_unlicensed", "org_1");
+
+      expect(getIsQuotasEnabled).toHaveBeenCalledWith("org_1");
+      expect(prisma.surveyQuota.findMany).not.toHaveBeenCalled();
+      expect(prisma.surveyQuota.update).not.toHaveBeenCalled();
     });
 
     test("refuses a column id the matrix doesn't have, with its path, and does not write", async () => {

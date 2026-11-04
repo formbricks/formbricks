@@ -135,6 +135,18 @@ describe("Set value expression validation", () => {
     expect(issuesOf(withScoreExpression(wide(48)))).toEqual([]);
   });
 
+  test("refuses a wide tree with a hostile deep tail on its node count, before parsing it", () => {
+    // 1 + 4 × (1 + 50) = 205 shallow nodes come first, so the node budget runs out before the walk
+    // reaches the 20,000-level tail; the tree is refused anyway, never handed to the recursive schema.
+    let tail: unknown = num(1);
+    for (let level = 0; level < 20_000; level++) tail = call("abs", tail);
+    const shallow = Array.from({ length: 4 }, () => call("add", ...Array.from({ length: 50 }, () => num(1))));
+
+    expect(issuesOf(withScoreExpression(call("add", ...shallow, tail)))).toEqual([
+      { path: scorePath, message: `Expression: more than ${String(EXPRESSION_MAX_NODES)} nodes` },
+    ]);
+  });
+
   test("refuses a reference to a question that doesn't exist, or one a formula can't use", () => {
     expect(issuesOf(withScoreExpression(call("add", num(1), answer("gone"))))).toEqual([
       { path: [...scorePath, "args", 1, "value"], message: "Expression: question gone does not exist" },

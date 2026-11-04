@@ -70,7 +70,7 @@ const syncColumns = (matrix: TMatrixAxes, operand: TRecord): TRecord => {
   if (operand.columnIds !== undefined) {
     if (!Array.isArray(operand.columnIds)) return operand;
     const positions = (operand.columnIds as unknown[]).map((id) => indexOfId(columns, id));
-    if (positions.some((position) => position === undefined)) return operand;
+    if (positions.includes(undefined)) return operand;
     const value = positions.map(String);
     return sameList(operand.value, value) ? operand : { ...operand, value };
   }
@@ -83,7 +83,7 @@ const syncColumns = (matrix: TMatrixAxes, operand: TRecord): TRecord => {
     const ids = (operand.value as unknown[]).map((position) =>
       idOf(columns[indexAt(position, columns.length) ?? -1])
     );
-    if (ids.some((id) => id === undefined)) return operand;
+    if (ids.includes(undefined)) return operand;
     return { ...operand, columnIds: ids };
   }
   const columnId = idOf(columns[indexAt(operand.value, columns.length) ?? -1]);

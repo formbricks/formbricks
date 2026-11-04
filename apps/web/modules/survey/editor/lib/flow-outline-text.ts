@@ -199,12 +199,10 @@ export const describeAction = (
             : formatFormula(tree, getFormulaReferences(survey));
         return { kind: "calculate", label: `${getFieldName(survey, action.variableId)} = ${formula}` };
       }
-      const value =
-        action.value.type === "static"
-          ? typeof action.value.value === "number"
-            ? String(action.value.value)
-            : quote(action.value.value)
-          : describeOperand(action.value, survey);
+      let value: string;
+      if (action.value.type !== "static") value = describeOperand(action.value, survey);
+      else if (typeof action.value.value === "number") value = String(action.value.value);
+      else value = quote(action.value.value);
       const symbol = CALCULATE_SYMBOLS[action.operator] ?? action.operator;
       return { kind: "calculate", label: `${getFieldName(survey, action.variableId)} ${symbol} ${value}` };
     }

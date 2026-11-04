@@ -88,8 +88,14 @@ describe("parseFormula: typed text into the tree AI writes", () => {
     ["round(1", "unexpected_end", 7],
     ["1 + @", "incomplete_reference", 4],
     ["@ + 1", "incomplete_reference", 0],
+    ["1 + @{Plan tier", "unexpected_end", 4],
   ])("refuses %j with %s at %d", (text, code, position) => {
     expect(parse(text)).toEqual({ ok: false, error: expect.objectContaining({ code, position }) });
+  });
+
+  test("a number may start with its decimal point, and text may sit in curly quotes", () => {
+    expect(tree(".5 + 1")).toEqual(call("add", num(0.5), num(1)));
+    expect(tree("concat(“a”, @fav)")).toEqual(call("concat", { type: "static", value: "a" }, answer("fav")));
   });
 });
 

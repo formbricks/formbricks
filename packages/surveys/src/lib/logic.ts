@@ -77,10 +77,11 @@ export const performActions = (
 
   actions.forEach((action) => {
     switch (action.objective) {
-      case "calculate":
+      case "calculate": {
         const result = performCalculation(survey, action, data, calculations, context);
         if (result !== undefined) calculations[action.variableId] = result;
         break;
+      }
       case "requireAnswer":
         requiredQuestionIds.push(action.target);
         break;

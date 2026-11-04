@@ -479,11 +479,9 @@ export const getElementSummary = async (
           let hasValidAnswer = false;
           // The option a pick names: a choice by label, "none", else the "other" text (P51).
           const pickNotShown = (value: string) => {
-            const optionId = elementChoices.includes(value)
-              ? choiceByLabel.get(value)?.id
-              : noneLabel && value === noneLabel
-                ? "none"
-                : "other";
+            let optionId: string | undefined = "other";
+            if (elementChoices.includes(value)) optionId = choiceByLabel.get(value)?.id;
+            else if (noneLabel && value === noneLabel) optionId = "none";
             return wasOptionNotShown(response, "options", element.id, optionId);
           };
 

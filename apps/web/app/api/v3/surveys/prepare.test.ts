@@ -1935,6 +1935,21 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
     expect(failedNames(createWithExpression(tree))).toEqual([tooDeep]);
   });
 
+  test("a wide tree hiding a deep tail past the node limit is one 400 at the tree, not a 500", () => {
+    let tail: unknown = { type: "static", value: 1 };
+    for (let level = 0; level < 20_000; level++) tail = { type: "call", fn: "abs", args: [tail] };
+    // 4 × (1 + 50) shallow nodes before the tail: past the node limit before the walk reaches it.
+    const shallow = Array.from({ length: 4 }, () => ({
+      type: "call",
+      fn: "add",
+      args: Array.from({ length: 50 }, () => ({ type: "static", value: 1 })),
+    }));
+
+    expect(failedNames(createWithExpression({ type: "call", fn: "add", args: [...shallow, tail] }))).toEqual([
+      valuePath,
+    ]);
+  });
+
   test("a wrong argument count and text in arithmetic are refused at their paths", () => {
     expect(failedNames(createWithExpression({ type: "call", fn: "abs", args: [] }))).toEqual([
       `${valuePath}.args`,

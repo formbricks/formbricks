@@ -1129,8 +1129,10 @@ export const ZSurveyBase = z.object({
  * field in logic — or as a follow-up recipient — would fail `ZSurvey` on publish, both in the
  * editor's own pre-flight and again as the server action's input schema.
  *
- * A payload with no `embeddedFields` is untouched, so every legacy caller (the v1 management PUT,
- * whose schema omits the key outright) validates exactly as before.
+ * A payload with no `embeddedFields` is untouched. The legacy writes (the v1 management PUT, and
+ * `updateSurvey` given only `variables` / `hiddenFields`) validate with the rows the write will leave
+ * the survey with (`getLegacyWriteEmbeddedFields` in apps/web), which are the legacy keys plus the
+ * stored fields those keys can't say, such as a computed date (ENG-6935).
  */
 const withDerivedLegacyColumns = <T extends z.infer<typeof ZSurveyBase>>(survey: T): T => {
   if (survey.embeddedFields === undefined) return survey;
@@ -4063,6 +4065,199 @@ const OPTION_LIST_NOUN = { choices: "option", rows: "row", columns: "column" } a
 const getBlockLabel = (block: TSurveyBlock, blockIndex: number): string =>
   block.name.trim() || `Block ${String(blockIndex + 1)}`;
 
+/** Where a block rule's action sits, for its checks and their messages. */
+interface TBlockActionContext {
+  survey: TSurvey;
+  blockIndex: number;
+  logicIndex: number;
+  currentBlock: TSurveyBlock;
+  allElements: Map<string, { block: number; element: number; data: TSurveyElement }>;
+}
+
+/** The answers a one-step calculation may take, by the type of the field it sets. */
+const TEXT_CALCULATION_ELEMENT_TYPES: TSurveyElementTypeEnum[] = [
+  TSurveyElementTypeEnum.OpenText,
+  TSurveyElementTypeEnum.MultipleChoiceSingle,
+  TSurveyElementTypeEnum.Rating,
+  TSurveyElementTypeEnum.NPS,
+  TSurveyElementTypeEnum.Date,
+];
+const NUMBER_CALCULATION_ELEMENT_TYPES: TSurveyElementTypeEnum[] = [
+  TSurveyElementTypeEnum.Rating,
+  TSurveyElementTypeEnum.NPS,
+];
+
+/** The answer a one-step calculation reads, checked against the type of the field it sets. */
+const validateCalculationElementSource = (
+  ctx: TBlockActionContext,
+  variableType: "number" | "text",
+  elementId: string
+): z.core.$ZodIssue | undefined => {
+  const { blockIndex, logicIndex, allElements } = ctx;
+  const selectedElement = allElements.get(elementId);
+
+  if (variableType === "text") {
+    if (selectedElement && TEXT_CALCULATION_ELEMENT_TYPES.includes(selectedElement.data.type))
+      return undefined;
+    return {
+      code: "custom",
+      message: `Conditional Logic: Invalid element type for text variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+
+  if (
+    !selectedElement ||
+    (!NUMBER_CALCULATION_ELEMENT_TYPES.includes(selectedElement.data.type) &&
+      selectedElement.data.type === TSurveyElementTypeEnum.OpenText &&
+      selectedElement.data.inputType !== "number")
+  ) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Invalid element type for number variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+  return undefined;
+};
+
+/**
+ * A Set value or one-step calculation. Its expression's issues, each at its exact path into the tree,
+ * go to `expressionIssues`; anything else is returned.
+ */
+const validateBlockCalculateAction = (
+  ctx: TBlockActionContext,
+  action: Extract<TSurveyBlockLogicAction, { objective: "calculate" }>,
+  actionIndex: number,
+  expressionIssues: z.core.$ZodIssue[]
+): z.core.$ZodIssue | undefined => {
+  const { survey, blockIndex, logicIndex, allElements } = ctx;
+  const variable = findLogicComputedField(survey, action.variableId);
+
+  if (!variable) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+
+  // Set value (ENG-6935): the expression's types and its result against the field, each issue at
+  // its exact path into the tree.
+  if (action.value.type === "expression") {
+    const valuePath = ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value", "value"];
+    for (const issue of getSetValueExpressionIssues(
+      action.value.value,
+      variable.dataType,
+      getExpressionTypeContext(survey, allElements)
+    )) {
+      expressionIssues.push({ code: "custom", message: issue.message, path: [...valuePath, ...issue.path] });
+    }
+    return undefined;
+  }
+
+  // The one-step operators predate dates; a computed date is set with a formula.
+  if (variable.type === "date") {
+    return {
+      code: "custom",
+      message: `Conditional Logic: A date field is set with a formula in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
+    };
+  }
+
+  if (action.value.type === "variable") {
+    const selectedVariable = findLogicComputedField(survey, action.value.value);
+
+    if (selectedVariable?.type !== variable.type) {
+      return {
+        code: "custom",
+        message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+        path: ["blocks", blockIndex, "logic", logicIndex],
+      };
+    }
+  }
+
+  if (action.value.type === "element") {
+    return validateCalculationElementSource(ctx, variable.type, action.value.value);
+  }
+  return undefined;
+};
+
+/** Require answer must target an optional question in a later block. */
+const validateBlockRequireAnswerAction = (
+  ctx: TBlockActionContext,
+  targetElementId: string
+): z.core.$ZodIssue | undefined => {
+  const { blockIndex, logicIndex, allElements } = ctx;
+  const targetElementInfo = allElements.get(targetElementId);
+
+  if (!targetElementInfo) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Element ID ${targetElementId} does not exist for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+
+  // Check if element is in the current block (not allowed)
+  if (targetElementInfo.block === blockIndex) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Element ${targetElementId} cannot be in the current block for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}. RequireAnswer must target elements in other blocks.`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+
+  // Check if element is in a previous block (should target future blocks)
+  if (targetElementInfo.block < blockIndex) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Element ${targetElementId} is in a previous block (block ${String(targetElementInfo.block + 1)}). RequireAnswer should target elements in future blocks after block ${String(blockIndex + 1)}.`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+
+  // Check if element is optional (not required)
+  if (targetElementInfo.data.required) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Element ${targetElementId} in block ${String(targetElementInfo.block + 1)} is already required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+  return undefined;
+};
+
+/** A jump must go to a block or an ending that exists, and not to its own block. */
+const validateBlockJumpAction = (
+  ctx: TBlockActionContext,
+  targetBlockId: string
+): z.core.$ZodIssue | undefined => {
+  const { survey, blockIndex, logicIndex, currentBlock } = ctx;
+  const possibleTargets = [...survey.blocks.map((b) => b.id), ...survey.endings.map((ending) => ending.id)];
+
+  if (!possibleTargets.includes(targetBlockId)) {
+    // Named by the owning block's title, never the missing target's id: the id is internal and
+    // the block it pointed at no longer exists to be named.
+    return {
+      code: "custom",
+      message: `Conditional Logic: Jump destination in rule ${String(logicIndex + 1)} of "${getBlockLabel(currentBlock, blockIndex)}" no longer exists. Choose a valid destination.`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+      params: { missingLogicDestination: "jump" },
+    };
+  }
+
+  // Cannot jump to the current block
+  if (targetBlockId === currentBlock.id) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Cannot jump to the current block in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+  return undefined;
+};
+
 const validateBlockActions = (
   survey: TSurvey,
   blockIndex: number,
@@ -4071,181 +4266,21 @@ const validateBlockActions = (
   currentBlock: TSurveyBlock,
   allElements: Map<string, { block: number; element: number; data: TSurveyElement }>
 ): z.core.$ZodIssue[] => {
+  const ctx: TBlockActionContext = { survey, blockIndex, logicIndex, currentBlock, allElements };
   const expressionIssues: z.core.$ZodIssue[] = [];
 
   const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action, actionIndex) => {
-    if (action.objective === "calculate") {
-      const variable = findLogicComputedField(survey, action.variableId);
-
-      if (!variable) {
-        return {
-          code: "custom",
-          message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex],
-        };
-      }
-
-      // Set value (ENG-6935): the expression's types and its result against the field, each issue at
-      // its exact path into the tree.
-      if (action.value.type === "expression") {
-        const valuePath = [
-          "blocks",
-          blockIndex,
-          "logic",
-          logicIndex,
-          "actions",
-          actionIndex,
-          "value",
-          "value",
-        ];
-        for (const issue of getSetValueExpressionIssues(
-          action.value.value,
-          variable.dataType,
-          getExpressionTypeContext(survey, allElements)
-        )) {
-          expressionIssues.push({
-            code: "custom",
-            message: issue.message,
-            path: [...valuePath, ...issue.path],
-          });
-        }
+    switch (action.objective) {
+      case "calculate":
+        return validateBlockCalculateAction(ctx, action, actionIndex, expressionIssues);
+      case "requireAnswer":
+        return validateBlockRequireAnswerAction(ctx, action.target);
+      case "jumpToBlock":
+        return validateBlockJumpAction(ctx, action.target);
+      default:
+        // `markLowQuality` (ENG-6933) has nothing to check: it takes no target.
         return undefined;
-      }
-
-      // The one-step operators predate dates; a computed date is set with a formula.
-      if (variable.type === "date") {
-        return {
-          code: "custom",
-          message: `Conditional Logic: A date field is set with a formula in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
-        };
-      }
-
-      if (action.value.type === "variable") {
-        const selectedVariable = findLogicComputedField(survey, action.value.value);
-
-        if (selectedVariable?.type !== variable.type) {
-          return {
-            code: "custom",
-            message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-            path: ["blocks", blockIndex, "logic", logicIndex],
-          };
-        }
-      }
-
-      if (variable.type === "text") {
-        if (action.value.type === "element") {
-          const allowedElements: TSurveyElementTypeEnum[] = [
-            TSurveyElementTypeEnum.OpenText,
-            TSurveyElementTypeEnum.MultipleChoiceSingle,
-            TSurveyElementTypeEnum.Rating,
-            TSurveyElementTypeEnum.NPS,
-            TSurveyElementTypeEnum.Date,
-          ];
-
-          const selectedElement = allElements.get(action.value.value);
-
-          if (!selectedElement || !allowedElements.includes(selectedElement.data.type)) {
-            return {
-              code: "custom",
-              message: `Conditional Logic: Invalid element type for text variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "logic", logicIndex],
-            };
-          }
-        }
-
-        return undefined;
-      }
-
-      if (action.value.type === "element") {
-        const allowedElements: TSurveyElementTypeEnum[] = [
-          TSurveyElementTypeEnum.Rating,
-          TSurveyElementTypeEnum.NPS,
-        ];
-
-        const selectedElement = allElements.get(action.value.value);
-
-        if (
-          !selectedElement ||
-          (!allowedElements.includes(selectedElement.data.type) &&
-            selectedElement.data.type === TSurveyElementTypeEnum.OpenText &&
-            selectedElement.data.inputType !== "number")
-        ) {
-          return {
-            code: "custom",
-            message: `Conditional Logic: Invalid element type for number variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-            path: ["blocks", blockIndex, "logic", logicIndex],
-          };
-        }
-      }
-    } else if (action.objective === "requireAnswer") {
-      // requireAnswer must target an element OUTSIDE the current block (in a future block)
-      const targetElementId = action.target;
-      const targetElementInfo = allElements.get(targetElementId);
-
-      if (!targetElementInfo) {
-        return {
-          code: "custom",
-          message: `Conditional Logic: Element ID ${targetElementId} does not exist for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex],
-        };
-      }
-
-      // Check if element is in the current block (not allowed)
-      if (targetElementInfo.block === blockIndex) {
-        return {
-          code: "custom",
-          message: `Conditional Logic: Element ${targetElementId} cannot be in the current block for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}. RequireAnswer must target elements in other blocks.`,
-          path: ["blocks", blockIndex, "logic", logicIndex],
-        };
-      }
-
-      // Check if element is in a previous block (should target future blocks)
-      if (targetElementInfo.block < blockIndex) {
-        return {
-          code: "custom",
-          message: `Conditional Logic: Element ${targetElementId} is in a previous block (block ${String(targetElementInfo.block + 1)}). RequireAnswer should target elements in future blocks after block ${String(blockIndex + 1)}.`,
-          path: ["blocks", blockIndex, "logic", logicIndex],
-        };
-      }
-
-      // Check if element is optional (not required)
-      if (targetElementInfo.data.required) {
-        return {
-          code: "custom",
-          message: `Conditional Logic: Element ${targetElementId} in block ${String(targetElementInfo.block + 1)} is already required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex],
-        };
-      }
-    } else if (action.objective === "jumpToBlock") {
-      const targetBlockId = action.target;
-      const blockIds = survey.blocks.map((b) => b.id);
-      const endingIds = survey.endings.map((ending) => ending.id);
-      const possibleTargets = [...blockIds, ...endingIds];
-
-      if (!possibleTargets.includes(targetBlockId)) {
-        // Named by the owning block's title, never the missing target's id: the id is internal and
-        // the block it pointed at no longer exists to be named.
-        return {
-          code: "custom",
-          message: `Conditional Logic: Jump destination in rule ${String(logicIndex + 1)} of "${getBlockLabel(currentBlock, blockIndex)}" no longer exists. Choose a valid destination.`,
-          path: ["blocks", blockIndex, "logic", logicIndex],
-          params: { missingLogicDestination: "jump" },
-        };
-      }
-
-      // Cannot jump to the current block
-      if (targetBlockId === currentBlock.id) {
-        return {
-          code: "custom",
-          message: `Conditional Logic: Cannot jump to the current block in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
-          path: ["blocks", blockIndex, "logic", logicIndex],
-        };
-      }
     }
-    // `markLowQuality` (ENG-6933) has nothing to check: it takes no target.
-
-    return undefined;
   });
 
   const jumpToBlockActions = actions.filter((action) => action.objective === "jumpToBlock");
@@ -4379,15 +4414,7 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
   createdAt: true,
   updatedAt: true,
   followUps: true,
-  // Omitted deliberately, and it stays omitted after ENG-3228 made `embeddedFields` accepted input
-  // elsewhere: this schema is the v1 `PUT /api/v1/management/surveys/{id}` boundary, which re-parses
-  // the loaded survey merged with the caller's patch. Admitting the key would hand `updateSurvey` the
-  // survey's OWN inlined rows as a desired set on every legacy PUT, turning what the columns say into
-  // a no-op. Omitting STRIPS rather than rejects, so a caller that sends it simply takes the legacy
-  // path. Callers that hand `updateSurvey` a raw `TSurvey` (the editor's save actions) never go
-  // through this schema and keep the V2 carrier.
-  embeddedFields: true,
-  // ENG-2949: stripped, like `embeddedFields`. This is the legacy v1 PUT boundary, which ignores a
+  // ENG-2949: stripped. This is the legacy v1 PUT boundary, which ignores a
   // `customCss` key like any other unknown one; omitting it here means the merged round-trip never hands
   // the stored value to `updateSurvey`, which then leaves the survey's CSS untouched.
   customCss: true,
@@ -4413,7 +4440,15 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
       updatedAt: z.coerce.date(),
     })
   )
-  .superRefine(surveyRefinement);
+  .superRefine(surveyRefinement)
+  // `embeddedFields` is read by the refinement and never output. This schema is the v1
+  // `PUT /api/v1/management/surveys/{id}` boundary, which re-parses the loaded survey merged with the
+  // caller's patch. Output, the key would hand `updateSurvey` a desired set on every legacy PUT, turning
+  // what the legacy columns say into a no-op, so the PUT stays a legacy write. Read, it is what logic
+  // resolves against that the legacy columns can't say (a computed date, ENG-6935): the route sets it
+  // to the rows the write will leave the survey with (`getLegacyWriteEmbeddedFields`), over whatever
+  // the caller sent.
+  .transform(({ embeddedFields: _validatedOnly, ...survey }) => survey);
 
 // Helper function to make all properties of a Zod object schema optional
 const makeSchemaOptional = <T extends z.ZodRawShape>(

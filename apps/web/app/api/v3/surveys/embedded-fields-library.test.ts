@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { getV3LibraryFieldIdsByKey, resolveV3EmbeddedFieldLibraryKeys } from "./embedded-fields-library";
+import { prepareV3SurveyCreateInput } from "./prepare";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({
@@ -112,6 +113,50 @@ describe("resolveV3EmbeddedFieldLibraryKeys (ENG-6930)", () => {
 
     expect(result.ok ? [] : result.invalidParams.map((param) => param.name)).toEqual([
       "embeddedFields.0.source",
+    ]);
+  });
+
+  test("keeps a key the caller sent beside the library key, so the strict schema still sees it", async () => {
+    const result = await resolveV3EmbeddedFieldLibraryKeys(workspaceId, {
+      embeddedFields: [{ key: "plan_tier", foo: 1, name: "Mine" }],
+    });
+
+    expect(result.ok && (result.input as { embeddedFields: unknown[] }).embeddedFields[0]).toEqual({
+      storageKey: "plan_tier",
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+      dataType: "string",
+      defaultValue: "free",
+      locked: true,
+      foo: 1,
+    });
+  });
+
+  test("a typo'd key beside a library key is refused at its path, as validate runs it", async () => {
+    // validate (create) resolves library keys, then prepares the resolved body.
+    const result = await resolveV3EmbeddedFieldLibraryKeys(workspaceId, {
+      workspaceId,
+      name: "Product Feedback",
+      defaultLanguage: "en-US",
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [{ id: "q1", type: "openText", headline: { "en-US": "Why?" }, required: true }],
+        },
+      ],
+      embeddedFields: [{ key: "plan_tier", storagekey: "plan" }],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const preparation = prepareV3SurveyCreateInput(result.input);
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.validation.invalidParams.map((param) => param.name)).toEqual([
+      "embeddedFields.0.storagekey",
     ]);
   });
 

@@ -119,8 +119,8 @@ export const getResponseCardRows = ({
 
     if (isValidValue(data[element.id])) return { type: "answer" };
 
-    const isSkipped =
-      finished || (skippedGroups.length > 0 && !skippedGroups[skippedGroups.length - 1].includes(element.id));
+    const lastGroup = skippedGroups.at(-1);
+    const isSkipped = finished || (lastGroup !== undefined && !lastGroup.includes(element.id));
     return { type: isSkipped ? "skipped" : "aborted", elementIds: skipped };
   });
 };

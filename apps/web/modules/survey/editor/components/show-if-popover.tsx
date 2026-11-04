@@ -45,16 +45,19 @@ export function ShowIfPopover({
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
-        <span className="inline-flex">
+        <button
+          type="button"
+          className="inline-flex rounded-full focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+          aria-label={t("workspace.surveys.edit.flow.edit_show_if", { conditions: summary })}
+          // The block header's badge sits inside the row's toggle: don't collapse the block.
+          onClick={(event) => event.stopPropagation()}>
           <Badge
             type="gray"
             size="tiny"
             icon={<EyeIcon />}
             text={t("workspace.surveys.edit.flow.show_if", { conditions: summary })}
-            aria-label={t("workspace.surveys.edit.flow.edit_show_if", { conditions: summary })}
-            onClick={() => onOpenChange(!isOpen)}
           />
-        </span>
+        </button>
       </PopoverTrigger>
       {/* Mounted only while open: its scope is computed for the open popover alone. */}
       {isOpen && (

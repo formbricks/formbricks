@@ -252,10 +252,18 @@ export function LogicEditorActions({
                         value={action.operator}
                         onChangeValue={(val: string | number | string[]) => {
                           if (val === USE_FORMULA) {
-                            handleValuesChange(idx, {
-                              operator: "assign",
-                              value: { type: "expression", value: oneStepToFormula(action) },
-                            });
+                            // Narrowed again: the closure doesn't keep the row's narrowing.
+                            if (action.value.type !== "expression") {
+                              const formula = oneStepToFormula({
+                                variableId: action.variableId,
+                                operator: action.operator,
+                                value: action.value,
+                              });
+                              handleValuesChange(idx, {
+                                operator: "assign",
+                                value: { type: "expression", value: formula },
+                              });
+                            }
                             return;
                           }
                           handleValuesChange(idx, {

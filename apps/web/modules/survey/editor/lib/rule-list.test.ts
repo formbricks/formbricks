@@ -55,11 +55,13 @@ describe("rule list operations work on any list of rules", () => {
     expect(duplicateRule(rules, 1)).toHaveLength(5);
   });
 
-  test("a rule whose last condition is removed is removed", () => {
+  test("a rule whose last condition is removed stays, always running, with its actions (ADR 0025)", () => {
     const rules = overallRules();
     const emptied = updateRuleConditions(rules, 0, (group) => ({ ...group, conditions: [] }));
 
-    expect(ruleIds(emptied)).toEqual(ruleIds(rules).slice(1));
+    expect(ruleIds(emptied)).toEqual(ruleIds(rules));
+    expect(emptied[0].conditions).toEqual({ ...rules[0].conditions, conditions: [] });
+    expect(emptied[0].actions).toEqual(rules[0].actions);
   });
 
   test("changing conditions or actions changes only that rule", () => {
@@ -135,8 +137,9 @@ describe("new rules from the Add logic menu", () => {
     }));
 
     expect(withCondition[0].conditions.conditions).toHaveLength(1);
-    // Removing the condition again from a calculation removes the rule, as the editor always did.
-    expect(updateRuleConditions(withCondition, 0, (group) => ({ ...group, conditions: [] }))).toEqual([]);
+    // Removing the condition again makes it always run again; its formula stays.
+    const emptied = updateRuleConditions(withCondition, 0, (group) => ({ ...group, conditions: [] }));
+    expect(emptied).toEqual([{ ...step, conditions: { ...step.conditions, conditions: [] } }]);
   });
 });
 

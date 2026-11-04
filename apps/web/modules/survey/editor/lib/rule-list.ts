@@ -35,7 +35,10 @@ export const duplicateRule = (rules: TSurveyBlockLogic[], ruleIdx: number): TSur
   return next;
 };
 
-/** Changes a rule's conditions. A rule left with no condition is removed, as the editor always did. */
+/**
+ * Changes a rule's conditions. A rule left with no condition stays, with its actions: an empty group
+ * always runs (ADR 0025), which the editor shows as "Always runs". Removing the rule is its own action.
+ */
 export const updateRuleConditions = (
   rules: TSurveyBlockLogic[],
   ruleIdx: number,
@@ -44,7 +47,6 @@ export const updateRuleConditions = (
   const rule = rules[ruleIdx];
   if (!rule) return rules;
   const conditions = updater(structuredClone(rule.conditions));
-  if (conditions.conditions.length === 0) return removeRule(rules, ruleIdx);
   return rules.map((item, idx) => (idx === ruleIdx ? { ...item, conditions } : item));
 };
 

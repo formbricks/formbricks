@@ -151,7 +151,7 @@ export function BlockConditional({
     const shownIds = shownElementIdsKey === "" ? [] : shownElementIdsKey.split("|");
     const revealed = getRevealedElementIds(shownElementIdsRef.current, shownIds);
     shownElementIdsRef.current = shownIds;
-    const lastRevealed = revealed[revealed.length - 1];
+    const lastRevealed = revealed.at(-1);
     if (lastRevealed === undefined) return;
     requestAnimationFrame(() => {
       elementFormRefs.current.get(lastRevealed)?.scrollIntoView({ block: "nearest" });

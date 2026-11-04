@@ -52,7 +52,7 @@ export interface TFormulaReference {
   blockIdx?: number;
 }
 
-const PLAIN_TOKEN = /^[A-Za-z0-9_]+$/;
+const PLAIN_TOKEN = /^\w+$/;
 
 /** How a token reads after `@`: bare when it is a plain identifier, braced otherwise. */
 export const formatReferenceToken = (token: string): string =>
@@ -154,15 +154,11 @@ export const getFormulaIssues = (
 export const oneStepToFormula = (action: {
   variableId: string;
   operator: string;
-  value: { type: string; value: unknown };
+  value: { type: string; value: string | number };
 }): TExpression => {
   const operand: TExpression =
     action.value.type === "static"
-      ? {
-          type: "static",
-          value:
-            typeof action.value.value === "number" ? action.value.value : String(action.value.value ?? ""),
-        }
+      ? { type: "static", value: action.value.value }
       : ({ type: action.value.type, value: String(action.value.value) } as TExpression);
 
   const current = (fallback: number | string): TExpression => ({
@@ -227,13 +223,15 @@ const ATOM_PRECEDENCE = 3;
 const getInfix = (node: TExpressionCall) => {
   const infix = INFIX[node.fn];
   if (!infix) return undefined;
-  return (infix.flat ? node.args.length >= 2 : node.args.length === 2) ? infix : undefined;
+  const readsAsOperator = infix.flat ? node.args.length >= 2 : node.args.length === 2;
+  return readsAsOperator ? infix : undefined;
 };
 
 const precedenceOf = (node: TExpression): number =>
   node.type === "call" ? (getInfix(node)?.precedence ?? ATOM_PRECEDENCE) : ATOM_PRECEDENCE;
 
-const quoteText = (text: string): string => `"${text.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
+const quoteText = (text: string): string =>
+  `"${text.replaceAll("\\", String.raw`\\`).replaceAll('"', String.raw`\"`)}"`;
 
 /**
  * A tree as the text the formula box shows. Parsing the result gives the same tree back, brackets
@@ -331,73 +329,90 @@ const OPERATOR_ALIASES: Record<string, "+" | "-" | "*" | "/" | "(" | ")" | ","> 
 
 const QUOTES: Record<string, string> = { '"': '"', "'": "'", "“": "”" };
 
+/** One token read at a position: the token, and where the next one starts. */
+type TTokenRead = { token: TToken; next: number };
+type TTokenReader = (text: string, idx: number) => TTokenRead | undefined;
+
+const readOperator: TTokenReader = (text, idx) => {
+  const operator = OPERATOR_ALIASES[text[idx]];
+  if (!operator) return undefined;
+  return { token: { kind: "operator", value: operator, position: idx }, next: idx + 1 };
+};
+
+const readNumber: TTokenReader = (text, idx) => {
+  const number = /^(\d+(\.\d+)?|\.\d+)/.exec(text.slice(idx));
+  if (!number) return undefined;
+  return { token: { kind: "number", value: Number(number[0]), position: idx }, next: idx + number[0].length };
+};
+
+/** Quoted text, with `\` escaping the next character. */
+const readText: TTokenReader = (text, idx) => {
+  const closingQuote = QUOTES[text[idx]];
+  if (!closingQuote) return undefined;
+  let value = "";
+  let end = idx + 1;
+  while (end < text.length && text[end] !== closingQuote) {
+    if (text[end] === "\\" && end + 1 < text.length) end += 1;
+    value += text[end];
+    end += 1;
+  }
+  if (end >= text.length) throw new FormulaError({ code: "unclosed_text", position: idx });
+  if (value.length > EXPRESSION_MAX_STATIC_TEXT_LENGTH) {
+    throw new FormulaError({ code: "text_too_long", position: idx });
+  }
+  return { token: { kind: "text", value, position: idx }, next: end + 1 };
+};
+
+/** `@name`, or `@{a name with spaces}`. */
+const readReference: TTokenReader = (text, idx) => {
+  if (text[idx] !== "@") return undefined;
+  if (text[idx + 1] === "{") {
+    const end = text.indexOf("}", idx + 2);
+    if (end === -1) throw new FormulaError({ code: "unexpected_end", position: idx });
+    return {
+      token: { kind: "reference", value: text.slice(idx + 2, end).trim(), position: idx },
+      next: end + 1,
+    };
+  }
+  const reference = /^\w+/.exec(text.slice(idx + 1));
+  // An `@` with no name after it: one being picked from the menu, or left behind.
+  if (!reference) throw new FormulaError({ code: "incomplete_reference", position: idx });
+  return {
+    token: { kind: "reference", value: reference[0], position: idx },
+    next: idx + 1 + reference[0].length,
+  };
+};
+
+const readName: TTokenReader = (text, idx) => {
+  const name = /^[A-Za-z_]\w*/.exec(text.slice(idx));
+  if (!name) return undefined;
+  return { token: { kind: "name", value: name[0], position: idx }, next: idx + name[0].length };
+};
+
+/** Tried in order at each position; the first that reads a token wins. */
+const TOKEN_READERS: TTokenReader[] = [readOperator, readNumber, readText, readReference, readName];
+
+const readToken = (text: string, idx: number): TTokenRead | undefined => {
+  for (const reader of TOKEN_READERS) {
+    const read = reader(text, idx);
+    if (read) return read;
+  }
+  return undefined;
+};
+
 const tokenize = (text: string): TToken[] => {
   const tokens: TToken[] = [];
   let idx = 0;
 
   while (idx < text.length) {
-    const char = text[idx];
-    if (/\s/.test(char)) {
+    if (/\s/.test(text[idx])) {
       idx += 1;
       continue;
     }
-
-    const operator = OPERATOR_ALIASES[char];
-    if (operator) {
-      tokens.push({ kind: "operator", value: operator, position: idx });
-      idx += 1;
-      continue;
-    }
-
-    const number = /^(\d+(\.\d+)?|\.\d+)/.exec(text.slice(idx));
-    if (number) {
-      tokens.push({ kind: "number", value: Number(number[0]), position: idx });
-      idx += number[0].length;
-      continue;
-    }
-
-    const closingQuote = QUOTES[char];
-    if (closingQuote) {
-      let value = "";
-      let end = idx + 1;
-      while (end < text.length && text[end] !== closingQuote) {
-        if (text[end] === "\\" && end + 1 < text.length) end += 1;
-        value += text[end];
-        end += 1;
-      }
-      if (end >= text.length) throw new FormulaError({ code: "unclosed_text", position: idx });
-      if (value.length > EXPRESSION_MAX_STATIC_TEXT_LENGTH) {
-        throw new FormulaError({ code: "text_too_long", position: idx });
-      }
-      tokens.push({ kind: "text", value, position: idx });
-      idx = end + 1;
-      continue;
-    }
-
-    if (char === "@") {
-      if (text[idx + 1] === "{") {
-        const end = text.indexOf("}", idx + 2);
-        if (end === -1) throw new FormulaError({ code: "unexpected_end", position: idx });
-        tokens.push({ kind: "reference", value: text.slice(idx + 2, end).trim(), position: idx });
-        idx = end + 1;
-        continue;
-      }
-      const reference = /^[A-Za-z0-9_]+/.exec(text.slice(idx + 1));
-      // An `@` with no name after it: one being picked from the menu, or left behind.
-      if (!reference) throw new FormulaError({ code: "incomplete_reference", position: idx });
-      tokens.push({ kind: "reference", value: reference[0], position: idx });
-      idx += 1 + reference[0].length;
-      continue;
-    }
-
-    const name = /^[A-Za-z_][A-Za-z0-9_]*/.exec(text.slice(idx));
-    if (name) {
-      tokens.push({ kind: "name", value: name[0], position: idx });
-      idx += name[0].length;
-      continue;
-    }
-
-    throw new FormulaError({ code: "unexpected_character", position: idx, detail: char });
+    const read = readToken(text, idx);
+    if (!read) throw new FormulaError({ code: "unexpected_character", position: idx, detail: text[idx] });
+    tokens.push(read.token);
+    idx = read.next;
   }
 
   return tokens;

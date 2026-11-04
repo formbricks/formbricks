@@ -46,6 +46,7 @@ import { lockSurveyVisibility } from "@/lib/authzed/survey";
 import {
   assertLinkableEmbeddedFields,
   assertWritableEmbeddedFields,
+  getLegacyWriteEmbeddedFields,
   reconcileEmbeddedData,
 } from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
@@ -69,7 +70,8 @@ import {
   getDestinationSettingTurnedOn,
 } from "@/modules/ee/creatives/lib/linked-creatives";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
-import { syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasMatrixElement, syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -464,12 +466,22 @@ export type TUpdateSurveyOptions = {
   customCssPrincipal?: string;
 };
 
+/** Whether the workspace's organization is licensed for quotas; a workspace with none is not. */
+const getIsQuotasEnabledForWorkspace = async (workspaceId: string): Promise<boolean> => {
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
+  return organization ? getIsQuotasEnabled(organization.id) : false;
+};
+
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
   skipValidation = false,
   options: TUpdateSurveyOptions = {}
 ): Promise<TSurvey> => {
-  if (!skipValidation) {
+  // A legacy write (only `variables` / `hiddenFields`, the v1 PUT) is validated once the stored rows
+  // are read, against the rows it will leave the survey with: logic may set or read a computed date
+  // the legacy keys can't say (ENG-6935).
+  const isLegacyWrite = updatedSurvey.embeddedFields === undefined;
+  if (!skipValidation && !isLegacyWrite) {
     validateInputs([updatedSurvey, ZSurvey]);
   }
 
@@ -481,6 +493,16 @@ export const updateSurveyInternal = async (
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    if (!skipValidation && isLegacyWrite) {
+      validateInputs([
+        {
+          ...updatedSurvey,
+          embeddedFields: getLegacyWriteEmbeddedFields(currentSurvey.embeddedFields ?? [], updatedSurvey),
+        },
+        ZSurvey,
+      ]);
     }
 
     // Archived surveys are read-only. This covers every write path that flows through here
@@ -934,6 +956,13 @@ export const updateSurveyInternal = async (
       data.startLogic = Prisma.DbNull;
     }
 
+    // ENG-6934: the quotas' matrix conditions follow a row or column reorder only where quotas are
+    // licensed, as every other quota write is. The license is resolved here, outside the transaction.
+    const syncsQuotaMatrix =
+      Array.isArray(data.blocks) &&
+      hasMatrixElement(data.blocks) &&
+      (await getIsQuotasEnabledForWorkspace(currentSurvey.workspaceId));
+
     delete data.createdBy;
     const persistedSurvey = await prisma.$transaction(
       async (tx) => {
@@ -955,7 +984,7 @@ export const updateSurveyInternal = async (
         });
 
         // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
-        if (Array.isArray(data.blocks)) await syncQuotaMatrixConditions(tx, surveyId, data.blocks);
+        if (syncsQuotaMatrix) await syncQuotaMatrixConditions(tx, surveyId, data.blocks);
 
         // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
         // survey never commits without them. ENG-2412: from the PAYLOAD — the rows are the only place

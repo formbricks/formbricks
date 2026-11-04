@@ -9,6 +9,7 @@ import {
 import {
   type TDesiredEmbeddedField,
   type TLegacyEmbeddedFields,
+  isLegacySayableComputedType,
   linkedToDesiredEmbeddedFields,
   toDesiredEmbeddedFields,
   toLegacyEmbeddedFields,
@@ -126,12 +127,35 @@ const isSharedDesiredField = (entry: TDesiredEmbeddedField): entry is TSharedDes
  * read-modify-write PUT from an integration that has never heard of the library would quietly
  * localize every shared field the editor had linked.
  *
+ * A computed field the legacy shape cannot say at all — a computed date (ENG-6935), which the derived
+ * `variables` leave out — is kept, at its position, by a `variables` write that does not name its
+ * storage key: that write never saw it, so it cannot have meant to remove it.
+ *
  * `computed` and `ingested` are the only two sources carried over, and that is the whole set a row
  * can have: `ZEmbeddedData` rejects `source: "reserved"` outright, because reserved fields are a
  * code catalog projected at read time rather than anything stored. A `reserved` row is therefore
  * unrepresentable through every write path — and if one ever appeared through raw SQL, this would
  * drop it, which is the correct outcome for a row the schema says cannot exist.
  */
+/**
+ * The legacy `variables` a write sent, with the current computed fields the legacy shape has no word
+ * for put back at their stored positions (see {@link resolveDesiredEmbeddedFields}).
+ */
+const withUnsayableComputedFields = (
+  current: readonly TDesiredEmbeddedField[],
+  fromVariables: TDesiredEmbeddedField[]
+): TDesiredEmbeddedField[] => {
+  const named = new Set(fromVariables.map((entry) => entry.storageKey));
+  const result = [...fromVariables];
+  current
+    .filter((entry) => entry.source === "computed")
+    .forEach((entry, position) => {
+      if (isLegacySayableComputedType(entry.dataType) || named.has(entry.storageKey)) return;
+      result.splice(Math.min(position, result.length), 0, entry);
+    });
+  return result;
+};
+
 export const resolveDesiredEmbeddedFields = (
   current: TDesiredEmbeddedField[],
   patch: TEmbeddedDataPatch
@@ -163,13 +187,34 @@ export const resolveDesiredEmbeddedFields = (
   // `toDesiredEmbeddedFields` puts every computed field before every ingested one.
   return [
     ...(patch.variables !== undefined
-      ? fromLegacy(toDesiredEmbeddedFields({ variables: patch.variables }))
+      ? withUnsayableComputedFields(
+          current,
+          fromLegacy(toDesiredEmbeddedFields({ variables: patch.variables }))
+        )
       : carriedOver("computed")),
     ...(patch.hiddenFields !== undefined
       ? fromLegacy(toDesiredEmbeddedFields({ hiddenFields: patch.hiddenFields }))
       : carriedOver("ingested")),
   ];
 };
+
+/**
+ * The Embedded Data a legacy write (only `variables` / `hiddenFields`, the v1 PUT) leaves the survey
+ * with, as the `{ field, link }` pairs the `ZSurvey` refinement resolves logic against: the legacy keys
+ * merged over the stored rows exactly as the reconcile will merge them, so a computed date the legacy
+ * keys can't say (ENG-6935) still resolves. For validation only: the write itself stays a legacy one,
+ * so it never writes these rows back as a desired set.
+ */
+export const getLegacyWriteEmbeddedFields = (
+  stored: readonly TLinkedEmbeddedField[],
+  legacy: TLegacyEmbeddedFields
+): TLinkedEmbeddedField[] =>
+  resolveDesiredEmbeddedFields(linkedToDesiredEmbeddedFields(stored), legacy).map(
+    ({ storageKey, embeddedDataId, ...field }) => ({
+      field: embeddedDataId === undefined ? field : { ...field, id: embeddedDataId },
+      link: { storageKey },
+    })
+  );
 
 /**
  * Prisma distinguishes a JSON `null` from a SQL `NULL` on a nullable Json column, so "this field has

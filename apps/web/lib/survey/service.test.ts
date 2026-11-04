@@ -29,6 +29,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   mockActionClass,
@@ -75,7 +76,13 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsQuotasEnabled: vi.fn(),
+}));
+
 beforeEach(() => {
+  vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
   // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
@@ -452,6 +459,49 @@ describe("Tests for updateSurvey", () => {
           ]),
         })
       );
+    });
+
+    describe("the quotas' matrix conditions (ENG-6934)", () => {
+      const matrixBlock = {
+        id: "clmatrixblock0000000000001",
+        name: "Grid",
+        elements: [
+          {
+            id: "grid",
+            type: "matrix",
+            headline: { default: "Rate" },
+            required: false,
+            shuffleOption: "none",
+            rows: [{ id: "netflix", label: { default: "Netflix" } }],
+            columns: [{ id: "good", label: { default: "Good" } }],
+          },
+        ],
+      };
+      const withMatrix = {
+        ...updateSurveyInput,
+        blocks: [...updateSurveyInput.blocks, matrixBlock],
+      } as unknown as TSurvey;
+
+      test("follows a matrix reorder where quotas are licensed", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.surveyQuota.findMany.mockResolvedValueOnce([]);
+
+        await updateSurvey(withMatrix);
+
+        expect(getIsQuotasEnabled).toHaveBeenCalledWith(mockOrganizationOutput.id);
+        expect(prisma.surveyQuota.findMany).toHaveBeenCalled();
+      });
+
+      test("leaves the quotas alone where quotas are not licensed", async () => {
+        vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+        await updateSurvey(withMatrix);
+
+        expect(prisma.surveyQuota.findMany).not.toHaveBeenCalled();
+      });
     });
 
     // Note: Language handling tests (for languages.length > 0 fix) are covered in

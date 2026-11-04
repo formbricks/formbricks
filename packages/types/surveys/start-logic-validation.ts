@@ -3,7 +3,7 @@ import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
 import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
 import { getSetValueExpressionIssues } from "./expression-types";
-import { type TExpression, isExpressionTooDeep } from "./expressions";
+import { type TExpression, isExpressionOverLimits } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 
 /**
@@ -157,7 +157,7 @@ const validateExpressionAction = (
 
   const valuePath = [...path, "value", "value"];
   // Refused by the schema at its path; the walks below would descend the whole hostile tree.
-  if (isExpressionTooDeep(expression)) return undefined;
+  if (isExpressionOverLimits(expression)) return undefined;
   const answerPath = findElementLeafPath(expression, valuePath);
   if (answerPath) {
     return {
@@ -232,6 +232,16 @@ const validateAction = (
       return {
         code: "custom",
         message: `Conditional Logic: ${ruleLabel(ruleIdx)} can't set a value from an answer: nothing has been answered yet.`,
+        path: [...path, "value"],
+      };
+    }
+    if (
+      action.value.type === "hiddenField" &&
+      getFieldType(survey, action.value.value, "ingested") === undefined
+    ) {
+      return {
+        code: "custom",
+        message: `Conditional Logic: Hidden field ID ${action.value.value} does not exist in ${ruleLabel(ruleIdx)}`,
         path: [...path, "value"],
       };
     }
