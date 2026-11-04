@@ -1104,6 +1104,9 @@ export const editEmbeddedField = async (
  * (`condition-0-0-…`, `action-0-…`) are the ones the steps after it fill in.
  */
 export const addFlowRule = async (page: Page, blockNumber: number): Promise<void> => {
+  // The Flow tab opens with every block collapsed; a block's Add logic shows once it is open.
+  const expand = page.getByRole("button", { name: "Expand", exact: true });
+  if (await expand.isVisible()) await expand.click();
   await page
     .locator('[id^="flow-add-logic-"]:not([id="flow-add-logic-start"])')
     .nth(blockNumber - 1)

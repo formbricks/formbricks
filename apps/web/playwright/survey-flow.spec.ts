@@ -164,6 +164,8 @@ test.describe("Survey flow @slow", () => {
       await page.getByRole("button", { name: "Flow", exact: true }).click();
 
       await expect(page.getByText("6 blocks · 4 endings")).toBeVisible();
+      // Every block starts collapsed: open them all to see their questions and rules.
+      await page.getByRole("button", { name: "Expand", exact: true }).click();
 
       // Rules before the first question: the screen-out on a missing panel id jumps to its ending.
       await expect(page.getByText("Before the first question")).toBeVisible();
