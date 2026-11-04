@@ -1160,6 +1160,7 @@ describe("ResponseQueue", () => {
     // one list, since which instance does the sending is an implementation detail.
     let sent: TResponseUpdate[];
     let holdNextSend: boolean;
+    let failSends: boolean;
     let releaseHeldSend: () => void;
 
     const createQueue = (sharedState: SurveyState) => {
@@ -1167,6 +1168,9 @@ describe("ResponseQueue", () => {
       const instance = new ResponseQueue(config, sharedState);
       vi.spyOn(instance, "sendResponse").mockImplementation(async (update) => {
         sent.push(update);
+        if (failSends) {
+          return err({ code: "internal_server_error", message: "down", status: 500 });
+        }
         if (holdNextSend) {
           holdNextSend = false;
           await new Promise<void>((resolve) => {
@@ -1181,6 +1185,7 @@ describe("ResponseQueue", () => {
     beforeEach(() => {
       sent = [];
       holdNextSend = false;
+      failSends = false;
       releaseHeldSend = () => {};
     });
 
@@ -1217,17 +1222,26 @@ describe("ResponseQueue", () => {
       const sharedState = getSurveyState();
       sharedState.responseId = "response1";
 
-      // An older instance's send failed, so its update is still queued; survey.tsx runs Retry on the
-      // newest instance.
-      const older = createQueue(sharedState);
-      older.instance.queue.push(responseUpdate);
+      // The older instance's send fails through every retry, so its update stays queued; survey.tsx
+      // then runs Retry on the newest instance.
+      vi.useFakeTimers();
+      try {
+        failSends = true;
+        const older = createQueue(sharedState);
+        older.instance.add(responseUpdate);
+        await vi.advanceTimersByTimeAsync(3000); // 1s + 2s backoff for retryAttempts: 2
+        expect(older.config.onResponseSendingFailed).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
       const newest = createQueue(sharedState);
 
+      failSends = false;
       const result = await newest.instance.processQueue();
 
       expect(result).toEqual({ success: true });
-      expect(sent).toEqual([responseUpdate]);
-      expect(older.instance.queue).toHaveLength(0);
+      expect(sent).toEqual([responseUpdate, responseUpdate, responseUpdate]);
+      expect(newest.instance.queue).toHaveLength(0);
     });
   });
 });
