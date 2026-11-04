@@ -6,7 +6,7 @@ import { rateLimitConfigs } from "./rate-limit-configs";
 
 const { mockEval, mockRedisClient, mockGetRedisClient } = vi.hoisted(() => {
   const _mockEval = vi.fn();
-  const _mockRedisClient = { eval: _mockEval } as any;
+  const _mockRedisClient = { evalSha: _mockEval, eval: _mockEval };
   const _mockGetRedisClient = vi.fn().mockResolvedValue(_mockRedisClient);
   return { mockEval: _mockEval, mockRedisClient: _mockRedisClient, mockGetRedisClient: _mockGetRedisClient };
 });
@@ -21,6 +21,9 @@ vi.mock("@/lib/constants", () => ({
 vi.mock("@/lib/cache", () => ({
   cache: {
     getRedisClient: mockGetRedisClient,
+    runRedisOperation: vi.fn((operation: (client: typeof mockRedisClient) => Promise<unknown>) =>
+      operation(mockRedisClient)
+    ),
   },
 }));
 

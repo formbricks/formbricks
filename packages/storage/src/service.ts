@@ -6,12 +6,14 @@ import {
   HeadObjectCommand,
   paginateListObjectsV2,
 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import {
   type PresignedPost,
   type PresignedPostOptions,
   createPresignedPost,
 } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import type { Readable } from "node:stream";
 import { logger } from "@formbricks/logger";
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
@@ -85,12 +87,23 @@ export const getSignedUploadUrl = async (
   }
 };
 
+export interface SignedDownloadUrlOptions {
+  /** Seconds the URL stays valid. Defaults to 30 minutes. */
+  expiresIn?: number;
+  /** Signed into the URL as `response-content-disposition`, so the browser saves under this name. */
+  responseContentDisposition?: string;
+}
+
 /**
  * Get a signed URL for a file in S3
  * @param fileKey - The key of the file in S3
+ * @param options - Expiry and response headers to sign into the URL
  * @returns A Result containing the signed URL or an error: StorageError
  */
-export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<string, StorageError>> => {
+export const getSignedDownloadUrl = async (
+  fileKey: string,
+  { expiresIn = 60 * 30, responseContentDisposition }: SignedDownloadUrlOptions = {}
+): Promise<Result<string, StorageError>> => {
   try {
     const s3Client = createS3Client();
 
@@ -134,9 +147,10 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
     const getObjectCommand = new GetObjectCommand({
       Bucket: S3_BUCKET_NAME,
       Key: fileKey,
+      ResponseContentDisposition: responseContentDisposition,
     });
 
-    return ok(await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 60 * 30 }));
+    return ok(await getSignedUrl(s3Client, getObjectCommand, { expiresIn }));
   } catch (error) {
     logger.error({ error: toLoggableStorageError(error) }, "Failed to get signed download URL");
     return err({
@@ -206,6 +220,96 @@ export const getFileStream = async (fileKey: string): Promise<Result<FileStreamR
     return err({
       code: StorageErrorCode.Unknown,
     });
+  }
+};
+
+/**
+ * Multipart part size for {@link uploadFileStream}. Memory held per upload is roughly part size times
+ * queue size, so a multi-GB stream costs ~32 MB rather than its own length.
+ */
+export const UPLOAD_PART_SIZE_BYTES = 16 * 1024 * 1024;
+const UPLOAD_QUEUE_SIZE = 2;
+
+export interface UploadFileStreamOptions {
+  contentType: string;
+  /** Stored on the object, so every download carries it even where a signed override is ignored. */
+  contentDisposition?: string;
+  /** Aborting cancels the upload and its multipart upload, so no parts are left billed in the bucket. */
+  signal?: AbortSignal;
+}
+
+/**
+ * Upload a stream of unknown length to S3 as a multipart upload.
+ *
+ * Server-side counterpart to the presigned POST: for objects the server produces itself, such as an
+ * export archive, which can be larger than any single PUT allows.
+ * @param fileKey - The key of the file in S3
+ * @param body - The stream to upload; consumed exactly once
+ * @param options - Object metadata and an abort signal
+ * @returns A Result containing void or an error: StorageError
+ */
+export const uploadFileStream = async (
+  fileKey: string,
+  body: Readable,
+  { contentType, contentDisposition, signal }: UploadFileStreamOptions
+): Promise<Result<void, StorageError>> => {
+  const s3Client = createS3Client();
+
+  if (!s3Client) {
+    return err({
+      code: StorageErrorCode.S3ClientError,
+    });
+  }
+
+  if (!S3_BUCKET_NAME) {
+    return err({
+      code: StorageErrorCode.S3CredentialsError,
+    });
+  }
+
+  if (signal?.aborted) {
+    body.destroy();
+    return err({ code: StorageErrorCode.Unknown });
+  }
+
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: S3_BUCKET_NAME,
+      Key: fileKey,
+      Body: body,
+      ContentType: contentType,
+      ContentDisposition: contentDisposition,
+      CacheControl: "no-store",
+    },
+    partSize: UPLOAD_PART_SIZE_BYTES,
+    queueSize: UPLOAD_QUEUE_SIZE,
+    // Aborts the multipart upload on failure; otherwise uploaded parts linger, invisible and billed.
+    leavePartsOnError: false,
+  });
+
+  const onAbort = () => {
+    void upload.abort().catch((error: unknown) => {
+      logger.warn({ error: toLoggableStorageError(error) }, "Failed to abort upload");
+    });
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
+
+  try {
+    await upload.done();
+    return ok(undefined);
+  } catch (error) {
+    body.destroy();
+    if (signal?.aborted) {
+      logger.warn("Upload aborted");
+    } else {
+      logger.error({ error: toLoggableStorageError(error) }, "Failed to upload file stream");
+    }
+    return err({
+      code: StorageErrorCode.Unknown,
+    });
+  } finally {
+    signal?.removeEventListener("abort", onAbort);
   }
 };
 

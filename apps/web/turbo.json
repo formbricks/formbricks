@@ -13,6 +13,7 @@
         "POSTHOG_KEY",
         "S3_ENDPOINT_URL",
         "SENTRY_AUTH_TOKEN",
+        "SMTP_REQUIRE_TLS",
         "WEBAPP_URL",
         "FORMBRICKS_DEPLOYMENT_ID"
       ],

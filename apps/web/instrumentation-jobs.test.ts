@@ -49,11 +49,18 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
 // handles, so the env-derived timing it pairs with each job stays under test.
 vi.mock("@formbricks/jobs", () => ({
   ONE_SHOT_JOB_NAMES: {
+    attachmentExport: "attachment-export.process",
     responsePipeline: "response-pipeline.process",
     webhookDelivery: "webhook-delivery.process",
     workflowRun: "workflow-run.process",
   },
   recurringJobs: {
+    attachmentExportReconcile: {
+      name: "attachment-export.reconcile",
+      scheduleId: "attachment-export-reconcile",
+      scope: "global",
+      upsert: vi.fn(),
+    },
     emailAuditMaintenance: {
       name: "email-audit.maintain",
       scheduleId: "email-audit-maintenance",
@@ -149,6 +156,12 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
+vi.mock("@/modules/storage/attachment-export/process-attachment-export-job", () => ({
+  processAttachmentExportJob: vi.fn(),
+}));
+vi.mock("@/modules/storage/attachment-export/process-attachment-export-reconcile-job", () => ({
+  processAttachmentExportReconcileJob: vi.fn(),
+}));
 vi.mock("@/modules/response-pipeline/lib/process-response-pipeline-job", () => ({
   processResponsePipelineJob: mockProcessResponsePipelineJob,
 }));
@@ -305,6 +318,8 @@ describe("instrumentation-jobs", () => {
       manageSignals: true,
       concurrency: 4,
       jobHandlerOverrides: {
+        "attachment-export.process": expect.any(Function),
+        "attachment-export.reconcile": expect.any(Function),
         "authzed-projection.deliver": expect.any(Function),
         "authzed-reconciliation.audit": expect.any(Function),
         "authzed-survey.audit": expect.any(Function),
