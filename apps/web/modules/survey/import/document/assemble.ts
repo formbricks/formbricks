@@ -546,8 +546,11 @@ class DocumentDraftBuilder {
     operator: TDocumentPlanRule["operator"],
     values: readonly string[]
   ): TCondition | null {
-    const numbers = values.map((value) => Number(collapseWhitespace(value)));
-    if (numbers.length === 0 || numbers.some((value) => !Number.isFinite(value))) return null;
+    // An empty value is no number: `Number("")` is 0, which would turn the rule into "equals 0".
+    const texts = values.map((value) => collapseWhitespace(value));
+    if (texts.length === 0 || texts.some((text) => text === "")) return null;
+    const numbers = texts.map(Number);
+    if (numbers.some((value) => !Number.isFinite(value))) return null;
     if (operator === "isAnyOf") {
       return numbers.length === 1
         ? singleCondition(elementId, "equals", numbers[0])

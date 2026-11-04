@@ -655,6 +655,7 @@ describe("assembleDocumentDraft: skips", () => {
   test.each([
     ["a value that is not a number", "nps", "number", "equals", ["high"]],
     ["no value", "nps", "number", "equals", []],
+    ["an empty value, which Number() reads as 0", "nps", "number", "equals", ["  "]],
     ["a comparison with two numbers", "nps", "number", "isGreaterThan", ["3", "4"]],
     ["a text answer", "openText", "text", "equals", ["18"]],
     ["a question with no answer to compare", "date", "text", "equals", ["1"]],
