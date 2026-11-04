@@ -1,5 +1,4 @@
 import "server-only";
-import { createHash } from "node:crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { cache } from "@/lib/cache";
 
@@ -27,10 +26,13 @@ export const withCachedDashboardDecision = async <T extends object>(
 ): Promise<Response | T> => {
   if (!principal) return decide();
 
-  const digest = createHash("sha256")
-    .update(JSON.stringify([principal, dashboard.updatedAt.toISOString(), decision]))
-    .digest("hex");
-  const key = createCacheKey.custom("analytics", dashboard.id, `read-decision:${digest}`);
+  // The principal is a user or API key id, and the decision names a dataset by id: nothing secret, and
+  // short, so the key holds them as they are.
+  const key = createCacheKey.custom(
+    "analytics",
+    dashboard.id,
+    `read-decision:${principal}:${dashboard.updatedAt.getTime()}:${decision}`
+  );
 
   const cached = await cache.get<T>(key);
   if (cached.ok && cached.data) return cached.data;
