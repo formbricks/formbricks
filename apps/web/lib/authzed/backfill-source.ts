@@ -559,19 +559,11 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
   const directorySource = getFeedbackDirectorySource(feedbackDirectories, organizationId);
 
   const expectedRelationships: TAuthzedRelationship[] = [
-    // A role that projects to no relation (`dashboard_viewer`, ADR-0018) expects none.
-    ...memberships.flatMap(({ role, userId }) => {
-      const relation = ORGANIZATION_RELATIONS[role];
-      return relation === null
-        ? []
-        : [
-            {
-              relation,
-              resource: { objectId: organizationId, objectType: "organization" },
-              subject: { objectId: userId, objectType: "user" },
-            },
-          ];
-    }),
+    ...memberships.map(({ role, userId }) => ({
+      relation: ORGANIZATION_RELATIONS[role],
+      resource: { objectId: organizationId, objectType: "organization" },
+      subject: { objectId: userId, objectType: "user" },
+    })),
     ...teams.map(({ id, organizationId: teamOrganizationId }) => ({
       relation: "organization",
       resource: { objectId: id, objectType: "team" },

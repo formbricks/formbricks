@@ -2,38 +2,28 @@ import "server-only";
 import { can } from "@/lib/authorization";
 import { getFeedbackDirectoryAssignmentAuthorizationAction } from "@/lib/authorization/permission-action";
 import {
-  canDashboardViewerReadFeedbackDataset,
-  canDashboardViewerReadWorkspace,
-} from "@/modules/ee/analysis/lib/dashboard-viewer-access";
-import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+  getIsDashboardViewerRoleEnabled,
+  getIsDashboardsEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess } from "./auth";
 import { problemDashboardsPlanRequired, problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
-import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
+import type { V3WorkspaceContext } from "./workspace-context";
 
 /**
- * Opt-in for the dashboard-bound reads a Dashboard viewer may make (ADR-0018): the dashboard list and
- * read, a saved chart's data through its dashboard, and a dashboard filter's value list. Without it a
- * viewer is refused like anyone SpiceDB denies. It only ever widens a `read`: a write never admits a
- * viewer, whatever the caller passes.
+ * Opt-in for the dashboard-bound reads a Dashboard viewer may make (ADR-0023): the dashboard list and
+ * read, a saved chart's data through its dashboard, and a dashboard filter's value list. They are decided
+ * by `workspace.dashboard_read` and `feedbackDirectoryAssignment.dashboard_read` in SpiceDB, which admit
+ * the workspace's viewers; without the option the caller is asked for `read`, which viewers never hold.
+ * It only ever changes a `read`: a write is never asked as a dashboard read, whatever the caller passes.
  */
 export type TDashboardViewerAccessOptions = Readonly<{ allowDashboardViewer?: boolean }>;
 
-/**
- * The SpiceDB denial a viewer may get past: a signed-in user (session or OAuth token, never an API key)
- * refused a `read` with 403. Anything else (401, a missing workspace answered as 403 for an API key, a
- * write) stands.
- */
-const getViewerCandidate = (
-  authentication: TV3Authentication,
+const isDashboardRead = (
   minPermission: TTeamPermission,
-  options: TDashboardViewerAccessOptions | undefined,
-  refusal: Response
-): string | null => {
-  if (!options?.allowDashboardViewer || minPermission !== "read" || refusal.status !== 403) return null;
-  return getV3SessionUserId(authentication);
-};
+  options: TDashboardViewerAccessOptions | undefined
+): boolean => options?.allowDashboardViewer === true && minPermission === "read";
 
 /**
  * The gate every chart and dashboard operation runs first (ENG-6584): workspace access at
@@ -62,13 +52,32 @@ export async function requireDashboardsAccess(
     instance
   );
   if (context instanceof Response) {
-    // SpiceDB is asked first, so everyone but a Dashboard viewer costs exactly the one check it always
-    // did; the viewer grant is consulted only after a denial, and answers the same 403 when it too says no.
-    const viewerId = getViewerCandidate(authentication, minPermission, options, context);
-    if (!viewerId || !(await canDashboardViewerReadWorkspace(viewerId, workspaceId))) {
+    // `read` is asked first, so everyone but a Dashboard viewer costs exactly the one check it always
+    // did. Only a signed-in user refused with 403 on a dashboard-bound read is asked `dashboard_read`;
+    // SpiceDB grants that without `read` to a Dashboard viewer alone, so the viewer's own entitlement
+    // (Access Control) is checked here, and a lapsed plan answers the same 403.
+    if (
+      !isDashboardRead(minPermission, options) ||
+      context.status !== 403 ||
+      !getV3SessionUserId(authentication)
+    ) {
       return context;
     }
-    context = await resolveV3WorkspaceContext(workspaceId);
+    const refusal = context;
+    const viewerContext = await requireV3WorkspaceAccess(
+      authentication,
+      workspaceId,
+      "dashboardRead",
+      requestId,
+      instance
+    );
+    if (
+      viewerContext instanceof Response ||
+      !(await getIsDashboardViewerRoleEnabled(viewerContext.organizationId))
+    ) {
+      return refusal;
+    }
+    context = viewerContext;
   }
 
   if (!(await getIsDashboardsEnabled(context.organizationId))) {
@@ -103,23 +112,16 @@ export async function refuseUnlessFeedbackDatasetAccess(
     return problemUnauthorized(requestId, "Not authenticated", instance);
   }
 
-  const allowed = await can(actor, getFeedbackDirectoryAssignmentAuthorizationAction(minPermission), {
+  // Only the dashboard-bound reads pass `allowDashboardViewer` (ADR-0023), and ask `dashboard_read`: `read`
+  // plus the workspace's Dashboard viewers. The free-form chart query and the field-value lookup never
+  // do, so a viewer can only read a dataset through a saved chart on a dashboard.
+  const level = isDashboardRead(minPermission, options) ? "dashboardRead" : minPermission;
+  const allowed = await can(actor, getFeedbackDirectoryAssignmentAuthorizationAction(level), {
     type: "feedbackDirectoryAssignment",
     feedbackDirectoryId: datasetId,
     workspaceId: context.workspaceId,
   });
   if (allowed) return null;
 
-  const refusal = problemForbidden(
-    requestId,
-    "You are not authorized to use this Feedback Dataset",
-    instance
-  );
-  // Only the dashboard-bound reads pass `allowDashboardViewer` (ADR-0018). The free-form chart query and
-  // the field-value lookup never do, so a viewer can only read a dataset through a saved chart.
-  const viewerId = getViewerCandidate(authentication, minPermission, options, refusal);
-  if (viewerId && (await canDashboardViewerReadFeedbackDataset(viewerId, context.workspaceId, datasetId))) {
-    return null;
-  }
-  return refusal;
+  return problemForbidden(requestId, "You are not authorized to use this Feedback Dataset", instance);
 }

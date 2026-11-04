@@ -116,8 +116,8 @@ const ZGetOrganizationsForSwitcherAction = z.object({
 export const getOrganizationsForSwitcherAction = authenticatedActionClient
   .inputSchema(ZGetOrganizationsForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
-    // A Dashboard viewer holds no SpiceDB relation (ADR-0018), so `organization.read` denies it; its
-    // membership row is what lets it switch organizations.
+    // A Dashboard viewer's SpiceDB relation reaches dashboard reads only (ADR-0023), so `organization.read`
+    // denies it; its membership row is what lets it switch organizations.
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
     if (membership?.role !== "dashboard_viewer") {
       await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {

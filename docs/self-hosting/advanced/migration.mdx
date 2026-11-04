@@ -274,6 +274,60 @@ previous file rejects. Refresh it the way [Cube model files for Docker](#cube-mo
 (one-click `./formbricks.sh update`, the Compose refresh step, or `helm upgrade`). Until then, chart data read
 with an API key or over MCP fails with `502`; the app keeps working. There are no new environment variables.
 
+### Dashboard viewer role (action required: apply the AuthZed schema)
+
+Organizations can now invite a **Dashboard viewer**: a role that reads the dashboards of the workspaces its
+teams are granted and nothing else (no surveys, responses, contacts or feedback records). The role is decided
+by SpiceDB like every other role, so this release changes the AuthZed schema (`authzed/schema.zed`): it adds the
+`organization#dashboard_viewer` relation and a `dashboard_read` permission on workspaces and Feedback Dataset
+assignments. A data migration adds the `dashboard_viewer` value to the organization role enum; no existing
+membership changes role.
+
+<Warning>
+  **Apply the schema before the new release serves traffic.** Until it is applied, SpiceDB rejects every
+  dashboard read the new release asks it (`workspace#dashboard_read` does not exist yet), so dashboards fail
+  to load for everyone, and assigning the Dashboard viewer role cannot be projected.
+</Warning>
+
+What to do when upgrading:
+
+1. Check the schema the connected SpiceDB holds and note the `remoteDigest` it prints. Drift (exit `2`) is
+   expected: the release ships the new schema.
+
+   ```bash
+   formbricks-authzed schema check
+   ```
+
+2. Apply the release's schema with that digest. The change only adds a relation and permissions, so the
+   previous release keeps working against it during a rolling upgrade.
+
+   ```bash
+   formbricks-authzed schema apply --expected-current-digest sha256:<remote-digest>
+   ```
+
+3. Run the database migrations of the new release, then audit and reconcile relationships, and run the
+   release gate:
+
+   ```bash
+   formbricks-authzed backfill
+   formbricks-authzed backfill --apply
+   formbricks-authzed upgrade check
+   ```
+
+4. Deploy the new release. Invite Dashboard viewers only after these steps pass.
+
+Docker prefixes the commands with `docker compose --profile authzed-ops run --rm authzed-ops`, Kubernetes with
+`kubectl exec ... --`; see [AuthZed operations](/self-hosting/configuration/authzed-operations#activate-or-upgrade-spicedb).
+
+The role needs both the Access Control and the Dashboards entitlements. If either lapses, viewers keep the
+role and see a "not available on this plan" page instead of the dashboards; they are never turned into
+Members.
+
+Reading a saved chart's numbers through its dashboard (`GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`
+and the MCP `get_chart_data` tool) now also admits Dashboard viewers, and the MCP tool needs only the
+`dashboards:read` scope: what a dashboard shows is no longer gated on `feedbackRecords:read`. Previewing a
+query of your own and listing a field's values still need it.
+
 ### Survey visibility (opt-in)
 
 Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the

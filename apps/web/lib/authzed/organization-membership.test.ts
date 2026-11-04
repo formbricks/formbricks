@@ -58,7 +58,7 @@ describe("organization membership projection", () => {
     clientMocks.writeRelationships.mockResolvedValue(undefined);
   });
 
-  test.each(["owner", "manager", "member", "billing"] as const)(
+  test.each(["owner", "manager", "member", "billing", "dashboard_viewer"] as const)(
     "atomically touches the %s relationship and deletes the other organization roles",
     async (role) => {
       vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows(role) as never);
@@ -70,7 +70,7 @@ describe("organization membership projection", () => {
 
       const updates = clientMocks.writeRelationships.mock
         .calls[0][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
-      expect(updates).toHaveLength(4);
+      expect(updates).toHaveLength(5);
       expect(updates).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -79,7 +79,7 @@ describe("organization membership projection", () => {
           }),
         ])
       );
-      expect(updates.filter((update) => update.operation === "delete")).toHaveLength(3);
+      expect(updates.filter((update) => update.operation === "delete")).toHaveLength(4);
       expect(updates.every(({ relationship }) => relationship.resource.objectId === ORGANIZATION_ID)).toBe(
         true
       );
@@ -106,24 +106,6 @@ describe("organization membership projection", () => {
       })
     );
     expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
-  });
-
-  test("projects a Dashboard viewer to no relation, deleting every role it may still hold (ADR-0018)", async () => {
-    vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows("dashboard_viewer") as never);
-
-    await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
-      passes: 1,
-      status: "projected",
-    });
-
-    const updates = clientMocks.writeRelationships.mock
-      .calls[0][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
-    expect(updates.map(({ operation, relationship }) => [operation, relationship.relation]).sort()).toEqual([
-      ["delete", "billing"],
-      ["delete", "manager"],
-      ["delete", "member"],
-      ["delete", "owner"],
-    ]);
   });
 
   test("deletes every organization role when the source membership no longer exists", async () => {
@@ -246,7 +228,7 @@ describe("organization membership projection", () => {
       // One read and one write for two memberships, rather than two of each.
       expect(prisma.membership.findMany).toHaveBeenCalledTimes(2); // source + verify
       expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
-      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(8);
+      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(10);
     });
 
     test("deletes every role for a target with no source row while preserving other targets", async () => {
@@ -267,7 +249,7 @@ describe("organization membership projection", () => {
       const ghostUpdates = updates.filter(
         ({ relationship }) => relationship.subject.objectId === "ghost-user"
       );
-      expect(ghostUpdates).toHaveLength(4);
+      expect(ghostUpdates).toHaveLength(5);
       expect(ghostUpdates.every(({ operation }) => operation === "delete")).toBe(true);
       expect(
         updates.filter(
@@ -286,7 +268,7 @@ describe("organization membership projection", () => {
         ],
       });
 
-      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(4);
+      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(5);
     });
 
     test.each([[undefined], [[]]])(
@@ -315,11 +297,11 @@ describe("organization membership projection", () => {
         status: "projected",
       });
 
-      // 251 targets * 4 relations = 1004 updates, so it must split, and the four updates for a single
+      // 251 targets * 5 relations = 1255 updates, so it must split, and the five updates for a single
       // membership must stay in one request or the role would not change atomically.
       expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
       expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(1_000);
-      expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(4);
+      expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(255);
     });
   });
 

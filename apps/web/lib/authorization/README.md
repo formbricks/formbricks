@@ -38,12 +38,13 @@ invalid action/resource pair into a union.
 
 Organization membership establishes organization capabilities:
 
-| Current source              | Current behavior                                                                                                         |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `Membership.role = owner`   | Reads, updates, and deletes the organization; has broad product, billing, access-control, and API-key management access. |
-| `Membership.role = manager` | Has broad product, billing, access-control, and API-key management access, but cannot update or delete the organization. |
-| `Membership.role = member`  | Can see the organization and access-control resources; receives product access only through team membership.             |
-| `Membership.role = billing` | Can see the organization and billing surfaces but receives no product-data access.                                       |
+| Current source                       | Current behavior                                                                                                                                                                                                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Membership.role = owner`            | Reads, updates, and deletes the organization; has broad product, billing, access-control, and API-key management access.                                                                                                                                                                         |
+| `Membership.role = manager`          | Has broad product, billing, access-control, and API-key management access, but cannot update or delete the organization.                                                                                                                                                                         |
+| `Membership.role = member`           | Can see the organization and access-control resources; receives product access only through team membership.                                                                                                                                                                                     |
+| `Membership.role = billing`          | Can see the organization and billing surfaces but receives no product-data access.                                                                                                                                                                                                               |
+| `Membership.role = dashboard_viewer` | Reads only the dashboards of the workspaces its teams are granted (`workspace.dashboard_read`, ADR-0023), and the dashboard-bound Feedback Dataset read behind them (`feedbackDirectoryAssignment.dashboard_read`). No organization, workspace, survey, response or Feedback Dataset permission. |
 
 Team and workspace grants use ordered permission ladders:
 
@@ -66,8 +67,9 @@ Surveys, dashboards, and responses inherit access through their workspace:
 - Survey deletion in the web application and V3 API currently requires
   workspace write; legacy management deletion and language management require
   workspace manage.
-- Dashboard read/write follow workspace read/write, including dashboard
-  deletion.
+- Dashboard read follows `workspace.dashboard_read` (workspace read, plus the
+  workspace's Dashboard viewers); dashboard write follows workspace write,
+  including dashboard deletion.
 - Response read and export currently both follow workspace read. They remain
   separate actions so a future policy split is explicit.
 - Response updates, tags, and web-application deletion follow workspace write;

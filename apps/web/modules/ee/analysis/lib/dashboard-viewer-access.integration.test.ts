@@ -10,6 +10,8 @@ import {
   ZV3ChartPreviewBody,
 } from "@/app/api/v3/charts/lib/schemas";
 import { listV3Contacts } from "@/app/api/v3/contacts/lib/operations";
+import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
+import { listV3DashboardFilterValues } from "@/app/api/v3/dashboards/lib/filter-values-operations";
 import {
   createV3Dashboard,
   deleteV3Dashboard,
@@ -18,7 +20,11 @@ import {
   listV3Dashboards,
   renameV3Dashboard,
 } from "@/app/api/v3/dashboards/lib/operations";
-import { ZV3DashboardListQuery } from "@/app/api/v3/dashboards/lib/schemas";
+import {
+  ZV3DashboardChartDataQuery,
+  ZV3DashboardFilterValuesQuery,
+  ZV3DashboardListQuery,
+} from "@/app/api/v3/dashboards/lib/schemas";
 import { getV3DashboardWidget } from "@/app/api/v3/dashboards/lib/widget-operations";
 import {
   getV3FeedbackRecord,
@@ -37,8 +43,6 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceMembers } from "@/lib/workspace/service";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import {
-  canDashboardViewerReadFeedbackDataset,
-  canDashboardViewerReadWorkspace,
   getDashboardViewerHomePath,
   getDashboardViewerWorkspaceState,
   listDashboardViewerOrganizations,
@@ -46,9 +50,10 @@ import {
 } from "./dashboard-viewer-access";
 
 /**
- * The Dashboard viewer (ADR-0018, ENG-6899 / ENG-6903) against real PostgreSQL and SpiceDB: what a viewer
- * may and may not reach, operation by operation. SpiceDB denies the role everything; the one app-layer
- * grant admits only the dashboard-bound reads, on workspaces one of the viewer's teams is granted.
+ * The Dashboard viewer (ADR-0023, ENG-6899 / ENG-6903) against real PostgreSQL and SpiceDB: what a viewer
+ * may and may not reach, operation by operation. The role is the `organization#dashboard_viewer`
+ * relation; SpiceDB grants it `workspace#dashboard_read` (and the dashboard-bound Feedback Dataset read)
+ * on the workspaces its teams are granted, and denies it everything else.
  */
 
 vi.mock("@cubejs-client/core", async (importOriginal) =>
@@ -61,6 +66,8 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   getIsDashboardsEnabled: vi.fn(async () => entitlement.dashboards),
   getIsDashboardViewerRoleEnabled: vi.fn(async () => entitlement.viewerRole && entitlement.dashboards),
 }));
+
+const FILTER_ID = "clfi000000000000000000001";
 
 let fixture: TDashboardsFixture;
 const ids = {
@@ -161,7 +168,12 @@ beforeAll(async () => {
     })
   ).id;
   const dashboard = await prisma.dashboard.create({
-    data: { name: "Visit NPS", workspaceId: fixture.workspaceId, createdBy: fixture.users.owner },
+    data: {
+      name: "Visit NPS",
+      workspaceId: fixture.workspaceId,
+      createdBy: fixture.users.owner,
+      filters: [{ id: FILTER_ID, field: "FeedbackRecords.sourceName", operator: "equals", label: "Source" }],
+    },
   });
   ids.dashboard = dashboard.id;
   ids.widget = (
@@ -183,17 +195,20 @@ beforeEach(() => {
   entitlement.viewerRole = true;
 });
 
-describe("SpiceDB denies a Dashboard viewer everything", () => {
+describe("SpiceDB denies a Dashboard viewer everything but dashboard reads", () => {
   test.each([
     ["organization.read", () => ({ type: "organization", id: fixture.organizationId })],
     ["organization.read_access", () => ({ type: "organization", id: fixture.organizationId })],
     ["workspace.read", () => ({ type: "workspace", id: fixture.workspaceId })],
     ["workspace.write", () => ({ type: "workspace", id: fixture.workspaceId })],
     ["workspace.manage", () => ({ type: "workspace", id: fixture.workspaceId })],
+    ["workspace.share", () => ({ type: "workspace", id: fixture.workspaceId })],
     ["survey.read", () => ({ type: "survey", id: ids.survey })],
     ["survey.response_read", () => ({ type: "survey", id: ids.survey })],
+    ["survey.response_export", () => ({ type: "survey", id: ids.survey })],
     ["response.read", () => ({ type: "response", id: ids.response })],
-    ["dashboard.read", () => ({ type: "dashboard", id: ids.dashboard })],
+    ["response.export", () => ({ type: "response", id: ids.response })],
+    ["dashboard.write", () => ({ type: "dashboard", id: ids.dashboard })],
     [
       "feedbackDirectoryAssignment.read",
       () => ({
@@ -202,13 +217,15 @@ describe("SpiceDB denies a Dashboard viewer everything", () => {
         workspaceId: fixture.workspaceId,
       }),
     ],
+    ["feedbackDirectory.read", () => ({ type: "feedbackDirectory", id: fixture.datasetId })],
   ] as const)("%s is denied, even with a Manage team grant", async (action, resource) => {
     for (const userId of [ids.viewer, ids.manageViewer]) {
       // The resource factory and the action are paired by the table above.
       await expect(can({ type: "user", id: userId }, action, resource() as never)).resolves.toBe(false);
     }
     // Control: the read & write member is allowed every read, so a refusal above is the role's.
-    if (!action.endsWith("write") && !action.endsWith("manage") && !action.startsWith("organization")) {
+    const isReadAction = !["write", "manage", "share"].some((level) => action.endsWith(level));
+    if (isReadAction && !action.startsWith("organization")) {
       await expect(
         can({ type: "user", id: fixture.users.editor }, action, resource() as never)
       ).resolves.toBe(true);
@@ -216,33 +233,41 @@ describe("SpiceDB denies a Dashboard viewer everything", () => {
   });
 });
 
-describe("the app-layer grant", () => {
-  test("admits a viewer only on a workspace one of their teams is granted", async () => {
-    await expect(canDashboardViewerReadWorkspace(ids.viewer, fixture.workspaceId)).resolves.toBe(true);
-    await expect(canDashboardViewerReadWorkspace(ids.viewer, fixture.otherWorkspaceId)).resolves.toBe(false);
-    await expect(canDashboardViewerReadWorkspace(ids.viewer, fixture.foreignWorkspaceId)).resolves.toBe(
-      false
-    );
-    await expect(canDashboardViewerReadWorkspace(ids.ungrantedViewer, fixture.workspaceId)).resolves.toBe(
-      false
-    );
-    await expect(canDashboardViewerReadWorkspace(ids.foreignViewer, fixture.workspaceId)).resolves.toBe(
-      false
-    );
+describe("SpiceDB grants a Dashboard viewer the dashboard reads of its teams' workspaces", () => {
+  const dashboardRead = (userId: string, workspaceId: string) =>
+    can({ type: "user", id: userId }, "workspace.dashboard_read", { type: "workspace", id: workspaceId });
+
+  test("workspace.dashboard_read only on a workspace one of their teams is granted, at any level", async () => {
+    await expect(dashboardRead(ids.viewer, fixture.workspaceId)).resolves.toBe(true);
+    await expect(dashboardRead(ids.manageViewer, fixture.workspaceId)).resolves.toBe(true);
+    await expect(dashboardRead(ids.viewer, fixture.otherWorkspaceId)).resolves.toBe(false);
+    await expect(dashboardRead(ids.viewer, fixture.foreignWorkspaceId)).resolves.toBe(false);
+    await expect(dashboardRead(ids.ungrantedViewer, fixture.workspaceId)).resolves.toBe(false);
+    await expect(dashboardRead(ids.foreignViewer, fixture.workspaceId)).resolves.toBe(false);
   });
 
-  test("never admits a member, whatever their grant", async () => {
-    await expect(canDashboardViewerReadWorkspace(fixture.users.viewer, fixture.workspaceId)).resolves.toBe(
-      false
-    );
-    await expect(canDashboardViewerReadWorkspace(fixture.users.owner, fixture.workspaceId)).resolves.toBe(
-      false
-    );
+  test("dashboard.read follows it: the granted workspace's dashboards, no other", async () => {
+    const read = (userId: string, dashboardId: string) =>
+      can({ type: "user", id: userId }, "dashboard.read", { type: "dashboard", id: dashboardId });
+    await expect(read(ids.viewer, ids.dashboard)).resolves.toBe(true);
+    await expect(read(ids.manageViewer, ids.dashboard)).resolves.toBe(true);
+    await expect(read(ids.viewer, ids.hiddenDashboard)).resolves.toBe(false);
+    await expect(read(ids.ungrantedViewer, ids.dashboard)).resolves.toBe(false);
   });
 
-  test("admits a dataset only when it is assigned to the granted workspace", async () => {
+  test("members keep their dashboard reads, and a member without a grant still has none", async () => {
+    await expect(dashboardRead(fixture.users.viewer, fixture.workspaceId)).resolves.toBe(true);
+    await expect(dashboardRead(fixture.users.owner, fixture.otherWorkspaceId)).resolves.toBe(true);
+    await expect(dashboardRead(fixture.users.viewer, fixture.otherWorkspaceId)).resolves.toBe(false);
+  });
+
+  test("the dashboard-bound dataset read only for a dataset assigned to the granted workspace", async () => {
     const read = (datasetId: string, workspaceId = fixture.workspaceId) =>
-      canDashboardViewerReadFeedbackDataset(ids.viewer, workspaceId, datasetId);
+      can({ type: "user", id: ids.viewer }, "feedbackDirectoryAssignment.dashboard_read", {
+        type: "feedbackDirectoryAssignment",
+        feedbackDirectoryId: datasetId,
+        workspaceId,
+      });
 
     await expect(read(fixture.datasetId)).resolves.toBe(true);
     await expect(read(fixture.unassignedDatasetId)).resolves.toBe(false);
@@ -336,6 +361,41 @@ describe("dashboard-bound reads: allowed on a granted workspace, refused elsewhe
 
   test("a viewer with no granted workspace sees nothing", async () => {
     expect(await statusOf(await list(ids.ungrantedViewer, fixture.workspaceId))).toBe(403);
+  });
+
+  const chartData = (userId: string) =>
+    getV3DashboardChartData({
+      dashboardId: ids.dashboard,
+      chartId: ids.chart,
+      query: ZV3DashboardChartDataQuery.parse({}),
+      ...ctx(userId, "/api/v3/dashboards/charts/data"),
+    });
+  const filterValues = (userId: string) =>
+    listV3DashboardFilterValues({
+      dashboardId: ids.dashboard,
+      filterId: FILTER_ID,
+      query: ZV3DashboardFilterValuesQuery.parse({}),
+      ...ctx(userId, "/api/v3/dashboards/filters/values"),
+    });
+
+  test("reads a widget's chart data and a dashboard filter's values through the dashboard", async () => {
+    for (const userId of [ids.viewer, ids.manageViewer]) {
+      const data = await chartData(userId);
+      expect(data.status, await data.clone().text()).toBe(200);
+      expect(((await data.json()) as { data: { rows: unknown[] } }).data.rows).toEqual(expect.any(Array));
+
+      const values = await filterValues(userId);
+      expect(values.status, await values.clone().text()).toBe(200);
+    }
+  });
+
+  test("refuses the dashboard-bound data to a viewer without the grant, or on a lapsed plan", async () => {
+    expect(await statusOf(await chartData(ids.ungrantedViewer))).toBe(403);
+    expect(await statusOf(await filterValues(ids.foreignViewer))).toBe(403);
+
+    entitlement.viewerRole = false;
+    expect(await statusOf(await chartData(ids.viewer))).toBe(403);
+    expect(await statusOf(await filterValues(ids.viewer))).toBe(403);
   });
 
   test("the operation-level gate keeps the viewer out of writes even when asked to admit them", async () => {
@@ -527,7 +587,7 @@ describe("the free-form chart routes answer a viewer exactly as a member without
 });
 
 describe("role changes are projected at once", () => {
-  test("a Member made a viewer loses the member relation and every raw read", async () => {
+  test("a Member made a viewer trades the member relation for dashboard_viewer, and loses every raw read", async () => {
     await expect(
       can({ type: "user", id: ids.demoted }, "workspace.read", { type: "workspace", id: fixture.workspaceId })
     ).resolves.toBe(true);
@@ -543,6 +603,12 @@ describe("role changes are projected at once", () => {
     await expect(
       can({ type: "user", id: ids.demoted }, "workspace.read", { type: "workspace", id: fixture.workspaceId })
     ).resolves.toBe(false);
+    await expect(
+      can({ type: "user", id: ids.demoted }, "workspace.dashboard_read", {
+        type: "workspace",
+        id: fixture.workspaceId,
+      })
+    ).resolves.toBe(true);
     expect(await statusOf(await getV3Survey({ surveyId: ids.survey, ...ctx(ids.demoted) }))).toBe(403);
     expect(await statusOf(await getV3Dashboard({ dashboardId: ids.dashboard, ...ctx(ids.demoted) }))).toBe(
       200
@@ -558,7 +624,7 @@ describe("role changes are projected at once", () => {
         id: fixture.workspaceId,
       })
     ).resolves.toBe(true);
-    await expect(canDashboardViewerReadWorkspace(ids.promoted, fixture.workspaceId)).resolves.toBe(false);
+    await expect(getDashboardViewerWorkspaceState(ids.promoted, fixture.workspaceId)).resolves.toBe("none");
   });
 });
 

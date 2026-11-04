@@ -9,9 +9,11 @@ import {
   runBestEffortProjection,
 } from "./projection";
 import { packRelationshipUpdateGroups } from "./relationship-batches";
-import { ORGANIZATION_RELATIONS, ORGANIZATION_RELATION_NAMES } from "./relationship-map";
+import { ORGANIZATION_RELATIONS } from "./relationship-map";
 
 export type { TAuthzedProjectionResult } from "./projection";
+
+const ORGANIZATION_RELATION_NAMES = Object.values(ORGANIZATION_RELATIONS);
 
 export type TOrganizationMembershipProjectionTarget = Readonly<{
   organizationId: string;
@@ -62,10 +64,6 @@ const snapshotsMatch = (
   right: TOrganizationMembershipSnapshot
 ): boolean => JSON.stringify(left) === JSON.stringify(right);
 
-/**
- * Touch the role's relation and delete the alternates. A role that projects to no relation
- * (`dashboard_viewer`) touches nothing and deletes them all.
- */
 const createMembershipUpdates = (
   target: TOrganizationMembershipProjectionTarget,
   role: OrganizationRole | null

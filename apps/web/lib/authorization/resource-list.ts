@@ -11,7 +11,8 @@ import { getSpicedbObjectType } from "./object-type";
 import { normalizeAuthorizationOperationalError } from "./operational-error";
 
 type TCurrentListResource = "organization" | "workspace";
-type TCurrentListPermission = "read" | "write";
+/** `dashboard_read` lists the workspaces whose dashboards the actor reads, a Dashboard viewer's included. */
+type TCurrentListPermission = "read" | "write" | "dashboard_read";
 
 const lookupAuthorizationResourceIds = reactCache(
   async (

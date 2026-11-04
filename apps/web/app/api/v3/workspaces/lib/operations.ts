@@ -44,8 +44,8 @@ async function fetchSessionWorkspaces(
 ): Promise<TResolvedWorkspaceList> {
   const [workspaceIds, viewerWorkspaces] = await Promise.all([
     lookupAuthorizedWorkspaceIds(actor),
-    // A Dashboard viewer holds no SpiceDB relation (ADR-0018); the workspaces whose dashboards it may
-    // read come from its team grants, so its client can find the ids the dashboard tools take.
+    // A Dashboard viewer holds no workspace `read` (ADR-0023); the workspaces whose dashboards it may
+    // read come from `workspace#dashboard_read`, so its client can find the ids the dashboard tools take.
     listDashboardViewerWorkspacesForUser(userId),
   ]);
   const workspaces = await getOrganizationScopedWorkspacesByIdsForUser(userId, [...workspaceIds]);

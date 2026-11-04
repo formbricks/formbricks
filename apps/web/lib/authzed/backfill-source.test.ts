@@ -121,36 +121,6 @@ describe("readOrganizationSource", () => {
     }
   });
 
-  test("keeps a Dashboard viewer as a reconcile target but expects no relation for it (ADR-0018)", async () => {
-    vi.mocked(prisma.membership.findMany).mockResolvedValue([
-      { role: "dashboard_viewer", userId: "viewer-1" },
-      { role: "member", userId: "member-1" },
-    ] as never);
-    for (const model of [
-      prisma.team,
-      prisma.workspace,
-      prisma.apiKey,
-      prisma.teamUser,
-      prisma.workspaceTeam,
-      prisma.apiKeyWorkspace,
-      prisma.feedbackDirectory,
-    ]) {
-      vi.mocked(model.findMany).mockResolvedValue([] as never);
-    }
-
-    const source = await readOrganizationSource(ORGANIZATION_ID);
-
-    expect(source.memberships).toEqual([
-      { organizationId: ORGANIZATION_ID, userId: "viewer-1" },
-      { organizationId: ORGANIZATION_ID, userId: "member-1" },
-    ]);
-    expect(
-      source.expectedRelationships.filter(({ resource }) => resource.objectType === "organization")
-    ).toEqual([
-      expect.objectContaining({ relation: "member", subject: { objectId: "member-1", objectType: "user" } }),
-    ]);
-  });
-
   test("collects every target kind owned by the organization", async () => {
     vi.mocked(prisma.membership.findMany).mockResolvedValue([{ role: "owner", userId: "user-1" }] as never);
     vi.mocked(prisma.team.findMany).mockResolvedValue([

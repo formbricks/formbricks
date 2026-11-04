@@ -1,80 +1,25 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { can } from "@/lib/authorization";
+import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
- * The one app-layer grant the Dashboard viewer holds (ADR-0018).
+ * Where the pages and lists find a Dashboard viewer's dashboards (ADR-0023).
  *
- * `dashboard_viewer` projects to no SpiceDB relation, so SpiceDB denies it every workspace, survey,
- * response, contact and Feedback Dataset permission. Reading a dashboard is decided here instead: the
- * user holds the `dashboard_viewer` role in the workspace's organization, one of their teams is granted
- * the workspace (at any permission: a Manage grant does not widen the role), and the organization is
- * entitled to the role (Access Control and Dashboards). Nothing else grants a viewer anything, so moving
- * the role to a SpiceDB relation later deletes this module and nothing more.
- *
- * Every function answers `false` for anyone who is not a Dashboard viewer, so a caller only consults it
- * after SpiceDB has denied the request.
+ * The role is a SpiceDB relation (`organization#dashboard_viewer`), and every decision here comes from
+ * SpiceDB: `workspace.dashboard_read`, which a viewer holds through the team grants of the workspaces
+ * its teams reach, at any level (a Manage grant does not widen the role). Nothing here grants anything.
+ * What stays in PostgreSQL is who holds the role (to route a viewer to its dashboards) and the
+ * entitlement (Access Control and Dashboards): a lapsed plan keeps the role and locks the viewer out.
  */
 
-/** A grant on the workspace through a team of the same organization, held by a viewer of that organization. */
-const viewerWorkspaceGrantWhere = (userId: string, workspaceId: string) => ({
-  workspaceId,
-  team: {
-    teamUsers: { some: { userId } },
-    // The team's organization must own the workspace and hold the user as a Dashboard viewer, so a
-    // cross-organization grant or a membership in another organization never admits anyone.
-    organization: {
-      workspaces: { some: { id: workspaceId } },
-      memberships: { some: { userId, role: "dashboard_viewer" as const } },
-    },
-  },
-});
-
-/**
- * Whether `userId` may read the dashboards of `workspaceId` as a Dashboard viewer. Reads only: no write
- * ever admits a viewer.
- */
-export const canDashboardViewerReadWorkspace = async (
-  userId: string,
-  workspaceId: string
-): Promise<boolean> => {
-  const grant = await prisma.workspaceTeam.findFirst({
-    where: viewerWorkspaceGrantWhere(userId, workspaceId),
-    select: { workspace: { select: { organizationId: true } } },
+const isDashboardViewerIn = async (userId: string, organizationId: string): Promise<boolean> => {
+  const membership = await prisma.membership.findUnique({
+    where: { userId_organizationId: { userId, organizationId } },
+    select: { role: true },
   });
-  if (!grant) return false;
-
-  return getIsDashboardViewerRoleEnabled(grant.workspace.organizationId);
-};
-
-/**
- * Whether a Dashboard viewer may read a Feedback Dataset's data through a dashboard of `workspaceId`:
- * they may read the workspace's dashboards, and the dataset is an active (not archived) dataset of the
- * same organization assigned to that workspace, exactly the assignment SpiceDB would check for anyone
- * else. Only the dashboard-bound reads (a saved chart's data on a dashboard, a dashboard filter's value
- * list) may ask this; the free-form chart query and field-value routes never do.
- */
-export const canDashboardViewerReadFeedbackDataset = async (
-  userId: string,
-  workspaceId: string,
-  datasetId: string
-): Promise<boolean> => {
-  const assignment = await prisma.feedbackDirectoryWorkspace.findFirst({
-    where: {
-      workspaceId,
-      feedbackDirectoryId: datasetId,
-      feedbackDirectory: { isArchived: false },
-      workspace: { workspaceTeams: { some: viewerWorkspaceGrantWhere(userId, workspaceId) } },
-    },
-    select: {
-      workspace: { select: { organizationId: true } },
-      feedbackDirectory: { select: { organizationId: true } },
-    },
-  });
-  if (!assignment) return false;
-  if (assignment.feedbackDirectory.organizationId !== assignment.workspace.organizationId) return false;
-
-  return getIsDashboardViewerRoleEnabled(assignment.workspace.organizationId);
+  return membership?.role === "dashboard_viewer";
 };
 
 /**
@@ -85,18 +30,14 @@ export const listDashboardViewerWorkspaces = async (
   userId: string,
   organizationId: string
 ): Promise<Array<{ id: string; name: string }>> => {
-  const membership = await prisma.membership.findUnique({
-    where: { userId_organizationId: { userId, organizationId } },
-    select: { role: true },
-  });
-  if (membership?.role !== "dashboard_viewer") return [];
+  if (!(await isDashboardViewerIn(userId, organizationId))) return [];
   if (!(await getIsDashboardViewerRoleEnabled(organizationId))) return [];
 
+  const workspaceIds = await lookupAuthorizedWorkspaceIds({ type: "user", id: userId }, "dashboard_read");
+  if (workspaceIds.length === 0) return [];
+
   return prisma.workspace.findMany({
-    where: {
-      organizationId,
-      workspaceTeams: { some: { team: { organizationId, teamUsers: { some: { userId } } } } },
-    },
+    where: { organizationId, id: { in: [...workspaceIds] } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -104,9 +45,9 @@ export const listDashboardViewerWorkspaces = async (
 
 /**
  * Where a Dashboard viewer stands on a workspace, for the pages: `granted` reads its dashboards,
- * `lapsed` holds a team grant but the organization lost Access Control or Dashboards (the viewer keeps
- * the role and sees the "not available on this plan" page), and `none` is anyone else: not a viewer
- * there, or a viewer none of whose teams is granted the workspace.
+ * `lapsed` may read them but the organization lost Access Control or Dashboards (the viewer keeps the
+ * role and sees the "not available on this plan" page), and `none` is anyone else: not a viewer
+ * there, or a viewer SpiceDB denies the workspace's dashboards.
  */
 export type TDashboardViewerWorkspaceState = "granted" | "lapsed" | "none";
 
@@ -114,13 +55,19 @@ export const getDashboardViewerWorkspaceState = async (
   userId: string,
   workspaceId: string
 ): Promise<TDashboardViewerWorkspaceState> => {
-  const grant = await prisma.workspaceTeam.findFirst({
-    where: viewerWorkspaceGrantWhere(userId, workspaceId),
-    select: { workspace: { select: { organizationId: true } } },
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { organizationId: true },
   });
-  if (!grant) return "none";
+  if (!workspace || !(await isDashboardViewerIn(userId, workspace.organizationId))) return "none";
 
-  return (await getIsDashboardViewerRoleEnabled(grant.workspace.organizationId)) ? "granted" : "lapsed";
+  const allowed = await can({ type: "user", id: userId }, "workspace.dashboard_read", {
+    type: "workspace",
+    id: workspaceId,
+  });
+  if (!allowed) return "none";
+
+  return (await getIsDashboardViewerRoleEnabled(workspace.organizationId)) ? "granted" : "lapsed";
 };
 
 /** The organizations where `userId` holds the Dashboard viewer role, entitled or not, by name. */
@@ -155,8 +102,8 @@ export const getDashboardViewerHomePath = async (
 /**
  * Whether every organization membership `userId` holds is the Dashboard viewer role. Such a user can
  * only ever read dashboards, so an OAuth grant they give is limited to `dashboards:read`. A user who is
- * a viewer in one organization and holds another role elsewhere grants as before: each operation still
- * refuses them the viewer organization's data (ADR-0018).
+ * a viewer in one organization and holds another role elsewhere grants as before: SpiceDB still
+ * refuses them everything but dashboard reads in the viewer organization (ADR-0023).
  */
 export const isDashboardViewerOnly = async (userId: string): Promise<boolean> => {
   const memberships = await prisma.membership.findMany({ where: { userId }, select: { role: true } });
