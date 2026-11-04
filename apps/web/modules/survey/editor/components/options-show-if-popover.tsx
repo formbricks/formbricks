@@ -1,19 +1,9 @@
 "use client";
 
-import { createId } from "@paralleldrive/cuid2";
 import type { TFunction } from "i18next";
-import {
-  CopyIcon,
-  EyeIcon,
-  EyeOffIcon,
-  LayersIcon,
-  ListFilterIcon,
-  RefreshCwIcon,
-  TrashIcon,
-} from "lucide-react";
+import { EyeIcon, EyeOffIcon, ListFilterIcon, TrashIcon } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { canHaveCopiedOptions, getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { type TOptionLike, type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -24,15 +14,7 @@ import {
   ShowIfPopoverFrame,
   useShowIfScope,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
-import {
-  copyOptionsAgain,
-  countOptionsToCopyAgain,
-  getCopySourceCandidates,
-  linkCopiedOptions,
-  unlinkCopiedOptions,
-} from "@/modules/survey/editor/lib/copied-options-editing";
 import { describeConditionGroup } from "@/modules/survey/editor/lib/flow-outline-text";
-import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 import {
   type TShowIfTarget,
   canAddShowIf,
@@ -40,12 +22,9 @@ import {
   setOptionHidden,
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
-import { getDefaultOperatorForElement, getElementPickerLabel } from "@/modules/survey/editor/lib/utils";
-import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
+import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { InputCombobox } from "@/modules/ui/components/input-combo-box";
-import { Label } from "@/modules/ui/components/label";
 import { Popover, PopoverTrigger } from "@/modules/ui/components/popover";
 import { Switch } from "@/modules/ui/components/switch";
 
@@ -62,10 +41,6 @@ interface OptionsShowIfPopoverProps {
   /** Options with their own show-if, and Hidden options: the badges that open the popover. */
   readonly showIfCount: number;
   readonly hiddenCount: number;
-  /** ENG-6938: the question the options are copied from, when they are. */
-  readonly copiedFromId?: string;
-  /** The saved survey, for the published lock: a first copy keeps the options that existed at launch. */
-  readonly persistedSurvey?: TSurvey;
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }
@@ -76,9 +51,6 @@ interface OptionsShowIfPopoverProps {
  * differently from conditional (P1): it wins over the condition and is labelled "Hidden".
  *
  * Opened from the question's option badges, or from a hover action when it has none yet.
- *
- * A choice or picture question also picks here which earlier question its options are copied from
- * (ENG-6938, "Options copied from"), and copies them again after the source gained options.
  */
 export function OptionsShowIfPopover({
   localSurvey,
@@ -88,16 +60,11 @@ export function OptionsShowIfPopover({
   optionLists,
   showIfCount,
   hiddenCount,
-  copiedFromId,
-  persistedSurvey,
   isOpen,
   onOpenChange,
 }: OptionsShowIfPopoverProps) {
   const { t } = useTranslation();
-  const hasBadges = showIfCount > 0 || hiddenCount > 0 || copiedFromId !== undefined;
-  const copiedFrom = copiedFromId
-    ? localSurvey.blocks.flatMap((block) => block.elements).find((element) => element.id === copiedFromId)
-    : undefined;
+  const hasBadges = showIfCount > 0 || hiddenCount > 0;
 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
@@ -108,16 +75,6 @@ export function OptionsShowIfPopover({
             className="inline-flex items-center gap-1 rounded-full focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
             aria-label={t("workspace.surveys.edit.flow.edit_options_shown_if")}
             onClick={(event) => event.stopPropagation()}>
-            {copiedFromId !== undefined && (
-              <Badge
-                type="gray"
-                size="tiny"
-                icon={<LayersIcon />}
-                text={t("workspace.surveys.edit.flow.options_copied_from", {
-                  question: copiedFrom ? getElementBadgeText(copiedFrom) : copiedFromId,
-                })}
-              />
-            )}
             {showIfCount > 0 && (
               <Badge
                 type="gray"
@@ -154,7 +111,6 @@ export function OptionsShowIfPopover({
           blockIdx={blockIdx}
           elementIdx={elementIdx}
           optionLists={optionLists}
-          persistedSurvey={persistedSurvey}
           onClose={() => onOpenChange(false)}
         />
       )}
@@ -168,7 +124,6 @@ interface OptionsShowIfEditorProps {
   readonly blockIdx: number;
   readonly elementIdx: number;
   readonly optionLists: TOptionListKey[];
-  readonly persistedSurvey?: TSurvey;
   readonly onClose: () => void;
 }
 
@@ -191,7 +146,6 @@ function OptionsShowIfEditor({
   blockIdx,
   elementIdx,
   optionLists,
-  persistedSurvey,
   onClose,
 }: OptionsShowIfEditorProps) {
   const { t } = useTranslation();
@@ -232,15 +186,6 @@ function OptionsShowIfEditor({
         </div>
       }>
       <div className="flex flex-col gap-3">
-        {canHaveCopiedOptions(element.type) && (
-          <CopiedOptionsSource
-            localSurvey={localSurvey}
-            setLocalSurvey={setLocalSurvey}
-            blockIdx={blockIdx}
-            elementIdx={elementIdx}
-            persistedSurvey={persistedSurvey}
-          />
-        )}
         {optionLists.map((listKey) => {
           const items = getOptionList<TEditableOption>(element, listKey);
           return (
@@ -311,87 +256,6 @@ function OptionsShowIfEditor({
         })}
       </div>
     </ShowIfPopoverFrame>
-  );
-}
-
-interface CopiedOptionsSourceProps {
-  readonly localSurvey: TSurvey;
-  readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
-  readonly blockIdx: number;
-  readonly elementIdx: number;
-  readonly persistedSurvey?: TSurvey;
-}
-
-const NOT_COPIED = "__not_copied__";
-
-/**
- * "Options copied from" (ENG-6938): the earlier question whose options this one copies, with their
- * ids and codes, each shown only if it was picked there; "Copy again" brings in options the source
- * gained since. Picking "Not copied" drops the link and keeps the options.
- */
-function CopiedOptionsSource({
-  localSurvey,
-  setLocalSurvey,
-  blockIdx,
-  elementIdx,
-  persistedSurvey,
-}: CopiedOptionsSourceProps) {
-  const { t } = useTranslation();
-  const target = { blockIdx, elementIdx };
-  const element = localSurvey.blocks[blockIdx]?.elements[elementIdx];
-  const copiedFrom = getOptionsCopiedFrom(element);
-  const candidates = getCopySourceCandidates(localSurvey, target);
-  const newCount = countOptionsToCopyAgain(localSurvey, target);
-  const id = `copied-from-${element?.id ?? elementIdx}`;
-
-  if (!element || (candidates.length === 0 && !copiedFrom)) return null;
-
-  // A first copy replaces the question's own options, except those a published survey must keep.
-  const lock = getElementLock(persistedSurvey ?? null, element.id);
-  const settings = { createId, keepOptionId: (optionId: string) => lock.isOptionLocked("choices", optionId) };
-
-  const options = [
-    { label: t("workspace.surveys.edit.flow.not_copied"), value: NOT_COPIED },
-    ...candidates.map((candidate) => ({
-      label: getElementPickerLabel(localSurvey, candidate, t),
-      value: candidate.id,
-    })),
-  ];
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{t("workspace.surveys.edit.flow.options_copied_from_label")}</Label>
-      <div className="flex flex-wrap items-center gap-2">
-        <InputCombobox
-          id={id}
-          showSearch={candidates.length > 6}
-          options={options}
-          value={copiedFrom ?? NOT_COPIED}
-          wideDropdown
-          comboboxClasses="w-full max-w-[440px] bg-white"
-          onChangeValue={(value) =>
-            setLocalSurvey((survey) =>
-              value === NOT_COPIED
-                ? unlinkCopiedOptions(survey, target)
-                : linkCopiedOptions(survey, target, String(value), settings)
-            )
-          }
-        />
-        {copiedFrom && (
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={() => setLocalSurvey((survey) => copyOptionsAgain(survey, target, settings))}>
-            {newCount > 0 ? <CopyIcon /> : <RefreshCwIcon />}
-            {newCount > 0
-              ? t("workspace.surveys.edit.flow.copy_again_new", { count: newCount })
-              : t("workspace.surveys.edit.flow.copy_again")}
-          </Button>
-        )}
-      </div>
-      <p className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.options_copied_from_help")}</p>
-    </div>
   );
 }
 

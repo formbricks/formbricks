@@ -9,7 +9,8 @@ import { getOptionListKeys } from "./show-if";
  * everywhere, through every hop), and each copied option an ordinary show-if "picked in the source",
  * so the survey runtime, results and the API need nothing new to honour it.
  *
- * Pure and Zod-free, so the editor, the validator, `fillMissingCodes` and the v3 checks share it.
+ * Pure and Zod-free, so the validator, `fillMissingCodes`, the v3 checks and the editor's Recode section
+ * share it. The editor no longer sets copies up (P70): they arrive through the API.
  *
  * - Choices copy from choices (single select, multi select, ranking), pictures from pictures. Matrix
  *   rows are not copied in 6.2 (decision A / P18): they use row show-if pointing at the source.
@@ -60,13 +61,6 @@ const optionKindOf = (type: string): "choices" | "pictures" | null => {
 export const getOptionsCopiedFrom = (element: object | null | undefined): string | undefined => {
   if (!element || !("optionsCopiedFrom" in element)) return undefined;
   return typeof element.optionsCopiedFrom === "string" ? element.optionsCopiedFrom : undefined;
-};
-
-/** The element without its copy link; the same element when it has none. */
-export const withoutOptionsCopiedFrom = <TElement extends object>(element: TElement): TElement => {
-  if (!("optionsCopiedFrom" in element)) return element;
-  const { optionsCopiedFrom: _removed, ...rest } = element;
-  return rest as TElement;
 };
 
 /** Whether `target` can copy the options of `source`: choices from choices, pictures from pictures. */

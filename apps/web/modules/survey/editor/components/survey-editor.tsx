@@ -416,7 +416,6 @@ export const SurveyEditor = ({
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
               onEditOnQuestionsTab={openOnQuestionsTab}
-              persistedSurvey={survey}
             />
           )}
 
