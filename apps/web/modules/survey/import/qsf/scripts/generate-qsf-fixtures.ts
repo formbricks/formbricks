@@ -439,6 +439,37 @@ write(
   )
 );
 
+// ---------- signature.qsf ----------
+// Qualtrics' Signature question: one required (ForceResponse ON), one left optional.
+resetFlowIds();
+write(
+  "signature.qsf",
+  survey(
+    "Signed agreement",
+    "EN",
+    [
+      question({
+        qid: "QID1",
+        text: "Sign to confirm you accept the terms",
+        type: "Signature",
+        selector: "Signature",
+        force: "ON",
+      }),
+      question({ qid: "QID2", text: "Witness signature", type: "Signature", selector: "Signature" }),
+      blocksElement([
+        {
+          id: "BL_default",
+          description: "Default Question Block",
+          type: "Default",
+          elements: ["QID1", "QID2"],
+        },
+      ]),
+      flowElement([flowBlock("BL_default"), flowEnd()]),
+    ],
+    2
+  )
+);
+
 // ---------- embedded-data.qsf ----------
 resetFlowIds();
 write(

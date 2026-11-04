@@ -38,6 +38,7 @@ properties:
       - address
       - ranking
       - contactInfo
+      - signature
     description: >-
       The element's type in the current survey definition. Matches the `type` of the corresponding
       `SurveyElement`.

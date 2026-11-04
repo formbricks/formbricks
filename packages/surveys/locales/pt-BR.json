@@ -102,5 +102,18 @@
     "value_must_equal": "O valor deve ser igual a {value}",
     "value_must_not_contain": "O valor não deve conter {value}",
     "value_must_not_equal": "O valor não deve ser igual a {value}"
+  },
+  "signature": {
+    "clear": "Limpar",
+    "draw": "Desenhar",
+    "method": "Método de assinatura",
+    "not_signed": "Não assinado",
+    "pad_label": "Campo de assinatura. Desenhe sua assinatura com o dedo, uma caneta stylus ou o mouse.",
+    "pad_label_with_type": "Campo de assinatura. Desenhe sua assinatura com o dedo, uma caneta stylus ou o mouse, ou mude para Digitar para inserir seu nome com o teclado.",
+    "saved": "Sua assinatura foi salva. Limpe-a para assinar novamente.",
+    "sign_here": "Assine aqui",
+    "signed": "Assinado",
+    "type": "Digitar",
+    "type_your_name": "Digite seu nome"
   }
 }

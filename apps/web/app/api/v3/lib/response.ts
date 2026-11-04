@@ -102,7 +102,11 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  */
 export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_empty",
+  "attachment_export_expired",
+  "attachment_export_filter_conflict",
+  "attachment_export_not_ready",
   "attachment_export_too_large",
+  "attachment_export_unavailable",
   "capacity_reached",
   "concurrency_limit_reached",
   "member_in_other_organizations",
@@ -503,12 +507,24 @@ export function problemConflict(
   // ENG-3069: `details` carries the machine-readable half of an optimistic-concurrency failure
   // (`expectedUpdatedAt` / `currentUpdatedAt`). Without it a client can only re-read and guess,
   // and the human `detail` string is the wrong place for a value a retry has to compare.
-  options?: { details?: Record<string, unknown> }
+  options?: { details?: Record<string, unknown>; code?: ProblemCode }
 ): Response {
   return problemResponse(409, "Conflict", detail, requestId, {
-    code: "conflict",
+    code: options?.code ?? "conflict",
     instance,
     ...(options?.details && { details: options.details }),
+  });
+}
+
+/** 410 for a resource that existed and is gone for good, e.g. an export archive past its expiry. */
+export function problemGone(
+  requestId: string,
+  detail: string,
+  options?: { instance?: string; code?: ProblemCode }
+): Response {
+  return problemResponse(410, "Gone", detail, requestId, {
+    code: options?.code,
+    instance: options?.instance,
   });
 }
 

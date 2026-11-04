@@ -1,6 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import type { TResponseData, TResponseDataValue, TResponseOutcome } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -19,6 +20,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { validateResponseData } from "@/modules/api/lib/validation";
+import { getSurveyUploadElementConfigs } from "@/modules/storage/survey-upload-elements";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { buildAnswerPlan } from "./answers";
 import { resolveV3LabelContext } from "./label-resolution";
@@ -769,31 +771,60 @@ function composeV3ResponseWrite({
  * 422 rather than v1/v2's 400, because the check needs the survey definition — the line this
  * contract draws between the two.
  */
-async function fileUploadIssues(
+async function uploadIssues(
   survey: TV3WriteSurveyRow,
   data: TResponseData | undefined
 ): Promise<InvalidParam[]> {
   if (!data) return [];
 
-  const valid = validateClientFileUploads({
-    data,
+  const check = {
     workspaceId: survey.workspaceId,
     surveyId: survey.id,
     blocks: survey.blocks as never,
     questions: survey.questions as never,
     legacyOwnedStoragePrefixes: await getWorkspaceLegacyStoragePrefixes(survey.workspaceId),
-  });
+  };
 
-  if (valid) return [];
+  // File uploads are checked apart from Signatures, so a bad file-upload answer keeps the reason it has
+  // always had and only a Signature failure gets its own.
+  const signatureIds = new Set(
+    getSurveyUploadElementConfigs({ blocks: check.blocks, questions: check.questions })
+      .filter((element) => element.type === TSurveyElementTypeEnum.Signature)
+      .map((element) => element.id)
+  );
+  const entries = Object.entries(data);
+  const signatureData = Object.fromEntries(entries.filter(([id]) => signatureIds.has(id)));
+  const fileUploadData = Object.fromEntries(entries.filter(([id]) => !signatureIds.has(id)));
+  const hasSignatureAnswer = Object.keys(signatureData).length > 0;
 
-  return [
-    {
-      name: "data",
-      reason: "A file-upload answer references a file that does not belong to this survey's upload element.",
-      code: "invalid_reference",
-      referenceType: "element",
-    },
-  ];
+  if (
+    (Object.keys(fileUploadData).length > 0 || !hasSignatureAnswer) &&
+    !validateClientFileUploads({ ...check, data: fileUploadData })
+  ) {
+    return [
+      {
+        name: "data",
+        reason:
+          "A file-upload answer references a file that does not belong to this survey's upload element.",
+        code: "invalid_reference",
+        referenceType: "element",
+      },
+    ];
+  }
+
+  if (hasSignatureAnswer && !validateClientFileUploads({ ...check, data: signatureData })) {
+    return [
+      {
+        name: "data",
+        reason:
+          "A signature answer is malformed or references a file that does not belong to this survey's signature element.",
+        code: "invalid_reference",
+        referenceType: "element",
+      },
+    ];
+  }
+
+  return [];
 }
 
 /** Survey validation-rule failures, itemized per element rather than collapsed into one message. */
@@ -870,7 +901,7 @@ export async function planV3ResponseCreate({
       (issue): issue is InvalidParam => issue !== null
     ),
     ...answerValidationIssues(survey, composed.data, storedLanguage),
-    ...(await fileUploadIssues(survey, composed.data)),
+    ...(await uploadIssues(survey, composed.data)),
   ];
 
   if (issues.length > 0) return { ok: false, issues };
@@ -1064,7 +1095,7 @@ export async function planV3ResponsePatch({
     // so an `embeddedData`-only patch would otherwise re-run stored upload URLs through today's
     // `allowedFileExtensions`: narrow those after collection and every later patch 422s naming `data`,
     // a field the request never carried.
-    ...(body.data === undefined ? [] : await fileUploadIssues(survey, composed.data)),
+    ...(body.data === undefined ? [] : await uploadIssues(survey, composed.data)),
   ];
 
   if (issues.length > 0) return { ok: false, issues };

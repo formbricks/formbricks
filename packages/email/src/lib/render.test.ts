@@ -11,6 +11,8 @@ import {
   render,
   renderAccountDeletedEmail,
   renderAccountDeletionEmail,
+  renderAttachmentExportFailedEmail,
+  renderAttachmentExportReadyEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderFollowUpEmail,
@@ -80,6 +82,14 @@ const renderers: [string, () => Promise<string>][] = [
   [
     "renderSurveyRetentionNoticeEmail",
     () => renderSurveyRetentionNoticeEmail({ ...exampleData.surveyRetentionNoticeEmail, ...legal, t }),
+  ],
+  [
+    "renderAttachmentExportReadyEmail",
+    () => renderAttachmentExportReadyEmail({ ...exampleData.attachmentExportReadyEmail, ...legal, t }),
+  ],
+  [
+    "renderAttachmentExportFailedEmail",
+    () => renderAttachmentExportFailedEmail({ ...exampleData.attachmentExportFailedEmail, ...legal, t }),
   ],
   [
     "renderMemberRetentionNoticeEmail",
@@ -194,6 +204,35 @@ describe("translation threading", () => {
     );
     expect(html).not.toContain(`/workspaces/${workspaceId}/settings/notifications`);
     expect(html).toContain(`${WEBAPP_URL}/workspaces/${workspaceId}/surveys/${survey.id}/responses`);
+  });
+});
+
+describe("Signature response", () => {
+  const signatureUrl = "/storage/ws1/private/surveys/s1/elements/e1/signature--fid--abc.png";
+  const elements = [
+    { element: "Please sign", response: signatureUrl, type: TSurveyElementTypeEnum.Signature },
+  ];
+
+  test("the response notification names the signature without carrying its link", async () => {
+    const html = await renderResponseFinishedEmail({
+      ...exampleData.responseFinishedEmail,
+      elements,
+      t,
+    });
+
+    expect(html).toContain("Link to the signature is not included for data privacy reasons");
+    expect(html).not.toContain("signature--fid--abc");
+  });
+
+  test("the follow-up email does not carry the link either", async () => {
+    const html = await renderFollowUpEmail({
+      ...exampleData.followUpEmail,
+      responseData: elements,
+      t,
+    });
+
+    expect(html).toContain("Link to the signature is not included for data privacy reasons");
+    expect(html).not.toContain("signature--fid--abc");
   });
 });
 

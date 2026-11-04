@@ -3,6 +3,7 @@ import {
   type JobHandlerOverrides,
   ONE_SHOT_JOB_NAMES,
   type RecurringJobHandle,
+  type TAttachmentExportJobData,
   type TGlobalScopeJobData,
   type TRecurringBackgroundJobSchedule,
   type TRecurringJobKey,
@@ -40,6 +41,8 @@ import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/r
 import { processEmailAuditMaintenanceJob } from "@/modules/email/lib/email-audit-maintenance";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 import { processWebhookDeliveryJob } from "@/modules/response-pipeline/lib/process-webhook-delivery-job";
+import { processAttachmentExportJob } from "@/modules/storage/attachment-export/process-attachment-export-job";
+import { processAttachmentExportReconcileJob } from "@/modules/storage/attachment-export/process-attachment-export-reconcile-job";
 import {
   SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
   SURVEY_ARCHIVE_PURGE_TIME_ZONE,
@@ -83,6 +86,12 @@ interface RecurringJobRegistration {
  * registered at all). A test pins the pairing instead.
  */
 export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, RecurringJobRegistration> = {
+  attachmentExportReconcile: {
+    requiresReleaseActivation: true,
+    handler: processAttachmentExportReconcileJob,
+    job: recurringJobs.attachmentExportReconcile,
+    schedule: { everyMs: 5 * 60_000, kind: "every" },
+  },
   emailAuditMaintenance: {
     requiresReleaseActivation: true,
     handler: processEmailAuditMaintenanceJob,
@@ -214,6 +223,8 @@ export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = 
 
 /** Handler overrides for every job whose real implementation lives in this app. */
 export const getJobHandlerOverrides = (): JobHandlerOverrides => ({
+  [ONE_SHOT_JOB_NAMES.attachmentExport]:
+    toJobHandlerOverride<TAttachmentExportJobData>(processAttachmentExportJob),
   [ONE_SHOT_JOB_NAMES.responsePipeline]:
     toJobHandlerOverride<TResponsePipelineJobData>(processResponsePipelineJob),
   [ONE_SHOT_JOB_NAMES.webhookDelivery]:

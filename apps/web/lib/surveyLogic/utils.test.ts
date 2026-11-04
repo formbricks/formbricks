@@ -361,6 +361,41 @@ describe("surveyLogic", () => {
     expect(result.jumpTarget).toBe("q3");
   });
 
+  test("evaluateLogic reads a Signature answer (one URL string) as signed, and empty or missing as not signed", () => {
+    const surveyWithSignature = {
+      ...mockSurvey,
+      blocks: [
+        ...mockSurvey.blocks,
+        {
+          id: "signatureBlock",
+          name: "Signature block",
+          elements: [
+            {
+              id: "sig1",
+              type: TSurveyElementTypeEnum.Signature,
+              headline: { default: "Sign here" },
+              required: false,
+              allowTypedSignature: true,
+            },
+          ],
+        },
+      ],
+    } as TJsWorkspaceStateSurvey;
+    const group = (operator: "isSubmitted" | "isSkipped"): TConditionGroup => ({
+      id: "g",
+      connector: "and",
+      conditions: [{ id: "c", operator, leftOperand: { type: "element", value: "sig1" } }],
+    });
+    const url = "/storage/ws1/private/surveys/survey1/elements/sig1/signature--fid--abc.png";
+
+    expect(evaluateLogic(surveyWithSignature, { sig1: url }, {}, group("isSubmitted"), "en")).toBe(true);
+    expect(evaluateLogic(surveyWithSignature, { sig1: url }, {}, group("isSkipped"), "en")).toBe(false);
+    expect(evaluateLogic(surveyWithSignature, { sig1: "" }, {}, group("isSubmitted"), "en")).toBe(false);
+    expect(evaluateLogic(surveyWithSignature, { sig1: "" }, {}, group("isSkipped"), "en")).toBe(true);
+    expect(evaluateLogic(surveyWithSignature, {}, {}, group("isSubmitted"), "en")).toBe(false);
+    expect(evaluateLogic(surveyWithSignature, {}, {}, group("isSkipped"), "en")).toBe(true);
+  });
+
   test("evaluateLogic handles all operators and error cases", () => {
     const baseCond = (operator: string, right: any = undefined) => ({
       id: "c",

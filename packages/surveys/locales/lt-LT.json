@@ -102,5 +102,18 @@
     "value_must_equal": "Reikšmė turi būti lygi {value}",
     "value_must_not_contain": "Reikšmė negali turėti {value}",
     "value_must_not_equal": "Reikšmė negali būti lygi {value}"
+  },
+  "signature": {
+    "clear": "Išvalyti",
+    "draw": "Piešti",
+    "method": "Parašo būdas",
+    "not_signed": "Nepasirašyta",
+    "pad_label": "Parašo laukas. Nupiešk savo parašą pirštu, rašikliu arba pele.",
+    "pad_label_with_type": "Parašo laukas. Nupiešk savo parašą pirštu, rašikliu arba pele, arba pereik prie režimo „Įvesti“ ir įvesk savo vardą klaviatūra.",
+    "saved": "Tavo parašas išsaugotas. Išvalyk jį, jei nori pasirašyti iš naujo.",
+    "sign_here": "Pasirašyk čia",
+    "signed": "Pasirašyta",
+    "type": "Įvesti",
+    "type_your_name": "Įvesk savo vardą"
   }
 }

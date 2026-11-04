@@ -13,6 +13,7 @@ export default defineConfig({
     rollupOptions: {
       external: [
         "@aws-sdk/client-s3",
+        "@aws-sdk/lib-storage",
         "@aws-sdk/s3-presigned-post",
         "@aws-sdk/s3-request-presigner",
         "@formbricks/logger",
