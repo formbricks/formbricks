@@ -577,6 +577,28 @@ export const getResponsesByWorkspaceId = reactCache(
  * unions by key: a key this payload rewrote takes its new verdict, including none at all, so a value
  * corrected on a later block stops being flagged.
  */
+/**
+ * Locks a response row for the rest of `tx` and returns its `finished` flag, or `null` when there is no such
+ * response. A check that guards a response write belongs on this result: under the lock, no other write can
+ * commit between the check and the write, and the read in `updateResponse` that follows sees the latest
+ * committed row, so its merge of `data`/`variables`/`ttc` cannot drop a concurrent update's keys.
+ *
+ * FOR NO KEY UPDATE rather than FOR UPDATE: the update never changes the key, and the weaker lock does not
+ * conflict with the FOR KEY SHARE that inserts referencing this row take (quota links, tags, notes).
+ */
+export const lockResponseForUpdate = async (
+  tx: Prisma.TransactionClient,
+  responseId: string
+): Promise<{ finished: boolean } | null> => {
+  const [locked] = await tx.$queryRaw<{ finished: boolean }[]>`
+    SELECT "finished"
+    FROM "Response"
+    WHERE "id" = ${responseId}
+    FOR NO KEY UPDATE
+  `;
+  return locked ?? null;
+};
+
 export const updateResponse = async (
   responseId: string,
   responseInput: TResponseUpdateInput,

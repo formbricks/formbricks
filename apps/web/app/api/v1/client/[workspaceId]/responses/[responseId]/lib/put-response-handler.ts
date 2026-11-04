@@ -1,5 +1,9 @@
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
-import { RESPONSE_ALREADY_FINISHED_ERROR_CODE, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  RESPONSE_ALREADY_FINISHED_ERROR_CODE,
+  ResourceNotFoundError,
+  ResponseAlreadyFinishedError,
+} from "@formbricks/types/errors";
 import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -43,6 +47,16 @@ const handleDatabaseError = (error: unknown, responseId: string): TRouteResult =
   }
   return handleApiError(error, { cors: true });
 };
+
+// The SDK's response queue keys off `details.code` to stop retrying, so both places that refuse a finished
+// response answer the same way.
+const responseAlreadyFinished = (): TRouteResult => ({
+  response: responses.badRequestResponse(
+    "Response is already finished",
+    { code: RESPONSE_ALREADY_FINISHED_ERROR_CODE },
+    true
+  ),
+});
 
 const validateResponse = (
   response: TResponse,
@@ -110,14 +124,10 @@ const validateUpdateRequest = (
     };
   }
 
+  // A cheap early exit only: the authoritative check runs under the row lock in
+  // updateResponseWithQuotaEvaluation, since the response can be finished after this read.
   if (existingResponse.finished) {
-    return {
-      response: responses.badRequestResponse(
-        "Response is already finished",
-        { code: RESPONSE_ALREADY_FINISHED_ERROR_CODE },
-        true
-      ),
-    };
+    return responseAlreadyFinished();
   }
 
   if (
@@ -172,6 +182,9 @@ const getUpdatedResponse = async (
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       return { response: responses.notFoundResponse("Response", responseId, true) };
+    }
+    if (error instanceof ResponseAlreadyFinishedError) {
+      return responseAlreadyFinished();
     }
     return handleApiError(error, { cors: true });
   }
@@ -276,6 +289,8 @@ export const putResponseHandler = async ({
     response: responseData,
   });
 
+  // The update ran on a locked, unfinished row, so `finished` here is this request's own transition: the
+  // finish event fires once per response, never again for a later write.
   if (updatedResponse.finished) {
     await sendToPipeline({
       event: "responseFinished",

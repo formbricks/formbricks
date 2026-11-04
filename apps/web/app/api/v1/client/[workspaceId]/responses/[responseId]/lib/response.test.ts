@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse } from "@formbricks/types/responses";
-import { updateResponse } from "@/lib/response/service";
+import { lockResponseForUpdate, updateResponse } from "@/lib/response/service";
 import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
@@ -13,6 +14,7 @@ vi.mock("@/lib/response/service");
 vi.mock("@/modules/ee/quotas/lib/evaluation-service");
 
 const mockUpdateResponse = vi.mocked(updateResponse);
+const mockLockResponseForUpdate = vi.mocked(lockResponseForUpdate);
 const mockEvaluateResponseQuotas = vi.mocked(evaluateResponseQuotas);
 const mockLoadQuotaEvaluationContext = vi.mocked(loadQuotaEvaluationContext);
 const mockQuotaContext = { quotas: [], survey: { id: "survey123" } } as unknown as Awaited<
@@ -37,6 +39,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
     };
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
     mockLoadQuotaEvaluationContext.mockResolvedValue(mockQuotaContext);
+    mockLockResponseForUpdate.mockResolvedValue({ finished: false });
   });
 
   const mockResponseId = "response123";
@@ -186,5 +189,27 @@ describe("updateResponseWithQuotaEvaluation", () => {
     expect(mockEvaluateResponseQuotas).toHaveBeenCalledWith(
       expect.objectContaining({ quotaContext: mockQuotaContext })
     );
+  });
+
+  test("refuses a response that is finished under the row lock, without writing it (ENG-6869)", async () => {
+    mockLockResponseForUpdate.mockResolvedValue({ finished: true });
+
+    await expect(
+      updateResponseWithQuotaEvaluation(mockResponseId, "survey123", mockResponseInput)
+    ).rejects.toThrow(ResponseAlreadyFinishedError);
+
+    expect(mockLockResponseForUpdate).toHaveBeenCalledWith(mockTx, mockResponseId);
+    expect(mockUpdateResponse).not.toHaveBeenCalled();
+    expect(mockEvaluateResponseQuotas).not.toHaveBeenCalled();
+  });
+
+  test("reports a response that no longer exists as not found", async () => {
+    mockLockResponseForUpdate.mockResolvedValue(null);
+
+    await expect(
+      updateResponseWithQuotaEvaluation(mockResponseId, "survey123", mockResponseInput)
+    ).rejects.toThrow(ResourceNotFoundError);
+
+    expect(mockUpdateResponse).not.toHaveBeenCalled();
   });
 });
