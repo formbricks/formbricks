@@ -11,6 +11,7 @@ import { Label } from "@/modules/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { FilterChip } from "@/modules/ui/components/table-toolbar/components/filter-chip";
 import { FilterValueList } from "@/modules/ui/components/table-toolbar/components/filter-value-list";
+import { useDeferredPick } from "../hooks/use-deferred-pick";
 import { summarizePickedValues, toTypedPick, withoutOwnPick } from "../lib/dashboard-filter-editing";
 import { getDashboardFilterValueProperty } from "../lib/dashboard-filter-values";
 import {
@@ -19,6 +20,8 @@ import {
   getDashboardFilterField,
   isListDashboardFilter,
 } from "../lib/dashboard-filters";
+
+const NO_VALUES: string[] = [];
 
 interface DashboardFilterControlProps {
   dashboardId: string;
@@ -51,11 +54,11 @@ const TypedValueEditor = ({
         event.preventDefault();
         onApply(toTypedPick(draft));
       }}>
-      <Label htmlFor={type === "time" ? undefined : inputId}>
+      <Label htmlFor={inputId}>
         {filter.label} {getFilterOperatorLabel(filter.operator, t)}
       </Label>
       {type === "time" ? (
-        <FilterDateInput value={draft} onChange={(next) => setDraft(next ?? "")} />
+        <FilterDateInput id={inputId} value={draft} onChange={(next) => setDraft(next ?? "")} />
       ) : (
         <Input
           id={inputId}
@@ -86,20 +89,24 @@ export const DashboardFilterControl = ({
   onChange,
 }: Readonly<DashboardFilterControlProps>) => {
   const [open, setOpen] = useState(false);
-  const selected = picks[filter.id] ?? [];
+  const selected = picks[filter.id] ?? NO_VALUES;
   const isList = isListDashboardFilter(filter);
   const otherPicks = withoutOwnPick(picks, filter.id);
-
-  const toggle = (value: string) =>
-    onChange(selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value]);
+  // Ticks are applied once, when the list closes: each applied pick reloads every chart.
+  const pick = useDeferredPick(selected, onChange);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && isList) pick.apply();
+        setOpen(next);
+      }}>
       <PopoverTrigger asChild>
         <FilterChip
           size="md"
           label={filter.label}
-          value={summarizePickedValues(selected)}
+          value={summarizePickedValues(isList && open ? pick.draft : selected)}
           accessibleName={filter.label}
           onRemove={selected.length > 0 ? () => onChange([]) : undefined}
         />
@@ -108,8 +115,8 @@ export const DashboardFilterControl = ({
         {isList ? (
           <FilterValueList
             property={getDashboardFilterValueProperty({ dashboardId, filter, otherPicks, dateRange })}
-            selected={selected}
-            onToggle={toggle}
+            selected={pick.draft}
+            onToggle={pick.toggle}
           />
         ) : (
           <TypedValueEditor
