@@ -16,21 +16,18 @@ import { cn } from "@/lib/cn";
 export type TFlowOutlineTone = "block" | "rule" | "embeddedData" | "ending";
 
 interface FlowOutlineProps {
-  /** Left of the header: e.g. Collapse all / Expand all. */
+  /** Left of the header: e.g. the Expand / Collapse toggle and an info button saying how to read it. */
   readonly actions?: ReactNode;
-  /** How to read the outline, shown next to the actions. */
-  readonly hint?: ReactNode;
   /** Right of the header: e.g. "5 blocks · 4 endings". */
   readonly count?: ReactNode;
   readonly children: ReactNode;
   readonly className?: string;
 }
 
-export const FlowOutline = ({ actions, hint, count, children, className }: FlowOutlineProps) => (
+export const FlowOutline = ({ actions, count, children, className }: FlowOutlineProps) => (
   <div className={cn("space-y-3", className)}>
     <div className="flex items-center justify-between gap-3">
-      {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
-      {hint && <span className="text-xs text-slate-500">{hint}</span>}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       {count && <span className="shrink-0 text-xs text-slate-500">{count}</span>}
     </div>
     <div className="space-y-2 border-l-2 border-slate-200 pl-1.5">{children}</div>

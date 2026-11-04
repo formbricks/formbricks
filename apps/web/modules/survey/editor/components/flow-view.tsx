@@ -79,6 +79,7 @@ import {
   FlowOutlineRow,
   FlowOutlineSectionLabel,
 } from "@/modules/ui/components/flow-outline";
+import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 
 interface FlowViewProps {
@@ -515,27 +516,24 @@ export const FlowView = ({
                 onClick={() => setCollapsedBlockIds(new Set())}>
                 {t("workspace.surveys.edit.flow.expand_all")}
               </Button>
+              <InfoTooltip label={t("workspace.surveys.edit.flow.about_flow_tab")}>
+                {t("workspace.surveys.edit.flow.hint")}
+              </InfoTooltip>
             </>
           }
-          hint={t("workspace.surveys.edit.flow.hint")}
           count={countText}>
           <FlowOutlineSectionLabel>
             {t("workspace.surveys.edit.flow.before_first_question")}
           </FlowOutlineSectionLabel>
           <FlowOutlineChildren>
-            {outline.start.rules.length === 0 && (
-              <p className="pl-6 text-xs text-slate-500">
-                {t("workspace.surveys.edit.flow.before_first_question_hint")}
-              </p>
-            )}
             {outline.start.rules.map((row) =>
               renderRuleRow(row, localSurvey.startLogic ?? [], START_SCOPE_BLOCK_IDX)
             )}
-            <div className="pl-6">
+            <div className="flex items-center gap-1.5 pl-6">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button type="button" size="sm" variant="secondary" id="flow-add-logic-start">
-                    {t("workspace.surveys.edit.add_logic")}
+                    {t("workspace.surveys.edit.flow.add_logic_before_first_question")}
                     <PlusIcon />
                   </Button>
                 </DropdownMenuTrigger>
@@ -552,6 +550,9 @@ export const FlowView = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <InfoTooltip label={t("workspace.surveys.edit.flow.about_before_first_question")}>
+                {t("workspace.surveys.edit.flow.before_first_question_hint")}
+              </InfoTooltip>
             </div>
           </FlowOutlineChildren>
 

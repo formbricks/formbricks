@@ -4191,7 +4191,10 @@
         "first_name": "First Name",
         "five_points_recommended": "5 points (recommended)",
         "flow": {
+          "about_before_first_question": "About logic before the first question",
+          "about_flow_tab": "About the Flow tab",
           "add_condition": "Add a condition",
+          "add_logic_before_first_question": "Add logic before first question",
           "always": "always",
           "always_runs": "Always",
           "always_shown": "Always shown",
