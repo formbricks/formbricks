@@ -18,6 +18,8 @@ interface MembersViewProps {
   readonly currentUserId: string;
   readonly isAccessControlAllowed: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
+  /** `organization.manage_access`: the role floor the member and invite actions enforce (ENG-6812). */
+  readonly canManageUsers: boolean;
 }
 
 // Carries its own gutter for the same reason the controls above do: the card body is flush.
@@ -37,6 +39,7 @@ export const MembersView = async ({
   currentUserId,
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
+  canManageUsers,
 }: MembersViewProps) => {
   const t = await getTranslate();
 
@@ -76,6 +79,7 @@ export const MembersView = async ({
             isMultiOrgEnabled={isMultiOrgEnabled}
             teams={teams}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+            canManageUsers={canManageUsers}
             isTeamAdmin={isTeamAdminUser}
             userAdminTeamIds={userAdminTeamIds}
             isBulkInviteAllowed={isBulkInviteAllowed}
@@ -91,6 +95,7 @@ export const MembersView = async ({
             currentUserId={currentUserId}
             role={membershipRole}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+            canManageUsers={canManageUsers}
           />
         </Suspense>
       )}

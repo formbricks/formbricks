@@ -43,6 +43,7 @@ export const TeamsPage = async (props: Readonly<{ params: Promise<{ organization
         currentUserId={session.user.id}
         isAccessControlAllowed={isAccessControlAllowed}
         isUserManagementDisabledFromUi={!hasUserManagementAccess}
+        canManageUsers={hasStandardUserManagementAccess}
       />
       <TeamsView
         organizationId={organization.id}

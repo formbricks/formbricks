@@ -12,6 +12,7 @@ interface EditMembershipsProps {
   readonly role: TOrganizationRole;
   readonly isAccessControlAllowed: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
+  readonly canManageUsers: boolean;
 }
 
 /**
@@ -25,6 +26,7 @@ export const EditMemberships = async ({
   role,
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
+  canManageUsers,
 }: EditMembershipsProps) => {
   const [members, invites] = await Promise.all([
     getMembershipByOrganizationId(organization.id),
@@ -49,6 +51,7 @@ export const EditMemberships = async ({
       isAccessControlAllowed={isAccessControlAllowed}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+      canManageUsers={canManageUsers}
     />
   );
 };

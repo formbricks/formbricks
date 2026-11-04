@@ -55,22 +55,22 @@ const getMembershipBadge = (member: TMemberRow, t: TFunction, locale: string) =>
 const showDeleteButton = (
   member: TMemberRow,
   {
-    isOwnerOrManager,
+    canManageUsers,
     isManager,
     currentUserId,
     doesOrgHaveMoreThanOneOwner,
   }: Readonly<{
-    isOwnerOrManager: boolean;
+    canManageUsers: boolean;
     isManager: boolean;
     currentUserId: string;
     doesOrgHaveMoreThanOneOwner: boolean;
   }>
 ): boolean => {
   if (isInvitee(member)) {
-    return isOwnerOrManager;
+    return canManageUsers;
   }
 
-  if (!isOwnerOrManager) {
+  if (!canManageUsers) {
     return false;
   }
 
@@ -138,9 +138,9 @@ const getMemberColumns = ({
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
   isOwnerOrManager,
+  canManageUsers,
   isManager,
   doesOrgHaveMoreThanOneOwner,
-  canReactivate,
   lastSignInSort,
   onToggleLastSignInSort,
 }: Readonly<{
@@ -153,13 +153,14 @@ const getMemberColumns = ({
   isFormbricksCloud: boolean;
   isUserManagementDisabledFromUi: boolean;
   isOwnerOrManager: boolean;
+  /**
+   * `organization.manage_access`, decided on the server: owners and managers above the
+   * `USER_MANAGEMENT_MINIMUM_ROLE` floor, licensed or not. Delete, Reactivate, the invite controls and the
+   * role picker are user management, so they follow it rather than the caller's role (ENG-6812).
+   */
+  canManageUsers: boolean;
   isManager: boolean;
   doesOrgHaveMoreThanOneOwner: boolean;
-  /**
-   * Owners and managers (`organization.manage_access`), licensed or not: Reactivate is user management,
-   * so a member deactivated while the organisation held data retention can come back after it lapses.
-   */
-  canReactivate: boolean;
   lastSignInSort: TLastSignInSort | null;
   onToggleLastSignInSort: () => void;
 }>): TSettingsTableColumn<TMemberRow>[] => {
@@ -200,7 +201,7 @@ const getMemberColumns = ({
           inviteId={isInvitee(member) ? member.id : ""}
           doesOrgHaveMoreThanOneOwner={doesOrgHaveMoreThanOneOwner}
           isFormbricksCloud={isFormbricksCloud}
-          isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+          isUserManagementDisabledFromUi={isUserManagementDisabledFromUi || !canManageUsers}
         />
       ),
     });
@@ -242,7 +243,7 @@ const getMemberColumns = ({
       align: "right",
       cell: (member) => (
         <div className="flex items-center justify-end gap-2">
-          {canReactivate &&
+          {canManageUsers &&
           !isInvitee(member) &&
           !member.isActive &&
           // Managers don't act on owners, as with Delete; the API refuses it too.
@@ -257,8 +258,9 @@ const getMemberColumns = ({
             organization={organization}
             member={isInvitee(member) ? undefined : member}
             invite={isInvitee(member) ? member : undefined}
+            canManageInvites={canManageUsers}
             showDeleteButton={showDeleteButton(member, {
-              isOwnerOrManager,
+              canManageUsers,
               isManager,
               currentUserId,
               doesOrgHaveMoreThanOneOwner,
@@ -281,6 +283,7 @@ interface MembersInfoProps {
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isUserManagementDisabledFromUi: boolean;
+  canManageUsers: boolean;
 }
 
 export const MembersInfo = ({
@@ -292,6 +295,7 @@ export const MembersInfo = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
+  canManageUsers,
 }: Readonly<MembersInfoProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -324,10 +328,10 @@ export const MembersInfo = ({
           isFormbricksCloud,
           isUserManagementDisabledFromUi,
           isOwnerOrManager,
+          // Delete, Reactivate (ENG-3610), the invite controls and the role picker.
+          canManageUsers,
           isManager,
           doesOrgHaveMoreThanOneOwner,
-          // "Reactivate" on inactive members (ENG-3610).
-          canReactivate: isOwnerOrManager,
           lastSignInSort,
           onToggleLastSignInSort: toggleLastSignInSort,
         })}

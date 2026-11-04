@@ -2,45 +2,29 @@ import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/errors";
 import { TMember, TMembership } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 
-const MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS = 3;
-
-const runSerializableTransactionWithRetry = async <T>(
+/**
+ * One serializable transaction, run again when Postgres aborts it over a concurrent one. Both the
+ * shared conflict check and the retry live in `prisma-error`, so a driver adapter's own conflict error
+ * is retried as well as Prisma's P2034.
+ */
+const runSerializableTransactionWithRetry = <T>(
   transaction: (tx: Prisma.TransactionClient) => Promise<T>
-): Promise<T> => {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS; attempt++) {
-    try {
-      return await prisma.$transaction(transaction, {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
-    } catch (error) {
-      lastError = error;
-      const shouldRetry =
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PrismaErrorType.TransactionConflict &&
-        attempt < MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS;
-
-      if (!shouldRetry) {
-        throw error;
-      }
-    }
-  }
-
-  throw lastError;
-};
+): Promise<T> =>
+  retryOnTransactionConflict(() =>
+    prisma.$transaction(transaction, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+  );
 
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
@@ -152,6 +136,20 @@ export const deleteMembership = async (
 
   try {
     const deletedTeamMemberships = await runSerializableTransactionWithRetry(async (tx) => {
+      // The last-owner guard is read in the same serializable transaction as the delete, so two owners
+      // removed at once cannot both see "another owner is left" and leave the organization with none.
+      const target = await tx.membership.findUnique({
+        where: { userId_organizationId: { organizationId, userId } },
+        select: { role: true, user: { select: { isActive: true } } },
+      });
+      if (target?.role === "owner") {
+        const activeOwners = await getOrganizationOwnerCount(organizationId, tx);
+        const activeOwnersLeft = activeOwners - (target.user.isActive ? 1 : 0);
+        if (activeOwnersLeft < 1) {
+          throw new ValidationError("You cannot delete the last owner of the organization");
+        }
+      }
+
       const teamMemberships = await tx.teamUser.findMany({
         where: {
           userId,

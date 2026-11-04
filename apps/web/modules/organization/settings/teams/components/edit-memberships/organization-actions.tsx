@@ -44,6 +44,8 @@ interface OrganizationActionsProps {
   readonly isFormbricksCloud: boolean;
   readonly isMultiOrgEnabled: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
+  /** `organization.manage_access`: owners and managers above the user-management floor (ENG-6812). */
+  readonly canManageUsers: boolean;
   readonly isTeamAdmin: boolean;
   readonly userAdminTeamIds?: string[];
   readonly enterpriseLicenseRequestFormUrl: string;
@@ -61,6 +63,7 @@ export const OrganizationActions = ({
   isFormbricksCloud,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
+  canManageUsers,
   isTeamAdmin,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
@@ -75,7 +78,9 @@ export const OrganizationActions = ({
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
 
-  const canInvite = isOwnerOrManager || (isAccessControlAllowed && isTeamAdmin);
+  // Owners and managers invite as the organization, which the role floor decides; a team admin who is
+  // neither invites into their own teams, which it doesn't (the server takes the same two paths).
+  const canInvite = isOwnerOrManager ? canManageUsers : isAccessControlAllowed && isTeamAdmin;
 
   const handleLeaveOrganization = async () => {
     setLoading(true);

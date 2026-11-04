@@ -181,6 +181,8 @@ export const getInvite = reactCache(async (inviteId: string): Promise<InviteWith
       },
       select: {
         email: true,
+        // The invite-role audit event records this snapshot before and after, so it carries the role.
+        role: true,
         creator: {
           select: {
             name: true,

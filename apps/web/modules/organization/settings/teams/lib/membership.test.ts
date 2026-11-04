@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import {
@@ -17,6 +17,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     membership: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       count: vi.fn(),
       delete: vi.fn(),
     },
@@ -212,6 +213,57 @@ describe("deleteMembership", () => {
   test("throws original error on unknown error", async () => {
     vi.mocked(prisma.teamUser.findMany).mockRejectedValue({});
     await expect(deleteMembership(userId, organizationId)).rejects.toThrowError();
+  });
+
+  // The last-owner guard used to be a cached count read in the action, before the delete's transaction,
+  // so two owners removed at once could both pass it.
+  describe("last-owner guard", () => {
+    const owner = (isActive: boolean) => ({ role: "owner" as const, user: { isActive } });
+
+    test("refuses to delete the only active owner, reading the count inside the transaction", async () => {
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue(owner(true) as never);
+      vi.mocked(prisma.membership.count).mockResolvedValue(1);
+
+      await expect(deleteMembership(userId, organizationId)).rejects.toThrow(ValidationError);
+
+      expect(prisma.membership.count).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ organizationId, role: "owner" }) })
+      );
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+      expect(prisma.membership.delete).not.toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    });
+
+    test("deletes an owner while another active owner remains", async () => {
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue(owner(true) as never);
+      vi.mocked(prisma.membership.count).mockResolvedValue(2);
+      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
+
+      await expect(deleteMembership(userId, organizationId)).resolves.toEqual([]);
+      expect(prisma.membership.delete).toHaveBeenCalled();
+    });
+
+    test("deletes a deactivated owner when the one active owner is someone else", async () => {
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue(owner(false) as never);
+      vi.mocked(prisma.membership.count).mockResolvedValue(1);
+      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
+
+      await expect(deleteMembership(userId, organizationId)).resolves.toEqual([]);
+      expect(prisma.membership.delete).toHaveBeenCalled();
+    });
+
+    test("does not count owners when removing a non-owner", async () => {
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+        role: "member",
+        user: { isActive: true },
+      } as never);
+      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
+
+      await deleteMembership(userId, organizationId);
+      expect(prisma.membership.count).not.toHaveBeenCalled();
+    });
   });
 });
 

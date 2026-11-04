@@ -57,13 +57,16 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
-    ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
+    const oldInvite = { ...(await getInvite(parsedInput.inviteId)) };
+    ctx.auditLoggingCtx.oldObject = oldInvite;
 
     const result = await updateInvite(parsedInput.inviteId, parsedInput.data, {
       allowOwnerInvite: currentUserMembership.role === "owner",
     });
 
-    ctx.auditLoggingCtx.newObject = { ...(await getInvite(parsedInput.inviteId)) };
+    // Built from the write rather than re-read: `getInvite` is request-cached, so a second read in this
+    // action would return the snapshot from before the update.
+    ctx.auditLoggingCtx.newObject = { ...oldInvite, ...parsedInput.data };
     return result;
   })
 );

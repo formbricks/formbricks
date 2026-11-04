@@ -25,9 +25,18 @@ interface MemberActionsProps {
   readonly member?: TMember;
   readonly invite?: TInvite;
   readonly showDeleteButton?: boolean;
+  /** Share link and Resend, which the server refuses below the user-management floor. */
+  readonly canManageInvites: boolean;
 }
 
-export const MemberActions = ({ organization, member, invite, showDeleteButton }: MemberActionsProps) => {
+export const MemberActions = ({
+  organization,
+  member,
+  invite,
+  showDeleteButton,
+  canManageInvites,
+}: MemberActionsProps) => {
+  const canActOnInvite = !!invite && canManageInvites;
   const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
@@ -137,12 +146,12 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
 
       <TooltipRenderer
         tooltipContent={t("workspace.settings.general.share_invite_link")}
-        shouldRender={!!invite}>
+        shouldRender={canActOnInvite}>
         <Button
           variant="secondary"
           size="icon"
           id="shareInviteButton"
-          disabled={!invite}
+          disabled={!canActOnInvite}
           onClick={() => {
             handleShareInvite();
           }}>
@@ -152,12 +161,12 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
 
       <TooltipRenderer
         tooltipContent={t("workspace.settings.general.resend_invitation_email")}
-        shouldRender={!!invite}>
+        shouldRender={canActOnInvite}>
         <Button
           variant="secondary"
           size="icon"
           id="resendInviteButton"
-          disabled={!invite}
+          disabled={!canActOnInvite}
           onClick={() => {
             handleResendInvite();
           }}>

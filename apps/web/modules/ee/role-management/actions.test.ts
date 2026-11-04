@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getMembershipByUserIdOrganizationId: vi.fn(),
   getOrganization: vi.fn(),
   getOrganizationIdFromInviteId: vi.fn(),
+  getInvite: vi.fn(),
   getOrganizationOwnerCount: vi.fn(),
   updateInvite: vi.fn(),
   updateMembership: vi.fn(),
@@ -81,7 +82,7 @@ vi.mock("@/modules/ee/role-management/lib/membership", () => ({
 }));
 
 vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
-  getInvite: vi.fn(),
+  getInvite: mocks.getInvite,
 }));
 
 vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
@@ -224,6 +225,23 @@ describe("updateInviteAction", () => {
       { role: "member" },
       { allowOwnerInvite: false }
     );
+  });
+
+  test("records the role change in the audit event", async () => {
+    const ctx = {
+      user: { id: currentUserId, locale: "en-US" },
+      auditLoggingCtx: {} as Record<string, unknown>,
+    };
+    mocks.getInvite.mockResolvedValue({
+      email: "invitee@example.com",
+      role: "manager",
+      creator: { name: "O" },
+    });
+
+    await updateInviteAction({ ctx, parsedInput: { inviteId, data: { role: "member" } } } as never);
+
+    expect(ctx.auditLoggingCtx.oldObject).toMatchObject({ role: "manager" });
+    expect(ctx.auditLoggingCtx.newObject).toMatchObject({ email: "invitee@example.com", role: "member" });
   });
 
   test("lets an owner change an owner invite", async () => {

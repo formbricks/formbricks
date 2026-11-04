@@ -27,7 +27,6 @@ import { sendInviteMemberEmail } from "@/modules/email";
 import {
   deleteMembership,
   getMembershipsByUserId,
-  getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
@@ -145,13 +144,7 @@ export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDel
       throw new OperationNotAllowedError("You cannot delete the owner of the organization");
     }
 
-    if (isOwner) {
-      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
-
-      if (ownerCount <= 1) {
-        throw new ValidationError("You cannot delete the last owner of the organization");
-      }
-    }
+    // The last-owner guard runs inside `deleteMembership`'s transaction, where it cannot race.
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
