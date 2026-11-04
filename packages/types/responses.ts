@@ -625,7 +625,7 @@ export const ZResponseInput = z.object({
 export type TResponseInput = z.infer<typeof ZResponseInput>;
 
 /**
- * Mark as low quality from the survey (ENG-6933, ADR 0022/0023): a rule's action asks the server to set the
+ * Mark as low quality from the survey (ENG-6933, ADR 0022/0024): a rule's action asks the server to set the
  * response's outcome to Low quality, with the create or update that follows it. The flag is one way: only
  * `true` is accepted, it never clears an outcome and sets no other value. The server sets the outcome and
  * queues the Hub reconcile, exactly as a reviewer marking the response does.
@@ -747,7 +747,7 @@ export type TResponseTableData = z.infer<typeof ZResponseTableData>;
 export const ZResponseWithQuotas = ZResponse.extend({
   quotas: z.array(ZSurveyQuota.pick({ id: true, name: true })).optional(),
   /**
-   * What the respondent was not shown (ENG-6936, ADR 0023); `null` means unknown. Read only for the
+   * What the respondent was not shown (ENG-6936, ADR 0024); `null` means unknown. Read only for the
    * app's own results (the responses page and the response card): it is not on `ZResponse`, and the
    * shared response selection leaves it out, so webhooks, integrations and the v1/v2 payloads stay
    * exactly as before.

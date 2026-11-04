@@ -13,7 +13,7 @@ export interface TLowQualityMark {
 }
 
 /**
- * Mark as low quality from the survey (ENG-6933, ADR 0022/0023): a rule's action made the survey send
+ * Mark as low quality from the survey (ENG-6933, ADR 0022/0024): a rule's action made the survey send
  * `markLowQuality: true` with this create or update. The response is marked exactly as a reviewer marks
  * it, through the same outcome write the v3 API uses (`writeResponsesOutcomeInTx`, `outcome-write.ts`): the outcome becomes
  * Low quality and the Hub reconcile is queued in the same transaction, so the response leaves the

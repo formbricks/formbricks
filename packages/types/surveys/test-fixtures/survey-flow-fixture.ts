@@ -939,7 +939,7 @@ const profileBlock: TSurveyBlock = {
   ],
 };
 
-// ENG-6935: Set value with expressions (ADR 0024, 0025). Kept apart from the blocks above and given
+// ENG-6935: Set value with expressions (ADR 0025, 0026). Kept apart from the blocks above and given
 // fixed ids, so the sequential ids of the earlier rules don't move.
 const always = (id: string) => ({ id, connector: "and" as const, conditions: [] });
 const answer = (elementId: string) => ({ type: "element" as const, value: elementId });

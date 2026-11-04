@@ -105,7 +105,7 @@ allOf:
       embeddedFields:
         type: array
         description: >-
-          Typed Embedded Data (ADR 0027): the survey's complete set of fields, which `variables` and
+          Typed Embedded Data (ADR 0028): the survey's complete set of fields, which `variables` and
           `hiddenFields` are derived from. Library fields carry their `key`.
         items:
           $ref: ./SurveyEmbeddedField.yml

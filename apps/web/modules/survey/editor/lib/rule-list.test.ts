@@ -55,7 +55,7 @@ describe("rule list operations work on any list of rules", () => {
     expect(duplicateRule(rules, 1)).toHaveLength(5);
   });
 
-  test("a rule whose last condition is removed stays, always running, with its actions (ADR 0025)", () => {
+  test("a rule whose last condition is removed stays, always running, with its actions (ADR 0026)", () => {
     const rules = overallRules();
     const emptied = updateRuleConditions(rules, 0, (group) => ({ ...group, conditions: [] }));
 

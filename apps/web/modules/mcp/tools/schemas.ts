@@ -219,7 +219,7 @@ const RATING_RANGES = (
 ).options.map((option) => option.value);
 
 /**
- * Block logic and Set value expressions (ENG-6935, ADR 0024 / 0025), described for agents. The
+ * Block logic and Set value expressions (ENG-6935, ADR 0025 / 0026), described for agents. The
  * function list is read off the schema's catalogue, so the advertised functions are the accepted ones.
  */
 const SURVEY_LOGIC_DESCRIPTION = [

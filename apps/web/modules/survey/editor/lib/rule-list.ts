@@ -37,7 +37,7 @@ export const duplicateRule = (rules: TSurveyBlockLogic[], ruleIdx: number): TSur
 
 /**
  * Changes a rule's conditions. A rule left with no condition stays, with its actions: an empty group
- * always runs (ADR 0025), which the editor shows as "Always runs". Removing the rule is its own action.
+ * always runs (ADR 0026), which the editor shows as "Always runs". Removing the rule is its own action.
  */
 export const updateRuleConditions = (
   rules: TSurveyBlockLogic[],
@@ -63,7 +63,7 @@ export const updateRuleActions = (
 
 /**
  * What the Add logic menu starts a rule as: a jump rule, a Set value step (ENG-6935), which always
- * runs: its condition group is an empty `and` group (ADR 0025), or a Mark as low quality rule
+ * runs: its condition group is an empty `and` group (ADR 0026), or a Mark as low quality rule
  * (ENG-6933). A Set value that runs only sometimes is the same step with "Add a condition" used on it,
  * so the menu offers no separate calculation.
  */

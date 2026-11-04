@@ -56,7 +56,7 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
 });
 
 /**
- * Set value (ENG-6935, ADR 0025): assigns the result of an expression tree (ADR 0024) to a computed
+ * Set value (ENG-6935, ADR 0026): assigns the result of an expression tree (ADR 0025) to a computed
  * field of any computed type. A third member of the union, so the one-step operators above keep
  * today's behaviour ("empty counts as 0") and this one has its own ("empty in, empty out").
  */
@@ -125,7 +125,7 @@ export const ZActionJumpToBlock = z.object({
 
 export type TActionJumpToBlock = z.infer<typeof ZActionJumpToBlock>;
 
-// MarkLowQuality action (ENG-6933, ADR 0022/0023): when the rule fires, the survey asks the server to
+// MarkLowQuality action (ENG-6933, ADR 0022/0024): when the rule fires, the survey asks the server to
 // mark the response Low quality with its next create or update (`markLowQuality: true`). The respondent
 // sees nothing. It takes no target, and is refused in the rules before the first question.
 

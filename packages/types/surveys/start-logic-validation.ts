@@ -7,7 +7,7 @@ import { type TExpression, isExpressionOverLimits } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 
 /**
- * Validation of the rules before the first question, `survey.startLogic` (ENG-6932, ADR 0023).
+ * Validation of the rules before the first question, `survey.startLogic` (ENG-6932, ADR 0024).
  *
  * They use the block-rule format, but run when the survey loads, before the welcome card and before
  * any answer exists:

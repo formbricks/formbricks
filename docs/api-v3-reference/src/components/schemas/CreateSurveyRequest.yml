@@ -142,7 +142,7 @@ properties:
     type: array
     maxItems: 300
     description: >-
-      Typed Embedded Data (ADR 0027): the survey's complete set of computed and ingested fields,
+      Typed Embedded Data (ADR 0028): the survey's complete set of computed and ingested fields,
       including workspace library fields linked by `key`. Optional: existing clients keep sending
       `variables` and `hiddenFields` alone, which work exactly as before. Sent alone, the legacy
       fields are derived from this list. Sent together with either legacy field, both have to

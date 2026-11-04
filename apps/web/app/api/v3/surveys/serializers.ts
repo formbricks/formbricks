@@ -307,7 +307,7 @@ export function serializeV3SurveyResource(
     // ENG-6932: rules before the first question, always an array (`[]` when the survey has none). They
     // hold no translatable text, so they are emitted as stored.
     startLogic: survey.startLogic ?? [],
-    // ENG-6930: the typed fields the legacy pair above is derived from (ADR 0027).
+    // ENG-6930: the typed fields the legacy pair above is derived from (ADR 0028).
     embeddedFields: toV3SurveyEmbeddedFields(survey.embeddedFields ?? []),
     // App-only runtime/distribution + targeting, via the shared survey→public mappers. Omitted
     // entirely for link surveys to keep the contract clean.

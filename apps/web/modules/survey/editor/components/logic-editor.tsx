@@ -48,7 +48,7 @@ export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeB
 
   if (!rule) return null;
 
-  // ENG-6935: a Set value step always runs — an empty `and` group (ADR 0025). It reads as such, and
+  // ENG-6935: a Set value step always runs — an empty `and` group (ADR 0026). It reads as such, and
   // gets a condition only when asked, which makes it a calculation.
   const alwaysRuns = rule.conditions.conditions.length === 0;
   const addFirstCondition = () => {

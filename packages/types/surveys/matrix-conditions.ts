@@ -1,7 +1,7 @@
 import type { TConditionGroup } from "./logic";
 
 /**
- * Matrix conditions by id (ENG-6934, ADR 0026, json-shapes §10).
+ * Matrix conditions by id (ENG-6934, ADR 0027, json-shapes §10).
  *
  * A condition on one matrix row stores the row in `leftOperand.meta` and the column(s) in its static
  * right operand. Until 6.2 both were positions (`meta.row` = row index, `value` = column index), so

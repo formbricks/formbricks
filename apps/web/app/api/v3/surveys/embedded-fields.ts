@@ -24,7 +24,7 @@ import {
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 
 /**
- * Typed Embedded Data on the v3 survey document (ENG-6930, ADR 0027).
+ * Typed Embedded Data on the v3 survey document (ENG-6930, ADR 0028).
  *
  * `embeddedFields` sits next to the legacy `variables` / `hiddenFields`, which stay a projection of
  * it. One entry is one field the survey has, flat: the survey's address for it (`storageKey`), the
@@ -422,7 +422,7 @@ function disagreementIssues(
 }
 
 /**
- * Settles the two Embedded Data formats of one write (ADR 0027).
+ * Settles the two Embedded Data formats of one write (ADR 0028).
  *
  * Takes the request's `embeddedFields` (library entries already filled in) and whichever legacy keys
  * the request itself sent, and answers with the complete fields plus the legacy projection derived

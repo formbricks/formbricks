@@ -8,7 +8,7 @@ import { resetDb } from "@/integration/reset-db";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
- * Mark as low quality from the survey (ENG-6933, ADR 0022/0023), against a real Postgres. A rule's action
+ * Mark as low quality from the survey (ENG-6933, ADR 0022/0024), against a real Postgres. A rule's action
  * makes the survey send `markLowQuality: true` with its next create or update. The server sets the outcome
  * to Low quality and queues the Hub reconcile (`hubResponseOutcome`), as a reviewer marking it does. The
  * flag is one way: it never clears an outcome, and any other value is refused.

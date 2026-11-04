@@ -1,6 +1,6 @@
 # Set value is a calculate action, and a rule with no conditions always runs
 
-The Flow tab's "Set a value" steps and calculations write a computed Embedded Data field with the existing `calculate` action, using `operator: "assign"` and a new value type `{ type: "expression", … }` (ADR 0024). An unconditional step is an ordinary rule whose condition group is an empty `and` group, which both logic engines already evaluate as true. A minor release can only add to the public survey JSON, so the existing action and the required `conditions` field stay as they are.
+The Flow tab's "Set a value" steps and calculations write a computed Embedded Data field with the existing `calculate` action, using `operator: "assign"` and a new value type `{ type: "expression", … }` (ADR 0025). An unconditional step is an ordinary rule whose condition group is an empty `and` group, which both logic engines already evaluate as true. A minor release can only add to the public survey JSON, so the existing action and the required `conditions` field stay as they are.
 
 ## Considered Options
 

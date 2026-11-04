@@ -950,7 +950,7 @@ Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` a
 #### Typed Embedded Data
 
 `create_survey`, `patch_survey` and `validate_survey` take the survey's Embedded Data as typed
-`embeddedFields` (ADR 0027), next to the legacy `variables` and `hiddenFields`, and `get_survey` returns
+`embeddedFields` (ADR 0028), next to the legacy `variables` and `hiddenFields`, and `get_survey` returns
 both. An entry is `{ storageKey, key, name, source, dataType, defaultValue, locked }`:
 
 - `source: "computed"` is set by logic. Logic operands of type `variable` and calculate actions name its

@@ -614,7 +614,7 @@ export const updateResponse = async (
     }
 
     // merge data object. The survey sends its whole not-shown record with every update (ENG-6936,
-    // ADR 0023): it replaces the stored one, and an answer to anything it lists is removed, so an item
+    // ADR 0024): it replaces the stored one, and an answer to anything it lists is removed, so an item
     // that ended up hidden after Back or a changed answer keeps no stale answer.
     const data = await withoutNotShownAnswers(
       prismaClient,

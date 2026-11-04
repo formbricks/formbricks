@@ -13,7 +13,7 @@ import { ZResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/ty
 import { resetDb } from "@/integration/reset-db";
 
 /**
- * The not-shown record on the client response routes (ENG-6936, ADR 0023), against real Postgres:
+ * The not-shown record on the client response routes (ENG-6936, ADR 0024), against real Postgres:
  * the survey sends it with its create and every update, the server stores it, replaces it on update,
  * and removes the answers it lists. Every other part of a stored response is written as before.
  */
