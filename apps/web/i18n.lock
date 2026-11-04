@@ -76,8 +76,8 @@ checksums:
     auth/oauth/client_uri: 39d52c7cfea1185b843e6388d65df4bd
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
     auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
-    auth/oauth/dashboard_viewer_no_dashboard_scope: f1fad491ba174718d95d9d373e3aa9a8
-    auth/oauth/dashboard_viewer_scope_description: 85f1ce3b976406d7f0835fc2e375100c
+    auth/oauth/dashboard_viewer_no_dashboard_scope: 79ce3b9f2fc06850bc63405425e8d782
+    auth/oauth/dashboard_viewer_scope_description: 485c4733b0af20534efd05854bd670b2
     auth/oauth/dashboard_viewer_scope_title: 409c50e64b51dad16a9f8728d654aa5a
     auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
     auth/oauth/formbricks_website: 95c2f69c6b6428e1aa6c26f4dd427e22
@@ -566,6 +566,7 @@ checksums:
     common/table_toolbar/owner_me: e0cdc99c6c88fe486dbd78d9d366b788
     common/table_toolbar/owner_others: 39160224ce0e35eb4eb252c997edf4d8
     common/table_toolbar/properties: d9d4b7cdfa9324272f895ed8687f607b
+    common/table_toolbar/refine_search_for_more: 609f69a071fa940e0f0894eb19d0a405
     common/table_toolbar/remove_filter: 086d53e6da9f98509b240125588fe942
     common/table_toolbar/reorder_column: 3cf041d5a9cc252f99c48fddb87d2fad
     common/table_toolbar/result_count: eeaaef6044758a554987b92d5d30283b
@@ -1773,6 +1774,7 @@ checksums:
     workspace/analysis/charts/dashboard: c9380ea68c8c76ea451bd9613329a07c
     workspace/analysis/charts/dashboard_select_placeholder: 9b875f2f10050d650ae63be53fe0d4e8
     workspace/analysis/charts/data_source: c29cdd1967a3d1b1a39e91e14469b047
+    workspace/analysis/charts/dataset_fields_failed: ef0d0888fee5717f20f149c7532e0c00
     workspace/analysis/charts/date_preset_last_24_hours: 0bc5386969795001992fccbe817580d3
     workspace/analysis/charts/date_preset_last_30_days: a738894cfc5e592052f1e16787744568
     workspace/analysis/charts/date_preset_last_6_months: 1be27ca36359a3a8131f2408827f0f69
@@ -1801,7 +1803,6 @@ checksums:
     workspace/analysis/charts/edit_chart_description: 822890e4b6068096e2fe8b7b78b4474f
     workspace/analysis/charts/edit_chart_title: d4d979e31c26af718cd0d000f6a34af0
     workspace/analysis/charts/embedded_data: 8e5bed779eec367b8b9617182079d0d1
-    workspace/analysis/charts/embedded_data_field_description: 8f7ccbce969cce58312a48252909848a
     workspace/analysis/charts/emotion_value_anger: 4fd64fc804c247fc3fcbc7dc147b62fe
     workspace/analysis/charts/emotion_value_disgust: e5860fbfc609c8c8686db8a18cadf932
     workspace/analysis/charts/emotion_value_fear: b7621ac47c2543dff100f55f948df8cf
@@ -1907,9 +1908,7 @@ checksums:
     workspace/analysis/charts/group_by_description: bebcfe28bb315834aa3a307834acfbe0
     workspace/analysis/charts/group_data: 55c0035773d8c6b7f4d96363a61cda82
     workspace/analysis/charts/horizontal_bars: 9f7e34591bab8b54fb713078677cf9d5
-    workspace/analysis/charts/is: 6e18221b26a14df86537e89f50dcec16
     workspace/analysis/charts/is_any_of: 692ceecb91b61066de37aa869014e7b6
-    workspace/analysis/charts/is_not: a59746bb7a7590c4dc5e57092a5fc138
     workspace/analysis/charts/is_not_set: 906801489132487ef457652af4835142
     workspace/analysis/charts/is_set: 9850468156356f95884bbaf56b6687aa
     workspace/analysis/charts/language_value_unspecified: 85dba018c7aea3e0590a113361f419c5
@@ -2057,12 +2056,15 @@ checksums:
     workspace/analysis/dashboards/filter_move_left: d28e9036127dfcff2a867c41ed2b52bc
     workspace/analysis/dashboards/filter_move_right: 51cabc93b9fa02d01d6f281c7ca29e62
     workspace/analysis/dashboards/filter_operator: c8e105116d65a17dcf68f6026a5e35fc
+    workspace/analysis/dashboards/filter_picks_too_long: 672b3d1dbe30ca53e9823b2c1c76c3dc
+    workspace/analysis/dashboards/filter_position: 96029ab981b5079a76fffe46c6e1a9cf
     workspace/analysis/dashboards/new_dashboard: 994b8a982af4c22385861d26e373a949
     workspace/analysis/dashboards/no_charts_match_search: 7ef6b1e501080e8a50d9997234a51fca
     workspace/analysis/dashboards/no_dashboards_found: b4d9dce52bf5f83d074306980b505477
     workspace/analysis/dashboards/no_dashboards_found_description: d5b83ba325d50cf69d8f0258981357ce
-    workspace/analysis/dashboards/no_dashboards_viewer: 2ae1e88f007d31b10b519df3947cb4b0
+    workspace/analysis/dashboards/no_dashboards_read_only_description: d8be441334dc608fe51650940a3106ed
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4
+    workspace/analysis/dashboards/no_data_message_read_only: 859e96906086ff2375bdda9c446f5f35
     workspace/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
     workspace/analysis/dashboards/stale_description: 1121ce6eb8eceb3151f3dc2596cd68c5
     workspace/analysis/dashboards/stale_overwrite_removes: eebe816783653c081af3f5f799e0cdfc
@@ -2073,7 +2075,7 @@ checksums:
     workspace/analysis/dashboards/upgrade_prompt_title: eef434745b5ef7ecc7f49a16e67e5a7a
     workspace/analysis/dashboards/viewer_no_access_subtitle: a202cc1c94130305464ed984b44aeac6
     workspace/analysis/dashboards/viewer_no_access_title: 71e219018e36d3acddcc00f29a7a3268
-    workspace/analysis/dashboards/viewer_plan_unavailable_subtitle: a36bae320e7bee5db477f810476f4add
+    workspace/analysis/dashboards/viewer_plan_unavailable_subtitle: daf3a66a5c65b32fb7f4cf01701f0b84
     workspace/analysis/dashboards/viewer_plan_unavailable_title: dfc2318f57ecd2f3a9c58bf5236b2f56
     workspace/analysis/dashboards/widget_view: 3104ba698f31ac027f53195f44427f28
     workspace/analysis/manage_feedback_sources: 6aa6a82334ab680b5aa187b7245e8ec8
@@ -3683,6 +3685,7 @@ checksums:
     workspace/settings/teams/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
     workspace/settings/teams/dashboard_viewer: b217bd372763d13d5b28ec519651269b
     workspace/settings/teams/dashboard_viewer_role_description: 24c7322b460f7d7e01c733696c065f1d
+    workspace/settings/teams/dashboard_viewer_role_info_message: 9d27c2e3e4cdfdb42990c6594052bdd9
     workspace/settings/teams/delete_team: 23e9200d46d42c7b89d42ae25c987ab6
     workspace/settings/teams/empty_teams_state: 785c1a638eb62211224fae951217fe3c
     workspace/settings/teams/enter_team_name: c324ef4c0ca524496a25a4afffda4f37
