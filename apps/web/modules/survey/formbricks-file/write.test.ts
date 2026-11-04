@@ -299,6 +299,26 @@ describe("writeFormbricksFile", () => {
     expect(ZFormbricksFileV1.safeParse(file).error?.issues).toBeUndefined();
   });
 
+  test("leaves out an alias stored blank, and trims one with spaces, so the file reads back", () => {
+    const file = write(
+      buildSurvey({
+        languages: [language("en-US", "  ", true), language("de-DE", " de ", false)],
+      })
+    );
+
+    expect(file.references.languages).toEqual([{ code: "de-DE", alias: "de" }]);
+    expect(ZFormbricksFileV1.safeParse(file).error?.issues).toBeUndefined();
+  });
+
+  test("writes an attribute key's blank name as none, which the import fills from the key", () => {
+    const blankName = { key: "plan", name: "   ", description: null, dataType: "string" } as const;
+
+    const file = write(appSurvey(), [blankName]);
+
+    expect(file.references.attributeKeys).toEqual([{ ...blankName, name: null }]);
+    expect(ZFormbricksFileV1.safeParse(file).error?.issues).toBeUndefined();
+  });
+
   test("embeds no action classes for a link survey, whose triggers are not part of the file", () => {
     const linkSurveyWithStaleTriggers = buildSurvey({ triggers: [{ actionClass: ACTION_CLASS }] });
     expect(write(linkSurveyWithStaleTriggers).references.actionClasses).toEqual([]);

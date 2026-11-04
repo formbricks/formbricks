@@ -132,11 +132,18 @@ const collectSharedEmbeddedFields = (survey: TSurvey): TFormbricksFileEmbeddedFi
         ]
   );
 
+/**
+ * A stored name as a file carries it: trimmed, and absent when blank. The editor and APIs store aliases
+ * and attribute key names as typed, but a file refuses a blank name, so an export must not carry one.
+ */
+const fileName = (name: string | null | undefined): string | null => name?.trim() || null;
+
 /** The aliases the survey's languages have in its workspace, which the survey part cannot carry. */
 const collectLanguageAliases = (survey: TSurvey): TFormbricksFileLanguage[] =>
-  survey.languages.flatMap(({ language }) =>
-    language.alias ? [{ code: language.code, alias: language.alias }] : []
-  );
+  survey.languages.flatMap(({ language }) => {
+    const alias = fileName(language.alias);
+    return alias ? [{ code: language.code, alias }] : [];
+  });
 
 /**
  * Write a survey as a Formbricks file in the current format (ADR 0023).
@@ -185,7 +192,11 @@ export const writeFormbricksFile = ({
     survey: document,
     references: {
       actionClasses: collectActionClasses(survey, document),
-      attributeKeys,
+      // A blank name is left out; the import names the key from itself, as for one without a name.
+      attributeKeys: attributeKeys.map((attributeKey) => ({
+        ...attributeKey,
+        name: fileName(attributeKey.name),
+      })),
       embeddedFields: collectSharedEmbeddedFields(survey),
       languages: collectLanguageAliases(survey),
     },

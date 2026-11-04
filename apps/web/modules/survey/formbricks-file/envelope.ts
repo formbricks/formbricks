@@ -50,21 +50,21 @@ export const FORMBRICKS_FILE_V1_SCHEMA_URL = "https://formbricks.com/docs/schema
 
 /** A key the file names: an action class's, an attribute key's, a shared field's. */
 const ZFormbricksFileKey = z.string().min(1).max(FORMBRICKS_FILE_MAX_KEY_CHARS);
-const ZFormbricksFileName = z.string().min(1).max(FORMBRICKS_FILE_MAX_NAME_CHARS);
-const ZFormbricksFileDescription = z.string().max(FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS);
 /**
- * An action class's name and key as `ZActionClass` holds them: trimmed first, so a value of spaces alone
- * is refused as empty rather than trimmed to an empty string after the length check passed. The pattern
- * says the same in the published JSON Schema, which cannot express a trim.
+ * A name the import may write — an action class's, an attribute key's, a shared field's, a language's
+ * alias — trimmed first, so a value of spaces alone is refused as empty rather than trimmed to an empty
+ * string after the length check passed. The pattern says the same in the published JSON Schema, which
+ * cannot express a trim; `abort` reports a blank value once, as empty, not again by the pattern.
  */
 const NOT_BLANK = /\S/;
-// `abort`: a blank value is reported once, as empty, not again by the pattern.
-const ZFormbricksFileActionName = z
+const ZFormbricksFileName = z
   .string()
   .trim()
   .min(1, { abort: true })
   .max(FORMBRICKS_FILE_MAX_NAME_CHARS)
   .regex(NOT_BLANK);
+const ZFormbricksFileDescription = z.string().max(FORMBRICKS_FILE_MAX_DESCRIPTION_CHARS);
+/** An action class's key, trimmed as `ZActionClass` holds it, and refused when blank, as names are. */
 const ZFormbricksFileActionKey = z
   .string()
   .trim()
@@ -111,7 +111,7 @@ export const ZFormbricksFileActionClass = ZActionClass.pick({
 })
   .extend({
     // The action class's own rules, each string capped.
-    name: ZFormbricksFileActionName,
+    name: ZFormbricksFileName,
     description: ZFormbricksFileDescription.nullable(),
     key: ZFormbricksFileActionKey.nullable(),
     noCodeConfig: ZActionClass.shape.noCodeConfig.refine(

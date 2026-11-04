@@ -161,6 +161,28 @@ describe("each string a Formbricks file's envelope and references carry", () => 
     );
   });
 
+  test.each([
+    [
+      "an attribute key's name",
+      () => withReferences({ attributeKeys: [attributeKey({ name: "  " })] }),
+      "attributeKeys.0.name",
+    ],
+    [
+      "a shared field's name",
+      () => withReferences({ embeddedFields: [embeddedField({ name: "  " })] }),
+      "embeddedFields.0.name",
+    ],
+    [
+      "a language's alias",
+      () => withReferences({ languages: [{ code: "de-DE", alias: "  " }] }),
+      "languages.0.alias",
+    ],
+  ])("%s of spaces alone is refused as empty", (_what, build, field) => {
+    expect(refusalOf(() => readFormbricksFile(build())).invalidParams).toContainEqual(
+      expect.objectContaining({ name: `file.references.${field}` })
+    );
+  });
+
   test("an action class's name and key are kept trimmed", () => {
     const read = readFormbricksFile(
       withReferences({ actionClasses: [actionClass({ name: "  Checkout  ", key: " checkout " })] })
