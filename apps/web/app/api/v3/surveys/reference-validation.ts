@@ -13,7 +13,7 @@ import {
   findUnknownMatrixIds,
   getMatrixLookup,
 } from "@formbricks/types/surveys/matrix-conditions";
-import { getOptionLists } from "@formbricks/types/surveys/show-if";
+import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
@@ -338,6 +338,52 @@ function getTypeContext(input: TReferenceValidationInput): TExpressionTypeContex
   };
 }
 
+type TSurveyBlock = TSurveyBlocks[number];
+type TSurveyBlockElement = TSurveyBlock["elements"][number];
+
+/** Whose show-if a visit is: the block's, an element's, or one of an element's options, rows or columns. */
+type TShowIfOwner =
+  | { kind: "block" }
+  | { kind: "element"; element: TSurveyBlockElement; elementIndex: number }
+  | {
+      kind: "option";
+      element: TSurveyBlockElement;
+      elementIndex: number;
+      listKey: TOptionListKey;
+      itemId: string;
+    };
+
+/**
+ * Every show-if of a block, in document order, with its path and owner: the block's own (ENG-6931), its
+ * elements' and their options', rows' and columns' (ENG-6937). The one walk the reference and the
+ * precedence checks share.
+ */
+function forEachShowIf(
+  block: TSurveyBlock,
+  blockIndex: number,
+  visit: (showIf: TConditionGroup, path: string, owner: TShowIfOwner) => void
+): void {
+  if (block.showIf) visit(block.showIf, `blocks.${blockIndex}.showIf`, { kind: "block" });
+  block.elements.forEach((element, elementIndex) => {
+    const elementPath = `blocks.${blockIndex}.elements.${elementIndex}`;
+    if (element.showIf) {
+      visit(element.showIf, `${elementPath}.showIf`, { kind: "element", element, elementIndex });
+    }
+    for (const { listKey, items } of getOptionLists(element)) {
+      items.forEach((item, itemIndex) => {
+        if (!item.showIf) return;
+        visit(item.showIf, `${elementPath}.${listKey}.${itemIndex}.showIf`, {
+          kind: "option",
+          element,
+          elementIndex,
+          listKey,
+          itemId: item.id,
+        });
+      });
+    }
+  });
+}
+
 function validateConditionGroup(
   conditionGroup: TConditionGroup,
   path: string,
@@ -491,31 +537,10 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
       });
     }
 
-    // ENG-6931: show-if conditions reference answers, fields and variables like logic conditions.
-    if (block.showIf) {
-      validateConditionGroup(block.showIf, `blocks.${blockIndex}.showIf`, references, issues);
-    }
-    block.elements.forEach((element, elementIndex) => {
-      if (element.showIf) {
-        validateConditionGroup(
-          element.showIf,
-          `blocks.${blockIndex}.elements.${elementIndex}.showIf`,
-          references,
-          issues
-        );
-      }
-      // ENG-6937: option, row and column show-if reference the same things.
-      for (const { listKey, items } of getOptionLists(element)) {
-        items.forEach((item, itemIndex) => {
-          if (!item.showIf) return;
-          validateConditionGroup(
-            item.showIf,
-            `blocks.${blockIndex}.elements.${elementIndex}.${listKey}.${itemIndex}.showIf`,
-            references,
-            issues
-          );
-        });
-      }
+    // ENG-6931 / ENG-6937: block, element, option, row and column show-if reference answers, fields and
+    // variables like logic conditions.
+    forEachShowIf(block, blockIndex, (showIf, path) => {
+      validateConditionGroup(showIf, path, references, issues);
     });
 
     block.logic?.forEach((logic, logicIndex) => {
@@ -867,42 +892,39 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
         }
       });
 
-    if (block.showIf) {
-      addShowIfViolations(
-        block.showIf,
-        `blocks.${blockIndex}.showIf`,
-        `block:${block.id}`,
-        (target) => target.blockIndex < blockIndex,
-        "a block's show-if can only use elements from earlier blocks"
-      );
-    }
-
-    block.elements.forEach((element, elementIndex) => {
-      const ownFlatIndex = positions.get(element.id)?.flatIndex ?? firstElementFlatIndex + elementIndex;
-      // Earlier blocks, or above it on the same block: strictly before it in flat order.
-      const isBefore = (target: TElementPosition) => target.flatIndex < ownFlatIndex;
-      if (element.showIf) {
+    forEachShowIf(block, blockIndex, (showIf, path, owner) => {
+      if (owner.kind === "block") {
         addShowIfViolations(
-          element.showIf,
-          `blocks.${blockIndex}.elements.${elementIndex}.showIf`,
+          showIf,
+          path,
+          `block:${block.id}`,
+          (target) => target.blockIndex < blockIndex,
+          "a block's show-if can only use elements from earlier blocks"
+        );
+        return;
+      }
+      const { element, elementIndex } = owner;
+      const ownFlatIndex = positions.get(element.id)?.flatIndex ?? firstElementFlatIndex + elementIndex;
+      // Earlier blocks, or above it on the same block: strictly before it in flat order. ENG-6937: an
+      // option, a row or a column follows its element's rule.
+      const isBefore = (target: TElementPosition) => target.flatIndex < ownFlatIndex;
+      if (owner.kind === "element") {
+        addShowIfViolations(
+          showIf,
+          path,
           `element:${element.id}`,
           isBefore,
           "an element's show-if can only use elements from earlier blocks or above it on the same block"
         );
+        return;
       }
-      // ENG-6937: an option, a row or a column follows its element's rule.
-      for (const { listKey, items } of getOptionLists(element)) {
-        items.forEach((item, itemIndex) => {
-          if (!item.showIf) return;
-          addShowIfViolations(
-            item.showIf,
-            `blocks.${blockIndex}.elements.${elementIndex}.${listKey}.${itemIndex}.showIf`,
-            `${listKey}:${element.id}:${item.id}`,
-            isBefore,
-            "an option's show-if can only use elements from earlier blocks or above its element on the same block"
-          );
-        });
-      }
+      addShowIfViolations(
+        showIf,
+        path,
+        `${owner.listKey}:${element.id}:${owner.itemId}`,
+        isBefore,
+        "an option's show-if can only use elements from earlier blocks or above its element on the same block"
+      );
     });
 
     block.logic?.forEach((logic, logicIndex) => {
