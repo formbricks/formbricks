@@ -2,14 +2,23 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { err, ok } from "@formbricks/types/error-handlers";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { findSegmentSurveyFilterViolation } from "@/modules/ee/contacts/segments/lib/helper";
 import { getContactAttributeKeys } from "./contact-attribute-key";
 import { getSegment } from "./segment";
 import { getSurvey } from "./surveys";
 
 export const getContactsInSegment = reactCache(
-  async (surveyId: string, segmentId: string, limit: number, skip: number, attributeKeys?: string) => {
+  async (
+    surveyId: string,
+    segmentId: string,
+    actor: TSurveyActorContext,
+    limit: number,
+    skip: number,
+    attributeKeys?: string
+  ) => {
     try {
       const surveyResult = await getSurvey(surveyId);
       if (!surveyResult.ok) {
@@ -39,6 +48,17 @@ export const getContactsInSegment = reactCache(
         const error: ApiErrorResponseV2 = {
           type: "bad_request",
           details: [{ field: "segmentId", issue: "Environment mismatch" }],
+        };
+        return err(error);
+      }
+
+      // ENG-6870: the contacts a survey-interaction filter matches are the people who saw, started or
+      // completed the surveys it reads, so the caller must be able to read every one of them.
+      if (await findSegmentSurveyFilterViolation(segment.filters, segment.workspaceId, actor, segment.id)) {
+        logger.warn({ surveyId, segmentId }, "Segment filters read surveys the caller cannot access");
+        const error: ApiErrorResponseV2 = {
+          type: "forbidden",
+          details: [{ field: "segmentId", issue: "Segment filters read surveys this API key cannot access" }],
         };
         return err(error);
       }

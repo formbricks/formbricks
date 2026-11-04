@@ -8,7 +8,7 @@ import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
-import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
+import { getUserVisibleSurveyWhere, resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
   getOrganizationIdFromSegmentId,
@@ -23,6 +23,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
 import {
+  assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
@@ -102,6 +103,12 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
       workspaceId,
       await getUserVisibleSurveyWhere(userId, organizationId)
     );
+    // ENG-6870: also the `any`-scoped filters and the surveys that nested segment filters read.
+    await assertSegmentSurveyFiltersVisible(
+      parsedFilters.data,
+      workspaceId,
+      await resolveSurveyActorContext({ type: "user", id: userId }, organizationId)
+    );
 
     const segment = await createSegment(parsedInput);
 
@@ -166,6 +173,13 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
       // Only the ids the caller sent must be visible to them; the stored ones they could not see are
       // put back afterwards, since the editor never held them.
       await assertSurveyInteractionSurveyIds(filters, segmentWorkspaceId, visibleSurveyWhere);
+      // ENG-6870: also the `any`-scoped filters and the surveys that nested segment filters read.
+      await assertSegmentSurveyFiltersVisible(
+        filters,
+        segmentWorkspaceId,
+        await resolveSurveyActorContext({ type: "user", id: ctx.user.id }, organizationId),
+        parsedInput.segmentId
+      );
       const merged =
         Object.keys(visibleSurveyWhere).length > 0
           ? await restoreHiddenSegmentSurveyIds(

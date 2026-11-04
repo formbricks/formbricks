@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   getUserVisibleSurveyWhere: vi.fn(),
   assertSurveysInWorkspace: vi.fn(),
   assertSurveyInteractionSurveyIds: vi.fn(),
+  assertSegmentSurveyFiltersVisible: vi.fn(),
+  resolveSurveyActorContext: vi.fn(),
   cloneSegment: vi.fn(),
   createSegment: vi.fn(),
   resetSegmentInSurvey: vi.fn(),
@@ -64,12 +66,14 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
 vi.mock("@/lib/survey/service", () => ({ loadNewSegmentInSurvey: mocks.loadNewSegmentInSurvey }));
 vi.mock("@/lib/survey/visibility/actor-context", () => ({
   getUserVisibleSurveyWhere: mocks.getUserVisibleSurveyWhere,
+  resolveSurveyActorContext: mocks.resolveSurveyActorContext,
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mocks.getOrganization }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/ee/contacts/lib/contact-attributes", () => ({ getDistinctAttributeValues: vi.fn() }));
 vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
+  assertSegmentSurveyFiltersVisible: mocks.assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace: mocks.assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter: vi.fn(),
@@ -134,6 +138,7 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
   const run = (action: unknown, parsedInput: Record<string, unknown>) =>
     (action as (args: unknown) => Promise<unknown>)({ ctx: ctx(), parsedInput });
   const visibleWhere = { OR: [{ visibility: "workspace" }, { ownerId: "user1" }] };
+  const memberActor = { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "user1" };
   /** Workspace checks pass; the survey-level one answers `surveyAllowed`. */
   const actAs = (surveyAllowed: boolean) =>
     mocks.assertCan.mockImplementation(async (_actor, _action, resource: { type: string }) => {
@@ -150,6 +155,7 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
     mocks.getIsContactsEnabled.mockResolvedValue(true);
     mocks.getOrganization.mockResolvedValue({ id: "org1" });
     mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleWhere);
+    mocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
     mocks.getSurveyWorkspaceIdMap.mockResolvedValue(
       new Map([
         ["s1", "ws1"],
@@ -268,6 +274,48 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
     await expect(run(updateSegmentAction, { segmentId: "seg1", data: { filters: [] } })).rejects.toThrow(
       InvalidInputError
     );
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  // ENG-6870: `any`-scoped filters and nested segment filters read surveys too, so a caller may only save
+  // filters they could evaluate themselves.
+  test("create and update hold the sent filters to what the caller may evaluate", async () => {
+    actAs(true);
+    const anyScope = [
+      {
+        id: "clfilter0000000000000001",
+        connector: null,
+        resource: {
+          id: "clresource00000000000001",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveCompleted" },
+          value: { surveyScope: "any", surveyIds: [], within: { amount: 30, unit: "days" } },
+        },
+      },
+    ];
+    mocks.getSegment.mockResolvedValue({ id: "seg1", filters: [] });
+    mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
+    mocks.assertSegmentSurveyFiltersVisible.mockRejectedValue(
+      new InvalidInputError("Filtering on any survey requires access to every survey in this workspace")
+    );
+
+    await expect(
+      run(createSegmentAction, { workspaceId: "ws1", title: "Seg", filters: anyScope, isPrivate: false })
+    ).rejects.toThrow(InvalidInputError);
+    await expect(
+      run(updateSegmentAction, { segmentId: "seg1", data: { filters: anyScope } })
+    ).rejects.toThrow(InvalidInputError);
+
+    expect(mocks.resolveSurveyActorContext).toHaveBeenCalledWith({ type: "user", id: "user1" }, "org1");
+    expect(mocks.assertSegmentSurveyFiltersVisible).toHaveBeenNthCalledWith(1, anyScope, "ws1", memberActor);
+    expect(mocks.assertSegmentSurveyFiltersVisible).toHaveBeenNthCalledWith(
+      2,
+      anyScope,
+      "ws1",
+      memberActor,
+      "seg1"
+    );
+    expect(mocks.createSegment).not.toHaveBeenCalled();
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { SurveyStatus, SurveyType } from "@formbricks/database/prisma";
 import type { TBaseFilters } from "@formbricks/types/segment";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getContactsInSegment } from "../contact";
@@ -16,6 +17,7 @@ vi.mock("react", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -25,6 +27,9 @@ vi.mock("@formbricks/database", () => ({
     contact: {
       findMany: vi.fn(),
       count: vi.fn(),
+    },
+    survey: {
+      findFirst: vi.fn(),
     },
     $transaction: vi.fn(async (promises: Promise<unknown>[]) => Promise.all(promises)),
   },
@@ -69,6 +74,9 @@ vi.mock("@/modules/ee/contacts/segments/lib/filter/prisma-query", () => ({
     },
   }),
 }));
+
+/** API keys never see a restricted survey (ENG-3282). */
+const apiKeyActor: TSurveyActorContext = { enforced: true, kind: "apiKey" };
 
 describe("getContactsInSegment", () => {
   const mockSurveyId = "survey-123";
@@ -183,6 +191,7 @@ describe("getContactsInSegment", () => {
     const result = await getContactsInSegment(
       mockSurveyId,
       mockSegmentId,
+      apiKeyActor,
       mockLimit,
       mockSkip,
       attributeKeys
@@ -287,7 +296,14 @@ describe("getContactsInSegment", () => {
 
     vi.mocked(prisma.$transaction).mockResolvedValue([filteredMockContacts.length, filteredMockContacts]);
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip, "email");
+    const result = await getContactsInSegment(
+      mockSurveyId,
+      mockSegmentId,
+      apiKeyActor,
+      mockLimit,
+      mockSkip,
+      "email"
+    );
 
     const whereClause = {
       AND: [
@@ -375,7 +391,14 @@ describe("getContactsInSegment", () => {
   test("should handle multiple fields when fields parameter has comma-separated values", async () => {
     vi.mocked(prisma.$transaction).mockResolvedValue([mockContacts.length, mockContacts]);
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip, "email,name");
+    const result = await getContactsInSegment(
+      mockSurveyId,
+      mockSegmentId,
+      apiKeyActor,
+      mockLimit,
+      mockSkip,
+      "email,name"
+    );
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -416,7 +439,14 @@ describe("getContactsInSegment", () => {
       mockContactsWithoutAttributes,
     ]);
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip, "");
+    const result = await getContactsInSegment(
+      mockSurveyId,
+      mockSegmentId,
+      apiKeyActor,
+      mockLimit,
+      mockSkip,
+      ""
+    );
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -447,7 +477,7 @@ describe("getContactsInSegment", () => {
       },
     });
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).not.toHaveBeenCalled();
@@ -472,7 +502,7 @@ describe("getContactsInSegment", () => {
       },
     });
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).not.toHaveBeenCalled();
@@ -494,7 +524,7 @@ describe("getContactsInSegment", () => {
       error: surveyError,
     });
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).not.toHaveBeenCalled();
@@ -516,7 +546,7 @@ describe("getContactsInSegment", () => {
       error: segmentError,
     });
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
@@ -540,7 +570,7 @@ describe("getContactsInSegment", () => {
       data: mockSegmentWithDifferentWorkspace,
     });
 
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
@@ -559,7 +589,7 @@ describe("getContactsInSegment", () => {
   test("should return error when database operation fails", async () => {
     const dbError = new Error("Database connection failed");
     vi.mocked(prisma.$transaction).mockRejectedValue(dbError);
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
@@ -570,5 +600,46 @@ describe("getContactsInSegment", () => {
         type: "internal_server_error",
       });
     }
+  });
+  // ENG-6870: an API key never sees a restricted survey, so it may not evaluate a filter that reads one.
+  test.each([
+    ["names a restricted survey", { surveyScope: "specific", surveyIds: ["clrestricted00000000000001"] }],
+    ["is scoped to any survey while one is restricted", { surveyScope: "any", surveyIds: [] }],
+  ])("refuses a segment whose survey-interaction filter %s", async (_name, scope) => {
+    const filters = [
+      {
+        id: "f1",
+        connector: null,
+        resource: {
+          id: "i1",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveCompleted" },
+          value: { ...scope, within: { amount: 30, unit: "days" } },
+        },
+      },
+    ] as unknown as TBaseFilters;
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: { id: mockSegmentId, workspaceId: mockWorkspaceId, filters },
+    });
+    vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: "clrestricted00000000000001" } as Awaited<
+      ReturnType<typeof prisma.survey.findFirst>
+    >);
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatchObject({ type: "forbidden" });
+    // The restricted-survey clause an API key is held to.
+    expect(prisma.survey.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          workspaceId: mockWorkspaceId,
+          AND: [expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) })],
+        }),
+      })
+    );
+    expect(segmentFilterToPrismaQuery).not.toHaveBeenCalled();
+    expect(prisma.contact.count).not.toHaveBeenCalled();
   });
 });
