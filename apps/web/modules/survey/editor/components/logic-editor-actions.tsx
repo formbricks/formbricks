@@ -321,7 +321,7 @@ export function LogicEditorActions({
                               clearable={true}
                               value={action.value?.value ?? ""}
                               inputProps={{
-                                placeholder: "Value",
+                                placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
                                 type: getCalculateFieldType(action.variableId) ?? "text",
                               }}
                               groupedOptions={getActionValueOptions(

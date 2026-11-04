@@ -4295,7 +4295,8 @@
           "then": "then",
           "turn_formula_off_body": "This formula does more than one step can, so it can't be kept without it. Turning it off clears the formula, and you pick an operator and a value instead.",
           "turn_formula_off_confirm": "Turn off and clear",
-          "turn_formula_off_title": "Turn the formula off?"
+          "turn_formula_off_title": "Turn the formula off?",
+          "value_placeholder": "Value"
         },
         "follow_ups": "Follow-ups",
         "follow_ups_delete_modal_text": "Are you sure you want to delete this follow-up?",
