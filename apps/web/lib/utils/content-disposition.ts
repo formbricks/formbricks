@@ -6,18 +6,13 @@
  * every file system it may land on, and the header has to carry it in UTF-8 with an ASCII fallback
  * for the clients that read only `filename`. Parsing lives next door in `file-download.ts`.
  */
+import { toDisplayFileName } from "@/lib/utils/display-file-name";
 
 /** The most bytes a file name may take on the common file systems (ext4, APFS, NTFS's 255 UTF-16 units). */
 export const DOWNLOAD_FILE_NAME_MAX_BYTES = 255;
 
 // Path separators and the characters Windows refuses anywhere in a name.
 const FORBIDDEN_CHARACTERS = /[/\\:*?"<>|]/g;
-// C0 and C1 controls, and the bidirectional marks and overrides that can make `exe.json` read as
-// `nosj.exe`. Whitespace controls are turned into spaces first, so a tab still separates words.
-const CONTROL_CHARACTERS = /[\p{Cc}\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/gu;
-const WHITESPACE_CONTROLS = /[\t\n\v\f\r\u0085\u2028\u2029]/g;
-// A lone surrogate is not text and would make `encodeURIComponent` throw.
-const LONE_SURROGATES = /\p{Cs}/gu;
 // CON, PRN, AUX, NUL, COM1–9 and LPT1–9 name devices on Windows, with or without an extension.
 const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
@@ -37,16 +32,9 @@ const trimDotsAndSpaces = (value: string): string => {
   return value.slice(start, end);
 };
 
+// The display name, then without the characters a file system refuses.
 const cleanName = (name: string): string =>
-  trimDotsAndSpaces(
-    name
-      .replaceAll(LONE_SURROGATES, "")
-      .normalize("NFC")
-      .replaceAll(WHITESPACE_CONTROLS, " ")
-      .replaceAll(CONTROL_CHARACTERS, "")
-      .replaceAll(FORBIDDEN_CHARACTERS, "")
-      .replaceAll(/\s+/g, " ")
-  );
+  trimDotsAndSpaces(toDisplayFileName(name).replaceAll(FORBIDDEN_CHARACTERS, "").replaceAll(/\s+/g, " "));
 
 /** The longest prefix of `value` that fits in `maxBytes` of UTF-8, cut between code points. */
 const truncateToBytes = (value: string, maxBytes: number): string => {

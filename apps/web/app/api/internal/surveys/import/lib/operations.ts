@@ -32,6 +32,7 @@ import type { TSurveyImportStage } from "@/modules/survey/import/types";
 import { SURVEY_IMPORT_HEARTBEAT_MS } from "./constants";
 import { importTimedOutEvent, toSurveyImportStreamErrorEvent } from "./error-events";
 import { SURVEY_IMPORT_STREAM_ERROR_CODES, type TSurveyImportStreamEvent } from "./events";
+import { getSurveyImportFileName } from "./schemas";
 
 /** Stream failures that describe the file, which the user can act on, rather than a fault. */
 const FILE_OUTCOME_CODES: ReadonlySet<string> = new Set([
@@ -151,8 +152,8 @@ export async function streamSurveyImport({
     requestId,
     instance,
   };
-  // The name the user's file had, for the report to show. Never a path, never stored.
-  const fileName = file.name.trim();
+  // The name the user's file had, cleaned for the report to show. Never a path, never stored.
+  const fileName = getSurveyImportFileName(file);
 
   // The upload's thread waits for its lane's read, and ends once the lane has it, or here.
   try {

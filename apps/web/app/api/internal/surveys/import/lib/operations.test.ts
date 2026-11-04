@@ -565,6 +565,18 @@ describe("streamSurveyImport", () => {
       );
     });
 
+    test("hands the report a name without the controls and bidirectional marks that disguise it", async () => {
+      const response = await importFile(
+        upload(JSON.stringify(body.qsf), " invoice\u202Egpj.exe\u0007\t(2) ")
+      );
+
+      expect(response.status).toBe(200);
+      await readEvents(response);
+      expect(mocks.runQsfImport).toHaveBeenCalledWith(
+        expect.objectContaining({ prepared: expect.objectContaining({ fileName: "invoicegpj.exe (2)" }) })
+      );
+    });
+
     test("charges a Qualtrics import to Create with AI's bucket, and stops at its 429 before any AI", async () => {
       await (await call()).text();
       expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3SurveyGenerate, "user_1");
