@@ -55,7 +55,7 @@ export const DashboardsTable = ({ workspaceId, isReadOnly }: Readonly<Dashboards
             <p className="text-sm text-slate-500">
               {
                 // Someone who can't create a dashboard (a Dashboard viewer, a read-only member) is told
-                // who can instead (U10).
+                // who can instead.
                 isReadOnly
                   ? t("workspace.analysis.dashboards.no_dashboards_read_only_description")
                   : t("workspace.analysis.dashboards.no_dashboards_found_description")

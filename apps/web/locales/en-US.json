@@ -2135,7 +2135,7 @@
         "no_charts_match_search": "No charts match your search",
         "no_dashboards_found": "No dashboards yet",
         "no_dashboards_found_description": "Create your first dashboard to organize charts and monitor your feedback insights in one place.",
-        "no_dashboards_read_only_description": "An owner or manager can create dashboards to organize charts and monitor your feedback insights in one place.",
+        "no_dashboards_read_only_description": "Ask an owner or manager to create one.",
         "no_data_message": "No Data. There is currently no information to display. Add charts to build your dashboard.",
         "no_data_message_read_only": "No Data. There is currently no information to display. An owner or manager can add charts to this dashboard.",
         "please_enter_name": "Please enter a dashboard name",
