@@ -1,9 +1,11 @@
 import "server-only";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { cache } from "@/lib/cache";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import type { TAnswerKind, TAnswerOption, TAnswerQuestion } from "@/modules/ee/analysis/lib/answer-filter";
@@ -99,14 +101,27 @@ export const collectAnswerQuestions = (
   return [...byId.values()].sort((a, b) => a.label.localeCompare(b.label) || a.id.localeCompare(b.id));
 };
 
-/** The answerable questions of one Feedback Dataset, from this workspace's sources. Two queries. */
-export const getAnswerQuestions = async (
+/**
+ * How long one dataset's questions are reused. Every chart query with an answer rule reads them twice —
+ * the validator and the Cube token — and a dashboard runs many such queries at once, so they are cached;
+ * briefly, since a survey edit should reach the builder soon (C7).
+ */
+export const ANSWER_QUESTIONS_CACHE_TTL_MS = 60 * 1000;
+/**
+ * Most survey-question mappings one dataset's questions are read from. A dataset maps a handful of
+ * surveys; the cap only keeps a pathological one from loading unbounded survey blocks per request.
+ */
+export const MAX_ANSWER_QUESTION_MAPPINGS = 1000;
+
+const loadAnswerQuestions = async (
   workspaceId: string,
   feedbackDirectoryId: string
 ): Promise<TAnswerQuestion[]> => {
   const mappings = await prisma.feedbackSourceFormbricksMapping.findMany({
     where: { workspaceId, feedbackSource: { workspaceId, feedbackDirectoryId } },
     select: { surveyId: true, elementId: true, customFieldLabel: true },
+    orderBy: [{ surveyId: "asc" }, { elementId: "asc" }],
+    take: MAX_ANSWER_QUESTION_MAPPINGS,
   });
   if (mappings.length === 0) return [];
 
@@ -117,3 +132,17 @@ export const getAnswerQuestions = async (
 
   return collectAnswerQuestions(mappings, surveys);
 };
+
+/**
+ * The answerable questions of one Feedback Dataset, from this workspace's sources: two queries, cached
+ * per workspace and dataset for `ANSWER_QUESTIONS_CACHE_TTL_MS`.
+ */
+export const getAnswerQuestions = async (
+  workspaceId: string,
+  feedbackDirectoryId: string
+): Promise<TAnswerQuestion[]> =>
+  cache.withCache(
+    () => loadAnswerQuestions(workspaceId, feedbackDirectoryId),
+    createCacheKey.custom("analytics", feedbackDirectoryId, `answer-questions-${workspaceId}`),
+    ANSWER_QUESTIONS_CACHE_TTL_MS
+  );

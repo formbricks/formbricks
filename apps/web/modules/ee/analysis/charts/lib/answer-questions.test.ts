@@ -1,8 +1,22 @@
-import { describe, expect, test, vi } from "vitest";
-import { collectAnswerQuestions } from "./answer-questions";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  ANSWER_QUESTIONS_CACHE_TTL_MS,
+  MAX_ANSWER_QUESTION_MAPPINGS,
+  collectAnswerQuestions,
+  getAnswerQuestions,
+} from "./answer-questions";
+
+const { mockPrisma, mockWithCache } = vi.hoisted(() => ({
+  mockPrisma: {
+    feedbackSourceFormbricksMapping: { findMany: vi.fn() },
+    survey: { findMany: vi.fn() },
+  },
+  mockWithCache: vi.fn(),
+}));
 
 vi.mock("server-only", () => ({}));
-vi.mock("@formbricks/database", () => ({ prisma: {} }));
+vi.mock("@formbricks/database", () => ({ prisma: mockPrisma }));
+vi.mock("@/lib/cache", () => ({ cache: { withCache: mockWithCache } }));
 
 const choice = (id: string, label: string) => ({ id, label: { default: label } });
 const select = (
@@ -108,5 +122,50 @@ describe("collectAnswerQuestions (ENG-6637)", () => {
     expect(
       collectAnswerQuestions([mapping("gone", "q1"), mapping("s1", "gone")], [survey("s1", [])])
     ).toEqual([]);
+  });
+});
+
+describe("getAnswerQuestions (C7)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWithCache.mockImplementation(async (fn: () => Promise<unknown>) => fn());
+  });
+
+  test("is one short-lived cache entry per workspace and dataset, shared by the validator and the token", async () => {
+    mockPrisma.feedbackSourceFormbricksMapping.findMany.mockResolvedValue([]);
+
+    await expect(getAnswerQuestions("workspace-1", "frd-1")).resolves.toEqual([]);
+    expect(mockWithCache).toHaveBeenCalledWith(
+      expect.any(Function),
+      "fb:analytics:frd-1:answer-questions-workspace-1",
+      ANSWER_QUESTIONS_CACHE_TTL_MS
+    );
+    expect(ANSWER_QUESTIONS_CACHE_TTL_MS).toBeLessThanOrEqual(5 * 60 * 1000);
+  });
+
+  test("reads a bounded number of mappings and only the fields it needs", async () => {
+    mockPrisma.feedbackSourceFormbricksMapping.findMany.mockResolvedValue([mapping("s1", "q_delivery")]);
+    mockPrisma.survey.findMany.mockResolvedValue([
+      survey("s1", [select("q_delivery", "multipleChoiceSingle", "Delivery", ["Late"])]),
+    ]);
+
+    const questions = await getAnswerQuestions("workspace-1", "frd-1");
+
+    expect(questions.map((question) => question.id)).toEqual(["q_delivery"]);
+    expect(mockPrisma.feedbackSourceFormbricksMapping.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: MAX_ANSWER_QUESTION_MAPPINGS,
+        select: { surveyId: true, elementId: true, customFieldLabel: true },
+      })
+    );
+    expect(mockPrisma.survey.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ select: { id: true, blocks: true } })
+    );
+  });
+
+  test("never queries surveys for a dataset without mappings", async () => {
+    mockPrisma.feedbackSourceFormbricksMapping.findMany.mockResolvedValue([]);
+    await getAnswerQuestions("workspace-1", "frd-1");
+    expect(mockPrisma.survey.findMany).not.toHaveBeenCalled();
   });
 });

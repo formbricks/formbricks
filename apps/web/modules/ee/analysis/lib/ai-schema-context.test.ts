@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
-import { generateSchemaContext } from "./ai-schema-context";
+import {
+  MAX_PROMPT_ANSWER_QUESTIONS,
+  MAX_PROMPT_EMBEDDED_FIELDS,
+  MAX_PROMPT_LABEL_LENGTH,
+  generateSchemaContext,
+} from "./ai-schema-context";
 
 describe("AI schema context", () => {
   test.each([
@@ -134,5 +139,43 @@ describe("AI schema context for one dataset (ENG-6893, ENG-6894)", () => {
     expect(context).toContain('- "q_feat" (multi) "Features": "opt_a" = "Surveys"');
     expect(context).toContain('"NPS when delivery was late"');
     expect(context).toContain('a multi question has no "does not contain"');
+  });
+});
+
+describe("AI schema context bounds (C21)", () => {
+  const question = (index: number, label: string) => ({
+    id: `q_${String(index).padStart(4, "0")}`,
+    label,
+    kind: "choice" as const,
+    options: [{ value: "opt", label }],
+  });
+
+  test("lists at most MAX_PROMPT_ANSWER_QUESTIONS questions, saying more exist", () => {
+    const questions = Array.from({ length: MAX_PROMPT_ANSWER_QUESTIONS + 50 }, (_, index) =>
+      question(index, `Question ${index}`)
+    );
+    const context = generateSchemaContext({ embeddedFields: [], answerQuestions: questions });
+
+    expect(context).toContain(`"q_${String(MAX_PROMPT_ANSWER_QUESTIONS - 1).padStart(4, "0")}"`);
+    expect(context).not.toContain(`"q_${String(MAX_PROMPT_ANSWER_QUESTIONS).padStart(4, "0")}"`);
+    expect(context).toContain("50 more questions");
+  });
+
+  test("cuts question and option labels to MAX_PROMPT_LABEL_LENGTH characters", () => {
+    const long = "L".repeat(MAX_PROMPT_LABEL_LENGTH * 4);
+    const context = generateSchemaContext({ embeddedFields: [], answerQuestions: [question(1, long)] });
+
+    expect(context).not.toContain("L".repeat(MAX_PROMPT_LABEL_LENGTH + 1));
+    expect(context).toContain(`${"L".repeat(MAX_PROMPT_LABEL_LENGTH)}…`);
+  });
+
+  test("lists at most MAX_PROMPT_EMBEDDED_FIELDS embedded fields", () => {
+    const embeddedFields = Array.from({ length: MAX_PROMPT_EMBEDDED_FIELDS + 20 }, (_, index) => ({
+      name: `FeedbackRecords.ed_k${index}_00000000`,
+      key: `k${index}`,
+    }));
+    const context = generateSchemaContext({ embeddedFields });
+
+    expect(context.match(/: embedded data "/g)).toHaveLength(MAX_PROMPT_EMBEDDED_FIELDS);
   });
 });

@@ -5,6 +5,7 @@
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
 import { ANSWER_MEMBER, MAX_ANSWER_RULES, type TAnswerQuestion } from "./answer-filter";
+import { MAX_TOKEN_EMBEDDED_KEYS } from "./embedded-data-fields";
 import type { TDatasetChartFields } from "./field-catalog";
 import {
   FEEDBACK_FIELDS,
@@ -42,13 +43,24 @@ function formatOperators(): string {
 
 /** Most options listed per question; a longer list is cut, which only costs the model the tail. */
 const MAX_LISTED_OPTIONS = 30;
+/**
+ * Bounds on what one dataset adds to the prompt (C21). Labels and keys are survey- and integrator-written
+ * text: without a bound one dataset could make the prompt arbitrarily long (and costly).
+ */
+export const MAX_PROMPT_ANSWER_QUESTIONS = 100;
+export const MAX_PROMPT_LABEL_LENGTH = 120;
+/** A token carries at most this many keys, so a chart can never name more. */
+export const MAX_PROMPT_EMBEDDED_FIELDS = MAX_TOKEN_EMBEDDED_KEYS;
+
+const cut = (text: string): string =>
+  text.length > MAX_PROMPT_LABEL_LENGTH ? `${text.slice(0, MAX_PROMPT_LABEL_LENGTH)}…` : text;
 
 /**
  * The dataset's embedded-data fields, each by its key's own name (ENG-6893). Keys are respondent- and
  * integrator-supplied text, so they are quoted as data.
  */
 function formatEmbeddedFields(dataset: TDatasetChartFields | undefined): string {
-  const fields = dataset?.embeddedFields ?? [];
+  const fields = (dataset?.embeddedFields ?? []).slice(0, MAX_PROMPT_EMBEDDED_FIELDS);
   if (fields.length === 0) return "";
   const lines = fields.map(({ name, key }) => `- ${name}: embedded data ${JSON.stringify(key)}`);
   return `### Embedded data (this dataset's own fields)
@@ -59,10 +71,10 @@ ${lines.join("\n")}`;
 function formatAnswerQuestion(question: TAnswerQuestion): string {
   const options = question.options
     .slice(0, MAX_LISTED_OPTIONS)
-    .map((option) => `${JSON.stringify(option.value)} = ${JSON.stringify(option.label)}`)
+    .map((option) => `${JSON.stringify(option.value)} = ${JSON.stringify(cut(option.label))}`)
     .join(", ");
   const more = question.options.length > MAX_LISTED_OPTIONS ? ", …" : "";
-  return `- ${JSON.stringify(question.id)} (${question.kind}) ${JSON.stringify(question.label)}: ${options}${more}`;
+  return `- ${JSON.stringify(question.id)} (${question.kind}) ${JSON.stringify(cut(question.label))}: ${options}${more}`;
 }
 
 /**
@@ -72,6 +84,9 @@ function formatAnswerQuestion(question: TAnswerQuestion): string {
 function formatAnswerFilters(dataset: TDatasetChartFields | undefined): string {
   const questions = dataset?.answerQuestions ?? [];
   if (questions.length === 0) return "";
+  const listed = questions.slice(0, MAX_PROMPT_ANSWER_QUESTIONS);
+  const unlisted = questions.length - listed.length;
+  const more = unlisted > 0 ? `\n(${unlisted} more questions are not listed; do not invent their ids.)` : "";
   return `### Answer filters (how the same response answered another question)
 Filter member \`${ANSWER_MEMBER}\` keeps records whose response answered another question a certain way. Each value is "<questionId>:<valueKey>" using the ids listed below, and one filter names exactly one question.
 - "is" / "contains": operator \`equals\` with one value; "is any of": \`equals\` with several values of the same question.
@@ -79,7 +94,7 @@ Filter member \`${ANSWER_MEMBER}\` keeps records whose response answered another
 - A response that skipped the question never matches. At most ${MAX_ANSWER_RULES} such filters.
 - Recipe: "NPS when delivery was late" → measure \`${CUBE_NAME}.npsScore\`, filter \`${CUBE_NAME}.fieldType\` equals ["nps"], and filter \`${ANSWER_MEMBER}\` equals ["<delivery question id>:<late option id>"].
 Questions ("id" (kind) "label": "valueKey" = "option label", …):
-${questions.map(formatAnswerQuestion).join("\n")}`;
+${listed.map(formatAnswerQuestion).join("\n")}${more}`;
 }
 
 export function generateSchemaContext(dataset?: TDatasetChartFields): string {
