@@ -117,7 +117,7 @@ const sameList = (a: unknown, b: readonly string[]): boolean =>
 const syncColumns = <TOperand extends TStaticOperand>(matrix: TMatrixAxes, operand: TOperand): TOperand => {
   if (operand.columnIds !== undefined) {
     const positions = operand.columnIds.map((id) => indexOfId(matrix.columns, id));
-    if (positions.some((position) => position === undefined)) return operand;
+    if (positions.includes(undefined)) return operand;
     const value = positions.map(String);
     return sameList(operand.value, value) ? operand : { ...operand, value };
   }
@@ -140,7 +140,7 @@ export const withMatrixColumnIdsFromPositions = <TOperand extends TStaticOperand
   const { columnId: _columnId, columnIds: _columnIds, ...rest } = operand;
   if (Array.isArray(operand.value)) {
     const positions = operand.value.map((position) => indexAt(position, matrix.columns.length));
-    if (positions.some((position) => position === undefined)) return operand;
+    if (positions.includes(undefined)) return operand;
     const columnIds = positions.map((position) => matrix.columns[position as number].id);
     return sameList(operand.columnIds, columnIds) && operand.columnId === undefined
       ? operand
