@@ -4262,7 +4262,7 @@
           "no_destination": "Choose where to jump",
           "open_flow": "Open Flow",
           "options": "Options",
-          "options_show_if": "{count, plural, one {Show-if on {count} option} other {Show-if on {count} options}}",
+          "options_show_if": "{count, plural, one {Show options if … ({count} option)} other {Show options if … ({count} options)}}",
           "options_shown_if": "Options shown if…",
           "options_shown_if_help": "Each option is shown only when its condition matches.",
           "options_shown_if_info": "Options update live as earlier answers change. A question left with no options is skipped. Conditions can use earlier blocks and the questions above this one on its page.",
