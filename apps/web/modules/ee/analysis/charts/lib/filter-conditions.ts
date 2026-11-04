@@ -110,8 +110,8 @@ export function getFilterFieldOptions(
 }
 
 /**
- * The operators an answer rule offers for its question's kind (ENG-6637): is, is not and is any of; a
- * multi-select reads "contains" for `equals` and has no "does not contain".
+ * The operators an answer rule offers for its question's kind (ENG-6637): equals, not equals and is any
+ * of; a multi-select reads "contains" for `equals` and has no "does not contain".
  */
 export function getAnswerOperatorOptions(
   question: TAnswerQuestion | undefined,
@@ -120,14 +120,13 @@ export function getAnswerOperatorOptions(
   const operators = question ? ANSWER_OPERATORS[question.kind] : ANSWER_OPERATORS.choice;
   const isMulti = question?.kind === "multi";
   return [
+    // The builder's own operator wording (U7); only a multi-select reads `equals` as "contains".
     ...operators.map((operator) => ({
       value: operator,
       label:
-        operator === "equals"
-          ? isMulti
-            ? t("workspace.analysis.charts.contains")
-            : t("workspace.analysis.charts.is")
-          : t("workspace.analysis.charts.is_not"),
+        operator === "equals" && isMulti
+          ? t("workspace.analysis.charts.contains")
+          : getFilterOperatorLabel(operator, t),
     })),
     { value: ANSWER_IS_ANY_OF_OPERATOR, label: t("workspace.analysis.charts.is_any_of") },
   ];

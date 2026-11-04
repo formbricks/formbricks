@@ -46,11 +46,14 @@ export function DimensionsPanel({
     label: getTranslatedFieldLabel(d.id, t),
     description: getTranslatedFieldDescription(d.id, d.description, t),
     icon: d.isGenerated ? <AiIcon /> : undefined,
+    // Headed only beside a second group, as the filter field picker does.
+    group: embeddedFields.length > 0 ? t("workspace.analysis.charts.dimensions") : undefined,
   }));
+  // Under one "Embedded data" heading, as the filter field picker groups them (U15).
   const embeddedOptions = embeddedFields.map((field) => ({
     value: field.name,
     label: field.key,
-    description: t("workspace.analysis.charts.embedded_data_field_description"),
+    group: t("workspace.analysis.charts.embedded_data"),
   }));
   const fieldLabel = (id: string) =>
     embeddedFields.find((field) => field.name === id)?.key ?? getTranslatedFieldLabel(id, t);

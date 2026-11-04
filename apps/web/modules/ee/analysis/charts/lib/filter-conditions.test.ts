@@ -139,10 +139,10 @@ describe("dataset fields in the filter editor (ENG-6893, ENG-6637)", () => {
     expect(getDefaultFilterOperator("FeedbackRecords.answer:q_feat")).toBe("equals");
   });
 
-  test("offers is, is not and is any of for a single-select, and contains and is any of for a multi-select", () => {
+  test("offers the builder's own equals, not equals and is any of for a single-select, and contains and is any of for a multi-select (U7)", () => {
     expect(getAnswerOperatorOptions(dataset.answerQuestions[0], t)).toEqual([
-      { value: "equals", label: "workspace.analysis.charts.is" },
-      { value: "notEquals", label: "workspace.analysis.charts.is_not" },
+      { value: "equals", label: "workspace.analysis.charts.equals" },
+      { value: "notEquals", label: "workspace.analysis.charts.not_equals" },
       { value: "isAnyOf", label: "workspace.analysis.charts.is_any_of" },
     ]);
     expect(getAnswerOperatorOptions(dataset.answerQuestions[1], t)).toEqual([
