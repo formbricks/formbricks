@@ -7,7 +7,10 @@ export { AccountDeletedEmail } from "../emails/auth/account-deleted-email";
 export { SsoRecoveryFactorsRemovedEmail } from "../emails/auth/sso-recovery-factors-removed-email";
 export { SsoSignInHintEmail } from "../emails/auth/sso-sign-in-hint-email";
 export { MemberRetentionNoticeEmail } from "../emails/retention/member-retention-notice-email";
-export { AttachmentExportFailedEmail } from "../emails/survey/attachment-export-failed-email";
+export {
+  AttachmentExportFailedEmail,
+  type TAttachmentExportFailureReason,
+} from "../emails/survey/attachment-export-failed-email";
 export { AttachmentExportReadyEmail } from "../emails/survey/attachment-export-ready-email";
 export {
   SurveyRetentionNoticeEmail,

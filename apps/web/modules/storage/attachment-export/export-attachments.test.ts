@@ -138,7 +138,7 @@ describe("streamAttachmentsAsZip", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/zip");
     expect(response.headers.get("Content-Disposition")).toBe(
-      'attachment; filename="survey-1-attachments-2026-09-01.zip"'
+      `attachment; filename="survey-1-attachments-2026-09-01.zip"; filename*=UTF-8''survey-1-attachments-2026-09-01.zip`
     );
     expect(response.headers.get("Cache-Control")).toBe("no-store");
 

@@ -16,7 +16,10 @@ import {
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
 } from "../../emails/retention/survey-retention-notice-email";
-import { AttachmentExportFailedEmail } from "../../emails/survey/attachment-export-failed-email";
+import {
+  AttachmentExportFailedEmail,
+  type TAttachmentExportFailureReason,
+} from "../../emails/survey/attachment-export-failed-email";
 import { AttachmentExportReadyEmail } from "../../emails/survey/attachment-export-ready-email";
 import { EmbedSurveyPreviewEmail } from "../../emails/survey/embed-survey-preview-email";
 import { FollowUpEmail, FollowUpEmailProps } from "../../emails/survey/follow-up-email";
@@ -128,6 +131,10 @@ export async function renderAttachmentExportReadyEmail(
   props: {
     surveyName: string;
     archiveSize: string;
+    fileCount: string;
+    includedFileCount: string;
+    sizeLimit: string;
+    retentionMonths: string;
     expiryDate: string;
     truncated: boolean;
     downloadLink: string;
@@ -138,7 +145,13 @@ export async function renderAttachmentExportReadyEmail(
 }
 
 export async function renderAttachmentExportFailedEmail(
-  props: { surveyName: string; responsesLink: string; t: TFunction } & TEmailTemplateLegalProps
+  props: {
+    surveyName: string;
+    reason: TAttachmentExportFailureReason;
+    maxFiles: string;
+    responsesLink: string;
+    t: TFunction;
+  } & TEmailTemplateLegalProps
 ): Promise<string> {
   return await render(AttachmentExportFailedEmail(props));
 }

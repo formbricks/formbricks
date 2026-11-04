@@ -2,9 +2,16 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZUserLocale } from "@formbricks/types/user";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { loggableError } from "@/lib/utils/loggable-error";
-import { sendAttachmentExportFailedEmail, sendAttachmentExportReadyEmail } from "@/modules/email";
+import {
+  type TAttachmentExportFailureReason,
+  sendAttachmentExportFailedEmail,
+  sendAttachmentExportReadyEmail,
+} from "@/modules/email";
+import { ATTACHMENT_EXPORT_RETENTION_MONTHS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_FILES } from "./constants";
 import { formatArchiveSize } from "./lib/format-archive-size";
+import type { TAttachmentExportErrorCode } from "./types";
 
 /**
  * Tells the user who started an attachment export how it ended (ENG-6862): a download link when it is
@@ -42,9 +49,27 @@ const loadRecipient = async ({ attachmentExportId, workspaceId }: TNotifyScope) 
 /** "February 3, 2027" in the reader's language, on the calendar of the organization's time zone. */
 const formatExpiryDate = (expiresAt: Date, locale: string, timeZone: string): string => {
   try {
-    return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone }).format(expiresAt);
+    return formatDateForDisplay(expiresAt, locale, { dateStyle: "long", timeZone });
   } catch {
-    return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(expiresAt);
+    // An unknown zone name throws; the date in UTC is at most a day off.
+    return formatDateForDisplay(expiresAt, locale, { dateStyle: "long", timeZone: "UTC" });
+  }
+};
+
+const formatCount = (count: number, locale: string): string => new Intl.NumberFormat(locale).format(count);
+
+/**
+ * What the failure email tells the requester to do. Only causes the requester can act on get their own
+ * advice; the rest (storage, a lost job, a bug) read as "something went wrong, start it again".
+ */
+const toFailureReason = (errorCode: TAttachmentExportErrorCode): TAttachmentExportFailureReason => {
+  switch (errorCode) {
+    case "too_many_files":
+    case "build_timeout":
+    case "no_attachments":
+      return errorCode;
+    default:
+      return "other";
   }
 };
 
@@ -92,7 +117,15 @@ const send = async (scope: TNotifyScope, outcome: string, deliver: () => Promise
 };
 
 export const notifyAttachmentExportReady = async (
-  scope: TNotifyScope & { archiveBytes: number; expiresAt: Date; truncated: boolean; timeZone: string }
+  scope: TNotifyScope & {
+    archiveBytes: number;
+    /** Files the export covered, and how many of them the archive holds. */
+    fileCount: number;
+    includedFileCount: number;
+    expiresAt: Date;
+    truncated: boolean;
+    timeZone: string;
+  }
 ): Promise<void> => {
   await send(scope, "ready", async () => {
     const loaded = await loadRecipient(scope);
@@ -102,16 +135,28 @@ export const notifyAttachmentExportReady = async (
       ...recipient,
       attachmentExportId: scope.attachmentExportId,
       archiveSize: formatArchiveSize(scope.archiveBytes, recipient.locale),
+      fileCount: formatCount(scope.fileCount, recipient.locale),
+      includedFileCount: formatCount(scope.includedFileCount, recipient.locale),
+      sizeLimit: formatArchiveSize(MAX_ATTACHMENT_BYTES, recipient.locale),
+      retentionMonths: formatCount(ATTACHMENT_EXPORT_RETENTION_MONTHS, recipient.locale),
       expiryDate: formatExpiryDate(scope.expiresAt, recipient.locale, scope.timeZone),
       truncated: scope.truncated,
     });
   });
 };
 
-export const notifyAttachmentExportFailed = async (scope: TNotifyScope): Promise<void> => {
+export const notifyAttachmentExportFailed = async (
+  scope: TNotifyScope & { errorCode: TAttachmentExportErrorCode }
+): Promise<void> => {
   await send(scope, "failed", async () => {
     const loaded = await loadRecipient(scope);
     if (!loaded) return true;
-    return await sendAttachmentExportFailedEmail({ ...loaded.recipient, workspaceId: scope.workspaceId });
+    const { recipient } = loaded;
+    return await sendAttachmentExportFailedEmail({
+      ...recipient,
+      workspaceId: scope.workspaceId,
+      reason: toFailureReason(scope.errorCode),
+      maxFiles: formatCount(MAX_ATTACHMENT_FILES, recipient.locale),
+    });
   });
 };

@@ -1,6 +1,8 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { prisma } from "@formbricks/database";
-import { can } from "@/lib/authorization";
+import type { Session } from "@formbricks/types/auth";
+import { authorizeAttachmentExportAccess } from "./authorize";
 import type { TAttachmentExportStatus } from "./types";
 
 export type TRequesterAttachmentExport = {
@@ -12,25 +14,29 @@ export type TRequesterAttachmentExport = {
 
 /**
  * The export an emailed download link points at, for the page that link opens (ENG-6862). Found only for
- * the user who started it, and only while they can still read its survey: the same check the download
- * route makes, so losing access hides the export here too rather than only at download.
+ * the user who started it, and only while `authorizeAttachmentExportAccess` — the gate the download route
+ * goes through — still lets them read its survey, so losing access hides the export here too.
  */
 export const getRequesterAttachmentExport = async ({
   id,
-  userId,
+  session,
 }: {
   id: string;
-  userId: string;
+  session: Session;
 }): Promise<TRequesterAttachmentExport | null> => {
   const row = await prisma.attachmentExport.findFirst({
-    where: { id, requestedById: userId },
+    where: { id, requestedById: session.user.id },
     select: { id: true, surveyId: true, workspaceId: true, status: true },
   });
   if (!row) return null;
 
-  const allowed = await can({ type: "user", id: userId }, "survey.read", {
-    type: "survey",
-    id: row.surveyId,
+  // The gate answers routes, so it takes a request id and instance for its problem documents; this page
+  // only needs to know whether it refused.
+  const access = await authorizeAttachmentExportAccess({
+    surveyId: row.surveyId,
+    authentication: session,
+    requestId: randomUUID(),
+    instance: `/attachment-exports/${id}`,
   });
-  return allowed ? row : null;
+  return access.response ? null : row;
 };

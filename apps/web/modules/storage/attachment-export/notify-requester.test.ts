@@ -44,6 +44,8 @@ describe("notifyAttachmentExportReady", () => {
     await notifyAttachmentExportReady({
       ...scope,
       archiveBytes: 5.7 * 1024 * 1024 * 1024,
+      fileCount: 4812,
+      includedFileCount: 4790,
       // Late on 2 February in UTC is already 3 February in Riyadh.
       expiresAt: new Date("2027-02-02T22:00:00.000Z"),
       truncated: true,
@@ -63,6 +65,11 @@ describe("notifyAttachmentExportReady", () => {
       attachmentExportId: EXPORT_ID,
       // `Intl` puts a no-break space between the number and the unit.
       archiveSize: "5,7\u00a0GB",
+      // Counts and limits in the reader's number format, and the retention the expiry was computed from.
+      fileCount: "4.812",
+      includedFileCount: "4.790",
+      sizeLimit: "5\u00a0GB",
+      retentionMonths: "3",
       expiryDate: "3. Februar 2027",
       truncated: true,
     });
@@ -74,6 +81,8 @@ describe("notifyAttachmentExportReady", () => {
     await notifyAttachmentExportReady({
       ...scope,
       archiveBytes: 1,
+      fileCount: 1,
+      includedFileCount: 1,
       expiresAt: new Date(),
       truncated: false,
       timeZone: "UTC",
@@ -90,6 +99,8 @@ describe("notifyAttachmentExportReady", () => {
     const run = notifyAttachmentExportReady({
       ...scope,
       archiveBytes: 1,
+      fileCount: 1,
+      includedFileCount: 1,
       expiresAt: new Date(),
       truncated: false,
       timeZone: "UTC",
@@ -110,6 +121,8 @@ describe("notifyAttachmentExportReady", () => {
     const run = notifyAttachmentExportReady({
       ...scope,
       archiveBytes: 1,
+      fileCount: 1,
+      includedFileCount: 1,
       expiresAt: new Date(),
       truncated: false,
       timeZone: "UTC",
@@ -133,6 +146,8 @@ describe("notifyAttachmentExportReady", () => {
     await notifyAttachmentExportReady({
       ...scope,
       archiveBytes: 1,
+      fileCount: 1,
+      includedFileCount: 1,
       expiresAt: new Date(),
       truncated: false,
       timeZone: "UTC",
@@ -143,12 +158,14 @@ describe("notifyAttachmentExportReady", () => {
 });
 
 describe("notifyAttachmentExportFailed", () => {
-  test("points the requester back at the survey's responses", async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
     mockedFailed.mockResolvedValue(true);
     prisma.attachmentExport.findFirst.mockResolvedValue(row(requester) as never);
+  });
 
-    await notifyAttachmentExportFailed(scope);
+  test("points the requester back at the survey's responses, with the file cap in their format", async () => {
+    await notifyAttachmentExportFailed({ ...scope, errorCode: "too_many_files" });
 
     expect(mockedFailed).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -156,7 +173,22 @@ describe("notifyAttachmentExportFailed", () => {
         workspaceId: WORKSPACE_ID,
         surveyId: "survey-1",
         surveyName: "Mystery shopper visit",
+        reason: "too_many_files",
+        maxFiles: "5.000",
       })
     );
+  });
+
+  test.each([
+    ["build_timeout", "build_timeout"],
+    ["no_attachments", "no_attachments"],
+    // Causes the requester cannot act on get the generic "start it again".
+    ["storage_upload_failed", "other"],
+    ["stale", "other"],
+    ["build_failed", "other"],
+  ] as const)("tells the requester what to do about %s", async (errorCode, reason) => {
+    await notifyAttachmentExportFailed({ ...scope, errorCode });
+
+    expect(mockedFailed).toHaveBeenCalledWith(expect.objectContaining({ reason }));
   });
 });

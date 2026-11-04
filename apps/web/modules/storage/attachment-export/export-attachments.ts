@@ -31,6 +31,13 @@ export const buildAttachmentArchiveFileName = (survey: TSurvey, now: Date): stri
   `${survey.id}-attachments-${now.toISOString().slice(0, 10)}.zip`;
 
 /**
+ * `Content-Disposition` for an archive (RFC 6266): the ASCII `filename` plus the RFC 8187 `filename*`.
+ * The name is ASCII by construction (survey id and an ISO date), so both carry the same name.
+ */
+export const buildAttachmentArchiveContentDisposition = (fileName: string): string =>
+  `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+
+/**
  * Holds the storage stream currently being consumed.
  *
  * `archive.abort()` is documented not to drain appended sources, and `Readable.toWeb` cancelling the
@@ -237,7 +244,9 @@ export const streamAttachmentsAsZip = ({
     status: 200,
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${buildAttachmentArchiveFileName(survey, now)}"`,
+      "Content-Disposition": buildAttachmentArchiveContentDisposition(
+        buildAttachmentArchiveFileName(survey, now)
+      ),
       "Cache-Control": "no-store",
     },
   });

@@ -1,4 +1,5 @@
 import {
+  type TAttachmentExportFailureReason,
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
   renderAccountDeletedEmail,
@@ -52,6 +53,7 @@ import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-su
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export { IS_SMTP_CONFIGURED } from "@/lib/constants";
+export type { TAttachmentExportFailureReason };
 export { sendEmail } from "@/modules/email/lib/send-email";
 
 const legalProps: TEmailTemplateLegalProps = {
@@ -376,6 +378,10 @@ export const sendAttachmentExportReadyEmail = async ({
   surveyName,
   attachmentExportId,
   archiveSize,
+  fileCount,
+  includedFileCount,
+  sizeLimit,
+  retentionMonths,
   expiryDate,
   truncated,
 }: {
@@ -387,6 +393,10 @@ export const sendAttachmentExportReadyEmail = async ({
   surveyName: string;
   attachmentExportId: string;
   archiveSize: string;
+  fileCount: string;
+  includedFileCount: string;
+  sizeLimit: string;
+  retentionMonths: string;
   expiryDate: string;
   truncated: boolean;
 }): Promise<boolean> => {
@@ -394,6 +404,10 @@ export const sendAttachmentExportReadyEmail = async ({
   const html = await renderAttachmentExportReadyEmail({
     surveyName,
     archiveSize,
+    fileCount,
+    includedFileCount,
+    sizeLimit,
+    retentionMonths,
     expiryDate,
     truncated,
     downloadLink: `${WEBAPP_URL}/attachment-exports/${attachmentExportId}`,
@@ -421,6 +435,8 @@ export const sendAttachmentExportFailedEmail = async ({
   workspaceId,
   surveyId,
   surveyName,
+  reason,
+  maxFiles,
 }: {
   email: string;
   locale: TUserLocale;
@@ -429,10 +445,14 @@ export const sendAttachmentExportFailedEmail = async ({
   workspaceId: string;
   surveyId: string;
   surveyName: string;
+  reason: TAttachmentExportFailureReason;
+  maxFiles: string;
 }): Promise<boolean> => {
   const t = await getTranslate(locale);
   const html = await renderAttachmentExportFailedEmail({
     surveyName,
+    reason,
+    maxFiles,
     responsesLink: `${WEBAPP_URL}/workspaces/${workspaceId}/surveys/${surveyId}/responses`,
     t,
     ...legalProps,

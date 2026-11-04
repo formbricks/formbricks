@@ -32,7 +32,9 @@ vi.mock("@formbricks/logger", () => ({
     withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })),
   },
 }));
-vi.mock("./lib/authorize", () => ({ authorizeAttachmentExportAccess: mocks.authorize }));
+vi.mock("@/modules/storage/attachment-export/authorize", () => ({
+  authorizeAttachmentExportAccess: mocks.authorize,
+}));
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
   get IS_SMTP_CONFIGURED() {
@@ -62,6 +64,7 @@ const row = {
   workspaceId: WORKSPACE_ID,
   dispatchCount: 0,
   status: "queued",
+  filterCriteria: null,
 };
 
 const post = (body: unknown = {}) =>
@@ -127,6 +130,31 @@ describe("POST /api/surveys/{surveyId}/attachment-exports", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.dispatch).not.toHaveBeenCalled();
+  });
+
+  test("refuses a request whose filter differs from the export in flight", async () => {
+    // The running export covers completed responses only; this request asks for every response.
+    mocks.create.mockResolvedValue({
+      row: { ...row, status: "running", filterCriteria: { finished: true } },
+      created: false,
+    });
+
+    const response = await post();
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).code).toBe("attachment_export_filter_conflict");
+    expect(mocks.dispatch).not.toHaveBeenCalled();
+  });
+
+  test("returns the export in flight when it was started with the same filter", async () => {
+    mocks.create.mockResolvedValue({
+      row: { ...row, status: "running", filterCriteria: { finished: true } },
+      created: false,
+    });
+
+    const response = await post({ filterCriteria: { finished: true } });
+
+    expect(response.status).toBe(200);
   });
 
   test("passes the authorization refusal through without reading responses", async () => {

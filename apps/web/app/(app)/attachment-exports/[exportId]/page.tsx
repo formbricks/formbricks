@@ -23,7 +23,7 @@ const Page = async ({ params }: Readonly<{ params: Promise<{ exportId: string }>
 
   const t = await getTranslate();
   const attachmentExport = z.cuid2().safeParse(exportId).success
-    ? await getRequesterAttachmentExport({ id: exportId, userId: session.user.id })
+    ? await getRequesterAttachmentExport({ id: exportId, session })
     : null;
 
   return (

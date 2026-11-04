@@ -103,6 +103,7 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
 export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_empty",
   "attachment_export_expired",
+  "attachment_export_filter_conflict",
   "attachment_export_not_ready",
   "attachment_export_too_large",
   "attachment_export_unavailable",

@@ -11,20 +11,53 @@ import {
   ATTACHMENT_EXPORT_REDISPATCH_AFTER_MS,
   ATTACHMENT_EXPORT_STALE_AFTER_MS,
 } from "./constants";
+import { notifyAttachmentExportFailed } from "./notify-requester";
 import { dispatchAttachmentExport } from "./service";
+import { ATTACHMENT_EXPORT_ACTIVE_STATUSES } from "./types";
 
 /**
  * Keeps attachment exports from getting stuck and archives from outliving their expiry (ENG-6862). Runs
  * every few minutes; every step is idempotent and safe to overlap with another tick or a running build.
  *
  * 1. **Stale:** a queued or running export older than the stale cutoff was lost — a pod killed past its
- *    retries, a job an older release dropped — and is failed so the user can start a new one.
+ *    retries, a job an older release dropped — and is failed so the user can start a new one. The
+ *    requester is emailed, since the email is the only way they hear how the export ended.
  * 2. **Lost dispatch:** a queued export untouched for a few minutes never reached a worker (Redis
  *    hiccup, an older pod that completed the unknown job without running it). It is re-enqueued under a
  *    new job id; a bare id would dedupe against the dropped job for a day.
  * 3. **Expired:** a completed archive past `expiresAt` is deleted and the row marked `expired`.
  * 4. **Failed leftovers:** a failed export whose archive delete did not go through is retried.
  */
+
+/** Fails lost exports one by one, so each requester whose export this tick settles is emailed once. */
+const failStaleExports = async (now: number): Promise<number> => {
+  const stale = await prisma.attachmentExport.findMany({
+    where: {
+      status: { in: [...ATTACHMENT_EXPORT_ACTIVE_STATUSES] },
+      createdAt: { lt: new Date(now - ATTACHMENT_EXPORT_STALE_AFTER_MS) },
+    },
+    select: { id: true, workspaceId: true },
+    orderBy: { createdAt: "asc" },
+    take: ATTACHMENT_EXPORT_RECONCILE_BATCH,
+  });
+
+  let failed = 0;
+  for (const row of stale) {
+    // Guarded on the status, so an export a build settled since the read is left alone.
+    const settled = await prisma.attachmentExport.updateMany({
+      where: { id: row.id, status: { in: [...ATTACHMENT_EXPORT_ACTIVE_STATUSES] } },
+      data: { status: "failed", errorCode: "stale", finishedAt: new Date(now) },
+    });
+    if (settled.count === 0) continue;
+    failed++;
+    await notifyAttachmentExportFailed({
+      attachmentExportId: row.id,
+      workspaceId: row.workspaceId,
+      errorCode: "stale",
+    });
+  }
+  return failed;
+};
 
 const redispatchLostExports = async (now: number): Promise<number> => {
   if (!getJobsQueueingConfig().enabled || !(await isNewReleaseWorkEnabled())) return 0;
@@ -78,13 +111,7 @@ export const processAttachmentExportReconcileJob: JobHandler<
 > = async () => {
   const now = Date.now();
 
-  const stale = await prisma.attachmentExport.updateMany({
-    where: {
-      status: { in: ["queued", "running"] },
-      createdAt: { lt: new Date(now - ATTACHMENT_EXPORT_STALE_AFTER_MS) },
-    },
-    data: { status: "failed", errorCode: "stale", finishedAt: new Date(now) },
-  });
+  const staleFailed = await failStaleExports(now);
 
   const redispatched = await redispatchLostExports(now);
 
@@ -115,10 +142,10 @@ export const processAttachmentExportReconcileJob: JobHandler<
     });
   }
 
-  if (stale.count + redispatched + expiredIds.length + cleanedIds.length > 0) {
+  if (staleFailed + redispatched + expiredIds.length + cleanedIds.length > 0) {
     logger.info(
       {
-        staleFailed: stale.count,
+        staleFailed,
         redispatched,
         expired: expiredIds.length,
         failedArchivesDeleted: cleanedIds.length,

@@ -53,6 +53,9 @@ export const ResponseDownloadMenu = ({
     if (err.code === "attachment_export_empty") {
       return t("workspace.surveys.responses.no_attachments_to_download");
     }
+    if (err.code === "attachment_export_filter_conflict") {
+      return t("workspace.surveys.responses.attachment_export_filter_conflict");
+    }
     if (err.status === 429) return t("workspace.surveys.responses.too_many_attachment_exports");
     return null;
   };

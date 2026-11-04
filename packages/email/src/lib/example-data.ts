@@ -44,6 +44,10 @@ export const exampleData = {
   attachmentExportReadyEmail: {
     surveyName: "Mystery shopper visit",
     archiveSize: "5.7 GB",
+    fileCount: "4,812",
+    includedFileCount: "4,812",
+    sizeLimit: "5 GB",
+    retentionMonths: "3",
     expiryDate: "February 3, 2027",
     truncated: false,
     downloadLink: "https://app.formbricks.com/attachment-exports/cm8cmpnjj000108jfdr9exp01",
@@ -51,6 +55,8 @@ export const exampleData = {
 
   attachmentExportFailedEmail: {
     surveyName: "Mystery shopper visit",
+    reason: "build_timeout" as const,
+    maxFiles: "5,000",
     responsesLink: "https://app.formbricks.com/workspaces/ws/surveys/survey/responses",
   },
 

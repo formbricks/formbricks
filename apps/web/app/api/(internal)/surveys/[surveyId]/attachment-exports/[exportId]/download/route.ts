@@ -9,10 +9,14 @@ import {
   problemNotFound,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import { loggableError } from "@/lib/utils/loggable-error";
+import { authorizeAttachmentExportAccess } from "@/modules/storage/attachment-export/authorize";
 import { ATTACHMENT_EXPORT_DOWNLOAD_URL_TTL_SECONDS } from "@/modules/storage/attachment-export/constants";
-import { buildAttachmentArchiveFileName } from "@/modules/storage/attachment-export/export-attachments";
+import {
+  buildAttachmentArchiveContentDisposition,
+  buildAttachmentArchiveFileName,
+} from "@/modules/storage/attachment-export/export-attachments";
 import { getAttachmentExport } from "@/modules/storage/attachment-export/service";
-import { authorizeAttachmentExportAccess } from "../../lib/authorize";
 
 /**
  * `GET /api/surveys/{surveyId}/attachment-exports/{exportId}/download`: a presigned URL for a completed
@@ -70,11 +74,11 @@ export const GET = withV3ApiWrapper({
       });
     }
 
-    // ASCII by construction (survey id and an ISO date), so no RFC 5987 `filename*` is needed.
-    const fileName = buildAttachmentArchiveFileName(access.survey, row.createdAt);
     const signed = await getSignedDownloadUrl(row.storageKey, {
       expiresIn: ATTACHMENT_EXPORT_DOWNLOAD_URL_TTL_SECONDS,
-      responseContentDisposition: `attachment; filename="${fileName}"`,
+      responseContentDisposition: buildAttachmentArchiveContentDisposition(
+        buildAttachmentArchiveFileName(access.survey, row.createdAt)
+      ),
     });
 
     // The row says completed but the object is gone (deleted by hand, or lost by a bucket rule): no retry
@@ -89,7 +93,7 @@ export const GET = withV3ApiWrapper({
 
     if (!signed.ok) {
       logger.error(
-        { attachmentExportId: row.id, error: signed.error },
+        { attachmentExportId: row.id, err: loggableError(signed.error) },
         "Failed to sign attachment export URL"
       );
       return problemInternalError(requestId, "The download link could not be created. Try again.", instance);

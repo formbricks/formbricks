@@ -4,7 +4,11 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { enqueueAttachmentExportJob } from "@formbricks/jobs";
 import type { TResponseFilterCriteria } from "@formbricks/types/responses";
-import type { TAttachmentExport } from "./types";
+import {
+  ATTACHMENT_EXPORT_ACTIVE_STATUSES,
+  type TAttachmentExport,
+  type TAttachmentExportErrorCode,
+} from "./types";
 
 export { buildAttachmentExportStorageKey, isAttachmentExportFilePath } from "./storage-key";
 
@@ -35,8 +39,6 @@ const attachmentExportSelect = {
 export type TAttachmentExportRow = Prisma.AttachmentExportGetPayload<{
   select: typeof attachmentExportSelect;
 }>;
-
-const ACTIVE_STATUSES = ["queued", "running"] as const;
 
 export const toAttachmentExportDto = (row: TAttachmentExportRow): TAttachmentExport => ({
   id: row.id,
@@ -100,7 +102,12 @@ export const createAttachmentExport = async ({
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
       const active = await prisma.attachmentExport.findFirst({
-        where: { surveyId, workspaceId, requestedById, status: { in: [...ACTIVE_STATUSES] } },
+        where: {
+          surveyId,
+          workspaceId,
+          requestedById,
+          status: { in: [...ATTACHMENT_EXPORT_ACTIVE_STATUSES] },
+        },
         select: attachmentExportSelect,
       });
       // Gone between the failed insert and this read only if it finished in that instant; the caller's
@@ -128,7 +135,11 @@ export const failUndispatchedAttachmentExport = async ({
 }: Pick<TAttachmentExportRow, "id" | "workspaceId">): Promise<void> => {
   await prisma.attachmentExport.updateMany({
     where: { id, workspaceId, status: "queued" },
-    data: { status: "failed", errorCode: "enqueue_failed", finishedAt: new Date() },
+    data: {
+      status: "failed",
+      errorCode: "enqueue_failed" satisfies TAttachmentExportErrorCode,
+      finishedAt: new Date(),
+    },
   });
 };
 

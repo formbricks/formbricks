@@ -43,6 +43,8 @@ const archiveStub = vi.hoisted(() => ({
 
 vi.mock("./export-attachments", () => ({
   buildAttachmentArchiveFileName: vi.fn(() => "survey-1-attachments-2026-11-03.zip"),
+  buildAttachmentArchiveContentDisposition: (fileName: string) =>
+    `attachment; filename="${fileName}"; filename*=UTF-8''${fileName}`,
   createAttachmentArchive: vi.fn(() => ({
     archive: {
       pointer: archiveStub.pointer,
@@ -140,7 +142,7 @@ describe("processAttachmentExportJob", () => {
     expect(mockedUpload.mock.calls[0][1]).toBeInstanceOf(Readable);
     expect(mockedUpload).toHaveBeenCalledWith(STORAGE_KEY, expect.anything(), {
       contentType: "application/zip",
-      contentDisposition: 'attachment; filename="survey-1-attachments-2026-11-03.zip"',
+      contentDisposition: `attachment; filename="survey-1-attachments-2026-11-03.zip"; filename*=UTF-8''survey-1-attachments-2026-11-03.zip`,
       signal: expect.any(AbortSignal),
     });
     expect(updateCalls()[1]).toEqual({
@@ -161,6 +163,8 @@ describe("processAttachmentExportJob", () => {
       attachmentExportId: EXPORT_ID,
       workspaceId: WORKSPACE_ID,
       archiveBytes: 4096,
+      fileCount: 3,
+      includedFileCount: 3,
       expiresAt: new Date("2027-02-03T12:00:00.000Z"),
       truncated: false,
       timeZone: "Asia/Riyadh",
@@ -193,7 +197,7 @@ describe("processAttachmentExportJob", () => {
     expect(mockedUpload).not.toHaveBeenCalled();
   });
 
-  test("resumes an export a previous attempt left running", async () => {
+  test("rebuilds, from the first file, an export a previous attempt left running", async () => {
     prisma.attachmentExport.findFirst.mockResolvedValue(queuedRow({ status: "running" }) as never);
 
     await processAttachmentExportJob(data, finalContext);
@@ -265,9 +269,11 @@ describe("processAttachmentExportJob", () => {
       expect.objectContaining({ status: "failed", errorCode: "storage_upload_failed" })
     );
     expect(mockedDeleteFile).toHaveBeenCalledWith(STORAGE_KEY);
+    // With the cause, so the email can say what to do about it.
     expect(mockedNotifyFailed).toHaveBeenCalledWith({
       attachmentExportId: EXPORT_ID,
       workspaceId: WORKSPACE_ID,
+      errorCode: "storage_upload_failed",
     });
     expect(mockedNotifyReady).not.toHaveBeenCalled();
     // The key is cleared once the delete went through, so the reconcile job does not retry it.

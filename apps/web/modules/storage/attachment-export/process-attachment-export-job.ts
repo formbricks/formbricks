@@ -11,19 +11,22 @@ import { collectResponseAttachments } from "@/modules/storage/lib/collect-respon
 import { ATTACHMENT_EXPORT_MAX_BUILD_MS, MAX_ATTACHMENT_FILES, getAttachmentExportExpiry } from "./constants";
 import {
   type AttachmentArchiveSummary,
+  buildAttachmentArchiveContentDisposition,
   buildAttachmentArchiveFileName,
   createAttachmentArchive,
   writeAttachmentArchive,
 } from "./export-attachments";
 import { notifyAttachmentExportFailed, notifyAttachmentExportReady } from "./notify-requester";
 import { buildAttachmentExportStorageKey } from "./storage-key";
+import { ATTACHMENT_EXPORT_ACTIVE_STATUSES, type TAttachmentExportErrorCode } from "./types";
 
 /**
  * Builds one attachment export (ENG-6862): re-collects the survey's attachments with the filter stored at
  * request time, streams them into a ZIP and the ZIP into a multipart upload, then records what the
  * archive holds. The browser later downloads the object through a presigned URL.
  *
- * The archive is rebuilt from the first file on every attempt. Memory stays flat whatever the size: one
+ * The archive is rebuilt from the first file on every attempt: a failed build does not resume, only the
+ * finished archive's download does (storage serves Range requests). Memory stays flat whatever the size: one
  * storage object is read at a time and the upload holds two 16 MB parts.
  *
  * Failures split three ways:
@@ -35,7 +38,7 @@ import { buildAttachmentExportStorageKey } from "./storage-key";
 
 class AttachmentExportBuildError extends Error {
   constructor(
-    readonly code: string,
+    readonly code: TAttachmentExportErrorCode,
     readonly retryable: boolean
   ) {
     super(`Attachment export failed: ${code}`);
@@ -72,8 +75,7 @@ const buildArchiveAndUpload = async ({
   // so either side failing aborts both.
   const uploaded = uploadFileStream(storageKey, body, {
     contentType: ARCHIVE_CONTENT_TYPE,
-    // ASCII by construction (survey id and an ISO date), so no RFC 5987 `filename*` is needed.
-    contentDisposition: `attachment; filename="${fileName}"`,
+    contentDisposition: buildAttachmentArchiveContentDisposition(fileName),
     signal: controller.signal,
   }).then((result) => {
     if (!result.ok) controller.abort();
@@ -121,14 +123,14 @@ const isCompletedElsewhere = async (data: TAttachmentExportJobData): Promise<boo
 
 const failExport = async (
   data: TAttachmentExportJobData,
-  errorCode: string,
+  errorCode: TAttachmentExportErrorCode,
   storageKey: string | null
 ): Promise<void> => {
   const failed = await prisma.attachmentExport.updateMany({
     where: {
       id: data.attachmentExportId,
       workspaceId: data.workspaceId,
-      status: { in: ["queued", "running"] },
+      status: { in: [...ATTACHMENT_EXPORT_ACTIVE_STATUSES] },
     },
     data: { status: "failed", errorCode, finishedAt: new Date() },
   });
@@ -137,6 +139,7 @@ const failExport = async (
     await notifyAttachmentExportFailed({
       attachmentExportId: data.attachmentExportId,
       workspaceId: data.workspaceId,
+      errorCode,
     });
   } else if (await isCompletedElsewhere(data)) {
     // A stalled job's re-run lost to the original, which completed: the archive is the export's result.
@@ -184,7 +187,7 @@ const collectExportEntries = async (
   if (exceedsMaxFiles) throw new AttachmentExportBuildError("too_many_files", false);
   if (fileCount === 0) throw new AttachmentExportBuildError("no_attachments", false);
 
-  return { survey, entries };
+  return { survey, entries, fileCount };
 };
 
 export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = async (data, context) => {
@@ -225,7 +228,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
     where: {
       id: data.attachmentExportId,
       workspaceId: data.workspaceId,
-      status: { in: ["queued", "running"] },
+      status: { in: [...ATTACHMENT_EXPORT_ACTIVE_STATUSES] },
       dispatchCount: data.dispatchCount,
     },
     data: { status: "running", startedAt: new Date(), storageKey, errorCode: null },
@@ -239,7 +242,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
   }
 
   try {
-    const { survey, entries } = await collectExportEntries(row, data.workspaceId);
+    const { survey, entries, fileCount } = await collectExportEntries(row, data.workspaceId);
 
     const result = await buildArchiveAndUpload({
       entries,
@@ -281,6 +284,8 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
       attachmentExportId: data.attachmentExportId,
       workspaceId: data.workspaceId,
       archiveBytes: result.archiveBytes,
+      fileCount,
+      includedFileCount: result.appendedFiles,
       expiresAt,
       truncated: result.truncated,
       timeZone: row.timeZone,
@@ -288,7 +293,7 @@ export const processAttachmentExportJob: JobHandler<TAttachmentExportJobData> = 
   } catch (error) {
     const buildError = error instanceof AttachmentExportBuildError ? error : null;
     const retryable = buildError?.retryable ?? true;
-    const errorCode = buildError?.code ?? "build_failed";
+    const errorCode: TAttachmentExportErrorCode = buildError?.code ?? "build_failed";
 
     if (retryable && context.attempt < context.maxAttempts) {
       logger.warn(

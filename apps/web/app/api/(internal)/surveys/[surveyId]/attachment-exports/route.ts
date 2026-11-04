@@ -17,7 +17,9 @@ import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { authorizeAttachmentExportAccess } from "@/modules/storage/attachment-export/authorize";
 import { MAX_ATTACHMENT_FILES } from "@/modules/storage/attachment-export/constants";
+import { isSameAttachmentExportFilter } from "@/modules/storage/attachment-export/same-filter";
 import {
   createAttachmentExport,
   dispatchAttachmentExport,
@@ -25,7 +27,6 @@ import {
   toAttachmentExportDto,
 } from "@/modules/storage/attachment-export/service";
 import { collectResponseAttachments } from "@/modules/storage/lib/collect-response-attachments";
-import { authorizeAttachmentExportAccess } from "./lib/authorize";
 
 /**
  * `/api/surveys/{surveyId}/attachment-exports` — background attachment ZIP exports (ENG-6862).
@@ -123,6 +124,17 @@ export const POST = withV3ApiWrapper({
       fileCount,
       responseCount,
     });
+
+    // The one export in flight was started with another filter. Handing it back would email an archive of
+    // other responses than the ones asked for, so the user is told to wait for it instead.
+    if (!created && !isSameAttachmentExportFilter(row.filterCriteria, filterCriteria)) {
+      return problemConflict(
+        requestId,
+        "An attachments export with a different filter is still being prepared. Start this one once it is ready.",
+        instance,
+        { code: "attachment_export_filter_conflict" }
+      );
+    }
 
     if (auditLog) {
       auditLog.organizationId = organizationId;

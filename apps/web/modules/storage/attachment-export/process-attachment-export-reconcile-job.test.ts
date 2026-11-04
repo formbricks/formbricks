@@ -5,6 +5,7 @@ import { deleteFile } from "@formbricks/storage";
 import { getJobsQueueingConfig } from "@/lib/jobs/config";
 import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { ATTACHMENT_EXPORT_REDISPATCH_AFTER_MS, ATTACHMENT_EXPORT_STALE_AFTER_MS } from "./constants";
+import { notifyAttachmentExportFailed } from "./notify-requester";
 import { processAttachmentExportReconcileJob } from "./process-attachment-export-reconcile-job";
 
 vi.mock("server-only", () => ({}));
@@ -17,11 +18,13 @@ vi.mock("@formbricks/jobs", () => ({ enqueueAttachmentExportJob: vi.fn() }));
 vi.mock("@formbricks/storage", () => ({ deleteFile: vi.fn() }));
 vi.mock("@/lib/jobs/config", () => ({ getJobsQueueingConfig: vi.fn() }));
 vi.mock("@/lib/upgrade/compatibility", () => ({ isNewReleaseWorkEnabled: vi.fn() }));
+vi.mock("./notify-requester", () => ({ notifyAttachmentExportFailed: vi.fn() }));
 
 const mockedEnqueue = vi.mocked(enqueueAttachmentExportJob);
 const mockedDeleteFile = vi.mocked(deleteFile);
 const mockedQueueingConfig = vi.mocked(getJobsQueueingConfig);
 const mockedReleaseWork = vi.mocked(isNewReleaseWorkEnabled);
+const mockedNotifyFailed = vi.mocked(notifyAttachmentExportFailed);
 
 const NOW = new Date("2026-11-03T12:00:00.000Z");
 const context = {
@@ -33,17 +36,23 @@ const context = {
 };
 const run = () => processAttachmentExportReconcileJob({ scope: "global" }, context);
 
-/** `findMany` is called for lost dispatches, expiring archives, then failed leftovers, in that order. */
+/**
+ * `findMany` is called for stale exports, lost dispatches, expiring archives, then failed leftovers, in
+ * that order.
+ */
 const mockFindMany = ({
+  stale = [],
   lost = [],
   expiring = [],
   failed = [],
 }: {
+  stale?: unknown[];
   lost?: unknown[];
   expiring?: unknown[];
   failed?: unknown[];
 }) => {
   prisma.attachmentExport.findMany
+    .mockResolvedValueOnce(stale as never)
     .mockResolvedValueOnce(lost as never)
     .mockResolvedValueOnce(expiring as never)
     .mockResolvedValueOnce(failed as never);
@@ -65,30 +74,50 @@ describe("processAttachmentExportReconcileJob", () => {
     vi.useRealTimers();
   });
 
-  test("fails queued and running exports created before the stale cutoff", async () => {
-    mockFindMany({});
+  test("fails queued and running exports created before the stale cutoff, and emails each requester", async () => {
+    mockFindMany({
+      stale: [
+        { id: "export-stale", workspaceId: "ws-1" },
+        { id: "export-settled", workspaceId: "ws-1" },
+      ],
+    });
+    // The second one finished between the read and the write.
+    prisma.attachmentExport.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
 
     await run();
 
+    expect(prisma.attachmentExport.findMany).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: {
+          status: { in: ["queued", "running"] },
+          createdAt: { lt: new Date(NOW.getTime() - ATTACHMENT_EXPORT_STALE_AFTER_MS) },
+        },
+      })
+    );
     expect(prisma.attachmentExport.updateMany).toHaveBeenCalledWith({
-      where: {
-        status: { in: ["queued", "running"] },
-        createdAt: { lt: new Date(NOW.getTime() - ATTACHMENT_EXPORT_STALE_AFTER_MS) },
-      },
+      where: { id: "export-stale", status: { in: ["queued", "running"] } },
       data: { status: "failed", errorCode: "stale", finishedAt: NOW },
+    });
+    // Only the export this tick settled: the email is the requester's only news of it.
+    expect(mockedNotifyFailed).toHaveBeenCalledOnce();
+    expect(mockedNotifyFailed).toHaveBeenCalledWith({
+      attachmentExportId: "export-stale",
+      workspaceId: "ws-1",
+      errorCode: "stale",
     });
   });
 
   test("re-dispatches a lost queued export under a new job id", async () => {
     const lost = { id: "exp-1", workspaceId: "ws-1", dispatchCount: 0 };
     mockFindMany({ lost: [lost] });
-    prisma.attachmentExport.updateMany
-      .mockResolvedValueOnce({ count: 0 }) // stale
-      .mockResolvedValueOnce({ count: 1 }); // dispatch bump
+    prisma.attachmentExport.updateMany.mockResolvedValueOnce({ count: 1 }); // dispatch bump
 
     await run();
 
-    expect(prisma.attachmentExport.findMany.mock.calls[0][0]).toEqual(
+    expect(prisma.attachmentExport.findMany.mock.calls[1][0]).toEqual(
       expect.objectContaining({
         where: {
           status: "queued",
@@ -145,7 +174,7 @@ describe("processAttachmentExportReconcileJob", () => {
 
     await run();
 
-    expect(prisma.attachmentExport.findMany.mock.calls[1][0]).toEqual(
+    expect(prisma.attachmentExport.findMany.mock.calls[2][0]).toEqual(
       expect.objectContaining({ where: { status: "completed", expiresAt: { lt: NOW } } })
     );
     expect(mockedDeleteFile).toHaveBeenCalledWith("ws/private/surveys/s/exports/exp-ok.zip");

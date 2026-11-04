@@ -23,7 +23,9 @@ vi.mock("@formbricks/logger", () => ({
     withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })),
   },
 }));
-vi.mock("../../lib/authorize", () => ({ authorizeAttachmentExportAccess: mocks.authorize }));
+vi.mock("@/modules/storage/attachment-export/authorize", () => ({
+  authorizeAttachmentExportAccess: mocks.authorize,
+}));
 vi.mock("@formbricks/storage", () => ({
   getSignedDownloadUrl: mocks.sign,
   StorageErrorCode: { FileNotFoundError: "file_not_found_error" },
@@ -31,6 +33,8 @@ vi.mock("@formbricks/storage", () => ({
 vi.mock("@/modules/storage/attachment-export/export-attachments", () => ({
   buildAttachmentArchiveFileName: (survey: { id: string }, date: Date) =>
     `${survey.id}-attachments-${date.toISOString().slice(0, 10)}.zip`,
+  buildAttachmentArchiveContentDisposition: (fileName: string) =>
+    `attachment; filename="${fileName}"; filename*=UTF-8''${fileName}`,
 }));
 vi.mock("@/modules/storage/attachment-export/service", () => ({
   getAttachmentExport: mocks.getExport,
@@ -97,7 +101,7 @@ describe("GET /api/surveys/{surveyId}/attachment-exports/{exportId}/download", (
     expect(mocks.getExport).toHaveBeenCalledWith(requesterScope);
     expect(mocks.sign).toHaveBeenCalledWith(STORAGE_KEY, {
       expiresIn: 6 * 60 * 60,
-      responseContentDisposition: `attachment; filename="${SURVEY_ID}-attachments-2026-11-03.zip"`,
+      responseContentDisposition: `attachment; filename="${SURVEY_ID}-attachments-2026-11-03.zip"; filename*=UTF-8''${SURVEY_ID}-attachments-2026-11-03.zip`,
     });
     // This is the request that lets respondent files leave the product, so it is the one audited.
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
