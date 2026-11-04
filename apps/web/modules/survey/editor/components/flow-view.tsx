@@ -28,7 +28,7 @@ import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import { ShowIfPopoverBoundary } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { getBlockDisplayName, isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
-import { expandBlock, toggleBlock } from "@/modules/survey/editor/lib/flow-open-state";
+import { expandBlock, getBlockToggle, toggleBlock } from "@/modules/survey/editor/lib/flow-open-state";
 import {
   type TFlowBadge,
   type TFlowBlockSection,
@@ -218,6 +218,8 @@ export const FlowView = ({
     setLocalSurvey((survey) => updateShowIf(survey, target, () => showIf));
     setOpenShowIfKey(key);
   };
+
+  const blockToggle = getBlockToggle(outline.blocks, expandedBlockIds);
 
   const countText = [
     t("workspace.surveys.edit.flow.count_blocks", { count: outline.counts.blocks }),
@@ -501,19 +503,20 @@ export const FlowView = ({
         <FlowOutline
           actions={
             <>
+              {/* One toggle for the blocks, not the rule rows: "Expand" while any block is collapsed. */}
               <Button
                 type="button"
                 size="sm"
                 variant="secondary"
-                onClick={() => setExpandedBlockIds(new Set())}>
-                {t("workspace.surveys.edit.flow.collapse_all")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => setExpandedBlockIds(new Set(outline.blocks.map((block) => block.id)))}>
-                {t("workspace.surveys.edit.flow.expand_all")}
+                disabled={outline.blocks.length === 0}
+                onClick={() =>
+                  setExpandedBlockIds(
+                    blockToggle === "expand" ? new Set(outline.blocks.map((block) => block.id)) : new Set()
+                  )
+                }>
+                {blockToggle === "expand"
+                  ? t("workspace.surveys.edit.flow.expand")
+                  : t("workspace.surveys.edit.flow.collapse")}
               </Button>
               <InfoTooltip label={t("workspace.surveys.edit.flow.about_flow_tab")}>
                 {t("workspace.surveys.edit.flow.hint")}
