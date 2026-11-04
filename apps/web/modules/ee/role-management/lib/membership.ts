@@ -8,6 +8,7 @@ import { TMembership, TMembershipUpdateInput, ZMembershipUpdateInput } from "@fo
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { validateInputs } from "@/lib/utils/validate";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 
@@ -59,11 +60,8 @@ export const updateMembership = async (
 
       // Someone who is now only ever a Dashboard viewer keeps no OAuth grant from a wider role: their
       // consents go and their refresh tokens are revoked, so the next authorization passes through a
-      // consent that offers only dashboards:read (ENG-6889), and no refresh mints a wider token.
-      const otherRoles = await client.membership.count({
-        where: { userId, role: { not: "dashboard_viewer" } },
-      });
-      if (otherRoles === 0) {
+      // consent that offers only dashboards:read, and no refresh mints a wider token.
+      if (await isOnlyDashboardViewer(client, userId)) {
         await revokeAllUserOAuthGrants(client, userId);
       }
     }

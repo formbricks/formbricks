@@ -11,6 +11,7 @@ import { reconcileOrganizationMembership } from "@/lib/authzed/organization-memb
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { validateInputs } from "@/lib/utils/validate";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
@@ -182,10 +183,9 @@ export const deleteMembership = async (
 
       // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
       // just lost: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
-      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0023, S13).
+      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0023).
       if (removed.role !== "dashboard_viewer") {
-        const remaining = await tx.membership.findMany({ where: { userId }, select: { role: true } });
-        if (remaining.length > 0 && remaining.every(({ role }) => role === "dashboard_viewer")) {
+        if (await isOnlyDashboardViewer(tx, userId)) {
           await revokeAllUserOAuthGrants(tx, userId);
         }
       }

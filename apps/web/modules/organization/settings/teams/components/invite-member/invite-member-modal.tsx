@@ -86,6 +86,7 @@ export const InviteMemberModal = ({
         isFormbricksCloud={isFormbricksCloud}
         isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
         isBulkInviteAllowed={isBulkInviteAllowed}
+        membershipRole={membershipRole}
         enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />
     ),

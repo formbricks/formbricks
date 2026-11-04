@@ -2,6 +2,8 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { can } from "@/lib/authorization";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
+import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
@@ -14,13 +16,8 @@ import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/
  * entitlement (Access Control and Dashboards): a lapsed plan keeps the role and locks the viewer out.
  */
 
-const isDashboardViewerIn = async (userId: string, organizationId: string): Promise<boolean> => {
-  const membership = await prisma.membership.findUnique({
-    where: { userId_organizationId: { userId, organizationId } },
-    select: { role: true },
-  });
-  return membership?.role === "dashboard_viewer";
-};
+const isDashboardViewerIn = async (userId: string, organizationId: string): Promise<boolean> =>
+  (await getMembershipByUserIdOrganizationId(userId, organizationId))?.role === "dashboard_viewer";
 
 /**
  * The workspaces of `organizationId` whose dashboards a Dashboard viewer may read, by name. Empty for
@@ -105,10 +102,8 @@ export const getDashboardViewerHomePath = async (
  * a viewer in one organization and holds another role elsewhere grants as before: SpiceDB still
  * refuses them everything but dashboard reads in the viewer organization (ADR-0023).
  */
-export const isDashboardViewerOnly = async (userId: string): Promise<boolean> => {
-  const memberships = await prisma.membership.findMany({ where: { userId }, select: { role: true } });
-  return memberships.length > 0 && memberships.every(({ role }) => role === "dashboard_viewer");
-};
+export const isDashboardViewerOnly = async (userId: string): Promise<boolean> =>
+  isOnlyDashboardViewer(prisma, userId);
 
 /**
  * Every workspace whose dashboards `userId` may read as a Dashboard viewer, across the organizations

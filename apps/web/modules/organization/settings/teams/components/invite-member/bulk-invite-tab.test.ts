@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
   type BulkCsvRow,
-  parseRoleCell,
   parseTeamCell,
   readCell,
 } from "@/modules/organization/settings/teams/components/invite-member/bulk-invite-tab";
+import { parseRoleCell } from "@/modules/organization/settings/teams/lib/bulk-invite-roles";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 
 // Regression coverage for ENG-1596: rows from PapaParse are typed as string maps but a
@@ -54,31 +54,8 @@ describe("parseTeamCell", () => {
   });
 });
 
-describe("parseRoleCell", () => {
-  test.each([
-    ["dashboard_viewer", "dashboard_viewer"],
-    ["Dashboard viewer", "dashboard_viewer"],
-    ["  DASHBOARD   VIEWER ", "dashboard_viewer"],
-    ["Member", "member"],
-    ["", ""],
-  ])("reads %j as %j", (cell, expected) => {
-    expect(parseRoleCell(cell, true)).toBe(expected);
-  });
-
-  test("invites everyone as an owner without Access Control, as before", () => {
-    expect(parseRoleCell("dashboard_viewer", false)).toBe("owner");
-  });
-
-  test("a parsed Dashboard viewer row passes the invite schema", () => {
-    const parsed = ZInvitees.safeParse([
-      { name: "Ada", email: "ada@example.com", role: parseRoleCell("Dashboard viewer", true), teamIds: [] },
-    ]);
-    expect(parsed.success).toBe(true);
-  });
-});
-
 describe("the downloadable members template", () => {
-  test("has a Dashboard viewer row, and every role in it is one the invite schema accepts (U19)", async () => {
+  test("has a Dashboard viewer row, and every role in it is one the invite schema accepts", async () => {
     const { readFile } = await import("node:fs/promises");
     const { resolve } = await import("node:path");
     const csv = await readFile(

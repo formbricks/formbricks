@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
-import { listDashboardViewerWorkspacesForUser } from "./dashboard-viewer-access";
+import {
+  listDashboardViewerWorkspaces,
+  listDashboardViewerWorkspacesForUser,
+} from "./dashboard-viewer-access";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({
@@ -13,6 +17,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
+vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
 vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedWorkspaceIds: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDashboardViewerRoleEnabled: vi.fn() }));
 
@@ -20,7 +25,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("listDashboardViewerWorkspacesForUser (C12)", () => {
+describe("listDashboardViewerWorkspacesForUser", () => {
   test("asks SpiceDB once and PostgreSQL once, however many viewer organizations there are", async () => {
     const organizations = Array.from({ length: 25 }, (_unused, index) => ({ id: `org-${index}`, name: "O" }));
     vi.mocked(prisma.organization.findMany).mockResolvedValue(organizations as never);
@@ -65,5 +70,17 @@ describe("listDashboardViewerWorkspacesForUser (C12)", () => {
 
     await expect(listDashboardViewerWorkspacesForUser("user-1")).resolves.toEqual([]);
     expect(prisma.workspace.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("listDashboardViewerWorkspaces", () => {
+  test("reads the role through the request-cached membership, not a query of its own", async () => {
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "member" } as never);
+
+    await expect(listDashboardViewerWorkspaces("user-1", "org-1")).resolves.toEqual([]);
+
+    expect(getMembershipByUserIdOrganizationId).toHaveBeenCalledWith("user-1", "org-1");
+    expect(prisma.membership.findUnique).not.toHaveBeenCalled();
+    expect(lookupAuthorizedWorkspaceIds).not.toHaveBeenCalled();
   });
 });

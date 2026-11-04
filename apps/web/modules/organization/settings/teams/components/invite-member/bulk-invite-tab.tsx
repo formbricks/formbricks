@@ -8,6 +8,10 @@ import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { cn } from "@/lib/cn";
 import type { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import {
+  findRefusedBulkInviteRoles,
+  parseRoleCell,
+} from "@/modules/organization/settings/teams/lib/bulk-invite-roles";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -27,6 +31,7 @@ interface BulkInviteTabProps {
   isFormbricksCloud: boolean;
   isDashboardViewerRoleEnabled: boolean;
   isBulkInviteAllowed: boolean;
+  membershipRole?: TOrganizationRole;
   enterpriseLicenseRequestFormUrl: string;
 }
 
@@ -54,14 +59,6 @@ export const parseTeamCell = (cell: string | undefined): string[] => {
     .filter((t) => t.length > 0);
 };
 
-/**
- * The organization role a CSV cell names, lowercased, with spaces read as underscores so "Dashboard
- * viewer" and `dashboard_viewer` both work. Without Access Control everyone is invited as an owner, as
- * before; anything the role enum does not know is left for schema validation to reject.
- */
-export const parseRoleCell = (cell: string, isAccessControlAllowed: boolean): string =>
-  isAccessControlAllowed ? cell.trim().toLowerCase().replaceAll(/\s+/g, "_") : "owner";
-
 export const BulkInviteTab = ({
   setOpen,
   onSubmit,
@@ -71,6 +68,7 @@ export const BulkInviteTab = ({
   isFormbricksCloud,
   isDashboardViewerRoleEnabled,
   isBulkInviteAllowed,
+  membershipRole,
   enterpriseLicenseRequestFormUrl,
 }: Readonly<BulkInviteTabProps>) => {
   const { t } = useTranslation();
@@ -138,19 +136,11 @@ export const BulkInviteTab = ({
 
     const teamByName = new Map(teams.map((team) => [team.name.trim().toLowerCase(), team]));
     const unknownTeamNames = new Set<string>();
-    const billingRoleEmails = new Set<string>();
-    const dashboardViewerRoleEmails = new Set<string>();
 
     const members = previewRows.map((csv) => {
       const email = readCell(csv, "Email Address", "email").trim();
       const roleCell = readCell(csv, "Organization Role", "Role", "role");
       const orgRole = parseRoleCell(roleCell, isAccessControlAllowed);
-      if (!isFormbricksCloud && orgRole === "billing") {
-        billingRoleEmails.add(email);
-      }
-      if (!isDashboardViewerRoleEnabled && orgRole === "dashboard_viewer") {
-        dashboardViewerRoleEmails.add(email);
-      }
 
       const teamsCell = readCell(csv, "Teams", "teams");
       const teamIds = isAccessControlAllowed
@@ -184,19 +174,37 @@ export const BulkInviteTab = ({
       return;
     }
 
-    if (billingRoleEmails.size > 0) {
+    // Without Access Control every row is an Owner invite, decided by the server as before.
+    const refused = isAccessControlAllowed
+      ? findRefusedBulkInviteRoles(members, {
+          assignerRole: membershipRole,
+          isFormbricksCloud,
+          isDashboardViewerRoleEnabled,
+        })
+      : { billing: [], dashboardViewer: [], other: [] };
+
+    if (refused.billing.length > 0) {
       setError(
         t("workspace.settings.general.bulk_invite_billing_not_supported", {
-          emails: Array.from(billingRoleEmails).join(", "),
+          emails: refused.billing.join(", "),
         })
       );
       return;
     }
 
-    if (dashboardViewerRoleEmails.size > 0) {
+    if (refused.dashboardViewer.length > 0) {
       setError(
         t("workspace.settings.general.bulk_invite_dashboard_viewer_not_available", {
-          emails: Array.from(dashboardViewerRoleEmails).join(", "),
+          emails: refused.dashboardViewer.join(", "),
+        })
+      );
+      return;
+    }
+
+    if (refused.other.length > 0) {
+      setError(
+        t("workspace.settings.general.bulk_invite_role_not_allowed", {
+          emails: refused.other.join(", "),
         })
       );
       return;

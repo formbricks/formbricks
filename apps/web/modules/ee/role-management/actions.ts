@@ -103,10 +103,6 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
       parsedInput.userId,
       parsedInput.organizationId
     );
-    if (currentUserMembership.role !== "owner" && targetMembership?.role === "owner") {
-      throw new OperationNotAllowedError("Only owners can change the role of an owner");
-    }
-
     await assertCanAssignRole({
       organizationId: parsedInput.organizationId,
       assignerRole: currentUserMembership.role,

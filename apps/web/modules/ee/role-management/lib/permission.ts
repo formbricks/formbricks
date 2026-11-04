@@ -22,7 +22,7 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
 };
 
 /**
- * The one rule every path that gives an organization role runs (C10): single and bulk invites, invite
+ * The one rule every path that gives an organization role runs: single and bulk invites, invite
  * edits, membership edits, and the management API's user create and update.
  *
  * - Billing only on Formbricks Cloud.
@@ -48,6 +48,9 @@ export const assertCanAssignRole = async ({
   channel?: "app" | "managementApi";
 }): Promise<void> => {
   const requested = [...new Set(roles)];
+  if (targetCurrentRole === "owner" && assignerRole !== "owner") {
+    throw new OperationNotAllowedError("Only owners can change the role of an owner");
+  }
   if (!IS_FORMBRICKS_CLOUD && requested.includes("billing")) {
     throw new ValidationError("Billing role is not allowed");
   }

@@ -14,7 +14,6 @@ vi.mock("@formbricks/database", () => ({
     membership: {
       update: vi.fn(),
       findMany: vi.fn(),
-      count: vi.fn(),
     },
     teamUser: {
       findMany: vi.fn(),
@@ -130,6 +129,7 @@ describe("updateMembership", () => {
       accepted: true,
     } as never);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([{ teamId: "team1" }] as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
 
     await updateMembership("user1", "org1", { role: "dashboard_viewer" });
 
@@ -144,24 +144,19 @@ describe("updateMembership", () => {
   });
 
   test.each([
-    [0, true],
-    [1, false],
-  ])(
-    "with %d other non-viewer memberships, revokes the user's OAuth grants: %s",
-    async (otherRoles, revoked) => {
-      vi.mocked(prisma.membership.update).mockResolvedValue({ role: "dashboard_viewer" } as never);
-      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
-      vi.mocked(prisma.membership.count).mockResolvedValue(otherRoles);
+    [["dashboard_viewer"], true],
+    [["dashboard_viewer", "member"], false],
+  ])("with memberships %j, revokes the user's OAuth grants: %s", async (roles, revoked) => {
+    vi.mocked(prisma.membership.update).mockResolvedValue({ role: "dashboard_viewer" } as never);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.membership.findMany).mockImplementation(((args: { select?: { role?: boolean } }) =>
+      Promise.resolve(args.select?.role ? roles.map((role) => ({ role })) : [])) as never);
 
-      await updateMembership("user1", "org1", { role: "dashboard_viewer" });
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" });
 
-      expect(prisma.membership.count).toHaveBeenCalledWith({
-        where: { userId: "user1", role: { not: "dashboard_viewer" } },
-      });
-      if (revoked) expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, "user1");
-      else expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
-    }
-  );
+    if (revoked) expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, "user1");
+    else expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
+  });
 
   test("includes memberships added while team roles are being updated in reconciliation", async () => {
     const mockMembership = {

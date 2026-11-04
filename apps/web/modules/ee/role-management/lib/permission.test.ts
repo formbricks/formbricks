@@ -53,7 +53,7 @@ describe("checkRoleManagementPermission", () => {
   });
 });
 
-describe("assertCanAssignRole (C10: the one rule every role-giving path runs)", () => {
+describe("assertCanAssignRole: the one rule every role-giving path runs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cloud.value = false;
@@ -104,7 +104,9 @@ describe("assertCanAssignRole (C10: the one rule every role-giving path runs)", 
   });
 
   test("a Manager may not change an Owner's role, an Owner may", async () => {
-    await expect(assign("manager", ["member"], "owner")).rejects.toThrow(OperationNotAllowedError);
+    await expect(assign("manager", ["member"], "owner")).rejects.toThrow(
+      new OperationNotAllowedError("Only owners can change the role of an owner")
+    );
     await expect(assign("owner", ["member"], "owner")).resolves.toBeUndefined();
   });
 
