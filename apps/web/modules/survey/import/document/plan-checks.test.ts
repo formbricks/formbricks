@@ -402,6 +402,18 @@ describe("mergeDocumentPlans", () => {
     expect([...merged.entries.keys()]).toEqual(["R2", "R3"]);
     expect(merged.failures.size).toBe(0);
   });
+
+  test("keeps the first round's failure for a line the retry leaves out, so the report still names it", () => {
+    const first = check([answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "address" })])]).plan;
+    // Asked about R3 again, the retry says nothing about it.
+    const retry = check([answer(["R3"], [])], true).plan;
+
+    const merged = mergeDocumentPlans(first, retry);
+
+    expect(first.failures.has("R3")).toBe(true);
+    expect(merged.failures.get("R3")).toEqual(first.failures.get("R3"));
+    expect(merged.entries.has("R3")).toBe(false);
+  });
 });
 
 describe("labels from the file", () => {

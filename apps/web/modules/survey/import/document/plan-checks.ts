@@ -494,7 +494,23 @@ const judgeEntry = (
   else for (const reason of result.reasons) addFailure(ref, reason);
 };
 
-/** Merge a retry round into the first one: the retry's verdicts replace the first round's failures. */
+/**
+ * The retry's failures, plus the first round's for each line the retry neither placed nor skipped: a
+ * document answer judges only the lines it names, so a line that failed and was then left out would
+ * otherwise have no verdict at all, and no line in the report.
+ */
+const keepUnresolvedFailures = (
+  first: TDocumentCheckedPlan,
+  retry: TDocumentCheckedPlan
+): TDocumentCheckedPlan["failures"] => {
+  const failures = new Map(retry.failures);
+  for (const [ref, reasons] of first.failures) {
+    if (!retry.entries.has(ref) && !retry.skipped.has(ref) && !failures.has(ref)) failures.set(ref, reasons);
+  }
+  return failures;
+};
+
+/** Merge a retry round into the first one: the retry's verdicts replace the first round's failures, for the lines it judged. */
 export function mergeDocumentPlans(
   first: TDocumentCheckedPlan,
   retry: TDocumentCheckedPlan
@@ -502,7 +518,7 @@ export function mergeDocumentPlans(
   return {
     entries: new Map([...first.entries, ...retry.entries]),
     skipped: new Map([...first.skipped, ...retry.skipped]),
-    failures: new Map(retry.failures),
+    failures: keepUnresolvedFailures(first, retry),
     silentResponses: first.silentResponses + retry.silentResponses,
   };
 }
