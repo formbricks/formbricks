@@ -1,11 +1,20 @@
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
+import { strictDeep } from "@/app/api/internal/lib/strict-schema";
 
 export const ZActionClassParams = z.object({ actionClassId: ZId }).strict();
 
-/** The whole action as the settings form edits it. The workspace is the action's own, not this one's. */
-export const ZActionClassPatchBody = ZActionClassInput;
+const [ZCodeInput, ZNoCodeInput] = ZActionClassInput.options;
+
+/**
+ * The whole action as the settings form edits it, strict at every level. No `workspaceId`: an action
+ * always stays in the workspace it belongs to, so the operation reads it off the stored row.
+ */
+export const ZActionClassPatchBody = z.discriminatedUnion("type", [
+  strictDeep(ZCodeInput.omit({ workspaceId: true })),
+  strictDeep(ZNoCodeInput.omit({ workspaceId: true })),
+]);
 
 /** The survey the editor is open on, left out of the list of other surveys using the action. */
 export const ZActionClassSurveysQuery = z.object({ excludeSurveyId: ZId.optional() }).strict();

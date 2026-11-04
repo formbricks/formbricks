@@ -24,7 +24,8 @@ export const ZApiKeyCreateBody = z
   .object({
     label: ZApiKeyLabel,
     workspacePermissions: z.array(ZWorkspacePermission).optional(),
-    organizationAccess: ZOrganizationAccess,
+    // The shared schema strips unknown access types; a request body rejects them.
+    organizationAccess: ZOrganizationAccess.strict(),
   })
   .strict()
   .superRefine((body, ctx) => {

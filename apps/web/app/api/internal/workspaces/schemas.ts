@@ -2,15 +2,19 @@ import { z } from "zod";
 import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/survey-runtime-languages";
 import { ZId } from "@formbricks/types/common";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { strictDeep } from "@/app/api/internal/lib/strict-schema";
 
-export const ZWorkspaceIdParams = z.object({ workspaceId: ZId });
+export const ZWorkspaceIdParams = z.object({ workspaceId: ZId }).strict();
 
 /**
  * The workspace settings the dashboard edits: name, cooldown, look and placement, branding, custom scripts
  * and the default survey language. Custom CSS has its own resource (`/api/v3/workspaces/{id}/custom-css`).
  *
  * `organizationId` is the workspace's tenant anchor and never writable (ENG-1919), and team assignment is
- * not a workspace column, so both are refused rather than silently dropped.
+ * not a workspace column, so both are refused rather than silently dropped. Survey branding is refused too:
+ * `PATCH /api/internal/workspaces/{id}/branding` is its one write path, behind the licence check. The
+ * nested `config`, `styling` and `logo` reject unknown keys like the top level does: the shared schema
+ * strips them, which would answer a typo with a confident 200.
  *
  * `config.defaultSurveyLanguage` is limited to the languages the survey runtime ships strings for. The set
  * cannot live in `ZWorkspaceConfig` itself, because `packages/types` deliberately depends on no other
@@ -19,8 +23,14 @@ export const ZWorkspaceIdParams = z.object({ workspaceId: ZId });
  * the write is rejected rather than silently ignored on read. That it is one of the workspace's own
  * languages needs the workspace, so the operation checks that half (ENG-2816).
  */
-export const ZWorkspacePatchBody = ZWorkspaceUpdateInput.omit({ organizationId: true, teamIds: true })
-  .strict()
+export const ZWorkspacePatchBody = strictDeep(
+  ZWorkspaceUpdateInput.omit({
+    organizationId: true,
+    teamIds: true,
+    inAppSurveyBranding: true,
+    linkSurveyBranding: true,
+  })
+)
   .refine(
     (body) =>
       body.config?.defaultSurveyLanguage == null ||
@@ -39,9 +49,12 @@ export const ZWorkspacePatchBody = ZWorkspaceUpdateInput.omit({ organizationId: 
 
 export type TWorkspacePatchBody = z.infer<typeof ZWorkspacePatchBody>;
 
-/** Deleting a workspace takes its name, typed back, so a stray request cannot delete one by id alone. */
-export const ZWorkspaceDeleteBody = z
+/**
+ * `POST /api/internal/workspaces/{id}/deletions` body. Deleting a workspace takes its name, typed back, so a
+ * stray request cannot delete one by id alone.
+ */
+export const ZWorkspaceDeletionBody = z
   .object({ confirmationName: z.string().trim().min(1, { error: "Type the workspace name to confirm." }) })
   .strict();
 
-export type TWorkspaceDeleteBody = z.infer<typeof ZWorkspaceDeleteBody>;
+export type TWorkspaceDeletionBody = z.infer<typeof ZWorkspaceDeletionBody>;

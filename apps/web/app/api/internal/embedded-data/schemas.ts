@@ -6,9 +6,9 @@ import {
   ZUpdateSharedEmbeddedDataInput,
 } from "@/modules/embedded-data/types";
 
-export const ZEmbeddedDataListQuery = z.object({ workspaceId: ZId });
+export const ZEmbeddedDataListQuery = z.object({ workspaceId: ZId }).strict();
 
-export const ZEmbeddedDataIdParams = z.object({ embeddedDataId: ZId });
+export const ZEmbeddedDataIdParams = z.object({ embeddedDataId: ZId }).strict();
 
 /** A new library field. The cross-field rules live on the row schema the service runs, not here. */
 export const ZEmbeddedDataCreateBody = ZCreateSharedEmbeddedDataInput;

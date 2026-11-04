@@ -1,5 +1,9 @@
 import "server-only";
-import { AuthenticationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { cache } from "@/lib/cache";
@@ -19,8 +23,8 @@ import type { TLicenseCheckResource } from "../schemas";
 
 /**
  * `POST /api/internal/license-checks?workspaceId=`: fetch this instance's license fresh. The organization
- * is the workspace's, and the caller must manage it; a caller outside it gets the same 403 as one who
- * may not recheck.
+ * is the workspace's, and the caller must manage it; a caller outside it, and a workspace id that names
+ * nothing, get the same 403 as one who may not recheck, so the answer never tells which ids exist.
  */
 export async function recheckLicenseOperation({
   authentication,
@@ -46,7 +50,11 @@ export async function recheckLicenseOperation({
   try {
     await assertCanRecheckLicense(userId, await getOrganizationIdFromWorkspaceId(workspaceId));
   } catch (error) {
-    if (error instanceof AuthenticationError || error instanceof OperationNotAllowedError) {
+    if (
+      error instanceof ResourceNotFoundError ||
+      error instanceof AuthenticationError ||
+      error instanceof OperationNotAllowedError
+    ) {
       return problemForbidden(requestId, "Only owners and managers can recheck the license", instance);
     }
     throw error;

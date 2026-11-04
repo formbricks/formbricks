@@ -8,6 +8,7 @@ import {
   PASSWORD_COMPROMISED_ERROR_CODE,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
+import { EMAILED_TOKEN_MAX } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
@@ -139,9 +140,18 @@ describe("POST /api/internal/password-resets", () => {
     ["no token", { password: BODY.password }],
     ["a password too short", { token: "t", password: "short" }],
     ["an unknown field", { ...BODY, userId: "someone" }],
+    [`a token over ${EMAILED_TOKEN_MAX} characters`, { ...BODY, token: "t".repeat(EMAILED_TOKEN_MAX + 1) }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await reset(body)).status).toBe(400);
     expect(mocks.resetPassword).not.toHaveBeenCalled();
+  });
+
+  test(`passes a token of exactly ${EMAILED_TOKEN_MAX} characters on to Better Auth`, async () => {
+    const token = "t".repeat(EMAILED_TOKEN_MAX);
+    expect((await reset({ ...BODY, token })).status).toBe(204);
+    expect(mocks.resetPassword).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { token, newPassword: BODY.password } })
+    );
   });
 
   test("refuses a cross-site request (CSRF), though there is no session to ride", async () => {

@@ -1,8 +1,7 @@
-import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { recheckLicenseOperation } from "./lib/operations";
+import { ZLicenseCheckQuery } from "./schemas";
 
 /**
  * `POST /api/internal/license-checks?workspaceId=`: ask the license server about this instance's license
@@ -10,7 +9,7 @@ import { recheckLicenseOperation } from "./lib/operations";
  */
 export const POST = withV3ApiWrapper({
   auth: "session",
-  schemas: { query: z.object({ workspaceId: ZId }).strict() },
+  schemas: { query: ZLicenseCheckQuery },
   // Its own small bucket: every call reaches the license server.
   customRateLimitConfig: rateLimitConfigs.actions.licenseRecheck,
   handler: async ({ authentication, parsedInput, requestId, instance }) =>

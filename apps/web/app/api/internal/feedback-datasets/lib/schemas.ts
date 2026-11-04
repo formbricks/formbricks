@@ -19,9 +19,6 @@ export const ZDatasetPathParams = z
   })
   .strict();
 
-/** No query parameters are accepted; a stray one is a caller bug, not something to ignore. */
-export const ZDatasetPurgeQuery = z.object({}).strict();
-
 /** The organization a new dataset is created in. Named by the caller, then authorized. */
 export const ZDatasetCreateQuery = z.object({ organizationId: ZId }).strict();
 
@@ -30,9 +27,6 @@ export const ZDatasetCreateBody = ZFeedbackDirectoryCreateInput.strict();
 
 /** A change to a dataset: rename it, reassign its workspaces, or archive and unarchive it. */
 export const ZDatasetUpdateBody = ZFeedbackDirectoryUpdateInput.strict();
-
-/** No query parameters are accepted on the dataset itself. */
-export const ZDatasetQuery = z.object({}).strict();
 
 export type TDatasetCreateBody = z.infer<typeof ZDatasetCreateBody>;
 export type TDatasetUpdateBody = z.infer<typeof ZDatasetUpdateBody>;

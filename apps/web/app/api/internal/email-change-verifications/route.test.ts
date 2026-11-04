@@ -2,6 +2,7 @@ import { TokenExpiredError } from "jsonwebtoken";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { EMAILED_TOKEN_MAX } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
@@ -136,9 +137,16 @@ describe("POST /api/internal/email-change-verifications", () => {
     ["no token", {}],
     ["an empty token", { token: "" }],
     ["an unknown field", { token: "t", email: "attacker@example.com" }],
+    [`a token over ${EMAILED_TOKEN_MAX} characters`, { token: "t".repeat(EMAILED_TOKEN_MAX + 1) }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await verify(body)).status).toBe(400);
     expect(mocks.verifyEmailChangeToken).not.toHaveBeenCalled();
+  });
+
+  test(`verifies a token of exactly ${EMAILED_TOKEN_MAX} characters`, async () => {
+    const token = "t".repeat(EMAILED_TOKEN_MAX);
+    expect((await verify({ token })).status).toBe(204);
+    expect(mocks.verifyEmailChangeToken).toHaveBeenCalledWith(token);
   });
 
   test("refuses a cross-site request (CSRF)", async () => {

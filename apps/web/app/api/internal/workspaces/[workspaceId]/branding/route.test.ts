@@ -248,4 +248,17 @@ describe("PATCH /api/internal/workspaces/{workspaceId}/branding", () => {
     expect(response.status).toBe(403);
     expect(mocks.updateWorkspaceBranding).not.toHaveBeenCalled();
   });
+
+  test("answers 400 for an unknown path parameter, without writing", async () => {
+    const response = await PATCH(
+      new NextRequest(`http://localhost/api/internal/workspaces/${WORKSPACE_ID}/branding`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
+        body: JSON.stringify({ linkSurveyBranding: false }),
+      }),
+      { params: Promise.resolve({ workspaceId: WORKSPACE_ID, extra: "x" }) } as never
+    );
+    expect(response.status).toBe(400);
+    expect(mocks.updateWorkspaceBranding).not.toHaveBeenCalled();
+  });
 });

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZWorkspaceUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/workspace";
 
-export const ZWorkspaceBrandingParams = z.object({ workspaceId: ZId });
+export const ZWorkspaceBrandingParams = z.object({ workspaceId: ZId }).strict();
 
 /** Whether link and in-app surveys show the Formbricks badge. Either or both, never neither. */
 export const ZWorkspaceBrandingPatchBody = ZWorkspaceUpdateBrandingInput.strict().refine(

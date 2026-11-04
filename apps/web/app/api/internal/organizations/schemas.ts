@@ -2,10 +2,15 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZOrganization, ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
-export const ZOrganizationIdParams = z.object({ organizationId: ZId });
+export const ZOrganizationIdParams = z.object({ organizationId: ZId }).strict();
+
+/** Bounds an organization's name on every write (ENG-1652), as `TEAM_NAME_MAX` bounds a team's. */
+export const ORGANIZATION_NAME_MAX = 255;
+
+const ZOrganizationName = ZOrganization.shape.name.max(ORGANIZATION_NAME_MAX);
 
 /** `POST /api/internal/organizations`: the organization set up during onboarding. */
-export const ZOrganizationCreateBody = z.object({ name: ZOrganization.shape.name }).strict();
+export const ZOrganizationCreateBody = z.object({ name: ZOrganizationName }).strict();
 
 export type TOrganizationCreateBody = z.infer<typeof ZOrganizationCreateBody>;
 
@@ -15,7 +20,7 @@ export type TOrganizationCreateBody = z.infer<typeof ZOrganizationCreateBody>;
  */
 export const ZOrganizationPatchBody = z
   .object({
-    name: ZOrganization.shape.name,
+    name: ZOrganizationName,
     isAISmartToolsEnabled: z.boolean(),
     displayTimeZone: ZOrganizationUpdateInput.shape.displayTimeZone.unwrap(),
   })

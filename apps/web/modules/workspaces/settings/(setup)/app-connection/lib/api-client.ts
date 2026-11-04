@@ -1,5 +1,8 @@
-import type { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
-import type { TActionClassSurveysResource } from "@/app/api/internal/action-classes/schemas";
+import type { TActionClass } from "@formbricks/types/action-classes";
+import type {
+  TActionClassPatchBody,
+  TActionClassSurveysResource,
+} from "@/app/api/internal/action-classes/schemas";
 import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
 
 /** Client fetchers for the app connection settings and the app shell. Each throws a `V3ApiError` on a refusal. */
@@ -13,12 +16,13 @@ type TActionClassJson = Omit<TActionClass, "createdAt" | "updatedAt"> & {
 };
 
 /**
- * Change an action. Answers with the action as stored, timestamps revived to `Date`s: the survey editor
- * puts it back into the survey's triggers, which are saved with the survey.
+ * Change an action. The body carries no `workspaceId`: an action stays in its own workspace. Answers with
+ * the action as stored, timestamps revived to `Date`s: the survey editor puts it back into the survey's
+ * triggers, which are saved with the survey.
  */
 export const updateActionClass = async (
   actionClassId: string,
-  body: TActionClassInput
+  body: TActionClassPatchBody
 ): Promise<TActionClass> => {
   const updated = await sendApiRequest<TActionClassJson>(actionClassPath(actionClassId), {
     method: "PATCH",

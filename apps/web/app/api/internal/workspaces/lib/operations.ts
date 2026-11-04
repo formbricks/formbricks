@@ -13,18 +13,15 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { type TAuthorizationAction, can } from "@/lib/authorization";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
-import { getOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent } from "@/lib/posthog";
 import { getWorkspace } from "@/lib/workspace/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { resolvePostWorkspaceDeletionDestination } from "@/modules/workspaces/settings/general/lib/delete-workspace";
 import {
   WORKSPACE_DELETE_CONFIRMATION_ERROR,
   hasMatchingWorkspaceDeleteConfirmation,
 } from "@/modules/workspaces/settings/general/lib/delete-workspace-confirmation";
 import { deleteWorkspaceIfNotLast, updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
-import type { TWorkspaceDeleteBody, TWorkspacePatchBody } from "../schemas";
+import type { TWorkspaceDeletionBody, TWorkspacePatchBody } from "../schemas";
 import { type TWorkspaceDeletionResource, serializeWorkspaceSettings } from "../serializers";
 
 type TRequestContext = {
@@ -35,7 +32,7 @@ type TRequestContext = {
   auditLog?: TV3AuditLog;
 };
 
-type TAuthorizedWorkspace = { userId: string; workspace: TWorkspace };
+type TAuthorizedWorkspace = { workspace: TWorkspace };
 
 /**
  * Read the workspace, name it in the audit entry, then authorize `action` on `target`. The audit target is
@@ -62,47 +59,13 @@ async function authorizeWorkspace(
       : await can(actor, "organization.manage", { type: "organization", id: workspace.organizationId });
   if (!allowed) return problemForbidden(requestId, undefined, instance);
 
-  return { userId: actor.id, workspace };
+  return { workspace };
 }
 
 /**
- * Turning either survey branding off needs the licence's remove-branding entitlement; turning it back on
- * needs it too, as before. Null when the change is allowed, the refusal otherwise.
+ * `PATCH /api/internal/workspaces/{workspaceId}`: the workspace settings pages' edits. Owners and managers.
+ * Survey branding is not among them: `/branding` is its one write path, behind the licence check.
  */
-async function refuseBrandingChange(
-  body: TWorkspacePatchBody,
-  organizationId: string,
-  { requestId, instance }: TRequestContext
-): Promise<Response | null> {
-  const changesInApp = body.inAppSurveyBranding !== undefined;
-  const changesLink = body.linkSurveyBranding !== undefined;
-  if (!changesInApp && !changesLink) return null;
-
-  if (!(await getOrganization(organizationId))) return problemForbidden(requestId, undefined, instance);
-  if (await getRemoveBrandingPermission(organizationId)) return null;
-
-  return problemForbidden(
-    requestId,
-    changesInApp
-      ? "You are not allowed to remove in-app branding"
-      : "You are not allowed to remove link survey branding",
-    instance
-  );
-}
-
-const captureBrandingRemoved = (
-  userId: string,
-  { organizationId, workspaceId }: { organizationId: string; workspaceId: string },
-  brandingType: "link" | "in_app"
-) =>
-  capturePostHogEvent(
-    userId,
-    "remove_branding_enabled",
-    { organization_id: organizationId, workspace_id: workspaceId, branding_type: brandingType },
-    { organizationId, workspaceId }
-  );
-
-/** `PATCH /api/internal/workspaces/{workspaceId}`: the workspace settings pages' edits. Owners and managers. */
 export async function updateWorkspaceOperation({
   body,
   ...context
@@ -110,17 +73,13 @@ export async function updateWorkspaceOperation({
   const { workspaceId, requestId, instance, auditLog } = context;
   const authorized = await authorizeWorkspace(context, "workspace.manage");
   if (authorized instanceof Response) return authorized;
-  const { userId, workspace: oldWorkspace } = authorized;
-  const { organizationId } = oldWorkspace;
+  const { workspace: oldWorkspace } = authorized;
 
   const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.stateMutation, workspaceId, {
     requestId,
     instance,
   });
   if (limited) return limited;
-
-  const brandingRefusal = await refuseBrandingChange(body, organizationId, context);
-  if (brandingRefusal) return brandingRefusal;
 
   // The default survey language has to be one of the workspace's own survey languages, so the setting
   // can never name a language the workspace does not have (ENG-2816). The body schema already limits it
@@ -161,26 +120,18 @@ export async function updateWorkspaceOperation({
     auditLog.newObject = updated;
   }
 
-  const group = { organizationId, workspaceId };
-  if (oldWorkspace.linkSurveyBranding && body.linkSurveyBranding === false) {
-    captureBrandingRemoved(userId, group, "link");
-  }
-  if (oldWorkspace.inAppSurveyBranding && body.inAppSurveyBranding === false) {
-    captureBrandingRemoved(userId, group, "in_app");
-  }
-
   return successResponse(serializeWorkspaceSettings(updated), { requestId });
 }
 
 /**
- * `DELETE /api/internal/workspaces/{workspaceId}`: delete the workspace, confirmed by typing its name.
+ * `POST /api/internal/workspaces/{workspaceId}/deletions`: delete the workspace, confirmed by typing its name.
  * Owners and managers of its organization, and never the organization's last workspace. Answers where the
  * dashboard goes next, and points the workspace cookie there.
  */
 export async function deleteWorkspaceOperation({
   body,
   ...context
-}: TRequestContext & { body: TWorkspaceDeleteBody }): Promise<Response> {
+}: TRequestContext & { body: TWorkspaceDeletionBody }): Promise<Response> {
   const { workspaceId, requestId, instance, auditLog } = context;
   const authorized = await authorizeWorkspace(context, "organization.manage");
   if (authorized instanceof Response) return authorized;

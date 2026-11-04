@@ -18,13 +18,13 @@ export const patchWorkspaceSettings = (workspaceId: string, body: TWorkspaceSett
   sendApiRequest<TWorkspaceSettingsResource>(workspacePath(workspaceId), { method: "PATCH", body });
 
 /**
- * Delete a workspace, confirmed by its name. Answers where the dashboard goes next. No client timeout: the
- * cascade (responses, files) grows with the workspace, and giving up early would leave the user on a
- * workspace the server is still deleting.
+ * Delete a workspace, confirmed by its name: a POST to its `deletions`, since the confirmation is a body.
+ * Answers where the dashboard goes next. No client timeout: the cascade (responses, files) grows with the
+ * workspace, and giving up early would leave the user on a workspace the server is still deleting.
  */
 export const deleteWorkspaceWithConfirmation = (workspaceId: string, confirmationName: string) =>
-  sendApiRequest<TWorkspaceDeletionResource>(workspacePath(workspaceId), {
-    method: "DELETE",
+  sendApiRequest<TWorkspaceDeletionResource>(`${workspacePath(workspaceId)}/deletions`, {
+    method: "POST",
     body: { confirmationName },
     timeoutMs: null,
   });

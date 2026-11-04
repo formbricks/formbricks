@@ -96,7 +96,12 @@ export const ActionSettingsTab = ({
     try {
       setIsUpdatingAction(true);
       validatePermissions(isReadOnly, t);
-      const updatedAction = buildActionObject(data, actionClass.workspaceId, t);
+      // The action stays in its own workspace, so the PATCH body doesn't name one.
+      const { workspaceId: _workspaceId, ...updatedAction } = buildActionObject(
+        data,
+        actionClass.workspaceId,
+        t
+      );
 
       const result = await updateActionClass(actionClass.id, updatedAction);
       onActionUpdated?.(result);

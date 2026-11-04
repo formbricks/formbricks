@@ -259,6 +259,17 @@ describe("POST /api/internal/feedback-sources", () => {
       "a mapping with no questions",
       { ...formbricksSource, formbricksMappings: [{ surveyId: SURVEY_ID, elementIds: [] }] },
     ],
+    [
+      "an unknown key in a survey mapping",
+      { ...formbricksSource, formbricksMappings: [{ surveyId: SURVEY_ID, elementIds: ["q1"], extra: 1 }] },
+    ],
+    [
+      "an unknown key in a field mapping",
+      {
+        source: { ...formbricksSource.source, type: "csv" },
+        fieldMappings: [{ sourceFieldId: "comment", targetFieldId: "value_text", extra: 1 }],
+      },
+    ],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await create(body)).status).toBe(400);
     expect(mocks.createFeedbackSourceWithMappings).not.toHaveBeenCalled();
@@ -329,6 +340,14 @@ describe("PATCH /api/internal/feedback-sources/{feedbackSourceId}", () => {
 
   test("answers 400 for a sync timestamp, which is the sync's to write", async () => {
     expect((await update({ source: { lastSyncAt: null } })).status).toBe(400);
+    expect(mocks.updateFeedbackSourceWithMappings).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["a survey mapping", { formbricksMappings: [{ surveyId: SURVEY_ID, elementIds: ["q1"], extra: 1 }] }],
+    ["a field mapping", { fieldMappings: [{ sourceFieldId: "a", targetFieldId: "value_text", extra: 1 }] }],
+  ])("answers 400 for an unknown key in %s", async (_label, body) => {
+    expect((await update(body)).status).toBe(400);
     expect(mocks.updateFeedbackSourceWithMappings).not.toHaveBeenCalled();
   });
 });

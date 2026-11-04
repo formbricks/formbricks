@@ -34,13 +34,18 @@ describe("app connection API client", () => {
       description: null,
       type: "code",
       key: "clicked",
-      workspaceId: "ws-1",
-    } as never);
+    });
 
     expect(updated.createdAt).toEqual(new Date("2026-10-01T10:00:00.000Z"));
     expect(updated.updatedAt).toEqual(new Date("2026-10-02T10:00:00.000Z"));
     expect(fetchMock.mock.calls[0][0]).toBe("/api/internal/action-classes/act-1");
     expect(fetchMock.mock.calls[0][1].method).toBe("PATCH");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      name: "Clicked",
+      description: null,
+      type: "code",
+      key: "clicked",
+    });
   });
 
   test("asks for an action's surveys without the one being edited", async () => {

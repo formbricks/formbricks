@@ -11,10 +11,15 @@ export const ZFeedbackSourceWorkspaceQuery = z.object({ workspaceId: ZId }).stri
 export const ZFeedbackSourceIdParams = z.object({ feedbackSourceId: ZId }).strict();
 
 /** One survey a Formbricks source maps, and which of its questions. */
-const ZFormbricksSurveyMapping = z.object({
-  surveyId: ZId,
-  elementIds: z.array(z.string()).min(1),
-});
+const ZFormbricksSurveyMapping = z
+  .object({
+    surveyId: ZId,
+    elementIds: z.array(z.string()).min(1),
+  })
+  .strict();
+
+/** One CSV column a source maps onto a Hub field. The shared schema strips unknown keys; this refuses them. */
+const ZFieldMapping = ZFeedbackSourceFieldMappingCreateInput.strict();
 
 /**
  * A new source and its mappings. A Formbricks source maps surveys, a CSV source maps fields. Who created
@@ -24,7 +29,7 @@ export const ZFeedbackSourceCreateBody = z
   .object({
     source: ZFeedbackSourceCreateInput.omit({ createdBy: true }).strict(),
     formbricksMappings: z.array(ZFormbricksSurveyMapping).optional(),
-    fieldMappings: z.array(ZFeedbackSourceFieldMappingCreateInput).optional(),
+    fieldMappings: z.array(ZFieldMapping).optional(),
   })
   .strict()
   .superRefine((body, ctx) => {
@@ -51,7 +56,7 @@ export const ZFeedbackSourceUpdateBody = z
   .object({
     source: ZFeedbackSourceUpdateInput.omit({ lastSyncAt: true }).strict().optional(),
     formbricksMappings: z.array(ZFormbricksSurveyMapping).min(1).optional(),
-    fieldMappings: z.array(ZFeedbackSourceFieldMappingCreateInput).optional(),
+    fieldMappings: z.array(ZFieldMapping).optional(),
   })
   .strict();
 

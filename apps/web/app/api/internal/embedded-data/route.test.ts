@@ -179,6 +179,18 @@ describe("reads", () => {
     expect(mocks.library.getSharedEmbeddedData).not.toHaveBeenCalled();
   });
 
+  test("answers 400 for an unknown query parameter, reading nothing", async () => {
+    const response = await LIST(request("GET", `${base}?workspaceId=${WORKSPACE_ID}&surveyId=x`), noProps);
+    expect(response.status).toBe(400);
+    expect(mocks.library.getSharedEmbeddedData).not.toHaveBeenCalled();
+  });
+
+  test("answers 400 for an unknown path parameter, reading nothing", async () => {
+    const props = { params: Promise.resolve({ embeddedDataId: FIELD_ID, extra: "x" }) } as never;
+    expect((await USAGE(request("GET", `${base}/${FIELD_ID}/usage`), props)).status).toBe(400);
+    expect(mocks.library.getEmbeddedDataUsage).not.toHaveBeenCalled();
+  });
+
   test("reads usage against the workspace on the row, not one the caller names", async () => {
     mocks.library.getEmbeddedDataWorkspaceId.mockResolvedValue(OTHER_WORKSPACE_ID);
     const response = await usage();

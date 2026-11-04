@@ -71,7 +71,19 @@ const codeInput = (overrides: Record<string, unknown> = {}) => ({
   description: null,
   type: "code",
   key: "clicked-upgrade",
-  workspaceId: WORKSPACE_ID,
+  ...overrides,
+});
+const noCodeInput = (noCodeConfig: Record<string, unknown>, overrides: Record<string, unknown> = {}) => ({
+  name: "Clicked upgrade button",
+  description: null,
+  type: "noCode",
+  noCodeConfig,
+  ...overrides,
+});
+const clickConfig = (overrides: Record<string, unknown> = {}) => ({
+  type: "click",
+  urlFilters: [{ value: "/pricing", rule: "startsWith" }],
+  elementSelector: { cssSelector: "#upgrade" },
   ...overrides,
 });
 
@@ -121,7 +133,10 @@ describe("PATCH /api/internal/action-classes/{actionClassId}", () => {
       type: "workspace",
       id: WORKSPACE_ID,
     });
-    expect(mocks.updateActionClass).toHaveBeenCalledWith(WORKSPACE_ID, ACTION_ID, codeInput());
+    expect(mocks.updateActionClass).toHaveBeenCalledWith(WORKSPACE_ID, ACTION_ID, {
+      ...codeInput(),
+      workspaceId: WORKSPACE_ID,
+    });
     expect(lastAudit()).toMatchObject({
       action: "updated",
       targetType: "actionClass",
@@ -153,18 +168,31 @@ describe("PATCH /api/internal/action-classes/{actionClassId}", () => {
     expect(JSON.stringify(data)).not.toContain("clsurvrestricted");
   });
 
-  test("can't move an action to another workspace through the body", async () => {
-    await patch(codeInput({ workspaceId: OTHER_WORKSPACE_ID }));
+  test("answers 400 for a workspaceId in the body: an action stays in its own workspace", async () => {
+    expect((await patch(codeInput({ workspaceId: OTHER_WORKSPACE_ID }))).status).toBe(400);
+    expect(mocks.updateActionClass).not.toHaveBeenCalled();
+    expect(mocks.assertCan).not.toHaveBeenCalled();
+  });
 
-    expect(mocks.updateActionClass).toHaveBeenCalledWith(
-      WORKSPACE_ID,
-      ACTION_ID,
-      expect.objectContaining({ workspaceId: WORKSPACE_ID })
-    );
-    expect(mocks.assertCan).not.toHaveBeenCalledWith(actor, expect.anything(), {
-      type: "workspace",
-      id: OTHER_WORKSPACE_ID,
+  test("updates a no-code action with every nested field the form sends", async () => {
+    const response = await patch(noCodeInput(clickConfig({ urlFiltersConnector: "and" })));
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateActionClass).toHaveBeenCalledWith(WORKSPACE_ID, ACTION_ID, {
+      ...noCodeInput(clickConfig({ urlFiltersConnector: "and" })),
+      workspaceId: WORKSPACE_ID,
     });
+  });
+
+  test.each([
+    ["the body", codeInput({ unknown: true })],
+    ["noCodeConfig", noCodeInput(clickConfig({ unknown: true }))],
+    ["a url filter", noCodeInput(clickConfig({ urlFilters: [{ value: "/a", rule: "startsWith", x: 1 }] }))],
+    ["the element selector", noCodeInput(clickConfig({ elementSelector: { cssSelector: "#a", x: 1 } }))],
+    ["a field of another config type", noCodeInput(clickConfig({ type: "pageView" }))],
+  ])("answers 400 for an unknown key in %s", async (_where, body) => {
+    expect((await patch(body)).status).toBe(400);
+    expect(mocks.updateActionClass).not.toHaveBeenCalled();
   });
 
   test("refuses a read-only member with 403", async () => {

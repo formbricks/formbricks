@@ -238,6 +238,21 @@ describe("POST /api/internal/api-keys", () => {
       { ...validBody, workspacePermissions: [{ workspaceId: WORKSPACE_ID, permission: "root" }] },
     ],
     ["an unknown field", { ...validBody, extra: true }],
+    [
+      "an unknown organization access type",
+      { ...validBody, organizationAccess: { ...ORG_ACCESS, billing: { read: true, write: false } } },
+    ],
+    [
+      "an unknown key in an access type",
+      { ...validBody, organizationAccess: { accessControl: { read: true, write: false, admin: true } } },
+    ],
+    [
+      "an unknown key in a workspace permission",
+      {
+        ...validBody,
+        workspacePermissions: [{ workspaceId: WORKSPACE_ID, permission: "read", workspaceName: "W" }],
+      },
+    ],
     ["no organization access", { label: "CI" }],
   ])("answers 400 for %s, and mints nothing", async (_label, body) => {
     const response = await createRequest(body);

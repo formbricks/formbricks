@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
@@ -124,6 +125,39 @@ describe("POST /api/internal/license-checks", () => {
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("Only owners and managers can recheck the license");
+    expect(mocks.fetchLicenseFresh).not.toHaveBeenCalled();
+  });
+
+  test("answers a workspace id that names nothing exactly like a workspace in another organization", async () => {
+    const withoutRequestId = async (response: Response) => {
+      const { requestId: _requestId, ...rest } = await response.json();
+      return { status: response.status, ...rest };
+    };
+
+    mocks.getOrganizationIdFromWorkspaceId.mockRejectedValue(
+      new ResourceNotFoundError("workspace", WORKSPACE_ID)
+    );
+    const unknown = await withoutRequestId(await recheck());
+
+    mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(ORG_ID);
+    mocks.can.mockResolvedValue(false);
+    const elsewhere = await withoutRequestId(await recheck());
+
+    expect(unknown.status).toBe(403);
+    expect(unknown.detail).toBe("Only owners and managers can recheck the license");
+    expect(unknown).toEqual(elsewhere);
+    expect(mocks.fetchLicenseFresh).not.toHaveBeenCalled();
+  });
+
+  test("answers 400 for an unknown query parameter", async () => {
+    const response = await POST(
+      new NextRequest(
+        `http://localhost/api/internal/license-checks?workspaceId=${WORKSPACE_ID}&organizationId=${ORG_ID}`,
+        { method: "POST", headers: SAME_ORIGIN_HEADERS }
+      ),
+      { params: Promise.resolve({}) } as never
+    );
+    expect(response.status).toBe(400);
     expect(mocks.fetchLicenseFresh).not.toHaveBeenCalled();
   });
 

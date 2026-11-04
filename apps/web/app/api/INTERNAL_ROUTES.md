@@ -64,8 +64,9 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/users/me/deletion-requests` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/deletion-requests/route.ts` |
 | `/api/internal/users/me/notification-settings` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/notification-settings/route.ts` |
 | `/api/internal/users/me/password-resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/password-resets/route.ts` |
-| `/api/internal/workspaces/{workspaceId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
+| `/api/internal/workspaces/{workspaceId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |
+| `/api/internal/workspaces/{workspaceId}/deletions` | POST | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/deletions/route.ts` |
 | `/api/organizations/{organizationId}/usage` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/organizations/[organizationId]/usage/route.ts` |
 | `/api/surveys/{surveyId}/attachment-exports` | POST | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachment-exports/route.ts` |
 | `/api/surveys/{surveyId}/attachment-exports/{exportId}/download` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachment-exports/[exportId]/download/route.ts` |

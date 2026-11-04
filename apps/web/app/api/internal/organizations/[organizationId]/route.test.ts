@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { ORGANIZATION_NAME_MAX } from "../schemas";
 import { DELETE, PATCH } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -214,9 +215,16 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
     ["an unknown time zone", { displayTimeZone: "Mars/Olympus_Mons" }],
     ["billing, which this route never writes", { billing: { plan: "enterprise" } }],
     ["whitelabel, which this route never writes", { whitelabel: { logoUrl: "https://evil.test/x.png" } }],
+    [`a name over ${ORGANIZATION_NAME_MAX} characters`, { name: "x".repeat(ORGANIZATION_NAME_MAX + 1) }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await patch(body)).status).toBe(400);
     expect(mocks.updateOrganization).not.toHaveBeenCalled();
+  });
+
+  test(`accepts a name of exactly ${ORGANIZATION_NAME_MAX} characters`, async () => {
+    const name = "x".repeat(ORGANIZATION_NAME_MAX);
+    expect((await patch({ name })).status).toBe(200);
+    expect(mocks.updateOrganization).toHaveBeenCalledWith(ORG_ID, { name });
   });
 
   test("answers 400 for a malformed organization id", async () => {

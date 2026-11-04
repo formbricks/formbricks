@@ -42,12 +42,12 @@ describe("workspace settings API client", () => {
     await expect(failure).rejects.toMatchObject({ status: 409, detail });
   });
 
-  test("DELETEs with the typed name and answers the next destination", async () => {
+  test("POSTs a deletion with the typed name and answers the next destination", async () => {
     const destination = {
       workspaceId: "clws222222222222222222222",
       path: "/workspaces/clws222222222222222222222/",
     };
-    routeFetch({ [`DELETE ${URL}`]: [json({ data: { destination } })] });
+    routeFetch({ [`POST ${URL}/deletions`]: [json({ data: { destination } })] });
 
     const timeout = vi.spyOn(AbortSignal, "timeout");
 

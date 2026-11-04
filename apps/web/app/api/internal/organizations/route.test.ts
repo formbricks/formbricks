@@ -5,6 +5,7 @@ import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
+import { ORGANIZATION_NAME_MAX } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -142,9 +143,16 @@ describe("POST /api/internal/organizations", () => {
   test.each([
     ["a blank name", { name: "   " }],
     ["an unknown field", { name: "Acme", billing: {} }],
+    [`a name over ${ORGANIZATION_NAME_MAX} characters`, { name: "x".repeat(ORGANIZATION_NAME_MAX + 1) }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await create(body)).status).toBe(400);
     expect(mocks.createOrganization).not.toHaveBeenCalled();
+  });
+
+  test(`accepts a name of exactly ${ORGANIZATION_NAME_MAX} characters`, async () => {
+    const name = "x".repeat(ORGANIZATION_NAME_MAX);
+    expect((await create({ name })).status).toBe(201);
+    expect(mocks.createOrganization).toHaveBeenCalledWith({ name });
   });
 
   test("answers 401 without a session, and refuses a cross-site request", async () => {

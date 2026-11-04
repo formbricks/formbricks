@@ -2,28 +2,24 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
-import { DELETE, PATCH } from "./route";
+import { POST as DELETION } from "./deletions/route";
+import * as workspaceRoute from "./route";
+
+const { PATCH } = workspaceRoute;
 
 const mocks = vi.hoisted(() => ({
   can: vi.fn(),
   getSession: vi.fn(),
   getWorkspace: vi.fn(),
-  getOrganization: vi.fn(),
-  getRemoveBrandingPermission: vi.fn(),
   updateWorkspace: vi.fn(),
   deleteWorkspaceIfNotLast: vi.fn(),
   resolvePostWorkspaceDeletionDestination: vi.fn(),
-  capturePostHogEvent: vi.fn(),
   applyRateLimit: vi.fn(),
   queueAuditEvent: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspace: mocks.getWorkspace }));
-vi.mock("@/lib/organization/service", () => ({ getOrganization: mocks.getOrganization }));
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getRemoveBrandingPermission: mocks.getRemoveBrandingPermission,
-}));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({
   updateWorkspace: mocks.updateWorkspace,
   deleteWorkspaceIfNotLast: mocks.deleteWorkspaceIfNotLast,
@@ -31,7 +27,6 @@ vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({
 vi.mock("@/modules/workspaces/settings/general/lib/delete-workspace", () => ({
   resolvePostWorkspaceDeletionDestination: mocks.resolvePostWorkspaceDeletionDestination,
 }));
-vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: mocks.capturePostHogEvent }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
@@ -81,13 +76,14 @@ const workspace = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const url = (id = WORKSPACE_ID) => `http://localhost/api/internal/workspaces/${id}`;
+const deletionsUrl = (id = WORKSPACE_ID) => `${url(id)}/deletions`;
 const props = (id = WORKSPACE_ID) => ({ params: Promise.resolve({ workspaceId: id }) });
 
 type TRequestOptions = { id?: string; headers?: Record<string, string> };
 
-const send = (method: "PATCH" | "DELETE", body: unknown, { id = WORKSPACE_ID, headers }: TRequestOptions) =>
-  (method === "PATCH" ? PATCH : DELETE)(
-    new NextRequest(url(id), {
+const send = (method: "PATCH" | "POST", body: unknown, { id = WORKSPACE_ID, headers }: TRequestOptions) =>
+  (method === "PATCH" ? PATCH : DELETION)(
+    new NextRequest(method === "PATCH" ? url(id) : deletionsUrl(id), {
       method,
       headers: { "Content-Type": "application/json", ...(headers ?? SAME_ORIGIN_HEADERS) },
       body: JSON.stringify(body),
@@ -97,7 +93,7 @@ const send = (method: "PATCH" | "DELETE", body: unknown, { id = WORKSPACE_ID, he
 
 const patch = (body: unknown, options: TRequestOptions = {}) => send("PATCH", body, options);
 const remove = (body: unknown = { confirmationName: "acme workspace" }, options: TRequestOptions = {}) =>
-  send("DELETE", body, options);
+  send("POST", body, options);
 
 /** Grant exactly these actions. */
 const allow = (...actions: string[]) =>
@@ -116,8 +112,6 @@ beforeEach(() => {
   allow("workspace.manage", "organization.manage");
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.getWorkspace.mockResolvedValue(workspace());
-  mocks.getOrganization.mockResolvedValue({ id: ORG_ID });
-  mocks.getRemoveBrandingPermission.mockResolvedValue(true);
   mocks.updateWorkspace.mockImplementation(async (_id: string, data: Record<string, unknown>) =>
     workspace({ ...data, updatedAt: new Date("2026-10-02T10:00:00.000Z") })
   );
@@ -196,42 +190,6 @@ describe("PATCH /api/internal/workspaces/{workspaceId}", () => {
     expect(mocks.updateWorkspace).toHaveBeenCalledTimes(1);
   });
 
-  test("lets a licensed organization remove link survey branding, and records that it did", async () => {
-    expect((await patch({ linkSurveyBranding: false })).status).toBe(200);
-
-    expect(mocks.getRemoveBrandingPermission).toHaveBeenCalledWith(ORG_ID);
-    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
-      USER_ID,
-      "remove_branding_enabled",
-      { organization_id: ORG_ID, workspace_id: WORKSPACE_ID, branding_type: "link" },
-      { organizationId: ORG_ID, workspaceId: WORKSPACE_ID }
-    );
-  });
-
-  test.each([
-    ["in-app", { inAppSurveyBranding: false }, "You are not allowed to remove in-app branding"],
-    ["link survey", { linkSurveyBranding: false }, "You are not allowed to remove link survey branding"],
-  ])("refuses to change %s branding without the licence, after authorizing", async (_label, body, detail) => {
-    mocks.getRemoveBrandingPermission.mockResolvedValue(false);
-
-    const response = await patch(body);
-
-    expect(response.status).toBe(403);
-    expect((await response.json()).detail).toBe(detail);
-    expect(mocks.updateWorkspace).not.toHaveBeenCalled();
-  });
-
-  test("checks no licence for a caller who may not manage the workspace anyway", async () => {
-    allow();
-    expect((await patch({ inAppSurveyBranding: false })).status).toBe(403);
-    expect(mocks.getRemoveBrandingPermission).not.toHaveBeenCalled();
-  });
-
-  test("checks no licence for a change that leaves branding alone", async () => {
-    expect((await patch({ name: "Renamed" })).status).toBe(200);
-    expect(mocks.getRemoveBrandingPermission).not.toHaveBeenCalled();
-  });
-
   describe("default survey language (ENG-2816)", () => {
     test("accepts a language the workspace has, merged onto the stored config", async () => {
       // The caller sends only the key it is changing. `config` is a JSON column that Prisma replaces
@@ -307,6 +265,11 @@ describe("PATCH /api/internal/workspaces/{workspaceId}", () => {
       { name: "Renamed", teamIds: ["clteam1111111111111111111"] },
     ],
     ["custom CSS, which has its own resource (ENG-2949)", { name: "Renamed", customCss: "body{}" }],
+    // `/branding` is the one write path for branding, behind the licence check.
+    ["in-app survey branding, which /branding writes", { inAppSurveyBranding: false }],
+    ["link survey branding, which /branding writes", { linkSurveyBranding: false }],
+    ["an unknown key in config", { config: { defaultSurveyLangauge: "de-DE" } }],
+    ["an unknown key in styling", { styling: { allowStyleOverwrite: true, brandColour: { light: "#000" } } }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await patch(body)).status).toBe(400);
     expect(mocks.updateWorkspace).not.toHaveBeenCalled();
@@ -328,7 +291,11 @@ describe("PATCH /api/internal/workspaces/{workspaceId}", () => {
   });
 });
 
-describe("DELETE /api/internal/workspaces/{workspaceId}", () => {
+describe("POST /api/internal/workspaces/{workspaceId}/deletions", () => {
+  test("is the only way to delete: the workspace itself takes no DELETE with a body", () => {
+    expect("DELETE" in workspaceRoute).toBe(false);
+  });
+
   test("lets an organization manager delete it, answers the next destination, and audits it", async () => {
     const response = await remove();
 

@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { ZWorkspacePatchBody } from "./schemas";
+import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
+import { STYLE_DEFAULTS } from "@/lib/styling/constants";
+import { ZWorkspaceIdParams, ZWorkspacePatchBody } from "./schemas";
 
 const parse = (body: unknown) => ZWorkspacePatchBody.safeParse(body);
 
@@ -42,5 +44,47 @@ describe("ZWorkspacePatchBody", () => {
       expectedUpdatedAt: new Date("2026-10-01T10:00:00.000Z"),
     });
     expect(parse({ logo }).error?.issues[0].path).toEqual(["expectedUpdatedAt"]);
+  });
+
+  test("accepts the theme form's whole styling, as Reset to default sends it", () => {
+    expect(parse({ styling: STYLE_DEFAULTS }).success).toBe(true);
+  });
+
+  test.each([
+    ["config", { config: { defaultSurveyLangauge: "de-DE" } }],
+    ["styling", { styling: { ...STYLE_DEFAULTS, brandColour: { light: "#000000" } } }],
+    [
+      "a styling color",
+      { styling: { ...STYLE_DEFAULTS, brandColor: { light: "#000000", hover: "#111111" } } },
+    ],
+    [
+      "the card arrangement",
+      {
+        styling: {
+          ...STYLE_DEFAULTS,
+          cardArrangement: { linkSurveys: "simple", appSurveys: "simple", x: 1 },
+        },
+      },
+    ],
+    ["the styling background", { styling: { ...STYLE_DEFAULTS, background: { bg: "#fff", opacity: 1 } } }],
+    ["the styling logo", { styling: { ...STYLE_DEFAULTS, logo: { url: undefined, size: 1 } } }],
+    ["the logo", { logo: { bgColor: "#ffffff", width: 10 }, expectedUpdatedAt: "2026-10-01T10:00:00.000Z" }],
+  ])("rejects an unknown key in %s", (_where, body) => {
+    // The shared schema takes it, stripping the key; only the route's strict copy refuses it.
+    expect(ZWorkspaceUpdateInput.safeParse(body).success).toBe(true);
+    expect(parse(body).success).toBe(false);
+  });
+
+  // `/branding` is the one write path for branding, behind the licence check.
+  test.each([["inAppSurveyBranding"], ["linkSurveyBranding"]])("rejects %s", (field) => {
+    expect(parse({ [field]: false }).success).toBe(false);
+  });
+});
+
+describe("ZWorkspaceIdParams", () => {
+  test("rejects an unknown path parameter", () => {
+    const workspaceId = "clwork1111111111111111111";
+    expect(ZWorkspaceIdParams.safeParse({ workspaceId }).success).toBe(true);
+    expect(ZWorkspaceIdParams.safeParse({ workspaceId, extra: "x" }).success).toBe(false);
   });
 });
