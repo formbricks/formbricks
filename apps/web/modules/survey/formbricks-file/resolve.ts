@@ -6,6 +6,7 @@ import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import type { TSurveyHiddenFields, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { isPlainObject } from "@/app/api/v3/surveys/guards";
+import { normalizeV3SurveyWriteLanguageCode } from "@/app/api/v3/surveys/language";
 import { collectV3TargetingAttributeKeys } from "@/app/api/v3/surveys/targeting-references";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
@@ -331,12 +332,13 @@ const planLanguages = async (
   survey: Record<string, unknown>,
   aliases: readonly TFormbricksFileLanguage[]
 ): Promise<TFormbricksFileLanguage[]> => {
-  // Spelled as the survey spells them: that is the code the create looks the language up by.
+  // Spelled as the v3 write path spells them (`de-de` → `de-DE`): that is the code the create looks the
+  // language up by, so a language this import adds is the row it finds, not a second one beside it.
   const surveyCodes = new Map(
     (Array.isArray(survey.languages) ? survey.languages : [])
       .map((language: unknown) => (isPlainObject(language) ? language.code : undefined))
       .filter((code): code is string => typeof code === "string")
-      .map((code) => [code.toLowerCase(), code])
+      .map((code) => [code.toLowerCase(), normalizeV3SurveyWriteLanguageCode(code) ?? code])
   );
   const wanted = aliases.flatMap(({ code, alias }) => {
     const surveyCode = surveyCodes.get(code.toLowerCase());

@@ -100,6 +100,18 @@ describe("planFormbricksFileReferences", () => {
     ]);
   });
 
+  test("plans a language the file names in the canonical spelling the create looks it up by", async () => {
+    const plan = await planFormbricksFileReferences(emptyReader() as never, {
+      workspaceId: WORKSPACE_ID,
+      survey: { type: "link", defaultLanguage: "en-US", languages: [{ code: "en-US" }, { code: "de-de" }] },
+      references: { ...references([]), languages: [{ code: "de-de", alias: "German" }] },
+      t: (key: string) => key,
+      fieldPrefix: null,
+    });
+
+    expect(plan.languagesToCreate).toEqual([{ code: "de-DE", alias: "German" }]);
+  });
+
   test("links a key the workspace already has, whatever it is called", async () => {
     const reader = emptyReader();
     reader.contactAttributeKey.findMany = vi.fn(async () => [{ key: "userId" }]) as never;
