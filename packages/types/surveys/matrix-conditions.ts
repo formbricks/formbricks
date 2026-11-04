@@ -89,6 +89,23 @@ export const resolveMatrixColumnValue = (
   return operand.value;
 };
 
+/**
+ * Whether a matrix row condition names a row or column id its matrix doesn't have (P48). Such a
+ * condition never matches, whatever its operator: without this, a negated operator (`doesNotEqual`,
+ * `isNotAnyOf`, `isSkipped`) would match every answer, because no answer sits at the unknown cell.
+ */
+export const namesUnknownMatrixId = (
+  matrix: TMatrixAxes,
+  meta: TMeta,
+  operand: { type: string; columnId?: string; columnIds?: string[] } | undefined
+): boolean => {
+  if (meta?.rowId !== undefined && indexOfId(matrix.rows, meta.rowId) === undefined) return true;
+  if (operand?.type !== "static") return false;
+  if (operand.columnId !== undefined && indexOfId(matrix.columns, operand.columnId) === undefined)
+    return true;
+  return (operand.columnIds ?? []).some((id) => indexOfId(matrix.columns, id) === undefined);
+};
+
 const sameList = (a: unknown, b: readonly string[]): boolean =>
   Array.isArray(a) && a.length === b.length && a.every((item, index) => item === b[index]);
 

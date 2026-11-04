@@ -1182,6 +1182,32 @@ describe("surveyLogic", () => {
       ).toBe(false);
     });
 
+    test("an unknown row or column id never matches a negated operator either (P48)", () => {
+      const notEqualsGone: TSingleCondition = {
+        ...netflixIsGood,
+        operator: "doesNotEqual",
+        rightOperand: { type: "static", value: "0", columnId: "col_gone" },
+      };
+      const goneRowSkipped: TSingleCondition = {
+        ...netflixIsGood,
+        leftOperand: { type: "element", value: "grid", meta: { row: "0", rowId: "row_gone" } },
+        operator: "isSkipped",
+        rightOperand: undefined,
+      };
+
+      for (const condition of [notEqualsGone, goneRowSkipped]) {
+        expect(
+          evaluateLogic(
+            reordered,
+            data,
+            {},
+            { id: "g", connector: "and", conditions: [condition] },
+            "default"
+          )
+        ).toBe(false);
+      }
+    });
+
     test("without ids, the positions are read as before", () => {
       const positionsOnly: TSingleCondition = {
         ...netflixIsGood,

@@ -27,6 +27,7 @@ import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/log
 import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
 import {
   isMatrixRowCondition,
+  namesUnknownMatrixId,
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
@@ -378,12 +379,15 @@ const evaluateSingleCondition = (
     // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
     if (
       condition.leftOperand.type === "element" &&
-      condition.rightOperand?.type === "static" &&
       typeof leftField === "object" &&
       leftField.type === TSurveyElementTypeEnum.Matrix &&
       isMatrixRowCondition(condition.leftOperand.meta)
     ) {
-      rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      // A row or column id the matrix doesn't have never matches (P48), negated operators included.
+      if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return false;
+      if (condition.rightOperand?.type === "static") {
+        rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      }
     }
 
     switch (condition.operator) {
