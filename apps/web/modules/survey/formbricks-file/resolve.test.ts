@@ -70,6 +70,23 @@ describe("planFormbricksFileReferences", () => {
     ]);
   });
 
+  test("names a refused key at its place in the file, past keys the survey doesn't use", async () => {
+    const refusal = await planFormbricksFileReferences(emptyReader() as never, {
+      workspaceId: WORKSPACE_ID,
+      survey: surveyTargeting("Plan Tier"),
+      references: references([
+        { key: "unused", name: null },
+        { key: "Plan Tier", name: null },
+      ]),
+      t: (text: string) => text,
+      fieldPrefix: "file",
+    }).catch((error: unknown) => error);
+
+    expect((refusal as SurveyImportInputError).invalidParams).toEqual([
+      expect.objectContaining({ name: "file.references.attributeKeys.1.key" }),
+    ]);
+  });
+
   test("links a key the workspace already has, whatever it is called", async () => {
     const reader = emptyReader();
     reader.contactAttributeKey.findMany = vi.fn(async () => [{ key: "userId" }]) as never;

@@ -273,12 +273,17 @@ const inUniqueKeyOrder = <T>(rows: readonly T[], keyOf: (row: T) => string): T[]
  */
 const ATTRIBUTE_KEY_CAP_LOCK_PREFIX = "survey-import:attribute-keys:";
 
+/**
+ * The attribute keys the survey's targeting uses, out of all the file lists (`fileKeys`, which a refusal
+ * indexes into, so it names the entry in the file): matched in the workspace, else created.
+ */
 const planAttributeKeys = async (
   db: TReader,
   workspaceId: string,
-  wanted: TFormbricksFileAttributeKey[],
+  { fileKeys, usedKeys }: { fileKeys: TFormbricksFileAttributeKey[]; usedKeys: ReadonlySet<string> },
   fieldPrefix: string | null
 ): Promise<Pick<TFormbricksFileReferencePlan, "attributeKeysToCreate" | "issues">> => {
+  const wanted = fileKeys.filter((attributeKey) => usedKeys.has(attributeKey.key));
   if (wanted.length === 0) return { attributeKeysToCreate: [], issues: [] };
 
   const [existing, count] = await Promise.all([
@@ -304,7 +309,7 @@ const planAttributeKeys = async (
   const refused = attributeKeysToCreate.flatMap((attributeKey) => {
     const reason = attributeKeyRefusal(attributeKey.key);
     if (!reason) return [];
-    const index = wanted.indexOf(attributeKey);
+    const index = fileKeys.indexOf(attributeKey);
     return [{ name: at(fieldPrefix, `references.attributeKeys.${index}.key`), reason }];
   });
   if (refused.length > 0) {
@@ -388,12 +393,7 @@ export const planFormbricksFileReferences = async (
       references.actionClasses.filter((actionClass) => triggerIds.has(actionClass.id)),
       t
     ),
-    planAttributeKeys(
-      db,
-      workspaceId,
-      references.attributeKeys.filter((attributeKey) => keys.has(attributeKey.key)),
-      fieldPrefix
-    ),
+    planAttributeKeys(db, workspaceId, { fileKeys: references.attributeKeys, usedKeys: keys }, fieldPrefix),
     planLanguages(db, workspaceId, survey, references.languages ?? []),
   ]);
 
