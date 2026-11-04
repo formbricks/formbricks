@@ -8,7 +8,7 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { compareDateValues } from "@formbricks/types/surveys/date-comparison";
+import { compareDateValues, isDateAfter, isDateBefore } from "@formbricks/types/surveys/date-comparison";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
@@ -472,16 +472,10 @@ const evaluateSingleCondition = (
         return leftValue === "clicked";
       case "isNotClicked":
         return leftValue !== "clicked";
-      // ISO dates by `compareDateValues` (a day against a timestamp compares days); anything else as
-      // `Date` reads it, as before.
-      case "isAfter": {
-        const order = compareDateValues(leftValue, rightValue);
-        return order === undefined ? new Date(String(leftValue)) > new Date(String(rightValue)) : order > 0;
-      }
-      case "isBefore": {
-        const order = compareDateValues(leftValue, rightValue);
-        return order === undefined ? new Date(String(leftValue)) < new Date(String(rightValue)) : order < 0;
-      }
+      case "isAfter":
+        return isDateAfter(leftValue, rightValue);
+      case "isBefore":
+        return isDateBefore(leftValue, rightValue);
       case "isBooked":
         return leftValue === "booked" || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":

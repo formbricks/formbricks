@@ -41,3 +41,24 @@ const toTime = (value: unknown): number | undefined => {
 };
 
 const toUtcDay = (time: number): number => Math.floor(time / MS_PER_DAY);
+
+/**
+ * A value as `Date` read it before ISO dates were compared by day: text or a number, parsed from its
+ * text form. Anything else is not a date (`NaN`), so "is before" / "is after" on it are false.
+ */
+const toLegacyTime = (value: unknown): number =>
+  typeof value === "string" || typeof value === "number" ? new Date(`${value}`).getTime() : Number.NaN;
+
+/**
+ * "is after" and "is before" in both logic engines: ISO dates by {@link compareDateValues} (a day
+ * against a timestamp compares days); anything else as `Date` reads it, as before.
+ */
+export const isDateAfter = (left: unknown, right: unknown): boolean => {
+  const order = compareDateValues(left, right);
+  return order === undefined ? toLegacyTime(left) > toLegacyTime(right) : order > 0;
+};
+
+export const isDateBefore = (left: unknown, right: unknown): boolean => {
+  const order = compareDateValues(left, right);
+  return order === undefined ? toLegacyTime(left) < toLegacyTime(right) : order < 0;
+};
