@@ -1,5 +1,17 @@
 import { z } from "zod";
 import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import {
+  SURVEY_IMPORT_DOCUMENT_PLAN_MAX_LABEL_CHARS,
+  SURVEY_IMPORT_DOCUMENT_PLAN_MAX_OPTIONS,
+  SURVEY_IMPORT_DOCUMENT_PLAN_MAX_PIECES,
+  SURVEY_IMPORT_DOCUMENT_PLAN_MAX_PIECE_CHARS,
+  SURVEY_IMPORT_DOCUMENT_PLAN_MAX_RULES,
+  SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS,
+  SURVEY_IMPORT_PLAN_MAX_ENTRIES,
+  SURVEY_IMPORT_PLAN_MAX_RAW_NOTE_CHARS,
+  SURVEY_IMPORT_PLAN_MAX_REF_CHARS,
+  SURVEY_IMPORT_PLAN_MAX_TYPE_CHARS,
+} from "../limits";
 
 /**
  * The AI plan for a document import (ENG-6852, decision 17): which lines are questions and which texts
@@ -199,23 +211,18 @@ export const ZDocumentImportPlanForAI = z.object({
     .describe("Questions on the lines asked about that Formbricks cannot represent"),
 });
 
-/** Bounds on what comes back, so a hostile or broken response costs a bounded amount to check. */
-const MAX_PLAN_ENTRIES = 1_000;
-const MAX_PIECES = 60;
-const MAX_OPTIONS = 400;
-const MAX_RULES = 20;
-const MAX_RAW_NOTE_CHARS = 4_000;
-/** A piece quotes at most a cell, which the reader caps at 32,767 characters. */
-const MAX_PIECE_CHARS = 32_767;
-const ZKey = z.string().max(20);
-const ZLabel = z.string().max(200);
+// Bounds on what comes back, so a hostile or broken response costs a bounded amount to check
+// (`../limits.ts`).
+const ZKey = z.string().max(SURVEY_IMPORT_PLAN_MAX_REF_CHARS);
+const ZLabel = z.string().max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_LABEL_CHARS);
+const ZLanguage = z.string().max(SURVEY_IMPORT_MAX_LANGUAGE_CODE_CHARS);
 
 const ZPiece = z.object({
-  language: z.string().max(64),
+  language: ZLanguage,
   cell: ZKey,
-  text: z.string().max(MAX_PIECE_CHARS).nullable(),
+  text: z.string().max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_PIECE_CHARS).nullable(),
 });
-const ZPieces = z.array(ZPiece).max(MAX_PIECES);
+const ZPieces = z.array(ZPiece).max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_PIECES);
 // `null` for an empty list, as the model-facing schema lets a JSON-mode provider send it.
 const ZOption = z.object({
   code: ZLabel.nullable(),
@@ -229,21 +236,21 @@ const ZOption = z.object({
  * provider without structured output, or a response that skipped schema validation.
  */
 export const ZDocumentImportPlanEnvelope = z.object({
-  defaultLanguage: z.string().max(64),
+  defaultLanguage: ZLanguage,
   languages: z
-    .array(z.string().max(64))
-    .max(MAX_PIECES)
+    .array(ZLanguage)
+    .max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_PIECES)
     .nullish()
     .transform((languages) => languages ?? []),
   titleCell: ZKey.nullish().transform((cell) => cell ?? null),
   questions: z
     .array(z.unknown())
-    .max(MAX_PLAN_ENTRIES)
+    .max(SURVEY_IMPORT_PLAN_MAX_ENTRIES)
     .nullish()
     .transform((questions) => questions ?? []),
   skipped: z
     .array(z.unknown())
-    .max(MAX_PLAN_ENTRIES)
+    .max(SURVEY_IMPORT_PLAN_MAX_ENTRIES)
     .nullish()
     .transform((skipped) => skipped ?? []),
 });
@@ -255,7 +262,7 @@ export const ZDocumentPlanRule = z.object({
   // `isSubmitted` and `isSkipped` take none, which a JSON-mode provider may send as `null`.
   values: z
     .array(ZLabel)
-    .max(MAX_OPTIONS)
+    .max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_OPTIONS)
     .nullish()
     .transform((values) => values ?? []),
   target: ZLabel.nullable(),
@@ -263,7 +270,7 @@ export const ZDocumentPlanRule = z.object({
 
 export const ZDocumentPlanEntry = z.object({
   ref: ZKey,
-  kind: z.string().max(40),
+  kind: z.string().max(SURVEY_IMPORT_PLAN_MAX_TYPE_CHARS),
   idCell: ZKey.nullable(),
   sectionCell: ZKey.nullable(),
   required: z.boolean(),
@@ -271,12 +278,12 @@ export const ZDocumentPlanEntry = z.object({
   subheader: ZPieces.nullish().transform((pieces) => pieces ?? []),
   options: z
     .array(ZOption)
-    .max(MAX_OPTIONS)
+    .max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_OPTIONS)
     .nullish()
     .transform((options) => options ?? []),
   columns: z
     .array(ZOption)
-    .max(MAX_OPTIONS)
+    .max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_OPTIONS)
     .nullish()
     .transform((columns) => columns ?? []),
   lowerLabel: ZPieces.nullish().transform((pieces) => pieces ?? []),
@@ -291,19 +298,19 @@ export const ZDocumentPlanEntry = z.object({
   format: z.enum(DOCUMENT_PLAN_DATE_FORMATS).nullable(),
   rules: z
     .array(ZDocumentPlanRule)
-    .max(MAX_RULES)
+    .max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_RULES)
     .nullish()
     .transform((rules) => rules ?? []),
   logicNotes: z
-    .array(z.string().max(MAX_RAW_NOTE_CHARS))
-    .max(MAX_RULES)
+    .array(z.string().max(SURVEY_IMPORT_PLAN_MAX_RAW_NOTE_CHARS))
+    .max(SURVEY_IMPORT_DOCUMENT_PLAN_MAX_RULES)
     .nullish()
     .transform((notes) => notes ?? []),
 });
 
 export const ZDocumentPlanSkip = z.object({
   ref: ZKey,
-  reason: z.string().max(MAX_RAW_NOTE_CHARS),
+  reason: z.string().max(SURVEY_IMPORT_PLAN_MAX_RAW_NOTE_CHARS),
 });
 
 export type TDocumentPlanPiece = z.infer<typeof ZPiece>;

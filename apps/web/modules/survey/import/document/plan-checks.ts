@@ -1,7 +1,11 @@
 import type { TImportCallFailure, TImportCheckedPlan, TImportPlanResponse } from "../core/ai-plan";
 import { cleanNote } from "../core/clean-note";
 import { normalizeImportLanguageCode } from "../core/language-codes";
-import { SURVEY_IMPORT_MAX_NAME_CHARS } from "../limits";
+import {
+  SURVEY_IMPORT_DOCUMENT_MAX_ENTRY_LINES,
+  SURVEY_IMPORT_MAX_NAME_CHARS,
+  SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS,
+} from "../limits";
 import type { TDocumentModel } from "./model";
 import {
   DOCUMENT_PLAN_KINDS,
@@ -29,12 +33,6 @@ import {
  * a piece that is not in its cell is kept with its whole cell as the headline instead (decision 17).
  */
 
-/**
- * Lines one entry may span after the one it starts on: a question whose options take a line each, or
- * a list under it. Past that, a cell belongs to some other entry.
- */
-export const DOCUMENT_MAX_ENTRY_LINES = 30;
-
 const ALLOWED_KINDS: ReadonlySet<string> = new Set(DOCUMENT_PLAN_KINDS);
 const ALLOWED_RANGES: Record<"rating" | "csat" | "ces", readonly number[]> = {
   rating: [3, 4, 5, 6, 7, 10],
@@ -47,7 +45,6 @@ const CHOICE_KINDS: ReadonlySet<TDocumentPlanKind> = new Set([
   "ranking",
 ]);
 const LABEL_KINDS: ReadonlySet<TDocumentPlanKind> = new Set(["rating", "csat", "ces", "nps"]);
-const MAX_RANKING_OPTIONS = 25;
 
 export type TDocumentPlanFailure =
   | TImportCallFailure
@@ -291,7 +288,8 @@ const hasTooFewOptions = (kind: TDocumentPlanKind, entry: TDocumentPlanEntry): b
 function checkShape(kind: TDocumentPlanKind, entry: TDocumentPlanEntry, fail: TFail): number | null {
   if (usesRoleNotForKind(kind, entry)) fail("role_not_for_type");
   if (hasTooFewOptions(kind, entry)) fail("too_few_options");
-  if (kind === "ranking" && entry.options.length > MAX_RANKING_OPTIONS) fail("too_many_options");
+  if (kind === "ranking" && entry.options.length > SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS)
+    fail("too_many_options");
 
   if (kind === "rating" || kind === "csat" || kind === "ces") {
     const range = entry.range === null ? null : Number(entry.range);
@@ -338,7 +336,7 @@ export function checkEntry(
   const kind = entry.kind as TDocumentPlanKind;
   const first = context.lineAt(entry.ref);
   if (first === undefined) return { ok: false, reasons: ["foreign_cell"] };
-  const span = { first, last: first + DOCUMENT_MAX_ENTRY_LINES };
+  const span = { first, last: first + SURVEY_IMPORT_DOCUMENT_MAX_ENTRY_LINES };
 
   const reasons = new Set<TDocumentPlanFailure>();
   const fail: TFail = (reason) => reasons.add(reason);

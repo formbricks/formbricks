@@ -1,4 +1,5 @@
 import { cleanNote } from "../core/clean-note";
+import { SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS } from "../limits";
 import {
   QSF_PLAN_ELEMENT_TYPES,
   type TQsfPlanContactField,
@@ -164,7 +165,7 @@ function planChoices(
     return role ? { key, special: role } : { key };
   });
   if (choices.length < 2) fail("too_few_options");
-  if (type === "ranking" && choices.length > 25) fail("too_many_options");
+  if (type === "ranking" && choices.length > SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS) fail("too_many_options");
   return choices;
 }
 

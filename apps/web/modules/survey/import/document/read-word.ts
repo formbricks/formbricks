@@ -3,6 +3,7 @@ import { surveyImportFileUnreadable } from "../core/errors";
 import type { TZipArchive } from "../core/zip";
 import {
   SURVEY_IMPORT_WORD_MAX_PARAGRAPHS,
+  SURVEY_IMPORT_WORD_MAX_STYLE_CHAIN,
   SURVEY_IMPORT_WORD_MAX_TABLES,
   SURVEY_IMPORT_WORD_MAX_TABLE_CELLS,
 } from "../limits";
@@ -156,9 +157,6 @@ interface TParagraphStyle {
   outlineLevel: number | null;
 }
 
-/** Inherited properties are looked up this many styles deep at most: a cycle stops here. */
-const MAX_STYLE_CHAIN = 20;
-
 const readNumberingProperty = (pPr: Element | null): TParagraphStyle["numbering"] => {
   const numPr = pPr ? wChild(pPr, "numPr") : null;
   if (!numPr) return null;
@@ -202,7 +200,7 @@ class WordStyles {
   /** The first value `read` finds on the style or the ones it is based on. */
   private inherited<T>(styleId: string | null, read: (style: TParagraphStyle) => T | null): T | null {
     let id = styleId;
-    for (let depth = 0; id !== null && depth < MAX_STYLE_CHAIN; depth += 1) {
+    for (let depth = 0; id !== null && depth < SURVEY_IMPORT_WORD_MAX_STYLE_CHAIN; depth += 1) {
       const style = this.styles.get(id);
       if (!style) return null;
       const value = read(style);

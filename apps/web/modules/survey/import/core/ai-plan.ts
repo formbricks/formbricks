@@ -5,7 +5,12 @@ import {
   SCHEMA_INSTRUCTIONS_SEPARATOR,
   buildSchemaInstructions,
 } from "@formbricks/ai";
-import { SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL, SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS } from "../limits";
+import {
+  SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+  SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
+  SURVEY_IMPORT_ASSEMBLY_RESERVE_MS,
+  SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS,
+} from "../limits";
 import { decideImportCallRetry, waitForRetry } from "./call-retry";
 import { SurveyImportFailedError } from "./errors";
 
@@ -37,16 +42,6 @@ import { SurveyImportFailedError } from "./errors";
  * together, failed calls included — sized by the lane from its own chunks and never above what its
  * costliest valid file needs, so a hostile file cannot cost more than that.
  */
-
-/** Time kept back for assembly when a call is sized against the deadline. */
-export const SURVEY_IMPORT_ASSEMBLY_RESERVE_MS = 5_000;
-/**
- * The least time a call is sent with. Below it no plan can come back: the first token alone takes
- * 1–3 s, and even a 10-question half needs ~700 tokens and its thinking at 150–250 tokens a second.
- * Such a call would only time out after paying for its prompt, so its units are left unplanned
- * (`ai_budget`, like any call the import has no time left for).
- */
-export const SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS = 5_000;
 
 /**
  * Calls one import may make: each chunk once, each split into two halves, and two more for the retry

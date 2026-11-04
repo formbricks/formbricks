@@ -2,12 +2,13 @@ import { APICallError, NoObjectGeneratedError } from "ai";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { SURVEY_IMPORT_ASSEMBLY_RESERVE_MS, SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS } from "../core/ai-plan";
 import { SurveyImportTimeoutError } from "../core/errors";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
   SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS,
   SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+  SURVEY_IMPORT_ASSEMBLY_RESERVE_MS,
+  SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS,
 } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { buildOversizedLogicQsf } from "./__fixtures__/oversized-logic";

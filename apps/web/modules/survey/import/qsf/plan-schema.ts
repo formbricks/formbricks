@@ -1,5 +1,13 @@
 import { z } from "zod";
 import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import {
+  SURVEY_IMPORT_PLAN_MAX_ENTRIES,
+  SURVEY_IMPORT_PLAN_MAX_RAW_NOTE_CHARS,
+  SURVEY_IMPORT_PLAN_MAX_REF_CHARS,
+  SURVEY_IMPORT_PLAN_MAX_TYPE_CHARS,
+  SURVEY_IMPORT_QSF_PLAN_MAX_EXCLUDED_KEYS,
+  SURVEY_IMPORT_QSF_PLAN_MAX_NOTES_PER_ENTRY,
+} from "../limits";
 
 /**
  * The AI plan for a Qualtrics import (ENG-3479, option B): which Formbricks type each question
@@ -111,17 +119,14 @@ export const ZQsfImportPlanForAI = z.object({
     .describe("Only pages that have logic rules"),
 });
 
-/** Bounds on what comes back, so a hostile or broken response costs a bounded amount to check. */
-const MAX_PLAN_ENTRIES = 1_000;
-const MAX_KEYS_PER_QUESTION = 400;
-const MAX_NOTES_PER_ENTRY = 20;
-const MAX_RAW_NOTE_CHARS = 4_000;
-const ZRef = z.string().max(20);
-const ZKey = z.string().max(20);
+// Bounds on what comes back, so a hostile or broken response costs a bounded amount to check
+// (`../limits.ts`).
+const ZRef = z.string().max(SURVEY_IMPORT_PLAN_MAX_REF_CHARS);
+const ZKey = z.string().max(SURVEY_IMPORT_PLAN_MAX_REF_CHARS);
 const ZRawNotes = z
-  .array(z.string().max(MAX_RAW_NOTE_CHARS))
-  .max(MAX_PLAN_ENTRIES)
-  .transform((notes) => notes.slice(0, MAX_NOTES_PER_ENTRY));
+  .array(z.string().max(SURVEY_IMPORT_PLAN_MAX_RAW_NOTE_CHARS))
+  .max(SURVEY_IMPORT_PLAN_MAX_ENTRIES)
+  .transform((notes) => notes.slice(0, SURVEY_IMPORT_QSF_PLAN_MAX_NOTES_PER_ENTRY));
 
 /**
  * What a returned plan is checked against. Lenient where the checks are stricter: `type` is any short
@@ -131,18 +136,18 @@ const ZRawNotes = z
 export const ZQsfImportPlanEnvelope = z.object({
   questions: z
     .array(z.unknown())
-    .max(MAX_PLAN_ENTRIES)
+    .max(SURVEY_IMPORT_PLAN_MAX_ENTRIES)
     .nullish()
     .transform((questions) => questions ?? []),
   skipped: z
     .array(z.unknown())
-    .max(MAX_PLAN_ENTRIES)
+    .max(SURVEY_IMPORT_PLAN_MAX_ENTRIES)
     .nullish()
     .transform((skipped) => skipped ?? []),
   // Optional here: a plan for questions with no page rules has nothing to say about pages.
   pages: z
     .array(z.unknown())
-    .max(MAX_PLAN_ENTRIES)
+    .max(SURVEY_IMPORT_PLAN_MAX_ENTRIES)
     .nullish()
     .transform((pages) => pages ?? [])
     .optional(),
@@ -150,7 +155,7 @@ export const ZQsfImportPlanEnvelope = z.object({
 
 export const ZQsfPlanQuestion = z.object({
   ref: ZRef,
-  type: z.string().max(40),
+  type: z.string().max(SURVEY_IMPORT_PLAN_MAX_TYPE_CHARS),
   required: z.boolean(),
   choicesFrom: ZOptionSource.nullable(),
   rowsFrom: ZOptionSource.nullable(),
@@ -160,7 +165,7 @@ export const ZQsfPlanQuestion = z.object({
   labelKey: ZKey.nullable(),
   excludedKeys: z
     .array(ZKey)
-    .max(MAX_KEYS_PER_QUESTION)
+    .max(SURVEY_IMPORT_QSF_PLAN_MAX_EXCLUDED_KEYS)
     .nullish()
     .transform((keys) => keys ?? []),
   contactFields: z
@@ -185,7 +190,7 @@ export const ZQsfPlanPage = z.object({
 
 export const ZQsfPlanSkip = z.object({
   ref: ZRef,
-  reason: z.string().max(MAX_RAW_NOTE_CHARS),
+  reason: z.string().max(SURVEY_IMPORT_PLAN_MAX_RAW_NOTE_CHARS),
 });
 
 export type TQsfPlanQuestion = z.infer<typeof ZQsfPlanQuestion>;

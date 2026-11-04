@@ -1,4 +1,9 @@
 import type { Element, Node } from "@xmldom/xmldom";
+import {
+  SURVEY_IMPORT_WORD_MAX_FORMATTED_NUMBER,
+  SURVEY_IMPORT_WORD_MAX_LIST_LABEL_CHARS,
+  SURVEY_IMPORT_WORD_MAX_NUMBER_LETTERS,
+} from "../limits";
 
 /**
  * The numbers and bullets Word's lists give paragraphs (ENG-6853), from `numbering.xml`: what a reader
@@ -14,22 +19,8 @@ import type { Element, Node } from "@xmldom/xmldom";
  */
 
 const ELEMENT_NODE = 1;
+/** Levels of a Word list (`ilvl` 0–8), as the format defines them. */
 const MAX_LEVELS = 9;
-/**
- * The largest number written as letters or numerals: Word's own limit on a list's start. A file can
- * claim any start; past this a number is written in digits, so a huge one costs nothing to label.
- */
-const MAX_FORMATTED_NUMBER = 32_767;
-/**
- * The most letters a number is written in: about as wide as the longest numeral under the cap above
- * (41 characters). Letters repeat with the number (aa…zz, then aaa…), so past this it is digits too.
- */
-const MAX_LETTERS = 40;
-/**
- * A level's label pattern, and the label made from it: Word's own are a few characters (`%1.`,
- * `Q%1`, `%1.%2.`). A file's longer pattern is cut, or every numbered paragraph would rebuild it whole.
- */
-const MAX_LABEL_CHARS = 255;
 
 interface TLevel {
   start: number;
@@ -73,7 +64,7 @@ const readLevel = (level: Element): TLevel => {
   return {
     start: integer(attr(child(level, "start"), "val")) ?? 0,
     format: attr(child(level, "numFmt"), "val") ?? "decimal",
-    text: (attr(child(level, "lvlText"), "val") ?? "").slice(0, MAX_LABEL_CHARS),
+    text: (attr(child(level, "lvlText"), "val") ?? "").slice(0, SURVEY_IMPORT_WORD_MAX_LIST_LABEL_CHARS),
     isLegal: isLegal !== null && !["0", "false", "off"].includes(attr(isLegal, "val") ?? "true"),
   };
 };
@@ -117,10 +108,10 @@ const roman = (value: number): string => {
   return text;
 };
 
-/** Word's letters: a … z, then aa … zz, then aaa; digits past `MAX_LETTERS` letters. */
+/** Word's letters: a … z, then aa … zz, then aaa; digits past `SURVEY_IMPORT_WORD_MAX_NUMBER_LETTERS` letters. */
 const letters = (value: number): string => {
   const count = Math.floor((value - 1) / 26) + 1;
-  if (count > MAX_LETTERS) return String(value);
+  if (count > SURVEY_IMPORT_WORD_MAX_NUMBER_LETTERS) return String(value);
   return String.fromCodePoint(97 + ((value - 1) % 26)).repeat(count);
 };
 
@@ -133,7 +124,7 @@ const ordinal = (value: number): string => {
 const formatNumber = (value: number, format: string): string => {
   // Letters and numerals have no zero or negatives; Word writes those as decimals too. Past the cap,
   // numerals and letters would grow with the number (one "m" per thousand), so it is digits as well.
-  if (value < 1 || value > MAX_FORMATTED_NUMBER) return String(value);
+  if (value < 1 || value > SURVEY_IMPORT_WORD_MAX_FORMATTED_NUMBER) return String(value);
   switch (format) {
     case "decimalZero":
       return String(value).padStart(2, "0");
@@ -225,6 +216,6 @@ export class WordNumbering {
       if (!shown) return "";
       return formatNumber(counters[index] ?? shown.start, level.isLegal ? "decimal" : shown.format);
     });
-    return label.slice(0, MAX_LABEL_CHARS);
+    return label.slice(0, SURVEY_IMPORT_WORD_MAX_LIST_LABEL_CHARS);
   }
 }

@@ -114,6 +114,33 @@ export const SURVEY_IMPORT_WORD_MAX_TABLES = 500;
 /** Table cells, in every table together. */
 export const SURVEY_IMPORT_WORD_MAX_TABLE_CELLS = 50_000;
 
+/*
+ * How far the Word reader follows what a file declares. Past these it stops following instead of
+ * refusing the file, so each bounds the work one declaration can cost.
+ */
+
+/** Styles an inherited property is looked up through (`basedOn`), at most: a cycle stops here. */
+export const SURVEY_IMPORT_WORD_MAX_STYLE_CHAIN = 20;
+
+/**
+ * The largest list number written as letters or numerals: Word's own limit on a list's start. A file
+ * can claim any start; past this a number is written in digits, so a huge one costs nothing to label.
+ */
+export const SURVEY_IMPORT_WORD_MAX_FORMATTED_NUMBER = 32_767;
+
+/**
+ * The most letters a list number is written in: about as wide as the longest numeral under
+ * `SURVEY_IMPORT_WORD_MAX_FORMATTED_NUMBER` (41 characters). Letters repeat with the number (aa…zz,
+ * then aaa…), so past this it is digits too.
+ */
+export const SURVEY_IMPORT_WORD_MAX_NUMBER_LETTERS = 40;
+
+/**
+ * A list level's label pattern, and the label made from it: Word's own are a few characters (`%1.`,
+ * `Q%1`, `%1.%2.`). A file's longer pattern is cut, or every numbered paragraph would rebuild it whole.
+ */
+export const SURVEY_IMPORT_WORD_MAX_LIST_LABEL_CHARS = 255;
+
 /**
  * Imports one server process runs at once. Memory is what this bounds; the server's thread is kept free
  * by reading each file in a thread of its own (`core/upload-thread.ts`), one at a time
@@ -243,6 +270,77 @@ export { AI_DEFAULT_TIMEOUT_MS as SURVEY_IMPORT_AI_CALL_TIMEOUT_MS } from "@form
 
 /** Retries per call after the first attempt: the AI SDK's default `maxRetries` (`core/call-retry.ts`). */
 export const SURVEY_IMPORT_MAX_CALL_RETRIES = 2;
+
+/** Time kept back for assembly when a call is sized against the deadline (`core/ai-plan.ts`). */
+export const SURVEY_IMPORT_ASSEMBLY_RESERVE_MS = 5_000;
+
+/**
+ * The least time a call is sent with. Below it no plan can come back: the first token alone takes
+ * 1–3 s, and even a 10-question half needs ~700 tokens and its thinking at 150–250 tokens a second.
+ * Such a call would only time out after paying for its prompt, so its units are left unplanned
+ * (`ai_budget`, like any call the import has no time left for).
+ */
+export const SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS = 5_000;
+
+/*
+ * What an AI plan may hold, in either lane (`qsf/plan-schema.ts`, `document/plan-schema.ts`). The plan
+ * is untrusted output, so these bound what a hostile or broken response costs to check; an entry past
+ * one fails its schema and goes to the retry round, a whole answer past one fails its call.
+ */
+
+/** Entries in one answer: questions, skips, and (Qualtrics) pages, each list on its own. */
+export const SURVEY_IMPORT_PLAN_MAX_ENTRIES = 1_000;
+
+/**
+ * One note or skip reason as the model writes it, before `cleanNote` cuts it to
+ * `SURVEY_IMPORT_MAX_NOTE_CHARS` for the report.
+ */
+export const SURVEY_IMPORT_PLAN_MAX_RAW_NOTE_CHARS = 4_000;
+
+/** A ref or key the plan names (`QID3`, `c12`, `C12`): the file's own are a few characters. */
+export const SURVEY_IMPORT_PLAN_MAX_REF_CHARS = 20;
+
+/** The element type or kind an entry names, before it is checked against the lane's allowlist. */
+export const SURVEY_IMPORT_PLAN_MAX_TYPE_CHARS = 40;
+
+/**
+ * Options of a ranking question: the ranking element's own cap (`packages/types/surveys/elements.ts`),
+ * checked on the plan so a ranking past it goes to the retry round instead of failing the create.
+ */
+export const SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS = 25;
+
+/**
+ * Option keys one Qualtrics entry may leave out (`excludedKeys`): every key of a question's two lists,
+ * choices and answers, at `SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION` each.
+ */
+export const SURVEY_IMPORT_QSF_PLAN_MAX_EXCLUDED_KEYS = 400;
+
+/** Logic notes kept per Qualtrics question or page, one per rule; the rest are dropped, not refused. */
+export const SURVEY_IMPORT_QSF_PLAN_MAX_NOTES_PER_ENTRY = 20;
+
+/** Pieces of one document text slot (one per language), and languages the plan may name. */
+export const SURVEY_IMPORT_DOCUMENT_PLAN_MAX_PIECES = 60;
+
+/**
+ * Options or columns of one document entry, and values one of its rules compares with: twice
+ * `SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION`, as for a Qualtrics question's keys.
+ */
+export const SURVEY_IMPORT_DOCUMENT_PLAN_MAX_OPTIONS = 400;
+
+/** Rules of one document entry, and the notes on them (one per rule). */
+export const SURVEY_IMPORT_DOCUMENT_PLAN_MAX_RULES = 20;
+
+/** A piece quotes at most a cell, which the sheet reader caps at 32,767 characters. */
+export const SURVEY_IMPORT_DOCUMENT_PLAN_MAX_PIECE_CHARS = 32_767;
+
+/** A label a document entry names: an option's code, a rule's question, value or target. */
+export const SURVEY_IMPORT_DOCUMENT_PLAN_MAX_LABEL_CHARS = 200;
+
+/**
+ * Lines one document entry may span after the one it starts on: a question whose options take a line
+ * each, or a list under it. Past that, a cell belongs to some other entry.
+ */
+export const SURVEY_IMPORT_DOCUMENT_MAX_ENTRY_LINES = 30;
 
 /*
  * A document import's AI plan (ENG-6852, ENG-6853), sized like the Qualtrics lane's.
