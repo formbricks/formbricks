@@ -31,7 +31,14 @@ import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
  * Above the threshold the walk is stricter than Zod in one known case: a record inside an intersection,
  * whose keys its own key schema refuses but the other side accepts (Zod reconciles the two). And a
  * codec's output side, behind its decode, is parsed whole once its input side passes, so it is not
- * bounded. None of the v3 request schemas has either.
+ * bounded. None of the v3 request schemas has either. Two costs are not bounded for every schema
+ * either: a non-transform pipe parses its input side again, so pipes nested in a recursive schema cost
+ * depth × size; and the walk recurses a few frames per level of nesting, so it overflows the stack
+ * sooner than Zod. The v3 routes cap nesting at 256 levels before parsing (`array-budget.ts`), and no
+ * v3 request schema nests pipes.
+ *
+ * A key named `__proto__` is skipped wherever Zod skips it (records, catchalls, declared shape keys), so
+ * the walk never reports a problem Zod would not.
  */
 
 /** Nodes (objects, arrays and values) a subtree may hold to be checked whole. */
@@ -196,7 +203,7 @@ function branchScore(branch: z.ZodType, value: Record<string, unknown>): number 
   if (schema instanceof z.ZodObject) {
     for (const [key, field] of Object.entries(schema.shape)) {
       // Only literal fields decide: anything else here would validate a whole (possibly big) subtree.
-      if (!(unwrap(field as z.ZodType) instanceof z.ZodLiteral)) {
+      if (key === "__proto__" || !(unwrap(field as z.ZodType) instanceof z.ZodLiteral)) {
         continue;
       }
       // The field as declared, and a missing key judged by its absence (not as `undefined`, which an
@@ -412,13 +419,13 @@ function splitObject(
   // A key the value lacks is judged as Zod does, by its absence, not by `undefined`: they differ for
   // `exactOptional`.
   const entries = Object.keys(shape)
-    .filter((key) => Object.hasOwn(value, key) || !absenceAllowed(shape, key))
+    .filter((key) => key !== "__proto__" && (Object.hasOwn(value, key) || !absenceAllowed(shape, key)))
     .map((key): [PropertyKey, unknown] => [key, value[key]]);
   // Keys a catchall accepts are entries like any other. A strict object's refusal of extra keys is its
   // own check, left to the schema's parse (one issue).
   if (catchall && !(catchall instanceof z.ZodNever)) {
     for (const key of Object.keys(value)) {
-      if (!Object.hasOwn(shape, key)) {
+      if (key !== "__proto__" && !Object.hasOwn(shape, key)) {
         entries.push([key, value[key]]);
       }
     }
@@ -500,6 +507,9 @@ function splitRecord(
   }
 
   for (const [key, entry] of Object.entries(value)) {
+    if (key === "__proto__") {
+      continue;
+    }
     if (sink.full) {
       sink.truncated = true;
       return;

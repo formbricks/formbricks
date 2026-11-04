@@ -924,6 +924,30 @@ describe("ZV3CreateSurveyBody", () => {
       expect(ZV3CreateSurveyBody.safeParse({ ...validCreateBody, metadata }).success).toBe(true);
     });
 
+    // Zod skips a record's own `__proto__` key; the guard once walked it and refused a valid body.
+    test("takes a logic operand's big meta with a `__proto__` key", () => {
+      const meta = {
+        ...(JSON.parse('{"__proto__":1}') as Record<string, unknown>),
+        ...Object.fromEntries(repeat(300, () => 0).map((_zero, index) => [`k${index}`, "x"])),
+      };
+      const condition = {
+        id: "c1",
+        leftOperand: { type: "element", value: "q1", meta },
+        operator: "isSubmitted",
+      };
+      const body = {
+        ...validCreateBody,
+        blocks: [
+          {
+            ...validCreateBody.blocks[0],
+            logic: [{ id: "l1", conditions: group([condition]), actions: [] }],
+          },
+        ],
+      };
+
+      expect(ZV3CreateSurveyBody.safeParse(body).success).toBe(true);
+    });
+
     // One bad leaf under a deep chain of condition groups with big valid levels: a guard that checks a
     // level's whole subtree at every level spent ~9 s here for one issue. The timeout is a complexity
     // guard, not a benchmark: the linear walk needs well under 100 ms.

@@ -406,6 +406,27 @@ describe("boundedSchema", () => {
         z.record(z.union([z.literal("a"), z.literal("b")]), z.array(z.number())),
         () => ({ a: entries(150, (index) => index), b: entries(150, (index) => index) }),
       ],
+      [
+        "a record with a `__proto__` key Zod skips",
+        z.record(z.string(), z.string()),
+        () => ({
+          ...(JSON.parse('{"__proto__":1}') as Record<string, unknown>),
+          ...Object.fromEntries(entries(300, (index) => [`k${index}`, "x"])),
+        }),
+      ],
+      [
+        "a catchall object with a `__proto__` key Zod skips",
+        z.object({}).catchall(z.string()),
+        () => ({
+          ...(JSON.parse('{"__proto__":1}') as Record<string, unknown>),
+          ...Object.fromEntries(entries(300, (index) => [`k${index}`, "x"])),
+        }),
+      ],
+      [
+        "a shape that declares a `__proto__` key",
+        z.object({ ["__proto__"]: z.string(), pad: z.array(z.number()) }),
+        () => ({ ...(JSON.parse('{"__proto__":1}') as Record<string, unknown>), ...padding }),
+      ],
       ["a value that contains itself", withPad({ a: z.string() }), cyclic],
       ["a value that contains itself, under a recursive schema", loop, looped],
     ])("%s", (_name, schema, build) => {
