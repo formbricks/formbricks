@@ -186,6 +186,28 @@ describe("rules before the first question", () => {
     ]);
   });
 
+  test("a condition may read a computed date (P38), which only the typed fields declare", () => {
+    expect(surveyFlowFixture.variables.some((variable) => variable.id === ids.variables.signedUpAt)).toBe(
+      false
+    );
+    expect(
+      issuesOf(
+        withStartLogic([
+          rule(
+            [jump(ids.blocks.concept)],
+            [
+              condition({
+                leftOperand: { type: "variable", value: ids.variables.signedUpAt },
+                operator: "isAfter",
+                rightOperand: { type: "static", value: "2026-01-01" },
+              }),
+            ]
+          ),
+        ])
+      )
+    ).toEqual([]);
+  });
+
   test("a Set value formula (ENG-6935) may set a computed date and read fields, but not an answer", () => {
     const setValue = (id: string, variableId: string, value: unknown) =>
       ({
