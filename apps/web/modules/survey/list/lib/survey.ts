@@ -23,12 +23,14 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { type TSurveyVisibilityFilter, buildSurveyAccessWhere } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveCopiedSurveyCustomCss } from "@/modules/custom-css/lib/service";
+import { assertSegmentSurveyFiltersVisible } from "@/modules/ee/contacts/segments/lib/helper";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
@@ -251,6 +253,19 @@ export const copySurveyToOtherWorkspace = async (
     if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", workspaceId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
     if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
+
+    // ENG-6870: a copy into the same workspace keeps the source's targeting (it connects the public
+    // segment, or clones the private one), and the copier then reads the copy's responses — so the
+    // copier must see every survey that targeting reads. Elsewhere its survey ids name another
+    // workspace's surveys, which no contact of the target workspace has interacted with.
+    if (isSameWorkspace && existingSurvey.segment) {
+      await assertSegmentSurveyFiltersVisible(
+        existingSurvey.segment.filters,
+        workspaceId,
+        await resolveSurveyActorContext({ type: "user", id: userId }, organization.id),
+        existingSurvey.segment.isPrivate ? undefined : existingSurvey.segment.id
+      );
+    }
 
     const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 

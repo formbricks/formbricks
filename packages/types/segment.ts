@@ -693,7 +693,8 @@ export interface TEvaluateSegmentUserData {
    * evaluate interaction filters against loaded relations / the database directly.
    */
   interactionData?: {
-    displays: { surveyId: string; createdAt: Date }[];
-    responses: { surveyId: string; createdAt: Date; finished: boolean }[];
+    /** `countsForAnySurvey`: whether the row's survey counts for `any` scope (workspace-visible, ENG-6870). */
+    displays: { surveyId: string; createdAt: Date; countsForAnySurvey: boolean }[];
+    responses: { surveyId: string; createdAt: Date; finished: boolean; countsForAnySurvey: boolean }[];
   };
 }

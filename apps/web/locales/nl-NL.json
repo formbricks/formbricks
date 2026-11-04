@@ -5065,6 +5065,7 @@
           "nav_title": "Persoonlijke koppelingen",
           "no_contacts_in_segment": "Geen contacten gevonden voor het geselecteerde segment",
           "no_segments_available": "Geen segmenten beschikbaar",
+          "segment_survey_filters_not_visible": "Het geselecteerde segment filtert op enquêtes waar je geen toegang toe hebt, dus het kan niet worden gebruikt voor persoonlijke links.",
           "segment_survey_workspace_mismatch": "Het geselecteerde segment hoort bij een andere werkruimte dan deze enquête.",
           "select_segment": "Selecteer segment",
           "upgrade_prompt_description": "Genereer persoonlijke links voor een segment en koppel enquêtereacties aan elk contact.",

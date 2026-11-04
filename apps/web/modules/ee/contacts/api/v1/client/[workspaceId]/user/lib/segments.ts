@@ -7,10 +7,12 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
+import { effectivelyRestrictedWhere } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import {
   type TContactInteractionData,
+  hasAnyScopeInteractionFilter,
   tryEvaluateSurveyInteractionSegmentInMemory,
 } from "@/modules/ee/contacts/segments/lib/filter/survey-interaction";
 
@@ -41,12 +43,47 @@ export const getSegments = reactCache(
     )
 );
 
+/** A contact's displays and responses as the contact sync loads them. */
+export type TContactInteractionRows = {
+  displays: { surveyId: string; createdAt: Date }[];
+  responses: { surveyId: string; createdAt: Date; finished: boolean }[];
+};
+
+/**
+ * The rows the in-memory evaluator reads, each marked with whether it counts for `any` scope (ENG-6870:
+ * only workspace-visible surveys do). The restricted surveys among the contact's own are looked up only
+ * when `needsAnyScope`, in one query, so a workspace without `any` filters pays nothing on this hot path.
+ */
+export const buildContactInteractionData = async (
+  workspaceId: string,
+  rows: TContactInteractionRows,
+  needsAnyScope: boolean
+): Promise<TContactInteractionData> => {
+  const surveyIds = [...new Set([...rows.displays, ...rows.responses].map((row) => row.surveyId))];
+  const notCounted =
+    needsAnyScope && surveyIds.length > 0
+      ? new Set(
+          (
+            await prisma.survey.findMany({
+              where: { workspaceId, id: { in: surveyIds }, AND: [effectivelyRestrictedWhere] },
+              select: { id: true },
+            })
+          ).map((survey) => survey.id)
+        )
+      : new Set<string>();
+  const counts = (surveyId: string) => !notCounted.has(surveyId);
+  return {
+    displays: rows.displays.map((row) => ({ ...row, countsForAnySurvey: counts(row.surveyId) })),
+    responses: rows.responses.map((row) => ({ ...row, countsForAnySurvey: counts(row.surveyId) })),
+  };
+};
+
 export const getPersonSegmentIds = async (
   workspaceId: string,
   contactId: string,
   contactUserId: string,
   deviceType: "phone" | "desktop",
-  interactionData: TContactInteractionData
+  interactionRows: TContactInteractionRows
 ): Promise<string[]> => {
   try {
     validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
@@ -56,6 +93,13 @@ export const getPersonSegmentIds = async (
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       return [];
     }
+
+    // Only segments the in-memory path can answer read the rows, and only `any` needs the lookup.
+    const interactionData = await buildContactInteractionData(
+      workspaceId,
+      interactionRows,
+      segments.some((segment) => hasAnyScopeInteractionFilter((segment.filters ?? []) as TBaseFilters))
+    );
 
     // A single evaluation instant shared across every segment so all relative windows agree.
     const now = new Date();

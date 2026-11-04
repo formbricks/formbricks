@@ -913,7 +913,7 @@ describe("Contacts Lib", () => {
         value: { surveyScope, surveyIds, within },
       });
 
-      /** The `any`-scope tree a member can save alone: completed some survey, but none they can see. */
+      /** Completed any survey, but not two the member can see. */
       const anyScopeFilters = [
         { id: "f1", connector: null, resource: completed("i1", "any") },
         {
@@ -979,20 +979,24 @@ describe("Contacts Lib", () => {
         expect(getContactSurveyLink).not.toHaveBeenCalled();
       });
 
-      test("refuses a member an `any`-scope segment while the workspace holds a survey hidden from them", async () => {
+      // `any` scope only reads workspace-visible surveys (see `isWorkspaceVisibleForAnyScope`), so the
+      // fatigue-style rule stays usable by a member and names no survey to check.
+      test("lets a member use an `any`-scope segment without a visibility lookup", async () => {
         vi.mocked(getSegment).mockResolvedValue(segmentWith(anyScopeFilters));
-        vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: restrictedSurveyId } as any);
 
-        await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).rejects.toThrow(
-          new ValidationError(SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE)
-        );
+        const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
-        // `any` reads every survey in the workspace, so the question is whether any of them is hidden.
+        expect(result).toHaveLength(1);
+        // The specific ids next to `any` are the only ones checked.
+        expect(prisma.survey.findFirst).toHaveBeenCalledOnce();
         expect(prisma.survey.findFirst).toHaveBeenCalledWith({
-          where: { workspaceId: mockWorkspaceId, AND: [memberHiddenSurveyWhere] },
+          where: {
+            id: { in: [visibleSurveyId, mockSurveyId] },
+            workspaceId: mockWorkspaceId,
+            AND: [memberHiddenSurveyWhere],
+          },
           select: { id: true },
         });
-        expect(prisma.contact.findMany).not.toHaveBeenCalled();
       });
 
       test("follows nested segment filters to the restricted survey they read", async () => {
@@ -1024,15 +1028,6 @@ describe("Contacts Lib", () => {
           })
         );
         expect(prisma.contact.findMany).not.toHaveBeenCalled();
-      });
-
-      test("generates links for a member when no survey the segment reads is hidden from them", async () => {
-        vi.mocked(getSegment).mockResolvedValue(segmentWith(anyScopeFilters));
-        vi.mocked(prisma.survey.findFirst).mockResolvedValue(null);
-
-        const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
-
-        expect(result).toHaveLength(1);
       });
 
       test("generates links for an organization owner without a visibility query", async () => {

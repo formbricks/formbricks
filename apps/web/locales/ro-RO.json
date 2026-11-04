@@ -5065,6 +5065,7 @@
           "nav_title": "Linkuri personale",
           "no_contacts_in_segment": "Nu s-au găsit contacte pentru segmentul selectat",
           "no_segments_available": "Nu există segmente disponibile",
+          "segment_survey_filters_not_visible": "Segmentul selectat filtrează după sondaje la care nu ai acces, așa că nu poate fi folosit pentru linkuri personale.",
           "segment_survey_workspace_mismatch": "Segmentul selectat aparține unui workspace diferit față de acest chestionar.",
           "select_segment": "Selectați segmentul",
           "upgrade_prompt_description": "Generează linkuri personale pentru un segment și leagă răspunsurile la sondaj de fiecare contact.",

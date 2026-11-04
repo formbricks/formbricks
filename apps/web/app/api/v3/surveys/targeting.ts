@@ -12,6 +12,7 @@ import type {
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getAddedSegmentSurveyIds } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   getExistingWorkspaceSurveyIds,
@@ -282,14 +283,45 @@ export async function assertV3SurveyTargetingFilterReferences(
     // Scope to the workspace's own segments — `getSegment(id)` is global, so a bare existence check
     // would accept (and store) a reference to another workspace's segment.
     const segments = await getSegments(workspaceId, ALL_SEGMENT_SURVEY_REFS);
-    const knownSegmentIds = new Set(segments.map((segment) => segment.id));
-    for (const reference of segmentRefs.filter((ref) => !knownSegmentIds.has(ref.value))) {
+    const segmentsById = new Map(segments.map((segment) => [segment.id, segment]));
+    for (const reference of segmentRefs.filter((ref) => !segmentsById.has(ref.value))) {
       invalidParams.push({
         name: reference.path,
         reason: `Segment '${reference.value}' was not found in this workspace`,
         code: "invalid_reference",
         identifier: reference.value,
       });
+    }
+
+    // ENG-6870: a nested segment reads the surveys its own filters name, so they are held to the same
+    // visibility as a survey named here directly. A survey that no longer exists reads nothing. One
+    // existence/visibility lookup pair covers every referenced segment.
+    const readSurveyIdsBySegment = new Map<string, string[]>();
+    for (const reference of segmentRefs) {
+      const segment = segmentsById.get(reference.value);
+      if (!segment || readSurveyIdsBySegment.has(segment.id)) continue;
+      readSurveyIdsBySegment.set(
+        segment.id,
+        await getAddedSegmentSurveyIds(segment.filters, [], workspaceId, segment.id)
+      );
+    }
+    const readSurveyIds = [...new Set([...readSurveyIdsBySegment.values()].flat())];
+    if (readSurveyIds.length > 0) {
+      const [existing, visible] = await Promise.all([
+        getExistingWorkspaceSurveyIds(workspaceId, readSurveyIds, {}),
+        getExistingWorkspaceSurveyIds(workspaceId, readSurveyIds, visibleSurveyWhere),
+      ]);
+      for (const reference of segmentRefs) {
+        const read = readSurveyIdsBySegment.get(reference.value) ?? [];
+        if (read.some((surveyId) => existing.has(surveyId) && !visible.has(surveyId))) {
+          invalidParams.push({
+            name: reference.path,
+            reason: `Segment '${reference.value}' filters on a survey you don't have access to`,
+            code: "invalid_reference",
+            identifier: reference.value,
+          });
+        }
+      }
     }
   }
 

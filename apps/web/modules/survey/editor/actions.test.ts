@@ -164,6 +164,8 @@ describe.each([
 
     expect(write).toHaveBeenCalledWith(expect.objectContaining({ id: "survey_1" }), {
       customCssPrincipal: "user_1",
+      // ENG-6870: targeting edits are checked against the same user's survey visibility.
+      targetingActor: expect.objectContaining({ kind: "user", userId: "user_1" }),
     });
   });
 });

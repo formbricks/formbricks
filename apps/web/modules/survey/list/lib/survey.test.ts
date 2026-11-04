@@ -34,6 +34,16 @@ const UNENFORCED_CONTEXT = {
 // Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("server-only", () => ({}));
+const targetingMocks = vi.hoisted(() => ({
+  assertSegmentSurveyFiltersVisible: vi.fn(),
+  resolveSurveyActorContext: vi.fn(),
+}));
+vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
+  assertSegmentSurveyFiltersVisible: targetingMocks.assertSegmentSurveyFiltersVisible,
+}));
+vi.mock("@/lib/survey/visibility/actor-context", () => ({
+  resolveSurveyActorContext: targetingMocks.resolveSurveyActorContext,
+}));
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -843,6 +853,36 @@ describe("copySurveyToOtherWorkspace", () => {
         }),
       })
     );
+  });
+
+  // ENG-6870: a same-workspace copy keeps the targeting, so the copier must see what it reads.
+  test("refuses a same-workspace copy whose targeting reads a survey hidden from the copier", async () => {
+    const memberActor = { enforced: true, isOrganizationAdmin: false, kind: "user", userId };
+    const filters = [{ id: "f1", connector: null, resource: [] }];
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({
+      ...mockExistingSurveyDetails,
+      segment: { id: "seg_public", title: "Public Segment", isPrivate: false, filters },
+    } as any);
+    targetingMocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
+    const refused = new Error("Segment filters reference a survey you don't have access to");
+    targetingMocks.assertSegmentSurveyFiltersVisible.mockRejectedValueOnce(refused);
+
+    await expect(
+      copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, sourceWorkspaceId, userId)
+    ).rejects.toBe(refused);
+    expect(targetingMocks.assertSegmentSurveyFiltersVisible).toHaveBeenCalledWith(
+      filters,
+      sourceWorkspaceId,
+      memberActor,
+      "seg_public"
+    );
+    expect(prisma.survey.create).not.toHaveBeenCalled();
+
+    // Into another workspace its survey ids name nothing there, so there is nothing to check.
+    targetingMocks.assertSegmentSurveyFiltersVisible.mockClear();
+    vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId).catch(() => {});
+    expect(targetingMocks.assertSegmentSurveyFiltersVisible).not.toHaveBeenCalled();
   });
 
   test("should handle private segment: create new private segment in target", async () => {

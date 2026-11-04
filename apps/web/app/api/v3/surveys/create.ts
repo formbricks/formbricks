@@ -28,7 +28,7 @@ import {
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
-import { resolveV3VisibleSurveyWhere } from "./visibility-context";
+import { resolveV3SurveyTargetingActor, resolveV3VisibleSurveyWhere } from "./visibility-context";
 
 export type TV3SurveyCreateOptions = {
   skipExternalUrlPermissionCheck?: boolean;
@@ -292,6 +292,10 @@ export async function executeV3SurveyCreate(params: {
     creationFacts,
     privateSegmentFilters,
     customCss,
+    targetingActor: await resolveV3SurveyTargetingActor(
+      authentication,
+      params.organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id
+    ),
   });
 
   return await finalizeV3AppSurveyCreate(survey, input);

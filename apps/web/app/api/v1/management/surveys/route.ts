@@ -27,6 +27,7 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getApiKeyVisibleSurveyWhere } from "@/lib/survey/visibility/api-key";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
@@ -175,7 +176,13 @@ export const POST = withV1ApiWrapper({
         actor: { type: "apiKey", id: authentication.apiKeyId },
         organizationId: organization.id,
       });
-      const survey = await createSurvey(workspaceId, surveyCreateInput, { creationFacts });
+      const survey = await createSurvey(workspaceId, surveyCreateInput, {
+        creationFacts,
+        targetingActor: await resolveSurveyActorContext(
+          { type: "apiKey", id: authentication.apiKeyId },
+          organization.id
+        ),
+      });
       if (auditLog) {
         auditLog.targetId = survey.id;
         auditLog.newObject = survey;

@@ -5,7 +5,7 @@ import { err, ok } from "@formbricks/types/error-handlers";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
-import { findSegmentSurveyFilterViolation } from "@/modules/ee/contacts/segments/lib/helper";
+import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/lib/helper";
 import { getContactAttributeKeys } from "./contact-attribute-key";
 import { getSegment } from "./segment";
 import { getSurvey } from "./surveys";
@@ -54,7 +54,7 @@ export const getContactsInSegment = reactCache(
 
       // ENG-6870: the contacts a survey-interaction filter matches are the people who saw, started or
       // completed the surveys it reads, so the caller must be able to read every one of them.
-      if (await findSegmentSurveyFilterViolation(segment.filters, segment.workspaceId, actor, segment.id)) {
+      if (await segmentFiltersReadHiddenSurvey(segment.filters, segment.workspaceId, actor, segment.id)) {
         logger.warn({ surveyId, segmentId }, "Segment filters read surveys the caller cannot access");
         const error: ApiErrorResponseV2 = {
           type: "forbidden",

@@ -56,13 +56,18 @@ import {
 } from "@/lib/organization/service";
 import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
-import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import { andVisibleSurveys, buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
 import {
   invalidateCustomCssCaches,
   parseStoredCustomCss,
   readCustomCssPayloadSource,
   resolveCustomCssWriteOrThrow,
 } from "@/modules/custom-css/lib/service";
+import {
+  assertAddedSegmentSurveyFiltersVisible,
+  assertSegmentSurveyFiltersVisible,
+  getAddedSegmentSurveyIds,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   assertNoLinkedCreatives,
@@ -86,6 +91,7 @@ import {
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
 } from "./utils";
+import type { TSurveyActorContext } from "./visibility/actor-context";
 
 /**
  * ENG-1839 / ENG-2933 / ENG-3142: refuse a reserved name, or a name a hidden field shares with a
@@ -460,6 +466,11 @@ export type TUpdateSurveyOptions = {
    * spends, so the editor's save and autosave cannot run the processor outside it.
    */
   customCssPrincipal?: string;
+  /**
+   * ENG-6870: who is saving, in survey-visibility terms. An app survey's targeting filters may only add
+   * surveys this actor can see, so a save that adds any fails without it.
+   */
+  targetingActor?: TSurveyActorContext;
 };
 
 export const updateSurveyInternal = async (
@@ -738,6 +749,13 @@ export const updateSurveyInternal = async (
         // this survey's workspace before re-pointing it to the segment (a foreign id would hijack
         // another tenant's survey targeting). Done outside the try below, which masks errors as a
         // generic Error and would otherwise hide this rejection.
+        await assertTargetingAddsNoHiddenSurvey(
+          currentSurvey.workspaceId,
+          currentSurvey.segment?.id,
+          segment,
+          options.targetingActor
+        );
+
         if (segment.surveys && segment.surveys.length > 0) {
           const workspaceBySurveyId = await getSurveyWorkspaceIdMap(segment.surveys);
           if (
@@ -1013,8 +1031,11 @@ export const updateSurveyInternal = async (
   }
 };
 
-export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
-  return updateSurveyInternal(updatedSurvey);
+export const updateSurvey = async (
+  updatedSurvey: TSurvey,
+  options: TUpdateSurveyOptions = {}
+): Promise<TSurvey> => {
+  return updateSurveyInternal(updatedSurvey, false, options);
 };
 
 // Draft update without validation
@@ -1115,6 +1136,46 @@ const assertSurveyLanguagesBelongToWorkspace = async (
   }
 };
 
+/**
+ * ENG-6870: a survey's responses show who its targeting reached, so a save may only make the targeting
+ * read surveys the saver can see. Editing the survey's own segment answers only for the surveys the edit
+ * adds (`assertAddedSegmentSurveyFiltersVisible`): the ones the stored filters already read stay, so
+ * saving anything else on a survey an administrator targeted keeps working. A save that points the
+ * survey at another segment, or connects more surveys to this one, targets them with the whole tree, so
+ * the whole tree is checked. Without an actor to check against, a save that needs a check fails closed.
+ */
+const assertTargetingAddsNoHiddenSurvey = async (
+  workspaceId: string,
+  currentSegmentId: string | null | undefined,
+  segment: { id?: string | null; filters: TBaseFilters; surveys?: string[] },
+  actor: TSurveyActorContext | undefined
+): Promise<void> => {
+  // An organization owner or manager sees every survey: nothing to look up.
+  if (actor && !buildHiddenSurveyWhere(actor)) return;
+  const stored = segment.id
+    ? await prisma.segment.findUnique({
+        where: { id: segment.id },
+        select: { filters: true, surveys: { select: { id: true } } },
+      })
+    : null;
+  const storedSurveyIds = new Set((stored?.surveys ?? []).map((survey) => survey.id));
+  const editsOwnSegment =
+    !!segment.id &&
+    segment.id === currentSegmentId &&
+    (segment.surveys ?? []).every((surveyId) => storedSurveyIds.has(surveyId));
+  const storedFilters = editsOwnSegment ? ((stored?.filters ?? []) as TBaseFilters) : [];
+  const segmentId = segment.id ?? undefined;
+
+  if (!actor) {
+    const added = await getAddedSegmentSurveyIds(segment.filters, storedFilters, workspaceId, segmentId);
+    if (added.length === 0) return;
+    throw new Error(
+      "Adding a survey to an app survey's targeting needs the acting user or API key (ENG-6870)"
+    );
+  }
+  await assertAddedSegmentSurveyFiltersVisible(segment.filters, storedFilters, workspaceId, actor, segmentId);
+};
+
 const assertSurveySegmentBelongsToWorkspace = async (
   workspaceId: string,
   segment: { id?: string | null } | null | undefined
@@ -1177,6 +1238,28 @@ const assertCreateEmbeddedFieldsAreStorable = async (
   assertDerivedLegacyColumnsAreStorable(toLegacyEmbeddedFields(desired));
 };
 
+/** ENG-6870: a new survey's targeting, connected or seeded, may only read surveys its creator can see. */
+const assertCreateTargetingVisible = async (
+  workspaceId: string,
+  segment: { id?: string | null } | null | undefined,
+  privateSegmentFilters: TBaseFilters,
+  actor: TSurveyActorContext
+): Promise<void> => {
+  if (privateSegmentFilters.length > 0) {
+    await assertSegmentSurveyFiltersVisible(privateSegmentFilters, workspaceId, actor);
+  }
+  if (!segment?.id) return;
+  const connected = await prisma.segment.findUnique({ where: { id: segment.id }, select: { filters: true } });
+  if (connected) {
+    await assertSegmentSurveyFiltersVisible(
+      connected.filters as TBaseFilters,
+      workspaceId,
+      actor,
+      segment.id
+    );
+  }
+};
+
 /** The private targeting segment an app survey is created with, written in the survey's transaction. */
 const createPrivateSegmentForSurvey = async (
   tx: Prisma.TransactionClient,
@@ -1217,6 +1300,11 @@ export type TCreateSurveyOptions = Readonly<{
   creationFacts: TSurveyCreationFacts;
   privateSegmentFilters?: TBaseFilters;
   /**
+   * ENG-6870: who is creating the survey. Its targeting — `privateSegmentFilters`, or the segment the body
+   * connects — may only read surveys this actor can see. Required so no creation path can forget it.
+   */
+  targetingActor: TSurveyActorContext;
+  /**
    * ENG-2949: custom CSS already resolved by the shared custom CSS service (plan checked, processed).
    * `ZSurveyCreateInput` strips `customCss` from the body, so this is the only way a create stores it.
    */
@@ -1226,7 +1314,7 @@ export type TCreateSurveyOptions = Readonly<{
 export const createSurvey = async (
   workspaceId: string,
   surveyBody: TSurveyCreateInput,
-  { creationFacts, privateSegmentFilters = [], customCss }: TCreateSurveyOptions
+  { creationFacts, privateSegmentFilters = [], customCss, targetingActor }: TCreateSurveyOptions
 ): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -1251,6 +1339,7 @@ export const createSurvey = async (
     } = parsedSurveyBody;
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment);
+    await assertCreateTargetingVisible(parsedWorkspaceId, segment, privateSegmentFilters, targetingActor);
 
     // ENG-1839: `existing` is empty because a create authors every name fresh — there is nothing to
     // grandfather yet. Covers templates, `POST /api/v1/management/surveys` and the v3 create route.

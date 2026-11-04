@@ -7,12 +7,13 @@ import {
 } from "@formbricks/types/segment";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import {
+  SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   collectSurveyIdsFromSegmentFilters,
-  findSegmentSurveyFilterViolation,
+  segmentFiltersReadHiddenSurvey,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
@@ -455,7 +456,7 @@ describe("assertSurveysInWorkspace (ENG-3282)", () => {
   });
 });
 
-describe("findSegmentSurveyFilterViolation (ENG-6870)", () => {
+describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
   const workspaceId = "ws1";
   const restrictedId = "clrestricted00000000000001";
   const visibleId = "clvisible000000000000000001";
@@ -496,6 +497,12 @@ describe("findSegmentSurveyFilterViolation (ENG-6870)", () => {
   const tree = (...filters: unknown[]) => filters as TBaseFilters;
   const segment = (id: string, filters: TBaseFilters, ws = workspaceId) =>
     ({ id, filters, workspaceId: ws }) as unknown as TSegmentWithSurveyRefs;
+  const memberHiddenWhere = {
+    AND: [
+      expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) }),
+      { OR: [{ ownerId: null }, { ownerId: { not: "u1" } }] },
+    ],
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -503,67 +510,52 @@ describe("findSegmentSurveyFilterViolation (ENG-6870)", () => {
   });
 
   test("an organization owner or manager sees every survey: nothing to look up", async () => {
-    const result = await findSegmentSurveyFilterViolation(
-      tree(interaction("any"), nestedSegment("clnested000000000000000001")),
+    const result = await segmentFiltersReadHiddenSurvey(
+      tree(interaction("specific", [restrictedId]), nestedSegment("clnested000000000000000001")),
       workspaceId,
       owner
     );
 
-    expect(result).toBeNull();
+    expect(result).toBe(false);
     expect(mockSurveyFindFirst).not.toHaveBeenCalled();
     expect(getSegment).not.toHaveBeenCalled();
   });
 
-  test("refuses a member a specific filter on a survey hidden from them", async () => {
+  test("a specific filter on a survey hidden from a member reads a hidden survey", async () => {
     mockSurveyFindFirst.mockResolvedValue({ id: restrictedId });
 
-    const result = await findSegmentSurveyFilterViolation(
+    const result = await segmentFiltersReadHiddenSurvey(
       tree(interaction("specific", [visibleId, restrictedId])),
       workspaceId,
       member
     );
 
-    expect(result).toBe("hiddenSurvey");
+    expect(result).toBe(true);
     expect(mockSurveyFindFirst).toHaveBeenCalledWith({
-      where: {
-        id: { in: [visibleId, restrictedId] },
-        workspaceId,
-        AND: [
-          {
-            AND: [
-              expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) }),
-              { OR: [{ ownerId: null }, { ownerId: { not: "u1" } }] },
-            ],
-          },
-        ],
-      },
+      where: { id: { in: [visibleId, restrictedId] }, workspaceId, AND: [memberHiddenWhere] },
       select: { id: true },
     });
   });
 
-  test("refuses `any` scope while the workspace holds a survey hidden from the caller", async () => {
+  test("an API key is held to the restricted-survey clause", async () => {
     mockSurveyFindFirst.mockResolvedValue({ id: restrictedId });
 
-    const result = await findSegmentSurveyFilterViolation(
-      tree(interaction("any"), interaction("specific", [visibleId])),
-      workspaceId,
-      apiKey
+    expect(
+      await segmentFiltersReadHiddenSurvey(tree(interaction("specific", [restrictedId])), workspaceId, apiKey)
+    ).toBe(true);
+    expect(mockSurveyFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          AND: [expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) })],
+        }),
+      })
     );
-
-    expect(result).toBe("anySurveyWithHiddenSurveys");
-    // One query covers both: with `any`, the question is whether any survey in the workspace is hidden.
-    expect(mockSurveyFindFirst).toHaveBeenCalledOnce();
-    expect(mockSurveyFindFirst).toHaveBeenCalledWith({
-      where: {
-        workspaceId,
-        AND: [expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) })],
-      },
-      select: { id: true },
-    });
   });
 
-  test("allows `any` scope when nothing in the workspace is hidden from the caller", async () => {
-    expect(await findSegmentSurveyFilterViolation(tree(interaction("any")), workspaceId, member)).toBeNull();
+  // `any` only reads workspace-visible surveys, so it never needs the caller to see more.
+  test("`any` scope names no survey and costs no query", async () => {
+    expect(await segmentFiltersReadHiddenSurvey(tree(interaction("any")), workspaceId, member)).toBe(false);
+    expect(mockSurveyFindFirst).not.toHaveBeenCalled();
   });
 
   test("follows nested segment filters, at any depth and inside groups", async () => {
@@ -576,9 +568,7 @@ describe("findSegmentSurveyFilterViolation (ENG-6870)", () => {
     );
     mockSurveyFindFirst.mockResolvedValue({ id: restrictedId });
 
-    const result = await findSegmentSurveyFilterViolation(tree(nestedSegment(outer)), workspaceId, member);
-
-    expect(result).toBe("hiddenSurvey");
+    expect(await segmentFiltersReadHiddenSurvey(tree(nestedSegment(outer)), workspaceId, member)).toBe(true);
     expect(mockSurveyFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ id: { in: [restrictedId] } }) })
     );
@@ -590,18 +580,18 @@ describe("findSegmentSurveyFilterViolation (ENG-6870)", () => {
     const foreign = "clforeign00000000000000001";
     vi.mocked(getSegment).mockImplementation(async (id: string) => {
       if (id === missing) throw new ResourceNotFoundError("segment", id);
-      if (id === foreign) return segment(foreign, tree(interaction("any")), "ws-other");
+      if (id === foreign) return segment(foreign, tree(interaction("specific", [restrictedId])), "ws-other");
       throw new Error(`unexpected lookup of ${id}`);
     });
 
-    const result = await findSegmentSurveyFilterViolation(
+    const result = await segmentFiltersReadHiddenSurvey(
       tree(nestedSegment(self), nestedSegment(missing), nestedSegment(foreign)),
       workspaceId,
       member,
       self
     );
 
-    expect(result).toBeNull();
+    expect(result).toBe(false);
     expect(getSegment).toHaveBeenCalledTimes(2);
     expect(mockSurveyFindFirst).not.toHaveBeenCalled();
   });
@@ -610,26 +600,18 @@ describe("findSegmentSurveyFilterViolation (ENG-6870)", () => {
     const ids = Array.from({ length: 450 }, (_, i) => `clsv${String(i).padStart(22, "0")}`);
     mockSurveyFindFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: ids[300] });
 
-    const result = await findSegmentSurveyFilterViolation(
-      tree(interaction("specific", ids)),
-      workspaceId,
-      member
-    );
-
-    expect(result).toBe("hiddenSurvey");
+    expect(
+      await segmentFiltersReadHiddenSurvey(tree(interaction("specific", ids)), workspaceId, member)
+    ).toBe(true);
     expect(mockSurveyFindFirst).toHaveBeenCalledTimes(2);
     expect(mockSurveyFindFirst.mock.calls[0][0].where.id.in).toHaveLength(200);
   });
 
-  test("assertSegmentSurveyFiltersVisible turns a violation into InvalidInputError", async () => {
+  test("assertSegmentSurveyFiltersVisible turns a hidden survey into InvalidInputError", async () => {
     mockSurveyFindFirst.mockResolvedValue({ id: restrictedId });
 
     await expect(
-      assertSegmentSurveyFiltersVisible(tree(interaction("any")), workspaceId, member)
-    ).rejects.toThrow(
-      new InvalidInputError(
-        "Filtering on any survey requires access to every survey in this workspace; pick specific surveys instead"
-      )
-    );
+      assertSegmentSurveyFiltersVisible(tree(interaction("specific", [restrictedId])), workspaceId, member)
+    ).rejects.toThrow(new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE));
   });
 });

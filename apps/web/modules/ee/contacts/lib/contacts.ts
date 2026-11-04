@@ -22,7 +22,7 @@ import {
   SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE,
 } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
-import { findSegmentSurveyFilterViolation } from "@/modules/ee/contacts/segments/lib/helper";
+import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   TContact,
@@ -749,7 +749,7 @@ export const generatePersonalLinks = async (
 
   // Survey-visibility guard (ENG-6870): the contacts a survey-interaction filter matches are the people
   // who saw, started or completed the surveys it reads, so the caller must see every one of them.
-  if (await findSegmentSurveyFilterViolation(segment.filters, segment.workspaceId, actor, segment.id)) {
+  if (await segmentFiltersReadHiddenSurvey(segment.filters, segment.workspaceId, actor, segment.id)) {
     throw new ValidationError(SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE);
   }
 

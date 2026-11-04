@@ -27,6 +27,7 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { SURVEY_ACTION_FOR_METHOD, canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 
@@ -248,7 +249,15 @@ export const PUT = withV1ApiWrapper({
       }
 
       try {
-        const updatedSurvey = await updateSurvey({ ...inputValidation.data, id: params.surveyId });
+        const updatedSurvey = await updateSurvey(
+          { ...inputValidation.data, id: params.surveyId },
+          {
+            targetingActor: await resolveSurveyActorContext(
+              { type: "apiKey", id: authentication.apiKeyId },
+              organization.id
+            ),
+          }
+        );
         if (auditLog) {
           auditLog.newObject = updatedSurvey;
         }

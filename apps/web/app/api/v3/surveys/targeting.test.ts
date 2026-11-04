@@ -202,7 +202,7 @@ const mockAttributeKeys = (keys: string[]): void => {
 
 const mockSegments = (ids: string[]): void => {
   vi.mocked(getSegments).mockResolvedValueOnce(
-    ids.map((id) => ({ id })) as Awaited<ReturnType<typeof getSegments>>
+    ids.map((id) => ({ id, filters: [] })) as unknown as Awaited<ReturnType<typeof getSegments>>
   );
 };
 
@@ -364,6 +364,30 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).resolves.toBeUndefined();
     // Reference validation needs every segment's id, and the result never reaches a browser.
     expect(getSegments).toHaveBeenCalledWith("ws_1", {});
+  });
+
+  // ENG-6870: a nested segment reads the surveys its own filters name.
+  test("rejects a segment whose filters read a survey hidden from the caller", async () => {
+    vi.mocked(getSegments).mockResolvedValueOnce([
+      { id: "seg_known", filters: [surveyInteractionNode("n1", "specific", ["survey_restricted"])] },
+    ] as unknown as Awaited<ReturnType<typeof getSegments>>);
+    vi.mocked(getExistingWorkspaceSurveyIds)
+      .mockResolvedValueOnce(new Set(["survey_restricted"]))
+      .mockResolvedValueOnce(new Set());
+    const filters = [segmentFilterNode("f1", "seg_known")] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
+      invalidParams: [
+        {
+          name: "targeting.filters.0.resource.root.segmentId",
+          reason: "Segment 'seg_known' filters on a survey you don't have access to",
+          code: "invalid_reference",
+          identifier: "seg_known",
+        },
+      ],
+    });
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_restricted"], {});
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_restricted"], VISIBLE);
   });
 
   test("rejects a segment filter referencing an unknown or foreign segment", async () => {

@@ -602,10 +602,8 @@ describe("getContactsInSegment", () => {
     }
   });
   // ENG-6870: an API key never sees a restricted survey, so it may not evaluate a filter that reads one.
-  test.each([
-    ["names a restricted survey", { surveyScope: "specific", surveyIds: ["clrestricted00000000000001"] }],
-    ["is scoped to any survey while one is restricted", { surveyScope: "any", surveyIds: [] }],
-  ])("refuses a segment whose survey-interaction filter %s", async (_name, scope) => {
+  test("refuses a segment whose survey-interaction filter names a restricted survey", async () => {
+    const scope = { surveyScope: "specific", surveyIds: ["clrestricted00000000000001"] };
     const filters = [
       {
         id: "f1",
@@ -634,6 +632,7 @@ describe("getContactsInSegment", () => {
     expect(prisma.survey.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
+          id: { in: ["clrestricted00000000000001"] },
           workspaceId: mockWorkspaceId,
           AND: [expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) })],
         }),

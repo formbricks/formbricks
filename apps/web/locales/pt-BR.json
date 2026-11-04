@@ -5065,6 +5065,7 @@
           "nav_title": "Links pessoais",
           "no_contacts_in_segment": "Nenhum contato encontrado para o segmento selecionado",
           "no_segments_available": "Nenhum segmento disponível",
+          "segment_survey_filters_not_visible": "O segmento selecionado filtra por pesquisas às quais você não tem acesso, então ele não pode ser usado para links pessoais.",
           "segment_survey_workspace_mismatch": "O segmento selecionado pertence a um workspace diferente desta pesquisa.",
           "select_segment": "Selecionar segmento",
           "upgrade_prompt_description": "Gerar links pessoais para um segmento e vincular respostas de pesquisa a cada contato.",

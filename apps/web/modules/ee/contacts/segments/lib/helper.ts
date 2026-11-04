@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
@@ -50,8 +50,8 @@ export const checkForRecursiveSegmentFilter = async (filters: TBaseFilters, segm
 
 /**
  * Collects all surveyIds referenced by "specific" scope survey-interaction filters in the (nested)
- * filter tree. Filters scoped to "any" survey contribute no ids, and nested segment filters are not
- * followed: `findSegmentSurveyFilterViolation` covers both (ENG-6870).
+ * filter tree. Filters scoped to "any" survey contribute no ids (they only read workspace-visible
+ * surveys), and nested segment filters are not followed: `segmentFiltersReadHiddenSurvey` does (ENG-6870).
  */
 export const collectSurveyIdsFromSegmentFilters = (filters: TBaseFilters): string[] => {
   const surveyIds: string[] = [];
@@ -150,114 +150,117 @@ export const restoreHiddenSegmentSurveyIds = async (
   return restoreHiddenSurveyIds(filters, storedFilters, new Set(visible.map((survey) => survey.id)));
 };
 
-/** What a filter tree's survey-interaction filters read, once its nested segment filters are followed. */
-type TSegmentSurveyReach = { surveyIds: Set<string>; anySurvey: boolean };
-
-const collectSegmentSurveyReach = async (
+/**
+ * Every survey id the tree's `specific` survey-interaction filters name, at any depth and through nested
+ * segment filters, the way evaluation resolves them (`buildSegmentFilterWhereClause`): a segment is
+ * followed once, and a missing one or another workspace's reads nothing.
+ */
+const collectReachableSurveyIds = async (
   filters: TBaseFilters,
   workspaceId: string,
-  reach: TSegmentSurveyReach,
+  surveyIds: Set<string>,
   visitedSegmentIds: Set<string>
 ): Promise<void> => {
-  for (const { resource } of filters) {
-    if (!isResourceFilter(resource)) {
-      await collectSegmentSurveyReach(resource, workspaceId, reach, visitedSegmentIds);
+  // Draft saves skip filter validation (`updateSurveyDraft`), so every node is read defensively: a
+  // half-built one names no survey.
+  if (!Array.isArray(filters)) return;
+  for (const filter of filters) {
+    const resource = filter?.resource;
+    if (!resource) continue;
+    if (Array.isArray(resource)) {
+      await collectReachableSurveyIds(resource, workspaceId, surveyIds, visitedSegmentIds);
+      continue;
+    }
+    if (!isResourceFilter(resource)) continue;
+
+    if (resource.root?.type === "surveyInteraction") {
+      const { value } = resource as Partial<TSegmentSurveyInteractionFilter>;
+      // `any` scope only reads workspace-visible surveys (see `survey-interaction.ts`).
+      if (value?.surveyScope !== "specific" || !Array.isArray(value.surveyIds)) continue;
+      for (const surveyId of value.surveyIds) if (typeof surveyId === "string") surveyIds.add(surveyId);
       continue;
     }
 
-    if (resource.root.type === "surveyInteraction") {
-      const { value } = resource as TSegmentSurveyInteractionFilter;
-      if (value.surveyScope === "any") reach.anySurvey = true;
-      else for (const surveyId of value.surveyIds) reach.surveyIds.add(surveyId);
-      continue;
-    }
-
-    if (resource.root.type !== "segment") continue;
+    if (resource.root?.type !== "segment") continue;
 
     const { segmentId } = resource.root;
-    if (visitedSegmentIds.has(segmentId)) continue;
+    if (typeof segmentId !== "string" || visitedSegmentIds.has(segmentId)) continue;
     visitedSegmentIds.add(segmentId);
 
     let nested: Awaited<ReturnType<typeof getSegment>>;
     try {
       nested = await getSegment(segmentId);
     } catch (error) {
-      // A dangling reference matches nobody and reads no survey.
-      if (error instanceof ResourceNotFoundError) continue;
+      // A dangling or malformed reference matches nobody and reads no survey.
+      if (error instanceof ResourceNotFoundError || error instanceof ValidationError) continue;
       throw error;
     }
-
-    // Evaluation ignores another workspace's segment (`buildSegmentFilterWhereClause`), so its filters
-    // read nothing here either.
     if (nested.workspaceId !== workspaceId) continue;
 
-    await collectSegmentSurveyReach(nested.filters, workspaceId, reach, visitedSegmentIds);
+    await collectReachableSurveyIds(nested.filters, workspaceId, surveyIds, visitedSegmentIds);
   }
 };
 
 const findHiddenSurvey = (where: Prisma.SurveyWhereInput) =>
   prisma.survey.findFirst({ where, select: { id: true } });
 
-/**
- * Why a caller may not evaluate a filter tree, if they may not:
- * - `hiddenSurvey`: a survey-interaction filter names a survey hidden from the caller;
- * - `anySurveyWithHiddenSurveys`: a filter is scoped to `any` survey while the workspace holds a survey
- *   hidden from the caller.
- */
-export type TSegmentSurveyFilterViolation = "hiddenSurvey" | "anySurveyWithHiddenSurveys";
-
-/**
- * ENG-6870: a survey-interaction filter reads who saw, started or completed a survey, so evaluating one
- * for a caller tells them that about every survey it reads. The caller must therefore see every survey
- * the tree reads: each `specific` id, at any depth and through nested segment filters, and for an
- * `any`-scoped filter every survey in the workspace. Returns the first violation, or `null` when the
- * caller may evaluate the tree.
- *
- * Applies `buildHiddenSurveyWhere`, so an organization owner or manager, or a workspace without hidden
- * surveys, never pays more than the nested-segment lookups (which `getSegment`'s request cache shares
- * with the evaluation that follows). Otherwise it is one query for `any`, or one per batch of ids.
- *
- * @param segmentId - the segment whose filters these are, if saved, so a self-reference is not followed
- */
-export const findSegmentSurveyFilterViolation = async (
+/** `collectReachableSurveyIds` from the top of a tree. */
+const getReachableSurveyIds = async (
   filters: TBaseFilters,
   workspaceId: string,
-  actor: TSurveyActorContext,
   segmentId?: string
-): Promise<TSegmentSurveyFilterViolation | null> => {
-  const hiddenSurveyWhere = buildHiddenSurveyWhere(actor);
-  if (!hiddenSurveyWhere) return null;
+): Promise<Set<string>> => {
+  const reachable = new Set<string>();
+  await collectReachableSurveyIds(filters, workspaceId, reachable, new Set(segmentId ? [segmentId] : []));
+  return reachable;
+};
 
-  const reach: TSegmentSurveyReach = { surveyIds: new Set(), anySurvey: false };
-  await collectSegmentSurveyReach(filters, workspaceId, reach, new Set(segmentId ? [segmentId] : []));
-
-  if (reach.anySurvey) {
-    // With no hidden survey in the workspace, no `specific` id can name one either.
-    const hiddenSurvey = await findHiddenSurvey({ workspaceId, AND: [hiddenSurveyWhere] });
-    return hiddenSurvey ? "anySurveyWithHiddenSurveys" : null;
-  }
-
-  const surveyIds = [...reach.surveyIds];
+/** Whether any of `surveyIds` is a survey of `workspaceId` that `buildHiddenSurveyWhere` hides from `actor`. */
+const anySurveyHiddenFrom = async (
+  surveyIds: ReadonlyArray<string>,
+  workspaceId: string,
+  hiddenSurveyWhere: Prisma.SurveyWhereInput
+): Promise<boolean> => {
   for (let i = 0; i < surveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
     const batch = surveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
     // Sequential on purpose: the first hidden survey decides, and no further query runs.
     const batchWhere: Prisma.SurveyWhereInput = { id: { in: batch }, workspaceId, AND: [hiddenSurveyWhere] };
-    if (await findHiddenSurvey(batchWhere)) return "hiddenSurvey"; // NOSONAR
+    if (await findHiddenSurvey(batchWhere)) return true; // NOSONAR
   }
-
-  return null;
-};
-
-const SEGMENT_SURVEY_FILTER_VIOLATION_MESSAGES: Record<TSegmentSurveyFilterViolation, string> = {
-  hiddenSurvey: "Segment filters reference a survey you don't have access to",
-  anySurveyWithHiddenSurveys:
-    "Filtering on any survey requires access to every survey in this workspace; pick specific surveys instead",
+  return false;
 };
 
 /**
- * `findSegmentSurveyFilterViolation` for a write: a caller may only save survey-interaction filters they
- * could evaluate themselves.
- * @throws {InvalidInputError} When the caller may not evaluate the filters
+ * ENG-6870: whether evaluating `filters` would tell `actor` who saw, started or completed a survey hidden
+ * from them — that is, whether any survey the tree names, directly or through nested segment filters, is
+ * one `buildHiddenSurveyWhere` hides from `actor`. Listing a segment's contacts, or targeting a survey
+ * whose responses the actor reads, is only allowed when it is not.
+ *
+ * An organization owner or manager sees every survey and costs no query. Otherwise it is the nested
+ * segment lookups (which `getSegment`'s request cache shares with the evaluation that follows) and one
+ * query per batch of ids.
+ *
+ * @param segmentId - the segment whose filters these are, if saved, so a self-reference is not followed
+ */
+export const segmentFiltersReadHiddenSurvey = async (
+  filters: TBaseFilters,
+  workspaceId: string,
+  actor: TSurveyActorContext,
+  segmentId?: string
+): Promise<boolean> => {
+  const hiddenSurveyWhere = buildHiddenSurveyWhere(actor);
+  if (!hiddenSurveyWhere) return false;
+  const reachable = await getReachableSurveyIds(filters, workspaceId, segmentId);
+  return anySurveyHiddenFrom([...reachable], workspaceId, hiddenSurveyWhere);
+};
+
+export const SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE =
+  "Segment filters reference a survey you don't have access to";
+
+/**
+ * `segmentFiltersReadHiddenSurvey` for a write: a caller may only save, attach or copy survey-interaction
+ * filters they could evaluate themselves.
+ * @throws {InvalidInputError} When the filters read a survey hidden from the caller
  */
 export const assertSegmentSurveyFiltersVisible = async (
   filters: TBaseFilters,
@@ -265,6 +268,43 @@ export const assertSegmentSurveyFiltersVisible = async (
   actor: TSurveyActorContext,
   segmentId?: string
 ): Promise<void> => {
-  const violation = await findSegmentSurveyFilterViolation(filters, workspaceId, actor, segmentId);
-  if (violation) throw new InvalidInputError(SEGMENT_SURVEY_FILTER_VIOLATION_MESSAGES[violation]);
+  if (await segmentFiltersReadHiddenSurvey(filters, workspaceId, actor, segmentId)) {
+    throw new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE);
+  }
+};
+
+/** The survey ids `filters` reads that `storedFilters` did not, nested segments followed in both. */
+export const getAddedSegmentSurveyIds = async (
+  filters: TBaseFilters,
+  storedFilters: TBaseFilters,
+  workspaceId: string,
+  segmentId?: string
+): Promise<string[]> => {
+  const [next, stored] = await Promise.all([
+    getReachableSurveyIds(filters, workspaceId, segmentId),
+    getReachableSurveyIds(storedFilters, workspaceId, segmentId),
+  ]);
+  return [...next].filter((surveyId) => !stored.has(surveyId));
+};
+
+/**
+ * `assertSegmentSurveyFiltersVisible` for an edit of a tree that is already stored: only the surveys the
+ * edit adds — named directly or through a nested segment it adds — must be visible to the caller. A
+ * survey the stored tree already read stays, as `restoreHiddenSegmentSurveyIds` keeps it: the caller did
+ * not add it, and refusing it would stop them editing anything else in a segment an administrator wrote.
+ * @throws {InvalidInputError} When the edit adds a survey hidden from the caller
+ */
+export const assertAddedSegmentSurveyFiltersVisible = async (
+  filters: TBaseFilters,
+  storedFilters: TBaseFilters,
+  workspaceId: string,
+  actor: TSurveyActorContext,
+  segmentId?: string
+): Promise<void> => {
+  const hiddenSurveyWhere = buildHiddenSurveyWhere(actor);
+  if (!hiddenSurveyWhere) return;
+  const added = await getAddedSegmentSurveyIds(filters, storedFilters, workspaceId, segmentId);
+  if (await anySurveyHiddenFrom(added, workspaceId, hiddenSurveyWhere)) {
+    throw new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE);
+  }
 };
