@@ -12,7 +12,6 @@ import {
 } from "@formbricks/types/surveys/expression-types";
 import {
   EXPRESSION_FUNCTIONS,
-  EXPRESSION_MAX_STATIC_TEXT_LENGTH,
   type TExpression,
   type TExpressionCall,
   type TExpressionFunction,
@@ -288,8 +287,7 @@ export type TFormulaErrorCode =
   | "unclosed_text"
   | "unknown_function"
   | "unknown_reference"
-  | "incomplete_reference"
-  | "text_too_long";
+  | "incomplete_reference";
 
 export interface TFormulaError {
   code: TFormulaErrorCode;
@@ -357,9 +355,7 @@ const readText: TTokenReader = (text, idx) => {
     end += 1;
   }
   if (end >= text.length) throw new FormulaError({ code: "unclosed_text", position: idx });
-  if (value.length > EXPRESSION_MAX_STATIC_TEXT_LENGTH) {
-    throw new FormulaError({ code: "text_too_long", position: idx });
-  }
+  // No length check: FORMULA_MAX_LENGTH keeps any quoted text within EXPRESSION_MAX_STATIC_TEXT_LENGTH.
   return { token: { kind: "text", value, position: idx }, next: end + 1 };
 };
 

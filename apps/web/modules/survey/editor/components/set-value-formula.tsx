@@ -166,7 +166,6 @@ export function SetValueFormula({
       case "incomplete_reference":
         return t("workspace.surveys.edit.flow.formula_error_incomplete_reference");
       case "too_long":
-      case "text_too_long":
         return t("workspace.surveys.edit.flow.formula_error_too_long", { max: FORMULA_MAX_LENGTH });
       case "empty":
         return "";
