@@ -21,6 +21,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
+import { assertUserManagementAllowed } from "@/modules/ee/role-management/lib/user-management";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
@@ -47,6 +48,7 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
   withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -67,6 +69,7 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
   withAuditLogging("updated", "invite", async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -107,6 +110,7 @@ const ZDeleteMembershipAction = z.object({
 
 export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDeleteMembershipAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
+    await assertUserManagementAllowed(ctx.user.id, parsedInput.organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
@@ -173,6 +177,7 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       throw new ValidationError("Invite does not belong to the organization");
     }
 
+    await assertUserManagementAllowed(ctx.user.id, parsedInput.organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
@@ -268,6 +273,7 @@ const assertInviterMayInvite = async ({
   userId: string;
 }>): Promise<void> => {
   if (isOrgOwnerOrManager) {
+    await assertUserManagementAllowed(userId, organizationId);
     await assertCan({ type: "user", id: userId }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -440,6 +446,7 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new AuthenticationError("User not a member of this organization");
     }
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,

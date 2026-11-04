@@ -6,7 +6,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
-import { assertCan, can } from "@/lib/authorization";
+import { assertCan } from "@/lib/authorization";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -17,6 +17,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
+import { assertUserManagementAllowed } from "@/modules/ee/role-management/lib/user-management";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
@@ -37,6 +38,7 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
       throw new AuthenticationError("User not a member of this organization");
     }
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -57,7 +59,9 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
 
-    const result = await updateInvite(parsedInput.inviteId, parsedInput.data);
+    const result = await updateInvite(parsedInput.inviteId, parsedInput.data, {
+      allowOwnerInvite: currentUserMembership.role === "owner",
+    });
 
     ctx.auditLoggingCtx.newObject = { ...(await getInvite(parsedInput.inviteId)) };
     return result;
@@ -79,21 +83,7 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
     }
-    // `organization.manage_access` *is* this decision in the central vocabulary. The SpiceDB
-    // evaluator maps `USER_MANAGEMENT_MINIMUM_ROLE` onto the schema (`owner` → write, `manager` →
-    // manage_access, `disabled` → deny). Asking centrally makes SpiceDB authoritative for this role
-    // mutation — the highest-risk one in the product. The check
-    // below it stays `organization.manage`, which is a different and additionally required
-    // capability, so both remain.
-    const canManageAccess = await can({ type: "user", id: ctx.user.id }, "organization.manage_access", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-
-    if (!canManageAccess) {
-      throw new OperationNotAllowedError("User management is not allowed for your role");
-    }
-
+    await assertUserManagementAllowed(ctx.user.id, parsedInput.organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { updateMembershipAction } from "./actions";
+import { updateInviteAction, updateMembershipAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
@@ -10,7 +10,9 @@ const mocks = vi.hoisted(() => ({
   getAccessControlPermission: vi.fn(),
   getMembershipByUserIdOrganizationId: vi.fn(),
   getOrganization: vi.fn(),
+  getOrganizationIdFromInviteId: vi.fn(),
   getOrganizationOwnerCount: vi.fn(),
+  updateInvite: vi.fn(),
   updateMembership: vi.fn(),
 }));
 
@@ -59,7 +61,7 @@ vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromInviteId: vi.fn(),
+  getOrganizationIdFromInviteId: mocks.getOrganizationIdFromInviteId,
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -71,7 +73,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 vi.mock("@/modules/ee/role-management/lib/invite", () => ({
-  updateInvite: vi.fn(),
+  updateInvite: mocks.updateInvite,
 }));
 
 vi.mock("@/modules/ee/role-management/lib/membership", () => ({
@@ -156,5 +158,82 @@ describe("updateMembershipAction", () => {
 
     await expect(callUpdateMembership("member")).rejects.toThrow(OperationNotAllowedError);
     expect(mocks.updateMembership).not.toHaveBeenCalled();
+  });
+});
+
+const denyManageAccess = () =>
+  mocks.can.mockImplementation(async (_actor, action: string) => action !== "organization.manage_access");
+
+describe("updateMembershipAction below the user-management floor", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    denyManageAccess();
+    mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
+      membership(userId, userId === currentUserId ? "manager" : "member")
+    );
+  });
+
+  test("refuses the change", async () => {
+    await expect(callUpdateMembership("member")).rejects.toThrow(OperationNotAllowedError);
+    expect(mocks.updateMembership).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateInviteAction", () => {
+  const inviteId = "5f1c9d3e-8a2b-4c6d-9e0f-1a2b3c4d5e6f";
+
+  const callUpdateInvite = (role: string) =>
+    updateInviteAction({
+      ctx: { user: { id: currentUserId, locale: "en-US" }, auditLoggingCtx: {} },
+      parsedInput: { inviteId, data: { role } },
+    } as never);
+
+  const asCaller = (role: string) =>
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue(membership(currentUserId, role));
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mocks.applyRateLimit.mockResolvedValue(undefined);
+    mocks.assertCan.mockResolvedValue(undefined);
+    mocks.can.mockResolvedValue(true);
+    mocks.getAccessControlPermission.mockResolvedValue(true);
+    mocks.getOrganization.mockResolvedValue({ id: organizationId });
+    mocks.getOrganizationIdFromInviteId.mockResolvedValue(organizationId);
+    mocks.updateInvite.mockResolvedValue(true);
+    asCaller("manager");
+  });
+
+  // ENG-6812: the invite path asked only `organization.manage`, so an owner-only floor did not hold.
+  test("refuses a manager below the user-management floor", async () => {
+    denyManageAccess();
+
+    await expect(callUpdateInvite("member")).rejects.toThrow(OperationNotAllowedError);
+    expect(mocks.can).toHaveBeenCalledWith(
+      { type: "user", id: currentUserId },
+      "organization.manage_access",
+      { type: "organization", id: organizationId }
+    );
+    expect(mocks.updateInvite).not.toHaveBeenCalled();
+  });
+
+  test("keeps owner invites out of a manager's reach", async () => {
+    await expect(callUpdateInvite("member")).resolves.toBe(true);
+    expect(mocks.updateInvite).toHaveBeenCalledWith(
+      inviteId,
+      { role: "member" },
+      { allowOwnerInvite: false }
+    );
+  });
+
+  test("lets an owner change an owner invite", async () => {
+    asCaller("owner");
+
+    await expect(callUpdateInvite("manager")).resolves.toBe(true);
+    expect(mocks.updateInvite).toHaveBeenCalledWith(
+      inviteId,
+      { role: "manager" },
+      { allowOwnerInvite: true }
+    );
   });
 });
