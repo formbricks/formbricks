@@ -3,7 +3,7 @@ import { MAX_DASHBOARD_COOKIE_VALUE_LENGTH, dashboardCookieAssignments } from ".
 
 const PAGE = "/workspaces/clws000000000000000000001/analysis/dashboards/cldb000000000000000000001";
 
-describe("dashboardCookieAssignments (C2)", () => {
+describe("dashboardCookieAssignments", () => {
   test("scopes a remembered value to the dashboard page, never to every path", () => {
     const [set, ...rest] = dashboardCookieAssignments({
       name: "fb_x",

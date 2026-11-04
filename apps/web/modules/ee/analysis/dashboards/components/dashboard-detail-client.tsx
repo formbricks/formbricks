@@ -677,7 +677,7 @@ function DashboardDetailView({
   const handlePickChange = useCallback(
     (filterId: string, values: string[]) => {
       const applied = applyDashboardFilterPick(dashboard.filters, picks, filterId, values);
-      // The picks travel in every chart read's URL, so their total is bounded as the API bounds it (C9).
+      // The picks travel in every chart read's URL, so their total is bounded as the API bounds it.
       if ("exceedsBudget" in applied) {
         toast.error(t("workspace.analysis.dashboards.filter_picks_too_long"));
         return;
@@ -747,7 +747,7 @@ function DashboardDetailView({
       {/* The date range and the filter picks only narrow existing charts, so the bar is hidden on an
           empty dashboard where they would have nothing to act on — except while editing, where the
           dashboard's filters are set up. The date range is this person's own view, like the picks, so
-          edit mode shows the filters being set up instead, as it did before filters existed (U9). */}
+          edit mode shows the filters being set up instead, as it did before filters existed. */}
       {(isEditing || !isEmpty) && (
         <div className="flex flex-wrap items-center gap-2" data-testid="dashboard-filter-bar">
           {!isEditing && <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />}
@@ -777,7 +777,7 @@ function DashboardDetailView({
           {isEmpty ? (
             <EmptyState
               text={
-                // Someone who can't edit the dashboard can't add charts to it either (U1).
+                // Someone who can't edit the dashboard can't add charts to it either.
                 isReadOnly
                   ? t("workspace.analysis.dashboards.no_data_message_read_only")
                   : t("workspace.analysis.dashboards.no_data_message")

@@ -12,7 +12,7 @@ import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalo
 export type TDashboardEmbeddedFields = TDatasetFieldsStatus & { embeddedFields: TEmbeddedChartField[] };
 
 /**
- * The embedded-data fields a dashboard filter can offer (ENG-6893): every key of every Feedback Dataset
+ * The embedded-data fields a dashboard filter can offer: every key of every Feedback Dataset
  * the dashboard's charts read, once each, read off each dataset's field catalog with the chart builder's
  * own query so the two share the cache. Empty until loaded, or while `enabled` is off (outside edit mode).
  */

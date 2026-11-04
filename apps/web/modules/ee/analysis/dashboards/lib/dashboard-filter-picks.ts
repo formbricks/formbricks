@@ -13,7 +13,7 @@ import {
  */
 
 /**
- * The most characters a person's picks may hold, summed over every value of every filter (C9). Each value
+ * The most characters a person's picks may hold, summed over every value of every filter. Each value
  * may be up to 1000 characters and a list pick up to 100 values, so without a total the picks of 10
  * filters could reach a megabyte in a GET's query string; 4000 keeps every read's URL well inside what
  * servers and proxies accept. The API answers 422 past it, and the dashboard page stops adding values.
@@ -51,7 +51,7 @@ const pickValueProblem = (type: string | undefined, value: string): string | nul
 };
 
 /**
- * What is wrong with a person's picks before any of them reaches a chart query (C6, C9): more characters
+ * What is wrong with a person's picks before any of them reaches a chart query: more characters
  * in all than `MAX_DASHBOARD_FILTER_PICKS_CHARS`, or a value a filter's field cannot hold (a number field
  * picked with a word), named by the filter it was picked for. Picks for filters the dashboard does not
  * have are ignored, as the operations drop them.
@@ -218,7 +218,7 @@ export const deserializeFilterPicks = (raw: string | null | undefined): TDashboa
 
 /**
  * Remember (or forget, when empty) a person's picks on one dashboard, in a cookie scoped to the dashboard's
- * page (C2). Picks too long for a cookie are kept in the URL only. Client-only; a no-op on the server.
+ * page. Picks too long for a cookie are kept in the URL only. Client-only; a no-op on the server.
  */
 export const writeStoredFilterPicks = (dashboardId: string, picks: TDashboardFilterPicks): void =>
   writeDashboardCookie(

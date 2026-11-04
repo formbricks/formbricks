@@ -9,7 +9,7 @@ import { getDashboardFilterField } from "./dashboard-filters";
 /**
  * Whether a Feedback Dataset has the field a dashboard filter names (ADR-0024: a filter matches a chart by
  * field name in the chart's dataset). Every dataset has the shared catalog's fields. An embedded-data field
- * (ENG-6893) is the dataset's when one of its keys compiles to that member, which is the case exactly when
+ * is the dataset's when one of its keys compiles to that member, which is the case exactly when
  * the dataset has the key, by its original name: the member name is derived from the key alone. A key
  * outside the dataset's top keys still counts, so a filter keeps matching a chart whose key grew rarer.
  *

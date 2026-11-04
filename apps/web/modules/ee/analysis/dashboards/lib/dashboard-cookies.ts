@@ -1,5 +1,5 @@
 /**
- * The cookies a dashboard page remembers a person's date range and filter picks in (C2). Each is scoped to
+ * The cookies a dashboard page remembers a person's date range and filter picks in. Each is scoped to
  * that dashboard's page path, so it travels only with requests for that dashboard rather than with every
  * request to the app: with `path=/`, every dashboard a person ever filtered added its cookies to every
  * request header, and enough of them push a request past the server's header limit.

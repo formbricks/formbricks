@@ -275,8 +275,8 @@ export const readStoredDateFilterFromCookie = (
 };
 
 /**
- * Persist (or clear, when null) the dashboard date filter in a cookie scoped to the dashboard's page
- * (C2). Client-only and defensive: no-ops during SSR. `SameSite=Lax` keeps the cookie on top-level
+ * Persist (or clear, when null) the dashboard date filter in a cookie scoped to the dashboard's
+ * page. Client-only and defensive: no-ops during SSR. `SameSite=Lax` keeps the cookie on top-level
  * navigations (shared links) without exposing it cross-site.
  */
 export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDateFilter | null): void =>

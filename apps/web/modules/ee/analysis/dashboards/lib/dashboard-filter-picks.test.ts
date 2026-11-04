@@ -139,7 +139,7 @@ describe("keepCurrentPicks", () => {
   });
 });
 
-describe("the total picks budget (C9)", () => {
+describe("the total picks budget", () => {
   test("counts every picked character across filters", () => {
     expect(countPickChars({})).toBe(0);
     expect(countPickChars({ [A]: ["Web", "App"], [B]: ["late"] })).toBe(10);
@@ -156,7 +156,7 @@ describe("the total picks budget (C9)", () => {
   });
 });
 
-describe("findPickIssues (C6, C9)", () => {
+describe("findPickIssues", () => {
   const typed: TDashboardFilter[] = [
     { id: A, field: "FeedbackRecords.valueNumber", operator: "gt", label: "Score" },
     { id: B, field: "FeedbackRecords.collectedAt", operator: "gte", label: "Since" },

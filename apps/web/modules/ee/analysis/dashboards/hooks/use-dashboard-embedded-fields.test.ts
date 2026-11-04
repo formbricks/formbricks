@@ -58,7 +58,7 @@ describe("useDashboardEmbeddedFields", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  test("reports a failed catalog so the editor can say so and retry, instead of raw member names (U6)", async () => {
+  test("reports a failed catalog so the editor can say so and retry, instead of raw member names", async () => {
     fetchMock.mockImplementation(async (url) =>
       url.includes("datasetId=ds1")
         ? catalog({ name: PLAN, label: "Plan" })

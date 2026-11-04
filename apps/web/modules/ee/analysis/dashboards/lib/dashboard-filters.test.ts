@@ -77,7 +77,7 @@ describe("isListDashboardFilter", () => {
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.collectedAt" }))).toBe(false);
   });
 
-  test("lists only fields the catalog has a value lookup for: free text is typed (C1)", () => {
+  test("lists only fields the catalog has a value lookup for: free text is typed", () => {
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.language" }))).toBe(true);
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueText" }))).toBe(false);
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.userId" }))).toBe(false);
@@ -90,7 +90,7 @@ describe("isListDashboardFilter", () => {
   });
 });
 
-describe("filter-only fields (S3)", () => {
+describe("filter-only fields", () => {
   test("the answer filter is not a dashboard filter field", () => {
     expect(getDashboardFilterField("FeedbackRecords.answer")).toBeUndefined();
     expect(getDashboardFilterOperators("FeedbackRecords.answer")).toEqual([]);
@@ -108,7 +108,7 @@ describe("parseStoredDashboardFilters", () => {
   });
 });
 
-describe("embedded-data fields as dashboard filters (ENG-6893)", () => {
+describe("embedded-data fields as dashboard filters", () => {
   const plan = "FeedbackRecords.ed_plan_64879f7d";
 
   test("an embedded member is a text dimension filtered like any text field, and picks from a list", () => {
