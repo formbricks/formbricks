@@ -216,7 +216,12 @@ const ZPiece = z.object({
   text: z.string().max(MAX_PIECE_CHARS).nullable(),
 });
 const ZPieces = z.array(ZPiece).max(MAX_PIECES);
-const ZOption = z.object({ code: ZLabel.nullable(), isOther: z.boolean(), texts: ZPieces });
+// `null` for an empty list, as the model-facing schema lets a JSON-mode provider send it.
+const ZOption = z.object({
+  code: ZLabel.nullable(),
+  isOther: z.boolean(),
+  texts: ZPieces.nullish().transform((pieces) => pieces ?? []),
+});
 
 /**
  * What a returned plan is checked against. Lenient where the checks are stricter: `kind` is any short
@@ -247,7 +252,12 @@ export const ZDocumentPlanRule = z.object({
   kind: z.enum(DOCUMENT_PLAN_RULE_KINDS),
   question: ZLabel,
   operator: z.enum(DOCUMENT_PLAN_OPERATORS),
-  values: z.array(ZLabel).max(MAX_OPTIONS),
+  // `isSubmitted` and `isSkipped` take none, which a JSON-mode provider may send as `null`.
+  values: z
+    .array(ZLabel)
+    .max(MAX_OPTIONS)
+    .nullish()
+    .transform((values) => values ?? []),
   target: ZLabel.nullable(),
 });
 

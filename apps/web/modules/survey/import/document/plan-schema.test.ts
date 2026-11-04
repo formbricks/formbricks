@@ -75,4 +75,25 @@ describe("the checks' schemas", () => {
     expect(entry.lowerLabel).toEqual([]);
     expect(entry.logicNotes).toEqual([]);
   });
+
+  test("take an option without texts and a rule without values as empty, as the model-facing schema does", () => {
+    const entry = ZDocumentPlanEntry.parse({
+      ref: "R1",
+      kind: "multipleChoiceSingle",
+      idCell: null,
+      sectionCell: null,
+      required: false,
+      headline: [],
+      options: [{ code: null, isOther: true, texts: null }],
+      rules: [{ kind: "skipTo", question: "Q1", operator: "isSkipped", values: null, target: "end" }],
+      dropdown: false,
+      inputType: null,
+      scale: null,
+      range: null,
+      format: null,
+    });
+
+    expect(entry.options[0].texts).toEqual([]);
+    expect(entry.rules[0].values).toEqual([]);
+  });
 });
