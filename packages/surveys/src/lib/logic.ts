@@ -18,6 +18,7 @@ import {
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
 import { getLocalizedValue } from "@/lib/i18n";
+import { findByLocalizedLabel, getAllLocalizedLabels } from "@/lib/localized-label";
 import { getElementsFromSurveyBlocks } from "./utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -124,9 +125,7 @@ const getLeftOperandValue = (
         const isOthersEnabled = currentQuestion.choices.some((c) => c.id === "other");
 
         if (typeof responseValue === "string") {
-          const choice = currentQuestion.choices.find((choice) => {
-            return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
-          });
+          const choice = findByLocalizedLabel(currentQuestion.choices, responseValue, selectedLanguage);
 
           if (!choice) {
             if (isOthersEnabled) {
@@ -140,9 +139,7 @@ const getLeftOperandValue = (
         } else if (Array.isArray(responseValue)) {
           let choices: string[] = [];
           responseValue.forEach((value) => {
-            const foundChoice = currentQuestion.choices.find((choice) => {
-              return getLocalizedValue(choice.label, selectedLanguage) === value;
-            });
+            const foundChoice = findByLocalizedLabel(currentQuestion.choices, value, selectedLanguage);
 
             if (foundChoice) {
               choices.push(foundChoice.id);
@@ -160,9 +157,7 @@ const getLeftOperandValue = (
       // option ids, so "was ranked" maps each label back, as multi select does.
       if (currentQuestion.type === "ranking" && Array.isArray(responseValue)) {
         return responseValue.flatMap((value) => {
-          const choice = currentQuestion.choices.find(
-            (candidate) => getLocalizedValue(candidate.label, selectedLanguage) === value
-          );
+          const choice = findByLocalizedLabel(currentQuestion.choices, value, selectedLanguage);
           return choice ? [choice.id] : [];
         });
       }
@@ -177,18 +172,21 @@ const getLeftOperandValue = (
           const rowIndex = resolveMatrixRowIndex(currentQuestion, leftOperand.meta);
           if (rowIndex === undefined) return undefined;
 
-          const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
+          // The row's label in the current language first, then in any other (a language switch
+          // after the matrix was answered keeps its keys in the language it was answered in).
+          const rowLabel = currentQuestion.rows[rowIndex].label;
+          const row = [
+            getLocalizedValue(rowLabel, selectedLanguage),
+            ...getAllLocalizedLabels(rowLabel),
+          ].find((label) => label in responseValue);
 
-          const rowValue = responseValue[row];
+          const rowValue = row === undefined ? undefined : responseValue[row];
           if (rowValue === "") return "";
 
-          if (rowValue) {
-            const columnIndex = currentQuestion.columns.findIndex((column) => {
-              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
-            });
-
-            if (columnIndex === -1) return undefined;
-            return columnIndex.toString();
+          if (typeof rowValue === "string") {
+            const column = findByLocalizedLabel(currentQuestion.columns, rowValue, selectedLanguage);
+            if (!column) return undefined;
+            return currentQuestion.columns.indexOf(column).toString();
           }
           return undefined;
         }

@@ -1,7 +1,7 @@
 import { type TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseDataValue } from "@formbricks/types/responses";
 import { type TDropOptionAnswers, type TElementOptionsNotShown } from "@formbricks/types/surveys/show-if";
-import { getLocalizedValue } from "@/lib/i18n";
+import { findByLocalizedLabel, getAllLocalizedLabels } from "@/lib/localized-label";
 
 /**
  * Answers without the options a page no longer offers (ENG-6937, P7). The not-shown record keys
@@ -20,11 +20,12 @@ type TOptionElement = {
   columns?: TLabelled[];
 };
 
-const labelsOf = (items: TLabelled[] | undefined, ids: string[] | undefined, language: string): Set<string> =>
+/** The labels of the listed items, in every language: an answer given before a language switch counts. */
+const labelsOf = (items: TLabelled[] | undefined, ids: string[] | undefined): Set<string> =>
   new Set(
     (items ?? [])
       .filter((item) => ids?.includes(item.id))
-      .map((item) => getLocalizedValue(item.label, language))
+      .flatMap((item) => getAllLocalizedLabels(item.label))
   );
 
 /**
@@ -33,9 +34,11 @@ const labelsOf = (items: TLabelled[] | undefined, ids: string[] | undefined, lan
  */
 const isOtherText = (element: TOptionElement, value: string, language: string): boolean =>
   value !== "" &&
-  !(element.choices ?? []).some(
-    (choice) => choice.id !== "other" && getLocalizedValue(choice.label, language) === value
-  );
+  findByLocalizedLabel(
+    (element.choices ?? []).filter((choice) => choice.id !== "other"),
+    value,
+    language
+  ) === undefined;
 
 /**
  * The answer `value` without the options `notShown` lists. Returns `value` itself when nothing in it
@@ -51,7 +54,7 @@ export const dropOptionsFromAnswer = (
     case "multipleChoiceSingle":
     case "multipleChoiceMulti":
     case "ranking": {
-      const hiddenLabels = labelsOf(element.choices, notShown.choices, language);
+      const hiddenLabels = labelsOf(element.choices, notShown.choices);
       const otherHidden = element.type !== "ranking" && (notShown.choices ?? []).includes("other");
       const isDropped = (entry: string) =>
         hiddenLabels.has(entry) || (otherHidden && isOtherText(element, entry, language));
@@ -71,8 +74,8 @@ export const dropOptionsFromAnswer = (
     }
     case "matrix": {
       if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
-      const hiddenRows = labelsOf(element.rows, notShown.rows, language);
-      const hiddenColumns = labelsOf(element.columns, notShown.columns, language);
+      const hiddenRows = labelsOf(element.rows, notShown.rows);
+      const hiddenColumns = labelsOf(element.columns, notShown.columns);
       const entries = Object.entries(value);
       const kept = entries.filter(([row, column]) => !hiddenRows.has(row) && !hiddenColumns.has(column));
       return kept.length === entries.length ? value : Object.fromEntries(kept);

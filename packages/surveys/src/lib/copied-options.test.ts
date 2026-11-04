@@ -104,6 +104,31 @@ describe("copied options: the target offers what was picked in the source", () =
     expect(offeredIn(survey, { brands: "Acme (de)" }, "de")).toEqual(["acme", "none"]);
   });
 
+  test("survives a language switch between the source and the target (picks stored in German)", () => {
+    const survey = makeSurvey(
+      TSurveyElementTypeEnum.MultipleChoiceMulti,
+      TSurveyElementTypeEnum.MultipleChoiceSingle
+    );
+
+    expect(offeredIn(survey, { brands: ["Acme (de)", "Initech (de)"] }, "default")).toEqual([
+      "acme",
+      "initech",
+      "none",
+    ]);
+    expect(offeredIn(survey, { brands: ["Globex"] }, "de")).toEqual(["globex", "none"]);
+  });
+
+  test("a pick stored in another language does not read as an 'other' text", () => {
+    const survey = makeSurvey(
+      TSurveyElementTypeEnum.MultipleChoiceMulti,
+      TSurveyElementTypeEnum.MultipleChoiceSingle
+    );
+    const brands = survey.blocks[0].elements[0] as unknown as { choices: unknown[] };
+    brands.choices.push({ id: "other", code: "99", label: { default: "Other", de: "Andere" } });
+
+    expect(offeredIn(survey, { brands: ["Acme (de)"] }, "default")).toEqual(["acme", "none"]);
+  });
+
   test("nothing picked leaves only the fixed option", () => {
     const survey = makeSurvey(
       TSurveyElementTypeEnum.MultipleChoiceMulti,
