@@ -121,10 +121,9 @@ export const getEmbeddedFieldDefinitionIssues = (field: {
 
   // The logic engine can only calculate the types in COMPUTED_EMBEDDED_DATA_TYPES.
   if (field.source === "computed" && !COMPUTED_EMBEDDED_DATA_TYPES.includes(field.dataType)) {
-    issues.push({
-      path: "dataType",
-      message: `Computed fields support only ${COMPUTED_EMBEDDED_DATA_TYPES.slice(0, -1).join(", ")} or ${COMPUTED_EMBEDDED_DATA_TYPES[COMPUTED_EMBEDDED_DATA_TYPES.length - 1]}`,
-    });
+    const leading = COMPUTED_EMBEDDED_DATA_TYPES.slice(0, -1).join(", ");
+    const [last] = COMPUTED_EMBEDDED_DATA_TYPES.slice(-1);
+    issues.push({ path: "dataType", message: `Computed fields support only ${leading} or ${last}` });
   }
 
   // `dataType` is what ingest coerces against, so a default that disagrees with it would surface
