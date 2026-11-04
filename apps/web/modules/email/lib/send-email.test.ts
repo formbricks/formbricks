@@ -1,3 +1,4 @@
+import { type Socket, createServer } from "node:net";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { sendEmail } from "./send-email";
 
@@ -13,11 +14,12 @@ const mocks = vi.hoisted(() => ({
     SES_EMAIL_ENVIRONMENT: undefined as string | undefined,
     SMTP_AUTHENTICATED: false,
     SMTP_HOST: "localhost",
-    SMTP_PASSWORD: undefined,
+    SMTP_PASSWORD: undefined as string | undefined,
     SMTP_PORT: "1025",
+    SMTP_REQUIRE_TLS: false,
     SMTP_REJECT_UNAUTHORIZED_TLS: true,
     SMTP_SECURE_ENABLED: false,
-    SMTP_USER: undefined,
+    SMTP_USER: undefined as string | undefined,
   },
 }));
 
@@ -33,6 +35,56 @@ const email = {
   html: "<p>Join</p>",
 };
 
+const startPlainSmtpServer = async () => {
+  const commands: string[] = [];
+  const sockets = new Set<Socket>();
+  const server = createServer((socket) => {
+    sockets.add(socket);
+    socket.on("close", () => sockets.delete(socket));
+    socket.setEncoding("utf8");
+    socket.write("220 local test SMTP\r\n");
+    let pending = "";
+    let readingData = false;
+    socket.on("data", (chunk: string) => {
+      pending += chunk;
+      while (pending.includes("\r\n")) {
+        const lineEnd = pending.indexOf("\r\n");
+        const line = pending.slice(0, lineEnd);
+        pending = pending.slice(lineEnd + 2);
+        if (readingData) {
+          if (line === ".") {
+            readingData = false;
+            socket.write("250 accepted\r\n");
+          }
+          continue;
+        }
+        commands.push(line);
+        if (line.startsWith("EHLO")) socket.write("250-localhost\r\n250 SIZE 100000\r\n");
+        else if (line.startsWith("HELO")) socket.write("250 localhost\r\n");
+        else if (line.startsWith("MAIL FROM") || line.startsWith("RCPT TO")) socket.write("250 OK\r\n");
+        else if (line === "DATA") {
+          readingData = true;
+          socket.write("354 go ahead\r\n");
+        } else if (line === "QUIT") socket.end("221 bye\r\n");
+        else socket.write("502 unsupported\r\n");
+      }
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("SMTP test server has no port");
+  return {
+    port: address.port,
+    commands,
+    close: async () => {
+      for (const socket of sockets) socket.destroy();
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve()))
+      );
+    },
+  };
+};
+
 describe("sendEmail SES event publishing", () => {
   beforeEach(() => {
     mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail });
@@ -40,6 +92,14 @@ describe("sendEmail SES event publishing", () => {
     mocks.constants.IS_SMTP_CONFIGURED = true;
     mocks.constants.SES_CONFIGURATION_SET = undefined;
     mocks.constants.SES_EMAIL_ENVIRONMENT = undefined;
+    mocks.constants.SMTP_REQUIRE_TLS = false;
+    mocks.constants.SMTP_SECURE_ENABLED = false;
+    mocks.constants.SMTP_REJECT_UNAUTHORIZED_TLS = true;
+    mocks.constants.SMTP_AUTHENTICATED = false;
+    mocks.constants.SMTP_HOST = "localhost";
+    mocks.constants.SMTP_PORT = "1025";
+    mocks.constants.SMTP_USER = undefined;
+    mocks.constants.SMTP_PASSWORD = undefined;
   });
 
   test("keeps ordinary SMTP messages free of SES headers and internal metadata", async () => {
@@ -65,6 +125,53 @@ describe("sendEmail SES event publishing", () => {
     await sendEmail(email);
     expect(mocks.createTransport).toHaveBeenLastCalledWith(expect.objectContaining({ secure: true }));
     mocks.constants.SMTP_SECURE_ENABLED = false;
+  });
+
+  test("requires STARTTLS for an explicit SMTP connection when opted in", async () => {
+    mocks.constants.SMTP_REQUIRE_TLS = true;
+    await sendEmail(email);
+    expect(mocks.createTransport).toHaveBeenLastCalledWith(expect.objectContaining({ requireTLS: true }));
+
+    mocks.constants.SMTP_SECURE_ENABLED = true;
+    await sendEmail(email);
+    expect(mocks.createTransport).toHaveBeenLastCalledWith(expect.objectContaining({ requireTLS: false }));
+    mocks.constants.SMTP_SECURE_ENABLED = false;
+  });
+
+  test("refuses a server without STARTTLS before sending credentials or message data", async () => {
+    const smtp = await startPlainSmtpServer();
+    const nodemailer = await vi.importActual<typeof import("nodemailer")>("nodemailer");
+    try {
+      mocks.constants.SMTP_HOST = "127.0.0.1";
+      mocks.constants.SMTP_PORT = String(smtp.port);
+      mocks.constants.SMTP_REQUIRE_TLS = true;
+      mocks.constants.SMTP_AUTHENTICATED = true;
+      mocks.constants.SMTP_USER = "test-user";
+      mocks.constants.SMTP_PASSWORD = "test-secret";
+      mocks.createTransport.mockImplementationOnce((options) => nodemailer.createTransport(options));
+
+      await expect(sendEmail(email)).rejects.toThrow("Incorrect SMTP credentials");
+      expect(smtp.commands.some((command) => /^(AUTH|MAIL|RCPT|DATA)\b/i.test(command))).toBe(false);
+      expect(smtp.commands.some((command) => /^EHLO\b/i.test(command))).toBe(true);
+    } finally {
+      await smtp.close();
+    }
+  });
+
+  test("still sends through an unauthenticated plaintext local relay by default", async () => {
+    const smtp = await startPlainSmtpServer();
+    const nodemailer = await vi.importActual<typeof import("nodemailer")>("nodemailer");
+    try {
+      mocks.constants.SMTP_HOST = "127.0.0.1";
+      mocks.constants.SMTP_PORT = String(smtp.port);
+      mocks.createTransport.mockImplementationOnce((options) => nodemailer.createTransport(options));
+
+      await expect(sendEmail(email)).resolves.toBe(true);
+      expect(smtp.commands.some((command) => /^MAIL FROM\b/i.test(command))).toBe(true);
+      expect(smtp.commands).toContain("DATA");
+    } finally {
+      await smtp.close();
+    }
   });
 
   test("adds the invite category and deployment to SES SMTP headers", async () => {

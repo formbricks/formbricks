@@ -36,6 +36,9 @@ MAIL_FROM=noreply@yourdomain.com
 MAIL_FROM_NAME=Formbricks
 SMTP_HOST=smtp.yourprovider.com
 SMTP_PORT=587
+SMTP_SECURE_ENABLED=0
+SMTP_REQUIRE_TLS=1
+SMTP_REJECT_UNAUTHORIZED_TLS=1
 SMTP_USER=your_username
 SMTP_PASSWORD=your_password
 ```
@@ -43,8 +46,9 @@ SMTP_PASSWORD=your_password
 Additional optional settings:
 
 ```bash
-# Enable SMTP_SECURE_ENABLED for TLS (port 465)
-SMTP_SECURE_ENABLED=0
+# Use SMTP_SECURE_ENABLED=1 for implicit TLS (typically port 465).
+# Use SMTP_REQUIRE_TLS=1 to require STARTTLS on non-implicit TLS connections (typically port 587).
+# SMTP_REQUIRE_TLS defaults to 0 so plaintext local relays remain supported.
 
 # If set to 0, the server won't require authentication
 SMTP_AUTHENTICATED=1
@@ -131,6 +135,9 @@ environment:
   MAIL_FROM_NAME: Formbricks
   SMTP_HOST: smtp.yourprovider.com
   SMTP_PORT: 587
+  SMTP_SECURE_ENABLED: 0
+  SMTP_REQUIRE_TLS: 1
+  SMTP_REJECT_UNAUTHORIZED_TLS: 1
   SMTP_USER: your_username
   SMTP_PASSWORD: your_password
   EMAIL_VERIFICATION_DISABLED: 0
@@ -153,6 +160,9 @@ MAIL_FROM=noreply@yourdomain.com
 MAIL_FROM_NAME=Formbricks
 SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
+SMTP_SECURE_ENABLED=0
+SMTP_REQUIRE_TLS=1
+SMTP_REJECT_UNAUTHORIZED_TLS=1
 SMTP_USER=apikey
 SMTP_PASSWORD=your_sendgrid_api_key
 ```
@@ -164,6 +174,9 @@ MAIL_FROM=noreply@yourdomain.com
 MAIL_FROM_NAME=Formbricks
 SMTP_HOST=email-smtp.us-east-1.amazonaws.com
 SMTP_PORT=587
+SMTP_SECURE_ENABLED=0
+SMTP_REQUIRE_TLS=1
+SMTP_REJECT_UNAUTHORIZED_TLS=1
 SMTP_USER=your_ses_access_key
 SMTP_PASSWORD=your_ses_secret_key
 ```
@@ -175,6 +188,9 @@ MAIL_FROM=your_email@gmail.com
 MAIL_FROM_NAME=Formbricks
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
+SMTP_SECURE_ENABLED=0
+SMTP_REQUIRE_TLS=1
+SMTP_REJECT_UNAUTHORIZED_TLS=1
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
 ```
@@ -189,6 +205,6 @@ If you're experiencing issues with your email configuration:
 2. Verify your SMTP credentials are valid
 3. Ensure your email provider allows sending from the specified MAIL_FROM address
 4. If using Gmail, ensure you're using an App Password
-5. For secure connections, make sure you've set the correct port and SMTP_SECURE_ENABLED value
+5. For port 465, set `SMTP_SECURE_ENABLED=1`. For port 587, set `SMTP_SECURE_ENABLED=0` and `SMTP_REQUIRE_TLS=1`.
 
 For additional help, join the conversation on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
