@@ -10,6 +10,13 @@ export const createOrganization = (name: string) =>
     body: { name },
   });
 
-/** Invite one teammate as an owner, from the setup screen. */
+/**
+ * Invite one teammate as an owner, from the setup screen. No client timeout: the invite email is sent
+ * before the route answers, and aborting would report a failure for an invite that was sent.
+ */
 export const inviteOnboardingMember = (invite: { organizationId: string; email: string; name: string }) =>
-  sendApiRequest<{ id: string }>("/api/internal/onboarding-invites", { method: "POST", body: invite });
+  sendApiRequest<{ id: string }>("/api/internal/onboarding-invites", {
+    method: "POST",
+    body: invite,
+    timeoutMs: null,
+  });

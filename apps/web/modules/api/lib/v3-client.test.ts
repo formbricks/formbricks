@@ -38,6 +38,16 @@ describe("parseV3ApiError", () => {
     expect(error.invalid_params).toEqual([{ name: "surveyId", reason: "Invalid id" }]);
   });
 
+  test("leaves detail empty for a non-problem answer, so callers show their translated fallback", async () => {
+    const error = await parseV3ApiError(
+      new Response("<html>Bad Gateway</html>", { status: 502, statusText: "Bad Gateway" })
+    );
+
+    expect(error.status).toBe(502);
+    expect(error.detail).toBe("");
+    expect(getV3ApiErrorMessage(error, "Something went wrong")).toBe("Something went wrong");
+  });
+
   test("keeps a problem's details, the part a client acts on", async () => {
     const response = new Response(
       JSON.stringify({

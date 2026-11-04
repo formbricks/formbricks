@@ -36,6 +36,13 @@ describe("makeQueryClient", () => {
     expect(options.mutations?.retry).toBeUndefined();
   });
 
+  test("lets a feature with no server prefetch override the stale time, keeping the retry rule", () => {
+    const options = makeQueryClient({ staleTime: 0 }).getDefaultOptions();
+
+    expect(options.queries?.staleTime).toBe(0);
+    expect(options.queries?.retry).toBe(QUERY_RETRY.retry);
+  });
+
   test("returns a fresh client each time, so no cache is ever shared between requests", () => {
     expect(makeQueryClient()).not.toBe(makeQueryClient());
   });

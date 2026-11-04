@@ -15,6 +15,7 @@ import { MemberRow } from "@/modules/ee/teams/team-list/components/team-settings
 import { WorkspaceRow } from "@/modules/ee/teams/team-list/components/team-settings/workspace-row";
 import { updateTeam } from "@/modules/ee/teams/team-list/lib/api-client";
 import {
+  TEAM_NAME_MAX,
   TOrganizationMember,
   TTeamDetails,
   TTeamRole,
@@ -225,6 +226,7 @@ export const TeamSettingsModal = ({
                       <Input
                         type="text"
                         placeholder={t("common.team_name")}
+                        maxLength={TEAM_NAME_MAX}
                         {...field}
                         disabled={!isOwnerOrManager && !isTeamAdminMember}
                       />

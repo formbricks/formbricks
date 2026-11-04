@@ -30,7 +30,10 @@ export const NotificationSwitch = ({
       ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrWorkspaceOrOrganizationId)
       : notificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId] === true;
 
-  const handleSwitchChange = async () => {
+  // `successMessage` is shown only once the write has landed, so a refused change never reads as done.
+  const handleSwitchChange = async (
+    successMessage = t("workspace.settings.notifications.notification_settings_updated")
+  ) => {
     // One switch, flipped from what is shown; the server applies it to the stored settings.
     const toggle =
       notificationType === "unsubscribedOrganizationIds"
@@ -43,9 +46,7 @@ export const NotificationSwitch = ({
 
     try {
       await updateSetting.mutateAsync(toggle);
-      toast.success(t("workspace.settings.notifications.notification_settings_updated"), {
-        id: "notification-switch",
-      });
+      toast.success(successMessage, { id: "notification-switch" });
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")), {
         id: "notification-switch",
@@ -62,14 +63,10 @@ export const NotificationSwitch = ({
       switch (notificationType) {
         case "alert":
           if (notificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId] === true) {
-            handleSwitchChange();
-            toast.success(
+            void handleSwitchChange(
               t(
                 "workspace.settings.notifications.you_will_not_receive_any_more_emails_for_responses_on_this_survey"
-              ),
-              {
-                id: "notification-switch",
-              }
+              )
             );
           }
           break;
@@ -78,14 +75,10 @@ export const NotificationSwitch = ({
           if (
             !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrWorkspaceOrOrganizationId)
           ) {
-            handleSwitchChange();
-            toast.success(
+            void handleSwitchChange(
               t(
                 "workspace.settings.notifications.you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore"
-              ),
-              {
-                id: "notification-switch",
-              }
+              )
             );
           }
           break;

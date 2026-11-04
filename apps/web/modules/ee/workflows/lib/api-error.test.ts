@@ -17,7 +17,7 @@ describe("getWorkflowApiErrorMessage", () => {
   });
 
   test.each([
-    // parseV3ApiError falls back to response.statusText, which is always "" over HTTP/2.
+    // parseV3ApiError leaves `detail` empty when the response carries no problem body.
     ["a V3ApiError with an empty detail", rejected("")],
     ["a V3ApiError with a whitespace-only detail", rejected("   ")],
     // The strings this helper exists to keep off the screen.

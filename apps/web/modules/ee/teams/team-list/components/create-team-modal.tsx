@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { createTeam } from "@/modules/ee/teams/team-list/lib/api-client";
+import { TEAM_NAME_MAX } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -72,6 +73,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
                   setTeamName(e.target.value);
                 }}
                 placeholder={t("workspace.settings.teams.enter_team_name")}
+                maxLength={TEAM_NAME_MAX}
               />
             </div>
           </DialogBody>

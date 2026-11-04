@@ -26,10 +26,12 @@ export const QUERY_RETRY = {
  * Mutations keep TanStack's default of no retries: a write the server may already have applied must not be
  * sent twice behind the user's back.
  */
-export const makeQueryClient = (): QueryClient =>
+export const makeQueryClient = ({
+  staleTime = QUERY_STALE_TIME_MS,
+}: { staleTime?: number } = {}): QueryClient =>
   new QueryClient({
     defaultOptions: {
-      queries: { staleTime: QUERY_STALE_TIME_MS, ...QUERY_RETRY },
+      queries: { staleTime, ...QUERY_RETRY },
       dehydrate: {
         // Also hand over queries still pending when the server finished rendering, so a prefetch that was
         // not awaited streams in instead of being fetched again.

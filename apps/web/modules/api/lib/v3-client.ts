@@ -146,8 +146,9 @@ export async function parseV3ApiError(response: Response): Promise<V3ApiError> {
 
   return new V3ApiError({
     status: problemBody?.status ?? response.status,
-    // `||`, not `??`: HTTP/2 has no reason phrase, so `statusText` is "" rather than missing.
-    detail: problemBody?.detail || response.statusText || "",
+    // Only a problem body's own detail. A proxy's HTML 502 or a bare 500 carries none, and its reason phrase
+    // ("Bad Gateway", present over HTTP/1.1 only) is untranslated, so callers show their translated fallback.
+    detail: problemBody?.detail ?? "",
     code: problemBody?.code,
     requestId: problemBody?.requestId ?? response.headers.get("X-Request-Id") ?? undefined,
     invalid_params: problemBody?.invalid_params,

@@ -9,7 +9,14 @@ import { makeQueryClient } from "@/modules/api/lib/query-client";
  * survives re-renders but is never shared between requests or users. Mount it at the route layout or page of
  * a feature that reads or writes through the dashboard API.
  */
-export const ApiQueryClientProvider = ({ children }: Readonly<{ children: ReactNode }>) => {
-  const [queryClient] = useState(makeQueryClient);
+export const ApiQueryClientProvider = ({
+  children,
+  staleTime,
+}: Readonly<{
+  children: ReactNode;
+  /** Overrides the house freshness window, for a feature with no server prefetch that must refetch on mount. */
+  staleTime?: number;
+}>) => {
+  const [queryClient] = useState(() => makeQueryClient({ staleTime }));
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 };

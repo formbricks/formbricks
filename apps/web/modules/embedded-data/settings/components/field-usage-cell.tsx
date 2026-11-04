@@ -34,7 +34,7 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
   const { t } = useTranslation();
   // Fetched the first time the popover opens, then kept in the query cache like any other read.
   const [isRequested, setIsRequested] = useState(false);
-  const { data: usage, error, refetch } = useEmbeddedDataUsage(fieldId, { enabled: isRequested });
+  const { data: usage, error, isFetching, refetch } = useEmbeddedDataUsage(fieldId, { enabled: isRequested });
   const label = getUsageLabel(surveyCount);
 
   if (label.kind === "unused") {
@@ -46,14 +46,16 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
   const text = t("workspace.embedded_data.used_in_surveys", { count: label.count });
 
   const renderBody = () => {
-    if (error) {
+    // A retry after a failed load shows "Loading" while it runs, not the old error.
+    if (error && !isFetching) {
       return (
         <p className="text-sm text-error">
           {getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}
         </p>
       );
     }
-    if (!usage) return <p className="text-sm text-slate-500">{t("common.loading")}</p>;
+    if (!usage || (error && isFetching))
+      return <p className="text-sm text-slate-500">{t("common.loading")}</p>;
     // A successful empty answer is reachable: `surveyCount` is as old as the page, so the last
     // linking survey may have been deleted since. Without this the panel renders an empty list.
     if (usage.length === 0)

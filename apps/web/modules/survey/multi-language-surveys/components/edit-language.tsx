@@ -218,16 +218,31 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     if (!validateLanguages(languages, t)) return;
     // Settled rather than all: every row is written even when one is refused, as before, and the first
     // refusal is the one shown.
-    const failedWrite = getFirstFailure(
-      await Promise.allSettled(
-        languages.map((lang) =>
-          lang.id === "new"
-            ? createLanguage(workspace.id, { code: lang.code, alias: lang.alias })
-            : updateLanguage(lang.id, { alias: lang.alias })
-        )
+    const writeResults = await Promise.allSettled(
+      languages.map((lang) =>
+        lang.id === "new"
+          ? createLanguage(workspace.id, { code: lang.code, alias: lang.alias })
+          : updateLanguage(lang.id, { alias: lang.alias })
       )
     );
+    const failedWrite = getFirstFailure(writeResults);
     if (failedWrite) {
+      // The rows that did land keep their stored ids, so saving again updates them instead of creating
+      // them a second time; the refused rows stay as typed for the user to correct.
+      // Matched by code, which validation keeps unique, so a row edited while the save ran still matches.
+      const createdIds = new Map<string, string>();
+      languages.forEach((lang, index) => {
+        const result = writeResults[index];
+        if (lang.id === "new" && result.status === "fulfilled") createdIds.set(lang.code, result.value.id);
+      });
+      if (createdIds.size > 0) {
+        setLanguages((current) =>
+          current.map((lang) => {
+            const id = lang.id === "new" ? createdIds.get(lang.code) : undefined;
+            return id ? { ...lang, id } : lang;
+          })
+        );
+      }
       toast.error(
         getV3ApiErrorMessage(failedWrite.reason, t("common.something_went_wrong_please_try_again"))
       );
