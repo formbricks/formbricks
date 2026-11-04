@@ -5,12 +5,17 @@ import { PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
+import { TSingleCondition, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
-import { updateRuleActions, updateRuleConditions } from "@/modules/survey/editor/lib/rule-list";
+import {
+  START_SCOPE_BLOCK_IDX,
+  getDefaultStartCondition,
+  updateRuleActions,
+  updateRuleConditions,
+} from "@/modules/survey/editor/lib/rule-list";
 import {
   getDefaultOperatorForElement,
   replaceEndingCardHeadlineRecall,
@@ -49,20 +54,23 @@ export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeB
   if (!rule) return null;
 
   // ENG-6935: a Set value step always runs — an empty `and` group (ADR 0026). It reads as such, and
-  // gets a condition only when asked, which makes it a calculation.
+  // gets a condition only when asked, which makes it a calculation. Only a rule that sets values or
+  // marks Low quality stays without a condition (rule-list.ts); before the first question there is no
+  // answer, so its first condition reads a URL parameter.
   const alwaysRuns = rule.conditions.conditions.length === 0;
+  const getFirstCondition = (): Omit<TSingleCondition, "id"> | undefined => {
+    if (scopeBlockIdx === START_SCOPE_BLOCK_IDX) return getDefaultStartCondition(localSurvey);
+    if (!firstElement) return undefined;
+    return { leftOperand: { type: "element", value: firstElement.id }, operator: getDefaultOperator() };
+  };
+  const canAddCondition = scopeBlockIdx === START_SCOPE_BLOCK_IDX || !!firstElement;
   const addFirstCondition = () => {
-    if (!firstElement) return;
+    const firstCondition = getFirstCondition();
+    if (!firstCondition) return;
     onRulesChange(
       updateRuleConditions(rules, ruleIdx, (group) => ({
         ...group,
-        conditions: [
-          {
-            id: createId(),
-            leftOperand: { type: "element", value: firstElement.id },
-            operator: getDefaultOperator(),
-          },
-        ],
+        conditions: [{ id: createId(), ...firstCondition }],
       }))
     );
   };
@@ -72,7 +80,7 @@ export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeB
       {alwaysRuns ? (
         <div className="flex items-center gap-3">
           <span className="font-medium text-slate-900">{t("workspace.surveys.edit.flow.always_runs")}</span>
-          {firstElement && (
+          {canAddCondition && (
             <Button type="button" size="sm" variant="secondary" onClick={addFirstCondition}>
               <PlusIcon />
               {t("workspace.surveys.edit.flow.add_condition")}
@@ -92,6 +100,7 @@ export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeB
         localSurvey={transformedSurvey}
         actions={rule.actions}
         scopeBlockIdx={scopeBlockIdx}
+        alwaysRuns={alwaysRuns}
         onActionsChange={(updater) => onRulesChange(updateRuleActions(rules, ruleIdx, updater))}
       />
     </div>

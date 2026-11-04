@@ -46,6 +46,8 @@ interface LogicEditorActionsProps {
    */
   readonly scopeBlockIdx: number;
   readonly isLast?: boolean;
+  /** The rule has no condition: it runs for everyone, so it only sets values or marks Low quality. */
+  readonly alwaysRuns?: boolean;
 }
 
 /** A Set value action written as a formula (ENG-6935), shown with the formula box. */
@@ -58,6 +60,7 @@ export function LogicEditorActions({
   onActionsChange,
   scopeBlockIdx,
   isLast,
+  alwaysRuns = false,
 }: LogicEditorActionsProps) {
   const { t } = useTranslation();
 
@@ -91,7 +94,7 @@ export function LogicEditorActions({
             0,
             getUpdatedActionBody(
               { id: createId(), objective: "jumpToBlock", target: "" },
-              getNextActionObjective(actionsClone, scopeBlockIdx)
+              getNextActionObjective(actionsClone, scopeBlockIdx, { alwaysRuns })
             )
           );
           break;
@@ -122,7 +125,9 @@ export function LogicEditorActions({
   // marks Low quality once (ENG-6933).
   const objectiveOptions = getActionObjectiveOptions(t);
   const getObjectiveOptions = (actionIdx: number) => {
-    const allowed = new Set<string>(getObjectivesForAction(actions, actionIdx, scopeBlockIdx));
+    const allowed = new Set<string>(
+      getObjectivesForAction(actions, actionIdx, scopeBlockIdx, { alwaysRuns })
+    );
     return objectiveOptions.filter((option) => allowed.has(String(option.value)));
   };
 

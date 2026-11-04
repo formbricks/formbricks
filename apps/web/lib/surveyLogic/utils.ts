@@ -21,7 +21,12 @@ import {
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
-import { compareDateValues, isDateAfter, isDateBefore } from "@formbricks/types/surveys/date-comparison";
+import {
+  compareDateValues,
+  isDateAfter,
+  isDateBefore,
+  isDateFieldOperand,
+} from "@formbricks/types/surveys/date-comparison";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
@@ -411,12 +416,13 @@ const evaluateSingleCondition = (
       }
     }
 
-    // ENG-6935: a computed date field (one `now()` set holds a timestamp) equals a day when it falls
-    // on that day; see `compareDateValues`.
-    const isComputedDate =
-      condition.leftOperand.type === "variable" &&
-      getComputedFieldDataType(computedFields, condition.leftOperand.value) === "date";
-    const dateOrder = isComputedDate ? compareDateValues(leftValue, rightValue) : undefined;
+    // ENG-6935: a date field (computed or ingested) holding a timestamp equals a picked day when it
+    // falls on that day, as "is before" and "is after" read it; see `compareDateValues`.
+    const embeddedFields = getSurveyEmbeddedFields(localSurvey);
+    const onDateField =
+      isDateFieldOperand(condition.leftOperand, embeddedFields) ||
+      isDateFieldOperand(condition.rightOperand, embeddedFields);
+    const dateOrder = onDateField ? compareDateValues(leftValue, rightValue) : undefined;
 
     switch (condition.operator) {
       case "equals":

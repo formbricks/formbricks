@@ -3,6 +3,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import type { TResponse } from "@formbricks/types/responses";
 import { writeResponsesOutcomeInTx } from "@/app/api/v3/responses/lib/outcome-write";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_AUDIT_REQUEST_METADATA } from "@/modules/ee/audit-logs/lib/request-metadata";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 
 /** What marking did: the response as it now reads, and, when the outcome changed, its organization. */
@@ -52,6 +53,9 @@ export const markResponseLowQualityFromSurvey = async (
  * The audit entry for a mark, as the v3 outcome write files one ("updated" on the response, the outcome
  * before and after), attributed to the system: the survey's rule set it, not a person. Called after the
  * transaction committed; a mark that changed nothing files nothing.
+ *
+ * The request is the respondent's, so its IP and user agent stay out of the entry: with Capture IP off
+ * the address is never stored, and the audit log is no exception.
  */
 export const auditLowQualityMark = async ({ response, organizationId }: TLowQualityMark): Promise<void> => {
   if (!organizationId) return;
@@ -65,5 +69,6 @@ export const auditLowQualityMark = async ({ response, organizationId }: TLowQual
     status: "success",
     oldObject: { id: response.id, outcome: null },
     newObject: { id: response.id, outcome: "lowQuality" },
+    requestMetadata: UNKNOWN_AUDIT_REQUEST_METADATA,
   });
 };

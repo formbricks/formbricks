@@ -18,6 +18,7 @@ import {
 } from "@/lib/auto-progress";
 import { type SubmitContributor, answersForValidation, createBlockSubmitRunner } from "@/lib/block-submit";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getBlockPrefill } from "@/lib/prefill";
 import { getRevealedElementIds } from "@/lib/revealed-elements";
 import { type SignatureDraftStore } from "@/lib/signature-answer";
 import { cn } from "@/lib/utils";
@@ -129,8 +130,8 @@ export function BlockConditional({
   visibleElementIds,
   signatureDrafts,
 }: Readonly<BlockConditionalProps>) {
-  // What the page shows. Auto-progress still reads `block.elements`: a block with a follow-up hidden
-  // for now must not auto-submit on the answer that would reveal it.
+  // What the page shows. Auto-progress and `skipPrefilled` still read `block.elements`: a block with a
+  // follow-up hidden for now must not auto-submit on the answer that would reveal it.
   const elements = visibleElementIds
     ? block.elements.filter((element) => visibleElementIds.includes(element.id))
     : block.elements;
@@ -304,42 +305,25 @@ export function BlockConditional({
 
   // Handle prefilling at block level (both skipPrefilled and regular prefilling)
   useEffect(() => {
-    if (prefilledResponseData) {
-      // Collect all prefilled values for elements in this block
-      const prefilledData: TResponseData = {};
-      let hasAnyPrefilled = false;
+    // Every element of the block, not only those shown now: a prefill that reveals a required
+    // follow-up keeps the page open for it (`getBlockPrefill`).
+    const { data: prefilledData, autoSubmit } = getBlockPrefill(block, prefilledResponseData, skipPrefilled);
+    if (Object.keys(prefilledData).length === 0) return;
 
-      elements.forEach((element) => {
-        if (prefilledResponseData[element.id] !== undefined) {
-          prefilledData[element.id] = prefilledResponseData[element.id];
-          hasAnyPrefilled = true;
-        }
+    // Apply all prefilled values in one atomic operation
+    onChange(prefilledData);
+
+    if (autoSubmit) {
+      const prefilledTtc: TResponseTtc = {};
+      block.elements.forEach((element) => {
+        prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
       });
+      setTtc({ ...ttc, ...prefilledTtc });
 
-      if (hasAnyPrefilled) {
-        // Apply all prefilled values in one atomic operation
-        onChange(prefilledData);
-
-        // If skipPrefilled and ALL elements are prefilled, auto-submit
-        if (skipPrefilled) {
-          const allElementsPrefilled = elements.every(
-            (element) => prefilledResponseData[element.id] !== undefined
-          );
-
-          if (allElementsPrefilled) {
-            const prefilledTtc: TResponseTtc = {};
-            elements.forEach((element) => {
-              prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
-            });
-            setTtc({ ...ttc, ...prefilledTtc });
-
-            // Auto-submit the entire block (skip to next)
-            setTimeout(() => {
-              onSubmit(prefilledData, prefilledTtc);
-            }, 0);
-          }
-        }
-      }
+      // Auto-submit the entire block (skip to next)
+      setTimeout(() => {
+        onSubmit(prefilledData, prefilledTtc);
+      }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when block mounts
   }, []);

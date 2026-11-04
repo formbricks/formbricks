@@ -2571,7 +2571,7 @@ const validateConditions = (
             });
           }
         } else if (rightOperand?.type === "static") {
-          if (!rightOperand.value) {
+          if (rightOperand.value === "") {
             issues.push({
               code: "custom",
               message: `Conditional Logic: Static value is required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
@@ -3590,7 +3590,7 @@ const validateConditionGroupOperands = (
             });
           }
         } else if (rightOperand?.type === "static") {
-          if (!rightOperand.value) {
+          if (rightOperand.value === "") {
             issues.push({
               code: "custom",
               message: `Conditional Logic: Static value is required in ${scope.where}`,

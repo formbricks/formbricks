@@ -45,11 +45,13 @@ export const formatDateTimeForDisplay = (
 const STORED_CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
 // The shape of an ISO timestamp; `Date` decides the rest (a value it can't read is not one).
 const STORED_TIMESTAMP_START = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+const STORED_UTC_MIDNIGHT = /^(\d{4}-\d{2}-\d{2})T00:00:00(?:\.0{1,3})?Z$/;
 
 /**
  * A stored date value as people read it (P65): a calendar date (`2026-11-04`) as that day only, in
  * the app's day format; a timestamp (`now()`, `2026-11-04T10:12:30.000Z`) as the same day format
- * plus the time, in the viewer's time zone (`timeZone`, else the runtime's). `null` for anything
+ * plus the time, in the viewer's time zone (`timeZone`, else the runtime's); a timestamp at exactly
+ * UTC midnight as its calendar day only. `null` for anything
  * else, so the caller shows the value as it is. Callers keep the stored value as a tooltip.
  */
 export const formatStoredDateValue = (
@@ -57,10 +59,14 @@ export const formatStoredDateValue = (
   locale: string = DEFAULT_LOCALE,
   timeZone?: string
 ): string | null => {
-  if (STORED_CALENDAR_DATE.test(value)) {
+  // A timestamp at exactly UTC midnight is a day written as a timestamp (an SDK's
+  // `new Date("2026-08-05")`): shown as that day, as the date picker reads it (`parseStoredDay`), not
+  // as the evening before for a viewer west of UTC.
+  const calendarDay = STORED_UTC_MIDNIGHT.exec(value)?.[1] ?? value;
+  if (STORED_CALENDAR_DATE.test(calendarDay)) {
     // Read as UTC midnight and shown in UTC: the day named, not the day it is somewhere else.
-    const day = new Date(`${value}T00:00:00.000Z`);
-    if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== value) return null;
+    const day = new Date(`${calendarDay}T00:00:00.000Z`);
+    if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== calendarDay) return null;
     return formatDateForDisplay(day, locale, { ...DATE_DISPLAY_OPTIONS, timeZone: "UTC" });
   }
   if (!STORED_TIMESTAMP_START.test(value)) return null;

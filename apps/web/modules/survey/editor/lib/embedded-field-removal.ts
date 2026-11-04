@@ -26,6 +26,8 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
  */
 export type TEmbeddedFieldBlocker =
   | { reason: "logic"; elementIndex: number }
+  /** A rule before the first question (ENG-6932), which belongs to no question. */
+  | { reason: "startLogic" }
   | { reason: "showIf"; elementIndex: number }
   | { reason: "recallWelcome" }
   | { reason: "recallEnding" }
@@ -47,6 +49,7 @@ export const findEmbeddedFieldRemovalBlocker = (
   const storageKey = link.storageKey;
 
   const use = isComputed ? findVariableUse(survey, storageKey) : findHiddenFieldUse(survey, storageKey);
+  if (use?.kind === "startLogic") return { reason: "startLogic" };
   if (use) return { reason: use.kind === "showIf" ? "showIf" : "logic", elementIndex: use.elementIndex };
 
   // `isUsedInRecall` answers with three sentinels and an index: -2 is the welcome card, the element

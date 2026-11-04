@@ -240,6 +240,19 @@ describe("formatStoredDateValue: a stored date in the app's date format (P65)", 
     expect(formatStoredDateValue("2026-11-04T23:30:00Z", "en-GB", "Asia/Tokyo")).toBe("5 Nov 2026, 8:30");
   });
 
+  test("a timestamp at exactly UTC midnight is a day written as a timestamp: that day only, as the picker reads it", () => {
+    // An SDK's `new Date("2026-08-05")` arrives as 2026-08-05T00:00:00.000Z; in New York it would be
+    // the evening of the 4th as an instant.
+    expect(formatStoredDateValue("2026-08-05T00:00:00.000Z", "en-US", "America/New_York")).toBe(
+      "Aug 5, 2026"
+    );
+    expect(formatStoredDateValue("2026-08-05T00:00:00Z", "en-US", "America/New_York")).toBe("Aug 5, 2026");
+    // A second past midnight is a time again.
+    expect(formatStoredDateValue("2026-08-05T00:00:01.000Z", "en-US", "America/New_York")).toMatch(
+      /^Aug 4, 2026, 8:00\sPM$/
+    );
+  });
+
   test("the day format is the date picker's, so the two read alike", () => {
     expect(formatStoredDateValue("2026-11-04", "en-US")).toBe(
       formatDateForDisplay(new Date(Date.UTC(2026, 10, 4)), "en-US", {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import {
   SURVEY_FLOW_FIXTURE_IDS as ids,
   surveyFlowFixture,
@@ -55,13 +56,51 @@ describe("rule list operations work on any list of rules", () => {
     expect(duplicateRule(rules, 1)).toHaveLength(5);
   });
 
-  test("a rule whose last condition is removed stays, always running, with its actions (ADR 0026)", () => {
-    const rules = overallRules();
-    const emptied = updateRuleConditions(rules, 0, (group) => ({ ...group, conditions: [] }));
+  const ruleWith = (
+    actions: TSurveyBlockLogic["actions"],
+    connector: "and" | "or" = "and"
+  ): TSurveyBlockLogic => ({
+    id: "rule0000000000000000000a",
+    conditions: {
+      id: "group000000000000000000a",
+      connector,
+      conditions: [
+        {
+          id: "cond0000000000000000000a",
+          leftOperand: { type: "element", value: "fav" },
+          operator: "isSubmitted",
+        },
+      ],
+    },
+    actions,
+  });
+  const empty = (group: TConditionGroup): TConditionGroup => ({ ...group, conditions: [] });
+  const calculate = overallRules()[0].actions[0];
+
+  test("a Set value or Mark as low quality rule whose last condition is removed stays, always running (ADR 0026)", () => {
+    const rules = [
+      ruleWith([calculate, { id: "lowq00000000000000000001", objective: "markLowQuality" }], "or"),
+    ];
+    const emptied = updateRuleConditions(rules, 0, empty);
 
     expect(ruleIds(emptied)).toEqual(ruleIds(rules));
-    expect(emptied[0].conditions).toEqual({ ...rules[0].conditions, conditions: [] });
+    // An empty group always reads and runs as "all": an emptied "any" group becomes an "all" one.
+    expect(emptied[0].conditions).toEqual({ ...rules[0].conditions, connector: "and", conditions: [] });
     expect(emptied[0].actions).toEqual(rules[0].actions);
+  });
+
+  test("any other rule whose last condition is removed is removed, as before the Flow tab", () => {
+    const jumpRule = ruleWith([
+      calculate,
+      { id: "jump00000000000000000001", objective: "jumpToBlock", target: ids.endings.thanks },
+    ]);
+    const requireRule = ruleWith([
+      { id: "req000000000000000000001", objective: "requireAnswer", target: "fav" },
+    ]);
+    const kept = overallRules()[0];
+
+    expect(updateRuleConditions([kept, jumpRule], 1, empty)).toEqual([kept]);
+    expect(updateRuleConditions([requireRule, kept], 0, empty)).toEqual([kept]);
   });
 
   test("changing conditions or actions changes only that rule", () => {
@@ -200,6 +239,20 @@ describe("the rules before the first question (ENG-6932)", () => {
     expect(getNextActionObjective(jump, START_SCOPE_BLOCK_IDX)).toBe("calculate");
     expect(getNextActionObjective(jump, 2)).toBe("requireAnswer");
     expect(getNextActionObjective([], START_SCOPE_BLOCK_IDX)).toBe("jumpToBlock");
+  });
+
+  test("a rule with no condition only sets values or marks Low quality, so it never gains a jump", () => {
+    const setValue = [{ ...overallRules()[0].actions[0] }];
+
+    expect(getObjectivesForAction(setValue, 0, 2, { alwaysRuns: true })).toEqual([
+      "calculate",
+      "markLowQuality",
+    ]);
+    expect(getObjectivesForAction(setValue, 0, START_SCOPE_BLOCK_IDX, { alwaysRuns: true })).toEqual([
+      "calculate",
+    ]);
+    expect(getNextActionObjective(setValue, 2, { alwaysRuns: true })).toBe("calculate");
+    expect(getNextActionObjective(setValue, START_SCOPE_BLOCK_IDX, { alwaysRuns: true })).toBe("calculate");
   });
 
   test("a new condition reads the first URL parameter, as there is no answer yet", () => {

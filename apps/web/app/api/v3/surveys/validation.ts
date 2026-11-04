@@ -384,7 +384,60 @@ function getStartLogicJumpTarget(document: TV3SurveyDocument, path: PropertyKey[
   return action?.objective === "jumpToBlock" ? action.target : undefined;
 }
 
-function toReferenceInput(document: TV3SurveyDocument) {
+type TV3TypedEmbeddedField = NonNullable<TV3SurveyDocument["embeddedFields"]>[number];
+
+/**
+ * The typed fields the reference check reads for a document without `embeddedFields` — a PATCH that
+ * sent only `status`, `blocks` or the legacy keys. Its legacy `variables` cannot carry a computed date
+ * (ENG-6935), so the stored survey's typed rows fill it in: the document's `variables` with their
+ * types, the stored computed dates they leave out, and its hidden fields typed as stored.
+ */
+function getDocumentTypedFields(
+  document: TV3SurveyDocument,
+  storedEmbeddedFields: readonly TV3TypedEmbeddedField[] | undefined
+): TV3TypedEmbeddedField[] | undefined {
+  if (document.embeddedFields !== undefined || storedEmbeddedFields === undefined) {
+    return document.embeddedFields;
+  }
+  const variableIds = new Set(document.variables.map((variable) => variable.id));
+  const storedIngested = new Map(
+    storedEmbeddedFields
+      .filter((field) => field.source === "ingested")
+      .map((field) => [field.storageKey, field] as const)
+  );
+
+  return [
+    ...document.variables.map(
+      (variable): TV3TypedEmbeddedField => ({
+        storageKey: variable.id,
+        name: variable.name,
+        source: "computed",
+        dataType: variable.type === "number" ? "number" : "string",
+      })
+    ),
+    ...storedEmbeddedFields.filter(
+      (field) =>
+        field.source === "computed" &&
+        field.dataType === "date" &&
+        field.storageKey !== undefined &&
+        !variableIds.has(field.storageKey)
+    ),
+    ...(document.hiddenFields.fieldIds ?? []).map(
+      (fieldId): TV3TypedEmbeddedField =>
+        storedIngested.get(fieldId) ?? {
+          storageKey: fieldId,
+          name: fieldId,
+          source: "ingested",
+          dataType: "string",
+        }
+    ),
+  ];
+}
+
+function toReferenceInput(
+  document: TV3SurveyDocument,
+  storedEmbeddedFields?: readonly TV3TypedEmbeddedField[]
+) {
   return {
     blocks: document.blocks,
     endings: document.endings,
@@ -392,13 +445,19 @@ function toReferenceInput(document: TV3SurveyDocument) {
     metadata: document.metadata,
     variables: document.variables,
     welcomeCard: document.welcomeCard,
-    embeddedFields: document.embeddedFields,
+    embeddedFields: getDocumentTypedFields(document, storedEmbeddedFields),
   };
+}
+
+export interface TV3SurveyDocumentValidationOptions {
+  /** The stored survey's typed Embedded Data rows, read when the document carries no `embeddedFields`. */
+  storedEmbeddedFields?: readonly TV3TypedEmbeddedField[];
 }
 
 export function validateV3SurveyDocument(
   document: TV3SurveyDocument,
-  precedence: TV3SurveyPrecedencePolicy
+  precedence: TV3SurveyPrecedencePolicy,
+  { storedEmbeddedFields }: TV3SurveyDocumentValidationOptions = {}
 ): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
   const mediaInvalidParams =
@@ -407,7 +466,7 @@ export function validateV3SurveyDocument(
       : getV3SurveyMediaInvalidParams(document.blocks);
   const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
 
-  const referenceInput = toReferenceInput(document);
+  const referenceInput = toReferenceInput(document, storedEmbeddedFields);
   const referenceValidation = validateV3SurveyReferences(referenceInput);
 
   if (!referenceValidation.ok) {
@@ -418,7 +477,10 @@ export function validateV3SurveyDocument(
     invalidParams.push(...getV3SurveyPrecedenceInvalidParams(referenceInput));
   } else if (precedence.mode === "introduced") {
     invalidParams.push(
-      ...getV3SurveyIntroducedPrecedenceInvalidParams(toReferenceInput(precedence.baseline), referenceInput)
+      ...getV3SurveyIntroducedPrecedenceInvalidParams(
+        toReferenceInput(precedence.baseline, storedEmbeddedFields),
+        referenceInput
+      )
     );
   }
 

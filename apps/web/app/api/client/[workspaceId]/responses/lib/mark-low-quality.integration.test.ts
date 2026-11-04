@@ -6,6 +6,7 @@ import { POST as postV2 } from "@/app/api/v2/client/[workspaceId]/responses/rout
 import { setScopedResponsesOutcome } from "@/app/api/v3/responses/lib/write-service";
 import { resetDb } from "@/integration/reset-db";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_AUDIT_REQUEST_METADATA } from "@/modules/ee/audit-logs/lib/request-metadata";
 
 /**
  * Mark as low quality from the survey (ENG-6933, ADR 0022/0024), against a real Postgres. A rule's action
@@ -197,6 +198,8 @@ describe("Mark as low quality from the survey (ENG-6933)", () => {
         status: "success",
         oldObject: { id: responseId, outcome: null },
         newObject: { id: responseId, outcome: "lowQuality" },
+        // The respondent's IP and user agent never reach the audit log.
+        requestMetadata: UNKNOWN_AUDIT_REQUEST_METADATA,
       })
     );
 

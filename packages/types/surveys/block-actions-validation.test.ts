@@ -167,3 +167,42 @@ describe("block rule actions", () => {
     });
   });
 });
+
+/** The fixed value of a condition: 0 is a value, only an empty text is missing. */
+describe("a condition's fixed value", () => {
+  const HEAVY_USERS = 2;
+  const withHoursCondition = (value: string | number): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks[HEAVY_USERS].logic = [
+      {
+        id: "blockrule000000000000001",
+        conditions: {
+          id: "blockgroup00000000000001",
+          connector: "and",
+          conditions: [
+            {
+              id: "blockcondition0000000001",
+              leftOperand: { type: "element", value: "hours" },
+              operator: "equals",
+              rightOperand: { type: "static", value },
+            },
+          ],
+        },
+        actions: [jump(ids.endings.thanks)],
+      },
+    ];
+    return survey;
+  };
+
+  test.each([0, "0"])("accepts %j, as validate does", (value) => {
+    expect(issuesOf(withHoursCondition(value))).toEqual([]);
+  });
+
+  test("refuses an empty value", () => {
+    expectIssue(
+      withHoursCondition(""),
+      ["blocks", HEAVY_USERS, "logic", 0, "conditions"],
+      "Static value is required"
+    );
+  });
+});

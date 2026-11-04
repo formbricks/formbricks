@@ -19,6 +19,7 @@ import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "./create";
+import { prepareV3SurveyCreateInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import { resolveV3ContactsEntitlement } from "./targeting";
@@ -556,6 +557,60 @@ describe("createV3Survey", () => {
     });
 
     await expect(createV3Survey(body, null, "req_eng2587_ok")).resolves.toBeDefined();
+    expect(createSurvey).toHaveBeenCalled();
+  });
+
+  test("a condition equal to 0 passes validate and create alike", async () => {
+    const raw = {
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [{ ...rawCreateBody.blocks[0].elements[0], inputType: "number" }],
+          logic: [
+            {
+              id: "clrule12345678901234567890",
+              conditions: {
+                id: "clgroup1234567890123456789",
+                connector: "and",
+                conditions: [
+                  {
+                    id: "clcond12345678901234567890",
+                    leftOperand: { type: "element", value: "satisfaction" },
+                    operator: "equals",
+                    rightOperand: { type: "static", value: 0 },
+                  },
+                ],
+              },
+              actions: [
+                {
+                  id: "claction123456789012345678",
+                  objective: "jumpToBlock",
+                  target: "clbk2234567890123456789012",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "clbk2234567890123456789012",
+          name: "Follow-up",
+          elements: [
+            {
+              id: "why_zero",
+              type: "openText",
+              headline: { "en-US": "Why none?", "de-DE": "Warum keine?" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(prepareV3SurveyCreateInput(raw).ok).toBe(true);
+    await expect(
+      createV3Survey(ZV3CreateSurveyBody.parse(raw), null, "req_equals_zero")
+    ).resolves.toBeDefined();
     expect(createSurvey).toHaveBeenCalled();
   });
 

@@ -225,7 +225,7 @@ const RATING_RANGES = (
 const SURVEY_LOGIC_DESCRIPTION = [
   "Block logic: a block's `logic` is a list of rules `{ id, conditions, actions[] }`; `conditions` is a",
   "group `{ id, connector: and|or, conditions[] }` of conditions `{ id, leftOperand, operator, rightOperand? }`",
-  "or nested groups, and an empty `and` group always matches. Operands are `{ type: element|variable|",
+  "or nested groups, and an empty group always matches. Operands are `{ type: element|variable|",
   "hiddenField|reserved|static, value }` (element id, computed or ingested storage key, reserved name).",
   "A matrix row condition names the row and column by id next to their 0-based positions: left",
   '`{ type: "element", value: <matrix id>, meta: { row: "1", rowId: <row id> } }`, right',

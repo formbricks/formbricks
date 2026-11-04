@@ -39,14 +39,12 @@ export const evaluateQuotas = (
       ...quota.logic,
     };
 
-    const conditionsMatch = evaluateLogic(
-      survey,
-      responseData,
-      variablesData,
-      conditions,
-      selectedLanguage,
-      embeddedValues
-    );
+    // A quota with no conditions keeps its own meaning: "all" counts every response, "any" counts none.
+    // Survey logic reads an empty group as "Always" whatever its connector (ADR 0026); quotas don't.
+    const conditionsMatch =
+      quota.logic.conditions.length === 0
+        ? quota.logic.connector === "and"
+        : evaluateLogic(survey, responseData, variablesData, conditions, selectedLanguage, embeddedValues);
 
     if (conditionsMatch) {
       passedQuotas.push(quota);

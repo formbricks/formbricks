@@ -11,11 +11,16 @@ import {
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import {
+  START_LOGIC_USE_INDEX,
+  findBlockUsedInLogic,
   findElementUse,
   findElementUsedInLogic,
+  findEndingCardUsedInLogic,
+  findHiddenFieldUse,
   findHiddenFieldUsedInLogic,
   findOptionUse,
   findOptionUsedInLogic,
+  findVariableUse,
   findVariableUsedInLogic,
   getActionObjectiveOptions,
   getActionValueOptions,
@@ -620,6 +625,35 @@ describe("operators that take no right-hand side", () => {
     expect(getMatchValueProps(condition({ type: "hiddenField", value: "plan" }, operator), typed, t)).toEqual(
       { show: false, options: [] }
     );
+  });
+});
+
+describe("a rule before the first question counts as a use, so deleting what it names warns", () => {
+  const ids = SURVEY_FLOW_FIXTURE_IDS;
+  /** The fixture with only its rules before the first question: no block rule or fallback is a use. */
+  const startRulesOnly = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks = survey.blocks.map(({ logicFallback: _fallback, ...block }) => ({ ...block, logic: [] }));
+    return survey;
+  };
+  const withoutStartRules = (): TSurvey => ({ ...startRulesOnly(), startLogic: null });
+
+  test("an ending a start rule screens out to", () => {
+    expect(findEndingCardUsedInLogic(startRulesOnly(), ids.endings.notForYou)).toBe(START_LOGIC_USE_INDEX);
+    expect(findEndingCardUsedInLogic(withoutStartRules(), ids.endings.notForYou)).toBe(-1);
+  });
+
+  test("a block a start rule jumps to", () => {
+    expect(findBlockUsedInLogic(startRulesOnly(), ids.blocks.heavyUsers)).toBe(START_LOGIC_USE_INDEX);
+  });
+
+  test("an Embedded Data field a start rule reads or sets", () => {
+    expect(findHiddenFieldUse(startRulesOnly(), ids.hiddenFields.panelId)).toEqual({
+      kind: "startLogic",
+      elementIndex: START_LOGIC_USE_INDEX,
+    });
+    expect(findVariableUse(startRulesOnly(), ids.variables.segment)?.kind).toBe("startLogic");
+    expect(findVariableUse(withoutStartRules(), ids.variables.segment)?.kind).not.toBe("startLogic");
   });
 });
 

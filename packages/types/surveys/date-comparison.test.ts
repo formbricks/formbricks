@@ -1,5 +1,32 @@
 import { describe, expect, test } from "vitest";
-import { compareDateValues, isDateAfter, isDateBefore } from "./date-comparison";
+import type { TLinkedEmbeddedField } from "../embedded-data-resolver";
+import { compareDateValues, isDateAfter, isDateBefore, isDateFieldOperand } from "./date-comparison";
+
+describe("isDateFieldOperand: which operands compare by day for equals", () => {
+  const row = (storageKey: string, source: "computed" | "ingested", dataType: "date" | "string") =>
+    ({
+      field: { key: null, name: storageKey, source, dataType, defaultValue: null, locked: false },
+      link: { storageKey },
+    }) as unknown as TLinkedEmbeddedField;
+  const fields = [
+    row("seen_at", "computed", "date"),
+    row("visit", "ingested", "date"),
+    row("note", "ingested", "string"),
+  ];
+
+  test("a computed or ingested field declared as a date", () => {
+    expect(isDateFieldOperand({ type: "variable", value: "seen_at" }, fields)).toBe(true);
+    expect(isDateFieldOperand({ type: "hiddenField", value: "visit" }, fields)).toBe(true);
+  });
+
+  test("not a text field, a field of the other source, an element or a fixed value", () => {
+    expect(isDateFieldOperand({ type: "hiddenField", value: "note" }, fields)).toBe(false);
+    expect(isDateFieldOperand({ type: "hiddenField", value: "seen_at" }, fields)).toBe(false);
+    expect(isDateFieldOperand({ type: "element", value: "visit" }, fields)).toBe(false);
+    expect(isDateFieldOperand({ type: "static", value: "2026-08-06" }, fields)).toBe(false);
+    expect(isDateFieldOperand(undefined, fields)).toBe(false);
+  });
+});
 
 describe("compareDateValues: how both logic engines order two stored dates", () => {
   test("two calendar dates compare by day", () => {

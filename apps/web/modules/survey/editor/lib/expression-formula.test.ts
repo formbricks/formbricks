@@ -13,6 +13,7 @@ import {
   getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
+  getFormulaToWriteOnBlur,
   getFunctionSnippet,
   getShownFormulaError,
   insertIntoFormula,
@@ -171,6 +172,22 @@ describe("getShownFormulaError: what the box says while it is typed in", () => {
     expect(
       getShownFormulaError(result.error, { text: "ro(", isReferenceMenuOpen: false, isTyping: false })
     ).toEqual(expect.objectContaining({ code: "unknown_function" }));
+  });
+});
+
+describe("getFormulaToWriteOnBlur: a half-typed formula never keeps the last one that parsed", () => {
+  test("text that doesn't parse writes the empty formula, which a save refuses at the step", () => {
+    // Stored `@sat_netflix * 20`; the author typed `round(` in front and left the box.
+    expect(getFormulaToWriteOnBlur("round(@sat_netflix * 20", references)).toEqual({
+      type: "static",
+      value: "",
+    });
+    expect(getFormulaToWriteOnBlur("@nope + 1", references)).toEqual({ type: "static", value: "" });
+  });
+
+  test("a formula that parses, or an emptied box, was already written while typing", () => {
+    expect(getFormulaToWriteOnBlur("round(@sat_netflix * 20)", references)).toBeNull();
+    expect(getFormulaToWriteOnBlur("  ", references)).toBeNull();
   });
 });
 

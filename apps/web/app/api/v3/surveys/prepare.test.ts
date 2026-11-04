@@ -1861,6 +1861,63 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
     );
   });
 
+  // A patch without `embeddedFields` still reads the stored computed date, which the legacy
+  // `variables` cannot carry: the reference check gets the survey's typed rows.
+  test("publishing the draft by status alone reads its computed date as declared", () => {
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, { status: "inProgress" });
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
+  });
+
+  test("a blocks-only edit may add a rule on the computed date", () => {
+    const blocks = structuredClone(resource.blocks) as unknown as typeof surveyFlowFixture.blocks;
+    blocks[0].logic = [
+      ...(blocks[0].logic ?? []),
+      {
+        id: "cldaterule1234567890123456",
+        conditions: {
+          id: "cldategroup123456789012345",
+          connector: "and",
+          conditions: [
+            {
+              id: "cldatecond1234567890123456",
+              leftOperand: { type: "variable", value: SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt },
+              operator: "isAfter",
+              rightOperand: { type: "static", value: "2026-01-01" },
+            },
+          ],
+        },
+        actions: [
+          {
+            id: "cldateaction12345678901234",
+            objective: "jumpToBlock",
+            target: SURVEY_FLOW_FIXTURE_IDS.endings.thanks,
+          },
+        ],
+      },
+    ];
+
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, { blocks } as never);
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
+  });
+
+  test("an embeddedFields edit dropping the date its rules still use is refused, live too", () => {
+    const live = { ...surveyFlowFixture, status: "inProgress" } as TSurvey;
+    const embeddedFields = resource.embeddedFields.filter(
+      (field) => field.storageKey !== SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt
+    );
+
+    const preparation = prepareV3SurveyPatchInput(live, { embeddedFields } as never);
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.origin).toBe("request");
+    expect(preparation.validation.invalidParams.map((param) => param.reason).join("\n")).toContain(
+      SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt
+    );
+  });
+
   const createWithExpression = (expression: unknown) =>
     prepareV3SurveyCreateInput({
       ...rawCreateBody,
