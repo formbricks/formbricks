@@ -1228,6 +1228,41 @@ describe("Tests for updateSurvey", () => {
     });
   });
 
+  // ENG-6935: a legacy write is validated against the rows it leaves the survey with, once they are
+  // read. Without that check it is not validated at all.
+  test("a legacy write whose logic sets a variable the survey doesn't have is refused, and not written", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+    const [firstBlock, ...otherBlocks] = updateSurveyInput.blocks;
+    const dangling = {
+      ...updateSurveyInput,
+      blocks: [
+        {
+          ...firstBlock,
+          logic: [
+            {
+              id: "cldanglingrule000000000001",
+              conditions: { id: "cldanglinggroup00000000001", connector: "and", conditions: [] },
+              actions: [
+                {
+                  id: "cldanglingaction0000000001",
+                  objective: "calculate",
+                  variableId: "clnosuchvariable0000000001",
+                  operator: "assign",
+                  value: { type: "static", value: 1 },
+                },
+              ],
+            },
+          ],
+        },
+        ...otherBlocks,
+      ],
+    } as TSurvey;
+    expect(dangling.embeddedFields).toBeUndefined();
+
+    await expect(updateSurvey(dangling)).rejects.toThrow(ValidationError);
+    expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
   describe("reserved names for newly declared fields", () => {
     test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({

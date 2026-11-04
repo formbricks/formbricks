@@ -201,6 +201,25 @@ describe("rules before the first question", () => {
     expect(issuesOf(withStartLogic([rule([setSegmentFrom(ids.hiddenFields.seg)])]))).toEqual([]);
   });
 
+  test("a hostile formula thousands of levels deep is refused once, at its path, and never walked", () => {
+    // An answer at the bottom: walking the tree would also report it, if the walk survived 20,000 levels.
+    let tree: unknown = { type: "element", value: "overall" };
+    for (let level = 0; level < 20_000; level++) tree = { type: "call", fn: "abs", args: [tree] };
+    const hostile = {
+      id: "startaction0000000000001",
+      objective: "calculate",
+      variableId: ids.variables.score,
+      operator: "assign",
+      value: { type: "expression", value: tree },
+    } as TSurveyBlockLogicAction;
+
+    const issues = issuesOf(withStartLogic([rule([hostile])]));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path.slice(0, 6)).toEqual(["startLogic", 0, "actions", 0, "value", "value"]);
+    expect(issues[0].message).toContain("nested deeper than");
+  });
+
   test("holds at most MAX_START_LOGIC_RULES rules, on every write path (the shared schema)", () => {
     const rules = (count: number) =>
       Array.from({ length: count }, (_unused, idx) => ({
