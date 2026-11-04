@@ -85,6 +85,7 @@ import {
 } from "@/modules/ui/components/flow-outline";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface FlowViewProps {
   readonly localSurvey: TSurvey;
@@ -551,6 +552,13 @@ export const FlowView = ({
             const isExpanded = expandedBlockIds.has(block.id);
             const rules = surveyBlock.logic ?? [];
             const onToggleBlock = () => setExpandedBlockIds((current) => toggleBlock(current, block.id));
+            // Why the block can't get a show-if now, or null when it can.
+            let blockShowIfBlocker: string | null = null;
+            if (surveyBlock.showIf) {
+              blockShowIfBlocker = t("workspace.surveys.edit.flow.show_block_if_exists");
+            } else if (!canAddShowIf(localSurvey, { type: "block", blockIdx: block.blockIdx })) {
+              blockShowIfBlocker = t("workspace.surveys.edit.flow.show_block_if_nothing_before");
+            }
 
             return (
               <FlowOutlineGroup key={block.id}>
@@ -687,17 +695,20 @@ export const FlowView = ({
                               {getRuleTypeLabel(kind, t)}
                             </DropdownMenuItem>
                           ))}
-                          <DropdownMenuItem
-                            icon={<EyeIcon className="size-4" />}
-                            disabled={
-                              Boolean(surveyBlock.showIf) ||
-                              !canAddShowIf(localSurvey, { type: "block", blockIdx: block.blockIdx })
-                            }
-                            onClick={() =>
-                              addShowIf({ type: "block", blockIdx: block.blockIdx }, `block:${block.id}`)
-                            }>
-                            {t("workspace.surveys.edit.flow.show_block_if")}
-                          </DropdownMenuItem>
+                          {/* Greyed out, it says why on hover: the item itself takes no pointer events. */}
+                          <TooltipRenderer
+                            shouldRender={blockShowIfBlocker !== null}
+                            tooltipContent={blockShowIfBlocker}
+                            triggerClass="block">
+                            <DropdownMenuItem
+                              icon={<EyeIcon className="size-4" />}
+                              disabled={blockShowIfBlocker !== null}
+                              onClick={() =>
+                                addShowIf({ type: "block", blockIdx: block.blockIdx }, `block:${block.id}`)
+                              }>
+                              {t("workspace.surveys.edit.flow.show_block_if")}
+                            </DropdownMenuItem>
+                          </TooltipRenderer>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

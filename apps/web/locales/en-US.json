@@ -4284,6 +4284,8 @@
           "set_to_formula": "to the formula below",
           "set_value": "Set value",
           "show_block_if": "Show this block if…",
+          "show_block_if_exists": "This block already has a show-if. Click its badge to edit it.",
+          "show_block_if_nothing_before": "Nothing comes before this block for a show-if to read: no earlier question and no hidden field.",
           "show_block_only_if": "Show this block only if",
           "show_if": "Show if: {conditions}",
           "show_if_block_help": "A block that doesn't match is skipped, and its logic still runs. Conditions can use earlier blocks only.",
