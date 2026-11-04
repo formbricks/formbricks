@@ -1506,7 +1506,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await addFlowRule(page, 8);
   await page.locator("#condition-0-0-conditionValue").first().click();
   await page.getByTestId("dropdown-menu-content").getByText(params.matrix.question).click();
-  await page.getByRole("menuitem", { name: "All fields" }).click();
+  // The whole matrix, named like a row since ENG-6934: "Any row (q8 · Matrix Question)".
+  await page.getByRole("menuitem", { name: /^Any row \(/ }).click();
   // Click the operator dropdown (currently shows "Is partially submitted")
   await page.getByText("Is partially submitted", { exact: true }).click();
   // Select "Is completely submitted" from the dropdown
