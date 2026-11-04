@@ -87,7 +87,7 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
     expect(row).toMatchObject({
       owner: { type: "block", blockId: ids.blocks.heavyUsers, blockIdx: 2 },
       ruleIdx: 1,
-      tone: "rule",
+      type: "markLowQuality",
       editable: true,
     });
     expect(row?.rule.actions).toEqual([{ id: ids.lowQuality.action, objective: "markLowQuality" }]);
@@ -127,13 +127,31 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
 describe("buildFlowOutline: how rules read", () => {
   const outline = buildFlowOutline(surveyFlowFixture);
 
-  test("a rule whose actions are all calculations is an Embedded Data step; any jump or require makes it a rule", () => {
-    const tones = outline.blocks.map((block) => block.rules.map((row) => row.tone));
+  test("each rule reads as one type, the type of its action: jump, Set value, Require answer, Low quality", () => {
+    const types = outline.blocks.map((block) => block.rules.map((row) => row.type));
 
-    expect(tones[0]).toEqual(["rule", "embeddedData"]);
-    expect(tones[3]).toEqual(["embeddedData", "embeddedData", "embeddedData"]);
+    expect(types[0]).toEqual(["requireAnswer", "setValue"]);
+    expect(types[2]).toEqual(["setValue", "markLowQuality", "setValue"]);
+    expect(types[4].slice(0, 3)).toEqual(["setValue", "jump", "jump"]);
+  });
+
+  test("a rule with several kinds of action reads as its first action's type", () => {
     // Two calculations and a jump.
-    expect(tones[4][3]).toBe("rule");
+    expect(outline.blocks[4].rules[3].type).toBe("setValue");
+
+    const survey = structuredClone(surveyFlowFixture);
+    const rule = survey.blocks[4].logic?.[3];
+    if (!rule) throw new Error("fixture rule missing");
+    rule.actions = [...rule.actions].reverse();
+    expect(buildFlowOutline(survey).blocks[4].rules[3].type).toBe("jump");
+  });
+
+  test("an action the editor doesn't know is passed over for the type of the next one", () => {
+    const survey = withUnknown((draft) => {
+      draft.blocks[2].logic[1].actions.unshift({ id: "unknownaction00000000002", objective: "setOutcome" });
+    });
+
+    expect(buildFlowOutline(survey).blocks[2].rules[1].type).toBe("markLowQuality");
   });
 
   test("each rule row names its block", () => {
@@ -182,7 +200,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     });
     const row = buildFlowOutline(survey).blocks[2].rules[0];
 
-    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedAction", tone: "rule" });
+    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedAction", type: "setValue" });
   });
 
   test("a calculation from a value type the editor doesn't know", () => {
@@ -191,7 +209,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     });
     const row = buildFlowOutline(survey).blocks[3].rules[0];
 
-    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedValue", tone: "embeddedData" });
+    expect(row).toMatchObject({ editable: false, readOnlyReason: "unsupportedValue", type: "setValue" });
   });
 
   test("a Set value expression is editable (ENG-6935)", () => {
@@ -203,7 +221,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     });
     const row = buildFlowOutline(survey).blocks[3].rules[0];
 
-    expect(row).toMatchObject({ editable: true, tone: "embeddedData" });
+    expect(row).toMatchObject({ editable: true, type: "setValue" });
     expect(row.readOnlyReason).toBeUndefined();
   });
 
@@ -229,8 +247,8 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     expect(start.rules.map((row) => [row.id, row.owner, row.ruleIdx, row.editable])).toEqual(
       startLogic.map((rule, ruleIdx) => [rule.id, { type: "start" }, ruleIdx, true])
     );
-    // A screen-out is a rule; a Set value step on its own is an Embedded Data step.
-    expect(start.rules.map((row) => row.tone)).toEqual(["rule", "rule", "embeddedData"]);
+    // A screen-out is a jump; a rule that sets a value before it jumps reads as its first action.
+    expect(start.rules.map((row) => row.type)).toEqual(["jump", "setValue", "setValue"]);
   });
 
   test("the section is there, empty, when the survey has no rules before the first question", () => {

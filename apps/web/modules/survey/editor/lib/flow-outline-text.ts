@@ -251,6 +251,10 @@ export const describeAction = (
       return { kind: "requireAnswer", label: quote(element ? getElementBadgeText(element) : action.target) };
     }
     case "calculate": {
+      // No field picked yet: the row says what is missing rather than ` = “”`.
+      if (!action.variableId) {
+        return { kind: "calculate", label: t("workspace.surveys.edit.flow.no_field_to_set") };
+      }
       // ENG-6935: a Set value step reads as its formula, in the formula box's own text form.
       if (action.value.type === "expression") {
         const tree = action.value.value;

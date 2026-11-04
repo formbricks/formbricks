@@ -2,15 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import type { TFunction } from "i18next";
-import {
-  CopyIcon,
-  EyeIcon,
-  EyeOffIcon,
-  LayersIcon,
-  ListFilterIcon,
-  RefreshCwIcon,
-  TrashIcon,
-} from "lucide-react";
+import { CopyIcon, EyeIcon, EyeOffIcon, LayersIcon, RefreshCwIcon, TrashIcon } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { canHaveCopiedOptions, getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
@@ -138,11 +130,11 @@ export function OptionsShowIfPopover({
         ) : (
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-500 opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden data-[state=open]:opacity-100"
+            className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
             // The question list sits inside the block row: don't collapse it.
             onClick={(event) => event.stopPropagation()}>
-            <ListFilterIcon className="size-3" aria-hidden="true" />
-            {t("workspace.surveys.edit.flow.options_shown_if")}
+            <EyeIcon className="size-3" aria-hidden="true" />
+            {t("workspace.surveys.edit.flow.show_options_if")}
           </button>
         )}
       </PopoverTrigger>

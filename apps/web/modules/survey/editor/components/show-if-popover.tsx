@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { EyeIcon, TrashIcon } from "lucide-react";
 import { type Dispatch, type SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,6 +24,16 @@ interface ShowIfPopoverProps {
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }
+
+/** A show-if chip names its level: "Show block if …" on a block, "Show question if …" on a question. */
+export const getShowIfChipText = (
+  targetType: TShowIfTarget["type"],
+  conditions: string,
+  t: TFunction
+): string =>
+  targetType === "block"
+    ? t("workspace.surveys.edit.flow.show_block_if_chip", { conditions })
+    : t("workspace.surveys.edit.flow.show_question_if_chip", { conditions });
 
 /**
  * The "Show if" badge of a block or a question on the Flow tab (ENG-6931), and the popover that edits
@@ -57,7 +68,7 @@ export function ShowIfPopover({
             type="gray"
             size="tiny"
             icon={<EyeIcon />}
-            text={t("workspace.surveys.edit.flow.show_if", { conditions: summary })}
+            text={getShowIfChipText(target.type, summary, t)}
           />
         </button>
       </PopoverTrigger>

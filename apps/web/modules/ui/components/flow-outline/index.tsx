@@ -9,28 +9,25 @@ import { cn } from "@/lib/cn";
  * respondent moves. Blocks are rows; what runs after a block sits indented under it; endings come
  * last. Presentational only — the Flow tab builds the rows from its outline model.
  *
- * Tones follow the UI mock: blue for a rule (jump, require answer), green for an Embedded Data step
- * (a calculation), red for an ending, white for a block.
+ * Tones: white for a block, red for an ending, and one colour per rule type — blue for a jump, green
+ * for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
  */
 
-export type TFlowOutlineTone = "block" | "rule" | "embeddedData" | "ending";
+export type TFlowOutlineTone = "block" | "jump" | "setValue" | "requireAnswer" | "markLowQuality" | "ending";
 
 interface FlowOutlineProps {
-  /** Left of the header: e.g. Collapse all / Expand all. */
+  /** Left of the header: e.g. the Expand / Collapse toggle and an info button saying how to read it. */
   readonly actions?: ReactNode;
-  /** How to read the outline, shown next to the actions. */
-  readonly hint?: ReactNode;
   /** Right of the header: e.g. "5 blocks · 4 endings". */
   readonly count?: ReactNode;
   readonly children: ReactNode;
   readonly className?: string;
 }
 
-export const FlowOutline = ({ actions, hint, count, children, className }: FlowOutlineProps) => (
+export const FlowOutline = ({ actions, count, children, className }: FlowOutlineProps) => (
   <div className={cn("space-y-3", className)}>
     <div className="flex items-center justify-between gap-3">
-      {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
-      {hint && <span className="text-xs text-slate-500">{hint}</span>}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       {count && <span className="shrink-0 text-xs text-slate-500">{count}</span>}
     </div>
     <div className="space-y-2 border-l-2 border-slate-200 pl-1.5">{children}</div>
@@ -47,9 +44,12 @@ export const FlowOutlineGroup = ({ children }: { readonly children: ReactNode })
   <div className="space-y-2">{children}</div>
 );
 
-/** The rows that run after a block, indented under it. */
+/**
+ * The rows that run after a block, indented under it. No top padding: the group's own gap sits above
+ * it, so "Add logic" is as far from its block as from the next one.
+ */
 export const FlowOutlineChildren = ({ children }: { readonly children: ReactNode }) => (
-  <div className="ml-5 space-y-2 border-l-2 border-slate-200 pt-2 pl-3">{children}</div>
+  <div className="ml-5 space-y-2 border-l-2 border-slate-200 pl-3">{children}</div>
 );
 
 /** A quiet line on the spine, e.g. where everyone else goes after a block. */
@@ -66,18 +66,46 @@ export const FlowOutlineNote = ({
   </div>
 );
 
+/**
+ * A rule type's one colour is its outline and its icon tile; a lighter tint of it is the row's
+ * background, and a little more of that tint its header's hover.
+ */
 const TONE_CARD: Record<TFlowOutlineTone, string> = {
   block: "border-slate-200 bg-white shadow-xs",
-  rule: "border-blue-200 bg-blue-50/60",
-  embeddedData: "border-emerald-200 bg-emerald-50/60",
+  jump: "border-blue-500 bg-blue-50",
+  setValue: "border-emerald-500 bg-emerald-50",
+  requireAnswer: "border-violet-500 bg-violet-50",
+  markLowQuality: "border-orange-500 bg-orange-50",
   ending: "border-red-300 bg-red-50",
 };
 
 const TONE_ICON: Record<TFlowOutlineTone, string> = {
   block: "size-6 bg-slate-700",
-  rule: "size-5 bg-blue-600",
-  embeddedData: "size-5 bg-emerald-600",
+  jump: "size-5 bg-blue-500",
+  setValue: "size-5 bg-emerald-500",
+  requireAnswer: "size-5 bg-violet-500",
+  markLowQuality: "size-5 bg-orange-500",
   ending: "size-6 bg-red-600",
+};
+
+/** The line between an open row's header and its settings: the card's own outline colour. */
+const TONE_DIVIDER: Record<TFlowOutlineTone, string> = {
+  block: "border-slate-200",
+  jump: "border-blue-500",
+  setValue: "border-emerald-500",
+  requireAnswer: "border-violet-500",
+  markLowQuality: "border-orange-500",
+  ending: "border-red-300",
+};
+
+/** The header's hover tint: a block card is white, so a white wash on it would not show. */
+const TONE_HOVER: Record<TFlowOutlineTone, string> = {
+  block: "hover:bg-slate-50",
+  jump: "hover:bg-blue-100/70",
+  setValue: "hover:bg-emerald-100/70",
+  requireAnswer: "hover:bg-violet-100/70",
+  markLowQuality: "hover:bg-orange-100/70",
+  ending: "hover:bg-white/60",
 };
 
 interface FlowOutlineRowProps {
@@ -96,7 +124,9 @@ interface FlowOutlineRowProps {
   readonly isInvalid?: boolean;
   /** Shown but not editable here (written through the API with something this editor can't edit yet). */
   readonly readOnlyLabel?: string;
-  /** Show a chevron that follows `isOpen`, for rows whose toggle collapses content (blocks). */
+  /** Controls at the right of the header (move, duplicate, delete), as on a question card's header. */
+  readonly actions?: ReactNode;
+  /** Show a chevron that follows `isOpen`, for rows that open and close (blocks, rule rows). */
   readonly showChevron?: boolean;
   readonly id?: string;
   readonly ariaLabel?: string;
@@ -112,6 +142,7 @@ export const FlowOutlineRow = ({
   body,
   isInvalid = false,
   readOnlyLabel,
+  actions,
   showChevron = false,
   id,
   ariaLabel,
@@ -125,13 +156,15 @@ export const FlowOutlineRow = ({
   };
 
   const Chevron = isOpen ? ChevronDownIcon : ChevronRightIcon;
+  // With content under it, the header's tint keeps the card's top corners only.
+  const hasContentBelow = Boolean(body) || (isOpen && Boolean(details));
 
   return (
-    <div className="flex items-start gap-1.5" id={id}>
+    <div className="flex scroll-mt-20 items-start gap-1.5" id={id}>
       <CornerDownRightIcon className="mt-2.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />
       <div
         className={cn(
-          "min-w-0 flex-1 scroll-mt-20 rounded-lg border",
+          "min-w-0 flex-1 rounded-lg border",
           TONE_CARD[tone],
           isInvalid && "border-red-400 ring-1 ring-red-400"
         )}>
@@ -146,9 +179,12 @@ export const FlowOutlineRow = ({
           onClick={onToggle}
           onKeyDown={handleKeyDown}
           className={cn(
-            "flex flex-wrap items-center gap-2 rounded-lg px-3 py-2",
-            onToggle &&
-              "cursor-pointer hover:bg-white/60 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+            "flex flex-wrap items-center gap-2 px-3 py-2",
+            hasContentBelow ? "rounded-t-[calc(0.5rem-1px)]" : "rounded-[calc(0.5rem-1px)]",
+            onToggle && [
+              "cursor-pointer focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden",
+              TONE_HOVER[tone],
+            ]
           )}>
           {showChevron && <Chevron className="size-4 shrink-0 text-slate-400" aria-hidden="true" />}
           <span
@@ -160,20 +196,33 @@ export const FlowOutlineRow = ({
             {icon}
           </span>
           {children}
-          {readOnlyLabel && (
-            <span
-              className="ml-auto inline-flex items-center gap-1 text-xs text-slate-500"
-              title={readOnlyLabel}>
-              <LockIcon className="size-3" aria-hidden="true" />
-              {readOnlyLabel}
-            </span>
+          {(readOnlyLabel || actions) && (
+            // Clicks and keys here act on the control, never open or close the row.
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+            <div
+              className="ml-auto flex shrink-0 items-center gap-2"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}>
+              {readOnlyLabel && (
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500" title={readOnlyLabel}>
+                  <LockIcon className="size-3" aria-hidden="true" />
+                  {readOnlyLabel}
+                </span>
+              )}
+              {actions && <div className="flex items-center">{actions}</div>}
+            </div>
           )}
         </div>
         {body && <div className="px-3 pb-2">{body}</div>}
         {/* Rounded to the card's inner corner (its radius less its border) rather than clipped by the
             card: overflow-hidden would also cut the focus rings at the card's edges. */}
         {isOpen && details && (
-          <div className="rounded-b-[calc(0.5rem-1px)] border-t border-slate-200 bg-white px-3 py-3">
+          <div
+            className={cn(
+              "rounded-b-[calc(0.5rem-1px)] border-t bg-white px-3 py-3",
+              // The line under the header is the card's outline colour, red when the row is flagged.
+              isInvalid ? "border-red-400" : TONE_DIVIDER[tone]
+            )}>
             {details}
           </div>
         )}

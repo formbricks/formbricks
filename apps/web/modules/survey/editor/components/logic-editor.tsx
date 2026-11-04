@@ -30,6 +30,8 @@ interface LogicEditorProps {
   readonly onRulesChange: (rules: TSurveyBlockLogic[]) => void;
   /** The index of the block the rules run after; `-1` before the first question. */
   readonly scopeBlockIdx: number;
+  /** Opens the Embedded Data card to add a Calculated field, from Set value's empty field picker. */
+  readonly onAddCalculatedField?: () => void;
 }
 
 /**
@@ -37,7 +39,14 @@ interface LogicEditorProps {
  * one block's index and `updateBlockLogic`; the list and its owner now come from the caller, so the
  * Flow tab edits a block's rules and the rules before the first question (ENG-6932) with it.
  */
-export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeBlockIdx }: LogicEditorProps) {
+export function LogicEditor({
+  localSurvey,
+  rules,
+  ruleIdx,
+  onRulesChange,
+  scopeBlockIdx,
+  onAddCalculatedField,
+}: LogicEditorProps) {
   const { t } = useTranslation();
   const rule = rules[ruleIdx];
 
@@ -101,6 +110,7 @@ export function LogicEditor({ localSurvey, rules, ruleIdx, onRulesChange, scopeB
         actions={rule.actions}
         scopeBlockIdx={scopeBlockIdx}
         alwaysRuns={alwaysRuns}
+        onAddCalculatedField={onAddCalculatedField}
         onActionsChange={(updater) => onRulesChange(updateRuleActions(rules, ruleIdx, updater))}
       />
     </div>

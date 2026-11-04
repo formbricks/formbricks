@@ -18,7 +18,7 @@ Logic belongs to the block, not to a single question. You add and edit it on the
 
 ## Building a rule
 
-On the Flow tab, click `Add logic +` under a block, choose **Jump rule** or **Set value**, and fill in the sentence. A Set value step always runs until you give it a condition with **Add a condition**.
+On the Flow tab, click `Add logic +` under a block, choose **Jump to block** or **Set value**, and fill in the sentence. A Set value step always runs until you give it a condition with **Add a condition**.
 
 ![A rule that routes savings-account respondents to a second block](/images/surveys/general-features/conditional-logic/logic-rule.webp)
 
@@ -48,11 +48,11 @@ On the Flow tab, click `Add logic +` under a block, choose **Jump rule** or **Se
 
 * **Set value**: change a variable's value. The result is available to every later question, and to the rules below this one.
 
-* **Require Answer**: make an optional question required. Only questions that are optional to begin with can be required this way.
+* **Require answer**: make an optional question required. Only questions that are optional to begin with can be required this way.
 
 * **Jump to block**: send the respondent to a specific block instead of the next one.
 
-* **Mark as low quality**: mark the response Low quality when its answers are implausible, for example *If “hours” is greater than 112 → Mark as low quality*. See [Mark as low quality](#mark-as-low-quality).
+* **Mark response as Low quality**: mark the response Low quality when its answers are implausible, for example *If “hours” is greater than 112 → Mark response as Low quality*. See [Mark as low quality](#mark-as-low-quality).
 
 <Note>
   A rule can carry several actions. They run in the order they are listed.
@@ -60,7 +60,7 @@ On the Flow tab, click `Add logic +` under a block, choose **Jump rule** or **Se
 
 ## Mark as low quality
 
-Some answers show that a response can't be trusted: someone who streams more than 112 hours a week, or who rates a product they said they never used. A rule with the **Mark as low quality** action marks such a response for you, so nobody has to review every response by hand.
+Some answers show that a response can't be trusted: someone who streams more than 112 hours a week, or who rates a product they said they never used. A rule with the **Mark response as Low quality** action marks such a response for you, so nobody has to review every response by hand.
 
 * **The respondent sees nothing.** The survey carries on as it would without the rule, and the rule's other actions, such as a jump, still run.
 * **The response is marked like one a reviewer marked.** It shows as Low quality in your responses, it is left out of the [Analysis export](/surveys/analysis/export-responses) by default, and it is removed from Dashboards.

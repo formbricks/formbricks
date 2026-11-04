@@ -410,11 +410,12 @@ export function SetValueFormula({
           <DropdownMenuTrigger asChild>
             <Button
               type="button"
-              variant="secondary"
-              className="size-10 shrink-0"
+              // The action menu's ⋮ beside it, and the condition rows' ⋮: same size, same outline.
+              variant="outline"
+              className="flex size-10 shrink-0 items-center justify-center rounded-md bg-white"
               title={t("workspace.surveys.edit.flow.formula_insert_reference")}
               aria-label={t("workspace.surveys.edit.flow.formula_insert_reference")}>
-              <AtSignIcon />
+              <AtSignIcon className="size-4 text-slate-700" />
             </Button>
           </DropdownMenuTrigger>
           {/* Closing returns to the formula rather than the button, so a space typed next doesn't
