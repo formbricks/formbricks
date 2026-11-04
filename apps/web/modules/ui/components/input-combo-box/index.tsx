@@ -7,6 +7,7 @@ import React, {
   Fragment,
   RefAttributes,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -36,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
+import { countChipsThatFit } from "./lib/fit-chips";
 import { filterComboboxOption } from "./lib/search";
 
 /**
@@ -170,8 +172,12 @@ function ComboboxOptionLabel({
     : "truncate text-slate-900";
   return (
     <>
-      {showCheckIcon && selected && (
-        <CheckIcon className="size-4 shrink-0 text-slate-300 hover:text-slate-400" />
+      {/* Every row keeps the check's room, so picked and unpicked labels line up (jobenjada #28). */}
+      {showCheckIcon && (
+        <CheckIcon
+          className={cn("size-4 shrink-0 text-slate-800", !selected && "invisible")}
+          aria-hidden="true"
+        />
       )}
       {option.icon && <option.icon className={cn("shrink-0", iconClassName)} />}
       {option.imgSrc && (
@@ -209,6 +215,69 @@ function ComboboxOptionLabel({
         <span className={labelClassName}>{option.label}</span>
       )}
     </>
+  );
+}
+
+const CHIP_GAP_PX = 4;
+/** Room for the "+N" chip: two digits at `text-xs` with its padding. */
+const CHIP_COUNTER_PX = 32;
+const CHIP_CLASS_NAME =
+  "shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs whitespace-nowrap text-slate-700";
+
+/**
+ * A multi-select's picks as chips on one line, with "+N" for those that don't fit (jobenjada review
+ * #28: they used to stack and get cut off). An invisible copy of every chip is measured, so how many
+ * show depends only on the box's width, never on what showed last.
+ */
+function SelectedChips({ options }: Readonly<{ options: TComboboxOption[] }>) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(options.length);
+  const labelsKey = options.map((option) => option.label).join("\u0000");
+
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const measure = measureRef.current;
+    if (!box || !measure || typeof ResizeObserver === "undefined") return;
+    // A ResizeObserver reports once as soon as it observes, so this also runs on mount.
+    const observer = new ResizeObserver(() => {
+      const widths = Array.from(measure.children).map((chip) => (chip as HTMLElement).offsetWidth);
+      setVisibleCount(
+        countChipsThatFit(widths, box.clientWidth, { gap: CHIP_GAP_PX, counterWidth: CHIP_COUNTER_PX })
+      );
+    });
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [labelsKey]);
+
+  const shown = options.slice(0, Math.max(1, visibleCount));
+  const hiddenCount = options.length - shown.length;
+
+  return (
+    <div
+      ref={boxRef}
+      className="relative flex w-full min-w-0 items-center gap-1 overflow-hidden"
+      title={options.map((option) => option.label).join(", ")}>
+      {shown.map((option, index) => (
+        <span
+          key={String(option.value)}
+          // The first chip may be cut short when it alone is wider than the box.
+          className={cn(CHIP_CLASS_NAME, index === 0 && "min-w-0 shrink truncate")}>
+          {option.label}
+        </span>
+      ))}
+      {hiddenCount > 0 && <span className={CHIP_CLASS_NAME}>+{hiddenCount}</span>}
+      <div
+        ref={measureRef}
+        aria-hidden
+        className="pointer-events-none invisible absolute top-0 left-0 flex gap-1 whitespace-nowrap">
+        {options.map((option) => (
+          <span key={String(option.value)} className={CHIP_CLASS_NAME}>
+            {option.label}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -328,30 +397,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   // value anyway, so the manual memo only made the two disagree (ENG-2366).
   const renderDisplayValue = () => {
     if (Array.isArray(localValue)) {
-      return localValue.map((v, i) => {
-        const opt = validOptions?.find((o) => o.value === v);
-        if (!opt) return null;
-        return (
-          <Fragment key={i}>
-            {i > 0 && <span>, </span>}
-            <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-              {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
-              {opt.imgSrc && (
-                <Image
-                  src={opt.imgSrc}
-                  alt={opt.label}
-                  width={24}
-                  height={24}
-                  unoptimized={isExternalImageSrc(opt.imgSrc)}
-                />
-              )}
-              <span className="truncate" title={opt.label}>
-                {opt.label}
-              </span>
-            </div>
-          </Fragment>
-        );
-      });
+      const picked = localValue.flatMap((v) => validOptions?.filter((o) => o.value === v).slice(0, 1) ?? []);
+      return <SelectedChips options={picked} />;
     }
 
     const opt = validOptions?.find((o) => o.value === localValue);
@@ -392,6 +439,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     <div
       className={cn(
         "group/icon flex h-10 max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        // A plain dropdown with nothing picked keeps room for a value. In a box that sizes to its
+        // content (the Set value field picker) it otherwise shrank to its chevron.
+        !withInput && inputType !== "dropdown" && "min-w-32",
         disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
@@ -401,7 +451,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           {...inputProps}
           disabled={disabled || inputProps?.disabled}
           className={cn(
-            "min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "min-w-0 flex-1 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0",
             inputProps?.className
           )}
           value={localValue ?? ""}
@@ -445,7 +495,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
       )}
 
       <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : handleOpenChange}>
-        <DropdownMenuTrigger asChild className="z-10 min-w-0 flex-1">
+        <DropdownMenuTrigger asChild>
           <div
             id={id}
             role="combobox"
@@ -457,10 +507,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             aria-controls="options"
             aria-expanded={open}
             aria-disabled={disabled || undefined}
+            // Next to the input or date picker the trigger is a fixed 40px chevron, and they take the
+            // rest. It must not also grow: a `flex-1` (basis 0) here squeezed it to nothing beside a
+            // full-width input, which hid the picker (jobenjada review #21), and split the row in half
+            // beside the date picker (#29).
             className={cn(
-              "flex h-full w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
+              "z-10 flex h-full w-full min-w-0 flex-1 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
               {
-                "w-10 shrink-0 justify-center pr-0": withInput && inputType !== "dropdown",
+                "w-10 flex-none justify-center pr-0": withInput && inputType !== "dropdown",
                 "pointer-events-none": isClearing || disabled,
                 "cursor-not-allowed bg-transparent": disabled,
               }
@@ -580,8 +634,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                                 }
                               }}>
                               <div className="flex w-full items-center gap-2 truncate">
-                                {showCheckIcon && isSelected(opt) && (
-                                  <CheckIcon className="mr-2 size-4 text-slate-300 hover:text-slate-400" />
+                                {showCheckIcon && (
+                                  <CheckIcon
+                                    className={cn(
+                                      "size-4 shrink-0 text-slate-800",
+                                      !isSelected(opt) && "invisible"
+                                    )}
+                                    aria-hidden="true"
+                                  />
                                 )}
                                 {opt.icon && <opt.icon className={iconClassName} />}
                                 {opt.imgSrc && (
