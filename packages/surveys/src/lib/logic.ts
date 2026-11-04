@@ -18,7 +18,10 @@ import {
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
-import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
+import {
+  evaluateConditionGroup,
+  evaluateUnansweredCondition,
+} from "@formbricks/types/surveys/logic-evaluation";
 import {
   isMatrixRowCondition,
   namesUnknownMatrixId,
@@ -42,6 +45,9 @@ export const isConditionGroup = (condition: TCondition): condition is TCondition
  *   pick up reserved metadata just because the respondent left it blank. Defaults to `{}` so a
  *   caller with nothing to project evaluates exactly as it does today, and every reserved operand
  *   reads as unset rather than throwing.
+ * @param notPassedElementIds The elements the respondent has not moved past yet: those of the page
+ *   being shown, for its show-if. A condition on one of them without an answer is false, "is skipped"
+ *   included (P71); once passed, "is skipped" holds. Empty by default: logic runs as a page is left.
  */
 export const evaluateLogic = (
   localSurvey: TJsWorkspaceStateSurvey,
@@ -49,10 +55,14 @@ export const evaluateLogic = (
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
   selectedLanguage: string,
-  embeddedValues: TResponseData = {}
+  embeddedValues: TResponseData = {},
+  notPassedElementIds: ReadonlySet<string> = new Set()
 ): boolean =>
-  evaluateConditionGroup(conditions, (condition) =>
-    evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  evaluateConditionGroup(
+    conditions,
+    (condition) =>
+      evaluateUnansweredCondition(condition, data, (elementId) => !notPassedElementIds.has(elementId)) ??
+      evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
   );
 
 /**

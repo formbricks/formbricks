@@ -41,7 +41,13 @@ The editor only offers what a show-if may use. A survey written through the API 
 * **A hidden block is skipped.** The survey moves on to the next block. The block's [logic](/surveys/general-features/conditional-logic) still runs, as if the respondent had submitted it with no answers, so its calculations and jumps keep working.
 * **A block whose questions are all hidden is skipped** the same way.
 
-In conditions further on, a question that was never shown counts as unanswered: *is skipped* and *is empty* match it.
+In conditions further on, a question that was never shown counts as unanswered.
+
+## Before an answer exists
+
+A condition on a question the respondent hasn't answered is false, whatever its operator, *does not equal* included. So a follow-up waits for the answer it depends on, and never shows and then disappears as that answer comes in.
+
+Only **is skipped** (for a call to action, **is not clicked**) matches an unanswered question, and only once the respondent has moved past it: on a later page, or in the logic that runs as they leave the page. On the page they are filling in, it doesn't match yet. The same holds for logic rules and quotas.
 
 ## Show if on options
 

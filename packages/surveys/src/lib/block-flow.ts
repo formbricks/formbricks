@@ -91,6 +91,9 @@ const getVisibility = (
   block: TSurveyBlock
 ): TPageVisibility => {
   const { survey, variables, selectedLanguage, reservedFieldValues } = input;
+  // The page's own questions are not passed yet while it is shown (P71): a show-if on one of them
+  // waits for its answer, and "is skipped" can't hold before the respondent leaves the page.
+  const onThisPage = new Set(block.elements.map((element) => element.id));
   return getBlockVisibility(
     block,
     input.responseData,
@@ -101,7 +104,8 @@ const getVisibility = (
         variables,
         group,
         selectedLanguage,
-        buildEmbeddedLookup(survey, reservedFieldValues, data)
+        buildEmbeddedLookup(survey, reservedFieldValues, data),
+        onThisPage
       ),
     createDropOptionAnswers(selectedLanguage)
   );

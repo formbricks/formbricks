@@ -30,7 +30,10 @@ import {
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
-import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
+import {
+  evaluateConditionGroup,
+  evaluateUnansweredCondition,
+} from "@formbricks/types/surveys/logic-evaluation";
 import {
   isMatrixRowCondition,
   namesUnknownMatrixId,
@@ -335,8 +338,12 @@ export const evaluateLogic = (
   selectedLanguage: string,
   embeddedValues: TResponseData = {}
 ): boolean =>
-  evaluateConditionGroup(conditions, (condition) =>
-    evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  evaluateConditionGroup(
+    conditions,
+    (condition) =>
+      // P71: a persisted response has passed every question it reports on.
+      evaluateUnansweredCondition(condition, data, () => true) ??
+      evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
   );
 
 const evaluateSingleCondition = (
