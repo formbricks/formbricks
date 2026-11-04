@@ -173,9 +173,10 @@ const getResponseFileUrlOwner = ({
   // `getStorageUrlSurveyId`'s reading, with the URL parsed once: a name that does not decode names no
   // survey.
   const parsed = parseStorageFileUrl(fileUrl);
-  const scope = parsed ? getStorageFileNameScope(parsed.fileName) : undefined;
+  const fileName = parsed ? decodeStorageUrlFileName(parsed.fileName) : null;
+  const scope = fileName === null ? undefined : getStorageFileNameScope(fileName);
 
-  if (!parsed || !scope?.decodable || scope.surveyId === null) return isUploadElementAnswer ? "own" : "none";
+  if (!parsed || !scope || scope.surveyId === null) return isUploadElementAnswer ? "own" : "none";
   if (parsed.accessType !== "private") return "none";
   return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
 };
@@ -364,38 +365,37 @@ export const parseStorageFileUrl = (fileUrl: string): TParsedStorageFileUrl | nu
  */
 export const getStorageUrlSurveyId = (fileUrl: string): string | null => {
   const parsed = parseStorageFileUrl(fileUrl);
-  if (!parsed) return null;
+  const fileName = parsed ? decodeStorageUrlFileName(parsed.fileName) : null;
 
-  const scope = getStorageFileNameScope(parsed.fileName);
-  return scope.decodable ? scope.surveyId : null;
+  return fileName === null ? null : getStorageFileNameScope(fileName).surveyId;
 };
 
 /**
- * Which survey (and, for an upload, which element) an object key's file name is filed under, read from
- * the name the storage layer actually uses: `getFileStreamForDownload` and `deleteFile` both decode the
- * joined name once more before building the key, so the check has to decode it too. `decodable: false`
- * for a name that does not decode — the storage layer fails on it as well, so there is no object it
- * could reach.
+ * A storage URL carries its file name percent-encoded once, and the object is stored under the decoded
+ * name. Returns null for a name that does not decode: the delete path fails on it too, so it reaches no
+ * object.
+ */
+const decodeStorageUrlFileName = (encodedFileName: string): string | null => {
+  try {
+    return decodeURIComponent(encodedFileName);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Which survey (and, for an upload, which element) an object key's file name is filed under.
  *
- * `fileName` is the joined, still-encoded name: a URL path's file part, or the route's catch-all
- * segments joined with `/`.
+ * `fileName` is the name as the storage layer uses it to build the key, so this does not decode: a URL's
+ * file part is decoded first (`decodeStorageUrlFileName`), and the route's catch-all segments, which the
+ * router has already decoded once, are joined with `/` and passed as they are.
  */
 export const getStorageFileNameScope = (
   fileName: string
-):
-  | { decodable: false }
-  | { decodable: true; isSurveyScope: boolean; surveyId: string | null; elementId: string | null } => {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(fileName);
-  } catch {
-    return { decodable: false };
-  }
-
-  const [scope, surveyId, elementsSegment, elementId] = decoded.split("/");
-  const isSurveyScope = scope === "surveys" && decoded.includes("/");
+): { isSurveyScope: boolean; surveyId: string | null; elementId: string | null } => {
+  const [scope, surveyId, elementsSegment, elementId] = fileName.split("/");
+  const isSurveyScope = scope === "surveys" && fileName.includes("/");
   return {
-    decodable: true,
     isSurveyScope,
     surveyId: isSurveyScope && surveyId ? surveyId : null,
     elementId: isSurveyScope && elementsSegment === "elements" && elementId ? elementId : null,

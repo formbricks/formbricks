@@ -139,12 +139,9 @@ export const DELETE = async (
     }
   }
 
-  const deleteResult = await deleteFile(
-    resolved.workspaceId,
-    accessType,
-    decodeURIComponent(fileName),
-    idParam
-  );
+  // `fileName` comes from the route param, which Next.js has already decoded once. Objects are stored
+  // under that name, so it goes to storage as is.
+  const deleteResult = await deleteFile(resolved.workspaceId, accessType, fileName, idParam);
 
   if (!deleteResult.ok) {
     if (!("error" in deleteResult)) {

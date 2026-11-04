@@ -246,6 +246,26 @@ describe("collectResponseAttachments", () => {
     expect(result.entries[0].storage?.fileName).toBe("my photo.jpg");
   });
 
+  // ENG-3077: the URL carries a literal `%` as `%25`. One decode gives the stored name, and that is the
+  // name `getFileStreamForDownload` now uses as given, so it must reach storage decoded exactly once.
+  test.each([
+    ["a literal %20", "Test%2520tiara--fid--1.png", "Test%20tiara--fid--1.png", "Test%20tiara.png"],
+    ["a bare %", "100%25--fid--1.png", "100%--fid--1.png", "100%.png"],
+  ])(
+    "hands storage the once-decoded name for a file name with %s",
+    async (_label, urlName, storedName, originalFileName) => {
+      respondWithBatches([
+        response("res-1", { [UPLOAD_ELEMENT_ID]: [`/storage/${WORKSPACE_ID}/private/${urlName}`] }),
+      ]);
+
+      const result = await collectResponseAttachments({ survey: buildBlocksSurvey(), maxFiles: 100 });
+
+      expect(result.entries[0].status).toBe("ok");
+      expect(result.entries[0].storage?.fileName).toBe(storedName);
+      expect(result.entries[0].originalFileName).toBe(originalFileName);
+    }
+  );
+
   test("scopes the query to the survey and passes the filter criteria through", async () => {
     respondWithBatches([]);
 
