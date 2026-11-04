@@ -10,7 +10,13 @@ import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-fi
 import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
-import { deleteResponse, getResponseDownloadFile, responseSelection, updateResponse } from "./service";
+import {
+  deleteResponse,
+  getResponseDownloadFile,
+  lockResponseForUpdate,
+  responseSelection,
+  updateResponse,
+} from "./service";
 import { calculateTtcTotal, getResponsesJson } from "./utils";
 
 vi.mock("@formbricks/database", () => ({
@@ -145,6 +151,24 @@ describe("responseSelection", () => {
   // out of it is a key missing from the payload rather than a `null` (ENG-6780).
   test("selects the outcome", () => {
     expect(responseSelection.outcome).toBe(true);
+  });
+});
+
+describe("lockResponseForUpdate", () => {
+  const lockingTx = (rows: { finished: boolean }[]) => ({ $queryRaw: vi.fn().mockResolvedValue(rows) });
+
+  test("locks the row without blocking key-share inserts and returns its finished flag", async () => {
+    const tx = lockingTx([{ finished: true }]);
+
+    await expect(lockResponseForUpdate(tx as never, "response-1")).resolves.toEqual({ finished: true });
+
+    const [strings, ...values] = tx.$queryRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
+    expect(strings.join("?")).toMatch(/FROM "Response"\s+WHERE "id" = \?\s+FOR NO KEY UPDATE/);
+    expect(values).toEqual(["response-1"]);
+  });
+
+  test("returns null when the response does not exist", async () => {
+    await expect(lockResponseForUpdate(lockingTx([]) as never, "missing")).resolves.toBeNull();
   });
 });
 
