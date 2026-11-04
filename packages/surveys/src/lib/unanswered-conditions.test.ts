@@ -16,10 +16,12 @@ vi.mock("@/lib/i18n", () => ({
 }));
 
 /**
- * A condition on a question the respondent has not answered (P71, jobenjada review #26): false for
- * every operator except "is skipped" (and a CTA's "is not clicked"), and those two are true only once
- * the respondent passed the question without answering it. A question on the page being filled in is
- * not passed yet, so nothing on that page shows and then disappears as it is answered.
+ * A show-if on a question the respondent has not answered (P71, jobenjada review #26): false for every
+ * operator except "is skipped" (and a CTA's "is not clicked"), and those two are true only once the
+ * respondent passed the question without answering it. A question on the page being filled in is not
+ * passed yet, so nothing on that page shows and then disappears as it is answered.
+ *
+ * Show-if only: rules and start logic read an unanswered question as they always have.
  */
 
 const when = (elementId: string, operator: TSurveyLogicConditionsOperator, value?: string) =>
@@ -61,26 +63,6 @@ const makeSurvey = (blocks: Record<string, unknown>[]): TJsWorkspaceStateSurvey 
 const ALL_OPERATORS = ZSurveyLogicConditionsOperator.options;
 const TRUE_ONCE_PASSED: TSurveyLogicConditionsOperator[] = ["isSkipped", "isNotClicked"];
 
-describe("a condition on a question passed without an answer", () => {
-  const survey = makeSurvey([{ id: "b1", name: "b1", elements: [openText("q")] }]);
-
-  test.each(ALL_OPERATORS)("%s", (operator) => {
-    const result = evaluateLogic(survey, {}, {}, when("q", operator, "x"), "default");
-
-    expect(result).toBe(TRUE_ONCE_PASSED.includes(operator));
-  });
-
-  test("an empty answer reads the same as no answer", () => {
-    expect(evaluateLogic(survey, { q: "" }, {}, when("q", "doesNotEqual", "x"), "default")).toBe(false);
-    expect(evaluateLogic(survey, { q: "" }, {}, when("q", "isSkipped"), "default")).toBe(true);
-  });
-
-  test("an answer is compared as before", () => {
-    expect(evaluateLogic(survey, { q: "y" }, {}, when("q", "doesNotEqual", "x"), "default")).toBe(true);
-    expect(evaluateLogic(survey, { q: "y" }, {}, when("q", "isSkipped"), "default")).toBe(false);
-  });
-});
-
 describe("show-if on the page being filled in", () => {
   const visibleWith = (operator: TSurveyLogicConditionsOperator, responseData: Record<string, string>) =>
     getPageVisibility({
@@ -109,7 +91,8 @@ describe("show-if on the page being filled in", () => {
   });
 });
 
-describe("show-if on a later page, and rules, after the question was passed", () => {
+describe("after the question was passed without an answer", () => {
+  // b1 asks "fav" and has a rule on it; b2 has a show-if on it.
   const survey = (operator: TSurveyLogicConditionsOperator) =>
     makeSurvey([
       {
@@ -128,9 +111,11 @@ describe("show-if on a later page, and rules, after the question was passed", ()
       { id: "b3", name: "b3", elements: [openText("q3")] },
     ]);
 
-  const advanceSkipping = (operator: TSurveyLogicConditionsOperator) =>
-    advanceFromBlock({
-      survey: survey(operator),
+  const skipBlock1 = (operator: TSurveyLogicConditionsOperator, withRule = true) => {
+    const built = survey(operator);
+    if (!withRule) built.blocks[0].logic = [];
+    return advanceFromBlock({
+      survey: built,
       blockId: "b1",
       responseData: {},
       submittedData: {},
@@ -138,15 +123,29 @@ describe("show-if on a later page, and rules, after the question was passed", ()
       selectedLanguage: "default",
       reservedFieldValues: {},
     });
+  };
 
-  test('"is skipped" is true once the question was passed: its rule jumps', () => {
-    expect(advanceSkipping("isSkipped").nextBlockId).toBe("end1");
+  test.each(ALL_OPERATORS)("a later block's show-if with %s", (operator) => {
+    const result = skipBlock1(operator, false);
+    const shown = TRUE_ONCE_PASSED.includes(operator);
+
+    expect(result.nextBlockId).toBe(shown ? "b2" : "b3");
   });
 
-  test('"does not equal" on the skipped question is false: no jump, and the later block is not shown', () => {
-    const result = advanceSkipping("doesNotEqual");
+  test('a rule with "does not equal X" still matches, as before: it jumps', () => {
+    expect(skipBlock1("doesNotEqual").nextBlockId).toBe("end1");
+  });
 
-    expect(result.nextBlockId).toBe("b3");
-    expect(result.skippedBlockIds).toEqual(["b2"]);
+  test('a rule with "is skipped" matches', () => {
+    expect(skipBlock1("isSkipped").nextBlockId).toBe("end1");
+  });
+});
+
+describe("rules read an unanswered question as before", () => {
+  const survey = makeSurvey([{ id: "b1", name: "b1", elements: [openText("q")] }]);
+
+  test('"does not equal" and "is empty" match an empty answer', () => {
+    expect(evaluateLogic(survey, {}, {}, when("q", "doesNotEqual", "x"), "default")).toBe(true);
+    expect(evaluateLogic(survey, { q: "" }, {}, when("q", "isEmpty"), "default")).toBe(true);
   });
 });

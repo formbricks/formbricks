@@ -48,17 +48,17 @@ const UNANSWERED_OPERATORS: ReadonlySet<TSingleCondition["operator"]> = new Set(
 ]);
 
 /**
- * How a condition on a question nobody answered resolves (P71, jobenjada review #26), in both
- * engines and in show-if: false for every operator except "is skipped" (and a CTA's "is not
- * clicked"), and those are true only once the respondent passed the question without answering it.
+ * How a show-if condition on a question nobody answered resolves (P71, jobenjada review #26): false
+ * for every operator except "is skipped" (and a CTA's "is not clicked"), and those are true only once
+ * the respondent passed the question without answering it. Show-if only: rules, start logic and
+ * quotas read an unanswered question as they always have.
  * A question on the page being filled in is not passed yet, so a follow-up never shows and then
  * disappears as the question above it is answered ("does not equal X" used to show it first).
  *
  * Returns `undefined` when the condition does not read an element, or the element has an answer: the
  * engine compares that answer as before.
  *
- * @param isPassed Whether the respondent has moved past the element. The renderer says no for the
- *   page being shown; a persisted response has passed everything it holds.
+ * @param isPassed Whether the respondent has moved past the element: not yet for the page being shown.
  */
 export const evaluateUnansweredCondition = (
   condition: TSingleCondition,

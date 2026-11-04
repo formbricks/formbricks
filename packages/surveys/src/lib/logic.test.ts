@@ -1628,10 +1628,9 @@ describe("Survey Logic", () => {
           },
         ],
       };
-      // P71: an element left empty is unanswered, and only "is skipped" holds for it.
       expect(
         evaluateLogic(mockSurvey, { ...mockData, q1: "" }, mockVariablesData, isEmptyCondition, "default")
-      ).toBe(false);
+      ).toBe(true);
 
       // Test isNotEmpty
       const isNotEmptyCondition: TConditionGroup = {

@@ -44,9 +44,6 @@ export const isConditionGroup = (condition: TCondition): condition is TCondition
  *   pick up reserved metadata just because the respondent left it blank. Defaults to `{}` so a
  *   caller with nothing to project evaluates exactly as it does today, and every reserved operand
  *   reads as unset rather than throwing.
- * @param notPassedElementIds The elements the respondent has not moved past yet: those of the page
- *   being shown, for its show-if. A condition on one of them without an answer is false, "is skipped"
- *   included (P71); once passed, "is skipped" holds. Empty by default: logic runs as a page is left.
  */
 export const evaluateLogic = (
   localSurvey: TJsWorkspaceStateSurvey,
@@ -54,8 +51,30 @@ export const evaluateLogic = (
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
   selectedLanguage: string,
-  embeddedValues: TResponseData = {},
-  notPassedElementIds: ReadonlySet<string> = new Set()
+  embeddedValues: TResponseData = {}
+): boolean =>
+  evaluateConditionGroup(conditions, (condition) =>
+    evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  );
+
+/**
+ * A show-if: whether a block, a question or an option is shown (P71, show-if only). Like
+ * `evaluateLogic`, except that a condition on a question without an answer is false, "does not equal"
+ * included, so nothing shows and then disappears as the answer comes in. Only "is skipped" (and a
+ * CTA's "is not clicked") holds for it, once the respondent has passed the question. Rules, start
+ * logic and quotas keep `evaluateLogic`.
+ *
+ * @param notPassedElementIds The elements the respondent has not moved past yet: those of the page
+ *   being shown.
+ */
+export const evaluateShowIf = (
+  localSurvey: TJsWorkspaceStateSurvey,
+  data: TResponseData,
+  variablesData: TResponseVariables,
+  conditions: TConditionGroup,
+  selectedLanguage: string,
+  embeddedValues: TResponseData,
+  notPassedElementIds: ReadonlySet<string>
 ): boolean =>
   evaluateConditionGroup(
     conditions,

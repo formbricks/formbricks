@@ -7,7 +7,7 @@ import {
   dropAnswers,
   getBlockVisibility,
 } from "@formbricks/types/surveys/show-if";
-import { evaluateLogic, performActions } from "@/lib/logic";
+import { evaluateLogic, evaluateShowIf, performActions } from "@/lib/logic";
 import { createDropOptionAnswers } from "@/lib/option-answers";
 import { END_BLOCK_ID, START_BLOCK_ID, getForwardTargetFromOffBlockId } from "@/lib/survey-navigation";
 
@@ -98,7 +98,7 @@ const getVisibility = (
     block,
     input.responseData,
     (group, data) =>
-      evaluateLogic(
+      evaluateShowIf(
         survey,
         data,
         variables,
