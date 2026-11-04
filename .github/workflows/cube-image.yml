@@ -131,10 +131,29 @@ jobs:
           load: true
           tags: formbricks-cube:ci
 
+      # setup-trivy's install script downloads the tarball from get.trivy.dev, which stopped resolving from
+      # the runners on 2026-11-04. Install the release from GitHub instead, checked against a pinned digest.
+      # Keep TRIVY_VERSION and the digest in step with `version` below.
+      - name: Install Trivy from the GitHub release
+        if: steps.changes.outputs.image == 'true'
+        env:
+          TRIVY_VERSION: "0.71.2"
+          TRIVY_SHA256: 0510e71e2fd39bf863856d499c8dc19feb4e7336546394c502a8f5cc7ab27460
+        run: |
+          set -euo pipefail
+          tarball="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSL --retry 3 -o "${RUNNER_TEMP}/${tarball}" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${tarball}"
+          echo "${TRIVY_SHA256}  ${RUNNER_TEMP}/${tarball}" | sha256sum --check --strict
+          mkdir -p "${RUNNER_TEMP}/trivy-bin"
+          tar -xzf "${RUNNER_TEMP}/${tarball}" -C "${RUNNER_TEMP}/trivy-bin" trivy
+          echo "${RUNNER_TEMP}/trivy-bin" >> "$GITHUB_PATH"
+
       - name: Trivy gate (CRITICAL and HIGH with a fix)
         if: steps.changes.outputs.image == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          skip-setup-trivy: true
           image-ref: formbricks-cube:ci
           scanners: vuln
           severity: "CRITICAL,HIGH"
