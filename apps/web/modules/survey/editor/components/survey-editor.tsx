@@ -190,6 +190,7 @@ export const SurveyEditor = ({
   // The Flow tab's open blocks, kept here because the tab unmounts on every switch: coming back keeps
   // what was opened and closed. It opens with every block collapsed.
   const [flowExpandedBlockIds, setFlowExpandedBlockIds] = useState<Set<string>>(() => new Set());
+  const flowHandledInvalidRef = useRef<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
   // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
   // so (ENG-2581). The card itself stops showing the error once the survey has a trigger.
@@ -416,6 +417,7 @@ export const SurveyEditor = ({
               setInvalidElements={setInvalidElements}
               persistedSurvey={survey}
               expandedBlockIds={flowExpandedBlockIds}
+              handledInvalidRef={flowHandledInvalidRef}
               setExpandedBlockIds={setFlowExpandedBlockIds}
             />
           )}

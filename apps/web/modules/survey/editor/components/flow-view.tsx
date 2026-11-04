@@ -14,7 +14,7 @@ import {
   SplitIcon,
   Undo2Icon,
 } from "lucide-react";
-import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
@@ -25,7 +25,12 @@ import { RuleRowActions } from "@/modules/survey/editor/components/rule-row-acti
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import { ShowIfPopoverBoundary } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { getBlockDisplayName, isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
-import { expandBlock, getBlockToggle, toggleBlock } from "@/modules/survey/editor/lib/flow-open-state";
+import {
+  expandBlock,
+  getBlockToggle,
+  getRuleToReveal,
+  toggleBlock,
+} from "@/modules/survey/editor/lib/flow-open-state";
 import {
   type TFlowBadge,
   type TFlowBlockSection,
@@ -58,7 +63,11 @@ import {
   createShowIf,
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
-import { getActionVariableOptions, getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
+import {
+  getActionVariableOptions,
+  getDefaultOperatorForElement,
+  scrollElementCardIntoView,
+} from "@/modules/survey/editor/lib/utils";
 import { isBlockLogicItemValid } from "@/modules/survey/editor/lib/validation";
 import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import { Badge } from "@/modules/ui/components/badge";
@@ -93,6 +102,8 @@ interface FlowViewProps {
    */
   readonly expandedBlockIds: Set<string>;
   readonly setExpandedBlockIds: Dispatch<SetStateAction<Set<string>>>;
+  /** The validation pass whose flagged rule was last opened; kept by the editor for the same reason. */
+  readonly handledInvalidRef: RefObject<string[] | null>;
 }
 
 const RULE_ICON = { rule: <SplitIcon />, embeddedData: <BinaryIcon /> };
@@ -124,6 +135,7 @@ export const FlowView = ({
   persistedSurvey,
   expandedBlockIds,
   setExpandedBlockIds,
+  handledInvalidRef,
 }: FlowViewProps) => {
   const { t, i18n } = useTranslation();
   // Dates on the rows read in the viewer's language (P65).
@@ -138,21 +150,26 @@ export const FlowView = ({
   // The show-if popover open, keyed by what carries it: `block:<id>` or `element:<id>` (ENG-6931).
   const [openShowIfKey, setOpenShowIfKey] = useState<string | null>(null);
 
-  // A save or publish that flags a rule opens it and its block, so the problem is visible on its row.
-  // Only newly flagged rules: a rule fixed and cleared below must not move the open row elsewhere.
-  const previousInvalidRef = useRef<string[] | null>(null);
+  // A save or publish that flags a rule opens the rule its toast names, and its block, and scrolls
+  // there. The pass handled last is kept by the editor, so coming back to the tab doesn't reopen it.
   useEffect(() => {
-    const previous = previousInvalidRef.current ?? [];
-    previousInvalidRef.current = invalidElements;
-    if (!invalidElements?.length) return;
-    const invalidRow = [...outline.start.rules, ...outline.blocks.flatMap((block) => block.rules)].find(
-      (row) => invalidElements.includes(row.id) && !previous.includes(row.id)
+    const previous = handledInvalidRef.current;
+    handledInvalidRef.current = invalidElements;
+    const ruleRows = [...outline.start.rules, ...outline.blocks.flatMap((block) => block.rules)];
+    const ruleId = getRuleToReveal(
+      invalidElements,
+      previous,
+      ruleRows.map((row) => row.id)
     );
+    const invalidRow = ruleRows.find((row) => row.id === ruleId);
     if (!invalidRow) return;
     setOpenRowId(invalidRow.id);
-    if (invalidRow.owner.type !== "block") return;
-    const blockId = invalidRow.owner.blockId;
-    setExpandedBlockIds((current) => expandBlock(current, blockId));
+    if (invalidRow.owner.type === "block") {
+      const blockId = invalidRow.owner.blockId;
+      setExpandedBlockIds((current) => expandBlock(current, blockId));
+    }
+    // After the block has opened and the row is on the page.
+    scrollElementCardIntoView(invalidRow.id, "start");
     // Re-run only for a new validation pass, not on every edit of the outline.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invalidElements]);
@@ -543,7 +560,11 @@ export const FlowView = ({
                   showChevron
                   isOpen={isExpanded}
                   onToggle={onToggleBlock}
-                  isInvalid={invalidElements?.includes(block.id) ?? false}
+                  // A collapsed block hides its rules: it shows when one of them is flagged.
+                  isInvalid={
+                    (invalidElements?.includes(block.id) ?? false) ||
+                    (!isExpanded && block.rules.some((row) => invalidElements?.includes(row.id)))
+                  }
                   body={
                     isExpanded ? (
                       <ul className="space-y-1.5 pl-10">

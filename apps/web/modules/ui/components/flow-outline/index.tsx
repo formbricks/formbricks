@@ -140,11 +140,11 @@ export const FlowOutlineRow = ({
   const hasContentBelow = Boolean(body) || (isOpen && Boolean(details));
 
   return (
-    <div className="flex items-start gap-1.5" id={id}>
+    <div className="flex scroll-mt-20 items-start gap-1.5" id={id}>
       <CornerDownRightIcon className="mt-2.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />
       <div
         className={cn(
-          "min-w-0 flex-1 scroll-mt-20 rounded-lg border",
+          "min-w-0 flex-1 rounded-lg border",
           TONE_CARD[tone],
           isInvalid && "border-red-400 ring-1 ring-red-400"
         )}>
