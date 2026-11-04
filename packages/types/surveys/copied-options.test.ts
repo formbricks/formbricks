@@ -342,6 +342,32 @@ describe("codes of copied options", () => {
     expect(grownCodes[grownCodes.length - 1]).toEqual(["initech", "6"]);
   });
 
+  test("a new source option takes the lowest code free in every linked question, not the highest plus one", () => {
+    // The copy's fixed "None of these" holds 99. The source's next option is the lowest number free in
+    // both questions (ENG-4024), not 100.
+    const sourceCodes = codesOf(blocksWith({}), 0);
+    const nextFree = sourceCodes.length + 1;
+    const blocks = fillMissingCodes(
+      blocksWith(
+        {
+          id: "fav_brand",
+          type: "multipleChoiceMulti",
+          optionsCopiedFrom: "brands",
+          choices: [{ id: "none", label: { default: "None of these" }, code: "99" }],
+        },
+        {
+          ...sourceMulti,
+          choices: [...(sourceMulti.choices as unknown[]), { id: "initech", label: { default: "Initech" } }],
+        }
+      ),
+      []
+    );
+
+    const filledSource = codesOf(blocks, 0);
+    expect(filledSource[filledSource.length - 1]).toEqual(["initech", String(nextFree)]);
+    expect(codesOf(blocks, 1)).toEqual([["none", "99"]]);
+  });
+
   test("codes travel through every hop", () => {
     const blocks = fillMissingCodes(
       [
