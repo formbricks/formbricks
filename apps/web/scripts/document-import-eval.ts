@@ -105,7 +105,7 @@ const parseArgs = (argv: ReadonlyArray<string>): TArgs => {
         return [key, value ?? "true"] as const;
       })
   );
-  const only = options.get("fixture")?.replace(/\.(docx|xlsx|csv)$/, "");
+  const only = options.get("fixture");
   const runs = Number(options.get("runs") ?? "1");
   return {
     sources: only ? [only] : Object.keys(CEILING_SET),
@@ -264,9 +264,9 @@ const loadSources = (args: TArgs): TSource[] => {
     return [{ name: basename(path), bytes: new Uint8Array(readFileSync(path)), recordable: false }];
   }
   return args.sources.map((name) => {
-    const load = CEILING_SET[name];
+    // A ceiling-set fixture by its name, with or without its extension; any other by its file name.
+    const load = CEILING_SET[name.replace(/\.(docx|xlsx|csv)$/, "")];
     if (load) return load();
-    // Any other fixture by its file name.
     return fixture(name.includes(".") ? name : `${name}.docx`);
   });
 };

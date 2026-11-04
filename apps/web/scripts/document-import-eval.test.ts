@@ -59,14 +59,15 @@ describe("pnpm document:eval", () => {
     server = undefined;
   });
 
-  test(
-    "loads the app as ES modules, ESM-only packages included, and reaches the provider",
+  // A CSV fixture too: `--fixture` once stripped every extension and read the name back as a .docx.
+  test.each(["tracked-changes-comments.docx", "sample-survey-2.csv"])(
+    "loads the app as ES modules, ESM-only packages included, and reaches the provider (%s)",
     { timeout: 60_000 },
-    async () => {
+    async (fixtureName) => {
       const provider = await startRefusingProvider();
       server = provider.server;
 
-      const result = await runEval(provider.port, ["--fixture=tracked-changes-comments.docx"]);
+      const result = await runEval(provider.port, [`--fixture=${fixtureName}`]);
 
       // `tsx` alone stopped here, before any call: `@formbricks/ai` only exports `import`.
       expect(result.stderr).not.toContain("ERR_PACKAGE_PATH_NOT_EXPORTED");
@@ -77,9 +78,7 @@ describe("pnpm document:eval", () => {
         .split("\n")
         .filter((line) => line.startsWith("{"))
         .map((line) => JSON.parse(line) as Record<string, unknown>);
-      expect(lines).toEqual([
-        { run: 1, fixture: "tracked-changes-comments.docx", failed: "AI_APICallError" },
-      ]);
+      expect(lines).toEqual([{ run: 1, fixture: fixtureName, failed: "AI_APICallError" }]);
     }
   );
 });
