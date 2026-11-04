@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { mergeEmbeddedFields, useDashboardEmbeddedFields } from "./use-dashboard-embedded-fields";
+import { useDashboardEmbeddedFields } from "./use-dashboard-embedded-fields";
 
 const WORKSPACE_ID = "clws000000000000000000001";
 const PLAN = "FeedbackRecords.ed_plan_64879f7d";
@@ -18,28 +18,6 @@ const catalog = (...fields: Array<{ name: string; label: string }>) =>
   Response.json({
     data: { fields: fields.map((field) => ({ ...field, kind: "dimension", type: "string" })) },
   });
-
-describe("mergeEmbeddedFields", () => {
-  test("has none for no datasets, or datasets without keys", () => {
-    expect(mergeEmbeddedFields([])).toEqual([]);
-    expect(mergeEmbeddedFields([[{ name: "FeedbackRecords.sourceName", label: "Source" }]])).toEqual([]);
-  });
-
-  test("keeps one field per key across datasets, in key order", () => {
-    expect(
-      mergeEmbeddedFields([
-        [
-          { name: TIER, label: "Tier" },
-          { name: PLAN, label: "Plan" },
-        ],
-        [{ name: PLAN, label: "Plan" }],
-      ])
-    ).toEqual([
-      { name: PLAN, key: "Plan" },
-      { name: TIER, key: "Tier" },
-    ]);
-  });
-});
 
 describe("useDashboardEmbeddedFields", () => {
   beforeEach(() => {
@@ -59,7 +37,8 @@ describe("useDashboardEmbeddedFields", () => {
     const disabled = renderHook(() => useDashboardEmbeddedFields(WORKSPACE_ID, ["ds1", "ds2"], false), {
       wrapper,
     });
-    expect(disabled.result.current).toEqual([]);
+    expect(disabled.result.current.embeddedFields).toEqual([]);
+    expect(disabled.result.current.isLoading).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
 
     const { result } = renderHook(
@@ -68,11 +47,38 @@ describe("useDashboardEmbeddedFields", () => {
         wrapper,
       }
     );
-    await waitFor(() => expect(result.current).toHaveLength(2));
-    expect(result.current).toEqual([
+    expect(result.current.isLoading).toBe(true);
+    await waitFor(() => expect(result.current.embeddedFields).toHaveLength(2));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+    expect(result.current.embeddedFields).toEqual([
       { name: PLAN, key: "Plan" },
       { name: TIER, key: "Tier" },
     ]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test("reports a failed catalog so the editor can say so and retry, instead of raw member names (U6)", async () => {
+    fetchMock.mockImplementation(async (url) =>
+      url.includes("datasetId=ds1")
+        ? catalog({ name: PLAN, label: "Plan" })
+        : Response.json({ title: "Boom", status: 500, detail: "Boom" }, { status: 500 })
+    );
+
+    const { result } = renderHook(() => useDashboardEmbeddedFields(WORKSPACE_ID, ["ds1", "ds2"], true), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.error).toBeTruthy());
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.embeddedFields).toEqual([{ name: PLAN, key: "Plan" }]);
+
+    fetchMock.mockImplementation(async (url) =>
+      url.includes("datasetId=ds1")
+        ? catalog({ name: PLAN, label: "Plan" })
+        : catalog({ name: TIER, label: "Tier" })
+    );
+    result.current.retry();
+    await waitFor(() => expect(result.current.embeddedFields).toHaveLength(2));
+    expect(result.current.error).toBeNull();
   });
 });

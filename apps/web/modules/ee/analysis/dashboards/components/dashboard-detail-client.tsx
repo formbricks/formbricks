@@ -33,6 +33,7 @@ import {
   toChartDateRange,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
+import { applyDashboardFilterPick } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-editing";
 import {
   keepCurrentPicks,
   readFilterPicksFromUrl,
@@ -364,7 +365,7 @@ function DashboardDetailView({
   // The embedded-data keys a filter can use: those of the datasets the dashboard's charts read. Only
   // editors set filters up, so they are loaded in edit mode alone.
   const datasetIds = useMemo(() => widgets.map(({ chart }) => chart.feedbackDirectoryId), [widgets]);
-  const embeddedFields = useDashboardEmbeddedFields(workspaceId, datasetIds, isEditing);
+  const filterFields = useDashboardEmbeddedFields(workspaceId, datasetIds, isEditing);
 
   const hasChanges = useMemo(() => {
     if (draftName !== null && draftName !== dashboard.name) return true;
@@ -675,7 +676,13 @@ function DashboardDetailView({
 
   const handlePickChange = useCallback(
     (filterId: string, values: string[]) => {
-      const next = keepCurrentPicks(dashboard.filters, { ...picks, [filterId]: values });
+      const applied = applyDashboardFilterPick(dashboard.filters, picks, filterId, values);
+      // The picks travel in every chart read's URL, so their total is bounded as the API bounds it (C9).
+      if ("exceedsBudget" in applied) {
+        toast.error(t("workspace.analysis.dashboards.filter_picks_too_long"));
+        return;
+      }
+      const next = applied.picks;
       // Remember the picks (cookie) for the next visit, then pin them in the URL so the view can be shared.
       writeStoredFilterPicks(dashboard.id, next);
       setChosenPicks(next);
@@ -687,7 +694,7 @@ function DashboardDetailView({
       const queryString = params.toString();
       window.history.pushState(null, "", queryString ? `${pathname}?${queryString}` : pathname);
     },
-    [dashboard.filters, dashboard.id, pathname, picks, searchParams]
+    [dashboard.filters, dashboard.id, pathname, picks, searchParams, t]
   );
 
   const isEmpty = widgets.length === 0;
@@ -739,14 +746,15 @@ function DashboardDetailView({
 
       {/* The date range and the filter picks only narrow existing charts, so the bar is hidden on an
           empty dashboard where they would have nothing to act on — except while editing, where the
-          dashboard's filters are set up. */}
+          dashboard's filters are set up. The date range is this person's own view, like the picks, so
+          edit mode shows the filters being set up instead, as it did before filters existed (U9). */}
       {(isEditing || !isEmpty) && (
         <div className="flex flex-wrap items-center gap-2" data-testid="dashboard-filter-bar">
-          <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
+          {!isEditing && <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />}
           {isEditing ? (
             <DashboardFilterEditor
               filters={filters}
-              embeddedFields={embeddedFields}
+              fields={filterFields}
               onFiltersChange={setDraftFilters}
             />
           ) : (
@@ -767,7 +775,14 @@ function DashboardDetailView({
       <section>
         <div ref={containerRef} className="w-full">
           {isEmpty ? (
-            <EmptyState text={t("workspace.analysis.dashboards.no_data_message")} />
+            <EmptyState
+              text={
+                // Someone who can't edit the dashboard can't add charts to it either (U1).
+                isReadOnly
+                  ? t("workspace.analysis.dashboards.no_data_message_read_only")
+                  : t("workspace.analysis.dashboards.no_data_message")
+              }
+            />
           ) : (
             mounted && (
               <ResponsiveGridLayout

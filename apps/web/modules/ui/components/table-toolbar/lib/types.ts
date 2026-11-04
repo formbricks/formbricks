@@ -58,6 +58,12 @@ export type TFilterOption = {
   value: string;
 };
 
+/** The first values of a longer list: `hasMore` when the search matched more than `options` holds. */
+export type TFilterOptionsPage = {
+  options: TFilterOption[];
+  hasMore: boolean;
+};
+
 /**
  * Something a table can be filtered by (GLOSSARY: Filter property). A table publishes a list of these;
  * a filter on a property that is not in the list is dropped when the URL is read.
@@ -75,8 +81,11 @@ export type TFilterProperty = {
    * they never limit what the rule may hold.
    */
   suggestions?: readonly string[];
-  /** Values loaded on demand, for value lists too long or too dynamic to ship with the page. */
-  loadOptions?: (search: string) => Promise<TFilterOption[]>;
+  /**
+   * Values loaded on demand, for value lists too long or too dynamic to ship with the page. A loader that
+   * returns only the first values of a longer list says so with `hasMore`, and the list asks for a search.
+   */
+  loadOptions?: (search: string) => Promise<TFilterOption[] | TFilterOptionsPage>;
   /** Shown before the label in Advanced filter's picker, so kinds of property read apart at a glance. */
   icon?: LucideIcon;
   /** Heading the property sits under in Advanced filter's picker. Absent: the table's one list. */

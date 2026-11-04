@@ -6,6 +6,7 @@ import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { toFilterOptionsPage } from "../lib/options-page";
 import type { TFilterOption, TFilterProperty } from "../lib/types";
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -39,7 +40,7 @@ export const FilterValueList = ({
   const loadOptions = property.loadOptions;
   const loaded = useQuery({
     queryKey: ["table-filter-values", property.id, debouncedSearch],
-    queryFn: () => loadOptions!(debouncedSearch),
+    queryFn: async () => toFilterOptionsPage(await loadOptions!(debouncedSearch)),
     enabled: Boolean(loadOptions),
     staleTime: 30_000,
   });
@@ -48,7 +49,7 @@ export const FilterValueList = ({
   const isSearchable = Boolean(loadOptions) || staticOptions.length >= SEARCHABLE_FROM;
   const needle = search.trim().toLowerCase();
   const baseOptions: TFilterOption[] = loadOptions
-    ? (loaded.data ?? [])
+    ? (loaded.data?.options ?? [])
     : staticOptions.filter((option) => !needle || option.label.toLowerCase().includes(needle));
 
   const knownValues = new Set(baseOptions.map((option) => option.value));
@@ -106,6 +107,11 @@ export const FilterValueList = ({
             </li>
           );
         })}
+        {loaded.data?.hasMore && loadOptions ? (
+          <li className="px-2 py-2 text-xs text-slate-500">
+            {t("common.table_toolbar.refine_search_for_more", { count: loaded.data.options.length })}
+          </li>
+        ) : null}
       </ul>
     </div>
   );

@@ -9,6 +9,7 @@ import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/das
 import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { useChartData } from "../hooks/use-chart-data";
+import { formatFilterLabels } from "../lib/dashboard-filter-editing";
 import type { TDashboardFilterPicks } from "../lib/dashboard-filters";
 import { DashboardWidgetSkeleton } from "./dashboard-widget-skeleton";
 
@@ -38,7 +39,7 @@ export function DashboardWidgetData({
   config,
   view = DEFAULT_WIDGET_VIEW,
 }: Readonly<DashboardWidgetDataProps>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     data: result,
     isPending,
@@ -63,10 +64,15 @@ export function DashboardWidgetData({
   // nothing, and says why rather than looking like a chart with no data.
   if (result.unfilterableFilters.length > 0) {
     return (
-      <div className="flex h-full items-center justify-center px-4 text-center text-sm text-slate-500">
-        {t("workspace.analysis.dashboards.chart_cannot_be_filtered_by", {
-          label: result.unfilterableFilters.map((filter) => filter.label).join(", "),
-        })}
+      <div className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center text-sm">
+        <p className="text-slate-500">
+          {t("workspace.analysis.dashboards.chart_cannot_be_filtered_by", {
+            label: formatFilterLabels(
+              result.unfilterableFilters.map((filter) => filter.label),
+              i18n.resolvedLanguage ?? i18n.language ?? "en-US"
+            ),
+          })}
+        </p>
       </div>
     );
   }
