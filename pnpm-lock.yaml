@@ -1053,6 +1053,9 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.12(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(@vitest/coverage-v8@4.1.12)(happy-dom@21.0.4)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@7.3.7(@types/node@25.4.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0))
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.6
 
   packages/api-v3-schemas:
     dependencies:
