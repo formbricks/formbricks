@@ -229,7 +229,7 @@ export function LogicEditorActions({
                   className={cn(
                     (action.objective === "jumpToBlock" || action.objective === "requireAnswer") &&
                       "col-span-4",
-                    action.objective === "calculate" && "col-span-3",
+                    action.objective === "calculate" && "col-span-4",
                     // ENG-6933: takes nothing else, so the objective is the whole action.
                     action.objective === "markLowQuality" && "col-span-12"
                   )}>
@@ -268,7 +268,7 @@ export function LogicEditorActions({
                   <>
                     {/* Reads as a sentence: Set value [field] to the expression below, or [field] [operator]
                         [value] for one step. The toggle switches between the two, both ways. */}
-                    <div className="col-span-9 flex min-w-0 flex-wrap items-center gap-2">
+                    <div className="col-span-8 flex min-w-0 flex-wrap items-center gap-2">
                       {/* The field takes the width its name needs, up to the row's. */}
                       <div className="max-w-full min-w-0">
                         <CalculatedFieldPicker
