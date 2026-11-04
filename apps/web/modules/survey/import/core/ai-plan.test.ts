@@ -45,8 +45,8 @@ describe("runImportPlan: the prompt budget", () => {
     expect(result.failures.get("Q1")).toEqual(["invalid_output"]);
   });
 
-  test("gives each call its schema on top of the lane's total, so counting it takes nothing from the file", async () => {
-    // The total holds the system prompt and the prompt alone; the schema is allowed for per call.
+  test("leaves the schema out of the import's total, so counting it takes nothing from the file", async () => {
+    // The total holds the system prompt and the prompt alone; only each call's own cap counts the schema.
     const { run, generate } = plan(100_000, 100);
 
     expect((await run).plan.answered).toBe(1);

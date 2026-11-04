@@ -170,7 +170,9 @@ interface TPlanContext<TFailure extends string, TPlan extends TImportCheckedPlan
   promptChars: number;
   /**
    * What a provider asked only for "a JSON object" gets after the system prompt: the schema, which
-   * `generateObject` adds. Counted in every call's size whatever the provider, so the caps hold on all.
+   * `generateObject` adds. Counted against every call's size cap whatever the provider, so one call
+   * never exceeds it; not against the import's total, which the lane sizes for its system prompt and
+   * its file, so counting the schema takes nothing from the file.
    */
   schemaChars: number;
   generate: TImportPlanGenerate;
@@ -292,9 +294,7 @@ function isPastBudget<TFailure extends string, TPlan extends TImportCheckedPlan<
   return (
     context.calls >= lane.callCap ||
     context.usage.outputTokens >= lane.outputBudget ||
-    // The total is the lane's own, for its system prompt and data, plus the schema each call it may make
-    // carries: counting the schema must not take budget from the file it plans.
-    context.promptChars + chars > lane.maxTotalChars + lane.callCap * context.schemaChars
+    context.promptChars + chars > lane.maxTotalChars
   );
 }
 
@@ -323,8 +323,8 @@ function preparePrompt<TFailure extends string, TPlan extends TImportCheckedPlan
     return { kind: "budget" };
   }
   const prompt = lane.buildPrompt(refs, failures);
-  const size = lane.system.length + context.schemaChars + prompt.length;
-  if (size > lane.maxCallChars) return { kind: "too_long" };
+  const size = lane.system.length + prompt.length;
+  if (size + context.schemaChars > lane.maxCallChars) return { kind: "too_long" };
   if (isPastBudget(context, size)) return { kind: "budget" };
   return { prompt, size };
 }
