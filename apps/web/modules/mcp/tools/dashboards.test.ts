@@ -5,6 +5,7 @@ import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
+import { listV3DashboardFilterValues } from "@/app/api/v3/dashboards/lib/filter-values-operations";
 import {
   createV3Dashboard,
   duplicateV3Dashboard,
@@ -20,7 +21,11 @@ import {
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
 import { successListResponse, successResponse } from "@/app/api/v3/lib/response";
-import { ZMcpGetChartDataInput, ZMcpGetChartDataOutput } from "./dashboard-schemas";
+import {
+  ZMcpGetChartDataInput,
+  ZMcpGetChartDataOutput,
+  ZMcpListDashboardFilterValuesInput,
+} from "./dashboard-schemas";
 import { registerDashboardTools } from "./dashboards";
 
 vi.mock("@/app/api/v3/charts/lib/field-operations", () => ({
@@ -40,6 +45,9 @@ vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
 }));
 vi.mock("@/app/api/v3/dashboards/lib/chart-data-operations", () => ({
   getV3DashboardChartData: vi.fn(),
+}));
+vi.mock("@/app/api/v3/dashboards/lib/filter-values-operations", () => ({
+  listV3DashboardFilterValues: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
   createV3Dashboard: vi.fn(),
@@ -541,5 +549,80 @@ describe("get_chart_data schemas (S1)", () => {
     expect(ZMcpGetChartDataOutput.safeParse({ data: { ...base, unfilterableFilters: [] } }).success).toBe(
       true
     );
+  });
+});
+
+describe("list_dashboard_filter_values", () => {
+  const FILTER_ID = "clfi000000000000000000001";
+  const VALUES = { values: [{ value: "Web" }], hasMore: false };
+
+  beforeEach(() => {
+    vi.mocked(listV3DashboardFilterValues).mockResolvedValue(successResponse(VALUES, { requestId: "req" }));
+  });
+
+  test("lists a dashboard filter's values through its dashboard, with the date range, picks and search", async () => {
+    const result = await call(
+      "list_dashboard_filter_values",
+      {
+        dashboardId: DASHBOARD_ID,
+        filterId: FILTER_ID,
+        dateRange: "last_7_days",
+        picks: { clfi000000000000000000002: ["Pro"] },
+        search: "we",
+      },
+      ["dashboards:read", "feedbackRecords:read"]
+    );
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ data: VALUES });
+    expect(listV3DashboardFilterValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dashboardId: DASHBOARD_ID,
+        filterId: FILTER_ID,
+        query: { dateRange: "last_7_days", picks: { clfi000000000000000000002: ["Pro"] }, search: "we" },
+      })
+    );
+  });
+
+  test("a Dashboard viewer lists values under dashboards:read alone, as it reads the dashboard's charts", async () => {
+    const result = await call(
+      "list_dashboard_filter_values",
+      { dashboardId: DASHBOARD_ID, filterId: FILTER_ID },
+      ["dashboards:read"],
+      true
+    );
+
+    expect(result.isError).toBeFalsy();
+    expect(listV3DashboardFilterValues).toHaveBeenCalledTimes(1);
+  });
+
+  test("anyone else also needs feedbackRecords:read, since the values are what respondents answered", async () => {
+    const result = await call(
+      "list_dashboard_filter_values",
+      { dashboardId: DASHBOARD_ID, filterId: FILTER_ID },
+      ["dashboards:read"]
+    );
+
+    expect(result.isError).toBe(true);
+    expect(listV3DashboardFilterValues).not.toHaveBeenCalled();
+  });
+
+  test("its input is strict, takes ids it can check, and is read-only", () => {
+    expect(
+      ZMcpListDashboardFilterValuesInput.safeParse({ dashboardId: DASHBOARD_ID, filterId: FILTER_ID }).success
+    ).toBe(true);
+    expect(
+      ZMcpListDashboardFilterValuesInput.safeParse({ dashboardId: DASHBOARD_ID, filterId: "Not An Id!" })
+        .success
+    ).toBe(false);
+    expect(
+      ZMcpListDashboardFilterValuesInput.safeParse({
+        dashboardId: DASHBOARD_ID,
+        filterId: FILTER_ID,
+        workspaceId: WORKSPACE_ID,
+      }).success
+    ).toBe(false);
+    const tool = createToolServer().get("list_dashboard_filter_values");
+    expect(tool?.config.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
   });
 });

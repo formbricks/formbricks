@@ -10,6 +10,7 @@ import {
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
 import {
   ZV3DashboardChartData,
+  ZV3DashboardFilterValues,
   ZV3DashboardListItem,
   ZV3DashboardResource,
   ZV3DashboardWidget,
@@ -173,6 +174,29 @@ export const ZMcpGetChartDataInput = z
     path: ["picks"],
   });
 export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;
+
+export const ZMcpListDashboardFilterValuesInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard whose filter to list values for."),
+    filterId: ZId.describe(
+      "A filter of that dashboard, from get_dashboard's filters, with equals or notEquals on a categorical or embedded-data field."
+    ),
+    dateRange: ZMcpChartDateRange,
+    picks: ZDashboardFilterPicks.optional().describe(
+      "Values already picked for the dashboard's other filters, by filter id: they narrow the list. A pick for this filter itself is ignored."
+    ),
+    search: z
+      .string()
+      .trim()
+      .min(1)
+      .max(V3_NAME_MAX_LENGTH)
+      .optional()
+      .describe("Only values containing this text, ignoring case. Use it when hasMore is true."),
+  })
+  .strict();
+export type TMcpListDashboardFilterValuesInput = z.infer<typeof ZMcpListDashboardFilterValuesInput>;
+
+export const ZMcpDashboardFilterValuesOutput = mcpToolOutput(ZV3DashboardFilterValues);
 
 export const ZMcpListChartFieldValuesInput = z
   .object({

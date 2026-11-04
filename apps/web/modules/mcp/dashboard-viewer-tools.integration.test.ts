@@ -48,7 +48,14 @@ for (const register of [
 }
 
 /** The dashboard reads a viewer's token may use; every other tool must refuse it. */
-const VIEWER_TOOLS = new Set(["list_workspaces", "list_dashboards", "get_dashboard", "get_chart_data"]);
+const VIEWER_TOOLS = new Set([
+  "list_workspaces",
+  "list_dashboards",
+  "get_dashboard",
+  "get_chart_data",
+  "list_dashboard_filter_values",
+]);
+const FILTER_ID = "clfi000000000000000000001";
 
 let fixture: TDashboardsFixture;
 const ids = { viewer: "", dashboard: "", chart: "", survey: "" };
@@ -107,7 +114,14 @@ beforeAll(async () => {
   ).id;
   ids.dashboard = (
     await prisma.dashboard.create({
-      data: { name: "D", workspaceId: fixture.workspaceId, createdBy: fixture.users.owner },
+      data: {
+        name: "D",
+        workspaceId: fixture.workspaceId,
+        createdBy: fixture.users.owner,
+        filters: [
+          { id: FILTER_ID, field: "FeedbackRecords.sourceName", operator: "equals", label: "Source" },
+        ],
+      },
     })
   ).id;
   await prisma.dashboardWidget.create({
@@ -141,7 +155,16 @@ describe("a Dashboard viewer's MCP token", () => {
     expect(result.structuredContent).toMatchObject({ data: { rows: expect.any(Array) } });
   });
 
-  test("is refused a chart read without its dashboard (S1)", async () => {
+  test("lists a dashboard filter's values with dashboards:read alone", async () => {
+    const result = await call("list_dashboard_filter_values", {
+      dashboardId: ids.dashboard,
+      filterId: FILTER_ID,
+    });
+    expect(result.isError, JSON.stringify(result).slice(0, 300)).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ data: { values: expect.any(Array), hasMore: false } });
+  });
+
+  test("is refused a chart read without its dashboard", async () => {
     const result = await call("get_chart_data", { chartId: ids.chart });
     expect(result.isError).toBe(true);
     expect(JSON.stringify(result)).toMatch(/insufficient_scope|feedbackRecords:read/);

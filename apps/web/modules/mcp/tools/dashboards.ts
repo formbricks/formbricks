@@ -4,6 +4,7 @@ import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
+import { listV3DashboardFilterValues } from "@/app/api/v3/dashboards/lib/filter-values-operations";
 import {
   createV3Dashboard,
   duplicateV3Dashboard,
@@ -32,6 +33,7 @@ import {
   type TMcpListChartFieldValuesInput,
   type TMcpListChartFieldsInput,
   type TMcpListChartsInput,
+  type TMcpListDashboardFilterValuesInput,
   type TMcpListDashboardsInput,
   type TMcpPreviewChartInput,
   type TMcpRemoveChartFromDashboardInput,
@@ -48,6 +50,7 @@ import {
   ZMcpChartOutput,
   ZMcpCreateChartInput,
   ZMcpCreateDashboardInput,
+  ZMcpDashboardFilterValuesOutput,
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
   ZMcpDashboardOutput,
@@ -58,6 +61,7 @@ import {
   ZMcpListChartFieldValuesInput,
   ZMcpListChartFieldsInput,
   ZMcpListChartsInput,
+  ZMcpListDashboardFilterValuesInput,
   ZMcpListDashboardsInput,
   ZMcpPreviewChartInput,
   ZMcpRemoveChartFromDashboardInput,
@@ -270,6 +274,40 @@ export function registerDashboardTools(server: McpServer): void {
         ? await getV3DashboardChartData({ dashboardId, chartId, query: { ...range, picks }, ...context })
         : await getV3ChartData({ chartId, query: range, ...context });
       return await responseToMcpToolResult(response, context.requestId);
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "list_dashboard_filter_values",
+    {
+      title: "List dashboard filter values",
+      description:
+        "List up to 100 values a dashboard filter offers, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange and the other filters' picks, and by search. Only filters with equals or notEquals on a categorical or embedded-data field have a list; others take a typed value. Pass the values as picks to get_chart_data.",
+      inputSchema: ZMcpListDashboardFilterValuesInput,
+      outputSchema: ZMcpDashboardFilterValuesOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    // Like a chart read through its dashboard: the values are respondents' answers, so anyone but a
+    // Dashboard viewer also needs feedback-record access; a viewer's token holds dashboards:read alone.
+    {
+      byInput: (_input, authInfo) =>
+        isMcpDashboardViewerOnly(authInfo)
+          ? ["dashboards:read"]
+          : ["dashboards:read", "feedbackRecords:read"],
+    },
+    async ({ dashboardId, filterId, dateRange, picks, search }: TMcpListDashboardFilterValuesInput, ctx) => {
+      const context = toolContext(ctx);
+      const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      return await responseToMcpToolResult(
+        await listV3DashboardFilterValues({
+          dashboardId,
+          filterId,
+          query: { ...range, picks, search },
+          ...context,
+        }),
+        context.requestId
+      );
     }
   );
 

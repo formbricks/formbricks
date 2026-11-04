@@ -115,7 +115,7 @@ Supported scopes:
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
-| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `get_chart_data`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId` on `dashboards:read` alone) |
+| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `get_chart_data`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, and `list_dashboard_filter_values`, on `dashboards:read` alone) |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
@@ -262,6 +262,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_feedback_record` | `manage` |
 | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard` | `read` |
 | `preview_chart`, `get_chart_data`, `list_chart_field_values` | `read`, and read access to the chart's feedback dataset |
+| `list_dashboard_filter_values` | `read`, and read access to each feedback dataset whose charts have the filter's field |
 | `create_chart`, `duplicate_chart` | `write` or `manage`, and write access to the feedback dataset |
 | `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
 
@@ -1472,7 +1473,7 @@ never this caller's, so repeating the call converges rather than compounding.
 
 ### Chart and dashboard tools
 
-Eighteen tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
+Nineteen tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
 operation, minus deletion: there is no tool that deletes a chart or a dashboard, so a vague prompt such as
 "clean up old charts" cannot remove anything permanently. There is no AI generation tool either — an agent
 writes the chart query itself.
@@ -1489,6 +1490,11 @@ writes the chart query itself.
   access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read` for a viewer. They spend from
   the same 600/min budget as the REST data routes, and share their limit of 20 queries running at once, both
   charged inside the operation.
+- **Dashboard filter values.** `list_dashboard_filter_values` is `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`:
+  the values a list filter offers, narrowed by the date range, the other filters' picks and `search`, which an
+  agent then passes as `picks` to `get_chart_data`. It is gated like a chart read through its dashboard —
+  `dashboards:read` and `feedbackRecords:read`, or `dashboards:read` alone for a Dashboard viewer — and spends
+  from the default v3 budget on every call and from the chart-query budget per Cube query on a cache miss.
 - **Shared charts.** `update_chart`'s description says an edit shows on every dashboard holding the chart, and
   points at `duplicate_chart` + `update_widget` for a per-dashboard change. `duplicate_dashboard` says the copy
   shares its charts. `remove_chart_from_dashboard` says the chart is kept.
