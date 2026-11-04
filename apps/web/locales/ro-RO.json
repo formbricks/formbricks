@@ -4464,6 +4464,7 @@
         "question_deleted": "Întrebare ștearsă.",
         "question_duplicated": "Întrebare duplicată.",
         "question_options_copied_warning_text": "O altă întrebare își copiază opțiunile de la aceasta. Sigur vrei să o ștergi?",
+        "question_options_copied_warning_title": "Opțiuni copiate de o altă întrebare",
         "question_tab_content": "Conținut",
         "question_used_in_logic_warning_text": "Elemente din acest bloc sunt folosite într-o regulă de logică. Sigur doriți să îl ștergeți?",
         "question_used_in_logic_warning_title": "Inconsistență logică",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Această întrebare este reamintită în întrebarea {questionIndex}.",
         "question_used_in_recall_ending_card": "Această întrebare este reamintită în Cardul de Încheiere.",
         "question_used_in_show_if_warning_text": "Această întrebare este folosită într-o condiție „afișată doar dacă”. Sigur vrei să o ștergi?",
+        "question_used_in_show_if_warning_title": "Utilizată într-o condiție de afișare",
         "quotas": {
           "add_quota": "Adăugați cotă",
           "change_quota_for_public_survey": "Modifici cota pentru un sondaj activ?",

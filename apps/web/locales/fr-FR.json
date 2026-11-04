@@ -4464,6 +4464,7 @@
         "question_deleted": "Question supprimée.",
         "question_duplicated": "Question dupliquée.",
         "question_options_copied_warning_text": "Une autre question copie ses options depuis celle-ci. Es-tu sûr de vouloir la supprimer ?",
+        "question_options_copied_warning_title": "Options copiées par une autre question",
         "question_tab_content": "Contenu",
         "question_used_in_logic_warning_text": "Des éléments de ce bloc sont utilisés dans une règle logique, êtes-vous sûr de vouloir le supprimer ?",
         "question_used_in_logic_warning_title": "Incohérence de logique",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Cette question est rappelée dans la question {questionIndex}.",
         "question_used_in_recall_ending_card": "Cette question est rappelée dans la carte de fin.",
         "question_used_in_show_if_warning_text": "Cette question est utilisée dans une condition « affichée uniquement si ». Es-tu sûr de vouloir la supprimer ?",
+        "question_used_in_show_if_warning_title": "Utilisée dans une condition d'affichage",
         "quotas": {
           "add_quota": "Ajouter un quota",
           "change_quota_for_public_survey": "Modifier le quota pour un sondage actif ?",

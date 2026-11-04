@@ -4464,6 +4464,7 @@
         "question_deleted": "Pregunta eliminada.",
         "question_duplicated": "Pregunta duplicada.",
         "question_options_copied_warning_text": "Otra pregunta copia sus opciones de esta. ¿Seguro que quieres eliminarla?",
+        "question_options_copied_warning_title": "Opciones copiadas por otra pregunta",
         "question_tab_content": "Contenido",
         "question_used_in_logic_warning_text": "Los elementos de este bloque se usan en una regla de lógica, ¿estás seguro de que quieres eliminarlo?",
         "question_used_in_logic_warning_title": "Inconsistencia de lógica",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Esta pregunta se está recordando en la pregunta {questionIndex}.",
         "question_used_in_recall_ending_card": "Esta pregunta se está recordando en la Tarjeta Final",
         "question_used_in_show_if_warning_text": "Esta pregunta se usa en una condición de «mostrar solo si». ¿Seguro que quieres eliminarla?",
+        "question_used_in_show_if_warning_title": "Se usa en una condición de visualización",
         "quotas": {
           "add_quota": "Añadir cuota",
           "change_quota_for_public_survey": "¿Cambiar cuota para una encuesta activa?",

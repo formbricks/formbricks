@@ -4464,6 +4464,7 @@
         "question_deleted": "Fråga borttagen.",
         "question_duplicated": "Fråga duplicerad.",
         "question_options_copied_warning_text": "En annan fråga kopierar sina alternativ från den här. Är du säker på att du vill ta bort den?",
+        "question_options_copied_warning_title": "Alternativen kopieras av en annan fråga",
         "question_tab_content": "Innehåll",
         "question_used_in_logic_warning_text": "Element från det här blocket används i en logikregel. Är du säker på att du vill ta bort det?",
         "question_used_in_logic_warning_title": "Logikkonflikt",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Denna fråga återkallas i fråga {questionIndex}.",
         "question_used_in_recall_ending_card": "Denna fråga återkallas i avslutningskortet",
         "question_used_in_show_if_warning_text": "Den här frågan används i ett villkor av typen ”visas endast om”. Är du säker på att du vill ta bort den?",
+        "question_used_in_show_if_warning_title": "Används i ett visningsvillkor",
         "quotas": {
           "add_quota": "Lägg till kvot",
           "change_quota_for_public_survey": "Ändra kvot för en aktiv enkät?",

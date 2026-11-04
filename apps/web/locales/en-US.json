@@ -4464,6 +4464,7 @@
         "question_deleted": "Question deleted.",
         "question_duplicated": "Question duplicated.",
         "question_options_copied_warning_text": "Another question copies its options from this one. Are you sure you want to delete it?",
+        "question_options_copied_warning_title": "Options copied by another question",
         "question_tab_content": "Content",
         "question_used_in_logic_warning_text": "Elements from this block are used in a logic rule, are you sure you want to delete it?",
         "question_used_in_logic_warning_title": "Logic Inconsistency",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "This question is being recalled in question {questionIndex}.",
         "question_used_in_recall_ending_card": "This question is being recalled in Ending Card",
         "question_used_in_show_if_warning_text": "This question is used in a “shown only if” condition, are you sure you want to delete it?",
+        "question_used_in_show_if_warning_title": "Used in a show-if condition",
         "quotas": {
           "add_quota": "Add quota",
           "change_quota_for_public_survey": "Change quota for an active survey?",
