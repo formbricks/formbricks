@@ -37,11 +37,11 @@ import { AddFilterModal } from "./add-filter-modal";
 import { SegmentEditor } from "./segment-editor";
 
 interface TargetingCardProps {
-  localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  contactAttributeKeys: TContactAttributeKey[];
-  segments: TSegment[];
-  initialSegment?: TSegment;
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly segments: TSegment[];
+  readonly initialSegment?: TSegment;
 }
 
 export function TargetingCard({

@@ -1,6 +1,7 @@
 import { rootCertificates } from "node:tls";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import type { RedisClient } from "@/types/client";
 import { ErrorCode } from "@/types/error";
 import { createRedisClientFromEnv, getCacheService, resetCacheFactory } from "./client";
@@ -68,7 +69,13 @@ describe("@formbricks/cache factory", () => {
     test("passes private trust and strict verification to the cache connection", async () => {
       process.env.REDIS_URL = "rediss://127.0.0.1:6378";
       process.env.REDIS_TLS_CA = rootCertificates[0];
-      const client = { on: vi.fn(), connect: vi.fn().mockResolvedValue(undefined) };
+      const client = {
+        isReady: true,
+        isOpen: true,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn(),
+      };
       mockCreateClient.mockReturnValue(client as unknown as ReturnType<typeof createClient>);
 
       expect((await createRedisClientFromEnv()).ok).toBe(true);
@@ -78,7 +85,8 @@ describe("@formbricks/cache factory", () => {
             tls: true,
             ca: [rootCertificates[0].trim()],
             rejectUnauthorized: true,
-            connectTimeout: 3000,
+            connectTimeout: 750,
+            reconnectStrategy: false,
           },
         })
       );
@@ -130,8 +138,11 @@ describe("@formbricks/cache factory", () => {
       expect(mockCreateClient).toHaveBeenCalledWith({
         url: "redis://localhost:6379",
         socket: {
-          connectTimeout: 3000,
+          connectTimeout: 750,
+          reconnectStrategy: false,
         },
+        disableOfflineQueue: true,
+        commandsQueueMaxLength: 1000,
         pingInterval: 300_000,
       });
 
@@ -169,8 +180,11 @@ describe("@formbricks/cache factory", () => {
       expect(mockCreateClient).toHaveBeenCalledWith({
         url: "redis://localhost:6379",
         socket: {
-          connectTimeout: 3000,
+          connectTimeout: 750,
+          reconnectStrategy: false,
         },
+        disableOfflineQueue: true,
+        commandsQueueMaxLength: 1000,
         pingInterval: 300_000,
       });
       expect(mockClient.connect).toHaveBeenCalled();
@@ -246,7 +260,80 @@ describe("@formbricks/cache factory", () => {
       expect(mockCreateClient).toHaveBeenCalledTimes(1);
     });
 
+    test("discards a connection that becomes unready before opening another", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const mockClient: MockRedisClient = {
+        isOpen: true,
+        isReady: true,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn(),
+      };
+      mockCreateClient.mockReturnValue(mockClient as unknown as ReturnType<typeof createClient>);
+
+      expect((await getCacheService()).ok).toBe(true);
+      mockClient.isReady = false;
+
+      expect(await getCacheService()).toEqual({
+        ok: false,
+        error: { code: ErrorCode.RedisConnectionError },
+      });
+      expect(mockClient.destroy).toHaveBeenCalledOnce();
+      expect(mockCreateClient).toHaveBeenCalledTimes(1);
+      expect((await getCacheService()).ok).toBe(false);
+      expect(mockCreateClient).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not extend backoff when another module instance already discarded the client", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      const now = Date.now();
+      const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+      const random = vi.spyOn(Math, "random").mockReturnValue(0);
+      const firstClient: MockRedisClient = {
+        isOpen: true,
+        isReady: true,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn(),
+      };
+      const nextClient: MockRedisClient = {
+        isOpen: true,
+        isReady: true,
+        on: vi.fn(),
+        connect: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn(),
+      };
+      mockCreateClient
+        .mockReturnValueOnce(firstClient as unknown as ReturnType<typeof createClient>)
+        .mockReturnValueOnce(nextClient as unknown as ReturnType<typeof createClient>);
+
+      try {
+        expect((await getCacheService()).ok).toBe(true);
+        vi.resetModules();
+        const anotherModule = await import("./client");
+        expect((await anotherModule.getCacheService()).ok).toBe(true);
+
+        firstClient.isReady = false;
+        firstClient.isOpen = false;
+        const onError = firstClient.on.mock.calls.find(([event]) => event === "error")?.[1] as
+          | ((error: Error) => void)
+          | undefined;
+        expect(onError).toBeDefined();
+        onError?.(new Error("socket closed"));
+
+        clock.mockReturnValue(now + 1001);
+        expect((await anotherModule.getCacheService()).ok).toBe(false);
+        expect((await anotherModule.getCacheService()).ok).toBe(true);
+        expect(mockCreateClient).toHaveBeenCalledTimes(2);
+      } finally {
+        clock.mockRestore();
+        random.mockRestore();
+      }
+    });
+
     test("should allow retry after failed initialization", async () => {
+      const now = Date.now();
+      const clock = vi.spyOn(Date, "now").mockReturnValue(now);
       process.env.REDIS_URL = "redis://localhost:6379";
 
       const mockClient: MockRedisClient = {
@@ -267,9 +354,12 @@ describe("@formbricks/cache factory", () => {
       const firstResult = await getCacheService();
       expect(firstResult.ok).toBe(false);
 
-      // Second call should succeed (after retry)
+      // An open circuit rejects immediately; one request probes after the cooldown.
+      expect((await getCacheService()).ok).toBe(false);
+      clock.mockReturnValue(now + 5000);
       const secondResult = await getCacheService();
       expect(secondResult.ok).toBe(true);
+      clock.mockRestore();
     });
 
     test("should handle connection failure and return error", async () => {
@@ -302,13 +392,14 @@ describe("@formbricks/cache factory", () => {
 
     test("should handle connection errors gracefully", async () => {
       process.env.REDIS_URL = "redis://localhost:6379";
+      const cause = Object.assign(new Error("private connection detail"), { code: "ECONNRESET" });
 
       const mockClient: MockRedisClient = {
         isOpen: false,
         isReady: false,
         on: vi.fn(),
         connect: vi.fn().mockRejectedValue(new Error("Connection failed")),
-        destroy: vi.fn().mockRejectedValue(new Error("Destroy failed")),
+        destroy: vi.fn().mockRejectedValue(new AggregateError([cause], "private destroy detail")),
       };
 
       // @ts-expect-error - Mock client type incompatibility with Redis types
@@ -323,6 +414,14 @@ describe("@formbricks/cache factory", () => {
         expect(typeof result.error).toBe("object");
         expect(result.error).toHaveProperty("code");
       }
+      await vi.waitFor(() =>
+        expect(logger.error).toHaveBeenCalledWith(
+          { name: "AggregateError", causes: [{ name: "Error", code: "ECONNRESET" }] },
+          "Error destroying Redis client"
+        )
+      );
+      expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("private connection detail");
+      expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("private destroy detail");
     });
   });
 

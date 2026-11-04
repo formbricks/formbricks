@@ -20,6 +20,12 @@ interface QueueConfig {
   retryAttempts: number;
   persistOffline?: boolean;
   surveyId?: string;
+  /**
+   * One per mounted survey display. The shared queue is keyed by it, so an answer that was never sent in an
+   * earlier display of the same survey (`displayMultiple`) is not replayed into the next one. Queues built
+   * for one display (a rebuild on a changed host callback) pass the same id and keep sharing.
+   */
+  displayKey?: string;
   onResponseCreated?: (responseId: string) => void;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate, errorCode?: TResponseErrorCodesEnum) => void;
   onResponseSendingFinished?: () => void;
@@ -39,11 +45,23 @@ export const delay = (ms: number): Promise<void> => {
 const syncingBySurvey = new Map<string, boolean>();
 const requestInProgressBySurvey = new Map<string, boolean>();
 const processedDbIdsPendingRemovalBySurvey = new Map<string, Set<number>>();
-// Instances that have queued items, in registration order. The host re-renders the survey on every
-// page change, so each update can land in a fresh instance while an older one's request holds the
-// shared lock above; that instance bails, and its items would never be sent unless an instance
-// with an empty queue hands off to the oldest one that still has items.
-const queuesWithItemsBySurvey = new Map<string, Set<ResponseQueue>>();
+// The answers waiting to be sent, and their IndexedDB ids, are shared the same way, but per display of the
+// survey: a display that ends with an unsent answer must not hand it to the next one. The survey component
+// rebuilds its queue when a host callback changes identity, so an answer can be added to a newer instance
+// while an older one holds the send lock. If each instance kept its own list, the older one would finish
+// with nothing left to send and the newer one would never be woken.
+const queueByDisplay = new Map<string, TResponseUpdate[]>();
+const pendingDbIdsByDisplay = new Map<string, Map<TResponseUpdate, number>>();
+
+const sharedFor = <T>(registry: Map<string, T>, surveyId: string | undefined, create: () => T, own: T): T => {
+  if (!surveyId) return own;
+  let shared = registry.get(surveyId);
+  if (!shared) {
+    shared = create();
+    registry.set(surveyId, shared);
+  }
+  return shared;
+};
 
 /** @internal Exposed for tests only. */
 export const _syncLocks = {
@@ -51,7 +69,8 @@ export const _syncLocks = {
     syncingBySurvey.clear();
     requestInProgressBySurvey.clear();
     processedDbIdsPendingRemovalBySurvey.clear();
-    queuesWithItemsBySurvey.clear();
+    queueByDisplay.clear();
+    pendingDbIdsByDisplay.clear();
   },
   set: (surveyId: string, value: boolean) => syncingBySurvey.set(surveyId, value),
   get: (surveyId: string) => syncingBySurvey.get(surveyId) ?? false,
@@ -60,13 +79,12 @@ export const _syncLocks = {
 };
 
 export class ResponseQueue {
-  readonly queue: TResponseUpdate[] = [];
+  private readonly ownQueue: TResponseUpdate[] = [];
   readonly config: QueueConfig;
   private surveyState: SurveyState;
   readonly api: ApiClient;
   private responseRecaptchaToken?: string;
-  // Maps queued response objects to their IndexedDB ids for cleanup after successful sends.
-  private readonly pendingDbIds: Map<TResponseUpdate, number> = new Map();
+  private readonly ownPendingDbIds: Map<TResponseUpdate, number> = new Map();
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
@@ -75,6 +93,20 @@ export class ResponseQueue {
       appUrl: config.appUrl,
       workspaceId: config.workspaceId,
     });
+  }
+
+  private get displayRegistryKey(): string | undefined {
+    const { surveyId, displayKey } = this.config;
+    return surveyId && displayKey ? `${surveyId}:${displayKey}` : surveyId;
+  }
+
+  get queue(): TResponseUpdate[] {
+    return sharedFor(queueByDisplay, this.displayRegistryKey, () => [], this.ownQueue);
+  }
+
+  /** Maps queued response objects to their IndexedDB ids for cleanup after successful sends. */
+  private get pendingDbIds(): Map<TResponseUpdate, number> {
+    return sharedFor(pendingDbIdsByDisplay, this.displayRegistryKey, () => new Map(), this.ownPendingDbIds);
   }
 
   private get isSyncing(): boolean {
@@ -111,28 +143,6 @@ export class ResponseQueue {
       contactId: this.surveyState.contactId,
       responseAcc: { ...this.surveyState.responseAcc },
     };
-  }
-
-  private registerQueueWithItems() {
-    if (!this.config.surveyId) return;
-
-    const queues = queuesWithItemsBySurvey.get(this.config.surveyId) ?? new Set<ResponseQueue>();
-    queues.add(this);
-    queuesWithItemsBySurvey.set(this.config.surveyId, queues);
-  }
-
-  private findOtherQueueWithItems(): ResponseQueue | undefined {
-    if (!this.config.surveyId) return undefined;
-
-    const queues = queuesWithItemsBySurvey.get(this.config.surveyId);
-    if (!queues) return undefined;
-
-    for (const queue of queues) {
-      if (queue.queue.length > 0) return queue;
-      // Drained instances re-register on their next add().
-      queues.delete(queue);
-    }
-    return undefined;
   }
 
   private logOfflinePersistenceError(message: string, error: unknown) {
@@ -292,7 +302,6 @@ export class ResponseQueue {
     }
     // add response to queue
     this.queue.push(responseUpdate);
-    this.registerQueueWithItems();
 
     // persist to IndexedDB if offline persistence is enabled,
     // then start processing only after the DB write completes
@@ -319,12 +328,7 @@ export class ResponseQueue {
   }
 
   async processQueue(): Promise<{ success: boolean }> {
-    if (this.queue.length === 0) {
-      const queueWithItems = this.findOtherQueueWithItems();
-      return queueWithItems ? queueWithItems.processQueue() : { success: false };
-    }
-
-    if (this.isRequestInProgress) {
+    if (this.isRequestInProgress || this.queue.length === 0) {
       return { success: false };
     }
 

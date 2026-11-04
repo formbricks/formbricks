@@ -16,14 +16,14 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface AddActionModalProps {
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  workspaceId: string;
-  actionClasses: ActionClass[];
-  setActionClasses: React.Dispatch<React.SetStateAction<ActionClass[]>>;
-  isReadOnly: boolean;
-  localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly workspaceId: string;
+  readonly actionClasses: ActionClass[];
+  readonly setActionClasses: React.Dispatch<React.SetStateAction<ActionClass[]>>;
+  readonly isReadOnly: boolean;
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
 }
 
 export const AddActionModal = ({

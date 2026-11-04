@@ -9,10 +9,10 @@ import { Input } from "@/modules/ui/components/input";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
 
 interface SavedActionsTabProps {
-  actionClasses: ActionClass[];
-  localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly actionClasses: ActionClass[];
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const SavedActionsTab = ({

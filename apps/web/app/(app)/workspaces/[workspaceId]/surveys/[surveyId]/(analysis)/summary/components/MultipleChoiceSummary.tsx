@@ -14,10 +14,10 @@ import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { OtherValuesList } from "./OtherValuesList";
 
 interface MultipleChoiceSummaryProps {
-  elementSummary: TSurveyElementSummaryMultipleChoice;
-  surveyType: TSurveyType;
-  survey: TSurvey;
-  setFilter: (
+  readonly elementSummary: TSurveyElementSummaryMultipleChoice;
+  readonly surveyType: TSurveyType;
+  readonly survey: TSurvey;
+  readonly setFilter: (
     elementId: string,
     label: TI18nString,
     elementType: TSurveyElementTypeEnum,

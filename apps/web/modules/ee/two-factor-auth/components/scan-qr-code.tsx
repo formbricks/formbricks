@@ -9,10 +9,10 @@ import { Button } from "@/modules/ui/components/button";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 interface ScanQRCodeProps {
-  setCurrentStep: (step: EnableTwoFactorModalStep) => void;
-  dataUri: string;
-  secret: string;
-  setOpen: (open: boolean) => void;
+  readonly setCurrentStep: (step: EnableTwoFactorModalStep) => void;
+  readonly dataUri: string;
+  readonly secret: string;
+  readonly setOpen: (open: boolean) => void;
 }
 
 export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRCodeProps) => {

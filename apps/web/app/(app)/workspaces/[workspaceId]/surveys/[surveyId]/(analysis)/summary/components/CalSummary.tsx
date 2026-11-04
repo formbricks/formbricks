@@ -7,8 +7,8 @@ import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface CalSummaryProps {
-  elementSummary: TSurveyElementSummaryCal;
-  survey: TSurvey;
+  readonly elementSummary: TSurveyElementSummaryCal;
+  readonly survey: TSurvey;
 }
 
 export const CalSummary = ({ elementSummary, survey }: CalSummaryProps) => {

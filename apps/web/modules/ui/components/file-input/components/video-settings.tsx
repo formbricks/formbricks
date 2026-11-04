@@ -12,11 +12,11 @@ import { Label } from "../../label";
 import { checkForYoutubePrivacyMode } from "../lib/utils";
 
 interface VideoSettingsProps {
-  uploadedVideoUrl: string;
-  setUploadedVideoUrl: (videoUrl: string) => void;
-  onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
-  videoUrl: string;
-  setVideoUrlTemp: (videoUrl: string) => void;
+  readonly uploadedVideoUrl: string;
+  readonly setUploadedVideoUrl: (videoUrl: string) => void;
+  readonly onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
+  readonly videoUrl: string;
+  readonly setVideoUrlTemp: (videoUrl: string) => void;
 }
 
 export const VideoSettings = ({

@@ -3,7 +3,11 @@ import { prisma } from "@formbricks/database";
 import { reconcileApiKeyRelationships } from "./api-key";
 import { isAuthzedEnabled } from "./config";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
-import { recordAuthzedRevocationDelivery } from "./metrics";
+import {
+  observeAuthzedOutboxStatus,
+  recordAuthzedOutboxDrain,
+  recordAuthzedRevocationDelivery,
+} from "./metrics";
 import {
   deleteOrganizationRelationships,
   deleteUserOrganizationRelationships,
@@ -11,6 +15,7 @@ import {
 } from "./organization-membership";
 import {
   drainAuthzedOutbox,
+  observeAuthzedOutboxHealth,
   processAuthzedOutboxBatch,
   processAuthzedProjectionDeliveryJob,
 } from "./outbox-processor";
@@ -36,8 +41,9 @@ vi.mock("./api-key", () => ({ reconcileApiKeyRelationships: vi.fn() }));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
 vi.mock("./feedback-directory", () => ({ reconcileFeedbackDirectoryRelationships: vi.fn() }));
 vi.mock("./metrics", () => ({
+  observeAuthzedOutboxStatus: vi.fn(),
   recordAuthzedOutboxDelivery: vi.fn(),
-  recordAuthzedOutboxStatus: vi.fn(),
+  recordAuthzedOutboxDrain: vi.fn(),
   recordAuthzedRevocationDelivery: vi.fn(),
 }));
 vi.mock("./organization-membership", () => ({
@@ -375,5 +381,23 @@ describe("AuthZed projection outbox processor", () => {
     vi.mocked(isAuthzedEnabled).mockReturnValue(false);
     await processAuthzedProjectionDeliveryJob();
     expect(claimAuthzedOutboxEvents).not.toHaveBeenCalled();
+  });
+
+  test("records a drain heartbeat once the drain completes, even when nothing was claimed", async () => {
+    vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue([]);
+
+    await drainAuthzedOutbox(10);
+
+    expect(recordAuthzedOutboxDrain).toHaveBeenCalledOnce();
+  });
+
+  test("reports outbox health from the status read only when AuthZed is enabled", () => {
+    observeAuthzedOutboxHealth();
+    expect(observeAuthzedOutboxStatus).toHaveBeenCalledExactlyOnceWith(getAuthzedOutboxStatus);
+
+    vi.mocked(observeAuthzedOutboxStatus).mockClear();
+    vi.mocked(isAuthzedEnabled).mockReturnValue(false);
+    observeAuthzedOutboxHealth();
+    expect(observeAuthzedOutboxStatus).not.toHaveBeenCalled();
   });
 });

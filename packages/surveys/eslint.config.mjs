@@ -1,7 +1,9 @@
+import cspSafe from "@formbricks/config-eslint/csp-safe";
 import reactHooks from "@formbricks/config-eslint/react-hooks";
 
 export default [
   ...reactHooks,
+  ...cspSafe,
   {
     files: ["vite.config.mts"],
     rules: {

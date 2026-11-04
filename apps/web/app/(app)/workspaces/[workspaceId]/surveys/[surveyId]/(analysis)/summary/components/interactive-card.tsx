@@ -4,14 +4,14 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { BaseCard } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/base-card";
 
 interface InteractiveCardProps {
-  tab: "dropOffs" | "quotas" | "impressions";
-  label: string;
-  percentage: number | null;
-  value: React.ReactNode;
-  tooltipText: string;
-  isLoading: boolean;
-  onClick: () => void;
-  isActive: boolean;
+  readonly tab: "dropOffs" | "quotas" | "impressions";
+  readonly label: string;
+  readonly percentage: number | null;
+  readonly value: React.ReactNode;
+  readonly tooltipText: string;
+  readonly isLoading: boolean;
+  readonly onClick: () => void;
+  readonly isActive: boolean;
 }
 
 export const InteractiveCard = ({

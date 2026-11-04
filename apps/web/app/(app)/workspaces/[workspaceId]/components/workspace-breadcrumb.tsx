@@ -26,17 +26,17 @@ import { WorkspaceLimitModal } from "@/modules/workspaces/components/workspace-l
 import { useWorkspace } from "../context/workspace-context";
 
 interface WorkspaceBreadcrumbProps {
-  currentWorkspaceId: string;
-  currentWorkspaceName?: string; // Optional: pass directly if context not available
-  isOwnerOrManager: boolean;
-  organizationWorkspacesLimit: number;
-  isFormbricksCloud: boolean;
-  isLicenseActive: boolean;
-  isNoLicense: boolean;
-  currentOrganizationId: string;
-  isAccessControlAllowed: boolean;
-  isEnvironmentBreadcrumbVisible: boolean;
-  isMembershipPending: boolean;
+  readonly currentWorkspaceId: string;
+  readonly currentWorkspaceName?: string; // Optional: pass directly if context not available
+  readonly isOwnerOrManager: boolean;
+  readonly organizationWorkspacesLimit: number;
+  readonly isFormbricksCloud: boolean;
+  readonly isLicenseActive: boolean;
+  readonly isNoLicense: boolean;
+  readonly currentOrganizationId: string;
+  readonly isAccessControlAllowed: boolean;
+  readonly isEnvironmentBreadcrumbVisible: boolean;
+  readonly isMembershipPending: boolean;
 }
 
 export const WorkspaceBreadcrumb = ({

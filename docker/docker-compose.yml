@@ -232,6 +232,8 @@ x-environment: &environment
     # OTEL_LOGS_ENABLED: 1
     # OTEL_TRACES_SAMPLER: parentbased_traceidratio
     # OTEL_TRACES_SAMPLER_ARG: 1
+    # OTLP metric export interval in milliseconds; 15000 or lower if you alert on the AuthZed outbox
+    # OTEL_METRIC_EXPORT_INTERVAL: 60000
 
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 

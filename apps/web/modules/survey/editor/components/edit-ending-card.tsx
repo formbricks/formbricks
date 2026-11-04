@@ -29,18 +29,18 @@ import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface EditEndingCardProps {
-  localSurvey: TSurvey;
-  endingCardIndex: number;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  setActiveElementId: (id: string | null) => void;
-  activeElementId: string | null;
-  isInvalid: boolean;
-  addEndingCard: (index: number) => void;
-  isFormbricksCloud: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  quotas: TSurveyQuota[];
-  isExternalUrlsAllowed: boolean;
+  readonly localSurvey: TSurvey;
+  readonly endingCardIndex: number;
+  readonly setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  readonly setActiveElementId: (id: string | null) => void;
+  readonly activeElementId: string | null;
+  readonly isInvalid: boolean;
+  readonly addEndingCard: (index: number) => void;
+  readonly isFormbricksCloud: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly quotas: TSurveyQuota[];
+  readonly isExternalUrlsAllowed: boolean;
 }
 
 export const EditEndingCard = ({

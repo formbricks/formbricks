@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 
 interface ResetProgressButtonProps {
-  onClick: () => void;
+  readonly onClick: () => void;
 }
 
 export const ResetProgressButton = ({ onClick }: ResetProgressButtonProps) => {

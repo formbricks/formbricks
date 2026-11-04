@@ -167,8 +167,11 @@ await cacheService.withCache<T>(fn, key, ttlMs): Promise<T>
 // Redis availability check with ping test (standardized across codebase)
 await cacheService.isRedisAvailable(): Promise<boolean>
 
-// Direct Redis access for advanced operations (rate limiting, etc.)
+// Check whether a raw Redis client is ready. Do not issue commands on this client directly.
 cacheService.getRedisClient(): RedisClient | null
+
+// Run advanced commands (rate limiting, Lua scripts, transactions) with a deadline.
+await cacheService.runRedisOperation((redis) => redis.eval(script, options))
 ```
 
 ### Redis Availability Method
@@ -325,8 +328,8 @@ const workspaceData = await cache.withCache(
   60000
 );
 
-// Advanced Redis access for rate limiting
-const redis = await cache.getRedisClient();
+// Advanced Redis commands use the same deadline and circuit behavior as cache.get/set.
+const result = await cache.runRedisOperation((redis) => redis.eval(script, options));
 ```
 
 ### Proxy Implementation

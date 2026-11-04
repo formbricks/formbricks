@@ -16,7 +16,7 @@ let isLoadingScript = false;
 
 type TSurveyInlineProps = Omit<SurveyContainerProps, "containerId"> & {
   /** The app's release version, which the renderer is loaded under (see `getSurveysScriptUrl`). */
-  rendererVersion?: string;
+  readonly rendererVersion?: string;
 };
 
 export const SurveyInline = (props: TSurveyInlineProps) => {

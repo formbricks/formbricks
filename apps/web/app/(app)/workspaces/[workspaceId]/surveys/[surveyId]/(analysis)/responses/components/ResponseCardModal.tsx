@@ -6,6 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
+import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -17,18 +18,19 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface ResponseCardModalProps {
-  responses: TResponse[];
-  selectedResponseId: string | null;
-  setSelectedResponseId: (id: string | null) => void;
-  survey: TSurvey;
-  user?: TUser;
-  environmentTags: TTag[];
-  updateResponse: (responseId: string, updatedResponse: TResponse) => void;
-  updateResponseList: (responseIds: string[]) => void;
-  isReadOnly: boolean;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  locale: TUserLocale;
+  readonly responses: TResponse[];
+  readonly selectedResponseId: string | null;
+  readonly setSelectedResponseId: (id: string | null) => void;
+  readonly survey: TSurvey;
+  readonly user?: TUser;
+  readonly environmentTags: TTag[];
+  readonly updateResponse: (responseId: string, updatedResponse: TResponse) => void;
+  readonly updateResponseList: (responseIds: string[]) => void;
+  readonly isReadOnly: boolean;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly locale: TUserLocale;
+  readonly outcomeActions?: TOutcomeActions;
 }
 
 export const ResponseCardModal = ({
@@ -44,6 +46,7 @@ export const ResponseCardModal = ({
   open,
   setOpen,
   locale,
+  outcomeActions,
 }: ResponseCardModalProps) => {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -125,6 +128,7 @@ export const ResponseCardModal = ({
               updateResponseList={updateResponseList}
               setSelectedResponseId={setSelectedResponseId}
               locale={locale}
+              outcomeActions={outcomeActions}
             />
           </div>
         </DialogBody>

@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   zBatchDeleteResponsesRequest,
   zBatchDeleteResponsesV3Query,
+  zBatchSetResponsesOutcomeRequest,
+  zBatchSetResponsesOutcomeV3Query,
   zCreateResponseRequest,
   zGetResponseV3Path,
   zPatchResponseRequest,
@@ -63,6 +65,21 @@ export const ZV3BatchDeleteResponsesBody = zBatchDeleteResponsesRequest.extend({
   }),
 });
 export type TV3BatchDeleteResponsesBody = z.infer<typeof ZV3BatchDeleteResponsesBody>;
+
+/**
+ * `POST /api/v3/responses/batch-outcome`: the same cap, uniqueness rule and required scope as
+ * `batch-delete`, for the same reasons. `outcome` is required by the contract so that leaving it out
+ * can never be read as a restore.
+ */
+export const ZV3BatchSetResponsesOutcomeQuery = z.strictObject(zBatchSetResponsesOutcomeV3Query.shape);
+export type TV3BatchSetResponsesOutcomeQuery = z.infer<typeof ZV3BatchSetResponsesOutcomeQuery>;
+
+export const ZV3BatchSetResponsesOutcomeBody = zBatchSetResponsesOutcomeRequest.extend({
+  ids: zBatchSetResponsesOutcomeRequest.shape.ids.refine(hasUniqueItems, {
+    message: RESPONSE_IDS_UNIQUE_MESSAGE,
+  }),
+});
+export type TV3BatchSetResponsesOutcomeBody = z.infer<typeof ZV3BatchSetResponsesOutcomeBody>;
 
 /**
  * Cardinality caps on a stored answer, per the ENG-1652 input policy — the same reason `tags` and the

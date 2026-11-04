@@ -4,10 +4,10 @@ import { isValidEmail } from "@/lib/utils/email";
 import { cn } from "@/modules/ui/lib/utils";
 
 interface FollowUpActionMultiEmailInputProps {
-  emails: string[];
-  setEmails: React.Dispatch<React.SetStateAction<string[]>>;
-  isInvalid?: boolean;
-  disabled?: boolean;
+  readonly emails: string[];
+  readonly setEmails: React.Dispatch<React.SetStateAction<string[]>>;
+  readonly isInvalid?: boolean;
+  readonly disabled?: boolean;
 }
 
 const FollowUpActionMultiEmailInput = ({

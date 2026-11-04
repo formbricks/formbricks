@@ -15,13 +15,13 @@ import {
 type ActionId = "primary" | "secondary" | "close";
 
 interface EditPublicSurveyAlertDialogProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  isLoading?: boolean;
-  primaryButtonAction?: () => Promise<void>;
-  secondaryButtonAction?: () => void;
-  primaryButtonText?: string;
-  secondaryButtonText?: string;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly isLoading?: boolean;
+  readonly primaryButtonAction?: () => Promise<void>;
+  readonly secondaryButtonAction?: () => void;
+  readonly primaryButtonText?: string;
+  readonly secondaryButtonText?: string;
 }
 
 export const EditPublicSurveyAlertDialog = ({

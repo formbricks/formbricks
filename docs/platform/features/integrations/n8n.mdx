@@ -12,7 +12,7 @@ icon: "diagram-project"
 
 n8n allows you to build flexible workflows focused on deep data integration. And with sharable templates and a user-friendly UI, the less technical people on your team can collaborate on them too. Unlike other tools, complexity is not a limitation. So you can build whatever you want — without stressing over budget. Hook up Formbricks with n8n and you can send your data to 350+ other apps. Here is how to do it.
 
-## Step 1: Setup your survey incl. `questionId` for every question
+## Step 1: Check your question codes
 
 <Note>
   Nailed down your survey? Any changes in the survey cause additional work in
@@ -20,17 +20,14 @@ n8n allows you to build flexible workflows focused on deep data integration. And
   then get to setting up n8n.
 </Note>
 
-When setting up the node your life will be easier when you change the `questionId`s of your survey questions. You can only do so **before** you activate your survey.
-
-![Update Question ID](/images/platform/features/integrations/n8n/update-question-id.webp)
-
-*The Question ID is the first field behind **Show Question settings** at the foot of a question card. Update it so you will recognise the response tied to this question.*
+Every question has a **question code**, such as `q1` or `nps`, and the `dataByQuestionCode` group of the trigger output shows your answers under these codes. You can read and change the code in the **Settings** tab of a question, under **Recode**, **before** you activate the survey. Once the survey is active, codes are locked, so the workflow you build on them keeps working.
 
 <Note>
-  Already activated? Duplicate survey You can only update the questionId
-  when the survey was not yet activated. Already activated it? Just **duplicate
-  it** to update the questionIds.
-  ![Duplicate Survey](/images/platform/features/integrations/n8n/duplicate-survey.webp)
+  Question codes start with a lowercase letter and use lowercase letters, digits and `_`. Pick short, readable names such as `nps` or `visit_reason`. Learn more in [Question codes and answer codes](/surveys/analysis/question-codes).
+</Note>
+
+<Note>
+  The Question ID of a question is generated and cannot be changed. If you need it, choose **Copy question ID** in the question's **⋯** menu.
 </Note>
 
 ## Step 2: Setup your n8n workflow

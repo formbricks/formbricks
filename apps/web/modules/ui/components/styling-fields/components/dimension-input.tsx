@@ -11,11 +11,11 @@ import {
 } from "@/modules/ui/components/select";
 
 interface DimensionInputProps {
-  form: any;
-  name: string;
-  label: string;
-  placeholder?: string;
-  description?: string;
+  readonly form: any;
+  readonly name: string;
+  readonly label: string;
+  readonly placeholder?: string;
+  readonly description?: string;
 }
 
 const UNITS = ["px", "%", "rem", "em"] as const;

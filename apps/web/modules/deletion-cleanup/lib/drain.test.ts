@@ -11,11 +11,13 @@ import {
 } from "./constants";
 import { drainDeletionCleanups } from "./drain";
 import { type THubCleanupResult, deleteHubRecords } from "./hub-cleanup";
+import { reconcileResponseOutcomes } from "./hub-outcome";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("@/modules/storage/lib/delete-response-files", () => ({ deleteResponseFileUrls: vi.fn() }));
 vi.mock("@/modules/storage/service", () => ({ deleteSurveyUploadFolder: vi.fn() }));
+vi.mock("./hub-outcome", () => ({ reconcileResponseOutcomes: vi.fn() }));
 vi.mock("./hub-cleanup", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./hub-cleanup")>()),
   deleteHubRecords: vi.fn(),
@@ -31,7 +33,13 @@ vi.mock("./hub-cleanup", async (importOriginal) => ({
 const NOW = new Date("2030-01-10T00:00:00.000Z");
 const LEASE_UNTIL = new Date(NOW.getTime() + DELETION_CLEANUP_LEASE_SECONDS * 1000);
 
-type TKind = "hubSurvey" | "hubResponses" | "storageSurveyFolder" | "storageFiles" | "somethingNew";
+type TKind =
+  | "hubSurvey"
+  | "hubResponses"
+  | "hubResponseOutcome"
+  | "storageSurveyFolder"
+  | "storageFiles"
+  | "somethingNew";
 const row = (id: string, kind: TKind, overrides: Record<string, unknown> = {}) => ({
   id,
   kind,
@@ -247,5 +255,104 @@ describe("drainDeletionCleanups", () => {
     const after = new Date(NOW.getTime() + DELETION_CLEANUP_RUN_BUDGET_MS);
     expect(updates()).toEqual([{ where: { OR: [leased("c2")] }, data: { nextAttemptAt: after } }]);
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+  describe("hubResponseOutcome rows", () => {
+    const outcomeRow = (id: string, responseId: string) =>
+      row(id, "hubResponseOutcome", { responseIds: [responseId] });
+
+    test("are reconciled together, once, and each row is finished by its own result", async () => {
+      queue(outcomeRow("c1", "r1"), outcomeRow("c2", "r2"), outcomeRow("c3", "r3"));
+      vi.mocked(reconcileResponseOutcomes).mockResolvedValue(
+        new Map([
+          ["c1", { status: "done" }],
+          ["c2", { status: "again", delayMs: CLEANUP_SETTLE_MS }],
+          ["c3", { status: "failed", error: "hubList:503" }],
+        ])
+      );
+
+      await expect(drainDeletionCleanups()).resolves.toEqual({ done: 1, again: 1, failed: 1 });
+
+      expect(reconcileResponseOutcomes).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(reconcileResponseOutcomes).mock.calls[0][0].map((r) => r.id)).toEqual([
+        "c1",
+        "c2",
+        "c3",
+      ]);
+      // A live response is the expected case: the "response still exists" wait of the delete kinds is not applied.
+      expect(prisma.response.findFirst).not.toHaveBeenCalled();
+      expect(prisma.deletionCleanup.deleteMany).toHaveBeenCalledWith({ where: leased("c1") });
+      expect(updates()).toEqual([
+        {
+          where: leased("c2"),
+          data: { attempts: 0, lastError: null, nextAttemptAt: new Date(NOW.getTime() + CLEANUP_SETTLE_MS) },
+        },
+        {
+          where: leased("c3"),
+          data: {
+            attempts: 3,
+            lastError: "hubList:503",
+            nextAttemptAt: new Date(NOW.getTime() + getDeletionCleanupRetryDelayMs(3)),
+          },
+        },
+      ]);
+    });
+
+    test("a reconcile that throws fails those rows with backoff and never the drain", async () => {
+      queue(outcomeRow("c1", "r1"), row("c2", "storageSurveyFolder"));
+      vi.mocked(reconcileResponseOutcomes).mockRejectedValue(new Error("db down"));
+
+      await expect(drainDeletionCleanups()).resolves.toEqual({ done: 1, again: 0, failed: 1 });
+
+      expect(updates()[0].data).toMatchObject({ lastError: "error" });
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ cleanupId: "c1", kind: "hubResponseOutcome" }),
+        "Deletion cleanup threw"
+      );
+    });
+
+    test("a reconcile that overruns the run's time still finishes the rows it settled; only the rest is handed back", async () => {
+      queue(outcomeRow("c1", "r1"), outcomeRow("c2", "r2"), row("c3", "storageSurveyFolder"));
+      vi.mocked(reconcileResponseOutcomes).mockImplementation(async () => {
+        vi.advanceTimersByTime(DELETION_CLEANUP_RUN_BUDGET_MS);
+        return new Map([
+          ["c1", { status: "done" }],
+          ["c2", { status: "failed", error: "hubList:503" }],
+        ]);
+      });
+
+      await expect(drainDeletionCleanups()).resolves.toEqual({ done: 1, again: 0, failed: 1 });
+
+      const after = new Date(NOW.getTime() + DELETION_CLEANUP_RUN_BUDGET_MS);
+      expect(prisma.deletionCleanup.deleteMany).toHaveBeenCalledWith({ where: leased("c1") });
+      expect(updates()).toEqual([
+        {
+          where: leased("c2"),
+          data: {
+            attempts: 3,
+            lastError: "hubList:503",
+            nextAttemptAt: new Date(after.getTime() + getDeletionCleanupRetryDelayMs(3)),
+          },
+        },
+        { where: { OR: [leased("c3")] }, data: { nextAttemptAt: after } },
+      ]);
+      expect(deleteSurveyUploadFolder).not.toHaveBeenCalled();
+    });
+
+    test("wait for the next run, untouched, when the Hub call budget is already spent", async () => {
+      // The first claim spends the budget; the second holds the outcome row.
+      vi.mocked(prisma.$queryRaw)
+        .mockResolvedValueOnce([row("c0", "hubSurvey")] as never)
+        .mockResolvedValueOnce([outcomeRow("c1", "r1")] as never)
+        .mockResolvedValue([] as never);
+      vi.mocked(deleteHubRecords).mockImplementation(async (_target, budget) => {
+        budget.remaining = 0;
+        return { status: "budget", count: 100 };
+      });
+
+      await drainDeletionCleanups();
+
+      expect(reconcileResponseOutcomes).not.toHaveBeenCalled();
+      expect(updates().at(-1)).toEqual({ where: { OR: [leased("c1")] }, data: { nextAttemptAt: NOW } });
+    });
   });
 });

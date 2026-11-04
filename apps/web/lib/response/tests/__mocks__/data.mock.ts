@@ -79,6 +79,7 @@ export const mockResponse: ResponseMock = {
   endingId: null,
   displayId: null,
   ingestFlags: null,
+  outcome: null,
 };
 
 const mockSurveyQuota: TSurveyQuota = {
@@ -152,6 +153,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    outcome: null,
   },
   {
     id: "clsk8db0r001kk8iujkn32q8g",
@@ -179,6 +181,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    outcome: null,
   },
   {
     id: "clsk7b15p001fk8iu04qpvo2f",
@@ -205,6 +208,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    outcome: null,
   },
   {
     id: "clsk6bk1l0017k8iut9dp0uxt",
@@ -231,6 +235,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    outcome: null,
   },
   {
     id: "clsk5tgkm000uk8iueqoficwc",
@@ -257,6 +262,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    outcome: null,
   },
 ];
 

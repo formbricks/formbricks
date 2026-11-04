@@ -7,15 +7,15 @@ import { cn } from "@/lib/cn";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface BadgeContentProps {
-  id: string | number;
-  isCopyEnabled: boolean;
-  className?: string;
-  handleCopy: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  isHovered: boolean;
-  setIsHovered: (hovered: boolean) => void;
-  shouldShowIcon: boolean;
-  isCopied: boolean;
-  label?: string;
+  readonly id: string | number;
+  readonly isCopyEnabled: boolean;
+  readonly className?: string;
+  readonly handleCopy: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  readonly isHovered: boolean;
+  readonly setIsHovered: (hovered: boolean) => void;
+  readonly shouldShowIcon: boolean;
+  readonly isCopied: boolean;
+  readonly label?: string;
 }
 
 export const BadgeContent: React.FC<BadgeContentProps> = ({

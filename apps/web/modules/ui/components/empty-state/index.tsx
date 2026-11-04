@@ -1,8 +1,8 @@
 "use client";
 
 interface EmptyStateProps {
-  text: string;
-  variant?: "default" | "simple";
+  readonly text: string;
+  readonly variant?: "default" | "simple";
 }
 
 export const EmptyState = ({ text, variant = "default" }: EmptyStateProps) => {

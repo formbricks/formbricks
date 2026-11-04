@@ -12,10 +12,10 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
 interface LanguageSelectProps {
-  language: Language;
-  onLanguageChange: (newLanguage: Language) => void;
-  disabled: boolean;
-  locale: TUserLocale;
+  readonly language: Language;
+  readonly onLanguageChange: (newLanguage: Language) => void;
+  readonly disabled: boolean;
+  readonly locale: TUserLocale;
 }
 
 export function LanguageSelect({ language, onLanguageChange, disabled, locale }: LanguageSelectProps) {

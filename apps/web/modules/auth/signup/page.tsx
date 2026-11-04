@@ -22,7 +22,7 @@ import { SignupForm } from "./components/signup-form";
 export const SignupPage = async ({
   searchParams: searchParamsProps,
 }: {
-  searchParams: Promise<Record<string, string>>;
+  readonly searchParams: Promise<Record<string, string>>;
 }) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;

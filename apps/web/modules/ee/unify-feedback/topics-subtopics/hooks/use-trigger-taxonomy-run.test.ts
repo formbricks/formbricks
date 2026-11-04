@@ -9,7 +9,7 @@ import { type TTaxonomyScopeSelection, taxonomyKeys } from "../lib/query";
 import { useTriggerTaxonomyRun } from "./use-trigger-taxonomy-run";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseTriggerTaxonomyRunTestWrapper";
   return Wrapper;

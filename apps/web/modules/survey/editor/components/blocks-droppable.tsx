@@ -11,6 +11,7 @@ import { BlockCard } from "@/modules/survey/editor/components/block-card";
 
 interface BlocksDroppableProps {
   localSurvey: TSurvey;
+  persistedSurvey: TSurvey;
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   workspace: TWorkspaceWithoutCustomCss;
   moveElement: (elementIdx: number, up: boolean) => void;
@@ -52,6 +53,7 @@ export const BlocksDroppable = ({
   duplicateElement,
   invalidElements,
   localSurvey,
+  persistedSurvey,
   setLocalSurvey,
   moveElement,
   workspace,
@@ -97,6 +99,7 @@ export const BlocksDroppable = ({
             <BlockCard
               key={block.id}
               localSurvey={localSurvey}
+              persistedSurvey={persistedSurvey}
               setLocalSurvey={setLocalSurvey}
               workspace={workspace}
               block={block}
