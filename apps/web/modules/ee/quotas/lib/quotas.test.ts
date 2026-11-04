@@ -9,7 +9,15 @@ import {
 } from "@formbricks/types/errors";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 import { validateInputs } from "@/lib/utils/validate";
-import { createQuota, deleteQuota, getQuota, getQuotas, reduceQuotaLimits, updateQuota } from "./quotas";
+import {
+  createQuota,
+  deleteQuota,
+  getQuota,
+  getQuotas,
+  reduceQuotaLimits,
+  syncQuotaMatrixConditions,
+  updateQuota,
+} from "./quotas";
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -395,5 +403,53 @@ describe("Quota Service", () => {
       vi.mocked(prisma.surveyQuota.updateMany).mockRejectedValue(new Error("Unknown error"));
       await expect(reduceQuotaLimits([mockQuotaId])).rejects.toThrow(Error);
     });
+  });
+});
+
+describe("syncQuotaMatrixConditions (ENG-6934)", () => {
+  // The rows were reordered: row_b now sits first. The quota was written when row_b was second.
+  const blocks = [
+    {
+      id: "b1",
+      elements: [
+        {
+          id: "grid",
+          type: "matrix",
+          rows: [{ id: "row_b" }, { id: "row_a" }],
+          columns: [{ id: "col_x" }, { id: "col_y" }],
+        },
+      ],
+    },
+  ];
+  const condition = (row: string) => ({
+    id: "c1",
+    leftOperand: { type: "element" as const, value: "grid", meta: { row, rowId: "row_b" } },
+    operator: "equals" as const,
+    rightOperand: { type: "static" as const, value: "1", columnId: "col_y" },
+  });
+
+  test("rewrites a quota's stale matrix positions from its ids, inside the save's transaction", async () => {
+    const tx = {
+      surveyQuota: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: "stale", logic: { connector: "and", conditions: [condition("1")] } },
+          { id: "in_sync", logic: { connector: "and", conditions: [condition("0")] } },
+        ]),
+        update: vi.fn(),
+      },
+    };
+
+    await syncQuotaMatrixConditions(tx as never, "survey123", blocks);
+
+    expect(tx.surveyQuota.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { surveyId: "survey123" } })
+    );
+    expect(tx.surveyQuota.update).toHaveBeenCalledTimes(1);
+    expect(tx.surveyQuota.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "stale" },
+        data: { logic: { connector: "and", conditions: [condition("0")] } },
+      })
+    );
   });
 });

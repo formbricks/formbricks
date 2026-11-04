@@ -84,6 +84,11 @@ vi.mock("@formbricks/database", () => {
       deleteMany: vi.fn(),
       updateMany: vi.fn(),
     },
+    // ENG-6934: a save that holds a matrix re-syncs its quotas' matrix conditions in the transaction.
+    surveyQuota: {
+      findMany: vi.fn(async () => []),
+      update: vi.fn(),
+    },
     // Interactive transaction: run the callback with the mocked client as the tx client.
     $executeRaw: vi.fn(),
     $transaction: vi.fn((callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
@@ -1821,6 +1826,32 @@ describe("patchV3Survey", () => {
         leftOperand: { meta: { row: "1", rowId: "netflix" } },
         rightOperand: { value: "0", columnId: "good" },
       });
+    });
+
+    test("re-syncs the survey's quotas after a row reorder, in the same transaction", async () => {
+      const quotaCondition = (row: string) => ({
+        id: "qc1",
+        leftOperand: { type: "element", value: "grid", meta: { row, rowId: "netflix" } },
+        operator: "equals",
+        rightOperand: { type: "static", value: "0", columnId: "good" },
+      });
+      vi.mocked(prisma.surveyQuota.findMany).mockResolvedValueOnce([
+        { id: "quota_1", logic: { connector: "and", conditions: [quotaCondition("0")] } },
+      ] as never);
+      const blocks = blocksWith(
+        grid(["disney", "netflix"], ["good", "poor"]),
+        { row: "1", rowId: "netflix" },
+        { value: "0", columnId: "good" }
+      );
+
+      await patchV3Survey(currentSurvey, { blocks }, "req_matrix_quota", "org_1");
+
+      expect(prisma.surveyQuota.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "quota_1" },
+          data: { logic: { connector: "and", conditions: [quotaCondition("1")] } },
+        })
+      );
     });
 
     test("refuses a column id the matrix doesn't have, with its path, and does not write", async () => {
