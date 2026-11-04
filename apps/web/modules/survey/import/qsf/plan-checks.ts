@@ -1,4 +1,12 @@
-import { cleanNote } from "../core/clean-note";
+import {
+  IMPORT_PLAN_RANGES,
+  addPlanFailure,
+  cleanRuleNotes,
+  collectPlanEntries,
+  collectPlanSkips,
+  isImportPlanRange,
+  judgePlanRef,
+} from "../core/plan-checks";
 import { SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS } from "../limits";
 import {
   QSF_PLAN_ELEMENT_TYPES,
@@ -25,11 +33,6 @@ import type { TQsfQuestion, TQsfSlider, TQsfSurvey, TQsfTextKey } from "./qsf-mo
  */
 
 const ALLOWED_TYPES: ReadonlySet<string> = new Set(QSF_PLAN_ELEMENT_TYPES);
-const ALLOWED_RANGES: Record<string, readonly number[]> = {
-  rating: [3, 4, 5, 6, 7, 10],
-  csat: [5],
-  ces: [5, 7],
-};
 
 export type TQsfPlanFailure =
   /** Never asked: the import's AI budget (calls, prompt size or time) ran out first. */
@@ -89,9 +92,6 @@ export interface TQsfPlanResponse {
   refs: ReadonlySet<string>;
   object: unknown;
 }
-
-/** One note per rule, empty included: the report reads them by the rule's index. */
-const cleanNotes = (notes: string[]): string[] => notes.map(cleanNote);
 
 const sourceKeys = (question: TQsfQuestion, source: "choices" | "answers" | null): TQsfTextKey[] =>
   source === null ? [] : question[source].map((option) => option.key);
@@ -198,7 +198,7 @@ export function sliderPoints(slider: TQsfSlider | null): number | null {
 
 /** The smallest rating size that holds every point, or the largest a rating has. */
 export const ratingRangeFor = (points: number): number =>
-  ALLOWED_RANGES.rating.find((range) => range >= points) ?? Math.max(...ALLOWED_RANGES.rating);
+  IMPORT_PLAN_RANGES.rating.find((range) => range >= points) ?? Math.max(...IMPORT_PLAN_RANGES.rating);
 
 /**
  * A rating, CSAT or CES question's range, one its type allows, and its scale. A slider's own size
@@ -213,7 +213,7 @@ function planRange(
   if (entry.scale === null) fail("missing_scale");
   if (type === "rating" && sliderSize !== null) return ratingRangeFor(sliderSize);
   const range = entry.range === null ? null : Number(entry.range);
-  if (range === null || !ALLOWED_RANGES[type].includes(range)) fail("invalid_range");
+  if (!isImportPlanRange(type, range)) fail("invalid_range");
   return range;
 }
 
@@ -298,47 +298,14 @@ export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuesti
       scale: entry.scale,
       range,
       format: entry.format,
-      notes: cleanNotes(entry.logicNotes),
+      notes: cleanRuleNotes(entry.logicNotes),
       leftOut: leftOutKeys(type, question, entry),
     },
   };
 }
 
-const readRef = (entry: unknown): string | null =>
-  typeof entry === "object" && entry !== null && "ref" in entry && typeof entry.ref === "string"
-    ? entry.ref
-    : null;
-
 type TAddFailure = (ref: string, reason: TQsfPlanFailure) => void;
 type TPlanEnvelope = ReturnType<typeof ZQsfImportPlanEnvelope.parse>;
-
-/** The entries a response gives for the refs its call was asked about, by ref. */
-function readEntries(
-  envelope: TPlanEnvelope,
-  refs: ReadonlySet<string>,
-  addFailure: TAddFailure
-): Map<string, TQsfPlanQuestion[]> {
-  const entries = new Map<string, TQsfPlanQuestion[]>();
-  for (const raw of envelope.questions) {
-    const ref = readRef(raw);
-    if (ref === null || !refs.has(ref)) continue;
-    const parsed = ZQsfPlanQuestion.safeParse(raw);
-    if (parsed.success) entries.set(ref, [...(entries.get(ref) ?? []), parsed.data]);
-    else addFailure(ref, "invalid_entry");
-  }
-  return entries;
-}
-
-/** The skip reasons a response gives for the refs its call was asked about, by ref. */
-function readSkips(envelope: TPlanEnvelope, refs: ReadonlySet<string>): Map<string, string[]> {
-  const skips = new Map<string, string[]>();
-  for (const raw of envelope.skipped) {
-    const parsed = ZQsfPlanSkip.safeParse(raw);
-    if (!parsed.success || !refs.has(parsed.data.ref)) continue;
-    skips.set(parsed.data.ref, [...(skips.get(parsed.data.ref) ?? []), parsed.data.reason]);
-  }
-  return skips;
-}
 
 /** Notes for the pages a call holds questions of. A page split across calls keeps the first. */
 function readPageNotes(
@@ -351,7 +318,7 @@ function readPageNotes(
   for (const raw of envelope.pages ?? []) {
     const parsed = ZQsfPlanPage.safeParse(raw);
     if (!parsed.success || !pageIds.has(parsed.data.id) || pageNotes.has(parsed.data.id)) continue;
-    pageNotes.set(parsed.data.id, cleanNotes(parsed.data.logicNotes));
+    pageNotes.set(parsed.data.id, cleanRuleNotes(parsed.data.logicNotes));
   }
 }
 
@@ -364,17 +331,15 @@ function judgeQuestion(
   addFailure: TAddFailure
 ): void {
   const { ref } = question;
-  if (entryList.length > 1 || skipList.length > 1) {
-    addFailure(ref, "duplicate_ref");
-  } else if (skipList.length === 1 && entryList.length > 0) {
-    addFailure(ref, "placed_and_skipped");
-  } else if (skipList.length === 1) {
-    const reason = cleanNote(skipList[0]);
-    plan.skipped.set(ref, reason.length > 0 ? reason : null);
-  } else if (entryList.length === 0) {
+  const verdict = judgePlanRef(entryList, skipList);
+  if (verdict.kind === "failed") {
+    addFailure(ref, verdict.reason);
+  } else if (verdict.kind === "skipped") {
+    plan.skipped.set(ref, verdict.reason);
+  } else if (verdict.kind === "missing") {
     addFailure(ref, "missing");
   } else {
-    const result = checkQuestionRoles(question, entryList[0]);
+    const result = checkQuestionRoles(question, verdict.entry);
     if (result.ok) plan.questions.set(ref, result.question);
     else for (const reason of result.reasons) addFailure(ref, reason);
   }
@@ -392,11 +357,7 @@ export function checkPlanResponses(survey: TQsfSurvey, responses: TQsfPlanRespon
     skipped: new Map(),
     failures: new Map(),
   };
-  const addFailure: TAddFailure = (ref, reason) => {
-    const reasons = plan.failures.get(ref) ?? [];
-    if (!reasons.includes(reason)) reasons.push(reason);
-    plan.failures.set(ref, reasons);
-  };
+  const addFailure: TAddFailure = (ref, reason) => addPlanFailure(plan.failures, ref, reason);
 
   for (const response of responses) {
     const envelope = ZQsfImportPlanEnvelope.safeParse(response.object);
@@ -405,8 +366,10 @@ export function checkPlanResponses(survey: TQsfSurvey, responses: TQsfPlanRespon
       continue;
     }
 
-    const entries = readEntries(envelope.data, response.refs, addFailure);
-    const skips = readSkips(envelope.data, response.refs);
+    const entries = collectPlanEntries(envelope.data.questions, response.refs, ZQsfPlanQuestion, (ref) =>
+      addFailure(ref, "invalid_entry")
+    );
+    const skips = collectPlanSkips(envelope.data.skipped, response.refs, ZQsfPlanSkip);
     readPageNotes(survey, envelope.data, response.refs, plan.pageNotes);
 
     for (const ref of response.refs) {

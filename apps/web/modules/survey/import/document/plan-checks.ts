@@ -1,6 +1,13 @@
 import type { TImportCallFailure, TImportCheckedPlan, TImportPlanResponse } from "../core/ai-plan";
-import { cleanNote } from "../core/clean-note";
 import { normalizeImportLanguageCode } from "../core/language-codes";
+import {
+  addPlanFailure,
+  cleanRuleNotes,
+  collectPlanEntries,
+  collectPlanSkips,
+  isImportPlanRange,
+  judgePlanRef,
+} from "../core/plan-checks";
 import {
   SURVEY_IMPORT_DOCUMENT_MAX_ENTRY_LINES,
   SURVEY_IMPORT_MAX_NAME_CHARS,
@@ -34,11 +41,6 @@ import {
  */
 
 const ALLOWED_KINDS: ReadonlySet<string> = new Set(DOCUMENT_PLAN_KINDS);
-const ALLOWED_RANGES: Record<"rating" | "csat" | "ces", readonly number[]> = {
-  rating: [3, 4, 5, 6, 7, 10],
-  csat: [5],
-  ces: [5, 7],
-};
 const CHOICE_KINDS: ReadonlySet<TDocumentPlanKind> = new Set([
   "multipleChoiceSingle",
   "multipleChoiceMulti",
@@ -293,7 +295,7 @@ function checkShape(kind: TDocumentPlanKind, entry: TDocumentPlanEntry, fail: TF
 
   if (kind === "rating" || kind === "csat" || kind === "ces") {
     const range = entry.range === null ? null : Number(entry.range);
-    if (range === null || !ALLOWED_RANGES[kind].includes(range)) fail("invalid_range");
+    if (!isImportPlanRange(kind, range)) fail("invalid_range");
     return range;
   }
   return null;
@@ -368,8 +370,7 @@ export function checkEntry(
     range,
     format: entry.format ?? "M-d-y",
     rules: kind === "welcome" || kind === "ending" ? [] : entry.rules,
-    // One note per rule, empty included: the report reads them by the rule's index.
-    notes: entry.logicNotes.map(cleanNote),
+    notes: cleanRuleNotes(entry.logicNotes),
     cells,
     unsplitCell: null,
   };
@@ -402,11 +403,6 @@ export function checkEntry(
   return { ok: false, reasons: [...reasons] };
 }
 
-const readRef = (entry: unknown): string | null =>
-  typeof entry === "object" && entry !== null && "ref" in entry && typeof entry.ref === "string"
-    ? entry.ref
-    : null;
-
 /**
  * Check one round of answers. Each answer is checked within the lines its call was asked about; an
  * entry starting anywhere else is ignored, so one call can never place, skip or claim the cells of a
@@ -423,11 +419,8 @@ export function checkDocumentPlanResponses(
     failures: new Map(),
     silentResponses: 0,
   };
-  const addFailure = (ref: string, reason: TDocumentPlanFailure) => {
-    const reasons = plan.failures.get(ref) ?? [];
-    if (!reasons.includes(reason)) reasons.push(reason);
-    plan.failures.set(ref, reasons);
-  };
+  const addFailure = (ref: string, reason: TDocumentPlanFailure) =>
+    addPlanFailure(plan.failures, ref, reason);
 
   const failAll = (refs: ReadonlySet<string>, reason: TDocumentPlanFailure) => {
     for (const ref of refs) addFailure(ref, reason);
@@ -469,50 +462,23 @@ function judgeResponse(
   round: { retry: boolean },
   addFailure: (ref: string, reason: TDocumentPlanFailure) => void
 ): void {
-  const entries = collectEntries(envelope.questions, refs, addFailure);
-  const skips = collectSkips(envelope.skipped, refs);
+  const entries = collectPlanEntries(envelope.questions, refs, ZDocumentPlanEntry, (ref) =>
+    addFailure(ref, "invalid_entry")
+  );
+  const skips = collectPlanSkips(envelope.skipped, refs, ZDocumentPlanSkip);
   if (entries.size === 0 && skips.size === 0) plan.silentResponses += 1;
 
   // A line that is no entry's start — a header, a continuation, a comment — is not a failure: the AI
   // decides which lines are questions.
   for (const ref of new Set([...entries.keys(), ...skips.keys()])) {
     if (plan.failures.has(ref)) continue;
-    const entryList = entries.get(ref) ?? [];
-    const skipList = skips.get(ref) ?? [];
-    if (entryList.length > 1 || skipList.length > 1) addFailure(ref, "duplicate_ref");
-    else if (entryList.length === 1 && skipList.length === 1) addFailure(ref, "placed_and_skipped");
-    else if (skipList.length === 1) plan.skipped.set(ref, cleanNote(skipList[0]) || null);
-    else judgeEntry(context, plan, ref, entryList[0], round, addFailure);
+    const verdict = judgePlanRef(entries.get(ref) ?? [], skips.get(ref) ?? []);
+    if (verdict.kind === "failed") addFailure(ref, verdict.reason);
+    else if (verdict.kind === "skipped") plan.skipped.set(ref, verdict.reason);
+    else if (verdict.kind === "placed") judgeEntry(context, plan, ref, verdict.entry, round, addFailure);
+    // `missing` cannot happen here: every ref comes from an entry or a skip of this answer.
   }
 }
-
-/** The answer's entries by the line they start on, each line asked about; one that doesn't parse fails. */
-const collectEntries = (
-  questions: unknown[],
-  refs: ReadonlySet<string>,
-  addFailure: (ref: string, reason: TDocumentPlanFailure) => void
-): Map<string, TDocumentPlanEntry[]> => {
-  const entries = new Map<string, TDocumentPlanEntry[]>();
-  for (const raw of questions) {
-    const ref = readRef(raw);
-    if (ref === null || !refs.has(ref)) continue;
-    const parsed = ZDocumentPlanEntry.safeParse(raw);
-    if (parsed.success) entries.set(ref, [...(entries.get(ref) ?? []), parsed.data]);
-    else addFailure(ref, "invalid_entry");
-  }
-  return entries;
-};
-
-/** The answer's skip reasons by line, for the lines asked about. */
-const collectSkips = (skipped: unknown[], refs: ReadonlySet<string>): Map<string, string[]> => {
-  const skips = new Map<string, string[]>();
-  for (const raw of skipped) {
-    const parsed = ZDocumentPlanSkip.safeParse(raw);
-    if (!parsed.success || !refs.has(parsed.data.ref)) continue;
-    skips.set(parsed.data.ref, [...(skips.get(parsed.data.ref) ?? []), parsed.data.reason]);
-  }
-  return skips;
-};
 
 /** Check one placed entry, keeping it or recording why it fails. */
 const judgeEntry = (
