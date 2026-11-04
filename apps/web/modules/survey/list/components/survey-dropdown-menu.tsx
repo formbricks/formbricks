@@ -378,7 +378,7 @@ export const SurveyDropDownMenu = ({
                     setIsDropDownOpen(false);
                     const previewUrl = new URL(surveyLink);
                     previewUrl.searchParams.set("preview", "true");
-                    globalThis.window.open(previewUrl.toString(), "_blank");
+                    globalThis.window.open(previewUrl.toString(), "_blank", "noopener,noreferrer");
                   }}>
                   <EyeIcon className="mr-2 size-4" />
                   {t("common.preview")}
