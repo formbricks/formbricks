@@ -33,11 +33,13 @@ const parseAction = (
  * The workspace permission a survey, response or dashboard action is decided by whenever the decision is
  * made on the workspace node: always for dashboards, and for surveys and responses while survey
  * visibility is not enforced (readiness marker off) or a change is pending. `survey.change_visibility`
- * is deliberately absent — it has no workspace equivalent. `dashboard.read` is `dashboard_read`, which
- * also admits the workspace's Dashboard viewers (ADR-0023); everything else a viewer lacks.
+ * is deliberately absent — it has no workspace equivalent. `dashboard.read` stays the workspace `read`,
+ * so no caller of it depends on the `dashboard_read` permission the Dashboard viewer schema adds: a
+ * viewer's dashboard-bound reads ask `workspace.dashboard_read` explicitly, and only in
+ * `app/api/v3/lib/dashboards-access.ts` (ADR-0023).
  */
 const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
-  "dashboard.read": "dashboard_read",
+  "dashboard.read": "read",
   "dashboard.write": "write",
   "response.export": "read",
   "response.manage": "manage",
@@ -50,7 +52,7 @@ const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "survey.response_export": "read",
   "survey.response_read": "read",
   "survey.write": "write",
-} as const satisfies Partial<Record<TAuthorizationAction, "dashboard_read" | "manage" | "read" | "write">>;
+} as const satisfies Partial<Record<TAuthorizationAction, "manage" | "read" | "write">>;
 
 /** A response action decided on its survey's node (ENG-3282): the survey permission it inherits. */
 const SURVEY_PERMISSION_FOR_RESPONSE_ACTION = {

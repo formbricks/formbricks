@@ -249,13 +249,12 @@ describe("SpiceDB grants a Dashboard viewer the dashboard reads of its teams' wo
     await expect(dashboardRead(ids.foreignViewer, fixture.workspaceId)).resolves.toBe(false);
   });
 
-  test("dashboard.read follows it: the granted workspace's dashboards, no other", async () => {
+  test("dashboard.read stays the workspace read: a viewer reads dashboards only through dashboard_read", async () => {
     const read = (userId: string, dashboardId: string) =>
       can({ type: "user", id: userId }, "dashboard.read", { type: "dashboard", id: dashboardId });
-    await expect(read(ids.viewer, ids.dashboard)).resolves.toBe(true);
-    await expect(read(ids.manageViewer, ids.dashboard)).resolves.toBe(true);
-    await expect(read(ids.viewer, ids.hiddenDashboard)).resolves.toBe(false);
-    await expect(read(ids.ungrantedViewer, ids.dashboard)).resolves.toBe(false);
+    await expect(read(ids.viewer, ids.dashboard)).resolves.toBe(false);
+    await expect(read(ids.manageViewer, ids.dashboard)).resolves.toBe(false);
+    await expect(read(fixture.users.viewer, ids.dashboard)).resolves.toBe(true);
   });
 
   test("members keep their dashboard reads, and a member without a grant still has none", async () => {
