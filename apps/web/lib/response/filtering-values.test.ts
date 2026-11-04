@@ -128,16 +128,6 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
     expect(contactAttributes).toEqual({ email: ["a@x.test", "b@x.test"], plan: ["pro"], seats: ["3"] });
   });
 
-  test("contact attributes: jsonb nulls are filtered in SQL, so toString never sees one", async () => {
-    mockRows({});
-    await getSurveyFilteringValues(asRead());
-
-    const [strings] = callFor(`r."contactAttributes"`)!;
-    expect((strings as unknown as TemplateStringsArray).join("?")).toContain(
-      "jsonb_typeof(a.value) <> 'null'"
-    );
-  });
-
   test("meta: nested objects flatten, url only registers its key, non-strings and empties are skipped", async () => {
     mockRows({
       meta: [

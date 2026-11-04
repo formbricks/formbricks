@@ -55,7 +55,7 @@ type TFilterValueSlice = Pick<TResponse, "contactAttributes" | "data" | "meta">;
  * and `getResponseContactAttributes` calls `.toString()` on each value, which threw on `null` and
  * failed the whole filter load.
  */
-export const queryContactAttributeValues = (surveyId: string): Promise<TFilterValueRow[]> =>
+const queryContactAttributeValues = (surveyId: string): Promise<TFilterValueRow[]> =>
   prisma.$queryRaw<TFilterValueRow[]>`
     SELECT DISTINCT a.key AS "key", a.value::text AS "value"
     FROM "Response" r
@@ -82,7 +82,7 @@ export const queryContactAttributeValues = (surveyId: string): Promise<TFilterVa
  * values (`userAgent`), which keeps the plan parallel. The single-lateral form was ~6x slower on 50k
  * responses.
  */
-export const queryMetaValues = (surveyId: string): Promise<TMetaFilterValueRow[]> =>
+const queryMetaValues = (surveyId: string): Promise<TMetaFilterValueRow[]> =>
   prisma.$queryRaw<TMetaFilterValueRow[]>`
     SELECT "key", "nestedKey", "value" FROM (
       SELECT DISTINCT m.key AS "key", NULL::text AS "nestedKey",
@@ -117,7 +117,7 @@ export const queryMetaValues = (surveyId: string): Promise<TMetaFilterValueRow[]
   `;
 
 /** Distinct scalar `data` values under the given keys — the survey's ingested storage keys. */
-export const queryDataValues = (surveyId: string, keys: string[]): Promise<TFilterValueRow[]> =>
+const queryDataValues = (surveyId: string, keys: string[]): Promise<TFilterValueRow[]> =>
   prisma.$queryRaw<TFilterValueRow[]>`
     SELECT DISTINCT k.key AS "key", (r.data -> k.key)::text AS "value"
     FROM "Response" r
@@ -132,11 +132,7 @@ export const queryDataValues = (surveyId: string, keys: string[]): Promise<TFilt
  * cap can run DB-side here because nothing projects these values: the first `limit` distinct
  * non-empty strings are exactly what `getResponseVariableFilterValues` keeps.
  */
-export const queryVariableValues = (
-  surveyId: string,
-  keys: string[],
-  limit: number
-): Promise<TFilterValueRow[]> =>
+const queryVariableValues = (surveyId: string, keys: string[], limit: number): Promise<TFilterValueRow[]> =>
   prisma.$queryRaw<TFilterValueRow[]>`
     SELECT ranked."key", ranked."value"
     FROM (
@@ -156,7 +152,7 @@ export const queryVariableValues = (
 
 const emptySlice = (): TFilterValueSlice => ({ contactAttributes: null, data: {}, meta: {} });
 
-export const contactAttributeRowsToSlices = (rows: TFilterValueRow[]): TFilterValueSlice[] =>
+const contactAttributeRowsToSlices = (rows: TFilterValueRow[]): TFilterValueSlice[] =>
   rows.map(({ key, value }) => ({ ...emptySlice(), contactAttributes: { [key]: JSON.parse(value) } }));
 
 export const metaRowsToSlices = (rows: TMetaFilterValueRow[]): TFilterValueSlice[] =>
@@ -165,10 +161,10 @@ export const metaRowsToSlices = (rows: TMetaFilterValueRow[]): TFilterValueSlice
     return { ...emptySlice(), meta: { [key]: nestedKey === null ? parsed : { [nestedKey]: parsed } } };
   });
 
-export const dataRowsToSlices = (rows: TFilterValueRow[]): TFilterValueSlice[] =>
+const dataRowsToSlices = (rows: TFilterValueRow[]): TFilterValueSlice[] =>
   rows.map(({ key, value }) => ({ ...emptySlice(), data: { [key]: JSON.parse(value) } }));
 
-export const variableRowsToSlices = (rows: TFilterValueRow[]): Pick<TResponse, "variables">[] =>
+const variableRowsToSlices = (rows: TFilterValueRow[]): Pick<TResponse, "variables">[] =>
   rows.map(({ key, value }) => ({ variables: { [key]: JSON.parse(value) } }));
 
 /**
