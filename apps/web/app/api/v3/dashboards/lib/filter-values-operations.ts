@@ -145,6 +145,54 @@ const valuesCacheKey = (parts: {
 };
 
 /**
+ * What a value-list request names, checked before anything is read: its filters, the one whose values are
+ * asked for (a list filter of the request), its picks and its date range. A problem is the caller's to fix,
+ * a 422 naming it.
+ */
+const checkValuesRequest = (
+  query: TV3DashboardFilterValuesQuery,
+  filterId: string,
+  context: TV3ChartOperationContext
+) => {
+  const { requestId, instance } = context;
+  const { filters, issues: filterIssues } = resolveFilterRules(query.rules);
+  if (filterIssues.length > 0) {
+    return problemUnprocessableContent(requestId, "The filters are not valid", {
+      instance,
+      invalid_params: filterIssues,
+    });
+  }
+  const filter = filters.find((candidate) => candidate.id === filterId);
+  if (!filter) return filterProblem("filterId", "Not one of the request's filter[<id>] parameters.", context);
+  if (!isListDashboardFilter(filter)) {
+    return filterProblem(
+      "filterId",
+      "Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, or embedded data) pick from a list; this one takes a typed value.",
+      context
+    );
+  }
+
+  const pickIssues = findPickIssues(filters, query.picks ?? {});
+  if (pickIssues.length > 0) {
+    return problemUnprocessableContent(requestId, "The filter picks are not valid", {
+      instance,
+      invalid_params: pickIssues,
+    });
+  }
+
+  const dateRange = requestedDateRangeOf(query);
+  const requested = parseRequestedDateRange(dateRange, DATA_ROUTE_DATE_RANGE_NAMES);
+  if (!requested.ok) {
+    return problemUnprocessableContent(requestId, "The date range is not valid", {
+      instance,
+      invalid_params: requested.issues,
+    });
+  }
+
+  return { filters, filter, dateRange, requested };
+};
+
+/**
  * `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values` → 200 `{ data: { values: [{ value }],
  * hasMore } }`.
  *
@@ -183,40 +231,9 @@ export async function listV3DashboardFilterValues({
     if (access instanceof Response) return access;
     if (!row) return filterProblem("filterId", "Not a filter of this dashboard.", context);
 
-    const { filters, issues: filterIssues } = resolveFilterRules(query.rules);
-    if (filterIssues.length > 0) {
-      return problemUnprocessableContent(requestId, "The filters are not valid", {
-        instance,
-        invalid_params: filterIssues,
-      });
-    }
-    const filter = filters.find((candidate) => candidate.id === filterId);
-    if (!filter)
-      return filterProblem("filterId", "Not one of the request's filter[<id>] parameters.", context);
-    if (!isListDashboardFilter(filter)) {
-      return filterProblem(
-        "filterId",
-        "Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, or embedded data) pick from a list; this one takes a typed value.",
-        context
-      );
-    }
-
-    const pickIssues = findPickIssues(filters, query.picks ?? {});
-    if (pickIssues.length > 0) {
-      return problemUnprocessableContent(requestId, "The filter picks are not valid", {
-        instance,
-        invalid_params: pickIssues,
-      });
-    }
-
-    const dateRange = requestedDateRangeOf(query);
-    const requested = parseRequestedDateRange(dateRange, DATA_ROUTE_DATE_RANGE_NAMES);
-    if (!requested.ok) {
-      return problemUnprocessableContent(requestId, "The date range is not valid", {
-        instance,
-        invalid_params: requested.issues,
-      });
-    }
+    const checked = checkValuesRequest(query, filterId, context);
+    if (checked instanceof Response) return checked;
+    const { filters, filter, dateRange, requested } = checked;
 
     const charts = row.widgets.map(({ chart }) => ({
       datasetId: chart.feedbackDirectoryId,

@@ -58,9 +58,12 @@ export type TDatasetFilterFields = {
   answerQuestions: readonly TAnswerQuestion[];
 };
 
+/** A dataset that adds nothing: no embedded-data keys, no answerable questions. */
+const NO_DATASET_FIELDS: TDatasetFilterFields = { embeddedFields: [], answerQuestions: [] };
+
 export function getFilterFieldOptions(
   t: TFunction,
-  dataset: TDatasetFilterFields = { embeddedFields: [], answerQuestions: [] }
+  dataset: TDatasetFilterFields = NO_DATASET_FIELDS
 ): TComboboxGroupedOption[] {
   return [
     {

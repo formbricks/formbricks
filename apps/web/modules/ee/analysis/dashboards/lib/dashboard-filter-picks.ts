@@ -46,7 +46,11 @@ export const exceedsPicksBudget = (picks: TDashboardFilterPicks): boolean =>
 /** A problem with a person's picks, shaped as a v3 `invalid_params` entry. */
 export type TPickIssue = { name: string; reason: string; code?: "limit_exceeded" };
 
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+/**
+ * A day, or a day with a time and an optional offset: only the shape. `Date.parse` then refuses what is
+ * shaped right but no date at all.
+ */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-][\d:]+)?)?$/;
 
 /** Why a picked value cannot be compared with the field, or `null` when it can. */
 const pickValueProblem = (type: string | undefined, value: string): string | null => {

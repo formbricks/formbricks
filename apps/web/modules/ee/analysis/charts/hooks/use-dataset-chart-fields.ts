@@ -25,8 +25,7 @@ export const useDatasetChartFields = (
   workspaceId: string,
   feedbackDirectoryId: string | null | undefined
 ): TDatasetBuilderFields => {
-  const datasetId = feedbackDirectoryId ?? "";
-  const catalog = useQuery(chartFieldCatalogQuery(workspaceId, datasetId));
+  const catalog = useQuery(chartFieldCatalogQuery(workspaceId, feedbackDirectoryId ?? ""));
 
   const embeddedFields = useMemo(() => mergeEmbeddedFields([catalog.data?.fields ?? []]), [catalog.data]);
   const answerQuestions = useMemo(

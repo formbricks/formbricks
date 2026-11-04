@@ -17,16 +17,31 @@ import {
 } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 
+/**
+ * Every workspace the user can open, across their organizations: the ones their role reaches, and — when
+ * they are a Dashboard viewer anywhere — the ones their teams are granted, in one lookup.
+ */
+const collectWorkspaceIds = async (
+  userId: string,
+  organizationIds: readonly string[],
+  isDashboardViewer: boolean
+): Promise<string[]> => {
+  const ids: string[] = [];
+  for (const organizationId of organizationIds) {
+    for (const workspace of await getUserWorkspaces(userId, organizationId)) ids.push(workspace.id);
+  }
+  if (isDashboardViewer) {
+    for (const workspace of await listDashboardViewerWorkspacesForUser(userId)) ids.push(workspace.id);
+  }
+  return ids;
+};
+
 const Page = async () => {
   const session: Session | null = await getSession();
   const isFreshInstance = await getIsFreshInstance();
 
   if (!session) {
-    if (isFreshInstance) {
-      return redirect("/setup/intro");
-    } else {
-      return redirect("/auth/login");
-    }
+    return redirect(isFreshInstance ? "/setup/intro" : "/auth/login");
   }
 
   const user = await getUser(session.user.id);
@@ -45,20 +60,11 @@ const Page = async () => {
     return redirect("/setup/organization/create");
   }
 
-  // Collect workspace IDs across all organizations
-  const allWorkspaceIds: string[] = [];
-  for (const org of userOrganizations) {
-    const workspaces = await getUserWorkspaces(user.id, org.id);
-    for (const ws of workspaces) {
-      allWorkspaceIds.push(ws.id);
-    }
-  }
-  if (viewerOrganizations.length > 0) {
-    // Every viewer organization's granted workspaces in one lookup (C12).
-    for (const ws of await listDashboardViewerWorkspacesForUser(user.id)) {
-      allWorkspaceIds.push(ws.id);
-    }
-  }
+  const allWorkspaceIds = await collectWorkspaceIds(
+    user.id,
+    userOrganizations.map((organization) => organization.id),
+    viewerOrganizations.length > 0
+  );
 
   if (userOrganizations.length === 0) {
     // Only a Dashboard viewer: the last-used granted workspace's dashboards (the workspace page sends a

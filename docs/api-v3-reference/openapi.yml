@@ -13957,6 +13957,7 @@ components:
           description: The questions of the Feedback Dataset an answer rule (`FeedbackRecords.answer`) may name, with the operators and values each takes. Empty for a dataset without such questions.
           items:
             $ref: '#/components/schemas/ChartAnswerQuestion'
+      additionalProperties: false
     ChartPreviewRequest:
       type: object
       required:
@@ -14001,6 +14002,39 @@ components:
                   format: date
               additionalProperties: false
       additionalProperties: false
+    ChartDataRows:
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          type:
+            - string
+            - number
+            - boolean
+            - 'null'
+      example:
+        - FeedbackRecords.sourceName: Web
+          FeedbackRecords.count: 42
+    ChartDataOptionLabels:
+      type: object
+      description: Choice option ids to their labels in the survey's default language, in survey order. Filled when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server rewrote to it); empty otherwise.
+      additionalProperties:
+        type: string
+    ChartDataFieldLabels:
+      type: object
+      description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
+      additionalProperties:
+        type: string
+    ChartDataMemberLabels:
+      type: object
+      description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
+      additionalProperties:
+        type: string
+      example:
+        FeedbackRecords.ed_plan_64879f7d: Plan
+    ChartDataQuery:
+      type: object
+      description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
     ChartData:
       type: object
       description: 'What a chart query returns: one row per group, keyed by field name, the label maps to display stored ids with, and the query as it ran.'
@@ -14012,38 +14046,15 @@ components:
         - query
       properties:
         rows:
-          type: array
-          items:
-            type: object
-            additionalProperties:
-              type:
-                - string
-                - number
-                - boolean
-                - 'null'
-          example:
-            - FeedbackRecords.sourceName: Web
-              FeedbackRecords.count: 42
+          $ref: '#/components/schemas/ChartDataRows'
         optionLabels:
-          type: object
-          description: Choice option ids to their labels in the survey's default language, in survey order. Filled when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server rewrote to it); empty otherwise.
-          additionalProperties:
-            type: string
+          $ref: '#/components/schemas/ChartDataOptionLabels'
         fieldLabels:
-          type: object
-          description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
-          additionalProperties:
-            type: string
+          $ref: '#/components/schemas/ChartDataFieldLabels'
         memberLabels:
-          type: object
-          description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
-          additionalProperties:
-            type: string
-          example:
-            FeedbackRecords.ed_plan_64879f7d: Plan
+          $ref: '#/components/schemas/ChartDataMemberLabels'
         query:
-          type: object
-          description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
+          $ref: '#/components/schemas/ChartDataQuery'
       additionalProperties: false
     ChartUpdateRequest:
       type: object
@@ -14375,42 +14386,9 @@ components:
           format: cuid2
           description: A chart in the dashboard's workspace that is not already on the dashboard.
       additionalProperties: false
-    rows:
-      type: array
-      items:
-        type: object
-        additionalProperties:
-          type:
-            - string
-            - number
-            - boolean
-            - 'null'
-      example:
-        - FeedbackRecords.sourceName: Web
-          FeedbackRecords.count: 42
-    optionLabels:
-      type: object
-      description: Choice option ids to their labels in the survey's default language, in survey order. Filled when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server rewrote to it); empty otherwise.
-      additionalProperties:
-        type: string
-    fieldLabels:
-      type: object
-      description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
-      additionalProperties:
-        type: string
-    memberLabels:
-      type: object
-      description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
-      additionalProperties:
-        type: string
-      example:
-        FeedbackRecords.ed_plan_64879f7d: Plan
-    query:
-      type: object
-      description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
     DashboardChartData:
       type: object
-      description: 'A chart''s rows read through its dashboard, after the dashboard date range and the filter picks narrowed its saved query. `unfilterableFilters` lists picked filters whose field the chart''s Feedback Dataset does not have; when it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
+      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters whose field the chart''s Feedback Dataset does not have; when it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
       required:
         - rows
         - optionLabels
@@ -14420,15 +14398,15 @@ components:
         - unfilterableFilters
       properties:
         rows:
-          $ref: '#/components/schemas/rows'
+          $ref: '#/components/schemas/ChartDataRows'
         optionLabels:
-          $ref: '#/components/schemas/optionLabels'
+          $ref: '#/components/schemas/ChartDataOptionLabels'
         fieldLabels:
-          $ref: '#/components/schemas/fieldLabels'
+          $ref: '#/components/schemas/ChartDataFieldLabels'
         memberLabels:
-          $ref: '#/components/schemas/memberLabels'
+          $ref: '#/components/schemas/ChartDataMemberLabels'
         query:
-          $ref: '#/components/schemas/query'
+          $ref: '#/components/schemas/ChartDataQuery'
         unfilterableFilters:
           type: array
           items:
@@ -14439,7 +14417,7 @@ components:
             properties:
               id:
                 type: string
-                format: cuid2
+                description: 'The filter''s id within the read: a request''s own `filter[<id>]`, or `locked.<n>` for the dashboard''s `n`th locked filter.'
               label:
                 type: string
             additionalProperties: false

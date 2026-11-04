@@ -95,11 +95,24 @@ const isFilterShape = (value: unknown): value is TFilterSpec & { values: string[
   );
 };
 
-/** Filters read back from storage, or `[]` for anything malformed. */
+/**
+ * The stored JSON, whether it comes still percent-encoded (`document.cookie`) or already decoded (the
+ * server's cookie store decodes values). Decoding twice would lose a value holding `%`, so a value that
+ * already parses as JSON is taken as it is.
+ */
+const parseStoredJson = (raw: string): unknown => {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return JSON.parse(decodeURIComponent(raw));
+  }
+};
+
+/** Filters read back from storage, encoded or not, or `[]` for anything malformed. */
 export const deserializeFilters = (raw: string | null | undefined): TDashboardFilterState[] => {
   if (!raw) return [];
   try {
-    const parsed: unknown = JSON.parse(decodeURIComponent(raw));
+    const parsed: unknown = parseStoredJson(raw);
     return Array.isArray(parsed) ? keepValidFilters(parsed.filter(isFilterShape)) : [];
   } catch {
     return [];

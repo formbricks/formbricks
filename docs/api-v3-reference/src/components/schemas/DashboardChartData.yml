@@ -1,8 +1,8 @@
 type: object
 description: >-
-  A chart's rows read through its dashboard, after the dashboard date range and the filter picks
-  narrowed its saved query. `unfilterableFilters` lists picked filters whose field the chart's
-  Feedback Dataset does not have; when it is not empty, `rows` is empty: the chart cannot be narrowed
+  A chart's rows read through its dashboard, after the dashboard date range, the dashboard's locked
+  filters and the caller's own filters narrowed its saved query. `unfilterableFilters` lists those
+  filters whose field the chart's Feedback Dataset does not have; when it is not empty, `rows` is empty: the chart cannot be narrowed
   to the pick, so it shows nothing rather than more than was picked.
 required:
   - rows
@@ -13,15 +13,15 @@ required:
   - unfilterableFilters
 properties:
   rows:
-    $ref: ./ChartData.yml#/properties/rows
+    $ref: ./ChartDataRows.yml
   optionLabels:
-    $ref: ./ChartData.yml#/properties/optionLabels
+    $ref: ./ChartDataOptionLabels.yml
   fieldLabels:
-    $ref: ./ChartData.yml#/properties/fieldLabels
+    $ref: ./ChartDataFieldLabels.yml
   memberLabels:
-    $ref: ./ChartData.yml#/properties/memberLabels
+    $ref: ./ChartDataMemberLabels.yml
   query:
-    $ref: ./ChartData.yml#/properties/query
+    $ref: ./ChartDataQuery.yml
   unfilterableFilters:
     type: array
     items:
@@ -32,7 +32,9 @@ properties:
       properties:
         id:
           type: string
-          format: cuid2
+          description: >-
+            The filter's id within the read: a request's own `filter[<id>]`, or `locked.<n>` for the
+            dashboard's `n`th locked filter.
         label:
           type: string
       additionalProperties: false

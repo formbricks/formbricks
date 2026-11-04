@@ -56,6 +56,10 @@ describe("deserializeFilters", () => {
   test("reads remembered filters back, and anything malformed as none", () => {
     expect(deserializeFilters(encodeURIComponent(JSON.stringify([SOURCE])))).toEqual([SOURCE]);
     expect(deserializeFilters(undefined)).toEqual([]);
+    // The server's cookie store hands the value over decoded: a `%` in a value must survive.
+    const percent = { ...SOURCE, values: ["50% off"] };
+    expect(deserializeFilters(JSON.stringify([percent]))).toEqual([percent]);
+    expect(deserializeFilters(encodeURIComponent(JSON.stringify([percent])))).toEqual([percent]);
     expect(deserializeFilters("not json")).toEqual([]);
     expect(deserializeFilters(encodeURIComponent(JSON.stringify({ a: 1 })))).toEqual([]);
     expect(deserializeFilters(encodeURIComponent(JSON.stringify([{ field: 1 }])))).toEqual([]);

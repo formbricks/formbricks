@@ -270,8 +270,14 @@ export const resolveEmbeddedMemberKeys = async (
   return resolved;
 };
 
+/** UTF-16 code-unit order: what `Array.prototype.sort` uses with no compare function, unlike `localeCompare`. */
+const byCodeUnit = (a: string, b: string): number => {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+};
+
 /** The order every token lists its keys in, the same as cube.js `getEmbeddedKeys` sorts them. */
-const canonicalOrder = (keys: readonly string[]): string[] => [...keys].sort();
+const canonicalOrder = (keys: readonly string[]): string[] => [...keys].sort(byCodeUnit);
 
 /** The member-name hash of a key: spreads keys evenly and never changes for a key. */
 const keyHash = (key: string): string => getEmbeddedMemberName(key).slice(-8);

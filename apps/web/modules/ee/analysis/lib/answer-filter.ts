@@ -79,7 +79,7 @@ export const checkAnswerRule = (
   questions?: ReadonlyMap<string, TAnswerQuestion>
 ): TAnswerRuleProblem | null => {
   const parsed = values.map(parseAnswerValue);
-  if (parsed.some((value) => value === null)) return "malformed_value";
+  if (parsed.includes(null)) return "malformed_value";
   const questionIds = new Set(parsed.map((value) => value?.questionId));
   if (questionIds.size !== 1) return "several_questions";
   if (!questions) return null;

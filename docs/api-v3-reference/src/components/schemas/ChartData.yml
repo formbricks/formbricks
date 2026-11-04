@@ -10,47 +10,13 @@ required:
   - query
 properties:
   rows:
-    type: array
-    items:
-      type: object
-      additionalProperties:
-        type:
-          - string
-          - number
-          - boolean
-          - "null"
-    example:
-      - FeedbackRecords.sourceName: Web
-        FeedbackRecords.count: 42
+    $ref: ./ChartDataRows.yml
   optionLabels:
-    type: object
-    description: >-
-      Choice option ids to their labels in the survey's default language, in survey order. Filled
-      when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server
-      rewrote to it); empty otherwise.
-    additionalProperties:
-      type: string
+    $ref: ./ChartDataOptionLabels.yml
   fieldLabels:
-    type: object
-    description: >-
-      Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when
-      the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
-    additionalProperties:
-      type: string
+    $ref: ./ChartDataFieldLabels.yml
   memberLabels:
-    type: object
-    description: >-
-      Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own
-      name as collected, so a column or legend can read `Plan` rather than the field name. Empty when
-      the query names no embedded-data field.
-    additionalProperties:
-      type: string
-    example:
-      FeedbackRecords.ed_plan_64879f7d: Plan
+    $ref: ./ChartDataMemberLabels.yml
   query:
-    type: object
-    description: >-
-      The query as it ran: after the requested date range replaced the saved one, and after a
-      `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys
-      follow this query.
+    $ref: ./ChartDataQuery.yml
 additionalProperties: false

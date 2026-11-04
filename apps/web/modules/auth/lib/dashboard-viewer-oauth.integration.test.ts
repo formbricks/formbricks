@@ -72,7 +72,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
   });
 
   test("a consent page that sends wider scopes is narrowed by the server", async () => {
-    const { cookie } = await userWithRole("dashboard_viewer");
+    const { cookie, userId } = await userWithRole("dashboard_viewer");
     const { target } = await authorize(cookie, clientId, EVERYTHING);
 
     const response = await consentWith(
@@ -84,6 +84,11 @@ describe("a Dashboard viewer's OAuth grant", () => {
     expect(response.status).toBe(200);
     const { url } = (await response.json()) as { url: string };
     expect(new URL(url).searchParams.get("code")).toBeTruthy();
+    // What is stored is the narrowed grant, not what the page sent.
+    const consent = await prisma.oauthConsent.findFirstOrThrow({ where: { userId, clientId } });
+    expect(consent.scopes).toContain("dashboards:read");
+    expect(consent.scopes).not.toContain("surveys:read");
+    expect(consent.scopes).not.toContain("responses:read");
   });
 
   test("a client that asks for no dashboard access is denied", async () => {

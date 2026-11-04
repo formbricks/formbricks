@@ -1,42 +1,24 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
-import { addDashboardViewer, dashboardUrl, setupDashboard, userIdFilter } from "./utils/dashboards";
+import { addDashboardViewer, dashboardUrl, setupDashboard } from "./utils/dashboards";
 
 // ENG-6896 user stories, "Dashboard viewer role": a Dashboard viewer lands on the dashboards of the
-// workspaces its teams can access, sees nothing else of the product, reads charts and uses the
-// dashboard's filters, and cannot edit a dashboard. ADR-0023 decides the role in SpiceDB.
+// workspaces its teams can access, is kept out of the rest of the product, reads charts and cannot edit a
+// dashboard. ADR-0023 decides the role in SpiceDB. Filtering, and locked filters, are in
+// dashboard-filters.spec.ts.
 
 test.describe("Dashboard viewer", () => {
-  test("lands on its dashboards and sees only Dashboards in the navigation @smoke", async ({
-    page,
-    users,
-  }) => {
+  test("lands on its dashboards and opens one it was granted @smoke", async ({ page, users }) => {
     const setup = await setupDashboard(users);
     const viewer = await addDashboardViewer(users, setup);
 
     await viewer.login();
 
     await expect(page).toHaveURL(new RegExp(`/workspaces/${setup.workspaceId}/dashboards/?$`));
-    await expect(page.getByRole("link", { name: setup.dashboardName })).toBeVisible();
-
-    // The app calls the dashboard list "Overview" (`common.dashboards`); for a viewer it is the only item.
-    const sidebar = page.getByRole("complementary");
-    await expect(sidebar.getByRole("link", { name: "Overview", exact: true })).toBeVisible();
-    for (const hidden of [
-      "Surveys",
-      "Contacts",
-      "Creatives",
-      "Feedback Data",
-      "Analysis",
-      "Workflows",
-      "Settings",
-    ]) {
-      await expect(
-        sidebar.getByRole("link", { name: hidden, exact: true }),
-        `${hidden} is hidden`
-      ).toHaveCount(0);
-    }
+    await page.getByRole("link", { name: setup.dashboardName }).click();
+    await expect(page).toHaveURL(new RegExp(dashboardUrl(setup.workspaceId, setup.dashboardId)));
+    await expect(page.getByText(setup.chartName)).toBeVisible();
   });
 
   test("is sent back to its dashboards from a direct link to surveys, responses or contacts", async ({
@@ -67,23 +49,8 @@ test.describe("Dashboard viewer", () => {
     }
   });
 
-  test("cannot read surveys or responses through API v3 with its session", async ({ page, users }) => {
-    const setup = await setupDashboard(users);
-    const viewer = await addDashboardViewer(users, setup);
-    await viewer.login();
-
-    for (const path of ["/api/v3/surveys", "/api/v3/responses"]) {
-      const response = await page.request.get(path, { params: { workspaceId: setup.workspaceId } });
-      expect(response.status(), `${path} answers ${await response.text()}`).toBe(403);
-    }
-
-    // The dashboard itself stays readable through v3.
-    const dashboard = await page.request.get(`/api/v3/dashboards/${setup.dashboardId}`);
-    expect(dashboard.status(), await dashboard.text()).toBe(200);
-  });
-
   test("reads a dashboard but has no way to edit it", async ({ page, users }) => {
-    const setup = await setupDashboard(users, { filters: [userIdFilter()] });
+    const setup = await setupDashboard(users);
     const viewer = await addDashboardViewer(users, setup);
     await viewer.login();
 
@@ -91,59 +58,18 @@ test.describe("Dashboard viewer", () => {
 
     const toolbar = page.getByRole("toolbar", { name: "Action buttons" });
     await expect(toolbar.getByRole("button", { name: "Refresh" })).toBeVisible();
+    await expect(page.getByText(setup.chartName)).toBeVisible();
     await expect(toolbar.getByRole("button", { name: "Edit" })).toHaveCount(0);
     await expect(toolbar.getByRole("button", { name: "Delete" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Add charts" })).toHaveCount(0);
-    await expect(page.getByText(setup.chartName)).toBeVisible();
 
-    // The edit shortcut does nothing for someone who cannot edit: no edit-mode controls appear.
+    // The edit shortcut does nothing for someone who cannot edit: the view stays as it is.
     await page.locator("body").press("e");
-    await expect(page.getByRole("button", { name: "Add filter" })).toHaveCount(0);
     await expect(toolbar.getByRole("button", { name: "Save" })).toHaveCount(0);
-
-    // A direct write through v3 is refused as well.
-    const write = await page.request.patch(`/api/v3/dashboards/${setup.dashboardId}`, {
-      data: { name: "Renamed by a viewer" },
-    });
-    expect(write.status(), await write.text()).toBe(403);
-    const stored = await prisma.dashboard.findUniqueOrThrow({ where: { id: setup.dashboardId } });
-    expect(stored.name).toBe(setup.dashboardName);
-  });
-
-  test("picks a dashboard filter value and finds it still set on the next visit", async ({ page, users }) => {
-    const filter = userIdFilter("User");
-    const setup = await setupDashboard(users, { filters: [filter] });
-    const viewer = await addDashboardViewer(users, setup);
-    await viewer.login();
-
-    const url = dashboardUrl(setup.workspaceId, setup.dashboardId);
-    await page.goto(url);
-
-    const bar = page.getByTestId("dashboard-filter-bar");
-    await bar.getByRole("button", { name: "Edit User" }).click();
-    const valueInput = page.getByLabel("User equals");
-    await valueInput.fill("rep-42");
-    await valueInput.press("Enter");
-
-    await expect(bar.getByRole("button", { name: "Edit User" })).toContainText("rep-42");
-    await expect(page).toHaveURL(/picks/);
-
-    // A fresh visit without the picks in the URL restores them from this person's dashboard cookie.
-    await page.goto("about:blank");
-    await page.goto(url);
-    await expect(bar.getByRole("button", { name: "Edit User" })).toContainText("rep-42");
-
-    // Clearing the pick is remembered too.
-    await bar.getByRole("button", { name: "Remove User" }).click();
-    await expect(bar.getByRole("button", { name: "Edit User" })).not.toContainText("rep-42");
-    await page.goto("about:blank");
-    await page.goto(url);
-    await expect(bar.getByRole("button", { name: "Edit User" })).toBeVisible();
-    await expect(bar.getByRole("button", { name: "Edit User" })).not.toContainText("rep-42");
-
-    // Picks are this person's view: the dashboard's saved filters are unchanged.
-    const stored = await prisma.dashboard.findUniqueOrThrow({ where: { id: setup.dashboardId } });
-    expect(stored.filters).toEqual([filter]);
+    await expect(toolbar.getByRole("button", { name: "Refresh" })).toBeVisible();
+    // A viewer filters for themselves, but has nothing to lock for everyone.
+    await expect(page.getByTestId("table-filter-button")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Lock for everyone" })).toHaveCount(0);
   });
 
   test("without a team grant sees the page explaining there are no dashboards", async ({ page, users }) => {

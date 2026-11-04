@@ -31,3 +31,4 @@ properties:
       the operators and values each takes. Empty for a dataset without such questions.
     items:
       $ref: ./ChartAnswerQuestion.yml
+additionalProperties: false

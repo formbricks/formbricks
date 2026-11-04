@@ -62,7 +62,7 @@ export const assertCanAssignRole = async ({
     throw new OperationNotAllowedError("The Dashboard viewer role is not available on this plan");
   }
 
-  const refused = requested.find(
+  const refused = requested.some(
     (role) =>
       !canAssignOrganizationRole({
         assignerRole,

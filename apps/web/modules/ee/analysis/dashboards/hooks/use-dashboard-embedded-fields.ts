@@ -21,7 +21,7 @@ export const useDashboardEmbeddedFields = (
   datasetIds: readonly string[],
   enabled: boolean
 ): TDashboardEmbeddedFields => {
-  const uniqueIds = useMemo(() => [...new Set(datasetIds)].sort(), [datasetIds]);
+  const uniqueIds = useMemo(() => [...new Set(datasetIds)].sort((a, b) => a.localeCompare(b)), [datasetIds]);
   return useQueries({
     queries: uniqueIds.map((datasetId) => chartFieldCatalogQuery(workspaceId, datasetId, enabled)),
     combine: (results) => ({

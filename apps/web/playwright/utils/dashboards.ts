@@ -1,25 +1,33 @@
 import { createId } from "@paralleldrive/cuid2";
+import { type Locator, type Page, expect } from "@playwright/test";
 import { setTimeout as delay } from "node:timers/promises";
 import { prisma } from "@formbricks/database";
-import type { UserFixture, UsersFixture } from "../fixtures/users";
+import { type UserFixture, type UsersFixture, login } from "../fixtures/users";
 
-/** A dashboard filter as the dashboard stores it (`Dashboard.filters`, ADR-0024). */
-export interface SeedDashboardFilter {
+/**
+ * A filter an editor locked on the dashboard, as the dashboard stores it (`Dashboard.filters`, ADR-0024):
+ * saved with its values, so the server applies it to every chart read, whoever reads it.
+ */
+export interface SeedLockedFilter {
   id: string;
   field: string;
   operator: "equals" | "notEquals" | "contains" | "notContains" | "gt" | "gte" | "lt" | "lte";
   label: string;
+  values: string[];
 }
 
 /**
- * A typed (non-list) filter: `userId` is free text, so it takes one typed value and never lists values
- * (D1). It needs neither Hub nor Cube to pick, which keeps the journeys that use it runnable everywhere.
+ * Sentiment has a fixed set of values the app knows, so a filter on it is picked from a list without
+ * looking anything up in Hub or Cube, which keeps the journeys that use it runnable everywhere.
  */
-export const userIdFilter = (label = "User"): SeedDashboardFilter => ({
+export const SENTIMENT_FIELD = "FeedbackRecords.sentiment";
+
+export const lockedSentimentFilter = (value = "positive"): SeedLockedFilter => ({
   id: createId(),
-  field: "FeedbackRecords.userId",
+  field: SENTIMENT_FIELD,
   operator: "equals",
-  label,
+  label: "Sentiment",
+  values: [value],
 });
 
 export interface DashboardSetup {
@@ -42,7 +50,7 @@ export interface DashboardSetup {
  */
 export const setupDashboard = async (
   users: UsersFixture,
-  { filters = [] }: { filters?: SeedDashboardFilter[] } = {}
+  { filters = [] }: { filters?: SeedLockedFilter[] } = {}
 ): Promise<DashboardSetup> => {
   const owner = await users.create();
   if (!owner.organizationId || !owner.workspaceId) throw new Error("Owner org/workspace not seeded");
@@ -148,3 +156,32 @@ const waitForOutboxDelivered = async (id: string): Promise<void> => {
 
 export const dashboardUrl = (workspaceId: string, dashboardId: string): string =>
   `/workspaces/${workspaceId}/dashboards/${dashboardId}`;
+
+/** Sign a seeded user in on a page of another browser context than the `users` fixture's own. */
+export const loginOn = async (page: Page, userId: string): Promise<void> =>
+  login(await prisma.user.findUniqueOrThrow({ where: { id: userId }, include: { memberships: true } }), page);
+
+/** The chips row under a dashboard's toolbar: locked filters first, then this person's own. */
+export const filterChips = (page: Page): Locator => page.getByTestId("table-filter-chips");
+
+/**
+ * Adds one filter through Filter → Advanced filter: picks the field, checks the operator the dialog picked
+ * with it, then picks the value from the field's list, and saves.
+ */
+export const addFilterRule = async (
+  page: Page,
+  rule: { field: string; operator: string; value: string }
+): Promise<void> => {
+  await page.getByTestId("table-filter-button").click();
+  await page.getByRole("menuitem", { name: "Advanced filter" }).click();
+  const dialog = page.getByRole("dialog", { name: "Advanced filter" });
+  await dialog.locator("#condition-0-0-conditionValue").click();
+  await page.getByRole("option", { name: rule.field, exact: true }).click();
+  // Picking a field picks its first operator too, so the value control that suits it shows at once.
+  await expect(dialog.locator("#condition-0-0-conditionOperator")).toHaveText(rule.operator);
+  await dialog.getByRole("button", { name: `${rule.field} value` }).click();
+  await page.getByRole("option", { name: rule.value, exact: true }).click();
+  await expect(dialog.getByRole("button", { name: `${rule.field} value` })).toHaveText(rule.value);
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog).toBeHidden();
+};

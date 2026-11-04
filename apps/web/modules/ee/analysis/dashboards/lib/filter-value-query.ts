@@ -254,9 +254,11 @@ export const resolveBoundedChartValues = ({
               asOneRule(
                 dimensions.map((dimension): TCubeFilter => {
                   const value = (row as Record<string, unknown>)[dimension];
-                  return value === null || value === undefined
-                    ? { member: dimension, operator: "notSet" }
-                    : { member: dimension, operator: "equals", values: [String(value)] };
+                  // Cube returns a dimension's value as a string, number or boolean; anything else is a
+                  // value this row cannot be pinned to, so it reads as not set.
+                  return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+                    ? { member: dimension, operator: "equals", values: [String(value)] }
+                    : { member: dimension, operator: "notSet" };
                 })
               )
             ),

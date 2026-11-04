@@ -91,7 +91,9 @@ export const toDateRangeRule = (
   clock: TDateClock
 ): TMemberFilter => {
   const resolved = resolveRange(range, clock);
-  const values = resolved ? toCubeBounds(resolved) : Array.isArray(range) ? range : [range];
+  let values: string[];
+  if (resolved) values = toCubeBounds(resolved);
+  else values = Array.isArray(range) ? range : [range];
   return { member: dimension, operator: "inDateRange", values };
 };
 
