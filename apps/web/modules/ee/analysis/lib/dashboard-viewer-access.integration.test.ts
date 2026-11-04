@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
@@ -43,6 +44,7 @@ import { can } from "@/lib/authorization";
 import { cache } from "@/lib/cache";
 import { getWorkspaceMembers } from "@/lib/workspace/service";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { feedbackRecordsGatewayAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import {
   getDashboardViewerHomePath,
   getDashboardViewerWorkspaceState,
@@ -66,9 +68,10 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
   getIsDashboardsEnabled: vi.fn(async () => entitlement.dashboards),
   getIsDashboardViewerRoleEnabled: vi.fn(async () => entitlement.viewerRole && entitlement.dashboards),
-  // The dashboard-bound reads read Access Control and Dashboards themselves (C11); `viewerRole` stands for
+  // The dashboard-bound reads read Access Control and Dashboards themselves; `viewerRole` stands for
   // Access Control here.
   getAccessControlPermission: vi.fn(async () => entitlement.viewerRole),
+  getIsFeedbackDirectoriesEnabled: vi.fn(async () => true),
 }));
 
 const FILTER_ID = "clfi000000000000000000001";
@@ -424,6 +427,30 @@ describe("dashboard-bound reads: allowed on a granted workspace, refused elsewhe
       { allowDashboardViewer: true }
     );
     expect((access as Response).status).toBe(403);
+  });
+});
+
+describe("a feedback records gateway token minted for a viewer", () => {
+  // The token routes mint for any signed-in user; what a token may do is decided per request by the
+  // gateway, which asks SpiceDB for `feedback_directory#read` (or org manage for a mutation). Hub itself
+  // never sees the token: it accepts only the gateway's own API key.
+  const listRecords = (userId: string) => {
+    const url = new URL(`http://localhost/api/v3/feedbackRecords?tenant_id=${fixture.datasetId}`);
+    return feedbackRecordsGatewayAuthorizer.authorize({
+      request: new NextRequest(url),
+      originalRequest: { method: "GET", url },
+      principal: { type: "user", userId, source: "jwt" },
+      requestId: "req",
+    });
+  };
+
+  test("reads no records, while a member holding the same grant does", async () => {
+    for (const userId of [ids.viewer, ids.manageViewer]) {
+      const decision = await listRecords(userId);
+      expect(decision.status).toBe("deny");
+      expect(decision.status === "deny" && decision.response.status).toBe(403);
+    }
+    expect((await listRecords(fixture.users.viewer)).status).toBe("allow");
   });
 });
 
