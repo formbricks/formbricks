@@ -64,6 +64,22 @@ describe("generateObject: strictSchema", () => {
     expect(result.object).toEqual({ title: "Survey", tags: [] });
   });
 
+  test("overrides a caller's strict decoding under the camel-cased provider name, which the adapter reads last", async () => {
+    stubModel('{"title":"Survey"}');
+
+    await generateObject(
+      {
+        schema,
+        prompt: "Plan",
+        strictSchema: false,
+        providerOptions: { customProvider: { strictJsonSchema: true } },
+      },
+      compatible("custom-provider")
+    );
+
+    expect(strictOf()).toBe(false);
+  });
+
   test("turns strict decoding off for Azure OpenAI", async () => {
     stubModel('{"title":"Survey"}');
 

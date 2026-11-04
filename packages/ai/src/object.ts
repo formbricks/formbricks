@@ -10,10 +10,15 @@ import type {
   TGenerateObjectResult,
 } from "./types";
 
+/** A provider name as the OpenAI-compatible adapter camel-cases it for its options' key. */
+const toCamelCase = (name: string): string =>
+  name.replaceAll(/[_-]([a-z])/g, (_match, letter: string) => letter.toUpperCase());
+
 /**
  * `providerOptions` with strict JSON-schema decoding turned off, under every key a strict-decoding
  * adapter reads its options from: `openai` and `azure` (the Azure adapter reads `azure`, else
- * `openai`), and the OpenAI-compatible adapter's own name. A key no configured adapter reads is ignored.
+ * `openai`), and the OpenAI-compatible adapter's own name, as given and camel-cased. A key no configured
+ * adapter reads is ignored.
  * The `azure` entry starts from the caller's `openai` options when it has none of its own, so adding it
  * does not hide them from the Azure adapter.
  */
@@ -21,11 +26,15 @@ const withoutStrictSchema = (
   providerOptions: TGenerateObjectOptions["providerOptions"],
   environment?: AIEnvironment
 ): NonNullable<TGenerateObjectOptions["providerOptions"]> => {
+  const providerName = getOpenAICompatibleProviderName(getAIEnvironment(environment));
   const keys = new Set([
     "openai",
     "azure",
     "openaiCompatible",
-    getOpenAICompatibleProviderName(getAIEnvironment(environment)),
+    providerName,
+    // The OpenAI-compatible adapter also reads the name camel-cased (`custom-provider` → `customProvider`),
+    // last, so it would win.
+    toCamelCase(providerName),
   ]);
   const options = { ...providerOptions };
   for (const key of keys) {
