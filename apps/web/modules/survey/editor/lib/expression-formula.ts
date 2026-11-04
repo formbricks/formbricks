@@ -154,15 +154,11 @@ export const getFormulaIssues = (
 export const oneStepToFormula = (action: {
   variableId: string;
   operator: string;
-  value: { type: string; value: unknown };
+  value: { type: string; value: string | number };
 }): TExpression => {
   const operand: TExpression =
     action.value.type === "static"
-      ? {
-          type: "static",
-          value:
-            typeof action.value.value === "number" ? action.value.value : String(action.value.value ?? ""),
-        }
+      ? { type: "static", value: action.value.value }
       : ({ type: action.value.type, value: String(action.value.value) } as TExpression);
 
   const current = (fallback: number | string): TExpression => ({

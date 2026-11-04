@@ -78,7 +78,7 @@ export async function resolveV3EmbeddedFieldLibraryKeys<TInput>(
     if (entry.source !== undefined && entry.source !== row.source) {
       invalidParams.push({
         name: `embeddedFields.${index}.source`,
-        reason: `Library field '${row.key}' is ${row.source}, not ${String(entry.source)}`,
+        reason: `Library field '${row.key}' is ${row.source}, not ${JSON.stringify(entry.source)}`,
         code: "invalid_reference",
         identifier: row.key ?? undefined,
       });
