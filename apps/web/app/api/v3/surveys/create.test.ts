@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -85,6 +86,7 @@ vi.mock("@/modules/survey/lib/permission", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    error: vi.fn(),
     withContext: vi.fn(() => ({
       error: vi.fn(),
       warn: vi.fn(),
@@ -771,6 +773,11 @@ describe("createV3Survey", () => {
       );
 
       expect((error as SurveyWriteAfterCommitError).result).toBe(createdAppSurvey);
+      // Kept, but not silently: the failed re-read is logged.
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error", surveyId: createdAppSurvey.id }),
+        expect.any(String)
+      );
     });
 
     test("forwards distribution scalars and resolved triggers to createSurvey", async () => {

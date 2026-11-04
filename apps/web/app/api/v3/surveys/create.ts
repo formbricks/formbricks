@@ -1,9 +1,11 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import type { TCustomCssStored, TCustomCssWarning } from "@formbricks/types/custom-css";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
 import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses, getActionClassesInTransaction } from "@/lib/actionClass/service";
@@ -343,8 +345,17 @@ export async function executeV3SurveyCreate(params: {
     // The survey committed and is answered as created: with the same re-read a create that finished
     // gets, so an app survey's `displayPercentage` is a number, not Prisma's `Decimal`.
     const created = error.result as TSurvey;
-    // Best effort: the re-read failing must not turn a created survey into a 500.
-    const finalized = await finalizeV3AppSurveyCreate(created, input, transaction).catch(() => created);
+    // Best effort: the re-read failing must not turn a created survey into a 500, but it is logged, so a
+    // broken re-read does not go unnoticed.
+    const finalized = await finalizeV3AppSurveyCreate(created, input, transaction).catch(
+      (rereadError: unknown) => {
+        logger.error(
+          { ...loggableError(rereadError), surveyId: created.id },
+          "Survey create committed, but its re-read after the failed after-commit work failed too"
+        );
+        return created;
+      }
+    );
     throw new SurveyWriteAfterCommitError(finalized, error.cause);
   }
 
