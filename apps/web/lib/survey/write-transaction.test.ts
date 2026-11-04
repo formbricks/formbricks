@@ -1,10 +1,13 @@
-import { describe, expect, test, vi } from "vitest";
+import { prisma } from "@/lib/__mocks__/database";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SurveyWriteAfterCommitError, runInSurveyWriteTransaction } from "./write-transaction";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@formbricks/database", () => ({
-  prisma: { $transaction: vi.fn((write: (tx: unknown) => unknown) => write({})) },
-}));
+
+beforeEach(() => {
+  // The write runs as a committed transaction would: once, with a client of its own.
+  vi.mocked(prisma.$transaction).mockImplementation(async (write) => write(prisma));
+});
 
 describe("runInSurveyWriteTransaction", () => {
   test("runs every after-commit effect, in order, once the write has committed", async () => {
