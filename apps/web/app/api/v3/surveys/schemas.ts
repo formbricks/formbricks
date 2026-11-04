@@ -16,6 +16,7 @@ import {
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import { boundedSchema } from "@/app/api/v3/lib/bounded-parse";
 import { BoundedInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
 import { normalizeV3SurveyWriteLanguageCode } from "./language";
@@ -717,6 +718,17 @@ function validateTranslatableField(
     return;
   }
 
+  // Each key costs a locale lookup here and again in the normalizer, so the count is checked first.
+  const keys = Object.keys(value);
+  if (keys.length > V3_SURVEY_MAX_TRANSLATIONS) {
+    issues.push(() => ({
+      name: path,
+      reason: `Too big: expected at most ${V3_SURVEY_MAX_TRANSLATIONS} translations`,
+      code: "limit_exceeded",
+    }));
+    return;
+  }
+
   if ("default" in value) {
     issues.push(() => ({
       name: `${path}.default`,
@@ -727,7 +739,7 @@ function validateTranslatableField(
   const normalizedKeys = new Map<string, string>();
   let includesDefaultLanguage = defaultLanguage === null;
 
-  for (const key of Object.keys(value)) {
+  for (const key of keys) {
     if (key === "default") {
       continue;
     }
@@ -1150,6 +1162,13 @@ export const V3_SURVEY_MAX_HIDDEN_FIELDS = 200;
 export const V3_SURVEY_MAX_TRIGGERS = 50;
 
 /**
+ * Locale keys one translatable field may carry (ENG-4100). It holds one per survey language, and those
+ * come from a catalog of 208 canonical codes, so no stored survey comes near this. Without a cap a single
+ * field could hold every key a 2 MB body fits, each one a locale lookup: ~2.7 s of CPU for 150k keys.
+ */
+export const V3_SURVEY_MAX_TRANSLATIONS = 256;
+
+/**
  * A document array, capped for request input or plain for the stored document. Typed on the output
  * alone so both variants slot into the same shape; the input side is `unknown` either way once the
  * preprocess wraps it.
@@ -1373,7 +1392,7 @@ export const ZV3CreateSurveyBody = z
       addInvalidParamZodIssue(ctx, issue);
     }
   })
-  .pipe(ZV3CreateSurveyBodyBase);
+  .pipe(boundedSchema(ZV3CreateSurveyBodyBase));
 
 /**
  * Where a created survey came from, for the `survey_created` analytics event and, through the request
@@ -1429,7 +1448,7 @@ export function createZV3PatchSurveyBodySchema(
         addInvalidParamZodIssue(ctx, issue);
       }
     })
-    .pipe(createV3PatchSurveyBodyBase(defaultLanguage, options, surveyType));
+    .pipe(boundedSchema(createV3PatchSurveyBodyBase(defaultLanguage, options, surveyType)));
 }
 
 export const ZV3PatchSurveyBody = createZV3PatchSurveyBodySchema();
