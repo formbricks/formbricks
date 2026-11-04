@@ -42,11 +42,6 @@ vi.mock("@/modules/auth/lib/auth", () => ({
   auth: {},
 }));
 
-// Not a Dashboard viewer: the viewer's scope bound has its own tests in modules/mcp/auth.test.ts.
-vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
-  isDashboardViewerOnly: vi.fn(async () => false),
-}));
-
 vi.mock("@formbricks/database", () => ({
   prisma: {
     user: {

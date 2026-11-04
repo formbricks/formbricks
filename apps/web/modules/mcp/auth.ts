@@ -18,6 +18,7 @@ import {
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { parseApiKeyV2 } from "@/lib/crypto";
+import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
@@ -35,7 +36,6 @@ import {
 } from "@/modules/auth/lib/oauth-urls";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 
 const QUERY_CREDENTIAL_PARAMS = new Set([
   "api_key",
@@ -284,13 +284,22 @@ function createOAuthMcpAuthInfo(payload: JWTPayload, requestId: string): TMcpAut
   };
 }
 
-async function isOAuthUserActive(userId: string): Promise<boolean> {
+/**
+ * What every OAuth request needs to know about its user, in one read: whether the user is active, and
+ * whether every membership they hold is the Dashboard viewer role (`hasOnlyDashboardViewerRoles`).
+ */
+async function getOAuthUserStanding(
+  userId: string
+): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isActive: true },
+    select: { isActive: true, memberships: { select: { role: true } } },
   });
 
-  return user?.isActive === true;
+  return {
+    isActive: user?.isActive === true,
+    isDashboardViewerOnly: hasOnlyDashboardViewerRoles(user?.memberships ?? []),
+  };
 }
 
 /**
@@ -556,7 +565,8 @@ async function authenticateMcpOAuthBearer(
   }
 
   const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
-  if (!(await isOAuthUserActive(sessionAuthentication.user.id))) {
+  const standing = await getOAuthUserStanding(sessionAuthentication.user.id);
+  if (!standing.isActive) {
     return await rejectUnauthenticatedMcpRequest({
       requestId,
       instance,
@@ -566,10 +576,13 @@ async function authenticateMcpOAuthBearer(
     });
   }
 
-  // ADR-0023 / ENG-6889: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the
-  // token carries. Consent already narrows new grants; this bounds a token minted before the user became
-  // a viewer, for the up-to-15 minutes it stays valid, and any grant a revocation missed.
-  if (await isDashboardViewerOnly(sessionAuthentication.user.id)) {
+  // ADR-0023: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the token
+  // carries. Consent already narrows new grants; this bounds a token minted before the user became a
+  // viewer, for the up-to-15 minutes it stays valid, and any grant a revocation missed. Trimming applies
+  // to a user who is a viewer in every organization they belong to. A user who is a viewer in one
+  // organization and holds another role elsewhere keeps their scopes: each operation still asks SpiceDB,
+  // which refuses them everything but dashboard reads in the viewer organization.
+  if (standing.isDashboardViewerOnly) {
     authInfo.scopes = trimScopesForDashboardViewer(authInfo.scopes);
     authInfo.extra.dashboardViewerOnly = true;
   }
