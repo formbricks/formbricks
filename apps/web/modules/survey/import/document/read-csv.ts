@@ -42,11 +42,22 @@ type TCsvRecords = string[][];
  */
 const MAX_RECORD_CHARS = SURVEY_IMPORT_SHEET_MAX_COLUMNS * (SURVEY_IMPORT_SHEET_MAX_CELL_CHARS + 1);
 
-const parseRecords = (text: string, delimiter: string, to?: number): TCsvRecords =>
+/**
+ * `relaxQuotes`: a quote inside an unquoted field is text, as spreadsheet apps read it, since a
+ * hand-written list has them (`1,Rate "the venue",Rating`); a quoted field parses the same either way.
+ * The list is read relaxed. The delimiter is sniffed strictly first, because a stray quote under the
+ * wrong delimiter is what rules that delimiter out.
+ */
+const parseRecords = (
+  text: string,
+  delimiter: string,
+  { to, relaxQuotes }: { to?: number; relaxQuotes: boolean }
+): TCsvRecords =>
   parse(text, {
     delimiter,
     bom: true,
     relax_column_count: true,
+    relax_quotes: relaxQuotes,
     skip_empty_lines: false,
     max_record_size: MAX_RECORD_CHARS,
     ...(to === undefined ? {} : { to }),
@@ -57,10 +68,14 @@ const parseRecords = (text: string, delimiter: string, to?: number): TCsvRecords
  * when that count is more than one. A delimiter that never occurs leaves one field per record and
  * scores 0; one that occurs inside fields gives counts that differ from record to record.
  */
-const scoreDelimiter = (text: string, delimiter: string): { score: number; fields: number } => {
+const scoreDelimiter = (
+  text: string,
+  delimiter: string,
+  relaxQuotes: boolean
+): { score: number; fields: number } => {
   let records: TCsvRecords;
   try {
-    records = parseRecords(text, delimiter, SNIFF_RECORDS).filter((record) =>
+    records = parseRecords(text, delimiter, { to: SNIFF_RECORDS, relaxQuotes }).filter((record) =>
       record.some((field) => field.trim() !== "")
     );
   } catch {
@@ -79,17 +94,30 @@ const scoreDelimiter = (text: string, delimiter: string): { score: number; field
     : { score: 0, fields: modal.fields };
 };
 
-/** The delimiter that splits the list most consistently, a comma when none splits it at all. */
-export const sniffCsvDelimiter = (text: string): string => {
-  const sample = sniffSample(text);
-  let best: { delimiter: string; score: number; fields: number } = { delimiter: ",", score: 0, fields: 0 };
+/** The delimiter that splits `sample` most consistently, or `null` when none splits it at all. */
+const bestDelimiter = (sample: string, relaxQuotes: boolean): string | null => {
+  let best: { delimiter: string | null; score: number; fields: number } = {
+    delimiter: null,
+    score: 0,
+    fields: 0,
+  };
   for (const delimiter of CSV_DELIMITERS) {
-    const { score, fields } = scoreDelimiter(sample, delimiter);
+    const { score, fields } = scoreDelimiter(sample, delimiter, relaxQuotes);
     if (score > best.score || (score === best.score && score > 0 && fields > best.fields)) {
       best = { delimiter, score, fields };
     }
   }
   return best.delimiter;
+};
+
+/**
+ * The delimiter that splits the list most consistently, a comma when none splits it at all. Sniffed
+ * strictly first, so a quote that only parses under the wrong delimiter rules it out; relaxed only when
+ * no delimiter parses strictly, as for a list with quotes inside its unquoted fields.
+ */
+export const sniffCsvDelimiter = (text: string): string => {
+  const sample = sniffSample(text);
+  return bestDelimiter(sample, false) ?? bestDelimiter(sample, true) ?? ",";
 };
 
 /** Hold the records to the sheet limits: columns with text, and characters per field. */
@@ -130,7 +158,7 @@ export const readCsvDocument = (
   let records: TCsvRecords;
   try {
     // One record past the limit is enough to know the list is past it.
-    records = parseRecords(text, delimiter, SURVEY_IMPORT_SHEET_MAX_ROWS + 1);
+    records = parseRecords(text, delimiter, { to: SURVEY_IMPORT_SHEET_MAX_ROWS + 1, relaxQuotes: true });
   } catch (error) {
     if (error instanceof CsvError && error.code === "CSV_MAX_RECORD_SIZE") {
       throw documentLimitExceeded(

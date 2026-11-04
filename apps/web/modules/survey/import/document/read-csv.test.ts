@@ -113,6 +113,27 @@ describe("readCsvDocument", () => {
     });
   });
 
+  test("reads a quote inside an unquoted field as text, as spreadsheet apps do", () => {
+    const model = readCsvDocument('id,text\n1,Rate "the venue"\n2,"Quoted, field"');
+
+    expect(model.cells.get("B2")).toBe('Rate "the venue"');
+    expect(model.cells.get("B3")).toBe("Quoted, field");
+  });
+
+  test("finds the semicolon of a quoted export whose fields hold commas, and keeps their quotes out", () => {
+    // Under a comma a stray quote would parse once quotes are relaxed: the delimiter is sniffed strictly.
+    const model = readCsvDocument(
+      '"Nr.";"Frage, Deutsch";"Frage, Englisch"\n"1";"Wie alt, ungefähr?";"How old, roughly?"'
+    );
+
+    expect(model.cells.get("B1")).toBe("Frage, Deutsch");
+    expect(model.cells.get("C2")).toBe("How old, roughly?");
+  });
+
+  test("keeps a quote in the middle of an unquoted field as it is written", () => {
+    expect(readCsvDocument('id,text\n1,"ab"cd').cells.get("B2")).toBe('"ab"cd');
+  });
+
   test("refuses a CSV with an unclosed quote as unreadable", () => {
     expect(refusal(() => readCsvDocument('id,text\n1,"never closed'))).toMatchObject({
       code: "file_unreadable",
