@@ -268,6 +268,18 @@ The bundled Docker Compose Cube service sets `CUBEJS_DEFAULT_API_SCOPES=meta,dat
 container. If you run Cube outside the bundled Compose stack, configure the equivalent Cube service environment
 there rather than adding it to the Formbricks app environment.
 
+The Cube service itself reads a few sizing settings. Set them on the Cube container (the `cube` service in
+Compose, `cube.env` in Helm), not on the Formbricks app:
+
+| Variable                    | Description                                                                                                                                                                          | Default        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| CUBEJS_COMPILER_CACHE_SIZE  | How many compiled data models Cube keeps in memory. Each takes 2–5 MB; raise Cube's memory limit when you raise this.                                                                 | `60`           |
+| CUBEJS_MAX_COMPILED_MEMBERS | Most members all compiled data models may hold together. Keep it in step with `CUBEJS_COMPILER_CACHE_SIZE` (about 500 per model).                                                    | `30000`        |
+| CUBEJS_DB_QUERY_TIMEOUT     | How long one database query may run before Cube cancels it. The shipped Compose file and Helm chart set it.                                                                         | `60s`          |
+
+With the bundled Docker Compose stack, PostgreSQL also needs more shared memory than Docker's 64 MB default for
+answer filters on large datasets: the shipped `postgres` service sets `shm_size: 512mb`.
+
 For Helm deployments, the chart deploys Cube by default (`cube.enabled: true`). To use an external Cube
 cluster instead, set `cube.enabled: false`, point `CUBEJS_API_URL` at your endpoint, and supply
 `CUBEJS_API_SECRET` through your existing secret management setup.

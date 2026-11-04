@@ -283,13 +283,24 @@ by SpiceDB like every other role, so this release changes the AuthZed schema (`a
 assignments, and it narrows `team#manage` to team admins who are product members of the organization. A data
 migration adds the `dashboard_viewer` value to the organization role enum; no existing membership changes role.
 
+6.2 is a breaking release for self-hosters, for these reasons:
+
+- **A manual schema step.** The AuthZed schema must be applied, and relationships backfilled, before anyone is
+  invited as a Dashboard viewer (steps below).
+- **No online upgrade from 6.1.** The Helm online mode refuses 6.1 → 6.2; upgrade in maintenance mode.
+- **Team management for billing members.** `team#manage` now requires a product membership (owner, manager or
+  member). A billing member who is a team admin can no longer rename the team or change its members; an owner or
+  manager can.
+- **A new organization role value.** `dashboard_viewer` is a new value of the organization role in the v2 API (see
+  [What changes for API and MCP clients](#what-changes-for-api-and-mcp-clients)).
+
 <Warning>
-  **Apply the schema before you invite anyone as a Dashboard viewer.** Owners, managers and members never
-  depend on the new permissions: until the schema is applied they read and edit dashboards exactly as before.
-  Only Dashboard viewers are affected — SpiceDB rejects their dashboard reads (`dashboard_read` does not exist
-  yet), and assigning the role cannot be projected. The change only adds a relation and permissions (and
-  narrows `team#manage`, which no application path relied on for a viewer or billing member), so the previous
-  release keeps working against the new schema during a rolling upgrade.
+  **Apply the schema and run the backfill before you invite anyone as a Dashboard viewer.** Owners, managers and
+  members never depend on the new relation or permissions: until the schema is applied they read and edit
+  dashboards exactly as before. Only Dashboard viewers are affected — SpiceDB rejects their dashboard reads
+  (`dashboard_read` does not exist yet), and assigning the role cannot be projected. The schema change only adds a
+  relation and permissions besides narrowing `team#manage`, so the previous release keeps working against the new
+  schema during a rolling upgrade.
 </Warning>
 
 How the schema gets applied depends on how you run Formbricks:
@@ -358,6 +369,32 @@ later; then roll back the release and, if you also restore the 6.1 schema, run `
   client that validates roles against a fixed list must accept it. The v1 API returns no organization roles.
   `GET /api/v2/roles` does not list it, and the v2 user create and update refuse to give it (`403`): the role
   is given in the app, where its rules are enforced.
+
+### Cube memory, query timeout and PostgreSQL shared memory
+
+Embedded-data fields and answer filters change how much memory Cube and PostgreSQL use, so the shipped Compose
+file and Helm chart change three settings:
+
+- **Cube compiles fewer data models at a time.** Cube compiles a data model per Feedback Dataset's set of
+  embedded-data keys and keeps the most recent ones in memory. A compiled model takes 2–5 MB, so the default
+  cache now holds 60 models (about 120–300 MB) and at most 30,000 compiled members, instead of 150 models. Rare
+  embedded-data keys share 8 fixed buckets, so picking them does not compile a new model for every combination.
+  If you raise `CUBEJS_COMPILER_CACHE_SIZE` or `CUBEJS_MAX_COMPILED_MEMBERS` on the Cube service, raise Cube's
+  memory limit with it, by about 5 MB per extra model.
+- **Cube cancels a query after 60 seconds.** The Cube service sets `CUBEJS_DB_QUERY_TIMEOUT=60s`, so PostgreSQL
+  cancels a chart or filter query that runs longer instead of letting it hold a connection. The chart shows an
+  error; narrow it with filters or a shorter date range.
+- **PostgreSQL gets 512 MB of shared memory on Docker.** The bundled `postgres` service sets `shm_size: 512mb`.
+  Answer filters join a dataset's records with themselves, and PostgreSQL runs those joins as parallel hash joins
+  in `/dev/shm`. Docker's default of 64 MB is too small for a large dataset, and the query fails with
+  `could not resize shared memory segment`.
+
+Helm upgrades get the Cube settings with the chart. Docker Compose and one-click updates keep your local
+`docker-compose.yml`, so add `CUBEJS_DB_QUERY_TIMEOUT: 60s` to the `cube` service's `environment` and
+`shm_size: 512mb` to the `postgres` service, then recreate both with
+`docker compose up -d --force-recreate cube postgres`. An external PostgreSQL needs enough shared memory for
+parallel queries; a managed database already has it. The Cube cache defaults ship in `cube/cube.js`, which the
+update refreshes (see [Cube model files for Docker](#cube-model-files-for-docker)).
 
 ### Survey visibility (opt-in)
 
