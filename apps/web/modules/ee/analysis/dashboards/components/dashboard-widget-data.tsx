@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/dashboards/lib/widget-view";
@@ -64,16 +65,14 @@ export function DashboardWidgetData({
   // nothing, and says why rather than looking like a chart with no data.
   if (result.unfilterableFilters.length > 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center text-sm">
-        <p className="text-slate-500">
-          {t("workspace.analysis.dashboards.chart_cannot_be_filtered_by", {
-            label: formatFilterLabels(
-              result.unfilterableFilters.map((filter) => filter.label),
-              i18n.resolvedLanguage ?? i18n.language ?? "en-US"
-            ),
-          })}
-        </p>
-      </div>
+      <ChartEmptyState
+        message={t("workspace.analysis.dashboards.chart_cannot_be_filtered_by", {
+          label: formatFilterLabels(
+            result.unfilterableFilters.map((filter) => filter.label),
+            i18n.resolvedLanguage ?? i18n.language ?? "en-US"
+          ),
+        })}
+      />
     );
   }
 

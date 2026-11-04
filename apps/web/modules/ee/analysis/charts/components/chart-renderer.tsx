@@ -10,6 +10,7 @@ import {
   CartesianChart,
   type CartesianChartProps,
 } from "@/modules/ee/analysis/charts/components/cartesian-chart";
+import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
 import { MatrixChart } from "@/modules/ee/analysis/charts/components/matrix-chart";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import { ResponseBaseFooter } from "@/modules/ee/analysis/charts/components/response-base-footer";
@@ -446,11 +447,7 @@ function SeriesChart({
   const gradientIdPrefix = useId();
 
   if (!data || data.length === 0) {
-    return (
-      <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
-        {t("workspace.analysis.charts.no_data_available")}
-      </div>
-    );
+    return <ChartEmptyState message={t("workspace.analysis.charts.no_data_available")} />;
   }
 
   const rowKeys = Object.keys(data[0] ?? {});
@@ -494,11 +491,7 @@ function SeriesChart({
   const dataKeys = [...rawDataKeys].sort((a, b) => measureRank(a) - measureRank(b));
 
   if (dataKeys.length === 0) {
-    return (
-      <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
-        {t("workspace.analysis.charts.no_data_available")}
-      </div>
-    );
+    return <ChartEmptyState message={t("workspace.analysis.charts.no_data_available")} />;
   }
 
   // Sentiment count measures carry semantic colors keyed by enum value (red-ish for very negative →
