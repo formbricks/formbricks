@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options-show-if-popover";
 import { RuleRowActions } from "@/modules/survey/editor/components/rule-row-actions";
-import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
+import { ShowIfPopover, getShowIfChipText } from "@/modules/survey/editor/components/show-if-popover";
 import { ShowIfPopoverBoundary } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { getBlockDisplayName, isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
 import {
@@ -343,13 +343,10 @@ export const FlowView = ({
             type="gray"
             size="tiny"
             icon={<EyeIcon />}
-            text={t(
-              target?.showIf.type === "block"
-                ? "workspace.surveys.edit.flow.show_block_if_chip"
-                : "workspace.surveys.edit.flow.show_question_if_chip",
-              {
-                conditions: describeConditionGroup(badge.conditions, localSurvey, t, textFormat),
-              }
+            text={getShowIfChipText(
+              target?.showIf.type ?? "element",
+              describeConditionGroup(badge.conditions, localSurvey, t, textFormat),
+              t
             )}
             title={t("workspace.surveys.edit.flow.read_only_hint")}
           />
