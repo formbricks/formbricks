@@ -129,7 +129,9 @@ TARGET_API_KEY="${TARGET_API_KEY:?needs manage access on the target workspace}"
 TARGET_WORKSPACE_ID="${TARGET_WORKSPACE_ID:?workspace id, see the app URL}"
 THROTTLE="${THROTTLE:-0.7}" # seconds between requests; keeps you under 100/minute
 
-# fb <method> <url> <api-key> [json-body] -> sets FB_BODY and FB_CODE, retries 429/5xx.
+# fb <method> <url> <api-key> [json-body] -> sets FB_BODY and FB_CODE. Retries 429 always, and a
+# dropped connection or 5xx only on a GET: a write that failed on the way back may have committed, and
+# sending it again would create a second copy.
 fb() {
   local method="$1" url="$2" key="$3" body="${4:-}" attempt=0 tmp code
   local -a args
@@ -139,8 +141,8 @@ fb() {
       -H "x-api-key: ${key}" -H 'content-type: application/json')
     if [ -n "$body" ]; then args+=(--data-binary @-); fi
     code=$(printf '%s' "$body" | curl "${args[@]}" "$url") || code=000
-    case "$code" in
-      429 | 000 | 5??)
+    case "${method}:${code}" in
+      *:429 | GET:000 | GET:5??)
         attempt=$((attempt + 1))
         [ "$attempt" -le 6 ] || break
         echo "  HTTP ${code} on ${method} ${url} — retry ${attempt} in $((attempt * 10))s" >&2
@@ -417,6 +419,8 @@ TARGET_WORKSPACE_ID="${TARGET_WORKSPACE_ID:?workspace id, see the app URL}"
 IN_DIR="${IN_DIR:-./fb-export}"
 THROTTLE="${THROTTLE:-0.7}" # seconds between writes; keeps you under 100 requests/minute
 
+# POST with retry on 429 only: the target refuses a 429 before it writes. A dropped connection or a 5xx
+# may come after the write committed, so it is reported, not sent again.
 fb_post() {
   local url="$1" body="$2" attempt=0 tmp code
   tmp=$(mktemp)
@@ -425,7 +429,7 @@ fb_post() {
       -H "x-api-key: ${TARGET_API_KEY}" -H 'content-type: application/json' \
       --data-binary @- "$url") || code=000
     case "$code" in
-      429 | 000 | 5??)
+      429)
         attempt=$((attempt + 1))
         [ "$attempt" -le 6 ] || break
         echo "  HTTP ${code} on ${url} — retry ${attempt} in $((attempt * 10))s" >&2
@@ -809,6 +813,7 @@ their own management endpoints (`/api/v2/management/contacts`,
 | `403` on a create, while `TARGET_API_KEY` can still *list* surveys in the target      | `TARGET_API_KEY` has read but not write on the target workspace, or that workspace was created after the key. A successful source read proves nothing here — the two ends use different keys | Create a **new** key on the target instance with the target workspace selected and `write`/`manage`; a key's workspace access cannot be edited after creation. Confirm with `GET /api/v3/surveys?workspaceId=<target>` using `TARGET_API_KEY` |
 | `401`                                                                              | The key is revoked, or the endpoint needs Organization access the key lacks (`/api/v2/me`) | Check the key still exists; add the workspace under Workspace Access with `manage` |
 | `429`                                                                              | 100 requests/minute per API key                                             | Raise `THROTTLE`; the scripts already back off and retry six times         |
+| `000` or `5xx` on a create, not retried                                           | The connection dropped or the target failed, possibly after the write committed | Check the target for what the step created before running it again; the scripts retry only reads on these |
 
 ---
 
