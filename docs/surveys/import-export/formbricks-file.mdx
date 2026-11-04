@@ -78,7 +78,7 @@ Every file has four keys at the top:
 | `formbricks` | About the file: its `format`, when it was exported, the Formbricks version that wrote it, and its `source`.                                        |
 | `formbricks.source` | The survey and workspace it came from, and when the survey last changed before the export. An import uses these to offer **Update**.        |
 | `survey`     | The survey: the same document the [API v3](/api-v3-reference/introduction) creates a survey from, without `workspaceId` and `metadata` (the link's share preview, which stays with the survey). |
-| `references` | What the survey uses from its workspace: `actionClasses` its triggers use, `attributeKeys` its targeting names, shared `embeddedFields`, and `languages` with their names. |
+| `references` | What the survey uses from its workspace: `actionClasses` its triggers use, `attributeKeys` its targeting names, and shared `embeddedFields`. `languages` is optional: it lists only the survey's languages that have a name in the workspace, with that name. |
 
 `format` is the file format's own version, separate from the Formbricks version. Formbricks reads every format up to its own and refuses newer ones.
 
