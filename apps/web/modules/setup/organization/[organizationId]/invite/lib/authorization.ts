@@ -23,7 +23,10 @@ import { assertUserManagementAllowed, canManageUsers } from "@/lib/membership/us
  */
 export const SETUP_INVITE_ACTION = "organization.write" as const;
 
-/** Throws `AuthorizationError` unless the user may invite through the onboarding path. */
+/**
+ * Throws `AuthorizationError` unless the user may invite through the onboarding path, and
+ * `OperationNotAllowedError` when the user-management floor refuses them.
+ */
 export const checkSetupInviteAuthorization = async (
   userId: string,
   organizationId: string

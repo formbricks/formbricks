@@ -221,12 +221,25 @@ describe("deleteMembership", () => {
     const owner = (isActive: boolean) => ({ role: "owner" as const, user: { isActive } });
 
     test("refuses to delete the only active owner, reading the count inside the transaction", async () => {
-      vi.mocked(prisma.membership.findUnique).mockResolvedValue(owner(true) as never);
-      vi.mocked(prisma.membership.count).mockResolvedValue(1);
+      // A transaction client of its own, so a guard read outside the transaction would miss these.
+      const tx = {
+        membership: {
+          findUnique: vi.fn().mockResolvedValue(owner(true)),
+          count: vi.fn().mockResolvedValue(1),
+          delete: vi.fn(),
+        },
+        teamUser: { findMany: vi.fn(), deleteMany: vi.fn() },
+        invite: { updateMany: vi.fn() },
+      };
+      vi.mocked(prisma.$transaction).mockImplementation(async (transaction) =>
+        (transaction as (client: unknown) => unknown)(tx)
+      );
 
       await expect(deleteMembership(userId, organizationId)).rejects.toThrow(ValidationError);
 
-      expect(prisma.membership.count).toHaveBeenCalledWith(
+      expect(prisma.membership.count).not.toHaveBeenCalled();
+      expect(tx.membership.delete).not.toHaveBeenCalled();
+      expect(tx.membership.count).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ organizationId, role: "owner" }) })
       );
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
@@ -252,6 +265,19 @@ describe("deleteMembership", () => {
 
       await expect(deleteMembership(userId, organizationId)).resolves.toEqual([]);
       expect(prisma.membership.delete).toHaveBeenCalled();
+    });
+
+    test("retries a conflict raised by the owner count, instead of wrapping it", async () => {
+      const conflict = new Prisma.PrismaClientKnownRequestError("conflict", {
+        code: PrismaErrorType.TransactionConflict,
+        clientVersion: "1.0.0",
+      });
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue(owner(true) as never);
+      vi.mocked(prisma.membership.count).mockRejectedValueOnce(conflict).mockResolvedValueOnce(2);
+      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
+
+      await expect(deleteMembership(userId, organizationId)).resolves.toEqual([]);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
     });
 
     test("does not count owners when removing a non-owner", async () => {

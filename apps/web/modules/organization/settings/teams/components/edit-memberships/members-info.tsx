@@ -13,6 +13,12 @@ import { formatDateForDisplay, formatDateWithOrdinal } from "@/lib/utils/datetim
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import {
+  type TMemberRow,
+  canActOnInvite,
+  isInvitee,
+  showDeleteButton,
+} from "@/modules/organization/settings/teams/lib/member-controls";
+import {
   type TLastSignInSort,
   sortMembersByLastSignIn,
 } from "@/modules/organization/settings/teams/lib/sort-members";
@@ -22,14 +28,6 @@ import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { ReactivateMemberButton } from "./reactivate-member-button";
-
-/** The two row shapes this table mixes: accepted memberships and pending invites. */
-type TMemberRow = TMember | TInvite;
-
-// Type guard to check if member is an invitee
-const isInvitee = (member: TMemberRow): member is TInvite => {
-  return (member as TInvite).expiresAt !== undefined;
-};
 
 const getMembershipBadge = (member: TMemberRow, t: TFunction, locale: string) => {
   if (isInvitee(member)) {
@@ -50,43 +48,6 @@ const getMembershipBadge = (member: TMemberRow, t: TFunction, locale: string) =>
   }
 
   return <Badge type="success" text={t("common.active")} size="tiny" />;
-};
-
-const showDeleteButton = (
-  member: TMemberRow,
-  {
-    canManageUsers,
-    isManager,
-    currentUserId,
-    doesOrgHaveMoreThanOneOwner,
-  }: Readonly<{
-    canManageUsers: boolean;
-    isManager: boolean;
-    currentUserId: string;
-    doesOrgHaveMoreThanOneOwner: boolean;
-  }>
-): boolean => {
-  if (isInvitee(member)) {
-    return canManageUsers;
-  }
-
-  if (!canManageUsers) {
-    return false;
-  }
-
-  if (member.userId === currentUserId) {
-    return false;
-  }
-
-  if (isManager) {
-    return member.role !== "owner";
-  }
-
-  if (member.role === "owner") {
-    return doesOrgHaveMoreThanOneOwner;
-  }
-
-  return true;
 };
 
 // The calendar day is read in the organization's reporting zone, so a sign-in near midnight lands on the
@@ -258,7 +219,7 @@ const getMemberColumns = ({
             organization={organization}
             member={isInvitee(member) ? undefined : member}
             invite={isInvitee(member) ? member : undefined}
-            canManageInvites={canManageUsers}
+            canManageInvites={isInvitee(member) && canActOnInvite(member, { canManageUsers, isManager })}
             showDeleteButton={showDeleteButton(member, {
               canManageUsers,
               isManager,

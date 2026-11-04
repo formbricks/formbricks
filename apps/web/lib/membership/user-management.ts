@@ -3,7 +3,7 @@ import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
 
 /**
- * The user-management role floor (`USER_MANAGEMENT_MINIMUM_ROLE`), the one copy every entry point asks.
+ * The user-management role floor (`USER_MANAGEMENT_MINIMUM_ROLE`), as the app's own entry points ask it.
  *
  * `organization.manage_access` *is* this decision in the central vocabulary: the SpiceDB evaluator maps
  * the floor onto the schema (`owner` → write, `manager` → manage_access, `disabled` → deny), and
@@ -12,7 +12,8 @@ import { can } from "@/lib/authorization";
  *
  * Asked by every server action that lets an owner or manager change who is invited or a member, by
  * the onboarding invite, by minting an API key with organization write access, and by the pages that
- * decide whether to offer those controls, so a control is never offered where its action refuses.
+ * decide whether to offer those controls, so a control is never offered where its action refuses. The v2
+ * users API still decides it through `getUserManagementAccess`, pinned equal by the integration test.
  * `organization.manage` is a different capability that the actions still require on top of this one.
  * Team admins inviting into their own teams are decided by `team.manage` instead.
  */

@@ -10,7 +10,7 @@ import { reconcileOrganizationMembership } from "@/lib/authzed/organization-memb
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
-import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
+import { isTransactionConflictError, retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 
@@ -94,7 +94,9 @@ const getOrganizationOwnerCountUncached = async (
 
     return ownersCount;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    // Inside a transaction the error belongs to the transaction's owner: wrapping a serialization
+    // conflict (P2034) here would hide it from the retry that re-runs the whole transaction.
+    if (!tx && error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
 
@@ -197,8 +199,9 @@ export const deleteMembership = async (
 
     return deletedTeamMemberships;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+    // A conflict that outlasted every retry may be the driver adapter's own error rather than P2034.
+    if (error instanceof Prisma.PrismaClientKnownRequestError || isTransactionConflictError(error)) {
+      throw new DatabaseError(error instanceof Error ? error.message : "Transaction conflict");
     }
 
     throw error;

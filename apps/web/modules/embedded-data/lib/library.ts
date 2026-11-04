@@ -21,6 +21,7 @@ import {
   type TSharedEmbeddedData,
   type TSharedEmbeddedDataListItem,
   type TUpdateSharedEmbeddedDataInput,
+  getEmbeddedDataUsageTotal,
 } from "../types";
 
 /**
@@ -395,10 +396,11 @@ export const deleteSharedEmbeddedData = async (
   // surveys are named only once the refusal is certain, so an unused field costs one count.
   const linkCount = await prisma.surveyEmbeddedData.count({ where: { embeddedDataId: id, workspaceId } });
   if (linkCount > 0) {
-    throw new EmbeddedDataInUseError(
-      "Cannot delete a field that is used by a survey",
-      await getEmbeddedDataUsage(id, workspaceId, await resolveVisibleSurveyWhere())
-    );
+    // Re-read rather than trusting the count: a link removed in between must not refuse with an empty list.
+    const usage = await getEmbeddedDataUsage(id, workspaceId, await resolveVisibleSurveyWhere());
+    if (getEmbeddedDataUsageTotal(usage) > 0) {
+      throw new EmbeddedDataInUseError("Cannot delete a field that is used by a survey", usage);
+    }
   }
 
   await prisma.embeddedData.delete({ where: { id, workspaceId } });
