@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getOrganizationWorkspacesLimit: vi.fn(),
   getOrganizationWorkspacesCount: vi.fn(),
   getAccessControlPermission: vi.fn(),
+  getRemoveBrandingPermission: vi.fn(),
   createWorkspace: vi.fn(),
   updateUser: vi.fn(),
 }));
@@ -32,6 +33,7 @@ vi.mock("@/lib/workspace/service", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getAccessControlPermission: mocks.getAccessControlPermission,
   getOrganizationWorkspacesLimit: mocks.getOrganizationWorkspacesLimit,
+  getRemoveBrandingPermission: mocks.getRemoveBrandingPermission,
 }));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace: mocks.createWorkspace }));
 vi.mock("@/lib/user/service", () => ({ updateUser: mocks.updateUser }));
@@ -44,10 +46,10 @@ vi.mock("./lib/workspace", () => ({
 
 const ORGANIZATION_ID = "org-1";
 
-const runCreateWorkspace = () =>
+const runCreateWorkspace = (data: Record<string, unknown> = { name: "New workspace" }) =>
   (createWorkspaceAction as unknown as (a: unknown) => Promise<unknown>)({
     ctx: { user: { id: "user-1", notificationSettings: {} }, auditLoggingCtx: {} },
-    parsedInput: { organizationId: ORGANIZATION_ID, data: { name: "New workspace" } },
+    parsedInput: { organizationId: ORGANIZATION_ID, data },
   });
 
 beforeEach(() => {
@@ -57,6 +59,7 @@ beforeEach(() => {
   mocks.getOrganizationWorkspacesLimit.mockResolvedValue(3);
   mocks.getOrganizationWorkspacesCount.mockResolvedValue(2);
   mocks.createWorkspace.mockResolvedValue({ id: "ws-new", name: "New workspace" });
+  mocks.getRemoveBrandingPermission.mockResolvedValue(false);
 });
 
 // The cap itself is enforced under a lock inside createWorkspace (ENG-3921); these cover what the
@@ -89,5 +92,35 @@ describe("createWorkspaceAction", () => {
       { name: "New workspace" },
       { workspaceLimit: 3 }
     );
+  });
+
+  // ENG-6840: create accepted the branding fields without the licence the update path asks for.
+  describe("branding at creation", () => {
+    test.each([
+      ["in-app", { inAppSurveyBranding: false }],
+      ["link survey", { linkSurveyBranding: false }],
+    ])("refuses %s branding removal without the remove-branding licence", async (_kind, branding) => {
+      await expect(runCreateWorkspace({ name: "New workspace", ...branding })).rejects.toThrow(
+        OperationNotAllowedError
+      );
+      expect(mocks.getRemoveBrandingPermission).toHaveBeenCalledWith(ORGANIZATION_ID);
+      expect(mocks.createWorkspace).not.toHaveBeenCalled();
+    });
+
+    test("allows it with the licence", async () => {
+      mocks.getRemoveBrandingPermission.mockResolvedValue(true);
+      const data = { name: "New workspace", inAppSurveyBranding: false, linkSurveyBranding: false };
+
+      await runCreateWorkspace(data);
+
+      expect(mocks.createWorkspace).toHaveBeenCalledWith(ORGANIZATION_ID, data, { workspaceLimit: 3 });
+    });
+
+    test("does not ask for the licence when no branding is set, as the create modal sends it", async () => {
+      await runCreateWorkspace({ name: "New workspace", teamIds: [] });
+
+      expect(mocks.getRemoveBrandingPermission).not.toHaveBeenCalled();
+      expect(mocks.createWorkspace).toHaveBeenCalled();
+    });
   });
 });

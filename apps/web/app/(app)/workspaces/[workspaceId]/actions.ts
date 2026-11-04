@@ -17,6 +17,7 @@ import {
   getAccessControlPermission,
   getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
+import { assertBrandingChangeAllowed } from "@/modules/ee/whitelabel/remove-branding/lib/permission";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { getOrganizationsByUserId } from "./lib/organization";
 import { getWorkspacesByUserId, getWritableWorkspacesByUserId } from "./lib/workspace";
@@ -57,6 +58,8 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
     if (workspaceCount >= workspaceLimit) {
       throw new OperationNotAllowedError("Organization workspace limit reached");
     }
+
+    await assertBrandingChangeAllowed(organization.id, parsedInput.data);
 
     if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
       const isAccessControlAllowed = await getAccessControlPermission(organization.id);
