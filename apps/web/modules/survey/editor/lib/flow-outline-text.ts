@@ -202,8 +202,7 @@ export const getEndingLabel = (ending: TSurveyEnding, survey: TSurvey, t: TFunct
 
 export type TFlowActionText =
   | { kind: "jump"; target: "block" | "missing"; label: string }
-  /** An ending names its type, so its chip carries the same icon as the ending on the Questions tab. */
-  | { kind: "jump"; target: "ending"; endingType: TSurveyEnding["type"]; label: string }
+  | { kind: "jump"; target: "ending"; label: string }
   | { kind: "requireAnswer"; label: string }
   | { kind: "calculate"; label: string }
   /** ENG-6933: names nothing, so the row reads "Mark as low quality". */
@@ -240,7 +239,6 @@ export const describeAction = (
         return {
           kind: "jump",
           target: "ending",
-          endingType: ending.type,
           label: getEndingLabel(ending, survey, t),
         };
       }

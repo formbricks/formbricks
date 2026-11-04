@@ -4,15 +4,14 @@ import {
   ArrowRightIcon,
   EyeIcon,
   EyeOffIcon,
-  HandshakeIcon,
   PlusIcon,
   Rows3Icon,
-  Undo2Icon,
+  SquareArrowRightExitIcon,
 } from "lucide-react";
 import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
-import { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options-show-if-popover";
@@ -75,6 +74,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import {
+  ENDING_TONE,
   FlowOutline,
   FlowOutlineChildren,
   FlowOutlineGroup,
@@ -114,19 +114,10 @@ const SHOW_IF_HINT_CLASS =
 const START_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue"];
 const BLOCK_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "markLowQuality"];
 
-/** The Questions tab's ending icons: a handshake for an ending card, a turned arrow for a redirect. */
-const EndingTypeIcon = ({
-  type,
-  className,
-}: {
-  readonly type: TSurveyEnding["type"];
-  readonly className?: string;
-}) =>
-  type === "redirectToUrl" ? (
-    <Undo2Icon className={cn("rotate-180", className)} aria-hidden="true" />
-  ) : (
-    <HandshakeIcon className={className} aria-hidden="true" />
-  );
+/** One icon for every ending, card or redirect, on its row and on a chip that jumps to it. */
+const EndingIcon = ({ className }: { readonly className?: string }) => (
+  <SquareArrowRightExitIcon className={className} aria-hidden="true" />
+);
 
 /**
  * The Flow tab (ENG-6929): the whole survey flow on one outline, built by `buildFlowOutline`, with
@@ -249,8 +240,11 @@ export const FlowView = ({
         return (
           <span
             key={key}
-            className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white">
-            <EndingTypeIcon type={action.endingType} className="size-3" />
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+              ENDING_TONE.pill
+            )}>
+            <EndingIcon className="size-3" />
             {action.label}
           </span>
         );
@@ -720,12 +714,12 @@ export const FlowView = ({
                 key={row.id}
                 id={`flow-${row.id}`}
                 tone="ending"
-                icon={<EndingTypeIcon type={ending.type} />}
+                icon={<EndingIcon />}
                 isInvalid={invalidElements?.includes(row.id) ?? false}>
-                <span className="text-sm font-semibold text-red-700">
+                <span className={cn("text-sm font-semibold", ENDING_TONE.title)}>
                   {t("workspace.surveys.edit.flow.end_label", { label })}
                 </span>
-                {row.url && <span className="text-xs text-red-700/80">→ {row.url}</span>}
+                {row.url && <span className={cn("text-xs", ENDING_TONE.detail)}>→ {row.url}</span>}
               </FlowOutlineRow>
             );
           })}

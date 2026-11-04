@@ -1,10 +1,10 @@
 ---
-title: "Set Value and Formulas"
-description: "Set a calculated Embedded Data field anywhere in the survey flow from a formula: scores, auto-coding, text joining and days since a date."
+title: "Set Value and Expressions"
+description: "Set a calculated Embedded Data field anywhere in the survey flow from an expression: scores, auto-coding, text joining and days since a date."
 icon: "equals"
 ---
 
-A **Set value** step writes a calculated [Embedded Data](/surveys/general-features/variables) field as the respondent moves through the survey. Its value comes from a formula, for example `round(@q1 + @q2 * 2)` for a score, `concat("segment-", @plan)` for auto-coding, or `daysBetween(@signup_date, now())` for days since a date.
+A **Set value** step writes a calculated [Embedded Data](/surveys/general-features/variables) field as the respondent moves through the survey. Its value comes from an expression, for example `round(@q1 + @q2 * 2)` for a score, `concat("segment-", @plan)` for auto-coding, or `daysBetween(@signup_date, now())` for days since a date.
 
 You add and edit Set value steps on the [Flow tab](/surveys/general-features/flow-tab).
 
@@ -12,29 +12,29 @@ You add and edit Set value steps on the [Flow tab](/surveys/general-features/flo
 
 Under a block on the Flow tab, open **Add logic** and choose **Set value**. The new step always runs after the block is submitted, and reads **Always** on the outline.
 
-Choose the calculated field to set, then type the formula. To set the value only for some respondents, use **Add a condition** on the step: it then runs only when the condition matches. Removing the condition makes it always run again.
+Choose the calculated field to set, then type the expression. To set the value only for some respondents, use **Add a condition** on the step: it then runs only when the condition matches. Removing the condition makes it always run again.
 
-A one-step calculation you already have, such as *score + 1*, keeps working exactly as before. To turn it into a formula, switch on **Formula** in its row. Switching it off turns a formula back into one step when it is one, such as *ifEmpty(@score, 0) + 1*; any other formula is cleared after you confirm.
+A one-step calculation you already have, such as *score + 1*, keeps working exactly as before. To turn it into an expression, switch on **Expression** in its row. Switching it off turns an expression back into one step when it is one, such as *ifEmpty(@score, 0) + 1*; any other expression is cleared after you confirm. Changing an existing action to **Set value** starts it with **Expression** on, like a new step.
 
-## Writing a formula
+## Writing an expression
 
 * **Numbers and text.** Type numbers as they are (`2`, `1.5`) and put text in quotes (`"gold"`). A date in quotes, such as `"2026-03-01"`, counts as a date where a date is expected.
 * **Answers and fields.** Type `@` or use the **@** button to insert an answer or a field. Questions are named by their question code, Embedded Data fields by their name, and auto-captured fields such as `language` by theirs. A name with spaces is written in braces: `@{Plan tier}`.
 * **Operators.** `+`, `-`, `*` and `/` work as in a calculator, with `*` and `/` first. Use brackets to change the order.
 * **Functions.** Click a function chip to insert it, or type its name.
 
-Below the formula, the box shows what a save would refuse, or the **sample result**: what the step computes for a made-up response with a typical answer to every question.
+Below the expression, the box shows what a save would refuse, or the **sample result**: what the step computes for a made-up response with a typical answer to every question.
 
-### What an answer is in a formula
+### What an answer is in an expression
 
-| Question | In a formula |
+| Question | In an expression |
 | -- | -- |
 | Rating, Net Promoter Score, CSAT, CES, a number open question | A number |
 | Other open questions | Text |
 | Date | A date |
 | Single select | Its answer code, as text, in every language |
 
-Other question types can't be used in a formula. An Embedded Data field has the type you gave it.
+Other question types can't be used in an expression. An Embedded Data field has the type you gave it.
 
 ## Functions
 
@@ -52,7 +52,7 @@ Other question types can't be used in a formula. An Embedded Data field has the 
 
 ## Empty values
 
-* **Empty in, empty out.** When a question wasn't answered or a field isn't set, a formula that uses it is empty. Use `ifEmpty` to set a default: `ifEmpty(@q1, 0) + 1`.
+* **Empty in, empty out.** When a question wasn't answered or a field isn't set, an expression that uses it is empty. Use `ifEmpty` to set a default: `ifEmpty(@q1, 0) + 1`.
 * **Dividing by zero** gives empty.
 * **A value that isn't a number** counts as empty where a number is needed.
 * **Setting a field to empty clears it**, so the response doesn't keep an old value.
@@ -67,7 +67,7 @@ A calculated field can be a **date**. Set it with `now()` to record when the res
 
 ## Checks when you save
 
-A formula is checked when you save or publish the survey. It is refused, with the exact place marked, when:
+An expression is checked when you save or publish the survey. It is refused, with the exact place marked, when:
 
 * it uses text where a number is needed, such as an open text answer in `+`
 * a function gets the wrong number of values, or a function doesn't exist
@@ -77,7 +77,7 @@ A formula is checked when you save or publish the survey. It is refused, with th
 
 ## Through the API
 
-The [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview) store the same formula as a tree, which is what the survey runs. A Set value step is a `calculate` action with `operator: "assign"` and an `expression` value:
+The [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview) store the same expression as a tree, which is what the survey runs. A Set value step is a `calculate` action with `operator: "assign"` and an `expression` value:
 
 ```json
 {
@@ -112,13 +112,13 @@ The [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/ove
 }
 ```
 
-A step that always runs is a rule whose `conditions` is an empty `and` group. The survey evaluates formulas without `eval`, so they work on websites with a strict Content Security Policy.
+A step that always runs is a rule whose `conditions` is an empty `and` group. The survey evaluates expressions without `eval`, so they work on websites with a strict Content Security Policy.
 
 ## While upgrading a self-hosted instance
 
 During a rolling upgrade to 6.2, the pods still on the previous release don't know three things a survey saved in that window may hold, and reject the survey wherever they validate it until the upgrade ends:
 
-* a Set value step with a formula (the `expression` value)
+* a Set value step with an expression (the `expression` value)
 * a **Mark response as Low quality** action
 * a condition on a calculated **date** field, even one set only by its default value: the previous release looks the field up in the older `variables` list, which doesn't list date fields
 

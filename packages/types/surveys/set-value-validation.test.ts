@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlockLogicAction } from "./blocks";
+import { getSetValueExpressionIssues } from "./expression-types";
 import { EXPRESSION_MAX_DEPTH, EXPRESSION_MAX_NODES, type TExpression } from "./expressions";
 import { SURVEY_FLOW_FIXTURE_IDS, surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
 import { type TSurvey, ZSurvey } from "./types";
@@ -147,7 +148,7 @@ describe("Set value expression validation", () => {
     ]);
   });
 
-  test("refuses a reference to a question that doesn't exist, or one a formula can't use", () => {
+  test("refuses a reference to a question that doesn't exist, or one an expression can't use", () => {
     expect(issuesOf(withScoreExpression(call("add", num(1), answer("gone"))))).toEqual([
       { path: [...scorePath, "args", 1, "value"], message: "Expression: question gone does not exist" },
     ]);
@@ -155,7 +156,7 @@ describe("Set value expression validation", () => {
     expect(issuesOf(withScoreExpression(call("add", num(1), answer("services"))))).toEqual([
       {
         path: [...scorePath, "args", 1, "value"],
-        message: "Expression: a multipleChoiceMulti question can't be used in a formula",
+        message: "Expression: a multipleChoiceMulti question can't be used in an expression",
       },
     ]);
   });
@@ -205,9 +206,26 @@ describe("Set value expression validation", () => {
     expect(oneStep.map((issue) => issue.path)).toEqual([signedUpPath.slice(0, -1)]);
   });
 
-  test("an empty formula is refused", () => {
+  test("an empty expression is refused", () => {
     expect(issuesOf(withScoreExpression({ type: "static", value: "" }))).toEqual([
-      { path: scorePath, message: "Expression: enter a formula" },
+      { path: scorePath, message: "Expression: enter an expression" },
+    ]);
+  });
+
+  test("a field an expression can't set is refused, worded for the editor's toast", () => {
+    const noLookups = {
+      getElement: () => undefined,
+      getComputedFieldType: () => undefined,
+      getIngestedFieldType: () => undefined,
+      getReservedFieldType: () => undefined,
+    };
+    expect(getSetValueExpressionIssues(num(1) as TExpression, "boolean", noLookups)).toEqual([
+      {
+        path: [],
+        message: "Expression: a boolean field can't be set with an expression",
+        code: "target_not_formula",
+        params: { fieldType: "boolean" },
+      },
     ]);
   });
 

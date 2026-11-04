@@ -367,7 +367,11 @@ function OptionRow({
           <label htmlFor={switchId} className="text-xs text-slate-600">
             {t("workspace.surveys.edit.flow.hide_option")}
           </label>
-          <InfoTooltip label={t("workspace.surveys.edit.flow.hidden_option_info_label")}>
+          {/* Below, toward the card's edge: above, the first option's would cover the popover's heading. */}
+          <InfoTooltip
+            label={t("workspace.surveys.edit.flow.hidden_option_info_label")}
+            side="bottom"
+            align="end">
             {t("workspace.surveys.edit.flow.hidden_option_help")}
           </InfoTooltip>
           <Switch id={switchId} checked={isHidden} onCheckedChange={onHiddenChange} />

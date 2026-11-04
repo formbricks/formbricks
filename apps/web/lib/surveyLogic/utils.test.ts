@@ -11,7 +11,6 @@ import {
   addConditionBelow,
   buildServerEmbeddedValues,
   createEmptyFormulaAction,
-  createEmptyOneStepAction,
   createGroupFromResource,
   deleteEmptyGroups,
   duplicateCondition,
@@ -228,10 +227,10 @@ describe("surveyLogic", () => {
     const base: TSurveyBlockLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     const calc = getUpdatedActionBody(base, "calculate");
     expect(calc.objective).toBe("calculate");
-    // Switching an action keeps the one-step editor; a new rule from the Add logic menu starts a
-    // formula instead (rule-list `createRule`, P39). The two are chosen on purpose.
-    expect(calc).toEqual(createEmptyOneStepAction("A"));
-    expect(createEmptyFormulaAction("B")).toMatchObject({
+    // ENG-6935: switching an action to Set value starts the empty expression with the switch on,
+    // exactly as a new Set value rule from the Add logic menu does (rule-list `createRule`, P39).
+    expect(calc).toEqual(createEmptyFormulaAction("A"));
+    expect(calc).toMatchObject({
       value: { type: "expression", value: { type: "static", value: "" } },
     });
     const req = getUpdatedActionBody(calc, "requireAnswer");

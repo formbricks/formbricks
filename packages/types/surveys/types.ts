@@ -4174,7 +4174,7 @@ const validateBlockCalculateAction = (
   if (variable.type === "date") {
     return {
       code: "custom",
-      message: `Conditional Logic: A date field is set with a formula in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      message: `Conditional Logic: A date field is set with an expression in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
     };
   }

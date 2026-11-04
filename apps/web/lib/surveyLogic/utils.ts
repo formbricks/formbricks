@@ -225,14 +225,9 @@ export const updateCondition = (
 };
 
 /**
- * The two empty calculations, side by side so they are chosen on purpose (they deliberately differ):
- *
- * - A **new rule** from the Add logic menu ("Set value") starts with an empty formula
- *   (ENG-6935, P39), saved only once the formula box holds one.
- * - **Switching an action** of an existing rule to Calculate keeps the one-step editor (`score + 1`),
- *   so one-step calculations can still be written; its operator list offers "Use a formula".
- *
- * Both are refused on save until filled in.
+ * The empty Set value action: an empty expression, with the editor's Expression switch on. A new rule
+ * from the Add logic menu and an action switched to Set value both start here (ENG-6935, P39); turning
+ * the switch off gives the one-step editor (`score + 1`). Refused on save until filled in.
  */
 export const createEmptyFormulaAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
   id,
@@ -242,14 +237,6 @@ export const createEmptyFormulaAction = (id: string, variableId = ""): TSurveyBl
   value: { type: "expression", value: { type: "static", value: "" } },
 });
 
-export const createEmptyOneStepAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
-  id,
-  objective: "calculate",
-  variableId,
-  operator: "assign",
-  value: { type: "static", value: "" },
-});
-
 export const getUpdatedActionBody = (
   action: TSurveyBlockLogicAction,
   objective: TSurveyBlockLogicActionObjective
@@ -257,7 +244,7 @@ export const getUpdatedActionBody = (
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":
-      return createEmptyOneStepAction(action.id);
+      return createEmptyFormulaAction(action.id);
     case "requireAnswer":
       return {
         id: action.id,

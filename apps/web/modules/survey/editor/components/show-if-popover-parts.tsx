@@ -53,7 +53,12 @@ export function ShowIfPopoverFrame({ title, help, info, children, footer }: Show
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-semibold text-slate-900">{title}</p>
-          {info && <InfoTooltip label={info.label}>{info.content}</InfoTooltip>}
+          {/* To the right, level with the title: above or below it would cover the heading. */}
+          {info && (
+            <InfoTooltip label={info.label} side="right" align="start">
+              {info.content}
+            </InfoTooltip>
+          )}
         </div>
         <p className="text-xs text-slate-500">{help}</p>
       </div>

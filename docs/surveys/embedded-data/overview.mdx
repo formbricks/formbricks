@@ -75,7 +75,7 @@ Keys follow one rule everywhere, and reserved names are refused for new fields i
 A field also carries a **type** that decides how its value is read back and compared. In this release:
 
 - **Passed-in fields** can be `string`, `number`, `boolean` or `date`, wherever they are declared, and incoming values are coerced to the declared type.
-- **Calculated fields** are text, number or date — the types survey logic can produce, a date coming from a [Set value](/surveys/general-features/set-value) formula such as `now()` — and the initial value you set is the default the field falls back to.
+- **Calculated fields** are text, number or date — the types survey logic can produce, a date coming from a [Set value](/surveys/general-features/set-value) expression such as `now()` — and the initial value you set is the default the field falls back to.
 - **Reserved fields** are typed by Formbricks, and several of them are genuinely numeric: `viewportWidth < 768` is a numeric comparison in logic, not a comparison of digit strings.
 
 <Note>

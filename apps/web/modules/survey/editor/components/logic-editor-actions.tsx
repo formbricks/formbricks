@@ -266,7 +266,7 @@ export function LogicEditorActions({
 
                 {action.objective === "calculate" && (
                   <>
-                    {/* Reads as a sentence: Set value [field] to the formula below, or [field] [operator]
+                    {/* Reads as a sentence: Set value [field] to the expression below, or [field] [operator]
                         [value] for one step. The toggle switches between the two, both ways. */}
                     <div className="col-span-9 flex min-w-0 flex-wrap items-center gap-2">
                       {/* The field takes the width its name needs, up to the row's. */}

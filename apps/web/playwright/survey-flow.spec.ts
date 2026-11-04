@@ -181,7 +181,7 @@ test.describe("Survey flow @slow", () => {
         await expect(page.locator(`[id="flow-${surveyBlock.id}"]`)).toContainText(surveyBlock.name);
       }
 
-      // Block show-if, question show-if, option show-if, a Hidden option and copied options.
+      // Block show-if, question show-if, option show-if, a Hidden option and copied options' show-ifs.
       await expect(page.locator(`[id="flow-${ids.blocks.heavyUsers}"]`)).toContainText("Show block if ");
       const question = (blockId: string, elementId: string) =>
         page
@@ -191,7 +191,9 @@ test.describe("Survey flow @slow", () => {
       await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show question if ");
       await expect(question(ids.blocks.overall, "fav")).toContainText("Show options if … (1 option)");
       await expect(question(ids.blocks.overall, "bundle")).toContainText("1 hidden option");
-      await expect(question(ids.blocks.profile, "recommend")).toContainText("Options copied from services");
+      // Copied options carry the "picked in the source" show-ifs the copy gave them (the copy itself has
+      // no badge of its own any more, P70).
+      await expect(question(ids.blocks.profile, "recommend")).toContainText("Show options if … (4 options)");
 
       // Set value with a formula, and Mark as low quality.
       await expect(page.locator(`[id="${ids.setValue.scoreRule}"]`)).toContainText(

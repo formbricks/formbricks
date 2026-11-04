@@ -9,8 +9,8 @@ import { cn } from "@/lib/cn";
  * respondent moves. Blocks are rows; what runs after a block sits indented under it; endings come
  * last. Presentational only — the Flow tab builds the rows from its outline model.
  *
- * Tones: white for a block, red for an ending, and one colour per rule type — blue for a jump, green
- * for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
+ * Tones: white for a block, pink (`ENDING_TONE`) for an ending, and one colour per rule type — blue for a
+ * jump, green for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
  */
 
 export type TFlowOutlineTone = "block" | "jump" | "setValue" | "requireAnswer" | "markLowQuality" | "ending";
@@ -67,6 +67,28 @@ export const FlowOutlineNote = ({
 );
 
 /**
+ * Every colour an ending shows in, on its own row and on a chip that jumps to it: pink, in the rule
+ * types' pattern of one colour for the outline and tile and a lighter tint for the row. Change an
+ * ending's colour here only.
+ */
+export const ENDING_TONE = {
+  /** The row's outline and background tint. */
+  card: "border-pink-500 bg-pink-50",
+  /** The icon tile's background (the icon is white). */
+  tile: "bg-pink-500",
+  /** The line under an open row's header. */
+  divider: "border-pink-500",
+  /** The header's hover tint. */
+  hover: "hover:bg-pink-100/70",
+  /** The row's title ("End: …"), dark enough to read on the tint. */
+  title: "text-pink-700",
+  /** Secondary text on the row, e.g. a redirect's URL. */
+  detail: "text-pink-700",
+  /** A jump-target chip that points to an ending: its background and text. */
+  pill: "bg-pink-500 text-white",
+} as const;
+
+/**
  * A rule type's one colour is its outline and its icon tile; a lighter tint of it is the row's
  * background, and a little more of that tint its header's hover.
  */
@@ -76,7 +98,7 @@ const TONE_CARD: Record<TFlowOutlineTone, string> = {
   setValue: "border-emerald-500 bg-emerald-50",
   requireAnswer: "border-violet-500 bg-violet-50",
   markLowQuality: "border-orange-500 bg-orange-50",
-  ending: "border-red-300 bg-red-50",
+  ending: ENDING_TONE.card,
 };
 
 const TONE_ICON: Record<TFlowOutlineTone, string> = {
@@ -85,7 +107,7 @@ const TONE_ICON: Record<TFlowOutlineTone, string> = {
   setValue: "size-5 bg-emerald-500",
   requireAnswer: "size-5 bg-violet-500",
   markLowQuality: "size-5 bg-orange-500",
-  ending: "size-6 bg-red-600",
+  ending: `size-6 ${ENDING_TONE.tile}`,
 };
 
 /** The line between an open row's header and its settings: the card's own outline colour. */
@@ -95,7 +117,7 @@ const TONE_DIVIDER: Record<TFlowOutlineTone, string> = {
   setValue: "border-emerald-500",
   requireAnswer: "border-violet-500",
   markLowQuality: "border-orange-500",
-  ending: "border-red-300",
+  ending: ENDING_TONE.divider,
 };
 
 /** The header's hover tint: a block card is white, so a white wash on it would not show. */
@@ -105,7 +127,7 @@ const TONE_HOVER: Record<TFlowOutlineTone, string> = {
   setValue: "hover:bg-emerald-100/70",
   requireAnswer: "hover:bg-violet-100/70",
   markLowQuality: "hover:bg-orange-100/70",
-  ending: "hover:bg-white/60",
+  ending: ENDING_TONE.hover,
 };
 
 interface FlowOutlineRowProps {
