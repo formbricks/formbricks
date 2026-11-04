@@ -170,7 +170,13 @@ export const FlowOutlineRow = ({
           )}
         </div>
         {body && <div className="px-3 pb-2">{body}</div>}
-        {isOpen && details && <div className="border-t border-slate-200 bg-white px-3 py-3">{details}</div>}
+        {/* Rounded to the card's inner corner (its radius less its border) rather than clipped by the
+            card: overflow-hidden would also cut the focus rings at the card's edges. */}
+        {isOpen && details && (
+          <div className="rounded-b-[calc(0.5rem-1px)] border-t border-slate-200 bg-white px-3 py-3">
+            {details}
+          </div>
+        )}
       </div>
     </div>
   );
