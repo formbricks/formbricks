@@ -1,11 +1,8 @@
 "use client";
 
 import {
-  ArrowDownIcon,
   ArrowRightIcon,
-  ArrowUpIcon,
   BinaryIcon,
-  CopyIcon,
   EqualIcon,
   EyeIcon,
   EyeOffIcon,
@@ -15,7 +12,6 @@ import {
   Rows3Icon,
   ShieldAlertIcon,
   SplitIcon,
-  TrashIcon,
   Undo2Icon,
 } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
@@ -25,6 +21,7 @@ import { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options-show-if-popover";
+import { RuleRowActions } from "@/modules/survey/editor/components/rule-row-actions";
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import { ShowIfPopoverBoundary } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { getBlockDisplayName, isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
@@ -425,56 +422,30 @@ export const FlowView = ({
         // The block cards' chevron: a rule row opens too. A read-only row doesn't, so it gets none.
         showChevron={row.editable}
         isOpen={isOpen}
+        actions={
+          row.editable ? (
+            <RuleRowActions
+              isFirst={row.ruleIdx === 0}
+              isLast={row.ruleIdx === rules.length - 1}
+              onMoveUp={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx - 1))}
+              onMoveDown={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx + 1))}
+              onDuplicate={() => onRulesChange(duplicateRule(rules, row.ruleIdx))}
+              onDelete={() => {
+                onRulesChange(removeRule(rules, row.ruleIdx));
+                if (isOpen) setOpenRowId(null);
+              }}
+            />
+          ) : undefined
+        }
         details={
           row.editable ? (
-            <div className="flex flex-col gap-3">
-              <LogicEditor
-                localSurvey={localSurvey}
-                rules={rules}
-                ruleIdx={row.ruleIdx}
-                onRulesChange={onRulesChange}
-                scopeBlockIdx={scopeBlockIdx}
-              />
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => onRulesChange(duplicateRule(rules, row.ruleIdx))}>
-                  <CopyIcon />
-                  {t("common.duplicate")}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  disabled={row.ruleIdx === 0}
-                  onClick={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx - 1))}>
-                  <ArrowUpIcon />
-                  {t("common.move_up")}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  disabled={row.ruleIdx === rules.length - 1}
-                  onClick={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx + 1))}>
-                  <ArrowDownIcon />
-                  {t("common.move_down")}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    onRulesChange(removeRule(rules, row.ruleIdx));
-                    setOpenRowId(null);
-                  }}>
-                  <TrashIcon />
-                  {t("common.remove")}
-                </Button>
-              </div>
-            </div>
+            <LogicEditor
+              localSurvey={localSurvey}
+              rules={rules}
+              ruleIdx={row.ruleIdx}
+              onRulesChange={onRulesChange}
+              scopeBlockIdx={scopeBlockIdx}
+            />
           ) : null
         }>
         <span className="text-sm text-slate-700">

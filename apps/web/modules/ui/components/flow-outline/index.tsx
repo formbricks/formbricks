@@ -101,6 +101,8 @@ interface FlowOutlineRowProps {
   readonly isInvalid?: boolean;
   /** Shown but not editable here (written through the API with something this editor can't edit yet). */
   readonly readOnlyLabel?: string;
+  /** Controls at the right of the header (move, duplicate, delete), as on a question card's header. */
+  readonly actions?: ReactNode;
   /** Show a chevron that follows `isOpen`, for rows that open and close (blocks, rule rows). */
   readonly showChevron?: boolean;
   readonly id?: string;
@@ -117,6 +119,7 @@ export const FlowOutlineRow = ({
   body,
   isInvalid = false,
   readOnlyLabel,
+  actions,
   showChevron = false,
   id,
   ariaLabel,
@@ -170,13 +173,21 @@ export const FlowOutlineRow = ({
             {icon}
           </span>
           {children}
-          {readOnlyLabel && (
-            <span
-              className="ml-auto inline-flex items-center gap-1 text-xs text-slate-500"
-              title={readOnlyLabel}>
-              <LockIcon className="size-3" aria-hidden="true" />
-              {readOnlyLabel}
-            </span>
+          {(readOnlyLabel || actions) && (
+            // Clicks and keys here act on the control, never open or close the row.
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+            <div
+              className="ml-auto flex shrink-0 items-center gap-2"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}>
+              {readOnlyLabel && (
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500" title={readOnlyLabel}>
+                  <LockIcon className="size-3" aria-hidden="true" />
+                  {readOnlyLabel}
+                </span>
+              )}
+              {actions && <div className="flex items-center">{actions}</div>}
+            </div>
           )}
         </div>
         {body && <div className="px-3 pb-2">{body}</div>}
