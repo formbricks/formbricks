@@ -118,6 +118,13 @@ echo "PASS: /readyz answers 200"
 node "$helper" healthcheck "$work_dir/compose.json" cube "$cube"
 node "$helper" check-queries "$work_dir/compose.json" "$cube_url"
 
+# Opt-in (CUBE_SMOKE_BENCH_SUBMISSIONS=20000): times 1-25 answer-rule self-joins over a large tenant.
+if [ -n "${CUBE_SMOKE_BENCH_SUBMISSIONS:-}" ]; then
+  node "$helper" bench-seed-sql "$CUBE_SMOKE_BENCH_SUBMISSIONS" |
+    docker exec -i "$postgres" psql -v ON_ERROR_STOP=1 -q -U postgres -d formbricks
+  node "$helper" bench-joins "$work_dir/compose.json" "$cube_url" "$CUBE_SMOKE_BENCH_SUBMISSIONS"
+fi
+
 # As the image's default user (compose sets none), which also proves that user can read the mounts:
 # the error below is raised by cube.js itself, so it is only printed once cube.js has loaded.
 echo "Starting $image without CUBEJS_API_SECRET"

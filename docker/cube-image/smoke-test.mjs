@@ -14,17 +14,25 @@ const TENANTS = {
   "smoke-tenant-b": { sourceName: "smoke-source-b", npsValues: [0, 6], actor: { apiKeyId: "smoke-api-key" } },
 };
 const TENANT_FILTER_REJECTION = "tenant filters are enforced by Cube";
-// Chart fields (ENG-6893, ENG-6894): one submission per row, each with an NPS answer, a delivery answer
-// and an embedded `region`, so an embedded filter, an embedded grouping and an answer filter can each be
-// checked against numbers written out here.
+// Chart fields (ENG-6893, ENG-6894): one submission per row, each with an NPS answer, a delivery answer,
+// the options picked on a multi-select (one record per option, `<question>__<option>`) and an embedded
+// `region`, so an embedded filter, an embedded grouping and answer filters of every kind can each be
+// checked against numbers worked out from this table.
 const FIELDS_TENANT = "smoke-tenant-fields";
 const FIELDS_SUBMISSIONS = [
-  { nps: 9, delivery: "late", region: "North" },
-  { nps: 3, delivery: "late", region: "South" },
-  { nps: 10, delivery: "on_time", region: "North" },
-  { nps: 6, delivery: null, region: "North" },
+  { nps: 9, delivery: "late", region: "North", features: ["opt_a", "opt_b"] },
+  { nps: 3, delivery: "late", region: "South", features: ["opt_a"] },
+  { nps: 10, delivery: "on_time", region: "North", features: [] },
+  { nps: 6, delivery: null, region: "North", features: ["opt_b"] },
 ];
 const FIELDS_KEY = "Area 'region' $1$";
+const FIELDS_ANSWER_KINDS = { q_delivery: "choice", q_feat: "multi", q_nps: "number" };
+// The answer-filter benchmark (C13): a large tenant where every submission answers 25 single-select
+// questions, timed with 1 to 25 answer rules (one AnswerFilterN self-join each).
+const BENCH_TENANT = "bench-tenant-joins";
+const BENCH_QUESTIONS = 25;
+const BENCH_OPTIONS = 4;
+const BENCH_DEFAULT_SUBMISSIONS = 20_000;
 const CONTINUE_WAIT_ATTEMPTS = 60;
 
 const fail = (message) => {
@@ -113,23 +121,48 @@ const printSeedSql = () => {
       `${rows.join(",\n")};`
   );
 
-  const fieldRows = FIELDS_SUBMISSIONS.flatMap(({ nps, delivery, region }, index) => {
+  const fieldRows = FIELDS_SUBMISSIONS.flatMap(({ nps, delivery, region, features }, index) => {
+    const tenant = sqlString(FIELDS_TENANT);
     const submission = sqlString(`${FIELDS_TENANT}-${index}`);
     const metadata = sqlString(JSON.stringify({ embedded_data: { [FIELDS_KEY]: region } }));
     return [
-      `('formbricks', 'q_nps', 'nps', ${nps}, NULL, ${sqlString(FIELDS_TENANT)}, ${submission}, ${metadata}::jsonb)`,
+      `('formbricks', 'q_nps', NULL, 'nps', ${nps}, NULL, ${tenant}, ${submission}, ${metadata}::jsonb)`,
       ...(delivery
         ? [
-            `('formbricks', 'q_delivery', 'categorical', NULL, ${sqlString(delivery)}, ${sqlString(FIELDS_TENANT)}, ${submission}, ${metadata}::jsonb)`,
+            `('formbricks', 'q_delivery', NULL, 'categorical', NULL, ${sqlString(delivery)}, ${tenant}, ${submission}, ${metadata}::jsonb)`,
           ]
         : []),
+      ...features.map(
+        (option) =>
+          `('formbricks', ${sqlString(`q_feat__${option}`)}, 'q_feat', 'categorical', NULL, ${sqlString(option)}, ${tenant}, ${submission}, ${metadata}::jsonb)`
+      ),
     ];
   });
   console.log(
     "INSERT INTO feedback_records " +
-      "(source_type, field_id, field_type, value_number, value_id, tenant_id, submission_id, metadata) VALUES\n" +
+      "(source_type, field_id, field_group_id, field_type, value_number, value_id, tenant_id, submission_id, metadata) VALUES\n" +
       `${fieldRows.join(",\n")};`
   );
+};
+
+// Every submission answers q_nps (submission % 11) and q_c1..q_c25: mostly one of opt_0..opt_2, and the
+// rarer opt_3 when the submission number divides by question + 30 (`benchOption`), so every rule keeping
+// opt_0..opt_2 removes a few submissions and 25 of them still leave most.
+const benchOption = (submission, question) =>
+  submission % (question + 30) === 0 ? BENCH_OPTIONS - 1 : (submission + question) % (BENCH_OPTIONS - 1);
+
+const printBenchSeedSql = (submissions) => {
+  const tenant = sqlString(BENCH_TENANT);
+  console.log(
+    "INSERT INTO feedback_records (source_type, field_id, field_type, value_number, tenant_id, submission_id)\n" +
+      `SELECT 'formbricks', 'q_nps', 'nps', s % 11, ${tenant}, 'bench-' || s FROM generate_series(1, ${submissions}) s;`
+  );
+  console.log(
+    "INSERT INTO feedback_records (source_type, field_id, field_type, value_id, tenant_id, submission_id)\n" +
+      `SELECT 'formbricks', 'q_c' || q, 'categorical', 'opt_' || CASE WHEN s % (q + 30) = 0 THEN ${BENCH_OPTIONS - 1} ELSE (s + q) % ${BENCH_OPTIONS - 1} END, ${tenant}, 'bench-' || s\n` +
+      `FROM generate_series(1, ${submissions}) s, generate_series(1, ${BENCH_QUESTIONS}) q;`
+  );
+  console.log("ANALYZE feedback_records;");
 };
 
 // Mirrors getEmbeddedMemberSuffix in docker/cube/cube.js.
@@ -238,7 +271,7 @@ const checkQueries = async (composeJsonPath, baseUrl) => {
 };
 
 const checkChartFields = async (environment, baseUrl) => {
-  const claims = { edKeys: [FIELDS_KEY], answerKinds: { q_delivery: "choice" } };
+  const claims = { edKeys: [FIELDS_KEY], answerKinds: FIELDS_ANSWER_KINDS };
   const token = () => createToken(environment, FIELDS_TENANT, { userId: "smoke-user" }, claims);
   const region = embeddedMember(FIELDS_KEY);
   const loadOk = async (query, label) => {
@@ -252,13 +285,12 @@ const checkChartFields = async (environment, baseUrl) => {
     "embedded group-by"
   );
   const groupedCounts = grouped.map((row) => [row[region], Number(row["FeedbackRecords.count"])]);
-  if (
-    JSON.stringify(groupedCounts) !==
-    JSON.stringify([
-      ["North", 5],
-      ["South", 2],
-    ])
-  ) {
+  const recordsPerRegion = new Map();
+  for (const { region: value, delivery, features } of FIELDS_SUBMISSIONS) {
+    recordsPerRegion.set(value, (recordsPerRegion.get(value) ?? 0) + 1 + (delivery ? 1 : 0) + features.length);
+  }
+  const expectedGrouping = [...recordsPerRegion].sort(([a], [b]) => a.localeCompare(b));
+  if (JSON.stringify(groupedCounts) !== JSON.stringify(expectedGrouping)) {
     fail(`grouping by an embedded key returned ${JSON.stringify(groupedCounts)}`);
   }
   pass("an embedded-data key with an awkward name groups records");
@@ -307,6 +339,68 @@ const checkChartFields = async (environment, baseUrl) => {
   }
   pass("an 'is not' answer filter never matches a submission that skipped the question");
 
+  const npsOf = (filters, label) =>
+    loadOk(
+      {
+        measures: ["FeedbackRecords.count", "FeedbackRecords.npsAverage"],
+        filters: [{ member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] }, ...filters],
+      },
+      label
+    ).then(([row]) => ({
+      count: Number(row?.["FeedbackRecords.count"] ?? 0),
+      average: Number(row?.["FeedbackRecords.npsAverage"]),
+    }));
+  const expectNps = (actual, submissions, label) => {
+    const average = submissions.reduce((sum, { nps }) => sum + nps, 0) / submissions.length;
+    if (actual.count !== submissions.length || Math.abs(actual.average - average) > 1e-9) {
+      fail(`${label} returned ${JSON.stringify(actual)}; expected ${submissions.length} records averaging ${average}`);
+    }
+    pass(label);
+  };
+
+  // "Is any of" on a multi-select: a submission that picked both options joins two option records, and
+  // must still be counted once.
+  expectNps(
+    await npsOf(
+      [{ member: "FeedbackRecords.answer", operator: "equals", values: ["q_feat:opt_a", "q_feat:opt_b"] }],
+      "multi-select any-of"
+    ),
+    FIELDS_SUBMISSIONS.filter(({ features }) => features.length > 0),
+    "a multi-select 'is any of' counts a submission that picked several options once"
+  );
+
+  // A number question's rule tests the number column.
+  const [promoterDeliveries] = await loadOk(
+    {
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_delivery"] },
+        { member: "FeedbackRecords.answer", operator: "equals", values: ["q_nps:9", "q_nps:10"] },
+      ],
+    },
+    "number answer filter"
+  );
+  const expectedPromoterDeliveries = FIELDS_SUBMISSIONS.filter(
+    ({ nps, delivery }) => delivery && nps >= 9
+  ).length;
+  if (Number(promoterDeliveries?.["FeedbackRecords.count"]) !== expectedPromoterDeliveries) {
+    fail(`a number answer filter returned ${JSON.stringify(promoterDeliveries)}`);
+  }
+  pass("a number answer filter keeps the records of submissions with that score");
+
+  // Several rules, each its own join, all applied.
+  expectNps(
+    await npsOf(
+      [
+        { member: "FeedbackRecords.answer", operator: "equals", values: ["q_delivery:late"] },
+        { member: "FeedbackRecords.answer", operator: "equals", values: ["q_feat:opt_b"] },
+      ],
+      "several answer rules"
+    ),
+    FIELDS_SUBMISSIONS.filter(({ delivery, features }) => delivery === "late" && features.includes("opt_b")),
+    "several answer rules all narrow, each on its own join"
+  );
+
   const metaResponse = await fetch(`${baseUrl}/cubejs-api/v1/meta`, {
     headers: { Authorization: createToken(environment, "smoke-tenant-a", { userId: "smoke-user" }) },
   });
@@ -315,6 +409,50 @@ const checkChartFields = async (environment, baseUrl) => {
     fail("another tenant's /meta lists this tenant's embedded-data key");
   }
   pass("an embedded-data key is not listed in another tenant's /meta");
+};
+
+// Times a chart query with 0, 1, 5, 10 and 25 answer rules over the benchmark tenant and checks every
+// count against the seeded data. A filter on a source type no record has makes each run's SQL unique, so
+// Cube's result cache never answers it; the second run shows Postgres with warm buffers. One line per run.
+const benchJoins = async (composeJsonPath, baseUrl, submissions) => {
+  const environment = serviceEnvironment(readService(composeJsonPath, "cube"));
+  const answerKinds = Object.fromEntries(
+    Array.from({ length: BENCH_QUESTIONS }, (_, index) => [`q_c${index + 1}`, "choice"])
+  );
+  const token = () =>
+    createToken(environment, BENCH_TENANT, { userId: "bench-user" }, { answerKinds });
+  // Each rule keeps opt_0..opt_2 ("is any of" three values) and drops the rare opt_3.
+  const kept = Array.from({ length: BENCH_OPTIONS - 1 }, (_, option) => option);
+  for (const ruleCount of [0, 1, 5, 10, 25]) {
+    const questions = Array.from({ length: ruleCount }, (_, index) => index + 1);
+    const query = (nonce) => ({
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        { member: "FeedbackRecords.sourceType", operator: "notEquals", values: [`bench-${nonce}`] },
+        { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] },
+        ...questions.map((question) => ({
+          member: "FeedbackRecords.answer",
+          operator: "equals",
+          values: kept.map((option) => `q_c${question}:opt_${option}`),
+        })),
+      ],
+    });
+    let expected = 0;
+    for (let submission = 1; submission <= submissions; submission++) {
+      if (questions.every((question) => kept.includes(benchOption(submission, question)))) expected++;
+    }
+    for (const run of ["cold", "warm"]) {
+      const started = performance.now();
+      const { status, body } = await load(baseUrl, token(), query(randomUUID()));
+      const elapsed = performance.now() - started;
+      if (status !== 200) fail(`${ruleCount} rules: HTTP ${status} ${JSON.stringify(body)}`);
+      const count = Number(body.data?.[0]?.["FeedbackRecords.count"] ?? 0);
+      if (count !== expected) fail(`${ruleCount} rules counted ${count}; expected ${expected}`);
+      console.log(
+        `BENCH: ${ruleCount} answer rules, ${submissions} submissions (${submissions * (BENCH_QUESTIONS + 1)} records), ${run}: ${elapsed.toFixed(0)} ms, count ${count}`
+      );
+    }
+  }
 };
 
 const [command, ...args] = process.argv.slice(2);
@@ -333,6 +471,12 @@ switch (command) {
     break;
   case "check-queries":
     await checkQueries(args[0], args[1]);
+    break;
+  case "bench-seed-sql":
+    printBenchSeedSql(Number(args[0] ?? BENCH_DEFAULT_SUBMISSIONS));
+    break;
+  case "bench-joins":
+    await benchJoins(args[0], args[1], Number(args[2] ?? BENCH_DEFAULT_SUBMISSIONS));
     break;
   default:
     fail(`unknown command "${command ?? ""}"`);
