@@ -24,6 +24,26 @@ type TFilterChipProps = {
   readonly lockedHint?: string;
 } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "value">;
 
+/** A chip's `×`: removes the filter, or unlocks a locked one. */
+const ChipRemoveButton = ({
+  label,
+  size,
+  disabled,
+  onRemove,
+}: Readonly<{ label: string; size: "sm" | "md"; disabled?: boolean; onRemove: () => void }>) => (
+  <button
+    type="button"
+    disabled={disabled}
+    onClick={onRemove}
+    aria-label={label}
+    className={cn(
+      "focus-visible:ring-ring flex h-full items-center rounded-r-md text-slate-500 hover:text-slate-900 focus-visible:ring-1 focus-visible:outline-hidden",
+      size === "sm" ? "px-1.5" : "px-2"
+    )}>
+    <XIcon className="size-3.5" />
+  </button>
+);
+
 /**
  * One active filter (ENG-3538): `Label:` then the values as a bold inner pill, then `×`. The body
  * reopens the filter; `×` removes only this one. Both are real buttons, so Tab reaches each.
@@ -83,21 +103,16 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
           </button>
         )}
         {onRemove && (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onRemove}
-            aria-label={
+          <ChipRemoveButton
+            label={
               lockedHint
                 ? t("common.table_toolbar.unlock_filter", { filter: accessibleName })
                 : t("common.table_toolbar.remove_filter", { filter: accessibleName })
             }
-            className={cn(
-              "focus-visible:ring-ring flex h-full items-center rounded-r-md text-slate-500 hover:text-slate-900 focus-visible:ring-1 focus-visible:outline-hidden",
-              size === "sm" ? "px-1.5" : "px-2"
-            )}>
-            <XIcon className="size-3.5" />
-          </button>
+            size={size}
+            disabled={disabled}
+            onRemove={onRemove}
+          />
         )}
       </span>
     );

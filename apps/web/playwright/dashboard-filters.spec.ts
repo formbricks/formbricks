@@ -393,8 +393,11 @@ test.describe("Dashboard filters on chart data @hub-cube", () => {
     await Promise.all(Object.values(seeded.datasets).map(deleteHubTenant));
   });
 
-  test.beforeEach(() => {
-    test.skip(!reachable, "Needs Formbricks Hub and Cube (HUB_API_URL, CUBEJS_API_URL); CI starts neither.");
+  test.beforeEach(({}, testInfo) => {
+    testInfo.skip(
+      !reachable,
+      "Needs Formbricks Hub and Cube (HUB_API_URL, CUBEJS_API_URL); CI starts neither."
+    );
   });
 
   test("a filter narrows every chart, and a chart whose dataset lacks the field says so", async ({

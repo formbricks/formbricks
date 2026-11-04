@@ -309,7 +309,7 @@ export const groupRareEmbeddedKeys = (rareKeys: readonly string[]): string[][] =
   for (const keys of classes) {
     let bucket: string[] = [];
     let bytes = 0;
-    for (const key of keys.sort(byHashThenKey)) {
+    for (const key of [...keys].sort(byHashThenKey)) {
       const keyBytes = getEmbeddedKeyTokenBytes(key);
       if (bucket.length >= MAX_RARE_EMBEDDED_KEYS || bytes + keyBytes > MAX_RARE_EMBEDDED_KEYS_BYTES) {
         buckets.push(bucket);

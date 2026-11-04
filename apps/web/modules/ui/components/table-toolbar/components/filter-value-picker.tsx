@@ -20,6 +20,20 @@ import type { TFilterOption, TFilterProperty } from "../lib/types";
 const SEARCH_DEBOUNCE_MS = 250;
 
 /**
+ * Whether what is typed can be taken as a value of its own: the property takes free values (not an enum),
+ * it is a number where a number is due, and the list does not already hold it.
+ */
+const isNewTypedValue = (
+  property: TFilterProperty,
+  typed: string,
+  listed: readonly TFilterOption[]
+): boolean =>
+  property.valueType !== "enum" &&
+  typed.length > 0 &&
+  (property.valueType !== "number" || Number.isFinite(Number(typed))) &&
+  !listed.some((option) => option.value === typed);
+
+/**
  * One value of an Advanced filter rule, picked from the property's values: its fixed `options`, or the
  * values `loadOptions` looks up one search at a time. A property whose values are free (a string or a
  * number) also takes what is typed, offered as the list's first row; an enum takes only a listed value.
@@ -62,12 +76,7 @@ export const FilterValuePicker = ({
   const listed: TFilterOption[] = loadOptions
     ? (loaded.data?.options ?? [])
     : staticOptions.filter((option) => option.label.toLowerCase().includes(needle.toLowerCase()));
-  const acceptsTyped = property.valueType !== "enum";
-  const typedIsNew =
-    acceptsTyped &&
-    needle.length > 0 &&
-    (property.valueType !== "number" || Number.isFinite(Number(needle))) &&
-    !listed.some((option) => option.value === needle);
+  const typedIsNew = isNewTypedValue(property, needle, listed);
   const isLoading = Boolean(loadOptions) && loaded.isLoading;
   const isSearching = Boolean(loadOptions) && (loaded.isFetching || needle !== debouncedSearch);
   const selectedLabel = staticOptions.find((option) => option.value === value)?.label ?? value;

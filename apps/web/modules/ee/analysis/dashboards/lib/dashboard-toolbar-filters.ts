@@ -63,6 +63,12 @@ const getFixedValueOptions = (field: string, t: TFunction): TFilterOption[] | un
   return undefined;
 };
 
+/** How the toolbar takes a catalog field's values: a number, a day, or text. */
+const TOOLBAR_VALUE_TYPE: Partial<Record<string, TFilterProperty["valueType"]>> = {
+  number: "number",
+  time: "date",
+};
+
 /** The fields whose values are a fixed set: quick filters of the Filter menu. */
 const QUICK_FIELDS: ReadonlySet<string> = new Set([
   SENTIMENT_DIMENSION_ID,
@@ -198,8 +204,6 @@ export const buildToolbarProperties = ({
             },
           ];
         }
-        const valueType: TFilterProperty["valueType"] =
-          definition.type === "number" ? "number" : definition.type === "time" ? "date" : "string";
-        return [{ ...shared, valueType }];
+        return [{ ...shared, valueType: TOOLBAR_VALUE_TYPE[definition.type] ?? "string" }];
       })
     );

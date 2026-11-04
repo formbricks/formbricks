@@ -76,7 +76,7 @@ export const reserveV3OperationRateLimit = async ({
   requested: number;
 }): Promise<{ refused: Response } | { settle: (used: number) => Promise<void> }> => {
   const principal = getV3RateLimitPrincipal(authentication);
-  if (!principal || requested <= 0) return { settle: async () => undefined };
+  if (!principal || requested <= 0) return { settle: () => Promise.resolve() };
 
   try {
     const reservation = await reserveRateLimitUsage(config, principal, requested);

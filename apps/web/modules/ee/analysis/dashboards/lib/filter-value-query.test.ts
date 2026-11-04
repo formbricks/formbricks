@@ -665,7 +665,7 @@ describe("answer rules in the merged value queries", () => {
 
     const queries = buildFilterValueQueries(input(charts));
 
-    expect(queries.length).toBe(2);
+    expect(queries).toHaveLength(2);
     for (const { query } of queries) expect(countAnswers(query.filters)).toBeLessThanOrEqual(5);
     expect(queries.reduce((sum, { query }) => sum + countAnswers(query.filters), 0)).toBe(6);
   });
@@ -675,7 +675,7 @@ describe("answer rules in the merged value queries", () => {
       input([chart("ds_a", answerRules("q1", 6)), chart("ds_a", [{ member: PRODUCT, operator: "set" }])])
     );
 
-    expect(queries.length).toBe(1);
+    expect(queries).toHaveLength(1);
     expect(countAnswers(queries[0].query.filters)).toBe(0);
   });
 
@@ -684,7 +684,7 @@ describe("answer rules in the merged value queries", () => {
       input([chart("ds_a", answerRules("q1", 2)), chart("ds_a", answerRules("q2", 3))])
     );
 
-    expect(queries.length).toBe(1);
+    expect(queries).toHaveLength(1);
     expect(countAnswers(queries[0].query.filters)).toBe(5);
   });
 });

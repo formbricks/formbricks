@@ -11,7 +11,7 @@ import { collectEmbeddedMemberNames } from "./embedded-data-fields";
 export const createRequestEmbeddedKeys = (scopeOf: (datasetId: string) => TEmbeddedKeysScope) => {
   const resolved = new Map<string, Promise<string[]>>();
   return (datasetId: string, query: unknown): Promise<string[]> => {
-    const members = [...new Set(collectEmbeddedMemberNames(query))].sort();
+    const members = [...new Set(collectEmbeddedMemberNames(query))].sort((a, b) => a.localeCompare(b));
     const key = JSON.stringify([datasetId, members]);
     let keys = resolved.get(key);
     if (!keys) {
