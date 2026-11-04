@@ -7,6 +7,7 @@ import {
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
   type TExpressionTypeIssue,
+  type TExpressionValueType,
   getElementExpressionType,
   getSetValueExpressionIssues,
 } from "@formbricks/types/surveys/expression-types";
@@ -49,6 +50,8 @@ export interface TFormulaReference {
   usable: boolean;
   /** For a question: the block it is on, to offer only answers given by the time the step runs. */
   blockIdx?: number;
+  /** For a usable question: what its answer is in a formula. */
+  valueType?: TExpressionValueType;
 }
 
 const PLAIN_TOKEN = /^\w+$/;
@@ -75,12 +78,14 @@ export const getFormulaReferences = (survey: TSurvey): TFormulaReference[] => {
 
   survey.blocks.forEach((block, blockIdx) => {
     block.elements.forEach((element: TSurveyElement) => {
+      const valueType = getElementExpressionType(element);
       add({
         token: ("code" in element && element.code) || element.id,
         leaf: { type: "element", value: element.id },
         group: "question",
-        usable: getElementExpressionType(element) !== undefined,
+        usable: valueType !== undefined,
         blockIdx,
+        ...(valueType ? { valueType } : {}),
       });
     });
   });
@@ -180,6 +185,41 @@ export const oneStepToFormula = (action: {
     default:
       return operand;
   }
+};
+
+// ---- Help -----------------------------------------------------------------------------------------
+
+/** The functions the box offers as chips: the four arithmetic ones are written with `+ - * /`. */
+export const FORMULA_CHIP_FUNCTIONS = EXPRESSION_FUNCTIONS.filter(
+  (fn): fn is Exclude<TExpressionFunction, "add" | "subtract" | "multiply" | "divide"> =>
+    !["add", "subtract", "multiply", "divide"].includes(fn)
+);
+export type TFormulaChipFunction = (typeof FORMULA_CHIP_FUNCTIONS)[number];
+
+/** Each chip's example in its tooltip. Formula text, so the same in every language. */
+export const FORMULA_FUNCTION_EXAMPLES: Record<TFormulaChipFunction, string> = {
+  round: "round(@q1 * 20)",
+  min: "min(@q1, @q2)",
+  max: "max(@q1, @q2)",
+  abs: "abs(@q1 - @q2)",
+  ifEmpty: "ifEmpty(@q1, 0)",
+  concat: 'concat("segment-", @q1)',
+  now: "now()",
+  daysBetween: "daysBetween(@q1, now())",
+};
+
+/**
+ * The example in the empty box's placeholder: a score from the first number question answered by the
+ * time the step runs, so it reads as this survey's own formula, or a generic one when there is none.
+ */
+export const getFormulaExample = (references: TFormulaReference[], scopeBlockIdx: number): string => {
+  const numberQuestion = references.find(
+    (reference) =>
+      reference.group === "question" &&
+      reference.valueType === "number" &&
+      (reference.blockIdx ?? 0) <= scopeBlockIdx
+  );
+  return `round(${formatReferenceToken(numberQuestion?.token ?? "q1")} * 20)`;
 };
 
 // ---- Insertion ----------------------------------------------------------------------------------

@@ -6,14 +6,18 @@ import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import type { TExpressionTypeIssue } from "@formbricks/types/surveys/expression-types";
-import { EXPRESSION_FUNCTIONS, type TExpression } from "@formbricks/types/surveys/expressions";
+import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
+  FORMULA_CHIP_FUNCTIONS,
+  FORMULA_FUNCTION_EXAMPLES,
   FORMULA_MAX_LENGTH,
+  type TFormulaChipFunction,
   type TFormulaError,
   type TFormulaReference,
   formatFormula,
   formatReferenceToken,
+  getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
   getFunctionSnippet,
@@ -31,6 +35,9 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Textarea } from "@/modules/ui/components/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+
+const SET_VALUE_DOCS_URL = "https://formbricks.com/docs/surveys/general-features/set-value";
 
 interface SetValueFormulaProps {
   readonly id: string;
@@ -186,6 +193,28 @@ export function SetValueFormula({
     }
   };
 
+  /** What a function chip does, for its tooltip. Literal keys, so the translation scan sees them. */
+  const describeFunction = (fn: TFormulaChipFunction): string => {
+    switch (fn) {
+      case "round":
+        return t("workspace.surveys.edit.flow.formula_function_round");
+      case "min":
+        return t("workspace.surveys.edit.flow.formula_function_min");
+      case "max":
+        return t("workspace.surveys.edit.flow.formula_function_max");
+      case "abs":
+        return t("workspace.surveys.edit.flow.formula_function_abs");
+      case "ifEmpty":
+        return t("workspace.surveys.edit.flow.formula_function_if_empty");
+      case "concat":
+        return t("workspace.surveys.edit.flow.formula_function_concat");
+      case "now":
+        return t("workspace.surveys.edit.flow.formula_function_now");
+      case "daysBetween":
+        return t("workspace.surveys.edit.flow.formula_function_days_between");
+    }
+  };
+
   /** The save check's problem (the shared validator's), worded in the author's language. */
   const describeFormulaIssue = (issue: TExpressionTypeIssue): string => {
     const params = issue.params ?? {};
@@ -270,7 +299,10 @@ export function SetValueFormula({
           rows={2}
           spellCheck={false}
           className="min-h-10 bg-white font-mono"
-          placeholder={t("workspace.surveys.edit.flow.formula_placeholder")}
+          placeholder={t("workspace.surveys.edit.flow.formula_placeholder", {
+            example: getFormulaExample(references, scopeBlockIdx),
+          })}
+          aria-describedby={`${id}-hint`}
           aria-label={t("workspace.surveys.edit.flow.formula")}
           aria-invalid={problem ? true : undefined}
           isInvalid={Boolean(problem)}
@@ -328,23 +360,41 @@ export function SetValueFormula({
         </DropdownMenu>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.formula_functions")}</span>
-        {EXPRESSION_FUNCTIONS.filter((fn) => !["add", "subtract", "multiply", "divide"].includes(fn)).map(
-          (fn) => (
-            <button
-              key={fn}
-              type="button"
-              className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 hover:bg-slate-100"
-              onClick={() => {
-                const snippet = getFunctionSnippet(fn);
-                insertAtCursor(snippet.text, { cursorOffset: snippet.cursorOffset });
-              }}>
-              {fn}()
-            </button>
-          )
-        )}
-      </div>
+      <p id={`${id}-hint`} className="text-xs text-slate-500">
+        {t("workspace.surveys.edit.flow.formula_hint")}{" "}
+        <a
+          href={SET_VALUE_DOCS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">
+          {t("common.learn_more")}
+        </a>
+      </p>
+
+      <TooltipProvider delayDuration={300}>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.formula_functions")}</span>
+          {FORMULA_CHIP_FUNCTIONS.map((fn) => (
+            <Tooltip key={fn}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 hover:bg-slate-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+                  onClick={() => {
+                    const snippet = getFunctionSnippet(fn);
+                    insertAtCursor(snippet.text, { cursorOffset: snippet.cursorOffset });
+                  }}>
+                  {fn}()
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64 text-xs">
+                <p>{describeFunction(fn)}</p>
+                <p className="mt-1 font-mono text-slate-500">{FORMULA_FUNCTION_EXAMPLES[fn]}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
 
       {problem && (
         <p className="text-xs text-red-600" role="alert">
