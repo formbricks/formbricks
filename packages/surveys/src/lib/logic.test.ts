@@ -2266,3 +2266,79 @@ describe("ranking conditions on option ids (T21, ENG-6937)", () => {
     );
   });
 });
+
+/**
+ * ENG-6935: a date field set by `now()` holds a full UTC timestamp. Conditions on it read the time
+ * against another timestamp, and the day against a date picked in the editor (`compareDateValues`).
+ */
+describe("conditions on a date field holding a timestamp (ENG-6935)", () => {
+  const CHECKED_IN = "checkedin000000000000001";
+  const FOLLOW_UP = "followup0000000000000001";
+  const NOW_VALUE = "2026-11-04T10:12:30.000Z";
+
+  const dateField = (storageKey: string, name: string) => ({
+    field: {
+      key: null,
+      name,
+      source: "computed" as const,
+      dataType: "date" as const,
+      defaultValue: null,
+      locked: false,
+    },
+    link: { storageKey },
+  });
+  const survey = {
+    id: "datesurvey00000000000001",
+    name: "Survey",
+    type: "link",
+    status: "inProgress",
+    welcomeCard: { enabled: false },
+    questions: [],
+    blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+    endings: [],
+    variables: [],
+    embeddedFields: [dateField(CHECKED_IN, "checked_in_at"), dateField(FOLLOW_UP, "follow_up_at")],
+    hiddenFields: { enabled: true, fieldIds: [] },
+    languages: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const variables = { [CHECKED_IN]: NOW_VALUE, [FOLLOW_UP]: "2026-11-04T09:00:00.000Z" };
+  const check = (operator: TSingleCondition["operator"], right: TSingleCondition["rightOperand"]): boolean =>
+    evaluateLogic(
+      survey,
+      {},
+      variables,
+      {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            leftOperand: { type: "variable", value: CHECKED_IN },
+            operator,
+            rightOperand: right,
+          },
+        ],
+      },
+      "default"
+    );
+  const day = (value: string) => ({ type: "static" as const, value });
+
+  test("against a picked date, the timestamp is that day: not after it, not before it, equal to it", () => {
+    expect(check("isAfter", day("2026-11-03"))).toBe(true);
+    expect(check("isAfter", day("2026-11-04"))).toBe(false);
+    expect(check("isBefore", day("2026-11-05"))).toBe(true);
+    expect(check("isBefore", day("2026-11-04"))).toBe(false);
+    expect(check("equals", day("2026-11-04"))).toBe(true);
+    expect(check("doesNotEqual", day("2026-11-04"))).toBe(false);
+    expect(check("equals", day("2026-11-03"))).toBe(false);
+  });
+
+  test("against another timestamp, the time counts", () => {
+    expect(check("isAfter", day("2026-11-04T10:00:00.000Z"))).toBe(true);
+    expect(check("isBefore", day("2026-11-04T11:00:00.000Z"))).toBe(true);
+    expect(check("isAfter", { type: "variable", value: FOLLOW_UP })).toBe(true);
+    expect(check("isBefore", { type: "variable", value: FOLLOW_UP })).toBe(false);
+    expect(check("equals", { type: "variable", value: FOLLOW_UP })).toBe(false);
+  });
+});

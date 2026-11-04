@@ -508,6 +508,26 @@ describe("Embedded Data", () => {
     expect(byName).toMatchObject({ ed_outcome: "x", visits: 7, vip: "true", score: 12, outcome: null });
     expect(builder.columns.find((c) => c.name === "visits")?.embedded).toMatchObject({ type: "number" });
   });
+
+  test("a date field set by now() exports its full ISO timestamp, time included (ENG-6935)", () => {
+    const embeddedFields = [
+      field("checked_in_at", "date", "computed", "k5"),
+      field("signup_date", "date", "ingested", "k6"),
+    ] as unknown as TAnalysisSurvey["embeddedFields"];
+    const builder = createAnalysisRowBuilder({
+      survey: surveyWith([colors], { embeddedFields }),
+      answers: "codes",
+      fields: { embeddedData: true },
+    });
+    const row = builder.buildRow(
+      response({ k6: "2026-11-01" }, { variables: { k5: "2026-11-04T10:12:30.000Z" } }),
+      () => {}
+    );
+    const byName = Object.fromEntries(builder.columns.map((c, i) => [c.name, row.codes?.[i]]));
+    // The export's date contract is the stored ISO value: a day stays a day, a timestamp keeps its time.
+    expect(byName).toMatchObject({ checked_in_at: "2026-11-04T10:12:30.000Z", signup_date: "2026-11-01" });
+    expect(builder.columns.find((c) => c.name === "checked_in_at")?.embedded).toMatchObject({ type: "date" });
+  });
 });
 
 describe("column names", () => {

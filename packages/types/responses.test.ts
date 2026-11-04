@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
+  ZClientResponseInput,
+  ZClientResponseUpdateInput,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseMeta,
@@ -128,6 +130,30 @@ describe("ZResponseUpdate.meta", () => {
     });
 
     expect(parsed.meta).toStrictEqual({ pagePath: "/checkout" });
+  });
+});
+
+describe("variables: a date field set by now() (ENG-6935)", () => {
+  // The renderer stores now() as a full UTC timestamp. No boundary may read a date variable as a
+  // calendar day and refuse or cut the time off.
+  const variables = { checkedinat0000000000001: "2026-11-04T10:12:30.000Z" };
+
+  test("the client create and update inputs keep the timestamp as sent", () => {
+    const created = ZClientResponseInput.parse({
+      workspaceId: "clx0000000000000000000w1",
+      surveyId: "clx0000000000000000000s2",
+      finished: false,
+      data: {},
+      variables,
+    });
+    const updated = ZClientResponseUpdateInput.parse({ finished: false, data: {}, variables });
+
+    expect(created.variables).toStrictEqual(variables);
+    expect(updated.variables).toStrictEqual(variables);
+  });
+
+  test("the stored response keeps it too", () => {
+    expect(ZResponseUpdate.parse({ finished: true, data: {}, variables }).variables).toStrictEqual(variables);
   });
 });
 

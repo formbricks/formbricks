@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { displayEmbeddedValue } from "./value-display";
+import { displayEmbeddedFieldValue, displayEmbeddedValue } from "./value-display";
 
 describe("displayEmbeddedValue", () => {
   test("shows a stored number, which is the value that used to disappear", () => {
@@ -40,5 +40,28 @@ describe("displayEmbeddedValue", () => {
   test("nothing to show for a number that cannot be written down", () => {
     expect(displayEmbeddedValue(Number.NaN)).toBeNull();
     expect(displayEmbeddedValue(Number.POSITIVE_INFINITY)).toBeNull();
+  });
+});
+
+describe("displayEmbeddedFieldValue: a stored value as its field's type reads (P65)", () => {
+  test("a date field set by now() keeps its time, with the stored value as the tooltip", () => {
+    expect(displayEmbeddedFieldValue("2026-11-04T10:12:30.000Z", "date", "en-GB", "UTC")).toEqual({
+      text: "4 Nov 2026, 10:12",
+      title: "2026-11-04T10:12:30.000Z",
+    });
+  });
+
+  test("a date field holding a day reads as that day", () => {
+    expect(displayEmbeddedFieldValue("2026-11-04", "date", "en-US", "Pacific/Honolulu")).toEqual({
+      text: "Nov 4, 2026",
+      title: "2026-11-04",
+    });
+  });
+
+  test("anything else reads as displayEmbeddedValue has it", () => {
+    expect(displayEmbeddedFieldValue("not a date", "date", "en-US")).toEqual({ text: "not a date" });
+    expect(displayEmbeddedFieldValue("2026-11-04", "string", "en-US")).toEqual({ text: "2026-11-04" });
+    expect(displayEmbeddedFieldValue(42, "number", "en-US")).toEqual({ text: "42" });
+    expect(displayEmbeddedFieldValue(undefined, "date", "en-US")).toBeNull();
   });
 });
