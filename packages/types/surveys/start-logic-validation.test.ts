@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
 import type { TSingleCondition } from "./logic";
 import { SURVEY_FLOW_FIXTURE_IDS, surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
-import { type TSurvey, ZSurvey } from "./types";
+import { MAX_START_LOGIC_RULES, type TSurvey, ZSurvey } from "./types";
 
 /**
  * Rules before the first question (ENG-6932, json-shapes.md section 4). They run before any answer
@@ -183,6 +183,19 @@ describe("rules before the first question", () => {
     expectIssues(issues, [
       [["startLogic", 0, "actions", 0, "variableId"], ""],
       [["startLogic", 0, "actions", 1, "value"], "answer"],
+    ]);
+  });
+
+  test("holds at most MAX_START_LOGIC_RULES rules, on every write path (the shared schema)", () => {
+    const rules = (count: number) =>
+      Array.from({ length: count }, (_unused, idx) => ({
+        ...rule([jump(ids.blocks.concept)]),
+        id: `startrule${String(idx).padStart(15, "0")}`,
+      }));
+
+    expect(issuesOf(withStartLogic(rules(MAX_START_LOGIC_RULES)))).toEqual([]);
+    expect(issuesOf(withStartLogic(rules(MAX_START_LOGIC_RULES + 1))).map((issue) => issue.path)).toEqual([
+      ["startLogic"],
     ]);
   });
 

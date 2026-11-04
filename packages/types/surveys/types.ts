@@ -944,6 +944,12 @@ export const ZSurveyInlineTriggers = z.object({
 
 export type TSurveyInlineTriggers = z.infer<typeof ZSurveyInlineTriggers>;
 
+/**
+ * Rules before the first question a survey may hold (ENG-6932). A screener has a handful; a ceiling,
+ * not a target. New in 6.2, so no stored survey exceeds it. The v3 API advertises the same number.
+ */
+export const MAX_START_LOGIC_RULES = 100;
+
 export const ZSurveyBase = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
@@ -1106,7 +1112,7 @@ export const ZSurveyBase = z.object({
    * to a block, screen out by jumping to an ending, and set a value; `surveyRefinement` refuses the
    * rest. Nullish: `null` (the column default) and a missing key both mean none.
    */
-  startLogic: z.array(ZSurveyBlockLogic).nullish(),
+  startLogic: z.array(ZSurveyBlockLogic).max(MAX_START_LOGIC_RULES).nullish(),
 });
 
 /**

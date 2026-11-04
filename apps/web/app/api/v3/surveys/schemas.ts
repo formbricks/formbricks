@@ -6,6 +6,7 @@ import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { ZSurveyBlockLogic, ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import { EXPRESSION_MAX_DEPTH } from "@formbricks/types/surveys/expressions";
 import {
+  MAX_START_LOGIC_RULES,
   type TSurveyType,
   ZSurveyDisplayOption,
   ZSurveyEndings,
@@ -1220,7 +1221,7 @@ export const V3_SURVEY_MAX_LANGUAGES = 50;
 export const V3_SURVEY_MAX_HIDDEN_FIELDS = 200;
 export const V3_SURVEY_MAX_TRIGGERS = 50;
 /** Rules before the first question (ENG-6932). A screener has a handful; this is a ceiling, not a target. */
-export const V3_SURVEY_MAX_START_LOGIC_RULES = 100;
+export const V3_SURVEY_MAX_START_LOGIC_RULES = MAX_START_LOGIC_RULES;
 /** Typed Embedded Data fields on one survey (ENG-6930). */
 export const V3_SURVEY_MAX_EMBEDDED_FIELDS = 300;
 
