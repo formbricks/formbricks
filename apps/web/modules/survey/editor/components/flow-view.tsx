@@ -85,8 +85,6 @@ interface FlowViewProps {
   readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   readonly invalidElements: string[] | null;
   readonly setInvalidElements: Dispatch<SetStateAction<string[] | null>>;
-  /** Switches to the Questions tab with this question or ending open. */
-  readonly onEditOnQuestionsTab: (id: string) => void;
   /** The saved survey, for the published lock: copying options keeps the options that existed at launch. */
   readonly persistedSurvey?: TSurvey;
   /**
@@ -123,7 +121,6 @@ export const FlowView = ({
   setLocalSurvey,
   invalidElements,
   setInvalidElements,
-  onEditOnQuestionsTab,
   persistedSurvey,
   expandedBlockIds,
   setExpandedBlockIds,
@@ -701,35 +698,14 @@ export const FlowView = ({
           {outline.endings.map((row) => {
             const ending = localSurvey.endings[row.endingIdx];
             const label = getEndingLabel(ending, localSurvey, t);
-            const rowId = `ending-${row.id}`;
+            // An ending is edited on the Questions tab; here it only shows where the flow ends.
             return (
               <FlowOutlineRow
                 key={row.id}
                 id={`flow-${row.id}`}
                 tone="ending"
                 icon={<EndingTypeIcon type={ending.type} />}
-                isInvalid={invalidElements?.includes(row.id) ?? false}
-                onToggle={() => toggleRow(rowId)}
-                isOpen={openRowId === rowId}
-                details={
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-700">
-                    <span>
-                      {row.type === "redirectToUrl"
-                        ? t("workspace.surveys.edit.flow.ending_redirect", { url: row.url ?? "" })
-                        : t("workspace.surveys.edit.flow.ending_card", { label })}
-                      <span className="block text-xs text-slate-500">
-                        {t("workspace.surveys.edit.flow.ending_edit_hint")}
-                      </span>
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => onEditOnQuestionsTab(row.id)}>
-                      {t("workspace.surveys.edit.flow.edit_on_questions_tab")}
-                    </Button>
-                  </div>
-                }>
+                isInvalid={invalidElements?.includes(row.id) ?? false}>
                 <span className="text-sm font-semibold text-red-700">
                   {t("workspace.surveys.edit.flow.end_label", { label })}
                 </span>

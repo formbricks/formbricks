@@ -177,10 +177,6 @@ export const SurveyEditor = ({
     if (activeView === "flow") markFlowTabSeen();
   }, [activeView]);
   const showLogicMovedNotice = !hasSeenFlowInBrowser && !hasOpenedFlow;
-  const openOnQuestionsTab = useCallback((id: string) => {
-    setActiveView("elements");
-    setActiveElementId(id);
-  }, []);
   // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
   // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
   // prompt, and that comparison short-circuits on differing key counts. The inlined
@@ -418,7 +414,6 @@ export const SurveyEditor = ({
               setLocalSurvey={setLocalSurveyNonNull}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
-              onEditOnQuestionsTab={openOnQuestionsTab}
               persistedSurvey={survey}
               expandedBlockIds={flowExpandedBlockIds}
               setExpandedBlockIds={setFlowExpandedBlockIds}
