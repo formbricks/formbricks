@@ -48,6 +48,10 @@ interface LogicEditorActionsProps {
   readonly isLast?: boolean;
 }
 
+/** A Set value action written as a formula (ENG-6935), shown with the formula box. */
+const isFormulaAction = (action: TSurveyBlockLogicAction) =>
+  action.objective === "calculate" && action.value.type === "expression";
+
 export function LogicEditorActions({
   localSurvey,
   actions,
@@ -122,6 +126,44 @@ export function LogicEditorActions({
     return objectiveOptions.filter((option) => allowed.has(String(option.value)));
   };
 
+  /** An action's ⋮ menu. A formula action shows it beside the formula's @ button, on the box's top line. */
+  const renderActionMenu = (idx: number) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger id={`actions-${idx}-dropdown`} asChild>
+        <Button variant="outline" className="flex size-10 items-center justify-center rounded-md bg-white">
+          <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent>
+        <DropdownMenuItem
+          onClick={() => {
+            handleActionsChange("addBelow", idx);
+          }}
+          icon={<PlusIcon className="size-4" />}>
+          {t("workspace.surveys.edit.add_action_below")}
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          disabled={actions.length === 1}
+          onClick={() => {
+            handleActionsChange("remove", idx);
+          }}
+          icon={<TrashIcon className="size-4" />}>
+          {t("common.remove")}
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => {
+            handleActionsChange("duplicate", idx);
+          }}
+          icon={<CopyIcon className="size-4" />}>
+          {t("common.duplicate")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="flex grow flex-col gap-2">
       <div className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">
@@ -130,11 +172,13 @@ export function LogicEditorActions({
 
       <div className={cn("flex grow flex-col gap-y-2 last:pb-3", isLast && "border-b border-slate-200")}>
         {actions?.map((action, idx) => (
-          <div className="flex items-center gap-x-2" key={action.id}>
-            <div className="flex w-10 shrink-0 items-center justify-end">
+          <div className="flex items-start gap-x-2" key={action.id}>
+            {/* Top-aligned: a formula action is taller than one line, and its arrow and controls start
+                on its first line like every other action's. */}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-end">
               <CornerDownRightIcon className="size-4 shrink-0 text-slate-500" />
             </div>
-            <div key={action.id} className="flex grow items-center justify-between gap-x-2">
+            <div key={action.id} className="flex grow items-start justify-between gap-x-2">
               <div className={cn("grid flex-1 grid-cols-12 gap-x-2")}>
                 <div
                   className={cn(
@@ -205,6 +249,7 @@ export function LogicEditorActions({
                         variableId={action.variableId}
                         expression={action.value.value}
                         scopeBlockIdx={scopeBlockIdx}
+                        actionMenu={renderActionMenu(idx)}
                         onExpressionChange={(expression) =>
                           handleValuesChange(idx, {
                             operator: "assign",
@@ -322,42 +367,7 @@ export function LogicEditorActions({
                   </>
                 )}
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger id={`actions-${idx}-dropdown`} asChild>
-                  <Button
-                    variant="outline"
-                    className="flex size-10 items-center justify-center rounded-md bg-white">
-                    <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
-                  </Button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      handleActionsChange("addBelow", idx);
-                    }}
-                    icon={<PlusIcon className="size-4" />}>
-                    {t("workspace.surveys.edit.add_action_below")}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    disabled={actions.length === 1}
-                    onClick={() => {
-                      handleActionsChange("remove", idx);
-                    }}
-                    icon={<TrashIcon className="size-4" />}>
-                    {t("common.remove")}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={() => {
-                      handleActionsChange("duplicate", idx);
-                    }}
-                    icon={<CopyIcon className="size-4" />}>
-                    {t("common.duplicate")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {!isFormulaAction(action) && renderActionMenu(idx)}
             </div>
           </div>
         ))}

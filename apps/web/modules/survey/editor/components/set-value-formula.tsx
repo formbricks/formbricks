@@ -1,7 +1,7 @@
 "use client";
 
 import { AtSignIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
@@ -48,6 +48,8 @@ interface SetValueFormulaProps {
   /** The block the step runs after; answers from later blocks are not offered by `@`. */
   readonly scopeBlockIdx: number;
   readonly onExpressionChange: (expression: TExpression) => void;
+  /** The action's ⋮ menu, beside the @ button on the box's top line. */
+  readonly actionMenu?: ReactNode;
 }
 
 const isEmptyFormula = (expression: TExpression) => expression.type === "static" && expression.value === "";
@@ -88,6 +90,7 @@ export function SetValueFormula({
   expression,
   scopeBlockIdx,
   onExpressionChange,
+  actionMenu,
 }: SetValueFormulaProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -396,7 +399,7 @@ export function SetValueFormula({
             <Button
               type="button"
               variant="secondary"
-              size="sm"
+              className="size-10 shrink-0"
               title={t("workspace.surveys.edit.flow.formula_insert_reference")}
               aria-label={t("workspace.surveys.edit.flow.formula_insert_reference")}>
               <AtSignIcon />
@@ -411,6 +414,7 @@ export function SetValueFormula({
             <ReferenceMenuItems groups={groups} onPick={pickReference} />
           </DropdownMenuContent>
         </DropdownMenu>
+        {actionMenu}
       </div>
 
       <p id={`${id}-hint`} className="text-xs text-slate-500">
