@@ -9566,7 +9566,7 @@ components:
 
         **A library field** is linked by its `key` alone: the server fills in the definition the workspace library holds, and replaces any definition sent with it, because the workspace owns it. Its `storageKey` defaults to the address the survey already links it at, else to a new cuid2 (computed) or the key (ingested). A `key` the workspace library does not have is refused with **400** at `embeddedFields.<i>.key`; a `source` that contradicts the library's at `.source`.
 
-        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`, `number` or `date` (a computed date is stored as an ISO 8601 UTC string and is left out of the legacy `variables`); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`).
+        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`, `number` or `date` (a computed date is stored as an ISO 8601 UTC string and is left out of the legacy `variables`); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`). No text value may contain a NULL byte (`\u0000`).
       properties:
         storageKey:
           type: string
@@ -9576,10 +9576,12 @@ components:
             - string
             - 'null'
           minLength: 1
+          maxLength: 255
           description: A workspace library key, to link that library field.
         name:
           type: string
           minLength: 1
+          maxLength: 255
         source:
           type: string
           enum:
@@ -9598,6 +9600,8 @@ components:
             - number
             - boolean
             - 'null'
+          maxLength: 1000
+          description: A text default is at most 1000 characters.
         locked:
           type: boolean
       additionalProperties: false
