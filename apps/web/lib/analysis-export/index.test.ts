@@ -16,7 +16,7 @@ vi.mock("@/lib/survey/service", () => ({ getSurvey: vi.fn() }));
 vi.mock("../survey/service", () => ({ getSurvey: vi.fn() }));
 vi.mock("@/modules/storage/utils", () => ({
   resolveStorageUrlsInObject: (value: unknown) => value,
-  getSurveyFileUploadElementIds: () => new Set<string>(),
+  getSurveyUploadElementIds: () => ({ fileUpload: new Set<string>(), signature: new Set<string>() }),
 }));
 
 const survey = {

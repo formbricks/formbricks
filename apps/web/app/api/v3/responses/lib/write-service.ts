@@ -23,6 +23,7 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import {
   type TOutcomeScope,
   type TV3OutcomeChange,
@@ -585,6 +586,16 @@ export async function updateScopedResponse({
         return { ok: false as const, issues };
       }
 
+      // `data` replaces the stored data, so the image of a signature this patch drops or swaps is read off
+      // the row as it is inside this transaction, scoped like the update. Skipped without data.
+      const previous =
+        patch.data === undefined
+          ? null
+          : await tx.response.findFirst({
+              where: { id: responseId, survey: { workspaceId } },
+              select: { data: true },
+            });
+
       // Read in the transaction that writes it, so the change the cleanup follows is the change made here.
       const outcomeChanged =
         patch.outcome !== undefined &&
@@ -618,6 +629,15 @@ export async function updateScopedResponse({
         },
         select: v3QuotaEvaluationSelect,
       });
+
+      if (previous) {
+        // After the write, in its transaction: a patch that rolls back queues nothing.
+        await enqueueReplacedSignatureFileCleanup(
+          tx,
+          { surveyId: survey.id, previousData: previous.data, nextData: updated.data },
+          { bestEffort: false }
+        );
+      }
 
       // Evaluated on every patch, not only on one that finishes the response. For a quota with
       // `countPartialSubmissions: false` the link row is written only once the response is finished,

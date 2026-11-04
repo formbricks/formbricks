@@ -95,6 +95,39 @@ describe("storage service", () => {
       );
     });
 
+    // The write check for a Signature answer requires exactly this name (`fileNamePattern`), so the
+    // renaming here and the pattern in `uploadElementKinds` have to agree, and the per-kind size cap
+    // has to reach the presigned policy rather than stop at the route.
+    test("should store a signature upload under the name the Signature file name pattern requires, with the cap in the policy", async () => {
+      const { uploadElementKinds } = await import("./survey-upload-elements");
+      vi.mocked(randomUUID).mockReturnValue("0b8a4a3e-1111-4222-8333-444455556666");
+      vi.mocked(getSignedUploadUrl).mockResolvedValue({
+        ok: true,
+        data: { signedUrl: "https://s3.example.com/upload", presignedFields: {} },
+      } as MockedSignedUploadReturn);
+
+      const result = await getSignedUrlForUpload(
+        "signature.png",
+        "ws-1",
+        "image/png",
+        "private",
+        uploadElementKinds.signature.maxFileSizeBytes,
+        ["surveys", "survey-1", "elements", "sig-1"]
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const storedName = result.data.fileUrl.split("/").pop() ?? "";
+        expect(uploadElementKinds.signature.fileNamePattern.test(storedName)).toBe(true);
+      }
+      expect(getSignedUploadUrl).toHaveBeenCalledWith(
+        "signature--fid--0b8a4a3e-1111-4222-8333-444455556666.png",
+        "image/png",
+        "ws-1/private/surveys/survey-1/elements/sig-1",
+        1024 * 1024
+      );
+    });
+
     test("should return relative URL for private files", async () => {
       const mockSignedUrlResponse = {
         ok: true,

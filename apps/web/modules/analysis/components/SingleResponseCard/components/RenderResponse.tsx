@@ -17,6 +17,7 @@ import { PictureSelectionResponse } from "@/modules/ui/components/picture-select
 import { RankingResponse } from "@/modules/ui/components/ranking-response";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
+import { SignatureResponse } from "@/modules/ui/components/signature-response";
 
 interface RenderResponseProps {
   readonly responseData: TResponseDataValue;
@@ -26,6 +27,10 @@ interface RenderResponseProps {
   readonly locale: TUserLocale;
   readonly isExpanded?: boolean;
   readonly showId: boolean;
+  /** Layout of a Signature answer: `thumbnail` for table cells, `full` (large image and download) for the single response card. */
+  readonly signatureVariant?: "thumbnail" | "full";
+  /** The response the answer belongs to; names a downloaded signature. */
+  readonly responseId?: string;
 }
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({
@@ -36,6 +41,8 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   locale,
   isExpanded = true,
   showId,
+  signatureVariant = "thumbnail",
+  responseId,
 }) => {
   if (
     (typeof responseData === "string" && responseData === "") ||
@@ -90,6 +97,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.FileUpload:
       if (Array.isArray(responseData)) {
         return <FileUploadResponse selected={responseData} />;
+      }
+      break;
+    case TSurveyElementTypeEnum.Signature:
+      if (typeof responseData === "string") {
+        return <SignatureResponse value={responseData} variant={signatureVariant} responseId={responseId} />;
       }
       break;
     case TSurveyElementTypeEnum.Matrix:

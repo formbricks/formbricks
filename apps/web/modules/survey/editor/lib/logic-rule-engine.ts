@@ -145,6 +145,18 @@ export const getLogicRules = (t: TFunction) => {
       [TSurveyElementTypeEnum.FileUpload]: {
         options: [...getSubmissionOptions(t)],
       },
+      [TSurveyElementTypeEnum.Signature]: {
+        options: [
+          {
+            label: t("workspace.surveys.edit.is_signed"),
+            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
+          },
+          {
+            label: t("workspace.surveys.edit.is_not_signed"),
+            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
+          },
+        ],
+      },
       // T21 (ENG-6937): "was ranked" compares the ranked options by id, as a multi select does.
       [TSurveyElementTypeEnum.Ranking]: {
         options: [...getMultiSelectOptions(t), ...getSubmissionOptions(t)],

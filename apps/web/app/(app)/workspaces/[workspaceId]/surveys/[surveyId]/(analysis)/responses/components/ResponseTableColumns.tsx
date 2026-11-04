@@ -285,6 +285,7 @@ const getElementColumnsData = (
                 locale={locale}
                 isExpanded={isExpanded}
                 showId={false}
+                signatureVariant="thumbnail"
               />
             );
           },

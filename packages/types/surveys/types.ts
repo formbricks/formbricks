@@ -52,6 +52,7 @@ import {
   ZSurveyPictureSelectionElement,
   ZSurveyRankingElement,
   ZSurveyRatingElement,
+  ZSurveySignatureElement,
 } from "./elements";
 import { validateElementLabels } from "./elements-validation";
 import { type TExpressionTypeContext, getSetValueExpressionIssues } from "./expression-types";
@@ -140,6 +141,7 @@ export enum TSurveyQuestionTypeEnum {
   ContactInfo = "contactInfo",
   CSAT = "csat",
   CES = "ces",
+  Signature = "signature",
 }
 
 /**
@@ -690,6 +692,15 @@ export const ZSurveyFileUploadQuestion = ZSurveyCodedQuestionBase.extend({
  */
 export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion>;
 
+/** The v1 API shape of a Signature element; use ZSurveySignatureElement in new code. */
+export const ZSurveySignatureQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.Signature), // NOSONAR the v1 compatibility shape has to name the legacy enum member
+  allowTypedSignature: z.boolean().prefault(true),
+});
+
+/** The v1 API shape of a Signature element; use TSurveySignatureElement in new code. */
+export type TSurveySignatureQuestion = z.infer<typeof ZSurveySignatureQuestion>;
+
 /**
  * @deprecated Use ZSurveyCalElement instead. Kept for v1 API backward compatibility only.
  */
@@ -848,6 +859,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyContactInfoQuestion,
   ZSurveyCsatQuestion,
   ZSurveyCesQuestion,
+  ZSurveySignatureQuestion,
 ]);
 
 /**
@@ -886,6 +898,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.ContactInfo,
   TSurveyQuestionTypeEnum.CSAT,
   TSurveyQuestionTypeEnum.CES,
+  TSurveyQuestionTypeEnum.Signature, // NOSONAR the v1 compatibility list has to name the legacy enum member
 ]);
 
 /**
@@ -2307,6 +2320,7 @@ const isInvalidOperatorsForQuestionType = (
       }
       break;
     case TSurveyQuestionTypeEnum.FileUpload:
+    case TSurveyQuestionTypeEnum.Signature: // NOSONAR the legacy question switch has to name the legacy enum member
     case TSurveyQuestionTypeEnum.Address:
     case TSurveyQuestionTypeEnum.Ranking:
       if (!["isSubmitted", "isSkipped"].includes(operator)) {
@@ -3347,6 +3361,12 @@ const isInvalidOperatorsForElementType = (
         isInvalidOperator = true;
       }
       break;
+    case TSurveyElementTypeEnum.FileUpload:
+    case TSurveyElementTypeEnum.Signature:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
     case TSurveyElementTypeEnum.NPS:
     case TSurveyElementTypeEnum.Rating:
     case TSurveyElementTypeEnum.CSAT:
@@ -3378,11 +3398,6 @@ const isInvalidOperatorsForElementType = (
       break;
     case TSurveyElementTypeEnum.Cal:
       if (!["isBooked", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.FileUpload:
-      if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
@@ -4842,6 +4857,30 @@ export const ZSurveyElementSummaryFileUpload = z.object({
 
 export type TSurveyElementSummaryFileUpload = z.infer<typeof ZSurveyElementSummaryFileUpload>;
 
+export const ZSurveyElementSummarySignature = z.object({
+  type: z.literal(TSurveyElementTypeEnum.Signature),
+  element: ZSurveySignatureElement,
+  responseCount: z.number(),
+  signedCount: z.number(),
+  skippedCount: z.number(),
+  signatures: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.string(),
+      contact: z
+        .object({
+          id: ZId,
+          userId: z.string().optional(),
+        })
+        .nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyElementSummarySignature = z.infer<typeof ZSurveyElementSummarySignature>;
+
 export const ZSurveyElementSummaryCal = z.object({
   type: z.literal(TSurveyElementTypeEnum.Cal),
   element: ZSurveyCalElement,
@@ -4986,6 +5025,7 @@ export const ZSurveyElementSummary = z.union([
   ZSurveyElementSummaryConsent,
   ZSurveyElementSummaryDate,
   ZSurveyElementSummaryFileUpload,
+  ZSurveyElementSummarySignature,
   ZSurveyElementSummaryCal,
   ZSurveyElementSummaryMatrix,
   ZSurveyElementSummaryAddress,

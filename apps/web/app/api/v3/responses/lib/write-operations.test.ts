@@ -639,7 +639,7 @@ describe("file-upload answers", () => {
    * The survey has to DECLARE the file-upload element, or these tests prove nothing.
    *
    * With the default fixture — one `openText` called `q1` — the key `upload` is not publishable, so
-   * `planAnswerDataWrite` raises `unsupported_field` and the 422 arrives before `fileUploadIssues`
+   * `planAnswerDataWrite` raises `unsupported_field` and the 422 arrives before `uploadIssues`
    * is ever consulted. Both refusal tests then pass with the storage check deleted, which is the one
    * check here that carries a security property.
    */
@@ -680,6 +680,15 @@ describe("file-upload answers", () => {
     });
 
     expect(response.status).toBe(422);
+    // The reason a file-upload failure has always carried: it is part of the API's responses.
+    expect((await bodyOf(response)).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "data",
+        code: "invalid_reference",
+        reason:
+          "A file-upload answer references a file that does not belong to this survey's upload element.",
+      }),
+    ]);
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
@@ -691,6 +700,103 @@ describe("file-upload answers", () => {
 
     expect(mockValidateFileUploads).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: WORKSPACE_ID, surveyId: SURVEY_ID })
+    );
+  });
+
+  test("wiring: a signature answer is a single string and reaches the storage check", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [
+              { id: "q1", type: "openText", headline: { default: "Q1" } },
+              { id: "sig", type: "signature", headline: { default: "Sign" }, required: false },
+            ],
+          },
+        ],
+      })
+    );
+    const signatureUrl = `/storage/${WORKSPACE_ID}/private/surveys/${SURVEY_ID}/elements/sig/s--fid--abc.png`;
+
+    const response = await createV3Response({
+      ...params,
+      body: { surveyId: SURVEY_ID, finished: true, data: { sig: signatureUrl } } as never,
+    });
+
+    expect(response.status).toBe(201);
+    expect(mockValidateFileUploads).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { sig: signatureUrl }, workspaceId: WORKSPACE_ID, surveyId: SURVEY_ID })
+    );
+  });
+
+  test("wiring: a signature URL the storage check refuses is a 422 and nothing is stored", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [{ id: "sig", type: "signature", headline: { default: "Sign" }, required: false }],
+          },
+        ],
+      })
+    );
+    mockValidateFileUploads.mockReturnValueOnce(false);
+
+    const response = await createV3Response({
+      ...params,
+      body: {
+        surveyId: SURVEY_ID,
+        finished: true,
+        data: { sig: "/storage/other-ws/private/surveys/other/elements/sig/s.png" },
+      } as never,
+    });
+
+    expect(response.status).toBe(422);
+    expect((await bodyOf(response)).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "data",
+        code: "invalid_reference",
+        reason:
+          "A signature answer is malformed or references a file that does not belong to this survey's signature element.",
+      }),
+    ]);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  test("a bad file-upload answer next to a Signature keeps the file-upload reason, and the Signature is checked apart", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [
+              { id: "upload", type: "fileUpload", headline: { default: "Upload" } },
+              { id: "sig", type: "signature", headline: { default: "Sign" }, required: false },
+            ],
+          },
+        ],
+      })
+    );
+    mockValidateFileUploads.mockReturnValueOnce(false);
+
+    const response = await createV3Response({
+      ...params,
+      body: {
+        surveyId: SURVEY_ID,
+        finished: true,
+        data: { upload: ["bad"], sig: "/storage/ws/private/surveys/s/elements/sig/s--fid--abc.png" },
+      } as never,
+    });
+
+    expect(response.status).toBe(422);
+    expect((await bodyOf(response)).invalid_params[0].reason).toMatch(/^A file-upload answer/);
+    expect(mockValidateFileUploads).toHaveBeenCalledTimes(1);
+    expect(mockValidateFileUploads).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { upload: ["bad"] } })
     );
   });
 

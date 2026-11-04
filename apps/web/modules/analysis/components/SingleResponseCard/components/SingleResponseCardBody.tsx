@@ -118,6 +118,8 @@ export const SingleResponseCardBody = ({
                       language={response.language}
                       locale={locale}
                       showId={true}
+                      signatureVariant="full"
+                      responseId={response.id}
                     />
                   </div>
                 </div>

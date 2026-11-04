@@ -6,7 +6,7 @@ import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-fi
 import {
   collectResponseFileUrls,
   getStorageUrlSurveyId,
-  getSurveyFileUploadElementIds,
+  getSurveyUploadElementIds,
 } from "@/modules/storage/utils";
 
 /**
@@ -70,15 +70,16 @@ export const collectSurveyResponseFileUrls = async (
     return { fileUrls: [], workspaceId: undefined };
   }
 
-  const fileUploadElementIds = getSurveyFileUploadElementIds(survey);
+  const uploadElementIds = getSurveyUploadElementIds(survey);
 
   // Only the flat-key scan may skip on an empty set: a flat key is matched by element id, so with no
-  // current upload element it has nothing to match. The full scan (reset) runs anyway, because a survey
-  // whose only upload element was deleted still has answers holding keys filed under it. Those are bound
-  // to this survey by the key itself, not by the answer's shape, so the scan never reaches another
-  // survey's files. Reset cannot use a folder sweep instead: a respondent still filling in the survey has
-  // uploads whose response row does not exist yet, and a sweep would delete them.
-  if (flatKeysOnly && fileUploadElementIds.size === 0) {
+  // current File upload element it has nothing to match (a Signature never has a flat key). The full
+  // scan (reset) runs anyway, because a survey whose only upload element was deleted still has answers
+  // holding keys filed under it. Those are bound to this survey by the key itself, not by the answer's
+  // shape, so the scan never reaches another survey's files. Reset cannot use a folder sweep instead: a
+  // respondent still filling in the survey has uploads whose response row does not exist yet, and a sweep
+  // would delete them.
+  if (flatKeysOnly && uploadElementIds.fileUpload.size === 0) {
     return { fileUrls: [], workspaceId: survey.workspaceId };
   }
 
@@ -98,7 +99,7 @@ export const collectSurveyResponseFileUrls = async (
     }
 
     for (const response of responses) {
-      for (const fileUrl of collectResponseFileUrls(response.data, fileUploadElementIds, surveyId)) {
+      for (const fileUrl of collectResponseFileUrls(response.data, uploadElementIds, surveyId)) {
         if (!flatKeysOnly || getStorageUrlSurveyId(fileUrl) === null) fileUrls.push(fileUrl);
       }
     }
