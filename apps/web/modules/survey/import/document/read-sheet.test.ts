@@ -202,6 +202,17 @@ describe("readSheetDocument", () => {
       '<dimension ref="A1"/>'
     );
     expect(read(withCell("")).lines).toEqual([{ key: "R1", cells: [{ key: "A1", text: "Q1" }] }]);
+    // An error cell reads as empty, as SheetJS's own row reader reads it.
+    const withError = workbook(
+      { Sheet1: [["Q1"]] },
+      {
+        edit: (book) => {
+          book.Sheets.Sheet1[`${pastTheLimit}1`] = { t: "e", v: 0x2a, w: "#N/A" };
+          book.Sheets.Sheet1["!ref"] = `A1:${pastTheLimit}1`;
+        },
+      }
+    );
+    expect(read(withError).lines).toEqual([{ key: "R1", cells: [{ key: "A1", text: "Q1" }] }]);
     expect(refusal(() => read(withCell("extra")))).toMatchObject({
       code: "document_limit_exceeded",
       identifier: "columns",

@@ -9,13 +9,14 @@ import {
   runImportPlan,
 } from "../core/ai-plan";
 import { SurveyImportTimeoutError } from "../core/errors";
+import { collectPlanEntries, collectPlanSkips } from "../core/plan-checks";
 import type { TSurveyImportPipelineIssue } from "../core/report";
 import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
   SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
   SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS,
   SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS,
-  SURVEY_IMPORT_MAX_QUESTIONS,
+  SURVEY_IMPORT_PLANNING_STOP_QUESTIONS,
 } from "../limits";
 import { chunkDocumentLines } from "./chunks";
 import type { TDocumentModel } from "./model";
@@ -26,7 +27,13 @@ import {
   checkDocumentPlanResponses,
   mergeDocumentPlans,
 } from "./plan-checks";
-import { DOCUMENT_PLAN_ELEMENT_TYPES, ZDocumentImportPlanForAI } from "./plan-schema";
+import {
+  DOCUMENT_PLAN_ELEMENT_TYPES,
+  ZDocumentImportPlanEnvelope,
+  ZDocumentImportPlanForAI,
+  ZDocumentPlanEntry,
+  ZDocumentPlanSkip,
+} from "./plan-schema";
 import { buildDocumentPlanPrompt, buildDocumentPlanSystemPrompt } from "./prompt";
 
 /**
@@ -39,22 +46,19 @@ import { buildDocumentPlanPrompt, buildDocumentPlanSystemPrompt } from "./prompt
 const QUESTION_KINDS: ReadonlySet<string> = new Set(DOCUMENT_PLAN_ELEMENT_TYPES);
 
 /**
- * The lines an answer starts a question on: entries of an element kind (not a welcome card or an
- * ending), on a line the call was asked about. Read off the answer as the engine received it, which
- * the schema has already admitted.
+ * The lines an answer starts a question on, as its checks would first read them: one entry that parses,
+ * of an element kind (not a welcome card or an ending), on a line the call was asked about, and not
+ * also skipped. An entry the cell and verbatim checks then fail is still counted: those depend on the
+ * whole round, so the stop allows a margin (`SURVEY_IMPORT_PLANNING_STOP_QUESTIONS`).
  */
 export const documentQuestionRefs = (response: TImportPlanResponse): string[] => {
-  const { questions } = response.object as { questions?: unknown };
-  if (!Array.isArray(questions)) return [];
-  return questions.flatMap((entry: unknown) => {
-    const { ref, kind } = (entry ?? {}) as { ref?: unknown; kind?: unknown };
-    return typeof ref === "string" &&
-      typeof kind === "string" &&
-      QUESTION_KINDS.has(kind) &&
-      response.refs.has(ref)
-      ? [ref]
-      : [];
-  });
+  const envelope = ZDocumentImportPlanEnvelope.safeParse(response.object);
+  if (!envelope.success) return [];
+  const entries = collectPlanEntries(envelope.data.questions, response.refs, ZDocumentPlanEntry, () => {});
+  const skips = collectPlanSkips(envelope.data.skipped, response.refs, ZDocumentPlanSkip);
+  return [...entries].flatMap(([ref, placed]) =>
+    placed.length === 1 && QUESTION_KINDS.has(placed[0].kind) && !skips.has(ref) ? [ref] : []
+  );
 };
 
 export interface TDocumentPlanResult {
@@ -106,8 +110,9 @@ export async function planDocumentImport(params: {
     ),
     // A document's question count is only known from its plan (decision 18): the characters and chunks
     // checked before the first call bound what planning can cost, and this stops it once the answers
-    // so far already hold more questions than the import takes.
-    questionCeiling: { max: SURVEY_IMPORT_MAX_QUESTIONS, questionRefs: documentQuestionRefs },
+    // so far hold clearly more questions than the import takes. The pipeline refuses past the exact
+    // ceiling on the checked plan.
+    questionCeiling: { max: SURVEY_IMPORT_PLANNING_STOP_QUESTIONS, questionRefs: documentQuestionRefs },
   };
   const run = await runImportPlan({ lane, refs, generate, signal: params.signal, deadline, callTimeoutMs });
   const { plan } = run;

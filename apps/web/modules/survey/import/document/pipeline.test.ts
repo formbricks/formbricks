@@ -420,7 +420,7 @@ describe("runDocumentImport: the AI ceiling", () => {
   });
 
   test("planning stops once its answers hold more questions than the import takes, before the rest is asked", async () => {
-    const lines = 3 * SURVEY_IMPORT_MAX_QUESTIONS;
+    const lines = 4 * SURVEY_IMPORT_MAX_QUESTIONS;
     const file = listOf(lines);
     const chunks = chunkDocumentLines(
       file.model,
@@ -432,6 +432,37 @@ describe("runDocumentImport: the AI ceiling", () => {
     // Every chunk asked would be `chunks` calls; it stopped once the questions so far passed the ceiling.
     expect(chunks).toBeGreaterThan(4);
     expect(generate.mock.calls.length).toBeLessThan(chunks);
+  });
+
+  test("a file at the ceiling is not refused for entries the checks and the retry drop", async () => {
+    // Round one places every line as a question, ten of them on a cell their line does not have; the
+    // retry skips those ten. Counted before the checks that is 205, past the ceiling; checked, it is 195.
+    const real = SURVEY_IMPORT_MAX_QUESTIONS - 5;
+    const lines = real + 10;
+    const firstRound = planOf(
+      Array.from({ length: lines }, (_, index) =>
+        openTextEntry(`R${index + 1}`, index < real ? `A${index + 1}` : "Z9999")
+      )
+    );
+    const retry = planOf([], {
+      skipped: Array.from({ length: 10 }, (_, index) => ({
+        ref: `R${real + index + 1}`,
+        reason: "A note, not a question",
+      })),
+    });
+    const file = listOf(lines);
+    const chunks = chunkDocumentLines(
+      file.model,
+      file.model.lines.map((line) => line.key)
+    ).length;
+    let calls = 0;
+    const generate = recordedDocumentGenerate(firstRound, (request) => {
+      calls += 1;
+      return calls > chunks ? planForLines(retry, linesInPrompt(request.prompt)) : undefined;
+    });
+
+    const { report } = await run(file, generate);
+    expect(report.summary.questions).toBe(real);
   });
 
   test("a question asked again on the retry counts once toward the ceiling", async () => {

@@ -145,8 +145,8 @@ export interface TImportPlanLane<TFailure extends string, TPlan extends TImportC
    * The most questions one import takes, for a lane that only learns how many its file holds from the
    * plan: the units each answer starts a question on, counted as answers arrive. Past `max`, the calls
    * still running are stopped and the import fails with `too_many_questions`, rather than planning the
-   * rest of a file it will refuse. An answer's questions are counted before the lane's checks, so a
-   * file the AI reads as more than `max` questions is refused even if some of them would then fail.
+   * rest of a file it will refuse. An answer's questions are counted before the lane's checks, which
+   * may still drop some, so a lane sets `max` with a margin above its exact ceiling.
    */
   questionCeiling?: { max: number; questionRefs: (response: TImportPlanResponse) => readonly string[] };
 }
@@ -292,7 +292,9 @@ function isPastBudget<TFailure extends string, TPlan extends TImportCheckedPlan<
   return (
     context.calls >= lane.callCap ||
     context.usage.outputTokens >= lane.outputBudget ||
-    context.promptChars + chars > lane.maxTotalChars
+    // The total is the lane's own, for its system prompt and data, plus the schema each call it may make
+    // carries: counting the schema must not take budget from the file it plans.
+    context.promptChars + chars > lane.maxTotalChars + lane.callCap * context.schemaChars
   );
 }
 

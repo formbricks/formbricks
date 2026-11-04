@@ -102,7 +102,8 @@ const textExtentOf = (sheet: XLSX.WorkSheet): { row: number; column: number } | 
   // Dense mode: rows and cells by their absolute indices, holes where the file has none.
   (sheet["!data"] ?? []).forEach((row, rowIndex) => {
     row?.forEach((cell, columnIndex) => {
-      if (!cell || XLSX.utils.format_cell(cell).trim() === "") return;
+      // An error cell (`#N/A`) reads as empty, as `sheet_to_json` reads it.
+      if (!cell || cell.t === "e" || XLSX.utils.format_cell(cell).trim() === "") return;
       if (columnIndex >= SURVEY_IMPORT_SHEET_MAX_COLUMNS) {
         throw documentLimitExceeded(
           "columns",

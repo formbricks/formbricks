@@ -192,6 +192,14 @@ export const SURVEY_IMPORT_DEADLINE_MS = 120_000;
  */
 export const SURVEY_IMPORT_MAX_QUESTIONS = 200;
 
+/**
+ * Questions a document's answers may start before planning stops early: the ceiling with a quarter's
+ * margin. The count is taken before the plan's checks, so it includes entries the checks or the retry
+ * later drop; the margin keeps a file at the ceiling from being refused for those, and the exact count
+ * after planning refuses one between the two. A file past this is past the ceiling by any reading.
+ */
+export const SURVEY_IMPORT_PLANNING_STOP_QUESTIONS = Math.ceil(SURVEY_IMPORT_MAX_QUESTIONS * 1.25);
+
 /** Options of one question: its choices, or a matrix's rows and columns each. */
 export const SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION = 200;
 
