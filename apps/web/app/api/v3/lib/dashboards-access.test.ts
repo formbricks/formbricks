@@ -1,20 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
-import {
-  getIsDashboardViewerRoleEnabled,
-  getIsDashboardsEnabled,
-} from "@/modules/ee/license-check/lib/utils";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getAccessControlPermission, getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { requireV3WorkspaceAccess } from "./auth";
 import { refuseUnlessFeedbackDatasetAccess, requireDashboardsAccess } from "./dashboards-access";
 import { problemForbidden } from "./response";
 import type { TV3Authentication } from "./types";
+import { resolveV3WorkspaceContext } from "./workspace-context";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsDashboardsEnabled: vi.fn(),
-  getIsDashboardViewerRoleEnabled: vi.fn(),
+  getAccessControlPermission: vi.fn(),
 }));
+vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
 vi.mock("./workspace-context", () => ({
   resolveV3WorkspaceContext: vi.fn(async (workspaceId: string) => ({
     workspaceId,
@@ -128,106 +129,159 @@ describe("refuseUnlessFeedbackDatasetAccess", () => {
 
 describe("dashboard-bound reads admit a Dashboard viewer through SpiceDB (ADR-0023)", () => {
   const allow = { allowDashboardViewer: true } as const;
+  const asRole = (role: string | null) =>
+    vi
+      .mocked(getMembershipByUserIdOrganizationId)
+      .mockResolvedValue(
+        role ? ({ role } as Awaited<ReturnType<typeof getMembershipByUserIdOrganizationId>>) : null
+      );
 
-  test("asks dashboardRead after a read refusal, and admits the viewer it allows", async () => {
-    vi.mocked(requireV3WorkspaceAccess)
-      .mockResolvedValueOnce(problemForbidden("req"))
-      .mockResolvedValueOnce(context);
-    vi.mocked(getIsDashboardViewerRoleEnabled).mockResolvedValue(true);
+  test("asks a member `read` alone, never `dashboard_read`, so the previous schema keeps serving them (S2)", async () => {
+    asRole("member");
+    vi.mocked(can).mockResolvedValue(true);
     vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
 
     await expect(requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow)).resolves.toEqual(
       context
     );
-    expect(requireV3WorkspaceAccess).toHaveBeenNthCalledWith(1, session, WORKSPACE_ID, "read", "req", "/i");
-    expect(requireV3WorkspaceAccess).toHaveBeenNthCalledWith(
-      2,
-      session,
-      WORKSPACE_ID,
-      "dashboardRead",
-      "req",
-      "/i"
-    );
-    expect(getIsDashboardViewerRoleEnabled).toHaveBeenCalledWith(ORGANIZATION_ID);
+    expect(can).toHaveBeenCalledTimes(1);
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "workspace.read", {
+      type: "workspace",
+      id: WORKSPACE_ID,
+    });
+    expect(getAccessControlPermission).not.toHaveBeenCalled();
   });
 
-  test("costs everyone SpiceDB allows the one read check it always did", async () => {
-    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
+  test("answers a member SpiceDB refuses with the plain 403, never asking dashboard_read (S2)", async () => {
+    asRole("member");
+    vi.mocked(can).mockResolvedValue(false);
+
+    const result = await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
+
+    expect((result as Response).status).toBe(403);
+    expect(can).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(can).mock.calls[0][1]).toBe("workspace.read");
+  });
+
+  test("asks a Dashboard viewer `dashboard_read` once, and reads each entitlement once (C11)", async () => {
+    asRole("dashboard_viewer");
+    vi.mocked(can).mockResolvedValue(true);
+    vi.mocked(getAccessControlPermission).mockResolvedValue(true);
     vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
 
-    await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
-    expect(requireV3WorkspaceAccess).toHaveBeenCalledTimes(1);
-    expect(getIsDashboardViewerRoleEnabled).not.toHaveBeenCalled();
+    await expect(requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow)).resolves.toEqual(
+      {
+        ...context,
+        asDashboardViewer: true,
+      }
+    );
+    expect(can).toHaveBeenCalledTimes(1);
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "workspace.dashboard_read", {
+      type: "workspace",
+      id: WORKSPACE_ID,
+    });
+    expect(getAccessControlPermission).toHaveBeenCalledTimes(1);
+    expect(getIsDashboardsEnabled).toHaveBeenCalledTimes(1);
+    expect(requireV3WorkspaceAccess).not.toHaveBeenCalled();
+  });
+
+  test("refuses a viewer SpiceDB allows when the organization lost the role's entitlement", async () => {
+    asRole("dashboard_viewer");
+    vi.mocked(can).mockResolvedValue(true);
+    vi.mocked(getAccessControlPermission).mockResolvedValue(false);
+    vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
+
+    const result = await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
+
+    expect((result as Response).status).toBe(403);
+    expect(await (result as Response).json()).toMatchObject({ code: "forbidden" });
+  });
+
+  test("refuses a viewer SpiceDB denies the workspace", async () => {
+    asRole("dashboard_viewer");
+    vi.mocked(can).mockResolvedValue(false);
+
+    const result = await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
+
+    expect((result as Response).status).toBe(403);
+    expect(getAccessControlPermission).not.toHaveBeenCalled();
+  });
+
+  test("refuses a workspace that does not exist with the same 403", async () => {
+    vi.mocked(resolveV3WorkspaceContext).mockRejectedValueOnce(new ResourceNotFoundError("workspace", "x"));
+
+    const result = await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
+
+    expect((result as Response).status).toBe(403);
+    expect(can).not.toHaveBeenCalled();
   });
 
   test.each([
     ["the operation does not opt in", "read", undefined],
     ["the operation is a write", "readWrite", allow],
     ["the operation needs manage", "manage", allow],
-  ] as const)("never asks dashboardRead when %s", async (_label, permission, options) => {
+  ] as const)("keeps the plain workspace check when %s", async (_label, permission, options) => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden("req"));
 
     const result = await requireDashboardsAccess(session, WORKSPACE_ID, permission, "req", "/i", options);
 
     expect((result as Response).status).toBe(403);
     expect(requireV3WorkspaceAccess).toHaveBeenCalledTimes(1);
+    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(session, WORKSPACE_ID, permission, "req", "/i");
+    expect(getMembershipByUserIdOrganizationId).not.toHaveBeenCalled();
   });
 
-  test("never asks dashboardRead for an API key, whose dashboard read is its read", async () => {
+  test("keeps the plain workspace check for an API key, whose dashboard read is its read", async () => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden("req"));
 
     const result = await requireDashboardsAccess(apiKey, WORKSPACE_ID, "read", "req", "/i", allow);
 
     expect((result as Response).status).toBe(403);
-    expect(requireV3WorkspaceAccess).toHaveBeenCalledTimes(1);
+    expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(apiKey, WORKSPACE_ID, "read", "req", "/i");
+    expect(getMembershipByUserIdOrganizationId).not.toHaveBeenCalled();
   });
 
-  test("keeps the read refusal when SpiceDB denies dashboardRead too", async () => {
-    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden("req"));
-
-    const result = await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
-
-    expect((result as Response).status).toBe(403);
-    expect(await (result as Response).json()).toMatchObject({ code: "forbidden" });
-    expect(getIsDashboardViewerRoleEnabled).not.toHaveBeenCalled();
-  });
-
-  test("refuses a viewer SpiceDB allows when the organization lost the role's entitlement", async () => {
-    vi.mocked(requireV3WorkspaceAccess)
-      .mockResolvedValueOnce(problemForbidden("req"))
-      .mockResolvedValueOnce(context);
-    vi.mocked(getIsDashboardViewerRoleEnabled).mockResolvedValue(false);
-
-    const result = await requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow);
-
-    expect((result as Response).status).toBe(403);
-    expect(await (result as Response).json()).toMatchObject({ code: "forbidden" });
-    expect(getIsDashboardsEnabled).not.toHaveBeenCalled();
-  });
-
-  test("asks the dashboard-bound dataset read only on an opted-in read", async () => {
+  test("asks the dashboard-bound dataset read only for a context admitted as a Dashboard viewer (S2)", async () => {
     vi.mocked(can).mockResolvedValue(true);
     const resource = {
       type: "feedbackDirectoryAssignment",
       feedbackDirectoryId: DATASET_ID,
       workspaceId: WORKSPACE_ID,
     };
+    const viewerContext = { ...context, asDashboardViewer: true as const };
 
-    await refuseUnlessFeedbackDatasetAccess(session, context, DATASET_ID, "read", "req", "/i", allow);
+    await refuseUnlessFeedbackDatasetAccess(session, viewerContext, DATASET_ID, "read", "req", "/i", allow);
     expect(can).toHaveBeenLastCalledWith(
       { type: "user", id: "user_1" },
       "feedbackDirectoryAssignment.dashboard_read",
       resource
     );
 
-    await refuseUnlessFeedbackDatasetAccess(session, context, DATASET_ID, "read", "req");
+    // A member's dashboard-bound read is its plain read: `dashboard_read` is never asked of it.
+    await refuseUnlessFeedbackDatasetAccess(session, context, DATASET_ID, "read", "req", "/i", allow);
     expect(can).toHaveBeenLastCalledWith(
       { type: "user", id: "user_1" },
       "feedbackDirectoryAssignment.read",
       resource
     );
 
-    await refuseUnlessFeedbackDatasetAccess(session, context, DATASET_ID, "readWrite", "req", "/i", allow);
+    // Without the opt-in, a viewer context is still only asked `read`, which it never holds.
+    await refuseUnlessFeedbackDatasetAccess(session, viewerContext, DATASET_ID, "read", "req");
+    expect(can).toHaveBeenLastCalledWith(
+      { type: "user", id: "user_1" },
+      "feedbackDirectoryAssignment.read",
+      resource
+    );
+
+    await refuseUnlessFeedbackDatasetAccess(
+      session,
+      viewerContext,
+      DATASET_ID,
+      "readWrite",
+      "req",
+      "/i",
+      allow
+    );
     expect(can).toHaveBeenLastCalledWith(
       { type: "user", id: "user_1" },
       "feedbackDirectoryAssignment.write",

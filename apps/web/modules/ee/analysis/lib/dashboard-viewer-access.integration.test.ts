@@ -65,6 +65,9 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
   getIsDashboardsEnabled: vi.fn(async () => entitlement.dashboards),
   getIsDashboardViewerRoleEnabled: vi.fn(async () => entitlement.viewerRole && entitlement.dashboards),
+  // The dashboard-bound reads read Access Control and Dashboards themselves (C11); `viewerRole` stands for
+  // Access Control here.
+  getAccessControlPermission: vi.fn(async () => entitlement.viewerRole),
 }));
 
 const FILTER_ID = "clfi000000000000000000001";
@@ -289,7 +292,16 @@ describe("SpiceDB grants a Dashboard viewer the dashboard reads of its teams' wo
   });
 
   test("the Feedback Dataset gate admits a viewer only when the operation opts in", async () => {
-    const access = { workspaceId: fixture.workspaceId, organizationId: fixture.organizationId };
+    const access = await requireDashboardsAccess(
+      sessionOf(ids.viewer),
+      fixture.workspaceId,
+      "read",
+      "req",
+      "/i",
+      { allowDashboardViewer: true }
+    );
+    if (access instanceof Response) throw new Error(`viewer refused the workspace: ${access.status}`);
+    expect(access.asDashboardViewer).toBe(true);
     const refuse = (options?: { allowDashboardViewer: boolean }) =>
       refuseUnlessFeedbackDatasetAccess(
         sessionOf(ids.viewer),
