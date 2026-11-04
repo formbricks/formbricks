@@ -11,7 +11,7 @@ import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-fe
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDateFilterCookieName, readStoredDateFilterFromCookie } from "../lib/dashboard-date-filter";
-import { deserializeFilterPicks, getFilterPicksCookieName } from "../lib/dashboard-filter-picks";
+import { deserializeFilters, getFiltersCookieName } from "../lib/dashboard-filter-state";
 
 export async function DashboardDetailPage({
   params,
@@ -27,10 +27,8 @@ export async function DashboardDetailPage({
   const storedDateFilter = readStoredDateFilterFromCookie(
     cookieStore.get(getDateFilterCookieName(dashboardId))?.value
   );
-  // The filter picks are remembered the same way, so a revisit's first fetch is already narrowed by them.
-  const storedFilterPicks = deserializeFilterPicks(
-    cookieStore.get(getFilterPicksCookieName(dashboardId))?.value
-  );
+  // The filters are remembered the same way, so a revisit's first fetch is already narrowed by them.
+  const storedFilters = deserializeFilters(cookieStore.get(getFiltersCookieName(dashboardId))?.value);
 
   const { isReadOnly, organizationId, userId, isDashboardViewer } = await getDashboardsPageAuth(workspaceId);
 
@@ -75,7 +73,7 @@ export async function DashboardDetailPage({
         workspaceId={workspaceId}
         dashboardId={dashboardId}
         storedDateFilter={storedDateFilter}
-        storedFilterPicks={storedFilterPicks}
+        storedFilters={storedFilters}
         directories={[]}
         isReadOnly
         isAIAvailable={false}
@@ -95,7 +93,7 @@ export async function DashboardDetailPage({
       workspaceId={workspaceId}
       dashboardId={dashboardId}
       storedDateFilter={storedDateFilter}
-      storedFilterPicks={storedFilterPicks}
+      storedFilters={storedFilters}
       directories={directories}
       isReadOnly={isReadOnly}
       isAIAvailable={isAIAvailable}

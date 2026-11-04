@@ -17,12 +17,18 @@ import {
 } from "@/app/api/v3/dashboards/lib/resources";
 import {
   MAX_WIDGETS_PER_WRITE,
-  ZDashboardFilterPicks,
   ZV3DashboardName,
   ZV3WidgetLayoutInput,
   refuseEmptyWidgetUpdate,
   refuseRepeatedWidgets,
 } from "@/app/api/v3/dashboards/lib/schemas";
+import { zPostgresText } from "@/lib/utils/postgres-text";
+import {
+  DASHBOARD_FILTER_OPERATORS,
+  MAX_DASHBOARD_FILTERS,
+  MAX_DASHBOARD_FILTER_PICK_VALUES,
+  MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
@@ -157,33 +163,63 @@ export const ZMcpUpdateChartInput = z
   .strict();
 export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;
 
+/** A filter an agent applies to a dashboard read: any dimension of the charts' datasets, or an embedded-data field. */
+const ZMcpDashboardFilter = z
+  .object({
+    field: z
+      .string()
+      .min(1)
+      .max(255)
+      .describe("A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…)."),
+    operator: z.enum(DASHBOARD_FILTER_OPERATORS).describe("How the field is compared with the values."),
+    values: z
+      .array(zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
+      .min(1)
+      .max(MAX_DASHBOARD_FILTER_PICK_VALUES)
+      .describe(
+        "What to compare with: several values for equals/notEquals on a text field (any of), one value otherwise."
+      ),
+  })
+  .strict();
+
+const ZMcpDashboardFilters = z.array(ZMcpDashboardFilter).max(MAX_DASHBOARD_FILTERS);
+export type TMcpDashboardFilters = z.infer<typeof ZMcpDashboardFilters>;
+
 export const ZMcpGetChartDataInput = z
   .object({
     dashboardId: ZId.optional().describe(
-      "Read the chart through this dashboard, as get_dashboard lists its widgets: the dashboard's date range narrows it and picks apply. Without it the saved chart is read on its own."
+      "Read the chart through this dashboard, as get_dashboard lists its widgets: the dashboard's date range replaces the chart's own and filters apply. Without it the saved chart is read on its own."
     ),
     chartId: ZId.describe("The chart to read: a widget's chartId on that dashboard."),
     dateRange: ZMcpChartDateRange,
-    picks: ZDashboardFilterPicks.optional().describe(
-      "Values for the dashboard's filters, by filter id from get_dashboard's filters: several values for an equals/notEquals filter on a text field (any of), one value otherwise. Each narrows the chart; it never widens it. Needs dashboardId."
+    filters: ZMcpDashboardFilters.optional().describe(
+      "Filters to apply, each a field, an operator and its values. Each narrows the chart; it never widens it. Needs dashboardId."
     ),
   })
   .strict()
-  .refine((input) => input.picks === undefined || input.dashboardId !== undefined, {
-    message: "picks need a dashboardId: they are values for that dashboard's filters.",
-    path: ["picks"],
+  .refine((input) => input.filters === undefined || input.dashboardId !== undefined, {
+    message: "filters need a dashboardId: they narrow the chart as that dashboard shows it.",
+    path: ["filters"],
   });
 export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;
 
 export const ZMcpListDashboardFilterValuesInput = z
   .object({
-    dashboardId: ZId.describe("The dashboard whose filter to list values for."),
-    filterId: ZId.describe(
-      "A filter of that dashboard, from get_dashboard's filters, with equals or notEquals on a categorical or embedded-data field."
-    ),
+    dashboardId: ZId.describe("The dashboard whose charts the values are listed for."),
+    field: z
+      .string()
+      .min(1)
+      .max(255)
+      .describe(
+        "A categorical dimension from list_chart_fields (one marked valueLookup), or an embedded-data field."
+      ),
+    operator: z
+      .enum(["equals", "notEquals"])
+      .default("equals")
+      .describe("The comparison the values are for; only equals and notEquals have a list."),
     dateRange: ZMcpChartDateRange,
-    picks: ZDashboardFilterPicks.optional().describe(
-      "Values already picked for the dashboard's other filters, by filter id: they narrow the list. A pick for this filter itself is ignored."
+    filters: ZMcpDashboardFilters.optional().describe(
+      "Filters already applied: they narrow the list, as they narrow the charts."
     ),
     search: z
       .string()

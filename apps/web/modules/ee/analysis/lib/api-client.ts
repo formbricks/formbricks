@@ -8,10 +8,13 @@ import type {
   TV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
-import { appendPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import {
+  type TDashboardFilterState,
+  appendFilterParams,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-state";
 import type {
   TDashboardFilter,
-  TDashboardFilterPicks,
+  TLockedDashboardFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import type {
   AnalyticsResponse,
@@ -218,30 +221,30 @@ export type TAppDashboardChartData = TAppChartData & {
   unfilterableFilters: TV3DashboardChartData["unfilterableFilters"];
 };
 
-/** The dashboard date range and filter picks a dashboard-bound read is narrowed by. */
+/** The dashboard date range and filters a dashboard-bound read is set to. */
 const dashboardReadParams = (
   dateRange: TChartDateRangeInput | undefined,
-  picks: TDashboardFilterPicks | undefined
-): URLSearchParams => appendPickParams(dateRangeSearchParams(dateRange), picks ?? {});
+  filters: readonly TDashboardFilterState[] | undefined
+): URLSearchParams => appendFilterParams(dateRangeSearchParams(dateRange), filters ?? []);
 
 /**
- * A widget's rows through its dashboard (ADR-0002): the dashboard date range narrows the chart's own, and
- * each filter pick is ANDed onto its saved filters.
+ * A widget's rows through its dashboard (ADR-0002): the dashboard date range replaces the chart's own, and
+ * each filter is ANDed onto its saved filters.
  */
 export const getDashboardChartData = async ({
   dashboardId,
   chartId,
   dateRange,
-  picks,
+  filters,
   signal,
 }: {
   dashboardId: string;
   chartId: string;
   dateRange?: TChartDateRangeInput;
-  picks?: TDashboardFilterPicks;
+  filters?: readonly TDashboardFilterState[];
   signal?: AbortSignal;
 }): Promise<TAppDashboardChartData> => {
-  const search = dashboardReadParams(dateRange, picks).toString();
+  const search = dashboardReadParams(dateRange, filters).toString();
   const base = `${dashboardPath(dashboardId)}/charts/${encodeURIComponent(chartId)}/data`;
   const data = await readData<TV3DashboardChartData>(
     await fetch(search ? `${base}?${search}` : base, { cache: "no-store", signal })
@@ -249,26 +252,31 @@ export const getDashboardChartData = async ({
   return { ...toAppChartData(data), unfilterableFilters: data.unfilterableFilters };
 };
 
-/** Up to 100 values a list dashboard filter offers, narrowed by the date range, the other picks and `search`. */
+/**
+ * Up to 100 values a field offers on a dashboard, narrowed by the date range, the `filters` already applied
+ * and `search`. The field is asked as the first filter of the request, `f1`, with no values of its own.
+ */
 export const listDashboardFilterValues = async ({
   dashboardId,
-  filterId,
+  field,
+  operator,
   dateRange,
-  picks,
+  filters,
   search,
   signal,
 }: {
   dashboardId: string;
-  filterId: string;
+  field: string;
+  operator: TDashboardFilter["operator"];
   dateRange?: TChartDateRangeInput;
-  picks?: TDashboardFilterPicks;
+  filters?: readonly TDashboardFilterState[];
   search?: string;
   signal?: AbortSignal;
 }): Promise<TV3DashboardFilterValues> => {
-  const params = dashboardReadParams(dateRange, picks);
+  const params = dashboardReadParams(dateRange, [{ field, operator, values: [] }, ...(filters ?? [])]);
   if (search) params.set("search", search);
   const query = params.toString();
-  const base = `${dashboardPath(dashboardId)}/filters/${encodeURIComponent(filterId)}/values`;
+  const base = `${dashboardPath(dashboardId)}/filters/f1/values`;
   return readData<TV3DashboardFilterValues>(
     await fetch(query ? `${base}?${query}` : base, { cache: "no-store", signal })
   );
@@ -346,7 +354,7 @@ const toAppDashboardListItem = (item: TV3DashboardListItem): TAppDashboardListIt
  * sends back for the stale-check, and a round trip through `Date` would be one more place to lose it.
  */
 export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "name" | "updatedAt"> & {
-  filters: TDashboardFilter[];
+  filters: TLockedDashboardFilter[];
   widgets: TDashboardWidget[];
 };
 
@@ -426,7 +434,7 @@ export const replaceDashboard = async (
   dashboard: {
     name: string;
     expectedUpdatedAt: string;
-    filters?: TDashboardFilter[];
+    filters?: TLockedDashboardFilter[];
     widgets: { widgetId: string; layout: TDashboardWidget["layout"]; order: number }[];
   }
 ): Promise<TAppDashboard> =>

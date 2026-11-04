@@ -132,7 +132,7 @@ Click a filter in the bar to choose its values:
 - **Free-text fields**, such as the response text or the user ID, and number or date fields take a value you type.
   They never list values, so the text of individual responses isn't shown to everyone who opens the dashboard.
 
-Use **Choose date range** to pick the period every chart shows.
+Use **Choose date range** to pick the period every chart shows. It replaces the period each chart was saved with, so you can look further back or ahead than the chart's author did. On a chart grouped by time, **All time** keeps the chart's own period.
 
 Your picks and date range are your own: they are remembered for this dashboard in your browser, and they don't change what
 anyone else sees. They are also part of the page address, so a link you share opens the dashboard with the same
@@ -141,9 +141,8 @@ filters.
 ### Filters only narrow a chart
 
 A dashboard filter is added on top of each chart's own filters and never replaces them. A chart saved for
-products A and B shows nothing when you pick product C, rather than showing product C. The same holds for the date
-range: it narrows the period a chart was saved with, and a chart whose period doesn't overlap the range shows no
-data. A filter's value list only offers values that at least one chart on the dashboard can show.
+products A and B shows nothing when you pick product C, rather than showing product C. The date range is the one exception: it
+replaces the period a chart was saved with. A filter's value list only offers values that at least one chart on the dashboard can show.
 
 If a chart's Feedback Dataset doesn't have the field a filter uses, the chart can't be narrowed by it. When you pick
 a value in that filter, the chart says "This chart can't be filtered by" and names the filter, instead of showing

@@ -9,12 +9,12 @@ import { FilterChipRow } from "./components/filter-chip-row";
 import { FilterMenu } from "./components/filter-menu";
 import { type TTableSettingsProps, TableSettingsPopover } from "./components/table-settings-popover";
 import { isSameSearch } from "./lib/search-sync";
-import type { TFilterProperty, TTableFilter } from "./lib/types";
+import type { TFilterProperty, TLockedFilters, TTableFilter } from "./lib/types";
 
 export type { TTableColumnSetting, TTableToggleSetting } from "./components/table-settings-popover";
 export { ListTable } from "./components/list-table";
 export { TableNoMatch } from "./components/table-no-match";
-export type { TFilterOption, TFilterProperty, TSortOption, TTableFilter } from "./lib/types";
+export type { TFilterOption, TFilterProperty, TLockedFilters, TSortOption, TTableFilter } from "./lib/types";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -79,6 +79,8 @@ export type TTableToolbarProps = {
     onFiltersChange: (filters: TTableFilter[]) => void;
     /** Called when the Filter menu or the Advanced filter first opens, for tables that load options late. */
     onOpen?: () => void;
+    /** Filters set for everyone, shown locked before the person's own. */
+    locked?: TLockedFilters;
   };
   /** Rows matching the filters, not rows loaded. Null while unknown. */
   matchCount?: { count: number | null; isCapped?: boolean };
@@ -178,6 +180,7 @@ export const TableToolbar = ({
           onFiltersChange={onVisibleFiltersChange}
           onAddFilter={() => setIsFilterMenuOpen(true)}
           onEditRules={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
+          locked={filter.locked}
           disabled={isLoading}
         />
       )}

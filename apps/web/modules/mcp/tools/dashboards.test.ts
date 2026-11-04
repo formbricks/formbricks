@@ -294,7 +294,7 @@ describe("chart and dashboard MCP tools", () => {
         dashboardId: DASHBOARD_ID,
         chartId: CHART_ID,
         dateRange: { from: "2026-01-01", to: "2026-01-31" },
-        picks: { clfi000000000000000000001: ["Web"] },
+        filters: [{ field: "FeedbackRecords.sourceName", operator: "equals", values: ["Web"] }],
       },
       ["dashboards:read"],
       true
@@ -305,7 +305,12 @@ describe("chart and dashboard MCP tools", () => {
       expect.objectContaining({
         dashboardId: DASHBOARD_ID,
         chartId: CHART_ID,
-        query: { from: "2026-01-01", to: "2026-01-31", picks: { clfi000000000000000000001: ["Web"] } },
+        query: {
+          from: "2026-01-01",
+          to: "2026-01-31",
+          rules: { f1: "equals:FeedbackRecords.sourceName" },
+          picks: { f1: ["Web"] },
+        },
       })
     );
   });
@@ -525,19 +530,22 @@ describe("chart and dashboard MCP tools", () => {
 });
 
 describe("get_chart_data schemas (S1)", () => {
-  test("dashboardId is optional, and picks need one", () => {
+  const filter = (value: string) => [
+    { field: "FeedbackRecords.sourceName", operator: "equals", values: [value] },
+  ];
+
+  test("dashboardId is optional, and filters need one", () => {
     expect(ZMcpGetChartDataInput.safeParse({ chartId: CHART_ID }).success).toBe(true);
-    expect(
-      ZMcpGetChartDataInput.safeParse({ chartId: CHART_ID, picks: { clfi000000000000000000001: ["Web"] } })
-        .success
-    ).toBe(false);
+    expect(ZMcpGetChartDataInput.safeParse({ chartId: CHART_ID, filters: filter("Web") }).success).toBe(
+      false
+    );
   });
 
-  test("picks go through the one shared picks schema, which refuses a NUL byte (C15, C6)", () => {
+  test("filter values go through the same text rules as picks, which refuse a NUL byte", () => {
     const input = (value: string) => ({
       dashboardId: DASHBOARD_ID,
       chartId: CHART_ID,
-      picks: { clfi000000000000000000001: [value] },
+      filters: filter(value),
     });
     expect(ZMcpGetChartDataInput.safeParse(input("Web")).success).toBe(true);
     expect(ZMcpGetChartDataInput.safeParse(input("We\u0000b")).success).toBe(false);
@@ -553,7 +561,7 @@ describe("get_chart_data schemas (S1)", () => {
 });
 
 describe("list_dashboard_filter_values", () => {
-  const FILTER_ID = "clfi000000000000000000001";
+  const FIELD = "FeedbackRecords.sourceName";
   const VALUES = { values: [{ value: "Web" }], hasMore: false };
 
   beforeEach(() => {
@@ -565,9 +573,9 @@ describe("list_dashboard_filter_values", () => {
       "list_dashboard_filter_values",
       {
         dashboardId: DASHBOARD_ID,
-        filterId: FILTER_ID,
+        field: FIELD,
         dateRange: "last_7_days",
-        picks: { clfi000000000000000000002: ["Pro"] },
+        filters: [{ field: "FeedbackRecords.metadataDevice", operator: "equals", values: ["Pro"] }],
         search: "we",
       },
       ["dashboards:read", "feedbackRecords:read"]
@@ -578,8 +586,13 @@ describe("list_dashboard_filter_values", () => {
     expect(listV3DashboardFilterValues).toHaveBeenCalledWith(
       expect.objectContaining({
         dashboardId: DASHBOARD_ID,
-        filterId: FILTER_ID,
-        query: { dateRange: "last_7_days", picks: { clfi000000000000000000002: ["Pro"] }, search: "we" },
+        filterId: "f1",
+        query: {
+          dateRange: "last_7_days",
+          rules: { f1: "equals:FeedbackRecords.sourceName", f2: "equals:FeedbackRecords.metadataDevice" },
+          picks: { f2: ["Pro"] },
+          search: "we",
+        },
       })
     );
   });
@@ -587,7 +600,7 @@ describe("list_dashboard_filter_values", () => {
   test("a Dashboard viewer lists values under dashboards:read alone, as it reads the dashboard's charts", async () => {
     const result = await call(
       "list_dashboard_filter_values",
-      { dashboardId: DASHBOARD_ID, filterId: FILTER_ID },
+      { dashboardId: DASHBOARD_ID, field: FIELD },
       ["dashboards:read"],
       true
     );
@@ -597,28 +610,29 @@ describe("list_dashboard_filter_values", () => {
   });
 
   test("anyone else also needs feedbackRecords:read, since the values are what respondents answered", async () => {
-    const result = await call(
-      "list_dashboard_filter_values",
-      { dashboardId: DASHBOARD_ID, filterId: FILTER_ID },
-      ["dashboards:read"]
-    );
+    const result = await call("list_dashboard_filter_values", { dashboardId: DASHBOARD_ID, field: FIELD }, [
+      "dashboards:read",
+    ]);
 
     expect(result.isError).toBe(true);
     expect(listV3DashboardFilterValues).not.toHaveBeenCalled();
   });
 
-  test("its input is strict, takes ids it can check, and is read-only", () => {
+  test("its input is strict, takes only equals and notEquals, and is read-only", () => {
     expect(
-      ZMcpListDashboardFilterValuesInput.safeParse({ dashboardId: DASHBOARD_ID, filterId: FILTER_ID }).success
+      ZMcpListDashboardFilterValuesInput.safeParse({ dashboardId: DASHBOARD_ID, field: FIELD }).success
     ).toBe(true);
     expect(
-      ZMcpListDashboardFilterValuesInput.safeParse({ dashboardId: DASHBOARD_ID, filterId: "Not An Id!" })
-        .success
+      ZMcpListDashboardFilterValuesInput.safeParse({
+        dashboardId: DASHBOARD_ID,
+        field: FIELD,
+        operator: "contains",
+      }).success
     ).toBe(false);
     expect(
       ZMcpListDashboardFilterValuesInput.safeParse({
         dashboardId: DASHBOARD_ID,
-        filterId: FILTER_ID,
+        field: FIELD,
         workspaceId: WORKSPACE_ID,
       }).success
     ).toBe(false);

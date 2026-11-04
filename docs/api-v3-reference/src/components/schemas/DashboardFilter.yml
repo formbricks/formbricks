@@ -1,14 +1,16 @@
 type: object
 description: >-
-  A dashboard filter: a field and an operator the dashboard's editors pin to its top bar, shared by
-  everyone who opens it. Each person picks or enters its value (`picks[<id>]` on the dashboard-bound
-  chart data and value list operations); a pick is ANDed onto every chart's saved query and never
-  widens it. A chart whose Feedback Dataset lacks the field shows no data under a pick.
+  A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the
+  dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the
+  caller's own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it.
+  Like a caller's filter it is ANDed onto every chart's saved query and never widens it. A chart whose
+  Feedback Dataset lacks the field shows no data.
 required:
   - id
   - field
   - operator
   - label
+  - values
 properties:
   id:
     type: string
@@ -37,7 +39,7 @@ properties:
       - lt
       - lte
     description: >-
-      One of the field's `filterOperators`, fixed by the editor. `equals` and `notEquals` on a
+      One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a
       categorical field — one whose catalog entry has `valueLookup`, or an embedded-data field — pick
       from a list of values (`GET
       /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of);
@@ -48,4 +50,19 @@ properties:
     minLength: 1
     maxLength: 100
     description: What the top bar shows for the filter.
+  values:
+    type: array
+    minItems: 1
+    maxItems: 100
+    items:
+      type: string
+      minLength: 1
+      maxLength: 1000
+    description: >-
+      The values the filter is locked to. A list filter (`equals` or `notEquals` on a categorical field)
+      matches any of them; every other filter takes the first. Each must be a value its field can hold,
+      and all of a dashboard's locked values together stay within the 4000 percent-encoded characters a
+      read's picks may take.
+    example:
+      - Website
 additionalProperties: false

@@ -4,6 +4,7 @@ import {
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
+import { encodeFilterRule } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import { getV3DashboardChartData } from "./chart-data-operations";
@@ -11,8 +12,9 @@ import { ZV3DashboardChartDataQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
 
 /**
- * A dashboard-bound chart read checks a person's picks before any query (C6, C9): a value its field cannot
- * hold, or more than the total budget, answers 422 naming the pick rather than reaching Cube.
+ * A dashboard-bound chart read checks a person's filters and picks before any query: a filter that names no
+ * field, a value its field cannot hold, or more than the total budget, answers 422 naming the parameter
+ * rather than reaching Cube.
  */
 
 vi.mock("server-only", () => ({}));
@@ -43,18 +45,23 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const SCORE: TDashboardFilter = {
-  id: "clfi000000000000000000001",
+  id: "f1",
   field: "FeedbackRecords.valueNumber",
   operator: "gt",
   label: "Score",
 };
 const SOURCE: TDashboardFilter = {
-  id: "clfi000000000000000000002",
+  id: "f2",
   field: "FeedbackRecords.sourceName",
   operator: "equals",
   label: "Source",
 };
 const chartId = "clch000000000000000000001";
+
+const RULES = {
+  [`filter[${SCORE.id}]`]: encodeFilterRule(SCORE),
+  [`filter[${SOURCE.id}]`]: encodeFilterRule(SOURCE),
+};
 
 const read = (params: Record<string, string | string[]>) =>
   getV3DashboardChartData({
@@ -73,7 +80,6 @@ beforeEach(() => {
     id: "cldb000000000000000000001",
     workspaceId: "clws000000000000000000001",
     updatedAt: new Date(),
-    filters: [SCORE, SOURCE],
     widgets: [
       {
         chart: {
@@ -96,12 +102,12 @@ beforeEach(() => {
 
 describe("getV3DashboardChartData picks", () => {
   test("runs valid picks", async () => {
-    expect((await read({ [`picks[${SCORE.id}]`]: "7" })).status).toBe(200);
+    expect((await read({ ...RULES, [`picks[${SCORE.id}]`]: "7" })).status).toBe(200);
     expect(runV3ChartQuery).toHaveBeenCalled();
   });
 
   test("answers 422 naming the pick for a word on a number field (C6)", async () => {
-    const response = await read({ [`picks[${SCORE.id}]`]: "seven" });
+    const response = await read({ ...RULES, [`picks[${SCORE.id}]`]: "seven" });
 
     expect(response.status).toBe(422);
     const body = (await response.json()) as { invalid_params: { name: string }[] };
@@ -111,11 +117,37 @@ describe("getV3DashboardChartData picks", () => {
 
   test("answers 422 naming the budget for picks over it (C9)", async () => {
     const long = "x".repeat(1000);
-    const response = await read({ [`picks[${SOURCE.id}]`]: [long, long, long, long, "x"] });
+    const response = await read({ ...RULES, [`picks[${SOURCE.id}]`]: [long, long, long, long, "x"] });
 
     expect(response.status).toBe(422);
     expect(JSON.stringify(await response.json())).toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
     expect(runV3ChartQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe("getV3DashboardChartData filters", () => {
+  test("answers 422 naming the parameter for a filter that is not <operator>:<field>", async () => {
+    const response = await read({ "filter[f1]": "FeedbackRecords.sourceName" });
+
+    expect(response.status).toBe(422);
+    const body = (await response.json()) as { invalid_params: { name: string }[] };
+    expect(body.invalid_params[0].name).toBe("filter[f1]");
+    expect(runV3ChartQuery).not.toHaveBeenCalled();
+  });
+
+  test("answers 422 naming the parameter for a field outside the catalog and an operator it refuses", async () => {
+    const response = await read({
+      "filter[f1]": "equals:FeedbackRecords.notAField",
+      "filter[f2]": "gt:FeedbackRecords.sourceName",
+    });
+
+    expect(response.status).toBe(422);
+    const body = (await response.json()) as { invalid_params: { name: string }[] };
+    expect(body.invalid_params.map(({ name }) => name).sort()).toEqual(["filter[f1]", "filter[f2]"]);
+  });
+
+  test("a pick for a filter the request does not name is ignored", async () => {
+    expect((await read({ [`picks[${SCORE.id}]`]: "7" })).status).toBe(200);
   });
 });
 

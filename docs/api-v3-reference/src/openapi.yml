@@ -75,11 +75,11 @@ info:
       …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
     - **Date ranges.** A preset from the catalog's `datePresets`, `all-time`, or two ISO dates, both
       inclusive, read in the organization's time zone. On the data operations a requested range
-      narrows the chart's own range on `collectedAt` — the two are ANDed, the way a dashboard's date
-      filter does — and never widens it.
-    - **Dashboard filters.** A dashboard holds up to 10 filters (`filters`, saved with `PUT`). Each
-      person's `picks[<filterId>]` are ANDed onto every chart's saved query on the dashboard-bound
-      data operation, never replacing a saved rule.
+      replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
+    - **Dashboard filters.** A person filters a dashboard by any dimension of its charts' datasets or
+      embedded-data field, up to 10 at once: each `filter[<id>]=<operator>:<field>`, with its values
+      in `picks[<id>]`, is ANDed onto every chart's saved query on the dashboard-bound operations,
+      never replacing a saved rule. The dashboard keeps no list of them.
     - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
       need read access to its Feedback Dataset as well as the workspace. They share one budget of
       **600 per minute** per user or key, sized for dashboards that load one query per widget, and at

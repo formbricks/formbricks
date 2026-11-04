@@ -102,7 +102,10 @@ describe("filter-only fields", () => {
 
 describe("parseStoredDashboardFilters", () => {
   test("reads a stored list, skipping anything malformed, and anything but a list as none", () => {
-    expect(parseStoredDashboardFilters([filter(1), { id: "x" }, filter(2)])).toEqual([filter(1), filter(2)]);
+    const locked = (index: number) => ({ ...filter(index), values: [`value ${index}`] });
+    expect(parseStoredDashboardFilters([locked(1), { id: "x" }, locked(2)])).toEqual([locked(1), locked(2)]);
+    // Saved before filters were locked with their values: nothing to apply.
+    expect(parseStoredDashboardFilters([filter(1)])).toEqual([]);
     expect(parseStoredDashboardFilters({})).toEqual([]);
     expect(parseStoredDashboardFilters(null)).toEqual([]);
   });

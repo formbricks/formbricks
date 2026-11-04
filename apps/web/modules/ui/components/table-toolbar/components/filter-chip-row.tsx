@@ -11,7 +11,7 @@ import {
   setDateQuickFilter,
   toggleQuickFilterValue,
 } from "../lib/filter-state";
-import type { TFilterProperty, TTableFilter } from "../lib/types";
+import type { TFilterProperty, TLockedFilters, TTableFilter } from "../lib/types";
 import { DateFilterEditor } from "./date-filter-editor";
 import { FilterChip } from "./filter-chip";
 import { FilterValueList } from "./filter-value-list";
@@ -77,6 +77,7 @@ export const FilterChipRow = ({
   onFiltersChange,
   onAddFilter,
   onEditRules,
+  locked,
   disabled,
 }: Readonly<{
   properties: readonly TFilterProperty[];
@@ -84,13 +85,15 @@ export const FilterChipRow = ({
   onFiltersChange: (filters: TTableFilter[]) => void;
   onAddFilter: () => void;
   onEditRules?: () => void;
+  locked?: TLockedFilters;
   disabled?: boolean;
 }>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const propertyById = new Map(properties.map((property) => [property.id, property]));
 
-  if (filters.length === 0) return null;
+  const lockedFilters = locked?.filters ?? [];
+  if (filters.length === 0 && lockedFilters.length === 0) return null;
 
   return (
     <div
@@ -99,6 +102,30 @@ export const FilterChipRow = ({
       <ul
         className="flex min-w-0 flex-wrap items-center gap-1.5"
         aria-label={t("common.table_toolbar.active_filters")}>
+        {lockedFilters.map((filter, index) => {
+          // A locked filter can be on a property this person cannot filter by themselves: named by its own
+          // label then, and read as text.
+          const property = propertyById.get(filter.property) ?? {
+            id: filter.property,
+            label: locked?.labels?.[index] ?? filter.property,
+            valueType: "string" as const,
+          };
+          const parts = getChipParts(filter, property, t, locale);
+          const onRemoveLocked = locked?.onRemove;
+          return (
+            <li key={`locked-${filter.property}-${filter.operator}-${index}`} className="max-w-full">
+              <FilterChip
+                {...parts}
+                lockedHint={locked?.hint}
+                disabled={disabled}
+                onRemove={onRemoveLocked ? () => onRemoveLocked(index) : undefined}
+              />
+            </li>
+          );
+        })}
+        {lockedFilters.length > 0 && filters.length > 0 && (
+          <li aria-hidden="true" className="mx-0.5 h-5 w-px bg-slate-300" />
+        )}
         {filters.map((filter, index) => {
           const property = propertyById.get(filter.property);
           if (!property) return null;
@@ -140,13 +167,15 @@ export const FilterChipRow = ({
           </button>
         </li>
       </ul>
-      <button
-        type="button"
-        onClick={() => onFiltersChange([])}
-        disabled={disabled}
-        className="focus-visible:ring-ring h-7 shrink-0 rounded-md px-2 text-xs font-medium text-slate-800 hover:bg-white focus-visible:ring-1 focus-visible:outline-hidden">
-        {t("common.clear_all")}
-      </button>
+      {filters.length > 0 && (
+        <button
+          type="button"
+          onClick={() => onFiltersChange([])}
+          disabled={disabled}
+          className="focus-visible:ring-ring h-7 shrink-0 rounded-md px-2 text-xs font-medium text-slate-800 hover:bg-white focus-visible:ring-1 focus-visible:outline-hidden">
+          {t("common.clear_all")}
+        </button>
+      )}
     </div>
   );
 };

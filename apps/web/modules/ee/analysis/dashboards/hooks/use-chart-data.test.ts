@@ -9,13 +9,12 @@ import { useChartData } from "./use-chart-data";
 
 const CHART_ID = "clch000000000000000000001";
 const DASHBOARD_ID = "cldb000000000000000000001";
-const FILTER_ID = "clfi000000000000000000001";
 const DATA_PATH = `/api/v3/dashboards/${DASHBOARD_ID}/charts/${CHART_ID}/data`;
-const NO_PICKS = {};
+const NO_FILTERS: Parameters<typeof useChartData>[0]["filters"] = [];
 const read =
-  (dateRange: Parameters<typeof useChartData>[0]["dateRange"], picks = NO_PICKS) =>
+  (dateRange: Parameters<typeof useChartData>[0]["dateRange"], filters = NO_FILTERS) =>
   () =>
-    useChartData({ dashboardId: DASHBOARD_ID, chartId: CHART_ID, dateRange, picks });
+    useChartData({ dashboardId: DASHBOARD_ID, chartId: CHART_ID, dateRange, filters });
 
 let wrapper: (props: Readonly<{ children: ReactNode }>) => ReturnType<typeof createElement>;
 
@@ -73,17 +72,19 @@ describe("useChartData", () => {
     expect(fetchMock.mock.calls[0][0]).toBe(DATA_PATH);
   });
 
-  test("reads the chart through its dashboard for the dashboard's range and the filter picks", async () => {
+  test("reads the chart through its dashboard for the dashboard's range and the filters", async () => {
     fetchMock.mockResolvedValueOnce(dataResponse());
 
     const { result } = renderHook(
-      read({ from: "2026-01-01", to: "2026-01-31" }, { [FILTER_ID]: ["Web", "App"] }),
+      read({ from: "2026-01-01", to: "2026-01-31" }, [
+        { field: "FeedbackRecords.sourceName", operator: "equals", values: ["Web", "App"] },
+      ]),
       { wrapper }
     );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(decodeURIComponent(fetchMock.mock.calls[0][0])).toBe(
-      `${DATA_PATH}?from=2026-01-01&to=2026-01-31&picks[${FILTER_ID}]=Web&picks[${FILTER_ID}]=App`
+      `${DATA_PATH}?from=2026-01-01&to=2026-01-31&filter[f1]=equals:FeedbackRecords.sourceName&picks[f1]=Web&picks[f1]=App`
     );
   });
 

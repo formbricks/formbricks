@@ -7,6 +7,7 @@ import {
 import { cache } from "@/lib/cache";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { MAX_DASHBOARD_FILTER_PICKS_CHARS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import { encodeFilterRule } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import { getEmbeddedKeysForQuery } from "@/modules/ee/analysis/lib/dataset-embedded-keys";
@@ -55,7 +56,7 @@ vi.mock("@formbricks/logger", () => ({
 const SOURCE = "FeedbackRecords.sourceName";
 const SCORE = "FeedbackRecords.valueNumber";
 const COUNT = "FeedbackRecords.count";
-const filterId = (n: number) => `clfi${String(n).padStart(21, "0")}`;
+const filterId = (n: number) => `f${n}`;
 const SOURCE_FILTER: TDashboardFilter = {
   id: filterId(1),
   field: SOURCE,
@@ -102,11 +103,19 @@ const rowWith = (
   widgets,
 });
 
+// The filters belong to the request: the three of the dashboard these tests are about.
+const RULES = Object.fromEntries(
+  [SOURCE_FILTER, SCORE_FILTER, TEXT_FILTER].map((filter) => [
+    `filter[${filter.id}]`,
+    encodeFilterRule(filter),
+  ])
+);
+
 const list = (filter: string, params: Record<string, string | string[]> = {}) =>
   listV3DashboardFilterValues({
     dashboardId: "cldb000000000000000000001",
     filterId: filter,
-    query: ZV3DashboardFilterValuesQuery.parse(params),
+    query: ZV3DashboardFilterValuesQuery.parse({ ...RULES, ...params }),
     ...context,
   });
 

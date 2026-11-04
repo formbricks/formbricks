@@ -1,10 +1,11 @@
 import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/analysis";
-import { writeDashboardCookie } from "./dashboard-cookies";
+import { filterRuleIdOf } from "./dashboard-filter-rules";
 import {
   type TDashboardFilter,
   type TDashboardFilterPicks,
   getDashboardFilterField,
   isListDashboardFilter,
+  parseStoredDashboardFilters,
 } from "./dashboard-filters";
 
 /**
@@ -152,36 +153,27 @@ export const resolvePicksForDataset = (
 const PICK_PARAM = /^picks\[([^\]]+)\]$/;
 
 /**
- * Gather `picks[<filterId>]=value` parameters (repeated for several values) into one `picks` object, and
- * leave every other parameter as it was — the shape the routes' schemas validate, and the page's URL reads.
+ * Gather `picks[<filterId>]=value` parameters (repeated for several values) into one `picks` object and
+ * `filter[<filterId>]=<operator>:<field>` parameters into one `rules` object, and leave every other
+ * parameter as it was — the shape the routes' schemas validate.
  */
 export const splitPickParams = (params: unknown): unknown => {
   if (typeof params !== "object" || params === null || Array.isArray(params)) return params;
   const rest: Record<string, unknown> = {};
   const picks: Record<string, string[]> = {};
+  const rules: Record<string, unknown> = {};
   for (const [name, value] of Object.entries(params)) {
     const match = PICK_PARAM.exec(name);
-    if (!match) rest[name] = value;
-    else if (typeof value === "string") picks[match[1]] = [value];
-    else picks[match[1]] = value as string[];
+    const ruleId = filterRuleIdOf(name);
+    if (match) picks[match[1]] = typeof value === "string" ? [value] : (value as string[]);
+    else if (ruleId !== null) rules[ruleId] = value;
+    else rest[name] = value;
   }
-  return Object.keys(picks).length > 0 ? { ...rest, picks } : rest;
-};
-
-/** The query parameter a pick travels in, on the API and in the dashboard page's URL. */
-export const pickParamName = (filterId: string): string => `picks[${filterId}]`;
-
-/** Picks as `picks[<id>]` parameters, in the dashboard's filter order, for a stable cache key and URL. */
-export const appendPickParams = (
-  params: URLSearchParams,
-  picks: TDashboardFilterPicks,
-  filterOrder?: readonly string[]
-): URLSearchParams => {
-  const ids = filterOrder ? filterOrder.filter((id) => id in picks) : Object.keys(picks).sort();
-  for (const id of ids) {
-    for (const value of picks[id] ?? []) params.append(pickParamName(id), value);
-  }
-  return params;
+  return {
+    ...rest,
+    ...(Object.keys(picks).length > 0 ? { picks } : {}),
+    ...(Object.keys(rules).length > 0 ? { rules } : {}),
+  };
 };
 
 /**
@@ -200,67 +192,32 @@ export const keepCurrentPicks = (
   return current;
 };
 
-/** Picks a person made are kept like the dashboard date: in the URL, and in a per-dashboard cookie. */
-export const getFilterPicksCookieName = (dashboardId: string): string =>
-  `fb_dashboard_filter_picks_${dashboardId}`;
-
-/** Remembered picks live as long as a remembered date range: 30 days, refreshed on every change. */
-const FILTER_PICKS_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
-
-const isStringArray = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every((item) => typeof item === "string");
-
-/** Picks read back from storage, or `{}` for anything malformed. */
-export const deserializeFilterPicks = (raw: string | null | undefined): TDashboardFilterPicks => {
-  if (!raw) return {};
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(decodeURIComponent(raw));
-  } catch {
-    return {};
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return {};
-  const picks: TDashboardFilterPicks = {};
-  for (const [id, values] of Object.entries(parsed)) {
-    if (isStringArray(values) && values.length > 0) picks[id] = values;
-  }
-  return picks;
-};
+/**
+ * The id a locked filter goes by within one read. A request's own ids match `FILTER_RULE_ID`, which allows
+ * no `.`, so a request can never name a locked filter, and so never replace or drop its values.
+ */
+const lockedFilterId = (index: number): string => `locked.${index}`;
 
 /**
- * Remember (or forget, when empty) a person's picks on one dashboard, in a cookie scoped to the dashboard's
- * page. Picks too long for a cookie are kept in the URL only. Client-only; a no-op on the server.
+ * A read's filters: the dashboard's locked ones (saved on it by an editor, with their values) first, then
+ * the person's own from the request. Every one of them is ANDed onto each chart, so a person's filters can
+ * only narrow what the locked ones already show. The request's picks are taken as they are; the locked
+ * filters bring their own.
  */
-export const writeStoredFilterPicks = (dashboardId: string, picks: TDashboardFilterPicks): void =>
-  writeDashboardCookie(
-    getFilterPicksCookieName(dashboardId),
-    Object.keys(picks).length === 0 ? null : encodeURIComponent(JSON.stringify(picks)),
-    FILTER_PICKS_COOKIE_MAX_AGE_SECONDS
-  );
-
-/** The picks pinned in a page URL, or `null` when the URL pins none, so remembered ones apply. */
-export const readFilterPicksFromUrl = (searchParams: URLSearchParams): TDashboardFilterPicks | null => {
-  let found = false;
-  const picks: TDashboardFilterPicks = {};
-  for (const name of new Set(searchParams.keys())) {
-    const match = PICK_PARAM.exec(name);
-    if (!match) continue;
-    found = true;
-    const values = searchParams.getAll(name).filter((value) => value !== "");
-    if (values.length > 0) picks[match[1]] = values;
-  }
-  return found ? picks : null;
-};
-
-/** Replace the picks in a page URL's parameters, leaving every other parameter as it was. */
-export const writeFilterPicksToUrl = (
-  searchParams: URLSearchParams,
-  picks: TDashboardFilterPicks,
-  filterOrder: readonly string[]
-): URLSearchParams => {
-  const next = new URLSearchParams();
-  for (const [name, value] of searchParams.entries()) {
-    if (!PICK_PARAM.test(name)) next.append(name, value);
-  }
-  return appendPickParams(next, picks, filterOrder);
+export const withLockedFilters = (
+  storedFilters: unknown,
+  requestFilters: readonly TDashboardFilter[],
+  requestPicks: TDashboardFilterPicks
+): { filters: TDashboardFilter[]; picks: TDashboardFilterPicks } => {
+  const locked = parseStoredDashboardFilters(storedFilters).map(({ values, ...filter }, index) => ({
+    filter: { ...filter, id: lockedFilterId(index) },
+    values,
+  }));
+  return {
+    filters: [...locked.map(({ filter }) => filter), ...requestFilters],
+    picks: {
+      ...requestPicks,
+      ...Object.fromEntries(locked.map(({ filter, values }) => [filter.id, values])),
+    },
+  };
 };

@@ -24,11 +24,11 @@ info:
       …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
     - **Date ranges.** A preset from the catalog's `datePresets`, `all-time`, or two ISO dates, both
       inclusive, read in the organization's time zone. On the data operations a requested range
-      narrows the chart's own range on `collectedAt` — the two are ANDed, the way a dashboard's date
-      filter does — and never widens it.
-    - **Dashboard filters.** A dashboard holds up to 10 filters (`filters`, saved with `PUT`). Each
-      person's `picks[<filterId>]` are ANDed onto every chart's saved query on the dashboard-bound
-      data operation, never replacing a saved rule.
+      replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
+    - **Dashboard filters.** A person filters a dashboard by any dimension of its charts' datasets or
+      embedded-data field, up to 10 at once: each `filter[<id>]=<operator>:<field>`, with its values
+      in `picks[<id>]`, is ANDed onto every chart's saved query on the dashboard-bound operations,
+      never replacing a saved rule. The dashboard keeps no list of them.
     - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
       need read access to its Feedback Dataset as well as the workspace. They share one budget of
       **600 per minute** per user or key, sized for dashboards that load one query per widget, and at
@@ -4444,13 +4444,12 @@ paths:
       operationId: getChartDataV3
       summary: Get a chart's data
       description: |
-        Runs a saved chart and returns its rows. A date range given here narrows the chart's own range
-        on `FeedbackRecords.collectedAt` — the two are ANDed, so the chart shows only the days both
-        cover, exactly as a dashboard's date filter does — and never widens it: a chart saved for the
-        last 30 days read for the last 12 months still shows the last 30 days, and ranges that do not
-        overlap answer an empty chart. `dateRange=all-time`, or no date range, leaves the chart's saved
-        range as it is. Every range is read in the organization's display time zone; a `timezone`
-        parameter is refused with 400. For a chart grouped by time alone, a narrowed range that spans
+        Runs a saved chart and returns its rows. A date range given here replaces the chart's own range
+        on `FeedbackRecords.collectedAt`, exactly as a dashboard's date filter does: a chart saved for the
+        last 30 days read for the last 12 months shows the last 12 months. `dateRange=all-time` drops the
+        chart's saved range, except for a chart grouped by time, which keeps it; no date range leaves the
+        saved range as it is. Every range is read in the organization's display time zone; a `timezone`
+        parameter is refused with 400. For a chart grouped by time alone, a requested range that spans
         more than 10,000 buckets of its granularity answers 422 `limit_exceeded` on `dateRange`:
         request a shorter range, or use a chart with a coarser granularity.
 
@@ -4469,7 +4468,7 @@ paths:
           schema:
             type: string
             maxLength: 64
-          description: A date preset from the field catalog's `datePresets`, or `all-time`, narrowing the chart's saved range. Not together with `from`/`to`.
+          description: A date preset from the field catalog's `datePresets`, or `all-time`, replacing the chart's saved range. Not together with `from`/`to`.
           example: last 7 days
         - in: query
           name: from
@@ -5196,14 +5195,15 @@ paths:
         dashboard widget loads its data from. The body is the chart data body (`GET
         /api/v3/charts/{chartId}/data`) plus `unfilterableFilters`.
 
-        Both narrow the chart's saved query and never widen it:
+        The filters narrow the chart's saved query and never widen it; the date range sets its period:
 
-        - **Date range.** `dateRange`, or `from` and `to`, is ANDed with the chart's own range on
+        - **Date range.** `dateRange`, or `from` and `to`, replaces the chart's own range on
           `FeedbackRecords.collectedAt`: a chart saved for the last 30 days read for the last 12 months
-          still shows the last 30 days, and ranges that do not overlap answer an empty chart.
-        - **Filter picks.** Each `picks[<filterId>]` is ANDed onto the chart's saved filters; a saved
-          rule on the same field is kept, at any depth. A pick on a field the chart's Feedback Dataset
-          lacks answers empty `rows` and names the filter in `unfilterableFilters`. Picks may take at
+          shows the last 12 months.
+        - **Filters.** Each `filter[<id>]` with values in `picks[<id>]` is ANDed onto the chart's saved
+          filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
+          on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
+          `unfilterableFilters`. Picks may take at
           most 4000 characters in all, each value counted percent-encoded as the URL carries it
           (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
           `limit_exceeded`.
@@ -5220,6 +5220,7 @@ paths:
         - $ref: '#/components/parameters/DashboardDateRangeQuery'
         - $ref: '#/components/parameters/DashboardDateFromQuery'
         - $ref: '#/components/parameters/DashboardDateToQuery'
+        - $ref: '#/components/parameters/DashboardFilterRulesQuery'
         - $ref: '#/components/parameters/DashboardFilterPicksQuery'
       responses:
         '200':
@@ -5312,14 +5313,15 @@ paths:
       operationId: listDashboardFilterValuesV3
       summary: List a dashboard filter's values
       description: |
-        The values a list dashboard filter offers — one whose operator is `equals` or `notEquals` on a
-        categorical field (`valueLookup` in the field catalog, or an embedded-data field): the values the dashboard's charts let through under their own saved filters and date
-        ranges, narrowed by the dashboard date range and the other filters' picks. The filter's own pick
+        The values a list filter offers — one whose operator is `equals` or `notEquals` on a categorical
+        field (`valueLookup` in the field catalog, or an embedded-data field): the values the dashboard's
+        charts let through under their own saved filters, narrowed by the dashboard date range and the
+        other filters' picks. `filterId` is the `<id>` of one of the request's `filter[<id>]` parameters. The filter's own pick
         never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked
         filter's field, offer nothing.
 
         Up to 100 values, alphabetical; `hasMore` says more match, and `search` narrows them
-        (case-insensitive, contains). A filter the dashboard does not have, or one that takes a typed
+        (case-insensitive, contains). A filter the request does not name, or one that takes a typed
         value (free text such as `FeedbackRecords.valueText`), answers 422.
 
         Picks may take at most 4000 characters in all, each value counted percent-encoded as the URL
@@ -5342,6 +5344,7 @@ paths:
         - $ref: '#/components/parameters/DashboardDateRangeQuery'
         - $ref: '#/components/parameters/DashboardDateFromQuery'
         - $ref: '#/components/parameters/DashboardDateToQuery'
+        - $ref: '#/components/parameters/DashboardFilterRulesQuery'
         - $ref: '#/components/parameters/DashboardFilterPicksQuery'
         - in: query
           name: search
@@ -13981,7 +13984,7 @@ components:
         query:
           $ref: '#/components/schemas/ChartQuery'
         dateRange:
-          description: 'Narrows the query''s date range on `FeedbackRecords.collectedAt` to where the two overlap: a preset, `all-time` (the query''s own range applies), or `{ from, to }` ISO calendar dates. Ranges that do not overlap answer an empty chart. Read in the organization''s display time zone.'
+          description: 'Replaces the query''s date range on `FeedbackRecords.collectedAt`: a preset, `all-time` (the query''s own range applies when it is grouped by time, and is dropped otherwise), or `{ from, to }` ISO calendar dates. Read in the organization''s display time zone.'
           oneOf:
             - type: string
               example: last 7 days
@@ -14040,7 +14043,7 @@ components:
             FeedbackRecords.ed_plan_64879f7d: Plan
         query:
           type: object
-          description: 'The query as it ran: after the requested date range narrowed the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
+          description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
       additionalProperties: false
     ChartUpdateRequest:
       type: object
@@ -14168,12 +14171,13 @@ components:
       additionalProperties: false
     DashboardFilter:
       type: object
-      description: 'A dashboard filter: a field and an operator the dashboard''s editors pin to its top bar, shared by everyone who opens it. Each person picks or enters its value (`picks[<id>]` on the dashboard-bound chart data and value list operations); a pick is ANDed onto every chart''s saved query and never widens it. A chart whose Feedback Dataset lacks the field shows no data under a pick.'
+      description: 'A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the caller''s own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it. Like a caller''s filter it is ANDed onto every chart''s saved query and never widens it. A chart whose Feedback Dataset lacks the field shows no data.'
       required:
         - id
         - field
         - operator
         - label
+        - values
       properties:
         id:
           type: string
@@ -14196,12 +14200,23 @@ components:
             - gte
             - lt
             - lte
-          description: One of the field's `filterOperators`, fixed by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value.
+          description: One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value.
         label:
           type: string
           minLength: 1
           maxLength: 100
           description: What the top bar shows for the filter.
+        values:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1000
+          description: The values the filter is locked to. A list filter (`equals` or `notEquals` on a categorical field) matches any of them; every other filter takes the first. Each must be a value its field can hold, and all of a dashboard's locked values together stay within the 4000 percent-encoded characters a read's picks may take.
+          example:
+            - Website
       additionalProperties: false
     DashboardWidget:
       type: object
@@ -14392,7 +14407,7 @@ components:
         FeedbackRecords.ed_plan_64879f7d: Plan
     query:
       type: object
-      description: 'The query as it ran: after the requested date range narrowed the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
+      description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
     DashboardChartData:
       type: object
       description: 'A chart''s rows read through its dashboard, after the dashboard date range and the filter picks narrowed its saved query. `unfilterableFilters` lists picked filters whose field the chart''s Feedback Dataset does not have; when it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
@@ -17186,7 +17201,7 @@ components:
       schema:
         type: string
         maxLength: 64
-      description: 'The dashboard date range: a date preset from the field catalog''s `datePresets`, or `all-time`. It narrows each chart''s saved range on `FeedbackRecords.collectedAt`, never widens it. Not together with `from`/`to`.'
+      description: 'The dashboard date range: a date preset from the field catalog''s `datePresets`, or `all-time`. It replaces each chart''s saved range on `FeedbackRecords.collectedAt`. Not together with `from`/`to`.'
       example: last 7 days
     DashboardDateFromQuery:
       in: query
@@ -17202,6 +17217,21 @@ components:
         type: string
         format: date
       description: Last day of a custom dashboard date range (inclusive). Requires `from`.
+    DashboardFilterRulesQuery:
+      in: query
+      name: filter
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        maxProperties: 10
+        additionalProperties:
+          type: string
+          minLength: 3
+          maxLength: 300
+      description: 'The filters the request applies, as `filter[<id>]=<operator>:<field>`: any dimension from the field catalog, or an embedded-data field (`FeedbackRecords.ed_…`), with `equals`, `notEquals`, `contains`, `notContains`, `gt`, `gte`, `lt` or `lte` as the field allows. The dashboard keeps no list of them; `<id>` only names a filter within the request, to give its values in `picks[<id>]`. A filter without a pick is ignored. A definition that is not `<operator>:<field>`, a field outside the catalog or an operator the field refuses answers 422 naming `filter[<id>]`.'
+      example:
+        f1: equals:FeedbackRecords.sourceName
     DashboardFilterPicksQuery:
       in: query
       name: picks
@@ -17217,9 +17247,9 @@ components:
           items:
             type: string
             maxLength: 1000
-      description: Values picked for the dashboard's filters, as `picks[<filterId>]=value`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is ANDed onto every chart's saved query; picks for filters the dashboard does not have are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.
+      description: Values for the request's filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is ANDed onto every chart's saved query; picks for a filter the request does not name are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.
       example:
-        clfi000000000000000000001:
+        f1:
           - Web
     FilterIdPath:
       in: path
@@ -17227,8 +17257,8 @@ components:
       required: true
       schema:
         type: string
-        format: cuid2
-      description: Dashboard filter identifier, from the dashboard's `filters`.
+        pattern: ^[A-Za-z0-9_-]{1,24}$
+      description: 'The filter to list values for: the `<id>` of one of the request''s `filter[<id>]` parameters. One that is not answers 422.'
     CreativeIdPath:
       in: path
       name: creativeId

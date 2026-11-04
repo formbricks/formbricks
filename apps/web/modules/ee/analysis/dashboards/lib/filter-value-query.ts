@@ -2,9 +2,9 @@ import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/
 import { MAX_ANSWER_RULES, countAnswerRules } from "@/modules/ee/analysis/lib/answer-filter";
 import { getChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
-  COLLECTED_AT_DIMENSION,
   type TDashboardDateFilter,
   type TDateClock,
+  applyDashboardDateFilter,
   toDateRangeRule,
 } from "./dashboard-date-filter";
 import { resolvePicksForDataset } from "./dashboard-filter-picks";
@@ -12,12 +12,12 @@ import type { TDashboardFilter, TDashboardFilterPicks } from "./dashboard-filter
 
 /**
  * A list dashboard filter's values (ENG-6892, ENG-6895): the values the dashboard's charts let through
- * under their own saved filters and date ranges, narrowed by the dashboard date and the other filters'
- * picks — never by the filter's own pick.
+ * under their own saved filters, with the dashboard's date range in place of their saved one, narrowed by
+ * the other filters' picks — never by the filter's own pick.
  *
  * One query per Feedback Dataset that has the field. Its filter is the OR of the dataset's distinct chart
- * rule sets, each branch keeping its chart's whole rule set and saved date range, ANDed with the dashboard
- * date and the other picks. Merging field by field instead leaked values no chart lets through (ENG-6895):
+ * rule sets, each branch keeping its chart's whole rule set as the dashboard runs it (the dashboard's date
+ * range in place of the saved one), ANDed with the other picks. Merging field by field instead leaked values no chart lets through (ENG-6895):
  * a value allowed by one chart's product rule and another chart's region rule is let through by neither.
  */
 
@@ -77,18 +77,6 @@ const chunkByAnswerRules = (ruleSets: readonly TCubeFilter[][]): TCubeFilter[][]
 /** One rule standing for a branch: its rule, or the AND of its rules. */
 const asOneRule = (rules: TCubeFilter[]): TCubeFilter => (rules.length === 1 ? rules[0] : { and: rules });
 
-/** The dashboard date range as a rule on collectedAt, or none for all time. */
-const dashboardDateRules = (dateFilter: TDashboardDateFilter | null, clock: TDateClock): TCubeFilter[] =>
-  dateFilter && dateFilter.type !== "all-time"
-    ? [
-        toDateRangeRule(
-          COLLECTED_AT_DIMENSION,
-          dateFilter.type === "preset" ? dateFilter.value : dateFilter.range,
-          clock
-        ),
-      ]
-    : [];
-
 /** The rules every value query ends with: the field has a value, containing `search` when given. */
 const valueRulesOf = (filter: TDashboardFilter, search?: string): TCubeFilter[] => [
   { member: filter.field, operator: "set" },
@@ -121,14 +109,13 @@ export const buildFilterValueQueries = ({
   datasetHasField: (datasetId: string, field: string) => boolean;
   search?: string;
 }): TFilterValueQuery[] => {
-  const dashboardDate = dashboardDateRules(dateFilter, clock);
   const valueRules = valueRulesOf(filter, search);
 
   const toQuery = (datasetId: string, scope: TCubeFilter[], narrowing: TCubeFilter[]): TFilterValueQuery => ({
     datasetId,
     query: {
       dimensions: [filter.field],
-      filters: [...scope, ...narrowing, ...dashboardDate, ...valueRules],
+      filters: [...scope, ...narrowing, ...valueRules],
       order: [[filter.field, "asc"]],
       limit: FILTER_VALUE_LIST_LIMIT + 1,
     },
@@ -146,7 +133,7 @@ export const buildFilterValueQueries = ({
     const branches = new Map<string, TCubeFilter[]>();
     for (const chart of charts) {
       if (chart.datasetId !== datasetId || isGroupBoundedChart(chart.query)) continue;
-      const rules = chartRuleSet(chart.query, clock);
+      const rules = chartRuleSet(applyDashboardDateFilter(chart.query, dateFilter), clock);
       branches.set(JSON.stringify(rules), rules);
     }
 
@@ -180,8 +167,8 @@ export const FILTER_VALUE_GROUP_LIMIT = 100;
 
 /**
  * A bounded chart's own query — as the dashboard shows it under the other picks and the dashboard date —
- * and the record-level rules its groups are drawn from (`scope`: its non-measure rules, its saved dates,
- * the other picks and the dashboard date).
+ * and the record-level rules its groups are drawn from (`scope`: its non-measure rules, its date range as
+ * the dashboard runs it, and the other picks).
  */
 export type TFilterValueGroupQuery = { datasetId: string; query: TChartQuery; scope: TCubeFilter[] };
 
@@ -200,7 +187,6 @@ export const buildBoundedChartQueries = ({
   clock,
   datasetHasField,
 }: Omit<Parameters<typeof buildFilterValueQueries>[0], "search">): TFilterValueGroupQuery[] => {
-  const dashboardDate = dashboardDateRules(dateFilter, clock);
   return charts.flatMap((chart) => {
     if (!isGroupBoundedChart(chart.query)) return [];
     // A chart over the answer-rule cap is refused when it runs, so it shows no value.
@@ -210,12 +196,12 @@ export const buildBoundedChartQueries = ({
     const otherPicks = resolvePicksForDataset(filters, picks, hasField, { except: filter.id });
     if (otherPicks.unfilterable.length > 0) return [];
 
-    const narrowing = [...otherPicks.rules, ...dashboardDate];
+    const query = applyDashboardDateFilter(chart.query, dateFilter);
     return [
       {
         datasetId: chart.datasetId,
-        query: { ...chart.query, filters: [...(chart.query.filters ?? []), ...narrowing] },
-        scope: [...chartRuleSet(chart.query, clock).filter(isRecordRule), ...narrowing],
+        query: { ...query, filters: [...(query.filters ?? []), ...otherPicks.rules] },
+        scope: [...chartRuleSet(query, clock).filter(isRecordRule), ...otherPicks.rules],
       },
     ];
   });

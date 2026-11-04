@@ -113,3 +113,16 @@ export type TSortOption = {
   value: string;
   label: string;
 };
+
+/**
+ * Filters set for everyone, such as a dashboard's locked filters: shown before a person's own, with a lock,
+ * and never edited from the toolbar. `onRemove` is given to whoever may take one off.
+ */
+export type TLockedFilters = {
+  filters: readonly TTableFilter[];
+  /** Each filter's own name, for a property the toolbar does not list (one this person cannot add). */
+  labels?: readonly string[];
+  /** Why the chips are locked, shown on hover. */
+  hint: string;
+  onRemove?: (index: number) => void;
+};

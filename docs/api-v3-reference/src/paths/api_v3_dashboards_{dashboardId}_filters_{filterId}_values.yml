@@ -2,14 +2,15 @@ get:
   operationId: listDashboardFilterValuesV3
   summary: List a dashboard filter's values
   description: |
-    The values a list dashboard filter offers — one whose operator is `equals` or `notEquals` on a
-    categorical field (`valueLookup` in the field catalog, or an embedded-data field): the values the dashboard's charts let through under their own saved filters and date
-    ranges, narrowed by the dashboard date range and the other filters' picks. The filter's own pick
+    The values a list filter offers — one whose operator is `equals` or `notEquals` on a categorical
+    field (`valueLookup` in the field catalog, or an embedded-data field): the values the dashboard's
+    charts let through under their own saved filters, narrowed by the dashboard date range and the
+    other filters' picks. `filterId` is the `<id>` of one of the request's `filter[<id>]` parameters. The filter's own pick
     never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked
     filter's field, offer nothing.
 
     Up to 100 values, alphabetical; `hasMore` says more match, and `search` narrows them
-    (case-insensitive, contains). A filter the dashboard does not have, or one that takes a typed
+    (case-insensitive, contains). A filter the request does not name, or one that takes a typed
     value (free text such as `FeedbackRecords.valueText`), answers 422.
 
     Picks may take at most 4000 characters in all, each value counted percent-encoded as the URL
@@ -32,6 +33,7 @@ get:
     - $ref: ../components/parameters/DashboardDateRangeQuery.yml
     - $ref: ../components/parameters/DashboardDateFromQuery.yml
     - $ref: ../components/parameters/DashboardDateToQuery.yml
+    - $ref: ../components/parameters/DashboardFilterRulesQuery.yml
     - $ref: ../components/parameters/DashboardFilterPicksQuery.yml
     - in: query
       name: search

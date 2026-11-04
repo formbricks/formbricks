@@ -479,23 +479,27 @@ export const SettingsSidebarContent = ({
         </div>
       )}
 
-      <div>
-        <SectionHeader
-          label={t("common.organization")}
-          switcherType="organization"
-          isCollapsed={isCollapsed}
-          isTextVisible={isTextVisible}
-          switcherName={organizationName}
-          switcherItems={organizations}
-          isLoadingSwitcher={isLoadingOrganizations}
-          errorSwitcher={errorOrganizations}
-          onSwitcherRetry={onOrganizationRetry}
-          currentId={organizationId}
-          onSwitcherChange={onOrganizationChange}
-          onSwitcherOpen={onOrganizationDropdownOpen}
-        />
-        {renderSection(visibleOrganizationItems)}
-      </div>
+      {/* A section with nothing to open (a Dashboard viewer's organization) is left out rather than shown
+          as a bare heading; the main navigation still switches organizations. */}
+      {visibleOrganizationItems.length > 0 && (
+        <div>
+          <SectionHeader
+            label={t("common.organization")}
+            switcherType="organization"
+            isCollapsed={isCollapsed}
+            isTextVisible={isTextVisible}
+            switcherName={organizationName}
+            switcherItems={organizations}
+            isLoadingSwitcher={isLoadingOrganizations}
+            errorSwitcher={errorOrganizations}
+            onSwitcherRetry={onOrganizationRetry}
+            currentId={organizationId}
+            onSwitcherChange={onOrganizationChange}
+            onSwitcherOpen={onOrganizationDropdownOpen}
+          />
+          {renderSection(visibleOrganizationItems)}
+        </div>
+      )}
 
       <div>
         <SectionHeader label={t("common.account")} isCollapsed={isCollapsed} isTextVisible={isTextVisible} />

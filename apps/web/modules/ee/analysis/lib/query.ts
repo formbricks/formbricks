@@ -1,5 +1,5 @@
 import type { InfiniteData } from "@tanstack/react-query";
-import type { TDashboardFilterPicks } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import type { TDashboardFilterState } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-state";
 import type {
   TAppChart,
   TAppDashboardListItem,
@@ -21,13 +21,13 @@ export const chartKeys = {
   allData: () => [...chartKeys.all, "data"] as const,
   data: (chartId: string, dateRange: TChartDateRangeInput | null) =>
     [...chartKeys.allData(), chartId, dateRange] as const,
-  /** A widget's data read through its dashboard: also keyed by the dashboard and the filter picks. */
+  /** A widget's data read through its dashboard: also keyed by the dashboard and the filters. */
   dashboardData: (
     dashboardId: string,
     chartId: string,
     dateRange: TChartDateRangeInput | null,
-    picks: TDashboardFilterPicks
-  ) => [...chartKeys.allData(), chartId, dateRange, { dashboardId, picks }] as const,
+    filters: readonly TDashboardFilterState[]
+  ) => [...chartKeys.allData(), chartId, dateRange, { dashboardId, filters }] as const,
 };
 
 export const dashboardKeys = {
@@ -40,20 +40,19 @@ export const dashboardKeys = {
   details: () => [...dashboardKeys.all, "detail"] as const,
   detail: (dashboardId: string) => [...dashboardKeys.details(), dashboardId] as const,
   /**
-   * One search of a dashboard filter's value list; under the chart data keys so a chart edit refreshes
-   * it too. The field and operator are in the key: editing a filter keeps its id but changes its list.
+   * One search of a field's value list on a dashboard; under the chart data keys so a chart edit refreshes
+   * it too.
    */
   filterValues: (
     dashboardId: string,
-    filterId: string,
     context: {
       dateRange: TChartDateRangeInput | null;
-      picks: TDashboardFilterPicks;
+      filters: readonly TDashboardFilterState[];
       search: string;
       field: string;
       operator: string;
     }
-  ) => [...chartKeys.allData(), "filterValues", dashboardId, filterId, context] as const,
+  ) => [...chartKeys.allData(), "filterValues", dashboardId, context] as const,
 };
 
 export const flattenPages = <T>(data?: InfiniteData<TV3ListPage<T>>): T[] =>

@@ -307,9 +307,9 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     ]);
   });
 
-  test("a requested preset narrows the saved range on collectedAt, keeping the granularity", async () => {
+  test("a requested preset replaces the saved range on collectedAt, keeping the granularity", async () => {
     expect(await timeDimensionsSent(charts.ranged, { dateRange: "last 7 days" })).toEqual([
-      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-03-04", "2026-03-10"] },
+      { dimension: COLLECTED_AT, granularity: "week", dateRange: "last 7 days" },
     ]);
   });
 
@@ -319,23 +319,23 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     ]);
   });
 
-  test("a requested range wider than the saved one leaves the saved range, and all-time keeps it too", async () => {
+  test("a requested range wider than the saved one replaces it, and all-time keeps a time-grouped chart's", async () => {
     expect(await timeDimensionsSent(charts.ranged, { from: "2025-01-01", to: "2026-12-31" })).toEqual([
-      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-12-11", "2026-03-10"] },
+      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-01-01", "2026-12-31"] },
     ]);
     expect(await timeDimensionsSent(charts.ranged, { dateRange: "all-time" })).toEqual([
       { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-12-11", "2026-03-10"] },
     ]);
   });
 
-  test("a requested range disjoint from the saved one answers no rows without reaching Cube", async () => {
+  test("a requested range disjoint from the saved one is read as asked", async () => {
     const response = await read(sessionOf(fixture.users.viewer), charts.wideHourly, {
       from: "2026-02-01",
       to: "2026-02-07",
     });
     expect(response.status).toBe(200);
-    expect(ZV3ChartData.parse((await response.json()).data).rows).toEqual([]);
-    expect(cubeFake.calls).toHaveLength(0);
+    expect(cubeFake.calls).toHaveLength(1);
+    expect(cubeFake.calls[0].query.timeDimensions?.[0].dateRange).toEqual(["2026-02-01", "2026-02-07"]);
   });
 
   test("refuses an invalid or half-given range with 422 and a timezone with 400, before reaching Cube", async () => {
@@ -367,8 +367,8 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     ]);
     expect(cubeFake.calls).toHaveLength(0);
 
-    // A saved range too wide for the limit does not block a read whose requested range narrows it,
-    // and is named as the saved query's when nothing narrows it.
+    // A saved range too wide for the limit does not block a read whose requested range replaces it,
+    // and is named as the saved query's when nothing replaces it.
     expect(await timeDimensionsSent(charts.wideHourly, { from: "2025-12-01", to: "2025-12-07" })).toEqual([
       { dimension: COLLECTED_AT, granularity: "hour", dateRange: ["2025-12-01", "2025-12-07"] },
     ]);

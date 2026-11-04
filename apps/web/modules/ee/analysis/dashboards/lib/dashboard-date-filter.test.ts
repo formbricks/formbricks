@@ -28,96 +28,60 @@ const savedOn = (dateRange?: string | [string, string]): TChartQuery => ({
 describe("applyDashboardDateFilter", () => {
   test("returns the query unchanged when no filter is active", () => {
     const query: TChartQuery = { measures: ["FeedbackRecords.count"] };
-    expect(applyDashboardDateFilter(query, null, CLOCK)).toBe(query);
+    expect(applyDashboardDateFilter(query, null)).toBe(query);
   });
 
-  test("saved last 30 days + requested last 12 months narrows to the last 30 days", () => {
-    const result = applyDashboardDateFilter(savedOn("last 30 days"), LAST_12_MONTHS, CLOCK);
-    expect(result?.timeDimensions).toEqual([
-      { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2026-10-05", "2026-11-03"] },
+  test("the requested range replaces the saved one, whether it is wider or narrower", () => {
+    const wider = applyDashboardDateFilter(savedOn("last 30 days"), LAST_12_MONTHS);
+    expect(wider.timeDimensions).toEqual([
+      { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2025-11-04", "2026-11-03"] },
     ]);
+    const narrower = applyDashboardDateFilter(savedOn(["2026-01-01", "2026-12-31"]), {
+      type: "custom",
+      range: ["2026-03-01", "2026-03-31"],
+    });
+    expect(narrower.timeDimensions?.[0].dateRange).toEqual(["2026-03-01", "2026-03-31"]);
   });
 
-  test("saved all time + requested last 7 days narrows to the last 7 days", () => {
-    const result = applyDashboardDateFilter(savedOn(), { type: "preset", value: "last 7 days" }, CLOCK);
-    expect(result?.timeDimensions).toEqual([
+  test("a range that does not overlap the saved one is still asked for", () => {
+    const result = applyDashboardDateFilter(savedOn("last 30 days"), { type: "preset", value: "last year" });
+    expect(result.timeDimensions?.[0].dateRange).toBe("last year");
+  });
+
+  test("saved all time + requested last 7 days takes the last 7 days, keeping the granularity", () => {
+    const result = applyDashboardDateFilter(savedOn(), { type: "preset", value: "last 7 days" });
+    expect(result.timeDimensions).toEqual([
       { dimension: COLLECTED_AT, granularity: "day", dateRange: "last 7 days" },
     ]);
   });
 
-  test("disjoint ranges answer null: no data", () => {
-    expect(
-      applyDashboardDateFilter(savedOn("last 30 days"), { type: "preset", value: "last year" }, CLOCK)
-    ).toBeNull();
-    expect(
-      applyDashboardDateFilter(
-        savedOn(["2026-01-01", "2026-01-31"]),
-        { type: "custom", range: ["2026-02-01", "2026-02-28"] },
-        CLOCK
-      )
-    ).toBeNull();
+  test("a sub-day preset is passed on as it is", () => {
+    const result = applyDashboardDateFilter(savedOn("last 30 days"), {
+      type: "preset",
+      value: "last 24 hours",
+    });
+    expect(result.timeDimensions?.[0].dateRange).toBe("last 24 hours");
   });
 
-  test("a requested range inside the saved one is kept whole, and the order does not matter", () => {
-    const narrower = applyDashboardDateFilter(
-      savedOn(["2026-01-01", "2026-12-31"]),
-      { type: "custom", range: ["2026-03-01", "2026-03-31"] },
-      CLOCK
-    );
-    expect(narrower?.timeDimensions?.[0].dateRange).toEqual(["2026-03-01", "2026-03-31"]);
-    const overlapping = applyDashboardDateFilter(
-      savedOn(["2026-03-15", "2026-04-15"]),
-      { type: "custom", range: ["2026-03-01", "2026-03-31"] },
-      CLOCK
-    );
-    expect(overlapping?.timeDimensions?.[0].dateRange).toEqual(["2026-03-15", "2026-03-31"]);
-  });
-
-  test("ranges that share a single day keep that day", () => {
-    const result = applyDashboardDateFilter(
-      savedOn(["2026-01-01", "2026-01-31"]),
-      { type: "custom", range: ["2026-01-31", "2026-02-28"] },
-      CLOCK
-    );
-    expect(result?.timeDimensions?.[0].dateRange).toEqual(["2026-01-31", "2026-01-31"]);
-  });
-
-  test("all time requested leaves the saved range untouched", () => {
-    const query = savedOn("last 30 days");
-    expect(applyDashboardDateFilter(query, { type: "all-time" }, CLOCK)).toBe(query);
-  });
-
-  test("a sub-day range intersects as instants", () => {
-    const result = applyDashboardDateFilter(
-      savedOn("last 30 days"),
-      { type: "preset", value: "last 24 hours" },
-      CLOCK
-    );
-    expect(result?.timeDimensions?.[0].dateRange).toEqual(["2026-11-02T12:00:00Z", "2026-11-03T12:00:00Z"]);
-  });
-
-  test("calendar days are cut in the reporting zone", () => {
-    const berlin = { timeZone: "Europe/Berlin", now: new Date("2026-11-03T12:00:00Z") };
-    const result = applyDashboardDateFilter(
-      savedOn(["2026-11-03", "2026-11-03"]),
-      { type: "preset", value: "last 24 hours" },
-      berlin
-    );
-    // 3 November in Berlin (UTC+1) starts at 2 November 23:00 UTC.
-    expect(result?.timeDimensions?.[0].dateRange).toEqual(["2026-11-02T23:00:00Z", "2026-11-03T12:00:00Z"]);
-  });
-
-  test("a relative range only Cube reads stays saved, and the requested one is ANDed as a filter", () => {
+  test("all time drops the saved range of a chart not grouped by time", () => {
     const query: TChartQuery = {
-      ...savedOn("last 3 months"),
-      filters: [{ member: "FeedbackRecords.sourceName", operator: "equals", values: ["Web"] }],
+      measures: ["FeedbackRecords.count"],
+      timeDimensions: [{ dimension: COLLECTED_AT, dateRange: "last 30 days" }],
     };
-    const result = applyDashboardDateFilter(query, { type: "preset", value: "last 7 days" }, CLOCK);
-    expect(result?.timeDimensions).toEqual(query.timeDimensions);
-    expect(result?.filters).toEqual([
-      { member: "FeedbackRecords.sourceName", operator: "equals", values: ["Web"] },
-      { member: COLLECTED_AT, operator: "inDateRange", values: ["2026-10-28", "2026-11-03"] },
-    ]);
+    expect(applyDashboardDateFilter(query, { type: "all-time" }).timeDimensions).toEqual([]);
+  });
+
+  test("all time keeps the saved range of a chart grouped by time", () => {
+    const query = savedOn("last 30 days");
+    expect(applyDashboardDateFilter(query, { type: "all-time" })).toBe(query);
+  });
+
+  test("all time leaves other time dimensions and a chart with no saved range alone", () => {
+    const query: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      timeDimensions: [{ dimension: "FeedbackRecords.createdAt", dateRange: "last 7 days" }],
+    };
+    expect(applyDashboardDateFilter(query, { type: "all-time" })).toBe(query);
   });
 
   test("appends a filter-only time dimension when the chart has no collectedAt", () => {
@@ -125,8 +89,8 @@ describe("applyDashboardDateFilter", () => {
       measures: ["FeedbackRecords.count"],
       timeDimensions: [{ dimension: "FeedbackRecords.createdAt", granularity: "week" }],
     };
-    const result = applyDashboardDateFilter(query, { type: "preset", value: "last 7 days" }, CLOCK);
-    expect(result?.timeDimensions).toEqual([
+    const result = applyDashboardDateFilter(query, { type: "preset", value: "last 7 days" });
+    expect(result.timeDimensions).toEqual([
       { dimension: "FeedbackRecords.createdAt", granularity: "week" },
       { dimension: COLLECTED_AT, dateRange: "last 7 days" },
     ]);
@@ -135,7 +99,8 @@ describe("applyDashboardDateFilter", () => {
   test("does not mutate the input query", () => {
     const query = savedOn("last 30 days");
     const before = JSON.stringify(query);
-    applyDashboardDateFilter(query, { type: "preset", value: "last 7 days" }, CLOCK);
+    applyDashboardDateFilter(query, { type: "preset", value: "last 7 days" });
+    applyDashboardDateFilter(query, { type: "all-time" });
     expect(JSON.stringify(query)).toBe(before);
   });
 });

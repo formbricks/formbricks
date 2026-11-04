@@ -23,7 +23,9 @@ import {
 import { conditionGroupToRules, emptyCondition, rulesToConditionGroup } from "../lib/advanced-filter";
 import { getRules, replaceRules } from "../lib/filter-state";
 import { getOperatorName, operatorTakesValue } from "../lib/operators";
-import type { TFilterProperty, TTableFilter } from "../lib/types";
+import { getRuleValueControl } from "../lib/rule-value-control";
+import type { TFilterProperty, TRuleOperator, TTableFilter } from "../lib/types";
+import { RuleValueInput } from "./rule-value-input";
 
 const INPUT_TYPE_BY_VALUE_TYPE: Record<TFilterProperty["valueType"], string> = {
   string: "text",
@@ -79,6 +81,34 @@ export const AdvancedFilterDialog = ({
   const propertyFor = (condition: TGenericCondition) =>
     ruleProperties.find((property) => property.id === condition.leftOperand.value);
 
+  /**
+   * A row as an edit leaves it. Picking a property picks its first operator too, so the value control
+   * that suits the property shows at once; switching between operators that take the same kind of
+   * value (is → is not) keeps the value typed or picked.
+   */
+  const withDefaults = (
+    condition: TGenericCondition,
+    updates: Partial<TGenericCondition>
+  ): TGenericCondition => {
+    const next = { ...condition, ...updates };
+    const property = propertyFor(next);
+    if (updates.leftOperand && property && !next.operator) {
+      next.operator = property.ruleOperators?.[0] ?? "";
+    }
+    const isOperatorSwitch =
+      updates.operator !== undefined && updates.operator !== condition.operator && !updates.leftOperand;
+    if (
+      isOperatorSwitch &&
+      condition.rightOperand &&
+      !Array.isArray(condition.rightOperand.value) &&
+      getRuleValueControl(property, condition.operator as TRuleOperator) ===
+        getRuleValueControl(property, next.operator as TRuleOperator)
+    ) {
+      next.rightOperand = condition.rightOperand;
+    }
+    return next;
+  };
+
   const updateConditions = (
     update: (conditions: TGenericConditionGroup["conditions"]) => TGenericConditionGroup["conditions"]
   ) => {
@@ -110,24 +140,41 @@ export const AdvancedFilterDialog = ({
           ],
         };
       }
+      const suggested = property.suggestions?.map((value) => ({ label: value, value })) ?? [];
       return {
         show: true,
-        // Seen values to pick from; typing anything else still makes a valid rule.
-        options: property.suggestions?.length
-          ? [
-              {
-                label: property.label,
-                value: property.id,
-                options: property.suggestions.map((value) => ({ label: value, value })),
-              },
-            ]
-          : [],
+        // Values seen before, to pick from; typing anything else still makes a valid rule.
+        options:
+          suggested.length > 0 ? [{ label: property.label, value: property.id, options: suggested }] : [],
         showInput: true,
         inputType: INPUT_TYPE_BY_VALUE_TYPE[property.valueType],
       };
     },
+    // The operator is chosen with the property (its first), in `onUpdateCondition`.
     getDefaultOperator: () => "",
+    renderValueInput: (condition) => {
+      const property = propertyFor(condition);
+      const operator = condition.operator as TRuleOperator | "";
+      if (getRuleValueControl(property, operator) === "editor") return undefined;
+      const value = condition.rightOperand?.value;
+      return (
+        <RuleValueInput
+          id={`advanced-filter-value-${condition.id}`}
+          property={property}
+          operator={operator}
+          value={value === undefined || Array.isArray(value) ? "" : String(value)}
+          invalid={incompleteIds.includes(condition.id)}
+          onChange={(next) =>
+            callbacks.onUpdateCondition(condition.id, {
+              rightOperand: next === "" ? undefined : { value: next, type: "static" },
+            })
+          }
+        />
+      );
+    },
     showWhenLabel: false,
+    leftOperandPlaceholder: t("common.table_toolbar.select_property"),
+    operatorPlaceholder: t("common.table_toolbar.select_operator"),
     wideLeftOperandDropdown: true,
     formatLeftOperandValue: (condition) => condition.leftOperand.value,
   };
@@ -157,7 +204,7 @@ export const AdvancedFilterDialog = ({
     onUpdateCondition: (id, updates) =>
       updateConditions((conditions) =>
         conditions.map((condition) =>
-          condition.id === id && isCondition(condition) ? { ...condition, ...updates } : condition
+          condition.id === id && isCondition(condition) ? withDefaults(condition, updates) : condition
         )
       ),
     // AND only: there is no connector to toggle.
@@ -181,7 +228,8 @@ export const AdvancedFilterDialog = ({
           <DialogTitle>{t("common.table_toolbar.advanced_filter")}</DialogTitle>
           <DialogDescription>{t("common.table_toolbar.advanced_filter_description")}</DialogDescription>
         </DialogHeader>
-        <DialogBody className="space-y-3">
+        {/* The body scrolls, so it clips: a 4px margin it pads back keeps the controls' focus rings whole. */}
+        <DialogBody className="-m-1 space-y-3 p-1">
           <ConditionsEditor conditions={group} config={config} callbacks={callbacks} isConnectorLocked />
           {/* Lined up under the rules' first field: past the 40px connector slot and its 8px gap, which
               only exists once there is an "and" to show. */}

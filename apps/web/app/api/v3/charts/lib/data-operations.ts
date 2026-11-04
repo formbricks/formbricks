@@ -125,13 +125,12 @@ const validatePicks = (
 };
 
 /**
- * Validate, narrow to the requested date range, shape for the chart type, and run — the part preview and
+ * Validate, apply the requested date range, shape for the chart type, and run — the part preview and
  * data share once the caller is authorized for the dataset. `query` is caller input for a preview and
  * the stored query for a saved chart; both go through the validator, so a stored query that no longer
- * passes it answers 422 rather than reaching Cube. A requested range is ANDed with the saved one
- * (ADR-0024); ranges that do not overlap answer an empty chart. The time-bucket limit is checked once, on
- * the query that will run, and a narrowed range too wide for the chart's granularity is named as
- * `dateRange`. `extraFilters` (a dashboard's filter picks) are ANDed onto the saved filters the same way,
+ * passes it answers 422 rather than reaching Cube. A requested range takes the place of the saved
+ * one (ADR-0024). The time-bucket limit is checked once, on the query that will run, and a requested range
+ * too wide for the chart's granularity is named as `dateRange`. `extraFilters` (a dashboard's filter picks) are ANDed onto the saved filters the same way,
  * and `respond` shapes the success body.
  */
 export async function runV3ChartQuery({
@@ -187,12 +186,8 @@ export async function runV3ChartQuery({
 
   const narrowed = applyDashboardDateFilter(
     narrowWithFilters(validated.query, picks.filters),
-    requested.filter,
-    { timeZone: await getOrganizationReportingTimeZone(access.organizationId) }
+    requested.filter
   );
-  if (!narrowed) {
-    return successResponse(respond(emptyChartData(validated.query)), { requestId: context.requestId });
-  }
   const runnable = prepareQueryForChartType(narrowed, type);
   const bucketIssue = checkTimeBucketLimit(runnable, (index) =>
     requested.filter && runnable.timeDimensions?.[index]?.dimension === COLLECTED_AT_DIMENSION
@@ -303,9 +298,9 @@ export const requestedDateRangeOf = (
 /**
  * `GET /api/v3/charts/{chartId}/data` → 200 `{ data: { rows, optionLabels, fieldLabels, query } }`.
  *
- * A requested date range narrows the chart's own on `collectedAt` — the dashboard date filter's rule
- * (ADR-0024) — so the numbers match what a person sees on a dashboard filtered the same way; `all-time` and
- * no range leave the saved range as it is. Needs read access to the chart's workspace and to its Feedback
+ * A requested date range replaces the chart's own on `collectedAt` — the dashboard date filter's rule
+ * (ADR-0024) — so the numbers match what a person sees on a dashboard filtered the same way; no range
+ * leaves the saved range as it is. Needs read access to the chart's workspace and to its Feedback
  * Dataset: a dashboards grant alone never reaches respondents' answers.
  */
 export async function getV3ChartData({

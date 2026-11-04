@@ -33,11 +33,10 @@ import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   findPickIssues,
   keepCurrentPicks,
+  withLockedFilters,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
-import {
-  isListDashboardFilter,
-  parseStoredDashboardFilters,
-} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import { resolveFilterRules } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
+import { isListDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import {
   type TFilterValueQuery,
@@ -149,10 +148,10 @@ const valuesCacheKey = (parts: {
  * `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values` → 200 `{ data: { values: [{ value }],
  * hasMore } }`.
  *
- * The values a list dashboard filter offers: those the dashboard's charts let through under their saved
- * filters and date ranges, narrowed by the dashboard date range and the other filters' picks — never by
- * this filter's own pick — and by a case-insensitive `search`. Up to 100, alphabetical, `hasMore` when more
- * match. A filter the dashboard does not have, or one that takes a typed value, answers 422.
+ * The values a list filter offers: those the dashboard's charts let through under their saved filters,
+ * narrowed by the dashboard date range and the other filters' picks — never by this filter's own pick — and
+ * by a case-insensitive `search`. Up to 100, alphabetical, `hasMore` when more match. `filterId` is one of
+ * the request's `filter[<id>]` parameters; one that is not, or one that takes a typed value, answers 422.
  *
  * Needs read access to the dashboard and to each Feedback Dataset whose charts have the field. Every
  * request spends from the default v3 budget first, before the cache is read, so a cached list is charged
@@ -184,9 +183,16 @@ export async function listV3DashboardFilterValues({
     if (access instanceof Response) return access;
     if (!row) return filterProblem("filterId", "Not a filter of this dashboard.", context);
 
-    const filters = parseStoredDashboardFilters(row.filters);
+    const { filters, issues: filterIssues } = resolveFilterRules(query.rules);
+    if (filterIssues.length > 0) {
+      return problemUnprocessableContent(requestId, "The filters are not valid", {
+        instance,
+        invalid_params: filterIssues,
+      });
+    }
     const filter = filters.find((candidate) => candidate.id === filterId);
-    if (!filter) return filterProblem("filterId", "Not a filter of this dashboard.", context);
+    if (!filter)
+      return filterProblem("filterId", "Not one of the request's filter[<id>] parameters.", context);
     if (!isListDashboardFilter(filter)) {
       return filterProblem(
         "filterId",
@@ -221,7 +227,9 @@ export async function listV3DashboardFilterValues({
     const actor = getV3AuthorizationActor(context.authentication);
     if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
-    const filterFields = filters.map(({ field }) => field);
+    // The values offered are those left once the dashboard's locked filters apply, as on its charts.
+    const locked = withLockedFilters(row.filters, filters, query.picks ?? {});
+    const filterFields = locked.filters.map(({ field }) => field);
     const matchers = new Map(
       await Promise.all(
         datasetIds.map(
@@ -248,7 +256,7 @@ export async function listV3DashboardFilterValues({
     const refused = refusals.find((refusal) => refusal !== null);
     if (refused) return refused;
 
-    const picks = keepCurrentPicks(filters, query.picks ?? {});
+    const picks = keepCurrentPicks(locked.filters, locked.picks);
     const { [filter.id]: _ownPick, ...otherPicks } = picks;
     const { cacheKey, lockKey } = valuesCacheKey({
       dashboardId,
@@ -265,7 +273,7 @@ export async function listV3DashboardFilterValues({
 
     const plan = {
       filter,
-      filters,
+      filters: locked.filters,
       charts,
       picks: otherPicks,
       dateFilter: requested.filter,

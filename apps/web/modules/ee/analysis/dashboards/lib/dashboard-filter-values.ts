@@ -1,43 +1,46 @@
 import { type TChartDateRangeInput, listDashboardFilterValues } from "@/modules/ee/analysis/lib/api-client";
 import { dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import type { TFilterProperty } from "@/modules/ui/components/table-toolbar/lib/types";
-import type { TDashboardFilter, TDashboardFilterPicks } from "./dashboard-filters";
+import type { TDashboardFilterState } from "./dashboard-filter-state";
 
 /**
- * A list dashboard filter as the shared value list takes it: the values the dashboard's charts let
- * through for the other picks and the date range, one search at a time. Each search is cached under
- * the chart data keys (`dashboardKeys.filterValues`), so editing a chart refreshes the list as it
- * refreshes the charts.
+ * A categorical field as the toolbar's value list takes it: the values the dashboard's charts let through
+ * for the filters already applied and the date range, one search at a time. Each search is cached under the
+ * chart data keys (`dashboardKeys.filterValues`), so editing a chart refreshes the list as it refreshes
+ * the charts.
  */
-export const getDashboardFilterValueProperty = ({
+export const getDashboardFieldValueProperty = ({
   dashboardId,
-  filter,
-  otherPicks,
+  field,
+  label,
+  otherFilters,
   dateRange,
 }: Readonly<{
   dashboardId: string;
-  filter: TDashboardFilter;
-  /** Every pick but this filter's own: they narrow which values it offers. */
-  otherPicks: TDashboardFilterPicks;
+  field: string;
+  label: string;
+  /** Every filter but this field's own: they narrow which values it offers. */
+  otherFilters: readonly TDashboardFilterState[];
   dateRange: TChartDateRangeInput | null;
 }>): TFilterProperty => ({
-  id: filter.id,
-  label: filter.label,
+  id: field,
+  label,
   valueType: "enum",
   queryKey: (search) =>
-    dashboardKeys.filterValues(dashboardId, filter.id, {
+    dashboardKeys.filterValues(dashboardId, {
       dateRange,
-      picks: otherPicks,
+      filters: otherFilters,
       search,
-      field: filter.field,
-      operator: filter.operator,
+      field,
+      operator: "equals",
     }),
   loadOptions: async (search, signal) => {
     const { values, hasMore } = await listDashboardFilterValues({
       dashboardId,
-      filterId: filter.id,
+      field,
+      operator: "equals",
       dateRange: dateRange ?? undefined,
-      picks: otherPicks,
+      filters: otherFilters,
       search: search || undefined,
       signal,
     });

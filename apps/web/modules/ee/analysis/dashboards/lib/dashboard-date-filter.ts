@@ -1,16 +1,10 @@
 import type { TChartQuery, TMemberFilter } from "@formbricks/types/analysis";
-import {
-  DATE_RANGE_PRESETS,
-  getEndOfDayInTimeZone,
-  getStartOfDayInTimeZone,
-  isSubDayDateRangePreset,
-  resolveDateRangePreset,
-} from "@/lib/date-ranges";
-import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
+import { DATE_RANGE_PRESETS, isSubDayDateRangePreset, resolveDateRangePreset } from "@/lib/date-ranges";
+import { formatLocalDay } from "@/lib/utils/datetime";
 import { writeDashboardCookie } from "./dashboard-cookies";
 
-// The dashboard-level date filter only ever narrows the "Collected at" time dimension (ADR-0024).
-// Other time dimensions (e.g. createdAt) are left untouched.
+// The dashboard-level date filter sets the range of the "Collected at" time dimension, in place of the one
+// saved on the chart (ADR-0024). Other time dimensions (e.g. createdAt) are left untouched.
 export const COLLECTED_AT_DIMENSION = "FeedbackRecords.collectedAt";
 
 // URL search-param keys + reserved values for the dashboard date filter. The custom-range keys are
@@ -54,7 +48,7 @@ type TQueryDateRange = string | [string, string];
 
 /**
  * A date range resolved to its bounds: calendar days (presets, custom pairs) compare as `yyyy-MM-dd`
- * strings; anything with a time of day ("last 24 hours", or an intersection with one) as instants.
+ * strings; anything with a time of day ("last 24 hours") as instants.
  */
 type TResolvedRange = { kind: "days"; from: string; to: string } | { kind: "instants"; from: Date; to: Date };
 
@@ -82,31 +76,9 @@ const resolveRange = (
     : { kind: "days", from: formatLocalDay(bounds[0]), to: formatLocalDay(bounds[1]) };
 };
 
-const toInstants = (range: TResolvedRange, timeZone: string): { from: Date; to: Date } =>
-  range.kind === "instants"
-    ? range
-    : {
-        from: getStartOfDayInTimeZone(parseLocalDay(range.from), timeZone),
-        to: getEndOfDayInTimeZone(parseLocalDay(range.to), timeZone),
-      };
-
 /** The range as explicit Cube bounds. */
 const toCubeBounds = (range: TResolvedRange): [string, string] =>
   range.kind === "days" ? [range.from, range.to] : [toCubeInstant(range.from), toCubeInstant(range.to)];
-
-/** Where two ranges overlap, or `null` when they do not. */
-const intersectRanges = (a: TResolvedRange, b: TResolvedRange, timeZone: string): TResolvedRange | null => {
-  if (a.kind === "days" && b.kind === "days") {
-    const from = a.from > b.from ? a.from : b.from;
-    const to = a.to < b.to ? a.to : b.to;
-    return from <= to ? { kind: "days", from, to } : null;
-  }
-  const x = toInstants(a, timeZone);
-  const y = toInstants(b, timeZone);
-  const from = x.from > y.from ? x.from : y.from;
-  const to = x.to < y.to ? x.to : y.to;
-  return from <= to ? { kind: "instants", from, to } : null;
-};
 
 /**
  * A filter rule keeping only records collected in `range`, with its bounds written out so it means the
@@ -124,58 +96,41 @@ export const toDateRangeRule = (
 };
 
 /**
- * Narrow a chart query to the dashboard's date range (ADR-0024): the requested range is ANDed with the one
- * saved on the chart's "Collected at" time dimension, never replacing it. Other time dimensions are left
- * untouched.
+ * Set a chart query's "Collected at" range to the dashboard's date range (ADR-0024), in place of the one the
+ * chart was saved with: the person looking at the dashboard chooses the period. Other time dimensions are
+ * left untouched.
  *
- * - no filter, or all-time: the saved range stands.
- * - a chart without a saved range on collectedAt takes the requested one, appending a filter-only time
- *   dimension (no granularity) when it has none.
- * - otherwise the time dimension gets the overlap of the two, written out as explicit bounds; ranges that
- *   do not overlap answer `null`, "no data", which the caller shows as an empty chart without asking Cube.
- * - a relative range older charts were saved with stays on the time dimension, and the requested range is
- *   added as a filter rule, so Cube ANDs the two.
+ * - no filter: the saved range stands.
+ * - a preset or custom range: it becomes the range of the "Collected at" time dimension, which is added
+ *   (filter-only, no granularity) when the chart has none. A saved granularity is kept.
+ * - all time: the saved range is dropped. A chart grouped by time keeps it, since a bucket for every day of
+ *   all time is more than the time-bucket limit allows.
  *
- * Pure and immutable — the input query is never mutated. `clock` resolves relative ranges in the
- * organization's reporting time zone, as Cube reads them.
+ * Pure and immutable — the input query is never mutated.
  */
 export const applyDashboardDateFilter = (
   query: TChartQuery,
-  filter: TDashboardDateFilter | null,
-  clock: TDateClock
-): TChartQuery | null => {
-  if (!filter || filter.type === "all-time") return query;
+  filter: TDashboardDateFilter | null
+): TChartQuery => {
+  if (!filter) return query;
 
-  const requested: TQueryDateRange = filter.type === "preset" ? filter.value : filter.range;
   const timeDimensions = query.timeDimensions ?? [];
   const index = timeDimensions.findIndex((td) => td.dimension === COLLECTED_AT_DIMENSION);
 
+  if (filter.type === "all-time") {
+    if (index === -1 || timeDimensions[index].granularity !== undefined) return query;
+    return { ...query, timeDimensions: timeDimensions.filter((_, position) => position !== index) };
+  }
+
+  const dateRange: TQueryDateRange = filter.type === "preset" ? filter.value : filter.range;
   if (index === -1) {
     return {
       ...query,
-      timeDimensions: [...timeDimensions, { dimension: COLLECTED_AT_DIMENSION, dateRange: requested }],
+      timeDimensions: [...timeDimensions, { dimension: COLLECTED_AT_DIMENSION, dateRange }],
     };
   }
-
-  const saved = timeDimensions[index].dateRange;
   const next = [...timeDimensions];
-  if (saved === undefined) {
-    next[index] = { ...next[index], dateRange: requested };
-    return { ...query, timeDimensions: next };
-  }
-
-  const requestedBounds = resolveRange(requested, clock);
-  const savedBounds = resolveRange(saved, clock);
-  if (!requestedBounds || !savedBounds) {
-    return {
-      ...query,
-      filters: [...(query.filters ?? []), toDateRangeRule(COLLECTED_AT_DIMENSION, requested, clock)],
-    };
-  }
-
-  const overlap = intersectRanges(requestedBounds, savedBounds, clock.timeZone);
-  if (!overlap) return null;
-  next[index] = { ...next[index], dateRange: toCubeBounds(overlap) };
+  next[index] = { ...next[index], dateRange };
   return { ...query, timeDimensions: next };
 };
 
@@ -288,7 +243,7 @@ export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDat
 
 /**
  * The dashboard filter as the chart data API takes it, or `null` when the charts keep their own ranges.
- * Both read a range the same way: it narrows the chart's range on collectedAt.
+ * Both read a range the same way: it replaces the chart's range on collectedAt.
  */
 export const toChartDateRange = (
   filter: TDashboardDateFilter | null

@@ -350,7 +350,7 @@ describe("GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data (ENG-6898, 
     expect(sent).toContainEqual({ member: LANGUAGE, operator: "equals", values: ["de"] });
   });
 
-  test("narrows the saved date range and answers an empty chart without Cube when the dates are disjoint", async () => {
+  test("the requested date range replaces the saved one, even where the two do not overlap", async () => {
     const chart = await createChart({
       measures: ["FeedbackRecords.count"],
       timeDimensions: [
@@ -360,12 +360,12 @@ describe("GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data (ENG-6898, 
     const dashboard = await createDashboard([chart.id]);
 
     await readData(dashboard.id, chart.id, { from: "2026-01-20", to: "2026-03-01" });
-    expect(cubeFake.calls[0].query.timeDimensions?.[0].dateRange).toEqual(["2026-01-20", "2026-01-31"]);
+    expect(cubeFake.calls[0].query.timeDimensions?.[0].dateRange).toEqual(["2026-01-20", "2026-03-01"]);
 
     const disjoint = await readData(dashboard.id, chart.id, { from: "2026-02-01", to: "2026-02-28" });
     expect(disjoint.status).toBe(200);
-    expect((await dataOf(disjoint)).rows).toEqual([]);
-    expect(cubeFake.calls).toHaveLength(1);
+    expect(cubeFake.calls).toHaveLength(2);
+    expect(cubeFake.calls[1].query.timeDimensions?.[0].dateRange).toEqual(["2026-02-01", "2026-02-28"]);
   });
 
   test("answers an empty chart naming the filter when the dataset lacks a picked field, and ignores unpicked ones", async () => {

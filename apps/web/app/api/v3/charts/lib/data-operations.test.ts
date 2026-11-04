@@ -240,7 +240,7 @@ describe("chart queries within budget", () => {
       });
     });
 
-    test("narrows the range on collectedAt to where the requested one overlaps it", async () => {
+    test("replaces the range on collectedAt with the requested one, keeping the granularity", async () => {
       await preview({
         query: {
           measures: ["FeedbackRecords.count"],
@@ -252,12 +252,12 @@ describe("chart queries within budget", () => {
       });
 
       expect(sentQuery().timeDimensions).toEqual([
-        { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2026-03-01", "2026-03-31"] },
+        { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2026-03-01", "2026-04-30"] },
       ]);
     });
 
-    test("answers an empty chart without running Cube when the ranges do not overlap", async () => {
-      const response = await preview({
+    test("asks Cube for a requested range that does not overlap the saved one", async () => {
+      await preview({
         query: {
           measures: ["FeedbackRecords.count"],
           timeDimensions: [{ dimension: COLLECTED_AT, dateRange: ["2026-01-01", "2026-01-31"] }],
@@ -265,11 +265,9 @@ describe("chart queries within budget", () => {
         dateRange: { from: "2026-02-01", to: "2026-02-28" },
       });
 
-      expect(response.status).toBe(200);
-      expect((await response.json()).data).toEqual(
-        expect.objectContaining({ rows: [], optionLabels: {}, fieldLabels: {} })
-      );
-      expect(runChartQuery).not.toHaveBeenCalled();
+      expect(sentQuery().timeDimensions).toEqual([
+        { dimension: COLLECTED_AT, dateRange: ["2026-02-01", "2026-02-28"] },
+      ]);
     });
 
     test("refuses an invalid query and an invalid range together with 422, before running anything", async () => {
@@ -465,7 +463,7 @@ describe("chart queries within budget", () => {
       );
     });
 
-    test("narrows the saved range with a requested pair, and keeps it for all-time", async () => {
+    test("replaces the saved range with a requested pair, and keeps it for all-time on a chart grouped by time", async () => {
       vi.mocked(loadAuthorizedChart).mockResolvedValue({
         row: chartOf({
           ...RANGED,
@@ -480,7 +478,7 @@ describe("chart queries within budget", () => {
       await read({ dateRange: "all-time" });
 
       expect(vi.mocked(runChartQuery).mock.calls.map(([run]) => run.query.timeDimensions)).toEqual([
-        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-01-31"] }],
+        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-12-01", "2026-01-31"] }],
         [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-06-30"] }],
       ]);
     });

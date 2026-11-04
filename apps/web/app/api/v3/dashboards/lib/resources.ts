@@ -39,13 +39,17 @@ export const ZV3DashboardWidget = z
   .strict();
 export type TV3DashboardWidget = z.infer<typeof ZV3DashboardWidget>;
 
-/** One dashboard filter as read: the field and operator everyone picks a value for, and its label. */
+/**
+ * One locked dashboard filter as read: the field, the operator and the values an editor locked it to, and
+ * its label. Every read of the dashboard's charts applies it, whoever reads them.
+ */
 export const ZV3DashboardFilter = z
   .object({
     id: z.string(),
     field: z.string(),
     operator: z.enum(DASHBOARD_FILTER_OPERATORS),
     label: z.string(),
+    values: z.array(z.string()),
   })
   .strict();
 export type TV3DashboardFilter = z.infer<typeof ZV3DashboardFilter>;

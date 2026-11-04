@@ -1,0 +1,20 @@
+in: query
+name: filter
+style: deepObject
+explode: true
+schema:
+  type: object
+  maxProperties: 10
+  additionalProperties:
+    type: string
+    minLength: 3
+    maxLength: 300
+description: >-
+  The filters the request applies, as `filter[<id>]=<operator>:<field>`: any dimension from the field
+  catalog, or an embedded-data field (`FeedbackRecords.ed_…`), with `equals`, `notEquals`, `contains`,
+  `notContains`, `gt`, `gte`, `lt` or `lte` as the field allows. The dashboard keeps no list of them;
+  `<id>` only names a filter within the request, to give its values in `picks[<id>]`. A filter without
+  a pick is ignored. A definition that is not `<operator>:<field>`, a field outside the catalog or an
+  operator the field refuses answers 422 naming `filter[<id>]`.
+example:
+  f1: equals:FeedbackRecords.sourceName

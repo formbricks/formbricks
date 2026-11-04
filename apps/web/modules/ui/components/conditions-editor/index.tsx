@@ -221,6 +221,7 @@ export function ConditionsEditor({
                 key="conditionValue"
                 showSearch
                 groupedOptions={leftOperandOptions}
+                placeholder={config.leftOperandPlaceholder}
                 wideDropdown={config.wideLeftOperandDropdown}
                 iconClassName={config.wideLeftOperandDropdown ? "size-4 text-slate-500" : undefined}
                 value={config.formatLeftOperandValue(condition)}
@@ -235,6 +236,7 @@ export function ConditionsEditor({
                 key="conditionOperator"
                 showSearch={false}
                 options={operatorOptions}
+                placeholder={config.operatorPlaceholder}
                 value={condition.operator}
                 onChangeValue={(val: string | number | string[]) => {
                   handleOperatorChange(condition, String(val));

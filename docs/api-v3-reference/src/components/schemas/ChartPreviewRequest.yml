@@ -25,9 +25,9 @@ properties:
     $ref: ./ChartQuery.yml
   dateRange:
     description: >-
-      Narrows the query's date range on `FeedbackRecords.collectedAt` to where the two overlap: a
-      preset, `all-time` (the query's own range applies), or `{ from, to }` ISO calendar dates. Ranges
-      that do not overlap answer an empty chart. Read in the organization's display time zone.
+      Replaces the query's date range on `FeedbackRecords.collectedAt`: a preset, `all-time` (the
+      query's own range applies when it is grouped by time, and is dropped otherwise), or
+      `{ from, to }` ISO calendar dates. Read in the organization's display time zone.
     oneOf:
       - type: string
         example: last 7 days

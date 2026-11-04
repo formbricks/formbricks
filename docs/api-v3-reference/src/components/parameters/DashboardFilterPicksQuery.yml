@@ -13,11 +13,11 @@ schema:
       type: string
       maxLength: 1000
 description: >-
-  Values picked for the dashboard's filters, as `picks[<filterId>]=value`; repeat the parameter for
-  several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is
-  ANDed onto every chart's saved query; picks for filters the dashboard does not have are ignored.
+  Values for the request's filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter
+  for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is
+  ANDed onto every chart's saved query; picks for a filter the request does not name are ignored.
   All values together may take at most 4000 characters percent-encoded
   (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.
 example:
-  clfi000000000000000000001:
+  f1:
     - Web

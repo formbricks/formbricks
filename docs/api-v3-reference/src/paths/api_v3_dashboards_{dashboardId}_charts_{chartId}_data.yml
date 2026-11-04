@@ -6,14 +6,15 @@ get:
     dashboard widget loads its data from. The body is the chart data body (`GET
     /api/v3/charts/{chartId}/data`) plus `unfilterableFilters`.
 
-    Both narrow the chart's saved query and never widen it:
+    The filters narrow the chart's saved query and never widen it; the date range sets its period:
 
-    - **Date range.** `dateRange`, or `from` and `to`, is ANDed with the chart's own range on
+    - **Date range.** `dateRange`, or `from` and `to`, replaces the chart's own range on
       `FeedbackRecords.collectedAt`: a chart saved for the last 30 days read for the last 12 months
-      still shows the last 30 days, and ranges that do not overlap answer an empty chart.
-    - **Filter picks.** Each `picks[<filterId>]` is ANDed onto the chart's saved filters; a saved
-      rule on the same field is kept, at any depth. A pick on a field the chart's Feedback Dataset
-      lacks answers empty `rows` and names the filter in `unfilterableFilters`. Picks may take at
+      shows the last 12 months.
+    - **Filters.** Each `filter[<id>]` with values in `picks[<id>]` is ANDed onto the chart's saved
+      filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
+      on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
+      `unfilterableFilters`. Picks may take at
       most 4000 characters in all, each value counted percent-encoded as the URL carries it
       (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
       `limit_exceeded`.
@@ -30,6 +31,7 @@ get:
     - $ref: ../components/parameters/DashboardDateRangeQuery.yml
     - $ref: ../components/parameters/DashboardDateFromQuery.yml
     - $ref: ../components/parameters/DashboardDateToQuery.yml
+    - $ref: ../components/parameters/DashboardFilterRulesQuery.yml
     - $ref: ../components/parameters/DashboardFilterPicksQuery.yml
   responses:
     "200":

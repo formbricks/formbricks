@@ -60,6 +60,9 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
    * table filter has nothing to trigger, so it leaves the slot empty. Omitted means shown.
    */
   showWhenLabel?: boolean;
+  /** Shown in the first operand and the operator while they are empty. Omitted: blank. */
+  leftOperandPlaceholder?: string;
+  operatorPlaceholder?: string;
   /** Lets the first operand's list grow past its field and wrap long names (survey questions). */
   wideLeftOperandDropdown?: boolean;
   /**

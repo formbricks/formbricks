@@ -2,18 +2,14 @@ import { describe, expect, test } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import {
   MAX_DASHBOARD_FILTER_PICKS_CHARS,
-  appendPickParams,
   countPickChars,
-  deserializeFilterPicks,
   exceedsPicksBudget,
   findPickIssues,
   keepCurrentPicks,
   narrowWithFilters,
   pickValuesOf,
-  readFilterPicksFromUrl,
   resolvePicksForDataset,
   splitPickParams,
-  writeFilterPicksToUrl,
 } from "./dashboard-filter-picks";
 import type { TDashboardFilter } from "./dashboard-filters";
 
@@ -90,40 +86,11 @@ describe("splitPickParams", () => {
     ).toEqual({ dateRange: "today", picks: { [A]: ["Web", "App"], [B]: ["late"] } });
     expect(splitPickParams({ dateRange: "today" })).toEqual({ dateRange: "today" });
   });
-});
 
-describe("picks in the URL and the cookie", () => {
-  test("round-trip through URL parameters in filter order, keeping other parameters", () => {
-    const params = writeFilterPicksToUrl(
-      new URLSearchParams(`dateRange=today&picks[${C}]=old`),
-      { [B]: ["late"], [A]: ["Web", "App"] },
-      [A, B, C]
-    );
-    expect([...params.keys()]).toEqual(["dateRange", `picks[${A}]`, `picks[${A}]`, `picks[${B}]`]);
-    expect(readFilterPicksFromUrl(params)).toEqual({ [A]: ["Web", "App"], [B]: ["late"] });
-  });
-
-  test("a URL without picks says so, so the remembered ones apply", () => {
-    expect(readFilterPicksFromUrl(new URLSearchParams("dateRange=today"))).toBeNull();
-    expect(readFilterPicksFromUrl(new URLSearchParams(`picks[${A}]=`))).toEqual({});
-  });
-
-  test("appends picks without an order sorted by id", () => {
-    expect(appendPickParams(new URLSearchParams(), { [B]: ["x"], [A]: ["y"] }).toString()).toBe(
-      new URLSearchParams([
-        [`picks[${A}]`, "y"],
-        [`picks[${B}]`, "x"],
-      ]).toString()
-    );
-  });
-
-  test("reads remembered picks back, and anything malformed as none", () => {
-    expect(deserializeFilterPicks(encodeURIComponent(JSON.stringify({ [A]: ["Web"], [B]: [] })))).toEqual({
-      [A]: ["Web"],
-    });
-    expect(deserializeFilterPicks("%7Bnot json")).toEqual({});
-    expect(deserializeFilterPicks(encodeURIComponent("[1]"))).toEqual({});
-    expect(deserializeFilterPicks(undefined)).toEqual({});
+  test("gathers filter[id] parameters into the filters of the request", () => {
+    expect(
+      splitPickParams({ [`filter[f1]`]: "equals:FeedbackRecords.sourceName", [`picks[f1]`]: "Web" })
+    ).toEqual({ rules: { f1: "equals:FeedbackRecords.sourceName" }, picks: { f1: ["Web"] } });
   });
 });
 

@@ -29,8 +29,9 @@ import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   findPickIssues,
   resolvePicksForDataset,
+  withLockedFilters,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
-import { parseStoredDashboardFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import { resolveFilterRules } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import { withCachedDashboardDecision } from "./read-decision-cache";
 import type { TV3DashboardChartData } from "./resources";
@@ -106,9 +107,11 @@ const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartO
  * fieldLabels, memberLabels, query, unfilterableFilters } }`.
  *
  * A widget's data, read through the dashboard it sits on: what every dashboard widget and the MCP chart
- * data tool load. The dashboard date range narrows the chart's saved range, and each of the person's
- * filter picks is ANDed onto the chart's saved filters (ADR-0024) — a saved rule on the same field is kept.
- * A pick on a field the chart's Feedback Dataset lacks leaves the chart empty, naming the filter.
+ * data tool load. The dashboard date range replaces the chart's saved range, and each of the person's
+ * filters (`filter[<id>]`, with its values in `picks[<id>]`) is ANDed onto the chart's saved filters
+ * (ADR-0024) — a saved rule on the same field is kept — and so is every filter an editor locked on the
+ * dashboard, whoever reads it. A filter on a field the chart's Feedback Dataset
+ * lacks leaves the chart empty, naming the filter.
  *
  * Needs read access to the dashboard and to the chart's Feedback Dataset; spends from the chart-query budget.
  */
@@ -146,19 +149,32 @@ export async function getV3DashboardChartData({
     const actor = getV3AuthorizationActor(context.authentication);
     if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
 
-    const dashboardFilters = parseStoredDashboardFilters(row.filters);
+    // The caller's own filters, named by the request. The dashboard's locked ones are added after these
+    // are checked: they were checked when an editor saved them.
+    const { filters: requestFilters, issues: filterIssues } = resolveFilterRules(query.rules);
+    if (filterIssues.length > 0) {
+      return problemUnprocessableContent(context.requestId, "The filters are not valid", {
+        instance: context.instance,
+        invalid_params: filterIssues,
+      });
+    }
     // Picks are checked before any query: a value its field cannot hold, or more than the total budget,
     // is the caller's to fix (422), not a Cube failure (C6, C9).
-    const pickIssues = findPickIssues(dashboardFilters, query.picks ?? {});
+    const pickIssues = findPickIssues(requestFilters, query.picks ?? {});
     if (pickIssues.length > 0) {
       return problemUnprocessableContent(context.requestId, "The filter picks are not valid", {
         instance: context.instance,
         invalid_params: pickIssues,
       });
     }
+    const { filters: dashboardFilters, picks } = withLockedFilters(
+      row.filters,
+      requestFilters,
+      query.picks ?? {}
+    );
     const { rules, unfilterable } = resolvePicksForDataset(
       dashboardFilters,
-      query.picks ?? {},
+      picks,
       await getDatasetFieldMatcher(
         {
           datasetId: chart.feedbackDirectoryId,

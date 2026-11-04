@@ -55,7 +55,7 @@ describe("ZV3DashboardReplaceBody", () => {
 });
 
 describe("dashboard filter picks (C6, C15)", () => {
-  const A = "clfi000000000000000000001";
+  const A = "f1";
 
   test("one exported picks schema: a filter id to one to 100 values of up to 1000 characters", () => {
     expect(ZDashboardFilterPicks.safeParse({ [A]: ["Web", "App"] }).success).toBe(true);
@@ -64,7 +64,7 @@ describe("dashboard filter picks (C6, C15)", () => {
       false
     );
     expect(ZDashboardFilterPicks.safeParse({ [A]: ["x".repeat(1001)] }).success).toBe(false);
-    expect(ZDashboardFilterPicks.safeParse({ "not-an-id": ["x"] }).success).toBe(false);
+    expect(ZDashboardFilterPicks.safeParse({ "not an id": ["x"] }).success).toBe(false);
   });
 
   test("refuses a NUL byte in a pick value and in a value-list search", () => {
@@ -77,7 +77,12 @@ describe("dashboard filter picks (C6, C15)", () => {
   test("refuses a NUL byte in a filter label", () => {
     expect(
       ZV3DashboardFilters.safeParse([
-        { id: A, field: "FeedbackRecords.sourceName", operator: "equals", label: "So\u0000urce" },
+        {
+          id: "clfi000000000000000000001",
+          field: "FeedbackRecords.sourceName",
+          operator: "equals",
+          label: "So\u0000urce",
+        },
       ]).success
     ).toBe(false);
   });

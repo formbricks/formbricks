@@ -11,16 +11,18 @@ import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client"
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { useChartData } from "../hooks/use-chart-data";
 import { formatFilterLabels } from "../lib/dashboard-filter-editing";
-import type { TDashboardFilterPicks } from "../lib/dashboard-filters";
+import type { TDashboardFilterState } from "../lib/dashboard-filter-state";
 import { DashboardWidgetSkeleton } from "./dashboard-widget-skeleton";
 
 interface DashboardWidgetDataProps {
   dashboardId: string;
   chartId: string;
-  /** The dashboard's date range, narrowing the chart's own; `null` keeps the chart's. */
+  /** The dashboard's date range, in place of the chart's own; `null` keeps the chart's. */
   dateRange: TChartDateRangeInput | null;
-  /** The person's dashboard filter picks, each ANDed onto the chart's saved filters. */
-  picks: TDashboardFilterPicks;
+  /** The person's filters on the dashboard, each ANDed onto the chart's saved filters. */
+  filters: readonly TDashboardFilterState[];
+  /** How a filter's field reads, for the message of a chart its dataset cannot be filtered by. */
+  filterFieldLabel: (field: string) => string;
   chartType: TChartType;
   /** Saved display settings of the chart behind this widget. */
   config?: TChartConfig;
@@ -35,7 +37,8 @@ export function DashboardWidgetData({
   dashboardId,
   chartId,
   dateRange,
-  picks,
+  filters,
+  filterFieldLabel,
   chartType,
   config,
   view = DEFAULT_WIDGET_VIEW,
@@ -46,7 +49,7 @@ export function DashboardWidgetData({
     isPending,
     isError,
     error,
-  } = useChartData({ dashboardId, chartId, dateRange, picks });
+  } = useChartData({ dashboardId, chartId, dateRange, filters });
 
   if (isPending) return <DashboardWidgetSkeleton />;
 
@@ -61,14 +64,14 @@ export function DashboardWidgetData({
     );
   }
 
-  // A pick on a field this chart's Feedback Dataset lacks: it cannot be narrowed to the pick, so it shows
+  // A filter on a field this chart's Feedback Dataset lacks: it cannot be narrowed to the pick, so it shows
   // nothing, and says why rather than looking like a chart with no data.
   if (result.unfilterableFilters.length > 0) {
     return (
       <ChartEmptyState
         message={t("workspace.analysis.dashboards.chart_cannot_be_filtered_by", {
           label: formatFilterLabels(
-            result.unfilterableFilters.map((filter) => filter.label),
+            result.unfilterableFilters.map((filter) => filterFieldLabel(filter.label)),
             i18n.resolvedLanguage ?? i18n.language ?? "en-US"
           ),
         })}

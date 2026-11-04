@@ -2,12 +2,13 @@ import { z } from "zod";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
 import { zPostgresText } from "@/lib/utils/postgres-text";
-import { splitPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import { findPickIssues, splitPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import { FILTER_RULE_ID } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import {
   MAX_DASHBOARD_FILTERS,
   MAX_DASHBOARD_FILTER_PICK_VALUES,
   MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
-  ZDashboardFilter,
+  ZLockedDashboardFilter,
   findDashboardFilterIssues,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
@@ -136,16 +137,22 @@ export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.Re
 };
 
 /**
- * A dashboard's filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each a catalog dimension or
- * an embedded-data field with an operator it allows, ids unique. Every problem is named at its position.
+ * A dashboard's locked filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each a catalog
+ * dimension or an embedded-data field with an operator it allows and values it can hold, ids unique, and
+ * all their values within the budget a read's picks have. Every problem is named at its position.
  */
 export const ZV3DashboardFilters = z
-  .array(ZDashboardFilter)
+  .array(ZLockedDashboardFilter)
   .max(MAX_DASHBOARD_FILTERS)
   .superRefine((filters, ctx) => {
     // The cap is the array's own `max`; only the per-filter problems are added here.
     for (const issue of findDashboardFilterIssues(filters)) {
       if (issue.path.length > 0) ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
+    }
+    const picks = Object.fromEntries(filters.map((filter) => [filter.id, filter.values]));
+    for (const issue of findPickIssues(filters, picks)) {
+      const index = filters.findIndex((filter) => `picks[${filter.id}]` === issue.name);
+      ctx.addIssue({ code: "custom", message: issue.reason, path: index >= 0 ? [index, "values"] : [] });
     }
   });
 
@@ -194,10 +201,23 @@ export type TV3DashboardLayoutBody = z.infer<typeof ZV3DashboardLayoutBody>;
 /** `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. */
 export const ZV3DashboardChartParams = z.object({ dashboardId: z.cuid2(), chartId: z.cuid2() }).strict();
 
-/** `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`. */
-export const ZV3DashboardFilterParams = z.object({ dashboardId: z.cuid2(), filterId: z.cuid2() }).strict();
+/** `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`: `filterId` names a `filter[<id>]` of the query. */
+export const ZV3DashboardFilterParams = z
+  .object({ dashboardId: z.cuid2(), filterId: z.string().regex(FILTER_RULE_ID) })
+  .strict();
 
 const ZV3PickValue = zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH);
+
+/**
+ * The filters of a read, sent as `filter[<id>]=<operator>:<field>`: the dashboard keeps no list of them, so
+ * every read names the ones its picks are for. The field and operator are checked by the operations
+ * (`resolveFilterRules`), which name the parameter at fault. At most `MAX_DASHBOARD_FILTERS`.
+ */
+export const ZDashboardFilterRules = z
+  .record(z.string().regex(FILTER_RULE_ID), z.string().min(3).max(300))
+  .refine((rules) => Object.keys(rules).length <= MAX_DASHBOARD_FILTERS, {
+    message: `At most ${MAX_DASHBOARD_FILTERS} filters can be applied.`,
+  });
 
 /**
  * A person's dashboard filter picks, sent as `picks[<filterId>]=value`, repeated for several values. Picks
@@ -206,7 +226,10 @@ const ZV3PickValue = zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH)
  * (`MAX_DASHBOARD_FILTER_PICKS_CHARS`, 422), so both answer it the same way.
  */
 export const ZDashboardFilterPicks = z
-  .record(z.cuid2(), z.array(ZV3PickValue).min(1).max(MAX_DASHBOARD_FILTER_PICK_VALUES))
+  .record(
+    z.string().regex(FILTER_RULE_ID),
+    z.array(ZV3PickValue).min(1).max(MAX_DASHBOARD_FILTER_PICK_VALUES)
+  )
   .refine((picks) => Object.keys(picks).length <= MAX_DASHBOARD_FILTERS, {
     message: `At most ${MAX_DASHBOARD_FILTERS} filters can be picked.`,
   });
@@ -221,7 +244,13 @@ const dashboardDateRange = {
 /** The date range and the picks a dashboard-bound chart read is narrowed by. */
 export const ZV3DashboardChartDataQuery = z.preprocess(
   splitPickParams,
-  z.object({ ...dashboardDateRange, picks: ZDashboardFilterPicks.optional() }).strict()
+  z
+    .object({
+      ...dashboardDateRange,
+      rules: ZDashboardFilterRules.optional(),
+      picks: ZDashboardFilterPicks.optional(),
+    })
+    .strict()
 );
 export type TV3DashboardChartDataQuery = z.infer<typeof ZV3DashboardChartDataQuery>;
 
@@ -231,6 +260,7 @@ export const ZV3DashboardFilterValuesQuery = z.preprocess(
   z
     .object({
       ...dashboardDateRange,
+      rules: ZDashboardFilterRules.optional(),
       picks: ZDashboardFilterPicks.optional(),
       search: zPostgresText().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),
     })

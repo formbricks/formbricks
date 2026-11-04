@@ -18,6 +18,7 @@ import {
   removeV3DashboardWidget,
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
+import { toRequestFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, isMcpDashboardViewerOnly } from "../auth";
 import { responseToMcpToolResult } from "../errors";
@@ -253,7 +254,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Get chart data",
       description:
-        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) narrows the chart's own range on collectedAt to the days both cover; without one the chart's saved range applies. Pass dashboardId to read the chart through a dashboard it sits on, as the dashboard shows it: picks (values for the dashboard's filters, by filter id) are then ANDed onto the chart's saved filters and never widen it, and a pick on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters. Without dashboardId picks are not accepted. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
+        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt; without one the chart's saved range applies. Pass dashboardId to read the chart through a dashboard it sits on, as the dashboard shows it: filters (a field, an operator and values each, on any dimension of the chart's dataset or an embedded-data field) are then ANDed onto the chart's saved filters and never widen it, and a filter on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters. Without dashboardId filters are not accepted. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
       inputSchema: ZMcpGetChartDataInput,
       outputSchema: ZMcpGetChartDataOutput,
       annotations: READ_ANNOTATIONS,
@@ -267,11 +268,16 @@ export function registerDashboardTools(server: McpServer): void {
           ? ["dashboards:read"]
           : ["dashboards:read", "feedbackRecords:read"],
     },
-    async ({ dashboardId, chartId, dateRange, picks }: TMcpGetChartDataInput, ctx) => {
+    async ({ dashboardId, chartId, dateRange, filters }: TMcpGetChartDataInput, ctx) => {
       const context = toolContext(ctx);
       const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
       const response = dashboardId
-        ? await getV3DashboardChartData({ dashboardId, chartId, query: { ...range, picks }, ...context })
+        ? await getV3DashboardChartData({
+            dashboardId,
+            chartId,
+            query: { ...range, ...toRequestFilters(filters ?? []) },
+            ...context,
+          })
         : await getV3ChartData({ chartId, query: range, ...context });
       return await responseToMcpToolResult(response, context.requestId);
     }
@@ -283,7 +289,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "List dashboard filter values",
       description:
-        "List up to 100 values a dashboard filter offers, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange and the other filters' picks, and by search. Only filters with equals or notEquals on a categorical or embedded-data field have a list; others take a typed value. Pass the values as picks to get_chart_data.",
+        "List up to 100 values a field offers for a dashboard, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange, the filters already applied and search. Only a categorical field (one marked valueLookup in list_chart_fields) or an embedded-data field, with equals or notEquals, has a list; others take a typed value. Pass the values as a filter to get_chart_data.",
       inputSchema: ZMcpListDashboardFilterValuesInput,
       outputSchema: ZMcpDashboardFilterValuesOutput,
       annotations: READ_ANNOTATIONS,
@@ -296,14 +302,22 @@ export function registerDashboardTools(server: McpServer): void {
           ? ["dashboards:read"]
           : ["dashboards:read", "feedbackRecords:read"],
     },
-    async ({ dashboardId, filterId, dateRange, picks, search }: TMcpListDashboardFilterValuesInput, ctx) => {
+    async (
+      { dashboardId, field, operator, dateRange, filters, search }: TMcpListDashboardFilterValuesInput,
+      ctx
+    ) => {
       const context = toolContext(ctx);
       const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      // The filter listed is `f1`; the ones already applied follow it.
       return await responseToMcpToolResult(
         await listV3DashboardFilterValues({
           dashboardId,
-          filterId,
-          query: { ...range, picks, search },
+          filterId: "f1",
+          query: {
+            ...range,
+            ...toRequestFilters([{ field, operator: operator ?? "equals" }, ...(filters ?? [])]),
+            search,
+          },
           ...context,
         }),
         context.requestId

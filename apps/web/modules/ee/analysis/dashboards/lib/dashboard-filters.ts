@@ -10,9 +10,10 @@ import {
 import type { FilterOperator } from "@/modules/ee/analysis/lib/schema-definition";
 
 /**
- * Dashboard filters (ADR-0024, glossary "Dashboard filter"): a field and an operator a dashboard's editors pin
- * to its top bar, in order. Everyone who opens the dashboard picks or enters the value; the pick narrows every
- * chart, never widens one.
+ * Dashboard filters (ADR-0024, glossary "Dashboard filter"): a field, an operator and the values compared
+ * against. A person's own filters travel with each read; the ones an editor locks are saved on the
+ * dashboard and apply to everyone who opens it, on top of their own. Either kind narrows every chart,
+ * never widens one.
  */
 
 /** Most filters one dashboard holds. */
@@ -54,6 +55,19 @@ export const ZDashboardFilter = z
   .strict();
 
 export type TDashboardFilter = z.infer<typeof ZDashboardFilter>;
+
+/**
+ * A filter locked on the dashboard by an editor: saved with its values, so it applies to every read of the
+ * dashboard, whoever reads it, and a viewer cannot take it off.
+ */
+export const ZLockedDashboardFilter = ZDashboardFilter.extend({
+  values: z
+    .array(zPostgresText().trim().min(1).max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
+    .min(1)
+    .max(MAX_DASHBOARD_FILTER_PICK_VALUES),
+}).strict();
+
+export type TLockedDashboardFilter = z.infer<typeof ZLockedDashboardFilter>;
 
 /** A person's picks: the values entered or chosen per filter id. A filter with no values is not applied. */
 export type TDashboardFilterPicks = Record<string, string[]>;
@@ -129,11 +143,14 @@ export const findDashboardFilterIssues = (filters: readonly TDashboardFilter[]):
   return issues;
 };
 
-/** A dashboard's saved filters, read defensively: a JSON column could hold anything. */
-export const parseStoredDashboardFilters = (value: unknown): TDashboardFilter[] => {
+/**
+ * A dashboard's locked filters, read defensively: a JSON column could hold anything. One saved before
+ * filters were locked with their values has nothing to apply, so it is left out.
+ */
+export const parseStoredDashboardFilters = (value: unknown): TLockedDashboardFilter[] => {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
-    const parsed = ZDashboardFilter.safeParse(item);
+    const parsed = ZLockedDashboardFilter.safeParse(item);
     return parsed.success ? [parsed.data] : [];
   });
 };
