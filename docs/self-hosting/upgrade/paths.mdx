@@ -68,7 +68,8 @@ Minor and major upgrades run in a maintenance window, because they can contain d
   upgrade: it jumps straight to the newest release and skips your stops.
 - Use the Compose file, Cube model files and migration images from the same release as the app. The
   [configuration checklist](/self-hosting/upgrade/configuration) lists every pin to change.
-- On Kubernetes, write down the chart version **and** the app version. They are numbered separately.
+- On Kubernetes, use the chart with the same version as the app: since 4.0, each release publishes its chart
+  with the app's version number. If your values override the image tag, set it to the same version.
 - Keep your PostgreSQL major version and storage setup. A newer example file for fresh installs is not
   a reason to change them.
 

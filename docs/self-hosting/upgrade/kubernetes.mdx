@@ -23,7 +23,8 @@ Before you start:
     writers="app.kubernetes.io/instance=${rel},app.kubernetes.io/component in (formbricks,hub,hub-worker,taxonomy)"
     ```
 
-    Each release publishes a chart with the same version number as the app: chart `6.1.3` deploys app `6.1.3`.
+    Since 4.0, each release publishes a chart with the same version number as the app: chart `6.1.3` deploys app `6.1.3`.
+    If your values override `deployment.image.tag`, set it to the same version.
     Check it with:
 
     ```bash
@@ -138,6 +139,16 @@ Before you start:
     **Argo CD or Flux:** commit the new chart version and values to Git, then sync once by hand, for example
     `argocd app sync <app>`. Keep automatic sync off until the checks pass.
   </Step>
+  <Step title="Restore replicas">
+    Hub, Hub worker and taxonomy start with the replica count from your values. If the app uses an autoscaler
+    (the default), scale it back up by hand, because an autoscaler doesn't scale up from zero. Keep traffic
+    closed and GitOps paused:
+
+    ```bash
+    while read -r name replicas; do kubectl scale deploy -n "$ns" "$name" --replicas="$replicas"; done < replicas-before.txt
+    kubectl rollout status deploy/formbricks -n "$ns" --timeout=10m
+    ```
+  </Step>
   <Step title="Check that it worked">
     ```bash
     kubectl get jobs -n "$ns"
@@ -148,14 +159,7 @@ Before you start:
     The migration Jobs must show `Complete`, the pods must run the target version, and `upgrade check` must exit `0`.
     Then do the [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade).
   </Step>
-  <Step title="Restore replicas, controllers and traffic">
-    Hub, Hub worker and taxonomy start with the replica count from your values. If the app uses an autoscaler
-    (the default), scale it back up by hand, because an autoscaler doesn't scale up from zero:
-
-    ```bash
-    while read -r name replicas; do kubectl scale deploy -n "$ns" "$name" --replicas="$replicas"; done < replicas-before.txt
-    ```
-
+  <Step title="Restore controllers and traffic">
     Turn automatic sync back on with your original settings, for example
     `argocd app set <app> --sync-policy automated --self-heal` or `flux resume helmrelease <name> -n "$ns"`.
     Then reopen traffic and watch the logs and queues.
