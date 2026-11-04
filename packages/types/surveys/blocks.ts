@@ -136,9 +136,13 @@ export const ZSurveyBlock = z
     backButtonLabel: ZI18nString.optional(),
   })
   .superRefine((block, ctx) => {
-    // Validate element IDs are unique within block
-    const elementIds = block.elements.map((e) => e.id);
-    const duplicateIndex = elementIds.findIndex((id, index) => elementIds.indexOf(id) !== index);
+    // One pass: the first element whose ID an earlier one already has.
+    const seenIds = new Set<string>();
+    const duplicateIndex = block.elements.findIndex(({ id }) => {
+      if (seenIds.has(id)) return true;
+      seenIds.add(id);
+      return false;
+    });
     if (duplicateIndex !== -1) {
       ctx.addIssue({
         code: "custom",
