@@ -3,7 +3,7 @@ import { z } from "zod";
 import { CANONICAL_LANGUAGE_CODES } from "@formbricks/i18n-utils/canonical";
 import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
 import { findArrayBudgetViolation } from "@/app/api/v3/lib/array-budget";
-import { V3_INVALID_PARAMS_MAX } from "@/app/api/v3/lib/invalid-params";
+import { V3_INVALID_PARAMS_MAX, V3_INVALID_PARAM_REASON_MAX_CHARS } from "@/app/api/v3/lib/invalid-params";
 import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
@@ -1467,8 +1467,10 @@ describe("formatV3ZodInvalidParams", () => {
       const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
 
       // Whole expected string, not fragments: the caller's interior run survives untouched, only the
-      // marker and the whitespace adjoining it are collapsed, and a marker-free message is identical.
-      expect(invalidParam.reason).toBe(withMarker ? `Language 'a${run}b' is not valid: de-DE` : message);
+      // marker and the whitespace adjoining it are collapsed, and a marker-free message is identical,
+      // up to the reply's echo limit (ENG-4100).
+      const expected = withMarker ? `Language 'a${run}b' is not valid: de-DE` : message;
+      expect(invalidParam.reason).toBe(`${expected.slice(0, V3_INVALID_PARAM_REASON_MAX_CHARS)}…`);
     },
     2_000
   );
