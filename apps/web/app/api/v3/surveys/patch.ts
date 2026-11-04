@@ -420,14 +420,8 @@ export async function executeV3SurveyPatch(params: {
         })
       : null;
 
-  // ENG-6934: the quotas' matrix conditions follow a row or column reorder only where quotas are
-  // licensed, as every other quota write is. The license is resolved here, outside the transaction.
-  const quotaMatrixBlocks =
-    Array.isArray(data.blocks) &&
-    hasMatrixElement(data.blocks) &&
-    (await getIsV3QuotasEnabled(currentSurvey.workspaceId, organizationId))
-      ? data.blocks
-      : undefined;
+  // ENG-6934: the license is resolved here, outside the transaction.
+  const syncQuotaMatrix = await prepareV3QuotaMatrixSync(currentSurvey, data.blocks, organizationId);
 
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
     client.survey.update({
@@ -469,7 +463,7 @@ export async function executeV3SurveyPatch(params: {
 
         await runSurveyUpdate(tx);
         // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
-        if (quotaMatrixBlocks) await syncQuotaMatrixConditions(tx, currentSurvey.id, quotaMatrixBlocks);
+        await syncQuotaMatrix(tx);
 
         // ENG-6930: typed Embedded Data, when the request sent it, is the complete set and wins over
         // the legacy keys (which prepare derived from it). Library entries link the workspace's row,
@@ -545,6 +539,23 @@ export async function executeV3SurveyPatch(params: {
 
     throw error;
   }
+}
+
+/**
+ * ENG-6934: the step that makes the quotas' matrix conditions follow a row or column reorder, run
+ * inside the patch's transaction. Only where quotas are licensed, as every other quota write is, and
+ * only when the blocks hold a matrix (the license is not read otherwise); else a step that does nothing.
+ */
+async function prepareV3QuotaMatrixSync(
+  currentSurvey: TSurvey,
+  blocks: Prisma.SurveyUpdateInput["blocks"],
+  organizationId: string | undefined
+): Promise<(tx: Prisma.TransactionClient) => Promise<void>> {
+  const skip = async () => {};
+  if (!Array.isArray(blocks) || !hasMatrixElement(blocks)) return skip;
+  if (!(await getIsV3QuotasEnabled(currentSurvey.workspaceId, organizationId))) return skip;
+  const matrixBlocks: readonly unknown[] = blocks;
+  return (tx) => syncQuotaMatrixConditions(tx, currentSurvey.id, matrixBlocks);
 }
 
 /** Whether the survey's organization is licensed for quotas; a workspace with none is not. */

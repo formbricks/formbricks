@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
-import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
+import type { TActionCalculate, TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
 import { getSetValueExpressionIssues } from "./expression-types";
 import { type TExpression, isExpressionOverLimits } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
@@ -220,43 +220,54 @@ const validateAction = (
     if (action.value.type === "expression") {
       return validateExpressionAction(survey, action.variableId, action.value.value, ruleIdx, path);
     }
-    const variable = survey.variables.find((item) => item.id === action.variableId);
-    if (!variable) {
-      return {
-        code: "custom",
-        message: `Conditional Logic: Variable ID ${action.variableId} does not exist in ${ruleLabel(ruleIdx)}`,
-        path: [...path, "variableId"],
-      };
-    }
-    if (action.value.type === "element") {
-      return {
-        code: "custom",
-        message: `Conditional Logic: ${ruleLabel(ruleIdx)} can't set a value from an answer: nothing has been answered yet.`,
-        path: [...path, "value"],
-      };
-    }
-    if (
-      action.value.type === "hiddenField" &&
-      getFieldType(survey, action.value.value, "ingested") === undefined
-    ) {
-      return {
-        code: "custom",
-        message: `Conditional Logic: Hidden field ID ${action.value.value} does not exist in ${ruleLabel(ruleIdx)}`,
-        path: [...path, "value"],
-      };
-    }
-    if (action.value.type === "variable") {
-      const source = survey.variables.find((item) => item.id === action.value.value);
-      if (source?.type !== variable.type) {
-        return {
-          code: "custom",
-          message: `Conditional Logic: Invalid variable type for variable in ${ruleLabel(ruleIdx)}`,
-          path: [...path, "value"],
-        };
-      }
-    }
+    return validateOneStepCalculation(survey, action, ruleIdx, path);
   }
 
+  return undefined;
+};
+
+/** A one-step calculation (not a formula) before the first question: its variable and its source. */
+const validateOneStepCalculation = (
+  survey: TStartLogicSurvey,
+  action: TActionCalculate,
+  ruleIdx: number,
+  path: (string | number)[]
+): TIssue | undefined => {
+  const variable = survey.variables.find((item) => item.id === action.variableId);
+  if (!variable) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Variable ID ${action.variableId} does not exist in ${ruleLabel(ruleIdx)}`,
+      path: [...path, "variableId"],
+    };
+  }
+  if (action.value.type === "element") {
+    return {
+      code: "custom",
+      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can't set a value from an answer: nothing has been answered yet.`,
+      path: [...path, "value"],
+    };
+  }
+  if (
+    action.value.type === "hiddenField" &&
+    getFieldType(survey, action.value.value, "ingested") === undefined
+  ) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Hidden field ID ${action.value.value} does not exist in ${ruleLabel(ruleIdx)}`,
+      path: [...path, "value"],
+    };
+  }
+  if (action.value.type === "variable") {
+    const source = survey.variables.find((item) => item.id === action.value.value);
+    if (source?.type !== variable.type) {
+      return {
+        code: "custom",
+        message: `Conditional Logic: Invalid variable type for variable in ${ruleLabel(ruleIdx)}`,
+        path: [...path, "value"],
+      };
+    }
+  }
   return undefined;
 };
 

@@ -1,10 +1,11 @@
 import { describe, expect, test } from "vitest";
-import type { TExpression } from "@formbricks/types/surveys/expressions";
+import { EXPRESSION_MAX_STATIC_TEXT_LENGTH, type TExpression } from "@formbricks/types/surveys/expressions";
 import {
   SURVEY_FLOW_FIXTURE_IDS,
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import {
+  FORMULA_MAX_LENGTH,
   formatFormula,
   formatReferenceToken,
   getFormulaIssues,
@@ -96,6 +97,16 @@ describe("parseFormula: typed text into the tree AI writes", () => {
   test("a number may start with its decimal point, and text may sit in curly quotes", () => {
     expect(tree(".5 + 1")).toEqual(call("add", num(0.5), num(1)));
     expect(tree("concat(“a”, @fav)")).toEqual(call("concat", { type: "static", value: "a" }, answer("fav")));
+  });
+
+  test("the longest text the box takes fits a stored step, so the box's length is the only limit", () => {
+    const longest = `"${"x".repeat(FORMULA_MAX_LENGTH - 2)}"`;
+    const value = (tree(longest) as { value: string }).value;
+    expect(value.length).toBeLessThanOrEqual(EXPRESSION_MAX_STATIC_TEXT_LENGTH);
+    expect(parse(`"${"x".repeat(FORMULA_MAX_LENGTH - 1)}"`)).toEqual({
+      ok: false,
+      error: { code: "too_long", position: FORMULA_MAX_LENGTH },
+    });
   });
 });
 

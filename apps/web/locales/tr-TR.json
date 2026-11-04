@@ -4464,6 +4464,7 @@
         "question_deleted": "Soru silindi.",
         "question_duplicated": "Soru çoğaltıldı.",
         "question_options_copied_warning_text": "Başka bir soru seçeneklerini bu sorudan kopyalıyor. Bu soruyu silmek istediğine emin misin?",
+        "question_options_copied_warning_title": "Seçenekler başka bir soru tarafından kopyalandı",
         "question_tab_content": "İçerik",
         "question_used_in_logic_warning_text": "Bu bloktan öğeler bir mantık kuralında kullanılıyor, silmek istediğinden emin misin?",
         "question_used_in_logic_warning_title": "Mantık Tutarsızlığı",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Bu soru {questionIndex} numaralı soruda geri çağrılıyor.",
         "question_used_in_recall_ending_card": "Bu soru Bitiş Kartında geri çağrılıyor",
         "question_used_in_show_if_warning_text": "Bu soru bir “yalnızca şu durumda göster” koşulunda kullanılıyor. Silmek istediğine emin misin?",
+        "question_used_in_show_if_warning_title": "Bir göster-eğer koşulunda kullanılıyor",
         "quotas": {
           "add_quota": "Kota ekle",
           "change_quota_for_public_survey": "Aktif bir anket için kotayı değiştir?",

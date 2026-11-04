@@ -4464,6 +4464,7 @@
         "question_deleted": "質問を削除しました。",
         "question_duplicated": "質問を複製しました。",
         "question_options_copied_warning_text": "別の質問がこの質問から選択肢をコピーしています。本当に削除しますか?",
+        "question_options_copied_warning_title": "他の質問によってコピーされている選択肢",
         "question_tab_content": "内容",
         "question_used_in_logic_warning_text": "このブロックの要素はロジックルールで使用されていますが、本当に削除しますか？",
         "question_used_in_logic_warning_title": "ロジックの不整合",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "この 質問 は 質問 {questionIndex} で 呼び出され て います 。",
         "question_used_in_recall_ending_card": "この 質問 は エンディング カード で 呼び出され て います。",
         "question_used_in_show_if_warning_text": "この質問は「次の場合のみ表示」条件で使われています。本当に削除しますか?",
+        "question_used_in_show_if_warning_title": "表示条件で使用されています",
         "quotas": {
           "add_quota": "クォータを追加",
           "change_quota_for_public_survey": "実施中のアンケートのクォータを変更しますか?",

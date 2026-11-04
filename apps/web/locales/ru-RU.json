@@ -4464,6 +4464,7 @@
         "question_deleted": "Вопрос удалён.",
         "question_duplicated": "Вопрос дублирован.",
         "question_options_copied_warning_text": "Другой вопрос копирует варианты ответа из этого. Точно хочешь его удалить?",
+        "question_options_copied_warning_title": "Варианты скопированы другим вопросом",
         "question_tab_content": "Содержание",
         "question_used_in_logic_warning_text": "Элементы из этого блока используются в правиле логики. Вы уверены, что хотите удалить его?",
         "question_used_in_logic_warning_title": "Несогласованность логики",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Этот вопрос используется в отзыве в вопросе {questionIndex}.",
         "question_used_in_recall_ending_card": "Этот вопрос используется в отзыве на финальной карточке",
         "question_used_in_show_if_warning_text": "Этот вопрос используется в условии «показывать только если». Точно хочешь его удалить?",
+        "question_used_in_show_if_warning_title": "Используется в условии показа",
         "quotas": {
           "add_quota": "Добавить квоту",
           "change_quota_for_public_survey": "Изменить квоту для активного опроса?",

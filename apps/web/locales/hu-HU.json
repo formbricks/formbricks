@@ -4464,6 +4464,7 @@
         "question_deleted": "Kérdés törölve.",
         "question_duplicated": "Kérdés megkettőzve.",
         "question_options_copied_warning_text": "Egy másik kérdés ebből a kérdésből másolja a beállításait. Biztosan törölni kívánja?",
+        "question_options_copied_warning_title": "Egy másik kérdés által átmásolt válaszlehetőségek",
         "question_tab_content": "Tartalom",
         "question_used_in_logic_warning_text": "Ezen blokkból származó elemek egy logikai szabályban vannak használva, biztosan törölni szeretné?",
         "question_used_in_logic_warning_title": "Logikai következetlenség",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Ez a kérdés visszahívásra kerül a(z) {questionIndex}. kérdésben.",
         "question_used_in_recall_ending_card": "Ez a kérdés visszahívásra kerül a befejező kártyában",
         "question_used_in_show_if_warning_text": "Ez a kérdés egy „csak akkor jelenik meg, ha” feltételben szerepel. Biztosan törölni kívánja?",
+        "question_used_in_show_if_warning_title": "Megjelenítési feltételben használatos",
         "quotas": {
           "add_quota": "Kvóta hozzáadása",
           "change_quota_for_public_survey": "Kvóta módosítása egy aktív felmérés esetében?",

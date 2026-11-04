@@ -4464,6 +4464,7 @@
         "question_deleted": "Vraag verwijderd.",
         "question_duplicated": "Vraag dubbel gesteld.",
         "question_options_copied_warning_text": "Een andere vraag kopieert de opties van deze vraag. Weet je zeker dat je deze wilt verwijderen?",
+        "question_options_copied_warning_title": "Opties gekopieerd door een andere vraag",
         "question_tab_content": "Inhoud",
         "question_used_in_logic_warning_text": "Elementen uit dit blok worden gebruikt in een logische regel, weet je zeker dat je het wilt verwijderen?",
         "question_used_in_logic_warning_title": "Logica-inconsistentie",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Deze vraag wordt teruggehaald in vraag {questionIndex}.",
         "question_used_in_recall_ending_card": "Deze vraag wordt teruggeroepen in de Eindkaart",
         "question_used_in_show_if_warning_text": "Deze vraag wordt gebruikt in een voorwaarde 'alleen tonen als'. Weet je zeker dat je deze wilt verwijderen?",
+        "question_used_in_show_if_warning_title": "Gebruikt in een weergavevoorwaarde",
         "quotas": {
           "add_quota": "Quota toevoegen",
           "change_quota_for_public_survey": "Quota wijzigen voor een actieve enquête?",

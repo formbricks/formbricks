@@ -4464,6 +4464,7 @@
         "question_deleted": "Frage gelöscht.",
         "question_duplicated": "Frage dupliziert.",
         "question_options_copied_warning_text": "Eine andere Frage übernimmt ihre Optionen von dieser. Möchtest Du sie wirklich löschen?",
+        "question_options_copied_warning_title": "Optionen von einer anderen Frage übernommen",
         "question_tab_content": "Inhalt",
         "question_used_in_logic_warning_text": "Elemente aus diesem Block werden in einer Logikregel verwendet. Bist du sicher, dass du ihn löschen möchtest?",
         "question_used_in_logic_warning_title": "Logik-Inkonsistenz",
@@ -4471,6 +4472,7 @@
         "question_used_in_recall": "Diese Frage wird in Frage {questionIndex} abgerufen.",
         "question_used_in_recall_ending_card": "Diese Frage wird in der Abschlusskarte abgerufen",
         "question_used_in_show_if_warning_text": "Diese Frage wird in einer „Nur anzeigen, wenn“-Bedingung verwendet. Möchtest Du sie wirklich löschen?",
+        "question_used_in_show_if_warning_title": "In einer Anzeigebedingung verwendet",
         "quotas": {
           "add_quota": "Quota hinzufügen",
           "change_quota_for_public_survey": "Kontingent für eine aktive Umfrage ändern?",

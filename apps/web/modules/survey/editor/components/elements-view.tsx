@@ -44,6 +44,7 @@ import {
   updateElementInBlock,
   withFilledCodes,
 } from "@/modules/survey/editor/lib/blocks";
+import { describeDeletionWarning } from "@/modules/survey/editor/lib/deletion-warning";
 import {
   type TUseKind,
   findBlockUsedInLogic,
@@ -113,17 +114,6 @@ export const ElementsView = ({
   onOpenFlow,
 }: Readonly<ElementsViewProps>) => {
   const { t } = useTranslation();
-  /** The warning's text. Literal keys, so the translation scan sees them. */
-  const getDeletionWarningText = (useKind: TUseKind | undefined): string => {
-    switch (useKind) {
-      case "showIf":
-        return t("workspace.surveys.edit.question_used_in_show_if_warning_text");
-      case "copiedOptions":
-        return t("workspace.surveys.edit.question_options_copied_warning_text");
-      default:
-        return t("workspace.surveys.edit.question_used_in_logic_warning_text");
-    }
-  };
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
     open: boolean;
     elementIdx: number;
@@ -136,6 +126,7 @@ export const ElementsView = ({
     elementIdx: 0,
     type: "element",
   });
+  const deletionWarning = describeDeletionWarning(logicDeletionWarning.useKind, t);
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -884,8 +875,8 @@ export const ElementsView = ({
       <ConfirmationModal
         open={logicDeletionWarning.open}
         setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
-        title={t("workspace.surveys.edit.question_used_in_logic_warning_title")}
-        body={getDeletionWarningText(logicDeletionWarning.useKind)}
+        title={deletionWarning.title}
+        body={deletionWarning.body}
         buttonText={t("workspace.surveys.edit.delete_anyways")}
         onConfirm={() => {
           if (logicDeletionWarning.type === "element") {

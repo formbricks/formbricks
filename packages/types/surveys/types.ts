@@ -4075,17 +4075,17 @@ interface TBlockActionContext {
 }
 
 /** The answers a one-step calculation may take, by the type of the field it sets. */
-const TEXT_CALCULATION_ELEMENT_TYPES: TSurveyElementTypeEnum[] = [
+const TEXT_CALCULATION_ELEMENT_TYPES = new Set<TSurveyElementTypeEnum>([
   TSurveyElementTypeEnum.OpenText,
   TSurveyElementTypeEnum.MultipleChoiceSingle,
   TSurveyElementTypeEnum.Rating,
   TSurveyElementTypeEnum.NPS,
   TSurveyElementTypeEnum.Date,
-];
-const NUMBER_CALCULATION_ELEMENT_TYPES: TSurveyElementTypeEnum[] = [
+]);
+const NUMBER_CALCULATION_ELEMENT_TYPES = new Set<TSurveyElementTypeEnum>([
   TSurveyElementTypeEnum.Rating,
   TSurveyElementTypeEnum.NPS,
-];
+]);
 
 /** The answer a one-step calculation reads, checked against the type of the field it sets. */
 const validateCalculationElementSource = (
@@ -4097,8 +4097,7 @@ const validateCalculationElementSource = (
   const selectedElement = allElements.get(elementId);
 
   if (variableType === "text") {
-    if (selectedElement && TEXT_CALCULATION_ELEMENT_TYPES.includes(selectedElement.data.type))
-      return undefined;
+    if (selectedElement && TEXT_CALCULATION_ELEMENT_TYPES.has(selectedElement.data.type)) return undefined;
     return {
       code: "custom",
       message: `Conditional Logic: Invalid element type for text variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
@@ -4108,7 +4107,7 @@ const validateCalculationElementSource = (
 
   if (
     !selectedElement ||
-    (!NUMBER_CALCULATION_ELEMENT_TYPES.includes(selectedElement.data.type) &&
+    (!NUMBER_CALCULATION_ELEMENT_TYPES.has(selectedElement.data.type) &&
       selectedElement.data.type === TSurveyElementTypeEnum.OpenText &&
       selectedElement.data.inputType !== "number")
   ) {
