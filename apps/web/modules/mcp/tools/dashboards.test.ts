@@ -223,44 +223,42 @@ describe("chart and dashboard MCP tools", () => {
     expect(description).toMatch(/every one of them/);
   });
 
-  test("every tool that returns respondent data needs feedbackRecords:read on top of dashboards:read", async () => {
-    vi.mocked(getV3DashboardChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+  test("the free-form value lookup needs feedbackRecords:read on top of dashboards:read", async () => {
     vi.mocked(listV3ChartFieldValues).mockResolvedValue(successResponse([], { requestId: "req" }));
-    const dataTools = [
-      [
-        "get_chart_data",
-        {
-          dashboardId: DASHBOARD_ID,
-          chartId: CHART_ID,
-          dateRange: { from: "2026-01-01", to: "2026-01-31" },
-          picks: { clfi000000000000000000001: ["Web"] },
-        },
-      ],
-      [
-        "list_chart_field_values",
-        { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID, field: "FeedbackRecords.sourceName" },
-      ],
-    ] as const;
+    const input = { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID, field: "FeedbackRecords.sourceName" };
 
-    for (const [name, input] of dataTools) {
-      expect((await call(name, input, ["dashboards:read"])).isError).toBe(true);
-    }
-    expect(getV3DashboardChartData).not.toHaveBeenCalled();
+    expect((await call("list_chart_field_values", input, ["dashboards:read"])).isError).toBe(true);
     expect(listV3ChartFieldValues).not.toHaveBeenCalled();
 
-    for (const [name, input] of dataTools)
-      await call(name, input, ["dashboards:read", "feedbackRecords:read"]);
+    await call("list_chart_field_values", input, ["dashboards:read", "feedbackRecords:read"]);
+    expect(listV3ChartFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        field: "FeedbackRecords.sourceName",
+        query: { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID },
+      })
+    );
+  });
+
+  test("get_chart_data reads a saved chart through its dashboard under dashboards:read alone (ADR-0023)", async () => {
+    vi.mocked(getV3DashboardChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+
+    const result = await call(
+      "get_chart_data",
+      {
+        dashboardId: DASHBOARD_ID,
+        chartId: CHART_ID,
+        dateRange: { from: "2026-01-01", to: "2026-01-31" },
+        picks: { clfi000000000000000000001: ["Web"] },
+      },
+      ["dashboards:read"]
+    );
+
+    expect(result.isError).toBeFalsy();
     expect(getV3DashboardChartData).toHaveBeenCalledWith(
       expect.objectContaining({
         dashboardId: DASHBOARD_ID,
         chartId: CHART_ID,
         query: { from: "2026-01-01", to: "2026-01-31", picks: { clfi000000000000000000001: ["Web"] } },
-      })
-    );
-    expect(listV3ChartFieldValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        field: "FeedbackRecords.sourceName",
-        query: { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID },
       })
     );
   });

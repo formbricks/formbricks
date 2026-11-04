@@ -115,7 +115,7 @@ Supported scopes:
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
-| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `preview_chart`, `get_chart_data`, `list_chart_field_values` |
+| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`, `get_chart_data`; with `feedbackRecords:read`, `preview_chart`, `list_chart_field_values` |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
@@ -1480,10 +1480,13 @@ writes the chart query itself.
 - **Write against the catalog.** `list_chart_fields` returns every field a chart query may use; the query
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved
   chart so an agent can check it before `create_chart` saves it.
-- **Numbers need feedback access.** `preview_chart`, `get_chart_data` and `list_chart_field_values` return
-  respondents' answers in aggregate, so they declare `dashboards:read` **and** `feedbackRecords:read`, and the
-  operation also checks read access to the chart's feedback dataset. They spend from the same 600/min budget as
-  the REST data routes, and share their limit of 20 queries running at once, both charged inside the operation.
+- **Free-form numbers need feedback access.** `preview_chart` and `list_chart_field_values` run a caller's own
+  query over respondents' answers, so they declare `dashboards:read` **and** `feedbackRecords:read`.
+  `get_chart_data` reads a saved chart through its dashboard, as the dashboard shows it, so it declares
+  `dashboards:read` alone (ADR-0023: the Dashboard viewer's client holds nothing else). Each operation also checks
+  read access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read`. They spend from
+  the same 600/min budget as the REST data routes, and share their limit of 20 queries running at once, both
+  charged inside the operation.
 - **Shared charts.** `update_chart`'s description says an edit shows on every dashboard holding the chart, and
   points at `duplicate_chart` + `update_widget` for a per-dashboard change. `duplicate_dashboard` says the copy
   shares its charts. `remove_chart_from_dashboard` says the chart is kept.

@@ -47,7 +47,7 @@ for (const register of [
 }
 
 /** The dashboard reads a viewer's token may use; every other tool must refuse it. */
-const VIEWER_TOOLS = new Set(["list_workspaces", "list_dashboards", "get_dashboard"]);
+const VIEWER_TOOLS = new Set(["list_workspaces", "list_dashboards", "get_dashboard", "get_chart_data"]);
 
 let fixture: TDashboardsFixture;
 const ids = { viewer: "", dashboard: "", chart: "", survey: "" };
@@ -104,6 +104,9 @@ beforeAll(async () => {
       data: { name: "D", workspaceId: fixture.workspaceId, createdBy: fixture.users.owner },
     })
   ).id;
+  await prisma.dashboardWidget.create({
+    data: { dashboardId: ids.dashboard, chartId: ids.chart, layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
+  });
   ids.survey = (await prisma.survey.create({ data: { name: "S", workspaceId: fixture.workspaceId } })).id;
 
   await synchronizeAuthzedIntegrationFixture();
@@ -124,6 +127,12 @@ describe("a Dashboard viewer's MCP token", () => {
 
     const read = await call("get_dashboard", { dashboardId: ids.dashboard });
     expect(read.isError).toBeFalsy();
+  });
+
+  test("reads a saved chart's data through its dashboard with dashboards:read alone (ADR-0023)", async () => {
+    const result = await call("get_chart_data", { dashboardId: ids.dashboard, chartId: ids.chart });
+    expect(result.isError, JSON.stringify(result).slice(0, 300)).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ data: { rows: expect.any(Array) } });
   });
 
   test("is refused the dashboards of a workspace its team is not granted", async () => {

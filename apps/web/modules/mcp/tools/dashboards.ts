@@ -104,8 +104,11 @@ const runMutation = (
  * like "clean up old charts" cannot remove anything permanently. There is no generate tool either; AI
  * chart generation is the app's, not the API's.
  *
- * Definitions and the field catalog need `dashboards:read`. Reading a chart's numbers also needs
- * `feedbackRecords:read`, so a dashboards grant never becomes a way into respondents' answers.
+ * Definitions and the field catalog need `dashboards:read`. A saved chart's numbers read through the
+ * dashboard it sits on (`get_chart_data`) need `dashboards:read` alone: that is what a dashboard shows,
+ * and the only data a Dashboard viewer's token may read (ADR-0023). Previewing a query of one's own and
+ * looking up field values also need `feedbackRecords:read`, so a dashboards grant never becomes a way to
+ * run arbitrary queries over respondents' answers.
  */
 export function registerDashboardTools(server: McpServer): void {
   registerScopedTool(
@@ -247,8 +250,8 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpDashboardChartDataOutput,
       annotations: READ_ANNOTATIONS,
     },
-    // The rows are respondents' answers in aggregate, so reading them also needs feedback-record access.
-    ["dashboards:read", "feedbackRecords:read"],
+    // Dashboard-bound: the saved chart as its dashboard shows it, so `dashboards:read` is enough (ADR-0023).
+    ["dashboards:read"],
     async ({ dashboardId, chartId, dateRange, picks }: TMcpGetChartDataInput, ctx) => {
       const context = toolContext(ctx);
       const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
