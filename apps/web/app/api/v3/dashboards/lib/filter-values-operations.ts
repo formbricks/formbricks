@@ -36,7 +36,10 @@ import {
   withLockedFilters,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { resolveFilterRules } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
-import { isListDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import {
+  type TDashboardFilter,
+  isListDashboardFilter,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import {
   type TFilterValueQuery,
@@ -113,8 +116,9 @@ const filterProblem = (
 /**
  * The cache key for one list: the dashboard and the version it was read at (an editor's save moves it, so
  * a changed filter is never answered from before), each widget's chart and the version it was read at (a
- * chart edited in the chart builder does not move the dashboard, S7), the filter, the other filters'
- * picks, the date range and the search. Shared across everyone who may read the dashboard: they all see
+ * chart edited in the chart builder does not move the dashboard, S7), every filter's definition — the
+ * request names its own filters, so an id like `f1` says nothing about the field on its own — the other
+ * filters' picks, the date range and the search. Shared across everyone who may read the dashboard: they all see
  * the same list.
  */
 const valuesCacheKey = (parts: {
@@ -122,6 +126,7 @@ const valuesCacheKey = (parts: {
   updatedAt: Date;
   charts: { id: string; updatedAt: Date }[];
   filterId: string;
+  filters: readonly Pick<TDashboardFilter, "id" | "field" | "operator">[];
   otherPicks: Record<string, string[]>;
   dateRange: unknown;
   search?: string;
@@ -132,6 +137,7 @@ const valuesCacheKey = (parts: {
         parts.updatedAt.toISOString(),
         parts.charts.map(({ id, updatedAt }) => [id, updatedAt.toISOString()]),
         parts.filterId,
+        parts.filters.map(({ id, field, operator }) => [id, field, operator]),
         Object.entries(parts.otherPicks).sort(([a], [b]) => a.localeCompare(b)),
         parts.dateRange ?? null,
         parts.search ?? null,
@@ -280,6 +286,7 @@ export async function listV3DashboardFilterValues({
       updatedAt: row.updatedAt,
       charts: row.widgets.map(({ chart }) => ({ id: chart.id, updatedAt: chart.updatedAt })),
       filterId,
+      filters: locked.filters,
       otherPicks,
       dateRange,
       search: query.search,

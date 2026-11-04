@@ -204,6 +204,16 @@ describe("the cache key (S7)", () => {
     expect(await keyFor(new Date("2026-11-01T00:00:00Z"))).toBe(before);
     expect(await keyFor(new Date("2026-11-03T00:00:00Z"))).not.toBe(before);
   });
+
+  test("moves with the field a request's filter id names, so one field's list never answers another's", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(rowWith([chartOf(1, { measures: [COUNT] })]) as never);
+    const keyOf = async (field: string) => {
+      vi.mocked(cache.get).mockClear();
+      await list(SOURCE_FILTER.id, { [`filter[${SOURCE_FILTER.id}]`]: `equals:${field}` });
+      return vi.mocked(cache.get).mock.calls[0][0];
+    };
+    expect(await keyOf("FeedbackRecords.language")).not.toBe(await keyOf("FeedbackRecords.sourceName"));
+  });
 });
 
 describe("checking the datasets (C8)", () => {
