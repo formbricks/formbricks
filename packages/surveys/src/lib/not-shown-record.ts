@@ -49,62 +49,76 @@ export const appendNotShownStep = (
   step: TNotShownStep
 ): TNotShownStep[] => [...steps.slice(0, historyLength), step];
 
+/** What the steps add up to, unordered: blocks passed over, elements hidden, options not offered. */
+interface TNotShownFold {
+  blocks: Set<string>;
+  elements: Set<string>;
+  /** Element id → what it did not offer, from the step that last submitted its block. */
+  options: Map<string, TOptionsNotShown[string]>;
+}
+
+const foldNotShownSteps = (survey: TRecordSurvey, steps: readonly TNotShownStep[]): TNotShownFold => {
+  const fold: TNotShownFold = { blocks: new Set(), elements: new Set(), options: new Map() };
+  /** Forgets what earlier steps said about a block's elements. */
+  const forgetElementsOf = (blockId: string) => {
+    const block = survey.blocks.find((item) => item.id === blockId);
+    for (const element of block?.elements ?? []) {
+      fold.elements.delete(element.id);
+      fold.options.delete(element.id);
+    }
+  };
+
+  for (const step of steps) {
+    // Submitted from this block, so it was shown, and only what its page hid stays hidden.
+    fold.blocks.delete(step.blockId);
+    forgetElementsOf(step.blockId);
+    for (const elementId of step.hiddenElementIds) fold.elements.add(elementId);
+    for (const [elementId, notShown] of Object.entries(step.optionsNotShown ?? {})) {
+      fold.options.set(elementId, notShown);
+    }
+
+    for (const blockId of step.skippedBlockIds) {
+      fold.blocks.add(blockId);
+      forgetElementsOf(blockId);
+    }
+  }
+  return fold;
+};
+
+/** ENG-6937: per shown element, the options, rows and columns it did not offer, in survey order. */
+const getOrderedOptionsNotShown = (
+  survey: TRecordSurvey,
+  fold: TNotShownFold
+): Pick<TResponseNotShown, "options" | "rows" | "columns"> => {
+  const maps: Pick<TResponseNotShown, "options" | "rows" | "columns"> = {};
+  for (const element of survey.blocks.flatMap((block) => block.elements)) {
+    const notShown = fold.options.get(element.id);
+    if (!notShown || fold.elements.has(element.id)) continue;
+    for (const [listKey, ids] of Object.entries(notShown) as [TOptionListKey, string[]][]) {
+      if (ids.length === 0) continue;
+      const recordKey = RECORD_KEY_OF[listKey];
+      maps[recordKey] = { ...maps[recordKey], [element.id]: ids };
+    }
+  }
+  return maps;
+};
+
 /** The record the steps add up to, in survey order. `{}` when nothing was kept from the respondent. */
 export const buildNotShownRecord = (
   survey: TRecordSurvey,
   steps: readonly TNotShownStep[]
 ): TResponseNotShown => {
-  const blocks = new Set<string>();
-  const elements = new Set<string>();
-  // Element id → what it did not offer, from the step that last submitted its block.
-  const options = new Map<string, TOptionsNotShown[string]>();
-  const elementIdsOf = (blockId: string) =>
-    survey.blocks.find((block) => block.id === blockId)?.elements.map((element) => element.id) ?? [];
+  const fold = foldNotShownSteps(survey, steps);
 
-  for (const step of steps) {
-    // Submitted from this block, so it was shown, and only what its page hid stays hidden.
-    blocks.delete(step.blockId);
-    for (const elementId of elementIdsOf(step.blockId)) {
-      elements.delete(elementId);
-      options.delete(elementId);
-    }
-    for (const elementId of step.hiddenElementIds) elements.add(elementId);
-    for (const [elementId, notShown] of Object.entries(step.optionsNotShown ?? {})) {
-      options.set(elementId, notShown);
-    }
-
-    for (const blockId of step.skippedBlockIds) {
-      blocks.add(blockId);
-      for (const elementId of elementIdsOf(blockId)) {
-        elements.delete(elementId);
-        options.delete(elementId);
-      }
-    }
-  }
-
-  const orderedBlocks = survey.blocks.filter((block) => blocks.has(block.id)).map((block) => block.id);
+  const orderedBlocks = survey.blocks.filter((block) => fold.blocks.has(block.id)).map((block) => block.id);
   const orderedElements = survey.blocks.flatMap((block) =>
-    block.elements.filter((element) => elements.has(element.id)).map((element) => element.id)
+    block.elements.filter((element) => fold.elements.has(element.id)).map((element) => element.id)
   );
-
-  // ENG-6937: per shown element, the options, rows and columns it did not offer, in survey order.
-  const maps: Pick<TResponseNotShown, "options" | "rows" | "columns"> = {};
-  for (const block of survey.blocks) {
-    for (const element of block.elements) {
-      const notShown = options.get(element.id);
-      if (!notShown || elements.has(element.id)) continue;
-      for (const [listKey, ids] of Object.entries(notShown) as [TOptionListKey, string[]][]) {
-        if (ids.length === 0) continue;
-        const recordKey = RECORD_KEY_OF[listKey];
-        maps[recordKey] = { ...maps[recordKey], [element.id]: ids };
-      }
-    }
-  }
 
   return {
     ...(orderedBlocks.length > 0 && { blocks: orderedBlocks }),
     ...(orderedElements.length > 0 && { elements: orderedElements }),
-    ...maps,
+    ...getOrderedOptionsNotShown(survey, fold),
   };
 };
 

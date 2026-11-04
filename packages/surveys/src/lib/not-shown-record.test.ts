@@ -148,6 +148,16 @@ describe("offline progress (ENG-6936)", () => {
     ]);
   });
 
+  test("lists the options a shown question did not offer, skips empty lists, and reads steps saved without them", () => {
+    const steps: TNotShownStep[] = [
+      // Saved for offline progress before ENG-6937: no options at all.
+      step(blocks.services),
+      { ...step(blocks.overall), optionsNotShown: { fav: { choices: ["apple"] }, bundle: { choices: [] } } },
+    ];
+
+    expect(buildNotShownRecord(survey, steps)).toEqual({ options: { fav: ["apple"] } });
+  });
+
   test("the answers saved after a submit leave out the ones the record now lists", () => {
     expect(
       mergeSubmittedAnswers({ services: ["netflix"], apple_reason: "Price" }, { fav: "Netflix" }, [
