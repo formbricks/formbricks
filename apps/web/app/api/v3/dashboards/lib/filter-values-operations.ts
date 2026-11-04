@@ -136,9 +136,22 @@ export async function listV3DashboardFilterValues({
       query: chart.query as TChartQuery,
     }));
     const datasetIds = [...new Set(charts.map((chart) => chart.datasetId))];
+    const actor = getV3AuthorizationActor(context.authentication);
+    if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+    const filterFields = filters.map(({ field }) => field);
     const matchers = new Map(
       await Promise.all(
-        datasetIds.map(async (datasetId) => [datasetId, await getDatasetFieldMatcher(datasetId)] as const)
+        datasetIds.map(
+          async (datasetId) =>
+            [
+              datasetId,
+              await getDatasetFieldMatcher(
+                { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
+                filterFields
+              ),
+            ] as const
+        )
       )
     );
     const datasetHasField = (datasetId: string, field: string) => matchers.get(datasetId)?.(field) ?? false;
@@ -165,9 +178,6 @@ export async function listV3DashboardFilterValues({
 
     const limited = await applyChartQueryRateLimit(context);
     if (limited) return limited;
-
-    const actor = getV3AuthorizationActor(context.authentication);
-    if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
     const queries = buildFilterValueQueries({
       filter,

@@ -135,8 +135,8 @@ export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.Re
 };
 
 /**
- * A dashboard's filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each a catalog dimension
- * with an operator it allows, ids unique. Every problem is named at its position.
+ * A dashboard's filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each a catalog dimension or
+ * an embedded-data field with an operator it allows, ids unique. Every problem is named at its position.
  */
 export const ZV3DashboardFilters = z
   .array(ZDashboardFilter)

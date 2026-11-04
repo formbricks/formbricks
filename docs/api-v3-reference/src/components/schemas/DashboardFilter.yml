@@ -20,7 +20,9 @@ properties:
     maxLength: 255
     description: >-
       A dimension from the field catalog (`GET /api/v3/charts/fields`, `kind` `dimension` or
-      `timeDimension`).
+      `timeDimension`), or an embedded-data field (`FeedbackRecords.ed_…`) from any chart's dataset
+      catalog. An embedded-data field's name is derived from its key alone, so the filter applies to
+      every chart whose Feedback Dataset has that key.
     example: FeedbackRecords.sourceName
   operator:
     type: string

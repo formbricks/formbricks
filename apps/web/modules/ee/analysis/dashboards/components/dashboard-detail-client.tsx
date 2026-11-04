@@ -72,6 +72,7 @@ import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { useDashboard } from "../hooks/use-dashboard";
+import { useDashboardEmbeddedFields } from "../hooks/use-dashboard-embedded-fields";
 import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
 import { findNextOpenSlot } from "../lib/widget-placement";
 
@@ -360,6 +361,10 @@ function DashboardDetailView({
 
   const widgets = draftWidgets ?? dashboard.widgets;
   const filters = draftFilters ?? dashboard.filters;
+  // The embedded-data keys a filter can use: those of the datasets the dashboard's charts read. Only
+  // editors set filters up, so they are loaded in edit mode alone.
+  const datasetIds = useMemo(() => widgets.map(({ chart }) => chart.feedbackDirectoryId), [widgets]);
+  const embeddedFields = useDashboardEmbeddedFields(workspaceId, datasetIds, isEditing);
 
   const hasChanges = useMemo(() => {
     if (draftName !== null && draftName !== dashboard.name) return true;
@@ -739,7 +744,11 @@ function DashboardDetailView({
         <div className="flex flex-wrap items-center gap-2" data-testid="dashboard-filter-bar">
           <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
           {isEditing ? (
-            <DashboardFilterEditor filters={filters} onFiltersChange={setDraftFilters} />
+            <DashboardFilterEditor
+              filters={filters}
+              embeddedFields={embeddedFields}
+              onFiltersChange={setDraftFilters}
+            />
           ) : (
             dashboard.filters.map((filter) => (
               <DashboardFilterControl

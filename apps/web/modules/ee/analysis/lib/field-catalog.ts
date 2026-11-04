@@ -115,7 +115,8 @@ export type TDatasetChartFields = {
   answerQuestions?: readonly TAnswerQuestion[];
 };
 
-const toEmbeddedField = ({ name, key }: TEmbeddedChartField): TChartField => ({
+/** The catalog field an embedded-data key of a dataset is: a text dimension listed under the key. */
+export const toEmbeddedChartField = ({ name, key }: TEmbeddedChartField): TChartField => ({
   name,
   kind: "dimension",
   type: "string",
@@ -130,7 +131,7 @@ const toEmbeddedField = ({ name, key }: TEmbeddedChartField): TChartField => ({
 /** The catalog for one Feedback Dataset: the shared fields, then its embedded-data keys. */
 export const getChartFieldCatalog = (dataset?: TDatasetChartFields): TChartField[] => [
   ...CHART_FIELD_CATALOG,
-  ...(dataset?.embeddedFields ?? []).map(toEmbeddedField),
+  ...(dataset?.embeddedFields ?? []).map(toEmbeddedChartField),
 ];
 
 /** Looks a field up in one dataset's catalog; without a dataset, only the shared fields exist. */
@@ -138,6 +139,6 @@ export const createChartFieldLookup = (
   dataset?: TDatasetChartFields
 ): ((name: string) => TChartField | undefined) => {
   if (!dataset || dataset.embeddedFields.length === 0) return getChartField;
-  const embedded = new Map(dataset.embeddedFields.map((field) => [field.name, toEmbeddedField(field)]));
+  const embedded = new Map(dataset.embeddedFields.map((field) => [field.name, toEmbeddedChartField(field)]));
   return (name) => CATALOG_BY_NAME.get(name) ?? embedded.get(name);
 };

@@ -1,9 +1,14 @@
 import { z } from "zod";
-import { type TChartField, getChartField } from "@/modules/ee/analysis/lib/field-catalog";
+import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
+import {
+  type TChartField,
+  getChartField,
+  toEmbeddedChartField,
+} from "@/modules/ee/analysis/lib/field-catalog";
 import type { FilterOperator } from "@/modules/ee/analysis/lib/schema-definition";
 
 /**
- * Dashboard filters (ADR-0019, glossary "Dashboard filter"): a field and an operator a dashboard's editors pin
+ * Dashboard filters (ADR-0024, glossary "Dashboard filter"): a field and an operator a dashboard's editors pin
  * to its top bar, in order. Everyone who opens the dashboard picks or enters the value; the pick narrows every
  * chart, never widens one.
  */
@@ -52,10 +57,15 @@ export type TDashboardFilter = z.infer<typeof ZDashboardFilter>;
 export type TDashboardFilterPicks = Record<string, string[]>;
 
 /**
- * A field a dashboard filter can use: a dimension from the field catalog. Measures are left out: a filter on
- * one is a condition on each chart's own groups, which means something different on every chart.
+ * A field a dashboard filter can use: a dimension from the field catalog, or an embedded-data key
+ * (`FeedbackRecords.ed_…`, ENG-6893). Measures are left out: a filter on one is a condition on each chart's
+ * own groups, which means something different on every chart. An embedded key's member name is the same in
+ * every dataset that has the key, so the filter matches each chart whose dataset has it; which datasets do
+ * is the server's to say, so this only knows it is a text dimension and labels it by its member name until
+ * a dataset's catalog names the key (`getDashboardFilterFieldLabel`).
  */
 export const getDashboardFilterField = (name: string): TChartField | undefined => {
+  if (isEmbeddedMemberName(name)) return toEmbeddedChartField({ name, key: name });
   const field = getChartField(name);
   return field && field.kind !== "measure" ? field : undefined;
 };
@@ -98,7 +108,7 @@ export const findDashboardFilterIssues = (filters: readonly TDashboardFilter[]):
     if (!getDashboardFilterField(filter.field)) {
       issues.push({
         path: [index, "field"],
-        message: "Must be a dimension from the field catalog.",
+        message: "Must be a dimension from the field catalog or an embedded-data field.",
       });
       return;
     }

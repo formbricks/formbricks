@@ -10,12 +10,18 @@ import {
   runV3ChartQuery,
 } from "@/app/api/v3/charts/lib/data-operations";
 import type { TV3ChartData } from "@/app/api/v3/charts/lib/resources";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { problemForbidden, problemNotFound, successResponse } from "@/app/api/v3/lib/response";
+import {
+  problemForbidden,
+  problemNotFound,
+  problemUnauthorized,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { resolvePicksForDataset } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
@@ -32,26 +38,33 @@ import { getDashboardChartsRow } from "./service";
  */
 
 /**
- * Read access to a dashboard's workspace, with the Dashboards entitlement. A dashboard that does not exist
- * answers the same 403 as one the caller may not see.
+ * Read access to a dashboard's workspace, with the Dashboards entitlement. A dashboard-bound read, so a
+ * Dashboard viewer of the workspace is admitted too (ADR-0023). A dashboard that does not exist answers
+ * the same 403 as one the caller may not see.
  */
 export const authorizeDashboardRead = async (
   row: { workspaceId: string } | null,
   { authentication, requestId, instance }: TV3ChartOperationContext
 ): Promise<Response | V3WorkspaceContext> => {
   if (!row) return problemForbidden(requestId, undefined, instance);
-  // ENG-6899: pass allowDashboardViewer
-  return requireDashboardsAccess(authentication, row.workspaceId, "read", requestId, instance);
+  return requireDashboardsAccess(authentication, row.workspaceId, "read", requestId, instance, {
+    allowDashboardViewer: true,
+  });
 };
 
-/** Read access to a Feedback Dataset a dashboard's chart reads; `null` when allowed. */
+/**
+ * Read access to a Feedback Dataset a dashboard's chart reads, as a dashboard-bound read
+ * (`feedbackDirectoryAssignment.dashboard_read`, which admits the workspace's Dashboard viewers); `null`
+ * when allowed.
+ */
 export const refuseUnlessDashboardDatasetReadable = (
   access: V3WorkspaceContext,
   datasetId: string,
   { authentication, requestId, instance }: TV3ChartOperationContext
 ): Promise<Response | null> =>
-  // ENG-6899: pass allowDashboardViewer
-  refuseUnlessFeedbackDatasetAccess(authentication, access, datasetId, "read", requestId, instance);
+  refuseUnlessFeedbackDatasetAccess(authentication, access, datasetId, "read", requestId, instance, {
+    allowDashboardViewer: true,
+  });
 
 /** A chart that is not a widget on the dashboard: the same 404 whether it exists elsewhere or not at all. */
 const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartOperationContext): Response =>
@@ -59,11 +72,11 @@ const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartO
 
 /**
  * `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data` → 200 `{ data: { rows, optionLabels,
- * fieldLabels, query, unfilterableFilters } }`.
+ * fieldLabels, memberLabels, query, unfilterableFilters } }`.
  *
  * A widget's data, read through the dashboard it sits on: what every dashboard widget and the MCP chart
  * data tool load. The dashboard date range narrows the chart's saved range, and each of the person's
- * filter picks is ANDed onto the chart's saved filters (ADR-0019) — a saved rule on the same field is kept.
+ * filter picks is ANDed onto the chart's saved filters (ADR-0024) — a saved rule on the same field is kept.
  * A pick on a field the chart's Feedback Dataset lacks leaves the chart empty, naming the filter.
  *
  * Needs read access to the dashboard and to the chart's Feedback Dataset; spends from the chart-query budget.
@@ -94,10 +107,22 @@ export async function getV3DashboardChartData({
     const refused = await refuseUnlessDashboardDatasetReadable(access, chart.feedbackDirectoryId, context);
     if (refused) return refused;
 
+    const actor = getV3AuthorizationActor(context.authentication);
+    if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
+
+    const dashboardFilters = parseStoredDashboardFilters(row.filters);
     const { rules, unfilterable } = resolvePicksForDataset(
-      parseStoredDashboardFilters(row.filters),
+      dashboardFilters,
       query.picks ?? {},
-      await getDatasetFieldMatcher(chart.feedbackDirectoryId)
+      await getDatasetFieldMatcher(
+        {
+          datasetId: chart.feedbackDirectoryId,
+          workspaceId: access.workspaceId,
+          organizationId: access.organizationId,
+          actor,
+        },
+        dashboardFilters.map(({ field }) => field)
+      )
     );
     const unfilterableFilters = unfilterable.map(({ id, label }) => ({ id, label }));
     const respond = (data: TV3ChartData): TV3DashboardChartData => ({ ...data, unfilterableFilters });

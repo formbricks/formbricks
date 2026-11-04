@@ -1,6 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
+import type { TFunction } from "i18next";
 import { ArrowLeftIcon, ArrowRightIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,7 @@ import {
   getFilterFieldOptions,
   getFilterOperatorLabel,
 } from "@/modules/ee/analysis/charts/lib/filter-conditions";
+import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import { getTranslatedFieldLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -37,8 +39,24 @@ export const moveDashboardFilter = (
   return next;
 };
 
+/**
+ * How a filter's field reads: an embedded-data key by its own name (from the dashboard's datasets), any
+ * other field by its translated label.
+ */
+const getFieldLabel = (
+  field: string,
+  embeddedFields: readonly TEmbeddedChartField[],
+  t: TFunction
+): string => {
+  const embedded = embeddedFields.find(({ name }) => name === field);
+  if (embedded) return embedded.key;
+  return getDashboardFilterField(field) ? getTranslatedFieldLabel(field, t) : field;
+};
+
 interface DashboardFilterFormProps {
   initial: TDashboardFilter | null;
+  /** The embedded-data keys of the dashboard's datasets, offered after the shared fields. */
+  embeddedFields: readonly TEmbeddedChartField[];
   canMoveLeft?: boolean;
   canMoveRight?: boolean;
   onSave: (filter: TDashboardFilter) => void;
@@ -52,6 +70,7 @@ interface DashboardFilterFormProps {
  */
 const DashboardFilterForm = ({
   initial,
+  embeddedFields,
   canMoveLeft,
   canMoveRight,
   onSave,
@@ -64,8 +83,11 @@ const DashboardFilterForm = ({
   const [label, setLabel] = useState(initial?.label ?? "");
   const [labelEdited, setLabelEdited] = useState(Boolean(initial));
 
-  // The chart builder's field picker, less measures: a dashboard filter narrows records, not groups.
-  const fieldOptions = getFilterFieldOptions(t).filter((group) => group.value === "dimensions");
+  // The chart builder's field picker, less measures and answer rules: a dashboard filter narrows records,
+  // not groups, and an answer rule names one dataset's question.
+  const fieldOptions = getFilterFieldOptions(t, { embeddedFields, answerQuestions: [] }).filter(
+    (group) => group.value === "dimensions" || group.value === "embeddedData"
+  );
   const operators = field ? getDashboardFilterOperators(field) : [];
   const trimmedLabel = label.trim();
   const canSave = Boolean(field && operator && trimmedLabel);
@@ -91,7 +113,7 @@ const DashboardFilterForm = ({
             const next = String(value);
             setField(next);
             setOperator(getDashboardFilterOperators(next)[0] ?? "");
-            if (!labelEdited) setLabel(getTranslatedFieldLabel(next, t));
+            if (!labelEdited) setLabel(getFieldLabel(next, embeddedFields, t));
           }}
         />
       </div>
@@ -165,18 +187,18 @@ const EditableFilterChip = ({
   filter,
   index,
   filters,
+  embeddedFields,
   onFiltersChange,
 }: Readonly<{
   filter: TDashboardFilter;
   index: number;
   filters: readonly TDashboardFilter[];
+  embeddedFields: readonly TEmbeddedChartField[];
   onFiltersChange: (filters: TDashboardFilter[]) => void;
 }>) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const fieldLabel = getDashboardFilterField(filter.field)
-    ? getTranslatedFieldLabel(filter.field, t)
-    : filter.field;
+  const fieldLabel = getFieldLabel(filter.field, embeddedFields, t);
   const remove = () => onFiltersChange(filters.filter((candidate) => candidate.id !== filter.id));
 
   return (
@@ -193,6 +215,7 @@ const EditableFilterChip = ({
       <PopoverContent align="start" className="w-auto p-0">
         <DashboardFilterForm
           initial={filter}
+          embeddedFields={embeddedFields}
           canMoveLeft={index > 0}
           canMoveRight={index < filters.length - 1}
           onMove={(direction) => onFiltersChange(moveDashboardFilter(filters, index, direction))}
@@ -217,9 +240,12 @@ const EditableFilterChip = ({
  */
 export const DashboardFilterEditor = ({
   filters,
+  embeddedFields = [],
   onFiltersChange,
 }: Readonly<{
   filters: readonly TDashboardFilter[];
+  /** The embedded-data keys of the dashboard's datasets (`useDashboardEmbeddedFields`). */
+  embeddedFields?: readonly TEmbeddedChartField[];
   onFiltersChange: (filters: TDashboardFilter[]) => void;
 }>) => {
   const { t } = useTranslation();
@@ -234,6 +260,7 @@ export const DashboardFilterEditor = ({
           filter={filter}
           index={index}
           filters={filters}
+          embeddedFields={embeddedFields}
           onFiltersChange={onFiltersChange}
         />
       ))}
@@ -255,6 +282,7 @@ export const DashboardFilterEditor = ({
         <PopoverContent align="start" className="w-auto p-0">
           <DashboardFilterForm
             initial={null}
+            embeddedFields={embeddedFields}
             onSave={(filter) => {
               onFiltersChange([...filters, filter]);
               setIsAdding(false);

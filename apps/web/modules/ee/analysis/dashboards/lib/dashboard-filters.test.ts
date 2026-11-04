@@ -3,6 +3,7 @@ import {
   MAX_DASHBOARD_FILTERS,
   type TDashboardFilter,
   findDashboardFilterIssues,
+  getDashboardFilterField,
   getDashboardFilterOperators,
   isListDashboardFilter,
   parseStoredDashboardFilters,
@@ -82,5 +83,26 @@ describe("parseStoredDashboardFilters", () => {
     expect(parseStoredDashboardFilters([filter(1), { id: "x" }, filter(2)])).toEqual([filter(1), filter(2)]);
     expect(parseStoredDashboardFilters({})).toEqual([]);
     expect(parseStoredDashboardFilters(null)).toEqual([]);
+  });
+});
+
+describe("embedded-data fields as dashboard filters (ENG-6893)", () => {
+  const plan = "FeedbackRecords.ed_plan_64879f7d";
+
+  test("an embedded member is a text dimension filtered like any text field, and picks from a list", () => {
+    expect(getDashboardFilterField(plan)).toMatchObject({ name: plan, kind: "dimension", type: "string" });
+    expect(getDashboardFilterOperators(plan)).toEqual(["equals", "notEquals", "contains", "notContains"]);
+    expect(isListDashboardFilter(filter(1, { field: plan }))).toBe(true);
+    expect(isListDashboardFilter(filter(1, { field: plan, operator: "contains" }))).toBe(false);
+  });
+
+  test("saves a filter on an embedded member, and refuses a name that only looks like one", () => {
+    expect(findDashboardFilterIssues([filter(1, { field: plan })])).toEqual([]);
+    expect(findDashboardFilterIssues([filter(1, { field: "FeedbackRecords.ed_Plan!" })])).toEqual([
+      expect.objectContaining({ path: [0, "field"] }),
+    ]);
+    expect(findDashboardFilterIssues([filter(1, { field: plan, operator: "gt" })])).toEqual([
+      expect.objectContaining({ path: [0, "operator"] }),
+    ]);
   });
 });
