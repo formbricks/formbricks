@@ -225,14 +225,30 @@ function branchScore(branch: z.ZodType, value: Record<string, unknown>): number 
   return 0;
 }
 
-/** A subtree checked whole: `validate` first, and its issues only when that fails. */
+/**
+ * A subtree checked whole: `validate` first, and its issues only when that fails.
+ *
+ * Checked on its own, a subtree can reach an intersection merge that the whole parse never reaches (it
+ * stopped at a sibling's failure), and Zod throws on an unmergeable result. That one throw is reported as
+ * the subtree's problem, so the reply stays a 400; any other error is a bug and is rethrown.
+ */
 function checkWhole(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: IssueSink): void {
-  if (schema.validate(value)) {
-    return;
-  }
-  const result = schema.safeParse(value);
-  if (!result.success) {
-    sink.add(result.error.issues, path);
+  try {
+    if (schema.validate(value)) {
+      return;
+    }
+    const result = schema.safeParse(value);
+    if (!result.success) {
+      sink.add(result.error.issues, path);
+    }
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.startsWith("Unmergable intersection")) {
+      throw error;
+    }
+    sink.add(
+      [{ code: "custom", message: "Invalid input: the intersection's sides conflict", path: [] }],
+      path
+    );
   }
 }
 
@@ -341,15 +357,22 @@ function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: Iss
   checkWhole(schema, value, path, sink);
 }
 
-const absenceCache = new WeakMap<z.ZodType, boolean>();
+// Keyed by field and key: Zod reads an absent key through `in`, so a key named like a prototype property
+// (`constructor`) gets a different answer from the same field elsewhere.
+const absenceCache = new WeakMap<z.ZodType, Map<string, boolean>>();
 
 /** Whether an object with this field may leave its key out, asked of Zod with a one-key object. */
 function absenceAllowed(shape: Record<string, z.ZodType>, key: string): boolean {
   const field = shape[key];
-  let allowed = absenceCache.get(field);
+  let byKey = absenceCache.get(field);
+  if (!byKey) {
+    byKey = new Map();
+    absenceCache.set(field, byKey);
+  }
+  let allowed = byKey.get(key);
   if (allowed === undefined) {
     allowed = z.object({ [key]: field }).validate({});
-    absenceCache.set(field, allowed);
+    byKey.set(key, allowed);
   }
   return allowed;
 }
@@ -502,11 +525,16 @@ function splitUnion(
   if (schema instanceof z.ZodDiscriminatedUnion) {
     const discriminator = schema.def.discriminator;
     const branch = options.find((option) => {
-      const field = unwrap(option);
-      return (
-        field instanceof z.ZodObject &&
-        (field.shape[discriminator] as z.ZodType | undefined)?.validate(value[discriminator]) === true
-      );
+      const branchSchema = unwrap(option);
+      if (!(branchSchema instanceof z.ZodObject)) {
+        return false;
+      }
+      const shape = branchSchema.shape as Record<string, z.ZodType>;
+      const field = shape[discriminator] as z.ZodType | undefined;
+      // An absent discriminator is judged by its absence, as Zod does, not as `undefined`.
+      return Object.hasOwn(value, discriminator)
+        ? field?.validate(value[discriminator]) === true
+        : field !== undefined && absenceAllowed(shape, discriminator);
     });
     if (branch) {
       walk(branch, value, path, sink, ctx);

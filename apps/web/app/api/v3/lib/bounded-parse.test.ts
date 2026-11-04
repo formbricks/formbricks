@@ -398,6 +398,55 @@ describe("boundedSchema", () => {
     expect(checks).toBeLessThan(500);
   });
 
+  // An absent discriminator is judged by its absence: checked as `undefined`, an exactOptional one
+  // matched no branch and the union was parsed whole.
+  test("splits a discriminated union whose exactOptional discriminator is absent", () => {
+    let checks = 0;
+    const leaf = z.string().superRefine((_value, ctx) => {
+      checks += 1;
+      ctx.addIssue({ code: "custom", message: "bad" });
+    });
+    const schema = z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("a").exactOptional(), items: z.array(leaf) }),
+      z.object({ kind: z.literal("b"), other: z.string() }),
+    ]);
+
+    const issues = issuesOf(boundedSchema(schema).safeParse({ items: entries(5000, () => "x") }));
+
+    expect(issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+    expect(checks).toBeLessThan(500);
+  });
+
+  // Zod reads an absent key through `in`, so a field's absence verdict depends on its key: one schema
+  // used under `constructor` must not decide it for the same schema under another key.
+  test("judges a field's absence per key", () => {
+    const shared = z.literal("a").exactOptional();
+    const pad = { pad: entries(300, (index) => index) };
+    const first = z.object({ constructor: shared, pad: z.array(z.number()) });
+    const union = z.union([
+      z.object({ kind: shared, list: z.array(z.number()) }),
+      z.object({ other: z.string(), list: z.array(z.number()) }),
+    ]);
+
+    boundedSchema(first).safeParse(pad);
+    const value = { list: entries(300, (index) => index) };
+
+    expect(boundedSchema(union).safeParse(value).success).toBe(union.safeParse(value).success);
+  });
+
+  // Checked alone, a subtree can reach an intersection merge the whole parse never would, and Zod throws
+  // on a conflicting merge; the guard reports that as a problem instead of a 500.
+  test("reports a conflicting intersection merge instead of throwing", () => {
+    const conflict = z
+      .object({ a: z.string().transform((value) => `${value}!`) })
+      .and(z.object({ a: z.string() }));
+    const schema = z.object({ items: z.array(z.object({ c: conflict })) });
+
+    const result = boundedSchema(schema).safeParse({ items: entries(300, () => ({ c: { a: "x" } })) });
+
+    expect(result.success).toBe(false);
+  });
+
   // A refused key is judged on its own: the big value under it is not parsed whole.
   test("walks the value under a refused key instead of parsing it whole", () => {
     let checks = 0;
