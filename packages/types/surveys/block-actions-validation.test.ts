@@ -79,7 +79,7 @@ describe("block rule actions", () => {
       expectIssue(
         withConceptActions([calculate(ids.variables.signedUpAt, "assign", { type: "static", value: "x" })]),
         [...rulePath, "actions", 0, "value"],
-        "A date field is set with a formula"
+        "A date field is set with an expression"
       );
     });
 

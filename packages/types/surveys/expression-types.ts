@@ -153,7 +153,7 @@ export const checkExpressionTypes = (
         if (!type) {
           issues.push({
             path: [...path, "value"],
-            message: `Expression: a ${element.type} question can't be used in a formula`,
+            message: `Expression: a ${element.type} question can't be used in an expression`,
             code: "unusable_question",
             params: { questionType: element.type },
           });
@@ -262,7 +262,7 @@ export const getSetValueExpressionIssues = (
   ctx: TExpressionTypeContext
 ): TExpressionTypeIssue[] => {
   if (expression.type === "static" && expression.value === "") {
-    return [{ path: [], message: "Expression: enter a formula", code: "empty" }];
+    return [{ path: [], message: "Expression: enter an expression", code: "empty" }];
   }
   // Refused by the schema at its path; checking its types would descend the whole hostile tree.
   if (isExpressionOverLimits(expression)) return [];
@@ -274,7 +274,7 @@ export const getSetValueExpressionIssues = (
     return [
       {
         path: [],
-        message: `Expression: a ${targetDataType} field can't be set with a formula`,
+        message: `Expression: a ${targetDataType} field can't be set with an expression`,
         code: "target_not_formula",
         params: { fieldType: getDataTypeExpressionType(targetDataType) },
       },
