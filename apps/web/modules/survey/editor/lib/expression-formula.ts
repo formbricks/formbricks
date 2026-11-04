@@ -227,7 +227,8 @@ const ATOM_PRECEDENCE = 3;
 const getInfix = (node: TExpressionCall) => {
   const infix = INFIX[node.fn];
   if (!infix) return undefined;
-  return (infix.flat ? node.args.length >= 2 : node.args.length === 2) ? infix : undefined;
+  const readsAsOperator = infix.flat ? node.args.length >= 2 : node.args.length === 2;
+  return readsAsOperator ? infix : undefined;
 };
 
 const precedenceOf = (node: TExpression): number =>

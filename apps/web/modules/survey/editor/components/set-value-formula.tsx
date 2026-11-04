@@ -98,12 +98,11 @@ export function SetValueFormula({
   const applyText = (nextText: string) => {
     setText(nextText);
     const parsed = parseFormula(nextText, references);
-    const next: TExpression | null = parsed.ok
-      ? parsed.expression
-      : parsed.error.code === "empty"
-        ? { type: "static", value: "" }
-        : null;
-    setParseError(parsed.ok || parsed.error.code === "empty" ? null : parsed.error);
+    const isEmpty = !parsed.ok && parsed.error.code === "empty";
+    let next: TExpression | null = null;
+    if (parsed.ok) next = parsed.expression;
+    else if (isEmpty) next = { type: "static", value: "" };
+    setParseError(parsed.ok || isEmpty ? null : parsed.error);
     if (!next) return;
     const serialized = JSON.stringify(next);
     if (serialized === lastWritten.current) return;
@@ -253,11 +252,9 @@ export function SetValueFormula({
     ? getShownFormulaError(parseError, { text, isReferenceMenuOpen, isTyping })
     : null;
   const shownIssue = isTyping ? undefined : formulaIssues[0];
-  const problem = parseError
-    ? shownParseError && describeParseError(shownParseError)
-    : shownIssue
-      ? describeFormulaIssue(shownIssue)
-      : null;
+  let problem: string | null = null;
+  if (parseError) problem = shownParseError && describeParseError(shownParseError);
+  else if (shownIssue) problem = describeFormulaIssue(shownIssue);
   const shownSample =
     sampleResult !== null && sampleResult !== "" && targetDataType
       ? formatSampleResult(sampleResult, targetDataType, locale)
@@ -350,11 +347,12 @@ export function SetValueFormula({
         )}
       </div>
 
-      {problem ? (
+      {problem && (
         <p className="text-xs text-red-600" role="alert">
           {problem}
         </p>
-      ) : sampleResult !== null ? (
+      )}
+      {!problem && sampleResult !== null && (
         <p className="text-xs text-slate-600" title={t("workspace.surveys.edit.flow.formula_sample_hint")}>
           {shownSample ? (
             <span title={shownSample.title}>
@@ -364,7 +362,7 @@ export function SetValueFormula({
             t("workspace.surveys.edit.flow.formula_sample_empty")
           )}
         </p>
-      ) : null}
+      )}
     </div>
   );
 }

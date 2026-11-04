@@ -85,10 +85,9 @@ export async function resolveV3EmbeddedFieldLibraryKeys<TInput>(
       return entry;
     }
 
-    const storageKey =
-      typeof entry.storageKey === "string"
-        ? entry.storageKey
-        : (currentStorageKeyById.get(row.id) ?? (row.source === "computed" ? createId() : entry.key));
+    let storageKey =
+      typeof entry.storageKey === "string" ? entry.storageKey : currentStorageKeyById.get(row.id);
+    storageKey ??= row.source === "computed" ? createId() : entry.key;
 
     // The caller's other keys stay, so the strict schema still refuses a typo'd or unknown one; the
     // library's definition keys win over the ones it sent.
