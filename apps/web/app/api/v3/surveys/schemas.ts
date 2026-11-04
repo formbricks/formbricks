@@ -646,28 +646,24 @@ function addUnknownKeyIssues(
   value: unknown,
   allowedKeys: Set<string>,
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   context?: string
 ): void {
   if (!isPlainObject(value)) {
     return;
   }
 
-  const allowedFields = context
-    ? Array.from(allowedKeys)
-        .sort((left, right) => left.localeCompare(right))
-        .join(", ")
-    : "";
-
   for (const key of Object.keys(value)) {
     if (!allowedKeys.has(key)) {
-      issues.push({
+      issues.push(() => ({
         name: path ? `${path}.${key}` : key,
         reason: context
-          ? `Unsupported field '${key}' for ${context}. Allowed fields: ${allowedFields}`
+          ? `Unsupported field '${key}' for ${context}. Allowed fields: ${Array.from(allowedKeys)
+              .sort((left, right) => left.localeCompare(right))
+              .join(", ")}`
           : `Unsupported field '${key}'`,
         code: "unsupported_field",
-      });
+      }));
     }
   }
 }
@@ -676,7 +672,7 @@ function addMissingRequiredKeyIssues(
   value: unknown,
   requiredKeys: readonly string[],
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   context: string
 ): void {
   if (!isPlainObject(value)) {
@@ -685,11 +681,11 @@ function addMissingRequiredKeyIssues(
 
   for (const key of requiredKeys) {
     if (value[key] === undefined) {
-      issues.push({
+      issues.push(() => ({
         name: path ? `${path}.${key}` : key,
         reason: `Missing required field '${key}' for ${context}`,
         code: "missing_required_field",
-      });
+      }));
     }
   }
 }
@@ -713,7 +709,7 @@ function addInvalidParamZodIssue(ctx: z.RefinementCtx, issue: InvalidParam): voi
 function validateTranslatableField(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -722,10 +718,10 @@ function validateTranslatableField(
   }
 
   if ("default" in value) {
-    issues.push({
+    issues.push(() => ({
       name: `${path}.default`,
       reason: "Use the defaultLanguage locale code instead of the internal 'default' translation key",
-    });
+    }));
   }
 
   const normalizedKeys = new Map<string, string>();
@@ -738,22 +734,22 @@ function validateTranslatableField(
 
     const normalizedKey = normalizeV3SurveyWriteLanguageCode(key, options?.allowedLanguageCodes);
     if (!normalizedKey) {
-      issues.push({
+      issues.push(() => ({
         name: `${path}.${key}`,
         reason: `Language key '${key}' is not a valid locale code`,
         code: "invalid_locale",
-      });
+      }));
       continue;
     }
 
     const normalizedKeyLookup = normalizedKey.toLowerCase();
     const previousKey = normalizedKeys.get(normalizedKeyLookup);
     if (previousKey) {
-      issues.push({
+      issues.push(() => ({
         name: `${path}.${key}`,
         reason: `Language key '${key}' duplicates '${previousKey}' after locale normalization`,
         code: "duplicate_locale",
-      });
+      }));
       continue;
     }
 
@@ -764,17 +760,17 @@ function validateTranslatableField(
   }
 
   if (!includesDefaultLanguage) {
-    issues.push({
+    issues.push(() => ({
       name: path,
       reason: `Translatable field must include the defaultLanguage locale '${defaultLanguage}'`,
-    });
+    }));
   }
 }
 
 function validateChoice(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   defaultLanguage: string | null,
   allowedKeys: Set<string>,
   options?: TV3LanguageCompatibilityOptions
@@ -790,7 +786,7 @@ function validateChoice(
 function validateToggleInput(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -800,7 +796,7 @@ function validateToggleInput(
   }
 }
 
-function validateValidation(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateValidation(value: unknown, path: string, issues: BoundedInvalidParams): void {
   addUnknownKeyIssues(value, VALIDATION_KEYS, path, issues);
   if (!isPlainObject(value) || !Array.isArray(value.rules)) {
     return;
@@ -812,11 +808,11 @@ function validateValidation(value: unknown, path: string, issues: InvalidParam[]
   });
 }
 
-function validateDynamicReference(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateDynamicReference(value: unknown, path: string, issues: BoundedInvalidParams): void {
   addUnknownKeyIssues(value, DYNAMIC_REFERENCE_KEYS, path, issues);
 }
 
-function validateLogicOperand(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateLogicOperand(value: unknown, path: string, issues: BoundedInvalidParams): void {
   if (!isPlainObject(value)) {
     return;
   }
@@ -829,7 +825,7 @@ function validateLogicOperand(value: unknown, path: string, issues: InvalidParam
   validateDynamicReference(value, path, issues);
 }
 
-function validateConditionGroup(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateConditionGroup(value: unknown, path: string, issues: BoundedInvalidParams): void {
   addUnknownKeyIssues(value, CONDITION_GROUP_KEYS, path, issues);
   if (!isPlainObject(value) || !Array.isArray(value.conditions)) {
     return;
@@ -850,7 +846,7 @@ function validateConditionGroup(value: unknown, path: string, issues: InvalidPar
   });
 }
 
-function validateAction(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateAction(value: unknown, path: string, issues: BoundedInvalidParams): void {
   if (!isPlainObject(value)) {
     return;
   }
@@ -871,7 +867,7 @@ function validateAction(value: unknown, path: string, issues: InvalidParam[]): v
   }
 }
 
-function validateBlockLogic(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateBlockLogic(value: unknown, path: string, issues: BoundedInvalidParams): void {
   addUnknownKeyIssues(value, LOGIC_KEYS, path, issues);
   if (!isPlainObject(value)) {
     return;
@@ -887,7 +883,7 @@ function validateBlockLogic(value: unknown, path: string, issues: InvalidParam[]
 function validateElement(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -942,7 +938,7 @@ function validateElement(
 function validateBlock(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -974,7 +970,7 @@ function validateBlock(
 function validateEnding(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: BoundedInvalidParams,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -993,35 +989,44 @@ function validateEnding(
   );
 }
 
-function validateTrigger(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateTrigger(value: unknown, path: string, issues: BoundedInvalidParams): void {
   addMissingRequiredKeyIssues(value, ["actionClassId"], path, issues, "survey trigger");
   addUnknownKeyIssues(value, TRIGGER_KEYS, path, issues, "survey trigger");
 }
 
-function validateDistribution(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateDistribution(value: unknown, path: string, issues: BoundedInvalidParams): void {
   addUnknownKeyIssues(value, DISTRIBUTION_KEYS, path, issues, "survey distribution");
   if (isPlainObject(value) && Array.isArray(value.triggers)) {
     value.triggers.forEach((trigger, index) => validateTrigger(trigger, `${path}.triggers.${index}`, issues));
   }
 }
 
-function validateTargeting(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateTargeting(value: unknown, path: string, issues: BoundedInvalidParams): void {
   addUnknownKeyIssues(value, TARGETING_KEYS, path, issues, "survey targeting");
 }
 
+/**
+ * The document-shape problems of a survey write: unknown fields, missing required fields, bad locale keys.
+ *
+ * Runs before the Zod parse and decides whether it runs at all, so it is where a hostile document fans
+ * out: an array entry of `{}` is four problems (ENG-4100), and 49k of them fit in 150 KB, inside every
+ * request bound. The list is therefore collected through `BoundedInvalidParams`, which builds no entry
+ * past the response cap and only counts the rest. The walk itself still visits every entry, so the
+ * summary's count stays exact, and its cost is the traversal alone.
+ */
 function getUnsupportedV3SurveyDocumentFields(
   value: unknown,
   rootKeys: Set<string>,
   fallbackDefaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE,
   options?: TV3LanguageCompatibilityOptions
 ): InvalidParam[] {
-  const issues: InvalidParam[] = [];
+  const issues = new BoundedInvalidParams();
   // Include the allowed top-level fields in the error so agents/clients can self-correct from the
   // message alone (mirrors the per-element/block unknown-key errors).
   addUnknownKeyIssues(value, rootKeys, "", issues, "the survey document");
 
   if (!isPlainObject(value)) {
-    return issues;
+    return issues.report("", "survey document");
   }
 
   const defaultLanguage =
@@ -1068,7 +1073,7 @@ function getUnsupportedV3SurveyDocumentFields(
     validateTargeting(value.targeting, "targeting", issues);
   }
 
-  return issues;
+  return issues.report("", "survey document");
 }
 
 function addLanguageIssues(

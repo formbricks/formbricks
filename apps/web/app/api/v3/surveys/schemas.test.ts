@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
+import { V3_INVALID_PARAMS_MAX } from "@/app/api/v3/lib/invalid-params";
 import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
@@ -711,6 +712,65 @@ describe("ZV3CreateSurveyBody", () => {
         ])
       );
     }
+  });
+
+  // ENG-4100: an incomplete element is four problems, and 49k `{}` entries fit in 150 KB. The document
+  // pre-pass must stop building them at the response cap, not after the Zod parse has held them all.
+  describe("document pre-pass cap", () => {
+    const incompleteElements = (count: number) => Array.from({ length: count }, () => ({}));
+    const withElements = (elements: unknown[]) => ({
+      ...validCreateBody,
+      blocks: [{ ...validCreateBody.blocks[0], elements }],
+    });
+
+    test("holds at most the response cap of issues however many entries are incomplete", () => {
+      const result = ZV3CreateSurveyBody.safeParse(withElements(incompleteElements(1000)));
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+      }
+    });
+
+    test("still counts every problem it did not list", () => {
+      const result = ZV3CreateSurveyBody.safeParse(withElements(incompleteElements(1000)));
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const params = formatV3ZodInvalidParams(result.error, "body");
+        expect(params).toHaveLength(V3_INVALID_PARAMS_MAX);
+        expect(params[0]).toMatchObject({
+          name: "blocks.0.elements.0.id",
+          code: "missing_required_field",
+        });
+        // 1,000 elements x 4 missing fields, minus the 49 listed.
+        expect(params.at(-1)?.reason).toBe(
+          "3951 further problems with this survey document were not reported; fix the ones above and retry"
+        );
+      }
+    });
+
+    test("lists every problem, with no summary, while they fit under the cap", () => {
+      const result = ZV3CreateSurveyBody.safeParse(withElements(incompleteElements(12)));
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const params = formatV3ZodInvalidParams(result.error, "body");
+        expect(params).toHaveLength(48);
+        expect(params.every((param) => param.code === "missing_required_field")).toBe(true);
+      }
+    });
+
+    test("applies to a patch body too", () => {
+      const result = ZV3PatchSurveyBody.safeParse({
+        blocks: [{ ...validCreateBody.blocks[0], elements: incompleteElements(1000) }],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+      }
+    });
   });
 
   test("accepts hideDefaultIcon on an end screen ending", () => {
