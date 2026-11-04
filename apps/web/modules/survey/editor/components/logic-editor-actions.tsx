@@ -268,98 +268,105 @@ export function LogicEditorActions({
                   <>
                     {/* Reads as a sentence: Set value [field] to the expression below, or [field] [operator]
                         [value] for one step. The toggle switches between the two, both ways. */}
-                    <div className="col-span-8 flex min-w-0 flex-wrap items-center gap-2">
-                      {/* The field takes the width its name needs, up to the row's. */}
-                      <div className="max-w-full min-w-0">
-                        <CalculatedFieldPicker
-                          id={`action-${idx}-variableId`}
-                          key={`variableId-${action.id}`}
-                          options={getActionVariableOptions(localSurvey)}
-                          value={action.variableId}
-                          onChange={(variableId) =>
-                            handleValuesChange(
-                              idx,
-                              // A formula stays: a field of another type shows what no longer fits.
-                              isFormulaAction(action)
-                                ? { variableId }
-                                : { variableId, value: { type: "static", value: "" } }
-                            )
-                          }
-                          onAddCalculatedField={onAddCalculatedField}
-                        />
+                    {/* The Expression switch keeps its place at the end of the first line in both modes; only the
+                        sentence before it wraps when the row is narrow. */}
+                    <div className="col-span-8 flex min-w-0 items-start gap-2">
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                        {/* The field takes the width its name needs, up to the row's. */}
+                        <div className="max-w-full min-w-0">
+                          <CalculatedFieldPicker
+                            id={`action-${idx}-variableId`}
+                            key={`variableId-${action.id}`}
+                            options={getActionVariableOptions(localSurvey)}
+                            value={action.variableId}
+                            onChange={(variableId) =>
+                              handleValuesChange(
+                                idx,
+                                // A formula stays: a field of another type shows what no longer fits.
+                                isFormulaAction(action)
+                                  ? { variableId }
+                                  : { variableId, value: { type: "static", value: "" } }
+                              )
+                            }
+                            onAddCalculatedField={onAddCalculatedField}
+                          />
+                        </div>
+
+                        {action.value.type === "expression" ? (
+                          <span className="shrink-0 text-sm whitespace-nowrap text-slate-600">
+                            {t("workspace.surveys.edit.flow.set_to_formula")}
+                          </span>
+                        ) : (
+                          <>
+                            <div className="w-36 shrink-0">
+                              <InputCombobox
+                                id={`action-${idx}-operator`}
+                                key={`operator-${action.id}`}
+                                showSearch={false}
+                                options={getActionOperatorOptions(
+                                  t,
+                                  getCalculateFieldType(action.variableId)
+                                )}
+                                value={action.operator}
+                                onChangeValue={(val: string | number | string[]) => {
+                                  handleValuesChange(idx, {
+                                    operator: val as
+                                      | TActionTextVariableCalculateOperator
+                                      | TActionNumberVariableCalculateOperator,
+                                  });
+                                }}
+                                comboboxClasses="grow"
+                              />
+                            </div>
+
+                            <div className="min-w-32 flex-1">
+                              <InputCombobox
+                                id={`action-${idx}-value`}
+                                key={`value-${action.id}`}
+                                withInput={true}
+                                clearable={true}
+                                value={action.value?.value ?? ""}
+                                inputProps={{
+                                  placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
+                                  type: getCalculateFieldType(action.variableId) ?? "text",
+                                }}
+                                groupedOptions={getActionValueOptions(
+                                  action.variableId,
+                                  localSurvey,
+                                  scopeBlockIdx,
+                                  t
+                                )}
+                                onChangeValue={(val, option, fromInput) => {
+                                  const fieldType = option?.meta?.type as
+                                    | "static"
+                                    | "variable"
+                                    | "hiddenField"
+                                    | "element";
+
+                                  if (!fromInput && fieldType !== "static") {
+                                    handleValuesChange(idx, {
+                                      value: {
+                                        type: fieldType,
+                                        value: val as string,
+                                      },
+                                    });
+                                  } else if (fromInput) {
+                                    handleValuesChange(idx, {
+                                      value: {
+                                        type: "static",
+                                        value: val as string,
+                                      },
+                                    });
+                                  }
+                                }}
+                                comboboxClasses="grow shrink-0"
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
 
-                      {action.value.type === "expression" ? (
-                        <span className="shrink-0 text-sm whitespace-nowrap text-slate-600">
-                          {t("workspace.surveys.edit.flow.set_to_formula")}
-                        </span>
-                      ) : (
-                        <>
-                          <div className="w-36 shrink-0">
-                            <InputCombobox
-                              id={`action-${idx}-operator`}
-                              key={`operator-${action.id}`}
-                              showSearch={false}
-                              options={getActionOperatorOptions(t, getCalculateFieldType(action.variableId))}
-                              value={action.operator}
-                              onChangeValue={(val: string | number | string[]) => {
-                                handleValuesChange(idx, {
-                                  operator: val as
-                                    | TActionTextVariableCalculateOperator
-                                    | TActionNumberVariableCalculateOperator,
-                                });
-                              }}
-                              comboboxClasses="grow"
-                            />
-                          </div>
-
-                          <div className="min-w-32 flex-1">
-                            <InputCombobox
-                              id={`action-${idx}-value`}
-                              key={`value-${action.id}`}
-                              withInput={true}
-                              clearable={true}
-                              value={action.value?.value ?? ""}
-                              inputProps={{
-                                placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
-                                type: getCalculateFieldType(action.variableId) ?? "text",
-                              }}
-                              groupedOptions={getActionValueOptions(
-                                action.variableId,
-                                localSurvey,
-                                scopeBlockIdx,
-                                t
-                              )}
-                              onChangeValue={(val, option, fromInput) => {
-                                const fieldType = option?.meta?.type as
-                                  | "static"
-                                  | "variable"
-                                  | "hiddenField"
-                                  | "element";
-
-                                if (!fromInput && fieldType !== "static") {
-                                  handleValuesChange(idx, {
-                                    value: {
-                                      type: fieldType,
-                                      value: val as string,
-                                    },
-                                  });
-                                } else if (fromInput) {
-                                  handleValuesChange(idx, {
-                                    value: {
-                                      type: "static",
-                                      value: val as string,
-                                    },
-                                  });
-                                }
-                              }}
-                              comboboxClasses="grow shrink-0"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      <div className="ml-auto flex shrink-0 items-center gap-2">
+                      <div className="flex h-10 shrink-0 items-center gap-2">
                         <Switch
                           id={`action-${idx}-formula-toggle`}
                           checked={action.value.type === "expression"}

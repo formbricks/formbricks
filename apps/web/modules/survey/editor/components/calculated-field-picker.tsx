@@ -32,14 +32,14 @@ export function CalculatedFieldPicker({
     return (
       <div
         id={id}
-        className="flex h-10 items-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 text-sm whitespace-nowrap text-slate-500">
-        <span>{t("workspace.surveys.edit.flow.no_calculated_fields")}</span>
+        className="flex h-10 min-w-0 items-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 text-sm whitespace-nowrap text-slate-500">
+        <span className="min-w-0 truncate">{t("workspace.surveys.edit.flow.no_calculated_fields")}</span>
         {onAddCalculatedField && (
           <Button
             type="button"
             variant="link"
             size="sm"
-            className="h-auto px-0 text-sm"
+            className="h-auto shrink-0 px-0 text-sm"
             onClick={onAddCalculatedField}>
             {t("workspace.surveys.edit.flow.create_calculated_field")}
           </Button>
