@@ -530,8 +530,9 @@ export function BlockConditional({
       <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
         <div className={isActionRowSticky ? undefined : "space-y-6"}>
           {/* While Next uploads, the card's other inputs are read-only: the answers sent are the ones that were
-              just validated, so an edit made now would be silently dropped. */}
-          <fieldset disabled={isSubmitting} className="m-0 min-w-0 space-y-6 border-0 p-0">
+              just validated, so an edit made now would be silently dropped. No margin utility: it would
+              beat the space-y-6 gap above the action row. The preflight already zeroes a fieldset's margin. */}
+          <fieldset disabled={isSubmitting} className="min-w-0 space-y-6 border-0 p-0">
             {elements.map((element, index) => {
               const isFirstElement = index === 0;
 
