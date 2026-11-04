@@ -2219,6 +2219,45 @@ describe("conditions on a date field holding a timestamp (ENG-6935)", () => {
     expect(check("equals", { type: "variable", value: FOLLOW_UP })).toBe(false);
   });
 
+  test("an ingested date field holding a timestamp is the picked day, for equals as for before and after", () => {
+    const VISIT = "visitedat000000000000001";
+    const visitField = dateField(VISIT, "visited_at");
+    const ingestedSurvey = {
+      ...survey,
+      embeddedFields: [
+        ...(survey.embeddedFields ?? []),
+        { ...visitField, field: { ...visitField.field, source: "ingested" } },
+      ],
+    } as unknown as TJsWorkspaceStateSurvey;
+    const checkVisit = (operator: TSingleCondition["operator"], value: string): boolean =>
+      evaluateLogic(
+        ingestedSurvey,
+        { [VISIT]: "2026-08-06T10:30:00.000Z" },
+        {},
+        {
+          id: "group1",
+          connector: "and",
+          conditions: [
+            {
+              id: "condition1",
+              leftOperand: { type: "hiddenField", value: VISIT },
+              operator,
+              rightOperand: day(value),
+            },
+          ],
+        },
+        "default"
+      );
+
+    expect(checkVisit("equals", "2026-08-06")).toBe(true);
+    expect(checkVisit("doesNotEqual", "2026-08-06")).toBe(false);
+    expect(checkVisit("isBefore", "2026-08-06")).toBe(false);
+    expect(checkVisit("isAfter", "2026-08-06")).toBe(false);
+    expect(checkVisit("equals", "2026-08-07")).toBe(false);
+    // Two timestamps still compare instants.
+    expect(checkVisit("equals", "2026-08-06T09:00:00.000Z")).toBe(false);
+  });
+
   test("now() stores the full timestamp, and daysBetween reads it as its UTC day", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-11-04T22:30:00.000Z"));

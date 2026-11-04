@@ -1,4 +1,24 @@
+import type { TLinkedEmbeddedField } from "../embedded-data-resolver";
 import { DATE_LITERAL_PATTERN } from "./expression-types";
+import type { TLeftOperand, TRightOperand } from "./logic";
+
+/**
+ * Whether a condition operand names a date field: a computed (`variable`) or ingested
+ * (`hiddenField`) Embedded Data field declared as `date`. On such a field "equals" and "does not
+ * equal" compare by {@link compareDateValues} too, as "is before" and "is after" do, so a timestamp
+ * equals the day it falls on whether `now()` or the URL set it.
+ */
+export const isDateFieldOperand = (
+  operand: TLeftOperand | TRightOperand | undefined,
+  embeddedFields: readonly TLinkedEmbeddedField[]
+): boolean => {
+  if (operand?.type !== "variable" && operand?.type !== "hiddenField") return false;
+  const source = operand.type === "variable" ? "computed" : "ingested";
+  return embeddedFields.some(
+    ({ field, link }) =>
+      field.source === source && field.dataType === "date" && link.storageKey === operand.value
+  );
+};
 
 /**
  * How both logic engines (`packages/surveys/src/lib/logic.ts` and `apps/web/lib/surveyLogic/utils.ts`)
