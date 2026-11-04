@@ -35,6 +35,23 @@ You can build a chart in two ways:
 
 Pick a Feedback Dataset, choose dimensions and measures (count of records, average NPS, ...), apply filters, and select a chart type. Live preview updates as you tweak.
 
+### Filter by embedded data
+
+Embedded data that a Feedback Source carries on its records (a plan, a region, a customer segment) shows up in
+the builder under **Embedded data**, next to the dataset's other fields. You can group by an embedded-data field and
+filter on it like any other text field. The builder lists the 100 most frequent embedded-data keys of the dataset;
+a chart already saved on a rarer key keeps working.
+
+### Filter by answers to another question
+
+Use **Answer to question** in the filters to keep only the records whose submission answered another question of the
+dataset a certain way, for example "comments from people who gave an NPS of 9 or 10" or "CSAT of customers who chose
+*Enterprise* as their plan". Pick the question, then the answer it must (or must not) have. A multiple-choice
+question with several selections matches when any of the chosen options was selected. A submission that skipped
+the question never matches.
+
+A chart takes up to 5 answer filters, and you can combine them with other filters in AND and OR groups.
+
 ### Matrix chart
 
 To chart a matrix question:
@@ -81,6 +98,63 @@ If someone else saves the dashboard while you are editing it, saving tells you s
 version and drop your changes, or **Save mine anyway** to keep yours; the dialog names any charts they added that
 saving yours would remove.
 
+## Dashboard filters
+
+Dashboard filters let everyone who opens a dashboard narrow all of its charts at once, for example to one region,
+one product, or one plan. The filters sit in the bar at the top of the dashboard, next to the date range.
+
+### Add filters
+
+<Steps>
+  <Step title="Edit the dashboard">
+    Open the dashboard and click **Edit**.
+  </Step>
+  <Step title="Add a filter">
+    Click **Add filter**, pick the field to filter by and an operator (**equals**, **not equals**, **contains**,
+    **greater than**, ...), and give the filter the label people see in the bar.
+  </Step>
+  <Step title="Order and save">
+    Drag the filters into the order you want, then click **Save**. Nothing changes for others until you save, and
+    **Cancel** drops your changes.
+  </Step>
+</Steps>
+
+A dashboard holds up to 10 filters. A filter can use any field the charts can be grouped by, including embedded-data
+fields. Answer filters are not offered here: they belong in each chart, in the chart builder.
+
+### Pick values
+
+Click a filter in the bar to choose its values:
+
+- **Fields with a fixed set of values**, such as the source type, a sentiment, or an embedded-data field, show a list
+  of the values that occur in the dashboard's charts, narrowed by the date range and your picks in the other
+  filters. Search the list to find more; a list shows up to 100 values at a time, and you can pick up to 100.
+- **Free-text fields**, such as the response text or the user ID, and number or date fields take a value you type.
+  They never list values, so the text of individual responses isn't shown to everyone who opens the dashboard.
+
+Use **Choose date range** to pick the period every chart shows.
+
+Your picks and date range are your own: they are remembered for this dashboard in your browser, and they don't change what
+anyone else sees. They are also part of the page address, so a link you share opens the dashboard with the same
+filters.
+
+### Filters only narrow a chart
+
+A dashboard filter is added on top of each chart's own filters and never replaces them. A chart saved for
+products A and B shows nothing when you pick product C, rather than showing product C. The same holds for the date
+range: it narrows the period a chart was saved with, and a chart whose period doesn't overlap the range shows no
+data. A filter's value list only offers values that at least one chart on the dashboard can show.
+
+If a chart's Feedback Dataset doesn't have the field a filter uses, the chart can't be narrowed by it. When you pick
+a value in that filter, the chart says "This chart can't be filtered by" and names the filter, instead of showing
+data the filter would have left out.
+
+<Note>
+  A filter's value list shows the values of that field to everyone who can open the dashboard, Dashboard viewers
+  included. Before you add a filter on an embedded-data field such as an email address or a name, consider whether
+  everyone with access should see those values.
+</Note>
+
 Charts and dashboards are also available through the [MCP server](/platform/mcp/overview), so an agent can build
 them for you.
 
@@ -88,6 +162,10 @@ them for you.
 
 - Owners, Managers, and members with **Manage** or **Read & Write** access can create and edit dashboards and charts.
 - Members with **Read** access can view dashboards and charts but cannot edit them.
+- Dashboard viewers can open the dashboards of the Workspaces their teams have access to and use their filters, and
+  see nothing else. See [Dashboard viewer](/platform/features/user-management/organizations-and-roles#dashboard-viewer-role).
+- Everyone who can open a dashboard can pick values in its filters; only those who can edit it can add, change,
+  or remove filters.
 
 ## Requirements
 
