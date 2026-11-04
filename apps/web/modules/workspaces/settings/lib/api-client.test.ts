@@ -49,7 +49,11 @@ describe("workspace settings API client", () => {
     };
     routeFetch({ [`DELETE ${URL}`]: [json({ data: { destination } })] });
 
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+
     expect(await deleteWorkspaceWithConfirmation(WORKSPACE_ID, "Acme")).toEqual({ destination });
     expect(sentBody()).toEqual({ confirmationName: "Acme" });
+    // A large workspace's cascade can outlast any client timeout; the client waits for the answer.
+    expect(timeout).not.toHaveBeenCalled();
   });
 });

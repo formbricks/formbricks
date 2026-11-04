@@ -17,9 +17,14 @@ export type TWorkspaceSettingsPatch = z.input<typeof ZWorkspacePatchBody>;
 export const patchWorkspaceSettings = (workspaceId: string, body: TWorkspaceSettingsPatch) =>
   sendApiRequest<TWorkspaceSettingsResource>(workspacePath(workspaceId), { method: "PATCH", body });
 
-/** Delete a workspace, confirmed by its name. Answers where the dashboard goes next. */
+/**
+ * Delete a workspace, confirmed by its name. Answers where the dashboard goes next. No client timeout: the
+ * cascade (responses, files) grows with the workspace, and giving up early would leave the user on a
+ * workspace the server is still deleting.
+ */
 export const deleteWorkspaceWithConfirmation = (workspaceId: string, confirmationName: string) =>
   sendApiRequest<TWorkspaceDeletionResource>(workspacePath(workspaceId), {
     method: "DELETE",
     body: { confirmationName },
+    timeoutMs: null,
   });

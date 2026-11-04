@@ -3,6 +3,7 @@
 import { CircleHelpIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -18,6 +19,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import SlackLogo from "@/images/slacklogo.png";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -64,6 +66,7 @@ export const AddChannelMappingModal = ({
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
   const { t } = useTranslation();
+  const router = useRouter();
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -149,14 +152,17 @@ export const AddChannelMappingModal = ({
         includeCreatedAt,
         includeContactAttributes,
       };
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+      const updated = structuredClone(slackIntegrationData);
       if (selectedIntegration) {
         // update action
-        slackIntegrationData.config.data[selectedIntegration.index] = integrationData;
+        updated.config.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        slackIntegrationData.config.data.push(integrationData);
+        updated.config.data.push(integrationData);
       }
-      await saveIntegration(workspaceId, slackIntegrationData.type, slackIntegrationData.config);
+      await saveIntegration(workspaceId, updated.type, updated.config);
+      router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -165,7 +171,7 @@ export const AddChannelMappingModal = ({
       resetForm();
       setOpen(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsLinkingChannel(false);
     }
@@ -190,14 +196,16 @@ export const AddChannelMappingModal = ({
   };
 
   const deleteLink = async () => {
-    slackIntegrationData.config.data.splice(selectedIntegration!.index, 1);
+    const updated = structuredClone(slackIntegrationData);
+    updated.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await saveIntegration(workspaceId, slackIntegrationData.type, slackIntegrationData.config);
+      await saveIntegration(workspaceId, updated.type, updated.config);
+      router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

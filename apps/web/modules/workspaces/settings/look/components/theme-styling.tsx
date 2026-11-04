@@ -173,6 +173,8 @@ export const ThemeStyling = ({
       setPreviewBrandColor(
         saved?.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor
       );
+      // The logo form sends the workspace's updatedAt with its save; refresh it, or the next logo save is stale.
+      router.refresh();
       toast.success(
         customCss.status === "saved" && customCss.removedCount > 0
           ? t("workspace.custom_css.saved_with_warnings", { count: customCss.removedCount })

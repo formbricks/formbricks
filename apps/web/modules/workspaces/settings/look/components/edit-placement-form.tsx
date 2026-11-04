@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -40,6 +41,7 @@ type EditPlacementFormValues = z.infer<typeof ZWorkspacePlacementInput>;
 
 export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const placements = [
     { name: t("common.bottom_right"), value: "bottomRight", disabled: false },
@@ -92,6 +94,8 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
         overlayOpacity: data.overlayOpacity,
         clickOutsideClose: data.clickOutsideClose,
       });
+      // The logo form sends the workspace's updatedAt with its save; refresh it, or the next logo save is stale.
+      router.refresh();
       toast.success(t("workspace.look.placement_updated_successfully"));
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));

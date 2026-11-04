@@ -106,7 +106,7 @@ export const ActionSettingsTab = ({
       }
       toast.success(t("workspace.actions.action_updated_successfully"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsUpdatingAction(false);
     }

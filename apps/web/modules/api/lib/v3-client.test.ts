@@ -71,6 +71,16 @@ describe("parseV3ApiError", () => {
     expect(getV3ApiErrorReason(new Error("Failed to fetch"), "fallback")).toBe("fallback");
   });
 
+  test("shows a rejected field's reason instead of the generic invalid-body detail", () => {
+    const invalid = new V3ApiError({
+      status: 400,
+      detail: "Invalid request body",
+      invalid_params: [{ name: "name", reason: "Team name is required" }],
+    });
+
+    expect(getV3ApiErrorMessage(invalid, "fallback")).toBe("Team name is required");
+  });
+
   test("shows the fallback for a failure with no detail", () => {
     expect(getV3ApiErrorMessage(new V3ApiError({ status: 0, detail: "" }), "fallback")).toBe("fallback");
   });

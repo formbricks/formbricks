@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -71,6 +72,7 @@ export const AddIntegrationModal = ({
   selectedIntegration,
 }: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
@@ -186,14 +188,17 @@ export const AddIntegrationModal = ({
       integrationData.includeMetadata = includeMetadata;
       integrationData.includeCreatedAt = includeCreatedAt;
       integrationData.includeContactAttributes = includeContactAttributes;
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+      const updated = structuredClone(googleSheetIntegrationData);
       if (selectedIntegration) {
         // update action
-        googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData;
+        updated.config.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        googleSheetIntegrationData.config.data.push(integrationData);
+        updated.config.data.push(integrationData);
       }
-      await saveIntegration(workspaceId, googleSheetIntegrationData.type, googleSheetIntegrationData.config);
+      await saveIntegration(workspaceId, updated.type, updated.config);
+      router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -202,7 +207,7 @@ export const AddIntegrationModal = ({
       resetForm();
       setOpen(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsLinkingSheet(false);
     }
@@ -230,14 +235,16 @@ export const AddIntegrationModal = ({
   };
 
   const deleteLink = async () => {
-    googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1);
+    const updated = structuredClone(googleSheetIntegrationData);
+    updated.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await saveIntegration(workspaceId, googleSheetIntegrationData.type, googleSheetIntegrationData.config);
+      await saveIntegration(workspaceId, updated.type, updated.config);
+      router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

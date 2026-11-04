@@ -22,6 +22,7 @@ import { fetchTables } from "@/app/(app)/workspaces/[workspaceId]/settings/works
 import { saveIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import AirtableLogo from "@/images/airtableLogo.svg";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -278,15 +279,21 @@ export const AddIntegrationModal = ({
         includeContactAttributes,
       };
 
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+
+      const updated = structuredClone(airtableIntegrationData);
+
       if (isEditMode) {
         // update action
-        airtableIntegrationData.config.data[defaultData.index] = integrationData;
+        updated.config.data[defaultData.index] = integrationData;
       } else {
         // create action
-        airtableIntegrationData.config?.data.push(integrationData);
+        updated.config.data.push(integrationData);
       }
 
-      await saveIntegration(workspaceId, airtableIntegrationData.type, airtableIntegrationData.config);
+      await saveIntegration(workspaceId, updated.type, updated.config);
+
+      router.refresh();
       if (isEditMode) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -294,7 +301,7 @@ export const AddIntegrationModal = ({
       }
       handleClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -328,7 +335,7 @@ export const AddIntegrationModal = ({
 
       toast.success(t("workspace.integrations.integration_removed_successfully"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     }
   };
 

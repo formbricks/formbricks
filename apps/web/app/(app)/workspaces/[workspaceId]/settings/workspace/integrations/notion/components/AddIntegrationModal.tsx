@@ -2,6 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -29,6 +30,7 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/MappingRow";
 import NotionLogo from "@/images/notion.png";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -72,6 +74,7 @@ export const AddIntegrationModal = ({
   contactAttributeKeys,
 }: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const { handleSubmit } = useForm();
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
@@ -249,15 +252,21 @@ export const AddIntegrationModal = ({
       });
       integrationData.createdAt = new Date();
 
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+
+      const updated = structuredClone(notionIntegrationData);
+
       if (selectedIntegration) {
         // update action
-        notionIntegrationData.config.data[selectedIntegration.index] = integrationData;
+        updated.config.data[selectedIntegration.index] = integrationData;
       } else {
         // create action
-        notionIntegrationData.config.data.push(integrationData);
+        updated.config.data.push(integrationData);
       }
 
-      await saveIntegration(workspaceId, notionIntegrationData.type, notionIntegrationData.config);
+      await saveIntegration(workspaceId, updated.type, updated.config);
+
+      router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -266,21 +275,23 @@ export const AddIntegrationModal = ({
       resetForm();
       setOpen(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsLinkingDatabase(false);
     }
   };
 
   const deleteLink = async () => {
-    notionIntegrationData.config.data.splice(selectedIntegration!.index, 1);
+    const updated = structuredClone(notionIntegrationData);
+    updated.config.data.splice(selectedIntegration!.index, 1);
     try {
       setIsDeleting(true);
-      await saveIntegration(workspaceId, notionIntegrationData.type, notionIntegrationData.config);
+      await saveIntegration(workspaceId, updated.type, updated.config);
+      router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

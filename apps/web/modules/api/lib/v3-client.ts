@@ -99,8 +99,10 @@ export const v3RetryDelay = (failureCount: number, error: unknown): number =>
 
 export function getV3ApiErrorMessage(error: unknown, fallbackMessage: string): string {
   if (error instanceof V3ApiError) {
+    // A 400 from schema validation says only "Invalid request body"; the field's own reason is what helps.
+    const fieldReason = error.status === 400 ? error.invalid_params?.[0]?.reason : undefined;
     // A failure with nothing to say (no problem body, a network error) gets the caller's translated text.
-    return error.detail || fallbackMessage;
+    return fieldReason || error.detail || fallbackMessage;
   }
 
   if (error instanceof Error && error.message) {
