@@ -55,6 +55,20 @@ describe("getImportedName", () => {
 });
 
 describe("stripImportedSuffix", () => {
+  test("strips a suffix whatever the spaces around it", () => {
+    expect(stripImportedSuffix("  Onboarding NPS   (imported 3)  ", t)).toBe("Onboarding NPS");
+    expect(stripImportedSuffix("Onboarding NPS(imported)", t)).toBe("Onboarding NPS");
+  });
+
+  test("takes linear time on a long run of spaces with no suffix after it", () => {
+    // A leading `\s*` in the pattern backtracked across the run from every position in it: seconds here.
+    const name = `A${" ".repeat(50_000)}B`;
+    const startedAt = performance.now();
+
+    expect(stripImportedSuffix(name, t)).toBe(name);
+    expect(performance.now() - startedAt).toBeLessThan(500);
+  });
+
   test("leaves a name that is only a suffix, or has one in the middle, as it is", () => {
     expect(stripImportedSuffix("(imported)", t)).toBe("(imported)");
     expect(stripImportedSuffix("A (imported) survey", t)).toBe("A (imported) survey");

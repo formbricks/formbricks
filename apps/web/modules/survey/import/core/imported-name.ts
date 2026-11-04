@@ -19,13 +19,16 @@ const escapeRegExp = (text: string): string => text.replaceAll(/[.*+?^${}()|[\]\
 const suffix = (t: TTranslate, number: number): string =>
   number === 1 ? t("common.imported_suffix") : t("common.imported_suffix_number", { number: String(number) });
 
-/** A trailing "(imported)" or "(imported N)", in the user's language, with the space before it. */
+/**
+ * A trailing "(imported)" or "(imported N)", in the user's language, matched on a name trimmed first: a
+ * leading `\s*` here would backtrack across a long run of spaces from every position in it.
+ */
 const trailingSuffixPattern = (t: TTranslate): RegExp => {
   const plain = escapeRegExp(t("common.imported_suffix"));
   const [before = "", after = ""] = t("common.imported_suffix_number", { number: NUMBER_MARK })
     .split(NUMBER_MARK)
     .map(escapeRegExp);
-  return new RegExp(String.raw`\s*(?:${plain}|${before}\d+${after})$`, "u");
+  return new RegExp(String.raw`(?:${plain}|${before}\d+${after})$`, "u");
 };
 
 /** The longest start `a` and `b` share. */
@@ -48,8 +51,10 @@ export const importedNamePrefix = (name: string, t: TTranslate): string => {
 
 /** The name without a trailing "(imported N)", so suffixes never stack. */
 export const stripImportedSuffix = (name: string, t: TTranslate): string => {
-  const stripped = name.replace(trailingSuffixPattern(t), "").trim();
-  return stripped === "" ? name.trim() : stripped;
+  const trimmed = name.trim();
+  const match = trailingSuffixPattern(t).exec(trimmed);
+  const stripped = match ? trimmed.slice(0, match.index).trim() : trimmed;
+  return stripped === "" ? trimmed : stripped;
 };
 
 /**
