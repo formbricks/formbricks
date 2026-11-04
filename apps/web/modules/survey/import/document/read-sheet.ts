@@ -90,18 +90,49 @@ const originOf = (sheet: XLSX.WorkSheet): { row: number; column: number } => {
 };
 
 /**
- * The sheet as rows of cell texts from its used range's first cell: what each cell shows (its
- * formatted value), held to the column and cell-size limits. Empty cells are empty strings.
+ * The last row and column holding text, zero-based, from the cells SheetJS read — never from the range
+ * the file declares, which its `<dimension>` sets to any width: one cell under `A1:XFD5000` would
+ * otherwise be read as 82 million empty ones. Refuses a row with text at or past the column limit;
+ * cells past it that hold nothing are allowed, as Excel leaves formatted empty ones there. `null` for a
+ * sheet with no text. Costs one pass over the cells read, which the XML limits bound.
+ */
+const textExtentOf = (sheet: XLSX.WorkSheet): { row: number; column: number } | null => {
+  let lastRow = -1;
+  let lastColumn = -1;
+  // Dense mode: rows and cells by their absolute indices, holes where the file has none.
+  (sheet["!data"] ?? []).forEach((row, rowIndex) => {
+    row?.forEach((cell, columnIndex) => {
+      if (!cell || XLSX.utils.format_cell(cell).trim() === "") return;
+      if (columnIndex >= SURVEY_IMPORT_SHEET_MAX_COLUMNS) {
+        throw documentLimitExceeded(
+          "columns",
+          `file.R${rowIndex + 1}`,
+          `A row must not have more than ${SURVEY_IMPORT_SHEET_MAX_COLUMNS} columns`
+        );
+      }
+      lastRow = Math.max(lastRow, rowIndex);
+      lastColumn = Math.max(lastColumn, columnIndex);
+    });
+  });
+  return lastRow < 0 ? null : { row: lastRow, column: lastColumn };
+};
+
+/**
+ * The sheet as rows of cell texts from its used range's first cell to the last cell with text: what
+ * each cell shows (its formatted value), held to the column and cell-size limits. Empty cells are empty
+ * strings.
  */
 const readRows = (sheet: XLSX.WorkSheet, origin: { row: number; column: number }): string[][] => {
+  const extent = textExtentOf(sheet);
+  if (!extent || extent.row < origin.row || extent.column < origin.column) return [];
   const rows = XLSX.utils.sheet_to_json<string[]>(sheet, {
     header: 1,
     raw: false,
     defval: "",
     blankrows: true,
+    range: { s: { r: origin.row, c: origin.column }, e: { r: extent.row, c: extent.column } },
   });
   rows.forEach((row, rowIndex) => {
-    let lastWithText = -1;
     row.forEach((text, columnIndex) => {
       if (text.length > SURVEY_IMPORT_SHEET_MAX_CELL_CHARS) {
         throw documentLimitExceeded(
@@ -110,15 +141,7 @@ const readRows = (sheet: XLSX.WorkSheet, origin: { row: number; column: number }
           `A cell must not exceed ${SURVEY_IMPORT_SHEET_MAX_CELL_CHARS} characters`
         );
       }
-      if (text.trim() !== "") lastWithText = origin.column + columnIndex;
     });
-    if (lastWithText >= SURVEY_IMPORT_SHEET_MAX_COLUMNS) {
-      throw documentLimitExceeded(
-        "columns",
-        `file.R${origin.row + rowIndex + 1}`,
-        `A row must not have more than ${SURVEY_IMPORT_SHEET_MAX_COLUMNS} columns`
-      );
-    }
   });
   return rows;
 };

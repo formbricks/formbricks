@@ -1,5 +1,5 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import * as XLSX from "xlsx";
 import { editLocalHeader, setDeclaredSizes, setFlags } from "../core/__fixtures__/zip-builders";
 import { SurveyImportFileTooLargeError, SurveyImportInputError } from "../core/errors";
@@ -11,6 +11,7 @@ import {
   SURVEY_IMPORT_XML_MAX_DEPTH,
 } from "../limits";
 import { loadDocumentFixture } from "./__fixtures__/load-fixture";
+import { columnName } from "./model";
 import { readSheetDocument } from "./read-sheet";
 
 const read = (bytes: Uint8Array) => readSheetDocument(openZipArchive(bytes));
@@ -156,6 +157,56 @@ describe("readSheetDocument", () => {
         name: "file.R1",
       }
     );
+  });
+
+  test("sizes the read from the cells the sheet holds, not the range its dimension declares", () => {
+    // Every row holds one cell and the dimension claims Excel's widest range: read as declared, each of
+    // the 5,000 rows would be padded to 16,384 cells, about 1 GB from a 37 KB file.
+    const rows = Array.from({ length: SURVEY_IMPORT_SHEET_MAX_ROWS }, (_, index) => [`Q${index + 1}`]);
+    const declaredWide = patched(
+      workbook({ Sheet1: rows }),
+      `<dimension ref="A1:A${SURVEY_IMPORT_SHEET_MAX_ROWS}"/>`,
+      `<dimension ref="A1:XFD${SURVEY_IMPORT_SHEET_MAX_ROWS}"/>`
+    );
+    expect(strFromU8(unzipSync(declaredWide)["xl/worksheets/sheet1.xml"])).toContain("A1:XFD");
+    const toRows = vi.spyOn(XLSX.utils, "sheet_to_json");
+
+    try {
+      expect(read(declaredWide).lines).toHaveLength(SURVEY_IMPORT_SHEET_MAX_ROWS);
+      const readRows = toRows.mock.results[0]?.value as string[][];
+      expect(Math.max(...readRows.map((row) => row.length))).toBe(1);
+    } finally {
+      toRows.mockRestore();
+    }
+  });
+
+  test("allows empty cells past the column limit, and refuses text there wherever the dimension ends", () => {
+    const pastTheLimit = columnName(SURVEY_IMPORT_SHEET_MAX_COLUMNS);
+    // The dimension stops before the cell: the cell is still read, and still counts.
+    const withCell = (value: string) =>
+      patched(
+        workbook(
+          { Sheet1: [["Q1"]] },
+          {
+            edit: (book) => {
+              book.Sheets.Sheet1[`${pastTheLimit}1`] = { t: "s", v: value };
+              book.Sheets.Sheet1["!ref"] = `A1:${pastTheLimit}1`;
+            },
+          }
+        ),
+        `<dimension ref="A1:${pastTheLimit}1"/>`,
+        '<dimension ref="A1"/>'
+      );
+
+    expect(strFromU8(unzipSync(withCell("extra"))["xl/worksheets/sheet1.xml"])).toContain(
+      '<dimension ref="A1"/>'
+    );
+    expect(read(withCell("")).lines).toEqual([{ key: "R1", cells: [{ key: "A1", text: "Q1" }] }]);
+    expect(refusal(() => read(withCell("extra")))).toMatchObject({
+      code: "document_limit_exceeded",
+      identifier: "columns",
+      name: "file.R1",
+    });
   });
 
   test("takes a cell of exactly the cell limit and refuses one character more", () => {
