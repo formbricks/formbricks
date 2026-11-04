@@ -20,7 +20,8 @@ properties:
     maxLength: 255
     description: >-
       A dimension from the field catalog (`GET /api/v3/charts/fields`, `kind` `dimension` or
-      `timeDimension`), or an embedded-data field (`FeedbackRecords.ed_…`) from any chart's dataset
+      `timeDimension`; not a filter-only field such as `FeedbackRecords.answer`), or an
+      embedded-data field (`FeedbackRecords.ed_…`) from any chart's dataset
       catalog. An embedded-data field's name is derived from its key alone, so the filter applies to
       every chart whose Feedback Dataset has that key.
     example: FeedbackRecords.sourceName
@@ -36,10 +37,12 @@ properties:
       - lt
       - lte
     description: >-
-      One of the field's `filterOperators`, fixed by the editor. `equals` and `notEquals` on a text
-      field pick from a list of values (`GET
+      One of the field's `filterOperators`, fixed by the editor. `equals` and `notEquals` on a
+      categorical field — one whose catalog entry has `valueLookup`, or an embedded-data field — pick
+      from a list of values (`GET
       /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of);
-      every other filter takes one typed value.
+      every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one
+      typed value.
   label:
     type: string
     minLength: 1

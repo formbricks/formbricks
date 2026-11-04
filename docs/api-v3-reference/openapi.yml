@@ -5278,14 +5278,14 @@ paths:
       summary: List a dashboard filter's values
       description: |
         The values a list dashboard filter offers — one whose operator is `equals` or `notEquals` on a
-        text field: the values the dashboard's charts let through under their own saved filters and date
+        categorical field (`valueLookup` in the field catalog, or an embedded-data field): the values the dashboard's charts let through under their own saved filters and date
         ranges, narrowed by the dashboard date range and the other filters' picks. The filter's own pick
         never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked
         filter's field, offer nothing.
 
         Up to 100 values, alphabetical; `hasMore` says more match, and `search` narrows them
         (case-insensitive, contains). A filter the dashboard does not have, or one that takes a typed
-        value, answers 422.
+        value (free text such as `FeedbackRecords.valueText`), answers 422.
 
         Needs read access to the dashboard's workspace and to every Feedback Dataset whose charts have
         the field. Lists are cached for 60 seconds per dashboard version, filter, picks, date range and
@@ -13784,12 +13784,63 @@ components:
           description: 'Embedded-data fields only: the key exactly as collected, case included. Read the key here, not from `label`, which is display text.'
           example: plan
       additionalProperties: false
+    ChartAnswerQuestion:
+      type: object
+      description: 'A question of the Feedback Dataset an answer rule may name: a filter on `FeedbackRecords.answer` keeping the records whose submission answered this question a certain way. One rule names one question; put an option''s `value` in the rule''s `values`.'
+      required:
+        - id
+        - label
+        - kind
+        - operators
+        - options
+      properties:
+        id:
+          type: string
+          description: The question's id, as the rule values start with it.
+        label:
+          type: string
+          description: The question as respondents read it.
+        kind:
+          type: string
+          enum:
+            - choice
+            - multi
+            - number
+          description: 'How the question stores its answer: `choice` a single-select''s option, `multi` one record per selected option, `number` an NPS, rating, CSAT or CES value.'
+        operators:
+          type: array
+          description: The operators a rule on this question takes. A multi-select takes `equals` only ("contains any of"); there is no "does not contain".
+          items:
+            type: string
+            enum:
+              - equals
+              - notEquals
+        options:
+          type: array
+          description: The answers a rule may test for.
+          items:
+            type: object
+            required:
+              - value
+              - label
+            properties:
+              value:
+                type: string
+                description: The rule value, `<questionId>:<valueKey>`.
+                example: q_delivery:opt_late
+              label:
+                type: string
+                description: The answer as respondents read it.
+                example: Late
+            additionalProperties: false
+      additionalProperties: false
     ChartFieldCatalog:
       type: object
       description: 'The field catalog: the fields a chart query may use, and the named date ranges it may use on `FeedbackRecords.collectedAt` and other time dimensions. The chart query validator checks against this same list, so the catalog is the contract.'
       required:
         - fields
         - datePresets
+        - answerQuestions
       properties:
         fields:
           type: array
@@ -13805,7 +13856,11 @@ components:
             - last 7 days
             - this month
             - all-time
-      additionalProperties: false
+        answerQuestions:
+          type: array
+          description: The questions of the Feedback Dataset an answer rule (`FeedbackRecords.answer`) may name, with the operators and values each takes. Empty for a dataset without such questions.
+          items:
+            $ref: '#/components/schemas/ChartAnswerQuestion'
     ChartPreviewRequest:
       type: object
       required:
@@ -14035,7 +14090,7 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-          description: A dimension from the field catalog (`GET /api/v3/charts/fields`, `kind` `dimension` or `timeDimension`), or an embedded-data field (`FeedbackRecords.ed_…`) from any chart's dataset catalog. An embedded-data field's name is derived from its key alone, so the filter applies to every chart whose Feedback Dataset has that key.
+          description: A dimension from the field catalog (`GET /api/v3/charts/fields`, `kind` `dimension` or `timeDimension`; not a filter-only field such as `FeedbackRecords.answer`), or an embedded-data field (`FeedbackRecords.ed_…`) from any chart's dataset catalog. An embedded-data field's name is derived from its key alone, so the filter applies to every chart whose Feedback Dataset has that key.
           example: FeedbackRecords.sourceName
         operator:
           type: string
@@ -14048,7 +14103,7 @@ components:
             - gte
             - lt
             - lte
-          description: One of the field's `filterOperators`, fixed by the editor. `equals` and `notEquals` on a text field pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); every other filter takes one typed value.
+          description: One of the field's `filterOperators`, fixed by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value.
         label:
           type: string
           minLength: 1
@@ -17063,11 +17118,16 @@ components:
         type: object
         maxProperties: 10
         additionalProperties:
-          type: string
-          maxLength: 1000
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 1000
       description: Values picked for the dashboard's filters, as `picks[<filterId>]=value`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is ANDed onto every chart's saved query; picks for filters the dashboard does not have are ignored.
       example:
-        clfi000000000000000000001: Web
+        clfi000000000000000000001:
+          - Web
     FilterIdPath:
       in: path
       name: filterId

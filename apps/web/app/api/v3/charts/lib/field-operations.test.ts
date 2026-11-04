@@ -113,12 +113,60 @@ describe("getV3ChartFieldCatalog", () => {
     expect(catalog.fields).toContainEqual(
       expect.objectContaining({ name: "FeedbackRecords.answer", filterOperators: ["equals", "notEquals"] })
     );
-    expect(getDatasetChartFields).toHaveBeenCalledWith({
-      datasetId,
-      workspaceId: internalWorkspaceId,
-      organizationId,
-      actor,
+    expect(getDatasetChartFields).toHaveBeenCalledWith(
+      { datasetId, workspaceId: internalWorkspaceId, organizationId, actor },
+      { withAnswerQuestions: true }
+    );
+  });
+
+  test("lists the questions an answer rule may name, with their operators and ready-to-use values (C14)", async () => {
+    vi.mocked(getDatasetChartFields).mockResolvedValueOnce({
+      embeddedFields: [],
+      answerQuestions: [
+        {
+          id: "q_delivery",
+          label: "How was delivery?",
+          kind: "choice",
+          options: [
+            { value: "opt_late", label: "Late" },
+            { value: "opt_on_time", label: "On time" },
+          ],
+        },
+        { id: "q_topics", label: "Topics", kind: "multi", options: [{ value: "opt_price", label: "Price" }] },
+      ],
     });
+
+    const catalog = ZV3ChartFieldCatalog.parse(
+      ((await (await readCatalog()).json()) as { data: unknown }).data
+    );
+
+    expect(catalog.answerQuestions).toEqual([
+      {
+        id: "q_delivery",
+        label: "How was delivery?",
+        kind: "choice",
+        operators: ["equals", "notEquals"],
+        options: [
+          { value: "q_delivery:opt_late", label: "Late" },
+          { value: "q_delivery:opt_on_time", label: "On time" },
+        ],
+      },
+      {
+        id: "q_topics",
+        label: "Topics",
+        kind: "multi",
+        operators: ["equals"],
+        options: [{ value: "q_topics:opt_price", label: "Price" }],
+      },
+    ]);
+  });
+
+  test("lists no answer questions for a dataset without any", async () => {
+    vi.mocked(getDatasetChartFields).mockResolvedValueOnce({ embeddedFields: [] });
+    const catalog = ZV3ChartFieldCatalog.parse(
+      ((await (await readCatalog()).json()) as { data: unknown }).data
+    );
+    expect(catalog.answerQuestions).toEqual([]);
   });
 
   test("lists only the shared fields for a dataset without embedded data", async () => {

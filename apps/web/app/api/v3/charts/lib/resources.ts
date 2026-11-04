@@ -20,10 +20,25 @@ export const ZV3ChartField = z
   })
   .strict();
 
+/**
+ * A question of the dataset an answer rule (`FeedbackRecords.answer`) may name (C14): its kind decides the
+ * operators it takes, and each option's `value` is the rule value to send, `"<questionId>:<valueKey>"`.
+ */
+export const ZV3ChartAnswerQuestion = z
+  .object({
+    id: z.string(),
+    label: z.string(),
+    kind: z.enum(["choice", "multi", "number"]),
+    operators: z.array(z.enum(["equals", "notEquals"])),
+    options: z.array(z.object({ value: z.string(), label: z.string() }).strict()),
+  })
+  .strict();
+
 export const ZV3ChartFieldCatalog = z
   .object({
     fields: z.array(ZV3ChartField),
     datePresets: z.array(z.string()),
+    answerQuestions: z.array(ZV3ChartAnswerQuestion),
   })
   .strict();
 

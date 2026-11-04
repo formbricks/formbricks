@@ -14,6 +14,11 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import {
+  ANSWER_OPERATORS,
+  type TAnswerQuestion,
+  formatAnswerValue,
+} from "@/modules/ee/analysis/lib/answer-filter";
 import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import {
   buildDimensionValueQuery,
@@ -36,13 +41,24 @@ type TV3ReadContext = {
   instance: string;
 };
 
-const serializeCatalog = (fields: readonly TChartField[]): TV3ChartFieldCatalog => ({
+const serializeCatalog = (
+  fields: readonly TChartField[],
+  answerQuestions: readonly TAnswerQuestion[]
+): TV3ChartFieldCatalog => ({
   fields: fields.map((field) => ({
     ...field,
     filterOperators: [...field.filterOperators],
     granularities: [...field.granularities],
   })),
   datePresets: [...CHART_DATE_PRESETS],
+  // The questions an answer rule may name, so an API or MCP caller can write one as the builder does (C14).
+  answerQuestions: answerQuestions.map(({ id, label, kind, options }) => ({
+    id,
+    label,
+    kind,
+    operators: [...ANSWER_OPERATORS[kind]],
+    options: options.map((option) => ({ value: formatAnswerValue(id, option.value), label: option.label })),
+  })),
 });
 
 /**
@@ -50,7 +66,7 @@ const serializeCatalog = (fields: readonly TChartField[]): TV3ChartFieldCatalog 
  *
  * Answered per dataset: the caller has to be able to read the dataset it is about to write a query for,
  * and each dataset adds its embedded-data keys as `FeedbackRecords.ed_*` fields, labelled by the key
- * (ENG-6893). Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
+ * (ENG-6893), and the questions an answer rule may name (`answerQuestions`, C14). Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
  */
 export async function getV3ChartFieldCatalog({
   workspaceId,
@@ -78,13 +94,13 @@ export async function getV3ChartFieldCatalog({
     const actor = getV3AuthorizationActor(authentication);
     if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
-    const dataset = await getDatasetChartFields({
-      datasetId,
-      workspaceId: access.workspaceId,
-      organizationId: access.organizationId,
-      actor,
+    const dataset = await getDatasetChartFields(
+      { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
+      { withAnswerQuestions: true }
+    );
+    return successResponse(serializeCatalog(getChartFieldCatalog(dataset), dataset.answerQuestions ?? []), {
+      requestId,
     });
-    return successResponse(serializeCatalog(getChartFieldCatalog(dataset)), { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.fields" });
   }
