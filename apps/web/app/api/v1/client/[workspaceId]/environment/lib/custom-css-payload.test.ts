@@ -24,8 +24,14 @@ vi.mock("@formbricks/database", () => ({
     creative: { findMany: vi.fn(async () => []) },
   },
 }));
-vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
-vi.mock("@/lib/cache", () => ({ cache: { withCache: vi.fn((fn: () => Promise<unknown>) => fn()) } }));
+vi.mock("@formbricks/logger", () => ({ logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn() } }));
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    get: vi.fn(async () => ({ ok: true, data: null })),
+    set: vi.fn(async () => ({ ok: true })),
+    withCache: vi.fn((fn: () => Promise<unknown>) => fn()),
+  },
+}));
 vi.mock("@/lib/constants", () => ({ IS_RECAPTCHA_CONFIGURED: false, POSTHOG_KEY: undefined }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn() }));

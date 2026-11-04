@@ -6,8 +6,8 @@ import { createI18n } from "./create-i18n";
 import { loadLocaleMessages } from "./load-locale-messages";
 
 interface I18nProviderProps {
-  children: ReactNode;
-  language: string;
+  readonly children: ReactNode;
+  readonly language: string;
 }
 
 /**

@@ -5,8 +5,8 @@ import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface ManageTeamButtonProps {
-  onClick: () => void;
-  disabled: boolean;
+  readonly onClick: () => void;
+  readonly disabled: boolean;
 }
 
 export const ManageTeamButton = ({ onClick, disabled }: ManageTeamButtonProps) => {

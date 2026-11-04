@@ -132,6 +132,9 @@ export const ZWebhookDeliveryJobData = z.object({
     status: ZSurveyStatus,
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
+    // `{ [Question ID]: question code }` at the time the event fired, for the body's
+    // `dataByQuestionCode`. Optional so a job queued before the deploy still parses.
+    questionCodes: z.record(z.string(), z.string()).optional(),
   }),
 });
 

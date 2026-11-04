@@ -1,3 +1,4 @@
+import { ExportManagerProvider } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/export-manager";
 import { FormbricksProvider } from "@/app/formbricks/components/formbricks-provider";
 import { PlainChat } from "@/app/plain/components/plain-chat";
 import { getIsActiveCustomer } from "@/app/plain/lib/customer";
@@ -72,7 +73,7 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
         />
       )}
       <ToasterClient />
-      {children}
+      <ExportManagerProvider>{children}</ExportManagerProvider>
     </>
   );
 };

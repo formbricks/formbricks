@@ -20,10 +20,10 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 
 interface CreateTeamModalProps {
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  organizationId: string;
-  onCreate?: (teamId: string) => void;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly organizationId: string;
+  readonly onCreate?: (teamId: string) => void;
 }
 
 export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: CreateTeamModalProps) => {

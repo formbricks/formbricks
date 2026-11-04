@@ -24,6 +24,7 @@ import { ZBaseStyling } from "../styling";
 import { ZLanguage } from "../workspace";
 import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlocks } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
+import { validateSurveyCodes } from "./codes";
 import {
   type TSurveyElement,
   TSurveyElementTypeEnum,
@@ -338,10 +339,12 @@ export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
+  code: z.string().optional(),
 });
 
 export const ZSurveyPictureChoice = z.object({
   id: z.string(),
+  code: z.string().optional(),
   imageUrl: ZStorageUrl,
 });
 
@@ -474,13 +477,19 @@ export const ZSurveyQuestionBase = z.object({
   isDraft: z.boolean().optional(),
 });
 
+// Legacy twin of `ZSurveyQuestionElementBase`: every question but CTA can carry a code, so the v1
+// API round-trips it (ENG-6778).
+export const ZSurveyCodedQuestionBase = ZSurveyQuestionBase.extend({
+  code: z.string().optional(),
+});
+
 export const ZSurveyOpenTextQuestionInputType = z.enum(["text", "email", "url", "number", "phone"]);
 export type TSurveyOpenTextQuestionInputType = z.infer<typeof ZSurveyOpenTextQuestionInputType>;
 
 /**
  * @deprecated Use ZSurveyOpenTextElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyOpenTextQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
@@ -531,7 +540,7 @@ export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
 /**
  * @deprecated Use ZSurveyConsentElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyConsentQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Consent),
   label: ZI18nString,
 });
@@ -554,7 +563,7 @@ export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 /**
  * @deprecated Use ZSurveyMultipleChoiceElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyMultipleChoiceQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.union([
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceSingle),
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
@@ -574,7 +583,7 @@ export type TSurveyMultipleChoiceQuestion = z.infer<typeof ZSurveyMultipleChoice
 /**
  * @deprecated Use ZSurveyNPSElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyNPSQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.NPS),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
@@ -604,7 +613,7 @@ export type TSurveyCTAQuestion = z.infer<typeof ZSurveyCTAQuestion>;
 /**
  * @deprecated Use ZSurveyRatingElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyRatingQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Rating),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(6), z.literal(7), z.literal(10)]),
@@ -616,7 +625,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
 /**
  * @deprecated Use ZSurveyDateElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyDateQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyDateQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Date),
   html: ZI18nString.optional(),
   format: z.enum(["M-d-y", "d-M-y", "y-M-d"]),
@@ -635,7 +644,7 @@ export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
 /**
  * @deprecated Use ZSurveyPictureSelectionElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyPictureSelectionQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
   allowMulti: z.boolean().prefault(false),
   choices: z.array(ZSurveyPictureChoice).min(2, {
@@ -651,7 +660,7 @@ export type TSurveyPictureSelectionQuestion = z.infer<typeof ZSurveyPictureSelec
 /**
  * @deprecated Use ZSurveyFileUploadElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyFileUploadQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyFileUploadQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.FileUpload),
   allowMultipleFiles: z.boolean(),
   maxSizeInMB: z.number().optional(),
@@ -666,7 +675,7 @@ export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion
 /**
  * @deprecated Use ZSurveyCalElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyCalQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string().min(1, {
     error: "Cal user name is required",
@@ -682,6 +691,7 @@ export type TSurveyCalQuestion = z.infer<typeof ZSurveyCalQuestion>;
 export const ZSurveyMatrixQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
+  code: z.string().optional(),
 });
 
 export type TSurveyMatrixQuestionChoice = z.infer<typeof ZSurveyMatrixQuestionChoice>;
@@ -689,7 +699,7 @@ export type TSurveyMatrixQuestionChoice = z.infer<typeof ZSurveyMatrixQuestionCh
 /**
  * @deprecated Use ZSurveyMatrixElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyMatrixQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixQuestionChoice),
   columns: z.array(ZSurveyMatrixQuestionChoice),
@@ -712,7 +722,7 @@ export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 /**
  * @deprecated Use ZSurveyAddressElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyAddressQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
   addressLine1: ZToggleInputConfig,
   addressLine2: ZToggleInputConfig,
@@ -725,7 +735,7 @@ export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
 /**
  * @deprecated Use ZSurveyContactInfoElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyContactInfoQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
   firstName: ZToggleInputConfig,
   lastName: ZToggleInputConfig,
@@ -747,7 +757,7 @@ export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuesti
 /**
  * @deprecated Use ZSurveyRankingElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyRankingQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
   choices: z
     .array(ZSurveyQuestionChoice)
@@ -769,7 +779,7 @@ export type TSurveyRankingQuestion = z.infer<typeof ZSurveyRankingQuestion>;
 /**
  * @deprecated Use ZSurveyCsatElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyCsatQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyCsatQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CSAT),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.literal(5),
@@ -786,7 +796,7 @@ export type TSurveyCsatQuestion = z.infer<typeof ZSurveyCsatQuestion>;
 /**
  * @deprecated Use ZSurveyCesElement instead. Kept for v1 API backward compatibility only.
  */
-export const ZSurveyCesQuestion = ZSurveyQuestionBase.extend({
+export const ZSurveyCesQuestion = ZSurveyCodedQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.CES),
   scale: z.enum(["number", "smiley", "star"]),
   range: z.union([z.literal(5), z.literal(7)]),
@@ -1135,6 +1145,20 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
       message: "Survey cannot have both questions and blocks. Use one model.",
       path: ["blocks"],
     });
+  }
+
+  // Question codes and answer codes (ENG-6778). Embedded Data names are read from the derived legacy
+  // columns, which hold both the hidden fields and the variables whichever carrier the payload used.
+  if (hasBlocks) {
+    // Typed as optional on purpose: the create-input schema reaches this refinement with both absent.
+    const declared: { hiddenFields?: { fieldIds?: string[] }; variables?: { name: string }[] } = survey;
+    const embeddedDataNames = [
+      ...(declared.hiddenFields?.fieldIds ?? []),
+      ...(declared.variables ?? []).map((variable) => variable.name),
+    ];
+    for (const issue of validateSurveyCodes({ blocks, embeddedDataNames })) {
+      ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
+    }
   }
 
   let multiLangIssue: z.core.$ZodRawIssue | null;

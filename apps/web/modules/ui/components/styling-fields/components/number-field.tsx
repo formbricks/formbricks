@@ -4,14 +4,14 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/
 import { Input } from "@/modules/ui/components/input";
 
 interface NumberFieldProps {
-  form: any;
-  name: string;
-  label: string;
-  description?: string;
-  step?: number;
-  min?: number;
-  max?: number;
-  placeholder?: string;
+  readonly form: any;
+  readonly name: string;
+  readonly label: string;
+  readonly description?: string;
+  readonly step?: number;
+  readonly min?: number;
+  readonly max?: number;
+  readonly placeholder?: string;
 }
 
 export const NumberField = ({

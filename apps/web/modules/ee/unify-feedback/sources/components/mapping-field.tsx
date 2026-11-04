@@ -17,7 +17,7 @@ import { TFieldMapping, TSourceField, TTargetField } from "../types";
 export type TAutoMapState = "high" | "medium" | "low";
 
 interface AutoMappedBadgeProps {
-  sourceColumn?: string;
+  readonly sourceColumn?: string;
 }
 
 export const AutoMappedBadge = ({ sourceColumn }: AutoMappedBadgeProps) => {
@@ -56,16 +56,16 @@ const SENTINEL = {
 } as const;
 
 interface FormTargetFieldProps {
-  field: TTargetField;
-  mapping: TFieldMapping | null;
-  sourceFields: TSourceField[];
-  allMappings: TFieldMapping[];
-  targetNameById: Record<string, string>;
-  onChange: (next: TFieldMapping | null) => void;
-  autoMapState?: TAutoMapState;
-  autoMapSourceColumn?: string;
-  preview?: string;
-  disabled?: boolean;
+  readonly field: TTargetField;
+  readonly mapping: TFieldMapping | null;
+  readonly sourceFields: TSourceField[];
+  readonly allMappings: TFieldMapping[];
+  readonly targetNameById: Record<string, string>;
+  readonly onChange: (next: TFieldMapping | null) => void;
+  readonly autoMapState?: TAutoMapState;
+  readonly autoMapSourceColumn?: string;
+  readonly preview?: string;
+  readonly disabled?: boolean;
 }
 
 export const FormTargetField = ({

@@ -21,10 +21,10 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface MemberActionsProps {
-  organization: TOrganization;
-  member?: TMember;
-  invite?: TInvite;
-  showDeleteButton?: boolean;
+  readonly organization: TOrganization;
+  readonly member?: TMember;
+  readonly invite?: TInvite;
+  readonly showDeleteButton?: boolean;
 }
 
 export const MemberActions = ({ organization, member, invite, showDeleteButton }: MemberActionsProps) => {

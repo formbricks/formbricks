@@ -46,30 +46,30 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SettingsSidebarContentProps {
-  workspaceId: string;
-  workspaceName: string;
-  organizationId: string;
-  organizationName: string;
-  membershipRole?: TOrganizationRole;
-  isFormbricksCloud: boolean;
-  isCollapsed: boolean;
-  isTextVisible: boolean;
+  readonly workspaceId: string;
+  readonly workspaceName: string;
+  readonly organizationId: string;
+  readonly organizationName: string;
+  readonly membershipRole?: TOrganizationRole;
+  readonly isFormbricksCloud: boolean;
+  readonly isCollapsed: boolean;
+  readonly isTextVisible: boolean;
   // Hidden when the user has no workspace (org/account settings still render).
-  hideWorkspaceSection?: boolean;
+  readonly hideWorkspaceSection?: boolean;
   // Workspace switcher
-  workspaces: { id: string; name: string }[];
-  isLoadingWorkspaces: boolean;
-  onWorkspaceChange: (id: string) => void;
-  onWorkspaceDropdownOpen: () => void;
-  errorWorkspaces?: string | null;
-  onWorkspaceRetry?: () => void;
+  readonly workspaces: { id: string; name: string }[];
+  readonly isLoadingWorkspaces: boolean;
+  readonly onWorkspaceChange: (id: string) => void;
+  readonly onWorkspaceDropdownOpen: () => void;
+  readonly errorWorkspaces?: string | null;
+  readonly onWorkspaceRetry?: () => void;
   // Organization switcher
-  organizations: { id: string; name: string }[];
-  isLoadingOrganizations: boolean;
-  onOrganizationChange: (id: string) => void;
-  onOrganizationDropdownOpen: () => void;
-  errorOrganizations?: string | null;
-  onOrganizationRetry?: () => void;
+  readonly organizations: { id: string; name: string }[];
+  readonly isLoadingOrganizations: boolean;
+  readonly onOrganizationChange: (id: string) => void;
+  readonly onOrganizationDropdownOpen: () => void;
+  readonly errorOrganizations?: string | null;
+  readonly onOrganizationRetry?: () => void;
 }
 
 interface NavItem {

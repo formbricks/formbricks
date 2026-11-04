@@ -9,18 +9,17 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
 
 interface IDateElementFormProps {
-  localSurvey: TSurvey;
-  element: TSurveyDateElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyDateElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const DateElementForm = ({
@@ -89,16 +88,6 @@ export const DateElementForm = ({
           </Button>
         )}
       </div>
-
-      <ValidationRulesEditor
-        elementType={element.type}
-        validation={element.validation}
-        onUpdateValidation={(validation) => {
-          updateElement(elementIdx, {
-            validation,
-          });
-        }}
-      />
     </form>
   );
 };

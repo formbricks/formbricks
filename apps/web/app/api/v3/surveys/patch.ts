@@ -9,6 +9,7 @@ import {
   describeDeclaredFieldNameError,
   validateNewDeclaredFieldNames,
 } from "@formbricks/types/surveys/declared-field-guard";
+import { carryOverCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
@@ -16,6 +17,7 @@ import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE } from "@/lib/survey/publish-rule";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
@@ -373,7 +375,12 @@ export async function executeV3SurveyPatch(params: {
     showLanguageSwitch: document.showLanguageSwitch,
     autoSelectLanguage: document.autoSelectLanguage,
     welcomeCard: document.welcomeCard,
-    blocks: stripIsDraftFromBlocks(document.blocks),
+    // ENG-6782: a block `update` replaces the whole block, so a caller that sends none of the codes
+    // would otherwise wipe the stored ones. Carry them over by id first, then code what is new.
+    blocks: fillSurveyBlockCodes(
+      carryOverCodes(currentSurvey.blocks, stripIsDraftFromBlocks(document.blocks)),
+      document
+    ),
     endings: document.endings,
     closeOn: normalizedScheduling.closeOn,
     publishOn: normalizedScheduling.publishOn,

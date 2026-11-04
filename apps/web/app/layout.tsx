@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: "Open-Source Survey Suite",
 };
 
-const RootLayout = async ({ children }: { children: React.ReactNode }) => {
+const RootLayout = async ({ children }: { readonly children: React.ReactNode }) => {
   const locale = await getLocale();
 
   return (

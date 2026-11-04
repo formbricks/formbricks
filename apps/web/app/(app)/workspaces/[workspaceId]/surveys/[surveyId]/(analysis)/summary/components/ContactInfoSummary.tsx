@@ -13,9 +13,9 @@ import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface ContactInfoSummaryProps {
-  elementSummary: TSurveyElementSummaryContactInfo;
-  survey: TSurvey;
-  locale: TUserLocale;
+  readonly elementSummary: TSurveyElementSummaryContactInfo;
+  readonly survey: TSurvey;
+  readonly locale: TUserLocale;
 }
 
 export const ContactInfoSummary = ({ elementSummary, survey, locale }: ContactInfoSummaryProps) => {

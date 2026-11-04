@@ -20,12 +20,12 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
 interface AnonymousLinksTabProps {
-  survey: TSurvey;
-  surveyUrl: string;
-  publicDomain: string;
-  setSurveyUrl: (url: string) => void;
-  locale: TUserLocale;
-  isReadOnly: boolean;
+  readonly survey: TSurvey;
+  readonly surveyUrl: string;
+  readonly publicDomain: string;
+  readonly setSurveyUrl: (url: string) => void;
+  readonly locale: TUserLocale;
+  readonly isReadOnly: boolean;
 }
 
 export const AnonymousLinksTab = ({

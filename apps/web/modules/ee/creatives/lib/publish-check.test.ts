@@ -33,7 +33,7 @@ const readyButton: TCreativeEditorForm = {
   },
   distribution: everyPageView,
   schedule: { startAt: null, endAt: null },
-  languages: { defaultLanguage: "en-US", others: [], texts: {} },
+  languages: { defaultLanguage: "en-US", others: [], texts: {}, autoSelectLanguage: null },
 };
 
 const readyBanner: TCreativeEditorForm = {
@@ -54,7 +54,7 @@ const readyBanner: TCreativeEditorForm = {
   },
   distribution: everyPageView,
   schedule: { startAt: null, endAt: null },
-  languages: { defaultLanguage: "en-US", others: [], texts: {} },
+  languages: { defaultLanguage: "en-US", others: [], texts: {}, autoSelectLanguage: null },
 };
 
 const withDistribution = (patch: Partial<TCreativeDistributionForm>): TCreativeEditorForm => ({

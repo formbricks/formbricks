@@ -15,11 +15,11 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface AddActionModalProps {
-  workspaceId: string;
-  actionClasses: TActionClass[];
-  isReadOnly: boolean;
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  readonly workspaceId: string;
+  readonly actionClasses: TActionClass[];
+  readonly isReadOnly: boolean;
+  readonly open: boolean;
+  readonly setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export const AddActionModal = ({

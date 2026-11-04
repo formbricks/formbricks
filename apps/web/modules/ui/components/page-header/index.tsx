@@ -1,9 +1,9 @@
 import { cn } from "@/lib/cn";
 
 export interface PageHeaderProps {
-  pageTitle: React.ReactNode;
-  cta?: React.ReactNode;
-  children?: React.ReactNode;
+  readonly pageTitle: React.ReactNode;
+  readonly cta?: React.ReactNode;
+  readonly children?: React.ReactNode;
 }
 
 export const PageHeader = ({ cta, pageTitle, children }: PageHeaderProps) => {

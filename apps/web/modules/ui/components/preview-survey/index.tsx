@@ -597,10 +597,10 @@ const LanguageSelector = ({
   setLanguageCode,
   locale,
 }: {
-  languages: TSurveyLanguage[];
-  languageCode: string;
-  setLanguageCode: (code: string) => void;
-  locale?: TUserLocale;
+  readonly languages: TSurveyLanguage[];
+  readonly languageCode: string;
+  readonly setLanguageCode: (code: string) => void;
+  readonly locale?: TUserLocale;
 }) => {
   const { t } = useTranslation();
   return (

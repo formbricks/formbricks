@@ -1,8 +1,8 @@
 import { cn } from "@/lib/cn";
 
 interface PageContentWrapperProps {
-  children: React.ReactNode;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly className?: string;
 }
 
 export const PageContentWrapper = ({ children, className }: PageContentWrapperProps) => {

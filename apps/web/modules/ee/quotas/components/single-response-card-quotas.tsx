@@ -3,7 +3,7 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 
 interface ResponseCardQuotasProps {
-  quotas: TResponseWithQuotas["quotas"];
+  readonly quotas: TResponseWithQuotas["quotas"];
 }
 
 export const ResponseCardQuotas = ({ quotas }: ResponseCardQuotasProps) => {

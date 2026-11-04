@@ -8,7 +8,11 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 
-export const SegmentsPage = async ({ params: paramsProps }: { params: Promise<{ workspaceId: string }> }) => {
+export const SegmentsPage = async ({
+  params: paramsProps,
+}: {
+  readonly params: Promise<{ workspaceId: string }>;
+}) => {
   const params = await paramsProps;
   const t = await getTranslate();
 

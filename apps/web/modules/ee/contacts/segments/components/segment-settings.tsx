@@ -20,12 +20,12 @@ import { TSegmentActivitySummary } from "./segment-activity-utils";
 import { SegmentEditor } from "./segment-editor";
 
 interface TSegmentSettingsTabProps {
-  activitySummary: TSegmentActivitySummary;
-  setOpen: (open: boolean) => void;
-  initialSegment: TSegmentWithSurveyRefs;
-  segments: TSegment[];
-  contactAttributeKeys: TContactAttributeKey[];
-  isReadOnly: boolean;
+  readonly activitySummary: TSegmentActivitySummary;
+  readonly setOpen: (open: boolean) => void;
+  readonly initialSegment: TSegmentWithSurveyRefs;
+  readonly segments: TSegment[];
+  readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly isReadOnly: boolean;
 }
 
 export function SegmentSettings({

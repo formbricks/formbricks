@@ -14,8 +14,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface MergeTagsComboboxProps {
-  tags: Tag[];
-  onSelect: (tagId: string) => void;
+  readonly tags: Tag[];
+  readonly onSelect: (tagId: string) => void;
 }
 
 type Tag = {

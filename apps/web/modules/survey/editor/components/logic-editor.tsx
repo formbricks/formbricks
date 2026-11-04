@@ -13,14 +13,14 @@ import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 
 interface LogicEditorProps {
-  localSurvey: TSurvey;
-  logicItem: TSurveyBlockLogic;
-  updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
-  updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
-  block: TSurveyBlock;
-  blockIdx: number;
-  logicIdx: number;
-  isLast: boolean;
+  readonly localSurvey: TSurvey;
+  readonly logicItem: TSurveyBlockLogic;
+  readonly updateBlockLogic: (blockIdx: number, logic: TSurveyBlockLogic[]) => void;
+  readonly updateBlockLogicFallback: (blockIdx: number, logicFallback: string | undefined) => void;
+  readonly block: TSurveyBlock;
+  readonly blockIdx: number;
+  readonly logicIdx: number;
+  readonly isLast: boolean;
 }
 
 export function LogicEditor({

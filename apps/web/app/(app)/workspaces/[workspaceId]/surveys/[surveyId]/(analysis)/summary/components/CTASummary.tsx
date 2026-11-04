@@ -8,8 +8,8 @@ import { convertFloatToNDecimal } from "../lib/utils";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
 interface CTASummaryProps {
-  elementSummary: TSurveyElementSummaryCta;
-  survey: TSurvey;
+  readonly elementSummary: TSurveyElementSummaryCta;
+  readonly survey: TSurvey;
 }
 
 export const CTASummary = ({ elementSummary, survey }: CTASummaryProps) => {

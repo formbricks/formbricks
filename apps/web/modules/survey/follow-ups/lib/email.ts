@@ -50,6 +50,13 @@ export const sendFollowUpEmail = async ({
 
   await sendEmail({
     emailType: "survey_follow_up",
+    auditContext: {
+      trigger: "response",
+      surveyId: survey.id,
+      responseId: response.id,
+      followUpId: followUp.id,
+      organizationId: rateLimit.organizationId,
+    },
     to,
     replyTo: replyTo.join(", "),
     subject,

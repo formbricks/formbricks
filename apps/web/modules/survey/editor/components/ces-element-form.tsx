@@ -9,19 +9,18 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { Dropdown } from "@/modules/survey/editor/components/rating-type-dropdown";
-import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 
 interface CESElementFormProps {
-  localSurvey: TSurvey;
-  element: TSurveyCesElement;
-  elementIdx: number;
-  updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  isInvalid: boolean;
-  locale: TUserLocale;
-  isStorageConfigured: boolean;
-  isExternalUrlsAllowed?: boolean;
+  readonly localSurvey: TSurvey;
+  readonly element: TSurveyCesElement;
+  readonly elementIdx: number;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
+  readonly isInvalid: boolean;
+  readonly locale: TUserLocale;
+  readonly isStorageConfigured: boolean;
+  readonly isExternalUrlsAllowed?: boolean;
 }
 
 export const CESElementForm = ({
@@ -159,18 +158,6 @@ export const CESElementForm = ({
           />
         </div>
       </div>
-
-      {element.scale !== "star" && (
-        <AdvancedOptionToggle
-          isChecked={element.isColorCodingEnabled}
-          onToggle={() => updateElement(elementIdx, { isColorCodingEnabled: !element.isColorCodingEnabled })}
-          htmlId="isColorCodingEnabled"
-          title={t("workspace.surveys.edit.add_color_coding")}
-          description={t("workspace.surveys.edit.add_color_coding_description")}
-          childBorder
-          customContainerClass="p-0 mt-4"
-        />
-      )}
     </form>
   );
 };

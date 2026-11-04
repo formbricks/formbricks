@@ -369,6 +369,7 @@ export const render = (
   host.dataset.formbricksCreative = view.id;
   const shadow = host.attachShadow({ mode: "open" });
 
+  // eslint-disable-next-line no-restricted-syntax -- the nonce is set on the next line
   const style = doc.createElement("style");
   if (nonce) style.setAttribute("nonce", nonce);
   style.textContent = isBanner ? bannerCss(view, device) : feedbackButtonCss(view, device);

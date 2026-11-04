@@ -9,7 +9,7 @@ import type { TTaxonomyScopeSelection } from "../lib/query";
 import { useTaxonomyState } from "./use-taxonomy-state";
 
 function createWrapper(queryClient: QueryClient) {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseTaxonomyStateTestWrapper";
   return Wrapper;

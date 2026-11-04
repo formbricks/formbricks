@@ -4,7 +4,7 @@ import { Code, HelpCircle, Link2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface SurveyTypeIndicatorProps {
-  type: string;
+  readonly type: string;
 }
 
 export const SurveyTypeIndicator = ({ type }: SurveyTypeIndicatorProps) => {

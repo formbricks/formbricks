@@ -115,3 +115,25 @@ describe("buildWhereClause: date windows", () => {
     expect(clausesFor({ data: { renewal_date: { op: "inRange", ...window } } })).toEqual([]);
   });
 });
+
+describe("buildWhereClause: outcome", () => {
+  const conditions = (filter: TResponseFilterCriteria) =>
+    (buildWhereClause(survey, filter).AND as Prisma.ResponseWhereInput[]).filter(
+      (clause) => "outcome" in clause
+    );
+
+  test("a filter that selects Low quality keeps only those", () => {
+    expect(conditions({ outcome: "lowQuality" })).toEqual([{ outcome: "lowQuality" }]);
+  });
+
+  test("excludeLowQuality keeps only the responses without an outcome", () => {
+    expect(conditions({ excludeLowQuality: true })).toEqual([{ outcome: null }]);
+  });
+
+  test("selecting Low quality wins over leaving them out, and no outcome filter adds no condition", () => {
+    expect(conditions({ outcome: "lowQuality", excludeLowQuality: true })).toEqual([
+      { outcome: "lowQuality" },
+    ]);
+    expect(conditions({})).toEqual([]);
+  });
+});

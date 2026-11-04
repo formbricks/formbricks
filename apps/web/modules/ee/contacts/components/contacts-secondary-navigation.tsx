@@ -2,9 +2,9 @@ import { getTranslate } from "@/lingodotdev/server";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface PersonSecondaryNavigationProps {
-  activeId: string;
-  workspaceId?: string;
-  loading?: boolean;
+  readonly activeId: string;
+  readonly workspaceId?: string;
+  readonly loading?: boolean;
 }
 
 export const ContactsSecondaryNavigation = async ({

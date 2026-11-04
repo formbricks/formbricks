@@ -15,10 +15,10 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface ConfirmDeleteSegmentModalProps {
-  activitySummary: TSegmentActivitySummary;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  onDelete: () => Promise<void>;
+  readonly activitySummary: TSegmentActivitySummary;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly onDelete: () => Promise<void>;
 }
 
 export const ConfirmDeleteSegmentModal = ({
