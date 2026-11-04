@@ -12,6 +12,7 @@ import {
 import type { TV3ChartData } from "@/app/api/v3/charts/lib/resources";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
+  type TDashboardsAccessContext,
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
@@ -23,7 +24,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   findPickIssues,
@@ -49,7 +49,7 @@ import { getDashboardChartsRow } from "./service";
 export const authorizeDashboardRead = async (
   row: { workspaceId: string } | null,
   { authentication, requestId, instance }: TV3ChartOperationContext
-): Promise<Response | V3WorkspaceContext> => {
+): Promise<Response | TDashboardsAccessContext> => {
   if (!row) return problemForbidden(requestId, undefined, instance);
   return requireDashboardsAccess(authentication, row.workspaceId, "read", requestId, instance, {
     allowDashboardViewer: true,
@@ -57,12 +57,12 @@ export const authorizeDashboardRead = async (
 };
 
 /**
- * Read access to a Feedback Dataset a dashboard's chart reads, as a dashboard-bound read
- * (`feedbackDirectoryAssignment.dashboard_read`, which admits the workspace's Dashboard viewers); `null`
- * when allowed.
+ * Read access to a Feedback Dataset a dashboard's chart reads, as a dashboard-bound read: `read`, or
+ * `feedbackDirectoryAssignment.dashboard_read` for a caller `authorizeDashboardRead` admitted as the
+ * workspace's Dashboard viewer; `null` when allowed.
  */
 export const refuseUnlessDashboardDatasetReadable = (
-  access: V3WorkspaceContext,
+  access: TDashboardsAccessContext,
   datasetId: string,
   { authentication, requestId, instance }: TV3ChartOperationContext
 ): Promise<Response | null> =>
