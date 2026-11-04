@@ -753,7 +753,15 @@ describe("what an Update removes", () => {
     expect(done.match?.issues?.map((issue) => issue.code)).toEqual(["option_removed", "question_removed"]);
     expect((await update(surveyId, done, { updatedAt: done.match!.updatedAt })).status).toBe(200);
     expect(await prisma.response.count({ where: { surveyId } })).toBe(1);
-    expect(headlineOf(await storedSurvey(surveyId))).toBe("Which color?");
+    // The removals the report warned about are what was stored.
+    const after = await storedSurvey(surveyId);
+    expect(headlineOf(after)).toBe("Which color?");
+    const elements = (after.blocks as { elements: { id: string; choices?: { id: string }[] }[] }[])[0]
+      .elements;
+    expect(elements.map((element) => element.id)).not.toContain("feedback");
+    expect(
+      elements.find((element) => element.id === "color")?.choices?.map((choice) => choice.id)
+    ).not.toContain("green");
   });
 
   test("removes the parts the workspace cannot hold with a warning, as a create does", async () => {
