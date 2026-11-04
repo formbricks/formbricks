@@ -47,6 +47,7 @@ import {
   resolveBoundedChartValues,
 } from "@/modules/ee/analysis/dashboards/lib/filter-value-query";
 import { parseRequestedDateRange } from "@/modules/ee/analysis/lib/chart-query-validator";
+import { createRequestEmbeddedKeys } from "@/modules/ee/analysis/lib/request-embedded-keys";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
 import type { TV3DashboardFilterValues } from "./resources";
 import type { TV3DashboardFilterValuesQuery } from "./schemas";
@@ -242,7 +243,7 @@ export async function listV3DashboardFilterValues({
     const refusals = await Promise.all(
       datasetIds
         .filter((id) => datasetHasField(id, filter.field))
-        .map((datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, context))
+        .map((datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, row, context))
     );
     const refused = refusals.find((refusal) => refusal !== null);
     if (refused) return refused;
@@ -286,6 +287,13 @@ export async function listV3DashboardFilterValues({
       });
     }
 
+    // One list runs many queries on few datasets: their tokens' keys are resolved once per dataset.
+    const embeddedKeysFor = createRequestEmbeddedKeys((datasetId) => ({
+      datasetId,
+      workspaceId: access.workspaceId,
+      organizationId: access.organizationId,
+      actor,
+    }));
     const run = async ({ datasetId, query: cubeQuery }: TFilterValueQuery): Promise<unknown[]> => {
       const rows = await executeTenantScopedQuery({
         query: cubeQuery,
@@ -294,6 +302,7 @@ export async function listV3DashboardFilterValues({
         organizationId: access.organizationId,
         actor,
         source: "v3.dashboards.filterValues",
+        embeddedKeys: await embeddedKeysFor(datasetId, cubeQuery),
       });
       return Array.isArray(rows) ? (rows as unknown[]) : [];
     };

@@ -17,6 +17,7 @@ import {
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { getV3RateLimitPrincipal } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   problemForbidden,
   problemNotFound,
@@ -31,6 +32,7 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { parseStoredDashboardFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
+import { withCachedDashboardDecision } from "./read-decision-cache";
 import type { TV3DashboardChartData } from "./resources";
 import type { TV3DashboardChartDataQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
@@ -41,34 +43,59 @@ import { getDashboardChartsRow } from "./service";
  * decides who may read a dashboard and its datasets is here.
  */
 
+/** The dashboard a read goes through, at the version it was read: what its read decisions are kept for. */
+type TReadDashboard = { id: string; workspaceId: string; updatedAt: Date };
+
 /**
  * Read access to a dashboard's workspace, with the Dashboards entitlement. A dashboard-bound read, so a
  * Dashboard viewer of the workspace is admitted too (ADR-0023). A dashboard that does not exist answers
- * the same 403 as one the caller may not see.
+ * the same 403 as one the caller may not see. An allowed decision is reused for 30 seconds for the same
+ * caller and dashboard version (`withCachedDashboardDecision`): every widget and value list asks it.
  */
 export const authorizeDashboardRead = async (
-  row: { workspaceId: string } | null,
+  row: TReadDashboard | null,
   { authentication, requestId, instance }: TV3ChartOperationContext
 ): Promise<Response | TDashboardsAccessContext> => {
   if (!row) return problemForbidden(requestId, undefined, instance);
-  return requireDashboardsAccess(authentication, row.workspaceId, "read", requestId, instance, {
-    allowDashboardViewer: true,
-  });
+  return withCachedDashboardDecision(
+    { dashboard: row, principal: getV3RateLimitPrincipal(authentication), decision: "dashboard" },
+    () =>
+      requireDashboardsAccess(authentication, row.workspaceId, "read", requestId, instance, {
+        allowDashboardViewer: true,
+      })
+  );
 };
 
 /**
  * Read access to a Feedback Dataset a dashboard's chart reads, as a dashboard-bound read: `read`, or
  * `feedbackDirectoryAssignment.dashboard_read` for a caller `authorizeDashboardRead` admitted as the
- * workspace's Dashboard viewer; `null` when allowed.
+ * workspace's Dashboard viewer; `null` when allowed. Reused like the dashboard's own decision.
  */
-export const refuseUnlessDashboardDatasetReadable = (
+export const refuseUnlessDashboardDatasetReadable = async (
   access: TDashboardsAccessContext,
   datasetId: string,
+  dashboard: TReadDashboard,
   { authentication, requestId, instance }: TV3ChartOperationContext
-): Promise<Response | null> =>
-  refuseUnlessFeedbackDatasetAccess(authentication, access, datasetId, "read", requestId, instance, {
-    allowDashboardViewer: true,
-  });
+): Promise<Response | null> => {
+  const decided = await withCachedDashboardDecision(
+    {
+      dashboard,
+      principal: getV3RateLimitPrincipal(authentication),
+      decision: `dataset:${datasetId}:${access.asDashboardViewer ? "viewer" : "member"}`,
+    },
+    async () =>
+      (await refuseUnlessFeedbackDatasetAccess(
+        authentication,
+        access,
+        datasetId,
+        "read",
+        requestId,
+        instance,
+        { allowDashboardViewer: true }
+      )) ?? { allowed: true as const }
+  );
+  return decided instanceof Response ? decided : null;
+};
 
 /** A chart that is not a widget on the dashboard: the same 404 whether it exists elsewhere or not at all. */
 const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartOperationContext): Response =>
@@ -108,7 +135,12 @@ export async function getV3DashboardChartData({
     const chart = row?.widgets[0]?.chart;
     if (!chart) return chartNotOnDashboard(chartId, context);
 
-    const refused = await refuseUnlessDashboardDatasetReadable(access, chart.feedbackDirectoryId, context);
+    const refused = await refuseUnlessDashboardDatasetReadable(
+      access,
+      chart.feedbackDirectoryId,
+      row,
+      context
+    );
     if (refused) return refused;
 
     const actor = getV3AuthorizationActor(context.authentication);

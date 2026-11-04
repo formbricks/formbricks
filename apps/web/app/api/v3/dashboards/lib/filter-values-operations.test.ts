@@ -9,6 +9,7 @@ import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-cli
 import { MAX_DASHBOARD_FILTER_PICKS_CHARS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
+import { getEmbeddedKeysForQuery } from "@/modules/ee/analysis/lib/dataset-embedded-keys";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
 import { MAX_FILTER_VALUE_QUERIES, listV3DashboardFilterValues } from "./filter-values-operations";
 import { ZV3DashboardFilterValuesQuery } from "./schemas";
@@ -44,6 +45,9 @@ vi.mock("@/modules/ee/analysis/api/lib/cube-client", async (importOriginal) => (
   executeTenantScopedQuery: vi.fn(),
 }));
 vi.mock("@/modules/ee/analysis/dashboards/lib/dataset-fields", () => ({ getDatasetFieldMatcher: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dataset-embedded-keys", () => ({
+  getEmbeddedKeysForQuery: vi.fn(async () => ["Plan"]),
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })) },
 }));
@@ -342,5 +346,23 @@ describe("what a list costs", () => {
     expect((await list(SOURCE_FILTER.id)).status).toBe(200);
     expect(executeTenantScopedQuery).toHaveBeenCalledTimes(8);
     expect(most).toBe(5);
+  });
+});
+
+describe("the embedded keys of a list's Cube tokens", () => {
+  test("are resolved once per dataset for the whole list, and passed to every query", async () => {
+    const topN = (n: number) =>
+      chartOf(n, { measures: [COUNT], dimensions: ["FeedbackRecords.metadataCountry"], limit: 5 });
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([chartOf(1, { measures: [COUNT] }), topN(2), topN(3), topN(4)]) as never
+    );
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(200);
+
+    expect(executeTenantScopedQuery).toHaveBeenCalledTimes(4);
+    expect(getEmbeddedKeysForQuery).toHaveBeenCalledTimes(1);
+    for (const [call] of vi.mocked(executeTenantScopedQuery).mock.calls) {
+      expect(call.embeddedKeys).toEqual(["Plan"]);
+    }
   });
 });

@@ -16,6 +16,17 @@ import { getDashboardChartsRow } from "./service";
  */
 
 vi.mock("server-only", () => ({}));
+vi.mock("node:crypto", async (importOriginal) => await importOriginal());
+const { cacheStore } = vi.hoisted(() => ({ cacheStore: new Map<string, unknown>() }));
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    get: vi.fn(async (key: string) => ({ ok: true, data: cacheStore.get(key) ?? null })),
+    set: vi.fn(async (key: string, value: unknown) => {
+      cacheStore.set(key, value);
+      return { ok: true };
+    }),
+  },
+}));
 vi.mock("./service", () => ({ getDashboardChartsRow: vi.fn() }));
 vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   requireDashboardsAccess: vi.fn(),
@@ -57,6 +68,7 @@ const read = (params: Record<string, string | string[]>) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  cacheStore.clear();
   vi.mocked(getDashboardChartsRow).mockResolvedValue({
     id: "cldb000000000000000000001",
     workspaceId: "clws000000000000000000001",
@@ -104,5 +116,24 @@ describe("getV3DashboardChartData picks", () => {
     expect(response.status).toBe(422);
     expect(JSON.stringify(await response.json())).toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
     expect(runV3ChartQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe("the read decision", () => {
+  test("a second widget of the same dashboard version asks neither the workspace nor the dataset again", async () => {
+    expect((await read({})).status).toBe(200);
+    expect((await read({})).status).toBe(200);
+
+    expect(requireDashboardsAccess).toHaveBeenCalledTimes(1);
+    expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledTimes(1);
+    expect(runV3ChartQuery).toHaveBeenCalledTimes(2);
+  });
+
+  test("a refusal is asked again on the next read", async () => {
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(new Response(null, { status: 403 }));
+
+    expect((await read({})).status).toBe(403);
+    expect((await read({})).status).toBe(403);
+    expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledTimes(2);
   });
 });
