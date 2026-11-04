@@ -230,6 +230,7 @@ const walkElement = (element: TSurveyElement, collect: SurveyTextCollector) => {
       CONTACT_INFO_SUB_FIELDS.forEach((subField) => collect.subField(subField, element[subField]));
       break;
     case TSurveyElementTypeEnum.FileUpload:
+    case TSurveyElementTypeEnum.Signature:
     case TSurveyElementTypeEnum.Cal:
       break;
   }

@@ -522,7 +522,7 @@ const planOpenText = (element: TElementOf<"openText">, env: TQuestionEnv): TQues
   return planText(env);
 };
 
-/** Address, contact info, file upload, date, consent, calendar: the Standard export's cell. */
+/** Address, contact info, file upload, signature, date, consent, calendar: the Standard export's cell. */
 const planText = (env: TQuestionEnv): TQuestionPlan => ({
   columns: [env.baseColumn(env.code, "text")],
   fill: textFiller,

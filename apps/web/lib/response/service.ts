@@ -22,9 +22,10 @@ import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import {
   collectResponseFileUrls,
-  getSurveyFileUploadElementIds,
+  getSurveyUploadElementIds,
   resolveStorageUrlsInObject,
 } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
@@ -647,6 +648,17 @@ export const updateResponse = async (
       select: responseSelection,
     });
 
+    // After the write, on the same client: in the callers' transaction a failed update queues nothing,
+    // and a failed queueing rolls the update back, as for a delete. `currentResponse` is the row this
+    // update read, so a signature it replaces is compared against what was really stored.
+    if (responseInput.data) {
+      await enqueueReplacedSignatureFileCleanup(
+        prismaClient,
+        { surveyId: currentResponse.surveyId, previousData: currentResponse.data, nextData: data },
+        { bestEffort: !tx }
+      );
+    }
+
     const response: TResponse = {
       ...responsePrisma,
       contact: getResponseContact(responsePrisma),
@@ -671,7 +683,7 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey), survey.id);
+  const fileUrls = collectResponseFileUrls(response.data, getSurveyUploadElementIds(survey), survey.id);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };

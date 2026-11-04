@@ -64,6 +64,7 @@ export type TSurveyImportDraftElement = TDraftElementBase &
       }
     | { type: "date"; format: TSurveyDateElement["format"] }
     | { type: "fileUpload"; allowMultipleFiles: false }
+    | { type: "signature"; allowTypedSignature: true }
     | ({ type: "contactInfo" } & Record<TSurveyImportContactField, TDraftToggleInput>)
     | { type: "consent"; label: TSurveyImportLocaleText }
     | { type: "cta"; buttonExternal: false }

@@ -21,6 +21,7 @@ export const TYPE_MAPPING = {
   [TSurveyElementTypeEnum.Rating]: ["number"],
   [TSurveyElementTypeEnum.PictureSelection]: ["url"],
   [TSurveyElementTypeEnum.FileUpload]: ["url"],
+  [TSurveyElementTypeEnum.Signature]: ["url"],
   [TSurveyElementTypeEnum.Date]: ["date"],
   [TSurveyElementTypeEnum.Address]: ["rich_text"],
   [TSurveyElementTypeEnum.Matrix]: ["rich_text"],

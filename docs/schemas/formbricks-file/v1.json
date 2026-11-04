@@ -1507,6 +1507,58 @@
             "scale",
             "range"
           ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/__schema34"
+            },
+            "type": {
+              "type": "string",
+              "const": "signature"
+            },
+            "headline": {
+              "$ref": "#/$defs/__schema18"
+            },
+            "subheader": {
+              "$ref": "#/$defs/__schema36"
+            },
+            "imageUrl": {
+              "$ref": "#/$defs/__schema37"
+            },
+            "imageAltText": {
+              "$ref": "#/$defs/__schema38"
+            },
+            "videoUrl": {
+              "$ref": "#/$defs/__schema39"
+            },
+            "required": {
+              "$ref": "#/$defs/__schema40"
+            },
+            "scale": {
+              "$ref": "#/$defs/__schema41"
+            },
+            "range": {
+              "$ref": "#/$defs/__schema42"
+            },
+            "isDraft": {
+              "$ref": "#/$defs/__schema43"
+            },
+            "code": {
+              "$ref": "#/$defs/__schema44"
+            },
+            "allowTypedSignature": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "type",
+            "headline",
+            "required"
+          ]
         }
       ]
     },

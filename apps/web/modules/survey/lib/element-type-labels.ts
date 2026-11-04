@@ -42,5 +42,7 @@ export const getElementTypeLabel = (type: TSurveyElementTypeEnum, t: TFunction):
       return t("templates.address");
     case TSurveyElementTypeEnum.ContactInfo:
       return t("templates.contact_info");
+    case TSurveyElementTypeEnum.Signature:
+      return t("templates.signature");
   }
 };

@@ -11,7 +11,7 @@ import { ExportModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surve
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { MAX_ATTACHMENT_FILES } from "@/modules/storage/attachment-export/constants";
 import { useCreateAttachmentExport } from "@/modules/storage/attachment-export/hooks/use-create-attachment-export";
-import { getSurveyFileUploadConfigs } from "@/modules/storage/survey-file-upload-elements";
+import { getSurveyUploadElementConfigs } from "@/modules/storage/survey-upload-elements";
 import { Button } from "@/modules/ui/components/button";
 
 /**
@@ -37,7 +37,7 @@ export const ResponseDownloadMenu = ({
   // The attachment items only make sense when the survey actually collects files. Hidden rather than
   // disabled: a survey with no file-upload element has nothing to explain.
   const hasFileUploadElements = useMemo(
-    () => getSurveyFileUploadConfigs({ blocks: survey.blocks, questions: survey.questions }).length > 0,
+    () => getSurveyUploadElementConfigs({ blocks: survey.blocks, questions: survey.questions }).length > 0,
     [survey.blocks, survey.questions]
   );
 

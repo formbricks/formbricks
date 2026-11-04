@@ -18,6 +18,7 @@ import {
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 
 export const getResponse = reactCache(async (responseId: string) => {
   try {
@@ -273,6 +274,16 @@ export const updateResponse = async (
       return err(linkScopeError);
     }
 
+    // `data` replaces the stored data here, so the image of a signature this write drops or swaps is read
+    // off the row as it was just before. Skipped when the write carries no data.
+    const previous =
+      responseInput.data === undefined
+        ? null
+        : await prismaClient.response.findUnique({
+            where: { id: responseId },
+            select: { surveyId: true, data: true },
+          });
+
     const updatedResponse = await prismaClient.response.update({
       where: {
         id: responseId,
@@ -280,6 +291,15 @@ export const updateResponse = async (
       // Canonicalize the language on write (ENG-1067) — see normalizeResponseLanguage.
       data: { ...responseInput, language: normalizeResponseLanguage(responseInput.language) },
     });
+
+    if (previous) {
+      // After the write, on the same client: in the transaction a failed update queues nothing.
+      await enqueueReplacedSignatureFileCleanup(
+        prismaClient,
+        { surveyId: previous.surveyId, previousData: previous.data, nextData: updatedResponse.data },
+        { bestEffort: !tx }
+      );
+    }
 
     return ok(updatedResponse);
   } catch (error) {

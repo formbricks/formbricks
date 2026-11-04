@@ -32,6 +32,7 @@ export const QSF_PLAN_ELEMENT_TYPES = [
   "ranking",
   "date",
   "fileUpload",
+  "signature",
   "contactInfo",
   "consent",
   "cta",

@@ -2,12 +2,27 @@ import { TFunction } from "i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import {
   TSurveyElement,
+  TSurveyElementTypeEnum,
   TSurveyMatrixElement,
   TSurveyMultipleChoiceElement,
 } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
 import { isLabelValidForAllLanguages } from "@/lib/i18n/utils";
+
+// Answers recall cannot print into text: files and signatures are URLs, the rest are not text answers.
+const RECALL_EXCLUDED_ELEMENT_TYPES = new Set<TSurveyElementTypeEnum>([
+  TSurveyElementTypeEnum.FileUpload,
+  TSurveyElementTypeEnum.Signature,
+  TSurveyElementTypeEnum.CTA,
+  TSurveyElementTypeEnum.Consent,
+  TSurveyElementTypeEnum.PictureSelection,
+  TSurveyElementTypeEnum.Cal,
+  TSurveyElementTypeEnum.Matrix,
+]);
+
+export const isRecallExcludedElementType = (element: Pick<TSurveyElement, "type">): boolean =>
+  RECALL_EXCLUDED_ELEMENT_TYPES.has(element.type);
 
 // Function to get index for choice /rowLabel /columnLabel
 export const getIndex = (id: string, isChoice: boolean) => {

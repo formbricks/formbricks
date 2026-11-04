@@ -102,5 +102,18 @@
     "value_must_equal": "Värdet måste vara {value}",
     "value_must_not_contain": "Värdet får inte innehålla {value}",
     "value_must_not_equal": "Värdet får inte vara {value}"
+  },
+  "signature": {
+    "clear": "Rensa",
+    "draw": "Rita",
+    "method": "Signaturmetod",
+    "not_signed": "Inte signerat",
+    "pad_label": "Signaturruta. Rita din signatur med fingret, en penna eller en mus.",
+    "pad_label_with_type": "Signaturruta. Rita din signatur med fingret, en penna eller en mus, eller byt till Skriv för att ange ditt namn med tangentbordet.",
+    "saved": "Din signatur är sparad. Rensa den för att signera igen.",
+    "sign_here": "Signera här",
+    "signed": "Signerat",
+    "type": "Skriv",
+    "type_your_name": "Skriv ditt namn"
   }
 }
