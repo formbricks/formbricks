@@ -237,7 +237,8 @@ describe("option lists by element type (one table for every reader)", () => {
 
   test("getOptionList reads a list only where the type has it", () => {
     const choices = [{ id: "a" }];
-    expect(getOptionList({ type: "ranking", choices }, "choices")).toBe(choices);
+    const ranking: { type: string } = { type: "ranking", choices } as { type: string };
+    expect(getOptionList(ranking, "choices")).toBe(choices);
     // A stray key on a type without that list is not an option list.
     expect(getOptionList({ type: "openText", choices } as { type: string }, "choices")).toEqual([]);
     expect(getOptionList({ type: "matrix", choices } as { type: string }, "choices")).toEqual([]);
