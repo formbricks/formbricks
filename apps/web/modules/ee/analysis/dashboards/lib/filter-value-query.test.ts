@@ -635,3 +635,56 @@ describe("charts bounded by their own groups: top-N and HAVING (S6)", () => {
     ).toEqual([]);
   });
 });
+
+describe("answer rules in the merged value queries", () => {
+  const ANSWER = "FeedbackRecords.answer";
+  const answerRules = (question: string, count: number): TCubeFilter[] =>
+    Array.from({ length: count }, (_, index) => ({
+      member: ANSWER,
+      operator: "equals",
+      values: [`${question}:opt_${index}`],
+    }));
+  const countAnswers = (filters: unknown): number =>
+    JSON.stringify(filters).split(`"member":"${ANSWER}"`).length - 1;
+  const input = (charts: TFilterValueChart[]) => ({
+    filter: ACCOUNT_FILTER,
+    filters: FILTERS,
+    charts,
+    picks: {},
+    dateFilter: null,
+    clock: CLOCK,
+    datasetHasField: everyField,
+  });
+
+  test("no query carries more than MAX_ANSWER_RULES: charts are split across queries instead", () => {
+    const charts = [
+      chart("ds_a", answerRules("q1", 2)),
+      chart("ds_a", answerRules("q2", 2)),
+      chart("ds_a", answerRules("q3", 2)),
+    ];
+
+    const queries = buildFilterValueQueries(input(charts));
+
+    expect(queries.length).toBe(2);
+    for (const { query } of queries) expect(countAnswers(query.filters)).toBeLessThanOrEqual(5);
+    expect(queries.reduce((sum, { query }) => sum + countAnswers(query.filters), 0)).toBe(6);
+  });
+
+  test("a chart over the cap on its own is left out: it cannot run, so it shows no value", () => {
+    const queries = buildFilterValueQueries(
+      input([chart("ds_a", answerRules("q1", 6)), chart("ds_a", [{ member: PRODUCT, operator: "set" }])])
+    );
+
+    expect(queries.length).toBe(1);
+    expect(countAnswers(queries[0].query.filters)).toBe(0);
+  });
+
+  test("charts within the cap together stay one query", () => {
+    const queries = buildFilterValueQueries(
+      input([chart("ds_a", answerRules("q1", 2)), chart("ds_a", answerRules("q2", 3))])
+    );
+
+    expect(queries.length).toBe(1);
+    expect(countAnswers(queries[0].query.filters)).toBe(5);
+  });
+});

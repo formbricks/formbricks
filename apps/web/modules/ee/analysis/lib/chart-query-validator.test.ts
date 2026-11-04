@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { MAX_ANSWER_RULES } from "./answer-filter";
 import {
   MAX_FIELDS,
   MAX_FILTER_CONDITIONS,
@@ -493,13 +494,15 @@ describe("validateChartQuery: a dataset's embedded data and answer filters (ENG-
     expect(validateChartQuery(query, { dataset })).toEqual({ ok: true, query });
   });
 
-  test("checks only an answer rule's shape when the dataset's questions are not loaded", () => {
+  test("refuses an answer rule when the dataset's questions are not loaded, never checking its shape alone", () => {
     const query = { measures: [COUNT], filters: [condition(ANSWER, "notEquals", ["q_unknown:x"])] };
 
-    expect(validateChartQuery(query).ok).toBe(true);
-    expect(
-      issuesFor({ measures: [COUNT], filters: [condition(ANSWER, "equals", ["no-colon"])] }, {})
-    ).toEqual([expect.objectContaining({ name: "query.filters[0].values" })]);
+    expect(issuesFor(query, {})).toEqual([
+      expect.objectContaining({ name: "query.filters[0].values", code: "invalid_reference" }),
+    ]);
+    expect(issuesFor(query, { dataset: { embeddedFields: [] } })).toEqual([
+      expect.objectContaining({ name: "query.filters[0].values", code: "invalid_reference" }),
+    ]);
   });
 
   test.each([
@@ -535,16 +538,44 @@ describe("validateChartQuery: a dataset's embedded data and answer filters (ENG-
     ]);
   });
 
-  test(`holds answer rules to the ${MAX_FILTER_CONDITIONS}-condition budget`, () => {
+  test(`holds a query to ${MAX_ANSWER_RULES} answer rules, nested ones included, naming the limit`, () => {
     const rules = (count: number) =>
       Array.from({ length: count }, () => condition(ANSWER, "equals", ["q_delivery:opt_late"]));
 
+    expect(MAX_ANSWER_RULES).toBe(5);
     expect(
-      validateChartQuery({ measures: [COUNT], filters: rules(MAX_FILTER_CONDITIONS) }, { dataset }).ok
+      validateChartQuery({ measures: [COUNT], filters: [{ or: rules(MAX_ANSWER_RULES) }] }, { dataset }).ok
+    ).toBe(true);
+    expect(
+      issuesFor({ measures: [COUNT], filters: [...rules(1), { and: rules(MAX_ANSWER_RULES) }] }, { dataset })
+    ).toEqual([
+      expect.objectContaining({
+        name: "query.filters",
+        code: "limit_exceeded",
+        reason: expect.stringContaining("MAX_ANSWER_RULES"),
+      }),
+    ]);
+  });
+
+  test(`answer rules count toward the ${MAX_FILTER_CONDITIONS}-condition budget too`, () => {
+    const others = (count: number) =>
+      Array.from({ length: count }, () => condition(SOURCE, "equals", ["web"]));
+    const answers = Array.from({ length: MAX_ANSWER_RULES }, () =>
+      condition(ANSWER, "equals", ["q_delivery:opt_late"])
+    );
+
+    expect(
+      validateChartQuery(
+        { measures: [COUNT], filters: [...answers, ...others(MAX_FILTER_CONDITIONS - MAX_ANSWER_RULES)] },
+        { dataset }
+      ).ok
     ).toBe(true);
     expect(
       validateChartQuery(
-        { measures: [COUNT], filters: [{ and: rules(MAX_FILTER_CONDITIONS + 1) }] },
+        {
+          measures: [COUNT],
+          filters: [{ and: [...answers, ...others(MAX_FILTER_CONDITIONS - MAX_ANSWER_RULES + 1)] }],
+        },
         { dataset }
       ).ok
     ).toBe(false);

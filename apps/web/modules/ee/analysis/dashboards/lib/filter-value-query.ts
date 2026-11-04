@@ -1,4 +1,5 @@
 import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/analysis";
+import { MAX_ANSWER_RULES, countAnswerRules } from "@/modules/ee/analysis/lib/answer-filter";
 import { getChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
   COLLECTED_AT_DIMENSION,
@@ -48,6 +49,30 @@ export const chartRuleSet = (query: TChartQuery, clock: TDateClock): TCubeFilter
       : [toDateRangeRule(timeDimension.dimension, timeDimension.dateRange, clock)]
   ),
 ];
+
+/**
+ * The rule sets cut into runs whose answer rules fit one query (`MAX_ANSWER_RULES`), in order: each run is
+ * one value query, so an OR of several charts' answer rules never exceeds what one query may hold. A rule
+ * set over the cap on its own is left out — its chart is refused when it runs, so it shows no value.
+ */
+const chunkByAnswerRules = (ruleSets: readonly TCubeFilter[][]): TCubeFilter[][][] => {
+  const chunks: TCubeFilter[][][] = [];
+  let current: TCubeFilter[][] = [];
+  let answers = 0;
+  for (const rules of ruleSets) {
+    const count = countAnswerRules(rules);
+    if (count > MAX_ANSWER_RULES) continue;
+    if (current.length > 0 && answers + count > MAX_ANSWER_RULES) {
+      chunks.push(current);
+      current = [];
+      answers = 0;
+    }
+    current.push(rules);
+    answers += count;
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+};
 
 /** One rule standing for a branch: its rule, or the AND of its rules. */
 const asOneRule = (rules: TCubeFilter[]): TCubeFilter => (rules.length === 1 ? rules[0] : { and: rules });
@@ -125,18 +150,14 @@ export const buildFilterValueQueries = ({
       branches.set(JSON.stringify(rules), rules);
     }
 
-    const ruleSets = [...branches.values()];
+    const ruleSets = [...branches.values()].filter((rules) => countAnswerRules(rules) <= MAX_ANSWER_RULES);
     if (ruleSets.length === 0) return [];
     // A chart without saved rules lets every record through, so the OR of all branches is no narrowing.
     if (ruleSets.some((rules) => rules.length === 0)) return [toQuery(datasetId, [], otherPicks.rules)];
 
-    return [
-      toQuery(
-        datasetId,
-        ruleSets.length === 1 ? ruleSets[0] : [{ or: ruleSets.map(asOneRule) }],
-        otherPicks.rules
-      ),
-    ];
+    return chunkByAnswerRules(ruleSets).map((chunk) =>
+      toQuery(datasetId, chunk.length === 1 ? chunk[0] : [{ or: chunk.map(asOneRule) }], otherPicks.rules)
+    );
   });
 };
 
@@ -182,6 +203,8 @@ export const buildBoundedChartQueries = ({
   const dashboardDate = dashboardDateRules(dateFilter, clock);
   return charts.flatMap((chart) => {
     if (!isGroupBoundedChart(chart.query)) return [];
+    // A chart over the answer-rule cap is refused when it runs, so it shows no value.
+    if (countAnswerRules(chart.query.filters) > MAX_ANSWER_RULES) return [];
     const hasField = (field: string) => datasetHasField(chart.datasetId, field);
     if (!hasField(filter.field)) return [];
     const otherPicks = resolvePicksForDataset(filters, picks, hasField, { except: filter.id });

@@ -7,6 +7,7 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import {
   ANSWER_MEMBER,
+  MAX_ANSWER_RULES,
   type TAnswerQuestion,
   type TAnswerRuleProblem,
   checkAnswerRule,
@@ -463,7 +464,7 @@ const checkTimeDimension = (
   return field ? timeDimension : undefined;
 };
 
-type TFilterBudget = { conditions: number };
+type TFilterBudget = { conditions: number; answerRules: number };
 
 const ANSWER_RULE_REASONS: Readonly<Record<TAnswerRuleProblem, string>> = {
   malformed_value: "Each answer value is '<questionId>:<valueKey>'.",
@@ -472,6 +473,8 @@ const ANSWER_RULE_REASONS: Readonly<Record<TAnswerRuleProblem, string>> = {
   operator_not_allowed:
     "This question's answers can only be matched with equals: a multi-select has no 'does not contain'.",
   value_not_allowed: "Not a value this question's answers can hold (a number).",
+  questions_unavailable:
+    "This dataset's questions could not be read, so an answer filter cannot be checked. Try again shortly.",
 };
 
 const checkCondition = (
@@ -504,7 +507,12 @@ const checkCondition = (
   const values = checkConditionValues(entry.values, operator, `${path}.values`, issues);
   if (!values || !field) return undefined;
   if (field.name === ANSWER_MEMBER) {
-    const problem = checkAnswerRule(operator, values, issues.answerQuestions);
+    budget.answerRules += 1;
+    // Without the dataset's questions a rule is refused, not checked for its shape alone: an unknown
+    // question id would reach Cube, which would reject the whole query with a 502.
+    const problem =
+      checkAnswerRule(operator, values, issues.answerQuestions) ??
+      (issues.answerQuestions ? null : "questions_unavailable");
     if (problem) {
       issues.add(`${path}.values`, ANSWER_RULE_REASONS[problem], "invalid_reference");
       return undefined;
@@ -605,11 +613,18 @@ const checkFilters = (value: unknown, path: string, issues: IssueCollector): TCu
     return undefined;
   }
 
-  const budget: TFilterBudget = { conditions: 0 };
+  const budget: TFilterBudget = { conditions: 0, answerRules: 0 };
   const filters = value.map((entry, index) => checkFilter(entry, `${path}[${index}]`, 1, budget, issues));
 
   if (budget.conditions > MAX_FILTER_CONDITIONS) {
     issues.add(path, `At most ${MAX_FILTER_CONDITIONS} filter conditions are allowed in all.`);
+  }
+  if (budget.answerRules > MAX_ANSWER_RULES) {
+    issues.add(
+      path,
+      `At most ${MAX_ANSWER_RULES} answer filters are allowed in one query (MAX_ANSWER_RULES), nested ones included.`,
+      "limit_exceeded"
+    );
   }
   return filters.filter((filter): filter is TCubeFilter => filter !== undefined);
 };

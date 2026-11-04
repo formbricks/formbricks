@@ -10,8 +10,12 @@ import type { TCubeFilter } from "@formbricks/types/analysis";
 
 export const ANSWER_MEMBER = "FeedbackRecords.answer";
 
-/** Rules one query may hold: one per `AnswerFilterN` alias the Cube model joins. */
-export const MAX_ANSWER_RULES = 25;
+/**
+ * Answer rules one query may hold. Each rule is one more join on the submission, and every join widens
+ * the plan Postgres has to search, so the app holds a query to a handful; the Cube model's
+ * `AnswerFilterN` aliases (more of them) are only a backstop for a query that skipped this check.
+ */
+export const MAX_ANSWER_RULES = 5;
 
 /**
  * How a question stores its answer, which decides the column a rule tests:
@@ -60,12 +64,14 @@ export type TAnswerRuleProblem =
   | "several_questions"
   | "unknown_question"
   | "operator_not_allowed"
-  | "value_not_allowed";
+  | "value_not_allowed"
+  | "questions_unavailable";
 
 /**
- * What is wrong with one answer rule, or `null`. Without `questions` only the shape is checked; with
- * them the question must be one of the dataset's, the operator one its kind offers, and each value of
- * the kind's type.
+ * What is wrong with one answer rule, or `null`. The shape is checked first; then, with `questions`, the
+ * question must be one of the dataset's, the operator one its kind offers, and each value of the kind's
+ * type. A caller that holds no `questions` gets only the shape checked — the validator never accepts a
+ * rule on that alone (`questions_unavailable`).
  */
 export const checkAnswerRule = (
   operator: string,
@@ -111,6 +117,21 @@ export const collectAnswerQuestionIds = (filters: readonly TCubeFilter[] | undef
   };
   if (Array.isArray(filters)) filters.forEach(visit);
   return [...ids];
+};
+
+/** How many answer rules `filters` hold, nested groups included. */
+export const countAnswerRules = (filters: readonly TCubeFilter[] | undefined): number => {
+  let count = 0;
+  const visit = (filter: unknown): void => {
+    if (typeof filter !== "object" || filter === null) return;
+    const node = filter as Record<string, unknown>;
+    for (const group of [node.and, node.or]) {
+      if (Array.isArray(group)) group.forEach(visit);
+    }
+    if (node.member === ANSWER_MEMBER) count += 1;
+  };
+  if (Array.isArray(filters)) filters.forEach(visit);
+  return count;
 };
 
 /**
