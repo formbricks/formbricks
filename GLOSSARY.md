@@ -113,7 +113,7 @@ that is not listed here.
 
 **Update** — Importing a matched Formbricks file over that survey's content. The survey keeps its ID, status, responses, settings and styling. An active survey is never updated. _Avoid_: re-import (which also covers creating a new survey), overwrite, import into existing.
 
-**Reference** — Something a survey points at that lives outside it in its workspace: an action class a trigger uses, a contact attribute key in targeting, a shared hidden field or variable, a media file. A Formbricks file carries enough of each to find or recreate it in another workspace.
+**Reference** — Something a survey points at that lives outside it in its workspace: an action class a trigger uses, a contact attribute key in targeting, a shared hidden field or variable. A Formbricks file carries enough of each to find or recreate it in another workspace. Media is not a reference: the file keeps only a link to each image or video on the source instance (ENG-3401).
 
 **Document import** — Importing a Word, Excel or CSV questionnaire, read with AI. Texts come across word for word; the AI decides structure, types and logic only. _Avoid_: AI import (Qualtrics import also uses AI).
 
