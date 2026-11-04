@@ -12,8 +12,10 @@ import type {
 
 /**
  * `providerOptions` with strict JSON-schema decoding turned off, under every key a strict-decoding
- * adapter reads its options from: `openai` and `azure` (the Azure adapter reads either), and the
- * OpenAI-compatible adapter's own name. A key no configured adapter reads is ignored.
+ * adapter reads its options from: `openai` and `azure` (the Azure adapter reads `azure`, else
+ * `openai`), and the OpenAI-compatible adapter's own name. A key no configured adapter reads is ignored.
+ * The `azure` entry starts from the caller's `openai` options when it has none of its own, so adding it
+ * does not hide them from the Azure adapter.
  */
 const withoutStrictSchema = (
   providerOptions: TGenerateObjectOptions["providerOptions"],
@@ -27,7 +29,9 @@ const withoutStrictSchema = (
   ]);
   const options = { ...providerOptions };
   for (const key of keys) {
-    options[key] = { ...options[key], strictJsonSchema: false };
+    const own =
+      key === "azure" ? (providerOptions?.azure ?? providerOptions?.openai) : providerOptions?.[key];
+    options[key] = { ...own, strictJsonSchema: false };
   }
   return options;
 };

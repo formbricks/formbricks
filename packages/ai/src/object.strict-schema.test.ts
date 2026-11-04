@@ -83,6 +83,22 @@ describe("generateObject: strictSchema", () => {
     expect(responses ?? strictOf()).toBe(false);
   });
 
+  test("keeps the caller's OpenAI options for Azure, which reads them when it has none of its own", async () => {
+    stubModel('{"title":"Survey"}');
+
+    await generateObject(
+      { schema, prompt: "Plan", strictSchema: false, providerOptions: { openai: { store: false } } },
+      {
+        AI_PROVIDER: "azure",
+        AI_MODEL: "gpt-x",
+        AI_AZURE_API_KEY: "test-key",
+        AI_AZURE_BASE_URL: "https://example.openai.azure.com/openai",
+      }
+    ).catch(() => undefined);
+
+    expect(requests[0]?.store).toBe(false);
+  });
+
   test("leaves a provider's own strict decoding alone by default", async () => {
     stubModel('{"title":"Survey","tags":[]}');
 
