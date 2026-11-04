@@ -235,6 +235,16 @@ const validateAction = (
         path: [...path, "value"],
       };
     }
+    if (
+      action.value.type === "hiddenField" &&
+      getFieldType(survey, action.value.value, "ingested") === undefined
+    ) {
+      return {
+        code: "custom",
+        message: `Conditional Logic: Hidden field ID ${action.value.value} does not exist in ${ruleLabel(ruleIdx)}`,
+        path: [...path, "value"],
+      };
+    }
     if (action.value.type === "variable") {
       const source = survey.variables.find((item) => item.id === action.value.value);
       if (source?.type !== variable.type) {

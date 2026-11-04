@@ -186,6 +186,21 @@ describe("rules before the first question", () => {
     ]);
   });
 
+  test("a Set value from a hidden field must name one the survey declares", () => {
+    const setSegmentFrom = (fieldId: string): TSurveyBlockLogicAction => ({
+      id: "startaction0000000000001",
+      objective: "calculate",
+      variableId: ids.variables.segment,
+      operator: "assign",
+      value: { type: "hiddenField", value: fieldId },
+    });
+
+    expectIssues(issuesOf(withStartLogic([rule([setSegmentFrom("nope")])])), [
+      [["startLogic", 0, "actions", 0, "value"], "Hidden field ID nope does not exist"],
+    ]);
+    expect(issuesOf(withStartLogic([rule([setSegmentFrom(ids.hiddenFields.seg)])]))).toEqual([]);
+  });
+
   test("holds at most MAX_START_LOGIC_RULES rules, on every write path (the shared schema)", () => {
     const rules = (count: number) =>
       Array.from({ length: count }, (_unused, idx) => ({
