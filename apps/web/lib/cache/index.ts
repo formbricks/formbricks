@@ -1,6 +1,6 @@
 import "server-only";
 import type { RedisClientType } from "redis";
-import { getCacheService } from "@formbricks/cache";
+import { ErrorCode, getCacheService } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 
 type CacheResult<T, E = { code: string }> = { ok: true; data: T } | { ok: false; error: E };
@@ -18,6 +18,7 @@ type CacheService = {
     ttlMs: number
   ): Promise<T | null>;
   getRedisClient(): RedisClientType | null;
+  runRedisOperation<T>(operation: (redis: RedisClientType) => Promise<T>): Promise<T>;
 };
 
 // Expose an async-leaning service to reflect lazy init for sync members like getRedisClient
@@ -82,6 +83,16 @@ export const cache = new Proxy({} as AsyncCacheService, {
         }
         const cacheService = cacheServiceResult.data as CacheService;
         return cacheService.getRedisClient();
+      };
+    }
+
+    if (prop === "runRedisOperation") {
+      return async <T>(operation: (redis: RedisClientType) => Promise<T>): Promise<T> => {
+        const cacheServiceResult = await getCacheService();
+        if (!cacheServiceResult.ok) {
+          throw new Error(ErrorCode.RedisConnectionError);
+        }
+        return cacheServiceResult.data.runRedisOperation(operation);
       };
     }
 

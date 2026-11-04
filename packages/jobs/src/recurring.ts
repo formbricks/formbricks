@@ -72,6 +72,12 @@ export const defineRecurringJob = ({
 
 /** Every recurring job in the system. Adding one here wires the registry, the producer and the exports. */
 export const recurringJobDescriptors = {
+  // Re-dispatches lost attachment exports, fails stale ones and deletes expired archives (ENG-6862).
+  attachmentExportReconcile: defineRecurringJob({
+    label: "attachment export reconcile",
+    name: JOB_NAMES.attachmentExportReconcile,
+    scheduleId: "attachment-export-reconcile",
+  }),
   emailAuditMaintenance: defineRecurringJob({
     label: "email audit maintenance",
     name: JOB_NAMES.emailAuditMaintenance,

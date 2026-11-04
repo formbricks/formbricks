@@ -16,12 +16,15 @@ const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
   const _mockEval = vi.fn();
   const _mockGet = vi.fn();
   const _mockRedisClient = {
-    eval: _mockEval,
+    evalSha: _mockEval,
     get: _mockGet,
   } as any;
 
   const _mockCache = {
     getRedisClient: vi.fn().mockResolvedValue(_mockRedisClient),
+    runRedisOperation: vi.fn(async (operation: (client: typeof _mockRedisClient) => Promise<unknown>) =>
+      operation(_mockRedisClient)
+    ),
   };
 
   return {
@@ -30,6 +33,11 @@ const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
     mockRedisClient: _mockRedisClient,
     mockCache: _mockCache,
   };
+});
+
+const cacheWithClient = <T>(client: T) => ({
+  getRedisClient: vi.fn().mockResolvedValue(client),
+  runRedisOperation: vi.fn((operation: (redis: T) => Promise<unknown>) => operation(client)),
 });
 
 // Mock all dependencies (will use the hoisted mocks above)
@@ -174,13 +182,10 @@ describe("checkRateLimit", () => {
 
     await checkRateLimit(testConfig, "test-user");
 
-    expect(mockEval).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        keys: [expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/)],
-        arguments: ["5", expect.any(String), "1"],
-      })
-    );
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
+      keys: [expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/)],
+      arguments: ["5", expect.any(String), "1"],
+    });
   });
 
   test("should use provided namespace", async () => {
@@ -194,13 +199,10 @@ describe("checkRateLimit", () => {
 
     await checkRateLimit(configWithCustomNamespace, "test-user");
 
-    expect(mockEval).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        keys: [expect.stringMatching(/^fb:rate_limit:custom:test-user:\d+$/)],
-        arguments: ["5", expect.any(String), "1"],
-      })
-    );
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
+      keys: [expect.stringMatching(/^fb:rate_limit:custom:test-user:\d+$/)],
+      arguments: ["5", expect.any(String), "1"],
+    });
   });
 
   test("should calculate correct TTL for window expiration", async () => {
@@ -220,12 +222,10 @@ describe("checkRateLimit", () => {
     const result = await checkRateLimit(testConfig, "test-user", 5);
 
     expect(result).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
-    expect(mockEval).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        arguments: ["5", expect.any(String), "5"],
-      })
-    );
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
+      keys: [expect.any(String)],
+      arguments: ["5", expect.any(String), "5"],
+    });
   });
 
   test("should return an exact-window receipt for a weighted reservation", async () => {
@@ -260,7 +260,7 @@ describe("checkRateLimit", () => {
 
     await settleRateLimit(reservation, 2);
 
-    expect(mockEval).toHaveBeenCalledWith(expect.any(String), {
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
       keys: [reservation.key],
       arguments: ["3"],
     });
@@ -348,11 +348,7 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          eval: vi.fn().mockResolvedValue([6, 0]),
-        }),
-      },
+      cache: cacheWithClient({ evalSha: vi.fn().mockResolvedValue([6, 0]) }),
     }));
 
     // Dynamic import after mocking
@@ -391,11 +387,7 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          eval: vi.fn().mockResolvedValue([6, 0]),
-        }),
-      },
+      cache: cacheWithClient({ evalSha: vi.fn().mockResolvedValue([6, 0]) }),
     }));
 
     // Dynamic import after mocking
@@ -444,11 +436,7 @@ describe("checkRateLimit", () => {
 
     const redisError = new Error("Redis connection failed");
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          eval: vi.fn().mockRejectedValue(redisError),
-        }),
-      },
+      cache: cacheWithClient({ evalSha: vi.fn().mockRejectedValue(redisError) }),
     }));
 
     // Dynamic import after mocking
@@ -594,11 +582,7 @@ describe("peekRateLimit", () => {
 
     const redisError = new Error("Redis connection failed");
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          get: vi.fn().mockRejectedValue(redisError),
-        }),
-      },
+      cache: cacheWithClient({ get: vi.fn().mockRejectedValue(redisError) }),
     }));
 
     const { peekRateLimit: peekRateLimitMocked } = await import("./rate-limit");

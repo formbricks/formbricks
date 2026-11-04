@@ -120,6 +120,8 @@ export const emailRateLimits: Record<TEmailType, TEmailRateLimit> = {
   sso_recovery_notification: {},
   sso_sign_in_hint: { recipient: { total: limit(3) } },
   data_retention_notice: {},
+  // One per export the user started, and starting one is already rate-limited per user.
+  attachment_export: {},
   // Sent to the organization's own members; bounds one organization's share of the provider quota.
   response_notification: { organization: limit(2000) },
   survey_preview: { actor: limit(10) },
