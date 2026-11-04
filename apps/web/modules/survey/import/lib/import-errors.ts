@@ -139,8 +139,7 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
         return error.code;
       }
       // A file past the JSON budget is too complex; a broken one unreadable. A Qualtrics export past
-      // one of the import's limits names the limit; any other 422 is a file the import cannot read as a
-      // Qualtrics export.
+      // one of the import's limits names the limit, and one the reader does not recognise says so.
       if (hasParam("file_limit_exceeded")) return "file_too_complex";
       if (hasParam("file_unreadable")) return "file_unreadable";
       // A question list past the sheet's limits, or the AI's, names the limit.
@@ -149,7 +148,10 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
       )?.identifier;
       if (documentLimit) return `${SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX}${documentLimit}`;
       const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
-      return limit ? `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}` : "qsf_not_recognized";
+      if (limit) return `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}`;
+      if (hasParam("qsf_not_recognized")) return "qsf_not_recognized";
+      // Any other 422 may come from any lane, so it gets the sentence that fits every file.
+      return "file_unreadable";
     }
     default:
       return error.code ?? "ai_unknown";

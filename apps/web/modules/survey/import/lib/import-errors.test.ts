@@ -63,10 +63,11 @@ describe("getSurveyImportRequestErrorCode", () => {
     ["a missing session", refusal(401, "not_authenticated"), "not_authenticated"],
     ["a body over the route's limit", refusal(413, "payload_too_large"), "file_too_large"],
     ["an archive past a zip limit", fileRefusal(413, "file_limit_exceeded", "zip_entries"), "file_too_large"],
+    ["valid JSON that is not a QSF", fileRefusal(422, "qsf_not_recognized"), "qsf_not_recognized"],
     [
-      "valid JSON that is not a QSF",
+      "a 422 naming no problem it knows, which no lane's wording fits",
       refusal(422, "unprocessable_content", ["file.SurveyEntry"]),
-      "qsf_not_recognized",
+      "file_unreadable",
     ],
     ["the AI gate", refusal(403, "ai_smart_tools_disabled"), "ai_smart_tools_disabled"],
     ["an import already running", refusal(429, "concurrency_limit_reached"), "concurrency_limit_reached"],
