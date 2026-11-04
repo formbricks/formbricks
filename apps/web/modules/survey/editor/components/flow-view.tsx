@@ -538,14 +538,9 @@ export const FlowView = ({
                     {t("workspace.surveys.edit.flow.jump_rule")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    icon={<BinaryIcon className="size-4" />}
-                    onClick={() => addStartRule("calculate")}>
-                    {t("workspace.surveys.edit.flow.calculation")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     icon={<EqualIcon className="size-4" />}
                     onClick={() => addStartRule("setValue")}>
-                    {t("workspace.surveys.edit.flow.set_a_value")}
+                    {t("workspace.surveys.edit.flow.set_value")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -693,14 +688,9 @@ export const FlowView = ({
                             {t("workspace.surveys.edit.flow.jump_rule")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            icon={<BinaryIcon className="size-4" />}
-                            onClick={() => addRule(block, "calculate")}>
-                            {t("workspace.surveys.edit.flow.calculation")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
                             icon={<EqualIcon className="size-4" />}
                             onClick={() => addRule(block, "setValue")}>
-                            {t("workspace.surveys.edit.flow.set_a_value")}
+                            {t("workspace.surveys.edit.flow.set_value")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             icon={<ShieldAlertIcon className="size-4" />}

@@ -10,12 +10,9 @@ You add and edit Set value steps on the [Flow tab](/surveys/general-features/flo
 
 ## Adding a step
 
-Under a block on the Flow tab, open **Add logic**:
+Under a block on the Flow tab, open **Add logic** and choose **Set value**. The new step always runs after the block is submitted, and reads **Always** on the outline.
 
-* **Set a value** adds a step that always runs after the block is submitted. It reads **Always** on the outline.
-* **Calculation** adds a rule with a condition first, so the value is set only when the condition matches.
-
-Choose the calculated field to set, then type the formula. A step that always runs can get a condition later with **Add a condition**, which makes it a calculation.
+Choose the calculated field to set, then type the formula. To set the value only for some respondents, use **Add a condition** on the step: it then runs only when the condition matches. Removing the condition makes it always run again.
 
 A one-step calculation you already have, such as *score + 1*, keeps working exactly as before. To turn it into a formula, choose **Use a formula** in its operator list.
 

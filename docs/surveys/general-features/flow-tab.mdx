@@ -38,8 +38,7 @@ An open rule also lets you:
 To add a rule, use **Add logic** under a block:
 
 * **Jump rule** starts a rule that sends respondents to a later block or an ending.
-* **Calculation** starts a rule that sets a calculated field from a formula when its condition matches.
-* **Set a value** starts a step that always runs and sets a calculated field from a formula. See [Set Value and Formulas](/surveys/general-features/set-value).
+* **Set value** starts a step that sets a calculated field from a formula. It always runs until you give it a condition with **Add a condition**. See [Set Value and Formulas](/surveys/general-features/set-value).
 * **Mark as low quality** starts a rule that marks the response Low quality when it matches. The respondent sees nothing. See [Mark as low quality](/surveys/general-features/conditional-logic#mark-as-low-quality).
 * **Show this block if…** shows the block only to the respondents a condition matches. To show a single question only to some respondents, hover it and choose **Show if…**. See [Show If](/surveys/general-features/show-if).
 
@@ -63,9 +62,9 @@ And they can only:
 
 * **Screen out**: jump to an ending. The respondent sees only that ending, not the welcome card or any question.
 * **Jump to a block**: start the respondent on a later block. With a welcome card, the welcome card still shows first and leads to that block. A jump also takes priority over a start-at link.
-* **Set a value**: change a calculated field. Its value is saved with the response when the respondent submits the first page.
+* **Set value**: change a calculated field. Its value is saved with the response when the respondent submits the first page.
 
-Rules are checked from top to bottom: the first jump that matches wins, and every matching calculation runs. When no rule jumps, the survey starts as it always does. Use **Add logic** under the section to add a **Jump rule** or a **Calculation**.
+Rules are checked from top to bottom: the first jump that matches wins, and every matching Set value step runs. When no rule jumps, the survey starts as it always does. Use **Add logic** under the section to add a **Jump rule** or a **Set value** step.
 
 ### What a screen-out records
 

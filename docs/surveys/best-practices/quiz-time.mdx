@@ -22,13 +22,13 @@ Scroll to the **Embedded Data** card below the question list, choose **Add field
 
 ## 3. Add a point per correct answer
 
-This is the part the old version of this page got wrong, so it is worth being precise: **conditional logic belongs to a block, not to a question.** Open the [Flow tab](/surveys/general-features/flow-tab) next to Questions. Each block has an `Add logic +` button under it; choose **Calculation**.
+This is the part the old version of this page got wrong, so it is worth being precise: **conditional logic belongs to a block, not to a question.** Open the [Flow tab](/surveys/general-features/flow-tab) next to Questions. Each block has an `Add logic +` button under it; choose **Set value**, then **Add a condition**.
 
 Add one rule per question:
 
 ![A rule adding one to the score when the answer is correct](/images/surveys/best-practices/quiz-time/calculate.webp)
 
-Read it as a sentence: **when** the answer equals the correct choice, **then Set value** `score` `Add +` `1`.
+Read it as a sentence: **when** the answer equals the correct choice, **then Set value** `score` to `@score + 1`.
 
 <Note>
   A **Set value** action can add, subtract, multiply, divide or assign. A quiz normally wants **Add +** on a

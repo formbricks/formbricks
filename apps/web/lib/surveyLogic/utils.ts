@@ -221,7 +221,7 @@ export const updateCondition = (
 /**
  * The two empty calculations, side by side so they are chosen on purpose (they deliberately differ):
  *
- * - A **new rule** from the Add logic menu ("Calculation", "Set a value") starts with an empty formula
+ * - A **new rule** from the Add logic menu ("Set value") starts with an empty formula
  *   (ENG-6935, P39), saved only once the formula box holds one.
  * - **Switching an action** of an existing rule to Calculate keeps the one-step editor (`score + 1`),
  *   so one-step calculations can still be written; its operator list offers "Use a formula".
