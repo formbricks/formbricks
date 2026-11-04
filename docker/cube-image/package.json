@@ -15,6 +15,7 @@
     },
     "get-uri": {
       "basic-ftp": "6.2.2"
-    }
+    },
+    "follow-redirects": "1.16.2"
   }
 }
