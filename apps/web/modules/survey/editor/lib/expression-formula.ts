@@ -601,6 +601,25 @@ export const parseFormula = (text: string, references: TFormulaReference[]): TFo
   }
 };
 
+/** The formula a Set value step holds when nothing is typed; a save refuses it at the step. */
+export const EMPTY_FORMULA: TExpression = { type: "static", value: "" };
+
+/**
+ * What the formula box writes when it loses focus. Typing writes each formula that parses, so a
+ * half-typed one would leave the last good formula in place, and Publish would ship it while the box
+ * shows something else. Text that doesn't parse therefore writes the empty formula, which blocks Save
+ * and Publish and flags the step; the box keeps the author's text to fix. `null` when typing already
+ * wrote what the box shows.
+ */
+export const getFormulaToWriteOnBlur = (
+  text: string,
+  references: TFormulaReference[]
+): TExpression | null => {
+  const parsed = parseFormula(text, references);
+  if (parsed.ok || parsed.error.code === "empty") return null;
+  return EMPTY_FORMULA;
+};
+
 /**
  * The parse error the formula box shows while it is typed in, or none. Nothing is shown while the
  * reference menu is open, nor for an `@` that ends the text: both are a reference being picked.

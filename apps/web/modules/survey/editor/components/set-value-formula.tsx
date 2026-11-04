@@ -20,6 +20,7 @@ import {
   getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
+  getFormulaToWriteOnBlur,
   getFunctionSnippet,
   getShownFormulaError,
   insertIntoFormula,
@@ -358,7 +359,18 @@ export function SetValueFormula({
             aria-label={t("workspace.surveys.edit.flow.formula")}
             aria-invalid={problem ? true : undefined}
             isInvalid={Boolean(problem)}
-            onBlur={settleTyping}
+            onBlur={() => {
+              settleTyping();
+              // A formula left half-typed must not keep the last one that parsed: Publish would ship it.
+              // Focus moving into the reference menu is a reference being picked, not the box left.
+              if (isReferenceMenuOpen) return;
+              const onBlurExpression = getFormulaToWriteOnBlur(text, references);
+              if (!onBlurExpression) return;
+              const serialized = JSON.stringify(onBlurExpression);
+              if (serialized === lastWritten.current) return;
+              lastWritten.current = serialized;
+              onExpressionChange(onBlurExpression);
+            }}
             onChange={(event) => {
               const nextText = event.target.value;
               setIsTyping(true);
