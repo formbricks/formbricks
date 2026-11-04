@@ -954,9 +954,9 @@ Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` a
 both. An entry is `{ storageKey, key, name, source, dataType, defaultValue, locked }`:
 
 - `source: "computed"` is set by logic. Logic operands of type `variable` and calculate actions name its
-  `storageKey` (a cuid2, generated when omitted). Its `dataType` is `string` or `number`.
+  `storageKey` (a cuid2, generated when omitted). Its `dataType` is `string`, `number` or `date`.
 - `source: "ingested"` arrives by URL parameter or SDK. Operands of type `hiddenField` name its
-  `storageKey`, which defaults to its name. It may be `boolean` or `date` too, and only these can be
+  `storageKey`, which defaults to its name. It may be `boolean` too, and only ingested fields can be
   `locked`.
 - A workspace library field is linked by sending `{ "key": "plan_tier" }` alone: the server fills in the
   library's definition. A key the library does not have is a `400` at `embeddedFields.<i>.key`.
