@@ -230,7 +230,8 @@ const getInfix = (node: TExpressionCall) => {
 const precedenceOf = (node: TExpression): number =>
   node.type === "call" ? (getInfix(node)?.precedence ?? ATOM_PRECEDENCE) : ATOM_PRECEDENCE;
 
-const quoteText = (text: string): string => `"${text.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
+const quoteText = (text: string): string =>
+  `"${text.replaceAll("\\", String.raw`\\`).replaceAll('"', String.raw`\"`)}"`;
 
 /**
  * A tree as the text the formula box shows. Parsing the result gives the same tree back, brackets
