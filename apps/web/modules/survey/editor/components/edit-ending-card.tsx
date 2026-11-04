@@ -20,6 +20,7 @@ import { EndScreenForm } from "@/modules/survey/editor/components/end-screen-for
 import { RedirectUrlForm } from "@/modules/survey/editor/components/redirect-url-form";
 import { getEndingCardTypeChangePatch } from "@/modules/survey/editor/lib/ending-card";
 import {
+  START_LOGIC_USE_INDEX,
   findEndingCardUsedInLogic,
   formatTextWithSlashes,
   isUsedInQuota,
@@ -146,6 +147,10 @@ export const EditEndingCard = ({
     // checking if this ending card is used in logic
     const quesIdx = findEndingCardUsedInLogic(localSurvey, endingCard.id);
 
+    if (quesIdx === START_LOGIC_USE_INDEX) {
+      toast.error(t("workspace.surveys.edit.ending_card_used_in_start_logic"));
+      return;
+    }
     if (quesIdx !== -1) {
       toast.error(t("workspace.surveys.edit.ending_card_used_in_logic", { questionIndex: quesIdx + 1 }));
       return;

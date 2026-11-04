@@ -1209,12 +1209,30 @@ const findElementIndexByShowIf = (
  * the source of another question's copied options (`copiedOptions`), with the first element that uses
  * it. The guards name the right place in their message (show-if uses read "shown only if", not logic).
  */
-export type TUseKind = "logic" | "showIf" | "copiedOptions";
+export type TUseKind = "logic" | "startLogic" | "showIf" | "copiedOptions";
 export interface TUse {
   kind: TUseKind;
-  /** The first element (in survey order) whose rule, show-if or copy link uses it. */
+  /**
+   * The first element (in survey order) whose rule, show-if or copy link uses it; for a rule before
+   * the first question, which belongs to no element, {@link START_LOGIC_USE_INDEX}.
+   */
   elementIndex: number;
 }
+
+/**
+ * The index a finder returns when only a rule before the first question (ENG-6932) uses what it
+ * looks for: not -1 ("unused"), and no element's position.
+ */
+export const START_LOGIC_USE_INDEX = -2;
+
+/** Whether a rule before the first question matches. */
+const isUsedInStartLogic = (survey: TSurvey, isUsedInRule: (rule: TSurveyBlockLogic) => boolean): boolean =>
+  (survey.startLogic ?? []).some(isUsedInRule);
+
+const startLogicUse = (survey: TSurvey, isUsedInRule: (rule: TSurveyBlockLogic) => boolean): TUse | null =>
+  isUsedInStartLogic(survey, isUsedInRule)
+    ? { kind: "startLogic", elementIndex: START_LOGIC_USE_INDEX }
+    : null;
 
 /** The logic hit first, else the next kind's hit: each stops a removal, and logic is what it always named. */
 const firstUse = (first: TUse | null, next: () => TUse | null): TUse | null => first ?? next();
@@ -1339,6 +1357,8 @@ export const findBlockUsedInLogic = (survey: TSurvey, blockId: string): number =
   if (blockUsageIndex !== -1) {
     return blockUsageIndex;
   }
+
+  if (isUsedInStartLogic(survey, isUsedInLogicRule)) return START_LOGIC_USE_INDEX;
 
   // Check if any element in the block is used in logic
   for (const element of targetBlock.elements) {
@@ -1583,11 +1603,15 @@ const findFieldUse = (survey: TSurvey, type: "hiddenField" | "variable", id: str
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  return firstUse(usageAt("logic", findElementIndexByBlockLogic(survey, isUsedInLogicRule)), () =>
-    usageAt(
-      "showIf",
-      findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
-    )
+  return firstUse(
+    firstUse(usageAt("logic", findElementIndexByBlockLogic(survey, isUsedInLogicRule)), () =>
+      startLogicUse(survey, isUsedInLogicRule)
+    ),
+    () =>
+      usageAt(
+        "showIf",
+        findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+      )
   );
 };
 
@@ -1621,7 +1645,7 @@ export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string)
 
   const elements = getElementsFromBlocks(survey.blocks);
 
-  return elements.findIndex((element) => {
+  const blockLogicIndex = elements.findIndex((element) => {
     const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
@@ -1630,4 +1654,8 @@ export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string)
 
     return block.logicFallback === endingCardId || block.logic?.some(isUsedInLogicRule);
   });
+  if (blockLogicIndex !== -1) return blockLogicIndex;
+
+  // A screen-out before the first question jumps straight to an ending (ENG-6932).
+  return isUsedInStartLogic(survey, isUsedInLogicRule) ? START_LOGIC_USE_INDEX : -1;
 };

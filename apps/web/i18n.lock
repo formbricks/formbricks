@@ -4024,12 +4024,14 @@ checksums:
     workspace/surveys/edit/embedded_field_used_in_recall_ending: c10031a59720345b001d1364bb3880d8
     workspace/surveys/edit/embedded_field_used_in_recall_welcome: a4aae52f9aca6c3ddbb95f584061872d
     workspace/surveys/edit/embedded_field_used_in_show_if: 281f0ee8dc11d1553f30101192e1b9b5
+    workspace/surveys/edit/embedded_field_used_in_start_logic: 9914a5ba9a06827cc1aab312dd73024f
     workspace/surveys/edit/enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey: c70466147d49dcbb3686452f35c46428
     workspace/surveys/edit/enable_recaptcha_to_protect_your_survey_from_spam: 4483a5763718d201ac97caa1e1216e13
     workspace/surveys/edit/enable_spam_protection: e1fb0dd0723044bf040b92d8fc58015d
     workspace/surveys/edit/end_screen_card: 6146c2bcb87291e25ecb03abd2d9a479
     workspace/surveys/edit/ending_card: 16d30d3a36472159da8c2dbd374dfe22
     workspace/surveys/edit/ending_card_used_in_logic: 4f78d75c3ac79821ca5478ecf88f3fe2
+    workspace/surveys/edit/ending_card_used_in_start_logic: df19767eaee6d2a1b9a7939cf8e8444d
     workspace/surveys/edit/ending_used_in_quota: e09f0da09730bd16132bc13d4cc17222
     workspace/surveys/edit/ends_with: c8a5f60f1bd1d8fa018dbbf49806fb5b
     workspace/surveys/edit/enter_fallback_value: 810911dc4a25ca47fc48eed1fde41cb5

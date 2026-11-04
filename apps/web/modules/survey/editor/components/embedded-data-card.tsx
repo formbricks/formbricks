@@ -126,6 +126,8 @@ export const EmbeddedDataCard = ({
           name,
           questionIndex: blocker.elementIndex + 1,
         });
+      case "startLogic":
+        return t("workspace.surveys.edit.embedded_field_used_in_start_logic", { name });
       case "showIf":
         return t("workspace.surveys.edit.embedded_field_used_in_show_if", {
           name,
