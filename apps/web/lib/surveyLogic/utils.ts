@@ -29,6 +29,7 @@ import {
 } from "@formbricks/types/surveys/date-comparison";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
+import { findByLocalizedLabel, findMatrixRowKey } from "@formbricks/types/surveys/localized-label";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   evaluateConditionGroup,
@@ -41,7 +42,6 @@ import {
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
 import { TActionCalculate, TSurveyLogicAction } from "@formbricks/types/surveys/types";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -648,10 +648,9 @@ const getLeftOperandValue = (
       if (currentElement.type === "multipleChoiceSingle" || currentElement.type === "multipleChoiceMulti") {
         const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
 
+        // ENG-6943: the label in the response's language first, then in any language of the survey.
         if (typeof responseValue === "string") {
-          const choice = currentElement.choices.find((choice) => {
-            return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
-          });
+          const choice = findByLocalizedLabel(currentElement.choices, responseValue, selectedLanguage);
 
           if (!choice) {
             if (isOthersEnabled) {
@@ -665,9 +664,7 @@ const getLeftOperandValue = (
         } else if (Array.isArray(responseValue)) {
           let choices: string[] = [];
           responseValue.forEach((value) => {
-            const foundChoice = currentElement.choices.find((choice) => {
-              return getLocalizedValue(choice.label, selectedLanguage) === value;
-            });
+            const foundChoice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
 
             if (foundChoice) {
               choices.push(foundChoice.id);
@@ -685,9 +682,7 @@ const getLeftOperandValue = (
       // option ids, so "was ranked" maps each label back, as multi select does.
       if (currentElement.type === "ranking" && Array.isArray(responseValue)) {
         return responseValue.flatMap((value) => {
-          const choice = currentElement.choices.find(
-            (candidate) => getLocalizedValue(candidate.label, selectedLanguage) === value
-          );
+          const choice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
           return choice ? [choice.id] : [];
         });
       }
@@ -701,17 +696,15 @@ const getLeftOperandValue = (
           // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
           const rowIndex = resolveMatrixRowIndex(currentElement, leftOperand.meta);
           if (rowIndex === undefined) return undefined;
-          const row = getLocalizedValue(currentElement.rows[rowIndex].label, selectedLanguage);
+          const row = findMatrixRowKey(currentElement.rows[rowIndex].label, responseValue, selectedLanguage);
 
-          const rowValue = responseValue[row];
+          const rowValue = row === undefined ? undefined : responseValue[row];
           if (rowValue === "") return "";
 
-          if (rowValue) {
-            const columnIndex = currentElement.columns.findIndex((column) => {
-              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
-            });
-            if (columnIndex === -1) return undefined;
-            return columnIndex.toString();
+          if (typeof rowValue === "string") {
+            const column = findByLocalizedLabel(currentElement.columns, rowValue, selectedLanguage);
+            if (!column) return undefined;
+            return currentElement.columns.indexOf(column).toString();
           }
           return undefined;
         }

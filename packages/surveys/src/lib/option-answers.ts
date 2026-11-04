@@ -1,11 +1,11 @@
 import { type TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseDataValue } from "@formbricks/types/responses";
+import { findByLocalizedLabel, getAllLocalizedLabels } from "@formbricks/types/surveys/localized-label";
 import {
   type TDropOptionAnswers,
   type TElementOptionsNotShown,
   getOptionListKeys,
 } from "@formbricks/types/surveys/show-if";
-import { findByLocalizedLabel, getAllLocalizedLabels } from "@/lib/localized-label";
 
 /**
  * Answers without the options a page no longer offers (ENG-6937, P7). The not-shown record keys

@@ -17,6 +17,7 @@ import {
 } from "@formbricks/types/surveys/date-comparison";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
+import { findByLocalizedLabel, findMatrixRowKey } from "@formbricks/types/surveys/localized-label";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   evaluateConditionGroup,
@@ -28,8 +29,6 @@ import {
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
-import { getLocalizedValue } from "@/lib/i18n";
-import { findByLocalizedLabel, getAllLocalizedLabels } from "@/lib/localized-label";
 import { getElementsFromSurveyBlocks } from "./utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -191,13 +190,7 @@ const getLeftOperandValue = (
           const rowIndex = resolveMatrixRowIndex(currentQuestion, leftOperand.meta);
           if (rowIndex === undefined) return undefined;
 
-          // The row's label in the current language first, then in any other (a language switch
-          // after the matrix was answered keeps its keys in the language it was answered in).
-          const rowLabel = currentQuestion.rows[rowIndex].label;
-          const row = [
-            getLocalizedValue(rowLabel, selectedLanguage),
-            ...getAllLocalizedLabels(rowLabel),
-          ].find((label) => label in responseValue);
+          const row = findMatrixRowKey(currentQuestion.rows[rowIndex].label, responseValue, selectedLanguage);
 
           const rowValue = row === undefined ? undefined : responseValue[row];
           if (rowValue === "") return "";
