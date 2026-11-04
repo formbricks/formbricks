@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cpuMsSince } from "../core/__fixtures__/cpu-time";
 import { SurveyImportInputError } from "../core/errors";
@@ -44,6 +45,9 @@ const seen = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+// The draft's name is looked up in the workspace and suffixed in the user's language (English here).
+vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn(async () => "en-US") }));
+vi.mock("@/lingodotdev/server", () => import("../core/__fixtures__/lingodotdev-server-en-us"));
 vi.mock("@/modules/survey/lib/permission", () => ({ getExternalUrlsPermission: vi.fn(async () => true) }));
 vi.mock("node:timers/promises", async (importOriginal) => {
   const original = await importOriginal<typeof import("node:timers/promises")>();
@@ -119,6 +123,7 @@ vi.mock("./assemble", async (importOriginal) => {
 });
 
 beforeEach(() => {
+  vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
   seen.yields = 0;
   seen.languageCodeLookups = 0;
   seen.longestPipedScan = 0;

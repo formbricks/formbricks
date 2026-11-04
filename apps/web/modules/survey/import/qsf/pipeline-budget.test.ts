@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
+import { prisma } from "@/lib/__mocks__/database";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SurveyImportFailedError, SurveyImportInputError } from "../core/errors";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { buildMatrixHeavyQsf } from "./__fixtures__/matrix-heavy";
@@ -16,6 +17,9 @@ const budget = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+// The draft's name is looked up in the workspace and suffixed in the user's language (English here).
+vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn(async () => "en-US") }));
+vi.mock("@/lingodotdev/server", () => import("../core/__fixtures__/lingodotdev-server-en-us"));
 vi.mock("@/modules/survey/lib/permission", () => ({ getExternalUrlsPermission: vi.fn(async () => true) }));
 // Every part of the prompt is bounded, so no fixture is over the budget at the tightest limits; the
 // refusals are reached by making the measurement report one that is.
@@ -37,6 +41,10 @@ vi.mock("./prompt", async (importOriginal) => {
       return budget.coarsest ? original.QSF_COARSEST_PROMPT_LIMITS : original.chooseQsfPromptLimits(...args);
     },
   };
+});
+
+beforeEach(() => {
+  vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
 });
 
 describe("a survey too large for the prompt budget", () => {

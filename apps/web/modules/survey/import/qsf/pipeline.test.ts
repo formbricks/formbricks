@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
@@ -26,6 +27,9 @@ const mocks = vi.hoisted(() => ({
 const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
 
 vi.mock("server-only", () => ({}));
+// The draft's name is looked up in the workspace and suffixed in the user's language (English here).
+vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn(async () => "en-US") }));
+vi.mock("@/lingodotdev/server", () => import("../core/__fixtures__/lingodotdev-server-en-us"));
 vi.mock("@/lib/env", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/env")>();
   return {
@@ -207,6 +211,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
 beforeEach(() => {
   aiTimeoutEnv.multiplier = 1;
   vi.resetAllMocks();
+  vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
   mocks.getExternalUrlsPermission.mockResolvedValue(true);
   mocks.checkImportDraft.mockImplementation(mocks.realCheckImportDraft);
 });
@@ -249,6 +254,16 @@ describe("runQsfImport on recorded plans", () => {
     expect(mocks.generateOrganizationAIObject).toHaveBeenCalledWith(
       expect.objectContaining({ timeout: 45_000 * multiplier })
     );
+  });
+
+  test("names the draft as every import does, in the user's language and numbered past names taken", async () => {
+    answerFrom("simple.qsf");
+    const first = (await run("simple.qsf")).payload.name;
+    expect(first).toMatch(/ \(imported\)$/);
+
+    answerFrom("simple.qsf");
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([{ name: first }] as never);
+    expect((await run("simple.qsf")).payload.name).toBe(first.replace(/ \(imported\)$/, " (imported 2)"));
   });
 
   test.each(IMPORTABLE_QSF_FIXTURES)(

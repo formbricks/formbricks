@@ -49,6 +49,12 @@ export interface TAssembleQsfDraftParams {
   texts: TSanitizedTexts;
   plan: TQsfCheckedPlan;
   workspaceId: string;
+  /**
+   * The draft's name, its "(imported)" suffix in the importing user's language included, from
+   * `getImportedSurveyName`: the create strips that suffix and applies it again, so it must be the
+   * user's, as the document lane's is.
+   */
+  name: string;
   allowExternalUrls: boolean;
   /** Questions the final gate refused on a first pass. */
   excludedRefs?: ReadonlySet<string>;
@@ -238,7 +244,7 @@ class QsfAssembler {
     return {
       document: {
         workspaceId: this.params.workspaceId,
-        name: `${sanitizeName(survey.name) || "Qualtrics survey"} (imported)`,
+        name: this.params.name,
         type: "link",
         status: "draft",
         defaultLanguage: survey.defaultLanguage,

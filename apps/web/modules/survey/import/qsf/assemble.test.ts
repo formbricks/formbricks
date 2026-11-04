@@ -42,6 +42,8 @@ const assembleFixture = async (
     texts,
     plan,
     workspaceId: WORKSPACE_ID,
+    // The pipeline names the draft in the user's language; English here.
+    name: `${survey.name} (imported)`,
     allowExternalUrls: options.allowExternalUrls ?? true,
     excludedRefs: options.excludedRefs,
   });

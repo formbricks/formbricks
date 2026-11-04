@@ -384,6 +384,7 @@ describe("fitQsfSurveyToCreateLimit", () => {
       texts,
       plan,
       workspaceId: "clxx1234567890123456789012",
+      name: `${survey.name} (imported)`,
       allowExternalUrls: true,
     });
     return { survey, fit, assembly, planIssues };

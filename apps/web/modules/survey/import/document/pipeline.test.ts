@@ -34,21 +34,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/ai/service", () => ({ generateOrganizationAIObject: mocks.generateOrganizationAIObject }));
 vi.mock("@formbricks/database", () => ({ prisma: { survey: { findMany: vi.fn() } } }));
 vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn(async () => "en-US") }));
-vi.mock("@/lingodotdev/server", async () => {
-  const { default: enUS } = await import("@/locales/en-US.json");
-  const lookup = (key: string): unknown =>
-    key
-      .split(".")
-      .reduce<unknown>((node, part) => (node as Record<string, unknown> | undefined)?.[part], enUS);
-  return {
-    getTranslate:
-      async () =>
-      (key: string, options: Record<string, unknown> = {}) =>
-        String(lookup(key) ?? key).replaceAll(/\{(\w+)\}/g, (match, name: string) =>
-          name in options ? String(options[name]) : match
-        ),
-  };
-});
+vi.mock("@/lingodotdev/server", () => import("../core/__fixtures__/lingodotdev-server-en-us"));
 vi.mock("../core/final-gate", async (importOriginal) => {
   const original = await importOriginal<typeof import("../core/final-gate")>();
   mocks.realCheckImportDraft = original.checkImportDraft;

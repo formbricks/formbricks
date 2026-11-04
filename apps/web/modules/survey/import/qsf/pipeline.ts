@@ -8,8 +8,10 @@ import type { TSurveyImportAssembly, TSurveyImportDraft } from "../core/draft";
 import { SurveyImportFailedError, noQuestionsPlanned } from "../core/errors";
 import { yieldToOthers } from "../core/event-loop";
 import { checkImportDraftInSlices, elementsAtFault } from "../core/final-gate";
+import { getImportedSurveyName, getImporterTranslate } from "../core/imported-survey-name";
 import type { TSurveyImportResult, TSurveyImportRunParams } from "../core/lane";
 import { type TSurveyImportPipelineIssue, buildSurveyImportReport } from "../core/report";
+import { sanitizeName } from "../core/sanitize-text";
 import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS } from "../limits";
 import { type TQsfPlanGenerate, planQsfImport } from "./ai-plan";
 import { assembleQsfDraft } from "./assemble";
@@ -146,6 +148,13 @@ export async function runQsfImport(
   onProgress("assembling");
   if (planned.plan.questions.size === 0) throw noQuestionsPlanned(planned.conclusive);
 
+  const name = await getImportedSurveyName(
+    workspaceId,
+    sanitizeName(survey.name) || "Qualtrics survey",
+    await getImporterTranslate(params.userId)
+  );
+  signal.throwIfAborted();
+
   // Only asked when there is a redirect to keep: on Cloud it is a billing lookup.
   const allowExternalUrls = survey.endRedirectUrl ? await getExternalUrlsPermission(organizationId) : false;
   signal.throwIfAborted();
@@ -157,6 +166,7 @@ export async function runQsfImport(
         texts,
         plan: planned.plan,
         workspaceId,
+        name,
         allowExternalUrls,
         excludedRefs,
         cutRefs: surveyFit.cutRefs,
