@@ -126,7 +126,8 @@ export const CreateWithAIDialog = ({
           <AiIcon aria-hidden="true" className="text-ai-dark!" />
           <DialogTitle>{t("workspace.surveys.ai_create.dialog_title")}</DialogTitle>
           <DialogDescription>{t("workspace.surveys.ai_create.dialog_description")}</DialogDescription>
-          {hasUnsavedWork ? null : (
+          {/* Without AI the Import dialog takes Formbricks files only, none of the files the hint names. */}
+          {hasUnsavedWork || !isAIAvailable ? null : (
             <p className="text-xs text-slate-500">
               {t("workspace.surveys.ai_create.import_hint")}{" "}
               <button
