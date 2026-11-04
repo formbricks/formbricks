@@ -38,7 +38,8 @@ import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
  * v3 request schema nests pipes.
  *
  * A key named `__proto__` is skipped wherever Zod skips it (records, catchalls, declared shape keys), so
- * the walk never reports a problem Zod would not.
+ * the walk never reports a problem Zod would not. The one exception is a record whose key schema
+ * transforms some other key into `__proto__`, which Zod also skips; no v3 request schema has one.
  */
 
 /** Nodes (objects, arrays and values) a subtree may hold to be checked whole. */
@@ -517,8 +518,8 @@ function splitRecord(
     if (keyType.validate(key)) {
       walk(valueType, entry, [...path, key], sink, ctx);
     } else if (subtreeSize(entry, ctx.sizes) <= SMALL_SUBTREE_NODES) {
-      // Zod may still take it (a numeric key it reads as a number, a loose record, `__proto__`), so the
-      // record judges the one entry.
+      // Zod may still take it (a numeric key it reads as a number, a loose record), so the record judges
+      // the one entry.
       checkWhole(recordJudges(schema).entry, { [key]: entry }, path, sink);
     } else {
       // A big entry: Zod's verdict on the key alone, then the value walked like any other.
