@@ -34,7 +34,8 @@ interface DeleteFieldDialogProps {
  *
  * `SurveyEmbeddedData` cascades, so removing a linked field would strip it from every survey using
  * it and leave the responses already stored under its `storageKey` addressed by a definition that no
- * longer exists. The service refuses that and answers with the surveys, which this names — **there is
+ * longer exists. The service refuses that and answers with the surveys: this names the ones the reader
+ * can see and counts the rest (ENG-6811), which an owner or manager has to unlink — **there is
  * no force-delete path**, on purpose: the remedy is to remove the field from those surveys first.
  *
  * The refusal is read from the write's result rather than pre-empted by the row's `surveyCount`,
@@ -109,6 +110,11 @@ export const DeleteFieldDialog = ({
               ))}
               <HiddenSurveysItem count={blockingSurveys.hiddenSurveyCount} />
             </ul>
+            {blockingSurveys.hiddenSurveyCount > 0 && (
+              <p className="mt-3 text-sm text-slate-500">
+                {t("workspace.embedded_data.still_used_hidden_surveys_note")}
+              </p>
+            )}
           </DialogBody>
           <DialogFooter>
             <Button type="button" onClick={close}>

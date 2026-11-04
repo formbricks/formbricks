@@ -290,8 +290,13 @@ describe("writes", () => {
       fieldId,
       workspaceId,
       { dataType: "string" },
-      { visibleSurveyWhere, acknowledgeExistingResponses: true }
+      { resolveVisibleSurveyWhere: expect.any(Function), acknowledgeExistingResponses: true }
     );
+    // Resolved only when the library asks, and then as the caller sees the workspace's surveys.
+    expect(mocks.getUserVisibleSurveyWhere).not.toHaveBeenCalled();
+    const [, , , { resolveVisibleSurveyWhere }] = mocks.updateSharedEmbeddedData.mock.calls[0];
+    await expect(resolveVisibleSurveyWhere()).resolves.toEqual(visibleSurveyWhere);
+    expect(mocks.getUserVisibleSurveyWhere).toHaveBeenCalledWith(userId, organizationId);
     expect(result).toEqual({ status: "ok", field });
     expect(ctx.auditLoggingCtx.oldObject).toEqual(before);
     expect(ctx.auditLoggingCtx.newObject).toEqual(field);
@@ -300,7 +305,11 @@ describe("writes", () => {
   test("delete keeps the removed row as the whole record of what happened", async () => {
     const result = await run(deleteSharedEmbeddedDataAction, { id: fieldId }, ctx);
 
-    expect(mocks.deleteSharedEmbeddedData).toHaveBeenCalledWith(fieldId, workspaceId, visibleSurveyWhere);
+    expect(mocks.deleteSharedEmbeddedData).toHaveBeenCalledWith(fieldId, workspaceId, expect.any(Function));
+    expect(mocks.getUserVisibleSurveyWhere).not.toHaveBeenCalled();
+    const [, , resolveVisibleSurveyWhere] = mocks.deleteSharedEmbeddedData.mock.calls[0];
+    await expect(resolveVisibleSurveyWhere()).resolves.toEqual(visibleSurveyWhere);
+    expect(mocks.getUserVisibleSurveyWhere).toHaveBeenCalledWith(userId, organizationId);
     expect(result).toEqual({ status: "ok", field });
     expect(ctx.auditLoggingCtx.oldObject).toEqual(field);
     expect(ctx.auditLoggingCtx.newObject).toBeUndefined();

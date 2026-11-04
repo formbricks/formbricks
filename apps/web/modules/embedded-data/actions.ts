@@ -186,10 +186,13 @@ export const updateSharedEmbeddedDataAction = authenticatedActionClient
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
       ctx.auditLoggingCtx.oldObject = await getSharedEmbeddedDataById(id, workspaceId);
 
-      const visibleSurveyWhere = await getUserVisibleSurveyWhere(ctx.user.id, organizationId);
+      const resolveVisibleSurveyWhere = () => getUserVisibleSurveyWhere(ctx.user.id, organizationId);
 
       const result = await runWrite(ctx.auditLoggingCtx, () =>
-        updateSharedEmbeddedData(id, workspaceId, patch, { visibleSurveyWhere, acknowledgeExistingResponses })
+        updateSharedEmbeddedData(id, workspaceId, patch, {
+          resolveVisibleSurveyWhere,
+          acknowledgeExistingResponses,
+        })
       );
 
       if (result.status === "ok") ctx.auditLoggingCtx.newObject = result.field;
@@ -217,10 +220,10 @@ export const deleteSharedEmbeddedDataAction = authenticatedActionClient
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
-      const visibleSurveyWhere = await getUserVisibleSurveyWhere(ctx.user.id, organizationId);
+      const resolveVisibleSurveyWhere = () => getUserVisibleSurveyWhere(ctx.user.id, organizationId);
 
       const result = await runWrite(ctx.auditLoggingCtx, () =>
-        deleteSharedEmbeddedData(id, workspaceId, visibleSurveyWhere)
+        deleteSharedEmbeddedData(id, workspaceId, resolveVisibleSurveyWhere)
       );
 
       // A delete has no "after", so the removed row is the whole record of what happened.

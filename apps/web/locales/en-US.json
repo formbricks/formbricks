@@ -2738,6 +2738,7 @@
       "source_passed_in": "Passed in",
       "still_used_body": "Remove it from these surveys first:",
       "still_used_description": "A library field can be deleted once no survey uses it.",
+      "still_used_hidden_surveys_note": "An organization owner or manager can remove it from the surveys you can't see.",
       "still_used_title": "{name} is still used",
       "survey_field_address_fixed": "The source and the address cannot be changed: responses already collected are stored under them.",
       "survey_field_address_taken": "This survey already uses this key for a question, an ending or another field. Pick a different one.",

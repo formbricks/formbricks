@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Prisma } from "@formbricks/database/prisma";
 import {
   type TEmbeddedData,
   ZEmbeddedDataDefaultValue,
@@ -39,6 +40,13 @@ export type TEmbeddedDataUsage = {
   surveys: TEmbeddedDataUsageItem[];
   hiddenSurveyCount: number;
 };
+
+/** Every survey linking the field, seen or not. */
+export const getEmbeddedDataUsageTotal = (usage: TEmbeddedDataUsage): number =>
+  usage.surveys.length + usage.hiddenSurveyCount;
+
+/** The reader's survey visibility, resolved only on the paths that name surveys. */
+export type TResolveVisibleSurveyWhere = () => Promise<Prisma.SurveyWhereInput>;
 
 /**
  * What a caller may supply when adding a field to the library.

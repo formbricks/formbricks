@@ -18,7 +18,8 @@ interface FieldUsageCellProps {
 }
 
 /**
- * The "Used in" cell: a count, and for a field that is used, a popover naming the surveys.
+ * The "Used in" cell: a count, and for a field that is used, a popover naming the surveys the reader
+ * can see and counting the Restricted ones they cannot (ENG-6811).
  *
  * The names are fetched when the popover opens rather than with the list. The list query already
  * counts the links, which is what the cell reads; loading every survey name for every row would pay
