@@ -118,13 +118,11 @@ describe("describeAction", () => {
     expect(describeAction(action(4, 1), surveyFlowFixture, t)).toEqual({
       kind: "jump",
       target: "ending",
-      endingType: "endScreen",
       label: "Good to know bundles aren't for you",
     });
     expect(describeAction(action(4, 2), surveyFlowFixture, t)).toEqual({
       kind: "jump",
       target: "ending",
-      endingType: "redirectToUrl",
       label: "Internal test",
     });
     expect(describeAction(action(4, 3, 2), surveyFlowFixture, t)).toEqual({
@@ -255,7 +253,6 @@ describe("describeRuleActions: a rule's actions read as separate steps", () => {
         action: {
           kind: "jump",
           target: "ending",
-          endingType: "endScreen",
           label: "Good to know bundles aren't for you",
         },
       },

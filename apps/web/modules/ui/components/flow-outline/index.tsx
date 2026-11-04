@@ -9,8 +9,8 @@ import { cn } from "@/lib/cn";
  * respondent moves. Blocks are rows; what runs after a block sits indented under it; endings come
  * last. Presentational only — the Flow tab builds the rows from its outline model.
  *
- * Tones: white for a block, red for an ending, and one colour per rule type — blue for a jump, green
- * for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
+ * Tones: white for a block, `ENDING_TONE` for an ending, and one colour per rule type — blue for a
+ * jump, green for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
  */
 
 export type TFlowOutlineTone = "block" | "jump" | "setValue" | "requireAnswer" | "markLowQuality" | "ending";
@@ -66,6 +66,62 @@ export const FlowOutlineNote = ({
   </div>
 );
 
+/** Every colour an ending shows in, on its own row and on a chip that jumps to it. */
+export interface TEndingTone {
+  /** The row's outline and background tint. */
+  readonly card: string;
+  /** The icon tile's background (the icon is white). */
+  readonly tile: string;
+  /** The line under an open row's header. */
+  readonly divider: string;
+  /** The header's hover tint. */
+  readonly hover: string;
+  /** The row's title ("End: …"). */
+  readonly title: string;
+  /** Secondary text on the row, e.g. a redirect's URL. */
+  readonly detail: string;
+  /** A jump-target chip that points to an ending: its background and text. */
+  readonly pill: string;
+}
+
+/**
+ * The ending colours to choose from. Every place an ending is coloured reads `ENDING_TONE`, so
+ * switching colour is changing that one identifier. Slate is a solid tile with full-strength text so
+ * it never reads as disabled.
+ */
+export const ENDING_TONES = {
+  red: {
+    card: "border-red-300 bg-red-50",
+    tile: "bg-red-600",
+    divider: "border-red-300",
+    hover: "hover:bg-white/60",
+    title: "text-red-700",
+    detail: "text-red-700/80",
+    pill: "bg-red-600 text-white",
+  },
+  pink: {
+    card: "border-pink-500 bg-pink-50",
+    tile: "bg-pink-500",
+    divider: "border-pink-500",
+    hover: "hover:bg-pink-100/70",
+    title: "text-pink-700",
+    detail: "text-pink-700",
+    pill: "bg-pink-500 text-white",
+  },
+  slate: {
+    card: "border-slate-600 bg-slate-50",
+    tile: "bg-slate-600",
+    divider: "border-slate-600",
+    hover: "hover:bg-slate-100/70",
+    title: "text-slate-900",
+    detail: "text-slate-700",
+    pill: "bg-slate-600 text-white",
+  },
+} as const satisfies Record<string, TEndingTone>;
+
+/** The colour endings use. Switch it here (red, pink or slate). */
+export const ENDING_TONE: TEndingTone = ENDING_TONES.red;
+
 /**
  * A rule type's one colour is its outline and its icon tile; a lighter tint of it is the row's
  * background, and a little more of that tint its header's hover.
@@ -76,7 +132,7 @@ const TONE_CARD: Record<TFlowOutlineTone, string> = {
   setValue: "border-emerald-500 bg-emerald-50",
   requireAnswer: "border-violet-500 bg-violet-50",
   markLowQuality: "border-orange-500 bg-orange-50",
-  ending: "border-red-300 bg-red-50",
+  ending: ENDING_TONE.card,
 };
 
 const TONE_ICON: Record<TFlowOutlineTone, string> = {
@@ -85,7 +141,7 @@ const TONE_ICON: Record<TFlowOutlineTone, string> = {
   setValue: "size-5 bg-emerald-500",
   requireAnswer: "size-5 bg-violet-500",
   markLowQuality: "size-5 bg-orange-500",
-  ending: "size-6 bg-red-600",
+  ending: `size-6 ${ENDING_TONE.tile}`,
 };
 
 /** The line between an open row's header and its settings: the card's own outline colour. */
@@ -95,7 +151,7 @@ const TONE_DIVIDER: Record<TFlowOutlineTone, string> = {
   setValue: "border-emerald-500",
   requireAnswer: "border-violet-500",
   markLowQuality: "border-orange-500",
-  ending: "border-red-300",
+  ending: ENDING_TONE.divider,
 };
 
 /** The header's hover tint: a block card is white, so a white wash on it would not show. */
@@ -105,7 +161,7 @@ const TONE_HOVER: Record<TFlowOutlineTone, string> = {
   setValue: "hover:bg-emerald-100/70",
   requireAnswer: "hover:bg-violet-100/70",
   markLowQuality: "hover:bg-orange-100/70",
-  ending: "hover:bg-white/60",
+  ending: ENDING_TONE.hover,
 };
 
 interface FlowOutlineRowProps {
