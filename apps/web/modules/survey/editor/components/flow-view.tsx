@@ -106,6 +106,13 @@ interface FlowViewProps {
   readonly onAddCalculatedField?: () => void;
 }
 
+/**
+ * The faint "Show block if…", "Show question if…" hints an open block shows where a show-if can be
+ * added, always visible rather than on hover only. The options hint (`OptionsShowIfPopover`) matches.
+ */
+const SHOW_IF_HINT_CLASS =
+  "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden";
+
 /** What Add logic starts, in the rule types' order: before the first question only a jump or Set value. */
 const START_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue"];
 const BLOCK_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "markLowQuality"];
@@ -609,7 +616,7 @@ export const FlowView = ({
                               {!element.showIf && canAddShowIf(localSurvey, showIfTarget) && (
                                 <button
                                   type="button"
-                                  className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-500 opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+                                  className={SHOW_IF_HINT_CLASS}
                                   onClick={(event) => {
                                     // The question list sits inside the block row: don't collapse it.
                                     event.stopPropagation();
@@ -636,6 +643,20 @@ export const FlowView = ({
                       showIf: { type: "block", blockIdx: block.blockIdx },
                       key: `block:${block.id}`,
                     })
+                  )}
+                  {/* An open block shows how to add its show-if; a collapsed one stays quiet. */}
+                  {isExpanded && blockShowIfBlocker === null && (
+                    <button
+                      type="button"
+                      className={cn(SHOW_IF_HINT_CLASS, "text-xs")}
+                      onClick={(event) => {
+                        // The hint sits in the block's header: don't collapse it.
+                        event.stopPropagation();
+                        addShowIf({ type: "block", blockIdx: block.blockIdx }, `block:${block.id}`);
+                      }}>
+                      <EyeIcon className="size-3" aria-hidden="true" />
+                      {t("workspace.surveys.edit.flow.show_block_if")}
+                    </button>
                   )}
                   <span className="ml-auto text-xs text-slate-500">
                     {[
