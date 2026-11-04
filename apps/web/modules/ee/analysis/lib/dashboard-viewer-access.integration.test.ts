@@ -40,6 +40,7 @@ import { getV3Survey, listV3Surveys } from "@/app/api/v3/surveys/lib/operations"
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { can } from "@/lib/authorization";
+import { cache } from "@/lib/cache";
 import { getWorkspaceMembers } from "@/lib/workspace/service";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import {
@@ -404,7 +405,11 @@ describe("dashboard-bound reads: allowed on a granted workspace, refused elsewhe
     expect(await statusOf(await chartData(ids.ungrantedViewer))).toBe(403);
     expect(await statusOf(await filterValues(ids.foreignViewer))).toBe(403);
 
+    // An allowed read decision is kept for 30 seconds, so a lapsed plan stops the viewer once it expires.
+    expect(await statusOf(await chartData(ids.viewer))).toBe(200);
     entitlement.viewerRole = false;
+    expect(await statusOf(await chartData(ids.viewer))).toBe(200);
+    await expireReadDecisions();
     expect(await statusOf(await chartData(ids.viewer))).toBe(403);
     expect(await statusOf(await filterValues(ids.viewer))).toBe(403);
   });
@@ -421,6 +426,16 @@ describe("dashboard-bound reads: allowed on a granted workspace, refused elsewhe
     expect((access as Response).status).toBe(403);
   });
 });
+
+/** What 30 seconds do to the kept dashboard read decisions (`withCachedDashboardDecision`). */
+async function expireReadDecisions(): Promise<void> {
+  await cache.runRedisOperation(async (redis) => {
+    for await (const keys of redis.scanIterator({ MATCH: "*read-decision*", COUNT: 1000 })) {
+      const batch = ([] as string[]).concat(keys);
+      if (batch.length > 0) await redis.del(batch);
+    }
+  });
+}
 
 describe("everything else refuses a viewer", () => {
   test.each([
