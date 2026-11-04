@@ -40,6 +40,9 @@ is enough to keep every answer readable and correctly dated, but it is not a byt
   keyed by element ID and its `endingId` names an ending, so keeping those IDs is what makes a replayed
   response land on the right question instead of being rejected
 - App-survey display settings and triggers (see [App surveys](#app-surveys))
+- The survey's [custom CSS](/surveys/general-features/custom-css). A Formbricks Cloud target needs the
+  Scale plan to add it, and refuses the survey without it; both scripts then need `.customCss` in their
+  `del(...)` list (see [Step 2](#step-2-import-into-the-target-workspace))
 - Every response's `data`, `variables`, `ttc`, `meta`, `language`, `endingId` and `singleUseId` — `ttc`
   with [one caveat](#time-to-complete-needs-_total-stripped)
 - Each response's `createdAt` and `updatedAt`, so your charts keep their shape
@@ -383,6 +386,12 @@ the API rejects the request without it:
   `website` and `web` types; only `link` and `app` can be created.
 - `.metadata = (.metadata // {})` — `metadata` may be `null` on read but must be an object on write.
 - Trigger rewriting and the app-survey `status` fallback — see [App surveys](#app-surveys).
+
+A survey's [custom CSS](/surveys/general-features/custom-css) (`customCss`) is **not** stripped: it
+carries over with the survey. Self-hosted targets take it on every plan. A Formbricks Cloud target
+needs the Scale plan to add it, and without it refuses the survey with `403`
+`custom_css_plan_required`; for such a target, add `.customCss` to the `del(...)` list here and in
+[the single-survey script](#copying-a-single-survey), and the survey comes over without its CSS.
 
 Block, element and ending IDs are **not** stripped. The API accepts them, and keeping them is the whole
 trick: a replayed response's `data` is keyed by element ID and its `endingId` points at an ending, so
