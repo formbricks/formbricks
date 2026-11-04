@@ -1,10 +1,9 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import enUS from "@/locales/en-US.json";
 import { SURVEY_IMPORT_MAX_TAKEN_NAMES } from "../limits";
 import { getImportedSurveyName } from "./imported-survey-name";
 
-vi.mock("@formbricks/database", () => ({ prisma: { survey: { findMany: vi.fn() } } }));
 vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn() }));
 vi.mock("@/lingodotdev/server", () => ({ getTranslate: vi.fn() }));
 
