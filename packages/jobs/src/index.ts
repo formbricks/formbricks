@@ -9,6 +9,7 @@ export type {
 } from "./contracts";
 export {
   ONE_SHOT_JOB_NAMES,
+  enqueueAttachmentExportJob,
   enqueueResponsePipelineJob,
   enqueueTestLogJob,
   enqueueWebhookDeliveryJob,
@@ -18,6 +19,7 @@ export {
   scheduleTestLogJobAt,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
+export { processAttachmentExportJob } from "./processors/attachment-export";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
 export { processTestLogJob } from "./processors/test-log";
 export { processWebhookDeliveryJob } from "./processors/webhook-delivery";
@@ -30,6 +32,8 @@ export type { TRecurringJobKey } from "./recurring";
 export type { JobsRuntimeHandle, JobsRuntimeOptions } from "./runtime";
 export type { TRecurringBackgroundJobSchedule } from "./schedules";
 export {
+  ZAttachmentExportJobData,
+  ZAttachmentExportReconcileJobData,
   ZCreativeStatsFlushJobData,
   ZDataRetentionSweepJobData,
   ZDeletionCleanupDrainJobData,
@@ -46,6 +50,8 @@ export {
   ZWorkflowRunReconcileJobData,
 } from "./types";
 export type {
+  TAttachmentExportJobData,
+  TAttachmentExportReconcileJobData,
   TCreativeStatsFlushJobData,
   TDataRetentionSweepJobData,
   TDeletionCleanupDrainJobData,

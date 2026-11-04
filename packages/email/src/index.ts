@@ -8,6 +8,11 @@ export { SsoRecoveryFactorsRemovedEmail } from "../emails/auth/sso-recovery-fact
 export { SsoSignInHintEmail } from "../emails/auth/sso-sign-in-hint-email";
 export { MemberRetentionNoticeEmail } from "../emails/retention/member-retention-notice-email";
 export {
+  AttachmentExportFailedEmail,
+  type TAttachmentExportFailureReason,
+} from "../emails/survey/attachment-export-failed-email";
+export { AttachmentExportReadyEmail } from "../emails/survey/attachment-export-ready-email";
+export {
   SurveyRetentionNoticeEmail,
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
@@ -36,6 +41,8 @@ export {
   renderSsoSignInHintEmail,
   renderSurveyRetentionNoticeEmail,
   renderMemberRetentionNoticeEmail,
+  renderAttachmentExportReadyEmail,
+  renderAttachmentExportFailedEmail,
   renderInviteEmail,
   renderInviteAcceptedEmail,
   renderLinkSurveyEmail,

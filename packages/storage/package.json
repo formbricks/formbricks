@@ -40,6 +40,7 @@
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
     "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/lib-storage": "3.1007.0",
     "@aws-sdk/s3-presigned-post": "3.1007.0",
     "@aws-sdk/s3-request-presigner": "3.1007.0",
     "@formbricks/logger": "workspace:*"
