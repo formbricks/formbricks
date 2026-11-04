@@ -6,13 +6,18 @@ import { streamSurveyImport } from "@/app/api/internal/surveys/import/lib/operat
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
+import { cache } from "@/lib/cache";
 import { openSurveyImportUploadInProcess } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
 import {
   SURVEY_IMPORT_MAX_DRAFT_BYTES,
   SURVEY_IMPORT_MAX_OPTIONS_PER_QUESTION,
   SURVEY_IMPORT_MAX_TEXT_CHARS,
 } from "@/modules/survey/import/limits";
-import { claimSurveyImportIdempotencyKey, fingerprintSurveyImportRequest } from "./idempotency";
+import {
+  claimSurveyImportIdempotencyKey,
+  fingerprintSurveyImportRequest,
+  getSurveyImportIdempotencyCacheKey,
+} from "./idempotency";
 import { createSurveyImport } from "./operations";
 
 /**
@@ -935,6 +940,43 @@ describe("POST /api/internal/surveys/imports is idempotent per Idempotency-Key",
       expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before + 1);
     }
   );
+
+  describe("a create that outlives its claim", () => {
+    const userId = () => fixture.users.owner;
+    const claimFor = (idempotencyKey: string) =>
+      claimSurveyImportIdempotencyKey({ userId: userId(), idempotencyKey, fingerprint: "the request" });
+    /** The in-flight record's expiry, as Redis would run it. */
+    const expire = async (idempotencyKey: string) => {
+      const redis = await cache.getRedisClient();
+      await redis?.del(getSurveyImportIdempotencyCacheKey(userId(), idempotencyKey));
+    };
+
+    test("does not write over a retry that claimed the key after it expired", async () => {
+      const idempotencyKey = createId();
+      const slow = await claimFor(idempotencyKey);
+      await expire(idempotencyKey);
+      const retry = await claimFor(idempotencyKey);
+      expect([slow.kind, retry.kind]).toEqual(["claimed", "claimed"]);
+      if (slow.kind !== "claimed" || retry.kind !== "claimed") return;
+
+      await slow.complete("survey_slow");
+      expect(await claimFor(idempotencyKey)).toEqual({ kind: "in_flight" });
+
+      await retry.complete("survey_retry");
+      expect(await claimFor(idempotencyKey)).toEqual({ kind: "replay", surveyId: "survey_retry" });
+    });
+
+    test("still records itself when nothing claimed the key in the meantime", async () => {
+      const idempotencyKey = createId();
+      const slow = await claimFor(idempotencyKey);
+      await expire(idempotencyKey);
+      if (slow.kind !== "claimed") throw new Error(`expected a claim, got ${slow.kind}`);
+
+      await slow.complete("survey_slow");
+
+      expect(await claimFor(idempotencyKey)).toEqual({ kind: "replay", surveyId: "survey_slow" });
+    });
+  });
 
   test("refuses a create without a key", async () => {
     const response = await createSurveyImport({
