@@ -26,6 +26,9 @@ const listSourceFiles = (dir: string): string[] =>
       : [];
   });
 
+// Every shape `isWindowOpen` accepts contains this, line breaks and optional chaining included.
+const MENTIONS_WINDOW_OPEN = /\bwindow\s*\??\.\s*open\b/;
+
 // `window.open(…)` and `globalThis.window.open(…)`.
 const isWindowOpen = (node: ts.CallExpression): boolean => {
   const callee = node.expression;
@@ -65,6 +68,13 @@ const findWindowOpenCalls = (fileName: string, source: string): TWindowOpenCall[
   return calls;
 };
 
+// Collected at module load, as `use-server-exports.test.ts` does, so the file walk doesn't count against
+// the per-test timeout under coverage. Only files that mention the call are parsed.
+const appWindowOpenCalls = listSourceFiles(webRoot).flatMap((file) => {
+  const source = fs.readFileSync(file, "utf8");
+  return MENTIONS_WINDOW_OPEN.test(source) ? findWindowOpenCalls(path.relative(webRoot, file), source) : [];
+});
+
 describe("window.open noopener", () => {
   test("recognises the call shapes it guards and the features strings that satisfy it", () => {
     const calls = findWindowOpenCalls(
@@ -84,9 +94,7 @@ describe("window.open noopener", () => {
   });
 
   test("every window.open call in apps/web passes noopener", () => {
-    const calls = listSourceFiles(webRoot).flatMap((file) =>
-      findWindowOpenCalls(path.relative(webRoot, file), fs.readFileSync(file, "utf8"))
-    );
+    const calls = appWindowOpenCalls;
 
     // The scan has to see the app's real call sites, or an empty result would pass vacuously.
     expect(calls.length).toBeGreaterThan(5);
