@@ -8,7 +8,7 @@ import {
   PaintbrushIcon,
   Rows3Icon,
   SettingsIcon,
-  WorkflowIcon,
+  SplitIcon,
 } from "lucide-react";
 import { Fragment, type JSX, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,7 +52,7 @@ export const SurveyEditorTabs = ({
         // ENG-6929: the whole flow on one outline. Shown in CX mode too, which keeps the logic it had.
         id: "flow",
         label: t("workspace.surveys.edit.flow.tab"),
-        icon: <WorkflowIcon className="size-5" />,
+        icon: <SplitIcon className="size-5 rotate-90" />,
       },
       {
         id: "styling",
