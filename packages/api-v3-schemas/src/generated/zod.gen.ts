@@ -592,7 +592,7 @@ export type ResponseDataMapInputZodType = z.infer<typeof zResponseDataMapInput>;
  *
  * Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
  *
- * **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A survey declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
+ * **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A generous cap: a survey written through this API declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
  *
  */
 export const zResponseEmbeddedDataInput = z.record(

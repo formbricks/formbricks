@@ -119,6 +119,24 @@ describe("ZV3CreateResponseBody", () => {
     expect(issues[0]).toMatchObject({ code: "custom", path: ["data", "matrix"] });
   });
 
+  // Each answer's shape is checked before parsing too, so a map full of wrong values is one issue, not
+  // one per value or per matrix row.
+  test.each([
+    ["data", { row: 1 }],
+    ["data", [1, 2, 3]],
+    ["data", true],
+    ["embeddedData", ["not a scalar"]],
+    ["ttc", "not a number"],
+  ])("%s full of wrong values (%j) is refused in a single issue, at the first", (field, value) => {
+    const count = field === "embeddedData" ? V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS : MAX_RESPONSE_DATA_KEYS;
+    const map = Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`k${i}`, value]));
+    const result = create({ [field]: map });
+
+    expect(result.success ? [] : result.error.issues).toEqual([
+      expect.objectContaining({ code: "custom", path: [field, "k0"] }),
+    ]);
+  });
+
   test("data refuses a shape no element can store", () => {
     expect(create({ data: { q1: { nested: { deep: 1 } } } }).success).toBe(false);
   });

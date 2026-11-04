@@ -11995,7 +11995,7 @@ components:
           description: |
             The same map on the way in, with the cardinality bounds a v3 write enforces.
 
-            At most 2,000 keys, and at most 1000 entries in a multi-select array or matrix object. A response holds one entry per element or hidden field, and a survey may have 1,000 blocks and 200 hidden fields, so 2,000 keys covers a survey at that limit with one element per block; a multi-select answer holds one entry per choice. The bounds exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either is a **400** from the request schema, not a 422.
+            At most 2,000 keys, and at most 1000 entries in a multi-select array or matrix object. These are generous caps, set well above what surveys hold: the map has one key per answered element, and a survey written through this API has at most 1,000 blocks, so 2,000 keys covers one at that limit with one element per block; a multi-select answer holds one entry per choice. The bounds exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either, or sending a value of a shape `ResponseDataMap` does not allow, is a **400** from the request schema, not a 422, reported once, at the first such key.
 
             Deliberately separate from `ResponseDataMap`, which the read returns. The v1 and v2 client writes and the v1 management write apply these bounds to each request, plus a total of 10,000 entries in each request's `data` map, but a response built over several updates can still exceed them, the v2 management write does not apply them, and older responses predate them. A stored response may therefore exceed them, and the read schema must not claim otherwise.
           maxProperties: 2000
@@ -12040,7 +12040,7 @@ components:
 
         Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
 
-        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A survey declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
+        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A generous cap: a survey written through this API declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
       maxProperties: 500
       additionalProperties:
         oneOf:

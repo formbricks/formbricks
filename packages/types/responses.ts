@@ -55,12 +55,14 @@ export type TResponseVariables = z.infer<typeof ZResponseVariables>;
  * update inputs, one request at a time: the stored schemas (`ZResponseData`, `ZResponseVariables`,
  * `ZResponseTtc`) stay unbounded, so rows written before the caps still parse.
  *
- * Each is derived from what a survey can hold. `data` and `ttc` have one key per element or hidden field:
- * a survey may have 1,000 blocks and 200 hidden fields, so 2,000 keys covers one element per block at
- * that limit, and the largest survey in production has 31 blocks. A multi-select answer holds at most one
- * entry per choice and a matrix one per row, both far under 1,000. `variables` has one key per survey
- * variable, of which a survey may define 100. The entry budget counts the whole `data` map — its keys
- * plus every array item and matrix row — so 2,000 answers can still carry 8,000 selections between them.
+ * They are generous caps set well above what surveys hold, not limits a survey can reach by design: only
+ * v3 survey writes cap a survey's size (1,000 blocks, 200 hidden fields, 100 variables), and the editor
+ * and v1 survey writes do not. `data` and `ttc` have one key per answered element or hidden field, so
+ * 2,000 keys covers a survey at the v3 limits with one element per block; the largest survey in
+ * production has 31 blocks. A multi-select answer holds one entry per choice and a matrix one per row,
+ * both far under 1,000. `variables` has one key per survey variable. The entry budget counts the whole
+ * `data` map — its keys plus every array item and matrix row — so 2,000 answers can still carry 8,000
+ * selections between them.
  */
 export const MAX_RESPONSE_DATA_KEYS = 2_000;
 export const MAX_RESPONSE_DATA_VALUES = 1_000;
@@ -77,6 +79,7 @@ export const RESPONSE_DATA_LIMIT_MESSAGES = {
   rows: `A matrix answer may hold at most ${MAX_RESPONSE_DATA_VALUES} rows`,
   entries: `A response may hold at most ${MAX_RESPONSE_DATA_ENTRIES} values`,
   text: "An answer's items must be text",
+  shape: "An answer must be text, a number, a list of text, or a map of text",
 } as const;
 
 /** A refusal from a size check: its message, and the path under the checked map when it names one key. */
@@ -101,54 +104,75 @@ export const withSizeCheck = <TSchema extends z.ZodType>(
     return value;
   }, schema);
 
-export const maxKeys = (max: number, what: string) => (record: Record<string, unknown>) =>
-  Object.keys(record).length > max ? `A response may carry at most ${max} ${what}` : undefined;
+/**
+ * A key cap and a value check for a flat map, both run before Zod reads it. Zod reports every wrong value
+ * on its own; this refuses the map at the first one, with one issue at its key.
+ */
+export const checkFlatMap =
+  (max: number, what: string, isValue: (value: unknown) => boolean, invalid: string) =>
+  (record: Record<string, unknown>): TSizeCheckFailure | undefined => {
+    if (Object.keys(record).length > max) return `A response may carry at most ${max} ${what}`;
+    for (const key in record) {
+      if (!isValue(record[key])) return { message: invalid, path: [key] };
+    }
+    return undefined;
+  };
+
+const isTextOrNumber = (value: unknown) => typeof value === "string" || typeof value === "number";
 
 /**
- * The caps on a submitted answer map, checked before Zod reads it. Each answer's items are checked too:
- * an array answer holds text and a matrix maps rows to text, so one wrong item refuses the answer with
- * one issue instead of Zod reporting every item of the union it fails.
+ * The caps on a submitted answer map, checked before Zod reads it, shared by every API version that writes
+ * one. Each answer is checked too: it is text, a number, a list of text or a map of text, and one wrong
+ * answer or item refuses the map with one issue at that answer, instead of Zod reporting every item of
+ * the union it fails. Only shape is checked here; Zod still parses what passes, so the check never lets
+ * through anything the schema would refuse.
+ *
+ * `maxEntries` bounds the keys plus every array item and matrix row. The walk stops as soon as it is
+ * spent, so it never reads more than the budget allows.
  */
-const checkResponseDataSize = (data: Record<string, unknown>): TSizeCheckFailure | undefined => {
+export const checkResponseDataSize = (
+  data: Record<string, unknown>,
+  maxEntries = Number.POSITIVE_INFINITY
+): TSizeCheckFailure | undefined => {
   // Keys first: on a large map walking the entries costs more than counting them, so it only runs once
   // the map is under the cap.
   const keyCount = Object.keys(data).length;
   if (keyCount > MAX_RESPONSE_DATA_KEYS) return RESPONSE_DATA_LIMIT_MESSAGES.keys;
-  // The entry budget is checked as it grows, so the item checks below never walk more than it allows.
   let entries = keyCount;
   for (const key in data) {
     const value = data[key];
+    let items: unknown[];
     if (Array.isArray(value)) {
       if (value.length > MAX_RESPONSE_DATA_VALUES)
         return { message: RESPONSE_DATA_LIMIT_MESSAGES.values, path: [key] };
-      entries += value.length;
-      if (entries > MAX_RESPONSE_DATA_ENTRIES) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
-      if (!value.every((item) => typeof item === "string")) {
-        return { message: RESPONSE_DATA_LIMIT_MESSAGES.text, path: [key] };
-      }
+      items = value;
     } else if (isPlainRecord(value)) {
-      const rows = Object.keys(value);
-      if (rows.length > MAX_RESPONSE_DATA_VALUES)
+      items = Object.values(value);
+      if (items.length > MAX_RESPONSE_DATA_VALUES)
         return { message: RESPONSE_DATA_LIMIT_MESSAGES.rows, path: [key] };
-      entries += rows.length;
-      if (entries > MAX_RESPONSE_DATA_ENTRIES) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
-      if (!rows.every((row) => typeof value[row] === "string")) {
-        return { message: RESPONSE_DATA_LIMIT_MESSAGES.text, path: [key] };
-      }
+    } else if (value === undefined || isTextOrNumber(value)) {
+      continue;
+    } else {
+      return { message: RESPONSE_DATA_LIMIT_MESSAGES.shape, path: [key] };
+    }
+    entries += items.length;
+    if (entries > maxEntries) return RESPONSE_DATA_LIMIT_MESSAGES.entries;
+    if (!items.every((item) => typeof item === "string")) {
+      return { message: RESPONSE_DATA_LIMIT_MESSAGES.text, path: [key] };
     }
   }
-  return entries > MAX_RESPONSE_DATA_ENTRIES ? RESPONSE_DATA_LIMIT_MESSAGES.entries : undefined;
+  return undefined;
 };
 
 /** `ZResponseData` with the caps above, for the create and update inputs. */
 export const ZResponseDataInput = withSizeCheck(
   z.record(z.string(), buildResponseDataValue(z.array(z.string()).max(MAX_RESPONSE_DATA_VALUES))),
-  checkResponseDataSize
+  (data) => checkResponseDataSize(data, MAX_RESPONSE_DATA_ENTRIES)
 );
 
 export const ZResponseVariablesInput = withSizeCheck(
   ZResponseVariables,
-  maxKeys(MAX_RESPONSE_VARIABLE_KEYS, "variables")
+  checkFlatMap(MAX_RESPONSE_VARIABLE_KEYS, "variables", isTextOrNumber, "A variable must be text or a number")
 );
 
 export const ZResponseTtc = z.record(z.string(), z.number());
@@ -171,7 +195,12 @@ export const ZResponseTtcInput = withSizeCheck(
     z.string(),
     z.number().transform((value) => Math.min(Math.max(value, 0), MAX_RESPONSE_TTC))
   ),
-  maxKeys(MAX_RESPONSE_DATA_KEYS, "timing entries")
+  checkFlatMap(
+    MAX_RESPONSE_DATA_KEYS,
+    "timing entries",
+    (value) => typeof value === "number",
+    "A timing entry must be a number"
+  )
 );
 
 export type TResponseTtcInput = z.infer<typeof ZResponseTtcInput>;

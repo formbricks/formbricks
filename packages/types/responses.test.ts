@@ -192,8 +192,8 @@ describe("response input caps", () => {
   const issuesOf = (result: ReturnType<typeof create>) => (result.success ? [] : result.error.issues);
 
   test("accepts a response at every cap at once", () => {
-    // 500 answers: a multi-select with every one of 1,000 choices ticked, a 1,000-row matrix, and
-    // enough 15-item arrays to land exactly on the entry budget.
+    // 2,000 answers: a multi-select with every one of 1,000 choices ticked, a 1,000-row matrix, and
+    // 1,998 short arrays that land exactly on the entry budget between them.
     const fillerKeys = MAX_RESPONSE_DATA_KEYS - 2;
     const fillerItems = MAX_RESPONSE_DATA_ENTRIES - MAX_RESPONSE_DATA_KEYS - 2 * MAX_RESPONSE_DATA_VALUES;
     const data: Record<string, unknown> = keyed(fillerKeys, (index) =>
@@ -291,7 +291,23 @@ describe("response input caps", () => {
   test("still reports a data value of the wrong shape where it is", () => {
     const issues = issuesOf(create({ data: { q: true } }));
 
+    expect(issues).toEqual([
+      expect.objectContaining({ path: ["data", "q"], message: RESPONSE_DATA_LIMIT_MESSAGES.shape }),
+    ]);
+  });
+
+  // A wrong value is refused at the first one, so a map full of them costs one issue, not one per value.
+  test.each([
+    ["data", true, ["data", "k0"]],
+    ["data", null, ["data", "k0"]],
+    ["data", { row: 1 }, ["data", "k0"]],
+    ["ttc", "not a number", ["ttc", "k0"]],
+    ["variables", true, ["variables", "k0"]],
+  ])("refuses %s full of wrong values (%j) with one issue at the first", (field, value, path) => {
+    const count = field === "variables" ? MAX_RESPONSE_VARIABLE_KEYS : MAX_RESPONSE_DATA_KEYS;
+    const issues = issuesOf(create({ [field]: keyed(count, () => value) }));
+
     expect(issues).toHaveLength(1);
-    expect(issues[0].path).toEqual(["data", "q"]);
+    expect(issues[0].path).toEqual(path);
   });
 });

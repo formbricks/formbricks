@@ -53,7 +53,8 @@ description: >
 
   **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params`
   entry naming it, so without a cap a large body answers with a 422 several times its own size. A
-  survey declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
+  generous cap: a survey written through this API declares at most 200 hidden fields and 100
+  variables, so 500 leaves room for both.
 maxProperties: 500
 additionalProperties:
   oneOf:
