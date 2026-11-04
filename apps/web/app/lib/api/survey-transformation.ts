@@ -337,6 +337,9 @@ const reverseLogicActions = (
 
     // A Set value expression (ENG-6935) has no counterpart in the legacy question-logic types; it is
     // passed through as stored so a legacy reader sees the step rather than losing it.
+    // The cast is safe: a legacy update converts its questions to blocks (`updateLogicActions` passes
+    // this step through unchanged) before any logic is validated, so the step is checked by the block
+    // schema, which knows expressions, never by the legacy logic types.
     return action as TSurveyLogicAction;
   });
 };
