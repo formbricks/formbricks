@@ -43,7 +43,9 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
 const SOURCE = "FeedbackRecords.sourceName";
 const LANGUAGE = "FeedbackRecords.language";
 const COUNTRY = "FeedbackRecords.metadataCountry";
-const ACCOUNT = "FeedbackRecords.valueText";
+// A categorical field with a value lookup: only those, and embedded data, pick from a list (D1).
+const ACCOUNT = "FeedbackRecords.fieldLabel";
+const FREE_TEXT = "FeedbackRecords.valueText";
 const COLLECTED_AT = "FeedbackRecords.collectedAt";
 
 let fixture: TDashboardsFixture;
@@ -493,7 +495,14 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
   test("answers 422 for a filter the dashboard does not have and for one that takes a typed value", async () => {
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
     const typed = filterOf(3, ACCOUNT, "contains");
-    const dashboard = await createDashboard([chart.id], [typed]);
+    // Free text with equals is still typed: listing it would hand readers every record's text (D1).
+    const freeText = filterOf(4, FREE_TEXT);
+    const dashboard = await createDashboard([chart.id], [typed, freeText]);
+
+    expect(await outcomeOf(await readValues(dashboard.id, freeText.id))).toEqual({
+      status: 422,
+      code: "unprocessable_content",
+    });
 
     expect(await outcomeOf(await readValues(dashboard.id, filterId(7)))).toEqual({
       status: 422,
@@ -504,6 +513,50 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
       code: "unprocessable_content",
     });
     expect(cubeFake.calls).toHaveLength(0);
+  });
+
+  test("asks Cube again once a widget's chart is edited, though the dashboard is not (S7)", async () => {
+    records[fixture.datasetId] = [{ [ACCOUNT]: "a", [COUNTRY]: "IT" }];
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id], [ACCOUNT_FILTER]);
+    answerFromRecords();
+
+    await readValues(dashboard.id, ACCOUNT_FILTER.id);
+    await prisma.chart.update({
+      where: { id: chart.id },
+      data: {
+        query: {
+          measures: ["FeedbackRecords.count"],
+          filters: [{ member: COUNTRY, operator: "equals", values: ["DE"] }],
+        },
+      },
+    });
+    const after = await readValues(dashboard.id, ACCOUNT_FILTER.id);
+
+    expect(cubeFake.calls).toHaveLength(2);
+    expect(await valuesOf(after)).toEqual([]);
+  });
+
+  test("lists only the groups a top-N chart shows (S6)", async () => {
+    records[fixture.datasetId] = [
+      { [ACCOUNT]: "a", [COUNTRY]: "IT" },
+      { [ACCOUNT]: "b", [COUNTRY]: "DE" },
+    ];
+    const topOne = await createChart({
+      measures: ["FeedbackRecords.count"],
+      dimensions: [ACCOUNT],
+      order: [["FeedbackRecords.count", "desc"]],
+      limit: 1,
+    });
+    const dashboard = await createDashboard([topOne.id], [ACCOUNT_FILTER]);
+    // The chart's own query is answered with its one shown group.
+    cubeFake.respond = ({ query }) =>
+      (query.measures ?? []).length > 0 ? [{ [ACCOUNT]: "b", "FeedbackRecords.count": 1 }] : [];
+
+    const response = await readValues(dashboard.id, ACCOUNT_FILTER.id);
+
+    expect(await valuesOf(response)).toEqual(["b"]);
+    expect(cubeFake.calls).toHaveLength(1);
   });
 
   test("answers an empty list without Cube for a dashboard with no charts, and refuses an outsider", async () => {

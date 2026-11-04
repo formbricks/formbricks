@@ -52,9 +52,27 @@ export const chartRuleSet = (query: TChartQuery, clock: TDateClock): TCubeFilter
 /** One rule standing for a branch: its rule, or the AND of its rules. */
 const asOneRule = (rules: TCubeFilter[]): TCubeFilter => (rules.length === 1 ? rules[0] : { and: rules });
 
+/** The dashboard date range as a rule on collectedAt, or none for all time. */
+const dashboardDateRules = (dateFilter: TDashboardDateFilter | null, clock: TDateClock): TCubeFilter[] =>
+  dateFilter && dateFilter.type !== "all-time"
+    ? [
+        toDateRangeRule(
+          COLLECTED_AT_DIMENSION,
+          dateFilter.type === "preset" ? dateFilter.value : dateFilter.range,
+          clock
+        ),
+      ]
+    : [];
+
+/** The rules every value query ends with: the field has a value, containing `search` when given. */
+const valueRulesOf = (filter: TDashboardFilter, search?: string): TCubeFilter[] => [
+  { member: filter.field, operator: "set" },
+  ...(search ? [{ member: filter.field, operator: "contains", values: [search] }] : []),
+];
+
 /**
- * The Cube queries for one list filter's values: one per Feedback Dataset that has the field, plus one per
- * chart whose saved rules refer to a measure, which cannot sit in an OR beside the others.
+ * The Cube queries for one list filter's values: one per Feedback Dataset that has the field, over its
+ * charts that are not bounded by their own groups (`isGroupBoundedChart`; those take two steps, below).
  *
  * A dataset is left out when its charts cannot let anything through: it lacks the field, or another picked
  * filter's field, which leaves its charts empty.
@@ -78,20 +96,8 @@ export const buildFilterValueQueries = ({
   datasetHasField: (datasetId: string, field: string) => boolean;
   search?: string;
 }): TFilterValueQuery[] => {
-  const dashboardDate: TCubeFilter[] =
-    dateFilter && dateFilter.type !== "all-time"
-      ? [
-          toDateRangeRule(
-            COLLECTED_AT_DIMENSION,
-            dateFilter.type === "preset" ? dateFilter.value : dateFilter.range,
-            clock
-          ),
-        ]
-      : [];
-  const valueRules: TCubeFilter[] = [
-    { member: filter.field, operator: "set" },
-    ...(search ? [{ member: filter.field, operator: "contains", values: [search] }] : []),
-  ];
+  const dashboardDate = dashboardDateRules(dateFilter, clock);
+  const valueRules = valueRulesOf(filter, search);
 
   const toQuery = (datasetId: string, scope: TCubeFilter[], narrowing: TCubeFilter[]): TFilterValueQuery => ({
     datasetId,
@@ -114,30 +120,152 @@ export const buildFilterValueQueries = ({
     // Charts with the same saved rules let the same values through: one branch for each distinct set.
     const branches = new Map<string, TCubeFilter[]>();
     for (const chart of charts) {
-      if (chart.datasetId !== datasetId) continue;
+      if (chart.datasetId !== datasetId || isGroupBoundedChart(chart.query)) continue;
       const rules = chartRuleSet(chart.query, clock);
       branches.set(JSON.stringify(rules), rules);
     }
 
     const ruleSets = [...branches.values()];
+    if (ruleSets.length === 0) return [];
     // A chart without saved rules lets every record through, so the OR of all branches is no narrowing.
     if (ruleSets.some((rules) => rules.length === 0)) return [toQuery(datasetId, [], otherPicks.rules)];
 
-    const merged = ruleSets.filter((rules) => !refersToMeasure(rules));
-    const separate = ruleSets.filter(refersToMeasure);
     return [
-      ...(merged.length > 0
-        ? [
-            toQuery(
-              datasetId,
-              merged.length === 1 ? merged[0] : [{ or: merged.map(asOneRule) }],
-              otherPicks.rules
-            ),
-          ]
-        : []),
-      ...separate.map((rules) => toQuery(datasetId, rules, otherPicks.rules)),
+      toQuery(
+        datasetId,
+        ruleSets.length === 1 ? ruleSets[0] : [{ or: ruleSets.map(asOneRule) }],
+        otherPicks.rules
+      ),
     ];
   });
+};
+
+/**
+ * Whether a chart shows only some of the records its rules let through, picked per group (S6): a top-N
+ * (`limit`, `offset`) keeps the first groups, and a rule on a measure (HAVING) keeps the groups whose
+ * measure passes. Such a chart's values cannot be merged into a rule set: a value from a group the chart
+ * does not show would be listed, and a measure rule on the value query would be judged per value instead of
+ * per the chart's own group. Its values are bounded by its own groups (`buildBoundedChartQueries`).
+ */
+export const isGroupBoundedChart = (query: TChartQuery): boolean =>
+  query.limit !== undefined || query.offset !== undefined || refersToMeasure(query.filters ?? []);
+
+/**
+ * Most groups of a bounded chart its values are looked up within: each group is one branch of an OR in
+ * the value query. A chart showing more (or grouped by time, whose buckets are not values to match) is
+ * left out as a value source — a shorter list, never a value the chart does not show.
+ */
+export const FILTER_VALUE_GROUP_LIMIT = 100;
+
+/**
+ * A bounded chart's own query — as the dashboard shows it under the other picks and the dashboard date —
+ * and the record-level rules its groups are drawn from (`scope`: its non-measure rules, its saved dates,
+ * the other picks and the dashboard date).
+ */
+export type TFilterValueGroupQuery = { datasetId: string; query: TChartQuery; scope: TCubeFilter[] };
+
+const isRecordRule = (rule: TCubeFilter): boolean => !refersToMeasure([rule]);
+
+/**
+ * The first step for the bounded charts (S6): each one's own query, to learn which groups it shows. Charts
+ * whose dataset lacks the field, or another picked filter's field, show nothing and are left out.
+ */
+export const buildBoundedChartQueries = ({
+  filter,
+  filters,
+  charts,
+  picks,
+  dateFilter,
+  clock,
+  datasetHasField,
+}: Omit<Parameters<typeof buildFilterValueQueries>[0], "search">): TFilterValueGroupQuery[] => {
+  const dashboardDate = dashboardDateRules(dateFilter, clock);
+  return charts.flatMap((chart) => {
+    if (!isGroupBoundedChart(chart.query)) return [];
+    const hasField = (field: string) => datasetHasField(chart.datasetId, field);
+    if (!hasField(filter.field)) return [];
+    const otherPicks = resolvePicksForDataset(filters, picks, hasField, { except: filter.id });
+    if (otherPicks.unfilterable.length > 0) return [];
+
+    const narrowing = [...otherPicks.rules, ...dashboardDate];
+    return [
+      {
+        datasetId: chart.datasetId,
+        query: { ...chart.query, filters: [...(chart.query.filters ?? []), ...narrowing] },
+        scope: [...chartRuleSet(chart.query, clock).filter(isRecordRule), ...narrowing],
+      },
+    ];
+  });
+};
+
+export type TBoundedChartValues =
+  | { type: "values"; values: string[] }
+  | { type: "query"; query: TFilterValueQuery }
+  | { type: "none" };
+
+/**
+ * The second step for one bounded chart, from the rows its own query returned. When the chart is grouped by
+ * the filter's field, its rows are the values. Otherwise the values are looked up among the records of the
+ * groups it shows — one OR branch per group — and a chart grouped by time, or showing more than
+ * `FILTER_VALUE_GROUP_LIMIT` groups, offers none.
+ */
+export const resolveBoundedChartValues = ({
+  filter,
+  group,
+  rows,
+  search,
+}: {
+  filter: TDashboardFilter;
+  group: TFilterValueGroupQuery;
+  rows: readonly unknown[];
+  search?: string;
+}): TBoundedChartValues => {
+  if (rows.length === 0) return { type: "none" };
+  const dimensions = group.query.dimensions ?? [];
+
+  if (dimensions.includes(filter.field)) {
+    const needle = search?.toLowerCase();
+    const values = rows.flatMap((row) => {
+      const value = (row as Record<string, unknown>)[filter.field];
+      if (typeof value !== "string" || value === "") return [];
+      return needle && !value.toLowerCase().includes(needle) ? [] : [value];
+    });
+    return { type: "values", values };
+  }
+
+  const groupedByTime = (group.query.timeDimensions ?? []).some((td) => td.granularity !== undefined);
+  if (groupedByTime || rows.length > FILTER_VALUE_GROUP_LIMIT) return { type: "none" };
+
+  const groupRules: TCubeFilter[] =
+    dimensions.length === 0
+      ? []
+      : [
+          {
+            or: rows.map((row) =>
+              asOneRule(
+                dimensions.map((dimension): TCubeFilter => {
+                  const value = (row as Record<string, unknown>)[dimension];
+                  return value === null || value === undefined
+                    ? { member: dimension, operator: "notSet" }
+                    : { member: dimension, operator: "equals", values: [String(value)] };
+                })
+              )
+            ),
+          },
+        ];
+
+  return {
+    type: "query",
+    query: {
+      datasetId: group.datasetId,
+      query: {
+        dimensions: [filter.field],
+        filters: [...group.scope, ...groupRules, ...valueRulesOf(filter, search)],
+        order: [[filter.field, "asc"]],
+        limit: FILTER_VALUE_LIST_LIMIT + 1,
+      },
+    },
+  };
 };
 
 /**

@@ -20,16 +20,25 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { cache } from "@/lib/cache";
+import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { keepCurrentPicks } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
+import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import {
+  findPickIssues,
+  keepCurrentPicks,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import {
   isListDashboardFilter,
   parseStoredDashboardFilters,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import {
+  type TFilterValueQuery,
+  buildBoundedChartQueries,
   buildFilterValueQueries,
   mergeFilterValues,
+  resolveBoundedChartValues,
 } from "@/modules/ee/analysis/dashboards/lib/filter-value-query";
 import { parseRequestedDateRange } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
@@ -43,6 +52,16 @@ import { getDashboardChartsRow } from "./service";
  */
 export const FILTER_VALUES_CACHE_TTL_MS = 60_000;
 
+/**
+ * Most Cube queries one value list may take (C8): one per Feedback Dataset for the charts merged into a
+ * rule set, and up to two per chart bounded by its own groups (top-N or a measure rule, S6). A dashboard
+ * needing more answers 422 rather than fanning out without bound on one request.
+ */
+export const MAX_FILTER_VALUE_QUERIES = 40;
+
+/** How many of one list's Cube queries run at once. */
+const FILTER_VALUE_QUERY_CONCURRENCY = 5;
+
 const filterProblem = (
   name: string,
   reason: string,
@@ -55,12 +74,15 @@ const filterProblem = (
 
 /**
  * The cache key for one list: the dashboard and the version it was read at (an editor's save moves it, so
- * a changed filter or chart is never answered from before), the filter, the other filters' picks, the date
- * range and the search. Shared across everyone who may read the dashboard: they all see the same list.
+ * a changed filter is never answered from before), each widget's chart and the version it was read at (a
+ * chart edited in the chart builder does not move the dashboard, S7), the filter, the other filters'
+ * picks, the date range and the search. Shared across everyone who may read the dashboard: they all see
+ * the same list.
  */
 const valuesCacheKey = (parts: {
   dashboardId: string;
   updatedAt: Date;
+  charts: { id: string; updatedAt: Date }[];
   filterId: string;
   otherPicks: Record<string, string[]>;
   dateRange: unknown;
@@ -70,6 +92,7 @@ const valuesCacheKey = (parts: {
     .update(
       JSON.stringify([
         parts.updatedAt.toISOString(),
+        parts.charts.map(({ id, updatedAt }) => [id, updatedAt.toISOString()]),
         parts.filterId,
         Object.entries(parts.otherPicks).sort(([a], [b]) => a.localeCompare(b)),
         parts.dateRange ?? null,
@@ -117,9 +140,17 @@ export async function listV3DashboardFilterValues({
     if (!isListDashboardFilter(filter)) {
       return filterProblem(
         "filterId",
-        "Only filters on a text field with 'equals' or 'notEquals' pick from a list; this one takes a typed value.",
+        "Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, or embedded data) pick from a list; this one takes a typed value.",
         context
       );
+    }
+
+    const pickIssues = findPickIssues(filters, query.picks ?? {});
+    if (pickIssues.length > 0) {
+      return problemUnprocessableContent(requestId, "The filter picks are not valid", {
+        instance,
+        invalid_params: pickIssues,
+      });
     }
 
     const dateRange = requestedDateRangeOf(query);
@@ -133,7 +164,8 @@ export async function listV3DashboardFilterValues({
 
     const charts = row.widgets.map(({ chart }) => ({
       datasetId: chart.feedbackDirectoryId,
-      query: chart.query as TChartQuery,
+      // As the dashboard shows it: a big number is one group, whatever it was saved with.
+      query: prepareQueryForChartType(chart.query as TChartQuery, resolveChartType(chart.type)),
     }));
     const datasetIds = [...new Set(charts.map((chart) => chart.datasetId))];
     const actor = getV3AuthorizationActor(context.authentication);
@@ -157,16 +189,21 @@ export async function listV3DashboardFilterValues({
     const datasetHasField = (datasetId: string, field: string) => matchers.get(datasetId)?.(field) ?? false;
 
     // Every dataset whose charts can offer values must be readable, so the one cached list is everyone's.
-    for (const datasetId of datasetIds.filter((id) => datasetHasField(id, filter.field))) {
-      const refused = await refuseUnlessDashboardDatasetReadable(access, datasetId, context);
-      if (refused) return refused;
-    }
+    // Checked together (C8): one dashboard can read many datasets.
+    const refusals = await Promise.all(
+      datasetIds
+        .filter((id) => datasetHasField(id, filter.field))
+        .map((datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, context))
+    );
+    const refused = refusals.find((refusal) => refusal !== null);
+    if (refused) return refused;
 
     const picks = keepCurrentPicks(filters, query.picks ?? {});
     const { [filter.id]: _ownPick, ...otherPicks } = picks;
     const cacheKey = valuesCacheKey({
       dashboardId,
       updatedAt: row.updatedAt,
+      charts: row.widgets.map(({ chart }) => ({ id: chart.id, updatedAt: chart.updatedAt })),
       filterId,
       otherPicks,
       dateRange,
@@ -176,10 +213,7 @@ export async function listV3DashboardFilterValues({
     const cached = await cache.get<TV3DashboardFilterValues>(cacheKey);
     if (cached.ok && cached.data) return successResponse(cached.data, { requestId });
 
-    const limited = await applyChartQueryRateLimit(context);
-    if (limited) return limited;
-
-    const queries = buildFilterValueQueries({
+    const plan = {
       filter,
       filters,
       charts,
@@ -187,25 +221,58 @@ export async function listV3DashboardFilterValues({
       dateFilter: requested.filter,
       clock: { timeZone: await getOrganizationReportingTimeZone(access.organizationId) },
       datasetHasField,
-      search: query.search,
-    });
+    };
+    const queries = buildFilterValueQueries({ ...plan, search: query.search });
+    const groups = buildBoundedChartQueries(plan);
+    if (queries.length + 2 * groups.length > MAX_FILTER_VALUE_QUERIES) {
+      return problemUnprocessableContent(requestId, "This filter's value list needs too many queries", {
+        instance,
+        invalid_params: [
+          {
+            name: "filterId",
+            reason: `The dashboard's charts need more than ${MAX_FILTER_VALUE_QUERIES} queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.`,
+            code: "limit_exceeded",
+          },
+        ],
+      });
+    }
+
+    const limited = await applyChartQueryRateLimit(context);
+    if (limited) return limited;
+
+    const run = async ({ datasetId, query: cubeQuery }: TFilterValueQuery): Promise<unknown[]> => {
+      const rows = await executeTenantScopedQuery({
+        query: cubeQuery,
+        feedbackDirectoryId: datasetId,
+        workspaceId: access.workspaceId,
+        organizationId: access.organizationId,
+        actor,
+        source: "v3.dashboards.filterValues",
+      });
+      return Array.isArray(rows) ? (rows as unknown[]) : [];
+    };
 
     return await withChartQuerySlot(context, async () => {
-      const results = await Promise.all(
-        queries.map(async ({ datasetId, query: valueQuery }) => {
-          const rows = await executeTenantScopedQuery({
-            query: valueQuery,
-            feedbackDirectoryId: datasetId,
-            workspaceId: access.workspaceId,
-            organizationId: access.organizationId,
-            actor,
-            source: "v3.dashboards.filterValues",
-          });
-          return Array.isArray(rows) ? (rows as unknown[]) : [];
-        })
+      // First the merged value queries and the bounded charts' own queries; then, for each bounded chart
+      // not grouped by the field, its values within the groups it showed (S6).
+      const [results, groupRows] = await Promise.all([
+        mapWithConcurrency(queries, FILTER_VALUE_QUERY_CONCURRENCY, run),
+        mapWithConcurrency(groups, FILTER_VALUE_QUERY_CONCURRENCY, run),
+      ]);
+      const resolved = groups.map((group, index) =>
+        resolveBoundedChartValues({ filter, group, rows: groupRows[index], search: query.search })
       );
+      const secondStep = resolved.flatMap((outcome) => (outcome.type === "query" ? [outcome.query] : []));
+      const groupValues = resolved.flatMap((outcome) =>
+        outcome.type === "values" ? [outcome.values.map((value) => ({ [filter.field]: value }))] : []
+      );
+      const secondResults = await mapWithConcurrency(secondStep, FILTER_VALUE_QUERY_CONCURRENCY, run);
 
-      const data: TV3DashboardFilterValues = mergeFilterValues(filter.field, results);
+      const data: TV3DashboardFilterValues = mergeFilterValues(filter.field, [
+        ...results,
+        ...groupValues,
+        ...secondResults,
+      ]);
       const stored = await cache.set(cacheKey, data, FILTER_VALUES_CACHE_TTL_MS);
       if (!stored.ok) log.warn({ error: stored.error }, "Could not cache a dashboard filter's values");
       return successResponse(data, { requestId });

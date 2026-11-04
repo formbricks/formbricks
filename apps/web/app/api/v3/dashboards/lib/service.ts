@@ -222,7 +222,9 @@ export const getDashboardChartsRow = (dashboardId: string, { chartId }: { chartI
         ...(chartId ? { where: { chartId } } : {}),
         orderBy: WIDGET_READ_ORDER,
         select: {
-          chart: { select: { id: true, type: true, query: true, feedbackDirectoryId: true } },
+          chart: {
+            select: { id: true, type: true, query: true, feedbackDirectoryId: true, updatedAt: true },
+          },
         },
       },
     },

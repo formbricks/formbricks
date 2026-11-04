@@ -4,10 +4,14 @@ import { type TMemoryRecord, recordMatches, runMemoryDimensionQuery } from "./cu
 import type { TDashboardDateFilter } from "./dashboard-date-filter";
 import type { TDashboardFilter, TDashboardFilterPicks } from "./dashboard-filters";
 import {
+  FILTER_VALUE_GROUP_LIMIT,
   FILTER_VALUE_LIST_LIMIT,
   type TFilterValueChart,
+  buildBoundedChartQueries,
   buildFilterValueQueries,
+  isGroupBoundedChart,
   mergeFilterValues,
+  resolveBoundedChartValues,
 } from "./filter-value-query";
 
 const CLOCK = { timeZone: "UTC", now: new Date("2026-11-03T12:00:00Z") };
@@ -244,14 +248,14 @@ describe("buildFilterValueQueries", () => {
     ).toEqual(["ds_a"]);
   });
 
-  test("runs a chart whose rules refer to a measure on its own, outside the OR", () => {
+  test("leaves a chart whose rules refer to a measure out of the merged queries: it is bounded by its groups (S6)", () => {
     const queries = buildFilterValueQueries({
       filter: ACCOUNT_FILTER,
       filters: FILTERS,
       charts: [
         chart("ds_a", [{ member: REGION, operator: "equals", values: ["North"] }]),
         chart("ds_a", [{ member: PRODUCT, operator: "equals", values: ["Alpha"] }]),
-        chart("ds_a", [{ member: "FeedbackRecords.npsScore", operator: "gt", values: ["50"] }]),
+        chart("ds_a", [{ member: "FeedbackRecords.count", operator: "gt", values: ["50"] }]),
       ],
       picks: {},
       dateFilter: null,
@@ -266,7 +270,6 @@ describe("buildFilterValueQueries", () => {
           { member: PRODUCT, operator: "equals", values: ["Alpha"] },
         ],
       },
-      { member: "FeedbackRecords.npsScore", operator: "gt", values: ["50"] },
     ]);
   });
 
@@ -445,5 +448,190 @@ describe("mergeFilterValues", () => {
     expect(values[0]).toEqual({ value: "account-00000" });
     expect(values).toHaveLength(100);
     expect(hasMore).toBe(true);
+  });
+});
+
+/**
+ * A chart's own rows, the way Cube groups them: by its dimensions, counted, kept by its count rules
+ * (HAVING), ordered by count descending and cut by limit and offset. Enough for the bounded-chart tests.
+ */
+const runGroupQuery = (records: TMemoryRecord[], query: TChartQuery): Record<string, string | number>[] => {
+  const dimensions = query.dimensions ?? [];
+  const recordRules = (query.filters ?? []).filter(
+    (rule) => !("member" in rule && rule.member === "FeedbackRecords.count")
+  );
+  const countRules = (query.filters ?? []).flatMap((rule) =>
+    "member" in rule && rule.member === "FeedbackRecords.count" ? [rule] : []
+  );
+  const groups = new Map<string, { row: Record<string, string>; count: number }>();
+  for (const r of records) {
+    if (!recordMatches(r, { ...query, filters: recordRules })) continue;
+    const row = Object.fromEntries(dimensions.map((d) => [d, r[d] ?? ""]));
+    const key = JSON.stringify(row);
+    const group = groups.get(key) ?? { row, count: 0 };
+    group.count += 1;
+    groups.set(key, group);
+  }
+  const kept = [...groups.values()].filter(({ count }) =>
+    countRules.every((rule) => count > Number(rule.values?.[0]))
+  );
+  kept.sort((a, b) => b.count - a.count || JSON.stringify(a.row).localeCompare(JSON.stringify(b.row)));
+  const from = query.offset ?? 0;
+  return kept
+    .slice(from, query.limit === undefined ? undefined : from + query.limit)
+    .map(({ row, count }) => ({ ...row, "FeedbackRecords.count": count }));
+};
+
+/** Both phases for the bounded charts, in memory: their own rows, then the values within their groups. */
+const runBounded = (records: TMemoryRecord[], input: Parameters<typeof buildFilterValueQueries>[0]) =>
+  buildBoundedChartQueries(input).flatMap((group) => {
+    const resolved = resolveBoundedChartValues({
+      filter: input.filter,
+      group,
+      rows: runGroupQuery(records, group.query),
+      search: input.search,
+    });
+    if (resolved.type === "values") return resolved.values;
+    if (resolved.type === "query") {
+      return runMemoryDimensionQuery(records, resolved.query.query).map((row) => row[input.filter.field]);
+    }
+    return [];
+  });
+
+describe("charts bounded by their own groups: top-N and HAVING (S6)", () => {
+  const COUNT = "FeedbackRecords.count";
+  const PRODUCT_LIST = filter("3", PRODUCT, "Product");
+  const records = [
+    record({ [ACCOUNT]: "a1", [PRODUCT]: "Alpha", [REGION]: "North" }),
+    record({ [ACCOUNT]: "a2", [PRODUCT]: "Alpha", [REGION]: "North" }),
+    record({ [ACCOUNT]: "a3", [PRODUCT]: "Alpha", [REGION]: "South" }),
+    record({ [ACCOUNT]: "b1", [PRODUCT]: "Beta", [REGION]: "South" }),
+  ];
+  const topProduct: TFilterValueChart = {
+    datasetId: "ds_a",
+    query: { measures: [COUNT], dimensions: [PRODUCT], order: [[COUNT, "desc"]], limit: 1 },
+  };
+  const base = {
+    filters: FILTERS,
+    picks: {},
+    dateFilter: null,
+    clock: CLOCK,
+    datasetHasField: everyField,
+  };
+
+  test("a chart with a limit, an offset, or a rule on a measure is bounded; a plain one is not", () => {
+    expect(isGroupBoundedChart(topProduct.query)).toBe(true);
+    expect(isGroupBoundedChart({ measures: [COUNT], offset: 5 })).toBe(true);
+    expect(
+      isGroupBoundedChart({
+        measures: [COUNT],
+        filters: [{ or: [{ member: COUNT, operator: "gt", values: ["1"] }] }],
+      })
+    ).toBe(true);
+    expect(isGroupBoundedChart({ measures: [COUNT], dimensions: [PRODUCT] })).toBe(false);
+  });
+
+  test("top-N: a filter on the grouped field lists only the groups the chart shows", () => {
+    const merged = buildFilterValueQueries({ ...base, filter: PRODUCT_LIST, charts: [topProduct] });
+    expect(merged).toEqual([]);
+    expect(runBounded(records, { ...base, filter: PRODUCT_LIST, charts: [topProduct] })).toEqual(["Alpha"]);
+  });
+
+  test("top-N: a filter on another field lists only values within the shown groups", () => {
+    expect(runBounded(records, { ...base, filter: ACCOUNT_FILTER, charts: [topProduct] }).sort()).toEqual([
+      "a1",
+      "a2",
+      "a3",
+    ]);
+  });
+
+  test("HAVING: only values within groups whose measure passes the rule", () => {
+    const busyRegions: TFilterValueChart = {
+      datasetId: "ds_a",
+      query: {
+        measures: [COUNT],
+        dimensions: [REGION],
+        filters: [{ member: COUNT, operator: "gt", values: ["1"] }],
+      },
+    };
+    // North has 2 records, South 2: both pass "> 1". With "> 2" neither does, so nothing is listed.
+    expect(runBounded(records, { ...base, filter: ACCOUNT_FILTER, charts: [busyRegions] }).sort()).toEqual([
+      "a1",
+      "a2",
+      "a3",
+      "b1",
+    ]);
+    const none = {
+      ...busyRegions,
+      query: { ...busyRegions.query, filters: [{ member: COUNT, operator: "gt", values: ["2"] }] },
+    };
+    expect(runBounded(records, { ...base, filter: ACCOUNT_FILTER, charts: [none] })).toEqual([]);
+  });
+
+  test("searches the rows of a grouped field case-insensitively", () => {
+    const top2 = { ...topProduct, query: { ...topProduct.query, limit: 2 } };
+    expect(runBounded(records, { ...base, filter: PRODUCT_LIST, charts: [top2], search: "BET" })).toEqual([
+      "Beta",
+    ]);
+  });
+
+  test("lists nothing from a chart it cannot bound: grouped by time, or more groups than the cap", () => {
+    const byMonth: TFilterValueChart = {
+      datasetId: "ds_a",
+      query: {
+        measures: [COUNT],
+        timeDimensions: [{ dimension: COLLECTED_AT, granularity: "month" }],
+        limit: 3,
+      },
+    };
+    expect(runBounded(records, { ...base, filter: ACCOUNT_FILTER, charts: [byMonth] })).toEqual([]);
+
+    const many = Array.from({ length: FILTER_VALUE_GROUP_LIMIT + 1 }, (_, i) =>
+      record({ [ACCOUNT]: `x${i}`, [REGION]: `r${i}` })
+    );
+    const allRegions: TFilterValueChart = {
+      datasetId: "ds_a",
+      query: { measures: [COUNT], dimensions: [REGION], limit: FILTER_VALUE_GROUP_LIMIT + 1 },
+    };
+    expect(runBounded(many, { ...base, filter: ACCOUNT_FILTER, charts: [allRegions] })).toEqual([]);
+    const atCap = { ...allRegions, query: { ...allRegions.query, limit: FILTER_VALUE_GROUP_LIMIT } };
+    expect(runBounded(many, { ...base, filter: ACCOUNT_FILTER, charts: [atCap] })).toHaveLength(
+      FILTER_VALUE_GROUP_LIMIT
+    );
+  });
+
+  test("a bounded chart's own query carries the other picks and the dashboard date", () => {
+    const [group] = buildBoundedChartQueries({
+      ...base,
+      filter: ACCOUNT_FILTER,
+      charts: [topProduct],
+      picks: { [REGION_FILTER.id]: ["North"] },
+      dateFilter: { type: "custom", range: ["2026-10-01", "2026-10-31"] },
+    });
+    expect(group.query.limit).toBe(1);
+    expect(group.query.filters).toEqual(
+      expect.arrayContaining([{ member: REGION, operator: "equals", values: ["North"] }])
+    );
+    expect(JSON.stringify(group.query)).toContain("2026-10-01");
+  });
+
+  test("leaves out a dataset missing the field, and a chart missing another picked field", () => {
+    expect(
+      buildBoundedChartQueries({
+        ...base,
+        filter: ACCOUNT_FILTER,
+        charts: [topProduct],
+        datasetHasField: (_ds, field) => field !== ACCOUNT,
+      })
+    ).toEqual([]);
+    expect(
+      buildBoundedChartQueries({
+        ...base,
+        filter: ACCOUNT_FILTER,
+        charts: [topProduct],
+        picks: { [CHANNEL_FILTER.id]: ["web"] },
+        datasetHasField: (_ds, field) => field !== CHANNEL,
+      })
+    ).toEqual([]);
   });
 });
