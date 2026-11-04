@@ -295,18 +295,24 @@ function checkShape(kind: TDocumentPlanKind, entry: TDocumentPlanEntry, fail: TF
 /** The headline as the whole cell, in each language: what an entry whose pieces did not hold becomes. */
 const wholeCellHeadline = (
   context: DocumentPlanContext,
-  entry: TDocumentPlanEntry
-): { headline: Map<string, string>; cell: string } | null => {
+  entry: TDocumentPlanEntry,
+  span: { first: number; last: number }
+): { headline: Map<string, string>; cell: string; cells: Set<string> } | null => {
   const headline = new Map<string, string>();
+  const cells = new Set<string>();
   let defaultCell: string | null = null;
   for (const piece of entry.headline) {
     const code = context.languages?.byPlanCode.get(piece.language.trim());
     const text = context.model.cells.get(piece.cell);
-    if (!code || text === undefined || headline.has(code)) continue;
+    // Only the entry's own lines, as every other piece is read: a cell elsewhere is another entry's.
+    const line = context.cellLineAt(piece.cell);
+    const inSpan = line !== undefined && line >= span.first && line <= span.last;
+    if (!code || text === undefined || !inSpan || headline.has(code)) continue;
     headline.set(code, collapseWhitespace(text));
+    cells.add(piece.cell);
     if (code === context.languages?.defaultLanguage) defaultCell = piece.cell;
   }
-  return defaultCell ? { headline, cell: defaultCell } : null;
+  return defaultCell ? { headline, cell: defaultCell, cells } : null;
 };
 
 type TEntryResult =
@@ -364,7 +370,7 @@ export function checkEntry(
 
   // The retry was the split's last chance: the whole cell becomes the headline, reported (decision 17).
   if (retry && reasons.has("not_verbatim")) {
-    const whole = wholeCellHeadline(context, entry);
+    const whole = wholeCellHeadline(context, entry, span);
     if (whole) {
       const isScreen = kind === "welcome" || kind === "ending";
       return {
@@ -380,7 +386,7 @@ export function checkEntry(
           lowerLabel: null,
           upperLabel: null,
           range: null,
-          cells: new Set(entry.headline.map((piece) => piece.cell)),
+          cells: whole.cells,
           unsplitCell: whole.cell,
         },
       };

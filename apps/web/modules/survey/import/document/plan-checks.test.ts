@@ -93,6 +93,20 @@ describe("checkDocumentPlanResponses", () => {
     expect(retried?.headline.get("en-US")).toBe("Age group / Choices: 18-24; 25-34");
   });
 
+  test("on the retry, takes the whole cell only from the entry's own lines, and claims no other", () => {
+    // B3 doesn't hold its piece word for word; C2 is on an earlier line, another entry's.
+    const stray = entry("R3", {
+      headline: [piece("en", "B3", "Anything else, really?"), piece("de", "C2", "Altersgruppe")],
+    });
+
+    const retried = check([answer(["R3"], [stray])], true).plan.entries.get("R3");
+
+    expect(retried).toMatchObject({ unsplitCell: "B3" });
+    expect(retried?.headline.get("en-US")).toBe("Anything else?");
+    expect(retried?.headline.has("de-DE")).toBe(false);
+    expect([...(retried?.cells ?? [])]).toEqual(["B3"]);
+  });
+
   test("refuses a piece naming a cell before the line its entry starts on", () => {
     const reaching = entry("R3", { headline: [piece("en", "B2"), piece("de", "C3")] });
 
