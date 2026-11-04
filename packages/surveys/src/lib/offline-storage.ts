@@ -43,6 +43,11 @@ export interface SurveyProgressEntry {
    * record. Optional: entries written before it restore with none, as the bundle that wrote them sent.
    */
   notShownSteps?: TNotShownStep[];
+  /**
+   * A write already carried the Low quality flag (ENG-6933, P42), so a resumed session doesn't send
+   * it again. Optional: entries written before it restore without it.
+   */
+  lowQualitySent?: boolean;
   selectedLanguage: string;
   surveyStateSnapshot: SerializedSurveyState;
   /**
