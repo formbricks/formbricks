@@ -38,6 +38,7 @@ const mocks = vi.hoisted(() => {
     inputSchema,
     applyRateLimit: vi.fn(),
     getOrganizationIdFromWorkspaceId: vi.fn(),
+    getUserVisibleSurveyWhere: vi.fn(),
     createSharedEmbeddedData: vi.fn(),
     deleteSharedEmbeddedData: vi.fn(),
     getEmbeddedDataUsage: vi.fn(),
@@ -52,6 +53,9 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
+vi.mock("@/lib/survey/visibility/actor-context", () => ({
+  getUserVisibleSurveyWhere: mocks.getUserVisibleSurveyWhere,
+}));
 vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: { inputSchema: mocks.inputSchema },
 }));
@@ -99,7 +103,13 @@ const field = {
   workspaceId,
 };
 
-const usage = [{ id: surveyId, name: "Onboarding", status: "inProgress" as const }];
+const usage = {
+  surveys: [{ id: surveyId, name: "Onboarding", status: "inProgress" as const }],
+  hiddenSurveyCount: 1,
+};
+
+/** The caller's survey visibility, as `getUserVisibleSurveyWhere` resolves it. */
+const visibleSurveyWhere = { OR: [{ visibility: "workspace" }, { ownerId: userId }] };
 
 type TTestCtx = { user: { id: string }; auditLoggingCtx: AuditLoggingCtx };
 type TTestAction = ((args: { ctx: TTestCtx; parsedInput: Record<string, unknown> }) => Promise<unknown>) & {
@@ -118,6 +128,7 @@ beforeEach(() => {
   ctx = { user: { id: userId }, auditLoggingCtx: { ipAddress: "unknown", userAgent: "test-agent" } };
   vi.mocked(assertCan).mockResolvedValue(undefined);
   mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(organizationId);
+  mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleSurveyWhere);
   mocks.getEmbeddedDataWorkspaceId.mockResolvedValue(workspaceId);
   mocks.getSharedEmbeddedData.mockResolvedValue([{ ...field, surveyCount: 2 }]);
   mocks.getSharedEmbeddedDataById.mockResolvedValue(field);
@@ -175,12 +186,14 @@ describe("reads", () => {
     expect(result).toEqual([{ ...field, surveyCount: 2 }]);
   });
 
-  test("reads usage against the workspace on the row", async () => {
+  // ENG-6811: usage named every linked survey, Restricted ones included.
+  test("reads usage against the workspace on the row, as the caller may see its surveys", async () => {
     const result = await run(getEmbeddedDataUsageAction, { id: fieldId }, ctx);
 
     expect(mocks.getEmbeddedDataWorkspaceId).toHaveBeenCalledWith(fieldId);
     expect(assertCan).toHaveBeenCalledWith(actor, "workspace.read", workspaceResource);
-    expect(mocks.getEmbeddedDataUsage).toHaveBeenCalledWith(fieldId, workspaceId);
+    expect(mocks.getUserVisibleSurveyWhere).toHaveBeenCalledWith(userId, organizationId);
+    expect(mocks.getEmbeddedDataUsage).toHaveBeenCalledWith(fieldId, workspaceId, visibleSurveyWhere);
     expect(result).toEqual(usage);
   });
 });
@@ -277,7 +290,7 @@ describe("writes", () => {
       fieldId,
       workspaceId,
       { dataType: "string" },
-      { acknowledgeExistingResponses: true }
+      { visibleSurveyWhere, acknowledgeExistingResponses: true }
     );
     expect(result).toEqual({ status: "ok", field });
     expect(ctx.auditLoggingCtx.oldObject).toEqual(before);
@@ -287,7 +300,7 @@ describe("writes", () => {
   test("delete keeps the removed row as the whole record of what happened", async () => {
     const result = await run(deleteSharedEmbeddedDataAction, { id: fieldId }, ctx);
 
-    expect(mocks.deleteSharedEmbeddedData).toHaveBeenCalledWith(fieldId, workspaceId);
+    expect(mocks.deleteSharedEmbeddedData).toHaveBeenCalledWith(fieldId, workspaceId, visibleSurveyWhere);
     expect(result).toEqual({ status: "ok", field });
     expect(ctx.auditLoggingCtx.oldObject).toEqual(field);
     expect(ctx.auditLoggingCtx.newObject).toBeUndefined();

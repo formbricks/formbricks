@@ -2755,6 +2755,7 @@
       "unlink_field_title": "Remove {name} from this survey?",
       "used_in": "Used in",
       "used_in_surveys": "{count, plural, one {# survey} other {# surveys}}",
+      "used_in_surveys_you_cannot_see": "{count, plural, one {# survey you can't see} other {# surveys you can't see}}",
       "value_false": "False",
       "value_source": "Where does the value come from?",
       "value_source_column": "Source",

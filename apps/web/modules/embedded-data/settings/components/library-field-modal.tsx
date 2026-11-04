@@ -308,7 +308,10 @@ export const LibraryFieldModal = ({
         toast.error(result.message || t("common.something_went_wrong_please_try_again"));
         return;
       }
-      setPendingTypeChange({ draft, surveyCount: result.usage.length });
+      setPendingTypeChange({
+        draft,
+        surveyCount: result.usage.surveys.length + result.usage.hiddenSurveyCount,
+      });
       return;
     }
 

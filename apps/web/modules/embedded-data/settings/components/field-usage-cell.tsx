@@ -5,10 +5,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getEmbeddedDataUsageAction } from "@/modules/embedded-data/actions";
-import type { TEmbeddedDataUsageItem } from "@/modules/embedded-data/types";
+import type { TEmbeddedDataUsage } from "@/modules/embedded-data/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { getSurveyStatusLabel } from "../lib/field-labels";
 import { getUsageLabel } from "../lib/library-field";
+import { HiddenSurveysItem } from "./hidden-surveys-item";
 
 interface FieldUsageCellProps {
   fieldId: string;
@@ -37,7 +38,7 @@ interface FieldUsageCellProps {
  */
 export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<FieldUsageCellProps>) => {
   const { t } = useTranslation();
-  const [usage, setUsage] = useState<TEmbeddedDataUsageItem[] | null>(null);
+  const [usage, setUsage] = useState<TEmbeddedDataUsage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const label = getUsageLabel(surveyCount);
 
@@ -64,12 +65,12 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
     if (!usage) return <p className="text-sm text-slate-500">{t("common.loading")}</p>;
     // A successful empty answer is reachable: `surveyCount` is as old as the page, so the last
     // linking survey may have been deleted since. Without this the panel renders an empty list.
-    if (usage.length === 0)
+    if (usage.surveys.length === 0 && usage.hiddenSurveyCount === 0)
       return <p className="text-sm text-slate-500">{t("workspace.embedded_data.not_used")}</p>;
 
     return (
       <ul className="flex flex-col gap-2">
-        {usage.map((survey) => (
+        {usage.surveys.map((survey) => (
           <li key={survey.id} className="flex items-center justify-between gap-3">
             <Link
               href={`/workspaces/${workspaceId}/surveys/${survey.id}/edit`}
@@ -79,6 +80,7 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
             <span className="shrink-0 text-xs text-slate-500">{getSurveyStatusLabel(survey.status, t)}</span>
           </li>
         ))}
+        <HiddenSurveysItem count={usage.hiddenSurveyCount} />
       </ul>
     );
   };

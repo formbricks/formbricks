@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteSharedEmbeddedDataAction } from "@/modules/embedded-data/actions";
-import type { TEmbeddedDataUsageItem, TSharedEmbeddedData } from "@/modules/embedded-data/types";
+import type { TEmbeddedDataUsage, TSharedEmbeddedData } from "@/modules/embedded-data/types";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { getSurveyStatusLabel } from "../lib/field-labels";
+import { HiddenSurveysItem } from "./hidden-surveys-item";
 
 interface DeleteFieldDialogProps {
   field: TSharedEmbeddedData;
@@ -48,7 +49,7 @@ export const DeleteFieldDialog = ({
 }: Readonly<DeleteFieldDialogProps>) => {
   const { t } = useTranslation();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [blockingSurveys, setBlockingSurveys] = useState<TEmbeddedDataUsageItem[] | null>(null);
+  const [blockingSurveys, setBlockingSurveys] = useState<TEmbeddedDataUsage | null>(null);
 
   const close = () => {
     setBlockingSurveys(null);
@@ -94,7 +95,7 @@ export const DeleteFieldDialog = ({
           <DialogBody>
             <p className="text-sm text-slate-800">{t("workspace.embedded_data.still_used_body")}</p>
             <ul className="mt-3 flex flex-col gap-2">
-              {blockingSurveys.map((survey) => (
+              {blockingSurveys.surveys.map((survey) => (
                 <li key={survey.id} className="flex items-center justify-between gap-3">
                   <Link
                     href={`/workspaces/${workspaceId}/surveys/${survey.id}/edit`}
@@ -106,6 +107,7 @@ export const DeleteFieldDialog = ({
                   </span>
                 </li>
               ))}
+              <HiddenSurveysItem count={blockingSurveys.hiddenSurveyCount} />
             </ul>
           </DialogBody>
           <DialogFooter>

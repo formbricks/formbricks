@@ -10,6 +10,7 @@ import {
 import {
   createSharedEmbeddedData,
   deleteSharedEmbeddedData,
+  getEmbeddedDataUsage,
   getEmbeddedDataWorkspaceId,
   getSharedEmbeddedData,
   promoteEmbeddedDataToShared,
@@ -27,7 +28,7 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    surveyEmbeddedData: { findMany: vi.fn(), findFirst: vi.fn() },
+    surveyEmbeddedData: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() },
     survey: { findFirst: vi.fn() },
     response: { findFirst: vi.fn() },
   },
@@ -64,6 +65,11 @@ const createInput: TCreateSharedEmbeddedDataInput = {
 
 const usageRow = { survey: { id: surveyId, name: "Onboarding", status: "inProgress" as const } };
 
+/** A reader's survey-visibility clause, as `getUserVisibleSurveyWhere` builds it for a plain member. */
+const visibleSurveyWhere = {
+  OR: [{ visibility: "workspace" as const }, { ownerId: "cluu1234567890123456789012" }],
+};
+
 const uniqueViolation = () =>
   Object.assign(new Error("Unique constraint failed"), {
     code: PrismaErrorType.UniqueConstraintViolation,
@@ -72,6 +78,7 @@ const uniqueViolation = () =>
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+  vi.mocked(prisma.surveyEmbeddedData.count).mockResolvedValue(0);
 });
 
 describe("getSharedEmbeddedData", () => {
@@ -184,7 +191,12 @@ describe("updateSharedEmbeddedData", () => {
     vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
     vi.mocked(prisma.embeddedData.update).mockResolvedValue({ ...sharedRow, name: "Tier" } as never);
 
-    const field = await updateSharedEmbeddedData(fieldId, workspaceId, { name: "Tier" });
+    const field = await updateSharedEmbeddedData(
+      fieldId,
+      workspaceId,
+      { name: "Tier" },
+      { visibleSurveyWhere }
+    );
 
     expect(field.name).toBe("Tier");
     expect(prisma.embeddedData.update).toHaveBeenCalledWith(
@@ -195,9 +207,9 @@ describe("updateSharedEmbeddedData", () => {
   test("a row with no library key is not found here", async () => {
     vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(null);
 
-    await expect(updateSharedEmbeddedData(fieldId, workspaceId, { name: "Tier" })).rejects.toThrow(
-      ResourceNotFoundError
-    );
+    await expect(
+      updateSharedEmbeddedData(fieldId, workspaceId, { name: "Tier" }, { visibleSurveyWhere })
+    ).rejects.toThrow(ResourceNotFoundError);
     expect(prisma.embeddedData.update).not.toHaveBeenCalled();
   });
 
@@ -206,7 +218,12 @@ describe("updateSharedEmbeddedData", () => {
 
     // The stored field is a string; the patch retypes it to number and leaves a string default behind.
     await expect(
-      updateSharedEmbeddedData(fieldId, workspaceId, { dataType: "number", defaultValue: "seven" })
+      updateSharedEmbeddedData(
+        fieldId,
+        workspaceId,
+        { dataType: "number", defaultValue: "seven" },
+        { visibleSurveyWhere }
+      )
     ).rejects.toThrow("A number field's default value must be a number");
     expect(prisma.embeddedData.update).not.toHaveBeenCalled();
   });
@@ -216,14 +233,21 @@ describe("updateSharedEmbeddedData", () => {
     vi.mocked(prisma.surveyEmbeddedData.findMany)
       .mockResolvedValueOnce([{ surveyId }] as never)
       .mockResolvedValueOnce([usageRow] as never);
+    vi.mocked(prisma.surveyEmbeddedData.count).mockResolvedValue(1);
     vi.mocked(prisma.response.findFirst).mockResolvedValue({ id: "clrr1234567890123456789012" } as never);
 
-    const error = await updateSharedEmbeddedData(fieldId, workspaceId, { dataType: "number" }).catch(
-      (e: unknown) => e
-    );
+    const error = await updateSharedEmbeddedData(
+      fieldId,
+      workspaceId,
+      { dataType: "number" },
+      { visibleSurveyWhere }
+    ).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(EmbeddedDataInUseError);
-    expect((error as EmbeddedDataInUseError).usage).toEqual([usageRow.survey]);
+    expect((error as EmbeddedDataInUseError).usage).toEqual({
+      surveys: [usageRow.survey],
+      hiddenSurveyCount: 0,
+    });
     expect(prisma.embeddedData.update).not.toHaveBeenCalled();
   });
 
@@ -235,7 +259,7 @@ describe("updateSharedEmbeddedData", () => {
       fieldId,
       workspaceId,
       { dataType: "number" },
-      { acknowledgeExistingResponses: true }
+      { visibleSurveyWhere, acknowledgeExistingResponses: true }
     );
 
     expect(field.dataType).toBe("number");
@@ -250,7 +274,7 @@ describe("updateSharedEmbeddedData", () => {
     vi.mocked(prisma.embeddedData.update).mockResolvedValue({ ...sharedRow, dataType: "number" } as never);
 
     await expect(
-      updateSharedEmbeddedData(fieldId, workspaceId, { dataType: "number" })
+      updateSharedEmbeddedData(fieldId, workspaceId, { dataType: "number" }, { visibleSurveyWhere })
     ).resolves.toMatchObject({ dataType: "number" });
   });
 
@@ -258,7 +282,12 @@ describe("updateSharedEmbeddedData", () => {
     vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
     vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow as never);
 
-    await updateSharedEmbeddedData(fieldId, workspaceId, { dataType: "string", name: "Tier" });
+    await updateSharedEmbeddedData(
+      fieldId,
+      workspaceId,
+      { dataType: "string", name: "Tier" },
+      { visibleSurveyWhere }
+    );
 
     // Re-sending the same type is not a change, so a field with responses stays renameable.
     expect(prisma.response.findFirst).not.toHaveBeenCalled();
@@ -269,7 +298,7 @@ describe("deleteSharedEmbeddedData", () => {
   test("removes a field nothing links", async () => {
     vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
 
-    const field = await deleteSharedEmbeddedData(fieldId, workspaceId);
+    const field = await deleteSharedEmbeddedData(fieldId, workspaceId, visibleSurveyWhere);
 
     expect(field).toEqual(sharedRow);
     expect(prisma.embeddedData.delete).toHaveBeenCalledWith({ where: { id: fieldId, workspaceId } });
@@ -278,13 +307,52 @@ describe("deleteSharedEmbeddedData", () => {
   test("refuses while a survey links it, and says which", async () => {
     vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
     vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([usageRow] as never);
+    vi.mocked(prisma.surveyEmbeddedData.count).mockResolvedValue(1);
 
-    const error = await deleteSharedEmbeddedData(fieldId, workspaceId).catch((e: unknown) => e);
+    const error = await deleteSharedEmbeddedData(fieldId, workspaceId, visibleSurveyWhere).catch(
+      (e: unknown) => e
+    );
 
     // The cascade on SurveyEmbeddedData would otherwise strip the field from every linked survey.
     expect(error).toBeInstanceOf(EmbeddedDataInUseError);
-    expect((error as EmbeddedDataInUseError).usage).toEqual([usageRow.survey]);
+    expect((error as EmbeddedDataInUseError).usage).toEqual({
+      surveys: [usageRow.survey],
+      hiddenSurveyCount: 0,
+    });
     expect(prisma.embeddedData.delete).not.toHaveBeenCalled();
+  });
+
+  test("refuses while only surveys hidden from the caller link it, without naming them", async () => {
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.surveyEmbeddedData.count).mockResolvedValue(2);
+
+    const error = await deleteSharedEmbeddedData(fieldId, workspaceId, visibleSurveyWhere).catch(
+      (e: unknown) => e
+    );
+
+    expect(error).toBeInstanceOf(EmbeddedDataInUseError);
+    expect((error as EmbeddedDataInUseError).usage).toEqual({ surveys: [], hiddenSurveyCount: 2 });
+    expect(prisma.embeddedData.delete).not.toHaveBeenCalled();
+  });
+});
+
+// ENG-6811: the usage list named every linked survey, Restricted ones included.
+describe("getEmbeddedDataUsage", () => {
+  test("names only the surveys the reader can see and counts the rest", async () => {
+    vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([usageRow] as never);
+    vi.mocked(prisma.surveyEmbeddedData.count).mockResolvedValue(3);
+
+    await expect(getEmbeddedDataUsage(fieldId, workspaceId, visibleSurveyWhere)).resolves.toEqual({
+      surveys: [usageRow.survey],
+      hiddenSurveyCount: 2,
+    });
+    expect(prisma.surveyEmbeddedData.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { embeddedDataId: fieldId, workspaceId, survey: visibleSurveyWhere } })
+    );
+    expect(prisma.surveyEmbeddedData.count).toHaveBeenCalledWith({
+      where: { embeddedDataId: fieldId, workspaceId },
+    });
   });
 });
 

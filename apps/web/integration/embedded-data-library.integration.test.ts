@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import {
   createSharedEmbeddedData,
   deleteSharedEmbeddedData,
@@ -55,6 +56,13 @@ const linkSharedField = (workspaceId: string, surveyId: string, embeddedDataId: 
   prisma.surveyEmbeddedData.create({
     data: { workspaceId, surveyId, embeddedDataId, storageKey, order: 0 },
   });
+
+/** An administrator's survey visibility: every survey. */
+const seesEverything = {};
+
+/** A plain member's survey visibility, built by the real predicate rather than restated here. */
+const memberVisibility = (userId: string) =>
+  buildVisibleSurveyWhere({ enforced: true, isOrganizationAdmin: false, kind: "user", userId });
 
 beforeEach(async () => {
   await resetDb();
@@ -191,17 +199,22 @@ describe("deleting a library field (real Postgres)", () => {
     });
     const link = await linkSharedField(workspaceA, surveyId, shared.id, "plan_tier");
 
-    const error = await deleteSharedEmbeddedData(shared.id, workspaceA).catch((e: unknown) => e);
+    const error = await deleteSharedEmbeddedData(shared.id, workspaceA, seesEverything).catch(
+      (e: unknown) => e
+    );
     expect(error).toBeInstanceOf(EmbeddedDataInUseError);
-    expect((error as EmbeddedDataInUseError).usage).toEqual([
-      { id: surveyId, name: "Onboarding", status: "draft" },
-    ]);
+    expect((error as EmbeddedDataInUseError).usage).toEqual({
+      surveys: [{ id: surveyId, name: "Onboarding", status: "draft" }],
+      hiddenSurveyCount: 0,
+    });
     // The refusal is what stands between the survey and a silent cascade, so the row must still exist.
     expect(await prisma.embeddedData.findUnique({ where: { id: shared.id } })).not.toBeNull();
 
     await prisma.surveyEmbeddedData.delete({ where: { id: link.id } });
 
-    await expect(deleteSharedEmbeddedData(shared.id, workspaceA)).resolves.toMatchObject({ id: shared.id });
+    await expect(deleteSharedEmbeddedData(shared.id, workspaceA, seesEverything)).resolves.toMatchObject({
+      id: shared.id,
+    });
     expect(await prisma.embeddedData.findUnique({ where: { id: shared.id } })).toBeNull();
   });
 });
@@ -223,14 +236,18 @@ describe("changing a field's data type (real Postgres)", () => {
   test("refused while a linked survey holds a response, and names that survey", async () => {
     const { workspaceA, surveyId, sharedId } = await seedLinkedFieldWithResponse();
 
-    const error = await updateSharedEmbeddedData(sharedId, workspaceA, { dataType: "number" }).catch(
-      (e: unknown) => e
-    );
+    const error = await updateSharedEmbeddedData(
+      sharedId,
+      workspaceA,
+      { dataType: "number" },
+      { visibleSurveyWhere: seesEverything }
+    ).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(EmbeddedDataInUseError);
-    expect((error as EmbeddedDataInUseError).usage).toEqual([
-      { id: surveyId, name: "Onboarding", status: "draft" },
-    ]);
+    expect((error as EmbeddedDataInUseError).usage).toEqual({
+      surveys: [{ id: surveyId, name: "Onboarding", status: "draft" }],
+      hiddenSurveyCount: 0,
+    });
     expect(await prisma.embeddedData.findUnique({ where: { id: sharedId } })).toMatchObject({
       dataType: "string",
     });
@@ -244,7 +261,7 @@ describe("changing a field's data type (real Postgres)", () => {
         sharedId,
         workspaceA,
         { dataType: "number" },
-        { acknowledgeExistingResponses: true }
+        { visibleSurveyWhere: seesEverything, acknowledgeExistingResponses: true }
       )
     ).resolves.toMatchObject({ dataType: "number" });
   });
@@ -252,7 +269,9 @@ describe("changing a field's data type (real Postgres)", () => {
   test("a rename is never blocked by responses, only a type change is", async () => {
     const { workspaceA, sharedId } = await seedLinkedFieldWithResponse();
 
-    await expect(updateSharedEmbeddedData(sharedId, workspaceA, { name: "Tier" })).resolves.toMatchObject({
+    await expect(
+      updateSharedEmbeddedData(sharedId, workspaceA, { name: "Tier" }, { visibleSurveyWhere: seesEverything })
+    ).resolves.toMatchObject({
       name: "Tier",
     });
   });
@@ -268,14 +287,70 @@ describe("workspace scoping (real Postgres)", () => {
     });
     const { fieldId: localId } = await seedLocalField(workspaceA, surveyId);
 
-    await expect(updateSharedEmbeddedData(shared.id, workspaceB, { name: "Tier" })).rejects.toThrow(
+    await expect(
+      updateSharedEmbeddedData(
+        shared.id,
+        workspaceB,
+        { name: "Tier" },
+        { visibleSurveyWhere: seesEverything }
+      )
+    ).rejects.toThrow(ResourceNotFoundError);
+    await expect(deleteSharedEmbeddedData(shared.id, workspaceB, seesEverything)).rejects.toThrow(
       ResourceNotFoundError
     );
-    await expect(deleteSharedEmbeddedData(shared.id, workspaceB)).rejects.toThrow(ResourceNotFoundError);
     await expect(promoteEmbeddedDataToShared(localId, workspaceB, { key: "tier" })).rejects.toThrow(
       ResourceNotFoundError
     );
     expect(await getSharedEmbeddedData(workspaceB)).toEqual([]);
-    expect(await getEmbeddedDataUsage(shared.id, workspaceB)).toEqual([]);
+    expect(await getEmbeddedDataUsage(shared.id, workspaceB, seesEverything)).toEqual({
+      surveys: [],
+      hiddenSurveyCount: 0,
+    });
+  });
+});
+
+// ENG-6811: the usage list named every linked survey, Restricted ones included.
+describe("usage as a member who cannot see every survey (real Postgres)", () => {
+  const seedRestrictedUsage = async () => {
+    const { workspaceA, surveyId } = await seed();
+    const member = await prisma.user.create({ data: { name: "Member", email: "member@example.com" } });
+    const restricted = await prisma.survey.create({
+      data: { name: "Secret pricing study", workspaceId: workspaceA, visibility: "restricted" },
+    });
+    const shared = await createSharedEmbeddedData(workspaceA, {
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+    });
+    await linkSharedField(workspaceA, surveyId, shared.id, "plan_tier");
+    await linkSharedField(workspaceA, restricted.id, shared.id, "plan_tier");
+
+    return { workspaceA, surveyId, sharedId: shared.id, visibleSurveyWhere: memberVisibility(member.id) };
+  };
+
+  test("names the surveys the member can see and only counts the Restricted one", async () => {
+    const { workspaceA, surveyId, sharedId, visibleSurveyWhere } = await seedRestrictedUsage();
+
+    await expect(getEmbeddedDataUsage(sharedId, workspaceA, visibleSurveyWhere)).resolves.toEqual({
+      surveys: [{ id: surveyId, name: "Onboarding", status: "draft" }],
+      hiddenSurveyCount: 1,
+    });
+    // The library list's count is the same total the usage adds up to.
+    expect(await getSharedEmbeddedData(workspaceA)).toEqual([
+      expect.objectContaining({ id: sharedId, surveyCount: 2 }),
+    ]);
+  });
+
+  test("still refuses the delete when only a Restricted survey links the field, without naming it", async () => {
+    const { workspaceA, surveyId, sharedId, visibleSurveyWhere } = await seedRestrictedUsage();
+    await prisma.surveyEmbeddedData.deleteMany({ where: { surveyId } });
+
+    const error = await deleteSharedEmbeddedData(sharedId, workspaceA, visibleSurveyWhere).catch(
+      (e: unknown) => e
+    );
+
+    expect(error).toBeInstanceOf(EmbeddedDataInUseError);
+    expect((error as EmbeddedDataInUseError).usage).toEqual({ surveys: [], hiddenSurveyCount: 1 });
+    expect(await prisma.embeddedData.findUnique({ where: { id: sharedId } })).not.toBeNull();
   });
 });
