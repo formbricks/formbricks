@@ -422,6 +422,8 @@ export const FlowView = ({
         isInvalid={invalidElements?.includes(row.id) ?? false}
         readOnlyLabel={row.editable ? undefined : t("workspace.surveys.edit.flow.read_only")}
         onToggle={row.editable ? () => toggleRow(row.id) : undefined}
+        // The block cards' chevron: a rule row opens too. A read-only row doesn't, so it gets none.
+        showChevron={row.editable}
         isOpen={isOpen}
         details={
           row.editable ? (

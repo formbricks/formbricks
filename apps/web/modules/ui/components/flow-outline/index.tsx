@@ -93,7 +93,7 @@ interface FlowOutlineRowProps {
   readonly isInvalid?: boolean;
   /** Shown but not editable here (written through the API with something this editor can't edit yet). */
   readonly readOnlyLabel?: string;
-  /** Show a chevron that follows `isOpen`, for rows whose toggle collapses content (blocks). */
+  /** Show a chevron that follows `isOpen`, for rows that open and close (blocks, rule rows). */
   readonly showChevron?: boolean;
   readonly id?: string;
   readonly ariaLabel?: string;
