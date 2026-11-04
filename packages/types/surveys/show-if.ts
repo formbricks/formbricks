@@ -32,19 +32,38 @@ const OPTION_LISTS_BY_TYPE: Record<string, readonly TOptionListKey[]> = {
 };
 
 /**
+ * The option lists an element type has (P2): `choices` for single select, multi select, ranking and
+ * picture selection, `rows` and `columns` for a matrix, none for any other type. The one table every
+ * module that reads options by type uses: show-if, Hidden, copied options, answer dropping, the editor.
+ */
+export const getOptionListKeys = (type: string): readonly TOptionListKey[] =>
+  OPTION_LISTS_BY_TYPE[type] ?? [];
+
+/**
+ * One option list of an element, or `[]` when its type has no such list (or the element is missing).
+ * `TItem` is what the caller reads off each item; the list itself is not validated here.
+ */
+export const getOptionList = <TItem extends { id: string } = TOptionLike>(
+  element: { type: string } | null | undefined,
+  listKey: TOptionListKey
+): readonly TItem[] => {
+  if (!element || !getOptionListKeys(element.type).includes(listKey)) return [];
+  const items = (element as { type: string } & Partial<Record<TOptionListKey, unknown>>)[listKey];
+  return Array.isArray(items) ? (items as TItem[]) : [];
+};
+
+/**
  * The option lists of an element that option show-if and Hidden apply to (P2): the choices of single
  * select, multi select, ranking and picture selection, and a matrix's rows and columns. Any other
  * element type has none.
  */
 export const getOptionLists = (element: {
   type: string;
-}): { listKey: TOptionListKey; items: readonly TOptionLike[] }[] => {
-  const record = element as unknown as Record<string, unknown>;
-  return (OPTION_LISTS_BY_TYPE[element.type] ?? []).flatMap((listKey) => {
-    const items = record[listKey];
+}): { listKey: TOptionListKey; items: readonly TOptionLike[] }[] =>
+  getOptionListKeys(element.type).flatMap((listKey) => {
+    const items = (element as { type: string } & Partial<Record<TOptionListKey, unknown>>)[listKey];
     return Array.isArray(items) ? [{ listKey, items: items as TOptionLike[] }] : [];
   });
-};
 
 /**
  * Whether an item's show-if lets it be shown. A missing show-if and an empty group both mean "always

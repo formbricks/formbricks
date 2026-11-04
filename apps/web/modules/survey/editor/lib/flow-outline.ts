@@ -213,17 +213,17 @@ const getShowIfBadge = (item: unknown): TFlowBadge[] =>
       ]
     : [];
 
-/** The options of an element, wherever its type keeps them: choices, or matrix rows and columns. */
-const getOptionLikeItems = (element: TLooseRecord): unknown[] =>
-  ["choices", "rows", "columns"].flatMap((key) => {
-    const items = element[key];
-    return Array.isArray(items) ? items : [];
-  });
+/** The option lists of an element, wherever its type keeps them: choices, or matrix rows and columns. */
+const getElementOptionLists = (element: unknown) =>
+  isRecord(element) && typeof element.type === "string"
+    ? getOptionLists({ ...element, type: element.type })
+    : [];
+
+const getOptionLikeItems = (element: unknown): readonly unknown[] =>
+  getElementOptionLists(element).flatMap((list) => list.items);
 
 const getOptionListKeys = (element: unknown): TOptionListKey[] =>
-  isRecord(element) && typeof element.type === "string"
-    ? getOptionLists({ type: element.type, ...element }).map((list) => list.listKey)
-    : [];
+  getElementOptionLists(element).map((list) => list.listKey);
 
 const getElementBadges = (element: unknown): TFlowBadge[] => {
   if (!isRecord(element)) return [];

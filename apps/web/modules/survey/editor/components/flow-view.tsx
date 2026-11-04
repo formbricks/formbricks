@@ -24,6 +24,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options-show-if-popover";
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
+import { ShowIfPopoverBoundary } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { getBlockDisplayName, isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
 import {
   type TFlowBadge,
@@ -108,6 +109,8 @@ export const FlowView = ({
   const outline = useMemo(() => buildFlowOutline(localSurvey), [localSurvey]);
 
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
+  // The show-if popovers stay inside the editor column rather than spill over the preview.
+  const [popoverBoundary, setPopoverBoundary] = useState<HTMLDivElement | null>(null);
   // One row's settings open at a time, as in the UI mock.
   const [openRowId, setOpenRowId] = useState<string | null>(null);
   const toggleRow = (rowId: string) => setOpenRowId((current) => (current === rowId ? null : rowId));
@@ -475,282 +478,289 @@ export const FlowView = ({
   ];
 
   return (
-    <div className="mt-12 w-full px-5 py-4">
-      <FlowOutline
-        actions={
-          <>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => setCollapsedBlockIds(new Set(outline.blocks.map((block) => block.id)))}>
-              {t("workspace.surveys.edit.flow.collapse_all")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => setCollapsedBlockIds(new Set())}>
-              {t("workspace.surveys.edit.flow.expand_all")}
-            </Button>
-          </>
-        }
-        hint={t("workspace.surveys.edit.flow.hint")}
-        count={countText}>
-        <FlowOutlineSectionLabel>
-          {t("workspace.surveys.edit.flow.before_first_question")}
-        </FlowOutlineSectionLabel>
-        <FlowOutlineChildren>
-          {outline.start.rules.length === 0 && (
-            <p className="pl-6 text-xs text-slate-500">
-              {t("workspace.surveys.edit.flow.before_first_question_hint")}
-            </p>
-          )}
-          {outline.start.rules.map((row) =>
-            renderRuleRow(row, localSurvey.startLogic ?? [], START_SCOPE_BLOCK_IDX)
-          )}
-          <div className="pl-6">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" size="sm" variant="secondary" id="flow-add-logic-start">
-                  {t("workspace.surveys.edit.add_logic")}
-                  <PlusIcon />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  icon={<SplitIcon className="size-4" />}
-                  onClick={() => addStartRule("jump")}>
-                  {t("workspace.surveys.edit.flow.jump_rule")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  icon={<BinaryIcon className="size-4" />}
-                  onClick={() => addStartRule("calculate")}>
-                  {t("workspace.surveys.edit.flow.calculation")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  icon={<EqualIcon className="size-4" />}
-                  onClick={() => addStartRule("setValue")}>
-                  {t("workspace.surveys.edit.flow.set_a_value")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </FlowOutlineChildren>
-
-        {outline.blocks.map((block) => {
-          const surveyBlock = localSurvey.blocks[block.blockIdx];
-          const isExpanded = !collapsedBlockIds.has(block.id);
-          const rules = surveyBlock.logic ?? [];
-          const toggleBlock = () =>
-            setCollapsedBlockIds((current) => {
-              const next = new Set(current);
-              if (next.has(block.id)) next.delete(block.id);
-              else next.add(block.id);
-              return next;
-            });
-
-          return (
-            <FlowOutlineGroup key={block.id}>
-              <FlowOutlineRow
-                id={`flow-${block.id}`}
-                tone="block"
-                icon={<Rows3Icon />}
-                showChevron
-                isOpen={isExpanded}
-                onToggle={toggleBlock}
-                isInvalid={invalidElements?.includes(block.id) ?? false}
-                body={
-                  isExpanded ? (
-                    <ul className="space-y-1.5 pl-10">
-                      {surveyBlock.elements.map((element, elementIdx) => {
-                        const showIfTarget: TShowIfTarget = {
-                          type: "element",
-                          blockIdx: block.blockIdx,
-                          elementIdx,
-                        };
-                        const showIfKey = `element:${element.id}`;
-                        return (
-                          <li
-                            key={element.id}
-                            className="group flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                            <span className="truncate">
-                              {getHeadlineText(element.headline, localSurvey) || getElementBadgeText(element)}
-                            </span>
-                            {block.elements[elementIdx]?.badges.map((badge, idx) =>
-                              renderBadge(
-                                badge,
-                                `${element.id}-${idx}`,
-                                { showIf: showIfTarget, key: showIfKey },
-                                block.elements[elementIdx]
-                              )
-                            )}
-                            {renderOptionsShowIf(block.elements[elementIdx], block.blockIdx)}
-                            {!element.showIf && canAddShowIf(localSurvey, showIfTarget) && (
-                              <button
-                                type="button"
-                                className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-500 opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
-                                onClick={(event) => {
-                                  // The question list sits inside the block row: don't collapse it.
-                                  event.stopPropagation();
-                                  addShowIf(showIfTarget, showIfKey);
-                                }}>
-                                <EyeIcon className="size-3" aria-hidden="true" />
-                                {t("workspace.surveys.edit.flow.show_question_if")}
-                              </button>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : null
-                }>
-                <span className="text-xs font-medium text-slate-500">
-                  {t("workspace.surveys.edit.block_n", { blockNumber: block.blockIdx + 1 })}
-                </span>
-                {surveyBlock.name.trim() && !isAutoBlockName(surveyBlock.name) && (
-                  <span className="text-sm font-semibold text-slate-900">{surveyBlock.name}</span>
-                )}
-                {block.badges.map((badge, idx) =>
-                  renderBadge(badge, `${block.id}-${idx}`, {
-                    showIf: { type: "block", blockIdx: block.blockIdx },
-                    key: `block:${block.id}`,
-                  })
-                )}
-                <span className="ml-auto text-xs text-slate-500">
-                  {[
-                    t("common.count_questions", { count: block.elementCount }),
-                    t("workspace.surveys.edit.flow.count_rules", { count: block.ruleCount }),
-                  ].join(" · ")}
-                </span>
-              </FlowOutlineRow>
-
-              {isExpanded && (
-                <FlowOutlineChildren>
-                  {block.rules.map((row) => renderRuleRow(row, rules, block.blockIdx))}
-
-                  {block.fallback && (
-                    <FlowOutlineNote icon={<ArrowRightIcon aria-hidden="true" />}>
-                      <span className="inline-flex flex-wrap items-center gap-x-2">
-                        <Trans
-                          i18nKey="workspace.surveys.edit.all_other_answers_will_continue_to_fallback"
-                          components={{
-                            fallbackSelect: (
-                              <InputCombobox
-                                id={`flow-fallback-${block.id}`}
-                                showSearch={true}
-                                options={getFallbackOptions(block.blockIdx)}
-                                value={surveyBlock.logicFallback ?? "defaultSelection"}
-                                onChangeValue={(value) =>
-                                  setLocalSurvey((survey) =>
-                                    setBlockLogicFallback(
-                                      survey,
-                                      block.blockIdx,
-                                      value === "defaultSelection" ? undefined : String(value)
-                                    )
-                                  )
-                                }
-                                comboboxClasses="w-fit min-w-40 bg-white"
-                              />
-                            ),
-                          }}
-                        />
-                      </span>
-                    </FlowOutlineNote>
-                  )}
-
-                  <div className="pl-6">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button type="button" size="sm" variant="secondary" id={`flow-add-logic-${block.id}`}>
-                          {t("workspace.surveys.edit.add_logic")}
-                          <PlusIcon />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        <DropdownMenuItem
-                          icon={<SplitIcon className="size-4" />}
-                          onClick={() => addRule(block, "jump")}>
-                          {t("workspace.surveys.edit.flow.jump_rule")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          icon={<BinaryIcon className="size-4" />}
-                          onClick={() => addRule(block, "calculate")}>
-                          {t("workspace.surveys.edit.flow.calculation")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          icon={<EqualIcon className="size-4" />}
-                          onClick={() => addRule(block, "setValue")}>
-                          {t("workspace.surveys.edit.flow.set_a_value")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          icon={<ShieldAlertIcon className="size-4" />}
-                          onClick={() => addRule(block, "markLowQuality")}>
-                          {t("workspace.surveys.edit.mark_as_low_quality")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          icon={<EyeIcon className="size-4" />}
-                          disabled={
-                            Boolean(surveyBlock.showIf) ||
-                            !canAddShowIf(localSurvey, { type: "block", blockIdx: block.blockIdx })
-                          }
-                          onClick={() =>
-                            addShowIf({ type: "block", blockIdx: block.blockIdx }, `block:${block.id}`)
-                          }>
-                          {t("workspace.surveys.edit.flow.show_block_if")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </FlowOutlineChildren>
-              )}
-            </FlowOutlineGroup>
-          );
-        })}
-
-        {outline.endings.length > 0 && (
-          <FlowOutlineSectionLabel>{t("workspace.surveys.edit.flow.endings")}</FlowOutlineSectionLabel>
-        )}
-        {outline.endings.map((row) => {
-          const ending = localSurvey.endings[row.endingIdx];
-          const label = getEndingLabel(ending, localSurvey, t);
-          const rowId = `ending-${row.id}`;
-          return (
-            <FlowOutlineRow
-              key={row.id}
-              id={`flow-${row.id}`}
-              tone="ending"
-              icon={<FlagIcon />}
-              isInvalid={invalidElements?.includes(row.id) ?? false}
-              onToggle={() => toggleRow(rowId)}
-              isOpen={openRowId === rowId}
-              details={
-                <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-700">
-                  <span>
-                    {row.type === "redirectToUrl"
-                      ? t("workspace.surveys.edit.flow.ending_redirect", { url: row.url ?? "" })
-                      : t("workspace.surveys.edit.flow.ending_card", { label })}
-                    <span className="block text-xs text-slate-500">
-                      {t("workspace.surveys.edit.flow.ending_edit_hint")}
-                    </span>
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => onEditOnQuestionsTab(row.id)}>
-                    {t("workspace.surveys.edit.flow.edit_on_questions_tab")}
+    <div ref={setPopoverBoundary} className="mt-12 w-full px-5 py-4">
+      <ShowIfPopoverBoundary.Provider value={popoverBoundary}>
+        <FlowOutline
+          actions={
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => setCollapsedBlockIds(new Set(outline.blocks.map((block) => block.id)))}>
+                {t("workspace.surveys.edit.flow.collapse_all")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => setCollapsedBlockIds(new Set())}>
+                {t("workspace.surveys.edit.flow.expand_all")}
+              </Button>
+            </>
+          }
+          hint={t("workspace.surveys.edit.flow.hint")}
+          count={countText}>
+          <FlowOutlineSectionLabel>
+            {t("workspace.surveys.edit.flow.before_first_question")}
+          </FlowOutlineSectionLabel>
+          <FlowOutlineChildren>
+            {outline.start.rules.length === 0 && (
+              <p className="pl-6 text-xs text-slate-500">
+                {t("workspace.surveys.edit.flow.before_first_question_hint")}
+              </p>
+            )}
+            {outline.start.rules.map((row) =>
+              renderRuleRow(row, localSurvey.startLogic ?? [], START_SCOPE_BLOCK_IDX)
+            )}
+            <div className="pl-6">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" size="sm" variant="secondary" id="flow-add-logic-start">
+                    {t("workspace.surveys.edit.add_logic")}
+                    <PlusIcon />
                   </Button>
-                </div>
-              }>
-              <span className="text-sm font-semibold text-red-700">
-                {t("workspace.surveys.edit.flow.end_label", { label })}
-              </span>
-              {row.url && <span className="text-xs text-red-700/80">→ {row.url}</span>}
-            </FlowOutlineRow>
-          );
-        })}
-      </FlowOutline>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem
+                    icon={<SplitIcon className="size-4" />}
+                    onClick={() => addStartRule("jump")}>
+                    {t("workspace.surveys.edit.flow.jump_rule")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    icon={<BinaryIcon className="size-4" />}
+                    onClick={() => addStartRule("calculate")}>
+                    {t("workspace.surveys.edit.flow.calculation")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    icon={<EqualIcon className="size-4" />}
+                    onClick={() => addStartRule("setValue")}>
+                    {t("workspace.surveys.edit.flow.set_a_value")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </FlowOutlineChildren>
+
+          {outline.blocks.map((block) => {
+            const surveyBlock = localSurvey.blocks[block.blockIdx];
+            const isExpanded = !collapsedBlockIds.has(block.id);
+            const rules = surveyBlock.logic ?? [];
+            const toggleBlock = () =>
+              setCollapsedBlockIds((current) => {
+                const next = new Set(current);
+                if (next.has(block.id)) next.delete(block.id);
+                else next.add(block.id);
+                return next;
+              });
+
+            return (
+              <FlowOutlineGroup key={block.id}>
+                <FlowOutlineRow
+                  id={`flow-${block.id}`}
+                  tone="block"
+                  icon={<Rows3Icon />}
+                  showChevron
+                  isOpen={isExpanded}
+                  onToggle={toggleBlock}
+                  isInvalid={invalidElements?.includes(block.id) ?? false}
+                  body={
+                    isExpanded ? (
+                      <ul className="space-y-1.5 pl-10">
+                        {surveyBlock.elements.map((element, elementIdx) => {
+                          const showIfTarget: TShowIfTarget = {
+                            type: "element",
+                            blockIdx: block.blockIdx,
+                            elementIdx,
+                          };
+                          const showIfKey = `element:${element.id}`;
+                          return (
+                            <li
+                              key={element.id}
+                              className="group flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                              <span className="truncate">
+                                {getHeadlineText(element.headline, localSurvey) ||
+                                  getElementBadgeText(element)}
+                              </span>
+                              {block.elements[elementIdx]?.badges.map((badge, idx) =>
+                                renderBadge(
+                                  badge,
+                                  `${element.id}-${idx}`,
+                                  { showIf: showIfTarget, key: showIfKey },
+                                  block.elements[elementIdx]
+                                )
+                              )}
+                              {renderOptionsShowIf(block.elements[elementIdx], block.blockIdx)}
+                              {!element.showIf && canAddShowIf(localSurvey, showIfTarget) && (
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-500 opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+                                  onClick={(event) => {
+                                    // The question list sits inside the block row: don't collapse it.
+                                    event.stopPropagation();
+                                    addShowIf(showIfTarget, showIfKey);
+                                  }}>
+                                  <EyeIcon className="size-3" aria-hidden="true" />
+                                  {t("workspace.surveys.edit.flow.show_question_if")}
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : null
+                  }>
+                  <span className="text-xs font-medium text-slate-500">
+                    {t("workspace.surveys.edit.block_n", { blockNumber: block.blockIdx + 1 })}
+                  </span>
+                  {surveyBlock.name.trim() && !isAutoBlockName(surveyBlock.name) && (
+                    <span className="text-sm font-semibold text-slate-900">{surveyBlock.name}</span>
+                  )}
+                  {block.badges.map((badge, idx) =>
+                    renderBadge(badge, `${block.id}-${idx}`, {
+                      showIf: { type: "block", blockIdx: block.blockIdx },
+                      key: `block:${block.id}`,
+                    })
+                  )}
+                  <span className="ml-auto text-xs text-slate-500">
+                    {[
+                      t("common.count_questions", { count: block.elementCount }),
+                      t("workspace.surveys.edit.flow.count_rules", { count: block.ruleCount }),
+                    ].join(" · ")}
+                  </span>
+                </FlowOutlineRow>
+
+                {isExpanded && (
+                  <FlowOutlineChildren>
+                    {block.rules.map((row) => renderRuleRow(row, rules, block.blockIdx))}
+
+                    {block.fallback && (
+                      <FlowOutlineNote icon={<ArrowRightIcon aria-hidden="true" />}>
+                        <span className="inline-flex flex-wrap items-center gap-x-2">
+                          <Trans
+                            i18nKey="workspace.surveys.edit.all_other_answers_will_continue_to_fallback"
+                            components={{
+                              fallbackSelect: (
+                                <InputCombobox
+                                  id={`flow-fallback-${block.id}`}
+                                  showSearch={true}
+                                  options={getFallbackOptions(block.blockIdx)}
+                                  value={surveyBlock.logicFallback ?? "defaultSelection"}
+                                  onChangeValue={(value) =>
+                                    setLocalSurvey((survey) =>
+                                      setBlockLogicFallback(
+                                        survey,
+                                        block.blockIdx,
+                                        value === "defaultSelection" ? undefined : String(value)
+                                      )
+                                    )
+                                  }
+                                  comboboxClasses="w-fit min-w-40 bg-white"
+                                />
+                              ),
+                            }}
+                          />
+                        </span>
+                      </FlowOutlineNote>
+                    )}
+
+                    <div className="pl-6">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            id={`flow-add-logic-${block.id}`}>
+                            {t("workspace.surveys.edit.add_logic")}
+                            <PlusIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem
+                            icon={<SplitIcon className="size-4" />}
+                            onClick={() => addRule(block, "jump")}>
+                            {t("workspace.surveys.edit.flow.jump_rule")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            icon={<BinaryIcon className="size-4" />}
+                            onClick={() => addRule(block, "calculate")}>
+                            {t("workspace.surveys.edit.flow.calculation")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            icon={<EqualIcon className="size-4" />}
+                            onClick={() => addRule(block, "setValue")}>
+                            {t("workspace.surveys.edit.flow.set_a_value")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            icon={<ShieldAlertIcon className="size-4" />}
+                            onClick={() => addRule(block, "markLowQuality")}>
+                            {t("workspace.surveys.edit.mark_as_low_quality")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            icon={<EyeIcon className="size-4" />}
+                            disabled={
+                              Boolean(surveyBlock.showIf) ||
+                              !canAddShowIf(localSurvey, { type: "block", blockIdx: block.blockIdx })
+                            }
+                            onClick={() =>
+                              addShowIf({ type: "block", blockIdx: block.blockIdx }, `block:${block.id}`)
+                            }>
+                            {t("workspace.surveys.edit.flow.show_block_if")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </FlowOutlineChildren>
+                )}
+              </FlowOutlineGroup>
+            );
+          })}
+
+          {outline.endings.length > 0 && (
+            <FlowOutlineSectionLabel>{t("workspace.surveys.edit.flow.endings")}</FlowOutlineSectionLabel>
+          )}
+          {outline.endings.map((row) => {
+            const ending = localSurvey.endings[row.endingIdx];
+            const label = getEndingLabel(ending, localSurvey, t);
+            const rowId = `ending-${row.id}`;
+            return (
+              <FlowOutlineRow
+                key={row.id}
+                id={`flow-${row.id}`}
+                tone="ending"
+                icon={<FlagIcon />}
+                isInvalid={invalidElements?.includes(row.id) ?? false}
+                onToggle={() => toggleRow(rowId)}
+                isOpen={openRowId === rowId}
+                details={
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-700">
+                    <span>
+                      {row.type === "redirectToUrl"
+                        ? t("workspace.surveys.edit.flow.ending_redirect", { url: row.url ?? "" })
+                        : t("workspace.surveys.edit.flow.ending_card", { label })}
+                      <span className="block text-xs text-slate-500">
+                        {t("workspace.surveys.edit.flow.ending_edit_hint")}
+                      </span>
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => onEditOnQuestionsTab(row.id)}>
+                      {t("workspace.surveys.edit.flow.edit_on_questions_tab")}
+                    </Button>
+                  </div>
+                }>
+                <span className="text-sm font-semibold text-red-700">
+                  {t("workspace.surveys.edit.flow.end_label", { label })}
+                </span>
+                {row.url && <span className="text-xs text-red-700/80">→ {row.url}</span>}
+              </FlowOutlineRow>
+            );
+          })}
+        </FlowOutline>
+      </ShowIfPopoverBoundary.Provider>
     </div>
   );
 };

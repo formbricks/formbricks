@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { copyOptionsFrom, getCopiedOptionIds, getPickedInSourceShowIf } from "./copied-options";
+import {
+  copyOptionsFrom,
+  getCopiedOptionIds,
+  getOptionsCopiedFrom,
+  getPickedInSourceShowIf,
+  withoutOptionsCopiedFrom,
+} from "./copied-options";
 import { fillMissingCodes } from "./fill-missing-codes";
 import { surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
 import { type TSurvey, ZSurvey } from "./types";
@@ -336,6 +342,32 @@ describe("codes of copied options", () => {
     expect(grownCodes[grownCodes.length - 1]).toEqual(["initech", "6"]);
   });
 
+  test("a new source option takes the lowest code free in every linked question, not the highest plus one", () => {
+    // The copy's fixed "None of these" holds 99. The source's next option is the lowest number free in
+    // both questions (ENG-4024), not 100.
+    const sourceCodes = codesOf(blocksWith({}), 0);
+    const nextFree = sourceCodes.length + 1;
+    const blocks = fillMissingCodes(
+      blocksWith(
+        {
+          id: "fav_brand",
+          type: "multipleChoiceMulti",
+          optionsCopiedFrom: "brands",
+          choices: [{ id: "none", label: { default: "None of these" }, code: "99" }],
+        },
+        {
+          ...sourceMulti,
+          choices: [...(sourceMulti.choices as unknown[]), { id: "initech", label: { default: "Initech" } }],
+        }
+      ),
+      []
+    );
+
+    const filledSource = codesOf(blocks, 0);
+    expect(filledSource[filledSource.length - 1]).toEqual(["initech", String(nextFree)]);
+    expect(codesOf(blocks, 1)).toEqual([["none", "99"]]);
+  });
+
   test("codes travel through every hop", () => {
     const blocks = fillMissingCodes(
       [
@@ -364,5 +396,17 @@ describe("codes of copied options", () => {
     );
 
     expect(codesOf(blocks, 2)).toEqual([["acme", "7"]]);
+  });
+});
+
+describe("typed access to optionsCopiedFrom", () => {
+  test("reads the link off any element, and drops it without touching the rest", () => {
+    const linked = { id: "fav", type: "multipleChoiceSingle", optionsCopiedFrom: "services" };
+    expect(getOptionsCopiedFrom(linked)).toBe("services");
+    expect(getOptionsCopiedFrom({ id: "q", type: "openText" })).toBeUndefined();
+    expect(getOptionsCopiedFrom(undefined)).toBeUndefined();
+    expect(withoutOptionsCopiedFrom(linked)).toEqual({ id: "fav", type: "multipleChoiceSingle" });
+    const plain = { id: "q", type: "openText" };
+    expect(withoutOptionsCopiedFrom(plain)).toBe(plain);
   });
 });

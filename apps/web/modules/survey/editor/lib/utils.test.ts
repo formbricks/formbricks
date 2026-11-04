@@ -11,8 +11,10 @@ import {
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import {
+  findElementUse,
   findElementUsedInLogic,
   findHiddenFieldUsedInLogic,
+  findOptionUse,
   findOptionUsedInLogic,
   findVariableUsedInLogic,
   getActionObjectiveOptions,
@@ -684,6 +686,21 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     expect(findOptionUsedInLogic(survey, "services", "prime")).toBe(flatIndexOf(survey, "hours"));
     // ENG-6937: "Apple TV+" in "fav" is offered only if "services" includes Apple TV+.
     expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(flatIndexOf(survey, "fav"));
+  });
+
+  test("says which kind of use stops a removal, so the guard can word it (show-if, not logic)", () => {
+    const survey = withoutLogic();
+
+    expect(findElementUse(survey, "fav")).toEqual({
+      kind: "showIf",
+      elementIndex: flatIndexOf(survey, "apple_reason"),
+    });
+    expect(findOptionUse(survey, "services", "apple")).toEqual({
+      kind: "showIf",
+      elementIndex: flatIndexOf(survey, "fav"),
+    });
+    // With the fixture's logic back, a rule is what the guard names first.
+    expect(findElementUse(surveyFlowFixture, "bundle")?.kind).toBe("logic");
   });
 
   test("a question an option's show-if depends on is reported as used (ENG-6937)", () => {

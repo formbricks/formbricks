@@ -3,7 +3,7 @@ import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
 import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
 import { getSetValueExpressionIssues } from "./expression-types";
-import type { TExpression } from "./expressions";
+import { type TExpression, isExpressionTooDeep } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 
 /**
@@ -71,7 +71,11 @@ const validateConditions = (
       }
     } else if (operand.type === "variable") {
       const variableId = String(operand.value);
-      if (!survey.variables.some((variable) => variable.id === variableId)) {
+      // A computed date (ENG-6935, P38) is declared only in `embeddedFields`, not the legacy list.
+      if (
+        !survey.variables.some((variable) => variable.id === variableId) &&
+        getFieldType(survey, variableId, "computed") === undefined
+      ) {
         issues.push({
           code: "custom",
           message: `Conditional Logic: Variable ID ${variableId} does not exist in ${ruleLabel(ruleIdx)}`,
@@ -80,7 +84,7 @@ const validateConditions = (
       }
     } else if (operand.type === "hiddenField") {
       const fieldId = String(operand.value);
-      if (!hiddenFieldIds.includes(fieldId)) {
+      if (!hiddenFieldIds.includes(fieldId) && getFieldType(survey, fieldId, "ingested") === undefined) {
         issues.push({
           code: "custom",
           message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in ${ruleLabel(ruleIdx)}`,
@@ -152,6 +156,8 @@ const validateExpressionAction = (
   }
 
   const valuePath = [...path, "value", "value"];
+  // Refused by the schema at its path; the walks below would descend the whole hostile tree.
+  if (isExpressionTooDeep(expression)) return undefined;
   const answerPath = findElementLeafPath(expression, valuePath);
   if (answerPath) {
     return {

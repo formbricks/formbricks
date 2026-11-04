@@ -11,16 +11,19 @@ import {
   RefreshCwIcon,
   TrashIcon,
 } from "lucide-react";
-import { type Dispatch, type ReactNode, type SetStateAction, useMemo, useState } from "react";
+import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { canHaveCopiedOptions } from "@formbricks/types/surveys/copied-options";
-import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
-import { type TOptionLike, type TOptionListKey } from "@formbricks/types/surveys/show-if";
+import { canHaveCopiedOptions, getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
+import type { TConditionGroup } from "@formbricks/types/surveys/logic";
+import { type TOptionLike, type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
+import {
+  ShowIfConditionsEditor,
+  ShowIfPopoverFrame,
+  useShowIfScope,
+} from "@/modules/survey/editor/components/show-if-popover-parts";
 import {
   copyOptionsAgain,
   countOptionsToCopyAgain,
@@ -34,7 +37,6 @@ import {
   type TShowIfTarget,
   canAddShowIf,
   createShowIf,
-  getShowIfScope,
   setOptionHidden,
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
@@ -44,7 +46,7 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { Label } from "@/modules/ui/components/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { Popover, PopoverTrigger } from "@/modules/ui/components/popover";
 import { Switch } from "@/modules/ui/components/switch";
 
 type TOptionTarget = Extract<TShowIfTarget, { type: "option" }>;
@@ -144,11 +146,8 @@ export function OptionsShowIfPopover({
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="max-h-[min(36rem,80vh)] w-[min(44rem,calc(100vw-2rem))] overflow-y-auto"
-        onClick={(event) => event.stopPropagation()}
-        onFocusOutside={(event) => event.preventDefault()}>
+      {/* Mounted only while open: its scope is computed for the open popover alone. */}
+      {isOpen && (
         <OptionsShowIfEditor
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
@@ -158,7 +157,7 @@ export function OptionsShowIfPopover({
           persistedSurvey={persistedSurvey}
           onClose={() => onOpenChange(false)}
         />
-      </PopoverContent>
+      )}
     </Popover>
   );
 }
@@ -197,18 +196,14 @@ function OptionsShowIfEditor({
 }: OptionsShowIfEditorProps) {
   const { t } = useTranslation();
   const [editingKey, setEditingKey] = useState<string | null>(null);
-  const element = localSurvey.blocks[blockIdx]?.elements[elementIdx] as unknown as
-    | Record<string, unknown>
-    | undefined;
+  const element = localSurvey.blocks[blockIdx]?.elements[elementIdx];
 
-  // An option's show-if sees what its question's sees. Pickers read recalled headlines as plain text.
-  const scope = useMemo(() => {
-    const scoped = getShowIfScope(localSurvey, { type: "element", blockIdx, elementIdx });
-    return { ...scoped, survey: replaceHeadlineRecall(scoped.survey, "default") };
-  }, [localSurvey, blockIdx, elementIdx]);
-  const nearest = scope.survey.blocks.flatMap((block) => block.elements).at(-1);
-  const getDefaultOperator = (): TSurveyLogicConditionsOperator =>
-    nearest ? getDefaultOperatorForElement(nearest, t) : "isSet";
+  // An option's show-if sees what its question's sees.
+  const { scope, getDefaultOperator } = useShowIfScope(localSurvey, {
+    type: "element",
+    blockIdx,
+    elementIdx,
+  });
 
   if (!element) return null;
 
@@ -220,103 +215,100 @@ function OptionsShowIfEditor({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div>
-        <p className="text-sm font-semibold text-slate-900">
-          {t("workspace.surveys.edit.flow.options_shown_if")}
-        </p>
-        <p className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.options_shown_if_help")}</p>
-      </div>
-      {typeof element.type === "string" && canHaveCopiedOptions(element.type) && (
-        <CopiedOptionsSource
-          localSurvey={localSurvey}
-          setLocalSurvey={setLocalSurvey}
-          blockIdx={blockIdx}
-          elementIdx={elementIdx}
-          persistedSurvey={persistedSurvey}
-        />
-      )}
-      {optionLists.map((listKey) => {
-        const items = (Array.isArray(element[listKey]) ? element[listKey] : []) as TEditableOption[];
-        return (
-          <section key={listKey} className="flex flex-col gap-1">
-            {optionLists.length > 1 && (
-              <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                {getListHeading(listKey, t)}
-              </p>
-            )}
-            <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
-              {items.map((item, itemIdx) => {
-                const target: TOptionTarget = {
-                  type: "option",
-                  blockIdx,
-                  elementIdx,
-                  listKey,
-                  optionId: item.id,
-                };
-                const key = `${listKey}:${item.id}`;
-                return (
-                  <OptionRow
-                    key={key}
-                    label={
-                      item.label
-                        ? getTextContent(getLocalizedValue(item.label, "default")) || item.id
-                        : t("workspace.surveys.edit.flow.picture_n", { n: itemIdx + 1 })
-                    }
-                    item={item}
-                    localSurvey={localSurvey}
-                    isEditing={editingKey === key}
-                    onToggleEditing={() => setEditingKey(editingKey === key ? null : key)}
-                    onAddCondition={
-                      canAddShowIf(localSurvey, target) ? () => addCondition(target, key) : undefined
-                    }
-                    onHiddenChange={(hidden) =>
-                      setLocalSurvey((survey) => setOptionHidden(survey, target, hidden))
-                    }
-                    conditionsEditor={
-                      item.showIf ? (
-                        <div className="flex flex-col gap-2">
-                          <div className="overflow-x-auto pb-1 text-sm">
-                            <LogicEditorConditions
+    <ShowIfPopoverFrame
+      title={t("workspace.surveys.edit.flow.options_shown_if")}
+      help={t("workspace.surveys.edit.flow.options_shown_if_help")}
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.hidden_option_help")}</p>
+          <Button type="button" size="sm" onClick={onClose}>
+            {t("common.done")}
+          </Button>
+        </div>
+      }>
+      <div className="flex flex-col gap-3">
+        {canHaveCopiedOptions(element.type) && (
+          <CopiedOptionsSource
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            blockIdx={blockIdx}
+            elementIdx={elementIdx}
+            persistedSurvey={persistedSurvey}
+          />
+        )}
+        {optionLists.map((listKey) => {
+          const items = getOptionList<TEditableOption>(element, listKey);
+          return (
+            <section key={listKey} className="flex flex-col gap-1">
+              {optionLists.length > 1 && (
+                <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {getListHeading(listKey, t)}
+                </p>
+              )}
+              <ul className="divide-y divide-slate-100 rounded-md border border-slate-200">
+                {items.map((item, itemIdx) => {
+                  const target: TOptionTarget = {
+                    type: "option",
+                    blockIdx,
+                    elementIdx,
+                    listKey,
+                    optionId: item.id,
+                  };
+                  const key = `${listKey}:${item.id}`;
+                  return (
+                    <OptionRow
+                      key={key}
+                      label={
+                        item.label
+                          ? getTextContent(getLocalizedValue(item.label, "default")) || item.id
+                          : t("workspace.surveys.edit.flow.picture_n", { n: itemIdx + 1 })
+                      }
+                      item={item}
+                      localSurvey={localSurvey}
+                      isEditing={editingKey === key}
+                      onToggleEditing={() => setEditingKey(editingKey === key ? null : key)}
+                      onAddCondition={
+                        canAddShowIf(localSurvey, target) ? () => addCondition(target, key) : undefined
+                      }
+                      onHiddenChange={(hidden) =>
+                        setLocalSurvey((survey) => setOptionHidden(survey, target, hidden))
+                      }
+                      conditionsEditor={
+                        item.showIf ? (
+                          <div className="flex flex-col gap-2">
+                            <ShowIfConditionsEditor
                               conditions={item.showIf}
-                              localSurvey={scope.survey}
-                              scopeBlockIdx={scope.blockIdx}
+                              scope={scope}
                               getDefaultOperator={getDefaultOperator}
                               onConditionsChange={(updater) =>
                                 setLocalSurvey((survey) => updateShowIf(survey, target, updater))
                               }
                             />
+                            <div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                  setLocalSurvey((survey) => updateShowIf(survey, target, () => undefined));
+                                  setEditingKey(null);
+                                }}>
+                                <TrashIcon />
+                                {t("workspace.surveys.edit.flow.remove_condition")}
+                              </Button>
+                            </div>
                           </div>
-                          <div>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                setLocalSurvey((survey) => updateShowIf(survey, target, () => undefined));
-                                setEditingKey(null);
-                              }}>
-                              <TrashIcon />
-                              {t("workspace.surveys.edit.flow.remove_condition")}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null
-                    }
-                  />
-                );
-              })}
-            </ul>
-          </section>
-        );
-      })}
-      <p className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.hidden_option_help")}</p>
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={onClose}>
-          {t("common.done")}
-        </Button>
+                        ) : null
+                      }
+                    />
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
       </div>
-    </div>
+    </ShowIfPopoverFrame>
   );
 }
 
@@ -345,9 +337,7 @@ function CopiedOptionsSource({
   const { t } = useTranslation();
   const target = { blockIdx, elementIdx };
   const element = localSurvey.blocks[blockIdx]?.elements[elementIdx];
-  const copiedFromValue = (element as unknown as { optionsCopiedFrom?: unknown } | undefined)
-    ?.optionsCopiedFrom;
-  const copiedFrom = typeof copiedFromValue === "string" ? copiedFromValue : undefined;
+  const copiedFrom = getOptionsCopiedFrom(element);
   const candidates = getCopySourceCandidates(localSurvey, target);
   const newCount = countOptionsToCopyAgain(localSurvey, target);
   const id = `copied-from-${element?.id ?? elementIdx}`;

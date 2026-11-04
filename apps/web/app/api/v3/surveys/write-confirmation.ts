@@ -35,6 +35,10 @@ async function surveyHasResponsesToProtect(survey: { id: string; status: string 
  *
  * The message is the editor's own caution text (en-US, like every MCP message), followed by what the
  * agent has to do next.
+ *
+ * Read before, and outside, the write's transaction on purpose: it is a prompt to ask the user, as the
+ * editor's caution dialog is, not a guard. A first response landing between this read and the write
+ * changes nothing a later edit would not; the published lock is what protects stored responses.
  */
 export async function getV3SurveyWriteConfirmationRefusal(
   survey: { id: string; status: string },

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TConditionGroup } from "./logic";
-import { getBlockVisibility, isShownByShowIf } from "./show-if";
+import { getBlockVisibility, getOptionList, getOptionListKeys, isShownByShowIf } from "./show-if";
 import { SURVEY_FLOW_FIXTURE_IDS as ids, surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
 import { type TSurvey, ZSurvey } from "./types";
 
@@ -224,5 +224,24 @@ describe("isShownByShowIf and getBlockVisibility", () => {
       hiddenElementIds: ["a"],
       data: {},
     });
+  });
+});
+
+describe("option lists by element type (one table for every reader)", () => {
+  test("choices for the choice types, rows and columns for a matrix, none for the rest", () => {
+    expect(getOptionListKeys("multipleChoiceMulti")).toEqual(["choices"]);
+    expect(getOptionListKeys("pictureSelection")).toEqual(["choices"]);
+    expect(getOptionListKeys("matrix")).toEqual(["rows", "columns"]);
+    expect(getOptionListKeys("openText")).toEqual([]);
+  });
+
+  test("getOptionList reads a list only where the type has it", () => {
+    const choices = [{ id: "a" }];
+    const ranking: { type: string } = { type: "ranking", choices } as { type: string };
+    expect(getOptionList(ranking, "choices")).toBe(choices);
+    // A stray key on a type without that list is not an option list.
+    expect(getOptionList({ type: "openText", choices } as { type: string }, "choices")).toEqual([]);
+    expect(getOptionList({ type: "matrix", choices } as { type: string }, "choices")).toEqual([]);
+    expect(getOptionList(undefined, "rows")).toEqual([]);
   });
 });

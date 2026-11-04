@@ -2,7 +2,12 @@ import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import type { TSurveyBlock } from "./blocks";
 import type { TSurveyMatrixElement } from "./elements";
-import type { TConditionGroup, TSingleCondition } from "./logic";
+import {
+  MAX_MATRIX_CONDITION_COLUMN_IDS,
+  type TConditionGroup,
+  type TSingleCondition,
+  ZRightOperandStatic,
+} from "./logic";
 import {
   getMatrixLookup,
   resolveMatrixColumnValue,
@@ -324,5 +329,17 @@ describe("rolling upgrade: a survey written by 6.2 on the previous release", () 
 
     expect(ZPreviousRightOperandStatic.safeParse(condition.rightOperand).success).toBe(true);
     expect(Number(meta?.row)).toBeLessThan(matrixOf(saved).rows.length);
+  });
+});
+
+describe("columnIds cap", () => {
+  test("a condition lists at most MAX_MATRIX_CONDITION_COLUMN_IDS column ids", () => {
+    const operand = (count: number) => ({
+      type: "static",
+      value: ["0"],
+      columnIds: Array.from({ length: count }, (_unused, idx) => `col_${String(idx)}`),
+    });
+    expect(ZRightOperandStatic.safeParse(operand(MAX_MATRIX_CONDITION_COLUMN_IDS)).success).toBe(true);
+    expect(ZRightOperandStatic.safeParse(operand(MAX_MATRIX_CONDITION_COLUMN_IDS + 1)).success).toBe(false);
   });
 });

@@ -551,9 +551,10 @@ export const parseFormula = (text: string, references: TFormulaReference[]): TFo
  */
 export const getShownFormulaError = (
   error: TFormulaError,
-  context: { text: string; isReferenceMenuOpen: boolean }
+  context: { text: string; isReferenceMenuOpen: boolean; isTyping?: boolean }
 ): TFormulaError | null => {
-  if (context.isReferenceMenuOpen || error.code === "empty") return null;
+  // Mid-typing, a half-written formula is not a mistake yet: shown after a pause or on blur.
+  if (context.isTyping || context.isReferenceMenuOpen || error.code === "empty") return null;
   if (error.code === "incomplete_reference" && context.text.slice(error.position + 1).trim() === "") {
     return null;
   }

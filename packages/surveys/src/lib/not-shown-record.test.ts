@@ -7,7 +7,13 @@ import {
   surveyFlowFixtureNotShown,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { advanceFromBlock } from "./block-flow";
-import { type TNotShownStep, appendNotShownStep, buildNotShownRecord } from "./not-shown-record";
+import {
+  type TNotShownStep,
+  appendNotShownStep,
+  buildNotShownRecord,
+  getRestorableNotShownSteps,
+  mergeSubmittedAnswers,
+} from "./not-shown-record";
 
 const survey = surveyFlowFixture as unknown as TJsWorkspaceStateSurvey;
 const { blocks } = SURVEY_FLOW_FIXTURE_IDS;
@@ -127,5 +133,26 @@ describe("the not-shown record the survey sends", () => {
       elements: ["apple_reason"],
       ...hiddenBundleOption,
     });
+  });
+});
+
+describe("offline progress (ENG-6936)", () => {
+  const step = (blockId: string): TNotShownStep => ({ blockId, hiddenElementIds: [], skippedBlockIds: [] });
+
+  test("restores the steps of blocks that still exist, aligned with the restored history", () => {
+    const steps = [step("start"), step(blocks.services), step("deleted-block"), step(blocks.overall)];
+    expect(getRestorableNotShownSteps(survey, steps).map((kept) => kept.blockId)).toEqual([
+      "start",
+      blocks.services,
+      blocks.overall,
+    ]);
+  });
+
+  test("the answers saved after a submit leave out the ones the record now lists", () => {
+    expect(
+      mergeSubmittedAnswers({ services: ["netflix"], apple_reason: "Price" }, { fav: "Netflix" }, [
+        "apple_reason",
+      ])
+    ).toEqual({ services: ["netflix"], fav: "Netflix" });
   });
 });

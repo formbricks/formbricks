@@ -35,6 +35,18 @@ export const getTestValuesKey = (record: Record<string, string>): string =>
 /**
  * The preview's key: it starts over when the test values or the rules before the first question
  * change, so what the preview opens on is what the live survey would open on with those values.
+ * `run` counts the restarts after a finish: each one remounts the survey, so the rules before the
+ * first question and the first page's show-if run again, as for a new respondent.
  */
-export const getPreviewStartKey = (record: Record<string, string>, startLogic: readonly unknown[]): string =>
-  `${getTestValuesKey(record)}|${JSON.stringify(startLogic)}`;
+export const getPreviewStartKey = (
+  record: Record<string, string>,
+  startLogic: readonly unknown[],
+  run = 0
+): string => `${getTestValuesKey(record)}|${JSON.stringify(startLogic)}|${String(run)}`;
+
+/**
+ * Whether the preview starts over by itself when the survey finishes: an app survey with no ending
+ * has nothing to show at the end, so the preview reopens it from the start.
+ */
+export const restartsPreviewOnFinish = (survey: { type: string; endings: readonly unknown[] }): boolean =>
+  survey.type === "app" && survey.endings.length === 0;

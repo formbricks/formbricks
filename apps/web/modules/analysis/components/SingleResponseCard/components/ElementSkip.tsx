@@ -119,7 +119,7 @@ export const ElementSkip = ({
                 }}>
                 <EyeOffIcon className="min-h-6 min-w-6 rounded-full bg-white p-0.5 text-slate-400" />
               </div>
-              <div className="mb-2 ml-4 flex flex-col">
+              <div className="mb-2 ml-4 flex flex-col" data-testid="response-card-not-shown-group">
                 <TooltipProvider delayDuration={50}>
                   <Tooltip>
                     <TooltipTrigger asChild>

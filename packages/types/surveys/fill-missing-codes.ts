@@ -98,13 +98,28 @@ const fillOptionCodes = (
     if (NUMERIC_CODE_PATTERN.test(option.code)) highest = Math.max(highest, countedNumber(option.code));
   }
 
-  const filled = list.map((option) => {
-    if (!isRecord(option) || typeof option.code === "string") return option;
+  // In a copy group, the lowest number free in every linked question (ENG-6938): a sixth brand gets 6
+  // even when a fixed "None of these" holds 99, and it is still free in both questions (ENG-4024).
+  // Elsewhere, the next number after the highest, as before.
+  let lowest = 0;
+  const nextCode = (): string => {
+    if (shared) {
+      do lowest += 1;
+      while (used.has(String(lowest)) || !isFree(String(lowest)));
+      return String(lowest);
+    }
     do highest += 1;
     while (used.has(String(highest)) || !isFree(String(highest)));
-    used.add(String(highest));
-    shared?.used.add(String(highest));
-    return { ...option, code: String(highest) };
+    return String(highest);
+  };
+
+  const filled = list.map((option) => {
+    if (!isRecord(option) || typeof option.code === "string") return option;
+    const code = nextCode();
+    used.add(code);
+    shared?.used.add(code);
+    if (shared) highest = Math.max(highest, Number(code));
+    return { ...option, code };
   });
   if (shared) shared.highest = Math.max(shared.highest, highest);
   return filled.every((option, index) => option === list[index]) ? list : filled;

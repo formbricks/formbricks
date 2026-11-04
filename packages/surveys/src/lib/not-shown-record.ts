@@ -1,5 +1,6 @@
 import { type TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import { type TOptionListKey, type TOptionsNotShown } from "@formbricks/types/surveys/show-if";
+import { START_BLOCK_ID } from "./survey-navigation";
 
 /**
  * The not-shown record the survey sends with every update (ENG-6936, ADR 0023), built from what
@@ -105,4 +106,32 @@ export const buildNotShownRecord = (
     ...(orderedElements.length > 0 && { elements: orderedElements }),
     ...maps,
   };
+};
+
+/**
+ * The saved steps to restore with offline progress, next to `getRestorableHistory`: the steps sit one
+ * per history entry, so a step submitted from a block the creator has deleted since is dropped with
+ * its history entry, and the two stay aligned.
+ */
+export const getRestorableNotShownSteps = (
+  survey: TRecordSurvey,
+  steps: readonly TNotShownStep[]
+): TNotShownStep[] =>
+  steps.filter(
+    (step) => step.blockId === START_BLOCK_ID || survey.blocks.some((block) => block.id === step.blockId)
+  );
+
+/**
+ * The answers after a submit: what the page submitted on top of the earlier answers, without the
+ * answers to elements the respondent was not shown (ENG-6931, ENG-6936). What the renderer keeps,
+ * and what offline progress saves.
+ */
+export const mergeSubmittedAnswers = <TData extends Record<string, unknown>>(
+  responseData: TData,
+  submittedData: TData,
+  notShownElementIds: Iterable<string>
+): TData => {
+  const next: Record<string, unknown> = { ...responseData, ...submittedData };
+  for (const elementId of notShownElementIds) delete next[elementId];
+  return next as TData;
 };

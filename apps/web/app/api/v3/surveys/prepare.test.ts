@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import { EXPRESSION_MAX_DEPTH } from "@formbricks/types/surveys/expressions";
 import {
   SURVEY_FLOW_FIXTURE_IDS,
   surveyFlowFixture,
@@ -1754,6 +1755,29 @@ describe("embeddedFields schema rules (ENG-6930)", () => {
       "embeddedFields.0.id"
     );
   });
+
+  test("caps the name, the library key and a text default at their boundary", () => {
+    const at = (length: number) => "a".repeat(length);
+    expect(parseCreate([{ name: at(255), source: "ingested", defaultValue: at(1000) }]).success).toBe(true);
+    expect(parseCreate([{ key: at(255) }]).success).toBe(true);
+    expect(issuePaths(parseCreate([{ name: at(256), source: "ingested" }]))).toEqual([
+      "embeddedFields.0.name",
+    ]);
+    expect(issuePaths(parseCreate([{ key: at(256) }]))).toEqual(["embeddedFields.0.key"]);
+    expect(issuePaths(parseCreate([{ name: "plan", source: "ingested", defaultValue: at(1001) }]))).toEqual([
+      "embeddedFields.0.defaultValue",
+    ]);
+  });
+
+  test("refuses a NULL byte in any text Postgres would store, as a 400 at its path", () => {
+    expect(issuePaths(parseCreate([{ name: "pl\u0000an", source: "ingested" }]))).toEqual([
+      "embeddedFields.0.name",
+    ]);
+    expect(issuePaths(parseCreate([{ key: "plan\u0000" }]))).toEqual(["embeddedFields.0.key"]);
+    expect(issuePaths(parseCreate([{ name: "plan", source: "ingested", defaultValue: "a\u0000b" }]))).toEqual(
+      ["embeddedFields.0.defaultValue"]
+    );
+  });
 });
 
 describe("the shared flow fixture's Embedded Data through v3 (ENG-6930)", () => {
@@ -1901,6 +1925,14 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
         })
       )
     ).toEqual(expect.arrayContaining([`${valuePath}.label`, `${valuePath}.args.0.note`]));
+  });
+
+  test("a tree thousands of levels deep is a 400 at the first node past the limit, not a 500", () => {
+    let tree: unknown = { type: "static", value: 1 };
+    for (let level = 0; level < 20_000; level++) tree = { type: "call", fn: "abs", args: [tree] };
+    const tooDeep = `${valuePath}${".args.0".repeat(EXPRESSION_MAX_DEPTH)}`;
+
+    expect(failedNames(createWithExpression(tree))).toEqual([tooDeep]);
   });
 
   test("a wrong argument count and text in arithmetic are refused at their paths", () => {

@@ -141,6 +141,17 @@ describe("getShownFormulaError: what the box says while it is typed in", () => {
   test("other mistakes are reported as parsed", () => {
     expect(shown("@nope")).toEqual(expect.objectContaining({ code: "unknown_reference", detail: "nope" }));
   });
+
+  test("nothing is reported mid-typing; the same mistake shows once typing pauses or the box loses focus", () => {
+    const result = parse("ro(");
+    if (result.ok) throw new Error("expected a parse error");
+    expect(
+      getShownFormulaError(result.error, { text: "ro(", isReferenceMenuOpen: false, isTyping: true })
+    ).toBeNull();
+    expect(
+      getShownFormulaError(result.error, { text: "ro(", isReferenceMenuOpen: false, isTyping: false })
+    ).toEqual(expect.objectContaining({ code: "unknown_function" }));
+  });
 });
 
 describe("chips and @ insert at the cursor", () => {
@@ -170,7 +181,13 @@ describe("chips and @ insert at the cursor", () => {
 describe("getFormulaIssues: what a save would refuse, while typing", () => {
   test("text in arithmetic is named at its path; a fitting formula has none", () => {
     expect(getFormulaIssues(tree("@hours + @apple_reason"), ids.variables.score, surveyFlowFixture)).toEqual([
-      { path: ["args", 1], message: "Expression: + needs numbers, got text" },
+      {
+        path: ["args", 1],
+        message: "Expression: + needs numbers, got text",
+        // What the formula box words in the author's language.
+        code: "needs_numbers",
+        params: { fn: "+", wanted: "number", got: "text" },
+      },
     ]);
     expect(getFormulaIssues(tree("now()"), ids.variables.signedUpAt, surveyFlowFixture)).toEqual([]);
   });

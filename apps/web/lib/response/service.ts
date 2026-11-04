@@ -16,8 +16,6 @@ import {
   ZClientResponseUpdateInput,
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { type TResponseNotShown, getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -37,6 +35,7 @@ import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
+import { withoutNotShownAnswers } from "./not-shown-answers";
 import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "./pagination";
 import { standardColumnGroups, standardHeaders } from "./standard-columns";
 import {
@@ -138,6 +137,8 @@ export const getResponsesByContactId = reactCache(
         },
         select: {
           ...responseSelection,
+          // The contact page's response cards mark what the respondent was not shown (ENG-6936).
+          notShown: true,
           quotaLinks: {
             where: {
               status: "screenedIn",
@@ -584,19 +585,6 @@ export const getResponsesByWorkspaceId = reactCache(
  * unions by key: a key this payload rewrote takes its new verdict, including none at all, so a value
  * corrected on a later block stops being flagged.
  */
-/**
- * The blocks a not-shown record is resolved against, read in the update's own transaction. Skipped when
- * the record lists nothing, which is every update of a survey without show-if.
- */
-const getSurveyBlocksForNotShown = async (
-  prismaClient: Prisma.TransactionClient,
-  surveyId: string,
-  notShown: TResponseNotShown
-): Promise<TSurveyBlock[]> => {
-  if (!notShown.blocks?.length && !notShown.elements?.length) return [];
-  const survey = await prismaClient.survey.findUnique({ where: { id: surveyId }, select: { blocks: true } });
-  return survey?.blocks ?? [];
-};
 
 export const updateResponse = async (
   responseId: string,
@@ -624,24 +612,15 @@ export const updateResponse = async (
       throw new ResourceNotFoundError("Response", responseId);
     }
 
-    // merge data object
-    const data = {
-      ...currentResponse.data,
-      ...responseInput.data,
-    };
-    // The survey sends its whole not-shown record with every update (ENG-6936, ADR 0023): it replaces
-    // the stored one, and an answer to anything it lists is removed, so an item that ended up hidden
-    // after Back or a changed answer keeps no stale answer.
-    if (responseInput.notShown) {
-      const blocks = await getSurveyBlocksForNotShown(
-        prismaClient,
-        currentResponse.surveyId,
-        responseInput.notShown
-      );
-      for (const elementId of getNotShownElementIds(responseInput.notShown, blocks)) {
-        delete data[elementId];
-      }
-    }
+    // merge data object. The survey sends its whole not-shown record with every update (ENG-6936,
+    // ADR 0023): it replaces the stored one, and an answer to anything it lists is removed, so an item
+    // that ended up hidden after Back or a changed answer keeps no stale answer.
+    const data = await withoutNotShownAnswers(
+      prismaClient,
+      currentResponse.surveyId,
+      responseInput.notShown,
+      { ...currentResponse.data, ...responseInput.data }
+    );
     // merge ttc object (similar to data) to preserve TTC from previous blocks
     const currentTtc = currentResponse.ttc;
     const mergedTtc = responseInput.ttc

@@ -6,6 +6,7 @@ import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { ZSurveyBlockLogic, ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import { EXPRESSION_MAX_DEPTH } from "@formbricks/types/surveys/expressions";
 import {
+  MAX_START_LOGIC_RULES,
   type TSurveyType,
   ZSurveyDisplayOption,
   ZSurveyEndings,
@@ -19,11 +20,7 @@ import {
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
 import { BoundedInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
-import {
-  V3_EMBEDDED_FIELD_KEYS,
-  V3_SURVEY_MAX_EMBEDDED_FIELDS,
-  ZV3SurveyEmbeddedField,
-} from "./embedded-fields";
+import { V3_EMBEDDED_FIELD_KEYS, ZV3SurveyEmbeddedField } from "./embedded-fields";
 import { normalizeV3SurveyWriteLanguageCode } from "./language";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
@@ -1224,7 +1221,9 @@ export const V3_SURVEY_MAX_LANGUAGES = 50;
 export const V3_SURVEY_MAX_HIDDEN_FIELDS = 200;
 export const V3_SURVEY_MAX_TRIGGERS = 50;
 /** Rules before the first question (ENG-6932). A screener has a handful; this is a ceiling, not a target. */
-export const V3_SURVEY_MAX_START_LOGIC_RULES = 100;
+export const V3_SURVEY_MAX_START_LOGIC_RULES = MAX_START_LOGIC_RULES;
+/** Typed Embedded Data fields on one survey (ENG-6930). */
+export const V3_SURVEY_MAX_EMBEDDED_FIELDS = 300;
 
 /**
  * A document array, capped for request input or plain for the stored document. Typed on the output

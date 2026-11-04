@@ -57,9 +57,22 @@ import {
 } from "@/lib/block-flow";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { getCardStartsWithMedia } from "@/lib/card-header";
+import { type TFinishOnLoad, getFinishOnLoadToSend, prepareResponseCreate } from "@/lib/finish-on-load";
 import { getLocalizedValue } from "@/lib/i18n";
 import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
-import { type TNotShownStep, appendNotShownStep, buildNotShownRecord } from "@/lib/not-shown-record";
+import {
+  INITIAL_LOW_QUALITY_FLAG,
+  type TLowQualityFlag,
+  raiseLowQualityFlag,
+  takeLowQualityFlag,
+} from "@/lib/low-quality-flag";
+import {
+  type TNotShownStep,
+  appendNotShownStep,
+  buildNotShownRecord,
+  getRestorableNotShownSteps,
+  mergeSubmittedAnswers,
+} from "@/lib/not-shown-record";
 import {
   type SerializedSurveyState,
   clearSurveyProgress,
@@ -604,12 +617,16 @@ export function Survey({
   // Set once the display exists (or never will, outside a real deployment), so a screen-out before
   // the first question creates its response against that display (ENG-6932).
   const [isDisplaySettled, setIsDisplaySettled] = useState(false);
-  // A screen-out is sent at most once, and never for a session resumed from offline progress.
+  // A finish on load (a screen-out, or every block hidden) is sent at most once, and never for a
+  // session resumed from offline progress.
   const screenOutHandledRef = useRef(false);
-  // A rule marked the response Low quality (ENG-6933). The next response write carries
-  // `markLowQuality: true`, once: sent again on every later write, it would undo a reviewer's restore
-  // made while the respondent is still answering.
-  const pendingLowQualityRef = useRef(false);
+  // Every block was passed over by show-if as the survey opened (ENG-6931): the finish to send once
+  // the display has settled.
+  const [allHiddenFinish, setAllHiddenFinish] = useState<TFinishOnLoad | null>(null);
+  // A rule marked the response Low quality (ENG-6933): the next write carries `markLowQuality: true`,
+  // once per response (see `low-quality-flag.ts`). Saved with offline progress, so a resumed session
+  // does not send it again.
+  const lowQualityFlagRef = useRef<TLowQualityFlag>(INITIAL_LOW_QUALITY_FLAG);
 
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
@@ -764,7 +781,8 @@ export function Survey({
         setTtc(progress.ttc);
         setCurrentVariables(progress.currentVariables);
         setHistory(getRestorableHistory(localSurvey, progress.history));
-        setNotShownSteps(progress.notShownSteps ?? []);
+        setNotShownSteps(getRestorableNotShownSteps(localSurvey, progress.notShownSteps ?? []));
+        if (progress.lowQualitySent) lowQualityFlagRef.current = { pending: false, sent: true };
         setSelectedLanguage(progress.selectedLanguage);
 
         // Restore survey state from snapshot
@@ -1014,8 +1032,8 @@ export function Survey({
         }
 
         responseQueue.updateSurveyState(surveyState);
-        const markLowQuality = pendingLowQualityRef.current;
-        pendingLowQualityRef.current = false;
+        const { send: markLowQuality, next: lowQualityFlag } = takeLowQualityFlag(lowQualityFlagRef.current);
+        lowQualityFlagRef.current = lowQualityFlag;
         responseQueue.add({
           ...(markLowQuality && { markLowQuality: true }),
           data: responseUpdate.data,
@@ -1168,15 +1186,11 @@ export function Survey({
     setCurrentVariables(entry.variables);
     if (entry.requiredQuestionIds.length > 0) makeQuestionsRequired(entry.requiredQuestionIds);
     // Travels with the first write, like the values the passed-over blocks set.
-    if (entry.markLowQuality) pendingLowQualityRef.current = true;
+    if (entry.markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
+    // Sent by the finish-on-load effect below, once the display has settled.
     if (entry.finished) {
-      setIsSurveyFinished(true);
-      onResponseCreateOrUpdate({
-        data: {},
-        ttc: {},
-        finished: true,
+      setAllHiddenFinish({
         variables: entry.variables,
-        language: selectedLanguage,
         endingId: entry.endingId,
         notShown: buildNotShownRecord(localSurvey, [entryStep]),
       });
@@ -1216,26 +1230,38 @@ export function Survey({
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
   /**
-   * A screen-out before the first question (ENG-6932, T17): the rules sent the respondent to an
-   * ending as the survey loaded, so the ending is already on screen. The survey creates the finished
-   * response at once, through the create endpoint every first submit uses: the ending, the hidden
-   * fields and URL parameters (the queue merges them into `data`) and the values the rules set. With
-   * spam protection on, it fetches a reCAPTCHA token first, as the first submit does.
+   * A survey that finishes as it loads: a screen-out before the first question (ENG-6932, T17), or
+   * every block passed over by show-if (ENG-6931). The ending is already on screen. Once the display
+   * has settled, the survey creates the finished response through the create endpoint every first
+   * submit uses: the ending, the hidden fields and URL parameters (the queue merges them into `data`),
+   * the values the rules set and, for passed-over blocks, the not-shown record. With spam protection
+   * on, it fetches a reCAPTCHA token first, as the first submit does.
    */
   useEffect(() => {
-    if (!isDisplaySettled || !startOutcome.finished || screenOutHandledRef.current) return;
+    const finish = getFinishOnLoadToSend({
+      isDisplaySettled,
+      alreadyHandled: screenOutHandledRef.current,
+      screenOut: startOutcome.finished
+        ? { variables: startOutcome.variables, endingId: startOutcome.endingId }
+        : null,
+      allHidden: allHiddenFinish,
+    });
+    if (!finish) return;
     screenOutHandledRef.current = true;
 
-    const submitScreenOut = async () => {
-      if (isSpamProtectionEnabled && !surveyState?.responseId && getRecaptchaToken) {
-        const token = await getRecaptchaToken();
-        if (responseQueue && token) {
-          responseQueue.setResponseRecaptchaToken(token);
-        } else {
-          setShowError(true);
-          setErrorType(TResponseErrorCodesEnum.RecaptchaError);
-          return;
-        }
+    const submitFinishOnLoad = async () => {
+      const mayCreate = await prepareResponseCreate({
+        isSpamProtectionEnabled: !!isSpamProtectionEnabled,
+        hasResponseId: !!surveyState?.responseId,
+        getRecaptchaToken,
+        setRecaptchaToken: responseQueue
+          ? (token) => responseQueue.setResponseRecaptchaToken(token)
+          : undefined,
+      });
+      if (!mayCreate) {
+        setShowError(true);
+        setErrorType(TResponseErrorCodesEnum.RecaptchaError);
+        return;
       }
 
       setIsSurveyFinished(true);
@@ -1243,15 +1269,18 @@ export function Survey({
         data: {},
         ttc: {},
         finished: true,
-        variables: startOutcome.variables,
+        variables: finish.variables,
         language: selectedLanguage,
-        endingId: startOutcome.endingId,
+        endingId: finish.endingId,
+        ...(finish.notShown && { notShown: finish.notShown }),
       });
     };
 
-    void submitScreenOut();
+    submitFinishOnLoad().catch((error: unknown) => {
+      console.error("Formbricks: Failed to send the finished response", error);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, when the display has settled
-  }, [isDisplaySettled]);
+  }, [isDisplaySettled, allHiddenFinish]);
 
   // The outgoing card stays visible while the card transition cross-fades, so a
   // control that kept focus would show its focus ring hanging mid-fade before
@@ -1343,17 +1372,13 @@ export function Survey({
     // (ENG-6931), and so is an earlier answer to anything the record now lists, after Back or a changed
     // answer (ENG-6936): from the answers later conditions and recall read. The server removes it from
     // the response.
-    setResponseData((prev) => {
-      const next = { ...prev, ...submittedData };
-      for (const elementId of hiddenElementIds) delete next[elementId];
-      for (const elementId of notShownElementIds) delete next[elementId];
-      return next;
-    });
+    const droppedElementIds = [...hiddenElementIds, ...notShownElementIds];
+    setResponseData((prev) => mergeSubmittedAnswers(prev, submittedData, droppedElementIds));
     onChangeVariables(calculatedVariables);
 
     // A rule marked the response Low quality (ENG-6933): this submit's write carries the flag. The
     // respondent sees nothing.
-    if (markLowQuality) pendingLowQualityRef.current = true;
+    if (markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
 
     onResponseCreateOrUpdate({
       data: submittedData,
@@ -1375,11 +1400,13 @@ export function Survey({
       void saveSurveyProgress({
         surveyId: survey.id,
         blockId: nextCardId,
-        responseData: { ...responseData, ...submittedData },
+        // The same answers the renderer keeps: without the ones the record now lists (ENG-6936).
+        responseData: mergeSubmittedAnswers(responseData, submittedData, droppedElementIds),
         ttc: { ...ttc, ...responsettc },
         currentVariables: calculatedVariables,
         history: newHistory,
         notShownSteps: nextNotShownSteps,
+        lowQualitySent: lowQualityFlagRef.current.sent,
         selectedLanguage,
         webSurveyMeta: getWebSurveyMeta(),
         surveyStateSnapshot: {

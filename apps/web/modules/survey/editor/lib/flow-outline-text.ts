@@ -9,6 +9,12 @@ import type {
   TRightOperand,
   TSingleCondition,
 } from "@formbricks/types/surveys/logic";
+import {
+  isMatrixRowCondition,
+  resolveMatrixColumnValue,
+  resolveMatrixRowIndex,
+} from "@formbricks/types/surveys/matrix-conditions";
+import { type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -37,10 +43,8 @@ const getFieldName = (survey: TSurvey, storageKey: string): string =>
 
 type TOptionItem = { id: string; label?: Record<string, string> };
 
-const getOptionItems = (element: TSurveyElement | undefined, key: "choices" | "rows" | "columns") => {
-  const items = element && key in element ? (element as unknown as Record<string, unknown>)[key] : undefined;
-  return Array.isArray(items) ? (items as TOptionItem[]) : [];
-};
+const getOptionItems = (element: TSurveyElement | undefined, key: TOptionListKey): readonly TOptionItem[] =>
+  getOptionList<TOptionItem>(element, key);
 
 const getOptionLabel = (item: TOptionItem | undefined): string | undefined =>
   item?.label ? getTextContent(getLocalizedValue(item.label, "default")) : undefined;
@@ -54,10 +58,13 @@ const describeOperand = (
     case "element": {
       const element = findElement(survey, operand.value);
       const name = quote(element ? getElementBadgeText(element) : operand.value);
-      const row = "meta" in operand ? operand.meta?.row : undefined;
-      if (row === undefined) return name;
-      const rowLabel = getOptionLabel(getOptionItems(element, "rows")[Number(row)]);
-      return `${name} ${rowLabel ?? row}`;
+      const meta = "meta" in operand ? operand.meta : undefined;
+      if (!isMatrixRowCondition(meta)) return name;
+      // Ids first (ADR 0026): a row reordered since the condition was written still reads as its row.
+      const rows = getOptionItems(element, "rows");
+      const rowIndex = resolveMatrixRowIndex({ rows, columns: [] }, meta);
+      const rowLabel = rowIndex === undefined ? undefined : getOptionLabel(rows[rowIndex]);
+      return `${name} ${rowLabel ?? meta?.rowId ?? meta?.row}`;
     }
     case "variable":
       return getFieldName(survey, operand.value);
@@ -75,9 +82,17 @@ const describeStaticValue = (condition: TSingleCondition, survey: TSurvey): stri
   const element =
     condition.leftOperand.type === "element" ? findElement(survey, condition.leftOperand.value) : undefined;
 
-  if (element?.type === TSurveyElementTypeEnum.Matrix && condition.leftOperand.type === "element") {
-    const column = getOptionItems(element, "columns")[Number(value)];
-    return getOptionLabel(column) ?? String(value);
+  if (
+    element?.type === TSurveyElementTypeEnum.Matrix &&
+    condition.rightOperand?.type === "static" &&
+    condition.leftOperand.type === "element"
+  ) {
+    // Ids first (ADR 0026): the column ids resolve to positions, which name the columns as they are now.
+    const resolved = resolveMatrixColumnValue(element, condition.rightOperand);
+    const columns = getOptionItems(element, "columns");
+    const toColumnLabel = (position: string | number) =>
+      getOptionLabel(columns[Number(position)]) ?? String(position);
+    return Array.isArray(resolved) ? resolved.map(toColumnLabel).join(", ") : toColumnLabel(resolved);
   }
 
   const choices = getOptionItems(element, "choices");

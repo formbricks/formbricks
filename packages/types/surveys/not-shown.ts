@@ -20,7 +20,12 @@ export const MAX_NOT_SHOWN_MAP_KEYS = 1000;
 /** Characters an id may have. Element, block and option ids are far shorter. */
 export const MAX_NOT_SHOWN_ID_LENGTH = 200;
 
-const ZNotShownId = z.string().min(1).max(MAX_NOT_SHOWN_ID_LENGTH);
+// The record is stored as jsonb, which cannot hold U+0000: refusing it here answers 400, not 500.
+const ZNotShownId = z
+  .string()
+  .min(1)
+  .max(MAX_NOT_SHOWN_ID_LENGTH)
+  .refine((id) => !id.includes("\u0000"), "must not contain NULL bytes");
 const ZNotShownIds = z.array(ZNotShownId).max(MAX_NOT_SHOWN_IDS);
 const ZNotShownMap = z
   .record(ZNotShownId, ZNotShownIds)

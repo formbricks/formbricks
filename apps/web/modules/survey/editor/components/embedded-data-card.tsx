@@ -126,6 +126,11 @@ export const EmbeddedDataCard = ({
           name,
           questionIndex: blocker.elementIndex + 1,
         });
+      case "showIf":
+        return t("workspace.surveys.edit.embedded_field_used_in_show_if", {
+          name,
+          questionIndex: blocker.elementIndex + 1,
+        });
       case "recallWelcome":
         return t("workspace.surveys.edit.embedded_field_used_in_recall_welcome", { name });
       case "recallEnding":

@@ -31,7 +31,9 @@ export const ElementSummaryHeader = ({
   const notShownCount = useNotShownCount(elementSummary.element.id);
 
   return (
-    <div className="space-y-2 px-4 pt-6 pb-5 md:px-6">
+    <div
+      className="space-y-2 px-4 pt-6 pb-5 md:px-6"
+      data-testid={`element-summary-header-${elementSummary.element.id}`}>
       <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(

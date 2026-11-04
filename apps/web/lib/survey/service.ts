@@ -69,6 +69,7 @@ import {
   getDestinationSettingTurnedOn,
 } from "@/modules/ee/creatives/lib/linked-creatives";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
+import { syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -952,6 +953,9 @@ export const updateSurveyInternal = async (
           data,
           select: { id: true },
         });
+
+        // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
+        if (Array.isArray(data.blocks)) await syncQuotaMatrixConditions(tx, surveyId, data.blocks);
 
         // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
         // survey never commits without them. ENG-2412: from the PAYLOAD — the rows are the only place

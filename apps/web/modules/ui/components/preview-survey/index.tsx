@@ -33,7 +33,12 @@ import { PreviewModeSwitches, PreviewWindowBar } from "./components/preview-fram
 import { TestValuesControl } from "./components/test-values-control";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/containment";
 import { INITIAL_FOLLOW_STATE, followActiveElement } from "./lib/follow-active-element";
-import { getPreviewStartKey, getTestValueFields, toHiddenFieldsRecord } from "./lib/test-values";
+import {
+  getPreviewStartKey,
+  getTestValueFields,
+  restartsPreviewOnFinish,
+  toHiddenFieldsRecord,
+} from "./lib/test-values";
 import { mirrorPlacementForDir } from "./lib/utils";
 
 type TPreviewType = "modal" | "fullwidth" | "email";
@@ -98,9 +103,11 @@ export const PreviewSurvey = ({
     () => toHiddenFieldsRecord(testValues, testValueFields),
     [testValues, testValueFields]
   );
+  // Bumped when an app survey without endings finishes, to start it over (see `onFinished`).
+  const [previewRun, setPreviewRun] = useState(0);
   const previewStartKey = useMemo(
-    () => getPreviewStartKey(hiddenFieldsRecord, survey.startLogic ?? []),
-    [hiddenFieldsRecord, survey.startLogic]
+    () => getPreviewStartKey(hiddenFieldsRecord, survey.startLogic ?? [], previewRun),
+    [hiddenFieldsRecord, survey.startLogic, previewRun]
   );
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const enabledLanguages = useMemo(() => survey.languages.filter((l) => l.enabled), [survey.languages]);
@@ -240,13 +247,12 @@ export const PreviewSurvey = ({
   }, [elementId, updateElementId]);
 
   const onFinished = () => {
-    // close modal if there are no elements left
-    if (survey.type === "app" && survey.endings.length === 0) {
+    // close modal if there are no elements left, then start over: a remount runs the rules before the
+    // first question and the first page's show-if again, as the live survey does for a new respondent.
+    if (restartsPreviewOnFinish(survey)) {
       setIsModalOpen(false);
       setTimeout(() => {
-        if (survey.blocks[0]) {
-          setBlockId(survey.blocks[0].id);
-        }
+        setPreviewRun((run) => run + 1);
         setIsModalOpen(true);
       }, 500);
     }

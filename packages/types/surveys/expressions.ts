@@ -36,6 +36,7 @@ export type TExpressionFunction = z.infer<typeof ZExpressionFunction>;
 
 /** Input limits (CODING_STANDARDS "Input Limits", grill D6). */
 export const EXPRESSION_MAX_DEPTH = 12;
+const DEPTH_MESSAGE_TEXT = `Expression: nested deeper than ${String(EXPRESSION_MAX_DEPTH)} levels`;
 export const EXPRESSION_MAX_NODES = 200;
 /** The most arguments a variadic function (`add`, `multiply`, `min`, `max`, `concat`) takes. */
 export const EXPRESSION_MAX_ARGS = 50;
@@ -157,7 +158,7 @@ export const getExpressionLimitIssues = (expression: TExpression): { path: TPath
       if (!depthReported) {
         issues.push({
           path,
-          message: `Expression: nested deeper than ${String(EXPRESSION_MAX_DEPTH)} levels`,
+          message: DEPTH_MESSAGE_TEXT,
         });
         depthReported = true;
       }
@@ -176,13 +177,55 @@ export const getExpressionLimitIssues = (expression: TExpression): { path: TPath
   return issues;
 };
 
+/**
+ * The path of the first node past the depth limit in a raw (unparsed) tree, or `undefined`. Walks no
+ * deeper than the limit and no more nodes than the node limit, so a hostile tree (thousands of levels)
+ * is refused before the recursive schema descends into it: a 400 at its path, never a stack overflow.
+ */
+const findTooDeepPath = (root: unknown): TPath | undefined => {
+  let visited = 0;
+  const walk = (value: unknown, depth: number, path: TPath): TPath | undefined => {
+    visited += 1;
+    if (depth > EXPRESSION_MAX_DEPTH) return path;
+    if (visited > EXPRESSION_MAX_NODES) return undefined;
+    if (typeof value !== "object" || value === null) return undefined;
+    const node = value as { type?: unknown; args?: unknown };
+    if (node.type !== "call" || !Array.isArray(node.args)) return undefined;
+    for (const [idx, arg] of node.args.entries()) {
+      const found = walk(arg, depth + 1, [...path, "args", idx]);
+      if (found) return found;
+      if (visited > EXPRESSION_MAX_NODES) return undefined;
+    }
+    return undefined;
+  };
+  return walk(root, 1, []);
+};
+
+/**
+ * Whether a raw tree goes past the depth limit. The survey refinements still see a tree the schema
+ * refused (the issue is already reported); their recursive checks skip it rather than descend into it.
+ */
+export const isExpressionTooDeep = (expression: unknown): boolean =>
+  findTooDeepPath(expression) !== undefined;
+
+/** A tree, refused on depth before it is parsed (see {@link findTooDeepPath}). */
+const ZDepthBoundedExpression = z
+  .unknown()
+  .superRefine((value, ctx) => {
+    const path = findTooDeepPath(value);
+    if (path) ctx.addIssue({ code: "custom", message: DEPTH_MESSAGE_TEXT, path });
+  })
+  .pipe(ZExpression);
+
 /** The `value` of a Set value step: `{ type: "expression", value: <tree> }`. */
 export const ZExpressionValue = z
   .object({
     type: z.literal("expression"),
-    value: ZExpression,
+    value: ZDepthBoundedExpression,
   })
   .superRefine((value, ctx) => {
+    // Depth is refused (once, at its path) before the tree is parsed.
+    if (isExpressionTooDeep(value.value)) return;
     for (const issue of getExpressionLimitIssues(value.value)) {
       ctx.addIssue({ code: "custom", message: issue.message, path: ["value", ...issue.path] });
     }

@@ -182,7 +182,10 @@ test.describe("Survey flow @slow", () => {
       // Block show-if, question show-if, option show-if, a Hidden option and copied options.
       await expect(page.locator(`[id="flow-${ids.blocks.heavyUsers}"]`)).toContainText("Show if:");
       const question = (blockId: string, elementId: string) =>
-        page.locator(`[id="flow-${blockId}"] li`).filter({ hasText: headline(elementId) });
+        page
+          .locator(`[id="flow-${blockId}"]`)
+          .getByRole("listitem")
+          .filter({ hasText: headline(elementId) });
       await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show if:");
       await expect(question(ids.blocks.overall, "fav")).toContainText("Show-if on 1 option");
       await expect(question(ids.blocks.overall, "bundle")).toContainText("1 hidden option");
@@ -201,6 +204,13 @@ test.describe("Survey flow @slow", () => {
         );
       }
     });
+
+    // The last page holds a Cal.com booking question, which loads its embed from cal.com. Nobody books
+    // here, so the embed is refused: the journey never waits on, or fails with, outbound network.
+    await page.route(
+      (url) => url.hostname === "cal.com" || url.hostname.endsWith(".cal.com"),
+      (route) => route.abort()
+    );
 
     await test.step("a question appears live on its page as the answer above it changes", async () => {
       // Netflix and Apple TV+: "Heavy users" needs Netflix, Disney+ and Prime Video, so it is skipped.
@@ -309,19 +319,15 @@ test.describe("Survey flow @slow", () => {
         await page.getByRole("row").filter({ hasText: LOW_QUALITY_EMAIL }).click();
         await expect(notShown).toBeVisible({ timeout: 2000 });
       }).toPass({ timeout: 30000 });
-      await expect(notShown.locator("xpath=..")).toContainText(APPLE_REASON);
+      await expect(page.getByTestId("response-card-not-shown-group")).toContainText(APPLE_REASON);
       // A Low quality response offers to be restored as complete.
       await expect(page.getByRole("button", { name: "Restore as complete" })).toBeVisible();
       await page.keyboard.press("Escape");
 
       await page.goto(`/workspaces/${workspaceId}/surveys/${surveyId}/summary`);
       // Both respondents left the Overall page with it hidden, so both count.
-      // The innermost block holding both the question's heading and a "Not shown to" count: its header.
-      const appleReasonHeader = page
-        .locator("div")
-        .filter({ has: page.getByRole("heading", { name: APPLE_REASON, exact: true }) })
-        .filter({ hasText: /Not shown to \d+/ })
-        .last();
+      const appleReasonHeader = page.getByTestId("element-summary-header-apple_reason");
+      await expect(appleReasonHeader.getByRole("heading", { name: APPLE_REASON, exact: true })).toBeVisible();
       await expect(appleReasonHeader).toContainText("Not shown to 2");
     });
   });

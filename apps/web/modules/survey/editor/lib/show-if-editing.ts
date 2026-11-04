@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
-import type { TOptionListKey } from "@formbricks/types/surveys/show-if";
+import { type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
@@ -92,16 +92,16 @@ export const createShowIf = (
   return { id: createId(), connector: "and", conditions: [condition] };
 };
 
-const getOptionItems = (element: unknown, listKey: TOptionListKey): TOptionItem[] | undefined => {
-  const items = (element as Record<string, unknown> | undefined)?.[listKey];
-  return Array.isArray(items) ? (items as TOptionItem[]) : undefined;
-};
+const getOptionItems = (
+  element: TSurveyElement | undefined,
+  listKey: TOptionListKey
+): readonly TOptionItem[] => getOptionList<TOptionItem>(element, listKey);
 
 /** The option a target names; `undefined` for a block or element target, or an option gone since. */
 export const getTargetOption = (survey: TSurvey, target: TShowIfTarget): TOptionItem | undefined => {
   if (target.type !== "option") return undefined;
   const element = survey.blocks[target.blockIdx]?.elements[target.elementIdx];
-  return getOptionItems(element, target.listKey)?.find((item) => item.id === target.optionId);
+  return getOptionItems(element, target.listKey).find((item) => item.id === target.optionId);
 };
 
 export const getShowIf = (survey: TSurvey, target: TShowIfTarget): TConditionGroup | undefined => {
@@ -166,8 +166,8 @@ const updateOption = (
     return {
       ...block,
       elements: block.elements.map((element, elementIdx) => {
-        const items = elementIdx === target.elementIdx ? getOptionItems(element, target.listKey) : undefined;
-        if (!items) return element;
+        const items = elementIdx === target.elementIdx ? getOptionItems(element, target.listKey) : [];
+        if (items.length === 0) return element;
         return {
           ...element,
           [target.listKey]: items.map((item) => (item.id === target.optionId ? update(item) : item)),

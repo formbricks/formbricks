@@ -27,6 +27,7 @@ import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/log
 import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
 import {
   isMatrixRowCondition,
+  namesUnknownMatrixId,
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
@@ -217,6 +218,32 @@ export const updateCondition = (
   }
 };
 
+/**
+ * The two empty calculations, side by side so they are chosen on purpose (they deliberately differ):
+ *
+ * - A **new rule** from the Add logic menu ("Calculation", "Set a value") starts with an empty formula
+ *   (ENG-6935, P39), saved only once the formula box holds one.
+ * - **Switching an action** of an existing rule to Calculate keeps the one-step editor (`score + 1`),
+ *   so one-step calculations can still be written; its operator list offers "Use a formula".
+ *
+ * Both are refused on save until filled in.
+ */
+export const createEmptyFormulaAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
+  id,
+  objective: "calculate",
+  variableId,
+  operator: "assign",
+  value: { type: "expression", value: { type: "static", value: "" } },
+});
+
+export const createEmptyOneStepAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
+  id,
+  objective: "calculate",
+  variableId,
+  operator: "assign",
+  value: { type: "static", value: "" },
+});
+
 export const getUpdatedActionBody = (
   action: TSurveyBlockLogicAction,
   objective: TSurveyBlockLogicActionObjective
@@ -224,13 +251,7 @@ export const getUpdatedActionBody = (
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":
-      return {
-        id: action.id,
-        objective: "calculate",
-        variableId: "",
-        operator: "assign",
-        value: { type: "static", value: "" },
-      };
+      return createEmptyOneStepAction(action.id);
     case "requireAnswer":
       return {
         id: action.id,
@@ -378,12 +399,15 @@ const evaluateSingleCondition = (
     // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
     if (
       condition.leftOperand.type === "element" &&
-      condition.rightOperand?.type === "static" &&
       typeof leftField === "object" &&
       leftField.type === TSurveyElementTypeEnum.Matrix &&
       isMatrixRowCondition(condition.leftOperand.meta)
     ) {
-      rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      // A row or column id the matrix doesn't have never matches (P48), negated operators included.
+      if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return false;
+      if (condition.rightOperand?.type === "static") {
+        rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      }
     }
 
     switch (condition.operator) {

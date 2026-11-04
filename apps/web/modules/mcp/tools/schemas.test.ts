@@ -523,3 +523,19 @@ describe("array arguments are length-bounded (ENG-3384)", () => {
     expect(json.properties.languages.items).toMatchObject({ type: "object" });
   });
 });
+
+describe("embeddedFields entries (ENG-6930)", () => {
+  test("every key of an entry carries a description, as every MCP tool field must", () => {
+    const advertised = z.toJSONSchema(surveyAndFeedbackSchemas.ZMcpCreateSurveyInput, { io: "input" }) as {
+      properties: Record<string, { items?: { properties?: Record<string, { description?: string }> } }>;
+    };
+    const entry = advertised.properties.embeddedFields.items?.properties ?? {};
+
+    expect(Object.keys(entry).sort()).toEqual(
+      ["dataType", "defaultValue", "key", "locked", "name", "source", "storageKey"].sort()
+    );
+    for (const [key, schema] of Object.entries(entry)) {
+      expect(schema.description, key).toEqual(expect.any(String));
+    }
+  });
+});

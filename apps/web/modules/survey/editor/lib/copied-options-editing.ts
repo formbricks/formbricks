@@ -3,6 +3,8 @@ import {
   canCopyOptionsBetween,
   copyOptionsFrom,
   getCopiedOptionIds,
+  getOptionsCopiedFrom,
+  withoutOptionsCopiedFrom,
 } from "@formbricks/types/surveys/copied-options";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -16,8 +18,6 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 /** The question that copies, by position (the Flow tab's popovers address questions this way). */
 export type TCopyTarget = { blockIdx: number; elementIdx: number };
 
-type TRecord = Record<string, unknown>;
-
 const getTarget = (survey: TSurvey, target: TCopyTarget): TSurveyElement | undefined =>
   survey.blocks[target.blockIdx]?.elements[target.elementIdx];
 
@@ -26,10 +26,8 @@ const findElement = (survey: TSurvey, id: unknown): TSurveyElement | undefined =
     ? survey.blocks.flatMap((block) => block.elements).find((element) => element.id === id)
     : undefined;
 
-const copiedFromOf = (element: TSurveyElement | undefined): string | undefined => {
-  const value = (element as unknown as TRecord | undefined)?.optionsCopiedFrom;
-  return typeof value === "string" ? value : undefined;
-};
+const copiedFromOf = (element: TSurveyElement | undefined): string | undefined =>
+  getOptionsCopiedFrom(element);
 
 /**
  * The questions the target may copy its options from: those above it (earlier blocks, and above it on
@@ -103,10 +101,7 @@ export const copyOptionsAgain = (
  * is restored by picking the source again, which changes nothing else.
  */
 export const unlinkCopiedOptions = (survey: TSurvey, target: TCopyTarget): TSurvey =>
-  withTarget(survey, target, (element) => {
-    const { optionsCopiedFrom: _removed, ...rest } = element as unknown as TRecord;
-    return rest as unknown as TSurveyElement;
-  });
+  withTarget(survey, target, (element) => withoutOptionsCopiedFrom(element));
 
 /** How many of the source's options "Copy again" would bring in: those the target doesn't have yet. */
 export const countOptionsToCopyAgain = (survey: TSurvey, target: TCopyTarget): number => {

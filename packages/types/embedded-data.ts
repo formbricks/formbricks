@@ -12,6 +12,21 @@ import { RESERVED_DECLARED_FIELD_NAMES } from "./surveys/validation";
 export const EMBEDDED_DATA_KEY_MAX_LENGTH = 255;
 
 /**
+ * Authoring caps on a field's display name and string default: what a write that *declares* a field
+ * may send (the library manager, the v3 survey document). Not applied when reading a stored row; see
+ * `ZEmbeddedDataName`.
+ */
+export const EMBEDDED_DATA_NAME_MAX_LENGTH = 255;
+export const EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH = 1000;
+
+const NULL_BYTE = "\u0000";
+
+/** Postgres text cannot hold U+0000; no stored value has one, so refusing it never hides a row. */
+export const hasNoNullByte = (value: string): boolean => !value.includes(NULL_BYTE);
+
+export const NULL_BYTE_MESSAGE = "must not contain NULL bytes";
+
+/**
  * Where an Embedded Data field's value comes from.
  *
  * - `computed` — set inside the survey by logic (what used to be a "variable")
@@ -53,7 +68,10 @@ export type TEmbeddedDataDefaultValue = z.infer<typeof ZEmbeddedDataDefaultValue
  * a failure that only surfaces once ENG-1837 points readers at these tables. The create-time
  * limit belongs on the authoring path, alongside the naming rule.
  */
-const ZEmbeddedDataName = z.string().refine((value) => value.trim().length > 0, "Name must not be blank");
+const ZEmbeddedDataName = z
+  .string()
+  .refine((value) => value.trim().length > 0, "Name must not be blank")
+  .refine(hasNoNullByte, `Name ${NULL_BYTE_MESSAGE}`);
 
 /** A `date` default is stored as a string, so pin it to ISO 8601 — either a date or a datetime. */
 const ZIsoDateOrDateTime = z.union([z.iso.date(), z.iso.datetime()]);

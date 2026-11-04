@@ -1115,6 +1115,18 @@ describe("Survey Logic", () => {
 
         expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, condition, "default")).toBe(false);
       });
+
+      test("an unknown row or column id never matches a negated operator either (P48)", () => {
+        const notEqualsGone = matrixRow(
+          { row: "0", rowId: "row1" },
+          { type: "static", value: "0", columnId: "gone" },
+          "doesNotEqual"
+        );
+        const goneRowSkipped = matrixRow({ row: "0", rowId: "gone" }, undefined, "isSkipped");
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, notEqualsGone, "default")).toBe(false);
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, goneRowSkipped, "default")).toBe(false);
+      });
     });
 
     test("evaluates file upload questions", () => {

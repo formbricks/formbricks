@@ -13,6 +13,7 @@ import {
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
 import {
   TSurveyElement,
   TSurveyElementTypeEnum,
@@ -1203,16 +1204,36 @@ const findElementIndexByShowIf = (
     return Boolean(block?.showIf && isUsedInGroup(block.showIf));
   });
 
-/** The logic hit first, else the show-if hit: both stop a removal, and logic is what it always named. */
-const firstUse = (logicIndex: number, showIfIndex: () => number): number =>
-  logicIndex === -1 ? showIfIndex() : logicIndex;
+/**
+ * Where something a removal would break is used: in a rule (`logic`), in a show-if (`showIf`), or as
+ * the source of another question's copied options (`copiedOptions`), with the first element that uses
+ * it. The guards name the right place in their message (show-if uses read "shown only if", not logic).
+ */
+export type TUseKind = "logic" | "showIf" | "copiedOptions";
+export interface TUse {
+  kind: TUseKind;
+  /** The first element (in survey order) whose rule, show-if or copy link uses it. */
+  elementIndex: number;
+}
 
-export const findElementUsedInLogic = (survey: TSurvey, elementId: string): number => {
+/** The logic hit first, else the next kind's hit: each stops a removal, and logic is what it always named. */
+const firstUse = (first: TUse | null, next: () => TUse | null): TUse | null => first ?? next();
+
+const usageAt = (kind: TUseKind, elementIndex: number): TUse | null =>
+  elementIndex === -1 ? null : { kind, elementIndex };
+
+/** The index-only form the older callers read: -1 when unused. */
+const indexOfUse = (use: TUse | null): number => use?.elementIndex ?? -1;
+
+export const findElementUsedInLogic = (survey: TSurvey, elementId: string): number =>
+  indexOfUse(findElementUse(survey, elementId));
+
+export const findElementUse = (survey: TSurvey, elementId: string): TUse | null => {
   const { block } = findElementLocation(survey, elementId);
 
-  // The parent block for this elementId was not found in the survey, while this shouldn't happen but we still have a safety check and return -1
+  // The parent block for this elementId was not found in the survey, while this shouldn't happen but we still have a safety check
   if (!block) {
-    return -1;
+    return null;
   }
 
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
@@ -1272,15 +1293,19 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
   });
 
   return firstUse(
-    firstUse(logicIndex, () =>
-      findElementIndexByShowIf(survey, (group) => isUsedInCondition(group), elementId)
+    firstUse(usageAt("logic", logicIndex), () =>
+      usageAt(
+        "showIf",
+        findElementIndexByShowIf(survey, (group) => isUsedInCondition(group), elementId)
+      )
     ),
     // ENG-6938: a question another question copies its options from.
     () =>
-      elements.findIndex(
-        (element) =>
-          element.id !== elementId &&
-          (element as unknown as { optionsCopiedFrom?: unknown }).optionsCopiedFrom === elementId
+      usageAt(
+        "copiedOptions",
+        elements.findIndex(
+          (element) => element.id !== elementId && getOptionsCopiedFrom(element) === elementId
+        )
       )
   );
 };
@@ -1466,7 +1491,14 @@ export const findOptionUsedInLogic = (
   elementId: string,
   optionId: string,
   checkInLeftOperand: boolean = false
-): number => {
+): number => indexOfUse(findOptionUse(survey, elementId, optionId, checkInLeftOperand));
+
+export const findOptionUse = (
+  survey: TSurvey,
+  elementId: string,
+  optionId: string,
+  checkInLeftOperand: boolean = false
+): TUse | null => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       // It's a TConditionGroup
@@ -1502,8 +1534,11 @@ export const findOptionUsedInLogic = (
     return isUsedInCondition(logicRule.conditions);
   };
 
-  return firstUse(findElementIndexByBlockLogic(survey, isUsedInLogicRule), () =>
-    findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+  return firstUse(usageAt("logic", findElementIndexByBlockLogic(survey, isUsedInLogicRule)), () =>
+    usageAt(
+      "showIf",
+      findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+    )
   );
 };
 
@@ -1517,7 +1552,7 @@ export const findOptionUsedInLogic = (
  * nothing. The element finder already searches both sides; this is the same search, for the two
  * operand types the Embedded Data card removes.
  */
-const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable", id: string): number => {
+const findFieldUse = (survey: TSurvey, type: "hiddenField" | "variable", id: string): TUse | null => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       return condition.conditions.some(isUsedInCondition);
@@ -1546,16 +1581,25 @@ const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable",
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  return firstUse(findElementIndexByBlockLogic(survey, isUsedInLogicRule), () =>
-    findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+  return firstUse(usageAt("logic", findElementIndexByBlockLogic(survey, isUsedInLogicRule)), () =>
+    usageAt(
+      "showIf",
+      findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+    )
   );
 };
 
+export const findVariableUse = (survey: TSurvey, variableId: string): TUse | null =>
+  findFieldUse(survey, "variable", variableId);
+
+export const findHiddenFieldUse = (survey: TSurvey, hiddenFieldId: string): TUse | null =>
+  findFieldUse(survey, "hiddenField", hiddenFieldId);
+
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number =>
-  findFieldUsedInLogic(survey, "variable", variableId);
+  indexOfUse(findVariableUse(survey, variableId));
 
 export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number =>
-  findFieldUsedInLogic(survey, "hiddenField", hiddenFieldId);
+  indexOfUse(findHiddenFieldUse(survey, hiddenFieldId));
 
 export const getSurveyFollowUpActionDefaultBody = (t: TFunction): string => {
   return t("templates.follow_ups_modal_action_body")

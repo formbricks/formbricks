@@ -59,4 +59,16 @@ describe("ZResponseNotShownInput", () => {
       false
     );
   });
+
+  test("refuses a NULL byte in an id or a map key, which Postgres would answer with a 500", () => {
+    const nul = "q\u0000";
+    for (const record of [
+      { elements: [nul] },
+      { blocks: [nul] },
+      { options: { [nul]: ["a"] } },
+      { rows: { matrix: [nul] } },
+    ]) {
+      expect(ZResponseNotShownInput.safeParse(record).success).toBe(false);
+    }
+  });
 });

@@ -23,6 +23,7 @@ import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
+import { syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -454,6 +455,8 @@ export async function executeV3SurveyPatch(params: {
         }
 
         await runSurveyUpdate(tx);
+        // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
+        if (Array.isArray(data.blocks)) await syncQuotaMatrixConditions(tx, currentSurvey.id, data.blocks);
 
         // ENG-6930: typed Embedded Data, when the request sent it, is the complete set and wins over
         // the legacy keys (which prepare derived from it). Library entries link the workspace's row,

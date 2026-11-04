@@ -14,10 +14,12 @@ import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/s
 import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
 import {
   isMatrixRowCondition,
+  namesUnknownMatrixId,
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
 import { getLocalizedValue } from "@/lib/i18n";
+import { findByLocalizedLabel, getAllLocalizedLabels } from "@/lib/localized-label";
 import { getElementsFromSurveyBlocks } from "./utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -124,9 +126,7 @@ const getLeftOperandValue = (
         const isOthersEnabled = currentQuestion.choices.some((c) => c.id === "other");
 
         if (typeof responseValue === "string") {
-          const choice = currentQuestion.choices.find((choice) => {
-            return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
-          });
+          const choice = findByLocalizedLabel(currentQuestion.choices, responseValue, selectedLanguage);
 
           if (!choice) {
             if (isOthersEnabled) {
@@ -140,9 +140,7 @@ const getLeftOperandValue = (
         } else if (Array.isArray(responseValue)) {
           let choices: string[] = [];
           responseValue.forEach((value) => {
-            const foundChoice = currentQuestion.choices.find((choice) => {
-              return getLocalizedValue(choice.label, selectedLanguage) === value;
-            });
+            const foundChoice = findByLocalizedLabel(currentQuestion.choices, value, selectedLanguage);
 
             if (foundChoice) {
               choices.push(foundChoice.id);
@@ -160,9 +158,7 @@ const getLeftOperandValue = (
       // option ids, so "was ranked" maps each label back, as multi select does.
       if (currentQuestion.type === "ranking" && Array.isArray(responseValue)) {
         return responseValue.flatMap((value) => {
-          const choice = currentQuestion.choices.find(
-            (candidate) => getLocalizedValue(candidate.label, selectedLanguage) === value
-          );
+          const choice = findByLocalizedLabel(currentQuestion.choices, value, selectedLanguage);
           return choice ? [choice.id] : [];
         });
       }
@@ -177,18 +173,21 @@ const getLeftOperandValue = (
           const rowIndex = resolveMatrixRowIndex(currentQuestion, leftOperand.meta);
           if (rowIndex === undefined) return undefined;
 
-          const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
+          // The row's label in the current language first, then in any other (a language switch
+          // after the matrix was answered keeps its keys in the language it was answered in).
+          const rowLabel = currentQuestion.rows[rowIndex].label;
+          const row = [
+            getLocalizedValue(rowLabel, selectedLanguage),
+            ...getAllLocalizedLabels(rowLabel),
+          ].find((label) => label in responseValue);
 
-          const rowValue = responseValue[row];
+          const rowValue = row === undefined ? undefined : responseValue[row];
           if (rowValue === "") return "";
 
-          if (rowValue) {
-            const columnIndex = currentQuestion.columns.findIndex((column) => {
-              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
-            });
-
-            if (columnIndex === -1) return undefined;
-            return columnIndex.toString();
+          if (typeof rowValue === "string") {
+            const column = findByLocalizedLabel(currentQuestion.columns, rowValue, selectedLanguage);
+            if (!column) return undefined;
+            return currentQuestion.columns.indexOf(column).toString();
           }
           return undefined;
         }
@@ -296,12 +295,15 @@ const evaluateSingleCondition = (
     // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
     if (
       condition.leftOperand.type === "element" &&
-      condition.rightOperand?.type === "static" &&
       typeof leftField === "object" &&
       leftField.type === TSurveyElementTypeEnum.Matrix &&
       isMatrixRowCondition(condition.leftOperand.meta)
     ) {
-      rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      // A row or column id the matrix doesn't have never matches (P48), negated operators included.
+      if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return false;
+      if (condition.rightOperand?.type === "static") {
+        rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      }
     }
 
     switch (condition.operator) {

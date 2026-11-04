@@ -1,6 +1,6 @@
 import type { TEmbeddedDataType } from "../embedded-data";
 import { TSurveyElementTypeEnum } from "./constants";
-import type { TExpression, TExpressionFunction } from "./expressions";
+import { type TExpression, type TExpressionFunction, isExpressionTooDeep } from "./expressions";
 
 /**
  * The types of Set value expressions (ENG-6935): what each leaf and each function yields, and the
@@ -64,9 +64,27 @@ export interface TExpressionTypeContext {
   getReservedFieldType: (name: string) => TEmbeddedDataType | undefined;
 }
 
+/**
+ * What an issue is, for a UI that words it in the author's language. `message` stays the English text
+ * the API and MCP report; `params` holds the values a translated message needs (types as their
+ * expression type names: number, text, date, boolean).
+ */
+export type TExpressionTypeIssueCode =
+  | "unknown_question"
+  | "unusable_question"
+  | "unknown_field"
+  | "needs_numbers"
+  | "needs_type"
+  | "fallback_mismatch"
+  | "empty"
+  | "target_not_formula"
+  | "result_mismatch";
+
 export interface TExpressionTypeIssue {
   path: (string | number)[];
   message: string;
+  code: TExpressionTypeIssueCode;
+  params?: Record<string, string>;
 }
 
 type TInferred = { type: TExpressionValueType; dateLiteral?: boolean } | undefined;
@@ -126,6 +144,8 @@ export const checkExpressionTypes = (
           issues.push({
             path: [...path, "value"],
             message: `Expression: question ${node.value} does not exist`,
+            code: "unknown_question",
+            params: { id: node.value },
           });
           return undefined;
         }
@@ -134,6 +154,8 @@ export const checkExpressionTypes = (
           issues.push({
             path: [...path, "value"],
             message: `Expression: a ${element.type} question can't be used in a formula`,
+            code: "unusable_question",
+            params: { questionType: element.type },
           });
           return undefined;
         }
@@ -145,6 +167,8 @@ export const checkExpressionTypes = (
           issues.push({
             path: [...path, "value"],
             message: `Expression: field ${node.value} does not exist`,
+            code: "unknown_field",
+            params: { id: node.value },
           });
           return undefined;
         }
@@ -156,6 +180,8 @@ export const checkExpressionTypes = (
           issues.push({
             path: [...path, "value"],
             message: `Expression: field ${node.value} does not exist`,
+            code: "unknown_field",
+            params: { id: node.value },
           });
           return undefined;
         }
@@ -180,6 +206,8 @@ export const checkExpressionTypes = (
           wanted === "number"
             ? `Expression: ${FUNCTION_LABEL[fn]} needs numbers, got ${describeType(argType.type)}`
             : `Expression: ${FUNCTION_LABEL[fn]} needs a ${describeType(wanted)}, got ${describeType(argType.type)}`,
+        code: wanted === "number" ? "needs_numbers" : "needs_type",
+        params: { fn: FUNCTION_LABEL[fn], wanted, got: argType.type },
       });
       return false;
     };
@@ -210,6 +238,8 @@ export const checkExpressionTypes = (
         issues.push({
           path: [...path, "args", 1],
           message: `Expression: ifEmpty()'s fallback must be a ${describeType(value.type)}, got ${describeType(fallback.type)}`,
+          code: "fallback_mismatch",
+          params: { wanted: value.type, got: fallback.type },
         });
         return undefined;
       }
@@ -232,14 +262,23 @@ export const getSetValueExpressionIssues = (
   ctx: TExpressionTypeContext
 ): TExpressionTypeIssue[] => {
   if (expression.type === "static" && expression.value === "") {
-    return [{ path: [], message: "Expression: enter a formula" }];
+    return [{ path: [], message: "Expression: enter a formula", code: "empty" }];
   }
+  // Refused by the schema at its path; checking its types would descend the whole hostile tree.
+  if (isExpressionTooDeep(expression)) return [];
 
   const { type, dateLiteral, issues } = checkExpressionTypes(expression, ctx);
   if (issues.length > 0 || type === undefined) return issues;
 
   if (!EXPRESSION_TARGET_TYPES.includes(targetDataType)) {
-    return [{ path: [], message: `Expression: a ${targetDataType} field can't be set with a formula` }];
+    return [
+      {
+        path: [],
+        message: `Expression: a ${targetDataType} field can't be set with a formula`,
+        code: "target_not_formula",
+        params: { fieldType: getDataTypeExpressionType(targetDataType) },
+      },
+    ];
   }
 
   const wanted = getDataTypeExpressionType(targetDataType);
@@ -248,6 +287,8 @@ export const getSetValueExpressionIssues = (
       {
         path: [],
         message: `Expression: the result is ${describeType(type)}, but the field holds ${describeType(wanted)}`,
+        code: "result_mismatch",
+        params: { got: type, wanted },
       },
     ];
   }
