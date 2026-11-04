@@ -116,6 +116,11 @@ export type TMcpAuthInfo = AuthInfo & {
     formbricksAuthentication: TV3Authentication;
     requestId: string;
     authMethod: "apiKey" | "oauth";
+    /**
+     * Set on an OAuth token whose user holds only the Dashboard viewer role (ADR-0023). Such a token is
+     * trimmed to `dashboards:read`, and the dashboard-bound chart read accepts it on that scope alone.
+     */
+    dashboardViewerOnly?: boolean;
   };
 };
 
@@ -566,6 +571,7 @@ async function authenticateMcpOAuthBearer(
   // a viewer, for the up-to-15 minutes it stays valid, and any grant a revocation missed.
   if (await isDashboardViewerOnly(sessionAuthentication.user.id)) {
     authInfo.scopes = trimScopesForDashboardViewer(authInfo.scopes);
+    authInfo.extra.dashboardViewerOnly = true;
   }
 
   // Minimum grant required to authenticate against the MCP server at all: at least ONE *resource*
@@ -618,6 +624,11 @@ async function authenticateMcpOAuthBearer(
 export function hasMcpScopes(authInfo: AuthInfo | undefined, requiredScopes: string[]): boolean {
   const scopes = authInfo?.scopes ?? [];
   return requiredScopes.every((scope) => scopes.includes(scope));
+}
+
+/** True for an OAuth token whose user holds only the Dashboard viewer role (set at authentication). */
+export function isMcpDashboardViewerOnly(authInfo: AuthInfo | undefined): boolean {
+  return authInfo?.extra?.dashboardViewerOnly === true;
 }
 
 /** True when the caller holds at least one of `allowedScopes` (any-of, unlike `hasMcpScopes`). */

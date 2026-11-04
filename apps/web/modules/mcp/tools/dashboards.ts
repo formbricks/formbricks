@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
@@ -18,7 +18,7 @@ import {
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import type { TMcpToolContext } from "../auth";
+import { type TMcpToolContext, isMcpDashboardViewerOnly } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
   type TMcpAddChartToDashboardInput,
@@ -48,13 +48,13 @@ import {
   ZMcpChartOutput,
   ZMcpCreateChartInput,
   ZMcpCreateDashboardInput,
-  ZMcpDashboardChartDataOutput,
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
   ZMcpDashboardOutput,
   ZMcpDuplicateChartInput,
   ZMcpDuplicateDashboardInput,
   ZMcpGetChartDataInput,
+  ZMcpGetChartDataOutput,
   ZMcpListChartFieldValuesInput,
   ZMcpListChartFieldsInput,
   ZMcpListChartsInput,
@@ -104,12 +104,16 @@ const runMutation = (
  * like "clean up old charts" cannot remove anything permanently. There is no generate tool either; AI
  * chart generation is the app's, not the API's.
  *
- * Definitions and the field catalog need `dashboards:read`. A saved chart's numbers read through the
- * dashboard it sits on (`get_chart_data`) need `dashboards:read` alone: that is what a dashboard shows,
- * and the only data a Dashboard viewer's token may read (ADR-0023). Previewing a query of one's own and
- * looking up field values also need `feedbackRecords:read`, so a dashboards grant never becomes a way to
- * run arbitrary queries over respondents' answers.
+ * Definitions and the field catalog need `dashboards:read`. Reading a chart's numbers also needs
+ * `feedbackRecords:read`, so a dashboards grant never becomes a way into respondents' answers. The one
+ * exception is a Dashboard viewer's token reading a chart through its dashboard (ADR-0023): that token is
+ * trimmed to `dashboards:read`, and the dashboard is exactly what the role may see.
  */
+const hasDashboardId = (input: unknown): boolean =>
+  typeof input === "object" &&
+  input !== null &&
+  typeof (input as { dashboardId?: unknown }).dashboardId === "string";
+
 export function registerDashboardTools(server: McpServer): void {
   registerScopedTool(
     server,
@@ -245,20 +249,27 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Get chart data",
       description:
-        "Read a chart's rows through the dashboard it sits on, as the dashboard shows them. A dateRange (a preset, 'all-time', or { from, to }) narrows the chart's own range on collectedAt to the days both cover; without one the chart's saved range applies. picks (values for the dashboard's filters, by filter id) are ANDed onto the chart's saved filters and never widen it; a pick on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
+        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) narrows the chart's own range on collectedAt to the days both cover; without one the chart's saved range applies. Pass dashboardId to read the chart through a dashboard it sits on, as the dashboard shows it: picks (values for the dashboard's filters, by filter id) are then ANDed onto the chart's saved filters and never widen it, and a pick on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters. Without dashboardId picks are not accepted. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
       inputSchema: ZMcpGetChartDataInput,
-      outputSchema: ZMcpDashboardChartDataOutput,
+      outputSchema: ZMcpGetChartDataOutput,
       annotations: READ_ANNOTATIONS,
     },
-    // Dashboard-bound: the saved chart as its dashboard shows it, so `dashboards:read` is enough (ADR-0023).
-    ["dashboards:read"],
+    // The rows are respondents' answers in aggregate, so reading them needs feedback-record access too.
+    // The one exception is a Dashboard viewer reading through a dashboard (ADR-0023): its token is
+    // trimmed to `dashboards:read`, and the dashboard is the only data it may see (S1).
+    {
+      byInput: (input, authInfo) =>
+        hasDashboardId(input) && isMcpDashboardViewerOnly(authInfo)
+          ? ["dashboards:read"]
+          : ["dashboards:read", "feedbackRecords:read"],
+    },
     async ({ dashboardId, chartId, dateRange, picks }: TMcpGetChartDataInput, ctx) => {
       const context = toolContext(ctx);
       const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
-      return await responseToMcpToolResult(
-        await getV3DashboardChartData({ dashboardId, chartId, query: { ...range, picks }, ...context }),
-        context.requestId
-      );
+      const response = dashboardId
+        ? await getV3DashboardChartData({ dashboardId, chartId, query: { ...range, picks }, ...context })
+        : await getV3ChartData({ chartId, query: range, ...context });
+      return await responseToMcpToolResult(response, context.requestId);
     }
   );
 

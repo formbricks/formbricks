@@ -26,6 +26,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
   getIsDashboardsEnabled: vi.fn(async () => true),
   getIsDashboardViewerRoleEnabled: vi.fn(async () => true),
+  getAccessControlPermission: vi.fn(async () => true),
 }));
 
 type TToolHandler = (input: unknown, ctx: unknown) => Promise<CallToolResult>;
@@ -61,7 +62,12 @@ const call = (name: string, input: Record<string, unknown>) => {
         token: "oauth:viewer",
         clientId: "client",
         scopes: trimScopesForDashboardViewer([...MCP_OAUTH_SCOPES]),
-        extra: { formbricksAuthentication: sessionOf(ids.viewer), requestId: "req", authMethod: "oauth" },
+        extra: {
+          formbricksAuthentication: sessionOf(ids.viewer),
+          requestId: "req",
+          authMethod: "oauth",
+          dashboardViewerOnly: true,
+        },
       },
     },
   });
@@ -133,6 +139,12 @@ describe("a Dashboard viewer's MCP token", () => {
     const result = await call("get_chart_data", { dashboardId: ids.dashboard, chartId: ids.chart });
     expect(result.isError, JSON.stringify(result).slice(0, 300)).toBeFalsy();
     expect(result.structuredContent).toMatchObject({ data: { rows: expect.any(Array) } });
+  });
+
+  test("is refused a chart read without its dashboard (S1)", async () => {
+    const result = await call("get_chart_data", { chartId: ids.chart });
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result)).toMatch(/insufficient_scope|feedbackRecords:read/);
   });
 
   test("is refused the dashboards of a workspace its team is not granted", async () => {

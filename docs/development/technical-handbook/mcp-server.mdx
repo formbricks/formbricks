@@ -115,7 +115,7 @@ Supported scopes:
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
-| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`, `get_chart_data`; with `feedbackRecords:read`, `preview_chart`, `list_chart_field_values` |
+| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `get_chart_data`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId` on `dashboards:read` alone) |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
@@ -1482,9 +1482,11 @@ writes the chart query itself.
   chart so an agent can check it before `create_chart` saves it.
 - **Free-form numbers need feedback access.** `preview_chart` and `list_chart_field_values` run a caller's own
   query over respondents' answers, so they declare `dashboards:read` **and** `feedbackRecords:read`.
-  `get_chart_data` reads a saved chart through its dashboard, as the dashboard shows it, so it declares
-  `dashboards:read` alone (ADR-0023: the Dashboard viewer's client holds nothing else). Each operation also checks
-  read access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read`. They spend from
+  `get_chart_data` declares the same two, with one exception through `registerScopedTool`'s `{ byInput }` form:
+  given a `dashboardId` it reads the chart as that dashboard shows it, and a Dashboard viewer's token (trimmed to
+  `dashboards:read`, flagged `dashboardViewerOnly` at authentication) may do that on `dashboards:read` alone
+  (ADR-0023). Without `dashboardId` it is the chart-only read it always was. Each operation also checks read
+  access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read` for a viewer. They spend from
   the same 600/min budget as the REST data routes, and share their limit of 20 queries running at once, both
   charged inside the operation.
 - **Shared charts.** `update_chart`'s description says an edit shows on every dashboard holding the chart, and

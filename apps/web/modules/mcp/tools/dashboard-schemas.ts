@@ -16,16 +16,12 @@ import {
 } from "@/app/api/v3/dashboards/lib/resources";
 import {
   MAX_WIDGETS_PER_WRITE,
+  ZDashboardFilterPicks,
   ZV3DashboardName,
   ZV3WidgetLayoutInput,
   refuseEmptyWidgetUpdate,
   refuseRepeatedWidgets,
 } from "@/app/api/v3/dashboards/lib/schemas";
-import {
-  MAX_DASHBOARD_FILTERS,
-  MAX_DASHBOARD_FILTER_PICK_VALUES,
-  MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
-} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
@@ -126,7 +122,13 @@ export type TMcpPreviewChartInput = z.infer<typeof ZMcpPreviewChartInput>;
 
 export const ZMcpChartDataOutput = mcpToolOutput(ZV3ChartData);
 
-export const ZMcpDashboardChartDataOutput = mcpToolOutput(ZV3DashboardChartData);
+/**
+ * `get_chart_data`'s result: the chart's rows as before, plus `unfilterableFilters` when the read went
+ * through a dashboard. Optional, so a client written against the chart-only shape keeps parsing it (S1).
+ */
+export const ZMcpGetChartDataOutput = mcpToolOutput(
+  ZV3ChartData.extend({ unfilterableFilters: ZV3DashboardChartData.shape.unfilterableFilters.optional() })
+);
 
 const ZMcpChartConfig = ZV3ChartConfig.describe(
   "Display settings, separate from the query: e.g. showLegend, stacked, barOrientation (vertical|horizontal), pieDisplay (pie|breakdown), areaDisplay (filled|line), colors, axis labels."
@@ -156,26 +158,20 @@ export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;
 
 export const ZMcpGetChartDataInput = z
   .object({
-    dashboardId: ZId.describe("The dashboard the chart sits on, as get_dashboard lists its widgets."),
+    dashboardId: ZId.optional().describe(
+      "Read the chart through this dashboard, as get_dashboard lists its widgets: the dashboard's date range narrows it and picks apply. Without it the saved chart is read on its own."
+    ),
     chartId: ZId.describe("The chart to read: a widget's chartId on that dashboard."),
     dateRange: ZMcpChartDateRange,
-    picks: z
-      .record(
-        ZId,
-        z
-          .array(z.string().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
-          .min(1)
-          .max(MAX_DASHBOARD_FILTER_PICK_VALUES)
-      )
-      .refine((picks) => Object.keys(picks).length <= MAX_DASHBOARD_FILTERS, {
-        message: `At most ${MAX_DASHBOARD_FILTERS} filters can be picked.`,
-      })
-      .optional()
-      .describe(
-        "Values for the dashboard's filters, by filter id from get_dashboard's filters: several values for an equals/notEquals filter on a text field (any of), one value otherwise. Each narrows the chart; it never widens it."
-      ),
+    picks: ZDashboardFilterPicks.optional().describe(
+      "Values for the dashboard's filters, by filter id from get_dashboard's filters: several values for an equals/notEquals filter on a text field (any of), one value otherwise. Each narrows the chart; it never widens it. Needs dashboardId."
+    ),
   })
-  .strict();
+  .strict()
+  .refine((input) => input.picks === undefined || input.dashboardId !== undefined, {
+    message: "picks need a dashboardId: they are values for that dashboard's filters.",
+    path: ["picks"],
+  });
 export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;
 
 export const ZMcpListChartFieldValuesInput = z

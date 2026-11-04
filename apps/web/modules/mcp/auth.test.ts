@@ -355,6 +355,8 @@ describe("authenticateMcpRequest", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.authInfo.scopes).toEqual(["openid", "offline_access", "dashboards:read"]);
+      // get_chart_data reads this to let the trimmed token read a chart through its dashboard (S1).
+      expect(result.authInfo.extra.dashboardViewerOnly).toBe(true);
     }
     expect(isDashboardViewerOnlyMock).toHaveBeenCalledWith("viewer_1");
   });

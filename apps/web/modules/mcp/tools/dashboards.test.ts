@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
-import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
@@ -20,6 +20,7 @@ import {
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
 import { successListResponse, successResponse } from "@/app/api/v3/lib/response";
+import { ZMcpGetChartDataInput, ZMcpGetChartDataOutput } from "./dashboard-schemas";
 import { registerDashboardTools } from "./dashboards";
 
 vi.mock("@/app/api/v3/charts/lib/field-operations", () => ({
@@ -34,6 +35,7 @@ vi.mock("@/app/api/v3/charts/lib/operations", () => ({
 }));
 vi.mock("@/app/api/v3/charts/lib/duplicate-operations", () => ({ duplicateV3Chart: vi.fn() }));
 vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
+  getV3ChartData: vi.fn(),
   previewV3Chart: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/chart-data-operations", () => ({
@@ -66,7 +68,7 @@ const CHART_ID = "clch000000000000000000001";
 const DASHBOARD_ID = "cldb000000000000000000001";
 const WIDGET_ID = "clwg000000000000000000001";
 
-const authInfoWith = (scopes: string[]) => ({
+const authInfoWith = (scopes: string[], dashboardViewerOnly = false) => ({
   token: "key_1",
   clientId: "key_1",
   scopes,
@@ -81,6 +83,7 @@ const authInfoWith = (scopes: string[]) => ({
       ],
     },
     requestId: "req_tool",
+    ...(dashboardViewerOnly ? { dashboardViewerOnly: true } : {}),
   },
 });
 
@@ -100,11 +103,11 @@ const createToolServer = () => {
   return tools;
 };
 
-const call = async (name: string, input: unknown, scopes: string[]) => {
+const call = async (name: string, input: unknown, scopes: string[], dashboardViewerOnly = false) => {
   const tool = createToolServer().get(name);
   if (!tool) throw new Error(`${name} is not registered`);
   return await tool.handler(input, {
-    http: { authInfo: authInfoWith(scopes) },
+    http: { authInfo: authInfoWith(scopes, dashboardViewerOnly) },
     mcpReq: { method: "tools/call" },
   });
 };
@@ -239,7 +242,42 @@ describe("chart and dashboard MCP tools", () => {
     );
   });
 
-  test("get_chart_data reads a saved chart through its dashboard under dashboards:read alone (ADR-0023)", async () => {
+  test("get_chart_data without a dashboardId reads the chart as before and still needs feedbackRecords:read (S1)", async () => {
+    vi.mocked(getV3ChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+
+    const refused = await call("get_chart_data", { chartId: CHART_ID }, ["dashboards:read"]);
+    expect(refused.isError).toBe(true);
+    expect(getV3ChartData).not.toHaveBeenCalled();
+
+    const result = await call("get_chart_data", { chartId: CHART_ID, dateRange: "last_7_days" }, [
+      "dashboards:read",
+      "feedbackRecords:read",
+    ]);
+    expect(result.isError).toBeFalsy();
+    expect(getV3ChartData).toHaveBeenCalledWith(
+      expect.objectContaining({ chartId: CHART_ID, query: { dateRange: "last_7_days" } })
+    );
+    expect(getV3DashboardChartData).not.toHaveBeenCalled();
+  });
+
+  test("get_chart_data through a dashboard still needs feedbackRecords:read from anyone but a Dashboard viewer (S1)", async () => {
+    vi.mocked(getV3DashboardChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+
+    const refused = await call("get_chart_data", { dashboardId: DASHBOARD_ID, chartId: CHART_ID }, [
+      "dashboards:read",
+    ]);
+    expect(refused.isError).toBe(true);
+    expect(getV3DashboardChartData).not.toHaveBeenCalled();
+
+    const allowed = await call("get_chart_data", { dashboardId: DASHBOARD_ID, chartId: CHART_ID }, [
+      "dashboards:read",
+      "feedbackRecords:read",
+    ]);
+    expect(allowed.isError).toBeFalsy();
+    expect(getV3DashboardChartData).toHaveBeenCalledTimes(1);
+  });
+
+  test("get_chart_data reads a saved chart through its dashboard under dashboards:read alone for a Dashboard viewer (ADR-0023)", async () => {
     vi.mocked(getV3DashboardChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
 
     const result = await call(
@@ -250,7 +288,8 @@ describe("chart and dashboard MCP tools", () => {
         dateRange: { from: "2026-01-01", to: "2026-01-31" },
         picks: { clfi000000000000000000001: ["Web"] },
       },
-      ["dashboards:read"]
+      ["dashboards:read"],
+      true
     );
 
     expect(result.isError).toBeFalsy();
@@ -261,6 +300,12 @@ describe("chart and dashboard MCP tools", () => {
         query: { from: "2026-01-01", to: "2026-01-31", picks: { clfi000000000000000000001: ["Web"] } },
       })
     );
+  });
+
+  test("get_chart_data refuses a viewer without a dashboardId (S1)", async () => {
+    const result = await call("get_chart_data", { chartId: CHART_ID }, ["dashboards:read"], true);
+    expect(result.isError).toBe(true);
+    expect(getV3ChartData).not.toHaveBeenCalled();
   });
 
   test("list_dashboards maps its filters and get_dashboard reads one, both under dashboards:read", async () => {
@@ -468,5 +513,33 @@ describe("chart and dashboard MCP tools", () => {
       expect(result.isError).toBeUndefined();
       expect(outputSchema.safeParse(result.structuredContent).success).toBe(true);
     }
+  });
+});
+
+describe("get_chart_data schemas (S1)", () => {
+  test("dashboardId is optional, and picks need one", () => {
+    expect(ZMcpGetChartDataInput.safeParse({ chartId: CHART_ID }).success).toBe(true);
+    expect(
+      ZMcpGetChartDataInput.safeParse({ chartId: CHART_ID, picks: { clfi000000000000000000001: ["Web"] } })
+        .success
+    ).toBe(false);
+  });
+
+  test("picks go through the one shared picks schema, which refuses a NUL byte (C15, C6)", () => {
+    const input = (value: string) => ({
+      dashboardId: DASHBOARD_ID,
+      chartId: CHART_ID,
+      picks: { clfi000000000000000000001: [value] },
+    });
+    expect(ZMcpGetChartDataInput.safeParse(input("Web")).success).toBe(true);
+    expect(ZMcpGetChartDataInput.safeParse(input("We\u0000b")).success).toBe(false);
+  });
+
+  test("the output keeps the old shape and adds unfilterableFilters only as an optional field", () => {
+    const base = { rows: [], optionLabels: {}, fieldLabels: {}, memberLabels: {}, query: {} };
+    expect(ZMcpGetChartDataOutput.safeParse({ data: base }).success).toBe(true);
+    expect(ZMcpGetChartDataOutput.safeParse({ data: { ...base, unfilterableFilters: [] } }).success).toBe(
+      true
+    );
   });
 });

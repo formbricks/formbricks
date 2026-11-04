@@ -50,18 +50,20 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` | Record, correct and delete survey responses |
-| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`, `get_chart_data`³; with `feedbackRecords:read` also `preview_chart`³, `list_chart_field_values`³ | Read charts and dashboards, the fields a chart can use, the numbers a dashboard shows, and — with feedback-record access — the numbers of any query |
+| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read` also `get_chart_data`³, `preview_chart`³, `list_chart_field_values`³ | Read charts and dashboards, the fields a chart can use, the numbers a dashboard shows, and — with feedback-record access — the numbers of any query |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | Create and change charts and dashboards. There is no tool that deletes a chart or a dashboard |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
 ² Changing a record that already exists is held to a higher bar than creating one, because a feedback dataset shared across workspaces has no way to tell whose records are whose. Connected over **OAuth** (the flow on this page), both tools require you to be an **organization owner or manager**. Authenticated with an **API key** instead, they require the dataset to be assigned to a **single workspace** — a workspace-scoped key cannot be shown to own a record in a shared one — and `delete_feedback_record` additionally requires **manage** permission, matching `DELETE` elsewhere in the API. Creating, reading and searching are unaffected either way.
 
-³ `get_chart_data` reads a saved chart through the dashboard it sits on, exactly as the dashboard shows it, so
-`dashboards:read` is enough; it is what a Dashboard viewer's client uses. Running a query of your own
-(`preview_chart`) or listing a field's stored values (`list_chart_field_values`) needs `feedbackRecords:read` as
-well — a dashboards grant alone never runs arbitrary queries over feedback. All three also need read access to the
-chart's feedback dataset (for `get_chart_data`, through the dashboard).
+³ `get_chart_data` reads a saved chart's numbers. Pass `dashboardId` to read it through a dashboard it sits on,
+exactly as the dashboard shows it, with the dashboard's filters (`picks`); without it the chart is read on its
+own, as before. Either way it needs `feedbackRecords:read` as well, except for a Dashboard viewer: its client
+holds only `dashboards:read` and reads charts through their dashboards with that alone. Running a query of your
+own (`preview_chart`) or listing a field's stored values (`list_chart_field_values`) always needs
+`feedbackRecords:read` — a dashboards grant alone never runs arbitrary queries over feedback. All three also need
+read access to the chart's feedback dataset.
 
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed
