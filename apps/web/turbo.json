@@ -172,6 +172,7 @@
         "SMTP_PASSWORD",
         "SMTP_PORT",
         "SMTP_REJECT_UNAUTHORIZED_TLS",
+        "SMTP_REQUIRE_TLS",
         "SMTP_SECURE_ENABLED",
         "SMTP_USER",
         "STRAPI_API_KEY",
