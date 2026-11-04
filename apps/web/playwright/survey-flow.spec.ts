@@ -164,6 +164,8 @@ test.describe("Survey flow @slow", () => {
       await page.getByRole("button", { name: "Flow", exact: true }).click();
 
       await expect(page.getByText("6 blocks · 4 endings")).toBeVisible();
+      // Every block starts collapsed: open them all to see their questions and rules.
+      await page.getByRole("button", { name: "Expand", exact: true }).click();
 
       // Rules before the first question: the screen-out on a missing panel id jumps to its ending.
       await expect(page.getByText("Before the first question")).toBeVisible();
@@ -180,13 +182,13 @@ test.describe("Survey flow @slow", () => {
       }
 
       // Block show-if, question show-if, option show-if, a Hidden option and copied options.
-      await expect(page.locator(`[id="flow-${ids.blocks.heavyUsers}"]`)).toContainText("Show if:");
+      await expect(page.locator(`[id="flow-${ids.blocks.heavyUsers}"]`)).toContainText("Show block if ");
       const question = (blockId: string, elementId: string) =>
         page
           .locator(`[id="flow-${blockId}"]`)
           .getByRole("listitem")
           .filter({ hasText: headline(elementId) });
-      await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show if:");
+      await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show question if ");
       await expect(question(ids.blocks.overall, "fav")).toContainText("Show options if … (1 option)");
       await expect(question(ids.blocks.overall, "bundle")).toContainText("1 hidden option");
       await expect(question(ids.blocks.profile, "recommend")).toContainText("Options copied from services");
@@ -195,7 +197,9 @@ test.describe("Survey flow @slow", () => {
       await expect(page.locator(`[id="${ids.setValue.scoreRule}"]`)).toContainText(
         "score = round(ifEmpty(@sat_netflix, 0) + ifEmpty(@sat_disney, 0) * 2, 1)"
       );
-      await expect(page.locator(`[id="${ids.lowQuality.rule}"]`)).toContainText("Mark as low quality");
+      await expect(page.locator(`[id="${ids.lowQuality.rule}"]`)).toContainText(
+        "Mark response as Low quality"
+      );
 
       // Endings, the redirect one by its label.
       for (const ending of fixture.endings) {

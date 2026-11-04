@@ -1,7 +1,7 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { EyeIcon, EyeOffIcon, ListFilterIcon, TrashIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, TrashIcon } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
@@ -11,7 +11,6 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import {
-  InfoTooltip,
   ShowIfConditionsEditor,
   ShowIfPopoverFrame,
   useShowIfScope,
@@ -27,6 +26,7 @@ import {
 import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { Popover, PopoverTrigger } from "@/modules/ui/components/popover";
 import { Switch } from "@/modules/ui/components/switch";
 
@@ -97,11 +97,11 @@ export function OptionsShowIfPopover({
         ) : (
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-500 opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-700 focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden data-[state=open]:opacity-100"
+            className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
             // The question list sits inside the block row: don't collapse it.
             onClick={(event) => event.stopPropagation()}>
-            <ListFilterIcon className="size-3" aria-hidden="true" />
-            {t("workspace.surveys.edit.flow.options_shown_if")}
+            <EyeIcon className="size-3" aria-hidden="true" />
+            {t("workspace.surveys.edit.flow.show_options_if")}
           </button>
         )}
       </PopoverTrigger>
@@ -179,7 +179,10 @@ function OptionsShowIfEditor({
     <ShowIfPopoverFrame
       title={t("workspace.surveys.edit.flow.options_shown_if")}
       help={t("workspace.surveys.edit.flow.options_shown_if_help")}
-      info={t("workspace.surveys.edit.flow.options_shown_if_info")}
+      info={{
+        label: t("workspace.surveys.edit.flow.options_shown_if_info_label"),
+        content: t("workspace.surveys.edit.flow.options_shown_if_info"),
+      }}
       footer={
         <div className="flex items-center justify-end gap-3">
           <Button type="button" size="sm" onClick={onClose}>
@@ -364,7 +367,9 @@ function OptionRow({
           <label htmlFor={switchId} className="text-xs text-slate-600">
             {t("workspace.surveys.edit.flow.hide_option")}
           </label>
-          <InfoTooltip>{t("workspace.surveys.edit.flow.hidden_option_help")}</InfoTooltip>
+          <InfoTooltip label={t("workspace.surveys.edit.flow.hidden_option_info_label")}>
+            {t("workspace.surveys.edit.flow.hidden_option_help")}
+          </InfoTooltip>
           <Switch id={switchId} checked={isHidden} onCheckedChange={onHiddenChange} />
         </div>
       </div>

@@ -20,8 +20,12 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * free of translations and of the survey's languages.
  */
 
-/** How a rule reads on the outline: blue for a rule (jump, require answer), green for an Embedded Data step. */
-export type TFlowRuleTone = "rule" | "embeddedData";
+/**
+ * What a rule is, which names it and gives it its icon and colour everywhere: its row, the Add logic
+ * menu and the "then" dropdown. One per action objective; a rule with several kinds of action reads
+ * as its first action's.
+ */
+export type TFlowRuleType = "jump" | "setValue" | "requireAnswer" | "markLowQuality";
 
 /** Why a row or badge is shown read-only. */
 export type TFlowReadOnlyReason = "unsupportedAction" | "unsupportedValue" | "unsupportedCondition";
@@ -33,7 +37,7 @@ export interface TFlowRuleRow {
   id: string;
   owner: TFlowRuleOwner;
   ruleIdx: number;
-  tone: TFlowRuleTone;
+  type: TFlowRuleType;
   rule: TSurveyBlockLogic;
   editable: boolean;
   readOnlyReason?: TFlowReadOnlyReason;
@@ -177,11 +181,21 @@ const getReadOnlyReason = (
   return undefined;
 };
 
-const getRuleTone = (rule: TSurveyBlockLogic): TFlowRuleTone => {
-  const actions = Array.isArray(rule.actions) ? rule.actions : [];
-  return actions.length > 0 && actions.every((action) => action.objective === "calculate")
-    ? "embeddedData"
-    : "rule";
+const RULE_TYPE_BY_OBJECTIVE: Record<string, TFlowRuleType> = {
+  jumpToBlock: "jump",
+  calculate: "setValue",
+  requireAnswer: "requireAnswer",
+  markLowQuality: "markLowQuality",
+};
+
+/** The first action's type; an action the editor doesn't know is passed over, and a jump is the default. */
+export const getRuleType = (rule: TSurveyBlockLogic): TFlowRuleType => {
+  const actions: unknown[] = Array.isArray(rule.actions) ? rule.actions : [];
+  for (const action of actions) {
+    const type = isRecord(action) ? RULE_TYPE_BY_OBJECTIVE[String(action.objective)] : undefined;
+    if (type) return type;
+  }
+  return "jump";
 };
 
 const toRuleRow = (rule: TSurveyBlockLogic, ruleIdx: number, owner: TFlowRuleOwner): TFlowRuleRow => {
@@ -191,7 +205,7 @@ const toRuleRow = (rule: TSurveyBlockLogic, ruleIdx: number, owner: TFlowRuleOwn
     id: rule.id,
     owner,
     ruleIdx,
-    tone: getRuleTone(rule),
+    type: getRuleType(rule),
     rule,
     editable: readOnlyReason === undefined,
     ...(readOnlyReason ? { readOnlyReason } : {}),

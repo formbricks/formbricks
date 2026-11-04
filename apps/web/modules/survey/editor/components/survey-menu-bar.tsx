@@ -34,6 +34,7 @@ import {
   getSurveyToAutosave,
   isCustomCssBlockingManualSave,
 } from "@/modules/survey/editor/lib/custom-css-autosave";
+import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import {
   parseSurveyEndings,
@@ -432,16 +433,12 @@ export const SurveyMenuBar = ({
       }
 
       if (newInvalidIds.length > 0) {
-        setInvalidElements((prev) => {
-          const existing = prev ?? [];
-          const merged = [...existing];
-          for (const id of newInvalidIds) {
-            if (!merged.includes(id)) {
-              merged.push(id);
-            }
-          }
-          return merged;
-        });
+        // This pass's flags first, in issue order: the Flow tab opens the first flagged rule, which
+        // is the one the toast below names.
+        setInvalidElements((prev) => [
+          ...newInvalidIds,
+          ...(prev ?? []).filter((id) => !newInvalidIds.includes(id)),
+        ]);
       }
 
       if (firstInvalidScrollId) {
@@ -507,7 +504,7 @@ export const SurveyMenuBar = ({
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
           setActiveId("language");
         } else {
-          toast.error(firstError.message, {
+          toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")), {
             className: "w-fit max-w-md!",
           });
         }
@@ -527,7 +524,7 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      toast.error(firstError.message);
+      toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")));
       return false;
     }
 

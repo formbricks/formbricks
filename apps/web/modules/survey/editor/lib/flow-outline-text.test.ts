@@ -193,6 +193,31 @@ describe("describeAction", () => {
     );
   });
 
+  test("a Set value with no field yet says a field is missing, not = “”", () => {
+    const formula: TSurveyBlockLogicAction = {
+      id: "a",
+      objective: "calculate",
+      variableId: "",
+      operator: "assign",
+      value: { type: "expression", value: { type: "static", value: "" } },
+    };
+    const oneStep: TSurveyBlockLogicAction = {
+      id: "b",
+      objective: "calculate",
+      variableId: "",
+      operator: "assign",
+      value: { type: "static", value: "" },
+    };
+    expect(describeAction(formula, surveyFlowFixture, t)).toEqual({
+      kind: "calculate",
+      label: "no_field_to_set",
+    });
+    expect(describeAction(oneStep, surveyFlowFixture, t)).toEqual({
+      kind: "calculate",
+      label: "no_field_to_set",
+    });
+  });
+
   test("an action this editor doesn't know still reads as its objective", () => {
     const unknown = { id: "a", objective: "setOutcome" } as unknown as TSurveyBlockLogicAction;
     expect(describeAction(unknown, surveyFlowFixture, t)).toEqual({

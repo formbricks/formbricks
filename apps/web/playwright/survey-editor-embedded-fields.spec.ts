@@ -138,6 +138,9 @@ const openBlockLogic = async (page: Page): Promise<void> => {
 
   const firstConditionOperand = page.locator("#condition-0-0-conditionValue");
   if (await firstConditionOperand.isVisible().catch(() => false)) return;
+  // The Flow tab opens with every block collapsed, which hides their rules.
+  const expand = page.getByRole("button", { name: "Expand", exact: true });
+  if (await expand.isVisible()) await expand.click();
 
   // A rule's row reads "If …"; it opens its editor.
   const ruleRow = editorPanel(page).getByRole("button", { expanded: false }).filter({ hasText: /^If / });

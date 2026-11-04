@@ -808,6 +808,19 @@ describe("getActionObjectiveOptions", () => {
       "workspace.surveys.edit.flow.set_value"
     );
   });
+
+  test("lists the rule types in Add logic's order, each with its own icon", () => {
+    const options = getActionObjectiveOptions(t);
+
+    expect(options.map((option) => [option.value, option.label])).toEqual([
+      ["jumpToBlock", "workspace.surveys.edit.jump_to_block"],
+      ["calculate", "workspace.surveys.edit.flow.set_value"],
+      ["requireAnswer", "workspace.surveys.edit.require_answer"],
+      ["markLowQuality", "workspace.surveys.edit.mark_as_low_quality"],
+    ]);
+    expect(new Set(options.map((option) => option.icon)).size).toBe(4);
+    expect(options.every((option) => option.icon)).toBe(true);
+  });
 });
 
 describe("ranking conditions in the editor (T21, ENG-6937)", () => {

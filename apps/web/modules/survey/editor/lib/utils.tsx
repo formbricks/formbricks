@@ -49,6 +49,12 @@ import {
   getReservedFieldLabel,
 } from "@/modules/embedded-data/lib/field-display";
 import { findElementLocation, getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
+import {
+  RULE_TYPES,
+  RULE_TYPE_COMBOBOX_ICON,
+  RULE_TYPE_OBJECTIVE,
+  getRuleTypeLabel,
+} from "@/modules/survey/editor/lib/rule-types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { formatCodedLabel } from "@/modules/survey/lib/element-code-label";
 import { type TElement, getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
@@ -454,13 +460,16 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
   return modifiedSurvey;
 };
 
-export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
-  // The glossary's Set value: one action, whether it writes a formula or a one-step calculation.
-  { label: t("workspace.surveys.edit.flow.set_value"), value: "calculate" },
-  { label: t("workspace.surveys.edit.require_answer"), value: "requireAnswer" },
-  { label: t("workspace.surveys.edit.jump_to_block"), value: "jumpToBlock" },
-  { label: t("workspace.surveys.edit.mark_as_low_quality"), value: "markLowQuality" },
-];
+/**
+ * The "then" dropdown: each rule type with the name, icon and colour its row and the Add logic menu
+ * use, in the same order. Set value is the glossary's: one action, formula or one-step calculation.
+ */
+export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] =>
+  RULE_TYPES.map((type) => ({
+    label: getRuleTypeLabel(type, t),
+    value: RULE_TYPE_OBJECTIVE[type],
+    icon: RULE_TYPE_COMBOBOX_ICON[type],
+  }));
 
 export const hasJumpToBlockAction = (actions: TSurveyBlockLogicAction[]): boolean => {
   return actions.some((action) => action.objective === "jumpToBlock");

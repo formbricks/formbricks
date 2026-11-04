@@ -219,7 +219,7 @@ export const WithRole: Story = {
 
 export const WithIcon: Story = {
   args: {
-    text: "Show if: Netflix picked",
+    text: "Show question if Netflix picked",
     type: "gray",
     size: "tiny",
     icon: <EyeIcon />,
@@ -236,7 +236,7 @@ export const WithIcon: Story = {
 
 export const Clickable: Story = {
   args: {
-    text: "Show if: uses Netflix, Disney+ and Prime Video",
+    text: "Show block if uses Netflix, Disney+ and Prime Video",
     type: "gray",
     size: "normal",
     icon: <EyeIcon />,

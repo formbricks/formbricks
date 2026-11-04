@@ -13,39 +13,39 @@ The Flow tab is there in every survey, including surveys created in CX mode.
 Read the outline from top to bottom. That is the order a respondent moves through the survey.
 
 * **Blocks.** Each block is one page of the survey. Its row shows its number, its name, its questions and how many rules it has.
-* **Show if.** A block or a question shown only to some respondents carries a **Show if:** badge that reads its condition. See [Show If](/surveys/general-features/show-if).
-* **Options.** A question whose options are shown only to some respondents carries a **Show options if … (N options)** badge, and one with Hidden options a **N hidden options** badge. Click either, or hover a question with options and choose **Options shown if…**, to edit them. See [Show if on options](/surveys/general-features/show-if#show-if-on-options).
+* **Show if.** A block or a question shown only to some respondents carries a **Show block if …** or **Show question if …** badge that reads its condition. See [Show If](/surveys/general-features/show-if).
+* **Options.** A question whose options are shown only to some respondents carries a **Show options if … (N options)** badge, and one with Hidden options a **N hidden options** badge. Click either, or **Show options if…** on a question with options, to edit them. See [Show if on options](/surveys/general-features/show-if#show-if-on-options).
 * **Rules.** The rows indented under a block run after the respondent submits that block. Each row reads as a sentence, for example *If “services” includes one of Apple TV+ → Require an answer to “apple_reason”*.
-  * A **blue** row is a rule that jumps, requires an answer or marks the response Low quality, for example *If “hours” > 112 → Mark as low quality*.
-  * A **green** row only calculates: it changes a calculated [Embedded Data](/surveys/general-features/variables) field.
+  * Each kind of rule has its own colour and icon, the same on its row, in **Add logic** and in the rule's action list: **blue** for Jump to block, **green** for Set value, which changes a calculated [Embedded Data](/surveys/general-features/variables) field, **violet** for Require answer and **orange** for Mark response as Low quality, for example *If “hours” > 112 → Mark response as Low quality*.
+  * A rule with several kinds of action takes the colour of its first action.
   * A rule with several actions sets them apart with a dot, and a jump comes last, after **then**: *score + 10 · Require an answer to “q3” then Block 4*.
 * **Everyone else.** Under a block's rules, **All other answers will continue to** says where respondents go when none of the rules jumped. It is the next block unless you choose another block or an ending.
 * **Endings.** The endings are listed last, in red. A redirect ending shows the address it sends respondents to.
 
-The header counts your blocks and endings. **Collapse all** folds every block down to its row, and **Expand all** opens them again. Click a block's row to fold or open just that block.
+The Flow tab opens with every block folded down to its row. Click a block's row to open or fold just that block, or use **Expand** to open them all; once all are open, the same button reads **Collapse**. Switching to another tab and back keeps the blocks you opened. The header also counts your blocks and endings, and its (i) explains how to read the outline.
 
 ## Editing logic
 
 Click any rule row to open its settings right there on the outline. The rule editor is the same one described in [Conditional Logic](/surveys/general-features/conditional-logic): choose what to test, an operator and a value, then one or more actions.
 
-An open rule also lets you:
+The buttons at the right of a rule's row, as on a question card, let you:
 
-* **Duplicate** it, with the copy placed right below it.
 * **Move up** and **Move down**, because rules are checked from top to bottom and the first jump that matches wins.
-* **Remove** it. Removing a block's last rule also resets where everyone else goes, back to the next block.
+* **Duplicate** it, with the copy placed right below it.
+* **Delete** it. Deleting a block's last rule also resets where everyone else goes, back to the next block.
 
 To add a rule, use **Add logic** under a block:
 
-* **Jump rule** starts a rule that sends respondents to a later block or an ending.
+* **Jump to block** starts a rule that sends respondents to a later block or an ending.
 * **Set value** starts a step that sets a calculated field from a formula. It always runs until you give it a condition with **Add a condition**. See [Set Value and Formulas](/surveys/general-features/set-value).
-* **Mark as low quality** starts a rule that marks the response Low quality when it matches. The respondent sees nothing. See [Mark as low quality](/surveys/general-features/conditional-logic#mark-as-low-quality).
-* **Show this block if…** shows the block only to the respondents a condition matches. To show a single question only to some respondents, hover it and choose **Show if…**. See [Show If](/surveys/general-features/show-if).
+* **Mark response as Low quality** starts a rule that marks the response Low quality when it matches. The respondent sees nothing. See [Mark as low quality](/surveys/general-features/conditional-logic#mark-as-low-quality).
+* **Show block if…** shows the block only to the respondents a condition matches. An open block also shows **Show block if…** in its header, and **Show question if…** next to each question, to show a single question only to some respondents. See [Show If](/surveys/general-features/show-if).
 
-You can switch any action of a rule between Jump to block, Require Answer, Set value and Mark as low quality, and add more actions to the same rule. A rule jumps at most once and marks a response at most once.
+You can switch any action of a rule between Jump to block, Set value, Require answer and Mark response as Low quality, and add more actions to the same rule. A rule jumps at most once and marks a response at most once.
 
 Changes on the Flow tab are part of your survey draft, like changes on the Questions tab. They are kept when you save or publish the survey.
 
-Clicking an ending shows what kind of ending it is. Its text and button are edited on the **Questions** tab, and **Edit on the Questions tab** takes you there.
+An ending's text and button are edited on the **Questions** tab.
 
 ## Rules before the first question
 
@@ -63,7 +63,7 @@ And they can only:
 * **Jump to a block**: start the respondent on a later block. With a welcome card, the welcome card still shows first and leads to that block. A jump also takes priority over a start-at link.
 * **Set value**: change a calculated field. Its value is saved with the response when the respondent submits the first page.
 
-Rules are checked from top to bottom: the first jump that matches wins, and every matching Set value step runs. When no rule jumps, the survey starts as it always does. Use **Add logic** under the section to add a **Jump rule** or a **Set value** step.
+Rules are checked from top to bottom: the first jump that matches wins, and every matching Set value step runs. When no rule jumps, the survey starts as it always does. Use **Add logic before first question** to add a **Jump to block** rule or a **Set value** step.
 
 ### What a screen-out records
 
@@ -83,7 +83,7 @@ You can also open the survey's link with the parameters added, for example `?pan
 
 ## When something is wrong
 
-If a rule is incomplete or points at something that no longer exists, saving or publishing the survey opens the Flow tab, opens that rule and outlines it in red. The red outline goes away as soon as the rule is fixed.
+If a rule is incomplete or points at something that no longer exists, saving or publishing the survey opens the Flow tab, opens the block and the rule the error message names, scrolls to it and outlines it in red. A folded block with a flagged rule is outlined in red too. The red outline goes away as soon as the rule is fixed.
 
 ## Logic written through the API
 

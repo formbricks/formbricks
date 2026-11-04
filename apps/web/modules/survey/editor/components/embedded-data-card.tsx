@@ -57,7 +57,7 @@ interface EmbeddedDataCardProps {
 }
 
 /** Fixed, unlike the variables card's `Date.now()` id: one card, and the editor opens one at a time. */
-const EMBEDDED_DATA_CARD_ID = "embedded-data";
+export const EMBEDDED_DATA_CARD_ID = "embedded-data";
 
 /**
  * **The editor's one Embedded Data card** (ENG-1851), where the Variables and Hidden Fields cards
@@ -279,7 +279,9 @@ export const EmbeddedDataCard = ({
   );
 
   return (
-    <div className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
+    <div
+      id={EMBEDDED_DATA_CARD_ID}
+      className={cn(open ? "shadow-lg" : "shadow-md", "group z-10 flex flex-row rounded-lg bg-white")}>
       <div
         className={cn(
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
