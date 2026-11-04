@@ -3,4 +3,6 @@ name: from
 schema:
   type: string
   format: date
+  minLength: 1
+  maxLength: 32
 description: First day of a custom dashboard date range (inclusive). Requires `to`.

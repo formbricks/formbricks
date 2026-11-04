@@ -8,7 +8,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
-import { getUserWorkspaces } from "@/lib/workspace/service";
+import { getUserWorkspacesByOrganizationIds } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
 import {
   getDashboardViewerUnavailablePath,
@@ -18,22 +18,20 @@ import {
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 
 /**
- * Every workspace the user can open, across their organizations: the ones their role reaches, and — when
- * they are a Dashboard viewer anywhere — the ones their teams are granted, in one lookup.
+ * Every workspace the user can open, across their organizations: the ones their role reaches — one
+ * authorization lookup and one query for all the organizations together — and, when they are a Dashboard
+ * viewer anywhere, the ones their teams are granted.
  */
 const collectWorkspaceIds = async (
   userId: string,
-  organizationIds: readonly string[],
+  organizationIds: string[],
   isDashboardViewer: boolean
 ): Promise<string[]> => {
-  const ids: string[] = [];
-  for (const organizationId of organizationIds) {
-    for (const workspace of await getUserWorkspaces(userId, organizationId)) ids.push(workspace.id);
-  }
-  if (isDashboardViewer) {
-    for (const workspace of await listDashboardViewerWorkspacesForUser(userId)) ids.push(workspace.id);
-  }
-  return ids;
+  const [reached, granted] = await Promise.all([
+    getUserWorkspacesByOrganizationIds(organizationIds, userId),
+    isDashboardViewer ? listDashboardViewerWorkspacesForUser(userId) : [],
+  ]);
+  return [...reached, ...granted].map((workspace) => workspace.id);
 };
 
 const Page = async () => {

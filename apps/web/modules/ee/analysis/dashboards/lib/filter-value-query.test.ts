@@ -568,6 +568,18 @@ describe("charts bounded by their own groups: top-N and HAVING (S6)", () => {
     expect(runBounded(records, { ...base, filter: ACCOUNT_FILTER, charts: [none] })).toEqual([]);
   });
 
+  test("lists nothing from a bounded chart with no dimensions: its measure rule bounds no group", () => {
+    // A big number of the count with a HAVING-style rule. Its one row passes "> 1", but that holds for the
+    // aggregate only; a pick of any single account would leave one record, which the rule hides.
+    const busyTotal: TFilterValueChart = {
+      datasetId: "ds_a",
+      query: { measures: [COUNT], filters: [{ member: COUNT, operator: "gt", values: ["1"] }] },
+    };
+    expect(isGroupBoundedChart(busyTotal.query)).toBe(true);
+    expect(buildFilterValueQueries({ ...base, filter: ACCOUNT_FILTER, charts: [busyTotal] })).toEqual([]);
+    expect(runBounded(records, { ...base, filter: ACCOUNT_FILTER, charts: [busyTotal] })).toEqual([]);
+  });
+
   test("searches the rows of a grouped field case-insensitively", () => {
     const top2 = { ...topProduct, query: { ...topProduct.query, limit: 2 } };
     expect(runBounded(records, { ...base, filter: PRODUCT_LIST, charts: [top2], search: "BET" })).toEqual([

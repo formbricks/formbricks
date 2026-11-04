@@ -8,8 +8,8 @@ import type { TV3ChartOperationContext } from "@/app/api/v3/charts/lib/access";
 import {
   DATA_ROUTE_DATE_RANGE_NAMES,
   getOrganizationReportingTimeZone,
+  holdChartQuerySlot,
   requestedDateRangeOf,
-  withChartQuerySlot,
 } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -55,6 +55,7 @@ import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./
 import type { TV3DashboardFilterValues } from "./resources";
 import type { TV3DashboardFilterValuesQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
+import { refuseUnreadableLockedFilters } from "./unreadable-locked-filters";
 
 /**
  * How long a value list is reused. Every viewer of a dashboard asks for the same lists as they pick, and
@@ -83,6 +84,13 @@ const FILTER_VALUES_POLL_MS = 100;
 const inFlight = new Map<string, Promise<TBuiltList>>();
 
 type TBuiltList = { data: TV3DashboardFilterValues } | { refused: Response };
+
+/** A Cube query of a list found every in-flight chart query slot taken: the build stops, answering 429. */
+class FilterValuesSlotRefused extends Error {
+  constructor(readonly refused: Response) {
+    super("Every in-flight chart query slot is taken");
+  }
+}
 
 const runOnce = (key: string, build: () => Promise<TBuiltList>): Promise<TBuiltList> => {
   const running = inFlight.get(key);
@@ -211,7 +219,8 @@ const checkValuesRequest = (
  * Needs read access to the dashboard and to each Feedback Dataset whose charts have the field. Every
  * request spends from the default v3 budget first, before the cache is read, so a cached list is charged
  * too. Answered from a 60-second cache shared by every reader; a miss also reserves one unit of the
- * chart-query budget per Cube query it may run and gives back the ones it did not. A miss is built once:
+ * chart-query budget per Cube query it may run and gives back the ones it did not, and each Cube query
+ * holds one in-flight chart query slot while it runs (429 when they are all taken). A miss is built once:
  * requests for the same list in this process share one build, and across instances the one holding the
  * list's lock builds it while the others wait briefly for its cached result.
  */
@@ -348,10 +357,16 @@ export async function listV3DashboardFilterValues({
       });
       if ("refused" in reserved) return reserved;
 
+      // Each Cube query holds its own in-flight slot while it runs, not the whole build: a slot's lease
+      // is sized to one query, and a list may run up to MAX_FILTER_VALUE_QUERIES of them.
       let ran = 0;
-      const counted = (query: TFilterValueQuery) => {
-        ran += 1;
-        return run(query);
+      const counted = async (query: TFilterValueQuery) => {
+        const held = await holdChartQuerySlot(context, () => {
+          ran += 1;
+          return run(query);
+        });
+        if ("refused" in held) throw new FilterValuesSlotRefused(held.refused);
+        return held.value;
       };
       try {
         // First the merged value queries and the bounded charts' own queries, sharing one concurrency
@@ -380,32 +395,32 @@ export async function listV3DashboardFilterValues({
         const stored = await cache.set(cacheKey, data, FILTER_VALUES_CACHE_TTL_MS);
         if (!stored.ok) log.warn({ error: stored.error }, "Could not cache a dashboard filter's values");
         return { data };
+      } catch (error) {
+        if (error instanceof FilterValuesSlotRefused) return { refused: error.refused };
+        throw error;
       } finally {
         await reserved.settle(ran);
       }
     };
 
-    const built = await withChartQuerySlot(context, async () => {
-      // Only one principal's requests share a build: the build reserves that principal's chart-query
-      // budget, so another principal joining it would get the first one's refusal. The cached list
-      // and its lock stay shared by everyone.
-      const buildKey = `${String(cacheKey)}:${getV3RateLimitPrincipal(context.authentication) ?? "anonymous"}`;
-      const outcome = await runOnce(buildKey, async () => {
-        const locked = await cache.tryLock(lockKey, "1", FILTER_VALUES_LOCK_MS);
-        if (locked.ok && !locked.data) {
-          const waited = await waitForCachedList(cacheKey);
-          if (waited) return { data: waited };
-        }
-        try {
-          return await build();
-        } finally {
-          if (locked.ok && locked.data) await cache.del([lockKey]);
-        }
-      });
-      // A refusal is shared by every request that joined the build, so each sends its own copy.
-      return "refused" in outcome ? outcome.refused.clone() : successResponse(outcome.data, { requestId });
+    // Only one principal's requests share a build: the build reserves that principal's chart-query
+    // budget and slots, so another principal joining it would get the first one's refusal. The cached
+    // list and its lock stay shared by everyone.
+    const buildKey = `${String(cacheKey)}:${getV3RateLimitPrincipal(context.authentication) ?? "anonymous"}`;
+    const outcome = await runOnce(buildKey, async () => {
+      const locked = await cache.tryLock(lockKey, "1", FILTER_VALUES_LOCK_MS);
+      if (locked.ok && !locked.data) {
+        const waited = await waitForCachedList(cacheKey);
+        if (waited) return { data: waited };
+      }
+      try {
+        return await build();
+      } finally {
+        if (locked.ok && locked.data) await cache.del([lockKey]);
+      }
     });
-    return built;
+    // A refusal is shared by every request that joined the build, so each sends its own copy.
+    return "refused" in outcome ? outcome.refused.clone() : successResponse(outcome.data, { requestId });
   } catch (error) {
     if (error instanceof CubeQueryError) {
       log.warn(loggableError(error), "A dashboard filter's value lookup failed in Cube");
@@ -417,6 +432,9 @@ export async function listV3DashboardFilterValues({
         instance
       );
     }
-    return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.filterValues" });
+    return (
+      refuseUnreadableLockedFilters(error, { dashboardId, log, requestId, instance }) ??
+      mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.filterValues" })
+    );
   }
 }

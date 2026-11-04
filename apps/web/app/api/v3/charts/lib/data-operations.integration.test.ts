@@ -307,8 +307,8 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     ]);
   });
 
-  test("a requested preset narrows the saved range on collectedAt to its days, keeping the granularity", async () => {
-    // The preset is resolved to calendar days so it can be intersected with the saved range (ADR-0026).
+  test("a requested preset replaces the saved range on collectedAt, as its days, keeping the granularity", async () => {
+    // The preset is resolved to calendar days in the organization's time zone before it reaches Cube.
     expect(await timeDimensionsSent(charts.ranged, { dateRange: "last 7 days" })).toEqual([
       { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-03-04", "2026-03-10"] },
     ]);

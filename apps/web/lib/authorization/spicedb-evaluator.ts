@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import { type TAuthzedPermissionCheck, getAuthzedClient } from "@/lib/authzed/client";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
@@ -12,6 +13,7 @@ import {
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
 import { getSpicedbObjectType } from "./object-type";
+import { isPermissionMissingFromSchema } from "./schema-drift";
 import {
   type TPendingPrivateSurveyPolicy,
   type TResolvedAuthorizationScope,
@@ -205,19 +207,28 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
   const check = getCheck(actor, action, resource.type, scope);
   if (!check) return false;
 
-  const decision = await getAuthzedClient().checkPermission({
-    permission: check.permission,
-    resource: {
-      objectId: check.resource.id,
-      objectType: getSpicedbObjectType(check.resource.type),
-    },
-    subject: {
-      objectId: actor.id,
-      objectType: getSpicedbObjectType(actor.type),
-    },
-  });
+  try {
+    const decision = await getAuthzedClient().checkPermission({
+      permission: check.permission,
+      resource: {
+        objectId: check.resource.id,
+        objectType: getSpicedbObjectType(check.resource.type),
+      },
+      subject: {
+        objectId: actor.id,
+        objectType: getSpicedbObjectType(actor.type),
+      },
+    });
 
-  return decision.allowed;
+    return decision.allowed;
+  } catch (error) {
+    if (!isPermissionMissingFromSchema(error, check.permission)) throw error;
+    logger.warn(
+      { component: "authzed", permission: check.permission, resourceType: check.resource.type },
+      "AuthZed schema lacks this permission; apply the release's schema. Denying the check"
+    );
+    return false;
+  }
 };
 
 export const spicedbEvaluator: AuthorizationEvaluator = {

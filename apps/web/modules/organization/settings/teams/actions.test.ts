@@ -1,8 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { ZodType } from "zod";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { AuthenticationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { bulkInviteUsersAction, inviteUserAction, resendInviteAction } from "./actions";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  deleteMembership,
+  getMembershipsByUserId,
+} from "@/modules/organization/settings/teams/lib/membership";
+import {
+  bulkInviteUsersAction,
+  inviteUserAction,
+  leaveOrganizationAction,
+  resendInviteAction,
+} from "./actions";
 
 // The action client is mocked, so the schemas each action registers are read off the mock. Captured at
 // load, before any `clearAllMocks`.
@@ -360,5 +371,47 @@ describe("invite rate-limit settlement", () => {
     ).rejects.toBe(error);
 
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
+  });
+});
+
+describe("leaveOrganizationAction", () => {
+  const organizationId = "org-1";
+  const ctx = { user: { id: "user-1" }, auditLoggingCtx: {} };
+  const leave = () => leaveOrganizationAction({ ctx, parsedInput: { organizationId } } as never);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // SpiceDB refuses a Dashboard viewer `organization.read` (ADR-0025); leaving must not ask for it.
+    mocks.assertCan.mockRejectedValue(new Error("denied"));
+    vi.mocked(getAccessFlags).mockImplementation(
+      (role) => ({ isOwner: role === "owner" }) as ReturnType<typeof getAccessFlags>
+    );
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(getMembershipsByUserId).mockResolvedValue([{}, {}] as never);
+    vi.mocked(deleteMembership).mockResolvedValue(undefined as never);
+  });
+
+  test("lets a Dashboard viewer leave on its own membership alone", async () => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "dashboard_viewer" });
+
+    await leave();
+
+    expect(mocks.assertCan).not.toHaveBeenCalled();
+    expect(deleteMembership).toHaveBeenCalledWith("user-1", organizationId);
+  });
+
+  test("refuses someone with no membership before spending the organization's rate limit", async () => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue(null);
+
+    await expect(leave()).rejects.toBeInstanceOf(AuthenticationError);
+    expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+    expect(deleteMembership).not.toHaveBeenCalled();
+  });
+
+  test("still refuses an owner", async () => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "owner" });
+
+    await expect(leave()).rejects.toBeInstanceOf(OperationNotAllowedError);
+    expect(deleteMembership).not.toHaveBeenCalled();
   });
 });

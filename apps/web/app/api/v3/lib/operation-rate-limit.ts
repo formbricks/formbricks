@@ -101,40 +101,55 @@ export const reserveV3OperationRateLimit = async ({
 /** How soon a caller refused an in-flight slot should retry: a slot frees as soon as a query ends. */
 export const IN_FLIGHT_RETRY_AFTER_SECONDS = 1;
 
+type TV3SlotContext = {
+  config: TRateLimitConfig;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance: string;
+};
+
 /**
  * Run `operation` holding one of the principal's in-flight slots in `config` (see `in-flight.ts`): a limit
  * on how many such operations run at once rather than how many start per minute. The slot is taken before
- * the operation and given back when it settles, success or failure. Answers 429 with a one-second
- * `Retry-After` when every slot is taken. Like every limit here it fails open.
+ * the operation and given back when it settles, success or failure; its result comes back as `value`.
+ * When every slot is taken nothing runs, and `refused` is the 429 problem with a one-second `Retry-After`.
+ * Like every limit here it fails open. For an operation that runs several queries, take one slot per
+ * query: a slot's lease is sized to one query, and a slot held across many would free itself mid-way.
  */
-export const withV3OperationSlot = async (
-  {
-    config,
-    authentication,
-    requestId,
-    instance,
-  }: { config: TRateLimitConfig; authentication: TV3Authentication; requestId: string; instance: string },
-  operation: () => Promise<Response>
-): Promise<Response> => {
+export const holdV3OperationSlot = async <T>(
+  { config, authentication, requestId, instance }: TV3SlotContext,
+  operation: () => Promise<T>
+): Promise<{ value: T } | { refused: Response }> => {
   const principal = getV3RateLimitPrincipal(authentication);
-  if (!principal) return operation();
+  if (!principal) return { value: await operation() };
 
   const { allowed, slot } = await acquireInFlightSlot(config, principal);
   if (!allowed) {
     logger
       .withContext({ requestId })
       .warn({ statusCode: 429, namespace: config.namespace }, "V3 operation concurrency limit reached");
-    return problemTooManyRequests(
-      requestId,
-      `At most ${config.allowedPerInterval} of these can run at once. Retry when one finishes.`,
-      IN_FLIGHT_RETRY_AFTER_SECONDS,
-      instance
-    );
+    return {
+      refused: problemTooManyRequests(
+        requestId,
+        `At most ${config.allowedPerInterval} of these can run at once. Retry when one finishes.`,
+        IN_FLIGHT_RETRY_AFTER_SECONDS,
+        instance
+      ),
+    };
   }
 
   try {
-    return await operation();
+    return { value: await operation() };
   } finally {
     if (slot) await releaseInFlightSlot(slot);
   }
+};
+
+/** `holdV3OperationSlot` for an operation that answers with a response: a refusal is the answer. */
+export const withV3OperationSlot = async (
+  context: TV3SlotContext,
+  operation: () => Promise<Response>
+): Promise<Response> => {
+  const held = await holdV3OperationSlot(context, operation);
+  return "refused" in held ? held.refused : held.value;
 };

@@ -544,17 +544,15 @@ const ZLeaveOrganizationAction = z.object({
 
 export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLeaveOrganizationAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
-
+    // Leaving needs nothing but the caller's own membership. Not `organization.read`: SpiceDB denies it
+    // to a Dashboard viewer (ADR-0025), who must still be able to leave the organization.
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
 
     if (!membership) {
       throw new AuthenticationError("Not a member of this organization");
     }
+
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const { isOwner } = getAccessFlags(membership.role);
 

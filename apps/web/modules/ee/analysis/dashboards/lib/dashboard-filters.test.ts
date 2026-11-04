@@ -7,6 +7,7 @@ import {
   getDashboardFilterOperators,
   isListDashboardFilter,
   parseStoredDashboardFilters,
+  readStoredDashboardFilters,
 } from "./dashboard-filters";
 
 const filter = (n: number, overrides: Partial<TDashboardFilter> = {}): TDashboardFilter => ({
@@ -101,13 +102,32 @@ describe("filter-only fields", () => {
 });
 
 describe("parseStoredDashboardFilters", () => {
-  test("reads a stored list, skipping anything malformed, and anything but a list as none", () => {
+  test("shows the entries of a stored list that read, and anything but a list as none", () => {
     const locked = (index: number) => ({ ...filter(index), values: [`value ${index}`] });
     expect(parseStoredDashboardFilters([locked(1), { id: "x" }, locked(2)])).toEqual([locked(1), locked(2)]);
-    // Saved before filters were locked with their values: nothing to apply.
     expect(parseStoredDashboardFilters([filter(1)])).toEqual([]);
     expect(parseStoredDashboardFilters({})).toEqual([]);
     expect(parseStoredDashboardFilters(null)).toEqual([]);
+  });
+});
+
+describe("readStoredDashboardFilters", () => {
+  const locked = (index: number) => ({ ...filter(index), values: [`value ${index}`] });
+
+  test("counts every entry that does not read as a locked filter, so a read can refuse instead", () => {
+    expect(readStoredDashboardFilters([locked(1), { id: "x" }, locked(2)])).toEqual({
+      filters: [locked(1), locked(2)],
+      unreadable: 1,
+    });
+    // A filter with no values, or values emptied, would narrow nothing if kept: unreadable, not skipped.
+    expect(readStoredDashboardFilters([filter(1), { ...filter(2), values: [] }]).unreadable).toBe(2);
+    expect(readStoredDashboardFilters({}).unreadable).toBe(1);
+  });
+
+  test("nothing stored is no filters, and a list that reads has nothing unreadable", () => {
+    expect(readStoredDashboardFilters(null)).toEqual({ filters: [], unreadable: 0 });
+    expect(readStoredDashboardFilters(undefined)).toEqual({ filters: [], unreadable: 0 });
+    expect(readStoredDashboardFilters([locked(1)])).toEqual({ filters: [locked(1)], unreadable: 0 });
   });
 });
 

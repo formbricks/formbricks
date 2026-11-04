@@ -148,8 +148,13 @@ describe("on the 6.1 AuthZed schema, before the release's schema is applied (S2)
     }
   });
 
-  test("only a Dashboard viewer is refused until the schema is applied", async () => {
-    const response = await reads(ids.viewer).list();
-    expect(response.ok).toBe(false);
+  // ADR-0025: the 6.1 schema has no `dashboard_read`. SpiceDB answers the unknown permission with an error,
+  // which the evaluator reads as a denial, so the viewer gets the same clean 403 as no grant, never a 5xx.
+  test("only a Dashboard viewer is refused until the schema is applied, with the plain 403", async () => {
+    const read = reads(ids.viewer);
+    for (const [name, call] of Object.entries(read)) {
+      const response = await call();
+      expect(response.status, `${name}: ${await response.clone().text()}`).toBe(403);
+    }
   });
 });

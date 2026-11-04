@@ -115,7 +115,7 @@ Supported scopes:
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
-| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `get_chart_data`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, and `list_dashboard_filter_values`, on `dashboards:read` alone) |
+| `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, and `list_dashboard_filter_values`, on `dashboards:read` alone) |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |

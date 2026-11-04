@@ -144,13 +144,28 @@ export const findDashboardFilterIssues = (filters: readonly TDashboardFilter[]):
 };
 
 /**
- * A dashboard's locked filters, read defensively: a JSON column could hold anything. One saved before
- * filters were locked with their values has nothing to apply, so it is left out.
+ * A dashboard's locked filters as stored, with how many entries could not be read: a JSON column could
+ * hold anything. Nothing stored (`null`) is no filters; anything but a list is one unreadable entry.
  */
-export const parseStoredDashboardFilters = (value: unknown): TLockedDashboardFilter[] => {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
+export const readStoredDashboardFilters = (
+  value: unknown
+): { filters: TLockedDashboardFilter[]; unreadable: number } => {
+  if (value === null || value === undefined) return { filters: [], unreadable: 0 };
+  if (!Array.isArray(value)) return { filters: [], unreadable: 1 };
+  const filters: TLockedDashboardFilter[] = [];
+  let unreadable = 0;
+  for (const item of value) {
     const parsed = ZLockedDashboardFilter.safeParse(item);
-    return parsed.success ? [parsed.data] : [];
-  });
+    if (parsed.success) filters.push(parsed.data);
+    else unreadable += 1;
+  }
+  return { filters, unreadable };
 };
+
+/**
+ * The locked filters that can be read, for showing them (the dashboard resource, the editor). Never for
+ * narrowing a read: a locked filter left out there would widen what readers see — chart data and value
+ * lists go through `withLockedFilters`, which refuses instead.
+ */
+export const parseStoredDashboardFilters = (value: unknown): TLockedDashboardFilter[] =>
+  readStoredDashboardFilters(value).filters;

@@ -133,7 +133,10 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartFieldCatalogOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
+    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
+    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
+    ["dashboards:read", "feedbackRecords:read"],
     async (input: TMcpListChartFieldsInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -154,7 +157,10 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartListOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
+    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
+    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
+    ["dashboards:read", "feedbackRecords:read"],
     async (input: TMcpListChartsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Charts({
@@ -182,7 +188,10 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
+    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
+    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
+    ["dashboards:read", "feedbackRecords:read"],
     async (input: TMcpChartIdInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(

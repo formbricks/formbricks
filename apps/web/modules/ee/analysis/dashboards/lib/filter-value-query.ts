@@ -215,8 +215,8 @@ export type TBoundedChartValues =
 /**
  * The second step for one bounded chart, from the rows its own query returned. When the chart is grouped by
  * the filter's field, its rows are the values. Otherwise the values are looked up among the records of the
- * groups it shows — one OR branch per group — and a chart grouped by time, or showing more than
- * `FILTER_VALUE_GROUP_LIMIT` groups, offers none.
+ * groups it shows — one OR branch per group — and a chart with no dimensions, grouped by time, or showing
+ * more than `FILTER_VALUE_GROUP_LIMIT` groups, offers none.
  */
 export const resolveBoundedChartValues = ({
   filter,
@@ -243,27 +243,29 @@ export const resolveBoundedChartValues = ({
   }
 
   const groupedByTime = (group.query.timeDimensions ?? []).some((td) => td.granularity !== undefined);
-  if (groupedByTime || rows.length > FILTER_VALUE_GROUP_LIMIT) return { type: "none" };
+  // A chart with no dimensions (a big number) has no group to pin its rows to: its bound — a rule on a
+  // measure — holds for the aggregate, not for any record, so listing every value under the record-level
+  // scope would offer values whose pick the chart does not show (ADR-0026). It offers none.
+  if (dimensions.length === 0 || groupedByTime || rows.length > FILTER_VALUE_GROUP_LIMIT) {
+    return { type: "none" };
+  }
 
-  const groupRules: TCubeFilter[] =
-    dimensions.length === 0
-      ? []
-      : [
-          {
-            or: rows.map((row) =>
-              asOneRule(
-                dimensions.map((dimension): TCubeFilter => {
-                  const value = (row as Record<string, unknown>)[dimension];
-                  // Cube returns a dimension's value as a string, number or boolean; anything else is a
-                  // value this row cannot be pinned to, so it reads as not set.
-                  return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
-                    ? { member: dimension, operator: "equals", values: [String(value)] }
-                    : { member: dimension, operator: "notSet" };
-                })
-              )
-            ),
-          },
-        ];
+  const groupRules: TCubeFilter[] = [
+    {
+      or: rows.map((row) =>
+        asOneRule(
+          dimensions.map((dimension): TCubeFilter => {
+            const value = (row as Record<string, unknown>)[dimension];
+            // Cube returns a dimension's value as a string, number or boolean; anything else is a
+            // value this row cannot be pinned to, so it reads as not set.
+            return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+              ? { member: dimension, operator: "equals", values: [String(value)] }
+              : { member: dimension, operator: "notSet" };
+          })
+        )
+      ),
+    },
+  ];
 
   return {
     type: "query",

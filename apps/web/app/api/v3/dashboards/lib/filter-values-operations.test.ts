@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { holdChartQuerySlot } from "@/app/api/v3/charts/lib/data-operations";
 import {
   applyV3OperationRateLimit,
   getV3RateLimitPrincipal,
@@ -38,7 +39,9 @@ vi.mock("@/app/api/v3/lib/operation-rate-limit", () => ({
 }));
 vi.mock("@/app/api/v3/charts/lib/data-operations", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/app/api/v3/charts/lib/data-operations")>()),
-  withChartQuerySlot: vi.fn((_context: unknown, run: () => Promise<Response>) => run()),
+  holdChartQuerySlot: vi.fn(async (_context: unknown, run: () => Promise<unknown>) => ({
+    value: await run(),
+  })),
   getOrganizationReportingTimeZone: vi.fn(async () => "UTC"),
 }));
 vi.mock("@/lib/cache", () => ({ cache: { get: vi.fn(), set: vi.fn(), tryLock: vi.fn(), del: vi.fn() } }));
@@ -94,10 +97,8 @@ const chartOf = (
   },
 });
 
-const rowWith = (
-  widgets: ReturnType<typeof chartOf>[],
-  filters: TDashboardFilter[] = [SOURCE_FILTER, SCORE_FILTER, TEXT_FILTER]
-) => ({
+// `filters` is what the dashboard stores: the filters an editor locked, with their values. None by default.
+const rowWith = (widgets: ReturnType<typeof chartOf>[], filters: unknown[] = []) => ({
   id: "cldb000000000000000000001",
   workspaceId: "clws000000000000000000001",
   updatedAt: new Date("2026-11-02T00:00:00Z"),
@@ -187,6 +188,24 @@ describe("refused before Cube", () => {
     const response = await list(SOURCE_FILTER.id);
     expect(response.status).toBe(422);
     expect(JSON.stringify(await problemOf(response))).toContain("MAX_FILTER_VALUE_QUERIES");
+    expect(executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe("the dashboard's locked filters", () => {
+  test("one that no longer reads refuses the list with 500 naming the dashboard, never lists it wider", async () => {
+    // Locked with no values: left out, the list would offer every source instead of none of them.
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith(
+        [chartOf(1, { measures: [COUNT] })],
+        [{ ...SOURCE_FILTER, id: "clfi000000000000000000001" }]
+      ) as never
+    );
+
+    const response = await list(SOURCE_FILTER.id);
+
+    expect(response.status).toBe(500);
+    expect(((await response.json()) as { detail: string }).detail).toContain("cldb000000000000000000001");
     expect(executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 });
@@ -385,6 +404,59 @@ describe("what a list costs", () => {
     expect((await list(SOURCE_FILTER.id)).status).toBe(200);
     expect(executeTenantScopedQuery).toHaveBeenCalledTimes(8);
     expect(most).toBe(5);
+  });
+});
+
+describe("in-flight chart query slots", () => {
+  const DS = (n: number) => `clds${String(n).padStart(21, "0")}`;
+
+  test("each Cube query holds its own slot while it runs, not one slot for the whole list", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([1, 2, 3].map((n) => chartOf(n, { measures: [COUNT] }, DS(n)))) as never
+    );
+    let inSlot = 0;
+    vi.mocked(holdChartQuerySlot).mockImplementation(async (_context, run) => {
+      inSlot += 1;
+      try {
+        return { value: await run() };
+      } finally {
+        inSlot -= 1;
+      }
+    });
+    const slotsHeldByQuery: number[] = [];
+    vi.mocked(executeTenantScopedQuery).mockImplementation(async () => {
+      slotsHeldByQuery.push(inSlot);
+      return [] as never;
+    });
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(200);
+    expect(holdChartQuerySlot).toHaveBeenCalledTimes(3);
+    expect(executeTenantScopedQuery).toHaveBeenCalledTimes(3);
+    // Every query ran inside a slot taken for it.
+    expect(slotsHeldByQuery.every((held) => held >= 1)).toBe(true);
+  });
+
+  test("a query finding every slot taken stops the list with 429, uncached, settling only the queries run", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([1, 2].map((n) => chartOf(n, { measures: [COUNT] }, DS(n)))) as never
+    );
+    vi.mocked(executeTenantScopedQuery).mockResolvedValue([] as never);
+    vi.mocked(holdChartQuerySlot)
+      .mockImplementationOnce(async (_context, run) => ({ value: await run() }))
+      .mockImplementationOnce(async () => ({ refused: new Response(null, { status: 429 }) }));
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(429);
+    expect(executeTenantScopedQuery).toHaveBeenCalledTimes(1);
+    expect(settleMock).toHaveBeenCalledWith(1);
+    expect(cache.set).not.toHaveBeenCalled();
+  });
+
+  test("a list answered from the cache, or waited for from another instance, takes no slot", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(rowWith([chartOf(1, { measures: [COUNT] })]) as never);
+    vi.mocked(cache.get).mockResolvedValue({ ok: true, data: { values: [], hasMore: false } } as never);
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(200);
+    expect(holdChartQuerySlot).not.toHaveBeenCalled();
   });
 });
 

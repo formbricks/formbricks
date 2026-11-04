@@ -361,9 +361,10 @@ later; then roll back the release and, if you also restore the 6.1 schema, run `
   chart as that dashboard shows it (dashboard filters applied); that also needs both scopes, except for a
   Dashboard viewer's client, which holds only `dashboards:read`. Its result adds an optional
   `unfilterableFilters`. Existing clients keep working.
-- **`GET /api/v3/charts/{chartId}/data`:** a date range now narrows the chart's saved range instead of
-  replacing it. This endpoint shipped after 6.1 and before this release (it is in no 6.1 tag), so no
-  released client depends on the old behavior.
+- **`GET /api/v3/charts/{chartId}/data`:** a date range replaces the range saved on the chart's
+  `collectedAt` time dimension, as a dashboard's date range does (ADR-0026); a range the author saved as a
+  `collectedAt` filter rule still narrows. This endpoint shipped after 6.1 and before this release (it is in
+  no 6.1 tag), so no released client depends on another behavior.
 - **Membership roles in API responses:** `dashboard_viewer` is a new value of the organization role.
   `GET /api/v2/organizations/{organizationId}/users` returns it as a user's `role` once someone holds it; a
   client that validates roles against a fixed list must accept it. The v1 API returns no organization roles.

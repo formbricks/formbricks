@@ -5,7 +5,7 @@ import {
   type TDashboardFilterPicks,
   getDashboardFilterField,
   isListDashboardFilter,
-  parseStoredDashboardFilters,
+  readStoredDashboardFilters,
 } from "./dashboard-filters";
 
 /**
@@ -203,17 +203,31 @@ export const keepCurrentPicks = (
 const lockedFilterId = (index: number): string => `locked.${index}`;
 
 /**
+ * A dashboard's stored locked filters hold an entry that does not read as one. Reading its charts anyway
+ * would leave that filter off and show readers more than it lets through, so the read is refused.
+ */
+export class UnreadableLockedFiltersError extends Error {
+  constructor(readonly unreadable: number) {
+    super(`${unreadable} of the dashboard's locked filters could not be read`);
+    this.name = "UnreadableLockedFiltersError";
+  }
+}
+
+/**
  * A read's filters: the dashboard's locked ones (saved on it by an editor, with their values) first, then
  * the person's own from the request. Every one of them is ANDed onto each chart, so a person's filters can
  * only narrow what the locked ones already show. The request's picks are taken as they are; the locked
- * filters bring their own.
+ * filters bring their own. Fails closed: throws `UnreadableLockedFiltersError` when a stored locked filter
+ * does not read, rather than reading without it.
  */
 export const withLockedFilters = (
   storedFilters: unknown,
   requestFilters: readonly TDashboardFilter[],
   requestPicks: TDashboardFilterPicks
 ): { filters: TDashboardFilter[]; picks: TDashboardFilterPicks } => {
-  const locked = parseStoredDashboardFilters(storedFilters).map(({ values, ...filter }, index) => ({
+  const stored = readStoredDashboardFilters(storedFilters);
+  if (stored.unreadable > 0) throw new UnreadableLockedFiltersError(stored.unreadable);
+  const locked = stored.filters.map(({ values, ...filter }, index) => ({
     filter: { ...filter, id: lockedFilterId(index) },
     values,
   }));

@@ -7,7 +7,11 @@ import {
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { applyV3OperationRateLimit, withV3OperationSlot } from "@/app/api/v3/lib/operation-rate-limit";
+import {
+  applyV3OperationRateLimit,
+  holdV3OperationSlot,
+  withV3OperationSlot,
+} from "@/app/api/v3/lib/operation-rate-limit";
 import {
   type InvalidParam,
   problemBadGateway,
@@ -57,6 +61,16 @@ export const withChartQuerySlot = (
   query: () => Promise<Response>
 ): Promise<Response> =>
   withV3OperationSlot({ config: rateLimitConfigs.api.v3ChartQueriesInFlight, ...context }, query);
+
+/**
+ * Run one Cube query of an operation that runs several, holding an in-flight chart query slot for that
+ * query alone: `refused` when every slot is taken, else the query's `value`.
+ */
+export const holdChartQuerySlot = <T>(
+  context: TV3ChartOperationContext,
+  query: () => Promise<T>
+): Promise<{ value: T } | { refused: Response }> =>
+  holdV3OperationSlot({ config: rateLimitConfigs.api.v3ChartQueriesInFlight, ...context }, query);
 
 /**
  * A chart query that could not run: Cube unreachable, rejected, or out of time. Cube's own error never

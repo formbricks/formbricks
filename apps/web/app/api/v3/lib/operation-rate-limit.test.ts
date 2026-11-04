@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { reserveRateLimitUsage, settleRateLimitUsage } from "@/modules/core/rate-limit/helpers";
 import { acquireInFlightSlot, releaseInFlightSlot } from "@/modules/core/rate-limit/in-flight";
-import { reserveV3OperationRateLimit, withV3OperationSlot } from "./operation-rate-limit";
+import {
+  holdV3OperationSlot,
+  reserveV3OperationRateLimit,
+  withV3OperationSlot,
+} from "./operation-rate-limit";
 import type { TV3Authentication } from "./types";
 
 vi.mock("server-only", () => ({}));
@@ -79,6 +83,24 @@ describe("withV3OperationSlot", () => {
         .status
     ).toBe(200);
     expect(acquireInFlightSlot).not.toHaveBeenCalled();
+  });
+});
+
+describe("holdV3OperationSlot", () => {
+  test("hands back any operation's result as its value, slot given back after", async () => {
+    expect(await holdV3OperationSlot(slotContext, async () => [{ row: 1 }])).toEqual({ value: [{ row: 1 }] });
+    expect(releaseInFlightSlot).toHaveBeenCalledWith(slot);
+  });
+
+  test("hands back the 429 as refused when every slot is taken, running nothing", async () => {
+    vi.mocked(acquireInFlightSlot).mockResolvedValueOnce({ allowed: false });
+    const operation = vi.fn();
+
+    const held = await holdV3OperationSlot(slotContext, operation);
+
+    if (!("refused" in held)) throw new Error("expected a refusal");
+    expect(held.refused.status).toBe(429);
+    expect(operation).not.toHaveBeenCalled();
   });
 });
 

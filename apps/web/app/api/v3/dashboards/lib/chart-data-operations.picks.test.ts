@@ -151,6 +151,46 @@ describe("getV3DashboardChartData filters", () => {
   });
 });
 
+describe("the dashboard's locked filters", () => {
+  const row = (filters: unknown) => ({
+    id: "cldb000000000000000000001",
+    workspaceId: "clws000000000000000000001",
+    updatedAt: new Date(),
+    filters,
+    widgets: [
+      {
+        chart: {
+          id: chartId,
+          type: "bar",
+          query: { measures: ["FeedbackRecords.count"] },
+          feedbackDirectoryId: "clds000000000000000000001",
+          updatedAt: new Date(),
+        },
+      },
+    ],
+  });
+  const LOCKED = { ...SOURCE, id: "clfi000000000000000000001", values: ["Web"] };
+
+  test("narrow the chart's query", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(row([LOCKED]) as never);
+
+    expect((await read({})).status).toBe(200);
+    expect(vi.mocked(runV3ChartQuery).mock.calls[0][0].extraFilters).toEqual([
+      { member: SOURCE.field, operator: "equals", values: ["Web"] },
+    ]);
+  });
+
+  test("one that no longer reads refuses the read with 500 naming the dashboard, never runs it wider", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(row([LOCKED, { ...LOCKED, values: [] }]) as never);
+
+    const response = await read({});
+
+    expect(response.status).toBe(500);
+    expect(((await response.json()) as { detail: string }).detail).toContain("cldb000000000000000000001");
+    expect(runV3ChartQuery).not.toHaveBeenCalled();
+  });
+});
+
 describe("the read decision", () => {
   test("a second widget of the same dashboard version asks neither the workspace nor the dataset again", async () => {
     expect((await read({})).status).toBe(200);

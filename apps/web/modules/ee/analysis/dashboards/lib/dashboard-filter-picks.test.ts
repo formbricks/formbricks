@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import {
   MAX_DASHBOARD_FILTER_PICKS_CHARS,
+  UnreadableLockedFiltersError,
   countPickChars,
   exceedsPicksBudget,
   findPickIssues,
@@ -10,6 +11,7 @@ import {
   pickValuesOf,
   resolvePicksForDataset,
   splitPickParams,
+  withLockedFilters,
 } from "./dashboard-filter-picks";
 import type { TDashboardFilter } from "./dashboard-filters";
 
@@ -162,5 +164,24 @@ describe("findPickIssues", () => {
         code: "limit_exceeded",
       },
     ]);
+  });
+});
+
+describe("withLockedFilters", () => {
+  const LOCKED = { id: A, field: SOURCE, operator: "equals", label: "Source", values: ["Web"] };
+
+  test("puts the dashboard's locked filters, with their values, before the request's own", () => {
+    expect(withLockedFilters([LOCKED], [filters[1]], { [B]: ["x"] })).toEqual({
+      filters: [{ id: "locked.0", field: SOURCE, operator: "equals", label: "Source" }, filters[1]],
+      picks: { [B]: ["x"], "locked.0": ["Web"] },
+    });
+    expect(withLockedFilters(null, [], {})).toEqual({ filters: [], picks: {} });
+  });
+
+  test("fails closed: a stored locked filter that does not read refuses the read rather than dropping it", () => {
+    expect(() => withLockedFilters([LOCKED, { ...LOCKED, operator: "between" }], [], {})).toThrow(
+      UnreadableLockedFiltersError
+    );
+    expect(() => withLockedFilters({ not: "a list" }, [], {})).toThrow(UnreadableLockedFiltersError);
   });
 });

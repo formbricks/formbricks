@@ -37,6 +37,7 @@ import { withCachedDashboardDecision } from "./read-decision-cache";
 import type { TV3DashboardChartData } from "./resources";
 import type { TV3DashboardChartDataQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
+import { refuseUnreadableLockedFilters } from "./unreadable-locked-filters";
 
 /**
  * Dashboard-bound reads: a chart's data, and a dashboard filter's value list, read through the dashboard
@@ -207,11 +208,10 @@ export async function getV3DashboardChartData({
       context,
     });
   } catch (error) {
-    return mapV3ThrownError(error, {
-      log,
-      requestId: context.requestId,
-      instance: context.instance,
-      operation: "dashboards.chartData",
-    });
+    const { requestId, instance } = context;
+    return (
+      refuseUnreadableLockedFilters(error, { dashboardId, log, requestId, instance }) ??
+      mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.chartData" })
+    );
   }
 }

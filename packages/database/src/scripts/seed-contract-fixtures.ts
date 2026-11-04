@@ -72,6 +72,7 @@ const CONTRACT_IDS = {
   DASHBOARD_REPLACE: "clctdashboardreplace0001",
   DASHBOARD_WIDGETS: "clctdashboardwidgets0001",
   DASHBOARD_FILTER: "clctdashboardfilter00001",
+  DASHBOARD_LOCKED_FILTER: "clctdashboardlocked00001",
   WIDGET_READ: "clctwidgetread0000000001",
   WIDGET_REPLACE: "clctwidgetreplace0000001",
   WIDGET_PATCH: "clctwidgetpatch000000001",
@@ -486,16 +487,19 @@ async function seedDashboards(organizationId: string): Promise<void> {
       workspaceId: SEED_IDS.WORKSPACE,
       createdBy: SEED_IDS.USER_ADMIN,
       updatedAt: CONTRACT_FIXTURE_UPDATED_AT,
-      // The read dashboard carries a list filter, so its value list answers from a real filter rather
-      // than the documented 422.
+      // The read dashboard carries a locked filter, with values, so GET /dashboards/{id} serialises a
+      // non-empty `filters` and its chart data and value lists read through it. A locked filter is never
+      // what a value list's `filterId` names — that is one of the request's own `filter[<id>]`, set in
+      // `listDashboardFilterValuesV3` below.
       filters:
         id === CONTRACT_IDS.DASHBOARD_READ
           ? [
               {
-                id: CONTRACT_IDS.DASHBOARD_FILTER,
+                id: CONTRACT_IDS.DASHBOARD_LOCKED_FILTER,
                 field: "FeedbackRecords.sourceType",
                 operator: "equals",
                 label: "Source type",
+                values: ["survey"],
               },
             ]
           : [],
@@ -787,6 +791,12 @@ async function main(): Promise<void> {
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
+      // `filterId` (the read default above) must name one of the request's own `filter[<id>]`, or every
+      // call is the documented 422. The hook replaces `filter` whenever the case carries it, as every
+      // case built from the spec's example does.
+      listDashboardFilterValuesV3: {
+        query: { filter: { [CONTRACT_IDS.DASHBOARD_FILTER]: "equals:FeedbackRecords.sourceType" } },
+      },
       // Real data, so the 200 `{ updated }` body is checked and not only the empty scope-filtered one.
       // The call is idempotent, so the generated `lowQuality` / `null` alternate without drifting.
       batchSetResponsesOutcomeV3: { body: { ids: [CONTRACT_IDS.RESPONSE_OUTCOME] } },
