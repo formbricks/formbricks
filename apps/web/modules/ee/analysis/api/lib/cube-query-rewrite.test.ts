@@ -479,7 +479,7 @@ const answer = (operator: string, values: string[]) => ({
   values,
 });
 
-describe("cube queryRewrite: answer filters (ENG-6894)", () => {
+describe("cube queryRewrite: answer filters", () => {
   beforeEach(() => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
@@ -565,7 +565,7 @@ describe("cube queryRewrite: answer filters (ENG-6894)", () => {
     ]);
   });
 
-  test("knows no yes/no kind: no question type stores one, so a token naming it is refused (C16)", () => {
+  test("knows no yes/no kind: no question type stores one, so a token naming it is refused", () => {
     expect(() =>
       queryRewrite(
         { measures: ["FeedbackRecords.count"], filters: [answer("equals", ["q_yn:true"])] },
@@ -742,7 +742,7 @@ describe("cube queryRewrite: answer filters (ENG-6894)", () => {
   });
 });
 
-describe("cube embedded-data members (ENG-6893)", () => {
+describe("cube embedded-data members", () => {
   beforeEach(() => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
@@ -858,7 +858,7 @@ describe("cube embedded-data members (ENG-6893)", () => {
     ]);
   });
 
-  test("moves equals onto the twin when a filter names its member as `dimension` (S12)", () => {
+  test("moves equals onto the twin when a filter names its member as `dimension`", () => {
     const rewritten = queryRewrite(
       {
         measures: ["FeedbackRecords.count"],
@@ -898,8 +898,11 @@ describe("cube embedded-data members (ENG-6893)", () => {
   });
 
   test("bounds the compiled-model cache unless the operator set it", () => {
-    expect(cubeConfig.compilerCacheSize).toBe(150);
-    expect(cubeConfig.maxCompiledMembers).toBe(75_000);
+    // About 2-5 MB per compiled model (measured): 60 models stay within the chart's 1 GiB limit.
+    expect(cubeConfig.compilerCacheSize).toBe(60);
+    // The same 500 members per model the cache size implies, so neither limit undercuts the other.
+    expect(cubeConfig.maxCompiledMembers).toBe(30_000);
+    expect((cubeConfig.maxCompiledMembers ?? 0) / (cubeConfig.compilerCacheSize ?? 1)).toBe(500);
     // Cube validates its options strictly: the model's helpers must not be enumerable options.
     expect(Object.keys(cubeConfig).sort()).toEqual([
       "compilerCacheSize",

@@ -2,7 +2,7 @@
 // If the Hub changes column names or types, this schema must be updated to match.
 //
 // Compiled once per Feedback Dataset and embedded-data key set (cube.js `contextToAppId`): the dataset's
-// keys arrive in the signed token and each becomes one `ed_<slug>_<hash>` dimension (ENG-6893). A dataset
+// keys arrive in the signed token and each becomes one `ed_<slug>_<hash>` dimension. A dataset
 // without keys compiles exactly the plain model. The helpers live in cube.js, as non-enumerable exports.
 const {
   ANSWER_FILTER_ALIAS_COUNT,
@@ -45,7 +45,7 @@ asyncModule(async () => {
         : `SELECT * FROM feedback_records`;
     },
 
-    // One AnswerFilterN join per answer rule (ENG-6894), written out because Cube reads a join's target
+    // One AnswerFilterN join per answer rule, written out because Cube reads a join's target
     // from the template. The tenant is part of the key, so a submission id never reaches another tenant.
     // ANSWER_FILTER_ALIAS_COUNT in cube.js is how many there are; a test keeps the two equal.
     joins: {

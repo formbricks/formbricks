@@ -253,7 +253,7 @@ function normalizeCaseInsensitiveFilters(filters) {
   return filters.map(normalizeCaseInsensitiveFilter);
 }
 
-// ── Embedded data (ENG-6893) ──────────────────────────────────────────────────────────────────────
+// ── Embedded data ────────────────────────────────────────────────────────────────────────────────
 // Each Feedback Dataset compiles its own FeedbackRecords model: the app passes the dataset's most
 // frequent embedded-data keys in the signed token (`edKeys`), `contextToAppId` gives every distinct
 // (dataset, key set) its own compiled model, and schema/FeedbackRecords.js turns each key into one
@@ -265,6 +265,12 @@ function normalizeCaseInsensitiveFilters(filters) {
  * of 10 rarer keys a saved query names (apps/web `MAX_TOKEN_EMBEDDED_KEYS`).
  */
 const MAX_EMBEDDED_KEYS = 110;
+/**
+ * Most UTF-8 bytes the keys of one token may take as JSON writes them (apps/web
+ * `MAX_TOKEN_EMBEDDED_KEYS_BYTES`). The app stays within it; this guard keeps a token that does not from
+ * compiling a model bigger than the app ever asks for.
+ */
+const MAX_EMBEDDED_KEYS_BYTES = 8192;
 /** Longest key compiled. A longer one is dropped rather than truncated, so names stay exact. */
 const MAX_EMBEDDED_KEY_LENGTH = 128;
 const EMBEDDED_MEMBER_PREFIX = "ed_";
@@ -284,7 +290,7 @@ const CONTROL_CHARACTER = /[\u0000-\u001F\u007F-\u009F]/;
  * The keys a token names, in the one order every caller sees: strings only, no blank key (a blank
  * dimension title breaks the whole model, and failed compiles are not cached), none longer than
  * `MAX_EMBEDDED_KEY_LENGTH`, no control character, none Postgres text cannot hold, no duplicates, at most
- * `MAX_EMBEDDED_KEYS`.
+ * `MAX_EMBEDDED_KEYS` keys and `MAX_EMBEDDED_KEYS_BYTES` bytes.
  */
 function getEmbeddedKeys(securityContext) {
   const claim = securityContext?.edKeys;
@@ -293,10 +299,14 @@ function getEmbeddedKeys(securityContext) {
   }
 
   const keys = new Set();
+  let bytes = 0;
   for (const key of claim) {
     if (keys.size >= MAX_EMBEDDED_KEYS) break;
     if (typeof key !== "string" || key.trim().length === 0 || key.length > MAX_EMBEDDED_KEY_LENGTH) continue;
-    if (CONTROL_CHARACTER.test(key) || LONE_SURROGATE.test(key)) continue;
+    if (CONTROL_CHARACTER.test(key) || LONE_SURROGATE.test(key) || keys.has(key)) continue;
+    const keyBytes = Buffer.byteLength(JSON.stringify(key), "utf8");
+    if (bytes + keyBytes > MAX_EMBEDDED_KEYS_BYTES) continue;
+    bytes += keyBytes;
     keys.add(key);
   }
 
@@ -374,7 +384,7 @@ function getEmbeddedDimensionSpecs(compileContext) {
  * The containment predicate for one `equals` filter on an embedded key, as a superset of
  * `metadata->'embedded_data'->>key IN (values)`: a value stored as a JSON number or boolean reads as the
  * same text, so a numeric- or boolean-looking value is also tried in that type. Exact-case, like the
- * dimension itself (ENG-6893).
+ * dimension itself.
  */
 function getEmbeddedContainmentSql(keyLiteral, values) {
   const object = (value) => `metadata->'embedded_data' @> jsonb_build_object(${keyLiteral}, ${value})`;
@@ -433,7 +443,7 @@ function contextToAppId({ securityContext } = {}) {
   return `FB_ED_${sha256Hex(JSON.stringify([tenantId, keys])).slice(0, 32)}`;
 }
 
-// ── Answer filters (ENG-6894) ────────────────────────────────────────────────────────────────────
+// ── Answer filters ──────────────────────────────────────────────────────────────────────────────
 // A chart filters by how the same submission answered another question with ONE public condition on
 // the virtual member `FeedbackRecords.answer`, values "<questionId>:<valueKey>". queryRewrite gives each
 // rule its own `AnswerFilterN` join (schema/FeedbackRecords.js, on tenant + submission) and expands it
@@ -486,7 +496,7 @@ function expandAnswerRule(rule, kind, alias) {
   switch (kind) {
     case "multi":
       // One record per selected option: field_id `<question>__<option>`, field_group_id the question.
-      // "Does not contain" is not offered (ENG-6894): a join cannot express it.
+      // "Does not contain" is not offered: a join cannot express it.
       if (rule.operator !== "equals") {
         throw new Error("Cube query rejected: a multi-select answer rule takes equals only");
       }
@@ -581,12 +591,14 @@ function assertNoReservedMember(query) {
 }
 
 /**
- * Compiled-model cache limits for one Cube process. Every dataset with embedded keys is its own model
- * (about 1.2-1.6 MB each), so the defaults (250 models, no member budget) can outgrow the Helm chart's
- * 1 GiB limit. The operator's CUBEJS_COMPILER_CACHE_SIZE / CUBEJS_MAX_COMPILED_MEMBERS win when set.
+ * Compiled-model cache limits for one Cube process. Every dataset with embedded keys is its own model,
+ * measured at about 2-5 MB each once compiled (more keys, more members), so the defaults (250 models, no
+ * member budget) can outgrow the Helm chart's 1 GiB limit. 60 models at 500 members each keep the cache
+ * within about 300 MB; a dataset whose model was evicted compiles again on its next query. The operator's
+ * CUBEJS_COMPILER_CACHE_SIZE / CUBEJS_MAX_COMPILED_MEMBERS win when set.
  */
-const DEFAULT_COMPILER_CACHE_SIZE = 150;
-const DEFAULT_MAX_COMPILED_MEMBERS = 75_000;
+const DEFAULT_COMPILER_CACHE_SIZE = 60;
+const DEFAULT_MAX_COMPILED_MEMBERS = DEFAULT_COMPILER_CACHE_SIZE * 500;
 
 function getCompilerCacheOptions() {
   return {
@@ -653,6 +665,7 @@ for (const [name, value] of Object.entries({
   toSafeSqlStringLiteral,
   ANSWER_FILTER_ALIAS_COUNT,
   MAX_EMBEDDED_KEYS,
+  MAX_EMBEDDED_KEYS_BYTES,
   MAX_EMBEDDED_KEY_LENGTH,
 })) {
   Object.defineProperty(module.exports, name, { value, enumerable: false });
