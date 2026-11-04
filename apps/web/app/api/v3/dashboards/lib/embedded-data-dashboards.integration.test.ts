@@ -157,6 +157,52 @@ describe("a dashboard filter on an embedded-data key", () => {
     expect(cubeFake.calls).toHaveLength(1);
   });
 
+  const saveFilters = async (dashboard: { id: string; updatedAt: Date }, filters: TDashboardFilter[]) =>
+    replaceV3Dashboard({
+      dashboardId: dashboard.id,
+      body: ZV3DashboardReplaceBody.parse({
+        name: `Board ${++sequence}`,
+        expectedUpdatedAt: dashboard.updatedAt.toISOString(),
+        filters,
+        widgets: (
+          await prisma.dashboardWidget.findMany({
+            where: { dashboardId: dashboard.id },
+            select: { id: true, layout: true, order: true },
+          })
+        ).map(({ id, layout, order }) => ({ widgetId: id, layout, order })),
+      }),
+      ...ctx(),
+    });
+
+  test("is refused, naming it, when no chart's dataset has the key", async () => {
+    const withRegion = await createDataset(["Region"]);
+    await syncDatasets();
+    const chart = await createChart(withRegion, { measures: [COUNT], dimensions: [SOURCE] });
+    const dashboard = await createDashboard([chart], []);
+
+    const refused = await saveFilters(dashboard, [planFilter]);
+
+    expect(refused.status).toBe(422);
+    const problem = (await refused.json()) as { invalid_params: { name: string; code: string }[] };
+    expect(problem.invalid_params).toEqual([
+      expect.objectContaining({ name: "filters[0].field", code: "invalid_reference" }),
+    ]);
+    expect((await prisma.dashboard.findUniqueOrThrow({ where: { id: dashboard.id } })).filters).toEqual([]);
+  });
+
+  test("an empty dashboard takes no embedded-data filter, and a saved one keeps saving", async () => {
+    const emptyBoard = await createDashboard([], []);
+    expect((await saveFilters(emptyBoard, [planFilter])).status).toBe(422);
+
+    // A filter saved while a chart had the key keeps saving after the key is gone from every chart.
+    const withRegion = await createDataset(["Region"]);
+    await syncDatasets();
+    const chart = await createChart(withRegion, { measures: [COUNT] });
+    const kept = await createDashboard([chart], [planFilter]);
+    const saved = await saveFilters(kept, [planFilter]);
+    expect(saved.status, await saved.clone().text()).toBe(200);
+  });
+
   test("lists values from the datasets that have the key only", async () => {
     const withPlan = await createDataset(["Plan"]);
     const withoutPlan = await createDataset([]);

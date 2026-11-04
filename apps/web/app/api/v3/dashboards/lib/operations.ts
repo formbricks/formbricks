@@ -3,6 +3,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { getSessionUserId } from "@/app/api/v3/charts/lib/access";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
 import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -17,14 +18,17 @@ import {
   problemBadRequest,
   problemConflict,
   problemForbidden,
+  problemUnauthorized,
   problemUnprocessableContent,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
+import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
+import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import type {
   TV3DashboardCreateBody,
   TV3DashboardDuplicateBody,
@@ -405,7 +409,9 @@ const runDashboardReplace = async (
     auditLog?: TV3AuditLog;
     context: TV3DashboardOperationContext;
   },
-  write: () => Promise<TDashboardReplaceResult>
+  write: () => Promise<TDashboardReplaceResult>,
+  /** Checks the write needs the caller's access for; a `Response` refuses it before anything is written. */
+  precheck?: (access: V3WorkspaceContext) => Promise<Response | null>
 ): Promise<Response> => {
   const loaded = await authorizeLoadedDashboard(
     await getDashboardWorkspaceRow(dashboardId),
@@ -413,6 +419,8 @@ const runDashboardReplace = async (
     context
   );
   if (loaded instanceof Response) return loaded;
+  const refused = precheck ? await precheck(loaded.access) : null;
+  if (refused) return refused;
 
   let result: TDashboardReplaceResult;
   try {
@@ -462,7 +470,25 @@ export async function replaceV3Dashboard({
           name: body.name,
           filters: body.filters,
           widgets: body.widgets,
-        })
+        }),
+      async (access) => {
+        if (!body.filters) return null;
+        const actor = getV3AuthorizationActor(context.authentication);
+        if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
+        const issues = await findUnknownEmbeddedFilterFields({
+          dashboardId,
+          filters: body.filters,
+          widgetIds: body.widgets.map(({ widgetId }) => widgetId),
+          access,
+          actor,
+        });
+        return issues.length === 0
+          ? null
+          : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {
+              instance,
+              invalid_params: issues,
+            });
+      }
     );
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.replace" });
