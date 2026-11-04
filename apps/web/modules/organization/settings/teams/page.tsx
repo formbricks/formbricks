@@ -1,5 +1,4 @@
-import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
-import { getUserManagementAccess } from "@/lib/membership/utils";
+import { canManageUsers } from "@/lib/membership/user-management";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
@@ -20,11 +19,9 @@ export const TeamsPage = async (props: Readonly<{ params: Promise<{ organization
 
   const isAccessControlAllowed = await getAccessControlPermission(organization.id);
 
-  // Check if user has standard user management access (owner/manager)
-  const hasStandardUserManagementAccess = getUserManagementAccess(
-    currentUserMembership?.role,
-    USER_MANAGEMENT_MINIMUM_ROLE
-  );
+  // Owners and managers above the user-management floor: the same question the member and invite
+  // actions ask, so a control is offered exactly where its action accepts it (ENG-6812).
+  const hasStandardUserManagementAccess = await canManageUsers(session.user.id, organization.id);
 
   // Also check if user is a team admin (they get limited user management for invites)
   const userAdminTeamIds = await getTeamsWhereUserIsAdmin(session.user.id, organization.id);

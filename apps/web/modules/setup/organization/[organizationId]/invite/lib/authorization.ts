@@ -1,4 +1,5 @@
 import { assertCan, can } from "@/lib/authorization";
+import { assertUserManagementAllowed, canManageUsers } from "@/lib/membership/user-management";
 
 /**
  * The capability required on the onboarding invite path (ENG-2169).
@@ -31,8 +32,14 @@ export const checkSetupInviteAuthorization = async (
     type: "organization",
     id: organizationId,
   });
+  // Sending an invite is user management, so the floor applies here as on the settings page: with
+  // `USER_MANAGEMENT_MINIMUM_ROLE=disabled` not even an owner invites (ENG-6812).
+  await assertUserManagementAllowed(userId, organizationId);
 };
 
 /** Non-throwing variant for the page gate, which renders a 404 instead of surfacing an error. */
 export const hasSetupInviteAccess = async (userId: string, organizationId: string): Promise<boolean> =>
-  can({ type: "user", id: userId }, SETUP_INVITE_ACTION, { type: "organization", id: organizationId });
+  (await can({ type: "user", id: userId }, SETUP_INVITE_ACTION, {
+    type: "organization",
+    id: organizationId,
+  })) && (await canManageUsers(userId, organizationId));

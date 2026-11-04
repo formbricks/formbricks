@@ -12,6 +12,7 @@ import { assertCan, can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { assertUserManagementAllowed } from "@/lib/membership/user-management";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -21,7 +22,6 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
-import { assertUserManagementAllowed } from "@/modules/ee/role-management/lib/user-management";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
@@ -29,7 +29,14 @@ import {
   getMembershipsByUserId,
 } from "@/modules/organization/settings/teams/lib/membership";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
-import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
+import {
+  type TInviteWriteScope,
+  deleteInvite,
+  getInvite,
+  inviteUser,
+  refreshInviteExpiration,
+  resendInvite,
+} from "./lib/invite";
 import { type TBulkInviteResult, getInviteFailureReason } from "./lib/invite-failure";
 import { reserveInviteRateLimit, settleInviteRateLimit } from "./lib/invite-rate-limit";
 
@@ -38,6 +45,19 @@ const BULK_INVITE_MAX_INVITEES = 500;
 
 // Cap on the teams one invite may name. See ZInviteUserAction.
 const INVITE_MAX_TEAMS = 100;
+
+/**
+ * What the caller may do to pending invites in this organization: an owner's invite is an owner's to
+ * change (ENG-6812), as `deleteMembershipAction` keeps an owner's membership from managers. Read after
+ * the authorization checks, so a non-member never reaches it.
+ */
+const getCallerInviteScope = async (userId: string, organizationId: string): Promise<TInviteWriteScope> => {
+  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+  if (!membership) {
+    throw new AuthenticationError("User not a member of this organization");
+  }
+  return { allowOwnerInvite: membership.role === "owner" };
+};
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
@@ -56,7 +76,7 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
-    return await deleteInvite(parsedInput.inviteId);
+    return await deleteInvite(parsedInput.inviteId, await getCallerInviteScope(ctx.user.id, organizationId));
   })
 );
 
@@ -86,7 +106,10 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
     }
 
     // Refresh the invitation expiration
-    const updatedInvite = await refreshInviteExpiration(parsedInput.inviteId);
+    const updatedInvite = await refreshInviteExpiration(
+      parsedInput.inviteId,
+      await getCallerInviteScope(ctx.user.id, organizationId)
+    );
 
     // Set audit context
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -176,13 +199,14 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       id: parsedInput.organizationId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
+    const inviteScope = await getCallerInviteScope(ctx.user.id, parsedInput.organizationId);
     const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
 
     let invite: Awaited<ReturnType<typeof getInvite>>;
     let updatedInvite: Awaited<ReturnType<typeof resendInvite>>;
     try {
       invite = await getInvite(parsedInput.inviteId);
-      updatedInvite = await resendInvite(parsedInput.inviteId);
+      updatedInvite = await resendInvite(parsedInput.inviteId, inviteScope);
     } catch (error) {
       await settleInviteRateLimit(rateLimitReservation, 0);
       throw error;

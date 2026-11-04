@@ -473,3 +473,48 @@ describe("user-management role floor", () => {
     );
   });
 });
+
+// ENG-6812: an owner's pending invite is an owner's to delete, resend or re-link, as with an owner's
+// membership. The scope reaches the write, whose own WHERE applies it.
+describe("owner invites", () => {
+  const organizationId = "org-1";
+  const inviteId = "invite-1";
+  const ctx = { user: { id: "user-1", name: "Caller" }, auditLoggingCtx: {} };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.can.mockResolvedValue(true);
+    mocks.getOrganizationIdFromInviteId.mockResolvedValue(organizationId);
+    mocks.getInvite.mockResolvedValue({ creator: { name: "Inviter" } });
+    mocks.reserveInviteRateLimit.mockResolvedValue({});
+    mocks.findUniqueInvite.mockResolvedValue({ email: "invitee@example.com", expiresAt: new Date() });
+    mocks.refreshInviteExpiration.mockResolvedValue({ email: "invitee@example.com", expiresAt: new Date() });
+    mocks.resendInvite.mockResolvedValue({ email: "invitee@example.com", name: "Invitee" });
+  });
+
+  test.each([
+    [
+      "deleteInviteAction",
+      () => deleteInviteAction({ ctx, parsedInput: { inviteId } } as never),
+      mocks.deleteInvite,
+    ],
+    [
+      "createInviteTokenAction",
+      () => createInviteTokenAction({ ctx, parsedInput: { inviteId } } as never),
+      mocks.refreshInviteExpiration,
+    ],
+    [
+      "resendInviteAction",
+      () => resendInviteAction({ ctx, parsedInput: { inviteId, organizationId } } as never),
+      mocks.resendInvite,
+    ],
+  ])("%s keeps owner invites out of a manager's reach and in an owner's", async (_name, call, write) => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "manager" });
+    await call();
+    expect(write).toHaveBeenLastCalledWith(inviteId, { allowOwnerInvite: false });
+
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "owner" });
+    await call();
+    expect(write).toHaveBeenLastCalledWith(inviteId, { allowOwnerInvite: true });
+  });
+});
