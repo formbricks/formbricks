@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { copyOptionsFrom, getCopiedOptionIds, getPickedInSourceShowIf } from "./copied-options";
+import {
+  copyOptionsFrom,
+  getCopiedOptionIds,
+  getOptionsCopiedFrom,
+  getPickedInSourceShowIf,
+  withoutOptionsCopiedFrom,
+} from "./copied-options";
 import { fillMissingCodes } from "./fill-missing-codes";
 import { surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
 import { type TSurvey, ZSurvey } from "./types";
@@ -364,5 +370,17 @@ describe("codes of copied options", () => {
     );
 
     expect(codesOf(blocks, 2)).toEqual([["acme", "7"]]);
+  });
+});
+
+describe("typed access to optionsCopiedFrom", () => {
+  test("reads the link off any element, and drops it without touching the rest", () => {
+    const linked = { id: "fav", type: "multipleChoiceSingle", optionsCopiedFrom: "services" };
+    expect(getOptionsCopiedFrom(linked)).toBe("services");
+    expect(getOptionsCopiedFrom({ id: "q", type: "openText" })).toBeUndefined();
+    expect(getOptionsCopiedFrom(undefined)).toBeUndefined();
+    expect(withoutOptionsCopiedFrom(linked)).toEqual({ id: "fav", type: "multipleChoiceSingle" });
+    const plain = { id: "q", type: "openText" };
+    expect(withoutOptionsCopiedFrom(plain)).toBe(plain);
   });
 });

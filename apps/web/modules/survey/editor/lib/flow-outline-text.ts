@@ -14,6 +14,7 @@ import {
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
+import { type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -42,10 +43,8 @@ const getFieldName = (survey: TSurvey, storageKey: string): string =>
 
 type TOptionItem = { id: string; label?: Record<string, string> };
 
-const getOptionItems = (element: TSurveyElement | undefined, key: "choices" | "rows" | "columns") => {
-  const items = element && key in element ? (element as unknown as Record<string, unknown>)[key] : undefined;
-  return Array.isArray(items) ? (items as TOptionItem[]) : [];
-};
+const getOptionItems = (element: TSurveyElement | undefined, key: TOptionListKey): readonly TOptionItem[] =>
+  getOptionList<TOptionItem>(element, key);
 
 const getOptionLabel = (item: TOptionItem | undefined): string | undefined =>
   item?.label ? getTextContent(getLocalizedValue(item.label, "default")) : undefined;

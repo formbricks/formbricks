@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { canHaveCopiedOptions } from "@formbricks/types/surveys/copied-options";
+import { canHaveCopiedOptions, getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
 import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import { type TOptionLike, type TOptionListKey } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -345,9 +345,7 @@ function CopiedOptionsSource({
   const { t } = useTranslation();
   const target = { blockIdx, elementIdx };
   const element = localSurvey.blocks[blockIdx]?.elements[elementIdx];
-  const copiedFromValue = (element as unknown as { optionsCopiedFrom?: unknown } | undefined)
-    ?.optionsCopiedFrom;
-  const copiedFrom = typeof copiedFromValue === "string" ? copiedFromValue : undefined;
+  const copiedFrom = getOptionsCopiedFrom(element);
   const candidates = getCopySourceCandidates(localSurvey, target);
   const newCount = countOptionsToCopyAgain(localSurvey, target);
   const id = `copied-from-${element?.id ?? elementIdx}`;

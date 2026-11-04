@@ -13,6 +13,7 @@ import {
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
 import {
   TSurveyElement,
   TSurveyElementTypeEnum,
@@ -1277,11 +1278,7 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
     ),
     // ENG-6938: a question another question copies its options from.
     () =>
-      elements.findIndex(
-        (element) =>
-          element.id !== elementId &&
-          (element as unknown as { optionsCopiedFrom?: unknown }).optionsCopiedFrom === elementId
-      )
+      elements.findIndex((element) => element.id !== elementId && getOptionsCopiedFrom(element) === elementId)
   );
 };
 

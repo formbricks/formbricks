@@ -1,6 +1,10 @@
 import { type TI18nString } from "@formbricks/types/i18n";
 import { type TResponseData, type TResponseDataValue } from "@formbricks/types/responses";
-import { type TDropOptionAnswers, type TElementOptionsNotShown } from "@formbricks/types/surveys/show-if";
+import {
+  type TDropOptionAnswers,
+  type TElementOptionsNotShown,
+  getOptionListKeys,
+} from "@formbricks/types/surveys/show-if";
 import { findByLocalizedLabel, getAllLocalizedLabels } from "@/lib/localized-label";
 
 /**
@@ -50,39 +54,39 @@ export const dropOptionsFromAnswer = (
   value: TResponseDataValue,
   language: string
 ): TResponseDataValue => {
-  switch (element.type) {
-    case "multipleChoiceSingle":
-    case "multipleChoiceMulti":
-    case "ranking": {
-      const hiddenLabels = labelsOf(element.choices, notShown.choices);
-      const otherHidden = element.type !== "ranking" && (notShown.choices ?? []).includes("other");
-      const isDropped = (entry: string) =>
-        hiddenLabels.has(entry) || (otherHidden && isOtherText(element, entry, language));
+  const listKeys = getOptionListKeys(element.type);
 
-      if (typeof value === "string") return isDropped(value) ? "" : value;
-      if (Array.isArray(value)) {
-        const kept = value.filter((entry) => !isDropped(entry));
-        return kept.length === value.length ? value : kept;
-      }
-      return value;
-    }
-    case "pictureSelection": {
-      const ids = notShown.choices ?? [];
-      if (!Array.isArray(value)) return value;
-      const kept = value.filter((entry) => !ids.includes(entry));
-      return kept.length === value.length ? value : kept;
-    }
-    case "matrix": {
-      if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
-      const hiddenRows = labelsOf(element.rows, notShown.rows);
-      const hiddenColumns = labelsOf(element.columns, notShown.columns);
-      const entries = Object.entries(value);
-      const kept = entries.filter(([row, column]) => !hiddenRows.has(row) && !hiddenColumns.has(column));
-      return kept.length === entries.length ? value : Object.fromEntries(kept);
-    }
-    default:
-      return value;
+  // A matrix: `{ rowLabel: columnLabel }`.
+  if (listKeys.includes("rows")) {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
+    const hiddenRows = labelsOf(element.rows, notShown.rows);
+    const hiddenColumns = labelsOf(element.columns, notShown.columns);
+    const entries = Object.entries(value);
+    const kept = entries.filter(([row, column]) => !hiddenRows.has(row) && !hiddenColumns.has(column));
+    return kept.length === entries.length ? value : Object.fromEntries(kept);
   }
+  if (!listKeys.includes("choices")) return value;
+
+  // A picture selection stores the picked ids.
+  if (element.type === "pictureSelection") {
+    const ids = notShown.choices ?? [];
+    if (!Array.isArray(value)) return value;
+    const kept = value.filter((entry) => !ids.includes(entry));
+    return kept.length === value.length ? value : kept;
+  }
+
+  // Single and multi select and ranking store labels.
+  const hiddenLabels = labelsOf(element.choices, notShown.choices);
+  const otherHidden = element.type !== "ranking" && (notShown.choices ?? []).includes("other");
+  const isDropped = (entry: string) =>
+    hiddenLabels.has(entry) || (otherHidden && isOtherText(element, entry, language));
+
+  if (typeof value === "string") return isDropped(value) ? "" : value;
+  if (Array.isArray(value)) {
+    const kept = value.filter((entry) => !isDropped(entry));
+    return kept.length === value.length ? value : kept;
+  }
+  return value;
 };
 
 /** `getBlockVisibility`'s answer dropping, for answers in `language`. */

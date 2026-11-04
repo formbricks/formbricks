@@ -1,4 +1,5 @@
 import type { TConditionGroup } from "./logic";
+import { getOptionListKeys } from "./show-if";
 
 /**
  * Copied options (ENG-6938, json-shapes §3, ADR-free by design: the link is plain show-if).
@@ -32,7 +33,6 @@ export type TCopiedOption = {
   hidden?: boolean;
 };
 
-const CHOICE_TYPES: ReadonlySet<string> = new Set(["multipleChoiceSingle", "multipleChoiceMulti", "ranking"]);
 const PICTURE_TYPE = "pictureSelection";
 
 /** The option ids that are never copied: "Other" asks for text, "None" is exclusive. */
@@ -41,14 +41,32 @@ const RESERVED_OPTION_IDS: ReadonlySet<string> = new Set(["other", "none"]);
 const isRecord = (value: unknown): value is TRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** Whether a question of this type can copy options: single select, multi select, ranking, picture. */
-export const canHaveCopiedOptions = (type: string): boolean =>
-  CHOICE_TYPES.has(type) || type === PICTURE_TYPE;
+/**
+ * Whether a question of this type can copy options: every type whose options are `choices` (single
+ * select, multi select, ranking, picture). A matrix's rows and columns are not copied (P18).
+ */
+export const canHaveCopiedOptions = (type: string): boolean => getOptionListKeys(type).includes("choices");
 
 /** What kind of options a question has to copy from, or `null` for none. */
 const optionKindOf = (type: string): "choices" | "pictures" | null => {
-  if (CHOICE_TYPES.has(type)) return "choices";
-  return type === PICTURE_TYPE ? "pictures" : null;
+  if (!canHaveCopiedOptions(type)) return null;
+  return type === PICTURE_TYPE ? "pictures" : "choices";
+};
+
+/**
+ * The question an element copies its options from, or `undefined`. Typed for every element type: only
+ * single select, multi select, ranking and picture selection declare `optionsCopiedFrom`.
+ */
+export const getOptionsCopiedFrom = (element: object | null | undefined): string | undefined => {
+  if (!element || !("optionsCopiedFrom" in element)) return undefined;
+  return typeof element.optionsCopiedFrom === "string" ? element.optionsCopiedFrom : undefined;
+};
+
+/** The element without its copy link; the same element when it has none. */
+export const withoutOptionsCopiedFrom = <TElement extends object>(element: TElement): TElement => {
+  if (!("optionsCopiedFrom" in element)) return element;
+  const { optionsCopiedFrom: _removed, ...rest } = element;
+  return rest as TElement;
 };
 
 /** Whether `target` can copy the options of `source`: choices from choices, pictures from pictures. */
