@@ -17,6 +17,7 @@ import {
   shouldTriggerAutoProgress,
 } from "@/lib/auto-progress";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getRevealedElementIds } from "@/lib/revealed-elements";
 import { cn } from "@/lib/utils";
 import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
 
@@ -141,6 +142,21 @@ export function BlockConditional({
   const ttcCollectorRef = useRef<TResponseTtc>({});
   const autoProgressingInFlightRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // A follow-up an answer on this page just revealed is scrolled into view (ENG-6931), above the
+  // card's scroll-down button (the container's scroll padding), instead of appearing under it.
+  const shownElementIdsRef = useRef<string[] | null>(null);
+  const shownElementIdsKey = elements.map((element) => element.id).join("|");
+  useEffect(() => {
+    const shownIds = shownElementIdsKey === "" ? [] : shownElementIdsKey.split("|");
+    const revealed = getRevealedElementIds(shownElementIdsRef.current, shownIds);
+    shownElementIdsRef.current = shownIds;
+    const lastRevealed = revealed[revealed.length - 1];
+    if (lastRevealed === undefined) return;
+    requestAnimationFrame(() => {
+      elementFormRefs.current.get(lastRevealed)?.scrollIntoView({ block: "nearest" });
+    });
+  }, [shownElementIdsKey]);
 
   // Screen-reader/keyboard users continue right where they act: when the card
   // appears after user navigation (or on an autofocus-allowed initial render),
