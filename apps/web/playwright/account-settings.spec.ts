@@ -56,7 +56,8 @@ test.describe("Account settings", () => {
       page.getByRole("switch", { name: "toggle notification settings for unsubscribedOrganizationIds" });
 
     await test.step("turn on the response alert for a survey", async () => {
-      await page.goto("/account/settings/notifications", { waitUntil: "domcontentloaded" });
+      // `load`, not `domcontentloaded`: a click on the server-rendered switch before hydration does nothing.
+      await page.goto("/account/settings/notifications", { waitUntil: "load" });
       await expect(alertSwitch()).not.toBeChecked();
 
       await alertSwitch().click();
@@ -93,7 +94,8 @@ test.describe("Account settings", () => {
     });
 
     await test.step("rename yourself", async () => {
-      await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
+      // `load`: a value filled before hydration is reset by it, leaving the form clean and Update disabled.
+      await page.goto("/account/settings/profile", { waitUntil: "load" });
       const nameInput = page.getByRole("textbox", { name: "Full name" });
       await expect(nameInput).toHaveValue(name);
 
