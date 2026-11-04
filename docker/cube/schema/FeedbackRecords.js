@@ -755,7 +755,7 @@ asyncModule(async () => {
 // writes these members (cube.js); a caller naming one is refused.
 for (let index = 1; index <= ANSWER_FILTER_ALIAS_COUNT; index += 1) {
   cube(`AnswerFilter${index}`, {
-    sql: `SELECT id, tenant_id, submission_id, field_id, field_group_id, value_id, value_number, value_boolean FROM feedback_records`,
+    sql: `SELECT id, tenant_id, submission_id, field_id, field_group_id, value_id, value_number FROM feedback_records`,
 
     dimensions: {
       id: { sql: `id`, type: `string`, primaryKey: true, shown: false },
@@ -763,7 +763,6 @@ for (let index = 1; index <= ANSWER_FILTER_ALIAS_COUNT; index += 1) {
       fieldGroupId: { sql: `field_group_id`, type: `string`, shown: false },
       valueId: { sql: `value_id`, type: `string`, shown: false },
       valueNumber: { sql: `value_number`, type: `number`, shown: false },
-      valueBoolean: { sql: `value_boolean`, type: `boolean`, shown: false },
     },
   });
 }

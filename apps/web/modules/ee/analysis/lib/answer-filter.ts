@@ -16,9 +16,9 @@ export const MAX_ANSWER_RULES = 25;
 /**
  * How a question stores its answer, which decides the column a rule tests:
  * `choice` a single-select's option id, `multi` one record per selected option, `number` an NPS, CSAT,
- * CES or rating value, `boolean` a yes/no.
+ * CES or rating value. No survey question type stores a yes/no answer, so there is no boolean kind.
  */
-export type TAnswerKind = "choice" | "multi" | "number" | "boolean";
+export type TAnswerKind = "choice" | "multi" | "number";
 
 export type TAnswerOperator = "equals" | "notEquals";
 
@@ -41,7 +41,6 @@ export const ANSWER_OPERATORS: Readonly<Record<TAnswerKind, readonly TAnswerOper
   choice: ["equals", "notEquals"],
   multi: ["equals"],
   number: ["equals", "notEquals"],
-  boolean: ["equals", "notEquals"],
 };
 
 const NUMERIC_VALUE = /^[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?$/;
@@ -87,9 +86,6 @@ export const checkAnswerRule = (
 
   const valueKeys = parsed.map((value) => value?.valueKey ?? "");
   if (question.kind === "number" && !valueKeys.every((valueKey) => NUMERIC_VALUE.test(valueKey))) {
-    return "value_not_allowed";
-  }
-  if (question.kind === "boolean" && !valueKeys.every((key) => key === "true" || key === "false")) {
     return "value_not_allowed";
   }
   return null;

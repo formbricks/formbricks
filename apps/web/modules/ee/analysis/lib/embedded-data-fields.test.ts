@@ -2,7 +2,8 @@ import { createRequire } from "node:module";
 import { describe, expect, test, vi } from "vitest";
 import {
   MAX_EMBEDDED_KEYS,
-  MAX_EMBEDDED_KEYS_BYTES,
+  MAX_EMBEDDED_KEYS_CHARS,
+  MAX_TOKEN_EMBEDDED_KEYS,
   collectEmbeddedMemberNames,
   isEmbeddedMemberName,
   selectEmbeddedKeys,
@@ -79,16 +80,47 @@ describe("selectEmbeddedKeys", () => {
     expect(selectEmbeddedKeys(ranked)).toEqual(ranked.slice(0, MAX_EMBEDDED_KEYS));
   });
 
-  test("stays within the token's byte budget, skipping a key that would overflow it", () => {
-    const long = Array.from(
+  test("stays within the token's budget as JSON writes the keys, skipping a key that would overflow it", () => {
+    // A quote or backslash takes two characters in the token, which is JSON; a UTF-8 byte count would
+    // undercount the first and overcount accented letters, which JSON carries as one character.
+    const quoted = Array.from(
       { length: 100 },
-      (_, index) => `${String(index).padStart(3, "0")}${"é".repeat(60)}`
+      (_, index) => `${String(index).padStart(3, "0")}${'"'.repeat(60)}`
     );
-    const selected = selectEmbeddedKeys(long);
-    const bytes = selected.reduce((sum, key) => sum + new TextEncoder().encode(key).length, 0);
-    expect(bytes).toBeLessThanOrEqual(MAX_EMBEDDED_KEYS_BYTES);
+    const selected = selectEmbeddedKeys(quoted);
+    const chars = selected.reduce((sum, key) => sum + JSON.stringify(key).length, 0);
+    expect(chars).toBeLessThanOrEqual(MAX_EMBEDDED_KEYS_CHARS);
     expect(selected.length).toBeLessThan(100);
-    expect(selected).toEqual(long.slice(0, selected.length));
+    expect(selected).toEqual(quoted.slice(0, selected.length));
+
+    // 100 realistic keys of 60 characters fit.
+    const realistic = Array.from(
+      { length: 100 },
+      (_, index) => `${String(index).padStart(3, "0")}${"é".repeat(57)}`
+    );
+    expect(selectEmbeddedKeys(realistic)).toHaveLength(100);
+  });
+
+  test("drops keys holding C0 or C1 control characters, as the Cube model does", () => {
+    const controls = [
+      "tab\tkey",
+      "line\nbreak",
+      "nul\u0000",
+      "esc\u001b[31m",
+      "del\u007f",
+      "c1\u0085",
+      "c1\u009f",
+    ];
+    expect(selectEmbeddedKeys([...controls, "plan"])).toEqual(["plan"]);
+    expect(cubeConfig.getEmbeddedKeys({ edKeys: [...controls, "plan"] })).toEqual(["plan"]);
+  });
+
+  test("the Cube model accepts the top keys plus a rare-key bucket, and no more", () => {
+    const many = Array.from(
+      { length: MAX_TOKEN_EMBEDDED_KEYS + 5 },
+      (_, index) => `k${String(index).padStart(3, "0")}`
+    );
+    expect(cubeConfig.getEmbeddedKeys({ edKeys: many })).toEqual(many.slice(0, MAX_TOKEN_EMBEDDED_KEYS));
   });
 
   test("selects the same keys the Cube model compiles", () => {

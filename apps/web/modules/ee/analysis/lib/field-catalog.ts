@@ -87,7 +87,7 @@ const ANSWER_FIELD: TChartField = {
   kind: "dimension",
   type: "string",
   label: "Answer to question",
-  description: `Filter only: keeps the records whose submission answered another question of the dataset a certain way, e.g. NPS where Delivery is Late. Each value is "<questionId>:<valueKey>" — the option id of a single- or multi-select, the number of an NPS, rating, CSAT or CES answer, or true/false — and one condition names one question. equals is "is" / "is any of" (and "contains" for a multi-select); notEquals is "is not", not offered for a multi-select. A submission that skipped the question never matches. At most ${MAX_ANSWER_RULES} per query.`,
+  description: `Filter only: keeps the records whose submission answered another question of the dataset a certain way, e.g. NPS where Delivery is Late. Each value is "<questionId>:<valueKey>" — the option id of a single- or multi-select, or the number of an NPS, rating, CSAT or CES answer — and one condition names one question. equals is "is" / "is any of" (and "contains" for a multi-select); notEquals is "is not", not offered for a multi-select. A submission that skipped the question never matches. At most ${MAX_ANSWER_RULES} per query.`,
   filterOperators: ["equals", "notEquals"],
   granularities: [],
   valueLookup: false,

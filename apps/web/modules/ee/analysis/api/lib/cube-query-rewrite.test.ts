@@ -471,7 +471,7 @@ describe("cube queryRewrite", () => {
 });
 
 const TENANT_FILTER = { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] };
-const ANSWER_KINDS = { q_delivery: "choice", q_feat: "multi", q_nps: "number", q_yn: "boolean" };
+const ANSWER_KINDS = { q_delivery: "choice", q_feat: "multi", q_nps: "number" };
 const answerContext = { securityContext: { ...securityContext, answerKinds: ANSWER_KINDS } };
 const answer = (operator: string, values: string[]) => ({
   member: "FeedbackRecords.answer",
@@ -539,11 +539,11 @@ describe("cube queryRewrite: answer filters (ENG-6894)", () => {
     ]);
   });
 
-  test("puts number and yes/no rules on their typed columns", () => {
+  test("puts number rules on the number column", () => {
     const rewritten = queryRewrite(
       {
         measures: ["FeedbackRecords.count"],
-        filters: [answer("equals", ["q_nps:9", "q_nps:10"]), answer("notEquals", ["q_yn:false"])],
+        filters: [answer("equals", ["q_nps:9", "q_nps:10"]), answer("notEquals", ["q_nps:0"])],
       },
       answerContext
     );
@@ -557,12 +557,21 @@ describe("cube queryRewrite: answer filters (ENG-6894)", () => {
       },
       {
         and: [
-          { member: "AnswerFilter2.fieldId", operator: "equals", values: ["q_yn"] },
-          { member: "AnswerFilter2.valueBoolean", operator: "notEquals", values: ["false"] },
+          { member: "AnswerFilter2.fieldId", operator: "equals", values: ["q_nps"] },
+          { member: "AnswerFilter2.valueNumber", operator: "notEquals", values: ["0"] },
         ],
       },
       TENANT_FILTER,
     ]);
+  });
+
+  test("knows no yes/no kind: no question type stores one, so a token naming it is refused (C16)", () => {
+    expect(() =>
+      queryRewrite(
+        { measures: ["FeedbackRecords.count"], filters: [answer("equals", ["q_yn:true"])] },
+        { securityContext: { ...securityContext, answerKinds: { q_yn: "boolean" } } }
+      )
+    ).toThrow(/no known kind/);
   });
 
   test("gives every rule its own alias through nested and/or groups, next to ordinary filters", () => {
@@ -676,12 +685,6 @@ describe("cube queryRewrite: answer filters (ENG-6894)", () => {
       /takes equals only/,
     ],
     ["a non-number on a number question", [answer("equals", ["q_nps:high"])], answerContext, /takes numbers/],
-    [
-      "anything but true/false on a yes/no question",
-      [answer("equals", ["q_yn:yes"])],
-      answerContext,
-      /true or false/,
-    ],
   ])("refuses %s", (_label, filters, context, error) => {
     expect(() => queryRewrite({ measures: ["FeedbackRecords.count"], filters }, context)).toThrow(error);
   });
@@ -779,16 +782,16 @@ describe("cube embedded-data members (ENG-6893)", () => {
     expect(spec.equalsName).toBe(spec.name.replace(/^ed_/, "edc_"));
   });
 
-  test("drops blank keys, keys over 128 characters, non-strings and duplicates, and caps at 100", () => {
+  test("drops blank keys, keys over 128 characters, non-strings and duplicates, and caps at 110", () => {
     expect(
       specsFor(["", "   ", "x".repeat(129), 7, null, "ok", "ok", "y".repeat(128)]).map((spec) => spec.key)
     ).toEqual(["ok", "y".repeat(128)]);
 
     const many = Array.from({ length: 150 }, (_, index) => `key_${String(index).padStart(3, "0")}`);
     const specs = specsFor(many);
-    expect(specs).toHaveLength(100);
-    // The first 100 the token lists win, so the app's frequency order decides which keys are kept.
-    expect(specs.map((spec) => spec.key)).toEqual(many.slice(0, 100));
+    // The app's 100 top keys plus one bucket of 10 rarer keys; the first 110 the token lists win.
+    expect(specs).toHaveLength(110);
+    expect(specs.map((spec) => spec.key)).toEqual(many.slice(0, 110));
   });
 
   test("writes keys into SQL as escaped literals only", () => {
@@ -851,6 +854,27 @@ describe("cube embedded-data members (ENG-6893)", () => {
         ],
       },
       { member: "FeedbackRecords.ed_plan_64879f7d", operator: "contains", values: ["Pr"] },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("moves equals onto the twin when a filter names its member as `dimension` (S12)", () => {
+    const rewritten = queryRewrite(
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [
+          { dimension: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] },
+          {
+            or: [{ dimension: "FeedbackRecords.ed_plan_64879f7d", operator: "notEquals", values: ["Free"] }],
+          },
+        ],
+      },
+      { securityContext }
+    );
+
+    expect(rewritten.filters).toEqual([
+      { dimension: "FeedbackRecords.edc_plan_64879f7d", operator: "equals", values: ["Pro"] },
+      { or: [{ dimension: "FeedbackRecords.ed_plan_64879f7d", operator: "notEquals", values: ["Free"] }] },
       TENANT_FILTER,
     ]);
   });

@@ -5,39 +5,69 @@
  * applies the same rules again and must agree with them.
  */
 
-/** Most keys one dataset compiles, the most frequent first. */
+/** Most of a dataset's keys its catalog offers and every token carries: the most frequent first. */
 export const MAX_EMBEDDED_KEYS = 100;
 /** Longest key compiled. A longer one is left out rather than truncated, so a name stays exact. */
 export const MAX_EMBEDDED_KEY_LENGTH = 128;
 /**
- * Most UTF-8 bytes the keys may take together. They ride in the Cube token, which travels as an HTTP
- * header that Node caps at 16 KiB; base64 and the other claims leave room for about this much. Short,
- * realistic keys never come near it: 100 keys of 60 characters do not.
+ * Most characters the top keys may take in the Cube token, measured as JSON writes them
+ * (`JSON.stringify(key).length`: a quote or backslash counts twice). The token travels as an HTTP header
+ * that Node caps at 16 KiB; base64 and the other claims leave room for about 8 KiB of keys, shared with
+ * `MAX_RARE_EMBEDDED_KEYS_CHARS`. 100 realistic keys of 60 characters fit.
  */
-export const MAX_EMBEDDED_KEYS_BYTES = 8 * 1024;
+export const MAX_EMBEDDED_KEYS_CHARS = 6656;
+/**
+ * A query naming keys outside the top keys (a saved chart whose key grew rarer) adds one fixed bucket of
+ * rarer keys to the token, so every query naming a key of that bucket compiles the same model (S5).
+ */
+export const MAX_RARE_EMBEDDED_KEYS = 10;
+export const MAX_RARE_EMBEDDED_KEYS_CHARS = 1536;
+/** Most keys one token carries; docker/cube/cube.js compiles no more (`MAX_EMBEDDED_KEYS` there). */
+export const MAX_TOKEN_EMBEDDED_KEYS = MAX_EMBEDDED_KEYS + MAX_RARE_EMBEDDED_KEYS;
 
 export const EMBEDDED_MEMBER_PREFIX = "FeedbackRecords.ed_";
 const EMBEDDED_MEMBER_PATTERN = /^FeedbackRecords\.ed_[a-z0-9_]+$/;
 const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+// C0 and C1 control characters, NUL included; docker/cube/cube.js refuses the same.
+// eslint-disable-next-line no-control-regex -- matching control characters is the point
+const CONTROL_CHARACTER = /[\u0000-\u001F\u007F-\u009F]/;
 
 export const isEmbeddedMemberName = (name: string): boolean => EMBEDDED_MEMBER_PATTERN.test(name);
 
 /**
- * The keys a dataset compiles, from its keys ranked most frequent first: no blank key (a blank title
- * breaks the whole Cube model), none over `MAX_EMBEDDED_KEY_LENGTH`, none Postgres text cannot hold, no
- * duplicate, at most `MAX_EMBEDDED_KEYS` and `MAX_EMBEDDED_KEYS_BYTES`. Keeps frequency order.
+ * Whether a key can compile at all: a string, not blank (a blank title breaks the whole Cube model), at
+ * most `MAX_EMBEDDED_KEY_LENGTH`, no control character and nothing Postgres text cannot hold.
  */
-export const selectEmbeddedKeys = (rankedKeys: readonly unknown[]): string[] => {
+export const isCompilableEmbeddedKey = (key: unknown): key is string =>
+  typeof key === "string" &&
+  key.trim().length > 0 &&
+  key.length <= MAX_EMBEDDED_KEY_LENGTH &&
+  !CONTROL_CHARACTER.test(key) &&
+  !LONE_SURROGATE.test(key);
+
+/** The characters a key takes in the token, which is JSON. */
+export const getEmbeddedKeyTokenChars = (key: string): number => JSON.stringify(key).length;
+
+/**
+ * The keys a dataset compiles, from its keys ranked most frequent first: only compilable keys, no
+ * duplicate, at most `maxKeys` and `maxChars` token characters. Keeps the order it was given.
+ */
+export const selectEmbeddedKeys = (
+  rankedKeys: readonly unknown[],
+  {
+    maxKeys = MAX_EMBEDDED_KEYS,
+    maxChars = MAX_EMBEDDED_KEYS_CHARS,
+  }: { maxKeys?: number; maxChars?: number } = {}
+): string[] => {
   const keys: string[] = [];
   const seen = new Set<string>();
-  let bytes = 0;
+  let chars = 0;
   for (const key of rankedKeys) {
-    if (keys.length >= MAX_EMBEDDED_KEYS) break;
-    if (typeof key !== "string" || key.trim().length === 0 || key.length > MAX_EMBEDDED_KEY_LENGTH) continue;
-    if (key.includes("\u0000") || LONE_SURROGATE.test(key) || seen.has(key)) continue;
-    const keyBytes = new TextEncoder().encode(key).length;
-    if (bytes + keyBytes > MAX_EMBEDDED_KEYS_BYTES) continue;
-    bytes += keyBytes;
+    if (keys.length >= maxKeys) break;
+    if (!isCompilableEmbeddedKey(key) || seen.has(key)) continue;
+    const keyChars = getEmbeddedKeyTokenChars(key);
+    if (chars + keyChars > maxChars) continue;
+    chars += keyChars;
     seen.add(key);
     keys.push(key);
   }

@@ -260,8 +260,11 @@ function normalizeCaseInsensitiveFilters(filters) {
 // `FeedbackRecords.ed_<slug>_<hash>` dimension through `getEmbeddedDimensionSpecs`. Cube never looks
 // keys up itself, and one dataset's key names never reach another dataset's `/meta`.
 
-/** Most keys one dataset compiles; the app sends its 100 most frequent. */
-const MAX_EMBEDDED_KEYS = 100;
+/**
+ * Most keys one token compiles: the app sends a dataset's 100 most frequent keys plus at most one bucket
+ * of 10 rarer keys a saved query names (apps/web `MAX_TOKEN_EMBEDDED_KEYS`).
+ */
+const MAX_EMBEDDED_KEYS = 110;
 /** Longest key compiled. A longer one is dropped rather than truncated, so names stay exact. */
 const MAX_EMBEDDED_KEY_LENGTH = 128;
 const EMBEDDED_MEMBER_PREFIX = "ed_";
@@ -273,11 +276,15 @@ const EMBEDDED_MEMBER_PREFIX = "ed_";
  */
 const EMBEDDED_EQUALS_MEMBER_PREFIX = "edc_";
 const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+// C0 and C1 control characters (NUL included): never a key anyone means, and a title or log line breaker.
+// eslint-disable-next-line no-control-regex -- matching control characters is the point
+const CONTROL_CHARACTER = /[\u0000-\u001F\u007F-\u009F]/;
 
 /**
  * The keys a token names, in the one order every caller sees: strings only, no blank key (a blank
  * dimension title breaks the whole model, and failed compiles are not cached), none longer than
- * `MAX_EMBEDDED_KEY_LENGTH`, none Postgres text cannot hold, no duplicates, at most `MAX_EMBEDDED_KEYS`.
+ * `MAX_EMBEDDED_KEY_LENGTH`, no control character, none Postgres text cannot hold, no duplicates, at most
+ * `MAX_EMBEDDED_KEYS`.
  */
 function getEmbeddedKeys(securityContext) {
   const claim = securityContext?.edKeys;
@@ -289,7 +296,7 @@ function getEmbeddedKeys(securityContext) {
   for (const key of claim) {
     if (keys.size >= MAX_EMBEDDED_KEYS) break;
     if (typeof key !== "string" || key.trim().length === 0 || key.length > MAX_EMBEDDED_KEY_LENGTH) continue;
-    if (key.includes("\u0000") || LONE_SURROGATE.test(key)) continue;
+    if (CONTROL_CHARACTER.test(key) || LONE_SURROGATE.test(key)) continue;
     keys.add(key);
   }
 
@@ -385,7 +392,10 @@ function getEmbeddedContainmentSql(keyLiteral, values) {
 
 const EMBEDDED_MEMBER_PATTERN = /^FeedbackRecords\.ed_[a-z0-9_]+$/;
 
-/** `equals` on an embedded dimension moves to its hidden twin; everything else is left as written. */
+/**
+ * `equals` on an embedded dimension moves to its hidden twin; everything else is left as written. Cube
+ * accepts a filter's member as `member` or as the older `dimension`, so both are moved.
+ */
 function moveEmbeddedEqualsFilter(filter) {
   if (!filter || typeof filter !== "object") {
     return filter;
@@ -396,14 +406,12 @@ function moveEmbeddedEqualsFilter(filter) {
   if (Array.isArray(filter.or)) {
     return { ...filter, or: filter.or.map(moveEmbeddedEqualsFilter) };
   }
-  if (
-    filter.operator === "equals" &&
-    typeof filter.member === "string" &&
-    EMBEDDED_MEMBER_PATTERN.test(filter.member)
-  ) {
+  const memberKey = typeof filter.member === "string" ? "member" : "dimension";
+  const member = filter[memberKey];
+  if (filter.operator === "equals" && typeof member === "string" && EMBEDDED_MEMBER_PATTERN.test(member)) {
     return {
       ...filter,
-      member: filter.member.replace(
+      [memberKey]: member.replace(
         `FeedbackRecords.${EMBEDDED_MEMBER_PREFIX}`,
         `FeedbackRecords.${EMBEDDED_EQUALS_MEMBER_PREFIX}`
       ),
@@ -442,7 +450,7 @@ function getAnswerKind(securityContext, questionId) {
   const kinds = securityContext?.answerKinds;
   const kind =
     kinds && typeof kinds === "object" && Object.hasOwn(kinds, questionId) ? kinds[questionId] : undefined;
-  if (!["choice", "multi", "number", "boolean"].includes(kind)) {
+  if (!["choice", "multi", "number"].includes(kind)) {
     throw new Error("Cube query rejected: an answer rule names a question with no known kind");
   }
   return kind;
@@ -500,16 +508,6 @@ function expandAnswerRule(rule, kind, alias) {
         and: [
           condition("fieldId", "equals", [rule.questionId]),
           condition("valueNumber", rule.operator, rule.valueKeys),
-        ],
-      };
-    case "boolean":
-      if (!rule.valueKeys.every((valueKey) => valueKey === "true" || valueKey === "false")) {
-        throw new Error("Cube query rejected: a yes/no answer rule takes true or false");
-      }
-      return {
-        and: [
-          condition("fieldId", "equals", [rule.questionId]),
-          condition("valueBoolean", rule.operator, rule.valueKeys),
         ],
       };
     default:

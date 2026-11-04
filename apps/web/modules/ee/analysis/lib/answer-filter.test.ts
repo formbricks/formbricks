@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   ANSWER_MEMBER,
+  ANSWER_OPERATORS,
   type TAnswerQuestion,
   checkAnswerRule,
   collectAnswerQuestionIds,
@@ -14,7 +15,6 @@ const questions = new Map<string, TAnswerQuestion>(
       { id: "q_delivery", label: "Delivery", kind: "choice", options: [] },
       { id: "q_feat", label: "Features", kind: "multi", options: [] },
       { id: "q_nps", label: "NPS", kind: "number", options: [] },
-      { id: "q_yn", label: "Buy again?", kind: "boolean", options: [] },
     ] satisfies TAnswerQuestion[]
   ).map((question) => [question.id, question])
 );
@@ -33,6 +33,12 @@ describe("answer filter values", () => {
   });
 });
 
+describe("answer kinds", () => {
+  test("are the kinds a question stores its answer as; no question type stores a yes/no (C16)", () => {
+    expect(Object.keys(ANSWER_OPERATORS).sort()).toEqual(["choice", "multi", "number"]);
+  });
+});
+
 describe("checkAnswerRule", () => {
   test("accepts every operator a kind offers", () => {
     expect(checkAnswerRule("equals", ["q_delivery:opt_late"], questions)).toBeNull();
@@ -41,7 +47,6 @@ describe("checkAnswerRule", () => {
     ).toBeNull();
     expect(checkAnswerRule("equals", ["q_feat:opt_a", "q_feat:opt_b"], questions)).toBeNull();
     expect(checkAnswerRule("notEquals", ["q_nps:9"], questions)).toBeNull();
-    expect(checkAnswerRule("equals", ["q_yn:true"], questions)).toBeNull();
   });
 
   test("checks only the shape without the dataset's questions", () => {
@@ -54,7 +59,6 @@ describe("checkAnswerRule", () => {
     ["an unknown question", "equals", ["q_gone:x"], "unknown_question"],
     ["multi-select 'does not contain'", "notEquals", ["q_feat:opt_a"], "operator_not_allowed"],
     ["a word on a number question", "equals", ["q_nps:high"], "value_not_allowed"],
-    ["yes on a yes/no question", "equals", ["q_yn:yes"], "value_not_allowed"],
   ])("refuses %s", (_label, operator, values, problem) => {
     expect(checkAnswerRule(operator, values, questions)).toBe(problem);
   });

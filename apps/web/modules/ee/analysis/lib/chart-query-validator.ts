@@ -471,7 +471,7 @@ const ANSWER_RULE_REASONS: Readonly<Record<TAnswerRuleProblem, string>> = {
   unknown_question: "Not a question of this dataset an answer filter can use.",
   operator_not_allowed:
     "This question's answers can only be matched with equals: a multi-select has no 'does not contain'.",
-  value_not_allowed: "Not a value this question's answers can hold (a number, or true/false).",
+  value_not_allowed: "Not a value this question's answers can hold (a number).",
 };
 
 const checkCondition = (

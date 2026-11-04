@@ -75,7 +75,7 @@ function formatAnswerFilters(dataset: TDatasetChartFields | undefined): string {
   return `### Answer filters (how the same response answered another question)
 Filter member \`${ANSWER_MEMBER}\` keeps records whose response answered another question a certain way. Each value is "<questionId>:<valueKey>" using the ids listed below, and one filter names exactly one question.
 - "is" / "contains": operator \`equals\` with one value; "is any of": \`equals\` with several values of the same question.
-- "is not": \`notEquals\` — only for choice, number and boolean questions; a multi question has no "does not contain".
+- "is not": \`notEquals\` — only for choice and number questions; a multi question has no "does not contain".
 - A response that skipped the question never matches. At most ${MAX_ANSWER_RULES} such filters.
 - Recipe: "NPS when delivery was late" → measure \`${CUBE_NAME}.npsScore\`, filter \`${CUBE_NAME}.fieldType\` equals ["nps"], and filter \`${ANSWER_MEMBER}\` equals ["<delivery question id>:<late option id>"].
 Questions ("id" (kind) "label": "valueKey" = "option label", …):
