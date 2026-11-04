@@ -8,6 +8,7 @@ import { redactAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
+import { AI_TRANSLATION_MODEL_BATCHES_PER_ACTION, createTranslationBatches } from "./translation-batches";
 
 export const ZAITranslationField = z.object({
   path: z.string(),
@@ -63,18 +64,6 @@ export const translateFields = async ({
     return passthroughTranslations;
   }
 
-  // Indexed IDs insulate the LLM from user-supplied paths (dots, casing,
-  // separator normalization). We map back to paths after generation.
-  const items = translatableFields.map((f, i) => ({
-    id: `t${i}`,
-    path: f.path,
-    text: f.defaultText,
-    richText: f.isRichText,
-  }));
-
-  // Schema with explicit keys forces the provider to return exactly this set.
-  const schema = z.object(Object.fromEntries(items.map((item) => [item.id, z.string()])));
-
   const systemPrompt = `You are a professional translator for survey content. Translate each item from ${sourceLanguage} to ${targetLanguage}.
 
 Rules:
@@ -82,62 +71,79 @@ Rules:
 - Preserve any {{variable}} patterns exactly — do not translate text inside double curly braces.
 - Translate every item. Do not omit any keys.`;
 
-  const userPayload = JSON.stringify(items.map(({ id, text, richText }) => ({ id, text, richText })));
-
-  const maxOutputTokens = Math.min(
-    AI_TRANSLATION_MAX_OUTPUT_TOKENS,
-    Math.max(
-      AI_TRANSLATION_MIN_OUTPUT_TOKENS,
-      translatableFields.length * AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD
-    )
-  );
-
-  const result = await generateOrganizationAIObject({
-    organizationId,
-    aiTracing: { distinctId: userId, feature: AI_TRACING_FEATURE.Translation, workspaceId },
-    schema,
-    system: systemPrompt,
-    prompt: userPayload,
-    temperature: 0,
-    maxOutputTokens,
-    timeout: getAITimeoutMs(AI_TRANSLATION_TIMEOUT_MS),
-  }).catch((error: unknown) => {
-    // Retrying is futile (temperature 0, same budget), so tell the user the batch is too large instead
-    // of a generic failure. The shared AI service has already logged the token counts.
-    if (error instanceof AIOutputTokenLimitError) {
-      throw new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG);
-    }
-    // Logged by the AI service already. From here it reaches the server action client, which logs and
-    // reports a thrown error whole — and an AI SDK error carries the survey text and its translation.
-    throw redactAIError(error);
-  });
-
-  const translatedById = result.object;
-
-  const translations: Record<string, string> = {};
-  const missingIds: string[] = [];
-  for (const item of items) {
-    const value = translatedById[item.id];
-    if (typeof value === "string" && value.length > 0) {
-      translations[item.path] = value;
-    } else {
-      missingIds.push(item.id);
-    }
-  }
-
-  if (missingIds.length > 0) {
-    logger.error(
-      {
-        organizationId,
-        sourceLanguage,
-        targetLanguage,
-        requestedCount: translatableFields.length,
-        returnedCount: Object.keys(translations).length,
-        missingIds,
-      },
-      "AI translation returned incomplete result"
+  const translateBatch = async (batch: TAITranslationField[]): Promise<Record<string, string>> => {
+    // Indexed IDs insulate the LLM from user-supplied paths. Map them back after generation.
+    const items = batch.map((field, index) => ({
+      id: `t${index}`,
+      path: field.path,
+      text: field.defaultText,
+      richText: field.isRichText,
+    }));
+    const schema = z.object(Object.fromEntries(items.map((item) => [item.id, z.string()])));
+    const userPayload = JSON.stringify(items.map(({ id, text, richText }) => ({ id, text, richText })));
+    const sourceChars = batch.reduce((total, field) => total + field.defaultText.length, 0);
+    const maxOutputTokens = Math.min(
+      AI_TRANSLATION_MAX_OUTPUT_TOKENS,
+      Math.max(
+        AI_TRANSLATION_MIN_OUTPUT_TOKENS,
+        batch.length * AI_TRANSLATION_OUTPUT_TOKENS_PER_FIELD,
+        sourceChars
+      )
     );
-    throw new Error("AI translation returned incomplete result");
+
+    const result = await generateOrganizationAIObject({
+      organizationId,
+      aiTracing: { distinctId: userId, feature: AI_TRACING_FEATURE.Translation, workspaceId },
+      schema,
+      system: systemPrompt,
+      prompt: userPayload,
+      temperature: 0,
+      maxOutputTokens,
+      timeout: getAITimeoutMs(AI_TRANSLATION_TIMEOUT_MS),
+    }).catch((error: unknown) => {
+      if (error instanceof AIOutputTokenLimitError) {
+        throw new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG);
+      }
+      // AI SDK errors can contain survey text and model output. Keep them out of the action response.
+      throw redactAIError(error);
+    });
+
+    const translations: Record<string, string> = {};
+    const missingIds: string[] = [];
+    for (const item of items) {
+      const value = result.object[item.id];
+      if (typeof value === "string" && value.length > 0) {
+        translations[item.path] = value;
+      } else {
+        missingIds.push(item.id);
+      }
+    }
+
+    if (missingIds.length > 0) {
+      logger.error(
+        {
+          organizationId,
+          sourceLanguage,
+          targetLanguage,
+          requestedCount: batch.length,
+          returnedCount: Object.keys(translations).length,
+          missingIds,
+        },
+        "AI translation returned incomplete result"
+      );
+      throw new Error("AI translation returned incomplete result");
+    }
+
+    return translations;
+  };
+
+  const modelBatches = createTranslationBatches(translatableFields);
+  const translations: Record<string, string> = {};
+  for (let index = 0; index < modelBatches.length; index += AI_TRANSLATION_MODEL_BATCHES_PER_ACTION) {
+    const results = await Promise.all(
+      modelBatches.slice(index, index + AI_TRANSLATION_MODEL_BATCHES_PER_ACTION).map(translateBatch)
+    );
+    for (const result of results) Object.assign(translations, result);
   }
 
   return { ...passthroughTranslations, ...translations };

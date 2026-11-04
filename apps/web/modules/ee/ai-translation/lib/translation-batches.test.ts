@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   AI_TRANSLATION_FIELDS_PER_BATCH,
   AI_TRANSLATION_SOURCE_CHARS_PER_BATCH,
+  createTranslationActionBatches,
   createTranslationBatches,
 } from "./translation-batches";
 
@@ -47,5 +48,14 @@ describe("createTranslationBatches", () => {
 
   test("does not make a request for an empty field list", () => {
     expect(createTranslationBatches([])).toEqual([]);
+  });
+
+  test("groups at most three model batches into each action", () => {
+    const fields = Array.from({ length: 228 }, (_, index) => field(index, 100));
+    const actionBatches = createTranslationActionBatches(fields);
+
+    expect(actionBatches.flat()).toEqual(fields);
+    expect(actionBatches).toHaveLength(10);
+    expect(actionBatches.map((batch) => batch.length)).toEqual([24, 24, 24, 24, 24, 24, 24, 24, 24, 12]);
   });
 });

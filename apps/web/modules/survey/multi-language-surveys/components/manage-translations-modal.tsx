@@ -11,6 +11,10 @@ import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/actions";
+import {
+  AI_TRANSLATION_ACTIONS_PER_RUN,
+  createTranslationActionBatches,
+} from "@/modules/ee/ai-translation/lib/translation-batches";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -28,7 +32,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { isTranslationPathLocked } from "../lib/published-translation-lock";
-import { AI_TRANSLATION_BATCHES_PER_RUN, createTranslationBatches } from "../lib/translation-batches";
 import { type TranslatableString } from "../lib/types";
 import {
   extractTranslatableStrings,
@@ -173,14 +176,14 @@ export const ManageTranslationsModal = ({
   const handleTranslateWithAI = async () => {
     if (emptyFields.length === 0) return;
 
-    const batches = createTranslationBatches(
+    const batches = createTranslationActionBatches(
       emptyFields.map((s) => ({
         path: s.path,
         defaultText: s.value.default || "",
         isRichText: s.isRichText,
       }))
     );
-    const selectedBatches = batches.slice(0, AI_TRANSLATION_BATCHES_PER_RUN);
+    const selectedBatches = batches.slice(0, AI_TRANSLATION_ACTIONS_PER_RUN);
     const paths = new Set(selectedBatches.flatMap((batch) => batch.map((field) => field.path)));
     const runId = ++translationRunId.current;
     setIsTranslating(true);
@@ -188,43 +191,31 @@ export const ManageTranslationsModal = ({
 
     const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
     translationToastId.current = toastId;
-    let nextBatch = 0;
     let failedMessage: string | undefined;
     let translatedCount = 0;
 
     try {
-      const translateNextBatch = async () => {
-        while (nextBatch < selectedBatches.length && !failedMessage && runId === translationRunId.current) {
-          const batch = selectedBatches[nextBatch++];
-          try {
-            const result = await translateSurveyFieldsAction({
-              workspaceId,
-              fields: batch,
-              sourceLanguage: defaultLanguageName,
-              targetLanguage: languageName,
-            });
-            if (runId !== translationRunId.current) return;
+      for (const batch of selectedBatches) {
+        const result = await translateSurveyFieldsAction({
+          workspaceId,
+          fields: batch,
+          sourceLanguage: defaultLanguageName,
+          targetLanguage: languageName,
+        });
+        if (runId !== translationRunId.current) return;
 
-            const translations = result?.data?.translations;
-            if (!translations) {
-              const errorMessage = getFormattedErrorMessage(result);
-              failedMessage = errorMessage
-                ? getAIErrorMessage(errorMessage)
-                : t("workspace.surveys.edit.ai_translation_failed");
-              return;
-            }
-
-            translatedCount += batch.length;
-            setDraftTranslations((prev) => ({ ...prev, ...translations }));
-          } catch {
-            if (runId !== translationRunId.current) return;
-            failedMessage = t("workspace.surveys.edit.ai_translation_failed");
-            return;
-          }
+        const translations = result?.data?.translations;
+        if (!translations) {
+          const errorMessage = getFormattedErrorMessage(result);
+          failedMessage = errorMessage
+            ? getAIErrorMessage(errorMessage)
+            : t("workspace.surveys.edit.ai_translation_failed");
+          break;
         }
-      };
 
-      await Promise.all(Array.from({ length: Math.min(3, selectedBatches.length) }, translateNextBatch));
+        translatedCount += batch.length;
+        setDraftTranslations((prev) => ({ ...prev, ...translations }));
+      }
       if (runId !== translationRunId.current) return;
 
       if (failedMessage || batches.length > selectedBatches.length) {
@@ -239,7 +230,12 @@ export const ManageTranslationsModal = ({
       }
     } catch {
       if (runId === translationRunId.current) {
-        toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
+        toast.error(
+          translatedCount > 0
+            ? t("workspace.surveys.edit.ai_translation_partial")
+            : t("workspace.surveys.edit.ai_translation_failed"),
+          { id: toastId }
+        );
       }
     } finally {
       if (runId === translationRunId.current) {

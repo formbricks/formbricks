@@ -111,26 +111,53 @@ describe("translateFields", () => {
     });
   });
 
-  test("scales maxOutputTokens with field count in the mid-range", async () => {
+  test("sends a mid-range request as three model-sized batches", async () => {
     const midRangeFields = makeFields(20);
     mockTranslationsFor(midRangeFields);
 
     await translateFields({ ...baseInput, fields: midRangeFields });
 
-    expect(mockGenerateOrganizationAIObject.mock.calls[0][0]).toMatchObject({
-      maxOutputTokens: 3200,
-    });
+    expect(mockGenerateOrganizationAIObject).toHaveBeenCalledTimes(3);
+    expect(
+      mockGenerateOrganizationAIObject.mock.calls.map(([input]) => JSON.parse(input.prompt).length)
+    ).toEqual([8, 8, 4]);
+    expect(mockGenerateOrganizationAIObject.mock.calls.map(([input]) => input.maxOutputTokens)).toEqual([
+      1280, 1280, 1024,
+    ]);
   });
 
-  test("clamps maxOutputTokens to the maximum for large translation batches", async () => {
-    const largeBatchFields = makeFields(60);
-    mockTranslationsFor(largeBatchFields);
+  test("reserves more output tokens for a long field", async () => {
+    mockGenerateOrganizationAIObject.mockResolvedValue({ object: { t0: "Translated" } });
 
-    await translateFields({ ...baseInput, fields: largeBatchFields });
-
-    expect(mockGenerateOrganizationAIObject.mock.calls[0][0]).toMatchObject({
-      maxOutputTokens: 8192,
+    await translateFields({
+      ...baseInput,
+      fields: [{ path: "long", defaultText: "x".repeat(2500), isRichText: false }],
     });
+
+    expect(mockGenerateOrganizationAIObject.mock.calls[0][0].maxOutputTokens).toBe(2500);
+  });
+
+  test("never runs more than three model batches at once", async () => {
+    const largeBatchFields = makeFields(60);
+    let active = 0;
+    let maxActive = 0;
+    mockGenerateOrganizationAIObject.mockImplementation(async () => {
+      active++;
+      maxActive = Math.max(maxActive, active);
+      await Promise.resolve();
+      active--;
+      return {
+        object: Object.fromEntries(
+          Array.from({ length: 8 }, (_, index) => [`t${index}`, `Translated ${index}`])
+        ),
+      };
+    });
+
+    const result = await translateFields({ ...baseInput, fields: largeBatchFields });
+
+    expect(Object.keys(result)).toHaveLength(60);
+    expect(mockGenerateOrganizationAIObject).toHaveBeenCalledTimes(8);
+    expect(maxActive).toBe(3);
   });
 
   test("returns empty object without calling the model when no fields are provided", async () => {

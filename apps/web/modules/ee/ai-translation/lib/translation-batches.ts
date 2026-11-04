@@ -6,7 +6,8 @@ export interface TranslationBatchField {
 
 export const AI_TRANSLATION_FIELDS_PER_BATCH = 8;
 export const AI_TRANSLATION_SOURCE_CHARS_PER_BATCH = 3000;
-export const AI_TRANSLATION_BATCHES_PER_RUN = 50;
+export const AI_TRANSLATION_MODEL_BATCHES_PER_ACTION = 3;
+export const AI_TRANSLATION_ACTIONS_PER_RUN = 20;
 
 export const createTranslationBatches = (
   fields: readonly TranslationBatchField[]
@@ -33,4 +34,17 @@ export const createTranslationBatches = (
   if (batch.length > 0) batches.push(batch);
 
   return batches;
+};
+
+export const createTranslationActionBatches = (
+  fields: readonly TranslationBatchField[]
+): TranslationBatchField[][] => {
+  const modelBatches = createTranslationBatches(fields);
+  const actionBatches: TranslationBatchField[][] = [];
+
+  for (let index = 0; index < modelBatches.length; index += AI_TRANSLATION_MODEL_BATCHES_PER_ACTION) {
+    actionBatches.push(modelBatches.slice(index, index + AI_TRANSLATION_MODEL_BATCHES_PER_ACTION).flat());
+  }
+
+  return actionBatches;
 };
