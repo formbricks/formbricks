@@ -14,8 +14,10 @@ import {
   type TRecordedDocumentPlan,
   linesInPrompt,
   loadRecordedDocumentPlan,
+  planForLines,
   recordedDocumentGenerate,
 } from "./__fixtures__/recorded-plans";
+import { chunkDocumentLines } from "./chunks";
 import { buildGridModel } from "./model";
 import { type TRunDocumentImportParams, runDocumentImport } from "./pipeline";
 import { type TPreparedDocumentImport, prepareDocumentImport } from "./prepare";
@@ -415,6 +417,43 @@ describe("runDocumentImport: the AI ceiling", () => {
       recordedDocumentGenerate(plannedAll(SURVEY_IMPORT_MAX_QUESTIONS))
     );
     expect(report.summary.questions).toBe(SURVEY_IMPORT_MAX_QUESTIONS);
+  });
+
+  test("planning stops once its answers hold more questions than the import takes, before the rest is asked", async () => {
+    const lines = 3 * SURVEY_IMPORT_MAX_QUESTIONS;
+    const file = listOf(lines);
+    const chunks = chunkDocumentLines(
+      file.model,
+      file.model.lines.map((line) => line.key)
+    ).length;
+    const generate = vi.fn(recordedDocumentGenerate(plannedAll(lines)));
+
+    expect(await failureOf(run(file, generate))).toBe("too_many_questions");
+    // Every chunk asked would be `chunks` calls; it stopped once the questions so far passed the ceiling.
+    expect(chunks).toBeGreaterThan(4);
+    expect(generate.mock.calls.length).toBeLessThan(chunks);
+  });
+
+  test("a question asked again on the retry counts once toward the ceiling", async () => {
+    const count = Math.ceil(SURVEY_IMPORT_MAX_QUESTIONS * 0.75);
+    const valid = plannedAll(count);
+    // The first round's answers place every line on a cell the line does not have, which the checks
+    // fail; the retry places them right. Counted twice, the same lines would pass the ceiling.
+    const wrong = planOf(valid.questions.map((question) => openTextEntry(question.ref, "Z9999")));
+    const file = listOf(count);
+    const firstRound = chunkDocumentLines(
+      file.model,
+      file.model.lines.map((line) => line.key)
+    ).length;
+    let calls = 0;
+    const generate = recordedDocumentGenerate(valid, (request) => {
+      calls += 1;
+      return calls <= firstRound ? planForLines(wrong, linesInPrompt(request.prompt)) : undefined;
+    });
+
+    const { report } = await run(file, generate);
+    expect(calls).toBeGreaterThan(firstRound);
+    expect(report.summary.questions).toBe(count);
   });
 
   test("a plan with no question in it, every line answered, has nothing to import: a welcome and an ending alone are no survey", async () => {

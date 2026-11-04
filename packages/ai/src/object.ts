@@ -44,6 +44,18 @@ const providerDecodesSchema = (environment?: AIEnvironment): boolean => {
 };
 
 /**
+ * What a provider asked only for "a JSON object" is told about the answer's shape: the JSON Schema it
+ * must match, compact. Exported so a caller that budgets its prompt can count it.
+ */
+export const buildSchemaInstructions = async (schema: TGenerateObjectOptions["schema"]): Promise<string> => {
+  const jsonSchema = JSON.stringify(await asSchema(schema).jsonSchema);
+  return `Answer with one JSON object that matches this JSON Schema exactly: the same property names and nesting, every required property present, no other properties.\n${jsonSchema}`;
+};
+
+/** Characters `buildSchemaInstructions` adds after a system prompt, the separator included. */
+export const SCHEMA_INSTRUCTIONS_SEPARATOR = "\n\n";
+
+/**
  * The caller's system prompt, followed by the JSON Schema the answer must match, for a provider that is
  * asked only for "a JSON object": without the schema, a model makes up its own shape, and the answer
  * fails validation. A system prompt given as messages is left as it is.
@@ -53,9 +65,8 @@ const withSchemaInstructions = async (
   schema: TGenerateObjectOptions["schema"]
 ): Promise<TGenerateObjectOptions["system"]> => {
   if (system !== undefined && typeof system !== "string") return system;
-  const jsonSchema = JSON.stringify(await asSchema(schema).jsonSchema);
-  const instructions = `Answer with one JSON object that matches this JSON Schema exactly: the same property names and nesting, every required property present, no other properties.\n${jsonSchema}`;
-  return system ? `${system}\n\n${instructions}` : instructions;
+  const instructions = await buildSchemaInstructions(schema);
+  return system ? `${system}${SCHEMA_INSTRUCTIONS_SEPARATOR}${instructions}` : instructions;
 };
 
 export const generateObject = async <T = unknown>(

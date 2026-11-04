@@ -1,6 +1,7 @@
 import {
   type TImportPlanGenerate,
   type TImportPlanLane,
+  type TImportPlanResponse,
   type TImportPlanUsage,
   importCallCapFor,
   importFailureCause,
@@ -14,6 +15,7 @@ import {
   SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
   SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS,
   SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS,
+  SURVEY_IMPORT_MAX_QUESTIONS,
 } from "../limits";
 import { chunkDocumentLines } from "./chunks";
 import type { TDocumentModel } from "./model";
@@ -24,7 +26,7 @@ import {
   checkDocumentPlanResponses,
   mergeDocumentPlans,
 } from "./plan-checks";
-import { ZDocumentImportPlanForAI } from "./plan-schema";
+import { DOCUMENT_PLAN_ELEMENT_TYPES, ZDocumentImportPlanForAI } from "./plan-schema";
 import { buildDocumentPlanPrompt, buildDocumentPlanSystemPrompt } from "./prompt";
 
 /**
@@ -33,6 +35,27 @@ import { buildDocumentPlanPrompt, buildDocumentPlanSystemPrompt } from "./prompt
  * `plan-checks.ts`. A unit of work is a line; an entry is planned by the call asked about the line it
  * starts on.
  */
+
+const QUESTION_KINDS: ReadonlySet<string> = new Set(DOCUMENT_PLAN_ELEMENT_TYPES);
+
+/**
+ * The lines an answer starts a question on: entries of an element kind (not a welcome card or an
+ * ending), on a line the call was asked about. Read off the answer as the engine received it, which
+ * the schema has already admitted.
+ */
+export const documentQuestionRefs = (response: TImportPlanResponse): string[] => {
+  const { questions } = response.object as { questions?: unknown };
+  if (!Array.isArray(questions)) return [];
+  return questions.flatMap((entry: unknown) => {
+    const { ref, kind } = (entry ?? {}) as { ref?: unknown; kind?: unknown };
+    return typeof ref === "string" &&
+      typeof kind === "string" &&
+      QUESTION_KINDS.has(kind) &&
+      response.refs.has(ref)
+      ? [ref]
+      : [];
+  });
+};
 
 export interface TDocumentPlanResult {
   plan: TDocumentCheckedPlan;
@@ -81,6 +104,10 @@ export async function planDocumentImport(params: {
       importOutputBudgetFor(chunkCount),
       importOutputBudgetFor(SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS)
     ),
+    // A document's question count is only known from its plan (decision 18): the characters and chunks
+    // checked before the first call bound what planning can cost, and this stops it once the answers
+    // so far already hold more questions than the import takes.
+    questionCeiling: { max: SURVEY_IMPORT_MAX_QUESTIONS, questionRefs: documentQuestionRefs },
   };
   const run = await runImportPlan({ lane, refs, generate, signal: params.signal, deadline, callTimeoutMs });
   const { plan } = run;

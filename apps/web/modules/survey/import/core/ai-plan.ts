@@ -1,8 +1,13 @@
 import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
 import type { z } from "zod";
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import {
+  AIOutputTokenLimitError,
+  SCHEMA_INSTRUCTIONS_SEPARATOR,
+  buildSchemaInstructions,
+} from "@formbricks/ai";
 import { SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL, SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS } from "../limits";
 import { decideImportCallRetry, waitForRetry } from "./call-retry";
+import { SurveyImportFailedError } from "./errors";
 
 /**
  * The AI half of every import lane that plans with AI (ENG-3479, ENG-6852): ask for the plan in chunks,
@@ -141,6 +146,14 @@ export interface TImportPlanLane<TFailure extends string, TPlan extends TImportC
   /** Calls one import may make, and output tokens it may spend (`importCallCapFor` and friends). */
   callCap: number;
   outputBudget: number;
+  /**
+   * The most questions one import takes, for a lane that only learns how many its file holds from the
+   * plan: the units each answer starts a question on, counted as answers arrive. Past `max`, the calls
+   * still running are stopped and the import fails with `too_many_questions`, rather than planning the
+   * rest of a file it will refuse. An answer's questions are counted before the lane's checks, so a
+   * file the AI reads as more than `max` questions is refused even if some of them would then fail.
+   */
+  questionCeiling?: { max: number; questionRefs: (response: TImportPlanResponse) => readonly string[] };
 }
 
 export interface TImportPlanRun<TPlan> {
@@ -160,11 +173,18 @@ interface TPlanContext<TFailure extends string, TPlan extends TImportCheckedPlan
   lane: TImportPlanLane<TFailure, TPlan>;
   /** Prompt characters sent so far, system prompts included. */
   promptChars: number;
+  /**
+   * What a provider asked only for "a JSON object" gets after the system prompt: the schema, which
+   * `generateObject` adds. Counted in every call's size whatever the provider, so the caps hold on all.
+   */
+  schemaChars: number;
   generate: TImportPlanGenerate;
   signal: AbortSignal;
   usage: TImportPlanUsage;
   calls: number;
   ranOutOfTime: boolean;
+  /** Units an answer started a question on, across both rounds: a retried unit counts once. */
+  questionRefs: Set<string>;
 }
 
 type TCallOutcome =
@@ -306,7 +326,7 @@ function preparePrompt<TFailure extends string, TPlan extends TImportCheckedPlan
     return { kind: "budget" };
   }
   const prompt = lane.buildPrompt(refs, failures);
-  const size = lane.system.length + prompt.length;
+  const size = lane.system.length + context.schemaChars + prompt.length;
   if (size > lane.maxCallChars) return { kind: "too_long" };
   if (isPastBudget(context, size)) return { kind: "budget" };
   return { prompt, size };
@@ -385,6 +405,20 @@ async function callOnce<TFailure extends string, TPlan extends TImportCheckedPla
   }
 }
 
+/**
+ * Counts the questions `response` starts toward the lane's ceiling, and fails the import once they
+ * pass it. Thrown from a pool task, which stops the calls beside it.
+ */
+function countQuestions<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  response: TImportPlanResponse
+): void {
+  const ceiling = context.lane.questionCeiling;
+  if (!ceiling) return;
+  for (const ref of ceiling.questionRefs(response)) context.questionRefs.add(ref);
+  if (context.questionRefs.size > ceiling.max) throw new SurveyImportFailedError("too_many_questions");
+}
+
 const FAILURE_OF_OUTCOME: Record<Exclude<TCallOutcome["kind"], "ok">, TImportCallFailure> = {
   budget: "ai_budget",
   timed_out: "ai_timeout",
@@ -414,6 +448,7 @@ async function planRound<TFailure extends string, TPlan extends TImportCheckedPl
       const outcome = await callOnce(context, refs, timeout(), failures);
       if (outcome.kind === "ok") {
         responses.push(outcome.response);
+        countQuestions(context, outcome.response);
         return;
       }
       if ((outcome.kind === "too_long" || outcome.kind === "timed_out") && splittable && refs.length > 1) {
@@ -460,11 +495,13 @@ export async function runImportPlan<
   const context: TPlanContext<TFailure, TPlan> = {
     lane,
     promptChars: 0,
+    schemaChars: SCHEMA_INSTRUCTIONS_SEPARATOR.length + (await buildSchemaInstructions(lane.schema)).length,
     generate,
     signal: AbortSignal.any([params.signal, abort.signal]),
     usage: { inputTokens: 0, outputTokens: 0 },
     calls: 0,
     ranOutOfTime: false,
+    questionRefs: new Set(),
   };
 
   const callTimeout = () =>

@@ -209,6 +209,8 @@ export async function runDocumentImport(
   onProgress("assembling");
   const entries = orderedEntries(planned.context, planned.plan);
   // The AI ceiling on questions (decision 18): a survey this large is imported through MCP instead.
+  // Planning already stopped once its answers held more (`questionCeiling`); this holds it to the plan
+  // as checked.
   if (countQuestions(entries) > SURVEY_IMPORT_MAX_QUESTIONS)
     throw new SurveyImportFailedError("too_many_questions");
   if (countQuestions(entries) === 0) throw noQuestionsPlanned(planned.conclusive);
