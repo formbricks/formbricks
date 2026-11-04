@@ -4824,6 +4824,12 @@ paths:
         it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
         Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
         is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
+
+        `filters`, when sent, replace the dashboard's filters. A filter on an embedded-data field
+        (`FeedbackRecords.ed_*`) must name a key that the Feedback Dataset of at least one widget the save
+        keeps has; otherwise the save answers 422 naming `filters[<index>].field` with
+        `invalid_reference`. A filter already saved on the dashboard is not asked again, so it keeps
+        saving after its key leaves every chart.
       tags:
         - V3 Dashboards
       parameters:
@@ -5197,7 +5203,10 @@ paths:
           still shows the last 30 days, and ranges that do not overlap answer an empty chart.
         - **Filter picks.** Each `picks[<filterId>]` is ANDed onto the chart's saved filters; a saved
           rule on the same field is kept, at any depth. A pick on a field the chart's Feedback Dataset
-          lacks answers empty `rows` and names the filter in `unfilterableFilters`.
+          lacks answers empty `rows` and names the filter in `unfilterableFilters`. Picks may take at
+          most 4000 characters in all, each value counted percent-encoded as the URL carries it
+          (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
+          `limit_exceeded`.
 
         A chart that is not a widget on the dashboard answers 404, whether it exists elsewhere or not.
         Needs read access to the dashboard's workspace and to the chart's Feedback Dataset. Counts
@@ -5261,7 +5270,33 @@ paths:
                 code: not_found
                 requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
         '422':
-          $ref: '#/components/responses/V3UnprocessableContent'
+          description: The picks or date range are not valid, the saved chart no longer passes the chart query validator, or a limit is exceeded.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                picksOverBudget:
+                  summary: The picks take more than MAX_DASHBOARD_FILTER_PICKS_CHARS in a URL
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: The filter picks are not valid
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: picks
+                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                        code: limit_exceeded
         '429':
           $ref: '#/components/responses/V3ChartQueryTooManyRequests'
         '500':
@@ -5287,10 +5322,18 @@ paths:
         (case-insensitive, contains). A filter the dashboard does not have, or one that takes a typed
         value (free text such as `FeedbackRecords.valueText`), answers 422.
 
+        Picks may take at most 4000 characters in all, each value counted percent-encoded as the URL
+        carries it (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks`
+        with `limit_exceeded`. A list whose charts would need more than 40 Cube queries
+        (`MAX_FILTER_VALUE_QUERIES`: one per Feedback Dataset, up to two per chart showing only its top
+        groups, more when the charts' answer filters do not fit one query) answers 422 naming
+        `filterId` with `limit_exceeded`: type a value instead, or split the dashboard.
+
         Needs read access to the dashboard's workspace and to every Feedback Dataset whose charts have
-        the field. Lists are cached for 60 seconds per dashboard version, filter, picks, date range and
-        search, shared by everyone who may read the dashboard; only an uncached list counts against the
-        chart-query budget (600 per minute, 20 at once, per user or API key).
+        the field. Every request counts against the default v3 budget, cached or not. Lists are cached
+        for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
+        shared by everyone who may read the dashboard; an uncached list also counts one unit of the
+        chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.
       tags:
         - V3 Dashboards
       parameters:
@@ -5336,7 +5379,57 @@ paths:
         '403':
           $ref: '#/components/responses/V3DashboardsForbidden'
         '422':
-          $ref: '#/components/responses/V3UnprocessableContent'
+          description: The filter has no value list, the picks or date range are not valid, or a limit is exceeded.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                picksOverBudget:
+                  summary: The picks take more than MAX_DASHBOARD_FILTER_PICKS_CHARS in a URL
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: The filter picks are not valid
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: picks
+                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                        code: limit_exceeded
+                tooManyQueries:
+                  summary: The dashboard's charts need more than MAX_FILTER_VALUE_QUERIES queries for this list
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: This filter's value list needs too many queries
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: filterId
+                        reason: The dashboard's charts need more than 40 queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.
+                        code: limit_exceeded
+                typedFilter:
+                  summary: The filter takes a typed value, not a pick from a list
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: This filter has no value list
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: filterId
+                        reason: Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, or embedded data) pick from a list; this one takes a typed value.
+                        code: invalid_reference
         '429':
           $ref: '#/components/responses/V3ChartQueryTooManyRequests'
         '500':
@@ -17124,7 +17217,7 @@ components:
           items:
             type: string
             maxLength: 1000
-      description: Values picked for the dashboard's filters, as `picks[<filterId>]=value`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is ANDed onto every chart's saved query; picks for filters the dashboard does not have are ignored.
+      description: Values picked for the dashboard's filters, as `picks[<filterId>]=value`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is ANDed onto every chart's saved query; picks for filters the dashboard does not have are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.
       example:
         clfi000000000000000000001:
           - Web

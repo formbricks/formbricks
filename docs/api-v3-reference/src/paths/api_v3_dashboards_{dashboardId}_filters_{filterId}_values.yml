@@ -12,10 +12,18 @@ get:
     (case-insensitive, contains). A filter the dashboard does not have, or one that takes a typed
     value (free text such as `FeedbackRecords.valueText`), answers 422.
 
+    Picks may take at most 4000 characters in all, each value counted percent-encoded as the URL
+    carries it (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks`
+    with `limit_exceeded`. A list whose charts would need more than 40 Cube queries
+    (`MAX_FILTER_VALUE_QUERIES`: one per Feedback Dataset, up to two per chart showing only its top
+    groups, more when the charts' answer filters do not fit one query) answers 422 naming
+    `filterId` with `limit_exceeded`: type a value instead, or split the dashboard.
+
     Needs read access to the dashboard's workspace and to every Feedback Dataset whose charts have
-    the field. Lists are cached for 60 seconds per dashboard version, filter, picks, date range and
-    search, shared by everyone who may read the dashboard; only an uncached list counts against the
-    chart-query budget (600 per minute, 20 at once, per user or API key).
+    the field. Every request counts against the default v3 budget, cached or not. Lists are cached
+    for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
+    shared by everyone who may read the dashboard; an uncached list also counts one unit of the
+    chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.
   tags:
     - V3 Dashboards
   parameters:
@@ -61,7 +69,58 @@ get:
     "403":
       $ref: ../components/responses/V3DashboardsForbidden.yml
     "422":
-      $ref: ../components/responses/V3UnprocessableContent.yml
+      description: >-
+        The filter has no value list, the picks or date range are not valid, or a limit is exceeded.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            picksOverBudget:
+              summary: The picks take more than MAX_DASHBOARD_FILTER_PICKS_CHARS in a URL
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: The filter picks are not valid
+                code: unprocessable_content
+                requestId: req_01JB7X0000000000000000000
+                invalid_params:
+                  - name: picks
+                    reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                    code: limit_exceeded
+            tooManyQueries:
+              summary: The dashboard's charts need more than MAX_FILTER_VALUE_QUERIES queries for this list
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: This filter's value list needs too many queries
+                code: unprocessable_content
+                requestId: req_01JB7X0000000000000000000
+                invalid_params:
+                  - name: filterId
+                    reason: The dashboard's charts need more than 40 queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.
+                    code: limit_exceeded
+            typedFilter:
+              summary: The filter takes a typed value, not a pick from a list
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: This filter has no value list
+                code: unprocessable_content
+                requestId: req_01JB7X0000000000000000000
+                invalid_params:
+                  - name: filterId
+                    reason: Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, or embedded data) pick from a list; this one takes a typed value.
+                    code: invalid_reference
     "429":
       $ref: ../components/responses/V3ChartQueryTooManyRequests.yml
     "500":

@@ -13,17 +13,28 @@ import {
  */
 
 /**
- * The most characters a person's picks may hold, summed over every value of every filter. Each value
- * may be up to 1000 characters and a list pick up to 100 values, so without a total the picks of 10
- * filters could reach a megabyte in a GET's query string; 4000 keeps every read's URL well inside what
- * servers and proxies accept. The API answers 422 past it, and the dashboard page stops adding values.
+ * The most characters a person's picks may take in a URL, summed over every value of every filter, each
+ * counted percent-encoded as a GET carries it (`countPickChars`). Each value may be up to 1000 characters
+ * and a list pick up to 100 values, so without a total the picks of 10 filters could reach megabytes in a
+ * query string; 4000 encoded characters, plus the filter ids, keep every read's URL inside the 8 KB header
+ * buffers common proxies use. The API answers 422 past it, and the dashboard page stops adding values.
  */
 export const MAX_DASHBOARD_FILTER_PICKS_CHARS = 4000;
 
-/** How many characters a set of picks holds, summed over every value. */
+/** A value's length percent-encoded: a character outside ASCII takes up to 12, a space 3. */
+const encodedLength = (value: string): number => {
+  try {
+    return encodeURIComponent(value).length;
+  } catch {
+    // A lone surrogate cannot be encoded; count it as the widest a character can be.
+    return value.length * 12;
+  }
+};
+
+/** How many characters a set of picks takes in a URL, summed over every value, each percent-encoded. */
 export const countPickChars = (picks: TDashboardFilterPicks): number =>
   Object.values(picks).reduce(
-    (total, values) => total + values.reduce((sum, value) => sum + value.length, 0),
+    (total, values) => total + values.reduce((sum, value) => sum + encodedLength(value), 0),
     0
   );
 
@@ -64,7 +75,7 @@ export const findPickIssues = (
     return [
       {
         name: "picks",
-        reason: `Picks may hold at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all (MAX_DASHBOARD_FILTER_PICKS_CHARS).`,
+        reason: `Picks may take at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).`,
         code: "limit_exceeded",
       },
     ];

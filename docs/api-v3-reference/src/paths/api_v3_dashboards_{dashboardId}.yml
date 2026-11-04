@@ -108,6 +108,12 @@ put:
     it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
     Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
     is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
+
+    `filters`, when sent, replace the dashboard's filters. A filter on an embedded-data field
+    (`FeedbackRecords.ed_*`) must name a key that the Feedback Dataset of at least one widget the save
+    keeps has; otherwise the save answers 422 naming `filters[<index>].field` with
+    `invalid_reference`. A filter already saved on the dashboard is not asked again, so it keeps
+    saving after its key leaves every chart.
   tags:
     - V3 Dashboards
   parameters:

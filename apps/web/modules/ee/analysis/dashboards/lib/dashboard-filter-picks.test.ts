@@ -154,6 +154,14 @@ describe("the total picks budget", () => {
   test("is far below what 10 filters of 100 values of 1000 characters could carry", () => {
     expect(MAX_DASHBOARD_FILTER_PICKS_CHARS).toBe(4000);
   });
+
+  test("counts each value as it travels in the URL, so text outside ASCII costs what it takes there", () => {
+    // "日" is three UTF-8 bytes, nine characters once percent-encoded; a space is three ("%20").
+    expect(countPickChars({ [A]: ["日本"], [B]: ["a b"] })).toBe(18 + 5);
+    const cjk = "日".repeat(Math.floor(MAX_DASHBOARD_FILTER_PICKS_CHARS / 9));
+    expect(exceedsPicksBudget({ [A]: [cjk] })).toBe(false);
+    expect(exceedsPicksBudget({ [A]: [`${cjk}日`] })).toBe(true);
+  });
 });
 
 describe("findPickIssues", () => {
@@ -183,7 +191,7 @@ describe("findPickIssues", () => {
     expect(findPickIssues(typed, { [C]: ["x".repeat(MAX_DASHBOARD_FILTER_PICKS_CHARS + 1)] })).toEqual([
       {
         name: "picks",
-        reason: `Picks may hold at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all (MAX_DASHBOARD_FILTER_PICKS_CHARS).`,
+        reason: `Picks may take at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).`,
         code: "limit_exceeded",
       },
     ]);
