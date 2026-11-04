@@ -280,16 +280,30 @@ Organizations can now invite a **Dashboard viewer**: a role that reads the dashb
 teams are granted and nothing else (no surveys, responses, contacts or feedback records). The role is decided
 by SpiceDB like every other role, so this release changes the AuthZed schema (`authzed/schema.zed`): it adds the
 `organization#dashboard_viewer` relation and a `dashboard_read` permission on workspaces and Feedback Dataset
-assignments. A data migration adds the `dashboard_viewer` value to the organization role enum; no existing
-membership changes role.
+assignments, and it narrows `team#manage` to team admins who are product members of the organization. A data
+migration adds the `dashboard_viewer` value to the organization role enum; no existing membership changes role.
 
 <Warning>
-  **Apply the schema before the new release serves traffic.** Until it is applied, SpiceDB rejects every
-  dashboard read the new release asks it (`workspace#dashboard_read` does not exist yet), so dashboards fail
-  to load for everyone, and assigning the Dashboard viewer role cannot be projected.
+  **Apply the schema before you invite anyone as a Dashboard viewer.** Owners, managers and members never
+  depend on the new permissions: until the schema is applied they read and edit dashboards exactly as before.
+  Only Dashboard viewers are affected — SpiceDB rejects their dashboard reads (`dashboard_read` does not exist
+  yet), and assigning the role cannot be projected. The change only adds a relation and permissions (and
+  narrows `team#manage`, which no application path relied on for a viewer or billing member), so the previous
+  release keeps working against the new schema during a rolling upgrade.
 </Warning>
 
-What to do when upgrading:
+How the schema gets applied depends on how you run Formbricks:
+
+- **Helm, maintenance mode (the default):** the pre-upgrade hook runs `formbricks-authzed upgrade prepare`,
+  which applies the release's schema and reconciles relationships before the new pods start. Nothing to do.
+- **Helm, online mode:** not supported for 6.1 → 6.2. The online coordinator is pinned to the 6.0 → 6.1
+  transition and refuses another target ([Online upgrades](/self-hosting/configuration/online-upgrade)). Set
+  `upgrade.mode: maintenance` for this upgrade.
+- **One-click Docker (`./formbricks.sh update`):** the updater pulls the new images and then runs
+  `upgrade check`, which stops the update with a schema drift (exit `2`) because the release ships a new schema;
+  nothing has been stopped or migrated at that point. From the directory that contains `formbricks/`, run the
+  two schema commands below with the Compose prefix, then run `./formbricks.sh update` again.
+- **Docker Compose you manage yourself:** run all the steps below.
 
 1. Check the schema the connected SpiceDB holds and note the `remoteDigest` it prints. Drift (exit `2`) is
    expected: the release ships the new schema.
@@ -298,8 +312,7 @@ What to do when upgrading:
    formbricks-authzed schema check
    ```
 
-2. Apply the release's schema with that digest. The change only adds a relation and permissions, so the
-   previous release keeps working against it during a rolling upgrade.
+2. Apply the release's schema with that digest. The previous release keeps working against it.
 
    ```bash
    formbricks-authzed schema apply --expected-current-digest sha256:<remote-digest>
@@ -316,17 +329,35 @@ What to do when upgrading:
 
 4. Deploy the new release. Invite Dashboard viewers only after these steps pass.
 
-Docker prefixes the commands with `docker compose --profile authzed-ops run --rm authzed-ops`, Kubernetes with
-`kubectl exec ... --`; see [AuthZed operations](/self-hosting/configuration/authzed-operations#activate-or-upgrade-spicedb).
+Docker prefixes the commands with `sudo docker compose --profile authzed-ops run --rm --no-deps authzed-ops`,
+Kubernetes with `kubectl exec ... --`; see
+[AuthZed operations](/self-hosting/configuration/authzed-operations#activate-or-upgrade-spicedb).
 
 The role needs both the Access Control and the Dashboards entitlements. If either lapses, viewers keep the
 role and see a "not available on this plan" page instead of the dashboards; they are never turned into
 Members.
 
-Reading a saved chart's numbers through its dashboard (`GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`
-and the MCP `get_chart_data` tool) now also admits Dashboard viewers, and the MCP tool needs only the
-`dashboards:read` scope: what a dashboard shows is no longer gated on `feedbackRecords:read`. Previewing a
-query of your own and listing a field's values still need it.
+**Rolling back to 6.1.** The 6.1 schema has no `dashboard_viewer` relation, so SpiceDB refuses to write it back
+while any Dashboard viewer exists, and the 6.1 app does not know the role. Before rolling back, give every
+Dashboard viewer another role (Member, say) in **Organization settings → Members**, or invite them again
+later; then roll back the release and, if you also restore the 6.1 schema, run `formbricks-authzed backfill
+--apply` afterwards.
+
+#### What changes for API and MCP clients
+
+- **MCP `get_chart_data`** gains an optional `dashboardId` and `picks`. Without them it reads the saved chart
+  as before and still needs `dashboards:read` and `feedbackRecords:read`. With `dashboardId` it reads the
+  chart as that dashboard shows it (dashboard filters applied); that also needs both scopes, except for a
+  Dashboard viewer's client, which holds only `dashboards:read`. Its result adds an optional
+  `unfilterableFilters`. Existing clients keep working.
+- **`GET /api/v3/charts/{chartId}/data`:** a date range now narrows the chart's saved range instead of
+  replacing it. This endpoint shipped after 6.1 and before this release (it is in no 6.1 tag), so no
+  released client depends on the old behavior.
+- **Membership roles in API responses:** `dashboard_viewer` is a new value of the organization role.
+  `GET /api/v2/organizations/{organizationId}/users` returns it as a user's `role` once someone holds it; a
+  client that validates roles against a fixed list must accept it. The v1 API returns no organization roles.
+  `GET /api/v2/roles` does not list it, and the v2 user create and update refuse to give it (`403`): the role
+  is given in the app, where its rules are enforced.
 
 ### Survey visibility (opt-in)
 
