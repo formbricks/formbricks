@@ -27,7 +27,7 @@ import type {
 } from "./envelope";
 
 /**
- * The reference resolver of a Formbricks file import (ADR 0023, ENG-6850): what the survey points at
+ * The reference resolver of a Formbricks file import (ADR 0024, ENG-6850): what the survey points at
  * outside itself, found in the target workspace by natural key or created there.
  *
  * - **Action classes** a trigger uses: a code action by its key, a no-code action by its configuration.

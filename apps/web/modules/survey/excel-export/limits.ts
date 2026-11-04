@@ -1,5 +1,5 @@
 /**
- * Limits of the Excel export (ADR 0024). The export writes what the survey holds, whose own caps
+ * Limits of the Excel export (ADR 0025). The export writes what the survey holds, whose own caps
  * (texts, options, languages) already bound the sheet's size; only the format's own ceiling is left.
  */
 

@@ -1,7 +1,7 @@
 import { V3_SURVEY_MAX_HIDDEN_FIELDS, V3_SURVEY_MAX_VARIABLES } from "@/app/api/v3/surveys/schemas";
 
 /**
- * Limits of a Formbricks file's `references` (ADR 0023). Each kind is capped by what one survey can
+ * Limits of a Formbricks file's `references` (ADR 0024). Each kind is capped by what one survey can
  * point at, so a file past one was not written by an export.
  */
 

@@ -21,7 +21,7 @@ import {
 import { FORMBRICKS_FILE_MAX_REPORTED_DROPPED_KEYS, FORMBRICKS_FILE_MAX_UNKNOWN_KEY_PASSES } from "./limits";
 
 /**
- * Reading a Formbricks file (ADR 0023): the format probe, the upgrade steps up to the current format,
+ * Reading a Formbricks file (ADR 0024): the format probe, the upgrade steps up to the current format,
  * and the first two of the import's three validation tiers (ENG-6850):
  *
  * 1. malformed input — a shape the format does not allow, a broken logic or recall reference, a format
