@@ -28,6 +28,7 @@ import { OptionsShowIfPopover } from "@/modules/survey/editor/components/options
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import { ShowIfPopoverBoundary } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { getBlockDisplayName, isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
+import { expandBlock, toggleBlock } from "@/modules/survey/editor/lib/flow-open-state";
 import {
   type TFlowBadge,
   type TFlowBlockSection,
@@ -91,6 +92,12 @@ interface FlowViewProps {
   readonly onEditOnQuestionsTab: (id: string) => void;
   /** The saved survey, for the published lock: copying options keeps the options that existed at launch. */
   readonly persistedSurvey?: TSurvey;
+  /**
+   * The blocks open on the Flow tab. Kept by the survey editor: this tab unmounts on every tab switch,
+   * and coming back keeps what the person opened and closed. Empty at first: every block collapsed.
+   */
+  readonly expandedBlockIds: Set<string>;
+  readonly setExpandedBlockIds: Dispatch<SetStateAction<Set<string>>>;
 }
 
 const RULE_ICON = { rule: <SplitIcon />, embeddedData: <BinaryIcon /> };
@@ -121,13 +128,14 @@ export const FlowView = ({
   setInvalidElements,
   onEditOnQuestionsTab,
   persistedSurvey,
+  expandedBlockIds,
+  setExpandedBlockIds,
 }: FlowViewProps) => {
   const { t, i18n } = useTranslation();
   // Dates on the rows read in the viewer's language (P65).
   const textFormat = { locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US" };
   const outline = useMemo(() => buildFlowOutline(localSurvey), [localSurvey]);
 
-  const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
   // The show-if popovers stay inside the editor column rather than spill over the preview.
   const [popoverBoundary, setPopoverBoundary] = useState<HTMLDivElement | null>(null);
   // One row's settings open at a time, as in the UI mock.
@@ -150,12 +158,7 @@ export const FlowView = ({
     setOpenRowId(invalidRow.id);
     if (invalidRow.owner.type !== "block") return;
     const blockId = invalidRow.owner.blockId;
-    setCollapsedBlockIds((current) => {
-      if (!current.has(blockId)) return current;
-      const next = new Set(current);
-      next.delete(blockId);
-      return next;
-    });
+    setExpandedBlockIds((current) => expandBlock(current, blockId));
     // Re-run only for a new validation pass, not on every edit of the outline.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invalidElements]);
@@ -204,11 +207,7 @@ export const FlowView = ({
       variableId: String(getActionVariableOptions(localSurvey)[0]?.value ?? ""),
     });
     updateBlockRules(block.blockIdx, [...(localSurvey.blocks[block.blockIdx].logic ?? []), rule]);
-    setCollapsedBlockIds((current) => {
-      const next = new Set(current);
-      next.delete(block.id);
-      return next;
-    });
+    setExpandedBlockIds((current) => expandBlock(current, block.id));
     setOpenRowId(rule.id);
   };
 
@@ -506,14 +505,14 @@ export const FlowView = ({
                 type="button"
                 size="sm"
                 variant="secondary"
-                onClick={() => setCollapsedBlockIds(new Set(outline.blocks.map((block) => block.id)))}>
+                onClick={() => setExpandedBlockIds(new Set())}>
                 {t("workspace.surveys.edit.flow.collapse_all")}
               </Button>
               <Button
                 type="button"
                 size="sm"
                 variant="secondary"
-                onClick={() => setCollapsedBlockIds(new Set())}>
+                onClick={() => setExpandedBlockIds(new Set(outline.blocks.map((block) => block.id)))}>
                 {t("workspace.surveys.edit.flow.expand_all")}
               </Button>
               <InfoTooltip label={t("workspace.surveys.edit.flow.about_flow_tab")}>
@@ -558,15 +557,9 @@ export const FlowView = ({
 
           {outline.blocks.map((block) => {
             const surveyBlock = localSurvey.blocks[block.blockIdx];
-            const isExpanded = !collapsedBlockIds.has(block.id);
+            const isExpanded = expandedBlockIds.has(block.id);
             const rules = surveyBlock.logic ?? [];
-            const toggleBlock = () =>
-              setCollapsedBlockIds((current) => {
-                const next = new Set(current);
-                if (next.has(block.id)) next.delete(block.id);
-                else next.add(block.id);
-                return next;
-              });
+            const onToggleBlock = () => setExpandedBlockIds((current) => toggleBlock(current, block.id));
 
             return (
               <FlowOutlineGroup key={block.id}>
@@ -576,7 +569,7 @@ export const FlowView = ({
                   icon={<Rows3Icon />}
                   showChevron
                   isOpen={isExpanded}
-                  onToggle={toggleBlock}
+                  onToggle={onToggleBlock}
                   isInvalid={invalidElements?.includes(block.id) ?? false}
                   body={
                     isExpanded ? (
