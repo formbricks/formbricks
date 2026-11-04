@@ -24,7 +24,7 @@ import {
 
 interface LandingSidebarProps {
   user: TUser;
-  organization: TOrganization;
+  organization: Pick<TOrganization, "id" | "name">;
   isFormbricksSurveysConfigured: boolean;
 }
 

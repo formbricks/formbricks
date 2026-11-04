@@ -374,7 +374,7 @@ describe("layout navigation gates (ENG-1737)", () => {
       }
     );
 
-    test("sends a Dashboard viewer no billing or Stripe detail and no Cloud response count (S11)", async () => {
+    test("sends a Dashboard viewer no billing or Stripe detail and no Cloud response count", async () => {
       mocks.isFormbricksCloud = true;
       try {
         vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);

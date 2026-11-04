@@ -22,8 +22,11 @@ import {
   getAccessControlPermission,
   getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
+import { withPlanDetailsFor } from "@/modules/organization/lib/plan-details";
 
-type TOrganizationWithBilling = NonNullable<Awaited<ReturnType<typeof getOrganization>>>;
+type TOrganizationWithBilling = ReturnType<
+  typeof withPlanDetailsFor<NonNullable<Awaited<ReturnType<typeof getOrganization>>>>
+>;
 type TLicense = Awaited<ReturnType<typeof getEnterpriseLicense>>;
 type TUser = NonNullable<Awaited<ReturnType<typeof getUser>>>;
 
@@ -144,7 +147,12 @@ export const getSettingsLayoutData = async (
       : getWorkspacesByUserId(userId, organization.id),
   ]);
 
-  const responseCount = IS_FORMBRICKS_CLOUD ? await getMonthlyOrganizationResponseCount(organization.id) : 0;
+  // A Dashboard viewer sees nothing of the organization's plan: no Cloud response count, and the
+  // organization below goes out without its billing.
+  const responseCount =
+    IS_FORMBRICKS_CLOUD && !isDashboardViewer
+      ? await getMonthlyOrganizationResponseCount(organization.id)
+      : 0;
 
   // Resolve the workspace to display in the shell. Prefer the last active workspace when it belongs
   // to the accessible list; otherwise fall back to the first accessible workspace so the shell
@@ -160,7 +168,7 @@ export const getSettingsLayoutData = async (
   return {
     session,
     user,
-    organization,
+    organization: withPlanDetailsFor(membership.role, organization),
     membershipRole: membership.role,
     isAccessControlAllowed,
     isOwnerOrManager,

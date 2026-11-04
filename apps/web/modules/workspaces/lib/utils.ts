@@ -5,7 +5,6 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZOrganizationBilling } from "@formbricks/types/organizations";
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -24,6 +23,7 @@ import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { withPlanDetailsFor } from "@/modules/organization/lib/plan-details";
 import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
 /**
@@ -398,7 +398,7 @@ const resolveWorkspaceLayoutData = async (
   ]);
 
   // A Dashboard viewer sees dashboards and nothing of the organization's plan: no Stripe ids, usage cycle
-  // or limits, and no Cloud response count, which the layout would otherwise ship to its browser (S11).
+  // or limits, and no Cloud response count, which the layout would otherwise ship to its browser.
   const isDashboardViewer = membership.role === "dashboard_viewer";
 
   let responseCount = 0;
@@ -410,15 +410,7 @@ const resolveWorkspaceLayoutData = async (
     session,
     user,
     workspace,
-    organization: {
-      ...organization,
-      billing: isDashboardViewer
-        ? ZOrganizationBilling.parse({ stripeCustomerId: null, usageCycleAnchor: null })
-        : {
-            ...organization.billing,
-            stripe: organization.billing.stripe ?? undefined,
-          },
-    },
+    organization: withPlanDetailsFor(membership.role, organization),
     membership,
     isAccessControlAllowed,
     workspacePermission,

@@ -133,6 +133,29 @@ describe("getSettingsLayoutData", () => {
     expect(data?.isOwnerOrManager).toBe(false);
   });
 
+  test("sends a Dashboard viewer no Stripe or plan detail and no Cloud response count", async () => {
+    seedSuccess();
+    mocks.getOrganization.mockResolvedValue({
+      id: "org-1",
+      name: "Org",
+      billing: {
+        stripeCustomerId: "cus_secret",
+        limits: { workspaces: 9, monthly: { responses: 90_000, workflowRuns: null } },
+        usageCycleAnchor: new Date("2026-01-01"),
+        stripe: { subscriptionId: "sub_secret" },
+      },
+    });
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "dashboard_viewer" });
+    mocks.listDashboardViewerWorkspaces.mockResolvedValue([]);
+
+    const data = await getSettingsLayoutData("user-1", "org-1");
+
+    expect(JSON.stringify(data?.organization)).not.toMatch(/cus_secret|sub_secret|90000/);
+    expect(data?.organization.billing.stripeCustomerId).toBeNull();
+    expect(data?.responseCount).toBe(0);
+    expect(mocks.getMonthlyOrganizationResponseCount).not.toHaveBeenCalled();
+  });
+
   test("sends a Dashboard viewer with no granted workspace back to the unavailable page", async () => {
     seedSuccess();
     mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "dashboard_viewer" });

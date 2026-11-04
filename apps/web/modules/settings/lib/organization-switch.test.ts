@@ -20,7 +20,7 @@ describe("getOrganizationSwitchPath", () => {
     }
   });
 
-  test("a Dashboard viewer has no organization settings, so the current organization redirects too (U16)", () => {
+  test("a Dashboard viewer has no organization settings, so the current organization redirects too", () => {
     expect(
       getOrganizationSwitchPath({
         organizationId: "org1",
