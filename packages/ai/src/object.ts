@@ -62,15 +62,18 @@ export const SCHEMA_INSTRUCTIONS_SEPARATOR = "\n\n";
 /**
  * The caller's system prompt, followed by the JSON Schema the answer must match, for a provider that is
  * asked only for "a JSON object": without the schema, a model makes up its own shape, and the answer
- * fails validation. A system prompt given as messages is left as it is.
+ * fails validation. A prompt given as text gets the schema after it; one given as messages gets it as a
+ * system message of its own after them.
  */
 const withSchemaInstructions = async (
   system: TGenerateObjectOptions["system"],
   schema: TGenerateObjectOptions["schema"]
 ): Promise<TGenerateObjectOptions["system"]> => {
-  if (system !== undefined && typeof system !== "string") return system;
   const instructions = await buildSchemaInstructions(schema);
-  return system ? `${system}${SCHEMA_INSTRUCTIONS_SEPARATOR}${instructions}` : instructions;
+  if (system === undefined || system === "") return instructions;
+  if (typeof system === "string") return `${system}${SCHEMA_INSTRUCTIONS_SEPARATOR}${instructions}`;
+  const schemaMessage = { role: "system" as const, content: instructions };
+  return Array.isArray(system) ? [...system, schemaMessage] : [system, schemaMessage];
 };
 
 export const generateObject = async <T = unknown>(
