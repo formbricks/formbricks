@@ -6,6 +6,7 @@ import { can } from "@/lib/authorization";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
+import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
 import { getWorkspace } from "@/lib/workspace/service";
@@ -31,7 +32,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("react", () => ({ cache: (fn: (...args: unknown[]) => unknown) => fn }));
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
-  IS_FORMBRICKS_CLOUD: mocks.isFormbricksCloud,
+  get IS_FORMBRICKS_CLOUD() {
+    return mocks.isFormbricksCloud;
+  },
 }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspace: vi.fn() }));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
@@ -370,6 +373,52 @@ describe("layout navigation gates (ENG-1737)", () => {
         expect(data.membership.role).toBe("dashboard_viewer");
       }
     );
+
+    test("sends a Dashboard viewer no billing or Stripe detail and no Cloud response count (S11)", async () => {
+      mocks.isFormbricksCloud = true;
+      try {
+        vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);
+        mocks.workspaceFindUnique.mockResolvedValue({
+          id: layoutWorkspaceId,
+          organizationId: layoutOrganizationId,
+          organization: {
+            ...organizationRelation,
+            billing: {
+              stripeCustomerId: "cus_secret",
+              limits: { workspaces: 9, monthly: { responses: 9000, workflowRuns: null } },
+              usageCycleAnchor: new Date(0),
+              stripe: { subscriptionId: "sub_secret" },
+            },
+            memberships: [{ userId: layoutUserId, role: "dashboard_viewer" }],
+          },
+        });
+        vi.mocked(getDashboardViewerWorkspaceState).mockResolvedValueOnce("granted");
+
+        const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+        expect(data.organization.billing.stripeCustomerId).toBeNull();
+        expect(data.organization.billing.stripe).toBeUndefined();
+        expect(data.organization.billing.usageCycleAnchor).toBeNull();
+        expect(JSON.stringify(data.organization)).not.toMatch(/secret|9000/);
+        expect(data.responseCount).toBe(0);
+        expect(getMonthlyOrganizationResponseCount).not.toHaveBeenCalled();
+      } finally {
+        mocks.isFormbricksCloud = false;
+      }
+    });
+
+    test("keeps billing and the Cloud response count for everyone else", async () => {
+      mocks.isFormbricksCloud = true;
+      try {
+        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(42);
+
+        const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+        expect(data.responseCount).toBe(42);
+      } finally {
+        mocks.isFormbricksCloud = false;
+      }
+    });
 
     test("404s for a Dashboard viewer none of whose teams is granted the workspace", async () => {
       vi.mocked(canUserNavigateWorkspace).mockResolvedValue(false);

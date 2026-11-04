@@ -13,7 +13,7 @@ import { getSession } from "@/modules/auth/lib/session";
 import {
   getDashboardViewerUnavailablePath,
   listDashboardViewerOrganizations,
-  listDashboardViewerWorkspaces,
+  listDashboardViewerWorkspacesForUser,
 } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 
@@ -53,9 +53,9 @@ const Page = async () => {
       allWorkspaceIds.push(ws.id);
     }
   }
-  for (const org of viewerOrganizations) {
-    const workspaces = await listDashboardViewerWorkspaces(user.id, org.id);
-    for (const ws of workspaces) {
+  if (viewerOrganizations.length > 0) {
+    // Every viewer organization's granted workspaces in one lookup (C12).
+    for (const ws of await listDashboardViewerWorkspacesForUser(user.id)) {
       allWorkspaceIds.push(ws.id);
     }
   }

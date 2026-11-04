@@ -118,14 +118,23 @@ export const isDashboardViewerOnly = async (userId: string): Promise<boolean> =>
 export const listDashboardViewerWorkspacesForUser = async (
   userId: string
 ): Promise<Array<{ id: string; name: string; organizationId: string }>> => {
+  // One SpiceDB lookup and one workspace query for every viewer organization at once (C12): the landing
+  // page and `GET /api/v3/workspaces` call this, and a per-organization loop made both N+1.
   const organizations = await listDashboardViewerOrganizations(userId);
-  const perOrganization = await Promise.all(
-    organizations.map(async ({ id: organizationId }) =>
-      (await listDashboardViewerWorkspaces(userId, organizationId)).map((workspace) => ({
-        ...workspace,
-        organizationId,
-      }))
-    )
-  );
-  return perOrganization.flat();
+  if (organizations.length === 0) return [];
+
+  const [entitled, workspaceIds] = await Promise.all([
+    Promise.all(
+      organizations.map(async ({ id }) => ((await getIsDashboardViewerRoleEnabled(id)) ? id : null))
+    ),
+    lookupAuthorizedWorkspaceIds({ type: "user", id: userId }, "dashboard_read"),
+  ]);
+  const organizationIds = entitled.filter((id): id is string => id !== null);
+  if (organizationIds.length === 0 || workspaceIds.length === 0) return [];
+
+  return prisma.workspace.findMany({
+    where: { organizationId: { in: organizationIds }, id: { in: [...workspaceIds] } },
+    select: { id: true, name: true, organizationId: true },
+    orderBy: [{ organizationId: "asc" }, { name: "asc" }],
+  });
 };

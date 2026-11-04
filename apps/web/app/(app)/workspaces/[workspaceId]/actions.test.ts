@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { createWorkspaceAction } from "./actions";
+import { listDashboardViewerOrganizations } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
+import { createWorkspaceAction, getOrganizationsForSwitcherAction } from "./actions";
+import { getOrganizationsByUserId } from "./lib/organization";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
@@ -37,6 +39,11 @@ vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace:
 vi.mock("@/lib/user/service", () => ({ updateUser: mocks.updateUser }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), groupIdentifyPostHog: vi.fn() }));
 vi.mock("./lib/organization", () => ({ getOrganizationsByUserId: vi.fn() }));
+vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  listDashboardViewerOrganizations: vi.fn(),
+  listDashboardViewerWorkspaces: vi.fn(),
+}));
 vi.mock("./lib/workspace", () => ({
   getWorkspacesByUserId: vi.fn(),
   getWritableWorkspacesByUserId: vi.fn(),
@@ -89,5 +96,30 @@ describe("createWorkspaceAction", () => {
       { name: "New workspace" },
       { workspaceLimit: 3 }
     );
+  });
+});
+
+describe("getOrganizationsForSwitcherAction (C19)", () => {
+  const run = (organizationId: string) =>
+    (getOrganizationsForSwitcherAction as unknown as (a: unknown) => Promise<unknown>)({
+      ctx: { user: { id: "user-1" } },
+      parsedInput: { organizationId },
+    });
+
+  test("answers the caller's own organizations, viewer ones included, with no role-based gate", async () => {
+    vi.mocked(getOrganizationsByUserId).mockResolvedValue([{ id: "org-1", name: "A" }]);
+    vi.mocked(listDashboardViewerOrganizations).mockResolvedValue([
+      { id: "org-1", name: "A" },
+      { id: "org-2", name: "B" },
+    ]);
+
+    await expect(run("org-2")).resolves.toEqual([
+      { id: "org-1", name: "A" },
+      { id: "org-2", name: "B" },
+    ]);
+    expect(getOrganizationsByUserId).toHaveBeenCalledWith("user-1");
+    expect(listDashboardViewerOrganizations).toHaveBeenCalledWith("user-1");
+    // Scoped by the user, so the organization in the input grants nothing and is not gated by role.
+    expect(mocks.assertCan).not.toHaveBeenCalled();
   });
 });

@@ -116,16 +116,10 @@ const ZGetOrganizationsForSwitcherAction = z.object({
 export const getOrganizationsForSwitcherAction = authenticatedActionClient
   .inputSchema(ZGetOrganizationsForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
-    // A Dashboard viewer's SpiceDB relation reaches dashboard reads only (ADR-0023), so `organization.read`
-    // denies it; its membership row is what lets it switch organizations.
-    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
-    if (membership?.role !== "dashboard_viewer") {
-      await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
-        type: "organization",
-        id: parsedInput.organizationId,
-      });
-    }
-
+    // The list is the caller's own organizations: those SpiceDB grants them `organization.read` on, plus
+    // those where they are a Dashboard viewer (ADR-0023), whose relation reaches dashboard reads only.
+    // Scoped by the user, it reveals nothing about `organizationId`, so no gate on it is needed, and none
+    // that skips by role (C19).
     const [organizations, viewerOrganizations] = await Promise.all([
       getOrganizationsByUserId(ctx.user.id),
       listDashboardViewerOrganizations(ctx.user.id),

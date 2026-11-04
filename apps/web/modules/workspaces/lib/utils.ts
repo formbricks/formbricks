@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZOrganizationBilling } from "@formbricks/types/organizations";
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -396,8 +397,12 @@ const resolveWorkspaceLayoutData = async (
     getEnterpriseLicense(),
   ]);
 
+  // A Dashboard viewer sees dashboards and nothing of the organization's plan: no Stripe ids, usage cycle
+  // or limits, and no Cloud response count, which the layout would otherwise ship to its browser (S11).
+  const isDashboardViewer = membership.role === "dashboard_viewer";
+
   let responseCount = 0;
-  if (IS_FORMBRICKS_CLOUD) {
+  if (IS_FORMBRICKS_CLOUD && !isDashboardViewer) {
     responseCount = await getMonthlyOrganizationResponseCount(organization.id);
   }
 
@@ -407,10 +412,12 @@ const resolveWorkspaceLayoutData = async (
     workspace,
     organization: {
       ...organization,
-      billing: {
-        ...organization.billing,
-        stripe: organization.billing.stripe ?? undefined,
-      },
+      billing: isDashboardViewer
+        ? ZOrganizationBilling.parse({ stripeCustomerId: null, usageCycleAnchor: null })
+        : {
+            ...organization.billing,
+            stripe: organization.billing.stripe ?? undefined,
+          },
     },
     membership,
     isAccessControlAllowed,
