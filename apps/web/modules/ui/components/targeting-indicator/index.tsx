@@ -4,7 +4,7 @@ import { FilterIcon, UsersIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 
-export const TargetingIndicator = ({ segment }: { segment: TSegment | null }) => {
+export const TargetingIndicator = ({ segment }: { readonly segment: TSegment | null }) => {
   const { t } = useTranslation();
   const doFiltersExist = !!segment?.filters?.length;
 

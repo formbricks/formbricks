@@ -12,7 +12,11 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { InstallMethodCards } from "./components/install-method-cards";
 
-export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
+export const AppConnectionPage = async ({
+  params,
+}: {
+  readonly params: Promise<{ workspaceId: string }>;
+}) => {
   const t = await getTranslate();
   const { workspaceId } = await params;
   const workspaceIdMigrationUrl =

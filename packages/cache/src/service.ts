@@ -4,6 +4,7 @@ import { type CacheError, CacheErrorClass, ErrorCode, type Result, err, ok } fro
 import type { CacheKey } from "@/types/keys";
 import { ZCacheKey } from "@/types/keys";
 import { ZTtlMs, ZTtlMsOptional } from "@/types/service";
+import { REDIS_OPERATION_CLEANUP_DELAY_MS, REDIS_OPERATION_TIMEOUT_MS, withRedisDeadline } from "./deadline";
 import { validateInputs } from "./utils/validation";
 
 /** Marker for the nullable cache wire format. */
@@ -18,20 +19,29 @@ interface NullableCacheBox<T> {
  * Core cache service providing basic Redis operations with JSON serialization
  */
 export class CacheService {
-  constructor(private readonly redis: RedisClient) {}
+  constructor(
+    private readonly redis: RedisClient,
+    private readonly onTimeout: () => void = () => {}
+  ) {}
 
   /**
    * Wraps Redis operations with connection check and timeout to prevent hanging
    */
-  private async withTimeout<T>(operation: Promise<T>, timeoutMs = 1000): Promise<T> {
-    return Promise.race([
+  private async withTimeout<T>(operation: Promise<T>): Promise<T> {
+    return withRedisDeadline(
       operation,
-      new Promise<T>((_, reject) => {
-        setTimeout(() => {
-          reject(new CacheErrorClass(ErrorCode.RedisOperationError, "Cache operation timeout"));
-        }, timeoutMs);
-      }),
-    ]);
+      REDIS_OPERATION_TIMEOUT_MS,
+      this.onTimeout,
+      REDIS_OPERATION_CLEANUP_DELAY_MS
+    );
+  }
+
+  /** Run commands that require the raw client under the same deadline as cache operations. */
+  async runRedisOperation<T>(operation: (redis: RedisClient) => Promise<T>): Promise<T> {
+    if (!this.isRedisClientReady()) {
+      throw new CacheErrorClass(ErrorCode.RedisConnectionError);
+    }
+    return this.withTimeout(operation(this.redis));
   }
 
   /**

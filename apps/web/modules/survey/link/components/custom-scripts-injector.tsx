@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface CustomScriptsInjectorProps {
-  workspaceScripts?: string | null;
-  surveyScripts?: string | null;
-  scriptsMode?: TSurvey["customHeadScriptsMode"];
+  readonly workspaceScripts?: string | null;
+  readonly surveyScripts?: string | null;
+  readonly scriptsMode?: TSurvey["customHeadScriptsMode"];
 }
 
 /**

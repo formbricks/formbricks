@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
 
 interface WidgetStatusIndicatorProps {
-  workspace: { appSetupCompleted: boolean };
+  readonly workspace: { appSetupCompleted: boolean };
 }
 
 export const WidgetStatusIndicator = ({ workspace }: WidgetStatusIndicatorProps) => {

@@ -170,12 +170,13 @@ const ZMcpObjectInput = z.record(z.string(), z.unknown());
  */
 const SURVEY_ELEMENT_TYPES = Object.values(TSurveyElementTypeEnum).join(", ");
 
-/** A complete, valid block. Kept minimal: every field here is one the schema requires. */
+/** A complete, valid block. Kept minimal: every field here is one the schema requires, plus the optional `code`. */
 export const SURVEY_BLOCK_EXAMPLE = {
   name: "Feedback",
   elements: [
     {
       id: "improve",
+      code: "improve",
       type: "openText",
       headline: { "en-US": "What should we improve?" },
       required: false,
@@ -200,7 +201,17 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   "Survey blocks. A block is `{ name, elements[], id? }` and an element is `{ id, type, headline, ... }`,",
   `where \`type\` is one of: ${SURVEY_ELEMENT_TYPES}.`,
   "Element ids are caller-supplied and become immutable once the survey leaves draft; block ids are",
-  'generated when omitted. Translatable fields are keyed by locale code — `{ "en-US": "..." }` — and',
+  "generated when omitted. Every element except `cta` may carry an optional `code` (the question code",
+  "used in exports and links), and every choice, matrix row/column and picture choice an optional `code`",
+  "(the answer code). Codes start with a lowercase letter (answer codes may start with a digit) followed",
+  "by lowercase letters, digits and `_`, with no `__` and no trailing `_`, at most 30 (question) or 20",
+  "(answer) characters; they may not be SPSS reserved words (all, and, by, eq, ge, gt, le, lt, ne, not,",
+  "or, to, with) or export column names (response_id, language, outcome, ...). Question codes are unique",
+  "across the survey, its Embedded Data names and other questions' ids; answer codes are unique within",
+  "their question. Once the survey leaves draft (active, paused, completed or scheduled) question codes,",
+  "answer codes, question types and option text in every language are locked, and an option that existed",
+  "at launch cannot be deleted (`immutable_*` errors); new questions and options can still be added.",
+  'Translatable fields are keyed by locale code — `{ "en-US": "..." }` — and',
   "must carry every configured language; the internal `default` key is rejected. Each element type adds",
   `its own required fields — a \`rating\` needs \`scale\` (${RATING_SCALES.join("|")}) and \`range\``,
   `(${RATING_RANGES.join("|")}), a \`pictureSelection\` needs two or more choices. An element that is`,

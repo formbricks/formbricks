@@ -9,7 +9,10 @@ import {
   Tailwind,
   Text,
   render,
+  renderAccountDeletedEmail,
   renderAccountDeletionEmail,
+  renderAttachmentExportFailedEmail,
+  renderAttachmentExportReadyEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderFollowUpEmail,
@@ -62,6 +65,7 @@ const renderers: [string, () => Promise<string>][] = [
     () => renderNewEmailVerification({ ...exampleData.newEmailVerification, ...legal, t }),
   ],
   ["renderPasswordResetNotifyEmail", () => renderPasswordResetNotifyEmail({ ...legal, t })],
+  ["renderAccountDeletedEmail", () => renderAccountDeletedEmail({ ...legal, t })],
   [
     "renderSsoRecoveryFactorsRemovedEmail",
     () =>
@@ -78,6 +82,14 @@ const renderers: [string, () => Promise<string>][] = [
   [
     "renderSurveyRetentionNoticeEmail",
     () => renderSurveyRetentionNoticeEmail({ ...exampleData.surveyRetentionNoticeEmail, ...legal, t }),
+  ],
+  [
+    "renderAttachmentExportReadyEmail",
+    () => renderAttachmentExportReadyEmail({ ...exampleData.attachmentExportReadyEmail, ...legal, t }),
+  ],
+  [
+    "renderAttachmentExportFailedEmail",
+    () => renderAttachmentExportFailedEmail({ ...exampleData.attachmentExportFailedEmail, ...legal, t }),
   ],
   [
     "renderMemberRetentionNoticeEmail",

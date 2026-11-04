@@ -6,12 +6,18 @@ import { logger } from "@formbricks/logger";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { sendAccountDeletedEmail } from "@/modules/email";
+import {
+  activateEmailAuditErasureIntent,
+  requestEmailAuditErasureBeforeUserDeletion,
+} from "@/modules/email/lib/email-audit-maintenance";
 import { queueAccountDeletionAuditEvent } from "./account-deletion-audit";
 
 type DeleteUserConfig = NonNullable<NonNullable<BetterAuthOptions["user"]>["deleteUser"]>;
@@ -58,6 +64,8 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
     });
   }
 
+  await requestEmailAuditErasureBeforeUserDeletion(user.id, user.email);
+
   for (const organization of soleOwnerOrganizations) {
     await deleteOrganization(organization.id);
   }
@@ -65,12 +73,31 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
 };
 
 /**
+ * Tell the deleted user their account is gone (ENG-862), off the request path: the deletion has already
+ * committed, so a slow or failing mailer must neither delay the response nor surface as an error. The
+ * user row is gone and Better Auth's user object carries no locale, so the email uses the default locale.
+ */
+const queueAccountDeletedEmail = (user: { id: string; email: string }): void => {
+  setImmediate(async () => {
+    try {
+      const sent = await sendAccountDeletedEmail({ email: user.email, locale: DEFAULT_LOCALE });
+      if (!sent) {
+        logger.warn({ userId: user.id }, "Account deletion email was not sent (mailer reported no delivery)");
+      }
+    } catch (error) {
+      logger.error({ error, userId: user.id }, "Failed to send account deletion email");
+    }
+  });
+};
+
+/**
  * Post-delete cleanup (the user row is already gone) — mirrors the tail of the deleteUser service and
- * the prior success audit: remove the Brevo contact and emit the account-deletion audit event. A Brevo
- * failure is logged, not thrown: the deletion has already committed, so surfacing an error for a
- * completed delete would be misleading.
+ * the prior success audit: remove the Brevo contact, emit the account-deletion audit event, and queue
+ * the account-deleted email. A Brevo or email failure is logged, not thrown: the deletion has already
+ * committed, so surfacing an error for a completed delete would be misleading.
  */
 export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDelete"]> = async (user) => {
+  await activateEmailAuditErasureIntent(user.id);
   await runPostCommitProjection("account_delete_organization_cleanup", () =>
     deleteUserOrganizationRelationships(user.id)
   );
@@ -87,6 +114,8 @@ export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDele
     status: "success",
     targetUserId: user.id,
   });
+
+  queueAccountDeletedEmail(user);
 
   // Analytics parity with the prior account-deletion success path (fire-and-forget; self-swallowing).
   capturePostHogEvent(user.id, "delete_account");

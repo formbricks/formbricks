@@ -6,11 +6,11 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 
 type TFilterChipProps = {
-  label: string;
-  value: string;
-  accessibleName: string;
-  onRemove: () => void;
-  disabled?: boolean;
+  readonly label: string;
+  readonly value: string;
+  readonly accessibleName: string;
+  readonly onRemove: () => void;
+  readonly disabled?: boolean;
 } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "value">;
 
 /**

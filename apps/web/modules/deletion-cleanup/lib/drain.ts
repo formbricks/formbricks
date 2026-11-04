@@ -18,6 +18,7 @@ import {
   deleteHubRecords,
   isHubCallBudgetSpent,
 } from "./hub-cleanup";
+import { type TOutcomeCleanupResult, reconcileResponseOutcomes } from "./hub-outcome";
 
 type TClaimedCleanup = {
   id: string;
@@ -95,6 +96,27 @@ const fromHubResult = (result: THubCleanupResult): TCleanupOutcome => {
       return { status: "again", delayMs: 0 };
     case "failed":
       return { status: "failed", error: result.error };
+  }
+};
+
+/**
+ * The `hubResponseOutcome` rows of a claim, reconciled together: they share their reads of the responses, the
+ * surveys and the Hub listings, which a row-by-row pass would repeat per response. A row left out of the result
+ * (an exhausted budget) is due again at once.
+ */
+const reconcileOutcomeRows = async (
+  rows: readonly TClaimedCleanup[],
+  hubBudget: THubCallBudget
+): Promise<Map<string, TOutcomeCleanupResult>> => {
+  const outcomeRows = rows.filter((row) => row.kind === "hubResponseOutcome");
+  if (outcomeRows.length === 0 || isHubCallBudgetSpent(hubBudget)) return new Map();
+  try {
+    return await reconcileResponseOutcomes(outcomeRows, hubBudget);
+  } catch (error) {
+    for (const row of outcomeRows) {
+      logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
+    }
+    return new Map(outcomeRows.map((row) => [row.id, { status: "failed", error: "error" } as const]));
   }
 };
 
@@ -193,6 +215,55 @@ const releaseCleanups = async (rows: readonly TClaimedCleanup[], now: Date): Pro
   });
 };
 
+const processOutcomeOrCleanup = async (
+  row: TClaimedCleanup,
+  reconciled: TOutcomeCleanupResult | undefined,
+  hubBudget: THubCallBudget
+): Promise<TCleanupOutcome> => {
+  try {
+    return row.kind === "hubResponseOutcome"
+      ? (reconciled ?? { status: "again", delayMs: 0 })
+      : await processCleanup(row, hubBudget);
+  } catch (error) {
+    logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
+    return { status: "failed", error: "error" };
+  }
+};
+
+/**
+ * One claim's rows, in order. Returns `true` when time or the Hub call budget ran out and the rest of the
+ * claim was handed back for the next run.
+ */
+const processClaim = async (
+  rows: readonly TClaimedCleanup[],
+  hubBudget: THubCallBudget,
+  summary: TDeletionCleanupDrainSummary
+): Promise<boolean> => {
+  const outcomes = await reconcileOutcomeRows(rows, hubBudget);
+
+  const unstarted: TClaimedCleanup[] = [];
+  for (const row of rows) {
+    // An outcome row the reconcile already settled is finished whatever the clock says: its result is
+    // paid for, and dropping it would redo the Hub work and skip the row's backoff.
+    const reconciled = row.kind === "hubResponseOutcome" ? outcomes.get(row.id) : undefined;
+
+    // Out of time, or out of Hub calls (a row that hit the budget is due again at once, so claiming on
+    // would only spin): leave the rest to the next run.
+    if (!reconciled && (Date.now() >= hubBudget.deadline || isHubCallBudgetSpent(hubBudget))) {
+      unstarted.push(row);
+      continue;
+    }
+
+    const outcome = await processOutcomeOrCleanup(row, reconciled, hubBudget);
+    await finishCleanup(row, outcome, new Date());
+    summary[outcome.status] += 1;
+  }
+
+  if (unstarted.length === 0) return false;
+  await releaseCleanups(unstarted, new Date());
+  return true;
+};
+
 /**
  * Work through due `DeletionCleanup` rows until none are left, the run's time budget is spent, or its Hub
  * call budget is. `ids` limits it to those rows, for the drain a delete runs straight after its commit.
@@ -201,8 +272,8 @@ const releaseCleanups = async (rows: readonly TClaimedCleanup[], now: Date): Pro
 export const drainDeletionCleanups = async ({
   ids,
 }: { ids?: readonly string[] } = {}): Promise<TDeletionCleanupDrainSummary> => {
+  if (ids?.length === 0) return { done: 0, again: 0, failed: 0 };
   const summary: TDeletionCleanupDrainSummary = { done: 0, again: 0, failed: 0 };
-  if (ids?.length === 0) return summary;
 
   const deadline = Date.now() + DELETION_CLEANUP_RUN_BUDGET_MS;
   const hubBudget: THubCallBudget = { remaining: DELETION_CLEANUP_HUB_CALL_BUDGET, deadline };
@@ -210,25 +281,7 @@ export const drainDeletionCleanups = async ({
   while (Date.now() < deadline) {
     const rows = await claimDueCleanups(new Date(), ids);
     if (rows.length === 0) break;
-
-    for (const [index, row] of rows.entries()) {
-      // Out of time, or out of Hub calls (a row that hit the budget is due again at once, so claiming on
-      // would only spin): leave the rest to the next run.
-      if (Date.now() >= deadline || isHubCallBudgetSpent(hubBudget)) {
-        await releaseCleanups(rows.slice(index), new Date());
-        return summary;
-      }
-
-      let outcome: TCleanupOutcome;
-      try {
-        outcome = await processCleanup(row, hubBudget);
-      } catch (error) {
-        logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
-        outcome = { status: "failed", error: "error" };
-      }
-      await finishCleanup(row, outcome, new Date());
-      summary[outcome.status] += 1;
-    }
+    if (await processClaim(rows, hubBudget, summary)) break;
   }
 
   return summary;

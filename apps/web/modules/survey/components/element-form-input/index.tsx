@@ -19,6 +19,7 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { debounce } from "@/lib/utils/debounce";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
@@ -45,30 +46,34 @@ import {
 } from "./utils";
 
 interface ElementFormInputProps {
-  id: string;
-  value: TI18nString | undefined;
-  localSurvey: TSurvey;
-  elementIdx: number;
-  updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
-  updateSurvey?: (
+  readonly id: string;
+  readonly value: TI18nString | undefined;
+  readonly localSurvey: TSurvey;
+  readonly elementIdx: number;
+  readonly updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
+  readonly updateSurvey?: (
     data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
   ) => void;
-  updateChoice?: (choiceIdx: number, data: Partial<TSurveyElementChoice>) => void;
-  updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
-  isInvalid: boolean;
-  selectedLanguageCode?: string;
-  label: string;
-  maxLength?: number;
-  placeholder?: string;
-  onBlur?: React.FocusEventHandler<HTMLInputElement>;
-  className?: string;
-  locale: TUserLocale;
-  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
-  isStorageConfigured: boolean;
-  autoFocus?: boolean;
-  firstRender?: boolean;
-  setFirstRender?: Dispatch<SetStateAction<boolean>>;
-  isExternalUrlsAllowed?: boolean;
+  readonly updateChoice?: (choiceIdx: number, data: Partial<TSurveyElementChoice>) => void;
+  readonly updateMatrixLabel?: (index: number, type: "row" | "column", matrixLabel: TI18nString) => void;
+  readonly isInvalid: boolean;
+  readonly selectedLanguageCode?: string;
+  readonly label: string;
+  readonly maxLength?: number;
+  readonly placeholder?: string;
+  readonly onBlur?: React.FocusEventHandler<HTMLInputElement>;
+  readonly className?: string;
+  readonly locale: TUserLocale;
+  readonly onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
+  readonly isStorageConfigured: boolean;
+  readonly autoFocus?: boolean;
+  readonly firstRender?: boolean;
+  readonly setFirstRender?: Dispatch<SetStateAction<boolean>>;
+  readonly isExternalUrlsAllowed?: boolean;
+  /** Read-only, e.g. option text on a published survey. */
+  readonly disabled?: boolean;
+  /** Overrides the default spacing around the label, e.g. `mt-0` when the input starts a panel. */
+  readonly labelClassName?: string;
 }
 
 export const ElementFormInput = ({
@@ -94,6 +99,8 @@ export const ElementFormInput = ({
   firstRender: externalFirstRender,
   setFirstRender: externalSetFirstRender,
   isExternalUrlsAllowed,
+  disabled = false,
+  labelClassName,
 }: ElementFormInputProps) => {
   const { t } = useTranslation();
   const defaultLanguageCode =
@@ -416,7 +423,7 @@ export const ElementFormInput = ({
     return (
       <div className="w-full">
         {label && (
-          <div className="mt-3 mb-2 flex items-center justify-between">
+          <div className={cn("mt-3 mb-2 flex items-center justify-between", labelClassName)}>
             <Label htmlFor={id}>{label}</Label>
             {id === "headline" && currentElement && updateElement && (
               <div className="flex items-center gap-x-2">
@@ -581,7 +588,7 @@ export const ElementFormInput = ({
   return (
     <div className="w-full">
       {label && (
-        <div className="mt-3 mb-2 flex items-center justify-between">
+        <div className={cn("mt-3 mb-2 flex items-center justify-between", labelClassName)}>
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
@@ -642,6 +649,7 @@ export const ElementFormInput = ({
                     }
                     autoComplete={isRecallSelectVisible ? "off" : "on"}
                     autoFocus={false}
+                    disabled={disabled}
                     onKeyDown={handleKeyDown}
                   />
                   {recallComponents}

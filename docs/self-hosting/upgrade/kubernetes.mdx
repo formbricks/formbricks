@@ -67,10 +67,11 @@ Before you start:
     ```
 
     Wait for running Jobs to finish. Also stop any external process that writes to Formbricks.
-    PostgreSQL, Redis and SpiceDB keep running.
+    PostgreSQL, Redis and SpiceDB (if you already run 6.x) keep running.
   </Step>
   <Step title="Back up">
-    Snapshot the app database and the SpiceDB database with your provider, for example an RDS snapshot.
+    Snapshot the app database with your provider, for example an RDS snapshot. If you already run 6.x, also
+    snapshot the SpiceDB database. On a first upgrade to 6.0 it doesn't exist yet.
     For the bundled PostgreSQL:
 
     ```bash
@@ -184,7 +185,8 @@ Keep traffic closed and GitOps paused. `helm rollback` restores the Kubernetes r
 To go back to the old version:
 
 1. Scale the writers to zero again.
-2. Restore the app database and the SpiceDB database from the backup, for example from the RDS snapshot.
+2. Restore the app database from the backup, for example from the RDS snapshot, and the SpiceDB database
+   if you backed it up. After a failed first upgrade to 6.0 there is no SpiceDB backup: 5.4 doesn't use it.
 3. Roll back the release with `helm rollback "$rel" <revision> -n "$ns"` (find the revision with
    `helm history "$rel" -n "$ns"`), or revert the commit in Git for Argo CD or Flux.
 4. Restore the replicas, check the old version works, then reopen traffic.

@@ -1,12 +1,19 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
-import { enqueueResponsesDeletionCleanups, enqueueSurveyDeletionCleanups } from "./enqueue";
+import {
+  enqueueResponseOutcomeCleanups,
+  enqueueResponsesDeletionCleanups,
+  enqueueSurveyDeletionCleanups,
+} from "./enqueue";
 
 vi.mock("server-only", () => ({}));
-const storage = vi.hoisted(() => ({ configured: true }));
+const storage = vi.hoisted(() => ({ configured: true, auditConfigured: false }));
 vi.mock("@/lib/constants", () => ({
   get IS_STORAGE_CONFIGURED() {
     return storage.configured;
+  },
+  get EMAIL_SEND_AUDIT_BUCKET() {
+    return storage.auditConfigured ? "private-audit-bucket" : undefined;
   },
 }));
 
@@ -22,11 +29,13 @@ const makeTx = (tenantIds: string[]) => {
   let next = 0;
   return {
     feedbackDirectory: { findMany: vi.fn().mockResolvedValue(tenantIds.map((id) => ({ id }))) },
+    outboundEmailAudit: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     deletionCleanup: {
       createManyAndReturn: vi.fn(async ({ data }: { data: unknown[] }) =>
         data.map(() => ({ id: `cln-${++next}` }))
       ),
       createMany: vi.fn(),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
   };
 };
@@ -40,6 +49,17 @@ describe("enqueueSurveyDeletionCleanups", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    storage.auditConfigured = false;
+  });
+
+  test("marks survey audit records for erasure in the deletion transaction", async () => {
+    storage.auditConfigured = true;
+    const tx = makeTx([]);
+    await enqueueSurveyDeletionCleanups(tx as never, { ...SCOPE, fileUrls: [] });
+    expect(tx.outboundEmailAudit.updateMany).toHaveBeenCalledWith({
+      where: { surveyId: SCOPE.surveyId },
+      data: { erasureRequestedAt: NOW },
+    });
   });
 
   test("drains the folder and flat-key files now, then sweeps the folder and the Hub once uploads have settled", async () => {
@@ -114,6 +134,7 @@ describe("enqueueResponsesDeletionCleanups", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    storage.auditConfigured = false;
   });
 
   test("queues nothing when no response was deleted", async () => {
@@ -130,6 +151,19 @@ describe("enqueueResponsesDeletionCleanups", () => {
     ).resolves.toEqual({ drainNowIds: [] });
     expect(tx.feedbackDirectory.findMany).not.toHaveBeenCalled();
     expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  test("marks deleted response audit records for erasure in the deletion transaction", async () => {
+    storage.auditConfigured = true;
+    const tx = makeTx([]);
+    await enqueueResponsesDeletionCleanups(tx as never, {
+      ...WORKSPACE,
+      surveys: [deleted("survey-1", ["response-1", "response-2"])],
+    });
+    expect(tx.outboundEmailAudit.updateMany).toHaveBeenCalledWith({
+      where: { responseId: { in: ["response-1", "response-2"] } },
+      data: { erasureRequestedAt: NOW },
+    });
   });
 
   test("drains the responses' files now, and their Hub records once anything on its way has landed", async () => {
@@ -205,5 +239,94 @@ describe("enqueueResponsesDeletionCleanups", () => {
     ).resolves.toEqual({ drainNowIds: [] });
     expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
     expect(tx.deletionCleanup.createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("enqueueResponseOutcomeCleanups", () => {
+  const changes = [
+    { id: "r1", surveyId: "s1" },
+    { id: "r2", surveyId: "s2" },
+  ];
+
+  test("queues one row per changed response, due now, and returns them to drain straight after commit", async () => {
+    const tx = makeTx(["dir-a", "dir-b"]);
+
+    await expect(
+      enqueueResponseOutcomeCleanups(tx as never, { organizationId: "clorg", workspaceId: "clwsp", changes })
+    ).resolves.toEqual({ drainNowIds: ["cln-1", "cln-2"] });
+
+    // The whole batch costs one directory read and one insert, not one of each per response.
+    expect(tx.feedbackDirectory.findMany).toHaveBeenCalledTimes(1);
+    expect(tx.deletionCleanup.createManyAndReturn).toHaveBeenCalledTimes(1);
+    expect(tx.deletionCleanup.createManyAndReturn).toHaveBeenCalledWith({
+      data: [
+        {
+          organizationId: "clorg",
+          workspaceId: "clwsp",
+          surveyId: "s1",
+          kind: "hubResponseOutcome",
+          tenantIds: ["dir-a", "dir-b"],
+          responseIds: ["r1"],
+        },
+        {
+          organizationId: "clorg",
+          workspaceId: "clwsp",
+          surveyId: "s2",
+          kind: "hubResponseOutcome",
+          tenantIds: ["dir-a", "dir-b"],
+          responseIds: ["r2"],
+        },
+      ],
+      select: { id: true },
+    });
+  });
+
+  test("cancels what is still pending for those responses first, so a restore cannot be undone by an older row", async () => {
+    const tx = makeTx(["dir-a"]);
+    const order: string[] = [];
+    tx.deletionCleanup.deleteMany.mockImplementation(async () => {
+      order.push("cancel");
+      return { count: 1 };
+    });
+    tx.deletionCleanup.createManyAndReturn.mockImplementation(async () => {
+      order.push("insert");
+      return [{ id: "cln-1" }, { id: "cln-2" }];
+    });
+
+    await enqueueResponseOutcomeCleanups(tx as never, {
+      organizationId: "clorg",
+      workspaceId: "clwsp",
+      changes,
+    });
+
+    expect(tx.deletionCleanup.deleteMany).toHaveBeenCalledTimes(1);
+    expect(tx.deletionCleanup.deleteMany).toHaveBeenCalledWith({
+      where: { kind: "hubResponseOutcome", workspaceId: "clwsp", responseIds: { hasSome: ["r1", "r2"] } },
+    });
+    expect(order).toEqual(["cancel", "insert"]);
+  });
+
+  test("queues nothing for an organisation without a feedback directory: no record can exist", async () => {
+    const tx = makeTx([]);
+
+    await expect(
+      enqueueResponseOutcomeCleanups(tx as never, { organizationId: "clorg", workspaceId: "clwsp", changes })
+    ).resolves.toEqual({ drainNowIds: [] });
+
+    expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  test("does nothing for no changes", async () => {
+    const tx = makeTx(["dir-a"]);
+
+    await expect(
+      enqueueResponseOutcomeCleanups(tx as never, {
+        organizationId: "clorg",
+        workspaceId: "clwsp",
+        changes: [],
+      })
+    ).resolves.toEqual({ drainNowIds: [] });
+
+    expect(tx.feedbackDirectory.findMany).not.toHaveBeenCalled();
   });
 });

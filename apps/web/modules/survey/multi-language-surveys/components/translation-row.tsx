@@ -3,17 +3,20 @@
 import DOMPurify from "isomorphic-dompurify";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import { Input } from "@/modules/ui/components/input";
 import { type TranslatableString } from "../lib/types";
 import { RichTextTranslationInput } from "./rich-text-translation-input";
 
 interface TranslationRowProps {
-  s: TranslatableString;
-  value: string;
-  onChange: (path: string, value: string) => void;
-  localSurvey: TSurvey;
-  languageCode: string;
-  disabled?: boolean;
+  readonly s: TranslatableString;
+  readonly value: string;
+  readonly onChange: (path: string, value: string) => void;
+  readonly localSurvey: TSurvey;
+  readonly languageCode: string;
+  readonly disabled?: boolean;
+  /** An option text the published survey already has in this language: shown, not editable. */
+  readonly locked?: boolean;
 }
 
 const DefaultTextCell = ({
@@ -21,9 +24,9 @@ const DefaultTextCell = ({
   isRichText,
   noTextLabel,
 }: {
-  text: string;
-  isRichText: boolean;
-  noTextLabel: string;
+  readonly text: string;
+  readonly isRichText: boolean;
+  readonly noTextLabel: string;
 }) => {
   if (!text) {
     return <div className="text-sm text-slate-400 italic">{noTextLabel}</div>;
@@ -48,6 +51,7 @@ export const TranslationRow = ({
   localSurvey,
   languageCode,
   disabled,
+  locked,
 }: TranslationRowProps) => {
   const { t } = useTranslation();
 
@@ -69,26 +73,29 @@ export const TranslationRow = ({
         />
       </td>
       <td className="py-2 align-top">
-        {s.isRichText ? (
-          <RichTextTranslationInput
-            path={s.path}
-            value={value}
-            onChange={onChange}
-            localSurvey={localSurvey}
-            languageCode={languageCode}
-            elementId={s.elementId}
-            disabled={disabled}
-          />
-        ) : (
-          <Input
-            dir="auto"
-            className="text-sm"
-            value={value}
-            onChange={(e) => onChange(s.path, e.target.value)}
-            placeholder=""
-            disabled={disabled}
-          />
-        )}
+        <div className="flex items-start gap-1">
+          {s.isRichText ? (
+            <RichTextTranslationInput
+              path={s.path}
+              value={value}
+              onChange={onChange}
+              localSurvey={localSurvey}
+              languageCode={languageCode}
+              elementId={s.elementId}
+              disabled={disabled || locked}
+            />
+          ) : (
+            <Input
+              dir="auto"
+              className="text-sm"
+              value={value}
+              onChange={(e) => onChange(s.path, e.target.value)}
+              placeholder=""
+              disabled={disabled || locked}
+            />
+          )}
+          {locked && <PublishedLockNotice kind="optionText" className="mt-1" />}
+        </div>
       </td>
     </tr>
   );

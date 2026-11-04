@@ -247,7 +247,7 @@ The following IAM policy grants the minimum required permissions for Formbricks 
 {
   "Statement": [
     {
-      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+      "Action": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
       "Effect": "Allow",
       "Resource": ["arn:aws:s3:::your-bucket-name/*"]
     },
@@ -260,6 +260,24 @@ The following IAM policy grants the minimum required permissions for Formbricks 
   "Version": "2012-10-17"
 }
 ```
+
+`s3:AbortMultipartUpload` lets Formbricks clean up after an attachment export whose upload fails partway:
+the export ZIP is written to the bucket as a multipart upload. Without it, the uploaded parts of a failed
+export stay in the bucket, invisible but billed.
+
+Also add a lifecycle rule that aborts incomplete multipart uploads after a day, even with that permission
+granted. A Formbricks process that is killed mid-upload (a crash or a forced restart) never sends the
+abort, and only the bucket can remove the parts it left.
+
+Attachment exports are downloaded straight from the bucket through a presigned URL, the same way file
+uploads reach it. The bucket endpoint in `S3_ENDPOINT_URL` therefore has to be reachable from your users'
+browsers, which the file upload setup already requires.
+
+Formbricks emails the download link when an export is ready, so background exports need
+[email](/self-hosting/configuration/smtp) configured. Without it, "Download attachments" streams the ZIP
+to the browser directly instead. Each export ZIP stays in the bucket for 3 months, under
+`<workspace>/private/surveys/<survey>/exports/`, and is then deleted. If your bucket keeps object versions,
+add a lifecycle rule that removes noncurrent versions, or deleted ZIPs keep taking up space.
 
 <Note>
   Replace `your-bucket-name` with your actual S3 bucket name. The first statement grants object-level

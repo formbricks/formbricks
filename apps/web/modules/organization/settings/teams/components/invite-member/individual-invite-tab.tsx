@@ -21,17 +21,17 @@ import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Small } from "@/modules/ui/components/typography";
 
 interface IndividualInviteTabProps {
-  setOpen: (v: boolean) => void;
-  onSubmit: (
+  readonly setOpen: (v: boolean) => void;
+  readonly onSubmit: (
     data: { name: string; email: string; role: TOrganizationRole; teamIds: string[] }[]
   ) => Promise<boolean>;
-  teams: TOrganizationTeam[];
-  organizationId: string;
-  isAccessControlAllowed: boolean;
-  isFormbricksCloud: boolean;
-  membershipRole?: TOrganizationRole;
-  showTeamAdminRestrictions: boolean;
-  enterpriseLicenseRequestFormUrl: string;
+  readonly teams: TOrganizationTeam[];
+  readonly organizationId: string;
+  readonly isAccessControlAllowed: boolean;
+  readonly isFormbricksCloud: boolean;
+  readonly membershipRole?: TOrganizationRole;
+  readonly showTeamAdminRestrictions: boolean;
+  readonly enterpriseLicenseRequestFormUrl: string;
 }
 
 export const IndividualInviteTab = ({

@@ -20,14 +20,14 @@ import {
 import { Input } from "@/modules/ui/components/input";
 
 interface SaveAsNewSegmentModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  localSurvey: TSurvey;
-  segment: TSegment;
-  setSegment: (segment: TSegment) => void;
-  setIsSegmentEditorOpen: (isOpen: boolean) => void;
-  onCreateSegment: (data: TSegmentCreateInput) => Promise<TSegment>;
-  onUpdateSegment: (segmentId: string, data: TSegmentUpdateInput) => Promise<TSegment>;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+  readonly localSurvey: TSurvey;
+  readonly segment: TSegment;
+  readonly setSegment: (segment: TSegment) => void;
+  readonly setIsSegmentEditorOpen: (isOpen: boolean) => void;
+  readonly onCreateSegment: (data: TSegmentCreateInput) => Promise<TSegment>;
+  readonly onUpdateSegment: (segmentId: string, data: TSegmentUpdateInput) => Promise<TSegment>;
 }
 
 type SaveAsNewSegmentModalForm = {

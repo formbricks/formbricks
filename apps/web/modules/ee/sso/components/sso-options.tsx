@@ -10,14 +10,14 @@ import { OpenIdButton } from "./open-id-button";
 import { SamlButton } from "./saml-button";
 
 interface SSOOptionsProps {
-  googleOAuthEnabled: boolean;
-  githubOAuthEnabled: boolean;
-  azureOAuthEnabled: boolean;
-  oidcOAuthEnabled: boolean;
-  oidcDisplayName?: string;
-  returnToUrl: string;
-  samlSsoEnabled: boolean;
-  source: "signin" | "signup";
+  readonly googleOAuthEnabled: boolean;
+  readonly githubOAuthEnabled: boolean;
+  readonly azureOAuthEnabled: boolean;
+  readonly oidcOAuthEnabled: boolean;
+  readonly oidcDisplayName?: string;
+  readonly returnToUrl: string;
+  readonly samlSsoEnabled: boolean;
+  readonly source: "signin" | "signup";
 }
 
 export const SSOOptions = ({

@@ -1,11 +1,13 @@
-import { JOB_NAMES } from "@/src/constants";
+import { ATTACHMENT_EXPORT_QUEUE_NAME, JOB_NAMES } from "@/src/constants";
 import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@/src/contracts";
+import { processAttachmentExportJob } from "@/src/processors/attachment-export";
 import { processResponsePipelineJob } from "@/src/processors/response-pipeline";
 import { processTestLogJob } from "@/src/processors/test-log";
 import { processWebhookDeliveryJob } from "@/src/processors/webhook-delivery";
 import { processWorkflowRunJob } from "@/src/processors/workflow-run";
 import { recurringJobDefinitions } from "@/src/recurring";
 import {
+  ZAttachmentExportJobData,
   ZResponsePipelineJobData,
   ZTestLogJobData,
   ZWebhookDeliveryJobData,
@@ -19,6 +21,12 @@ import {
  */
 export const backgroundJobDefinitions: Record<string, AnyBackgroundJobDefinition> = {
   ...recurringJobDefinitions,
+  [JOB_NAMES.attachmentExport]: toAnyBackgroundJobDefinition({
+    handle: processAttachmentExportJob,
+    name: JOB_NAMES.attachmentExport,
+    queueName: ATTACHMENT_EXPORT_QUEUE_NAME,
+    schema: ZAttachmentExportJobData,
+  }),
   [JOB_NAMES.responsePipeline]: toAnyBackgroundJobDefinition({
     handle: processResponsePipelineJob,
     name: JOB_NAMES.responsePipeline,

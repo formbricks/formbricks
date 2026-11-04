@@ -14,9 +14,9 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 
 type DeleteOrganizationProps = {
-  organization: TOrganization;
-  isDeleteDisabled?: boolean;
-  isUserOwner?: boolean;
+  readonly organization: TOrganization;
+  readonly isDeleteDisabled?: boolean;
+  readonly isUserOwner?: boolean;
 };
 
 export const DeleteOrganization = ({
@@ -88,12 +88,12 @@ export const DeleteOrganization = ({
 };
 
 interface DeleteOrganizationModalProps {
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  readonly open: boolean;
+  readonly setOpen: Dispatch<SetStateAction<boolean>>;
   // organizationData: { name: string; id: string; plan: string };
-  organizationData: TOrganization;
-  deleteOrganization: () => void;
-  isDeleting?: boolean;
+  readonly organizationData: TOrganization;
+  readonly deleteOrganization: () => void;
+  readonly isDeleting?: boolean;
 }
 
 const DeleteOrganizationModal = ({

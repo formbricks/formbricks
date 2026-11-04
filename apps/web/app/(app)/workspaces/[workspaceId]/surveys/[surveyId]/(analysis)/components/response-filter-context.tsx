@@ -15,7 +15,7 @@ export interface FilterValue {
   };
 }
 
-export type TResponseStatus = "all" | "complete" | "partial";
+export type TResponseStatus = "all" | "complete" | "partial" | "lowQuality";
 
 export interface SelectedFilterValue {
   filter: FilterValue[];
@@ -36,7 +36,7 @@ interface ResponseFilterContextProps {
 
 const ResponseFilterContext = createContext<ResponseFilterContextProps | undefined>(undefined);
 
-const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => {
+const ResponseFilterProvider = ({ children }: { readonly children: React.ReactNode }) => {
   const refreshHandlerRef = useRef<(() => Promise<void>) | null>(null);
 
   const refreshAnalysisData = useCallback(async () => {

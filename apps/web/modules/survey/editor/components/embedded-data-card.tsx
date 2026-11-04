@@ -15,6 +15,7 @@ import { AddEmbeddedFieldModal } from "@/modules/survey/editor/components/add-em
 import { EmbeddedDataCardRow } from "@/modules/survey/editor/components/embedded-data-card-row";
 import { EmbeddedFieldModal } from "@/modules/survey/editor/components/embedded-field-modal";
 import { PromoteEmbeddedFieldDialog } from "@/modules/survey/editor/components/promote-embedded-field-dialog";
+import { describeQuestionCodeClash } from "@/modules/survey/editor/lib/code-messages";
 import { embeddedFieldKey, embeddedFieldWarnings } from "@/modules/survey/editor/lib/embedded-field-guards";
 import {
   type TEmbeddedFieldBlocker,
@@ -246,11 +247,15 @@ export const EmbeddedDataCard = ({
       .filter((field) => field.link.storageKey !== entry?.link.storageKey)
       .map(({ link }) => link.storageKey);
 
-  /** Ids a new name would collide with, beside the survey's other fields. */
+  /** Ids a new name would collide with, beside the survey's other fields: Question IDs, question codes and ending ids. */
+  const elements = getElementsFromBlocks(localSurvey.blocks);
   const takenIds = [
-    ...getElementsFromBlocks(localSurvey.blocks).map((element) => element.id),
+    ...elements.map((element) => element.id),
+    ...elements.flatMap((element) => ("code" in element && element.code ? [element.code] : [])),
     ...localSurvey.endings.map((ending) => ending.id),
   ];
+  // A clash with a question code names that question, as the Recode section does for a code clash.
+  const describeCodeClash = (name: string) => describeQuestionCodeClash(localSurvey, name, t);
 
   /**
    * One control, secondary, like every other action inside an editor card ("Add logic", "Add
@@ -325,6 +330,7 @@ export const EmbeddedDataCard = ({
             if (!next) setEditing(null);
           }}
           takenIds={takenIds}
+          describeQuestionCodeClash={describeCodeClash}
           // Matched on the address rather than on object identity: a render between opening the
           // dialog and submitting it rebuilds the list, and comparing references would then count
           // the edited field's own name as a duplicate of itself.
@@ -347,6 +353,7 @@ export const EmbeddedDataCard = ({
           embeddedFields={embeddedFields}
           persistedFields={persistedFields}
           takenIds={takenIds}
+          describeQuestionCodeClash={describeCodeClash}
           // Nothing to exclude: a field that does not exist yet cannot clash with itself.
           otherDeclaredNames={otherDeclaredNamesExcept(null)}
           otherDisplayNames={otherDisplayNamesExcept(null)}

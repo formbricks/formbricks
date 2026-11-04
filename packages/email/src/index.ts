@@ -3,9 +3,15 @@ export { ForgotPasswordEmail } from "../emails/auth/forgot-password-email";
 export { DeleteAccountEmail } from "../emails/auth/delete-account-email";
 export { NewEmailVerification } from "../emails/auth/new-email-verification";
 export { PasswordResetNotifyEmail } from "../emails/auth/password-reset-notify-email";
+export { AccountDeletedEmail } from "../emails/auth/account-deleted-email";
 export { SsoRecoveryFactorsRemovedEmail } from "../emails/auth/sso-recovery-factors-removed-email";
 export { SsoSignInHintEmail } from "../emails/auth/sso-sign-in-hint-email";
 export { MemberRetentionNoticeEmail } from "../emails/retention/member-retention-notice-email";
+export {
+  AttachmentExportFailedEmail,
+  type TAttachmentExportFailureReason,
+} from "../emails/survey/attachment-export-failed-email";
+export { AttachmentExportReadyEmail } from "../emails/survey/attachment-export-ready-email";
 export {
   SurveyRetentionNoticeEmail,
   type TRetentionNoticeArchivedSurvey,
@@ -30,10 +36,13 @@ export {
   renderAccountDeletionEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
+  renderAccountDeletedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
   renderSsoSignInHintEmail,
   renderSurveyRetentionNoticeEmail,
   renderMemberRetentionNoticeEmail,
+  renderAttachmentExportReadyEmail,
+  renderAttachmentExportFailedEmail,
   renderInviteEmail,
   renderInviteAcceptedEmail,
   renderLinkSurveyEmail,

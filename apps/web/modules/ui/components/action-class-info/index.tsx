@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 
 interface ActionClassInfoProps {
-  actionClass: TActionClass;
-  className?: string;
+  readonly actionClass: TActionClass;
+  readonly className?: string;
 }
 
-const InfoItem = ({ children }: { children: React.ReactNode }) => (
+const InfoItem = ({ children }: { readonly children: React.ReactNode }) => (
   <span className="mr-1 border-l border-slate-400 pl-1 first:border-l-0 first:pl-0">{children}</span>
 );
 

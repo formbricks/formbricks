@@ -6,7 +6,7 @@ import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface TwoFactorProps {
-  form: UseFormReturn<
+  readonly form: UseFormReturn<
     {
       email: string;
       password: string;

@@ -1,0 +1,3 @@
+﻿"Column","Question text","Unmapped value","Responses","Languages","Closest option","Closest code","Similarity","Likely cause","Response IDs","Question ID"
+"region","Where do you live?","Somewhere else",1,"ar","Western Province","02","19%","no similar option","resp_2","e3"
+"region","Where do you live?","Western Provnce",1,"en","Western Province","02","94%","wording differs slightly from Western Province","resp_3","e3"

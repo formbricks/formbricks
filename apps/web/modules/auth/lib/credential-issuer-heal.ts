@@ -1,8 +1,13 @@
 import "server-only";
-import { createLocalAccountIssuer } from "@better-auth/core/db";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+
+/**
+ * The `Account.issuer` a 1.7.0 pod expects on a credential row. Better Auth 1.7.3+ dropped the column from its
+ * model (and the `createLocalAccountIssuer` export), so this is the literal the ENG-2343 backfill wrote.
+ */
+const LOCAL_CREDENTIAL_ISSUER = "local:credential";
 
 /** Sign-in and the reset-link request: the two doors a user with a NULL-issuer credential row is stuck at. */
 const HEALED_PATHS = new Set(["/sign-in/email", "/request-password-reset"]);
@@ -11,14 +16,18 @@ const HEALED_PATHS = new Set(["/sign-in/email", "/request-password-reset"]);
  * Better Auth `before` hook: give a NULL-issuer credential `Account` row its issuer before the handler
  * looks it up (ENG-3258).
  *
- * Better Auth 1.7 finds the credential row by `issuer = 'local:credential'`, so a row with a NULL issuer
+ * Better Auth 1.7.0 finds the credential row by `issuer = 'local:credential'`, so a row with a NULL issuer
  * is invisible: sign-in rejects a correct password, and a reset tries to create a second row and fails
  * on `@@unique([provider, providerAccountId])`. These rows are written by 1.6 pods that keep serving
  * during a rolling upgrade, after the ENG-2343 backfill has already run, so no migration can reach them.
  * Healing on use does, including on self-hosted instances we cannot query.
  *
+ * Better Auth 1.7.7 no longer reads `issuer`, so on 1.7.7 these rows sign in and reset fine. New rows get
+ * their issuer from the `account.create.before` hook in better-auth-hooks.ts; this hook keeps healing the
+ * older NULL rows so a rollback to 1.7.0 still finds them. Delete both once that rollback is off the table.
+ *
  * The reset is healed at the request, not at `/reset-password`, because the request carries the email.
- * A link issued before the heal still fails, cleanly, in `resetPasswordAction`.
+ * On 1.7.0 a link issued before the heal fails, cleanly, in `resetPasswordAction`; on 1.7.7 it resets.
  *
  * The user is matched the way Better Auth matches them (lowercased, then exact). Only `issuer` changes
  * and its value follows from `provider`, so no row can move between users. Best effort: a failure is
@@ -33,7 +42,7 @@ export const healCredentialAccountIssuerBeforeHandler = async (ctx: AuthHookCont
   try {
     const { count } = await prisma.account.updateMany({
       where: { provider: "credential", issuer: null, user: { email: email.toLowerCase() } },
-      data: { issuer: createLocalAccountIssuer("credential") },
+      data: { issuer: LOCAL_CREDENTIAL_ISSUER },
     });
 
     if (count > 0) {

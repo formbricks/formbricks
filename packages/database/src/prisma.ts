@@ -16,6 +16,7 @@ export * as $Enums from "../generated/prisma/enums";
 export * from "../generated/prisma/enums";
 export type * from "../generated/prisma/models";
 export type {
+  AttachmentExport,
   Webhook,
   ContactAttribute,
   ContactAttributeKey,
@@ -96,6 +97,10 @@ export namespace Prisma {
     GlobalOmitOptions = {},
   > = PrismaNamespaceTypes.TypeMap<ExtArgs, GlobalOmitOptions>;
   export type ActionClassSelect = PrismaModelTypes.ActionClassSelect;
+  export type AttachmentExportGetPayload<
+    S extends boolean | null | undefined | PrismaModelTypes.AttachmentExportDefaultArgs,
+  > = PrismaModelTypes.AttachmentExportGetPayload<S>;
+  export type AttachmentExportSelect = PrismaModelTypes.AttachmentExportSelect;
   export type ChartFindManyArgs = PrismaModelTypes.ChartFindManyArgs;
   export type ChartGetPayload<S extends boolean | null | undefined | PrismaModelTypes.ChartDefaultArgs> =
     PrismaModelTypes.ChartGetPayload<S>;

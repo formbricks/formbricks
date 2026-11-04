@@ -14,6 +14,7 @@ import {
   findLinkedCreatives,
   unlinkSurveyCreatives,
 } from "@/modules/ee/creatives/lib/linked-creatives";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
 import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "./surveys";
@@ -62,6 +63,9 @@ vi.mock("@formbricks/logger", () => ({
     error: vi.fn(),
     warn: vi.fn(),
   },
+}));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
 }));
 
 const surveyId = "clq5n7p1q0000m7z0h5p6g3r2";
@@ -139,6 +143,7 @@ describe("deleteSurvey", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
     vi.mocked(getSurvey).mockResolvedValue(surveyWithFileUpload);
     vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: surveyId } as never);
     vi.mocked(prisma.response.findMany).mockResolvedValue([

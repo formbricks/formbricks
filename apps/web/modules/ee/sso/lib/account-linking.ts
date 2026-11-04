@@ -103,7 +103,7 @@ const syncSsoIdentityForUserWithTx = async ({
         },
         // `issuer` too, and the CANONICAL value (ENG-2555): the row may predate the ENG-2343 backfill
         // window (NULL) or carry the synthetic form where the provider declares its own — either way
-        // 1.7's account lookup cannot see it until this write corrects it.
+        // 1.7.0's account lookup cannot see it until this write corrects it.
         data: { issuer: canonicalAccountIssuer(provider), ...getAccountTokenUpdate(account) },
       });
     } else {
@@ -117,7 +117,7 @@ const syncSsoIdentityForUserWithTx = async ({
           provider,
           providerAccountId: account.providerAccountId,
           // Same reason as the create branch below: normalising a legacy row without setting `issuer`
-          // leaves it unmatched by 1.7's account lookup (ENG-2343).
+          // leaves it unmatched by 1.7.0's account lookup (ENG-2343).
           issuer: canonicalAccountIssuer(provider),
           ...getAccountTokenUpdate(account),
         },
@@ -130,8 +130,8 @@ const syncSsoIdentityForUserWithTx = async ({
       },
       // `issuer` here too, and this branch is the one that matters most (ENG-2555). It is the branch
       // every attempt after the first takes, so while it wrote only tokens a row created with a wrong
-      // or NULL issuer could never heal: sign-in could not see it, recovery ran again, and this update
-      // left the bad value untouched. Writing the canonical value makes the next sign-in repair it.
+      // or NULL issuer could never heal: 1.7.0's sign-in could not see it, recovery ran again, and this
+      // update left the bad value untouched. Writing the canonical value makes the next sign-in repair it.
       // The row's ownership is already asserted above, and the value derives from `provider`, so this
       // cannot rebind the row to another identity.
       data: { issuer: canonicalAccountIssuer(provider), ...getAccountTokenUpdate(account) },
@@ -143,14 +143,14 @@ const syncSsoIdentityForUserWithTx = async ({
         type: account.type,
         provider,
         providerAccountId: account.providerAccountId,
-        // 1.7 keys the account on `(issuer, accountId)` and `findAccountByKey` filters on `issuer`, so a
-        // row written with a missing OR non-canonical issuer is invisible to every later sign-in: the
-        // user completes verify-before-link, gets a session, and is pushed back through recovery on the
-        // NEXT sign-in, forever. The migration cannot save them either — it runs once, before this row
-        // exists. NOT the same helper the provider config pins (`ssoAccountIssuer`): google's canonical
-        // issuer is the one upstream declares, not the synthetic form, which is exactly the bug that
+        // 1.7.7 finds accounts by `(providerId, accountId)` and ignores `issuer`, but 1.7.0 keyed them on
+        // `(issuer, accountId)`, so on a rollback a row written with a missing OR non-canonical issuer is
+        // invisible to every later sign-in: the user completes verify-before-link, gets a session, and is
+        // pushed back through recovery on the NEXT sign-in, forever. The migration cannot save them
+        // either — it runs once, before this row exists. NOT `ssoAccountIssuer`: google's canonical issuer
+        // is the one 1.7.0 declared upstream, not the synthetic form, which is exactly the bug that
         // shipped here (ENG-2555). `canonicalAccountIssuer` mirrors the backfill's CASE and is pinned
-        // against both the SQL and upstream in constants.test.ts, so the sites cannot drift.
+        // against the SQL in constants.test.ts, so the sites cannot drift.
         issuer: canonicalAccountIssuer(provider),
         ...getAccountTokenUpdate(account),
       },

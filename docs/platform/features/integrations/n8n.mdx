@@ -20,6 +20,7 @@ You need permission to manage webhooks in the survey's workspace and an HTTPS en
 <span id="step-5-select-survey" />
 <span id="step-6-test-your-trigger" />
 <span id="step-7-add-discord-to-your-workflow" />
+<span id="step-1-check-your-question-codes" />
 
 ## Connect a workflow
 
@@ -54,4 +55,14 @@ n8n need their own [scoped key](/api-reference/generate-key).
 
 Create the webhook on your own instance. Its background worker must reach the n8n endpoint over HTTPS.
 If delivery fails, check the endpoint, selected survey and event, and [worker configuration](/self-hosting/configuration/job-runner).
-Keep question IDs stable after mapping response fields in n8n.
+
+## Map answers by question code
+
+Every question has a **question code**, such as `q1` or `nps`. The webhook payload's `dataByQuestionCode`
+group lists the answers under these codes, so map those fields in n8n. You can change a code in the question's
+**Settings** tab, under **Recode**, **before** you activate the survey. Once the survey is active, codes are
+locked, so a workflow built on them keeps working.
+
+Question codes start with a lowercase letter and use lowercase letters, digits and `_`. Learn more in
+[Question codes and answer codes](/surveys/analysis/question-codes) and
+[reading answers by question code](/platform/features/integrations/webhooks#reading-answers-by-question-code).

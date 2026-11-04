@@ -116,9 +116,12 @@ export const emailRateLimits: Record<TEmailType, TEmailRateLimit> = {
   password_reset: { recipient: { total: limit(6) } },
   password_reset_notification: {},
   account_deletion: {},
+  account_deletion_notification: {},
   sso_recovery_notification: {},
   sso_sign_in_hint: { recipient: { total: limit(3) } },
   data_retention_notice: {},
+  // One per export the user started, and starting one is already rate-limited per user.
+  attachment_export: {},
   // Sent to the organization's own members; bounds one organization's share of the provider quota.
   response_notification: { organization: limit(2000) },
   survey_preview: { actor: limit(10) },
@@ -244,7 +247,7 @@ const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitC
  * handed back, so a refused email costs nothing. Throws `TooManyRequestsError` when a limit is spent. An
  * email that is charged and then fails at the SMTP server keeps its charge, like any other attempt. Unlike
  * the app's throughput limits it fails closed: while Redis is unavailable every counted email is refused
- * (docs/adr/0015-abuse-limits-fail-closed.md). `RATE_LIMITING_DISABLED` turns it off.
+ * (docs/adr/0016-abuse-limits-fail-closed.md). `RATE_LIMITING_DISABLED` turns it off.
  */
 export const applyEmailRateLimits = async (
   emailType: TEmailType,

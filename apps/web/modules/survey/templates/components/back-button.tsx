@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 
 interface BackButtonProps {
-  path?: string;
+  readonly path?: string;
 }
 
 export const BackButton = ({ path }: BackButtonProps) => {

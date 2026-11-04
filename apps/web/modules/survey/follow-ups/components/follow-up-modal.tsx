@@ -67,17 +67,17 @@ import {
 import { cn } from "@/modules/ui/lib/utils";
 
 interface AddFollowUpModalProps {
-  localSurvey: TSurvey;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  selectedLanguageCode: string;
-  mailFrom: string;
-  defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
-  mode?: "create" | "edit";
-  userEmail: string;
-  teamMemberDetails: TFollowUpEmailToUser[];
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  locale: TUserLocale;
+  readonly localSurvey: TSurvey;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly selectedLanguageCode: string;
+  readonly mailFrom: string;
+  readonly defaultValues?: Partial<TCreateSurveyFollowUpForm & { surveyFollowUpId: string }>;
+  readonly mode?: "create" | "edit";
+  readonly userEmail: string;
+  readonly teamMemberDetails: TFollowUpEmailToUser[];
+  readonly setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  readonly locale: TUserLocale;
 }
 
 export const FollowUpModal = ({

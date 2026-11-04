@@ -1,7 +1,11 @@
 import {
+  type TAttachmentExportFailureReason,
   type TRetentionNoticeArchivedSurvey,
   type TRetentionNoticeResponseDeletion,
+  renderAccountDeletedEmail,
   renderAccountDeletionEmail,
+  renderAttachmentExportFailedEmail,
+  renderAttachmentExportReadyEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderForgotPasswordEmail,
@@ -49,6 +53,7 @@ import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-su
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export { IS_SMTP_CONFIGURED } from "@/lib/constants";
+export type { TAttachmentExportFailureReason };
 export { sendEmail } from "@/modules/email/lib/send-email";
 
 const legalProps: TEmailTemplateLegalProps = {
@@ -77,6 +82,7 @@ export const sendVerificationNewEmail = async (
 
     return await sendEmail({
       emailType: "email_change_verification",
+      auditContext: { trigger: "user", actorUserId: id },
       to: email,
       subject: t("emails.verification_new_email_subject"),
       html,
@@ -129,6 +135,7 @@ export const sendVerificationEmail = async ({
 
     return await sendEmail({
       emailType: purpose === "sso_recovery" ? "sso_recovery_verification" : "email_verification",
+      auditContext: { trigger: "system" },
       to: email,
       subject: t("emails.verification_email_subject"),
       html,
@@ -154,6 +161,7 @@ export const sendPasswordResetLinkEmail = async (user: {
   });
   return await sendEmail({
     emailType: "password_reset",
+    auditContext: { trigger: "system" },
     to: user.email,
     subject: t("emails.forgot_password_email_subject"),
     html,
@@ -161,6 +169,7 @@ export const sendPasswordResetLinkEmail = async (user: {
 };
 
 export const sendDeleteAccountConfirmationEmail = async (data: {
+  actorUserId?: string;
   email: TUserEmail;
   locale: TUserLocale;
   deleteLink: string;
@@ -175,6 +184,10 @@ export const sendDeleteAccountConfirmationEmail = async (data: {
   });
   return await sendEmail({
     emailType: "account_deletion",
+    auditContext: {
+      trigger: data.actorUserId ? "user" : "system",
+      actorUserId: data.actorUserId,
+    },
     to: data.email,
     subject: t("emails.delete_account_email_subject"),
     html,
@@ -198,6 +211,7 @@ export const sendVerificationLinkEmail = async (data: {
   });
   return await sendEmail({
     emailType: "email_verification",
+    auditContext: { trigger: "system" },
     to: data.email,
     subject: t("emails.verification_email_subject"),
     html,
@@ -212,8 +226,29 @@ export const sendPasswordResetNotifyEmail = async (user: {
   const html = await renderPasswordResetNotifyEmail({ t, ...legalProps });
   return await sendEmail({
     emailType: "password_reset_notification",
+    auditContext: { trigger: "system" },
     to: user.email,
     subject: t("emails.password_reset_notify_email_subject"),
+    html,
+  });
+};
+
+/**
+ * Tell a user their account was deleted (ENG-862). Sent after the deletion has committed, so the address
+ * comes from the deleted user and nobody can be signed in to receive anything else. Not to be confused with
+ * `sendDeleteAccountConfirmationEmail`, the link an SSO user clicks to confirm the deletion.
+ */
+export const sendAccountDeletedEmail = async (user: {
+  email: string;
+  locale: TUserLocale;
+}): Promise<boolean> => {
+  const t = await getTranslate(user.locale);
+  const html = await renderAccountDeletedEmail({ t, ...legalProps });
+  return await sendEmail({
+    emailType: "account_deletion_notification",
+    auditContext: { trigger: "system" },
+    to: user.email,
+    subject: t("emails.account_deleted_email_subject"),
     html,
   });
 };
@@ -254,6 +289,7 @@ export const sendSsoRecoveryFactorsRemovedEmail = async ({
   });
   return await sendEmail({
     emailType: "sso_recovery_notification",
+    auditContext: { trigger: "system" },
     to: email,
     subject: t("emails.sso_recovery_factors_removed_email_subject"),
     html,
@@ -283,6 +319,7 @@ export const sendSsoSignInHintEmail = async ({
   });
   return await sendEmail({
     emailType: "sso_sign_in_hint",
+    auditContext: { trigger: "system" },
     to: email,
     subject: t("emails.sso_sign_in_hint_email_subject"),
     html,
@@ -320,8 +357,111 @@ export const sendSurveyRetentionNoticeEmail = async ({
   });
   return await sendEmail({
     emailType: "data_retention_notice",
+    auditContext: { trigger: "system", organizationId },
     to: email,
     subject: t("emails.retention_notice_email_subject", { organizationName }),
+    html,
+  });
+};
+
+/**
+ * An attachment export finished building (ENG-6862). The link opens an app page that checks the reader is
+ * the requester, then starts the download, so it outlives any presigned URL. Size and date arrive
+ * formatted for the reader. Returns false when SMTP isn't configured; throws when sending fails.
+ */
+export const sendAttachmentExportReadyEmail = async ({
+  email,
+  locale,
+  userId,
+  organizationId,
+  surveyId,
+  surveyName,
+  attachmentExportId,
+  archiveSize,
+  fileCount,
+  includedFileCount,
+  sizeLimit,
+  retentionMonths,
+  expiryDate,
+  truncated,
+}: {
+  email: string;
+  locale: TUserLocale;
+  userId: string;
+  organizationId: string;
+  surveyId: string;
+  surveyName: string;
+  attachmentExportId: string;
+  archiveSize: string;
+  fileCount: string;
+  includedFileCount: string;
+  sizeLimit: string;
+  retentionMonths: string;
+  expiryDate: string;
+  truncated: boolean;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderAttachmentExportReadyEmail({
+    surveyName,
+    archiveSize,
+    fileCount,
+    includedFileCount,
+    sizeLimit,
+    retentionMonths,
+    expiryDate,
+    truncated,
+    downloadLink: `${WEBAPP_URL}/attachment-exports/${attachmentExportId}`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "attachment_export",
+    auditContext: { trigger: "user", actorUserId: userId, organizationId, surveyId },
+    to: email,
+    subject: t("emails.attachment_export_ready_email_subject", { surveyName }),
+    html,
+  });
+};
+
+/**
+ * An attachment export could not be built (ENG-6862); the link opens the survey's Responses page to
+ * start again. Returns false when SMTP isn't configured; throws when sending fails.
+ */
+export const sendAttachmentExportFailedEmail = async ({
+  email,
+  locale,
+  userId,
+  organizationId,
+  workspaceId,
+  surveyId,
+  surveyName,
+  reason,
+  maxFiles,
+}: {
+  email: string;
+  locale: TUserLocale;
+  userId: string;
+  organizationId: string;
+  workspaceId: string;
+  surveyId: string;
+  surveyName: string;
+  reason: TAttachmentExportFailureReason;
+  maxFiles: string;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderAttachmentExportFailedEmail({
+    surveyName,
+    reason,
+    maxFiles,
+    responsesLink: `${WEBAPP_URL}/workspaces/${workspaceId}/surveys/${surveyId}/responses`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "attachment_export",
+    auditContext: { trigger: "user", actorUserId: userId, organizationId, surveyId },
+    to: email,
+    subject: t("emails.attachment_export_failed_email_subject", { surveyName }),
     html,
   });
 };
@@ -351,6 +491,7 @@ export const sendMemberRetentionNoticeEmail = async ({
   });
   return await sendEmail({
     emailType: "data_retention_notice",
+    auditContext: { trigger: "system" },
     to: email,
     subject: t("emails.member_retention_notice_email_subject", { organizationName }),
     html,
@@ -362,7 +503,8 @@ export const sendInviteMemberEmail = async (
   email: string,
   inviterName: string,
   inviteeName: string,
-  organizationId: string
+  organizationId: string,
+  actorUserId?: string
 ): Promise<boolean> => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
@@ -380,6 +522,7 @@ export const sendInviteMemberEmail = async (
   });
   return await sendEmail({
     emailType: "invite",
+    auditContext: { trigger: actorUserId ? "user" : "system", actorUserId, organizationId, inviteId },
     to: email,
     subject: t("emails.invite_member_email_subject"),
     html,
@@ -391,7 +534,9 @@ export const sendInviteAcceptedEmail = async (
   inviterName: string,
   inviteeName: string,
   email: string,
-  inviterLocale?: TUserLocale
+  inviterLocale?: TUserLocale,
+  actorUserId?: string,
+  organizationId?: string
 ): Promise<void> => {
   const t = await getTranslate(inviterLocale);
   // Both names are profile text the invitee or inviter chose, shown in a Formbricks-branded email.
@@ -403,6 +548,7 @@ export const sendInviteAcceptedEmail = async (
   });
   await sendEmail({
     emailType: "invite_accepted",
+    auditContext: { trigger: actorUserId ? "user" : "system", actorUserId, organizationId },
     to: email,
     subject: t("emails.invite_accepted_email_subject"),
     html,
@@ -466,6 +612,12 @@ export const sendResponseFinishedEmail = async (
 
   await sendEmail({
     emailType: "response_notification",
+    auditContext: {
+      trigger: "response",
+      organizationId: organization.id,
+      surveyId: survey.id,
+      responseId: response.id,
+    },
     to: email,
     // Never put the respondent's email address in the subject — it's PII that ends up in
     // notification previews and mailbox lists; replying still reaches them via replyTo.
@@ -478,14 +630,25 @@ export const sendResponseFinishedEmail = async (
   });
 };
 
-export const sendEmbedSurveyPreviewEmail = async (
-  to: string,
-  innerHtml: string,
-  workspaceId: string,
-  locale: TUserLocale,
-  actorUserId: string,
-  logoUrl?: string
-): Promise<boolean> => {
+export const sendEmbedSurveyPreviewEmail = async ({
+  to,
+  innerHtml,
+  workspaceId,
+  locale,
+  actorUserId,
+  logoUrl,
+  surveyId,
+  organizationId,
+}: Readonly<{
+  to: string;
+  innerHtml: string;
+  workspaceId: string;
+  locale: TUserLocale;
+  actorUserId: string;
+  logoUrl?: string;
+  surveyId?: string;
+  organizationId?: string;
+}>): Promise<boolean> => {
   const t = await getTranslate(locale);
   // Resolve relative storage URLs to absolute URLs for email rendering
   const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
@@ -498,6 +661,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   });
   return await sendEmail({
     emailType: "survey_preview",
+    auditContext: { trigger: "user", actorUserId, surveyId, organizationId },
     to,
     subject: t("emails.embed_survey_preview_email_subject"),
     html,
@@ -510,7 +674,8 @@ export const sendEmailCustomizationPreviewEmail = async (
   userName: string,
   locale: TUserLocale,
   actorUserId: string,
-  logoUrl?: string
+  logoUrl?: string,
+  organizationId?: string
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
   // Resolve relative storage URLs to absolute URLs for email rendering
@@ -524,6 +689,7 @@ export const sendEmailCustomizationPreviewEmail = async (
 
   return await sendEmail({
     emailType: "customization_preview",
+    auditContext: { trigger: "user", actorUserId, organizationId },
     to,
     subject: t("emails.email_customization_preview_email_subject"),
     html: emailHtmlBody,
@@ -566,6 +732,7 @@ export const sendLinkSurveyToVerifiedEmail = async (
   const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t, ...legalProps });
   return await sendEmail({
     emailType: "verified_survey_link",
+    auditContext: { trigger: "system", surveyId, organizationId: rateLimit.organizationId },
     to: data.email,
     subject: t("emails.verified_link_survey_email_subject"),
     html,

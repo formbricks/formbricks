@@ -36,6 +36,16 @@ properties:
     type:
       - string
       - "null"
+  outcome:
+    type:
+      - string
+      - "null"
+    enum:
+      - lowQuality
+      - null
+    description: >-
+      A reviewer's verdict: `lowQuality` marks the response, `null` clears the mark. The response is
+      never deleted — see `ResponseBase.outcome`.
   data:
     $ref: ./ResponseDataMapInput.yml
   embeddedData:

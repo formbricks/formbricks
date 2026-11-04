@@ -84,8 +84,14 @@ Before you start:
     umask 077
     backup_time=$(date -u +%Y%m%dT%H%M%SZ)
     docker compose exec -T postgres pg_dump -Fc -U postgres -d formbricks > "../formbricks-${backup_time}.dump" &&
-      docker compose exec -T postgres pg_dump -Fc -U postgres -d spicedb > "../spicedb-${backup_time}.dump" &&
       cp .env.bak "../env-${backup_time}.bak" && cp docker-compose.yml.bak "../docker-compose-${backup_time}.yml"
+    ```
+
+    If you already run 6.x, also back up the permission database. Skip this on a first upgrade to 6.0: the
+    `spicedb` database doesn't exist yet.
+
+    ```bash
+    docker compose exec -T postgres pg_dump -Fc -U postgres -d spicedb > "../spicedb-${backup_time}.dump"
     ```
 
     If you use the bundled file storage (RustFS or MinIO), also back up its volume. Find its name with
@@ -154,7 +160,8 @@ database migrations. To return to the old version:
 1. Stop the app: `docker compose stop formbricks hub $(docker compose config --services | grep -x hub-worker)`.
 2. Restore the databases from your dumps, for example
    `docker compose exec -T postgres pg_restore --clean --if-exists -U postgres -d formbricks < ../formbricks-<time>.dump`,
-   and the same for `spicedb`.
+   and the same for `spicedb` if you backed it up. After a failed first upgrade to 6.0 there is no `spicedb`
+   dump to restore: the 5.4 version doesn't use it.
 3. Put back the old `docker-compose.yml` and `.env` from your backup, and restore the storage volume if you backed it up.
 4. Start the old version with `docker compose up -d`.
 

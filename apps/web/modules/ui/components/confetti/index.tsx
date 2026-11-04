@@ -10,7 +10,7 @@ type ConfettiProps = {
 export const Confetti: React.FC<ConfettiProps> = ({
   colors = ["#00C4B8", "#eee"],
 }: {
-  colors?: string[];
+  readonly colors?: string[];
 }) => {
   const [windowSize, setWindowSize] = useState({ height: 0, width: 0 });
 

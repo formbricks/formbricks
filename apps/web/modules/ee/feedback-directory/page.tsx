@@ -12,7 +12,9 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
-export const FeedbackDirectoriesPage = async (props: { params: Promise<{ organizationId: string }> }) => {
+export const FeedbackDirectoriesPage = async (props: {
+  readonly params: Promise<{ organizationId: string }>;
+}) => {
   const params = await props.params;
   const t = await getTranslate();
 

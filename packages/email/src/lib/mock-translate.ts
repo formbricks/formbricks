@@ -8,6 +8,34 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "common.continue": "Continue",
   "common.powered_by_formbricks": "Powered by Formbricks",
   "emails.accept": "Accept",
+  "emails.account_deleted_email_did_not_request":
+    "If you did not delete your account, please contact support immediately.",
+  "emails.account_deleted_email_heading": "Your account has been deleted",
+  "emails.account_deleted_email_subject": "Your Formbricks account has been deleted",
+  "emails.account_deleted_email_text": "Your Formbricks account has been permanently removed.",
+  "emails.attachment_export_failed_email_heading": "We couldn't prepare your attachments",
+  "emails.attachment_export_failed_email_open_responses": "Open responses",
+  "emails.attachment_export_failed_email_reason_build_timeout":
+    "It took longer to build than one export is allowed. Narrow the response filter so it includes fewer files, then start it again.",
+  "emails.attachment_export_failed_email_reason_no_attachments":
+    "The responses it covered no longer hold any files, so there was nothing to export.",
+  "emails.attachment_export_failed_email_reason_other":
+    "Something went wrong while preparing it. Start it again from the survey's Responses page.",
+  "emails.attachment_export_failed_email_reason_too_many_files":
+    "It covers more than {maxFiles} files, the most one export can hold. Narrow the response filter on the survey's Responses page, then start it again.",
+  "emails.attachment_export_failed_email_subject": "Your attachments export from {surveyName} failed",
+  "emails.attachment_export_failed_email_text": "The attachments export from {surveyName} didn't finish.",
+  "emails.attachment_export_ready_email_download": "Download attachments",
+  "emails.attachment_export_ready_email_expiry":
+    "This link works for {months} months, until {date}. After that the export is deleted, and you can start a new one from the survey's Responses page.",
+  "emails.attachment_export_ready_email_files": "Files: {includedFileCount} of {fileCount}",
+  "emails.attachment_export_ready_email_heading": "Your attachments are ready",
+  "emails.attachment_export_ready_email_size": "Size: {size}",
+  "emails.attachment_export_ready_email_subject": "Your attachments from {surveyName} are ready to download",
+  "emails.attachment_export_ready_email_text":
+    "The attachments export from {surveyName} is ready to download.",
+  "emails.attachment_export_ready_email_truncated":
+    "Some files were left out because the export reached its {sizeLimit} limit. manifest.csv in the archive lists every file and marks the ones left out. To get those, start a new export with a narrower response filter.",
   "emails.click_or_drag_to_upload_files": "Click or drag to upload files.",
   "emails.delete_account_email_confirm_deletion": "Confirm account deletion",
   "emails.delete_account_email_did_not_request":

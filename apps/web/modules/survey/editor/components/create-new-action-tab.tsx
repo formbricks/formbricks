@@ -21,12 +21,12 @@ import { buildActionObject } from "../lib/action-builder";
 import { createActionClassZodResolver, useActionClassKeys, validatePermissions } from "../lib/action-utils";
 
 interface CreateNewActionTabProps {
-  actionClasses: ActionClass[];
-  setActionClasses: React.Dispatch<React.SetStateAction<ActionClass[]>>;
-  isReadOnly: boolean;
-  setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  workspaceId: string;
+  readonly actionClasses: ActionClass[];
+  readonly setActionClasses: React.Dispatch<React.SetStateAction<ActionClass[]>>;
+  readonly isReadOnly: boolean;
+  readonly setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly workspaceId: string;
 }
 
 export const CreateNewActionTab = ({

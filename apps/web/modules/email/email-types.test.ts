@@ -4,6 +4,9 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { applyEmailRateLimits } from "@/modules/email/lib/email-rate-limits";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import {
+  sendAccountDeletedEmail,
+  sendAttachmentExportFailedEmail,
+  sendAttachmentExportReadyEmail,
   sendDeleteAccountConfirmationEmail,
   sendEmailCustomizationPreviewEmail,
   sendEmbedSurveyPreviewEmail,
@@ -44,7 +47,10 @@ vi.mock("@/modules/email/lib/survey-response-email", () => ({
   buildSurveyResponseEmailHtml: async () => "<p>Body</p>",
 }));
 vi.mock("@formbricks/email", () => ({
+  renderAccountDeletedEmail: async () => "html",
   renderAccountDeletionEmail: async () => "html",
+  renderAttachmentExportFailedEmail: async () => "html",
+  renderAttachmentExportReadyEmail: async () => "html",
   renderEmailCustomizationPreviewEmail: async () => "html",
   renderEmbedSurveyPreviewEmail: async () => "html",
   renderForgotPasswordEmail: async () => "html",
@@ -87,6 +93,7 @@ const senders: [string, () => Promise<unknown>][] = [
     () => sendDeleteAccountConfirmationEmail({ email, locale, deleteLink: link, linkValidityInMinutes: 30 }),
   ],
   ["password_reset_notification", () => sendPasswordResetNotifyEmail({ email, locale })],
+  ["account_deletion_notification", () => sendAccountDeletedEmail({ email, locale })],
   [
     "sso_recovery_notification",
     () =>
@@ -121,8 +128,53 @@ const senders: [string, () => Promise<unknown>][] = [
         deactivateDate: "Dec 7, 2026",
       }),
   ],
+  [
+    "attachment_export",
+    () =>
+      sendAttachmentExportReadyEmail({
+        email,
+        locale,
+        userId: "user",
+        organizationId: "organization",
+        surveyId: "survey",
+        surveyName: "Survey",
+        attachmentExportId: "export",
+        archiveSize: "5.7 GB",
+        fileCount: "12",
+        includedFileCount: "12",
+        sizeLimit: "5 GB",
+        retentionMonths: "3",
+        expiryDate: "Feb 3, 2027",
+        truncated: false,
+      }),
+  ],
+  [
+    "attachment_export",
+    () =>
+      sendAttachmentExportFailedEmail({
+        email,
+        locale,
+        userId: "user",
+        organizationId: "organization",
+        workspaceId: "workspace",
+        surveyId: "survey",
+        surveyName: "Survey",
+        reason: "other",
+        maxFiles: "5,000",
+      }),
+  ],
   ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],
-  ["survey_preview", () => sendEmbedSurveyPreviewEmail(email, "html", "workspace", locale, "user")],
+  [
+    "survey_preview",
+    () =>
+      sendEmbedSurveyPreviewEmail({
+        to: email,
+        innerHtml: "html",
+        workspaceId: "workspace",
+        locale,
+        actorUserId: "user",
+      }),
+  ],
   ["customization_preview", () => sendEmailCustomizationPreviewEmail(email, "User", locale, "user")],
   [
     "verified_survey_link",
@@ -143,7 +195,59 @@ describe("email source attribution", () => {
   test.each(senders)("classifies %s at the sending boundary", async (emailType, send) => {
     await send();
     expect(sendEmail).toHaveBeenCalledOnce();
-    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType, to: email }));
+    const trigger = [
+      "email_change_verification",
+      "survey_preview",
+      "customization_preview",
+      "attachment_export",
+    ].includes(emailType)
+      ? "user"
+      : emailType === "response_notification"
+        ? "response"
+        : "system";
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ emailType, to: email, auditContext: expect.objectContaining({ trigger }) })
+    );
+  });
+
+  test.each([
+    ["invite", { organizationId: "organization", inviteId: "invite" }],
+    ["email_change_verification", { actorUserId: "user" }],
+    ["data_retention_notice", { organizationId: "organization" }],
+    ["response_notification", { organizationId: "org", surveyId: "survey", responseId: "response" }],
+    ["customization_preview", { actorUserId: "user" }],
+    ["verified_survey_link", { surveyId: "survey", organizationId: "organization" }],
+    ["attachment_export", { actorUserId: "user", organizationId: "organization", surveyId: "survey" }],
+  ] as const)("preserves %s source identifiers", async (emailType, expectedContext) => {
+    const [, send] = senders.find(([type]) => type === emailType)!;
+    await send();
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ emailType, auditContext: expect.objectContaining(expectedContext) })
+    );
+  });
+
+  test("keeps the survey preview actor and tenant identifiers at the audit boundary", async () => {
+    await sendEmbedSurveyPreviewEmail({
+      to: email,
+      innerHtml: "html",
+      workspaceId: "workspace",
+      locale,
+      actorUserId: "user",
+      surveyId: "survey",
+      organizationId: "organization",
+    });
+
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailType: "survey_preview",
+        auditContext: {
+          trigger: "user",
+          actorUserId: "user",
+          surveyId: "survey",
+          organizationId: "organization",
+        },
+      })
+    );
   });
 
   // A sender that drops its organization or actor would skip the limits that matter most (ENG-3823).
@@ -196,6 +300,15 @@ describe("email source attribution", () => {
       attachResponseData: false,
       rateLimit: { organizationId: "organization", actorUserId: "owner", externalRecipient: true },
     });
-    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType: "survey_follow_up" }));
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailType: "survey_follow_up",
+        auditContext: expect.objectContaining({
+          trigger: "response",
+          surveyId: "survey",
+          responseId: "response",
+        }),
+      })
+    );
   });
 });

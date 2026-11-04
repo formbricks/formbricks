@@ -110,7 +110,12 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["surveys/overview", "surveys/analysis/reading-results"]
+            "pages": [
+              "surveys/overview",
+              "surveys/analysis/reading-results",
+              "surveys/analysis/export-responses",
+              "surveys/analysis/question-codes"
+            ]
           },
           {
             "group": "Surveys",
@@ -388,10 +393,20 @@
                     ]
                   },
                   {
+                    "group": "Patch releases",
+                    "pages": [
+                      "self-hosting/upgrade/versions/2026-10-27-patches",
+                      "self-hosting/upgrade/versions/2026-10-security-patches",
+                      "self-hosting/upgrade/versions/cube"
+                    ]
+                  },
+                  {
                     "group": "Upcoming changes",
                     "pages": [
                       "self-hosting/upgrade/versions/charts-dashboards",
-                      "self-hosting/upgrade/versions/valkey-9"
+                      "self-hosting/upgrade/versions/valkey-9",
+                      "self-hosting/upgrade/versions/question-codes",
+                      "self-hosting/upgrade/versions/attachment-exports"
                     ]
                   }
                 ]

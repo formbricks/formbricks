@@ -2,9 +2,9 @@ import Link from "next/link";
 import { ReactNode } from "react";
 
 interface WorkspaceNavItemProps {
-  href: string;
-  children: ReactNode;
-  isActive: boolean;
+  readonly href: string;
+  readonly children: ReactNode;
+  readonly isActive: boolean;
 }
 
 export const WorkspaceNavItem = ({ href, children, isActive }: WorkspaceNavItemProps) => {

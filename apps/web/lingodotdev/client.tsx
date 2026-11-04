@@ -5,14 +5,13 @@ import ICU from "i18next-icu";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { ReactNode, useEffect, useState } from "react";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import { logger } from "@formbricks/logger";
 
 let isInit = false;
 
 interface I18nProviderProps {
-  children: ReactNode;
-  language: string;
-  defaultLanguage: string;
+  readonly children: ReactNode;
+  readonly language: string;
+  readonly defaultLanguage: string;
 }
 
 export const I18nProvider = ({ children, language, defaultLanguage }: I18nProviderProps) => {
@@ -44,7 +43,9 @@ export const I18nProvider = ({ children, language, defaultLanguage }: I18nProvid
           isInit = true;
           setIsReady(true);
         } catch (error) {
-          logger.error(error);
+          // Not `@formbricks/logger`: this provider wraps every page, and the logger would put pino in
+          // every page's first-load JS for this one line.
+          console.error(error);
           setIsReady(true);
         }
       }
