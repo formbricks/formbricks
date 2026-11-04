@@ -11,6 +11,8 @@ interface InfoTooltipProps {
   /** The button's accessible name, e.g. "About the Flow tab". */
   readonly label: string;
   readonly side?: "top" | "right" | "bottom" | "left";
+  /** Where along that side it lines up with the button, e.g. "start" to keep text beside it clear. */
+  readonly align?: "start" | "center" | "end";
   readonly className?: string;
 }
 
@@ -19,7 +21,13 @@ interface InfoTooltipProps {
  * on the page as a paragraph, or why a button is disabled. A real button, so the explanation is
  * reachable by keyboard; it never submits or toggles what it sits in.
  */
-export const InfoTooltip = ({ children, label, side = "top", className }: InfoTooltipProps) => (
+export const InfoTooltip = ({
+  children,
+  label,
+  side = "top",
+  align = "center",
+  className,
+}: InfoTooltipProps) => (
   <TooltipProvider delayDuration={80}>
     <Tooltip>
       <TooltipTrigger asChild>
@@ -35,7 +43,7 @@ export const InfoTooltip = ({ children, label, side = "top", className }: InfoTo
           <InfoIcon className="size-4" aria-hidden="true" />
         </button>
       </TooltipTrigger>
-      <TooltipContent side={side} className="max-w-xs">
+      <TooltipContent side={side} align={align} className="max-w-xs">
         {children}
       </TooltipContent>
     </Tooltip>
