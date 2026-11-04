@@ -125,6 +125,8 @@ export const FilterValuePicker = ({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
+                // Enter confirms an IME candidate while composing; the text is not the value yet.
+                if (event.nativeEvent.isComposing) return;
                 // Enter with nothing highlighted takes what was typed, for a property that accepts it.
                 if (event.key === "Enter" && typedIsNew && listed.length === 0) {
                   event.preventDefault();

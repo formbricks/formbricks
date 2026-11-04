@@ -15,6 +15,7 @@ import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   applyV3OperationRateLimit,
+  getV3RateLimitPrincipal,
   reserveV3OperationRateLimit,
 } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -385,7 +386,11 @@ export async function listV3DashboardFilterValues({
     };
 
     const built = await withChartQuerySlot(context, async () => {
-      const outcome = await runOnce(cacheKey, async () => {
+      // Only one principal's requests share a build: the build reserves that principal's chart-query
+      // budget, so another principal joining it would get the first one's refusal. The cached list
+      // and its lock stay shared by everyone.
+      const buildKey = `${String(cacheKey)}:${getV3RateLimitPrincipal(context.authentication) ?? "anonymous"}`;
+      const outcome = await runOnce(buildKey, async () => {
         const locked = await cache.tryLock(lockKey, "1", FILTER_VALUES_LOCK_MS);
         if (locked.ok && !locked.data) {
           const waited = await waitForCachedList(cacheKey);

@@ -55,6 +55,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
         )}>
         {lockedHint ? (
           <span
+            role="group"
             title={lockedHint}
             aria-label={t("common.table_toolbar.locked_filter", { filter: accessibleName })}
             className={cn(

@@ -377,7 +377,7 @@ file and Helm chart change three settings:
 
 - **Cube compiles fewer data models at a time.** Cube compiles a data model per Feedback Dataset's set of
   embedded-data keys and keeps the most recent ones in memory. A compiled model takes 2–5 MB, so the default
-  cache now holds 60 models (about 120–300 MB) and at most 30,000 compiled members, instead of 150 models. Rare
+  cache now holds 60 models (about 120–300 MB) and at most 30,000 compiled members, instead of Cube's default of 250 models. Rare
   embedded-data keys share 8 fixed buckets, so picking them does not compile a new model for every combination.
   If you raise `CUBEJS_COMPILER_CACHE_SIZE` or `CUBEJS_MAX_COMPILED_MEMBERS` on the Cube service, raise Cube's
   memory limit with it, by about 5 MB per extra model.

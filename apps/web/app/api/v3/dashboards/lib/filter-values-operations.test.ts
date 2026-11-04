@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import {
   applyV3OperationRateLimit,
+  getV3RateLimitPrincipal,
   reserveV3OperationRateLimit,
 } from "@/app/api/v3/lib/operation-rate-limit";
 import { cache } from "@/lib/cache";
@@ -32,6 +33,7 @@ vi.mock("./chart-data-operations", () => ({
 }));
 vi.mock("@/app/api/v3/lib/operation-rate-limit", () => ({
   applyV3OperationRateLimit: vi.fn(async () => null),
+  getV3RateLimitPrincipal: vi.fn(() => "clus000000000000000000001"),
   reserveV3OperationRateLimit: vi.fn(async () => ({ settle: settleMock })),
 }));
 vi.mock("@/app/api/v3/charts/lib/data-operations", async (importOriginal) => ({
@@ -328,6 +330,24 @@ describe("what a list costs", () => {
     expect([first.status, second.status]).toEqual([200, 200]);
     expect(await second.json()).toEqual(await first.json());
     expect(executeTenantScopedQuery).toHaveBeenCalledTimes(2);
+  });
+
+  test("two principals asking for the same list at once each reserve their own budget", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([chartOf(1, { measures: [COUNT] }, DS(1)), chartOf(2, { measures: [COUNT] }, DS(2))]) as never
+    );
+    vi.mocked(executeTenantScopedQuery).mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return [{ [SOURCE]: "Web" }] as never;
+    });
+    vi.mocked(getV3RateLimitPrincipal)
+      .mockReturnValueOnce("clus000000000000000000001")
+      .mockReturnValueOnce("clus000000000000000000002");
+
+    const [first, second] = await Promise.all([list(SOURCE_FILTER.id), list(SOURCE_FILTER.id)]);
+
+    expect([first.status, second.status]).toEqual([200, 200]);
+    expect(reserveV3OperationRateLimit).toHaveBeenCalledTimes(2);
   });
 
   test("while another instance builds the list, its cached result is waited for instead of asking Cube", async () => {
