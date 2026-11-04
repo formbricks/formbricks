@@ -70,6 +70,7 @@ export const WorkspaceAndOrgSwitch = ({
             isAccessControlAllowed={isAccessControlAllowed}
             isEnvironmentBreadcrumbVisible={false}
             isMembershipPending={isMembershipPending}
+            membershipRole={membershipRole}
           />
         )}
       </BreadcrumbList>

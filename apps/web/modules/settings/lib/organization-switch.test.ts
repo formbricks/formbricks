@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getOrganizationSwitchPath } from "./organization-switch";
+import { getOrganizationSwitchPath, getWorkspaceHomePath } from "./organization-switch";
 
 describe("getOrganizationSwitchPath", () => {
   test("picking the current organization opens its settings", () => {
@@ -28,5 +28,21 @@ describe("getOrganizationSwitchPath", () => {
         membershipRole: "dashboard_viewer",
       })
     ).toBe("/organizations/org1/");
+  });
+});
+
+describe("getWorkspaceHomePath", () => {
+  test("a Dashboard viewer's workspace home is its dashboard list", () => {
+    expect(getWorkspaceHomePath("dashboard_viewer", "ws1")).toBe("/workspaces/ws1/dashboards");
+  });
+
+  test("a Billing member goes through the workspace route, which sends it to billing", () => {
+    expect(getWorkspaceHomePath("billing", "ws1")).toBe("/workspaces/ws1/");
+  });
+
+  test("everyone else lands on the surveys", () => {
+    for (const role of ["owner", "manager", "member", undefined] as const) {
+      expect(getWorkspaceHomePath(role, "ws1")).toBe("/workspaces/ws1/surveys");
+    }
   });
 });

@@ -19,3 +19,14 @@ export const getOrganizationSwitchPath = ({
   organizationId === currentOrganizationId && membershipRole !== "dashboard_viewer"
     ? `/organizations/${organizationId}/settings/general`
     : `/organizations/${organizationId}/`;
+
+/**
+ * Where a workspace's home is for someone of `role` — the one rule for the main navigation's home link,
+ * the workspace switchers and the workspace breadcrumb. A Dashboard viewer only has dashboards
+ * (ADR-0023); a Billing member goes through the workspace route, which sends it to billing.
+ */
+export const getWorkspaceHomePath = (role: TOrganizationRole | undefined, workspaceId: string): string => {
+  if (role === "dashboard_viewer") return `/workspaces/${workspaceId}/dashboards`;
+  if (role === "billing") return `/workspaces/${workspaceId}/`;
+  return `/workspaces/${workspaceId}/surveys`;
+};

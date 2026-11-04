@@ -38,7 +38,7 @@ import {
 } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
-import { getOrganizationSwitchPath } from "@/modules/settings/lib/organization-switch";
+import { getOrganizationSwitchPath, getWorkspaceHomePath } from "@/modules/settings/lib/organization-switch";
 import { Badge } from "@/modules/ui/components/badge";
 import {
   DropdownMenu,
@@ -319,17 +319,12 @@ export const MainNavigation = ({
 
   const getMainNavigationLink = () => {
     if (isBilling) return getBillingFallbackPath(organization.id, isFormbricksCloud);
-    if (isDashboardViewer) return `/workspaces/${workspace.id}/dashboards`;
-    return `/workspaces/${workspace.id}/surveys/`;
+    return getWorkspaceHomePath(membershipRole, workspace.id);
   };
   const mainNavigationLink = getMainNavigationLink();
 
   const handleWorkspaceChange = (workspaceId: string) => {
-    const workspaceHome = isDashboardViewer ? "dashboards" : "surveys";
-    const targetPath =
-      workspaceId === workspace.id
-        ? `/workspaces/${workspace.id}/${workspaceHome}`
-        : `/workspaces/${workspaceId}/${isDashboardViewer ? "dashboards" : ""}`;
+    const targetPath = getWorkspaceHomePath(membershipRole, workspaceId);
     startTransition(() => {
       setIsWorkspaceDropdownOpen(false);
       router.push(targetPath);
