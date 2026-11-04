@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import {
+  applyV3OperationRateLimit,
+  reserveV3OperationRateLimit,
+} from "@/app/api/v3/lib/operation-rate-limit";
 import { cache } from "@/lib/cache";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { MAX_DASHBOARD_FILTER_PICKS_CHARS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
@@ -24,13 +28,17 @@ vi.mock("./chart-data-operations", () => ({
   authorizeDashboardRead: vi.fn(),
   refuseUnlessDashboardDatasetReadable: vi.fn(),
 }));
+vi.mock("@/app/api/v3/lib/operation-rate-limit", () => ({
+  applyV3OperationRateLimit: vi.fn(async () => null),
+  reserveV3OperationRateLimit: vi.fn(async () => ({ settle: settleMock })),
+}));
 vi.mock("@/app/api/v3/charts/lib/data-operations", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/app/api/v3/charts/lib/data-operations")>()),
-  applyChartQueryRateLimit: vi.fn(async () => null),
   withChartQuerySlot: vi.fn((_context: unknown, run: () => Promise<Response>) => run()),
   getOrganizationReportingTimeZone: vi.fn(async () => "UTC"),
 }));
-vi.mock("@/lib/cache", () => ({ cache: { get: vi.fn(), set: vi.fn() } }));
+vi.mock("@/lib/cache", () => ({ cache: { get: vi.fn(), set: vi.fn(), tryLock: vi.fn(), del: vi.fn() } }));
+const { settleMock } = vi.hoisted(() => ({ settleMock: vi.fn(async () => undefined) }));
 vi.mock("@/modules/ee/analysis/api/lib/cube-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/analysis/api/lib/cube-client")>()),
   executeTenantScopedQuery: vi.fn(),
@@ -111,6 +119,10 @@ beforeEach(() => {
   vi.mocked(getDatasetFieldMatcher).mockResolvedValue(() => true);
   vi.mocked(cache.get).mockResolvedValue({ ok: true, data: null } as never);
   vi.mocked(cache.set).mockResolvedValue({ ok: true } as never);
+  vi.mocked(cache.tryLock).mockResolvedValue({ ok: true, data: true } as never);
+  vi.mocked(cache.del).mockResolvedValue({ ok: true } as never);
+  vi.mocked(applyV3OperationRateLimit).mockResolvedValue(null);
+  vi.mocked(reserveV3OperationRateLimit).mockResolvedValue({ settle: settleMock });
   vi.mocked(executeTenantScopedQuery).mockResolvedValue([] as never);
 });
 
@@ -222,5 +234,113 @@ describe("a top-N chart (S6)", () => {
     });
     expect(executeTenantScopedQuery).toHaveBeenCalledTimes(1);
     expect(vi.mocked(executeTenantScopedQuery).mock.calls[0][0].query).toMatchObject({ limit: 1 });
+  });
+});
+
+describe("what a list costs", () => {
+  const DS = (n: number) => `clds${String(n).padStart(21, "0")}`;
+  const topN = (n: number, datasetId = DS(1)) =>
+    chartOf(n, { measures: [COUNT], dimensions: ["FeedbackRecords.metadataCountry"], limit: 5 }, datasetId);
+  const LIST = { values: [{ value: "Web" }], hasMore: false };
+
+  test("the default API budget is charged before the cache is read, so a cached list is charged too", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(rowWith([chartOf(1, { measures: [COUNT] })]) as never);
+    vi.mocked(cache.get).mockResolvedValue({ ok: true, data: LIST } as never);
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(200);
+    expect(vi.mocked(applyV3OperationRateLimit).mock.calls[0][0]).toMatchObject({
+      config: expect.objectContaining({ namespace: "api:v3" }),
+    });
+    expect(vi.mocked(applyV3OperationRateLimit).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(cache.get).mock.invocationCallOrder[0]
+    );
+    expect(reserveV3OperationRateLimit).not.toHaveBeenCalled();
+
+    vi.mocked(applyV3OperationRateLimit).mockResolvedValueOnce(new Response(null, { status: 429 }));
+    vi.mocked(cache.get).mockClear();
+    expect((await list(SOURCE_FILTER.id)).status).toBe(429);
+    expect(cache.get).not.toHaveBeenCalled();
+  });
+
+  test("a miss reserves one chart-query unit per Cube query it may run, and gives back the rest", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([
+        chartOf(1, { measures: [COUNT] }, DS(1)),
+        chartOf(2, { measures: [COUNT] }, DS(2)),
+        topN(3),
+      ]) as never
+    );
+    // The top-N chart shows no group, so its second step never runs.
+    expect((await list(SOURCE_FILTER.id)).status).toBe(200);
+
+    expect(vi.mocked(reserveV3OperationRateLimit).mock.calls[0][0]).toMatchObject({
+      config: expect.objectContaining({ namespace: "api:v3:charts:queries" }),
+      requested: 4,
+    });
+    expect(executeTenantScopedQuery).toHaveBeenCalledTimes(3);
+    expect(settleMock).toHaveBeenCalledWith(3);
+  });
+
+  test("a spent chart-query budget answers 429 before Cube", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(rowWith([chartOf(1, { measures: [COUNT] })]) as never);
+    vi.mocked(reserveV3OperationRateLimit).mockResolvedValueOnce({
+      refused: new Response(null, { status: 429 }),
+    });
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(429);
+    expect(executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  test("two requests for the same list at once run its Cube queries once", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([chartOf(1, { measures: [COUNT] }, DS(1)), chartOf(2, { measures: [COUNT] }, DS(2))]) as never
+    );
+    vi.mocked(executeTenantScopedQuery).mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return [{ [SOURCE]: "Web" }] as never;
+    });
+
+    const [first, second] = await Promise.all([list(SOURCE_FILTER.id), list(SOURCE_FILTER.id)]);
+
+    expect([first.status, second.status]).toEqual([200, 200]);
+    expect(await second.json()).toEqual(await first.json());
+    expect(executeTenantScopedQuery).toHaveBeenCalledTimes(2);
+  });
+
+  test("while another instance builds the list, its cached result is waited for instead of asking Cube", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(rowWith([chartOf(1, { measures: [COUNT] })]) as never);
+    vi.mocked(cache.tryLock).mockResolvedValue({ ok: true, data: false } as never);
+    vi.mocked(cache.get)
+      .mockResolvedValueOnce({ ok: true, data: null } as never)
+      .mockResolvedValueOnce({ ok: true, data: null } as never)
+      .mockResolvedValue({ ok: true, data: LIST } as never);
+
+    const response = await list(SOURCE_FILTER.id);
+
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { data: unknown }).data).toEqual(LIST);
+    expect(executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  test("at most five of one list's Cube queries run at once, merged and bounded together", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([
+        ...[1, 2, 3, 4].map((n) => chartOf(n, { measures: [COUNT] }, DS(n))),
+        ...[5, 6, 7, 8].map((n) => topN(n, DS(n))),
+      ]) as never
+    );
+    let running = 0;
+    let most = 0;
+    vi.mocked(executeTenantScopedQuery).mockImplementation(async () => {
+      running += 1;
+      most = Math.max(most, running);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      running -= 1;
+      return [] as never;
+    });
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(200);
+    expect(executeTenantScopedQuery).toHaveBeenCalledTimes(8);
+    expect(most).toBe(5);
   });
 });

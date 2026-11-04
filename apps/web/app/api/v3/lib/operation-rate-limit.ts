@@ -1,7 +1,11 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import {
+  applyRateLimit,
+  reserveRateLimitUsage,
+  settleRateLimitUsage,
+} from "@/modules/core/rate-limit/helpers";
 import { acquireInFlightSlot, releaseInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { problemTooManyRequests } from "./response";
@@ -49,6 +53,48 @@ export const applyV3OperationRateLimit = async ({
       error instanceof TooManyRequestsError ? error.retryAfter : undefined,
       instance
     );
+  }
+};
+
+/**
+ * Reserve `requested` units of an operation's own budget at once — an operation that fans out into several
+ * queries charges each one — and give back what it did not use with `settle`. Returns the standard 429
+ * problem when the budget cannot cover them. Nothing is reserved for a caller without a principal, or for
+ * zero units; `settle` is then a no-op.
+ */
+export const reserveV3OperationRateLimit = async ({
+  config,
+  authentication,
+  requestId,
+  instance,
+  requested,
+}: {
+  config: TRateLimitConfig;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance: string;
+  requested: number;
+}): Promise<{ refused: Response } | { settle: (used: number) => Promise<void> }> => {
+  const principal = getV3RateLimitPrincipal(authentication);
+  if (!principal || requested <= 0) return { settle: async () => undefined };
+
+  try {
+    const reservation = await reserveRateLimitUsage(config, principal, requested);
+    return {
+      settle: (used) => settleRateLimitUsage(reservation, Math.min(Math.max(used, 0), requested)),
+    };
+  } catch (error) {
+    logger
+      .withContext({ requestId })
+      .warn({ statusCode: 429, namespace: config.namespace, requested }, "V3 operation rate limit exceeded");
+    return {
+      refused: problemTooManyRequests(
+        requestId,
+        error instanceof Error ? error.message : "Rate limit exceeded",
+        error instanceof TooManyRequestsError ? error.retryAfter : undefined,
+        instance
+      ),
+    };
   }
 };
 

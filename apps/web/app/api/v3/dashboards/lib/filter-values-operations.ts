@@ -1,12 +1,12 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { createCacheKey } from "@formbricks/cache";
+import type { CacheKey as TCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import type { TV3ChartOperationContext } from "@/app/api/v3/charts/lib/access";
 import {
   DATA_ROUTE_DATE_RANGE_NAMES,
-  applyChartQueryRateLimit,
   getOrganizationReportingTimeZone,
   requestedDateRangeOf,
   withChartQuerySlot,
@@ -14,13 +14,19 @@ import {
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
+  applyV3OperationRateLimit,
+  reserveV3OperationRateLimit,
+} from "@/app/api/v3/lib/operation-rate-limit";
+import {
   problemBadGateway,
   problemUnauthorized,
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { cache } from "@/lib/cache";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
@@ -59,8 +65,40 @@ export const FILTER_VALUES_CACHE_TTL_MS = 60_000;
  */
 export const MAX_FILTER_VALUE_QUERIES = 40;
 
-/** How many of one list's Cube queries run at once. */
+/** How many of one list's Cube queries run at once, its merged and its bounded charts' queries together. */
 const FILTER_VALUE_QUERY_CONCURRENCY = 5;
+
+/** How long one instance holds the right to build a list others wait for: longer than a Cube query may run. */
+const FILTER_VALUES_LOCK_MS = 70_000;
+
+/** How long a request waits for another instance's list before building it itself, and how often it looks. */
+const FILTER_VALUES_WAIT_MS = 2_000;
+const FILTER_VALUES_POLL_MS = 100;
+
+/** Lists being built in this process, so requests for the same list at once ask Cube once. */
+const inFlight = new Map<string, Promise<TBuiltList>>();
+
+type TBuiltList = { data: TV3DashboardFilterValues } | { refused: Response };
+
+const runOnce = (key: string, build: () => Promise<TBuiltList>): Promise<TBuiltList> => {
+  const running = inFlight.get(key);
+  if (running) return running;
+  const started = build().finally(() => inFlight.delete(key));
+  inFlight.set(key, started);
+  return started;
+};
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** The list another instance is building, once it lands in the cache within `FILTER_VALUES_WAIT_MS`. */
+const waitForCachedList = async (cacheKey: TCacheKey): Promise<TV3DashboardFilterValues | null> => {
+  for (let waited = 0; waited < FILTER_VALUES_WAIT_MS; waited += FILTER_VALUES_POLL_MS) {
+    await pause(FILTER_VALUES_POLL_MS);
+    const cached = await cache.get<TV3DashboardFilterValues>(cacheKey);
+    if (cached.ok && cached.data) return cached.data;
+  }
+  return null;
+};
 
 const filterProblem = (
   name: string,
@@ -87,7 +125,7 @@ const valuesCacheKey = (parts: {
   otherPicks: Record<string, string[]>;
   dateRange: unknown;
   search?: string;
-}) => {
+}): { cacheKey: TCacheKey; lockKey: TCacheKey } => {
   const digest = createHash("sha256")
     .update(
       JSON.stringify([
@@ -100,7 +138,10 @@ const valuesCacheKey = (parts: {
       ])
     )
     .digest("hex");
-  return createCacheKey.custom("analytics", parts.dashboardId, `filter-values:${digest}`);
+  return {
+    cacheKey: createCacheKey.custom("analytics", parts.dashboardId, `filter-values:${digest}`),
+    lockKey: createCacheKey.custom("analytics", parts.dashboardId, `filter-values-lock:${digest}`),
+  };
 };
 
 /**
@@ -112,8 +153,12 @@ const valuesCacheKey = (parts: {
  * this filter's own pick — and by a case-insensitive `search`. Up to 100, alphabetical, `hasMore` when more
  * match. A filter the dashboard does not have, or one that takes a typed value, answers 422.
  *
- * Needs read access to the dashboard and to each Feedback Dataset whose charts have the field. Answered
- * from a 60-second cache shared by every reader; only a cache miss spends from the chart-query budget.
+ * Needs read access to the dashboard and to each Feedback Dataset whose charts have the field. Every
+ * request spends from the default v3 budget first, before the cache is read, so a cached list is charged
+ * too. Answered from a 60-second cache shared by every reader; a miss also reserves one unit of the
+ * chart-query budget per Cube query it may run and gives back the ones it did not. A miss is built once:
+ * requests for the same list in this process share one build, and across instances the one holding the
+ * list's lock builds it while the others wait briefly for its cached result.
  */
 export async function listV3DashboardFilterValues({
   dashboardId,
@@ -129,6 +174,10 @@ export async function listV3DashboardFilterValues({
   const log = logger.withContext({ requestId, dashboardId, filterId });
 
   try {
+    // Charged here rather than by the route wrapper, so an MCP call pays the same, and never twice.
+    const limited = await applyV3OperationRateLimit({ config: rateLimitConfigs.api.v3, ...context });
+    if (limited) return limited;
+
     const row = await getDashboardChartsRow(dashboardId);
     const access = await authorizeDashboardRead(row, context);
     if (access instanceof Response) return access;
@@ -200,7 +249,7 @@ export async function listV3DashboardFilterValues({
 
     const picks = keepCurrentPicks(filters, query.picks ?? {});
     const { [filter.id]: _ownPick, ...otherPicks } = picks;
-    const cacheKey = valuesCacheKey({
+    const { cacheKey, lockKey } = valuesCacheKey({
       dashboardId,
       updatedAt: row.updatedAt,
       charts: row.widgets.map(({ chart }) => ({ id: chart.id, updatedAt: chart.updatedAt })),
@@ -237,9 +286,6 @@ export async function listV3DashboardFilterValues({
       });
     }
 
-    const limited = await applyChartQueryRateLimit(context);
-    if (limited) return limited;
-
     const run = async ({ datasetId, query: cubeQuery }: TFilterValueQuery): Promise<unknown[]> => {
       const rows = await executeTenantScopedQuery({
         query: cubeQuery,
@@ -252,33 +298,71 @@ export async function listV3DashboardFilterValues({
       return Array.isArray(rows) ? (rows as unknown[]) : [];
     };
 
-    return await withChartQuerySlot(context, async () => {
-      // First the merged value queries and the bounded charts' own queries; then, for each bounded chart
-      // not grouped by the field, its values within the groups it showed (S6).
-      const [results, groupRows] = await Promise.all([
-        mapWithConcurrency(queries, FILTER_VALUE_QUERY_CONCURRENCY, run),
-        mapWithConcurrency(groups, FILTER_VALUE_QUERY_CONCURRENCY, run),
-      ]);
-      const resolved = groups.map((group, index) =>
-        resolveBoundedChartValues({ filter, group, rows: groupRows[index], search: query.search })
-      );
-      const secondStep = resolved.flatMap((outcome) => (outcome.type === "query" ? [outcome.query] : []));
-      const groupValues = resolved.flatMap((outcome) =>
-        outcome.type === "values" ? [outcome.values.map((value) => ({ [filter.field]: value }))] : []
-      );
-      const secondResults = await mapWithConcurrency(secondStep, FILTER_VALUE_QUERY_CONCURRENCY, run);
+    const build = async (): Promise<TBuiltList> => {
+      const reserved = await reserveV3OperationRateLimit({
+        config: rateLimitConfigs.api.v3ChartQueries,
+        ...context,
+        requested: queries.length + 2 * groups.length,
+      });
+      if ("refused" in reserved) return reserved;
 
-      const data: TV3DashboardFilterValues = mergeFilterValues(filter.field, [
-        ...results,
-        ...groupValues,
-        ...secondResults,
-      ]);
-      const stored = await cache.set(cacheKey, data, FILTER_VALUES_CACHE_TTL_MS);
-      if (!stored.ok) log.warn({ error: stored.error }, "Could not cache a dashboard filter's values");
-      return successResponse(data, { requestId });
+      let ran = 0;
+      const counted = (query: TFilterValueQuery) => {
+        ran += 1;
+        return run(query);
+      };
+      try {
+        // First the merged value queries and the bounded charts' own queries, sharing one concurrency
+        // limit; then, for each bounded chart not grouped by the field, its values within its groups.
+        const firstStep = await mapWithConcurrency(
+          [...queries, ...groups],
+          FILTER_VALUE_QUERY_CONCURRENCY,
+          counted
+        );
+        const results = firstStep.slice(0, queries.length);
+        const groupRows = firstStep.slice(queries.length);
+        const resolved = groups.map((group, index) =>
+          resolveBoundedChartValues({ filter, group, rows: groupRows[index], search: query.search })
+        );
+        const secondStep = resolved.flatMap((outcome) => (outcome.type === "query" ? [outcome.query] : []));
+        const groupValues = resolved.flatMap((outcome) =>
+          outcome.type === "values" ? [outcome.values.map((value) => ({ [filter.field]: value }))] : []
+        );
+        const secondResults = await mapWithConcurrency(secondStep, FILTER_VALUE_QUERY_CONCURRENCY, counted);
+
+        const data: TV3DashboardFilterValues = mergeFilterValues(filter.field, [
+          ...results,
+          ...groupValues,
+          ...secondResults,
+        ]);
+        const stored = await cache.set(cacheKey, data, FILTER_VALUES_CACHE_TTL_MS);
+        if (!stored.ok) log.warn({ error: stored.error }, "Could not cache a dashboard filter's values");
+        return { data };
+      } finally {
+        await reserved.settle(ran);
+      }
+    };
+
+    const built = await withChartQuerySlot(context, async () => {
+      const outcome = await runOnce(cacheKey, async () => {
+        const locked = await cache.tryLock(lockKey, "1", FILTER_VALUES_LOCK_MS);
+        if (locked.ok && !locked.data) {
+          const waited = await waitForCachedList(cacheKey);
+          if (waited) return { data: waited };
+        }
+        try {
+          return await build();
+        } finally {
+          if (locked.ok && locked.data) await cache.del([lockKey]);
+        }
+      });
+      // A refusal is shared by every request that joined the build, so each sends its own copy.
+      return "refused" in outcome ? outcome.refused.clone() : successResponse(outcome.data, { requestId });
     });
+    return built;
   } catch (error) {
     if (error instanceof CubeQueryError) {
+      log.warn(loggableError(error), "A dashboard filter's value lookup failed in Cube");
       return problemBadGateway(
         requestId,
         error.timedOut

@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
+import { reserveRateLimitUsage, settleRateLimitUsage } from "@/modules/core/rate-limit/helpers";
 import { acquireInFlightSlot, releaseInFlightSlot } from "@/modules/core/rate-limit/in-flight";
-import { withV3OperationSlot } from "./operation-rate-limit";
+import { reserveV3OperationRateLimit, withV3OperationSlot } from "./operation-rate-limit";
 import type { TV3Authentication } from "./types";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn() })) },
 }));
-vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyRateLimit: vi.fn(),
+  reserveRateLimitUsage: vi.fn(),
+  settleRateLimitUsage: vi.fn(),
+}));
 vi.mock("@/modules/core/rate-limit/in-flight", () => ({
   acquireInFlightSlot: vi.fn(),
   releaseInFlightSlot: vi.fn(),
@@ -73,5 +79,47 @@ describe("withV3OperationSlot", () => {
         .status
     ).toBe(200);
     expect(acquireInFlightSlot).not.toHaveBeenCalled();
+  });
+});
+
+describe("reserveV3OperationRateLimit", () => {
+  const budget = { interval: 60, allowedPerInterval: 600, namespace: "api:v3:charts:queries" };
+  const reservation = { key: "w", requested: 7, settled: false } as never;
+
+  test("reserves the units asked for, and settles to what was used", async () => {
+    vi.mocked(reserveRateLimitUsage).mockResolvedValueOnce(reservation);
+
+    const reserved = await reserveV3OperationRateLimit({ ...slotContext, config: budget, requested: 7 });
+
+    expect(reserveRateLimitUsage).toHaveBeenCalledWith(budget, "user_1", 7);
+    expect("refused" in reserved).toBe(false);
+    if (!("settle" in reserved)) throw new Error("expected a reservation");
+    await reserved.settle(3);
+    expect(settleRateLimitUsage).toHaveBeenCalledWith(reservation, 3);
+  });
+
+  test("answers 429 with the limiter's Retry-After when the budget is spent", async () => {
+    vi.mocked(reserveRateLimitUsage).mockRejectedValueOnce(
+      new TooManyRequestsError("Rate limit exceeded", 12)
+    );
+
+    const reserved = await reserveV3OperationRateLimit({ ...slotContext, config: budget, requested: 7 });
+
+    if (!("refused" in reserved)) throw new Error("expected a refusal");
+    expect(reserved.refused.status).toBe(429);
+    expect(reserved.refused.headers.get("Retry-After")).toBe("12");
+  });
+
+  test("reserves nothing for a caller with no principal, and nothing for zero units", async () => {
+    const anonymous = await reserveV3OperationRateLimit({
+      ...slotContext,
+      authentication: null as never,
+      config: budget,
+      requested: 3,
+    });
+    const nothing = await reserveV3OperationRateLimit({ ...slotContext, config: budget, requested: 0 });
+
+    expect(reserveRateLimitUsage).not.toHaveBeenCalled();
+    expect("settle" in anonymous && "settle" in nothing).toBe(true);
   });
 });
