@@ -88,6 +88,16 @@ const TONE_ICON: Record<TFlowOutlineTone, string> = {
   ending: "size-6 bg-red-600",
 };
 
+/** The line between an open row's header and its settings: the card's own outline colour. */
+const TONE_DIVIDER: Record<TFlowOutlineTone, string> = {
+  block: "border-slate-200",
+  jump: "border-blue-500",
+  setValue: "border-emerald-500",
+  requireAnswer: "border-violet-500",
+  markLowQuality: "border-orange-500",
+  ending: "border-red-300",
+};
+
 /** The header's hover tint: a block card is white, so a white wash on it would not show. */
 const TONE_HOVER: Record<TFlowOutlineTone, string> = {
   block: "hover:bg-slate-50",
@@ -207,7 +217,12 @@ export const FlowOutlineRow = ({
         {/* Rounded to the card's inner corner (its radius less its border) rather than clipped by the
             card: overflow-hidden would also cut the focus rings at the card's edges. */}
         {isOpen && details && (
-          <div className="rounded-b-[calc(0.5rem-1px)] border-t border-slate-200 bg-white px-3 py-3">
+          <div
+            className={cn(
+              "rounded-b-[calc(0.5rem-1px)] border-t bg-white px-3 py-3",
+              // The line under the header is the card's outline colour, red when the row is flagged.
+              isInvalid ? "border-red-400" : TONE_DIVIDER[tone]
+            )}>
             {details}
           </div>
         )}
