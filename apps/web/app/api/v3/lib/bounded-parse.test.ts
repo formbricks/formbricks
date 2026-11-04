@@ -174,10 +174,11 @@ describe("boundedSchema", () => {
       expect(issuesOf(element.safeParse(input))).toHaveLength(1);
     });
 
+    // The best fit is declared last, so declaration order alone would report the wrong branch.
     test("reports only the best-fitting branch of a plain union", () => {
       const condition = z.union([
-        z.object({ id: z.string(), operator: z.string(), children: z.array(z.string()) }),
         z.object({ id: z.string(), connector: z.string(), conditions: z.array(z.unknown()) }),
+        z.object({ id: z.string(), operator: z.string(), children: z.array(z.string()) }),
       ]);
 
       const issues = issuesOf(boundedSchema(condition).safeParse({ id: "c", ...big("a") }));
@@ -219,14 +220,17 @@ describe("boundedSchema", () => {
       expect(checks).toBeLessThan(500);
     });
 
-    test.each([
-      ["a record", z.union([z.object({ a: z.string() }), z.record(z.string(), z.number())])],
+    const bigRecord = () => Object.fromEntries(entries(300, (index) => [`k${index}`, index]));
+
+    test.each<[string, z.ZodType, unknown]>([
+      ["a record", z.union([z.object({ a: z.string() }), z.record(z.string(), z.number())]), bigRecord()],
       [
         "a preprocessed branch",
         z.union([
           z.object({ a: z.string() }),
           z.preprocess((value) => value, z.record(z.string(), z.number())),
         ]),
+        bigRecord(),
       ],
       [
         "an optional literal",
@@ -234,13 +238,9 @@ describe("boundedSchema", () => {
           z.object({ a: z.string() }),
           z.object({ kind: z.literal("x").optional(), values: z.array(z.number()) }),
         ]),
+        { values: entries(300, (index) => index) },
       ],
-    ])("accepts a big value valid only for %s branch", (_name, schema) => {
-      const value =
-        _name === "an optional literal"
-          ? { values: entries(300, (index) => index) }
-          : Object.fromEntries(entries(300, (index) => [`k${index}`, index]));
-
+    ])("accepts a big value valid only for %s branch", (_name, schema, value) => {
       expect(schema.safeParse(value).success).toBe(true);
       expect(boundedSchema(schema).safeParse(value).success).toBe(true);
     });
@@ -269,6 +269,106 @@ describe("boundedSchema", () => {
 
       expect(checks).toBeLessThan((depth + 1) * 300 * 6);
     });
+  });
+
+  // Each side of an intersection is walked once per value: a recursive one was walked once per side at
+  // every level, 2^depth.
+  test("walks a recursive intersection in linear time", () => {
+    let checks = 0;
+    const leaf = z.string().superRefine(() => {
+      checks += 1;
+    });
+    type TNode = { children: string[]; next?: TNode };
+    const node: z.ZodType<TNode> = z.lazy(() =>
+      z.object({ children: z.array(leaf), next: node.optional() }).and(z.object({ children: z.array(leaf) }))
+    );
+    const depth = 14;
+    const build = (level: number): unknown => ({
+      children: entries(300, () => "ok"),
+      ...(level < depth ? { next: build(level + 1) } : { next: 0 }),
+    });
+
+    boundedSchema(node).safeParse(build(0));
+
+    expect(checks).toBeLessThan((depth + 1) * 300 * 6);
+  });
+
+  // Where Zod accepts something the walk could misjudge on its own, the guard defers to Zod.
+  describe("agrees with Zod above the threshold", () => {
+    const padding = { pad: entries(300, (index) => index) };
+    const withPad = (shape: Record<string, z.ZodType>) => z.object({ ...shape, pad: z.array(z.number()) });
+    const cyclic = () => {
+      const value: Record<string, unknown> = { a: "x", ...padding };
+      value.self = value;
+      return value;
+    };
+    type TLoop = { next?: TLoop; pad: number[] };
+    const loop: z.ZodType<TLoop> = z.lazy(() =>
+      z.object({ next: loop.optional(), pad: z.array(z.number()) })
+    );
+    const looped = () => {
+      const value: Record<string, unknown> = { ...padding };
+      value.next = value;
+      return value;
+    };
+
+    test.each<[string, z.ZodType, () => unknown]>([
+      [
+        "a numeric-key record",
+        withPad({ byIndex: z.record(z.number(), z.string()) }),
+        () => ({ byIndex: { 1: "a", 2: "b" }, ...padding }),
+      ],
+      [
+        "a loose record",
+        withPad({ labels: z.looseRecord(z.enum(["a"]), z.string()) }),
+        () => ({ labels: { a: "x", other: 1 }, ...padding }),
+      ],
+      [
+        "a codec",
+        withPad({
+          when: z.codec(z.iso.datetime(), z.date(), {
+            decode: (s) => new Date(s),
+            encode: (d) => d.toISOString(),
+          }),
+        }),
+        () => ({ when: "2026-01-01T00:00:00Z", ...padding }),
+      ],
+      ["an absent exactOptional key", withPad({ note: z.string().exactOptional() }), () => ({ ...padding })],
+      [
+        "a `__proto__` record key",
+        withPad({ labels: z.record(z.string(), z.string()) }),
+        () => ({ labels: JSON.parse('{"__proto__":"x","a":"b"}') as unknown, ...padding }),
+      ],
+      [
+        "a numeric key holding a big value",
+        z.record(z.number(), z.object({ items: z.array(z.number()) })),
+        () => ({ 1: { items: entries(300, (index) => index) } }),
+      ],
+      [
+        "a loose record passing a big value through",
+        z.looseRecord(z.enum(["a"]), z.string()),
+        () => ({ a: "x", other: { items: entries(300, (index) => index) } }),
+      ],
+      ["a value that contains itself", withPad({ a: z.string() }), cyclic],
+      ["a value that contains itself, under a recursive schema", loop, looped],
+    ])("%s", (_name, schema, build) => {
+      expect(boundedSchema(schema).safeParse(build()).success).toBe(schema.safeParse(build()).success);
+    });
+  });
+
+  // A refused key is judged on its own: the big value under it is not parsed whole.
+  test("walks the value under a refused key instead of parsing it whole", () => {
+    let checks = 0;
+    const leaf = z.string().superRefine((_value, ctx) => {
+      checks += 1;
+      ctx.addIssue({ code: "custom", message: "bad" });
+    });
+    const schema = z.record(z.enum(["a"]), z.array(leaf));
+
+    const issues = issuesOf(boundedSchema(schema).safeParse({ b: entries(5000, () => "x") }));
+
+    expect(issues.length).toBeGreaterThan(0);
+    expect(checks).toBe(0);
   });
 
   test("keeps the schema's output side for JSON Schema generation", () => {

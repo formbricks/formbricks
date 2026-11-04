@@ -14,9 +14,10 @@ import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
  * refinement or a string check reports. So the guard never lets Zod run over much at once. It walks the
  * input alongside the schema: a subtree of at most `SMALL_SUBTREE_NODES` nodes is checked whole, with one
  * `validate` (and a parse for its issues only if that fails), while a bigger object, array, record,
- * union or pipe is split into its children. Each node is checked about once (a union may try a few
- * branches), a small subtree builds a bounded number of issues, and the walk stops once it holds the
- * cap, so the work stays proportional to the input plus a capped number of issues, however it is shaped.
+ * union or pipe is split into its children. The walk checks each node about once (a union may try a few
+ * branches, a non-transform pipe parses its input side again), a small subtree builds a bounded number
+ * of issues, and the walk stops once it holds the cap, so the work stays proportional to the input plus a
+ * capped number of issues, however it is shaped. A valid input then gets the schema's own parse as well.
  *
  * What the walk leaves to the schema's own parse is a big container's own checks: an array's length, an
  * object's unknown keys, a refinement across children. They run once the walk finds nothing, and report
@@ -26,6 +27,9 @@ import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
  * both on input that is invalid anyway: a big container whose children fail does not report its own
  * checks, and a big `z.union` reports the branch the value plausibly belongs to rather than one
  * `invalid_union`.
+ *
+ * Above the threshold the walk is stricter than Zod in one known case: an enum-keyed record inside an
+ * intersection, whose extra keys Zod lets the other side accept. None of the v3 request schemas has one.
  */
 
 /** Nodes (objects, arrays and values) a subtree may hold to be checked whole. */
@@ -62,10 +66,16 @@ class IssueSink {
 }
 
 /**
- * Union branches already walked over a value, for the length of one parse. Without it, a chain of values
- * that each plausibly match two branches would be walked once per path down the chain: 2^depth.
+ * State kept for one parse. `trials`: union branches and intersection sides already walked over a value,
+ * without which a chain of values matching two branches would be walked once per path down it (2^depth).
+ * `sizes`: subtree sizes, see `subtreeSize`. `active`: the big values being split right now, so a value
+ * that contains itself is not split forever.
  */
-type TWalk = { trials: WeakMap<object, Map<z.ZodType, IssueSink>>; sizes: WeakMap<object, number> };
+type TWalk = {
+  trials: WeakMap<object, Map<z.ZodType, IssueSink>>;
+  sizes: WeakMap<object, number>;
+  active: WeakMap<object, Set<z.ZodType>>;
+};
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -96,8 +106,7 @@ function subtreeSize(value: unknown, sizes: WeakMap<object, number>): number {
   const stack: TFrame[] = [open(value)];
   let finished = 0;
 
-  while (stack.length > 0) {
-    const frame = stack[stack.length - 1];
+  for (let frame = stack.at(-1); frame !== undefined; frame = stack.at(-1)) {
     if (frame.next < frame.children.length && frame.total <= SMALL_SUBTREE_NODES) {
       const child = frame.children[frame.next];
       frame.next += 1;
@@ -106,10 +115,14 @@ function subtreeSize(value: unknown, sizes: WeakMap<object, number>): number {
         continue;
       }
       const childSize = sizes.get(child);
-      if (childSize === undefined) {
-        stack.push(open(child));
-      } else {
+      if (childSize !== undefined) {
         frame.total += childSize;
+      } else if (stack.length > SMALL_SUBTREE_NODES) {
+        // Each open frame is a node of its own, so this subtree is big already; stopping here also ends
+        // a value that contains itself.
+        frame.total += SMALL_SUBTREE_NODES + 1;
+      } else {
+        stack.push(open(child));
       }
       continue;
     }
@@ -119,7 +132,7 @@ function subtreeSize(value: unknown, sizes: WeakMap<object, number>): number {
     finished = Math.min(frame.total, SMALL_SUBTREE_NODES + 1);
     sizes.set(frame.node, finished);
     stack.pop();
-    const parent = stack[stack.length - 1];
+    const parent = stack.at(-1);
     if (parent) {
       parent.total += finished;
     }
@@ -171,9 +184,9 @@ function requiredKeys(schema: z.ZodObject): string[] {
 
 /**
  * How well `value` fits a union branch: `null` only when a literal field (a discriminator,
- * `objective: "calculate"`) rules it out, else the share of the branch's required keys present. A
- * value valid for an object branch scores 1 there, so walking branches best-first reaches it before any
- * other; a branch this cannot judge (a record, a pipe) scores 0, so it is tried last but never dropped.
+ * `objective: "calculate"`) rules it out, else the share of the branch's required keys present. A value
+ * valid for an object branch scores 1 there, so best-first order reaches it no later than any branch
+ * that scores less; a branch this cannot judge (a record, a pipe) scores 0, so it is never dropped.
  */
 function branchScore(branch: z.ZodType, value: Record<string, unknown>): number | null {
   const schema = unwrap(branch);
@@ -222,7 +235,21 @@ function walk(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: Issu
     checkWhole(schema, value, path, sink);
     return;
   }
+
+  // A big value is always an object. Met again inside itself under the same schema, it is left to the
+  // schema's own parse, which handles cycles; JSON bodies have none, but the guard is a general one.
+  const big = value as object;
+  let schemas = ctx.active.get(big);
+  if (schemas?.has(schema)) {
+    return;
+  }
+  if (!schemas) {
+    schemas = new Set();
+    ctx.active.set(big, schemas);
+  }
+  schemas.add(schema);
   split(schema, value, path, sink, ctx);
+  schemas.delete(schema);
 }
 
 function walkEach(
@@ -243,6 +270,12 @@ function walkEach(
 
 /** A big value: walk its children against the matching part of the schema. */
 function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: IssueSink, ctx: TWalk): void {
+  // A codec is a pipe with its own transform between the sides, which the walk would skip.
+  if (schema instanceof z.ZodCodec) {
+    checkWhole(schema, value, path, sink);
+    return;
+  }
+
   if (schema instanceof z.ZodPipe) {
     splitPipe(schema, value, path, sink, ctx);
     return;
@@ -255,19 +288,7 @@ function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: Iss
   }
 
   if (schema instanceof z.ZodObject && isPlainObject(value)) {
-    const shape = schema.shape as Record<string, z.ZodType>;
-    const catchall = schema.def.catchall as z.ZodType | undefined;
-    const entries = Object.keys(shape).map((key): [PropertyKey, unknown] => [key, value[key]]);
-    // Keys a catchall accepts are entries like any other. A strict object's refusal of extra keys is
-    // its own check, left to the schema's parse (one issue).
-    if (catchall && !(catchall instanceof z.ZodNever)) {
-      for (const key of Object.keys(value)) {
-        if (!Object.hasOwn(shape, key)) {
-          entries.push([key, value[key]]);
-        }
-      }
-    }
-    walkEach(entries, (key) => shape[key as string] ?? catchall, path, sink, ctx);
+    splitObject(schema, value, path, sink, ctx);
     return;
   }
 
@@ -278,25 +299,16 @@ function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: Iss
   }
 
   if (schema instanceof z.ZodRecord && isPlainObject(value)) {
-    const keyType = schema.def.keyType as z.ZodType;
-    const valueType = schema.def.valueType as z.ZodType;
-    for (const [key, entry] of Object.entries(value)) {
-      if (sink.full) {
-        sink.truncated = true;
-        return;
-      }
-      if (keyType.validate(key)) {
-        walk(valueType, entry, [...path, key], sink, ctx);
-      } else {
-        checkWhole(keyType, key, [...path, key], sink);
-      }
-    }
+    splitRecord(schema, value, path, sink, ctx);
     return;
   }
 
-  if (schema instanceof z.ZodIntersection) {
-    walk(schema.def.left as z.ZodType, value, path, sink, ctx);
-    walk(schema.def.right as z.ZodType, value, path, sink, ctx);
+  if (schema instanceof z.ZodIntersection && typeof value === "object" && value !== null) {
+    // Each side through the trial cache: a recursive intersection would otherwise walk the value once
+    // per side at every level, 2^depth.
+    for (const side of [schema.def.left, schema.def.right] as z.ZodType[]) {
+      sink.absorb(trial(side, value, sink.max, ctx), path);
+    }
     return;
   }
 
@@ -307,9 +319,92 @@ function split(schema: z.ZodType, value: unknown, path: PropertyKey[], sink: Iss
 
   // A big value against a schema the walk cannot split: a tuple, a set, a custom check, a union over a
   // big array (a segment filter's `resource`, a static operand's list). It is parsed whole; in the v3
-  // survey schemas each such union stops at its first branch or sits under its own caps (the segment
+  // survey schemas each such union costs about one branch or sits under its own caps (the segment
   // tree's node and depth limits, the show-condition list limit), so the parse stays small.
   checkWhole(schema, value, path, sink);
+}
+
+const absenceCache = new WeakMap<z.ZodType, boolean>();
+
+/** Whether an object with this field may leave its key out, asked of Zod with a one-key object. */
+function absenceAllowed(shape: Record<string, z.ZodType>, key: string): boolean {
+  const field = shape[key];
+  let allowed = absenceCache.get(field);
+  if (allowed === undefined) {
+    allowed = z.object({ [key]: field }).validate({});
+    absenceCache.set(field, allowed);
+  }
+  return allowed;
+}
+
+function splitObject(
+  schema: z.ZodObject,
+  value: Record<string, unknown>,
+  path: PropertyKey[],
+  sink: IssueSink,
+  ctx: TWalk
+): void {
+  const shape = schema.shape as Record<string, z.ZodType>;
+  const catchall = schema.def.catchall as z.ZodType | undefined;
+  // A key the value lacks is judged as Zod does, by its absence, not by `undefined`: they differ for
+  // `exactOptional`.
+  const entries = Object.keys(shape)
+    .filter((key) => Object.hasOwn(value, key) || !absenceAllowed(shape, key))
+    .map((key): [PropertyKey, unknown] => [key, value[key]]);
+  // Keys a catchall accepts are entries like any other. A strict object's refusal of extra keys is its
+  // own check, left to the schema's parse (one issue).
+  if (catchall && !(catchall instanceof z.ZodNever)) {
+    for (const key of Object.keys(value)) {
+      if (!Object.hasOwn(shape, key)) {
+        entries.push([key, value[key]]);
+      }
+    }
+  }
+  walkEach(entries, (key) => shape[key as string] ?? catchall, path, sink, ctx);
+}
+
+const keysOnlyCache = new WeakMap<z.ZodRecord, z.ZodType>();
+
+/** The record with any value allowed, so a parse of it judges keys and nothing else. */
+function keysOnly(schema: z.ZodRecord): z.ZodType {
+  let checker = keysOnlyCache.get(schema);
+  if (!checker) {
+    checker = schema.clone({ ...schema.def, valueType: z.unknown() });
+    keysOnlyCache.set(schema, checker);
+  }
+  return checker;
+}
+
+function splitRecord(
+  schema: z.ZodRecord,
+  value: Record<string, unknown>,
+  path: PropertyKey[],
+  sink: IssueSink,
+  ctx: TWalk
+): void {
+  const keyType = schema.def.keyType as z.ZodType;
+  const valueType = schema.def.valueType as z.ZodType;
+  for (const [key, entry] of Object.entries(value)) {
+    if (sink.full) {
+      sink.truncated = true;
+      return;
+    }
+    if (keyType.validate(key)) {
+      walk(valueType, entry, [...path, key], sink, ctx);
+    } else if (subtreeSize(entry, ctx.sizes) <= SMALL_SUBTREE_NODES) {
+      // Zod may still take it (a numeric key it reads as a number, a loose record, `__proto__`), so the
+      // record judges the one entry.
+      checkWhole(schema, { [key]: entry }, path, sink);
+    } else {
+      // A big entry: Zod's verdict on the key alone, then the value walked like any other.
+      const keyVerdict = keysOnly(schema).safeParse({ [key]: null });
+      if (!keyVerdict.success) {
+        sink.add(keyVerdict.error.issues, path);
+      } else if (schema.def.mode !== "loose") {
+        walk(valueType, entry, [...path, key], sink, ctx);
+      }
+    }
+  }
 }
 
 function splitPipe(
@@ -329,7 +424,9 @@ function splitPipe(
     walk(input, value, path, sink, ctx);
   }
   if (sink.issues.length !== before || sink.full) {
-    // The output side never ran, so whatever it would report is missing from the list.
+    // The output side never ran, so whatever it would report is missing from the list. Zod's own pipe
+    // goes on past an input side that reported only unknown keys (an enclosing intersection may accept
+    // them); this stops there, which can refuse such a value. No v3 request schema has that shape.
     sink.partial = true;
     return;
   }
@@ -345,7 +442,7 @@ function splitPipe(
   walk(schema.def.out as z.ZodType, output.data, path, sink, ctx);
 }
 
-function trial(option: z.ZodType, value: Record<string, unknown>, cap: number, ctx: TWalk): IssueSink {
+function trial(option: z.ZodType, value: object, cap: number, ctx: TWalk): IssueSink {
   let byBranch = ctx.trials.get(value);
   if (!byBranch) {
     byBranch = new Map();
@@ -442,7 +539,7 @@ export function boundedSchema<TSchema extends z.ZodType>(schema: TSchema): z.Zod
     .unknown()
     .transform((value, ctx) => {
       const sink = new IssueSink(V3_INVALID_PARAMS_MAX - 1);
-      walk(schema, value, [], sink, { trials: new WeakMap(), sizes: new WeakMap() });
+      walk(schema, value, [], sink, { trials: new WeakMap(), sizes: new WeakMap(), active: new WeakMap() });
 
       // A pipe goes on past `unrecognized_keys` (zod: an enclosing intersection may still accept the
       // key), so a list of nothing else would hand `z.NEVER` to the schema as its input. When the walk saw
