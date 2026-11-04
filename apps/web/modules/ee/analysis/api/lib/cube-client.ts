@@ -65,15 +65,16 @@ type TScopedCubeQueryInput = {
   source: TCubeQuerySource;
   /**
    * The embedded-data keys for the token. Omitted, `getEmbeddedKeysForQuery` picks them: the dataset's
-   * top keys, plus the fixed bucket of any rarer key the query names. Cube compiles one model per key
-   * set, so the set is kept stable per dataset rather than built per query (S5). Key discovery passes
+   * top keys, plus the fixed bucket of any rarer key the query names (a query naming rarer keys of two
+   * buckets is refused with its `RareEmbeddedKeysConflictError`, passed through as it is). Cube compiles one model per key
+   * set, so the set is kept stable per dataset rather than built per query. Key discovery passes
    * `[]` to run on the plain model.
    */
   embeddedKeys?: readonly string[];
 };
 
 /**
- * The kind of each question the query's answer rules name, from the dataset's surveys (ENG-6894). Cube
+ * The kind of each question the query's answer rules name, from the dataset's surveys. Cube
  * refuses a rule whose question has no kind here; the validator has already refused unknown questions.
  */
 const resolveAnswerKinds = async (
@@ -236,7 +237,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
   try {
     const [embeddedKeys, answerKinds] = await Promise.all([
-      // The dataset's top keys, plus any key the query names outside them (a saved chart's), ENG-6893.
+      // The dataset's top keys, plus the bucket of any rarer key the query names (a saved chart's).
       input.embeddedKeys ??
         getEmbeddedKeysForQuery(
           {

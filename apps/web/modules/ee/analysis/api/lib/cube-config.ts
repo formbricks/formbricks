@@ -33,12 +33,12 @@ export type TCubeTenantScope = {
   actor: TCubeQueryActor;
   source: TCubeQuerySource;
   /**
-   * The embedded-data keys to compile (ENG-6893), in canonical order: the dataset's top keys and at most
+   * The embedded-data keys to compile, in canonical order: the dataset's top keys and at most
    * one fixed bucket of rarer keys (`getEmbeddedKeysForQuery`). Cube compiles one model per dataset and
    * key set from them, so the few sets a dataset uses are each compiled once.
    */
   embeddedKeys?: readonly string[];
-  /** The kind of each question an answer rule in the query names (ENG-6894), which picks its column. */
+  /** The kind of each question an answer rule in the query names, which picks its column. */
   answerKinds?: Readonly<Record<string, TAnswerKind>>;
 };
 

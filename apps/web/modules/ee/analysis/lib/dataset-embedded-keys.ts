@@ -7,25 +7,38 @@ import type { TCubeQueryActor } from "@/modules/ee/analysis/api/lib/cube-config"
 import {
   MAX_EMBEDDED_KEYS,
   MAX_RARE_EMBEDDED_KEYS,
-  MAX_RARE_EMBEDDED_KEYS_CHARS,
+  MAX_RARE_EMBEDDED_KEYS_BYTES,
   collectEmbeddedMemberNames,
-  getEmbeddedKeyTokenChars,
+  getEmbeddedKeyTokenBytes,
   isCompilableEmbeddedKey,
   selectEmbeddedKeys,
 } from "./embedded-data-fields";
 import { getEmbeddedMemberName } from "./embedded-member-name";
 
 /**
- * A Feedback Dataset's embedded-data keys (ENG-6893). Both reads below scan the whole dataset (seconds on
+ * A Feedback Dataset's embedded-data keys. Both reads below scan the whole dataset (seconds on
  * a large one), so each result is kept in Valkey and refreshed in the background once it is older than
  * `EMBEDDED_KEYS_STALE_MS`, under a lock across app instances: a request answers from what is cached and
  * never waits on a rescan. Only a dataset's very first scan is awaited, once per process however many
  * widgets ask at once, and a failed scan is remembered for `FAILED_SCAN_RETRY_MS` so requests do not
- * rescan a dataset Cube cannot answer for (C4).
+ * rescan a dataset Cube cannot answer for.
+ *
+ * Cube compiles one model per dataset and key set, and keeps a bounded number of them, so the key set
+ * changes as rarely as it can: a refresh keeps the previous top keys until a material share of new keys
+ * would enter them (`EMBEDDED_KEYS_MATERIAL_SHIFT`), and the rarer keys fall into buckets fixed by their
+ * hash, so a new rare key reshuffles only its own class.
  */
 
 /** How old a scan may get before a request refreshes it in the background. */
 export const EMBEDDED_KEYS_STALE_MS = 15 * 60 * 1000;
+/**
+ * How many new keys must enter a full top-key set before a refresh replaces it. Fewer, and the previous
+ * set is kept: a key climbing past another one by a few records does not recompile the dataset's models.
+ * A key that would only be added (the set has room) always is.
+ */
+export const EMBEDDED_KEYS_MATERIAL_SHIFT = 10;
+/** How many classes the rarer keys of a dataset are split into, by their member hash. */
+export const RARE_EMBEDDED_KEY_CLASSES = 8;
 /** How long a failed scan is remembered as "no keys" before a request tries again. */
 export const FAILED_SCAN_RETRY_MS = 60 * 1000;
 /** How long an entry is kept at all; a dataset nobody charts for a week is discovered afresh. */
@@ -130,9 +143,27 @@ const refreshInBackground = (lock: string, datasetId: string, scan: () => Promis
   });
 };
 
-const discoverAndStore = (scope: TEmbeddedKeysScope): Promise<string[]> =>
+/**
+ * The top keys a refresh stores, from the previous set and the fresh ranking. The previous set is kept,
+ * with any new key added while there is room, unless `EMBEDDED_KEYS_MATERIAL_SHIFT` or more new keys
+ * would enter the fresh top keys: then the fresh set replaces it.
+ */
+export const stabilizeTopEmbeddedKeys = (
+  previous: readonly string[] | undefined,
+  rankedKeys: readonly unknown[]
+): string[] => {
+  const fresh = selectEmbeddedKeys(rankedKeys);
+  const kept = selectEmbeddedKeys(previous ?? []);
+  if (kept.length === 0) return fresh;
+  const keptSet = new Set(kept);
+  const entering = fresh.filter((key) => !keptSet.has(key));
+  if (entering.length >= EMBEDDED_KEYS_MATERIAL_SHIFT) return fresh;
+  return selectEmbeddedKeys([...kept, ...entering]);
+};
+
+const discoverAndStore = (scope: TEmbeddedKeysScope, previous?: readonly string[]): Promise<string[]> =>
   runOnce(keysCacheKey(scope.datasetId), async () => {
-    const keys = selectEmbeddedKeys(await scanRankedKeys(scope, DISCOVERY_ROW_LIMIT));
+    const keys = stabilizeTopEmbeddedKeys(previous, await scanRankedKeys(scope, DISCOVERY_ROW_LIMIT));
     const stored: TCachedEmbeddedKeys = { keys, refreshedAt: Date.now() };
     await storeOrWarn(keysCacheKey(scope.datasetId), stored, EMBEDDED_KEYS_TTL_MS, scope.datasetId);
     return keys;
@@ -151,7 +182,10 @@ export const getDatasetEmbeddedKeys = async (scope: TEmbeddedKeysScope): Promise
   }
   if (isCachedEmbeddedKeys(cached.data)) {
     if (Date.now() - cached.data.refreshedAt > EMBEDDED_KEYS_STALE_MS) {
-      refreshInBackground(keysLockKey(scope.datasetId), scope.datasetId, () => discoverAndStore(scope));
+      const previous = cached.data.keys;
+      refreshInBackground(keysLockKey(scope.datasetId), scope.datasetId, () =>
+        discoverAndStore(scope, previous)
+      );
     }
     return selectEmbeddedKeys(cached.data.keys);
   }
@@ -242,41 +276,68 @@ const canonicalOrder = (keys: readonly string[]): string[] => [...keys].sort();
 /** The member-name hash of a key: spreads keys evenly and never changes for a key. */
 const keyHash = (key: string): string => getEmbeddedMemberName(key).slice(-8);
 
+/** The class a rare key falls into: its member hash modulo `RARE_EMBEDDED_KEY_CLASSES`. */
+export const getRareEmbeddedKeyClass = (key: string): number =>
+  Number.parseInt(keyHash(key), 16) % RARE_EMBEDDED_KEY_CLASSES;
+
+const byHashThenKey = (a: string, b: string): number => {
+  const byHash = keyHash(a).localeCompare(keyHash(b));
+  if (byHash !== 0) return byHash;
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+};
+
 /**
- * The fixed buckets a dataset's rarer keys fall into (S5): the keys ordered by their member hash, cut into
- * runs of at most `MAX_RARE_EMBEDDED_KEYS` keys and `MAX_RARE_EMBEDDED_KEYS_CHARS` token characters. The
- * same keys always make the same buckets, whatever order they come in.
+ * The fixed buckets a dataset's rarer keys fall into: each key in the class its hash picks, and each class
+ * ordered by hash and cut into runs of at most `MAX_RARE_EMBEDDED_KEYS` keys and
+ * `MAX_RARE_EMBEDDED_KEYS_BYTES` token bytes (a class holds one run unless the dataset has hundreds of
+ * rarer keys). The same keys always make the same buckets, whatever order they come in, and a new key
+ * changes only the buckets of its own class.
  */
 export const groupRareEmbeddedKeys = (rareKeys: readonly string[]): string[][] => {
-  const ordered = [...new Set(rareKeys.filter(isCompilableEmbeddedKey))].sort((a, b) => {
-    const byHash = keyHash(a).localeCompare(keyHash(b));
-    if (byHash !== 0) return byHash;
-    if (a === b) return 0;
-    return a < b ? -1 : 1;
-  });
-  const buckets: string[][] = [];
-  let bucket: string[] = [];
-  let chars = 0;
-  for (const key of ordered) {
-    const keyChars = getEmbeddedKeyTokenChars(key);
-    if (bucket.length >= MAX_RARE_EMBEDDED_KEYS || chars + keyChars > MAX_RARE_EMBEDDED_KEYS_CHARS) {
-      buckets.push(bucket);
-      bucket = [];
-      chars = 0;
-    }
-    bucket.push(key);
-    chars += keyChars;
+  const classes: string[][] = Array.from({ length: RARE_EMBEDDED_KEY_CLASSES }, () => []);
+  for (const key of new Set(rareKeys.filter(isCompilableEmbeddedKey))) {
+    classes[getRareEmbeddedKeyClass(key)].push(key);
   }
-  if (bucket.length > 0) buckets.push(bucket);
+  const buckets: string[][] = [];
+  for (const keys of classes) {
+    let bucket: string[] = [];
+    let bytes = 0;
+    for (const key of keys.sort(byHashThenKey)) {
+      const keyBytes = getEmbeddedKeyTokenBytes(key);
+      if (bucket.length >= MAX_RARE_EMBEDDED_KEYS || bytes + keyBytes > MAX_RARE_EMBEDDED_KEYS_BYTES) {
+        buckets.push(bucket);
+        bucket = [];
+        bytes = 0;
+      }
+      bucket.push(key);
+      bytes += keyBytes;
+    }
+    if (bucket.length > 0) buckets.push(bucket);
+  }
   return buckets;
 };
 
 /**
+ * A query names rarer embedded keys of more than one bucket. One token carries one bucket: carrying the
+ * union would compile a model per combination of buckets, which dashboard picks could multiply at will.
+ * The message names no key.
+ */
+export class RareEmbeddedKeysConflictError extends Error {
+  constructor() {
+    super(
+      "The query uses rarely used embedded-data fields that cannot be combined in one chart. Remove one of them."
+    );
+    this.name = "RareEmbeddedKeysConflictError";
+  }
+}
+
+/**
  * The keys a Cube token carries for `query`, in canonical order. Cube compiles one model per dataset and
- * key set (`contextToAppId`), so the set must not vary from query to query (S5): it is the dataset's top
- * keys, and — when the query names a rarer key (a saved chart whose key grew rarer, or a dashboard filter
- * on one) — that key's whole fixed bucket, so every query naming a key of the bucket shares one model. A
- * query naming rarer keys of several buckets carries just its own rarer keys, within the same caps.
+ * key set (`contextToAppId`), so the set must not vary from query to query: it is the dataset's top keys,
+ * and — when the query names a rarer key (a saved chart whose key grew rarer, or a dashboard filter on
+ * one) — that key's whole fixed bucket, so every query naming a key of the bucket shares one model. A
+ * query naming rarer keys of several buckets is refused with `RareEmbeddedKeysConflictError`.
  */
 export const getEmbeddedKeysForQuery = async (
   scope: TEmbeddedKeysScope,
@@ -291,20 +352,11 @@ export const getEmbeddedKeysForQuery = async (
   if (!members) return canonicalOrder(topKeys);
 
   const top = new Set(topKeys);
-  const namedRare = [
-    ...new Set(outside.flatMap((member) => members[member] ?? []).filter((key) => !top.has(key))),
-  ];
-  if (namedRare.length === 0) return canonicalOrder(topKeys);
+  const named = new Set(outside.flatMap((member) => members[member] ?? []).filter((key) => !top.has(key)));
+  if (named.size === 0) return canonicalOrder(topKeys);
 
   const buckets = groupRareEmbeddedKeys(Object.values(members).filter((key) => !top.has(key)));
-  const named = new Set(namedRare);
   const chosen = buckets.filter((bucket) => bucket.some((key) => named.has(key)));
-  const rare =
-    chosen.length === 1
-      ? chosen[0]
-      : selectEmbeddedKeys(canonicalOrder(namedRare), {
-          maxKeys: MAX_RARE_EMBEDDED_KEYS,
-          maxChars: MAX_RARE_EMBEDDED_KEYS_CHARS,
-        });
-  return canonicalOrder([...topKeys, ...rare]);
+  if (chosen.length > 1) throw new RareEmbeddedKeysConflictError();
+  return canonicalOrder([...topKeys, ...(chosen[0] ?? [])]);
 };

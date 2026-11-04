@@ -851,7 +851,7 @@ describe("executeTenantScopedQuery", () => {
   });
 });
 
-describe("executeTenantScopedQuery token claims (ENG-6893, ENG-6894)", () => {
+describe("executeTenantScopedQuery token claims", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
@@ -926,5 +926,16 @@ describe("executeTenantScopedQuery token claims (ENG-6893, ENG-6894)", () => {
 
     expect(await signedClaims()).not.toHaveProperty("edKeys");
     expect(mockGetEmbeddedKeysForQuery).not.toHaveBeenCalled();
+  });
+
+  test("passes a refusal of the query's embedded keys through as it is, so the route can name it", async () => {
+    const refusal = Object.assign(new Error("cannot be combined"), { name: "RareEmbeddedKeysConflictError" });
+    mockGetEmbeddedKeysForQuery.mockRejectedValueOnce(refusal);
+    const { CubeQueryError, executeTenantScopedQuery } = await import("./cube-client");
+
+    const failure = executeTenantScopedQuery(scopedInput);
+    await expect(failure).rejects.toBe(refusal);
+    await expect(failure).rejects.not.toBeInstanceOf(CubeQueryError);
+    expect(mockLoad).not.toHaveBeenCalled();
   });
 });

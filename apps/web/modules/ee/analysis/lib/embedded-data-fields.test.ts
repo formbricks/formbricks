@@ -2,8 +2,9 @@ import { createRequire } from "node:module";
 import { describe, expect, test, vi } from "vitest";
 import {
   MAX_EMBEDDED_KEYS,
-  MAX_EMBEDDED_KEYS_CHARS,
+  MAX_EMBEDDED_KEYS_BYTES,
   MAX_TOKEN_EMBEDDED_KEYS,
+  MAX_TOKEN_EMBEDDED_KEYS_BYTES,
   collectEmbeddedMemberNames,
   isEmbeddedMemberName,
   selectEmbeddedKeys,
@@ -40,7 +41,7 @@ const AWKWARD_KEYS = [
   "Ünïcödé-Ñame with a very long tail that is cut",
 ];
 
-describe("embedded member names (ENG-6893)", () => {
+describe("embedded member names", () => {
   test("match the names the Cube model compiles, for awkward keys too", () => {
     for (const key of AWKWARD_KEYS) {
       expect(getEmbeddedMemberName(key)).toBe(
@@ -80,25 +81,50 @@ describe("selectEmbeddedKeys", () => {
     expect(selectEmbeddedKeys(ranked)).toEqual(ranked.slice(0, MAX_EMBEDDED_KEYS));
   });
 
-  test("stays within the token's budget as JSON writes the keys, skipping a key that would overflow it", () => {
-    // A quote or backslash takes two characters in the token, which is JSON; a UTF-8 byte count would
-    // undercount the first and overcount accented letters, which JSON carries as one character.
+  const tokenBytes = (keys: readonly string[]) =>
+    keys.reduce((sum, key) => sum + Buffer.byteLength(JSON.stringify(key), "utf8"), 0);
+
+  test("stays within the token's byte budget as JSON writes the keys, skipping a key that would overflow it", () => {
+    // A quote or backslash takes two bytes in the token, which is JSON.
     const quoted = Array.from(
       { length: 100 },
       (_, index) => `${String(index).padStart(3, "0")}${'"'.repeat(60)}`
     );
     const selected = selectEmbeddedKeys(quoted);
-    const chars = selected.reduce((sum, key) => sum + JSON.stringify(key).length, 0);
-    expect(chars).toBeLessThanOrEqual(MAX_EMBEDDED_KEYS_CHARS);
+    expect(tokenBytes(selected)).toBeLessThanOrEqual(MAX_EMBEDDED_KEYS_BYTES);
     expect(selected.length).toBeLessThan(100);
     expect(selected).toEqual(quoted.slice(0, selected.length));
 
-    // 100 realistic keys of 60 characters fit.
+    // 100 realistic ASCII keys of 60 characters fit.
     const realistic = Array.from(
       { length: 100 },
-      (_, index) => `${String(index).padStart(3, "0")}${"é".repeat(57)}`
+      (_, index) => `${String(index).padStart(3, "0")}${"a".repeat(57)}`
     );
     expect(selectEmbeddedKeys(realistic)).toHaveLength(100);
+  });
+
+  test("counts CJK and accented keys in UTF-8 bytes, which is what the token header carries", () => {
+    // 40 CJK characters are 40 JSON characters but 120 bytes: a character count would let 100 through.
+    const cjk = Array.from(
+      { length: 100 },
+      (_, index) => `${String(index).padStart(3, "0")}${"区".repeat(40)}`
+    );
+    const selected = selectEmbeddedKeys(cjk);
+    expect(cjk.reduce((sum, key) => sum + JSON.stringify(key).length, 0)).toBeLessThanOrEqual(
+      MAX_EMBEDDED_KEYS_BYTES
+    );
+    expect(tokenBytes(selected)).toBeLessThanOrEqual(MAX_EMBEDDED_KEYS_BYTES);
+    expect(selected).toHaveLength(Math.floor(MAX_EMBEDDED_KEYS_BYTES / tokenBytes([cjk[0]])));
+  });
+
+  test("the Cube model refuses keys past the token's byte budget too", () => {
+    const cjk = Array.from(
+      { length: MAX_TOKEN_EMBEDDED_KEYS },
+      (_, index) => `${String(index).padStart(3, "0")}${"区".repeat(40)}`
+    );
+    const compiled = cubeConfig.getEmbeddedKeys({ edKeys: cjk });
+    expect(tokenBytes(compiled)).toBeLessThanOrEqual(MAX_TOKEN_EMBEDDED_KEYS_BYTES);
+    expect(compiled).toEqual(cjk.slice(0, Math.floor(MAX_TOKEN_EMBEDDED_KEYS_BYTES / tokenBytes([cjk[0]]))));
   });
 
   test("drops keys holding C0 or C1 control characters, as the Cube model does", () => {

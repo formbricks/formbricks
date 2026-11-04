@@ -1,5 +1,5 @@
 /**
- * Embedded data as chart fields (ENG-6893): each Feedback Dataset's most frequent embedded-data keys
+ * Embedded data as chart fields: each Feedback Dataset's most frequent embedded-data keys
  * become `FeedbackRecords.ed_<slug>_<hash>` dimensions in that dataset's Cube model. The key list
  * travels in the Cube token, so this module decides which keys a dataset compiles; docker/cube/cube.js
  * applies the same rules again and must agree with them.
@@ -10,20 +10,23 @@ export const MAX_EMBEDDED_KEYS = 100;
 /** Longest key compiled. A longer one is left out rather than truncated, so a name stays exact. */
 export const MAX_EMBEDDED_KEY_LENGTH = 128;
 /**
- * Most characters the top keys may take in the Cube token, measured as JSON writes them
- * (`JSON.stringify(key).length`: a quote or backslash counts twice). The token travels as an HTTP header
- * that Node caps at 16 KiB; base64 and the other claims leave room for about 8 KiB of keys, shared with
- * `MAX_RARE_EMBEDDED_KEYS_CHARS`. 100 realistic keys of 60 characters fit.
+ * Most UTF-8 bytes the top keys may take in the Cube token, measured as JSON writes them
+ * (`Buffer.byteLength(JSON.stringify(key))`: a quote or backslash counts twice, an accented letter two
+ * bytes, a CJK character three). The token travels as an HTTP header that Node caps at 16 KiB; base64 and
+ * the other claims leave room for about 8 KiB of keys, shared with `MAX_RARE_EMBEDDED_KEYS_BYTES`. 100
+ * ASCII keys of 60 characters fit.
  */
-export const MAX_EMBEDDED_KEYS_CHARS = 6656;
+export const MAX_EMBEDDED_KEYS_BYTES = 6656;
 /**
  * A query naming keys outside the top keys (a saved chart whose key grew rarer) adds one fixed bucket of
- * rarer keys to the token, so every query naming a key of that bucket compiles the same model (S5).
+ * rarer keys to the token, so every query naming a key of that bucket compiles the same model.
  */
 export const MAX_RARE_EMBEDDED_KEYS = 10;
-export const MAX_RARE_EMBEDDED_KEYS_CHARS = 1536;
+export const MAX_RARE_EMBEDDED_KEYS_BYTES = 1536;
 /** Most keys one token carries; docker/cube/cube.js compiles no more (`MAX_EMBEDDED_KEYS` there). */
 export const MAX_TOKEN_EMBEDDED_KEYS = MAX_EMBEDDED_KEYS + MAX_RARE_EMBEDDED_KEYS;
+/** Most key bytes one token carries; docker/cube/cube.js compiles no more (`MAX_EMBEDDED_KEYS_BYTES`). */
+export const MAX_TOKEN_EMBEDDED_KEYS_BYTES = MAX_EMBEDDED_KEYS_BYTES + MAX_RARE_EMBEDDED_KEYS_BYTES;
 
 export const EMBEDDED_MEMBER_PREFIX = "FeedbackRecords.ed_";
 const EMBEDDED_MEMBER_PATTERN = /^FeedbackRecords\.ed_[a-z0-9_]+$/;
@@ -45,29 +48,30 @@ export const isCompilableEmbeddedKey = (key: unknown): key is string =>
   !CONTROL_CHARACTER.test(key) &&
   !LONE_SURROGATE.test(key);
 
-/** The characters a key takes in the token, which is JSON. */
-export const getEmbeddedKeyTokenChars = (key: string): number => JSON.stringify(key).length;
+/** The UTF-8 bytes a key takes in the token, which is JSON. */
+export const getEmbeddedKeyTokenBytes = (key: string): number =>
+  Buffer.byteLength(JSON.stringify(key), "utf8");
 
 /**
  * The keys a dataset compiles, from its keys ranked most frequent first: only compilable keys, no
- * duplicate, at most `maxKeys` and `maxChars` token characters. Keeps the order it was given.
+ * duplicate, at most `maxKeys` and `maxBytes` token bytes. Keeps the order it was given.
  */
 export const selectEmbeddedKeys = (
   rankedKeys: readonly unknown[],
   {
     maxKeys = MAX_EMBEDDED_KEYS,
-    maxChars = MAX_EMBEDDED_KEYS_CHARS,
-  }: { maxKeys?: number; maxChars?: number } = {}
+    maxBytes = MAX_EMBEDDED_KEYS_BYTES,
+  }: { maxKeys?: number; maxBytes?: number } = {}
 ): string[] => {
   const keys: string[] = [];
   const seen = new Set<string>();
-  let chars = 0;
+  let bytes = 0;
   for (const key of rankedKeys) {
     if (keys.length >= maxKeys) break;
     if (!isCompilableEmbeddedKey(key) || seen.has(key)) continue;
-    const keyChars = getEmbeddedKeyTokenChars(key);
-    if (chars + keyChars > maxChars) continue;
-    chars += keyChars;
+    const keyBytes = getEmbeddedKeyTokenBytes(key);
+    if (bytes + keyBytes > maxBytes) continue;
+    bytes += keyBytes;
     seen.add(key);
     keys.push(key);
   }
