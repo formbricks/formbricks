@@ -2,7 +2,8 @@ import { describe, expect, test } from "vitest";
 import {
   applyDashboardFilterPick,
   formatFilterLabels,
-  moveDashboardFilter,
+  getEditableFilterChipValue,
+  reorderDashboardFilters,
   saveDashboardFilterAt,
   summarizePickedValues,
   toTypedPick,
@@ -30,22 +31,32 @@ const ANSWER: TDashboardFilter = {
   label: "Answer",
 };
 
-describe("moveDashboardFilter", () => {
-  test("swaps a filter with its neighbour and stays put at either end", () => {
+describe("reorderDashboardFilters", () => {
+  test("moves the dragged filter to where it was dropped, either way", () => {
     const filters = [SOURCE, COUNTRY, ANSWER];
-    expect(moveDashboardFilter(filters, 1, -1)).toEqual([COUNTRY, SOURCE, ANSWER]);
-    expect(moveDashboardFilter(filters, 1, 1)).toEqual([SOURCE, ANSWER, COUNTRY]);
-    expect(moveDashboardFilter(filters, 0, -1)).toEqual(filters);
-    expect(moveDashboardFilter(filters, 2, 1)).toEqual(filters);
+    expect(reorderDashboardFilters(filters, ANSWER.id, SOURCE.id)).toEqual([ANSWER, SOURCE, COUNTRY]);
+    expect(reorderDashboardFilters(filters, SOURCE.id, ANSWER.id)).toEqual([COUNTRY, ANSWER, SOURCE]);
   });
 
-  test("leaves an empty list empty", () => {
-    expect(moveDashboardFilter([], 0, 1)).toEqual([]);
+  test("leaves the list as it is for a drop on itself or on something that is not a filter", () => {
+    const filters = [SOURCE, COUNTRY];
+    expect(reorderDashboardFilters(filters, SOURCE.id, SOURCE.id)).toEqual(filters);
+    expect(reorderDashboardFilters(filters, SOURCE.id, "nowhere")).toEqual(filters);
+    expect(reorderDashboardFilters([], SOURCE.id, COUNTRY.id)).toEqual([]);
+  });
+
+  test("keeps every filter of the largest dashboard", () => {
+    const filters = Array.from({ length: 10 }, (_, index) => ({
+      ...SOURCE,
+      id: `clfi0000000000000000000${String(index).padStart(2, "0")}`,
+    }));
+    const moved = reorderDashboardFilters(filters, filters[9].id, filters[0].id);
+    expect(moved.map(({ id }) => id)).toEqual([filters[9], ...filters.slice(0, 9)].map(({ id }) => id));
   });
 });
 
 describe("saveDashboardFilterAt", () => {
-  test("replaces an edited filter and moves it to the position chosen in the same save (U14)", () => {
+  test("replaces an edited filter and moves it to the position chosen", () => {
     const renamed = { ...COUNTRY, label: "Land" };
     expect(saveDashboardFilterAt([SOURCE, COUNTRY, ANSWER], renamed, 0)).toEqual([renamed, SOURCE, ANSWER]);
     expect(saveDashboardFilterAt([SOURCE, COUNTRY, ANSWER], renamed, 2)).toEqual([SOURCE, ANSWER, renamed]);
@@ -108,7 +119,7 @@ describe("applyDashboardFilterPick", () => {
     });
   });
 
-  test("refuses a pick that would take the picks past their total budget (C9), at the boundary", () => {
+  test("refuses a pick that would take the picks past their total budget, at the boundary", () => {
     const half = "x".repeat(MAX_DASHBOARD_FILTER_PICKS_CHARS / 2);
     const atBudget = applyDashboardFilterPick([SOURCE, COUNTRY], { [COUNTRY.id]: [half] }, SOURCE.id, [half]);
     expect(atBudget).toEqual({ picks: { [SOURCE.id]: [half], [COUNTRY.id]: [half] } });
@@ -126,7 +137,7 @@ describe("applyDashboardFilterPick", () => {
 });
 
 describe("formatFilterLabels", () => {
-  test("joins filter labels as the app's language lists them (U11)", () => {
+  test("joins filter labels as the app's language lists them", () => {
     expect(formatFilterLabels(["Plan"], "en-US")).toBe("Plan");
     expect(formatFilterLabels(["Plan", "Tier"], "en-US")).toBe("Plan and Tier");
     expect(formatFilterLabels(["Plan", "Tier", "Region"], "en-US")).toBe("Plan, Tier, and Region");
@@ -135,5 +146,15 @@ describe("formatFilterLabels", () => {
 
   test("has nothing to say for no labels", () => {
     expect(formatFilterLabels([], "en-US")).toBe("");
+  });
+});
+
+describe("getEditableFilterChipValue", () => {
+  test("names the field and the operator once the field can be named", () => {
+    expect(getEditableFilterChipValue("Source", "equals")).toBe("Source equals");
+  });
+
+  test("shows the operator alone while the field's name loads, never an empty pill", () => {
+    expect(getEditableFilterChipValue(undefined, "equals")).toBe("equals");
   });
 });

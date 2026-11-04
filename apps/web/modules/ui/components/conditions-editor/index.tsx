@@ -244,44 +244,46 @@ export function ConditionsEditor({
             {valueInput !== null && <div className="@xl:col-span-4">{valueInput}</div>}
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
-              <Button
-                variant="outline"
-                className="flex size-10 items-center justify-center rounded-md bg-white">
-                <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  callbacks.onAddConditionBelow(condition.id);
-                }}
-                icon={<PlusIcon className="size-4" />}>
-                {t("workspace.surveys.edit.add_condition_below")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                // onCreateGroup determines if this component is being used in quotas or logic, if in quotas we do not allow removal of only condition
-                disabled={!onCreateGroup && conditions.conditions.length === 1}
-                onClick={() => callbacks.onRemoveCondition(condition.id)}
-                icon={<TrashIcon className="size-4" />}>
-                {t("common.remove")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => callbacks.onDuplicateCondition(condition.id)}
-                icon={<CopyIcon className="size-4" />}>
-                {t("common.duplicate")}
-              </DropdownMenuItem>
-              {onCreateGroup && (config.canCreateGroup?.(depth) ?? true) && (
+          {!config.hideConditionMenu && (
+            <DropdownMenu>
+              <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
+                <Button
+                  variant="outline"
+                  className="flex size-10 items-center justify-center rounded-md bg-white">
+                  <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
                 <DropdownMenuItem
-                  onClick={() => onCreateGroup(condition.id)}
-                  icon={<WorkflowIcon className="size-4" />}
-                  disabled={conditions.conditions.length <= 1}>
-                  {t("workspace.surveys.edit.create_group")}
+                  onClick={() => {
+                    callbacks.onAddConditionBelow(condition.id);
+                  }}
+                  icon={<PlusIcon className="size-4" />}>
+                  {t("workspace.surveys.edit.add_condition_below")}
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  // onCreateGroup determines if this component is being used in quotas or logic, if in quotas we do not allow removal of only condition
+                  disabled={!onCreateGroup && conditions.conditions.length === 1}
+                  onClick={() => callbacks.onRemoveCondition(condition.id)}
+                  icon={<TrashIcon className="size-4" />}>
+                  {t("common.remove")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => callbacks.onDuplicateCondition(condition.id)}
+                  icon={<CopyIcon className="size-4" />}>
+                  {t("common.duplicate")}
+                </DropdownMenuItem>
+                {onCreateGroup && (config.canCreateGroup?.(depth) ?? true) && (
+                  <DropdownMenuItem
+                    onClick={() => onCreateGroup(condition.id)}
+                    icon={<WorkflowIcon className="size-4" />}
+                    disabled={conditions.conditions.length <= 1}>
+                    {t("workspace.surveys.edit.create_group")}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         {quotaError && isSubmitted && (
           <p className="mt-2 w-full text-right text-sm text-error">{quotaError}</p>

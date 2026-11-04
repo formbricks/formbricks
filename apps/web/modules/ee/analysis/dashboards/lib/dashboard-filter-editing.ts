@@ -1,23 +1,26 @@
+import { arrayMove } from "@dnd-kit/sortable";
 import { countPickChars, exceedsPicksBudget, keepCurrentPicks } from "./dashboard-filter-picks";
 import type { TDashboardFilter, TDashboardFilterPicks } from "./dashboard-filters";
 
-/** Move the filter at `index` one place towards `direction`, or leave the list as it is at an end. */
-export const moveDashboardFilter = (
+/**
+ * The filters after one is dragged onto another's place in edit mode: the dragged filter takes the
+ * drop target's index and the rest shift. A drop on itself, or on anything that is not a filter, leaves
+ * the order as it is.
+ */
+export const reorderDashboardFilters = (
   filters: readonly TDashboardFilter[],
-  index: number,
-  direction: -1 | 1
+  activeId: string,
+  overId: string
 ): TDashboardFilter[] => {
-  const target = index + direction;
-  if (target < 0 || target >= filters.length) return [...filters];
-  const next = [...filters];
-  [next[index], next[target]] = [next[target], next[index]];
-  return next;
+  const from = filters.findIndex(({ id }) => id === activeId);
+  const to = filters.findIndex(({ id }) => id === overId);
+  if (from === -1 || to === -1 || from === to) return [...filters];
+  return arrayMove([...filters], from, to);
 };
 
 /**
- * The filters after one filter's form is saved: the filter replaces its earlier version (or is added) and
- * lands at `position`, clamped to the list. The editor applies a reorder with the rest of the form's
- * changes, on Save, never on its own.
+ * The filters after one filter's form is saved: the filter replaces its earlier version (or is added)
+ * and lands at `position`, clamped to the list.
  */
 export const saveDashboardFilterAt = (
   filters: readonly TDashboardFilter[],
@@ -46,7 +49,7 @@ export const summarizePickedValues = (values: readonly string[]): string =>
 /**
  * A person's picks after one filter's values change: only filters the dashboard has, only non-empty picks.
  * A change that adds characters past `MAX_DASHBOARD_FILTER_PICKS_CHARS` is refused, as the API would refuse
- * it (C9); clearing or shrinking a pick is always allowed.
+ * it; clearing or shrinking a pick is always allowed.
  */
 export const applyDashboardFilterPick = (
   filters: readonly Pick<TDashboardFilter, "id">[],
@@ -65,3 +68,11 @@ export const applyDashboardFilterPick = (
 /** Filter labels as one phrase in the app's language ("Plan, Tier, and Region"). */
 export const formatFilterLabels = (labels: readonly string[], locale: string): string =>
   new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(labels);
+
+/**
+ * What an editable filter's chip shows in edit mode: its field and operator. The field of an
+ * embedded-data key is only named once the dashboard's datasets have loaded, so until then the chip
+ * shows the operator alone rather than an empty pill that then jumps wider.
+ */
+export const getEditableFilterChipValue = (fieldLabel: string | undefined, operatorLabel: string): string =>
+  fieldLabel ? `${fieldLabel} ${operatorLabel}` : operatorLabel;

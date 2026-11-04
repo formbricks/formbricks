@@ -62,4 +62,9 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
   showWhenLabel?: boolean;
   /** Lets the first operand's list grow past its field and wrap long names (survey questions). */
   wideLeftOperandDropdown?: boolean;
+  /**
+   * Drops the row menu (add below, remove, duplicate, group): for an editor that holds exactly one
+   * condition standing for something removed elsewhere, such as a dashboard filter's chip.
+   */
+  hideConditionMenu?: boolean;
 }
