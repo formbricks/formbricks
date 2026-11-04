@@ -76,7 +76,7 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
       [1, 3],
       [1, 3],
       [4, 4],
-      [13, 2],
+      [14, 2],
     ]);
   });
 

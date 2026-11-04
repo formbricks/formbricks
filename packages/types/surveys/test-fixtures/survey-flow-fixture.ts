@@ -893,6 +893,15 @@ const profileBlock: TSurveyBlock = {
         choice("none", "None of these", "5"),
       ],
     },
+    {
+      // #9880, last so the indexes above stay put: a signature is signed or not, like a file upload.
+      id: "signature",
+      code: "signature",
+      type: TSurveyElementTypeEnum.Signature,
+      headline: i18n("Sign to confirm your answers"),
+      required: false,
+      allowTypedSignature: true,
+    },
   ],
   logic: [
     // A matrix row condition (ENG-6934: row and column ids next to the positions row 0, column 1)
