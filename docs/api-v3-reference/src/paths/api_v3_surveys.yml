@@ -9,7 +9,7 @@ get:
     is applied in the query and the cursor, never after the fact: `limit` keeps its meaning and
     `meta.nextCursor` being `null` remains the only end-of-collection signal.
 
-    Session cookie, `x-api-key`, or a Bearer token.
+    `x-api-key` or a Bearer token.
   tags:
     - V3 Surveys
   parameters:

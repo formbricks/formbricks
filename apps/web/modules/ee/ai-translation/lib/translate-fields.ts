@@ -107,8 +107,8 @@ Rules:
     if (error instanceof AIOutputTokenLimitError) {
       throw new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG);
     }
-    // Logged by the AI service already. From here it reaches the server action client, which logs and
-    // reports a thrown error whole — and an AI SDK error carries the survey text and its translation.
+    // Logged by the AI service already. From here it reaches the route wrapper, which logs and reports a
+    // thrown error whole — and an AI SDK error carries the survey text and its translation.
     throw redactAIError(error);
   });
 

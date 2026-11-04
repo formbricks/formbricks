@@ -119,7 +119,8 @@ export const auth = betterAuth({
   // `/request-password-reset` (ENG-3639) for the same reason. It answered after the user lookup, token
   // write and SMTP send, so its response time told password accounts from everything else, and it
   // skipped the forgot-password flow's per-account mail limit (ENG-3640). Nothing calls it over HTTP:
-  // forgotPasswordAction and the profile action both use `auth.api.requestPasswordReset` in-process.
+  // forgotPasswordAction and the profile's password-reset route both use `auth.api.requestPasswordReset`
+  // in-process.
   //
   // `/sign-up/email` (ENG-3988) too. Every check a credential sign-up has to pass lives in
   // `createUserAction`: Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,

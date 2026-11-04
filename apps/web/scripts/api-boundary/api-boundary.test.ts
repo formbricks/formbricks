@@ -109,8 +109,8 @@ describe("server action ratchet", () => {
     expect(
       total,
       `Found ${total} server actions, more than the baseline of ${SERVER_ACTION_BASELINE}. New UI ` +
-        "data flows go through an /api/internal route consumed with TanStack Query (see the api-routes and " +
-        `frontend-coding skills). Files: ${[...actionsByFile.keys()].join(", ")}`
+        "data flows go through an /api/internal route consumed with TanStack Query (see CODING_STANDARDS.md, " +
+        `"API Design"). Files: ${[...actionsByFile.keys()].join(", ")}`
     ).toBeLessThanOrEqual(SERVER_ACTION_BASELINE);
   });
 
