@@ -151,8 +151,8 @@ export const getFormulaIssues = (
 // ---- One-step calculations ----------------------------------------------------------------------
 
 /**
- * A one-step calculation as the formula that computes the same thing, for "Use a formula" in its
- * operator list: `score + 1` becomes `ifEmpty(@score, 0) + 1`, keeping the field's "empty counts as
+ * A one-step calculation as the formula that computes the same thing, for turning the Set value
+ * row's formula toggle on: `score + 1` becomes `ifEmpty(@score, 0) + 1`, keeping the field's "empty counts as
  * 0". An empty operand now gives an empty result instead of leaving the field alone (grill P3).
  */
 export const oneStepToFormula = (action: {
@@ -184,6 +184,58 @@ export const oneStepToFormula = (action: {
       return { type: "call", fn: "concat", args: [current(""), operand] };
     default:
       return operand;
+  }
+};
+
+/** A one-step calculation's operator and value, what the formula toggle turned off writes back. */
+export interface TOneStepCalculation {
+  operator: "assign" | "add" | "subtract" | "multiply" | "divide" | "concat";
+  value:
+    | { type: "static"; value: string | number }
+    | { type: "element" | "variable" | "hiddenField"; value: string };
+}
+
+const ONE_STEP_OPERAND_TYPES = new Set(["static", "element", "variable", "hiddenField"]);
+
+const toOneStepOperand = (expression: TExpression | undefined): TOneStepCalculation["value"] | null =>
+  expression && ONE_STEP_OPERAND_TYPES.has(expression.type) && expression.type !== "call"
+    ? (expression as TOneStepCalculation["value"])
+    : null;
+
+/** Whether the expression is `ifEmpty(@field, fallback)`: the field's current value, empty as the fallback. */
+const isCurrentValue = (expression: TExpression | undefined, variableId: string, fallback: number | string) =>
+  expression?.type === "call" &&
+  expression.fn === "ifEmpty" &&
+  expression.args.length === 2 &&
+  expression.args[0].type === "variable" &&
+  expression.args[0].value === variableId &&
+  expression.args[1].type === "static" &&
+  expression.args[1].value === fallback;
+
+/**
+ * The reverse of {@link oneStepToFormula}, for turning the formula toggle off: the one-step
+ * calculation that computes the same thing, or `null` when the formula is more than one step and
+ * turning it off would lose it. An empty formula assigns an empty value.
+ */
+export const formulaToOneStep = (expression: TExpression, variableId: string): TOneStepCalculation | null => {
+  if (expression.type !== "call") {
+    const value = toOneStepOperand(expression);
+    return value ? { operator: "assign", value } : null;
+  }
+  if (expression.args.length !== 2) return null;
+  const [current, operand] = expression.args;
+  const value = toOneStepOperand(operand);
+  if (!value) return null;
+  switch (expression.fn) {
+    case "add":
+    case "subtract":
+    case "multiply":
+    case "divide":
+      return isCurrentValue(current, variableId, 0) ? { operator: expression.fn, value } : null;
+    case "concat":
+      return isCurrentValue(current, variableId, "") ? { operator: "concat", value } : null;
+    default:
+      return null;
   }
 };
 

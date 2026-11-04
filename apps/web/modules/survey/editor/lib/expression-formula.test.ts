@@ -10,6 +10,7 @@ import {
   FORMULA_MAX_LENGTH,
   formatFormula,
   formatReferenceToken,
+  formulaToOneStep,
   getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
@@ -114,7 +115,7 @@ describe("parseFormula: typed text into the tree AI writes", () => {
   });
 });
 
-describe("oneStepToFormula: Use a formula on a one-step calculation", () => {
+describe("oneStepToFormula: turning the formula toggle on for a one-step calculation", () => {
   test.each([
     ["add 1", { operator: "add", value: { type: "static", value: 1 } }, "ifEmpty(@score, 0) + 1"],
     [
@@ -136,6 +137,53 @@ describe("oneStepToFormula: Use a formula on a one-step calculation", () => {
     expect(formatFormula(oneStepToFormula({ variableId: ids.variables.score, ...action }), references)).toBe(
       text
     );
+  });
+});
+
+describe("formulaToOneStep: turning the formula off goes back to one step when nothing is lost", () => {
+  const score = ids.variables.score;
+  const back = (text: string) => formulaToOneStep(tree(text), score);
+
+  test.each([
+    ["ifEmpty(@score, 0) + 1", { operator: "add", value: { type: "static", value: 1 } }],
+    ["ifEmpty(@score, 0) - 2", { operator: "subtract", value: { type: "static", value: 2 } }],
+    ["ifEmpty(@score, 0) * @hours", { operator: "multiply", value: { type: "element", value: "hours" } }],
+    ["ifEmpty(@score, 0) / 4", { operator: "divide", value: { type: "static", value: 4 } }],
+    ['concat(ifEmpty(@score, ""), "-x")', { operator: "concat", value: { type: "static", value: "-x" } }],
+    ["@tenure_days", { operator: "assign", value: { type: "variable", value: ids.variables.tenureDays } }],
+    ["7", { operator: "assign", value: { type: "static", value: 7 } }],
+  ])("%s", (text, oneStep) => {
+    expect(back(text)).toEqual(oneStep);
+  });
+
+  test("every one-step calculation comes back as itself", () => {
+    const oneSteps = [
+      { operator: "add", value: { type: "static" as const, value: 1 } },
+      { operator: "divide", value: { type: "element" as const, value: "hours" } },
+      { operator: "concat", value: { type: "static" as const, value: "-x" } },
+      { operator: "assign", value: { type: "hiddenField" as const, value: "panel_id" } },
+    ];
+    for (const oneStep of oneSteps) {
+      expect(formulaToOneStep(oneStepToFormula({ variableId: score, ...oneStep }), score)).toEqual(oneStep);
+    }
+  });
+
+  test("an empty formula is an empty value to assign", () => {
+    expect(formulaToOneStep({ type: "static", value: "" }, score)).toEqual({
+      operator: "assign",
+      value: { type: "static", value: "" },
+    });
+  });
+
+  test.each([
+    ["more than one step", "ifEmpty(@score, 0) + 1 + 2"],
+    ["a function one step can't write", "round(@sat_netflix)"],
+    ["another field's current value", "ifEmpty(@tenure_days, 0) + 1"],
+    ["a fallback other than empty-counts-as-zero", "ifEmpty(@score, 5) + 1"],
+    ["the field's value without ifEmpty", "@score + 1"],
+    ["a nested operand", "ifEmpty(@score, 0) + (1 + 2)"],
+  ])("%s can't be one step", (_label, text) => {
+    expect(back(text)).toBeNull();
   });
 });
 

@@ -4280,7 +4280,7 @@
           "require_answer_to": "Require an answer to {question}",
           "rows": "Rows",
           "select_calculated_field": "Select a calculated field",
-          "set_to_formula": "= the formula below",
+          "set_to_formula": "to the formula below",
           "set_value": "Set value",
           "show_block_if": "Show this block if…",
           "show_block_only_if": "Show this block only if",
@@ -4292,7 +4292,9 @@
           "shown_if": "Shown if {conditions}",
           "tab": "Flow",
           "then": "then",
-          "use_a_formula": "Use a formula"
+          "turn_formula_off_body": "This formula does more than one step can, so it can't be kept without it. Turning it off clears the formula, and you pick an operator and a value instead.",
+          "turn_formula_off_confirm": "Turn off and clear",
+          "turn_formula_off_title": "Turn the formula off?"
         },
         "follow_ups": "Follow-ups",
         "follow_ups_delete_modal_text": "Are you sure you want to delete this follow-up?",
@@ -4686,7 +4688,7 @@
         "test_values_description": "Values for URL parameters and hidden fields, so you can try the rules before the first question in this preview.",
         "the_survey_will_be_shown_multiple_times_until_they_respond": "Show at most the specified number of times, or until they respond (whichever comes first).",
         "the_survey_will_be_shown_once_even_if_person_doesnt_respond": "Show a single time, even if they do not respond.",
-        "then": "then",
+        "then": "Then",
         "this_action_will_remove_all_the_translations_from_this_survey": "This action will remove all the translations from this survey.",
         "this_will_remove_the_language_and_all_its_translations": "This will remove this language and all its translations from this survey. This action cannot be undone.",
         "this_will_remove_the_language_from_this_survey": "This will remove this language from this survey. This action cannot be undone.",
