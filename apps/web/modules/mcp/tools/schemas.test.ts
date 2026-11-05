@@ -369,7 +369,7 @@ describe("rules before the first question (ENG-6932)", () => {
 });
 
 describe("Mark as low quality discoverability (ENG-6933)", () => {
-  test("the blocks description documents the action, and startLogic says it is refused there", () => {
+  test("the blocks description documents the action, and startLogic allows it too (ENG-6952)", () => {
     const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
     const blocks = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
     const advertised = z.toJSONSchema(ZMcpCreateSurveyInput, { io: "input" }) as {
@@ -378,7 +378,9 @@ describe("Mark as low quality discoverability (ENG-6933)", () => {
 
     expect(blocks).toContain('{ "id": "<cuid2>", "objective": "markLowQuality" }');
     expect(blocks).toContain("Low quality");
-    expect(advertised.properties.startLogic.description).toContain("`markLowQuality`");
+    expect(advertised.properties.startLogic.description).toContain(
+      "`markLowQuality` with no target, which marks the response Low quality"
+    );
   });
 });
 

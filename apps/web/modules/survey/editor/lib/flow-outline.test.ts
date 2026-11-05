@@ -239,7 +239,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     });
   });
 
-  test("rules before the first question get their own section, editable (ENG-6932)", () => {
+  test("rules before the first question get their own section, editable (ENG-6932, ENG-6952)", () => {
     const { start } = buildFlowOutline(surveyFlowFixture);
     const startLogic = surveyFlowFixture.startLogic ?? [];
 
@@ -247,7 +247,7 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
       startLogic.map((rule, ruleIdx) => [rule.id, { type: "start" }, ruleIdx, true])
     );
     // A screen-out is a jump; a rule that sets a value before it jumps reads as its first action.
-    expect(start.rules.map((row) => row.type)).toEqual(["jump", "setValue", "setValue"]);
+    expect(start.rules.map((row) => row.type)).toEqual(["jump", "setValue", "setValue", "markLowQuality"]);
   });
 
   test("the section is there, empty, when the survey has no rules before the first question", () => {
@@ -261,17 +261,15 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
 
   test("a rule before the first question that the editor can't offer there is read-only", () => {
     const survey = withUnknown((draft) => {
-      const [first, second, third] = draft.startLogic;
+      const [first, second] = draft.startLogic;
       first.actions = [{ id: "startaction0000000000009", objective: "requireAnswer", target: "fav" }];
       second.conditions.conditions[0].leftOperand = { type: "element", value: "services" };
-      third.actions.push({ id: "startaction0000000000010", objective: "markLowQuality" });
     });
     const { start } = buildFlowOutline(survey);
 
-    expect(start.rules.map((row) => [row.editable, row.readOnlyReason])).toEqual([
+    expect(start.rules.slice(0, 2).map((row) => [row.editable, row.readOnlyReason])).toEqual([
       [false, "unsupportedAction"],
       [false, "unsupportedCondition"],
-      [false, "unsupportedAction"],
     ]);
   });
 

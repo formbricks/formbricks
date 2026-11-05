@@ -171,12 +171,12 @@ export const setStartRules = (survey: TSurvey, rules: TSurveyBlockLogic[]): TSur
 });
 
 /**
- * What a rule's actions may do where it runs: before the first question only jump or set a value; a
- * block's rules may also require an answer and mark the response Low quality (ENG-6933).
+ * What a rule's actions may do where it runs: before the first question jump, set a value or mark the
+ * response Low quality (ENG-6933, ENG-6952); a block's rules may also require an answer.
  */
 export const getAllowedActionObjectives = (scopeBlockIdx: number): TSurveyBlockLogicActionObjective[] =>
   scopeBlockIdx === START_SCOPE_BLOCK_IDX
-    ? ["calculate", "jumpToBlock"]
+    ? ["calculate", "jumpToBlock", "markLowQuality"]
     : ["calculate", "requireAnswer", "jumpToBlock", "markLowQuality"];
 
 /** What an action's choices depend on besides its list: whether the rule has no condition. */

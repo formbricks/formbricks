@@ -177,7 +177,7 @@ export function LogicEditorActions({
     handleValuesChange(actionIdx, { variableId, value: { type: "static", value: "" } });
   };
 
-  // Before the first question a rule may only jump or set a value (ENG-6932); a rule jumps once and
+  // Before the first question a rule may not require an answer (ENG-6932); a rule jumps once and
   // marks Low quality once (ENG-6933).
   const objectiveOptions = getActionObjectiveOptions(t);
   const getObjectiveOptions = (actionIdx: number) => {

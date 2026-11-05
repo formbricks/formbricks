@@ -882,15 +882,16 @@ type's own fields with the element rather than expecting the validator to name t
 
 An optional `startLogic` array holds the **rules before the first question**: the survey runs them as
 soon as it loads, before the welcome card and on start-at links. Each rule has the shape of a block's
-`logic` rule, but may only `jumpToBlock` (to a block, or to an ending to screen the respondent out) and
-`calculate`, and may read `hiddenField`, `variable` and `reserved` operands only, since nothing has been
+`logic` rule, but may only `jumpToBlock` (to a block, or to an ending to screen the respondent out),
+`calculate` and `markLowQuality`, and may read `hiddenField`, `variable` and `reserved` operands only, since nothing has been
 answered yet. Anything else is refused with the exact path, such as `startLogic.0.actions.1`. On
 `patch_survey`, `null` or `[]` removes them and an omitted `startLogic` is kept; `get_survey` always
 returns the array, `[]` when there are none.
 
 A block rule may also carry a `markLowQuality` action, `{ "id": "<cuid2>", "objective": "markLowQuality" }`
 with no target (ENG-6933). When the rule fires, the respondent sees nothing and the response is marked Low
-quality as a reviewer would mark it. It is refused in `startLogic`, like `requireAnswer`.
+quality as a reviewer would mark it. It is allowed in `startLogic` too (ENG-6952), where the flag rides on
+the response's first write, a screen-out's finished response included; `requireAnswer` is refused there.
 
 Input:
 
