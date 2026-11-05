@@ -40,6 +40,9 @@ import {
   TGenericConditionGroup,
 } from "./types";
 
+/** A condition's right-hand value, as the combobox hands it over. */
+type TConditionValue = string | number | string[];
+
 interface SentenceConditionsEditorProps {
   conditions: TGenericConditionGroup;
   config: TConditionsEditorConfig;
@@ -99,7 +102,7 @@ export function SentenceConditionsEditor({
 
   const handleRightOperandChange = (
     condition: TGenericCondition,
-    value: string | number | string[],
+    value: TConditionValue,
     option?: TComboboxOption
   ) => {
     callbacks.onUpdateCondition(condition.id, {
@@ -239,7 +242,7 @@ export function SentenceConditionsEditor({
               wideDropdown
               iconClassName="size-4 text-slate-500"
               value={hasField ? config.formatLeftOperandValue(condition) : null}
-              onChangeValue={(val: string | number | string[], option) => {
+              onChangeValue={(val: TConditionValue, option) => {
                 handleLeftOperandChange(condition, String(val), option);
               }}
             />
@@ -251,7 +254,7 @@ export function SentenceConditionsEditor({
               placeholder={t("workspace.surveys.edit.flow.condition_placeholder")}
               value={hasField ? condition.operator : null}
               disabled={!hasField}
-              onChangeValue={(val: string | number | string[]) => {
+              onChangeValue={(val: TConditionValue) => {
                 handleOperatorChange(condition, String(val));
               }}
             />

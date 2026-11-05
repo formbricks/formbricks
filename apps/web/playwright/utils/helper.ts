@@ -928,7 +928,8 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 const selectConditionLeftOperand = async (page: Page, conditionId: string, label: string) => {
   await page.locator(`#${conditionId}`).first().click();
 
-  const search = page.getByPlaceholder("Search", { exact: true });
+  // The rule editor's field list (ENG-6969 T6) says what it searches.
+  const search = page.getByPlaceholder("Search questions and fields", { exact: true });
   await expect(search).toBeVisible();
   await search.fill(label);
 
@@ -1099,7 +1100,7 @@ export const editEmbeddedField = async (
 
 /**
  * Adds a rule to block `blockNumber` (1-based) on the Flow tab, where logic lives since ENG-6929, and
- * waits for its editor: a "Jump to block" rule with a condition on the block's first question, as "Add logic"
+ * waits for its editor: a "Jump to" rule with a condition on the block's first question, as "Add logic"
  * on the block card used to start one. Only the new rule's editor is open, so its ids
  * (`condition-0-0-…`, `action-0-…`) are the ones the steps after it fill in.
  */
@@ -1111,7 +1112,7 @@ export const addFlowRule = async (page: Page, blockNumber: number): Promise<void
     .locator('[id^="flow-add-logic-"]:not([id="flow-add-logic-start"])')
     .nth(blockNumber - 1)
     .click();
-  await page.getByRole("menuitem", { name: "Jump to block", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Jump to", exact: true }).click();
   await expect(page.locator("#condition-0-0-conditionValue")).toBeVisible();
 };
 
@@ -1443,8 +1444,9 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-1-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
 
-  await page.getByRole("combobox").filter({ hasText: "all are true" }).nth(1).click();
-  await page.getByText("any is true", { exact: true }).click();
+  // The and/or select sits before a group's second condition (ENG-6969 T6): the nested group's is second.
+  await page.getByRole("combobox", { name: "Combine conditions with" }).nth(1).click();
+  await page.getByRole("option", { name: "or", exact: true }).click();
 
   await page.locator("#condition-1-1-conditionValue").click();
   await page
@@ -1549,8 +1551,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is not clicked" }).click();
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
-  await page.getByRole("combobox").filter({ hasText: "all are true" }).first().click();
-  await page.getByText("any is true", { exact: true }).click();
+  await page.getByRole("combobox", { name: "Combine conditions with" }).first().click();
+  await page.getByRole("option", { name: "or", exact: true }).click();
   await page.locator("#condition-0-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Create group" }).click();
   await page.locator("#condition-1-0-conditionValue").click();
