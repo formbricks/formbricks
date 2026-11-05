@@ -586,6 +586,8 @@
       "no_values": "Inga värden ännu",
       "no_values_match": "Inga värden matchar \"{search}\"",
       "operator_contains": "innehåller",
+      "operator_contains_any_of": "innehåller någon av",
+      "operator_contains_none_of": "innehåller ingen av",
       "operator_does_not_contain": "innehåller inte",
       "operator_does_not_end_with": "slutar inte med",
       "operator_does_not_start_with": "börjar inte med",

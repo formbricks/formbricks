@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import { listDashboardFilterValues } from "@/modules/ee/analysis/lib/api-client";
 import { NO_VALUE_PICK } from "./dashboard-filters";
 import {
   buildToolbarProperties,
@@ -7,7 +8,14 @@ import {
   toToolbarFilters,
 } from "./dashboard-toolbar-filters";
 
+vi.mock("@/modules/ee/analysis/lib/api-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/analysis/lib/api-client")>()),
+  listDashboardFilterValues: vi.fn(),
+}));
+
 const SOURCE = "FeedbackRecords.sourceName";
+const EMOTIONS = "FeedbackRecords.emotions";
+const EMOTION_LABELS = ["joy", "anger", "sadness", "fear", "surprise", "disgust"];
 const SENTIMENT = "FeedbackRecords.sentiment";
 const SCORE = "FeedbackRecords.valueNumber";
 const COLLECTED_AT = "FeedbackRecords.collectedAt";
@@ -45,6 +53,19 @@ describe("toToolbarFilters", () => {
       { property: SOURCE, operator: "isSet", values: [] },
       { property: COLLECTED_AT, operator: "isNotSet", values: [] },
     ]);
+  });
+
+  test("emotions contains any of / none of keep every label, both ways", () => {
+    const stated = [
+      { field: EMOTIONS, operator: "contains" as const, values: ["joy", "fear"] },
+      { field: EMOTIONS, operator: "notContains" as const, values: ["anger", "disgust"] },
+    ];
+    const toolbar = [
+      { property: EMOTIONS, operator: "contains", values: ["joy", "fear"] },
+      { property: EMOTIONS, operator: "doesNotContain", values: ["anger", "disgust"] },
+    ];
+    expect(toToolbarFilters(stated)).toEqual(toolbar);
+    expect(fromToolbarFilters(toolbar as never)).toEqual(stated);
   });
 
   test("any other filter is a rule on its one value, the operator named as the toolbar does", () => {
@@ -199,13 +220,38 @@ describe("buildToolbarProperties", () => {
     expect(byId(SOURCE)?.availableValues).toBeUndefined();
   });
 
-  test("sentiment score and emotions follow sentiment: one lookup, the same hint", () => {
+  test("sentiment score and emotions follow sentiment, with its hint", () => {
     const sentiment = byId(SENTIMENT)?.availableValues;
-    for (const id of ["FeedbackRecords.sentimentScore", "FeedbackRecords.emotions"]) {
-      const available = byId(id)?.availableValues;
-      expect(available?.emptyHint).toBe("workspace.analysis.dashboards.filter_no_sentiment_yet");
-      expect(available?.queryKey).toEqual(sentiment?.queryKey);
+    expect(byId("FeedbackRecords.sentimentScore")?.availableValues?.queryKey).toEqual(sentiment?.queryKey);
+    for (const id of ["FeedbackRecords.sentimentScore", EMOTIONS]) {
+      expect(byId(id)?.availableValues?.emptyHint).toBe(
+        "workspace.analysis.dashboards.filter_no_sentiment_yet"
+      );
     }
+  });
+
+  test("emotions picks several of its labels with contains any of / none of, and no (No value)", () => {
+    expect(byId(EMOTIONS)).toMatchObject({
+      valueType: "enum",
+      multiValueContains: true,
+      ruleOperators: ["contains", "doesNotContain", "isSet", "isNotSet"],
+    });
+    expect(byId(EMOTIONS)?.quick).toBeUndefined();
+    expect(byId(EMOTIONS)?.multiValueEquals).toBeUndefined();
+    expect(byId(EMOTIONS)?.options?.map(({ value }) => value)).toEqual(EMOTION_LABELS);
+  });
+
+  test("emotions is disabled while nothing has a sentiment, and otherwise greys none of its labels", async () => {
+    const available = byId(EMOTIONS)?.availableValues;
+    // Cached apart from Sentiment's lookup, which holds sentiment values rather than labels.
+    expect(available?.queryKey).not.toEqual(byId(SENTIMENT)?.availableValues?.queryKey);
+    vi.mocked(listDashboardFilterValues).mockResolvedValueOnce({
+      values: [{ value: "positive" }],
+      hasMore: false,
+    } as never);
+    expect(await available?.load()).toEqual({ values: EMOTION_LABELS });
+    vi.mocked(listDashboardFilterValues).mockResolvedValueOnce({ values: [], hasMore: false } as never);
+    expect(await available?.load()).toEqual({ values: [] });
   });
 
   test("a categorical field and an embedded-data key list their values, after (No value)", () => {

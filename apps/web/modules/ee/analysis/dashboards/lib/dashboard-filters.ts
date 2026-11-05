@@ -7,7 +7,11 @@ import {
   getChartField,
   toEmbeddedChartField,
 } from "@/modules/ee/analysis/lib/field-catalog";
-import type { FilterOperator } from "@/modules/ee/analysis/lib/schema-definition";
+import {
+  EMOTIONS_DIMENSION_ID,
+  EMOTION_VALUES,
+  type FilterOperator,
+} from "@/modules/ee/analysis/lib/schema-definition";
 
 /**
  * Dashboard filters (ADR-0026, glossary "Dashboard filter"): a field, an operator and the values compared
@@ -139,6 +143,36 @@ export const isListDashboardFilter = (filter: Pick<TDashboardFilter, "field" | "
   const field = getDashboardFilterField(filter.field);
   return field?.type === "boolean" || (field?.type === "string" && field.valueLookup);
 };
+
+/**
+ * Fields whose value is a set of labels from a fixed list, stored joined into one text ("joy, surprise"):
+ * the AI-detected emotions. "is" would match only records holding exactly the picked set, so such a field
+ * is filtered by single labels with `contains` / `notContains`, each taking several: "contains any of"
+ * is Cube's `contains` with several values, which ORs them, and "contains none of" its `notContains`,
+ * which ANDs them (records without a value pass it, as they pass `notEquals`). A label matches as a
+ * substring, which is exact only because no label is part of another — joy, anger, sadness, fear,
+ * surprise and disgust are not; a label added to the list must keep that true.
+ */
+const MULTI_LABEL_FIELDS: ReadonlyMap<string, readonly string[]> = new Map([
+  [EMOTIONS_DIMENSION_ID, EMOTION_VALUES],
+]);
+
+/** The labels a multi-label field picks from, or `undefined` for any other field. */
+export const getMultiLabelValues = (field: string): readonly string[] | undefined =>
+  MULTI_LABEL_FIELDS.get(field);
+
+/** Whether the filter picks labels of a multi-label field: "contains any of" / "contains none of". */
+export const isMultiLabelDashboardFilter = (filter: Pick<TDashboardFilter, "field" | "operator">): boolean =>
+  (filter.operator === "contains" || filter.operator === "notContains") &&
+  MULTI_LABEL_FIELDS.has(filter.field);
+
+/**
+ * Whether the filter takes several values: a list filter (any of / none of the values that occur) or a
+ * multi-label filter (contains any of / none of the labels). Every other filter takes one value or none.
+ */
+export const dashboardFilterTakesSeveralValues = (
+  filter: Pick<TDashboardFilter, "field" | "operator">
+): boolean => isListDashboardFilter(filter) || isMultiLabelDashboardFilter(filter);
 
 export type TDashboardFilterIssue = { path: (string | number)[]; message: string };
 

@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { EMOTION_VALUES } from "@/modules/ee/analysis/lib/schema-definition";
+import { type TMemoryRecord, recordMatches } from "./cube-memory-test-utils";
 import {
   MAX_DASHBOARD_FILTER_PICKS_CHARS,
   UnreadableLockedFiltersError,
@@ -17,6 +19,8 @@ import {
 import { NO_VALUE_PICK, type TDashboardFilter } from "./dashboard-filters";
 
 const SOURCE = "FeedbackRecords.sourceName";
+const EMOTIONS = "FeedbackRecords.emotions";
+const UTC_CLOCK = { timeZone: "UTC" };
 const A = "clfi000000000000000000001";
 const B = "clfi000000000000000000002";
 const C = "clfi000000000000000000003";
@@ -58,12 +62,12 @@ describe("set and notSet", () => {
 
   test("apply with no pick, as a rule without values", () => {
     expect(pickValuesOf(isSet, undefined)).toEqual([]);
-    expect(resolvePicksForDataset([isSet], {}, () => true).rules).toEqual([
+    expect(resolvePicksForDataset([isSet], {}, () => true, UTC_CLOCK).rules).toEqual([
       { member: SOURCE, operator: "set" },
     ]);
-    expect(resolvePicksForDataset([{ ...isSet, operator: "notSet" }], {}, () => true).rules).toEqual([
-      { member: SOURCE, operator: "notSet" },
-    ]);
+    expect(
+      resolvePicksForDataset([{ ...isSet, operator: "notSet" }], {}, () => true, UTC_CLOCK).rules
+    ).toEqual([{ member: SOURCE, operator: "notSet" }]);
   });
 
   test("refuse a pick, since they compare against nothing", () => {
@@ -75,7 +79,7 @@ describe("set and notSet", () => {
 
   test("a locked one applies on every read", () => {
     const locked = withLockedFilters([{ ...isSet, values: [] }], [], {});
-    expect(resolvePicksForDataset(locked.filters, locked.picks, () => true).rules).toEqual([
+    expect(resolvePicksForDataset(locked.filters, locked.picks, () => true, UTC_CLOCK).rules).toEqual([
       { member: SOURCE, operator: "set" },
     ]);
   });
@@ -86,27 +90,31 @@ describe("the no-value pick", () => {
   const isNot: TDashboardFilter = { ...is, operator: "notEquals" };
 
   test("is any of the values or no value", () => {
-    expect(toPickRule(is, ["Web", NO_VALUE_PICK])).toEqual({
+    expect(toPickRule(is, ["Web", NO_VALUE_PICK], UTC_CLOCK)).toEqual({
       or: [
         { member: SOURCE, operator: "equals", values: ["Web"] },
         { member: SOURCE, operator: "notSet" },
       ],
     });
-    expect(toPickRule(is, [NO_VALUE_PICK])).toEqual({ member: SOURCE, operator: "notSet" });
+    expect(toPickRule(is, [NO_VALUE_PICK], UTC_CLOCK)).toEqual({ member: SOURCE, operator: "notSet" });
   });
 
   test("is not: has a value, and none of the others", () => {
-    expect(toPickRule(isNot, ["Web", NO_VALUE_PICK])).toEqual({
+    expect(toPickRule(isNot, ["Web", NO_VALUE_PICK], UTC_CLOCK)).toEqual({
       and: [
         { member: SOURCE, operator: "set" },
         { member: SOURCE, operator: "notEquals", values: ["Web"] },
       ],
     });
-    expect(toPickRule(isNot, [NO_VALUE_PICK])).toEqual({ member: SOURCE, operator: "set" });
+    expect(toPickRule(isNot, [NO_VALUE_PICK], UTC_CLOCK)).toEqual({ member: SOURCE, operator: "set" });
   });
 
   test("without it, a pick is the plain rule", () => {
-    expect(toPickRule(is, ["Web"])).toEqual({ member: SOURCE, operator: "equals", values: ["Web"] });
+    expect(toPickRule(is, ["Web"], UTC_CLOCK)).toEqual({
+      member: SOURCE,
+      operator: "equals",
+      values: ["Web"],
+    });
   });
 
   test("is refused as a real value anywhere but a list filter", () => {
@@ -129,7 +137,8 @@ describe("resolvePicksForDataset", () => {
     const resolved = resolvePicksForDataset(
       filters,
       { [B]: ["late"], [A]: ["Web"], clfi000000000000000000099: ["x"] },
-      hasField
+      hasField,
+      UTC_CLOCK
     );
     expect(resolved).toEqual({
       rules: [
@@ -138,16 +147,23 @@ describe("resolvePicksForDataset", () => {
       ],
       unfilterable: [],
     });
-    expect(resolvePicksForDataset(filters, { [A]: ["Web"] }, hasField, { except: A }).rules).toEqual([]);
+    expect(
+      resolvePicksForDataset(filters, { [A]: ["Web"] }, hasField, { ...UTC_CLOCK, except: A }).rules
+    ).toEqual([]);
   });
 
   test("marks a picked filter the dataset lacks as unfilterable, and ignores it when not picked", () => {
-    expect(resolvePicksForDataset(filters, { [C]: ["North"] }, hasField).unfilterable).toEqual([filters[2]]);
-    expect(resolvePicksForDataset(filters, {}, hasField).unfilterable).toEqual([]);
+    expect(resolvePicksForDataset(filters, { [C]: ["North"] }, hasField, UTC_CLOCK).unfilterable).toEqual([
+      filters[2],
+    ]);
+    expect(resolvePicksForDataset(filters, {}, hasField, UTC_CLOCK).unfilterable).toEqual([]);
   });
 
   test("applies nothing with no filters or no picks", () => {
-    expect(resolvePicksForDataset([], { [A]: ["Web"] }, hasField)).toEqual({ rules: [], unfilterable: [] });
+    expect(resolvePicksForDataset([], { [A]: ["Web"] }, hasField, UTC_CLOCK)).toEqual({
+      rules: [],
+      unfilterable: [],
+    });
   });
 });
 
@@ -222,6 +238,27 @@ describe("findPickIssues", () => {
     ]);
   });
 
+  test("refuses a day the calendar does not have, which Date.parse would roll over", () => {
+    expect(findPickIssues(typed, { [B]: ["2026-02-30"] })).toEqual([
+      { name: `picks[${B}]`, reason: "Must be a date (YYYY-MM-DD or an ISO 8601 timestamp)." },
+    ]);
+  });
+
+  test("takes only an emotion's own labels for contains any of / none of, and no no-value pick", () => {
+    const emotions: TDashboardFilter[] = [
+      { id: A, field: EMOTIONS, operator: "contains", label: "Emotions" },
+      { id: B, field: EMOTIONS, operator: "notContains", label: "Emotions" },
+    ];
+    expect(findPickIssues(emotions, { [A]: ["joy", "fear"], [B]: ["anger"] })).toEqual([]);
+    expect(findPickIssues(emotions, { [A]: ["jo"], [B]: [NO_VALUE_PICK] })).toEqual([
+      { name: `picks[${A}]`, reason: "Must be one of: joy, anger, sadness, fear, surprise, disgust." },
+      {
+        name: `picks[${B}]`,
+        reason: "The no-value pick only goes with equals or notEquals on a field that has a value list.",
+      },
+    ]);
+  });
+
   test("ignores picks for filters the dashboard does not have", () => {
     expect(findPickIssues(typed, { clfi000000000000000000099: ["seven"] })).toEqual([]);
   });
@@ -253,5 +290,104 @@ describe("withLockedFilters", () => {
       UnreadableLockedFiltersError
     );
     expect(() => withLockedFilters({ not: "a list" }, [], {})).toThrow(UnreadableLockedFiltersError);
+  });
+});
+
+describe("emotions: contains any of / none of", () => {
+  const anyOf: TDashboardFilter = { id: A, field: EMOTIONS, operator: "contains", label: "Emotions" };
+  const noneOf: TDashboardFilter = { ...anyOf, operator: "notContains" };
+  // Cube joins a record's emotions into one text, as FeedbackRecords.emotions reads them.
+  const records: TMemoryRecord[] = [
+    { id: "joy", [EMOTIONS]: "joy" },
+    { id: "joy+surprise", [EMOTIONS]: "joy, surprise" },
+    { id: "fear", [EMOTIONS]: "fear" },
+    { id: "anger", [EMOTIONS]: "anger" },
+    { id: "none", [EMOTIONS]: null },
+  ];
+  const matching = (filter: TDashboardFilter, values: string[]) => {
+    const { rules } = resolvePicksForDataset([filter], { [A]: values }, () => true, UTC_CLOCK);
+    return records.filter((record) => recordMatches(record, { filters: rules })).map(({ id }) => id);
+  };
+
+  test("keeps every picked label, as one rule Cube ORs (contains) or ANDs (notContains)", () => {
+    expect(pickValuesOf(anyOf, ["joy", "fear"])).toEqual(["joy", "fear"]);
+    expect(toPickRule(anyOf, ["joy", "fear"], UTC_CLOCK)).toEqual({
+      member: EMOTIONS,
+      operator: "contains",
+      values: ["joy", "fear"],
+    });
+  });
+
+  test("any of matches a record holding a picked emotion beside others", () => {
+    expect(matching(anyOf, ["joy", "fear"])).toEqual(["joy", "joy+surprise", "fear"]);
+  });
+
+  test("none of keeps records with none of them, records without emotions included", () => {
+    expect(matching(noneOf, ["joy", "fear"])).toEqual(["anger", "none"]);
+  });
+
+  test("no emotion is part of another, so matching one as a substring never matches another", () => {
+    for (const label of EMOTION_VALUES) {
+      expect(EMOTION_VALUES.filter((other) => other.includes(label))).toEqual([label]);
+    }
+  });
+});
+
+describe("a picked day on a time field", () => {
+  const COLLECTED_AT = "FeedbackRecords.collectedAt";
+  const BERLIN = { timeZone: "Europe/Berlin" };
+  const filterOf = (operator: TDashboardFilter["operator"]): TDashboardFilter => ({
+    id: A,
+    field: COLLECTED_AT,
+    operator,
+    label: "Collected",
+  });
+  // Berlin is two hours ahead of UTC in early October (CEST), so each is on another day there than in UTC.
+  const at = (id: string, instant: string): TMemoryRecord => ({ id, [COLLECTED_AT]: instant });
+  const records = [
+    at("Oct 4 23:30 Berlin", "2026-10-04T21:30:00.000Z"),
+    at("Oct 5 00:30 Berlin", "2026-10-04T22:30:00.000Z"),
+    at("Oct 5 23:30 Berlin", "2026-10-05T21:30:00.000Z"),
+    at("Oct 6 00:30 Berlin", "2026-10-05T22:30:00.000Z"),
+  ];
+  const matching = (operator: TDashboardFilter["operator"], day: string) => {
+    const { rules } = resolvePicksForDataset([filterOf(operator)], { [A]: [day] }, () => true, BERLIN);
+    return records.filter((record) => recordMatches(record, { filters: rules })).map(({ id }) => id);
+  };
+
+  test("after Oct 5 starts when Oct 6 starts in the organization's zone", () => {
+    expect(matching("gt", "2026-10-05")).toEqual(["Oct 6 00:30 Berlin"]);
+    expect(toPickRule(filterOf("gt"), ["2026-10-05"], BERLIN)).toEqual({
+      member: COLLECTED_AT,
+      operator: "gte",
+      values: ["2026-10-05T22:00:00.000Z"],
+    });
+  });
+
+  test("before Oct 5 ends when Oct 5 starts in the organization's zone", () => {
+    expect(matching("lt", "2026-10-05")).toEqual(["Oct 4 23:30 Berlin"]);
+  });
+
+  test("on or after, on or before, on and not on Oct 5 are whole days there too", () => {
+    expect(matching("gte", "2026-10-05")).toEqual([
+      "Oct 5 00:30 Berlin",
+      "Oct 5 23:30 Berlin",
+      "Oct 6 00:30 Berlin",
+    ]);
+    expect(matching("lte", "2026-10-05")).toEqual([
+      "Oct 4 23:30 Berlin",
+      "Oct 5 00:30 Berlin",
+      "Oct 5 23:30 Berlin",
+    ]);
+    expect(matching("equals", "2026-10-05")).toEqual(["Oct 5 00:30 Berlin", "Oct 5 23:30 Berlin"]);
+    expect(matching("notEquals", "2026-10-05")).toEqual(["Oct 4 23:30 Berlin", "Oct 6 00:30 Berlin"]);
+  });
+
+  test("a timestamp is compared as the instant it names", () => {
+    expect(toPickRule(filterOf("gt"), ["2026-10-05T12:00:00Z"], BERLIN)).toEqual({
+      member: COLLECTED_AT,
+      operator: "gt",
+      values: ["2026-10-05T12:00:00Z"],
+    });
   });
 });

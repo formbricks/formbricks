@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { runV3ChartQuery } from "@/app/api/v3/charts/lib/data-operations";
+import { getOrganizationReportingTimeZone, runV3ChartQuery } from "@/app/api/v3/charts/lib/data-operations";
 import {
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
@@ -38,6 +38,7 @@ vi.mock("@/app/api/v3/charts/lib/data-operations", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/app/api/v3/charts/lib/data-operations")>()),
   applyChartQueryRateLimit: vi.fn(async () => null),
   runV3ChartQuery: vi.fn(async () => new Response("{}", { status: 200 })),
+  getOrganizationReportingTimeZone: vi.fn(async () => "UTC"),
 }));
 vi.mock("@/modules/ee/analysis/dashboards/lib/dataset-fields", () => ({ getDatasetFieldMatcher: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
@@ -104,6 +105,24 @@ describe("getV3DashboardChartData picks", () => {
   test("runs valid picks", async () => {
     expect((await read({ ...RULES, [`picks[${SCORE.id}]`]: "7" })).status).toBe(200);
     expect(runV3ChartQuery).toHaveBeenCalled();
+  });
+
+  test("cuts a picked day in the organization's reporting zone", async () => {
+    vi.mocked(getOrganizationReportingTimeZone).mockResolvedValueOnce("Europe/Berlin");
+    const since: TDashboardFilter = {
+      id: "f3",
+      field: "FeedbackRecords.collectedAt",
+      operator: "gt",
+      label: "After",
+    };
+    expect(
+      (await read({ [`filter[${since.id}]`]: encodeFilterRule(since), [`picks[${since.id}]`]: "2026-10-05" }))
+        .status
+    ).toBe(200);
+    expect(getOrganizationReportingTimeZone).toHaveBeenCalledWith("clorg00000000000000000001");
+    expect(vi.mocked(runV3ChartQuery).mock.calls[0][0].extraFilters).toEqual([
+      { member: "FeedbackRecords.collectedAt", operator: "gte", values: ["2026-10-05T22:00:00.000Z"] },
+    ]);
   });
 
   test("answers 422 naming the pick for a word on a number field (C6)", async () => {

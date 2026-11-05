@@ -19,11 +19,29 @@ export const isMultiValueEquality = (
   property: Pick<TFilterProperty, "multiValueEquals"> | undefined
 ): boolean => Boolean(property?.multiValueEquals) && EQUALITY_OPERATORS.has(operator);
 
+/** The containment checks, which hold a list on a property with `multiValueContains`: contains any / none. */
+const CONTAINMENT_OPERATORS: ReadonlySet<TTableFilterOperator> = new Set(["contains", "doesNotContain"]);
+
+/**
+ * Whether `contains` / `doesNotContain` on the property pick several values from its fixed options: the
+ * row's value contains any of them, or none.
+ */
+export const isMultiValueContains = (
+  operator: TTableFilterOperator,
+  property: Pick<TFilterProperty, "multiValueContains"> | undefined
+): boolean => Boolean(property?.multiValueContains) && CONTAINMENT_OPERATORS.has(operator);
+
+/** Whether the operator picks several of the property's own values (`multiValueEquals`, `multiValueContains`). */
+export const isMultiValuePick = (
+  operator: TTableFilterOperator,
+  property: Pick<TFilterProperty, "multiValueEquals" | "multiValueContains"> | undefined
+): boolean => isMultiValueEquality(operator, property) || isMultiValueContains(operator, property);
+
 /** Whether a rule with the operator keeps a list of values, so every value it holds counts. */
 export const operatorTakesValues = (
   operator: TTableFilterOperator,
-  property?: Pick<TFilterProperty, "multiValueEquals">
-): boolean => MULTI_VALUE_OPERATORS.includes(operator) || isMultiValueEquality(operator, property);
+  property?: Pick<TFilterProperty, "multiValueEquals" | "multiValueContains">
+): boolean => MULTI_VALUE_OPERATORS.includes(operator) || isMultiValuePick(operator, property);
 
 export const STRING_RULE_OPERATORS: TRuleOperator[] = [
   "equals",
@@ -100,8 +118,20 @@ export const getOperatorLabel = (operator: TTableFilterOperator, t: TFunction): 
   }
 };
 
-/** The operator as the Advanced filter picker lists it: always in words ("is greater than"). */
-export const getOperatorName = (operator: TTableFilterOperator, t: TFunction): string => {
+/**
+ * The operator as the Advanced filter picker lists it: always in words ("is greater than"), and on a
+ * property whose containment takes several values, "contains any of" / "contains none of".
+ */
+export const getOperatorName = (
+  operator: TTableFilterOperator,
+  t: TFunction,
+  property?: Pick<TFilterProperty, "multiValueContains">
+): string => {
+  if (isMultiValueContains(operator, property)) {
+    return operator === "contains"
+      ? t("common.table_toolbar.operator_contains_any_of")
+      : t("common.table_toolbar.operator_contains_none_of");
+  }
   switch (operator) {
     case "greaterThan":
       return t("common.table_toolbar.operator_greater_than");

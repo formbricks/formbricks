@@ -586,6 +586,8 @@
       "no_values": "Még nincsenek értékek",
       "no_values_match": "Egyetlen érték sem felel meg a(z) \"{search}\" keresésnek",
       "operator_contains": "tartalmazza",
+      "operator_contains_any_of": "a következők bármelyikét tartalmazza",
+      "operator_contains_none_of": "a következők egyikét sem tartalmazza",
       "operator_does_not_contain": "nem tartalmazza",
       "operator_does_not_end_with": "nem végződik erre:",
       "operator_does_not_start_with": "nem erre kezdődik:",

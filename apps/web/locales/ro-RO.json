@@ -586,6 +586,8 @@
       "no_values": "Încă nu există valori",
       "no_values_match": "Nicio valoare nu corespunde pentru „{search}”",
       "operator_contains": "conține",
+      "operator_contains_any_of": "conține oricare dintre",
+      "operator_contains_none_of": "nu conține niciunul dintre",
       "operator_does_not_contain": "nu conține",
       "operator_does_not_end_with": "nu se termină cu",
       "operator_does_not_start_with": "nu începe cu",

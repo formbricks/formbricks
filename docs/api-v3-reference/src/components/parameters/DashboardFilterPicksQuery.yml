@@ -14,8 +14,10 @@ schema:
       maxLength: 1000
 description: >-
   Values for the request's filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter
-  for several values of a list filter (any of). A filter takes one typed value otherwise, and `set` /
-  `notSet` none (a pick for one answers 422). In a list filter, `%1Fnone` (`"\u001Fnone"`) stands for
+  for several values of a list filter (any of), or several labels of `contains` / `notContains` on
+  `FeedbackRecords.emotions` (contains any of / none of; a value that is not one of its labels answers
+  422). A filter takes one typed value otherwise, and `set` / `notSet` none (a pick for one answers
+  422). A day (`YYYY-MM-DD`) on a time field is the whole day in the organization's reporting time zone. In a list filter, `%1Fnone` (`"\u001Fnone"`) stands for
   "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only
   records with one; any other filter refuses it with 422. Each pick is ANDed onto every chart's saved
   query; picks for a filter the request does not name are ignored.

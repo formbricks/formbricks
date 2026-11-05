@@ -24,9 +24,16 @@ const formatValue = (property: TFilterProperty, value: string, locale: string): 
 
 /**
  * A rule's operator as its chip reads it. Wording follows the values: "is" one value, "is any of"
- * several, and "is not" one, "is none of" several.
+ * several, and "is not" one, "is none of" several; "contains" one, "contains any of" several, and "does
+ * not contain" one, "contains none of" several.
  */
 const ruleOperatorLabel = (filter: TTableFilter, t: TFunction): string => {
+  if (filter.values.length > 1 && filter.operator === "contains") {
+    return t("common.table_toolbar.operator_contains_any_of");
+  }
+  if (filter.values.length > 1 && filter.operator === "doesNotContain") {
+    return t("common.table_toolbar.operator_contains_none_of");
+  }
   if (filter.values.length > 1 && filter.operator === "equals") {
     return t("common.table_toolbar.operator_is_any_of");
   }

@@ -552,6 +552,8 @@ checksums:
     common/table_toolbar/no_values: 6ff5ed41e5f1553e7ff0f772e5fd582a
     common/table_toolbar/no_values_match: e9645265e71e66984fa0b1fef2452da5
     common/table_toolbar/operator_contains: 06dd606c0a8f81f9a03b414e9ae89440
+    common/table_toolbar/operator_contains_any_of: f53f11cae293d96e4395529bb6775c1b
+    common/table_toolbar/operator_contains_none_of: 7a7ed0e5f63eb1c4a441fe8f10f47006
     common/table_toolbar/operator_does_not_contain: 854da2bdf10613ce62fb454bab16c58b
     common/table_toolbar/operator_does_not_end_with: 06ffdaa7b01a2786bcb934d838698038
     common/table_toolbar/operator_does_not_start_with: 546f7950abfae95af54796391c946a5b

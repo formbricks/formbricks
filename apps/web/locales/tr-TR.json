@@ -586,6 +586,8 @@
       "no_values": "Henüz değer yok",
       "no_values_match": "\"{search}\" ile eşleşen değer yok",
       "operator_contains": "içerir",
+      "operator_contains_any_of": "şunlardan herhangi birini içerir",
+      "operator_contains_none_of": "şunlardan hiçbirini içermez",
       "operator_does_not_contain": "içermez",
       "operator_does_not_end_with": "şununla bitmez",
       "operator_does_not_start_with": "şununla başlamaz",

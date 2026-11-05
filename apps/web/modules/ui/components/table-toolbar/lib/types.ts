@@ -11,8 +11,9 @@ import type { TDateRangePreset } from "@/lib/date-ranges";
  *   writes them as `gte` / `lte`.
  * - The rest are Advanced filter rules. `includesOneOf` / `includesAllOf` hold a list of values (a
  *   multi-select question's choices), and so do `equals` / `notEquals` on a property with
- *   `multiValueEquals` (the row's one value is, or is not, any of the picked values); every other rule
- *   holds one value or none.
+ *   `multiValueEquals` (the row's one value is, or is not, any of the picked values), and `contains` /
+ *   `doesNotContain` on a property with `multiValueContains` (the row's value contains any, or none, of
+ *   the picked values); every other rule holds one value or none.
  */
 export const TABLE_FILTER_OPERATORS = [
   "in",
@@ -108,6 +109,12 @@ export type TFilterProperty = {
    * Absent: they hold one value.
    */
   multiValueEquals?: boolean;
+  /**
+   * `contains` / `doesNotContain` hold several values, picked from the property's fixed options: the row's
+   * value contains any of them, or none of them. Offered as "contains any of" / "contains none of".
+   * Absent: they hold one typed value.
+   */
+  multiValueContains?: boolean;
   /**
    * Which of the property's values occur, looked up when it is listed: values that do not show greyed
    * and cannot be picked, and a property with none at all is listed disabled with `emptyHint`.

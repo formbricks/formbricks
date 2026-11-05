@@ -20,6 +20,14 @@ describe("operatorTakesValues", () => {
     expect(operatorTakesValues("contains", list)).toBe(false);
     expect(operatorTakesValues("equals", {})).toBe(false);
   });
+
+  test("is true for contains / does not contain on a property whose containment takes several values", () => {
+    const labels = { multiValueContains: true };
+    expect(operatorTakesValues("contains", labels)).toBe(true);
+    expect(operatorTakesValues("doesNotContain", labels)).toBe(true);
+    expect(operatorTakesValues("equals", labels)).toBe(false);
+    expect(operatorTakesValues("contains", {})).toBe(false);
+  });
 });
 
 describe("operatorTakesValue", () => {
@@ -74,5 +82,14 @@ describe("getOperatorName", () => {
 
   test("uses the chip label for every other operator", () => {
     expect(getOperatorName("contains", t)).toBe("common.table_toolbar.operator_contains");
+  });
+
+  test("names containment that takes several values as contains any of / none of", () => {
+    const labels = { multiValueContains: true };
+    expect(getOperatorName("contains", t, labels)).toBe("common.table_toolbar.operator_contains_any_of");
+    expect(getOperatorName("doesNotContain", t, labels)).toBe(
+      "common.table_toolbar.operator_contains_none_of"
+    );
+    expect(getOperatorName("equals", t, labels)).toBe("common.table_toolbar.operator_equals");
   });
 });

@@ -1,4 +1,4 @@
-import { isMultiValueEquality, operatorTakesValue, operatorTakesValues } from "./operators";
+import { isMultiValuePick, operatorTakesValue, operatorTakesValues } from "./operators";
 import type { TFilterProperty, TRuleOperator } from "./types";
 
 /** The rule operators that match one exact value, so a listed value is the one worth picking. */
@@ -13,8 +13,8 @@ const EXACT_OPERATORS: ReadonlySet<TRuleOperator> = new Set(["equals", "notEqual
  *   typed text with values already seen as suggestions.
  * - `picker`: one value picked from the property's fixed or looked-up values; an enum's always are.
  * - `multiPicker`: several values picked from the property's fixed or looked-up values: `equals` /
- *   `notEquals` with `multiValueEquals`, and any list operator on looked-up values, which the editor's
- *   combobox cannot list.
+ *   `notEquals` with `multiValueEquals`, `contains` / `doesNotContain` with `multiValueContains`, and any
+ *   list operator on looked-up values, which the editor's combobox cannot list.
  * - `date`, `number`, `text`: a value typed, or a day picked.
  */
 export type TRuleValueControl =
@@ -34,7 +34,7 @@ export const getRuleValueControl = (
   if (!property || !operator) return "placeholder";
   if (!operatorTakesValue(operator)) return "none";
   if (operatorTakesValues(operator, property)) {
-    return isMultiValueEquality(operator, property) || property.loadOptions ? "multiPicker" : "editor";
+    return isMultiValuePick(operator, property) || property.loadOptions ? "multiPicker" : "editor";
   }
   if (property.valueType === "date") return "date";
 

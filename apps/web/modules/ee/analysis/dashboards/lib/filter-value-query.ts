@@ -154,7 +154,10 @@ export const buildFilterValueQueries = ({
     const hasField = (field: string) => datasetHasField(datasetId, field);
     if (!hasField(filter.field)) return [];
 
-    const otherPicks = resolvePicksForDataset(filters, picks, hasField, { except: filter.id });
+    const otherPicks = resolvePicksForDataset(filters, picks, hasField, {
+      except: filter.id,
+      timeZone: clock.timeZone,
+    });
     if (otherPicks.unfilterable.length > 0) return [];
     // Every query of the dataset ends with the picks and the value rules; the rest of the budget is the
     // charts'. Picks over the budget on their own refuse every chart on the dashboard, so none shows a value.
@@ -225,7 +228,10 @@ export const buildBoundedChartQueries = ({
     if (countAnswerRules(chart.query.filters) > MAX_ANSWER_RULES) return [];
     const hasField = (field: string) => datasetHasField(chart.datasetId, field);
     if (!hasField(filter.field)) return [];
-    const otherPicks = resolvePicksForDataset(filters, picks, hasField, { except: filter.id });
+    const otherPicks = resolvePicksForDataset(filters, picks, hasField, {
+      except: filter.id,
+      timeZone: clock.timeZone,
+    });
     if (otherPicks.unfilterable.length > 0) return [];
     // Its saved filters and the picks over MAX_FILTER_CONDITIONS together: the chart is refused when it runs.
     const conditions = countFilterConditions(chart.query.filters) + countFilterConditions(otherPicks.rules);

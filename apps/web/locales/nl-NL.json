@@ -586,6 +586,8 @@
       "no_values": "Nog geen waarden",
       "no_values_match": "Geen waarden gevonden voor \"{search}\"",
       "operator_contains": "bevat",
+      "operator_contains_any_of": "bevat een van",
+      "operator_contains_none_of": "bevat geen van",
       "operator_does_not_contain": "bevat niet",
       "operator_does_not_end_with": "eindigt niet op",
       "operator_does_not_start_with": "begint niet met",

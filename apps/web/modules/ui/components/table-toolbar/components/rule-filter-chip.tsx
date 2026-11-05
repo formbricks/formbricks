@@ -74,7 +74,7 @@ const RuleEditor = ({
         <SelectContent>
           {(property.ruleOperators ?? []).map((operator) => (
             <SelectItem key={operator} value={operator}>
-              {getOperatorName(operator, t)}
+              {getOperatorName(operator, t, property)}
             </SelectItem>
           ))}
         </SelectContent>

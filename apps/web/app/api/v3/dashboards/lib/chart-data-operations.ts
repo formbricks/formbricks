@@ -6,6 +6,7 @@ import {
   DATA_ROUTE_DATE_RANGE_NAMES,
   applyChartQueryRateLimit,
   emptyChartData,
+  getOrganizationReportingTimeZone,
   requestedDateRangeOf,
   runV3ChartQuery,
 } from "@/app/api/v3/charts/lib/data-operations";
@@ -197,7 +198,9 @@ export async function getV3DashboardChartData({
           actor,
         },
         dashboardFilters.map(({ field }) => field)
-      )
+      ),
+      // A picked day is a whole day where the organization reports, as its charts' date ranges are.
+      { timeZone: await getOrganizationReportingTimeZone(access.organizationId) }
     );
     const unfilterableFilters = unfilterable.map(({ id, label }) => ({ id, label }));
     const respond = (data: TV3ChartData): TV3DashboardChartData => ({ ...data, unfilterableFilters });

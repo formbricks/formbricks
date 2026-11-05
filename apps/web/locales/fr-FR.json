@@ -586,6 +586,8 @@
       "no_values": "Aucune valeur pour le moment",
       "no_values_match": "Aucune valeur ne correspond à « {search} »",
       "operator_contains": "contient",
+      "operator_contains_any_of": "contient l'un des éléments suivants",
+      "operator_contains_none_of": "ne contient aucun des éléments suivants",
       "operator_does_not_contain": "ne contient pas",
       "operator_does_not_end_with": "ne se termine pas par",
       "operator_does_not_start_with": "ne commence pas par",

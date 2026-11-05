@@ -4,6 +4,7 @@ import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client"
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
   EMOTIONS_DIMENSION_ID,
+  EMOTION_VALUES,
   SENTIMENT_DIMENSION_ID,
   SENTIMENT_VALUE_ORDER,
   VALUE_BAND_DIMENSION_ID,
@@ -11,6 +12,7 @@ import {
   getTranslatedDimensionValueLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type {
+  TAvailableValues,
   TFilterOption,
   TFilterProperty,
   TRuleOperator,
@@ -23,9 +25,11 @@ import {
   NO_VALUE_PICK,
   type TDashboardFilterOperator,
   type TLockedDashboardFilter,
+  dashboardFilterTakesSeveralValues,
   dashboardFilterTakesValues,
   getDashboardFilterField,
   getDashboardFilterOperators,
+  getMultiLabelValues,
   isListDashboardFilter,
 } from "./dashboard-filters";
 
@@ -37,23 +41,23 @@ import {
  * to be looked up in the data, is filtered in Advanced filter, which lists them when a rule on the field is
  * written. On a field that holds one of a list of values (a list filter, `isListDashboardFilter`) "is" /
  * "is not" take one value or several (`multiValueEquals`), so a rule holds every value a quick filter
- * would; such a list also offers "(No value)" (`NO_VALUE_PICK`). Every field can be "is set" / "is not
- * set". A fixed-option field greys the options the charts do not have (`availableValues`).
+ * would; such a list also offers "(No value)" (`NO_VALUE_PICK`). A multi-label field (emotions) picks
+ * several of its labels with "contains any of" / "contains none of" (`multiValueContains`). Every field can
+ * be "is set" / "is not set". A fixed-option field greys the options the charts do not have
+ * (`availableValues`).
  */
+
+/**
+ * The typed fields AI enrichment fills together with the sentiment label. Without a sentiment on the
+ * dashboard's records none of them has a value either, so each is listed disabled beside Sentiment, with
+ * its hint. Emotions, filled with it too, is a multi-label field and gets the same (`labelAvailability`).
+ */
+const ENRICHED_WITH_SENTIMENT: ReadonlySet<string> = new Set(["FeedbackRecords.sentimentScore"]);
 
 /**
  * Fields of one record's question rather than of the feedback: which question type and which question id
  * a record answers. A chart builder groups by them; a dashboard reader does not filter by them.
  */
-/**
- * The fields AI enrichment fills together with the sentiment label. Without a sentiment on the dashboard's
- * records none of them has a value either, so each is listed disabled beside Sentiment, with its hint.
- */
-const ENRICHED_WITH_SENTIMENT: ReadonlySet<string> = new Set([
-  "FeedbackRecords.sentimentScore",
-  EMOTIONS_DIMENSION_ID,
-]);
-
 const RECORD_LEVEL_FIELDS: ReadonlySet<string> = new Set([
   "FeedbackRecords.fieldType",
   "FeedbackRecords.fieldId",
@@ -65,6 +69,7 @@ const getFixedValueOptions = (field: string, t: TFunction): TFilterOption[] | un
     values.map((value) => ({ value, label: getTranslatedDimensionValueLabel(field, value, t) ?? value }));
   if (field === SENTIMENT_DIMENSION_ID) return translated(SENTIMENT_VALUE_ORDER);
   if (field === VALUE_BAND_DIMENSION_ID) return translated(VALUE_BAND_VALUES);
+  if (field === EMOTIONS_DIMENSION_ID) return translated(EMOTION_VALUES);
   if (getDashboardFilterField(field)?.type === "boolean") {
     return [
       { value: "true", label: t("common.yes") },
@@ -87,10 +92,10 @@ const isQuickField = (field: string): boolean => QUICK_FIELDS.has(field);
 
 /**
  * The kinds of field a dashboard filters by, each with its own operators: a fixed set of options
- * (sentiment, value band), yes/no, values looked up in the data (source, language, embedded data…), free
- * text (response text, user id), a number, and a date.
+ * (sentiment, value band), a set of labels from a fixed list (emotions), yes/no, values looked up in the
+ * data (source, language, embedded data…), free text (response text, user id), a number, and a date.
  */
-type TFieldKind = "fixed" | "boolean" | "list" | "text" | "number" | "time";
+type TFieldKind = "fixed" | "labels" | "boolean" | "list" | "text" | "number" | "time";
 
 /**
  * The operators each kind offers, in the order the toolbar lists them. "is" / "is not" on a field with a
@@ -98,6 +103,7 @@ type TFieldKind = "fixed" | "boolean" | "list" | "text" | "number" | "time";
  */
 const KIND_OPERATORS: Record<TFieldKind, readonly TDashboardFilterOperator[]> = {
   fixed: ["equals", "notEquals", "set", "notSet"],
+  labels: ["contains", "notContains", "set", "notSet"],
   boolean: ["equals", "set", "notSet"],
   list: ["equals", "notEquals", "contains", "notContains", "set", "notSet"],
   text: ["contains", "notContains", "equals", "notEquals", "set", "notSet"],
@@ -109,6 +115,7 @@ const fieldKindOf = (field: string): TFieldKind | undefined => {
   const definition = getDashboardFilterField(field);
   if (!definition) return undefined;
   if (isQuickField(field)) return "fixed";
+  if (getMultiLabelValues(field)) return "labels";
   if (definition.type === "boolean" || definition.type === "time" || definition.type === "number") {
     return definition.type;
   }
@@ -165,7 +172,8 @@ export const toStatedFilters = (filters: readonly TLockedDashboardFilter[]): TDa
 
 /**
  * The filters as the toolbar holds them: equals on a quick field is its quick filter, a list field's
- * equals and not-equals keep every value, `set` / `notSet` hold none and any other filter its one value.
+ * equals and not-equals and a multi-label field's contains and not-contains keep every value, `set` /
+ * `notSet` hold none and any other filter its one value.
  * One it cannot show (an operator it has no name for) is left out.
  */
 export const toToolbarFilters = (filters: readonly TDashboardFilterState[]): TTableFilter[] =>
@@ -178,7 +186,9 @@ export const toToolbarFilters = (filters: readonly TDashboardFilterState[]): TTa
     const operator = toRuleOperator(filter.field, filter.operator);
     if (!operator) return [];
     let values: string[] = [];
-    if (takesValues) values = isListDashboardFilter(filter) ? [...filter.values] : [filter.values[0]];
+    if (takesValues) {
+      values = dashboardFilterTakesSeveralValues(filter) ? [...filter.values] : [filter.values[0]];
+    }
     return [{ property: filter.field, operator, values }];
   });
 
@@ -188,31 +198,113 @@ export const fromToolbarFilters = (filters: readonly TTableFilter[]): TDashboard
     const operator = fromRuleOperator(filter.operator);
     if (!operator) return [];
     if (!dashboardFilterTakesValues(operator)) return [{ field: filter.property, operator, values: [] }];
-    const values = isListDashboardFilter({ field: filter.property, operator })
+    const values = dashboardFilterTakesSeveralValues({ field: filter.property, operator })
       ? [...filter.values]
       : filter.values.slice(0, 1);
     return values.length > 0 ? [{ field: filter.property, operator, values }] : [];
   });
 
 /**
- * The filters a field's value list is narrowed by: every one but the field's own list filters and its
- * set / not set, so more of its values can be chosen, and the ones a "none of" rule leaves out stay
- * there to untick.
+ * The filters a field's value list is narrowed by: every one but the field's own several-value filters
+ * and its set / not set, so more of its values can be chosen, and the ones a "none of" rule leaves out
+ * stay there to untick.
  */
 const otherFiltersOf = (field: string, filters: readonly TDashboardFilterState[]): TDashboardFilterState[] =>
   filters.filter(
     (filter) =>
       !(
         filter.field === field &&
-        (isListDashboardFilter(filter) || !dashboardFilterTakesValues(filter.operator))
+        (dashboardFilterTakesSeveralValues(filter) || !dashboardFilterTakesValues(filter.operator))
       )
   );
+
+type TPropertyScope = Readonly<{
+  t: TFunction;
+  dashboardId: string;
+  filters: readonly TDashboardFilterState[];
+  dateRange: TChartDateRangeInput | null;
+}>;
+
+/**
+ * Whether a field enriched with sentiment has values, asked of the sentiment list itself: without a
+ * sentiment on the dashboard's records it has none either, so it is listed disabled with Sentiment's hint.
+ * The field's own filters are left out of the lookup, so they never disable the field they are on.
+ */
+const sentimentAvailability = (field: string, { t, dashboardId, filters, dateRange }: TPropertyScope) =>
+  getDashboardFieldAvailableValues({
+    dashboardId,
+    dateRange,
+    field: SENTIMENT_DIMENSION_ID,
+    otherFilters: otherFiltersOf(SENTIMENT_DIMENSION_ID, otherFiltersOf(field, filters)),
+    emptyHint: t("workspace.analysis.dashboards.filter_no_sentiment_yet"),
+    narrowedHint: t("workspace.analysis.dashboards.filter_no_values_in_view"),
+  });
+
+/**
+ * A multi-label field's availability: disabled, with the sentiment hint, while no record has a sentiment;
+ * otherwise every label is offered. The lookup returns sentiment values, so they are not passed on as the
+ * labels that occur, which would grey every label; it is cached apart from Sentiment's for that reason.
+ */
+const labelAvailability = (
+  field: string,
+  labels: readonly string[],
+  scope: TPropertyScope
+): TAvailableValues => {
+  const sentiment = sentimentAvailability(field, scope);
+  return {
+    ...sentiment,
+    queryKey: [...sentiment.queryKey, field],
+    load: async (signal) => {
+      const result = await sentiment.load(signal);
+      return result.values.length > 0 ? { values: [...labels] } : result;
+    },
+  };
+};
+
+/** A field with a fixed set of values, picked from them; a multi-label field picks several labels. */
+const fixedValueProperty = (
+  field: string,
+  fixed: TFilterOption[],
+  noValueOption: TFilterOption,
+  scope: TPropertyScope
+): Pick<
+  TFilterProperty,
+  "valueType" | "options" | "quick" | "multiValueEquals" | "multiValueContains" | "availableValues"
+> => {
+  const { t, dashboardId, filters, dateRange } = scope;
+  const labels = getMultiLabelValues(field);
+  if (labels) {
+    return {
+      valueType: "enum",
+      options: fixed,
+      multiValueContains: true,
+      availableValues: labelAvailability(field, labels, scope),
+    };
+  }
+  return {
+    valueType: "enum",
+    options: [noValueOption, ...fixed],
+    quick: isQuickField(field),
+    multiValueEquals: true,
+    availableValues: getDashboardFieldAvailableValues({
+      dashboardId,
+      field,
+      otherFilters: otherFiltersOf(field, filters),
+      dateRange,
+      emptyHint:
+        field === SENTIMENT_DIMENSION_ID
+          ? t("workspace.analysis.dashboards.filter_no_sentiment_yet")
+          : t("workspace.analysis.dashboards.filter_no_values_yet"),
+      narrowedHint: t("workspace.analysis.dashboards.filter_no_values_in_view"),
+    }),
+  };
+};
 
 /**
  * The toolbar's properties for a dashboard: every dimension of the catalog and every embedded-data key of
  * its datasets a person can filter by. A field with a fixed set of values is a quick filter and picks from
- * them in Advanced filter too; a categorical field lists the values the charts let through there, and the
- * rest take a typed value.
+ * them in Advanced filter too (a multi-label field only there); a categorical field lists the values the
+ * charts let through there, and the rest take a typed value.
  */
 export const buildToolbarProperties = ({
   t,
@@ -231,6 +323,7 @@ export const buildToolbarProperties = ({
     value: NO_VALUE_PICK,
     label: t("workspace.analysis.dashboards.filter_no_value"),
   };
+  const propertyScope: TPropertyScope = { t, dashboardId, filters, dateRange };
   return getFilterFieldOptions(t, { embeddedFields: [...embeddedFields], answerQuestions: [] })
     .filter((group) => group.value === "dimensions" || group.value === "embeddedData")
     .flatMap((group) =>
@@ -241,29 +334,11 @@ export const buildToolbarProperties = ({
         const ruleOperators = getToolbarRuleOperators(field);
         if (!definition || ruleOperators.length === 0) return [];
         const shared = { id: field, label: option.label, group: group.label, ruleOperators };
-        const scope = { dashboardId, field, otherFilters: otherFiltersOf(field, filters), dateRange };
 
         const fixed = getFixedValueOptions(field, t);
-        if (fixed) {
-          return [
-            {
-              ...shared,
-              valueType: "enum",
-              options: [noValueOption, ...fixed],
-              quick: isQuickField(field),
-              multiValueEquals: true,
-              availableValues: getDashboardFieldAvailableValues({
-                ...scope,
-                emptyHint:
-                  field === SENTIMENT_DIMENSION_ID
-                    ? t("workspace.analysis.dashboards.filter_no_sentiment_yet")
-                    : t("workspace.analysis.dashboards.filter_no_values_yet"),
-                narrowedHint: t("workspace.analysis.dashboards.filter_no_values_in_view"),
-              }),
-            },
-          ];
-        }
+        if (fixed) return [{ ...shared, ...fixedValueProperty(field, fixed, noValueOption, propertyScope) }];
         if (isListDashboardFilter({ field, operator: "equals" })) {
+          const scope = { dashboardId, field, otherFilters: otherFiltersOf(field, filters), dateRange };
           return [
             {
               ...getDashboardFieldValueProperty({ ...scope, label: option.label, noValueOption }),
@@ -274,16 +349,8 @@ export const buildToolbarProperties = ({
         }
         const valueType = TOOLBAR_VALUE_TYPE[definition.type] ?? "string";
         if (ENRICHED_WITH_SENTIMENT.has(field)) {
-          // Asked of the sentiment list itself, so it shares that lookup's cache; this property has no
-          // values of its own to grey, only the menu's disabled state reads it.
-          const availableValues = getDashboardFieldAvailableValues({
-            ...scope,
-            field: SENTIMENT_DIMENSION_ID,
-            otherFilters: otherFiltersOf(SENTIMENT_DIMENSION_ID, filters),
-            emptyHint: t("workspace.analysis.dashboards.filter_no_sentiment_yet"),
-            narrowedHint: t("workspace.analysis.dashboards.filter_no_values_in_view"),
-          });
-          return [{ ...shared, valueType, availableValues }];
+          // This property has no values of its own to grey, only the menu's disabled state reads it.
+          return [{ ...shared, valueType, availableValues: sentimentAvailability(field, propertyScope) }];
         }
         return [{ ...shared, valueType }];
       })

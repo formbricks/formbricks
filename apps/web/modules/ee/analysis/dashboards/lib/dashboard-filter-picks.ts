@@ -1,12 +1,20 @@
+import { addDays } from "date-fns";
 import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/analysis";
+import { getStartOfDayInTimeZone } from "@/lib/date-ranges";
+import { parseLocalDay } from "@/lib/utils/datetime";
+import { isRealIsoDate } from "./dashboard-date-filter";
 import { filterRuleIdOf } from "./dashboard-filter-rules";
 import {
   NO_VALUE_PICK,
   type TDashboardFilter,
+  type TDashboardFilterOperator,
   type TDashboardFilterPicks,
+  dashboardFilterTakesSeveralValues,
   dashboardFilterTakesValues,
   getDashboardFilterField,
+  getMultiLabelValues,
   isListDashboardFilter,
+  isMultiLabelDashboardFilter,
   readStoredDashboardFilters,
 } from "./dashboard-filters";
 
@@ -54,6 +62,19 @@ export type TPickIssue = { name: string; reason: string; code?: "limit_exceeded"
  */
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-][\d:]+)?)?$/;
 
+/**
+ * Whether a value is a date: a real calendar day, alone or with a time. `Date.parse` rolls an impossible
+ * day over ("2026-02-30" is March 2), so the day is checked apart.
+ */
+const isPickedDate = (value: string): boolean =>
+  ISO_DATE.test(value) && isRealIsoDate(value.slice(0, 10)) && !Number.isNaN(Date.parse(value));
+
+/** Why a picked value is no label of a multi-label field, or `null` when it is one. */
+const labelProblem = (field: string, value: string): string | null => {
+  const labels = getMultiLabelValues(field) ?? [];
+  return labels.includes(value) ? null : `Must be one of: ${labels.join(", ")}.`;
+};
+
 /** Why a picked value cannot be compared with the field, or `null` when it can. */
 const pickValueProblem = (
   filter: Pick<TDashboardFilter, "field" | "operator">,
@@ -68,10 +89,9 @@ const pickValueProblem = (
   if (type === "number") {
     return value.trim() !== "" && Number.isFinite(Number(value)) ? null : "Must be a number.";
   }
+  if (isMultiLabelDashboardFilter(filter)) return labelProblem(filter.field, value);
   if (type === "time") {
-    return ISO_DATE.test(value) && !Number.isNaN(Date.parse(value))
-      ? null
-      : "Must be a date (YYYY-MM-DD or an ISO 8601 timestamp).";
+    return isPickedDate(value) ? null : "Must be a date (YYYY-MM-DD or an ISO 8601 timestamp).";
   }
   if (type === "boolean") return value === "true" || value === "false" ? null : "Must be true or false.";
   return null;
@@ -80,9 +100,9 @@ const pickValueProblem = (
 /**
  * What is wrong with a person's picks before any of them reaches a chart query: more characters
  * in all than `MAX_DASHBOARD_FILTER_PICKS_CHARS`, a value a filter's field cannot hold (a number field
- * picked with a word, the no-value pick on a filter without a list), or values for a `set` / `notSet`
- * filter, which takes none — each named by the filter it was picked for. Picks for filters the dashboard
- * does not have are ignored, as the operations drop them.
+ * picked with a word, a label a multi-label field does not have, the no-value pick on a filter without a
+ * list), or values for a `set` / `notSet` filter, which takes none — each named by the filter it was
+ * picked for. Picks for filters the dashboard does not have are ignored, as the operations drop them.
  */
 export const findPickIssues = (
   filters: readonly TDashboardFilter[],
@@ -123,9 +143,10 @@ export const narrowWithFilters = (query: TChartQuery, filters: readonly TCubeFil
   filters.length === 0 ? query : { ...query, filters: [...(query.filters ?? []), ...filters] };
 
 /**
- * The values a pick applies: a list filter takes every chosen value ("is any of"), any other filter its one
- * typed value, and `set` / `notSet` none — they apply without a pick. Blank values are dropped; `null`
- * when nothing is left, so the filter is not applied.
+ * The values a pick applies: a list filter takes every chosen value ("is any of"), a multi-label filter
+ * every chosen label ("contains any of"), any other filter its one typed value, and `set` / `notSet` none —
+ * they apply without a pick. Blank values are dropped; `null` when nothing is left, so the filter is not
+ * applied.
  */
 export const pickValuesOf = (
   filter: Pick<TDashboardFilter, "field" | "operator">,
@@ -134,18 +155,72 @@ export const pickValuesOf = (
   if (!dashboardFilterTakesValues(filter.operator)) return [];
   const kept = (values ?? []).filter((value) => value.trim() !== "");
   if (kept.length === 0) return null;
-  return isListDashboardFilter(filter) ? kept : [kept[0]];
+  return dashboardFilterTakesSeveralValues(filter) ? kept : [kept[0]];
+};
+
+/** How a pick reads its values: calendar days are cut in this zone, the organization's reporting zone. */
+export type TPickClock = { timeZone: string };
+
+const CALENDAR_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The instant the day `offset` days after `day` begins in `timeZone`, as Cube is sent a timestamp. */
+const dayStart = (day: string, offset: number, timeZone: string): string =>
+  getStartOfDayInTimeZone(addDays(parseLocalDay(day), offset), timeZone).toISOString();
+
+type TDayRule = (member: string, day: string, timeZone: string) => TCubeFilter;
+
+/**
+ * A comparison with a calendar day as whole days in the reporting zone, as the table toolbar's date filter
+ * reads one (`resolveDateFilterBounds`): "after Oct 5" starts when Oct 6 does there, "before Oct 5" ends
+ * when Oct 5 starts. Cube compares a time dimension with a bare day as midnight UTC, so the bounds are
+ * sent as instants instead.
+ */
+const DAY_RULES: Partial<Record<TDashboardFilterOperator, TDayRule>> = {
+  gt: (member, day, zone) => ({ member, operator: "gte", values: [dayStart(day, 1, zone)] }),
+  gte: (member, day, zone) => ({ member, operator: "gte", values: [dayStart(day, 0, zone)] }),
+  lt: (member, day, zone) => ({ member, operator: "lt", values: [dayStart(day, 0, zone)] }),
+  lte: (member, day, zone) => ({ member, operator: "lt", values: [dayStart(day, 1, zone)] }),
+  equals: (member, day, zone) => ({
+    and: [
+      { member, operator: "gte", values: [dayStart(day, 0, zone)] },
+      { member, operator: "lt", values: [dayStart(day, 1, zone)] },
+    ],
+  }),
+  // Records without a value pass, as they pass Cube's `notEquals`.
+  notEquals: (member, day, zone) => ({
+    or: [
+      { member, operator: "lt", values: [dayStart(day, 0, zone)] },
+      { member, operator: "gte", values: [dayStart(day, 1, zone)] },
+      { member, operator: "notSet" },
+    ],
+  }),
+};
+
+/** The rule a pick of one calendar day on a time field makes, or `null` for any other pick. */
+const toDayRule = (
+  filter: TDashboardFilter,
+  values: string[],
+  { timeZone }: TPickClock
+): TCubeFilter | null => {
+  const [day] = values;
+  if (values.length !== 1 || !CALENDAR_DAY.test(day)) return null;
+  if (getDashboardFilterField(filter.field)?.type !== "time") return null;
+  return DAY_RULES[filter.operator]?.(filter.field, day, timeZone) ?? null;
 };
 
 /**
- * The filter rule one pick adds to a chart query. `set` / `notSet` compare against nothing. The no-value
- * pick (`NO_VALUE_PICK`) never reaches Cube: "is" any of the values or no value is an OR with `notSet`,
- * "is not" any of them with a value an AND with `set` (Cube's `notEquals` lets records without a value
- * through), and the no-value pick alone is `notSet` or `set`.
+ * The filter rule one pick adds to a chart query. `set` / `notSet` compare against nothing. A calendar day
+ * on a time field is whole days in `clock`'s zone (`DAY_RULES`). Several labels of a multi-label field go
+ * to Cube as one `contains` (any of) or `notContains` (none of). The no-value pick (`NO_VALUE_PICK`) never
+ * reaches Cube: "is" any of the values or no value is an OR with `notSet`, "is not" any of them with a
+ * value an AND with `set` (Cube's `notEquals` lets records without a value through), and the no-value pick
+ * alone is `notSet` or `set`.
  */
-export const toPickRule = (filter: TDashboardFilter, values: string[]): TCubeFilter => {
+export const toPickRule = (filter: TDashboardFilter, values: string[], clock: TPickClock): TCubeFilter => {
   const member = filter.field;
   if (!dashboardFilterTakesValues(filter.operator)) return { member, operator: filter.operator };
+  const dayRule = toDayRule(filter, values, clock);
+  if (dayRule) return dayRule;
   const real = values.filter((value) => value !== NO_VALUE_PICK);
   if (real.length === values.length) return { member, operator: filter.operator, values };
 
@@ -166,13 +241,14 @@ export type TResolvedPicks = {
 /**
  * Resolve picks against one chart's Feedback Dataset. Picks for filters the dashboard no longer has are
  * dropped; a picked filter whose field the dataset lacks makes the chart unfilterable rather than being
- * skipped, since skipping it would show the chart wider than the pick.
+ * skipped, since skipping it would show the chart wider than the pick. `timeZone` is the organization's
+ * reporting zone, which a picked calendar day is cut in.
  */
 export const resolvePicksForDataset = (
   filters: readonly TDashboardFilter[],
   picks: TDashboardFilterPicks,
   datasetHasField: (field: string) => boolean,
-  { except }: { except?: string } = {}
+  { except, timeZone }: { except?: string; timeZone: string }
 ): TResolvedPicks => {
   const rules: TCubeFilter[] = [];
   const unfilterable: TDashboardFilter[] = [];
@@ -181,7 +257,7 @@ export const resolvePicksForDataset = (
     if (filter.id === except) continue;
     const values = pickValuesOf(filter, picks[filter.id]);
     if (!values) continue;
-    if (datasetHasField(filter.field)) rules.push(toPickRule(filter, values));
+    if (datasetHasField(filter.field)) rules.push(toPickRule(filter, values, { timeZone }));
     else unfilterable.push(filter);
   }
 

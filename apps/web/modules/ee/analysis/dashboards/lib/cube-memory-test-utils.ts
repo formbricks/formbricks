@@ -5,13 +5,20 @@ import type { TChartQuery, TCubeFilter } from "@formbricks/types/analysis";
  * a list of records the way Cube's SQL would, so a test can compare what a built query lets through with
  * what each chart lets through, without a Cube. Covers the operators dashboards use: `equals` (any of),
  * `notEquals` (none of, NULL included, as Cube does), `contains`/`notContains` (case-insensitive), `set`,
- * `notSet`, the comparisons, and `inDateRange` on `yyyy-MM-dd` days; `and`/`or` groups at any depth, and
+ * `notSet`, the comparisons (of numbers, or of instants on a time field: a bare day is midnight UTC, as
+ * Postgres reads one in Cube's UTC session), and `inDateRange` on `yyyy-MM-dd` days; `and`/`or` groups at any depth, and
  * every time dimension's `dateRange` given as a pair of days.
  */
 
 export type TMemoryRecord = Record<string, string | null>;
 
 const day = (value: string): string => value.slice(0, 10);
+
+/** A value as the comparisons take it: a number, or else the instant a timestamp or day names. */
+const comparable = (value: string): number => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : Date.parse(value);
+};
 
 const matchesRule = (record: TMemoryRecord, rule: TCubeFilter): boolean => {
   if ("and" in rule) return rule.and.every((child) => matchesRule(record, child));
@@ -33,13 +40,13 @@ const matchesRule = (record: TMemoryRecord, rule: TCubeFilter): boolean => {
     case "notSet":
       return actual === null;
     case "gt":
-      return actual !== null && Number(actual) > Number(values[0]);
+      return actual !== null && comparable(actual) > comparable(values[0]);
     case "gte":
-      return actual !== null && Number(actual) >= Number(values[0]);
+      return actual !== null && comparable(actual) >= comparable(values[0]);
     case "lt":
-      return actual !== null && Number(actual) < Number(values[0]);
+      return actual !== null && comparable(actual) < comparable(values[0]);
     case "lte":
-      return actual !== null && Number(actual) <= Number(values[0]);
+      return actual !== null && comparable(actual) <= comparable(values[0]);
     case "inDateRange":
       return actual !== null && day(actual) >= day(values[0]) && day(actual) <= day(values[1]);
     default:

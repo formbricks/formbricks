@@ -586,6 +586,8 @@
       "no_values": "値はまだありません",
       "no_values_match": "「{search}」に一致する値はありません",
       "operator_contains": "を含む",
+      "operator_contains_any_of": "いずれかを含む",
+      "operator_contains_none_of": "いずれも含まない",
       "operator_does_not_contain": "を含まない",
       "operator_does_not_end_with": "で終わらない",
       "operator_does_not_start_with": "で始まらない",

@@ -586,6 +586,8 @@
       "no_values": "暂无值",
       "no_values_match": "没有与“{search}”匹配的值",
       "operator_contains": "包含",
+      "operator_contains_any_of": "包含任意一项",
+      "operator_contains_none_of": "不包含任何一项",
       "operator_does_not_contain": "不包含",
       "operator_does_not_end_with": "不以…结尾",
       "operator_does_not_start_with": "不以…开头",

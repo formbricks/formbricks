@@ -14323,7 +14323,7 @@ components:
             - lte
             - set
             - notSet
-          description: One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value.
+          description: 'One of the field''s `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); `contains` and `notContains` on `FeedbackRecords.emotions` take several of its labels (`joy`, `anger`, `sadness`, `fear`, `surprise`, `disgust`): contains any of them, contains none of them; `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value. On a time field a day (`YYYY-MM-DD`) is the whole day in the organization''s reporting time zone: `gt` is after it, `lt` before it, `gte` and `lte` include it, `equals` is on it.'
         label:
           type: string
           minLength: 1
@@ -14336,7 +14336,7 @@ components:
             type: string
             minLength: 1
             maxLength: 1000
-          description: 'The values the filter is locked to: none for `set` and `notSet`, at least one otherwise. A list filter (`equals` or `notEquals` on a categorical field) matches any of them; every other filter takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it. Each must be a value its field can hold, and all of a dashboard''s locked values together stay within the 4000 percent-encoded characters a read''s picks may take.'
+          description: 'The values the filter is locked to: none for `set` and `notSet`, at least one otherwise. A list filter (`equals` or `notEquals` on a categorical field) matches any of them, and an emotions filter (`contains` or `notContains`) takes each, which must be one of its labels; every other filter takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it. Each must be a value its field can hold, and all of a dashboard''s locked values together stay within the 4000 percent-encoded characters a read''s picks may take.'
           example:
             - Website
       additionalProperties: false
@@ -17370,7 +17370,7 @@ components:
           items:
             type: string
             maxLength: 1000
-      description: 'Values for the request''s filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise, and `set` / `notSet` none (a pick for one answers 422). In a list filter, `%1Fnone` (`"\u001Fnone"`) stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it with 422. Each pick is ANDed onto every chart''s saved query; picks for a filter the request does not name are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.'
+      description: 'Values for the request''s filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter for several values of a list filter (any of), or several labels of `contains` / `notContains` on `FeedbackRecords.emotions` (contains any of / none of; a value that is not one of its labels answers 422). A filter takes one typed value otherwise, and `set` / `notSet` none (a pick for one answers 422). A day (`YYYY-MM-DD`) on a time field is the whole day in the organization''s reporting time zone. In a list filter, `%1Fnone` (`"\u001Fnone"`) stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it with 422. Each pick is ANDed onto every chart''s saved query; picks for a filter the request does not name are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.'
       example:
         f1:
           - Web

@@ -117,11 +117,13 @@ export const AdvancedFilterDialog = ({
 
   const config: TConditionsEditorConfig = {
     getLeftOperandOptions: () => groupProperties(ruleProperties, t("common.table_toolbar.properties")),
-    getOperatorOptions: (condition) =>
-      (propertyFor(condition)?.ruleOperators ?? []).map((operator) => ({
-        label: getOperatorName(operator, t),
+    getOperatorOptions: (condition) => {
+      const property = propertyFor(condition);
+      return (property?.ruleOperators ?? []).map((operator) => ({
+        label: getOperatorName(operator, t, property),
         value: operator,
-      })),
+      }));
+    },
     getValueProps: (condition) => {
       const property = propertyFor(condition);
       if (!property || !condition.operator || !operatorTakesValue(condition.operator as never)) {

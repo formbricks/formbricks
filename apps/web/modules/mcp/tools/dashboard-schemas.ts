@@ -172,7 +172,7 @@ export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;
  * What a dashboard filter's values are, for an agent. The no-value pick is written out as JSON escapes,
  * since it starts with a control character.
  */
-const FILTER_VALUES_DESCRIPTION = `What to compare with: several values for equals/notEquals on a field with a value list (any of — list_dashboard_filter_values lists them), one value otherwise, none for set/notSet. With equals/notEquals on a field with a value list, "${JSON.stringify(NO_VALUE_PICK).slice(1, -1)}" stands for "no value": equals with it also matches records without a value, notEquals with it only records with one.`;
+const FILTER_VALUES_DESCRIPTION = `What to compare with: several values for equals/notEquals on a field with a value list (any of — list_dashboard_filter_values lists them), several emotions for contains/notContains on FeedbackRecords.emotions (contains any of / none of; each one of joy, anger, sadness, fear, surprise, disgust), one value otherwise, none for set/notSet. A day (YYYY-MM-DD) on a time field is the whole day in the organization's reporting time zone: gt is after it, lt before it. With equals/notEquals on a field with a value list, "${JSON.stringify(NO_VALUE_PICK).slice(1, -1)}" stands for "no value": equals with it also matches records without a value, notEquals with it only records with one.`;
 
 /** Refuses values that do not suit the operator: some for set/notSet, none for any other operator. */
 const refuseValuesNotSuitingOperator = (

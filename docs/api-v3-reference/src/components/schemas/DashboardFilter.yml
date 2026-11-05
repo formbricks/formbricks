@@ -45,8 +45,12 @@ properties:
       categorical field — one whose catalog entry has `valueLookup`, a yes/no (`boolean`) field, or an
       embedded-data field — pick from a list of values (`GET
       /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of);
+      `contains` and `notContains` on `FeedbackRecords.emotions` take several of its labels (`joy`,
+      `anger`, `sadness`, `fear`, `surprise`, `disgust`): contains any of them, contains none of them;
       `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields
-      such as `FeedbackRecords.valueText` included, takes one typed value.
+      such as `FeedbackRecords.valueText` included, takes one typed value. On a time field a day
+      (`YYYY-MM-DD`) is the whole day in the organization's reporting time zone: `gt` is after it,
+      `lt` before it, `gte` and `lte` include it, `equals` is on it.
   label:
     type: string
     minLength: 1
@@ -61,8 +65,9 @@ properties:
       maxLength: 1000
     description: >-
       The values the filter is locked to: none for `set` and `notSet`, at least one otherwise. A list
-      filter (`equals` or `notEquals` on a categorical field) matches any of them; every other filter
-      takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also
+      filter (`equals` or `notEquals` on a categorical field) matches any of them, and an emotions
+      filter (`contains` or `notContains`) takes each, which must be one of its labels; every other
+      filter takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also
       matches records without a value, with `notEquals` it keeps only records with one; any other filter
       refuses it. Each must be a value its field can hold, and all of a dashboard's locked values
       together stay within the 4000 percent-encoded characters a read's picks may take.

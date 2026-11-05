@@ -586,6 +586,8 @@
       "no_values": "Значений пока нет",
       "no_values_match": "Нет значений, соответствующих «{search}»",
       "operator_contains": "содержит",
+      "operator_contains_any_of": "содержит любое из",
+      "operator_contains_none_of": "не содержит ни одного из",
       "operator_does_not_contain": "не содержит",
       "operator_does_not_end_with": "не заканчивается на",
       "operator_does_not_start_with": "не начинается с",

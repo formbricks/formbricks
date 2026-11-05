@@ -113,6 +113,20 @@ describe("getChipParts", () => {
     );
   });
 
+  test("contains / does not contain read by how many values they hold, on a property whose containment takes several", () => {
+    const labels = { ...status, multiValueContains: true };
+    const parts = (operator: "contains" | "doesNotContain", values: string[]) =>
+      getChipParts({ property: "status", operator, values }, labels, t, "en-US");
+    expect(parts("contains", ["draft"]).label).toBe("Status common.table_toolbar.operator_contains");
+    expect(parts("contains", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_contains_any_of"
+    );
+    expect(parts("contains", ["draft", "inProgress"]).value).toBe("Draft, In progress");
+    expect(parts("doesNotContain", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_contains_none_of"
+    );
+  });
+
   test("a date rule formats its day", () => {
     const parts = getChipParts(
       { property: "createdAt", operator: "isBefore", values: ["2026-01-31"] },

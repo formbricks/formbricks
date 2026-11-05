@@ -27,6 +27,17 @@ describe("getRuleValueControl", () => {
     expect(getRuleValueControl(property({ valueType: "enum", options: [] }), "includesOneOf")).toBe("editor");
   });
 
+  test("picks several fixed options for contains / does not contain with multiValueContains", () => {
+    const labels = property({
+      valueType: "enum",
+      options: [{ value: "a", label: "A" }],
+      multiValueContains: true,
+    });
+    expect(getRuleValueControl(labels, "contains")).toBe("multiPicker");
+    expect(getRuleValueControl(labels, "doesNotContain")).toBe("multiPicker");
+    expect(getRuleValueControl(labels, "equals")).toBe("picker");
+  });
+
   test("picks several values for is / is not with multiValueEquals, and for any list operator on looked-up values", () => {
     const fixed = property({
       valueType: "enum",
