@@ -178,8 +178,9 @@ test.describe("Survey flow @slow", () => {
       // (ENG-6969 T6). Closed again, so the outline below reads as before.
       const screenOutToggle = screenOut.locator('[role="button"][aria-expanded]').first();
       await screenOutToggle.click();
-      await expect(screenOut.getByText("If", { exact: true })).toBeVisible();
-      await expect(screenOut.getByText("Then", { exact: true })).toBeVisible();
+      // The editor's label column, not the summary row's "If", which T3's chips split into its own span.
+      await expect(screenOut.locator("div").filter({ hasText: /^If$/ })).toBeVisible();
+      await expect(screenOut.locator("div").filter({ hasText: /^Then$/ })).toBeVisible();
       await expect(screenOut.getByRole("combobox").filter({ hasText: "Jump to" })).toBeVisible();
       await screenOutToggle.click();
 
