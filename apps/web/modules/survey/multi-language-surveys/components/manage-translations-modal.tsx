@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, SparklesIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -10,7 +10,15 @@ import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
 import { translateSurveyFields } from "@/modules/ee/ai-translation/lib/api-client";
-import { getAITranslationErrorMessage } from "@/modules/ee/ai-translation/lib/error-message";
+import {
+  getAITranslationErrorCodeMessage,
+  getAITranslationErrorMessage,
+} from "@/modules/ee/ai-translation/lib/error-message";
+import {
+  AI_TRANSLATION_ACTIONS_PER_RUN,
+  createTranslationActionBatches,
+  partitionTranslationFieldsByLength,
+} from "@/modules/ee/ai-translation/lib/translation-batches";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -52,6 +60,32 @@ interface ManageTranslationsModalProps {
   readonly aiUnavailableReason?: TAIUnavailableReason;
 }
 
+type TranslationFunction = ReturnType<typeof useTranslation>["t"];
+
+const showTranslationRunResult = (
+  t: TranslationFunction,
+  toastId: string,
+  failedMessage: string | undefined,
+  hasOversizedFields: boolean,
+  hasRemainingBatches: boolean
+) => {
+  if (failedMessage) {
+    toast.error(failedMessage, { id: toastId });
+    return;
+  }
+
+  const messages = [
+    hasOversizedFields ? t("workspace.surveys.edit.ai_translation_field_too_long") : undefined,
+    hasRemainingBatches ? t("workspace.surveys.edit.ai_translation_run_limit_reached") : undefined,
+  ].filter((message): message is string => Boolean(message));
+  if (messages.length > 0) {
+    toast.error(messages.join(" "), { id: toastId });
+    return;
+  }
+
+  toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
+};
+
 export const ManageTranslationsModal = ({
   open,
   setOpen,
@@ -73,6 +107,8 @@ export const ManageTranslationsModal = ({
   const [missingFirst, setMissingFirst] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
+  const translationRunId = useRef(0);
+  const translationToastId = useRef<string | undefined>(undefined);
 
   // Initialize drafts when modal opens
   useEffect(() => {
@@ -146,33 +182,78 @@ export const ManageTranslationsModal = ({
     });
   }, [strings, draftTranslations]);
 
+  const translateBatches = async (
+    batches: ReturnType<typeof createTranslationActionBatches>,
+    runId: number
+  ): Promise<string | undefined> => {
+    for (const batch of batches) {
+      let result: Awaited<ReturnType<typeof translateSurveyFields>>;
+      try {
+        result = await translateSurveyFields(workspaceId, {
+          fields: batch,
+          sourceLanguage: defaultLanguageName,
+          targetLanguage: languageName,
+        });
+      } catch (error) {
+        if (runId !== translationRunId.current) return;
+        return getAITranslationErrorMessage(error, t);
+      }
+      if (runId !== translationRunId.current) return;
+
+      setDraftTranslations((prev) => ({ ...prev, ...result.translations }));
+      // Some of the batch's model calls failed: what did translate is kept, and the reason is shown.
+      if (result.errorCode) {
+        return getAITranslationErrorCodeMessage(result.errorCode, t);
+      }
+    }
+  };
+
   const handleTranslateWithAI = async () => {
     if (emptyFields.length === 0) return;
 
-    const paths = new Set(emptyFields.map((s) => s.path));
+    const { eligible, skipped } = partitionTranslationFieldsByLength(
+      emptyFields.map((field) => ({
+        path: field.path,
+        defaultText: field.value.default || "",
+        isRichText: field.isRichText,
+      }))
+    );
+    const hasOversizedFields = skipped.length > 0;
+    if (eligible.length === 0) {
+      toast.error(t("workspace.surveys.edit.ai_translation_field_too_long"));
+      return;
+    }
+
+    const batches = createTranslationActionBatches(eligible);
+    const selectedBatches = batches.slice(0, AI_TRANSLATION_ACTIONS_PER_RUN);
+    const paths = new Set(selectedBatches.flatMap((batch) => batch.map((field) => field.path)));
+    const runId = ++translationRunId.current;
     setIsTranslating(true);
     setTranslatingPaths(paths);
 
     const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
-
+    translationToastId.current = toastId;
     try {
-      const { translations } = await translateSurveyFields(workspaceId, {
-        fields: emptyFields.map((s) => ({
-          path: s.path,
-          defaultText: s.value.default || "",
-          isRichText: s.isRichText,
-        })),
-        sourceLanguage: defaultLanguageName,
-        targetLanguage: languageName,
-      });
+      const failedMessage = await translateBatches(selectedBatches, runId);
+      if (runId !== translationRunId.current) return;
 
-      setDraftTranslations((prev) => ({ ...prev, ...translations }));
-      toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
-    } catch (error) {
-      toast.error(getAITranslationErrorMessage(error, t), { id: toastId });
+      showTranslationRunResult(
+        t,
+        toastId,
+        failedMessage,
+        hasOversizedFields,
+        batches.length > selectedBatches.length
+      );
+    } catch {
+      if (runId === translationRunId.current) {
+        toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
+      }
     } finally {
-      setIsTranslating(false);
-      setTranslatingPaths(new Set());
+      if (runId === translationRunId.current) {
+        translationToastId.current = undefined;
+        setIsTranslating(false);
+        setTranslatingPaths(new Set());
+      }
     }
   };
 
@@ -191,6 +272,11 @@ export const ManageTranslationsModal = ({
   };
 
   const handleCancel = () => {
+    translationRunId.current++;
+    if (translationToastId.current) toast.dismiss(translationToastId.current);
+    translationToastId.current = undefined;
+    setIsTranslating(false);
+    setTranslatingPaths(new Set());
     setOpen(false);
   };
 
@@ -198,7 +284,7 @@ export const ManageTranslationsModal = ({
   const progressTextColor = getProgressTextColor(progress.percentage);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? setOpen(true) : handleCancel())}>
       <DialogContent width="wide" className="max-h-[85dvh]" disableCloseOnOutsideClick>
         <DialogHeader>
           <DialogTitle>{t("workspace.surveys.edit.manage_translations")}</DialogTitle>
@@ -296,7 +382,7 @@ export const ManageTranslationsModal = ({
           <Button variant="secondary" size="sm" onClick={handleCancel}>
             {t("common.cancel")}
           </Button>
-          <Button size="sm" onClick={handleSave}>
+          <Button size="sm" onClick={handleSave} disabled={isTranslating}>
             {t("common.save")}
           </Button>
         </DialogFooter>

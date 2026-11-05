@@ -34,6 +34,8 @@ const mockProcessWorkflowRunReconcileJob = vi.fn();
 const mockProcessWorkflowsUsageSnapshotJob = vi.fn();
 const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
 const mockObserveAuthzedOutboxHealth = vi.fn();
+const mockStartAuthzedOutboxSafetyNet = vi.fn();
+const mockStopAuthzedOutboxSafetyNet = vi.fn();
 const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const mockProcessDeletionCleanupDrainJob = vi.fn();
 const mockProcessDataRetentionSweepJob = vi.fn();
@@ -212,6 +214,11 @@ vi.mock("@/lib/authzed/outbox-processor", () => ({
   processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
 }));
 
+vi.mock("@/lib/authzed/outbox-safety-net", () => ({
+  startAuthzedOutboxSafetyNet: mockStartAuthzedOutboxSafetyNet,
+  stopAuthzedOutboxSafetyNet: mockStopAuthzedOutboxSafetyNet,
+}));
+
 vi.mock("@/lib/authzed/scheduled-reconciliation", () => ({
   processAuthzedScheduledReconciliationJob: mockProcessAuthzedScheduledReconciliationJob,
   processAuthzedSurveyAuditJob: vi.fn(),
@@ -285,6 +292,7 @@ describe("instrumentation-jobs", () => {
     expect(mockStartJobsRuntime).not.toHaveBeenCalled();
     expect(mockUpsertSurveyScheduling).not.toHaveBeenCalled();
     expect(mockObserveAuthzedOutboxHealth).not.toHaveBeenCalled();
+    expect(mockStartAuthzedOutboxSafetyNet).not.toHaveBeenCalled();
     expect(mockDebug).toHaveBeenCalledWith("BullMQ worker startup skipped");
   });
 
@@ -531,6 +539,18 @@ describe("instrumentation-jobs", () => {
     // Outbox health keeps reporting from PostgreSQL even though the runtime never reached Redis
     // (ENG-3764): a Redis outage is one of the ways delivery stops.
     expect(mockObserveAuthzedOutboxHealth).toHaveBeenCalled();
+    // So does delivery: the safety net drains the outbox from PostgreSQL while Redis is unreachable,
+    // and stops taking work once the server starts draining.
+    expect(mockStartAuthzedOutboxSafetyNet).toHaveBeenCalledTimes(1);
+    const shouldRun = mockStartAuthzedOutboxSafetyNet.mock.calls[0][0] as () => boolean;
+    expect(shouldRun()).toBe(true);
+    const lifecycleGlobal = globalThis as { formbricksServerLifecycle?: { draining: boolean } };
+    lifecycleGlobal.formbricksServerLifecycle = { draining: true };
+    try {
+      expect(shouldRun()).toBe(false);
+    } finally {
+      delete lifecycleGlobal.formbricksServerLifecycle;
+    }
   });
 
   slowTest("retries worker startup after a transient failure", async () => {
@@ -774,7 +794,22 @@ describe("instrumentation-jobs", () => {
       await import("./instrumentation-jobs");
 
     await expect(registerJobsWorker()).resolves.toBe(failingRuntime);
-    await expect(resetJobsWorkerRegistrationForTests()).resolves.toBeUndefined();
+    // The reset waits for the safety net to stop, so a drain it started cannot outlive the test.
+    let releaseSafetyNet!: () => void;
+    mockStopAuthzedOutboxSafetyNet.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        releaseSafetyNet = resolve;
+      })
+    );
+    let reset = false;
+    const resetting = resetJobsWorkerRegistrationForTests().then(() => {
+      reset = true;
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mockStopAuthzedOutboxSafetyNet).toHaveBeenCalledOnce();
+    expect(reset).toBe(false);
+    releaseSafetyNet();
+    await resetting;
     await expect(registerJobsWorker()).resolves.toBe(nextRuntime);
 
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);

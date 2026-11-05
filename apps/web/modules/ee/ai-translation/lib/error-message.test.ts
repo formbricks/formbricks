@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { getAITranslationErrorMessage } from "./error-message";
+import { getAITranslationErrorCodeMessage, getAITranslationErrorMessage } from "./error-message";
 
 const t = (key: string) => key;
 const apiError = (status: number, code?: string) => new V3ApiError({ status, detail: "detail", code });
@@ -35,5 +35,18 @@ describe("getAITranslationErrorMessage", () => {
     ["a non-API error", new Error("boom")],
   ])("reads %s as the generic failure, never a raw code", (_label, error) => {
     expect(getAITranslationErrorMessage(error, t)).toBe("workspace.surveys.edit.ai_translation_failed");
+  });
+});
+
+describe("getAITranslationErrorCodeMessage", () => {
+  test.each([
+    ["ai_quota_exceeded", "workspace.surveys.edit.ai_translation_quota_exceeded"],
+    ["ai_output_too_long", "workspace.surveys.edit.ai_translation_output_too_long"],
+    ["ai_translation_field_exceeds_20000_characters", "workspace.surveys.edit.ai_translation_field_too_long"],
+    ["ai_features_not_enabled", "common.ai_unavailable.not_in_plan"],
+    ["ai_translation_failed", "workspace.surveys.edit.ai_translation_failed"],
+    ["something_unexpected", "workspace.surveys.edit.ai_translation_failed"],
+  ])("reads the partial-failure code %s", (code, message) => {
+    expect(getAITranslationErrorCodeMessage(code, t)).toBe(message);
   });
 });

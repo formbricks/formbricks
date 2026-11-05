@@ -2,6 +2,7 @@
  * V3 API response helpers — RFC 9457 Problem Details (application/problem+json)
  * and list envelope for success responses.
  */
+import { clipInvalidParam } from "./invalid-params";
 
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
@@ -101,6 +102,7 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  * disjoint and that none of these reaches the spec.
  */
 export const INTERNAL_PROBLEM_CODES = [
+  "ai_translation_batch_too_large",
   "attachment_export_empty",
   "attachment_export_expired",
   "attachment_export_filter_conflict",
@@ -218,7 +220,9 @@ function problemResponse(
     ...(options?.instance && { instance: options.instance }),
     ...(options?.code && { code: options.code }),
     ...(options?.details && { details: options.details }),
-    ...(options?.invalid_params && { invalid_params: options.invalid_params }),
+    // Clipped here as well as where the bounded reporters build them: dozens of routes build params
+    // inline, and any of them may carry caller text.
+    ...(options?.invalid_params && { invalid_params: options.invalid_params.map(clipInvalidParam) }),
   };
 
   const headers: Record<string, string> = {

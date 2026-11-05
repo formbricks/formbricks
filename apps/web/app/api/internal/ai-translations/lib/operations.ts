@@ -21,6 +21,7 @@ import { assertOrganizationAIConfigured, getOrganizationAIConfig } from "@/lib/a
 import { can } from "@/lib/authorization";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import {
+  AI_TRANSLATION_BATCH_TOO_LARGE,
   AI_TRANSLATION_OUTPUT_TOO_LONG,
   translateFields,
 } from "@/modules/ee/ai-translation/lib/translate-fields";
@@ -89,7 +90,8 @@ export async function getAITranslationAvailabilityOperation({
  * - AI not in the plan or switched off → 403, AI not configured on the instance → 503, each with the
  *   code the editor's message is chosen by; provider quota exhausted → 429
  * - more text than one answer can hold → 422 `ai_output_too_long`, so the editor can say to translate
- *   in parts rather than retry
+ *   in parts rather than retry; more batches than one request may run → 422 `ai_translation_batch_too_large`
+ * - some batches failed and others translated → 200 with what translated and the failure's `errorCode`
  * - any other provider failure → 502, logged without its message, which can carry the survey's text
  */
 export async function translateSurveyFieldsOperation({
@@ -113,7 +115,7 @@ export async function translateSurveyFieldsOperation({
   try {
     await assertOrganizationAIConfigured(access.organizationId);
 
-    const translations = await translateFields({
+    const outcome = await translateFields({
       organizationId: access.organizationId,
       workspaceId: access.workspaceId,
       userId,
@@ -122,7 +124,7 @@ export async function translateSurveyFieldsOperation({
       targetLanguage: body.targetLanguage,
     });
 
-    const resource: TAITranslationResource = { translations };
+    const resource: TAITranslationResource = outcome;
     return successResponse(resource, { requestId });
   } catch (error) {
     return translateFailure(error, { ...context, ...access });
@@ -139,6 +141,13 @@ const translateFailure = (
   }: TRequestContext & { workspaceId: string; organizationId: string }
 ): Response => {
   const log = logger.withContext({ requestId, workspaceId });
+
+  if (error instanceof InvalidInputError && error.message === AI_TRANSLATION_BATCH_TOO_LARGE) {
+    return problemUnprocessableContent(requestId, "Too many texts to translate in one request.", {
+      instance,
+      code: AI_TRANSLATION_BATCH_TOO_LARGE,
+    });
+  }
 
   if (error instanceof InvalidInputError && error.message === AI_TRANSLATION_OUTPUT_TOO_LONG) {
     return problemUnprocessableContent(requestId, "There is too much text to translate at once.", {

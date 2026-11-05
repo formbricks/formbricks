@@ -9,5 +9,8 @@ export type TAITranslationAvailabilityResource =
   | { available: true }
   | { available: false; reason: Exclude<TAIUnavailableReason, "read_only"> };
 
-/** The translated texts, keyed by the field paths the request named. */
-export type TAITranslationResource = { translations: Record<string, string> };
+/**
+ * The translated texts, keyed by the field paths the request named. When some of the request's model
+ * calls failed and others did not, the texts that did translate come back with the failure's `errorCode`.
+ */
+export type TAITranslationResource = { translations: Record<string, string>; errorCode?: string };

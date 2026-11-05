@@ -119,8 +119,10 @@ beforeEach(() => {
   mocks.getOrganizationAIConfig.mockResolvedValue(AI_CONFIG);
   mocks.assertOrganizationAIConfigured.mockResolvedValue(AI_CONFIG);
   mocks.translateFields.mockResolvedValue({
-    "blocks.0.elements.0.headline": "Wie geht es dir?",
-    "blocks.0.elements.0.subheader": "<p>Sei ehrlich</p>",
+    translations: {
+      "blocks.0.elements.0.headline": "Wie geht es dir?",
+      "blocks.0.elements.0.subheader": "<p>Sei ehrlich</p>",
+    },
   });
   mocks.applyRateLimit.mockResolvedValue(undefined);
 });
@@ -260,6 +262,43 @@ describe("POST /api/internal/ai-translations", () => {
       rateLimitConfigs.api.internalAiTranslate,
       expect.any(String)
     );
+  });
+
+  test("returns what translated with the failure's errorCode when only some batches failed", async () => {
+    mocks.translateFields.mockResolvedValue({
+      translations: { "blocks.0.elements.0.headline": "Wie geht es dir?" },
+      errorCode: "ai_quota_exceeded",
+    });
+
+    const response = await translate();
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual({
+      translations: { "blocks.0.elements.0.headline": "Wie geht es dir?" },
+      errorCode: "ai_quota_exceeded",
+    });
+  });
+
+  test("answers more model batches than one request may run with 422 ai_translation_batch_too_large", async () => {
+    mocks.translateFields.mockRejectedValue(new InvalidInputError("ai_translation_batch_too_large"));
+
+    const response = await translate();
+
+    expect(response.status).toBe(422);
+    expect((await problem(response)).code).toBe("ai_translation_batch_too_large");
+  });
+
+  test("refuses more fields than one request may carry, and a field over the length cap, with 400", async () => {
+    const field = BODY.fields[0];
+    const tooMany = { ...BODY, fields: Array.from({ length: 257 }, (_, i) => ({ ...field, path: `p${i}` })) };
+    const tooLong = { ...BODY, fields: [{ ...field, defaultText: "x".repeat(20_001) }] };
+
+    for (const body of [tooMany, tooLong]) {
+      expect((await translate(body)).status).toBe(400);
+    }
+    expect(mocks.translateFields).not.toHaveBeenCalled();
+    const atCaps = { ...BODY, fields: Array.from({ length: 256 }, (_, i) => ({ ...field, path: `p${i}` })) };
+    expect((await translate(atCaps)).status).toBe(200);
   });
 
   test("answers a batch too large for one answer with 422 ai_output_too_long", async () => {
