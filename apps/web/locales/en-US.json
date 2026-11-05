@@ -4884,7 +4884,14 @@
       "filter": {
         "complete_responses": "Complete responses",
         "low_quality_responses": "Low quality responses",
-        "partial_responses": "Partial responses"
+        "not_shown": "Not shown",
+        "partial_responses": "Partial responses",
+        "shown_group": "Shown or not shown",
+        "shown_help": "Shown and Not shown read what each response recorded while the respondent answered. Shown means it was not hidden and they answered or skipped it. Not shown means a show-if or Hidden kept it from them, or kept the question or block holding it. Responses collected before Formbricks recorded this have no record and match neither.",
+        "shown_target_block": "Block: {name}",
+        "shown_target_column": "{question} · Column: {column}",
+        "shown_target_picture": "Picture {number}",
+        "shown_target_row": "{question} · Row: {row}"
       },
       "import": {
         "ai_note": "Formbricks AI maps the questions. Logic is not imported; the report lists every rule.",

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "./common";
 import { ZSurveyQuota } from "./quota";
-import { ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
+import { MAX_NOT_SHOWN_ID_LENGTH, ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
 
@@ -450,6 +450,48 @@ const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
 export const ZResponseOutcome = z.enum(["lowQuality"]);
 export type TResponseOutcome = z.infer<typeof ZResponseOutcome>;
 
+/** A block, element, option, row or column id a shown / not shown filter names. */
+const ZResponseFilterShownId = z.string().min(1).max(MAX_NOT_SHOWN_ID_LENGTH);
+
+/**
+ * Shown / not shown (ENG-6951): whether a response's not-shown record (ADR 0024) says the respondent
+ * was shown a block, an element, or an element's option, matrix row or matrix column.
+ *
+ * - `notShown`: the record lists the target, or the element or block holding it.
+ * - `shown`: the respondent reached it and it was not hidden. The record lists neither the target nor
+ *   what holds it, and the element (for a block: one of its elements) has an answer or a time entry,
+ *   which the survey writes for every element on a page the respondent submitted.
+ *
+ * A response with no record (`notShown` null: collected before 6.2 or by an older cached survey) is
+ * unknown and matches neither.
+ */
+const ZResponseFilterShownOp = z.enum(["shown", "notShown"]);
+
+export const ZResponseFilterCriteriaShown = z.discriminatedUnion("target", [
+  z.object({ target: z.literal("block"), blockId: ZResponseFilterShownId, op: ZResponseFilterShownOp }),
+  z.object({ target: z.literal("element"), elementId: ZResponseFilterShownId, op: ZResponseFilterShownOp }),
+  z.object({
+    target: z.literal("option"),
+    elementId: ZResponseFilterShownId,
+    itemId: ZResponseFilterShownId,
+    op: ZResponseFilterShownOp,
+  }),
+  z.object({
+    target: z.literal("row"),
+    elementId: ZResponseFilterShownId,
+    itemId: ZResponseFilterShownId,
+    op: ZResponseFilterShownOp,
+  }),
+  z.object({
+    target: z.literal("column"),
+    elementId: ZResponseFilterShownId,
+    itemId: ZResponseFilterShownId,
+    op: ZResponseFilterShownOp,
+  }),
+]);
+
+export type TResponseFilterCriteriaShown = z.infer<typeof ZResponseFilterCriteriaShown>;
+
 /** One condition on a `data` key: a question, or an ingested field under its storage key. */
 const ZResponseFilterCriteriaDataCondition = z.union([
   ZResponseFilterCriteriaDataLessThan,
@@ -585,6 +627,9 @@ const ZResponseFilterCriteriaFields = z.object({
       ])
     )
     .optional(),
+
+  /** Shown / not shown conditions on the not-shown record (ENG-6951), all ANDed. */
+  shown: z.array(ZResponseFilterCriteriaShown).max(MAX_FILTER_KEYS).optional(),
 });
 
 /**

@@ -7,7 +7,9 @@ import {
   type TFilterValueRow,
   type TFilterValueRows,
   type TMetaFilterValueRow,
+  type TNotShownFilterRow,
   buildFilteringValues,
+  getRecordedNotShown,
   getSurveyFilteringValues,
   metaRowsToSlices,
   toReservedProjectionSlice,
@@ -104,6 +106,56 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
       hiddenFields: {},
       reservedValues: {},
       variableValues: {},
+    });
+  });
+});
+
+describe("getRecordedNotShown (ENG-6951)", () => {
+  const flowSurvey = {
+    id: "survey_1",
+    blocks: [
+      {
+        id: "block_1",
+        elements: [
+          { id: "fav", type: "multipleChoiceSingle", choices: [{ id: "a" }, { id: "b" }] },
+          { id: "grid", type: "matrix", rows: [{ id: "r1" }], columns: [{ id: "c1" }] },
+        ],
+      },
+    ],
+  } as unknown as TSurvey;
+
+  beforeEach(() => {
+    vi.mocked(prisma.$queryRaw).mockReset();
+  });
+
+  test("binds the survey and every id it holds as parameters, never as SQL text", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
+    await getRecordedNotShown(flowSurvey);
+
+    const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0];
+    const sql = (strings as unknown as TemplateStringsArray).join("?");
+    expect(values).toContain("survey_1");
+    expect(values).toContainEqual(["block_1"]);
+    expect(values).toContainEqual(["fav", "grid"]);
+    expect(values).toContainEqual(["options", "options", "rows", "columns"]);
+    expect(values).toContainEqual(["a", "b", "r1", "c1"]);
+    expect(sql).not.toMatch(/block_1|fav|grid/);
+  });
+
+  test("folds the rows into one record", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { list: "blocks", elementId: null, id: "block_1" },
+      { list: "elements", elementId: null, id: "fav" },
+      { list: "options", elementId: "fav", id: "a" },
+      { list: "options", elementId: "fav", id: "b" },
+      { list: "columns", elementId: "grid", id: "c1" },
+    ] satisfies TNotShownFilterRow[]);
+
+    expect(await getRecordedNotShown(flowSurvey)).toEqual({
+      blocks: ["block_1"],
+      elements: ["fav"],
+      options: { fav: ["a", "b"] },
+      columns: { grid: ["c1"] },
     });
   });
 });

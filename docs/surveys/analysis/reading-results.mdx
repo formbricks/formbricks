@@ -58,6 +58,15 @@ A [show-if](/surveys/general-features/show-if) can keep a question or a whole bl
 
 Both tabs share the same **Filter** and time-range controls at the top, so a filter you set on the Summary carries to the Responses table. Filter on any answer, tag, hidden field or metadata value.
 
+### Filter by what was shown
+
+Under **Shown or not shown**, Advanced filter lists every block, question, option, matrix row and matrix column a show-if or Hidden can keep from respondents, and anything a response was recorded as not shown. Each takes **is Shown** or **is Not shown**, and the filter applies to the Summary, the Responses table and exports like any other:
+
+- **Not shown**: show-if or Hidden kept it from the respondent, or kept the question or block it belongs to. A respondent who was not shown a question was not shown its options either.
+- **Shown**: it was not hidden and the respondent answered or skipped it. For an option, row or column, its question was shown and the option was offered. A question the respondent never reached, because they left earlier or a logic jump passed it, is neither shown nor not shown.
+
+Responses collected before Formbricks recorded what was not shown, or by an older cached copy of the survey, have no record. They match neither **Shown** nor **Not shown**.
+
 **Export** opens one modal for every export. It exports the responses the current filter matches, or only the rows you ticked in the table, as CSV or Excel. Choose between the Standard export, which is the file Formbricks has always produced, and an Analysis export with question codes, answer codes, a datamap and an SPSS syntax file. See [Export responses](/surveys/analysis/export-responses).
 
 You can also mark a response as **Low quality**, so that it is left out of an Analysis export by default. It stays in the Summary and in your counts.

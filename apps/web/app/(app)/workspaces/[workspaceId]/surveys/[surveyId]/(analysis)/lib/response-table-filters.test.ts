@@ -9,6 +9,10 @@ import {
 } from "lucide-react";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
@@ -459,5 +463,78 @@ describe("field icons", () => {
     expect(iconOf("quota.quota1")).toBe(PieChartIcon);
     expect(iconOf("tag")).toBe(HashIcon);
     expect(iconOf("language")).toBe(LanguagesIcon);
+  });
+});
+
+describe("shown / not shown (ENG-6951)", () => {
+  const { heavyUsers } = SURVEY_FLOW_FIXTURE_IDS.blocks;
+  const flowOptions = generateElementAndFilterOptions({
+    survey: surveyFlowFixture,
+    environmentTags: [],
+    attributes: {},
+    reservedValues: {},
+    hiddenFields: {},
+    variableValues: {},
+    quotas: [],
+    t,
+  });
+  const flowModel = buildResponseFilterModel({
+    survey: surveyFlowFixture,
+    elementOptions: flowOptions.elementOptions,
+    elementFilterOptions: flowOptions.elementFilterOptions,
+    tagNames: [],
+    recordedNotShown: { columns: { brand_grid: ["col_good"] } },
+    t,
+  });
+  const flowCriteria = (filters: TTableFilter[]) => {
+    const { selectedFilter, dateRange } = toResponseFilterState(filters, flowModel.fields, "UTC");
+    return getFormattedFilters(surveyFlowFixture, selectedFilter, dateRange);
+  };
+
+  test("offers `is` Shown / Not shown, with help, grouped right under the questions", () => {
+    expect(flowModel.properties.find((item) => item.id === "shown.option.fav.apple")).toMatchObject({
+      ruleOperators: ["equals"],
+      valueType: "enum",
+      options: [
+        { value: "shown", label: "common.shown" },
+        { value: "notShown", label: "workspace.surveys.filter.not_shown" },
+      ],
+      description: "workspace.surveys.filter.shown_help",
+    });
+    const groups = [...new Set(flowModel.properties.map((item) => item.group).filter(Boolean))];
+    expect(groups.indexOf("workspace.surveys.filter.shown_group")).toBe(
+      groups.indexOf("common.elements") + 1
+    );
+  });
+
+  test("a target only a response's record names is offered once the filter data brings it", () => {
+    expect(flowModel.fields.has("shown.column.brand_grid.col_good")).toBe(true);
+  });
+
+  test("each target kind reaches the `shown` criteria group with its operator", () => {
+    expect(
+      flowCriteria([
+        { property: `shown.block.${heavyUsers}`, operator: "equals", values: ["shown"] },
+        { property: "shown.question.apple_reason", operator: "equals", values: ["notShown"] },
+        { property: "shown.option.fav.apple", operator: "equals", values: ["notShown"] },
+        { property: "shown.row.brand_grid.row_disney", operator: "equals", values: ["shown"] },
+        { property: "shown.column.brand_grid.col_good", operator: "equals", values: ["notShown"] },
+      ]).shown
+    ).toEqual([
+      { target: "block", blockId: heavyUsers, op: "shown" },
+      { target: "element", elementId: "apple_reason", op: "notShown" },
+      { target: "option", elementId: "fav", itemId: "apple", op: "notShown" },
+      { target: "row", elementId: "brand_grid", itemId: "row_disney", op: "shown" },
+      { target: "column", elementId: "brand_grid", itemId: "col_good", op: "notShown" },
+    ]);
+  });
+
+  test("any other operator or value is left out rather than sent", () => {
+    expect(
+      flowCriteria([
+        { property: "shown.option.fav.apple", operator: "notEquals", values: ["shown"] },
+        { property: "shown.question.apple_reason", operator: "equals", values: ["maybe"] },
+      ])
+    ).toEqual({});
   });
 });

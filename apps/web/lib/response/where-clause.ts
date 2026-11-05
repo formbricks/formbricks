@@ -12,6 +12,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { buildShownFilterClauses } from "./shown-filter";
 
 type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"]>[string];
 
@@ -672,6 +673,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
+  whereClause.push(...buildShownFilterClauses(survey, filterCriteria?.shown, spend));
 
   // `dataAnd` carries further conditions on keys `data` already holds; every one of them must hold.
   const dataEntries = [
