@@ -387,7 +387,7 @@ describe("getSurveyImportFacts", () => {
     expect(getSurveyImportFacts(report([]).summary, t)).toEqual([
       'questions {"count":12}',
       'blocks {"count":2}',
-      "en-US · de-DE",
+      "en-US, de-DE",
       'hidden_fields {"count":1}',
       'logic_not_imported {"count":3}',
     ]);
@@ -446,7 +446,7 @@ describe("formatSurveyImportReport", () => {
 
     expect(text.split("\n")).toEqual([
       'text_title {"fileName":"Customer survey.qsf"}',
-      'questions {"count":12} · blocks {"count":2} · en-US · de-DE · hidden_fields {"count":1} · logic_not_imported {"count":3}',
+      'questions {"count":12} · blocks {"count":2} · en-US, de-DE · hidden_fields {"count":1} · logic_not_imported {"count":3}',
       "",
       "- warning: Q2: image_dropped",
       '- note: field_renamed {"from":"a b","to":"a_b"}',

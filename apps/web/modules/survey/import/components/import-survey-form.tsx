@@ -7,14 +7,17 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
-import { ImportFacts } from "@/modules/survey/import/components/import-facts";
 import { ImportFieldProblems } from "@/modules/survey/import/components/import-field-problems";
 import { ImportMatchChoice } from "@/modules/survey/import/components/import-match-choice";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { getSurveyImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
 import { getSurveyImportFileExtensions } from "@/modules/survey/import/lib/import-file";
-import { getSwitchedOffLanguages, getUnreadLineCount } from "@/modules/survey/import/lib/import-report";
+import {
+  getSurveyImportFacts,
+  getSwitchedOffLanguages,
+  getUnreadLineCount,
+} from "@/modules/survey/import/lib/import-report";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -164,7 +167,10 @@ const getPrimaryAction = (importer: TImportSurvey, t: TFunction): { label: strin
     : { label: t("workspace.surveys.import.match.update_survey"), testId: "survey-import-update" };
 };
 
-/** The dialog's buttons: Stop while importing; Cancel, another file and the primary action in review. */
+/**
+ * The dialog's buttons: Stop while importing; Cancel and the primary action in review. Another file is
+ * the file row's pencil.
+ */
 const ImportFooter = ({
   importer,
   isImporting,
@@ -206,13 +212,6 @@ const ImportFooter = ({
       </Button>
       <Button
         type="button"
-        variant="secondary"
-        disabled={importer.isCreatingSurvey}
-        onClick={importer.pickAnotherFile}>
-        {t("workspace.surveys.import.pick_another_file")}
-      </Button>
-      <Button
-        type="button"
         loading={importer.isCreatingSurvey || isHostNavigating}
         onClick={importer.handleOpenInEditor}
         data-testid={primary.testId}>
@@ -223,7 +222,7 @@ const ImportFooter = ({
 };
 
 /**
- * The import running or under review: the Match choice, the draft with its source, facts and report,
+ * The import running or under review: the file with its facts, the Match choice, the draft and report,
  * and the progress line while it runs. The report and the languages warning can fill a short dialog;
  * then this part scrolls and the list keeps two rows instead of shrinking to nothing, while the warning
  * and the footer stay in view. -m-1/p-1 leave room for focus rings the scroll box would otherwise clip.
@@ -254,17 +253,6 @@ const ImportReviewPane = ({
 
   return (
     <div className="-m-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
-      {isReviewing && importer.match ? (
-        <ImportMatchChoice
-          match={importer.match}
-          newSurveyName={importer.newSurveyName}
-          choice={importer.choice}
-          onChoiceChange={importer.selectChoice}
-          triggersChoice={importer.triggersChoice}
-          onTriggersChoiceChange={importer.selectTriggersChoice}
-          conflict={importer.conflict}
-        />
-      ) : null}
       <DraftReviewPanel
         draft={reviewDraft}
         isGenerating={isImporting}
@@ -278,10 +266,26 @@ const ImportReviewPane = ({
               editLabel={t("workspace.surveys.import.pick_another_file")}
               disabled={importer.isCreatingSurvey}
               onEdit={importer.pickAnotherFile}
+              // What the file turned into, as a muted line in the row: facts, not controls.
+              meta={reviewReport ? getSurveyImportFacts(reviewReport.summary, t).join(" · ") : undefined}
+              metaLabel={t("workspace.surveys.import.facts.label")}
             />
           ) : null
         }
-        facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
+        // The file first, then the choice about it.
+        decision={
+          isReviewing && importer.match ? (
+            <ImportMatchChoice
+              match={importer.match}
+              newSurveyName={importer.newSurveyName}
+              choice={importer.choice}
+              onChoiceChange={importer.selectChoice}
+              triggersChoice={importer.triggersChoice}
+              onTriggersChoiceChange={importer.selectTriggersChoice}
+              conflict={importer.conflict}
+            />
+          ) : undefined
+        }
         report={
           reviewReport ? (
             // Remounted with the choice, so it opens by itself when an Update adds a warning.

@@ -195,7 +195,7 @@ test.describe("Survey import and export", () => {
       // The file names this survey and it has not changed since the export, so Update is the default.
       const match = dialog.getByTestId("survey-import-match-choice");
       await expect(match).toBeVisible({ timeout: 30000 });
-      await expect(match.getByRole("radio", { name: "Update", exact: true })).toBeChecked();
+      await expect(match.getByRole("radio", { name: `Update “${surveyName}”` })).toBeChecked();
       await expect(dialog.getByTestId("survey-import-stale")).toHaveCount(0);
       await expect(dialog.getByText(editedHeadline, { exact: true })).toBeVisible();
       await dialog.getByTestId("survey-import-update").click();

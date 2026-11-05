@@ -12,6 +12,10 @@ type SourceChipProps = {
   srLabel: string;
   /** A secondary detail after the label — a file size, for instance. */
   detail?: string;
+  /** A muted second line under the label: what the source turned into, at a glance. */
+  meta?: string;
+  /** Screen-reader prefix for `meta`, which reads as a list of facts on its own. */
+  metaLabel?: string;
   icon?: ReactNode;
   editLabel: string;
   onEdit: () => void;
@@ -29,6 +33,8 @@ export const SourceChip = ({
   label,
   srLabel,
   detail,
+  meta,
+  metaLabel,
   icon,
   editLabel,
   onEdit,
@@ -41,11 +47,19 @@ export const SourceChip = ({
   return (
     <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 py-1 pr-1 pl-3">
       {icon ? <span className="flex shrink-0 items-center text-slate-500">{icon}</span> : null}
-      <p id={labelId} className="min-w-0 flex-1 truncate text-sm text-slate-700">
-        <span className="sr-only">{srLabel}: </span>
-        {label}
-        {detail ? <span className="ml-1 text-xs text-slate-500">{detail}</span> : null}
-      </p>
+      <div className="min-w-0 flex-1">
+        <p id={labelId} className="truncate text-sm text-slate-700">
+          <span className="sr-only">{srLabel}: </span>
+          {label}
+          {detail ? <span className="ml-1 text-xs text-slate-500">{detail}</span> : null}
+        </p>
+        {meta ? (
+          <p className="truncate text-xs text-slate-500 tabular-nums">
+            {metaLabel ? <span className="sr-only">{metaLabel}: </span> : null}
+            {meta}
+          </p>
+        ) : null}
+      </div>
       <TooltipRenderer tooltipContent={editLabel}>
         <Button
           type="button"

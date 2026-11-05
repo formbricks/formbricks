@@ -260,7 +260,8 @@ export const getSurveyImportFacts = (summary: TSurveyImportReport["summary"], t:
     t("workspace.surveys.import.facts.questions", { count: summary.questions }),
     t("workspace.surveys.import.facts.blocks", { count: summary.blocks }),
   ];
-  if (summary.languages.length > 0) facts.push(summary.languages.join(" · "));
+  // Joined with commas: the facts themselves are joined with middle dots.
+  if (summary.languages.length > 0) facts.push(summary.languages.join(", "));
   if (summary.hiddenFields > 0) {
     facts.push(t("workspace.surveys.import.facts.hidden_fields", { count: summary.hiddenFields }));
   }
