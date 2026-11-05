@@ -33,11 +33,10 @@ fill-missing = true
 include-tag = "V3 Feedback Records"
 enabled = false
 
-# The three chart query operations run a Cube query, and this job runs no Cube. Where the licence grants
-# Dashboards they answer the documented 502 `bad_gateway`, and where it does not, the documented 403
-# `dashboards_plan_required` — which one a run gets is the licence's call, not the route's. 502 is
-# allowed here only so `not_a_server_error` stops failing on it; the status, content-type and response
-# schema checks still hold the 502 body to the documented problem shape. Any other 5xx still fails.
+# CI has no Cube service. These three operations still exercise authorization, validation and the
+# documented Bad Gateway response. Allow only that upstream-unavailable status in addition to the
+# normal statuses; keep status, content-type and response-schema conformance checks enabled.
+# Remove this exception when the contract job runs Cube so upstream failures fail the job again.
 [[operations]]
-include-operation-id = ["previewChartV3", "getChartDataV3", "listChartFieldValuesV3"]
+include-operation-id = ["listChartFieldValuesV3", "getChartDataV3", "previewChartV3"]
 checks.not_a_server_error.expected-statuses = ["2xx", "3xx", "4xx", "502"]
