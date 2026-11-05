@@ -69,6 +69,39 @@ export const getOperatorForField = (
     ? preferred
     : String(options[0].value);
 
+/** The symbol each numeric comparison operator is drawn as. */
+const COMPARISON_SYMBOLS: Readonly<Record<string, string>> = {
+  equals: "=",
+  doesNotEqual: "!=",
+  isGreaterThan: ">",
+  isLessThan: "<",
+  isGreaterThanOrEqual: ">=",
+  isLessThanOrEqual: "<=",
+};
+
+/** Only a number is ordered: a field offering one of these compares numbers. */
+const ORDERING_OPERATORS = new Set([
+  "isGreaterThan",
+  "isLessThan",
+  "isGreaterThanOrEqual",
+  "isLessThanOrEqual",
+]);
+
+/**
+ * A number field's comparisons ("=", "!=", ">", "<", ">=", "<=") drawn as the same pills as Set
+ * value's operators, picked by operator value. Equality is a pill only next to the ordering operators:
+ * on a text or choice field it reads "equals" / "does not equal".
+ */
+export const withComparisonPills = <T extends { value: string | number }>(
+  options: readonly T[]
+): (T & { symbol?: string; symbolOnly?: boolean })[] => {
+  const comparesNumbers = options.some((option) => ORDERING_OPERATORS.has(String(option.value)));
+  return options.map((option) => {
+    const symbol = comparesNumbers ? COMPARISON_SYMBOLS[String(option.value)] : undefined;
+    return symbol === undefined ? option : { ...option, symbol, symbolOnly: true };
+  });
+};
+
 /**
  * The and/or select's choice, written as the group's `connector` through the editor's toggle callback.
  * Picking the connector the group already has changes nothing.

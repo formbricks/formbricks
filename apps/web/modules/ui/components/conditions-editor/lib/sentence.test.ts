@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { toggleGroupConnector } from "@/lib/surveyLogic/utils";
-import { getOperatorForField, getSentenceLead, pickConnector } from "./sentence";
+import { getOperatorForField, getSentenceLead, pickConnector, withComparisonPills } from "./sentence";
 
 /**
  * The rule editor's sentence layout (ENG-6969 T6): "If" on the first condition, a small and/or select
@@ -36,6 +36,30 @@ describe("getSentenceLead: what stands before each condition", () => {
       kind: "text",
       connector: "and",
     });
+  });
+});
+
+describe("withComparisonPills: a number field's comparisons read as symbol pills", () => {
+  test("picked by operator value, so a translated or reworded label doesn't change them", () => {
+    const options = withComparisonPills([
+      { label: "is equal to", value: "equals" },
+      { label: "greater", value: "isGreaterThan" },
+      { label: "is submitted", value: "isSubmitted" },
+    ]);
+
+    expect(options).toEqual([
+      { label: "is equal to", value: "equals", symbol: "=", symbolOnly: true },
+      { label: "greater", value: "isGreaterThan", symbol: ">", symbolOnly: true },
+      { label: "is submitted", value: "isSubmitted" },
+    ]);
+  });
+
+  test("a text or choice field's equality keeps its words", () => {
+    const options = [
+      { label: "equals", value: "equals" },
+      { label: "does not equal", value: "doesNotEqual" },
+    ];
+    expect(withComparisonPills(options)).toEqual(options);
   });
 });
 
