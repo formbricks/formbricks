@@ -10,6 +10,7 @@ import {
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
 import {
   ZV3DashboardChartData,
+  ZV3DashboardFilterFields,
   ZV3DashboardFilterValues,
   ZV3DashboardListItem,
   ZV3DashboardResource,
@@ -189,7 +190,9 @@ const ZMcpDashboardFilter = z
       .string()
       .min(1)
       .max(255)
-      .describe("A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…)."),
+      .describe(
+        "A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…) from list_dashboard_filter_fields."
+      ),
     operator: z
       .enum(DASHBOARD_FILTER_OPERATORS)
       .describe(
@@ -233,7 +236,7 @@ export const ZMcpListDashboardFilterValuesInput = z
       .min(1)
       .max(255)
       .describe(
-        "A categorical dimension from list_chart_fields (one marked valueLookup), a yes/no (boolean) dimension, or an embedded-data field."
+        "A categorical dimension from list_chart_fields (one marked valueLookup), a yes/no (boolean) dimension, or an embedded-data field from list_dashboard_filter_fields."
       ),
     operator: z
       .enum(["equals", "notEquals"])
@@ -255,6 +258,8 @@ export const ZMcpListDashboardFilterValuesInput = z
 export type TMcpListDashboardFilterValuesInput = z.infer<typeof ZMcpListDashboardFilterValuesInput>;
 
 export const ZMcpDashboardFilterValuesOutput = mcpToolOutput(ZV3DashboardFilterValues);
+
+export const ZMcpDashboardFilterFieldsOutput = mcpToolOutput(ZV3DashboardFilterFields);
 
 export const ZMcpListChartFieldValuesInput = z
   .object({
@@ -389,7 +394,7 @@ const ZMcpLockedDashboardFilter = z
         "The filter's id from get_dashboard, to keep an existing filter. Leave it out for a new one."
       ),
     field: ZLockedDashboardFilter.shape.field.describe(
-      "A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…) of a dataset the dashboard's charts read."
+      "A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…) of a dataset the dashboard's charts read, as list_dashboard_filter_fields lists them."
     ),
     operator: ZLockedDashboardFilter.shape.operator.describe(
       "How the field is compared with the values; the field must allow it."

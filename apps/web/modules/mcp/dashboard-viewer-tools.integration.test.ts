@@ -53,6 +53,7 @@ const VIEWER_TOOLS = new Set([
   "list_dashboards",
   "get_dashboard",
   "get_chart_data",
+  "list_dashboard_filter_fields",
   "list_dashboard_filter_values",
 ]);
 const FILTER_ID = "clfi000000000000000000001";
@@ -168,6 +169,12 @@ describe("a Dashboard viewer's MCP token", () => {
     });
     expect(result.isError, JSON.stringify(result).slice(0, 300)).toBeFalsy();
     expect(result.structuredContent).toMatchObject({ data: { values: expect.any(Array), hasMore: false } });
+  });
+
+  test("lists the dashboard's embedded-data filter fields with dashboards:read alone", async () => {
+    const result = await call("list_dashboard_filter_fields", { dashboardId: ids.dashboard });
+    expect(result.isError, JSON.stringify(result).slice(0, 300)).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ data: { fields: expect.any(Array) } });
   });
 
   test("is refused a chart read without its dashboard", async () => {

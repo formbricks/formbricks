@@ -5,6 +5,7 @@ import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
+import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
 import { listV3DashboardFilterValues } from "@/app/api/v3/dashboards/lib/filter-values-operations";
 import {
   createV3Dashboard,
@@ -47,6 +48,9 @@ vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
 }));
 vi.mock("@/app/api/v3/dashboards/lib/chart-data-operations", () => ({
   getV3DashboardChartData: vi.fn(),
+}));
+vi.mock("@/app/api/v3/dashboards/lib/filter-fields-operations", () => ({
+  listV3DashboardFilterFields: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/filter-values-operations", () => ({
   listV3DashboardFilterValues: vi.fn(),
@@ -738,5 +742,74 @@ describe("list_dashboard_filter_values", () => {
     ).toBe(false);
     const tool = createToolServer().get("list_dashboard_filter_values");
     expect(tool?.config.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+  });
+});
+
+describe("list_dashboard_filter_fields", () => {
+  const FIELDS = {
+    fields: [{ name: "FeedbackRecords.ed_plan", key: "plan", label: "plan" }],
+  };
+
+  beforeEach(() => {
+    vi.mocked(listV3DashboardFilterFields).mockResolvedValue(successResponse(FIELDS, { requestId: "req" }));
+  });
+
+  test("lists the dashboard's embedded-data fields from the filter-fields operation, with the caller's context", async () => {
+    const result = await call("list_dashboard_filter_fields", { dashboardId: DASHBOARD_ID }, [
+      "dashboards:read",
+      "feedbackRecords:read",
+    ]);
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ data: FIELDS });
+    expect(listV3DashboardFilterFields).toHaveBeenCalledWith({
+      dashboardId: DASHBOARD_ID,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+      authentication: expect.objectContaining({ apiKeyId: "key_1" }),
+    });
+  });
+
+  test("a Dashboard viewer lists them under dashboards:read alone, since it cannot call list_chart_fields", async () => {
+    const result = await call(
+      "list_dashboard_filter_fields",
+      { dashboardId: DASHBOARD_ID },
+      ["dashboards:read"],
+      true
+    );
+
+    expect(result.isError).toBeFalsy();
+    expect(listV3DashboardFilterFields).toHaveBeenCalledTimes(1);
+  });
+
+  test("anyone else also needs feedbackRecords:read, as list_chart_fields does for the same keys", async () => {
+    const result = await call("list_dashboard_filter_fields", { dashboardId: DASHBOARD_ID }, [
+      "dashboards:read",
+    ]);
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({ error: { status: 403 } });
+    expect(listV3DashboardFilterFields).not.toHaveBeenCalled();
+  });
+
+  test("is refused without dashboards:read, even to a Dashboard viewer", async () => {
+    const result = await call(
+      "list_dashboard_filter_fields",
+      { dashboardId: DASHBOARD_ID },
+      ["feedbackRecords:read"],
+      true
+    );
+
+    expect(result.isError).toBe(true);
+    expect(listV3DashboardFilterFields).not.toHaveBeenCalled();
+  });
+
+  test("is read-only and points agents at the tools that take its fields", () => {
+    const tool = createToolServer().get("list_dashboard_filter_fields");
+    expect(tool?.config.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+    const description = String(tool?.config.description);
+    for (const name of ["set_dashboard_filters", "get_chart_data", "list_dashboard_filter_values"]) {
+      expect(description).toContain(name);
+    }
   });
 });

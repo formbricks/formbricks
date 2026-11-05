@@ -5,6 +5,7 @@ import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
+import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
 import { listV3DashboardFilterValues } from "@/app/api/v3/dashboards/lib/filter-values-operations";
 import {
   createV3Dashboard,
@@ -54,6 +55,7 @@ import {
   ZMcpChartOutput,
   ZMcpCreateChartInput,
   ZMcpCreateDashboardInput,
+  ZMcpDashboardFilterFieldsOutput,
   ZMcpDashboardFilterValuesOutput,
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
@@ -293,6 +295,34 @@ export function registerDashboardTools(server: McpServer): void {
           })
         : await getV3ChartData({ chartId, query: range, ...context });
       return await responseToMcpToolResult(response, context.requestId);
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "list_dashboard_filter_fields",
+    {
+      title: "List dashboard filter fields",
+      description:
+        "List the embedded-data fields a dashboard can be filtered on: the keys of the Feedback Datasets its charts read, each once, in key order, with the name a filter uses (FeedbackRecords.ed_…) and its label. Use a name as the field of a filter in set_dashboard_filters, in get_chart_data with dashboardId, and in list_dashboard_filter_values. A Dashboard viewer, who cannot call list_chart_fields, finds a dashboard's embedded-data fields here.",
+      inputSchema: ZMcpDashboardIdInput,
+      outputSchema: ZMcpDashboardFilterFieldsOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    // Like list_dashboard_filter_values: anyone but a Dashboard viewer also needs feedback-record access,
+    // as list_chart_fields does for the same keys; a viewer's token holds dashboards:read alone (ADR-0025).
+    {
+      byInput: (_input, authInfo) =>
+        isMcpDashboardViewerOnly(authInfo)
+          ? ["dashboards:read"]
+          : ["dashboards:read", "feedbackRecords:read"],
+    },
+    async ({ dashboardId }: TMcpDashboardIdInput, ctx) => {
+      const context = toolContext(ctx);
+      return await responseToMcpToolResult(
+        await listV3DashboardFilterFields({ dashboardId, ...context }),
+        context.requestId
+      );
     }
   );
 
