@@ -3,8 +3,8 @@ import { evaluateUnansweredCondition } from "@formbricks/types/surveys/logic-eva
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
- * A jump into a block whose show-if can never match on the path the jump takes (review of ENG-6969,
- * point M1): the start rule `seg = heavy → Heavy users`, where Heavy users is shown only if Services
+ * A jump into a block whose show-if can never match on the path the jump takes (review of ENG-6969):
+ * the start rule `seg = heavy → Heavy users`, where Heavy users is shown only if Services
  * includes all of Netflix, Disney+ and Prime Video. The jump skips Services, so on that path Services
  * has no answer, the show-if is false, and the respondent silently lands on the block after it.
  *
