@@ -861,6 +861,20 @@ describe("runDocumentImport: Prompt_Injection", () => {
     } as TRecordedDocumentPlan;
 
     const { payload, report } = await run(prepared, recordedDocumentGenerate(hijacked));
+    const honest = await run(prepared, recordedDocumentGenerate(recorded));
+
+    // The file's own questions survive the hijack: none is lost beyond the line it made unusable.
+    const headlines = (draft: unknown) =>
+      elementsOf(draft as TSurveyImportDraft).map((element) => element.headline);
+    expect(headlines(payload)).toEqual([
+      // The headline it misquoted is put back as its whole cell.
+      { "en-US": "1. What did you think of the event overall?" },
+      // The second is both placed and skipped, so it is reported, not built; every other question stays.
+      ...headlines(honest.payload).slice(2),
+    ]);
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({ code: "question_skipped", questionTag: second.ref })
+    );
 
     const cellTexts = [...prepared.model.cells.values()].join("\n");
     for (const element of elementsOf(payload as TSurveyImportDraft)) {
