@@ -178,7 +178,7 @@ A **document import** turns a questionnaire in Word (`.docx`), Excel (`.xlsx`) o
 - **Tracked changes** in Word are resolved as if accepted: insertions kept, deletions dropped. Comments, headers, footers and hidden text are not read.
 - **Images** are not imported. The report counts them so you know what to add.
 - **Excel:** only the first sheet is read. The report names the sheets it skipped. A formula cell gives its last calculated value.
-- **CSV:** the separator can be a comma, semicolon, tab or pipe. Files are read as UTF-8, as UTF-16 when the file starts with a byte-order mark, and otherwise as Windows-1252, which Excel on Windows uses. When a file isn't UTF-8, the report says which encoding was used. If accented letters look wrong, save the file as **CSV UTF-8** and import it again.
+- **CSV:** the separator can be a comma, semicolon, tab or pipe. Files are read as UTF-8, as UTF-16 when the file starts with a byte-order mark, and otherwise as Windows-1252, which Excel on Windows uses. When a file is read as Windows-1252, the report says so. If accented letters look wrong, save the file as **CSV UTF-8** and import it again.
 - **Older Office files** (`.doc`, `.xls`) are not read. Save them as `.docx` or `.xlsx` first.
 
 The survey is named after the document's title, then its first heading or title row, then the file name, with "(imported)" added.

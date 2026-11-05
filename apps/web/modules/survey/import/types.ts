@@ -88,8 +88,8 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `text_not_split` — a cell whose question and options could not be told apart word for word, imported
  *   whole as the question's text (`params.cell`)
  * - `sheets_skipped` — the workbook's other sheets, which an import never reads (`params.sheets`)
- * - `file_encoding` — how a text file was decoded (`params.encoding`: `utf-8`, `utf-16le`, `utf-16be`
- *   or `windows-1252`)
+ * - `file_encoding` — a text file decoded by a guess, whose accents may be wrong (`params.encoding`:
+ *   `windows-1252`, the only one sent today; the dialog names any encoding it is given)
  * - `table_as_matrix` — a question a Word file lays out as a table, its statements down the rows and its
  *   scale across, imported as a matrix for the user to check (ENG-6853)
  * - `images_not_imported` — the pictures, drawings and embedded objects a Word file holds, which an

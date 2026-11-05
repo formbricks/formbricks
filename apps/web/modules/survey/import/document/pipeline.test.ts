@@ -670,6 +670,22 @@ describe("runDocumentImport: what the file holds that the draft cannot", () => {
     });
   });
 
+  test.each(["utf-8", "utf-16le"] as const)(
+    "says nothing of the encoding of a file read as %s, as it was written",
+    async (encoding) => {
+      const model = buildGridModel("csv", [["Q1", "Wie groß?"]], { encoding });
+
+      const { report } = await run(
+        { fileName: "list.csv", model },
+        recordedDocumentGenerate(
+          planOf([openTextEntry("R1", "B1", "de-DE")], { defaultLanguage: "de-DE", languages: ["de-DE"] })
+        )
+      );
+
+      expect(report.issues.map((issue) => issue.code)).not.toContain("file_encoding");
+    }
+  );
+
   test("a question laid out as a table becomes a matrix, flagged for checking, and images are reported", async () => {
     const image = "<w:r><w:drawing/></w:r>";
     const bytes = docx({

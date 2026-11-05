@@ -245,10 +245,13 @@ export async function runDocumentImport(
           },
         ]
       : [];
-  // A text file says how it was read: a list saved as Windows-1252 shows its accents only if read so.
-  const encodingNote: TSurveyImportPipelineIssue[] = prepared.model.encoding
-    ? [{ code: "file_encoding", severity: "info", params: { encoding: prepared.model.encoding } }]
-    : [];
+  // Only a file read as Windows-1252 says so: that encoding is the one guess (bytes that are not valid
+  // UTF-8, and carry no UTF-16 byte-order mark), so its accents may be wrong, and saving it as CSV UTF-8
+  // is the fix. A file read as UTF-8 or UTF-16 was read as it was written.
+  const encodingNote: TSurveyImportPipelineIssue[] =
+    prepared.model.encoding === "windows-1252"
+      ? [{ code: "file_encoding", severity: "info", params: { encoding: prepared.model.encoding } }]
+      : [];
   const notes = documentNotes(
     planned.context,
     entries,
