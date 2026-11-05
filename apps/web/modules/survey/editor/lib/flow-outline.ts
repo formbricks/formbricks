@@ -121,12 +121,12 @@ const EDITABLE_CALCULATE_ONLY_VALUE_TYPES = new Set(["expression"]);
 const EDITABLE_OPERAND_TYPES = new Set(["element", "variable", "hiddenField", "reserved"]);
 
 /**
- * Before the first question the editor offers no answers, no "require answer" (ENG-6932) and no "mark
- * as low quality" (ENG-6933). A rule written there through the API with any of them is shown read-only,
- * as the validator refuses it anyway.
+ * Before the first question the editor offers no answers and no "require answer" (ENG-6932), but does
+ * offer "mark as low quality" (ENG-6952). A rule written there through the API with an answer or a
+ * "require answer" is shown read-only, as the validator refuses it anyway.
  */
 const START_EDITABLE = {
-  objectives: new Set(["jumpToBlock", "calculate"]),
+  objectives: new Set(["jumpToBlock", "calculate", "markLowQuality"]),
   valueTypes: new Set(["static", "variable", "hiddenField", "reserved"]),
   operandTypes: new Set(["variable", "hiddenField", "reserved"]),
 };

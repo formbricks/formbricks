@@ -128,7 +128,7 @@ describe("the survey flow fixture", () => {
     ).toBe(true);
   });
 
-  test("has rules before the first question that screen out, jump to a block and set a value", () => {
+  test("has rules before the first question that screen out, jump to a block, set a value and mark Low quality", () => {
     const blockIds = new Set(surveyFlowFixture.blocks.map((block) => block.id));
     const endingIds = new Set(surveyFlowFixture.endings.map((ending) => ending.id));
     const startActions = (surveyFlowFixture.startLogic ?? []).flatMap((rule) => rule.actions);
@@ -139,6 +139,7 @@ describe("the survey flow fixture", () => {
     expect(startJumps.some((target) => endingIds.has(target))).toBe(true);
     expect(startJumps.some((target) => blockIds.has(target))).toBe(true);
     expect(startActions.some((action) => action.objective === "calculate")).toBe(true);
+    expect(startActions.some((action) => action.objective === "markLowQuality")).toBe(true);
   });
 
   test("holds every ending type and every question type", () => {

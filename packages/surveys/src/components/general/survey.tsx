@@ -61,9 +61,10 @@ import { type TFinishOnLoad, getFinishOnLoadToSend, prepareResponseCreate } from
 import { getLocalizedValue } from "@/lib/i18n";
 import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
 import {
-  INITIAL_LOW_QUALITY_FLAG,
   type TLowQualityFlag,
   raiseLowQualityFlag,
+  resumeLowQualityFlag,
+  startLowQualityFlag,
   takeLowQualityFlag,
 } from "@/lib/low-quality-flag";
 import {
@@ -645,8 +646,9 @@ export function Survey({
   const [allHiddenFinish, setAllHiddenFinish] = useState<TFinishOnLoad | null>(null);
   // A rule marked the response Low quality (ENG-6933): the next write carries `markLowQuality: true`,
   // once per response (see `low-quality-flag.ts`). Saved with offline progress, so a resumed session
-  // does not send it again.
-  const lowQualityFlagRef = useRef<TLowQualityFlag>(INITIAL_LOW_QUALITY_FLAG);
+  // does not send it again. A rule before the first question raises it as the survey loads
+  // (ENG-6952), so it rides on the first write, or on a screen-out's finished response.
+  const lowQualityFlagRef = useRef<TLowQualityFlag>(startLowQualityFlag(startOutcome.markLowQuality));
 
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
@@ -802,7 +804,7 @@ export function Survey({
         setCurrentVariables(progress.currentVariables);
         setHistory(getRestorableHistory(localSurvey, progress.history));
         setNotShownSteps(getRestorableNotShownSteps(localSurvey, progress.notShownSteps ?? []));
-        if (progress.lowQualitySent) lowQualityFlagRef.current = { pending: false, sent: true };
+        lowQualityFlagRef.current = resumeLowQualityFlag(progress.lowQualitySent);
         setSelectedLanguage(progress.selectedLanguage);
 
         // Restore survey state from snapshot

@@ -62,8 +62,9 @@ And they can only:
 * **Screen out**: jump to an ending. The respondent sees only that ending, not the welcome card or any question.
 * **Jump to a block**: start the respondent on a later block. With a welcome card, the welcome card still shows first and leads to that block. A jump also takes priority over a start-at link.
 * **Set value**: change a calculated field. Its value is saved with the response when the respondent submits the first page.
+* **Mark response as Low quality**: flag the response, for example for a panel source you don't trust, while the respondent answers as usual. The response is marked when the respondent submits the first page, or straight away when another rule screens them out. See [Mark as low quality](/surveys/general-features/conditional-logic#mark-as-low-quality).
 
-Rules are checked from top to bottom: the first jump that matches wins, and every matching Set value step runs. When no rule jumps, the survey starts as it always does. Use **Add logic before first question** to add a **Jump to block** rule or a **Set value** step.
+Rules are checked from top to bottom: the first jump that matches wins, and every matching Set value or Mark response as Low quality step runs. When no rule jumps, the survey starts as it always does. Use **Add logic before first question** to add a **Jump to block**, **Set value** or **Mark response as Low quality** rule.
 
 ### What a screen-out records
 
