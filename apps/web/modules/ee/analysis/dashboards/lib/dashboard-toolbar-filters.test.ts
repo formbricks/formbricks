@@ -199,6 +199,15 @@ describe("buildToolbarProperties", () => {
     expect(byId(SOURCE)?.availableValues).toBeUndefined();
   });
 
+  test("sentiment score and emotions follow sentiment: one lookup, the same hint", () => {
+    const sentiment = byId(SENTIMENT)?.availableValues;
+    for (const id of ["FeedbackRecords.sentimentScore", "FeedbackRecords.emotions"]) {
+      const available = byId(id)?.availableValues;
+      expect(available?.emptyHint).toBe("workspace.analysis.dashboards.filter_no_sentiment_yet");
+      expect(available?.queryKey).toEqual(sentiment?.queryKey);
+    }
+  });
+
   test("a categorical field and an embedded-data key list their values, after (No value)", () => {
     for (const id of [SOURCE, "FeedbackRecords.metadataDevice", "FeedbackRecords.ed_region"]) {
       expect(byId(id)).toMatchObject({ valueType: "enum", multiValueEquals: true });

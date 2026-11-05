@@ -3,6 +3,7 @@ import { getFilterFieldOptions } from "@/modules/ee/analysis/charts/lib/filter-c
 import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
+  EMOTIONS_DIMENSION_ID,
   SENTIMENT_DIMENSION_ID,
   SENTIMENT_VALUE_ORDER,
   VALUE_BAND_DIMENSION_ID,
@@ -44,6 +45,15 @@ import {
  * Fields of one record's question rather than of the feedback: which question type and which question id
  * a record answers. A chart builder groups by them; a dashboard reader does not filter by them.
  */
+/**
+ * The fields AI enrichment fills together with the sentiment label. Without a sentiment on the dashboard's
+ * records none of them has a value either, so each is listed disabled beside Sentiment, with its hint.
+ */
+const ENRICHED_WITH_SENTIMENT: ReadonlySet<string> = new Set([
+  "FeedbackRecords.sentimentScore",
+  EMOTIONS_DIMENSION_ID,
+]);
+
 const RECORD_LEVEL_FIELDS: ReadonlySet<string> = new Set([
   "FeedbackRecords.fieldType",
   "FeedbackRecords.fieldId",
@@ -261,7 +271,19 @@ export const buildToolbarProperties = ({
             },
           ];
         }
-        return [{ ...shared, valueType: TOOLBAR_VALUE_TYPE[definition.type] ?? "string" }];
+        const valueType = TOOLBAR_VALUE_TYPE[definition.type] ?? "string";
+        if (ENRICHED_WITH_SENTIMENT.has(field)) {
+          // Asked of the sentiment list itself, so it shares that lookup's cache; this property has no
+          // values of its own to grey, only the menu's disabled state reads it.
+          const availableValues = getDashboardFieldAvailableValues({
+            ...scope,
+            field: SENTIMENT_DIMENSION_ID,
+            otherFilters: otherFiltersOf(SENTIMENT_DIMENSION_ID, filters),
+            emptyHint: t("workspace.analysis.dashboards.filter_no_sentiment_yet"),
+          });
+          return [{ ...shared, valueType, availableValues }];
+        }
+        return [{ ...shared, valueType }];
       })
     );
 };
