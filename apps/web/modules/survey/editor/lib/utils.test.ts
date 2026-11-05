@@ -828,7 +828,7 @@ describe("getActionObjectiveOptions", () => {
     const options = getActionObjectiveOptions(t);
 
     expect(options.map((option) => [option.value, option.label])).toEqual([
-      ["jumpToBlock", "workspace.surveys.edit.jump_to_block"],
+      ["jumpToBlock", "workspace.surveys.edit.flow.jump_to"],
       ["calculate", "workspace.surveys.edit.flow.set_value"],
       ["requireAnswer", "workspace.surveys.edit.require_answer"],
       ["markLowQuality", "workspace.surveys.edit.mark_as_low_quality"],

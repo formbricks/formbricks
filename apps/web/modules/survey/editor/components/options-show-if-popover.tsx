@@ -23,13 +23,12 @@ import {
   type TShowIfTarget,
   applyOptionsShowIfDraft,
   canAddShowIf,
-  createShowIf,
+  createDraftShowIf,
   getShowIf,
   isShowIfComplete,
   setOptionHidden,
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
-import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
@@ -196,8 +195,10 @@ function OptionsShowIfEditor({
   if (!element) return null;
 
   const addCondition = (target: TOptionTarget, key: string) => {
-    const showIf = createShowIf(localSurvey, target, (start) => getDefaultOperatorForElement(start, t));
-    if (!showIf) return;
+    if (!canAddShowIf(localSurvey, target)) return;
+    // Its first field is still to be chosen (ENG-6969 T6): it lives in this draft only, and Done stays
+    // disabled until it is picked.
+    const showIf = createDraftShowIf();
     setLocalSurvey((survey) => updateShowIf(survey, target, () => showIf));
     setEditingKey(key);
   };
@@ -381,6 +382,20 @@ function OptionRow({
   let shownWhen: ReactNode;
   if (isHidden) {
     shownWhen = <span className="text-slate-400">{t("workspace.surveys.edit.flow.never_shown")}</span>;
+  } else if (showIf && !isShowIfComplete(showIf)) {
+    // A condition being drafted, its field still to be chosen (ENG-6969 T6): no sentence to read yet.
+    shownWhen = (
+      <button
+        type="button"
+        className="min-w-0 truncate rounded-sm text-left text-slate-400 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+        aria-expanded={isEditing}
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggleEditing();
+        }}>
+        {t("workspace.surveys.edit.flow.choose_question_or_field")}
+      </button>
+    );
   } else if (showIf) {
     shownWhen = (
       <button

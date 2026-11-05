@@ -22,6 +22,14 @@ export interface TGenericConditionGroup<T extends TGenericCondition = TGenericCo
   conditions: (T | TGenericConditionGroup<T>)[];
 }
 
+/**
+ * How the editor lays its conditions out. `default` is every shared caller's (quotas, chart filters,
+ * the table Advanced filter, show conditions). `sentence` is the survey rule editor's and the Flow
+ * tab's show-if popovers' (ENG-6969 T6): "If … and …", the and/or in a select before the second
+ * condition, one aligned grid, borderless row actions, and an empty first field read as a placeholder.
+ */
+export type TConditionsEditorVariant = "default" | "sentence";
+
 export interface TConditionValueProps {
   show?: boolean;
   options: TComboboxGroupedOption[];

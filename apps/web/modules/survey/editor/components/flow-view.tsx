@@ -40,7 +40,6 @@ import {
   describeRuleSummary,
   getActionPlainText,
   getEndingLabel,
-  getFallbackTargetOptions,
   getHeadlineText,
   summarizeRuleActions,
 } from "@/modules/survey/editor/lib/flow-outline-text";
@@ -58,6 +57,7 @@ import {
 } from "@/modules/survey/editor/lib/rule-list";
 import { RuleTypeIcon, RuleTypeTile, getRuleTypeLabel } from "@/modules/survey/editor/lib/rule-types";
 import { type TShowIfTarget, canAddShowIf } from "@/modules/survey/editor/lib/show-if-editing";
+import { TARGET_LIST_CLASS, getFallbackTargetGroups } from "@/modules/survey/editor/lib/target-options";
 import {
   getActionVariableOptions,
   getDefaultOperatorForElement,
@@ -683,7 +683,11 @@ export const FlowView = ({
                           id={`flow-fallback-${block.id}`}
                           aria-labelledby={`flow-fallback-label-${block.id}`}
                           showSearch={true}
-                          options={getFallbackTargetOptions(localSurvey, block.blockIdx, t)}
+                          searchPlaceholder={t("workspace.surveys.edit.flow.search_blocks_and_endings")}
+                          // The jump target's grouped list (ENG-6969 T6.6), with the destination's icon.
+                          groupedOptions={getFallbackTargetGroups(localSurvey, block.blockIdx, t)}
+                          iconClassName="size-4 text-slate-500"
+                          dropdownClassName={TARGET_LIST_CLASS}
                           value={surveyBlock.logicFallback ?? "defaultSelection"}
                           onChangeValue={(value) =>
                             setLocalSurvey((survey) =>

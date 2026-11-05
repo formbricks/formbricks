@@ -18,13 +18,13 @@ Logic belongs to the block, not to a single question. You add and edit it on the
 
 ## Building a rule
 
-On the Flow tab, click `Add logic +` under a block, choose **Jump to block** or **Set value**, and fill in the sentence. A Set value step always runs until you give it a condition with **Add a condition**.
+On the Flow tab, click `Add logic +` under a block, choose **Jump to** or **Set value**, and fill in the sentence: **If** … **Then** …. A Set value step always runs until you give it a condition with **Add a condition**.
 
 ![A rule that routes savings-account respondents to a second block](/images/surveys/general-features/conditional-logic/logic-rule.webp)
 
 <Steps>
   <Step title="Choose what to test">
-    The **When** row starts with a source. It can be the answer to a **question**, the value of a **variable**, or the value of a **hidden field**.
+    The **If** row starts with a source. Its list starts with a search box and groups the sources: **Questions** (each with its type icon and question code), **Hidden fields**, **Embedded Data** and **Survey info** such as the page URL or the language.
   </Step>
 
   <Step title="Choose an operator">
@@ -40,7 +40,7 @@ On the Flow tab, click `Add logic +` under a block, choose **Jump to block** or 
   <Step title="Choose an action">
     The **Then** row is what happens when the condition holds.
 
-    ![The three actions: Set value, Require Answer and Jump to block](/images/surveys/general-features/conditional-logic/action-options.webp)
+    ![The actions: Jump to, Set value, Require answer and Mark response as Low quality](/images/surveys/general-features/conditional-logic/action-options.webp)
   </Step>
 </Steps>
 
@@ -50,7 +50,7 @@ On the Flow tab, click `Add logic +` under a block, choose **Jump to block** or 
 
 * **Require answer**: make an optional question required. Only questions that are optional to begin with can be required this way.
 
-* **Jump to block**: send the respondent to a specific block instead of the next one.
+* **Jump to**: send the respondent to a later block or to an ending instead of the next block. Its list offers **Next block** first, then the later **Blocks** by number and the **Endings** by name, each with the icon the Flow tab gives it.
 
 * **Mark response as Low quality**: mark the response Low quality when its answers are implausible, for example *If “hours” is greater than 112 → Mark response as Low quality*. See [Mark as low quality](#mark-as-low-quality).
 
@@ -71,11 +71,11 @@ The action is available in a block's rules and in the [rules before the first qu
 
 ## Everyone else
 
-The last line of a block, under its rules and **Add logic**, is **Otherwise go to**. This is the fallback for respondents whom none of the rules sent anywhere, including those who answered nothing, and it is set to the next block unless you change it.
+The last line of a block, under its rules and **Add logic**, is **Otherwise go to**. This is the fallback for respondents whom none of the rules sent anywhere, including those who answered nothing, and it is set to the next block unless you change it. It offers the same list as **Jump to**.
 
 ## Several conditions in one rule
 
-The `⋮` button beside a condition adds another condition below it, duplicates it, removes it, or wraps it in a **group**. Conditions are joined with `and` or `or`, and a group is how you mix the two without ambiguity — the same reason brackets exist in arithmetic. Removing the last condition of a rule that jumps or requires an answer removes the rule; a rule that only sets values or marks the response Low quality stays and reads **Always**.
+The trash button beside a condition removes it, and its `⋮` button adds another condition below it, duplicates it, or wraps it in a **group**. Conditions are joined with `and` or `or`: pick one in the small select before the second condition, and the conditions after it repeat your choice. A group is how you mix the two without ambiguity — the same reason brackets exist in arithmetic — and it has its own `⋮` and its own `and`/`or`. Removing the last condition of a rule that jumps or requires an answer removes the rule; a rule that only sets values or marks the response Low quality stays and reads **Always**.
 
 ## Several rules in one block
 

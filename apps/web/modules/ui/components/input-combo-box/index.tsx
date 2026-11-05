@@ -68,6 +68,8 @@ export interface TComboboxOption {
   children?: TComboboxOption[];
   /** Listed, searchable and dimmed, but can't be picked (say why with `meta.badge` or a note nearby). */
   disabled?: boolean;
+  /** A short mark before the icon in the list, such as a block's number. Not shown once picked. */
+  leading?: string;
 }
 
 export interface TComboboxGroupedOption {
@@ -107,6 +109,8 @@ export interface InputComboboxProps {
    * them, for pickers whose options are whole sentences, such as survey questions.
    */
   readonly wideDropdown?: boolean;
+  /** Classes for the open list, after its own: a fixed width for a target picker, say. */
+  readonly dropdownClassName?: string;
   readonly disabled?: boolean;
   // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
   // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
@@ -178,6 +182,11 @@ function ComboboxOptionLabel({
           className={cn("size-4 shrink-0 text-slate-800", !selected && "invisible")}
           aria-hidden="true"
         />
+      )}
+      {option.leading !== undefined && (
+        <span className="w-4 shrink-0 text-right font-mono text-xs text-slate-400" aria-hidden="true">
+          {option.leading}
+        </span>
       )}
       {option.icon && <option.icon className={cn("shrink-0", iconClassName)} />}
       {option.imgSrc && (
@@ -315,6 +324,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   onSearchChange,
   iconClassName = "h-5 w-5 text-slate-400",
   wideDropdown = false,
+  dropdownClassName,
   disabled = false,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
@@ -578,7 +588,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             "min-w-52 overflow-y-hidden",
             wideDropdown
               ? "w-max max-w-[min(36rem,calc(100vw-2rem))] min-w-(--radix-dropdown-menu-trigger-width)"
-              : "w-(--radix-dropdown-menu-trigger-width)"
+              : "w-(--radix-dropdown-menu-trigger-width)",
+            dropdownClassName
           )}
           data-testid="dropdown-menu-content">
           <Command
@@ -636,7 +647,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 <Fragment key={gi}>
                   {gi > 0 && <CommandSeparator className="my-1 bg-slate-200" />}
                   <CommandGroup className="p-0" tabIndex={0}>
-                    <div className="px-2 pb-2 text-xs font-medium text-slate-500">{group.label}</div>
+                    {/* A group without a label draws no heading: a lone entry above the others. */}
+                    {group.label !== "" && (
+                      <div className="px-2 pb-2 text-xs font-medium text-slate-500">{group.label}</div>
+                    )}
                     {group.options.map((opt) =>
                       opt.children ? (
                         <CommandItem

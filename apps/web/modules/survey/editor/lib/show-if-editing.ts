@@ -1,10 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import {
-  type TConditionGroup,
-  type TSurveyLogicConditionsOperator,
-  ZConditionGroup,
-} from "@formbricks/types/surveys/logic";
+import { type TConditionGroup, ZConditionGroup } from "@formbricks/types/surveys/logic";
 import { type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -52,49 +48,25 @@ const isUsableInConditions = (element: TSurveyElement): boolean =>
   element.type !== TSurveyElementTypeEnum.CTA || Boolean(element.buttonExternal);
 
 /**
- * What a new show-if for the target starts on: the nearest question it may use (the one right above
- * it, or the last of the block before), which is what a follow-up usually depends on. With no
- * question in reach, the first hidden field. `null` when there is nothing to use.
+ * Whether the target can get a show-if: something before it to depend on, the nearest question it may
+ * use (a CTA without an external button records no answer) or, with none in reach, a hidden field.
  */
-const getShowIfStart = (
-  survey: TSurvey,
-  target: TShowIfTarget
-): { element: TSurveyElement } | { hiddenFieldId: string } | null => {
+export const canAddShowIf = (survey: TSurvey, target: TShowIfTarget): boolean => {
   const inScope = getShowIfScope(survey, target).survey.blocks.flatMap((block) => block.elements);
-  const nearest = inScope.findLast(isUsableInConditions);
-  if (nearest) return { element: nearest };
-  const hiddenFieldId = survey.hiddenFields.fieldIds?.[0];
-  return hiddenFieldId ? { hiddenFieldId } : null;
+  return inScope.some(isUsableInConditions) || (survey.hiddenFields.fieldIds?.length ?? 0) > 0;
 };
 
-/** Whether the target can get a show-if: something before it to depend on. */
-export const canAddShowIf = (survey: TSurvey, target: TShowIfTarget): boolean =>
-  getShowIfStart(survey, target) !== null;
-
-/** A new show-if for the target, with one condition on `getShowIfStart`; `null` when there is none. */
-export const createShowIf = (
-  survey: TSurvey,
-  target: TShowIfTarget,
-  getDefaultOperator: (element: TSurveyElement) => TSurveyLogicConditionsOperator
-): TConditionGroup | null => {
-  const start = getShowIfStart(survey, target);
-  if (!start) return null;
-
-  const condition =
-    "element" in start
-      ? {
-          id: createId(),
-          leftOperand: { type: "element" as const, value: start.element.id },
-          operator: getDefaultOperator(start.element),
-        }
-      : {
-          id: createId(),
-          leftOperand: { type: "hiddenField" as const, value: start.hiddenFieldId },
-          operator: "isSet" as const,
-        };
-
-  return { id: createId(), connector: "and", conditions: [condition] };
-};
+/**
+ * What a show-if popover opens on (ENG-6969 T1, T6): one condition with no field picked yet, so the
+ * first selector reads "Choose a question or field". It lives only in the popover's draft: a condition
+ * can't be stored without a field (`leftOperand` is required), and `isShowIfComplete` keeps Done
+ * disabled until one is picked.
+ */
+export const createDraftShowIf = (): TConditionGroup => ({
+  id: createId(),
+  connector: "and",
+  conditions: [{ id: createId(), leftOperand: { type: "element", value: "" }, operator: "isSet" }],
+});
 
 const getOptionItems = (
   element: TSurveyElement | undefined,

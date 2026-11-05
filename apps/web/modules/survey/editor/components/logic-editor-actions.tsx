@@ -16,6 +16,7 @@ import { CalculatedFieldPicker } from "@/modules/survey/editor/components/calcul
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
 import { formulaToOneStep, oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
 import { getNextActionObjective, getObjectivesForAction } from "@/modules/survey/editor/lib/rule-list";
+import { TARGET_LIST_CLASS, getJumpTargetGroups } from "@/modules/survey/editor/lib/target-options";
 import {
   getActionObjectiveOptions,
   getActionOperatorOptions,
@@ -25,6 +26,13 @@ import {
   isExpressionOnlyField,
 } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
+import {
+  SENTENCE_FIELDS_CLASS,
+  SENTENCE_ICON_BUTTON_CLASS,
+  SENTENCE_LEAD_CLASS,
+  SENTENCE_ROW_ACTIONS_CLASS,
+  SENTENCE_ROW_CLASS,
+} from "@/modules/ui/components/conditions-editor/lib/sentence";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   DropdownMenu,
@@ -49,7 +57,6 @@ interface LogicEditorActionsProps {
    * values come from that block and earlier ones. `-1` is before the first question (ENG-6932).
    */
   readonly scopeBlockIdx: number;
-  readonly isLast?: boolean;
   /** The rule has no condition: it runs for everyone, so it only sets values or marks Low quality. */
   readonly alwaysRuns?: boolean;
   /** Opens the Embedded Data card to add a Calculated field, from Set value's empty field picker. */
@@ -65,7 +72,6 @@ export function LogicEditorActions({
   actions,
   onActionsChange,
   scopeBlockIdx,
-  isLast,
   alwaysRuns = false,
   onAddCalculatedField,
 }: LogicEditorActionsProps) {
@@ -187,242 +193,258 @@ export function LogicEditorActions({
     return objectiveOptions.filter((option) => allowed.has(String(option.value)));
   };
 
-  /** An action's ⋮ menu. A formula action shows it beside the formula's @ button, on the box's top line. */
-  const renderActionMenu = (idx: number) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger id={`actions-${idx}-dropdown`} asChild>
-        <Button variant="outline" className="flex size-10 items-center justify-center rounded-md bg-white">
-          <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent>
-        <DropdownMenuItem
-          onClick={() => {
-            handleActionsChange("addBelow", idx);
-          }}
-          icon={<PlusIcon className="size-4" />}>
-          {t("workspace.surveys.edit.add_action_below")}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          disabled={actions.length === 1}
-          onClick={() => {
-            handleActionsChange("remove", idx);
-          }}
-          icon={<TrashIcon className="size-4" />}>
-          {t("common.remove")}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          onClick={() => {
-            handleActionsChange("duplicate", idx);
-          }}
-          icon={<CopyIcon className="size-4" />}>
-          {t("common.duplicate")}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  /** An action's controls at the end of its first line: a borderless delete and a ⋮ menu (ENG-6969 T6). */
+  const renderActionControls = (idx: number) => (
+    <div className={SENTENCE_ROW_ACTIONS_CLASS}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={SENTENCE_ICON_BUTTON_CLASS}
+        aria-label={t("common.remove")}
+        disabled={actions.length === 1}
+        onClick={() => handleActionsChange("remove", idx)}>
+        <TrashIcon />
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger id={`actions-${idx}-dropdown`} asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className={SENTENCE_ICON_BUTTON_CLASS}
+            aria-label={t("common.actions")}>
+            <EllipsisVerticalIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onClick={() => handleActionsChange("addBelow", idx)}
+            icon={<PlusIcon className="size-4" />}>
+            {t("workspace.surveys.edit.add_action_below")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleActionsChange("duplicate", idx)}
+            icon={<CopyIcon className="size-4" />}>
+            {t("common.duplicate")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 
   return (
-    <div className="flex grow flex-col gap-2">
-      <div className={cn("flex grow flex-col gap-y-2 last:pb-3", isLast && "border-b border-slate-200")}>
+    // The conditions' grid (label · field · operator · value · actions), so a rule's conditions and
+    // actions line up (ENG-6969 T6). Its own container, as wide as the conditions editor's.
+    <div className="@container flex grow flex-col gap-2">
+      <div className="flex grow flex-col gap-y-2">
         {actions?.map((action, idx) => (
-          <div className="flex items-start gap-x-2" key={action.id}>
-            {/* "Then" on the first action's line, as "When" on the first condition's, so the row reads
-                "Then Set value …"; an arrow before each action after it. Top-aligned: a formula action
+          <div className={SENTENCE_ROW_CLASS} key={action.id}>
+            {/* "Then" on the first action's line, as "If" on the first condition's, so the row reads
+                "Then Jump to …"; an arrow before each action after it. Top-aligned: a formula action
                 is taller than one line, and its lead and controls start on its first line. */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-end font-medium text-slate-900">
+            <div className={SENTENCE_LEAD_CLASS}>
               {idx === 0 ? (
                 t("workspace.surveys.edit.then")
               ) : (
                 <CornerDownRightIcon className="size-4 shrink-0 text-slate-500" />
               )}
             </div>
-            <div key={action.id} className="flex grow items-start justify-between gap-x-2">
-              <div className={cn("grid flex-1 grid-cols-12 gap-x-2")}>
-                <div
-                  className={cn(
-                    (action.objective === "jumpToBlock" || action.objective === "requireAnswer") &&
-                      "col-span-4",
-                    action.objective === "calculate" && "col-span-4",
-                    // ENG-6933: takes nothing else, so the objective is the whole action.
-                    action.objective === "markLowQuality" && "col-span-12"
-                  )}>
+            <div className={SENTENCE_FIELDS_CLASS}>
+              <div
+                // ENG-6933: takes nothing else, so the objective is the whole action.
+                className={cn("min-w-0", action.objective === "markLowQuality" && "@xl:col-span-3")}>
+                <InputCombobox
+                  id={`action-${idx}-objective`}
+                  key={`objective-${action.id}`}
+                  showSearch={false}
+                  options={getObjectiveOptions(idx)}
+                  value={action.objective}
+                  onChangeValue={(val: string | number | string[]) => {
+                    handleObjectiveChange(idx, val as TSurveyBlockLogicActionObjective);
+                  }}
+                  comboboxClasses="grow"
+                />
+              </div>
+
+              {/* The target spans the operator and value columns, so the right edges line up. */}
+              {action.objective === "jumpToBlock" && (
+                <div className="min-w-0 @xl:col-span-2">
                   <InputCombobox
-                    id={`action-${idx}-objective`}
-                    key={`objective-${action.id}`}
-                    showSearch={false}
-                    options={getObjectiveOptions(idx)}
-                    value={action.objective}
+                    id={`action-${idx}-target`}
+                    key={`target-${action.id}`}
+                    showSearch={true}
+                    searchPlaceholder={t("workspace.surveys.edit.flow.search_blocks_and_endings")}
+                    // The destination's icon, as on the row's pill (ENG-6969 T6.5).
+                    groupedOptions={getJumpTargetGroups(localSurvey, scopeBlockIdx, t)}
+                    iconClassName="size-4 text-slate-500"
+                    dropdownClassName={TARGET_LIST_CLASS}
+                    value={action.target}
                     onChangeValue={(val: string | number | string[]) => {
-                      handleObjectiveChange(idx, val as TSurveyBlockLogicActionObjective);
+                      handleValuesChange(idx, {
+                        target: String(val),
+                      });
                     }}
                     comboboxClasses="grow"
                   />
                 </div>
+              )}
 
-                {(action.objective === "jumpToBlock" || action.objective === "requireAnswer") && (
-                  <div className="col-span-8">
-                    <InputCombobox
-                      id={`action-${idx}-target`}
-                      key={`target-${action.id}`}
-                      showSearch={true}
-                      options={getActionTargetOptions(action, localSurvey, scopeBlockIdx, t)}
-                      value={action.target}
-                      onChangeValue={(val: string | number | string[]) => {
-                        handleValuesChange(idx, {
-                          target: String(val),
-                        });
-                      }}
-                      comboboxClasses="grow"
-                    />
-                  </div>
-                )}
+              {action.objective === "requireAnswer" && (
+                <div className="min-w-0 @xl:col-span-2">
+                  <InputCombobox
+                    id={`action-${idx}-target`}
+                    key={`target-${action.id}`}
+                    showSearch={true}
+                    options={getActionTargetOptions(action, localSurvey, scopeBlockIdx, t)}
+                    value={action.target}
+                    onChangeValue={(val: string | number | string[]) => {
+                      handleValuesChange(idx, {
+                        target: String(val),
+                      });
+                    }}
+                    comboboxClasses="grow"
+                  />
+                </div>
+              )}
 
-                {action.objective === "calculate" && (
-                  <>
-                    {/* Reads as a sentence: Set value [field] to the expression below, or [field] [operator]
+              {action.objective === "calculate" && (
+                <>
+                  {/* Reads as a sentence: Set value [field] to the expression below, or [field] [operator]
                         [value] for one step. The toggle switches between the two, both ways. */}
-                    {/* The Expression switch keeps its place at the end of the first line in both modes; only the
+                  {/* The Expression switch keeps its place at the end of the first line in both modes; only the
                         sentence before it wraps when the row is narrow. */}
-                    <div className="col-span-8 flex min-w-0 items-start gap-2">
-                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                        {/* The field takes the width its name needs, up to the row's. */}
-                        <div className="max-w-full min-w-0">
-                          <CalculatedFieldPicker
-                            id={`action-${idx}-variableId`}
-                            key={`variableId-${action.id}`}
-                            options={getActionVariableOptions(localSurvey)}
-                            value={action.variableId}
-                            onChange={(variableId) => changeCalculatedField(idx, variableId)}
-                            onAddCalculatedField={onAddCalculatedField}
-                          />
-                        </div>
-
-                        {action.value.type === "expression" ? (
-                          <span className="shrink-0 text-sm whitespace-nowrap text-slate-600">
-                            {t("workspace.surveys.edit.flow.set_to_formula")}
-                          </span>
-                        ) : (
-                          <>
-                            <div className="w-36 shrink-0">
-                              <InputCombobox
-                                id={`action-${idx}-operator`}
-                                key={`operator-${action.id}`}
-                                showSearch={false}
-                                options={getActionOperatorOptions(
-                                  t,
-                                  getCalculateFieldType(action.variableId)
-                                )}
-                                value={action.operator}
-                                onChangeValue={(val: string | number | string[]) => {
-                                  handleValuesChange(idx, {
-                                    operator: val as
-                                      | TActionTextVariableCalculateOperator
-                                      | TActionNumberVariableCalculateOperator,
-                                  });
-                                }}
-                                comboboxClasses="grow"
-                              />
-                            </div>
-
-                            <div className="min-w-32 flex-1">
-                              <InputCombobox
-                                id={`action-${idx}-value`}
-                                key={`value-${action.id}`}
-                                withInput={true}
-                                clearable={true}
-                                value={action.value?.value ?? ""}
-                                inputProps={{
-                                  placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
-                                  type: getCalculateFieldType(action.variableId) ?? "text",
-                                }}
-                                groupedOptions={getActionValueOptions(
-                                  action.variableId,
-                                  localSurvey,
-                                  scopeBlockIdx,
-                                  t
-                                )}
-                                onChangeValue={(val, option, fromInput) => {
-                                  const fieldType = option?.meta?.type as
-                                    | "static"
-                                    | "variable"
-                                    | "hiddenField"
-                                    | "element";
-
-                                  if (!fromInput && fieldType !== "static") {
-                                    handleValuesChange(idx, {
-                                      value: {
-                                        type: fieldType,
-                                        value: val as string,
-                                      },
-                                    });
-                                  } else if (fromInput) {
-                                    handleValuesChange(idx, {
-                                      value: {
-                                        type: "static",
-                                        value: val as string,
-                                      },
-                                    });
-                                  }
-                                }}
-                                comboboxClasses="grow shrink-0"
-                              />
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex h-10 shrink-0 items-center gap-2">
-                        <Switch
-                          id={`action-${idx}-formula-toggle`}
-                          checked={action.value.type === "expression"}
-                          // A date field has no one-step input: it stays an expression (P38).
-                          disabled={
-                            action.value.type === "expression" &&
-                            isExpressionOnlyField(localSurvey, action.variableId)
-                          }
-                          onCheckedChange={(on) => (on ? turnFormulaOn(idx) : turnFormulaOff(idx))}
+                  <div className="flex min-w-0 items-start gap-2 @xl:col-span-2">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                      {/* The field takes the width its name needs, up to the row's. */}
+                      <div className="max-w-full min-w-0">
+                        <CalculatedFieldPicker
+                          id={`action-${idx}-variableId`}
+                          key={`variableId-${action.id}`}
+                          options={getActionVariableOptions(localSurvey)}
+                          value={action.variableId}
+                          onChange={(variableId) => changeCalculatedField(idx, variableId)}
+                          onAddCalculatedField={onAddCalculatedField}
                         />
-                        <Label
-                          htmlFor={`action-${idx}-formula-toggle`}
-                          className="text-sm font-normal text-slate-600">
-                          {t("workspace.surveys.edit.flow.formula")}
-                        </Label>
-                        {isExpressionOnlyField(localSurvey, action.variableId) && (
-                          <InfoTooltip
-                            label={t("workspace.surveys.edit.flow.date_field_expression_only_label")}>
-                            {t("workspace.surveys.edit.flow.date_field_expression_only")}
-                          </InfoTooltip>
-                        )}
                       </div>
+
+                      {action.value.type === "expression" ? (
+                        <span className="shrink-0 text-sm whitespace-nowrap text-slate-600">
+                          {t("workspace.surveys.edit.flow.set_to_formula")}
+                        </span>
+                      ) : (
+                        <>
+                          <div className="w-36 shrink-0">
+                            <InputCombobox
+                              id={`action-${idx}-operator`}
+                              key={`operator-${action.id}`}
+                              showSearch={false}
+                              options={getActionOperatorOptions(t, getCalculateFieldType(action.variableId))}
+                              value={action.operator}
+                              onChangeValue={(val: string | number | string[]) => {
+                                handleValuesChange(idx, {
+                                  operator: val as
+                                    | TActionTextVariableCalculateOperator
+                                    | TActionNumberVariableCalculateOperator,
+                                });
+                              }}
+                              comboboxClasses="grow"
+                            />
+                          </div>
+
+                          <div className="min-w-32 flex-1">
+                            <InputCombobox
+                              id={`action-${idx}-value`}
+                              key={`value-${action.id}`}
+                              withInput={true}
+                              clearable={true}
+                              value={action.value?.value ?? ""}
+                              inputProps={{
+                                placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
+                                type: getCalculateFieldType(action.variableId) ?? "text",
+                              }}
+                              groupedOptions={getActionValueOptions(
+                                action.variableId,
+                                localSurvey,
+                                scopeBlockIdx,
+                                t
+                              )}
+                              onChangeValue={(val, option, fromInput) => {
+                                const fieldType = option?.meta?.type as
+                                  | "static"
+                                  | "variable"
+                                  | "hiddenField"
+                                  | "element";
+
+                                if (!fromInput && fieldType !== "static") {
+                                  handleValuesChange(idx, {
+                                    value: {
+                                      type: fieldType,
+                                      value: val as string,
+                                    },
+                                  });
+                                } else if (fromInput) {
+                                  handleValuesChange(idx, {
+                                    value: {
+                                      type: "static",
+                                      value: val as string,
+                                    },
+                                  });
+                                }
+                              }}
+                              comboboxClasses="grow shrink-0"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
 
-                    {action.value.type === "expression" && (
-                      <div className="col-span-12 mt-2">
-                        <SetValueFormula
-                          id={`action-${idx}-formula`}
-                          localSurvey={localSurvey}
-                          variableId={action.variableId}
-                          expression={action.value.value}
-                          scopeBlockIdx={scopeBlockIdx}
-                          actionMenu={renderActionMenu(idx)}
-                          onExpressionChange={(expression) =>
-                            handleValuesChange(idx, {
-                              operator: "assign",
-                              value: { type: "expression", value: expression },
-                            })
-                          }
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-              {!isFormulaAction(action) && renderActionMenu(idx)}
+                    <div className="flex h-10 shrink-0 items-center gap-2">
+                      <Switch
+                        id={`action-${idx}-formula-toggle`}
+                        checked={action.value.type === "expression"}
+                        // A date field has no one-step input: it stays an expression (P38).
+                        disabled={
+                          action.value.type === "expression" &&
+                          isExpressionOnlyField(localSurvey, action.variableId)
+                        }
+                        onCheckedChange={(on) => (on ? turnFormulaOn(idx) : turnFormulaOff(idx))}
+                      />
+                      <Label
+                        htmlFor={`action-${idx}-formula-toggle`}
+                        className="text-sm font-normal text-slate-600">
+                        {t("workspace.surveys.edit.flow.formula")}
+                      </Label>
+                      {isExpressionOnlyField(localSurvey, action.variableId) && (
+                        <InfoTooltip
+                          label={t("workspace.surveys.edit.flow.date_field_expression_only_label")}>
+                          {t("workspace.surveys.edit.flow.date_field_expression_only")}
+                        </InfoTooltip>
+                      )}
+                    </div>
+                  </div>
+
+                  {action.value.type === "expression" && (
+                    <div className="min-w-0 @xl:col-span-3">
+                      <SetValueFormula
+                        id={`action-${idx}-formula`}
+                        localSurvey={localSurvey}
+                        variableId={action.variableId}
+                        expression={action.value.value}
+                        scopeBlockIdx={scopeBlockIdx}
+                        onExpressionChange={(expression) =>
+                          handleValuesChange(idx, {
+                            operator: "assign",
+                            value: { type: "expression", value: expression },
+                          })
+                        }
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+            {renderActionControls(idx)}
           </div>
         ))}
       </div>

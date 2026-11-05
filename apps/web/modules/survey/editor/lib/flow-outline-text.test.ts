@@ -10,7 +10,6 @@ import {
   describeBlockCounts,
   describeConditionGroup,
   describeRuleSummary,
-  getFallbackTargetOptions,
   summarizeRuleActions,
 } from "./flow-outline-text";
 
@@ -314,26 +313,5 @@ describe("describeBlockCounts (ENG-6969 T15)", () => {
 
   test("leaves the rule count out when there are none", () => {
     expect(describeBlockCounts({ elementCount: 1, ruleCount: 0 }, count)).toBe("count_questions:1");
-  });
-});
-
-describe("getFallbackTargetOptions: where Otherwise go to can send everyone else (ENG-6969 T7)", () => {
-  test("the next block by name first, then the later blocks, then the endings", () => {
-    const options = getFallbackTargetOptions(surveyFlowFixture, 0, t);
-    expect(options[0]).toEqual({ label: "next_block_named", value: "defaultSelection" });
-    expect(options.slice(1, 1 + surveyFlowFixture.blocks.length - 1).map((option) => option.value)).toEqual(
-      surveyFlowFixture.blocks.slice(1).map((block) => block.id)
-    );
-    expect(options.slice(-surveyFlowFixture.endings.length).map((option) => option.value)).toEqual(
-      surveyFlowFixture.endings.map((ending) => ending.id)
-    );
-  });
-
-  test("the last block's default has no next block to name", () => {
-    const lastIdx = surveyFlowFixture.blocks.length - 1;
-    expect(getFallbackTargetOptions(surveyFlowFixture, lastIdx, t)[0]).toEqual({
-      label: "next_block",
-      value: "defaultSelection",
-    });
   });
 });

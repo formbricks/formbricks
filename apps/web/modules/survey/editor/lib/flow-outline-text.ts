@@ -367,33 +367,3 @@ export const describeBlockCounts = (
       ? [t("workspace.surveys.edit.flow.count_rules", { count: block.ruleCount })]
       : []),
   ].join(" · ");
-
-/**
- * Where a block's "Otherwise go to" can send everyone the rules didn't move (ENG-6969 T7): the next
- * block by name (the default, stored as no fallback), the later blocks, then the endings. The same set
- * as before; only the default's label changed.
- */
-export const getFallbackTargetOptions = (
-  survey: TSurvey,
-  blockIdx: number,
-  t: TFunction
-): { label: string; value: string }[] => {
-  const nextBlock = survey.blocks[blockIdx + 1];
-  return [
-    {
-      label: nextBlock
-        ? t("workspace.surveys.edit.flow.next_block_named", {
-            name: getBlockDisplayName(nextBlock, blockIdx + 1, t),
-          })
-        : t("workspace.surveys.edit.next_block"),
-      value: "defaultSelection",
-    },
-    ...survey.blocks
-      .slice(blockIdx + 1)
-      .map((block, idx) => ({ label: getBlockDisplayName(block, blockIdx + 1 + idx, t), value: block.id })),
-    ...survey.endings.map((ending) => ({
-      label: t("workspace.surveys.edit.flow.end_label", { label: getEndingLabel(ending, survey, t) }),
-      value: ending.id,
-    })),
-  ];
-};

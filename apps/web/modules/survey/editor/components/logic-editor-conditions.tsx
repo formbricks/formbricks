@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { toSentenceFieldGroups } from "@/modules/survey/editor/lib/condition-field-groups";
 import { createSharedConditionsFactory } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
 import type {
@@ -46,10 +47,18 @@ export function LogicEditorConditions({
     { onConditionsChange }
   );
 
+  // The rule sentence's grouping of the first selector (ENG-6969 T6): Questions, Hidden fields,
+  // Embedded Data, Survey info. Quotas keep the shared grouping.
+  const sentenceConfig: TConditionsEditorConfig = {
+    ...(config as TConditionsEditorConfig),
+    getLeftOperandOptions: () => toSentenceFieldGroups(config.getLeftOperandOptions(), t),
+  };
+
   return (
     <ConditionsEditor
+      variant="sentence"
       conditions={conditions}
-      config={config as TConditionsEditorConfig}
+      config={sentenceConfig}
       callbacks={callbacks as TConditionsEditorCallbacks}
       depth={depth}
     />

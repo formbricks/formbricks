@@ -23,9 +23,11 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { cn } from "@/modules/ui/lib/utils";
+import { SentenceConditionsEditor } from "./sentence-conditions-editor";
 import {
   TConditionsEditorCallbacks,
   TConditionsEditorConfig,
+  TConditionsEditorVariant,
   TGenericCondition,
   TGenericConditionGroup,
 } from "./types";
@@ -41,7 +43,20 @@ interface ConditionsEditorProps {
   isConnectorLocked?: boolean;
 }
 
+/**
+ * The conditions editor shared by survey logic, show-if, quotas, chart filters, every table's Advanced
+ * filter and show conditions. `variant="sentence"` (ENG-6969 T6) opts into the rule editor's sentence
+ * layout; without it, every caller gets the default layout below, unchanged.
+ */
 export function ConditionsEditor({
+  variant = "default",
+  ...props
+}: Readonly<ConditionsEditorProps & { variant?: TConditionsEditorVariant }>) {
+  if (variant === "sentence") return <SentenceConditionsEditor {...props} />;
+  return <DefaultConditionsEditor {...props} />;
+}
+
+function DefaultConditionsEditor({
   conditions,
   config,
   callbacks,
