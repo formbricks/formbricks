@@ -10,6 +10,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
 import {
   AddConditionCell,
   SHOW_IF_CELL_CLASS,
@@ -18,7 +19,8 @@ import {
   ShowIfPopoverFrame,
   useShowIfScope,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
-import { describeConditionGroup } from "@/modules/survey/editor/lib/flow-outline-text";
+import { describeIfConditionParts } from "@/modules/survey/editor/lib/flow-outline-text";
+import { toPlainText } from "@/modules/survey/editor/lib/reference-chips";
 import {
   type TShowIfTarget,
   applyOptionsShowIfDraft,
@@ -373,6 +375,7 @@ function OptionRow({
   conditionsEditor,
 }: OptionRowProps) {
   const { t, i18n } = useTranslation();
+  const elementIcons = useElementIcons();
   const isHidden = item.hidden === true;
   const showIf: TConditionGroup | undefined = item.showIf;
   const switchId = `option-hidden-${item.id}`;
@@ -400,18 +403,21 @@ function OptionRow({
       </button>
     );
   } else if (showIf) {
+    // References as chips (ENG-6969 T3); the button's name is the plain sentence (guardrail 4).
+    const shownWhenParts = describeIfConditionParts(showIf, localSurvey, t, {
+      locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
+    });
     shownWhen = (
       <button
         type="button"
+        aria-label={toPlainText(shownWhenParts)}
         className="min-w-0 truncate rounded-sm text-left text-slate-700 underline-offset-2 hover:underline focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
         aria-expanded={isEditing}
         onClick={(event) => {
           event.stopPropagation();
           onToggleEditing();
         }}>
-        {`${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(showIf, localSurvey, t, {
-          locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
-        })}`}
+        <FlowTextParts parts={shownWhenParts} elementIcons={elementIcons} />
       </button>
     );
   } else {

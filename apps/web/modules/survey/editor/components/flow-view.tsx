@@ -13,7 +13,7 @@ import {
 } from "@/modules/survey/editor/components/options-show-if-popover";
 import { FlowTextParts } from "@/modules/survey/editor/components/reference-chip";
 import { RuleRowActions } from "@/modules/survey/editor/components/rule-row-actions";
-import { ShowIfPopover, getBlockShowIfChipText } from "@/modules/survey/editor/components/show-if-popover";
+import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import {
   AddConditionCell,
   SHOW_IF_CELL_CLASS,
@@ -36,7 +36,8 @@ import {
 import {
   type TFlowActionText,
   describeBlockCounts,
-  describeConditionGroup,
+  describeBlockShowIfParts,
+  describeConditionGroupParts,
   describeFirstStepParts,
   describeRuleConditionParts,
   describeRuleSummary,
@@ -68,7 +69,6 @@ import {
 import { isBlockLogicItemValid } from "@/modules/survey/editor/lib/validation";
 import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -381,7 +381,10 @@ export const FlowView = ({
         <span className={SHOW_IF_CELL_CLASS.readOnly} title={t("workspace.surveys.edit.flow.read_only_hint")}>
           <EyeIcon aria-hidden="true" />
           <span className="truncate">
-            {describeConditionGroup(cell.conditions, localSurvey, t, textFormat)}
+            <FlowTextParts
+              parts={describeConditionGroupParts(cell.conditions, localSurvey, t, textFormat)}
+              elementIcons={elementIcons}
+            />
           </span>
         </span>
       );
@@ -491,17 +494,18 @@ export const FlowView = ({
     const key = `block:${block.id}`;
     if (badge && !badge.editable) {
       return (
-        <Badge
-          type="gray"
-          size="tiny"
-          icon={<EyeIcon />}
-          className="min-w-0 truncate"
-          text={getBlockShowIfChipText(
-            describeConditionGroup(badge.conditions, localSurvey, t, textFormat),
-            t
-          )}
-          title={t("workspace.surveys.edit.flow.read_only_hint")}
-        />
+        // The editable chip's look, without its hover; references as chips (ENG-6969 T3).
+        <span
+          className="inline-flex min-w-0 cursor-default items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
+          title={t("workspace.surveys.edit.flow.read_only_hint")}>
+          <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
+          <span className="truncate">
+            <FlowTextParts
+              parts={describeBlockShowIfParts(badge.conditions, localSurvey, t, textFormat)}
+              elementIcons={elementIcons}
+            />
+          </span>
+        </span>
       );
     }
     // An open block shows how to add its show-if; a collapsed one stays quiet.

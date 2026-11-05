@@ -8,9 +8,11 @@ import {
 import {
   describeAction,
   describeBlockCounts,
+  describeBlockShowIfParts,
   describeConditionGroup,
   describeConditionGroupParts,
   describeFirstStepParts,
+  describeIfConditionParts,
   describeRuleCondition,
   describeRuleConditionParts,
   describeRuleSummary,
@@ -393,6 +395,47 @@ describe("references as chips in rule summaries (ENG-6969 T3)", () => {
     const jumpFirst = [rule(4, 3).actions[2], rule(4, 3).actions[0]];
     expect(toPlainText(describeFirstStepParts(jumpFirst, surveyFlowFixture, t))).toBe("segment = “hot-lead”");
     expect(describeFirstStepParts([rule(4, 3).actions[2]], surveyFlowFixture, t)).toEqual([]);
+  });
+});
+
+describe("references as chips in show-if summaries (ENG-6969 T3)", () => {
+  const chips = (parts: TFlowTextPart[]) =>
+    parts.flatMap((part) => (part.kind === "reference" ? [part.chip] : []));
+  const sentence = ((key: string, options?: { conditions?: string }) =>
+    key.endsWith("show_block_if_chip")
+      ? `Show block if ${options?.conditions}`
+      : key.split(".").pop()) as never;
+  const blockShowIf = surveyFlowFixture.blocks.find((block) => block.id === ids.blocks.heavyUsers)!.showIf!;
+  const questionShowIf = surveyFlowFixture.blocks
+    .flatMap((block) => block.elements)
+    .find((element) => element.id === "apple_reason")!.showIf!;
+
+  test("a block's chip: its sentence around the condition, the question a chip, option labels plain", () => {
+    const parts = describeBlockShowIfParts(blockShowIf, surveyFlowFixture, sentence);
+    expect(parts[0]).toEqual({ kind: "text", text: "Show block if " });
+    expect(chips(parts)).toEqual([
+      { kind: "question", label: "services", elementType: "multipleChoiceMulti" },
+    ]);
+    expect(toPlainText(parts)).toBe("Show block if “services” includes_all_of Netflix, Disney+, Prime Video");
+  });
+
+  test("a block's chip reads as its plain sentence for the aria-label", () => {
+    expect(toPlainText(describeBlockShowIfParts(blockShowIf, surveyFlowFixture, sentence))).toBe(
+      `Show block if ${describeConditionGroup(blockShowIf, surveyFlowFixture, sentence)}`
+    );
+  });
+
+  test("an option's “Shown when” cell starts with If, its question a chip", () => {
+    const parts = describeIfConditionParts(questionShowIf, surveyFlowFixture, t);
+    expect(parts[0]).toEqual({ kind: "text", text: "if " });
+    expect(chips(parts)).toEqual([{ kind: "question", label: "fav", elementType: "multipleChoiceSingle" }]);
+    expect(toPlainText(parts)).toBe(`if ${describeConditionGroup(questionShowIf, surveyFlowFixture, t)}`);
+  });
+
+  test("a rule's condition starts the same way", () => {
+    expect(describeRuleConditionParts(rule(4, 1), surveyFlowFixture, t)).toEqual(
+      describeIfConditionParts(rule(4, 1).conditions, surveyFlowFixture, t)
+    );
   });
 });
 

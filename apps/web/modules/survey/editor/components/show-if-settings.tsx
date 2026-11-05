@@ -8,12 +8,13 @@ import {
   OptionsShowIfCounts,
   OptionsShowIfPopover,
 } from "@/modules/survey/editor/components/options-show-if-popover";
+import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import {
   AddConditionCell,
   SHOW_IF_CELL_CLASS,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
-import { describeConditionGroup } from "@/modules/survey/editor/lib/flow-outline-text";
+import { describeConditionGroupParts } from "@/modules/survey/editor/lib/flow-outline-text";
 import {
   type TOptionsShowIfSection,
   type TShowIfSection,
@@ -80,6 +81,7 @@ const ShowIfField = ({
   unavailableReason,
 }: ShowIfFieldProps) => {
   const { t, i18n } = useTranslation();
+  const elementIcons = useElementIcons();
   const [isOpen, setIsOpen] = useState(false);
   const addLabel = `${title} ${t("workspace.surveys.edit.flow.add_show_if_condition")}`;
 
@@ -91,9 +93,13 @@ const ShowIfField = ({
       <ReadOnlyCell>
         <EyeIcon aria-hidden="true" />
         <span className="truncate">
-          {describeConditionGroup(section.conditions, localSurvey, t, {
-            locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
-          })}
+          {/* References as chips (ENG-6969 T3), as on the Flow tab. */}
+          <FlowTextParts
+            parts={describeConditionGroupParts(section.conditions, localSurvey, t, {
+              locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
+            })}
+            elementIcons={elementIcons}
+          />
         </span>
       </ReadOnlyCell>
     );
