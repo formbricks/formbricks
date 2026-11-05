@@ -159,6 +159,145 @@ const valuesCacheKey = (parts: {
   };
 };
 
+/**
+ * The read a value-list request asks for, authorized: the dashboard, the caller, the list filter, the
+ * filters that apply (locked ones first), the charts as the dashboard shows them, and which datasets
+ * have which fields. Any refusal comes back as the response to send.
+ */
+const resolveValueListRequest = async ({
+  dashboardId,
+  filterId,
+  query,
+  context,
+}: {
+  dashboardId: string;
+  filterId: string;
+  query: TV3DashboardFilterValuesQuery;
+  context: TV3ChartOperationContext;
+}) => {
+  const { requestId, instance } = context;
+  const row = await getDashboardChartsRow(dashboardId);
+  const access = await authorizeDashboardRead(row, context);
+  if (access instanceof Response) return access;
+  if (!row) return filterProblem("filterId", "Not a filter of this dashboard.", context);
+
+  const checked = checkValuesRequest(query, filterId, context);
+  if (checked instanceof Response) return checked;
+  const { filters, filter, dateRange, requested } = checked;
+
+  const charts = row.widgets.map(({ chart }) => ({
+    datasetId: chart.feedbackDirectoryId,
+    // As the dashboard shows it: a big number is one group, whatever it was saved with.
+    query: prepareQueryForChartType(chart.query as TChartQuery, resolveChartType(chart.type)),
+  }));
+  const datasetIds = [...new Set(charts.map((chart) => chart.datasetId))];
+  const actor = getV3AuthorizationActor(context.authentication);
+  if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+  // The values offered are those left once the dashboard's locked filters apply, as on its charts.
+  const locked = withLockedFilters(row.filters, filters, requestPicks(query));
+  const filterFields = locked.filters.map(({ field }) => field);
+  const datasetHasField = await matchDatasetFields(datasetIds, filterFields, (datasetId) => ({
+    datasetId,
+    workspaceId: access.workspaceId,
+    organizationId: access.organizationId,
+    actor,
+  }));
+
+  // Every dataset whose charts can offer values must be readable, so the one cached list is everyone's.
+  // Checked together (C8): one dashboard can read many datasets.
+  const refused = await refuseUnlessAllReadable(
+    datasetIds.filter((id) => datasetHasField(id, filter.field)),
+    (datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, row, context)
+  );
+  if (refused) return refused;
+
+  return { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested };
+};
+
+/** The key one principal's concurrent requests for a list share a build under. */
+const principalBuildKey = (cacheKey: TCacheKey, context: TV3ChartOperationContext): string =>
+  `${String(cacheKey)}:${getV3RateLimitPrincipal(context.authentication) ?? "anonymous"}`;
+
+/** The request's picks, or none. */
+const requestPicks = (query: TV3DashboardFilterValuesQuery): Record<string, string[]> => query.picks ?? {};
+
+/**
+ * Build a list while holding its cross-instance lock. When another instance holds it, that instance's
+ * cached result is waited for briefly instead, and built here only if it does not come.
+ */
+const buildUnderListLock = async (
+  keys: { cacheKey: TCacheKey; lockKey: TCacheKey },
+  build: () => Promise<TBuiltList>
+): Promise<TBuiltList> => {
+  const locked = await cache.tryLock(keys.lockKey, "1", FILTER_VALUES_LOCK_MS);
+  if (locked.ok && !locked.data) {
+    const waited = await waitForCachedList(keys.cacheKey);
+    if (waited) return { data: waited };
+  }
+  try {
+    return await build();
+  } finally {
+    if (locked.ok && locked.data) await cache.del([keys.lockKey]);
+  }
+};
+
+/**
+ * Runs value-list queries one in-flight slot each, not the whole build in one: a slot's lease is sized to
+ * one query, and a list may run up to MAX_FILTER_VALUE_QUERIES of them. A refused slot stops the build.
+ * `ran` counts the queries that ran, which is what the reserved budget is settled with.
+ */
+const createSlottedRunner = (
+  context: TV3ChartOperationContext,
+  run: (query: TFilterValueQuery) => Promise<unknown[]>
+) => {
+  let ran = 0;
+  return {
+    run: async (query: TFilterValueQuery): Promise<unknown[]> => {
+      const held = await holdChartQuerySlot(context, () => {
+        ran += 1;
+        return run(query);
+      });
+      if ("refused" in held) throw new FilterValuesSlotRefused(held.refused);
+      return held.value;
+    },
+    ran: () => ran,
+  };
+};
+
+/**
+ * Runs one value-list Cube query in the caller's tenant. One list runs many queries on few datasets, so
+ * their tokens' embedded keys are resolved once per dataset.
+ */
+const createValueQueryRunner = (scope: {
+  workspaceId: string;
+  organizationId: string;
+  actor: NonNullable<ReturnType<typeof getV3AuthorizationActor>>;
+}) => {
+  const embeddedKeysFor = createRequestEmbeddedKeys((datasetId) => ({ datasetId, ...scope }));
+  return async ({ datasetId, query: cubeQuery }: TFilterValueQuery): Promise<unknown[]> => {
+    const rows = await executeTenantScopedQuery({
+      query: cubeQuery,
+      feedbackDirectoryId: datasetId,
+      ...scope,
+      source: "v3.dashboards.filterValues",
+      embeddedKeys: await embeddedKeysFor(datasetId, cubeQuery),
+    });
+    return Array.isArray(rows) ? (rows as unknown[]) : [];
+  };
+};
+
+/** Of the bounded charts' outcomes, the queries still to run and the values already known, as rows. */
+const splitBoundedOutcomes = (
+  outcomes: ReturnType<typeof resolveBoundedChartValues>[],
+  field: string
+): { secondStep: TFilterValueQuery[]; groupValues: Record<string, string>[][] } => ({
+  secondStep: outcomes.flatMap((outcome) => (outcome.type === "query" ? [outcome.query] : [])),
+  groupValues: outcomes.flatMap((outcome) =>
+    outcome.type === "values" ? [outcome.values.map((value) => ({ [field]: value }))] : []
+  ),
+});
+
 /** The first refusal among the datasets, all asked at once, or `null` when every one is readable. */
 const refuseUnlessAllReadable = async (
   datasetIds: readonly string[],
@@ -265,41 +404,9 @@ export async function listV3DashboardFilterValues({
     const limited = await applyV3OperationRateLimit({ config: rateLimitConfigs.api.v3, ...context });
     if (limited) return limited;
 
-    const row = await getDashboardChartsRow(dashboardId);
-    const access = await authorizeDashboardRead(row, context);
-    if (access instanceof Response) return access;
-    if (!row) return filterProblem("filterId", "Not a filter of this dashboard.", context);
-
-    const checked = checkValuesRequest(query, filterId, context);
-    if (checked instanceof Response) return checked;
-    const { filters, filter, dateRange, requested } = checked;
-
-    const charts = row.widgets.map(({ chart }) => ({
-      datasetId: chart.feedbackDirectoryId,
-      // As the dashboard shows it: a big number is one group, whatever it was saved with.
-      query: prepareQueryForChartType(chart.query as TChartQuery, resolveChartType(chart.type)),
-    }));
-    const datasetIds = [...new Set(charts.map((chart) => chart.datasetId))];
-    const actor = getV3AuthorizationActor(context.authentication);
-    if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
-
-    // The values offered are those left once the dashboard's locked filters apply, as on its charts.
-    const locked = withLockedFilters(row.filters, filters, query.picks ?? {});
-    const filterFields = locked.filters.map(({ field }) => field);
-    const datasetHasField = await matchDatasetFields(datasetIds, filterFields, (datasetId) => ({
-      datasetId,
-      workspaceId: access.workspaceId,
-      organizationId: access.organizationId,
-      actor,
-    }));
-
-    // Every dataset whose charts can offer values must be readable, so the one cached list is everyone's.
-    // Checked together (C8): one dashboard can read many datasets.
-    const refused = await refuseUnlessAllReadable(
-      datasetIds.filter((id) => datasetHasField(id, filter.field)),
-      (datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, row, context)
-    );
-    if (refused) return refused;
+    const resolved = await resolveValueListRequest({ dashboardId, filterId, query, context });
+    if (resolved instanceof Response) return resolved;
+    const { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested } = resolved;
 
     const picks = keepCurrentPicks(locked.filters, locked.picks);
     const { [filter.id]: _ownPick, ...otherPicks } = picks;
@@ -341,25 +448,11 @@ export async function listV3DashboardFilterValues({
       });
     }
 
-    // One list runs many queries on few datasets: their tokens' keys are resolved once per dataset.
-    const embeddedKeysFor = createRequestEmbeddedKeys((datasetId) => ({
-      datasetId,
+    const run = createValueQueryRunner({
       workspaceId: access.workspaceId,
       organizationId: access.organizationId,
       actor,
-    }));
-    const run = async ({ datasetId, query: cubeQuery }: TFilterValueQuery): Promise<unknown[]> => {
-      const rows = await executeTenantScopedQuery({
-        query: cubeQuery,
-        feedbackDirectoryId: datasetId,
-        workspaceId: access.workspaceId,
-        organizationId: access.organizationId,
-        actor,
-        source: "v3.dashboards.filterValues",
-        embeddedKeys: await embeddedKeysFor(datasetId, cubeQuery),
-      });
-      return Array.isArray(rows) ? (rows as unknown[]) : [];
-    };
+    });
 
     const build = async (): Promise<TBuiltList> => {
       const reserved = await reserveV3OperationRateLimit({
@@ -369,17 +462,8 @@ export async function listV3DashboardFilterValues({
       });
       if ("refused" in reserved) return reserved;
 
-      // Each Cube query holds its own in-flight slot while it runs, not the whole build: a slot's lease
-      // is sized to one query, and a list may run up to MAX_FILTER_VALUE_QUERIES of them.
-      let ran = 0;
-      const counted = async (query: TFilterValueQuery) => {
-        const held = await holdChartQuerySlot(context, () => {
-          ran += 1;
-          return run(query);
-        });
-        if ("refused" in held) throw new FilterValuesSlotRefused(held.refused);
-        return held.value;
-      };
+      const slotted = createSlottedRunner(context, run);
+      const counted = slotted.run;
       try {
         // First the merged value queries and the bounded charts' own queries, sharing one concurrency
         // limit; then, for each bounded chart not grouped by the field, its values within its groups.
@@ -393,10 +477,7 @@ export async function listV3DashboardFilterValues({
         const resolved = groups.map((group, index) =>
           resolveBoundedChartValues({ filter, group, rows: groupRows[index], search: query.search })
         );
-        const secondStep = resolved.flatMap((outcome) => (outcome.type === "query" ? [outcome.query] : []));
-        const groupValues = resolved.flatMap((outcome) =>
-          outcome.type === "values" ? [outcome.values.map((value) => ({ [filter.field]: value }))] : []
-        );
+        const { secondStep, groupValues } = splitBoundedOutcomes(resolved, filter.field);
         const secondResults = await mapWithConcurrency(secondStep, FILTER_VALUE_QUERY_CONCURRENCY, counted);
 
         const data: TV3DashboardFilterValues = mergeFilterValues(filter.field, [
@@ -411,26 +492,15 @@ export async function listV3DashboardFilterValues({
         if (error instanceof FilterValuesSlotRefused) return { refused: error.refused };
         throw error;
       } finally {
-        await reserved.settle(ran);
+        await reserved.settle(slotted.ran());
       }
     };
 
     // Only one principal's requests share a build: the build reserves that principal's chart-query
     // budget and slots, so another principal joining it would get the first one's refusal. The cached
     // list and its lock stay shared by everyone.
-    const buildKey = `${String(cacheKey)}:${getV3RateLimitPrincipal(context.authentication) ?? "anonymous"}`;
-    const outcome = await runOnce(buildKey, async () => {
-      const locked = await cache.tryLock(lockKey, "1", FILTER_VALUES_LOCK_MS);
-      if (locked.ok && !locked.data) {
-        const waited = await waitForCachedList(cacheKey);
-        if (waited) return { data: waited };
-      }
-      try {
-        return await build();
-      } finally {
-        if (locked.ok && locked.data) await cache.del([lockKey]);
-      }
-    });
+    const buildKey = principalBuildKey(cacheKey, context);
+    const outcome = await runOnce(buildKey, () => buildUnderListLock({ cacheKey, lockKey }, build));
     // A refusal is shared by every request that joined the build, so each sends its own copy.
     return "refused" in outcome ? outcome.refused.clone() : successResponse(outcome.data, { requestId });
   } catch (error) {

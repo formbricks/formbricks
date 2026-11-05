@@ -19,6 +19,27 @@ import type { TFilterOption, TFilterProperty } from "../lib/types";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
+/** The values picked so far, as a list whether one or several may be picked. */
+const selectedValues = (selection: TPickOne | TPickSeveral): readonly string[] =>
+  selection.multiple ? selection.value : [selection.value].filter((value) => value !== "");
+
+/**
+ * A value's label: from the fixed options, else the label it had when picked here, else from the listed
+ * values, else the value itself.
+ */
+const labelFor = (
+  value: string,
+  sources: {
+    fixed: readonly TFilterOption[];
+    picked: ReadonlyMap<string, string>;
+    listed: readonly TFilterOption[];
+  }
+): string =>
+  sources.fixed.find((option) => option.value === value)?.label ??
+  sources.picked.get(value) ??
+  sources.listed.find((option) => option.value === value)?.label ??
+  value;
+
 /** The values a search lists: what the lookup returned, or the fixed options whose label holds it. */
 const listedOptions = (
   property: TFilterProperty,
@@ -112,14 +133,8 @@ export const FilterValuePicker = ({
   const needle = search.trim();
   const staticOptions = property.options ?? [];
   const listed = listedOptions(property, loaded.data?.options, needle);
-  const selected: readonly string[] = selection.multiple
-    ? selection.value
-    : [selection.value].filter((value) => value !== "");
-  const labelOf = (value: string) =>
-    staticOptions.find((option) => option.value === value)?.label ??
-    pickedLabels.get(value) ??
-    listed.find((option) => option.value === value)?.label ??
-    value;
+  const selected = selectedValues(selection);
+  const labelOf = (value: string) => labelFor(value, { fixed: staticOptions, picked: pickedLabels, listed });
   const shown = selection.multiple ? withPickedFirst(selected, listed, labelOf) : listed;
   const typedIsNew = isNewTypedValue(property, needle, shown);
   const isLoading = Boolean(loadOptions) && loaded.isLoading;
