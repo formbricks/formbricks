@@ -170,9 +170,7 @@ export const ManageTranslationsModal = ({
       }
 
       if (errorCode.includes(AI_TRANSLATION_FIELD_TOO_LONG)) {
-        return t("workspace.surveys.edit.ai_translation_field_too_long", {
-          maxCharacters: AI_TRANSLATION_MAX_FIELD_CHARS.toLocaleString(),
-        });
+        return t("workspace.surveys.edit.ai_translation_field_too_long");
       }
 
       // Fall back to the generic failure message rather than leaking a raw error code to the user.
@@ -185,11 +183,7 @@ export const ManageTranslationsModal = ({
     if (emptyFields.length === 0) return;
 
     if (emptyFields.some((field) => (field.value.default || "").length > AI_TRANSLATION_MAX_FIELD_CHARS)) {
-      toast.error(
-        t("workspace.surveys.edit.ai_translation_field_too_long", {
-          maxCharacters: AI_TRANSLATION_MAX_FIELD_CHARS.toLocaleString(),
-        })
-      );
+      toast.error(t("workspace.surveys.edit.ai_translation_field_too_long"));
       return;
     }
 

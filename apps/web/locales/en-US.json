@@ -3988,7 +3988,7 @@
         "ai_translation_all_fields_populated": "All fields are already translated",
         "ai_translation_complete": "AI translation complete",
         "ai_translation_failed": "Translation failed",
-        "ai_translation_field_too_long": "A field exceeds the {{maxCharacters}}-character translation limit. Shorten it and try again.",
+        "ai_translation_field_too_long": "A field exceeds the 20,000-character translation limit. Shorten it and try again.",
         "ai_translation_output_too_long": "This survey has too much text to translate at once. Translate some fields manually, then try again.",
         "ai_translation_quota_exceeded": "Translation is temporarily unavailable due to high demand. Please try again shortly.",
         "ai_translation_run_limit_reached": "Some fields were not translated in this run. Translate with AI again to continue.",
