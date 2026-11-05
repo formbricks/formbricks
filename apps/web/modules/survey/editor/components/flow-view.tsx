@@ -412,7 +412,7 @@ export const FlowView = ({
    */
   const describeAlwaysSkippedJump = (rule: TSurveyBlockLogic, scopeBlockIdx: number): string | null => {
     const jump = rule.actions.find((action) => action.objective === "jumpToBlock");
-    if (!jump || jump.objective !== "jumpToBlock") return null;
+    if (jump?.objective !== "jumpToBlock") return null;
     const skipped = getAlwaysSkippedJump(localSurvey, scopeBlockIdx, jump.target);
     if (!skipped) return null;
     const targetIdx = localSurvey.blocks.findIndex((block) => block.id === skipped.targetBlockId);

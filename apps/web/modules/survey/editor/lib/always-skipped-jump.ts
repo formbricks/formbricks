@@ -34,15 +34,15 @@ const readGroup = (group: TConditionGroup, skippedIds: ReadonlySet<string>): TMa
   return results.every((result) => result === otherwise) ? otherwise : undefined;
 };
 
+/** The question a single condition reads, if it reads one. */
+const getReadElementId = (condition: TSingleCondition): string[] =>
+  condition.leftOperand.type === "element" ? [condition.leftOperand.value] : [];
+
 /** The questions a group's conditions read, by id, in order, once each. */
 const getReadElementIds = (group: TConditionGroup): string[] => [
   ...new Set(
     group.conditions.flatMap((condition) =>
-      "conditions" in condition
-        ? getReadElementIds(condition)
-        : condition.leftOperand.type === "element"
-          ? [condition.leftOperand.value]
-          : []
+      "conditions" in condition ? getReadElementIds(condition) : getReadElementId(condition)
     )
   ),
 ];
