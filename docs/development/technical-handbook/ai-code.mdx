@@ -11,7 +11,7 @@ code; AI-assisted review is described in [Code reviews](/development/standards/q
 All calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and, in `apps/web`, through
 `lib/ai/service.ts`. Do not import a provider SDK directly.
 
-The rules follow the [OWASP Top 10 for LLM Applications](https://genai.owasp.org/llm-top-10/): prompt injection,
+The rules follow the OWASP Top 10 for LLM Applications: prompt injection,
 sensitive information disclosure, improper output handling, excessive agency, and unbounded consumption. When in
 doubt, check a design against that list.
 
