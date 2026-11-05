@@ -110,7 +110,9 @@ const buildQuestionLabels = (survey: TSurvey, elements: Iterable<TSurveyElement>
       .replaceAll(/\s+/gu, " ")
       .trim();
     if (!text) continue;
-    const label = cutText(text, EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS, "…");
+    // Cut, the ellipsis follows the last word, not a space.
+    const cut = cutText(text, EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS, "…");
+    const label = cut === text ? text : `${cut.slice(0, -1).trimEnd()}…`;
     labels.set(element.id, label);
     uses.set(label, (uses.get(label) ?? 0) + 1);
   }

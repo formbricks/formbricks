@@ -34,7 +34,10 @@ import { importTimedOutEvent, toSurveyImportStreamErrorEvent } from "./error-eve
 import { SURVEY_IMPORT_STREAM_ERROR_CODES, type TSurveyImportStreamEvent } from "./events";
 import { getSurveyImportFileName } from "./schemas";
 
-/** Stream failures that describe the file, which the user can act on, rather than a fault. */
+/**
+ * Stream failures that describe the file, which the user can act on, rather than a fault. Not
+ * `import_partly_unread`: AI calls failed on the way there, which is an incident to see.
+ */
 const FILE_OUTCOME_CODES: ReadonlySet<string> = new Set([
   SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE,
   SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE,

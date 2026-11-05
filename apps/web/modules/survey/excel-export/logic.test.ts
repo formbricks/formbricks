@@ -572,6 +572,58 @@ describe("createLogicRenderer: how a rule names a question", () => {
     );
   });
 
+  test("a matrix row of a question named by its id stays named by its id", () => {
+    const survey = {
+      ...SURVEY,
+      blocks: [
+        {
+          id: createId(),
+          name: "Block",
+          elements: [
+            element("m", TSurveyElementTypeEnum.Matrix, {
+              headline: { default: "" },
+              rows: [{ id: "r", label: { default: "Price" } }],
+              columns: [{ id: "c", label: { default: "Good" } }],
+            }),
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+    const block = {
+      id: createId(),
+      name: "Block",
+      elements: [],
+      logic: [
+        {
+          id: createId(),
+          conditions: {
+            id: createId(),
+            connector: "and",
+            conditions: [
+              {
+                id: createId(),
+                leftOperand: { type: "element", value: "m", meta: { row: "0" } },
+                operator: "isSubmitted",
+              },
+            ],
+          },
+          actions: [{ id: createId(), objective: "requireAnswer", target: "m" }],
+        },
+      ],
+    } as unknown as TSurveyBlock;
+
+    expect(createLogicRenderer({ survey, t, locale: "en-US" })(block)).toBe(
+      "If question m, row “Price” is submitted, then require an answer to question m."
+    );
+  });
+
+  test("cut after a word, the ellipsis not after a space", () => {
+    // The 59th character is a space: the label ends on the word before it.
+    const headline = `${"c".repeat(58)} ${"d".repeat(20)}`;
+
+    expect(renderWith({ q1: headline }, "q1")).toContain(`question “${"c".repeat(58)}…”`);
+  });
+
   test("cut to 60 characters, with an ellipsis", () => {
     const headline = `${"a".repeat(70)} end`;
 

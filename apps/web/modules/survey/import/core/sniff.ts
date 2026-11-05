@@ -87,8 +87,9 @@ const refuseOverBudget = (violation: TArrayBudgetViolation): SurveyImportInputEr
  */
 export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJsonPosition | null => {
   const message = error instanceof Error ? error.message : "";
-  // Anchored to V8's own words: the message can quote the file, which may itself say "position 5".
-  const offset = /in JSON at position (\d+)\b/.exec(message);
+  // Anchored to the end of V8's own words: the message can quote the file, which may itself say
+  // "in JSON at position 5".
+  const offset = /in JSON at position (\d+)(?: \(line \d+ column \d+\))?$/.exec(message);
   let index: number;
   if (offset) index = Math.min(Number(offset[1]), text.length);
   else if (message.includes("end of JSON input")) index = text.length;

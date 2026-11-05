@@ -224,6 +224,11 @@ describe("jsonErrorPosition", () => {
     const quoted = new SyntaxError(`Unexpected token 'x', "{"note": "at position 5"x}" is not valid JSON`);
 
     expect(jsonErrorPosition('{"note": "at position 5"x}', quoted)).toBeNull();
+    // Even the quoted words V8 itself uses, when the file holds them and V8 gives no offset of its own.
+    const mimic = new SyntaxError(
+      `Unexpected token 'x', "{"n": "in JSON at position 5"x}" is not valid JSON`
+    );
+    expect(jsonErrorPosition('{"n": "in JSON at position 5"x}', mimic)).toBeNull();
   });
 
   test("counts an emoji earlier on the line as one column, as an editor does", () => {
