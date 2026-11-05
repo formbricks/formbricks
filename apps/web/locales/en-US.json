@@ -4836,8 +4836,10 @@
       "import": {
         "ai_note": "Qualtrics, Word, Excel and CSV files are read with Formbricks AI. Every text comes from the file word for word.",
         "card_description": "Turn a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel or CSV into a draft survey.",
+        "card_description_json_only": "Turn a survey exported from Formbricks into a draft survey.",
         "card_title": "Import survey",
         "dialog_description": "Bring in a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel or CSV. You review the draft before anything is created.",
+        "dialog_description_json_only": "Bring in a survey exported from Formbricks. You review the draft before anything is created.",
         "dialog_title": "Import a survey",
         "discard_draft_body": "The imported draft has not been opened in the editor yet. Closing will discard it.",
         "discard_draft_title": "Discard this import?",

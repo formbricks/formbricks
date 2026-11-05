@@ -26,7 +26,11 @@ export const ImportSurveyCard = ({ workspaceId, isAIAvailable }: Readonly<Import
           <h3 className="text-md mt-3 mb-1 text-left font-bold text-slate-700">
             {t("workspace.surveys.import.card_title")}
           </h3>
-          <p className="text-left text-xs text-slate-600">{t("workspace.surveys.import.card_description")}</p>
+          <p className="text-left text-xs text-slate-600">
+            {isAIAvailable
+              ? t("workspace.surveys.import.card_description")
+              : t("workspace.surveys.import.card_description_json_only")}
+          </p>
         </button>
       }
     />

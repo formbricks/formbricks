@@ -92,7 +92,13 @@ export const ImportSurveyDialog = ({
         <DialogHeader>
           <UploadIcon aria-hidden="true" />
           <DialogTitle>{t("workspace.surveys.import.dialog_title")}</DialogTitle>
-          <DialogDescription>{t("workspace.surveys.import.dialog_description")}</DialogDescription>
+          <DialogDescription>
+            {/* Without AI only a Formbricks file can be read, as the drop zone says. AI turned off after
+                the page loaded is the form's shared alert to explain. */}
+            {isAIAvailable
+              ? t("workspace.surveys.import.dialog_description")
+              : t("workspace.surveys.import.dialog_description_json_only")}
+          </DialogDescription>
         </DialogHeader>
 
         <DialogBody unconstrained className="-mx-1 -mt-1 flex flex-none flex-col px-1 pt-1 pb-1">
