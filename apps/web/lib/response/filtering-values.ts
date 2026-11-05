@@ -208,6 +208,32 @@ export interface TResponseFilteringValues {
   variableValues: TSurveyMetaFieldFilter;
 }
 
+/** The distinct-value rows each query returns, in the order the query sorts them. */
+export interface TFilterValueRows {
+  contactAttributes: TFilterValueRow[];
+  meta: TMetaFilterValueRow[];
+  data: TFilterValueRow[];
+  variables: TFilterValueRow[];
+}
+
+/** Turns the query rows into the filter's option lists. Pure, so it is unit-tested without a database. */
+export const buildFilteringValues = (survey: TSurvey, rows: TFilterValueRows): TResponseFilteringValues => {
+  const metaSlices = metaRowsToSlices(rows.meta);
+
+  return {
+    contactAttributes: getResponseContactAttributes(
+      scalarRowsToSlices(rows.contactAttributes, "contactAttributes")
+    ),
+    meta: getResponseMeta(metaSlices),
+    hiddenFields: getResponseHiddenFields(survey, scalarRowsToSlices(rows.data, "data")),
+    reservedValues: getResponseReservedFilterValues(
+      survey,
+      metaSlices.map((slice) => toReservedProjectionSlice(survey.id, slice))
+    ),
+    variableValues: getResponseVariableFilterValues(survey, variableRowsToSlices(rows.variables)),
+  };
+};
+
 /** The caller authorizes and loads `survey`; every query here is scoped to its id. */
 export const getSurveyFilteringValues = async (survey: TSurvey): Promise<TResponseFilteringValues> => {
   const hiddenFieldKeys = getIngestedStorageKeys(survey);
@@ -215,25 +241,12 @@ export const getSurveyFilteringValues = async (survey: TSurvey): Promise<TRespon
     .filter(({ field }) => field.dataType === "string")
     .map(({ link }) => link.storageKey);
 
-  const [contactAttributeRows, metaRows, dataRows, variableRows] = await Promise.all([
+  const [contactAttributes, meta, data, variables] = await Promise.all([
     queryContactAttributeValues(survey.id),
     queryMetaValues(survey.id),
     hiddenFieldKeys.length > 0 ? queryDataValues(survey.id, hiddenFieldKeys) : [],
     variableKeys.length > 0 ? queryVariableValues(survey.id, variableKeys, MAX_FILTER_VALUE_OPTIONS) : [],
   ]);
 
-  const metaSlices = metaRowsToSlices(metaRows);
-
-  return {
-    contactAttributes: getResponseContactAttributes(
-      scalarRowsToSlices(contactAttributeRows, "contactAttributes")
-    ),
-    meta: getResponseMeta(metaSlices),
-    hiddenFields: getResponseHiddenFields(survey, scalarRowsToSlices(dataRows, "data")),
-    reservedValues: getResponseReservedFilterValues(
-      survey,
-      metaSlices.map((slice) => toReservedProjectionSlice(survey.id, slice))
-    ),
-    variableValues: getResponseVariableFilterValues(survey, variableRowsToSlices(variableRows)),
-  };
+  return buildFilteringValues(survey, { contactAttributes, meta, data, variables });
 };

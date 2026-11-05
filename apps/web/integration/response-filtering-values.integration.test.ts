@@ -5,6 +5,7 @@ import { type TSurvey } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
 import { type TResponseFilteringValues, getSurveyFilteringValues } from "@/lib/response/filtering-values";
 import {
+  MAX_FILTER_VALUE_OPTIONS,
   getResponseContactAttributes,
   getResponseHiddenFields,
   getResponseMeta,
@@ -200,5 +201,24 @@ describe("getSurveyFilteringValues (real Postgres)", () => {
     const { contactAttributes } = await getSurveyFilteringValues(survey);
 
     expect(contactAttributes).toEqual({ plan: ["pro"] });
+  });
+
+  test("variable values: the first MAX_FILTER_VALUE_OPTIONS distinct values in sorted order, whatever the insert order", async () => {
+    const survey = await seedSurvey("Variable cap");
+    // Inserted in reverse, and with one duplicate and one blank, so neither insert order nor repeats
+    // decide which values survive the cap.
+    const plans = Array.from(
+      { length: MAX_FILTER_VALUE_OPTIONS + 5 },
+      (_, i) => `plan-${String(i).padStart(2, "0")}`
+    );
+    await seedResponses(survey, [
+      ...[...plans].reverse().map((plan) => ({ variables: { plan } })),
+      { variables: { plan: "plan-00" } },
+      { variables: { plan: "" } },
+    ]);
+
+    const { variableValues } = await getSurveyFilteringValues(survey);
+
+    expect(variableValues.plan).toEqual(plans.slice(0, MAX_FILTER_VALUE_OPTIONS));
   });
 });

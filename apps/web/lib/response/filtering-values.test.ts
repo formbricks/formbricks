@@ -5,7 +5,9 @@ import { type TEmbeddedValueResponse, projectReservedValues } from "@formbricks/
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   type TFilterValueRow,
+  type TFilterValueRows,
   type TMetaFilterValueRow,
+  buildFilteringValues,
   getSurveyFilteringValues,
   metaRowsToSlices,
   toReservedProjectionSlice,
@@ -50,41 +52,31 @@ const metaRow = (key: string, value: unknown, nestedKey: string | null = null): 
   value: json(value),
 });
 
-interface TRows {
-  contact?: TFilterValueRow[];
-  meta?: TMetaFilterValueRow[];
-  data?: TFilterValueRow[];
-  variables?: TFilterValueRow[];
-}
+/** Rows for `buildFilteringValues`; a query left out returned nothing. */
+const build = (rows: Partial<TFilterValueRows>, surveyOver: Partial<TSurvey> = {}) =>
+  buildFilteringValues(asRead(surveyOver), {
+    contactAttributes: [],
+    meta: [],
+    data: [],
+    variables: [],
+    ...rows,
+  });
 
-type TQuery = keyof TRows;
-
-/**
- * Which query a tagged-template call is, read from its bound parameters rather than its SQL text, so
- * rewording a query does not break these tests: only the variables query binds a limit, only the data
- * query binds a key list without one, and only the meta query binds the survey id twice.
- */
-const queryOf = (values: unknown[]): TQuery => {
-  if (values.some((value) => typeof value === "number")) return "variables";
-  if (values.some(Array.isArray)) return "data";
-  return values.filter((value) => value === survey.id).length > 1 ? "meta" : "contact";
-};
-
-const mockRows = (rows: TRows) => {
-  vi.mocked(prisma.$queryRaw).mockImplementation(((_strings: TemplateStringsArray, ...values: unknown[]) =>
-    Promise.resolve(rows[queryOf(values)] ?? [])) as unknown as typeof prisma.$queryRaw);
-};
-
-const callFor = (query: TQuery) =>
-  vi.mocked(prisma.$queryRaw).mock.calls.find(([, ...values]) => queryOf(values) === query);
+/** The `$queryRaw` call that bound exactly this key list. */
+const callBinding = (keys: string[]) =>
+  vi
+    .mocked(prisma.$queryRaw)
+    .mock.calls.find(([, ...values]) =>
+      values.some((value) => JSON.stringify(value) === JSON.stringify(keys))
+    );
 
 describe("getSurveyFilteringValues (ENG-3755)", () => {
   beforeEach(() => {
     vi.mocked(prisma.$queryRaw).mockReset();
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
   });
 
   test("queries distinct values scoped to the survey and passes keys as bound parameters", async () => {
-    mockRows({});
     await getSurveyFilteringValues(asRead());
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(4);
@@ -96,15 +88,11 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
       expect(sql).not.toContain("var_plan");
     }
 
-    const [, dataKeys] = callFor("data")!;
-    expect(dataKeys).toEqual(["campaign", "score"]);
-    const [, variableKeys, , limit] = callFor("variables")!;
-    expect(variableKeys).toEqual(["var_plan"]);
-    expect(limit).toBe(MAX_FILTER_VALUE_OPTIONS);
+    expect(callBinding(["campaign", "score"])).toBeDefined();
+    expect(callBinding(["var_plan"])).toContain(MAX_FILTER_VALUE_OPTIONS);
   });
 
   test("skips the data and variables queries when the survey declares no such fields", async () => {
-    mockRows({});
     const result = await getSurveyFilteringValues(
       asRead({ hiddenFields: { enabled: true, fieldIds: [] }, variables: [] })
     );
@@ -118,18 +106,24 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
       variableValues: {},
     });
   });
+});
 
-  test("contact attributes: toString of each distinct value, grouped by key", async () => {
-    mockRows({
-      contact: [row("email", "a@x.test"), row("email", "b@x.test"), row("plan", "pro"), row("seats", 3)],
+describe("buildFilteringValues (ENG-3755)", () => {
+  test("contact attributes: toString of each distinct value, grouped by key", () => {
+    const { contactAttributes } = build({
+      contactAttributes: [
+        row("email", "a@x.test"),
+        row("email", "b@x.test"),
+        row("plan", "pro"),
+        row("seats", 3),
+      ],
     });
-    const { contactAttributes } = await getSurveyFilteringValues(asRead());
 
     expect(contactAttributes).toEqual({ email: ["a@x.test", "b@x.test"], plan: ["pro"], seats: ["3"] });
   });
 
-  test("meta: nested objects flatten, url only registers its key, non-strings and empties are skipped", async () => {
-    mockRows({
+  test("meta: nested objects flatten, url only registers its key, non-strings and empties are skipped", () => {
+    const { meta } = build({
       meta: [
         metaRow("country", ""),
         metaRow("country", "DE"),
@@ -142,7 +136,6 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
         metaRow("userAgent", 5, "os"),
       ],
     });
-    const { meta } = await getSurveyFilteringValues(asRead());
 
     expect(meta).toEqual({
       country: ["DE"],
@@ -153,8 +146,8 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
     });
   });
 
-  test("reserved values: projected through the catalog, query strings redacted, numbers coerced", async () => {
-    mockRows({
+  test("reserved values: projected through the catalog, query strings redacted, numbers coerced", () => {
+    const { reservedValues } = build({
       meta: [
         metaRow("pageReferrer", "https://r.test/a?x=1"),
         metaRow("pageReferrer", "https://r.test/a?x=2"),
@@ -167,7 +160,6 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
         metaRow("userAgent", "Chrome", "browser"),
       ],
     });
-    const { reservedValues } = await getSurveyFilteringValues(asRead());
 
     expect(reservedValues.pageReferrer).toEqual(["https://r.test/a"]);
     expect(reservedValues.source).toEqual(["7", "link"]);
@@ -177,44 +169,44 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
     expect(reservedValues.browser).toEqual(["Chrome"]);
   });
 
-  test("reserved values keep the anonymize gate", async () => {
-    mockRows({ meta: [metaRow("country", "DE"), metaRow("utmSource", "ads")] });
-    const { reservedValues } = await getSurveyFilteringValues(asRead({ isAnonymizeResponsesEnabled: true }));
+  test("reserved values keep the anonymize gate", () => {
+    const { reservedValues } = build(
+      { meta: [metaRow("country", "DE"), metaRow("utmSource", "ads")] },
+      { isAnonymizeResponsesEnabled: true }
+    );
 
     expect(reservedValues.country).toBeUndefined();
     expect(reservedValues.utmSource).toEqual(["ads"]);
   });
 
-  test("reserved values stay capped at MAX_FILTER_VALUE_OPTIONS, keeping the first rows in query order", async () => {
-    mockRows({
+  test("reserved values stay capped at MAX_FILTER_VALUE_OPTIONS, keeping the first rows in query order", () => {
+    const { reservedValues } = build({
       meta: Array.from({ length: 60 }, (_, i) => metaRow("pagePath", `/p/${String(i).padStart(2, "0")}`)),
     });
-    const { reservedValues } = await getSurveyFilteringValues(asRead());
 
     expect(reservedValues.pagePath).toHaveLength(MAX_FILTER_VALUE_OPTIONS);
     expect(reservedValues.pagePath[0]).toBe("/p/00");
     expect(reservedValues.pagePath.at(-1)).toBe("/p/49");
   });
 
-  test("hidden fields: every declared key present, numbers stringified, empty strings skipped", async () => {
-    mockRows({
+  test("hidden fields: every declared key present, numbers stringified, empty strings skipped", () => {
+    const { hiddenFields } = build({
       data: [row("campaign", ""), row("campaign", "spring"), row("score", 0), row("score", 42.5)],
     });
-    const { hiddenFields } = await getSurveyFilteringValues(asRead());
 
     expect(hiddenFields).toEqual({ campaign: ["spring"], score: ["0", "42.5"] });
   });
 
-  test("hidden fields: a declared key with no stored values still gets an empty list", async () => {
-    mockRows({ data: [row("campaign", "spring")] });
-    const { hiddenFields } = await getSurveyFilteringValues(asRead());
+  test("hidden fields: a declared key with no stored values still gets an empty list", () => {
+    const { hiddenFields } = build({ data: [row("campaign", "spring")] });
 
     expect(hiddenFields).toEqual({ campaign: ["spring"], score: [] });
   });
 
-  test("variable values: string-typed computed fields only", async () => {
-    mockRows({ variables: [row("var_plan", "gold"), row("var_plan", "silver"), row("var_points", "5")] });
-    const { variableValues } = await getSurveyFilteringValues(asRead());
+  test("variable values: string-typed computed fields only", () => {
+    const { variableValues } = build({
+      variables: [row("var_plan", "gold"), row("var_plan", "silver"), row("var_points", "5")],
+    });
 
     expect(variableValues).toEqual({ var_plan: ["gold", "silver"] });
   });
