@@ -43,7 +43,7 @@ const isTableDelimiterRow = (line: string): boolean => {
   if (!line.includes("|") || !line.includes("-")) return false;
   const cells = line.trim().split("|");
   if (cells[0].trim() === "") cells.shift();
-  if (cells.length > 0 && cells[cells.length - 1].trim() === "") cells.pop();
+  if (cells.at(-1)?.trim() === "") cells.pop();
   return cells.length > 0 && cells.every((cell) => TABLE_DELIMITER_CELL.test(cell.trim()));
 };
 /** An ATX heading: `# Title`. */
