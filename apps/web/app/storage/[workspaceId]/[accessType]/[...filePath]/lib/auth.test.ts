@@ -32,14 +32,11 @@ describe("authorizePrivateDownload survey scoping", () => {
     grantAllButRestrictedSurvey();
   });
 
-  // Each of these reaches storage key `surveys/restricted-survey/…` once the storage layer decodes the
-  // joined name, so each must hit the survey check.
+  // The route passes the segments the router has already decoded once, and storage builds its key from
+  // them joined as they are. Each of these is the key `surveys/restricted-survey/…`, so each must hit the
+  // survey check. (`surveys%2F…` in the URL arrives as the second shape.)
   test.each([
     ["plain segments", ["surveys", "restricted-survey", "elements", "el-1", "a.png"]],
-    ["an encoded segment", ["%73urveys", "restricted-survey", "a.png"]],
-    ["encoded slashes", ["surveys%2Frestricted-survey%2Felements%2Fel-1%2Fa.png"]],
-    // `%252F` in the URL: the router decodes it once to `%2F`, the storage layer decodes it to `/`.
-    ["double-encoded slashes after the router's decode", ["surveys%2Frestricted-survey%2Fa.png"]],
     ["slashes the router already decoded", ["surveys/restricted-survey/a.png"]],
   ])("refuses a restricted survey's file named with %s", async (_label, filePath) => {
     for (const method of ["GET", "DELETE"] as const) {
@@ -53,12 +50,12 @@ describe("authorizePrivateDownload survey scoping", () => {
     });
   });
 
-  test("refuses an encoded-slash path for an API key too", async () => {
+  test("refuses a restricted survey's file for an API key too", async () => {
     vi.mocked(getSession).mockResolvedValue(null);
     vi.mocked(authenticateRequest).mockResolvedValue({ apiKeyId: "key-1" } as never);
 
     const result = await authorizePrivateDownload(request, "ws-1", "GET", [
-      "surveys%2Frestricted-survey%2Fa.png",
+      "surveys/restricted-survey/a.png",
     ]);
 
     expect(result).toEqual({ ok: false, error: { unauthorized: true } });
@@ -69,7 +66,7 @@ describe("authorizePrivateDownload survey scoping", () => {
   });
 
   test("allows a reachable survey's file", async () => {
-    const result = await authorizePrivateDownload(request, "ws-1", "GET", ["surveys%2Fopen-survey%2Fa.png"]);
+    const result = await authorizePrivateDownload(request, "ws-1", "GET", ["surveys/open-survey/a.png"]);
 
     expect(result).toEqual({ ok: true, data: { authType: "session", userId: "user-1" } });
     expect(vi.mocked(can)).toHaveBeenCalledWith({ type: "user", id: "user-1" }, "survey.read", {
@@ -78,11 +75,13 @@ describe("authorizePrivateDownload survey scoping", () => {
     });
   });
 
-  test("keeps the workspace check alone for a triple-encoded name, whose storage key is flat", async () => {
-    // The router and storage each decode once, so the key is the literal `surveys%2F…`, not the survey's.
-    const result = await authorizePrivateDownload(request, "ws-1", "GET", [
-      "surveys%252Frestricted-survey%252Fa.png",
-    ]);
+  // Storage no longer decodes the name a second time, so a literal `%…` in it is part of the key. These
+  // are flat keys, not the survey's, and the survey check must not read them as `surveys/restricted-survey/…`.
+  test.each([
+    ["an encoded segment", ["%73urveys", "restricted-survey", "a.png"]],
+    ["encoded slashes", ["surveys%2Frestricted-survey%2Fa.png"]],
+  ])("keeps the workspace check alone for a flat key with %s", async (_label, filePath) => {
+    const result = await authorizePrivateDownload(request, "ws-1", "GET", filePath);
 
     expect(result.ok).toBe(true);
     expect(surveyChecks()).toHaveLength(0);
@@ -95,14 +94,26 @@ describe("authorizePrivateDownload survey scoping", () => {
     expect(surveyChecks()).toHaveLength(0);
   });
 
-  test("refuses a name that does not decode", async () => {
-    const result = await authorizePrivateDownload(request, "ws-1", "DELETE", ["surveys%E0%A4%A", "a.png"]);
+  // Regression (ENG-3077): a bare `%` used to be refused as "does not decode", so a survey upload named
+  // `100%.png` could not be downloaded or deleted at all.
+  test.each(["GET", "DELETE"] as const)(
+    "checks the survey, not the decoding, for a file name with a bare percent sign on %s",
+    async (method) => {
+      const result = await authorizePrivateDownload(request, "ws-1", method, [
+        "surveys",
+        "open-survey",
+        "elements",
+        "el-1",
+        "100%--fid--abc.png",
+      ]);
 
-    expect(result).toEqual({ ok: false, error: { unauthorized: true } });
-  });
+      expect(result.ok).toBe(true);
+      expect(surveyChecks()).toHaveLength(1);
+    }
+  );
 
   test("refuses a survey-scoped key with an empty survey segment", async () => {
-    const result = await authorizePrivateDownload(request, "ws-1", "GET", ["surveys%2F%2Fa.png"]);
+    const result = await authorizePrivateDownload(request, "ws-1", "GET", ["surveys//a.png"]);
 
     expect(result).toEqual({ ok: false, error: { unauthorized: true } });
   });
@@ -111,7 +122,7 @@ describe("authorizePrivateDownload survey scoping", () => {
     vi.mocked(isSurveyVisibilityReady).mockResolvedValue(false);
 
     const result = await authorizePrivateDownload(request, "ws-1", "GET", [
-      "surveys%2Frestricted-survey%2Fa.png",
+      "surveys/restricted-survey/a.png",
     ]);
 
     expect(result.ok).toBe(false);

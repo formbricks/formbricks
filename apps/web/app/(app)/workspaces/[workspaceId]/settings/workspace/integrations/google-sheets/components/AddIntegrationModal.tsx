@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -19,6 +20,7 @@ import {
   extractSpreadsheetIdFromUrl,
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/lib/util";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
@@ -69,6 +71,9 @@ export const AddIntegrationModal = ({
   selectedIntegration,
 }: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const refetchIntegration = () =>
+    queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "googleSheets") });
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
@@ -97,7 +102,8 @@ export const AddIntegrationModal = ({
     config: {
       key: googleSheetIntegration?.config?.key,
       email: googleSheetIntegration.config.email,
-      data: existingIntegrationData || [],
+      // A copy: the save and delete paths edit this array, and the original is the query cache's.
+      data: [...(existingIntegrationData ?? [])],
     },
   };
 
@@ -208,6 +214,7 @@ export const AddIntegrationModal = ({
       }
       resetForm();
       setOpen(false);
+      void refetchIntegration();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     } finally {
@@ -250,6 +257,7 @@ export const AddIntegrationModal = ({
       }
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
+      void refetchIntegration();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
