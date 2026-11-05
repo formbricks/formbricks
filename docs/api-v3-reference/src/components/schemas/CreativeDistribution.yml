@@ -1,0 +1,43 @@
+type: object
+description: >
+  When the creative shows. `showOn: pageView` shows it on every page view; `showOn: action` only when
+  one of `triggers` fires, and publishing needs at least one. `triggers` must be empty with
+  `pageView`. A creative never falls back to every page view. `conditions` (Show when) narrows
+  either, and `displayPercentage` (Share of visitors) shows it to that share of visitors, each decided
+  once and kept on every page; `null` means everyone.
+required:
+  - showOn
+  - triggers
+  - conditions
+  - displayPercentage
+properties:
+  showOn:
+    type: string
+    enum:
+      - pageView
+      - action
+  triggers:
+    type: array
+    maxItems: 20
+    items:
+      $ref: ./CreativeTrigger.yml
+    description: >-
+      Each id must name an action class in the creative's workspace, at most once; an unknown or
+      repeated id answers **422**.
+  conditions:
+    anyOf:
+      - $ref: ./ShowConditionGroup.yml
+      - type: "null"
+    description: Show when. `null` means no conditions.
+  displayPercentage:
+    type:
+      - number
+      - "null"
+    minimum: 0.01
+    maximum: 100
+additionalProperties: false
+example:
+  showOn: pageView
+  triggers: []
+  conditions: null
+  displayPercentage: null

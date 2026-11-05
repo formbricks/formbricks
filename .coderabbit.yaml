@@ -85,11 +85,17 @@ reviews:
     # Generated from the reviewed OpenAPI bundle and byte-checked by `pnpm api:v3:schemas:check`;
     # the review belongs on docs/api-v3-reference/src/ and the generator, not on its output.
     - "!packages/api-v3-schemas/src/generated/**"
+    # Agent skills vendored from upstream and pinned by hash in skills-lock.json; the next
+    # `skills` update overwrites local edits. Formbricks-specific behaviour belongs in
+    # docs/agents/, which is reviewed. skills-lock.json stays in review: it records each skill's
+    # source and hash.
+    - "!.agents/skills/**"
+    - "!.claude/skills/**"
 
   path_instructions:
     - path: "**/*.test.tsx"
       instructions: |
-        AGENTS.md forbids React component unit tests in this repo. If this file is newly added, say
+        CODING_STANDARDS.md forbids React component unit tests in this repo. If this file is newly added, say
         so and ask for the logic under test to move into a `.ts` module with a unit test. Do not ask
         for a Playwright spec instead: deleting a `.test.tsx` creates no E2E obligation, and a
         component is not an E2E subject. Do not raise this on edits to the handful of `.test.tsx`
@@ -97,7 +103,7 @@ reviews:
 
     - path: "**/*.tsx"
       instructions: |
-        - Never suggest adding unit tests for `.tsx` files — AGENTS.md forbids them, and their
+        - Never suggest adding unit tests for `.tsx` files — CODING_STANDARDS.md forbids them, and their
           absence is not a coverage gap to fill somewhere else. Ask for a Playwright spec only when
           the diff changes a feature's happy path or a journey across several surfaces, and then ask
           for it in that feature's existing spec — or, if the diff opens a feature area the suite does
@@ -108,7 +114,6 @@ reviews:
         - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
           Action. Server data lives in the query cache only — flag it being mirrored into
           `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
-        - Component props must be `Readonly<>` (e.g. `({ children }: Readonly<Props>)`).
         - All user-facing strings must go through `t()` from `react-i18next` with lowercase
           dot-nested keys, never hardcoded text.
         - Dates and times must use the shared formatting helpers, never ad-hoc `date-fns`, `Intl`,
@@ -123,17 +128,18 @@ reviews:
 
     - path: "**/*.test.ts"
       instructions: |
-        Judge tests by confidence, not coverage (AGENTS.md "Testing Guidelines"):
+        Judge tests by confidence, not coverage (CODING_STANDARDS.md "Testing Guidelines"):
         - Assert on inputs and outputs. Flag tests that lock implementation details, markup, or
           snapshots, and tests that cannot fail (no meaningful assertion, everything mocked).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
-        - Network and storage boundaries should be mocked via helpers from `@formbricks/*` and
-          mocks placed in a `__mocks__` directory.
+        - Module boundaries are mocked with `vi.mock`; where a shared `__mocks__` module exists
+          (e.g. `apps/web/lib/__mocks__/database.ts`) the test reuses it instead of redefining it.
+          Do not ask for a shared helper that does not exist.
 
     - path: "apps/web/playwright/**/*.spec.ts"
       instructions: |
         This suite is the critical path of every PR and every test is paid on every PR forever, so
-        cost is a review dimension here rather than a nit (AGENTS.md "Testing Guidelines"):
+        cost is a review dimension here rather than a nit (CODING_STANDARDS.md "Testing Guidelines"):
         - A new spec file is a finding unless it opens a feature area the suite does not cover yet
           (the spec filenames in `apps/web/playwright/` are the inventory — check before claiming an
           area is uncovered); the default is assertions or a `test.step` added to that feature's
@@ -185,7 +191,7 @@ reviews:
 
     - path: "{apps/web,packages}/**/*.{ts,tsx}"
       instructions: |
-        Performance is an explicit review dimension in this repo (AGENTS.md "Performance in Review"):
+        Performance is an explicit review dimension in this repo (CODING_STANDARDS.md "Performance in Review"):
         the patterns below reach `main` when nobody looks for them. Raise one where the diff
         introduces it:
         - N+1 work: a query, AI call or cross-service fetch issued inside a `for`/`map`/`Promise.all`
@@ -201,7 +207,7 @@ reviews:
           depend on each other, or many calls fired from a loop where one batch request would do.
         - Render amplification: one state change or parent update re-rendering a large subtree that
           does not depend on it (a context value rebuilt every render, unstable props into a big list).
-          Name the measured cost, not a missing `useMemo`; AGENTS.md rules out memoization for its
+          Name the measured cost, not a missing `useMemo`; CODING_STANDARDS.md rules out memoization for its
           own sake.
         - Large lists rendered in full with no pagination or virtualization.
         Quantify the cost against the data ("one query per response, ~5k on a 5k-response survey").
@@ -230,21 +236,27 @@ reviews:
 
     - path: "packages/database/migration/**/migration.ts"
       instructions: |
-        Data migrations must be idempotent, batched (never load a whole table into memory), and
-        safe to resume after a partial failure. Check transaction boundaries and timeouts.
+        Data migrations must be idempotent, bounded in memory (cursor reads, never a whole table at
+        once), and safe to resume after a partial failure. The runner wraps each data migration in one
+        interactive transaction, so do not ask for batching inside it; check that the work fits the
+        runner's transaction timeout.
 
     - path: "apps/web/app/api/v1/**"
       instructions: |
         API v1 is the legacy public contract used by self-hosted deployments and existing
-        integrations. Treat any change to a request or response shape, status code, or default as
-        breaking: it must be intentional, and the PR's "Breaking changes" table must document it.
-        Prefer adding to v3 over changing v1.
+        integrations: shipped clients read it without updating. A released shape is breaking when it
+        is renamed, removed or retyped, when a field that was optional becomes required, or when a
+        default or an existing case's status code changes — it must be intentional, and the PR's
+        "Breaking changes" table must document it. A new optional field or endpoint is additive and
+        stays unticked. Prefer adding to v3 over changing v1.
 
     - path: "apps/web/{app/api/v2,modules/api/v2}/**"
       instructions: |
         Public API v2. Route handlers stay thin; logic lives in `apps/web/modules/api/v2/`. Any
         change to a request or response shape must be mirrored in the endpoint's `lib/openapi.ts`,
-        or the published `openapi.yml` silently goes stale. Response-shape changes are breaking.
+        or the published `openapi.yml` silently goes stale. Once a release carries the shape,
+        renaming, removing or retyping a field, or requiring one that was optional, is breaking; a
+        new optional field is additive and stays unticked.
 
     - path: "apps/web/app/api/v3/**"
       instructions: |
@@ -297,8 +309,9 @@ reviews:
     - path: "charts/formbricks/**"
       instructions: |
         Helm chart consumed by self-hosters. Flag changes that alter a `values.yaml` key name or
-        default, or that require manual action on upgrade, without a breaking-change entry. New
-        values need a default that keeps existing installs working unchanged.
+        default, or that require manual action on upgrade, without a breaking-change entry once a
+        release carries the key. New values need a default that keeps existing installs working
+        unchanged.
 
     - path: "apps/web/locales/en-US.json"
       instructions: |
@@ -310,7 +323,13 @@ reviews:
       instructions: |
         Ships to end users' websites as an embedded bundle. Be strict about added dependencies and
         bundle size, browser compatibility, and anything that leaks respondent data. No Node-only
-        APIs. Public SDK signatures are a compatibility contract — changes are breaking.
+        APIs. A published SDK signature is a compatibility contract: any change an existing caller
+        can trip over is breaking once a release publishes it — renaming, removing or retyping an
+        export, or requiring an argument that callers do not pass. A new optional export or
+        optional parameter is additive and stays unticked.
+        The host page is hostile (CODING_STANDARDS.md "Survey Bundles"): flag global CSS (`*`,
+        `:root`, `@property`), buttons without `type="button"`, code that needs `eval`, and reliance
+        on host globals.
   abort_on_close: true
   disable_cache: false
 
@@ -389,6 +408,11 @@ reviews:
           declaration that the PR has one; an unticked box declares that it has none. The prose or
           table under the checkbox is the explanation and does not change the declaration.
 
+          A change is breaking only when a published release already carries the shape it changes.
+          Prereleases count; a shape this PR introduces, one an unmerged PR in its stack
+          introduced, or one on `main` that no release contains yet has no consumer outside this
+          repo, so renaming or removing it is not a breaking change.
+
           Treat a change as breaking if the diff does any of the following:
           - Renames, removes, or retypes a field in an API request or response shape, requires a
             field that was optional, or changes an emitted value (for example `EN` becoming
@@ -424,7 +448,8 @@ reviews:
 
           Return inconclusive rather than failing when the diff alone does not let you determine
           an API response shape — for example when the shape comes from a serializer or type that
-          this PR does not touch.
+          this PR does not touch — or whether a published release already carries the shape, config
+          key, environment variable or SDK signature the change alters.
 
       - name: Only the ticket line carries a magic word
         mode: warning
@@ -629,7 +654,8 @@ knowledge_base:
     enabled: true
   code_guidelines:
     enabled: true
-    filePatterns: []
+    filePatterns:
+      - "**/CODING_STANDARDS.md"
   learnings:
     scope: auto
     # Not 0. A learning is a durable review rule, and at 0 it applies immediately —

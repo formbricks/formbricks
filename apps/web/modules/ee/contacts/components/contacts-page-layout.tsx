@@ -7,17 +7,17 @@ import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { ContactsSecondaryNavigation } from "./contacts-secondary-navigation";
 
 interface ContactsPageLayoutProps {
-  pageTitle: string;
-  activeId: string;
-  workspaceId: string;
-  organizationId: string;
-  isContactsEnabled: boolean;
-  isReadOnly: boolean;
-  cta?: ReactNode;
-  children: ReactNode;
-  upgradePromptTitle?: string;
-  upgradePromptDescription?: string;
-  upgradeFeature?: string;
+  readonly pageTitle: string;
+  readonly activeId: string;
+  readonly workspaceId: string;
+  readonly organizationId: string;
+  readonly isContactsEnabled: boolean;
+  readonly isReadOnly: boolean;
+  readonly cta?: ReactNode;
+  readonly children: ReactNode;
+  readonly upgradePromptTitle?: string;
+  readonly upgradePromptDescription?: string;
+  readonly upgradeFeature?: string;
 }
 
 export const ContactsPageLayout = async ({

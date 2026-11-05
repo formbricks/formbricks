@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import nextConfig from "eslint-config-next";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import tseslint from "typescript-eslint";
 import { base, commonIgnores, typescriptParsing, unusedVarsConvention } from "./base.mjs";
 
@@ -36,6 +37,12 @@ const downgradeToWarn = ({ rules, ...config }) => ({
   }),
 });
 
+export const nextCacheRestriction = {
+  name: "next/cache",
+  importNames: ["unstable_cache"],
+  message: "Use React cache() for request deduplication or cache.withCache() / Redis for shared caching.",
+};
+
 export const next = [
   commonIgnores,
   typescriptParsing,
@@ -50,6 +57,27 @@ export const next = [
     rules: {
       "@next/next/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
+      // Props are read-only: CODING_STANDARDS listed this as a review check, and CodeRabbit raised it
+      // by hand on almost every UI PR. The autofix adds `readonly`, so `pnpm lint --fix` clears it.
+      "react/prefer-read-only-props": "error",
+      "no-restricted-imports": ["error", { paths: [nextCacheRestriction] }],
+    },
+  },
+  // eslint-config-next registers the jsx-a11y plugin but enables only six of its rules; this adds
+  // the rest of the recommended set, the floor the react/react-hooks tiers already enforce. Rules
+  // only, scoped to the files eslint-config-next registers the plugin for: it registers its own
+  // copy of the plugin object, so passing ours under the same key throws "Cannot redefine plugin".
+  // Severities below the upstream "error" are set per rule by the consumer (apps/web).
+  {
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
+    rules: {
+      ...jsxA11y.flatConfigs.recommended.rules,
+      // A severity-only entry keeps eslint-config-next's options, which check `<img>` alone. Restate
+      // the plugin's default elements, plus the `Image` mapping Next adds for next/image.
+      "jsx-a11y/alt-text": [
+        "error",
+        { elements: ["img", "object", "area", 'input[type="image"]'], img: ["Image"] },
+      ],
     },
   },
   ...base,

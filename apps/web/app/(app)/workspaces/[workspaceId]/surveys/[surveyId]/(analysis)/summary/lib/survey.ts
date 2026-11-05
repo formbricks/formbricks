@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { convertFloatTo2Decimal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import {
   collectSurveyResponseFileUrls,
   deleteSurveyResponseFiles,
@@ -26,18 +27,12 @@ export const deleteResponsesAndDisplaysForSurvey = async (
     // Delete all responses for this survey
 
     const [deletedResponsesCount, deletedDisplaysCount] = await prisma.$transaction(
-      [
-        prisma.response.deleteMany({
-          where: {
-            surveyId: surveyId,
-          },
-        }),
-        prisma.display.deleteMany({
-          where: {
-            surveyId: surveyId,
-          },
-        }),
-      ],
+      async (tx) => {
+        await requestEmailAuditErasureRequired({ responsesOfSurveyId: surveyId }, tx);
+        const deletedResponses = await tx.response.deleteMany({ where: { surveyId } });
+        const deletedDisplays = await tx.display.deleteMany({ where: { surveyId } });
+        return [deletedResponses, deletedDisplays] as const;
+      },
       { timeout: SURVEY_RESET_TRANSACTION_TIMEOUT_MS }
     );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -22,6 +23,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import {
   MappingRow,
   TMapping,
@@ -73,6 +75,9 @@ export const AddIntegrationModal = ({
   contactAttributeKeys,
 }: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const refetchIntegration = () =>
+    queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "notion") });
   const { handleSubmit } = useForm();
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
@@ -104,7 +109,8 @@ export const AddIntegrationModal = ({
     type: "notion",
     config: {
       key: notionIntegration?.config?.key,
-      data: notionIntegration.config?.data || [],
+      // A copy: the save and delete paths edit this array, and the original is the query cache's.
+      data: [...(notionIntegration.config?.data ?? [])],
     },
   };
 
@@ -273,6 +279,7 @@ export const AddIntegrationModal = ({
       }
       resetForm();
       setOpen(false);
+      void refetchIntegration();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Unknown error occurred");
     } finally {
@@ -294,6 +301,7 @@ export const AddIntegrationModal = ({
       }
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
+      void refetchIntegration();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {

@@ -62,6 +62,11 @@ export const ZSurveyArchivePurgeJobData = ZGlobalScopeJobData;
 
 export type TSurveyArchivePurgeJobData = TGlobalScopeJobData;
 
+/** Creative counters copied from Redis to the daily rollups, every minute (ENG-4000). */
+export const ZCreativeStatsFlushJobData = ZGlobalScopeJobData;
+
+export type TCreativeStatsFlushJobData = TGlobalScopeJobData;
+
 /** The nightly data retention sweep (ENG-3612). */
 export const ZDataRetentionSweepJobData = ZGlobalScopeJobData;
 
@@ -79,6 +84,21 @@ export type TUsageTelemetryJobData = TGlobalScopeJobData;
 /** Daily PostHog snapshot of workflow usage per organization (ENG-2851). */
 export const ZWorkflowsUsageSnapshotJobData = ZGlobalScopeJobData;
 export type TWorkflowsUsageSnapshotJobData = TGlobalScopeJobData;
+
+export const ZAttachmentExportJobData = z.object({
+  attachmentExportId: z.cuid2(),
+  workspaceId: z.cuid2(),
+  // The export's dispatch count when this job was enqueued. A re-dispatch raises the count, so a job it
+  // superseded (still waiting behind a long build) can tell and skip, rather than build the export twice.
+  dispatchCount: z.number().int().nonnegative(),
+});
+
+export type TAttachmentExportJobData = z.infer<typeof ZAttachmentExportJobData>;
+
+// A global sweep over every export, like the workflow run reconciler; it carries no export ids.
+export const ZAttachmentExportReconcileJobData = ZGlobalScopeJobData;
+
+export type TAttachmentExportReconcileJobData = TGlobalScopeJobData;
 
 export const ZWorkflowRunJobData = z.object({
   workflowRunId: z.cuid2(),
@@ -127,6 +147,9 @@ export const ZWebhookDeliveryJobData = z.object({
     status: ZSurveyStatus,
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
+    // `{ [Question ID]: question code }` at the time the event fired, for the body's
+    // `dataByQuestionCode`. Optional so a job queued before the deploy still parses.
+    questionCodes: z.record(z.string(), z.string()).optional(),
   }),
 });
 

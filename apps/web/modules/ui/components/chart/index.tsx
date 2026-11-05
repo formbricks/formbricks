@@ -34,8 +34,8 @@ function useChart() {
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    config: ChartConfig;
-    children: React.ComponentProps<typeof ResponsiveContainer>["children"];
+    readonly config: ChartConfig;
+    readonly children: React.ComponentProps<typeof ResponsiveContainer>["children"];
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId();
@@ -66,23 +66,23 @@ const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<typeof Tooltip> &
     React.ComponentProps<"div"> & {
-      active?: boolean;
-      payload?: unknown[];
-      label?: string;
-      labelFormatter?: (value: unknown, payload: unknown[]) => React.ReactNode;
-      labelClassName?: string;
-      formatter?: (
+      readonly active?: boolean;
+      readonly payload?: unknown[];
+      readonly label?: string;
+      readonly labelFormatter?: (value: unknown, payload: unknown[]) => React.ReactNode;
+      readonly labelClassName?: string;
+      readonly formatter?: (
         value: unknown,
         name: string,
         item: unknown,
         index: number,
         payload: unknown[]
       ) => React.ReactNode;
-      hideLabel?: boolean;
-      hideIndicator?: boolean;
-      indicator?: "line" | "dot" | "dashed";
-      nameKey?: string;
-      labelKey?: string;
+      readonly hideLabel?: boolean;
+      readonly hideIndicator?: boolean;
+      readonly indicator?: "line" | "dot" | "dashed";
+      readonly nameKey?: string;
+      readonly labelKey?: string;
     }
 >(
   (
@@ -187,7 +187,7 @@ const ChartTooltipContent = React.forwardRef<
                     )}
                     <div
                       className={cn(
-                        "flex flex-1 justify-between leading-none",
+                        "flex flex-1 justify-between gap-4 leading-none",
                         nestLabel ? "items-end" : "items-center"
                       )}>
                       <div className="grid gap-1.5">
@@ -217,10 +217,10 @@ const ChartLegend = RechartsPrimitive.Legend;
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    payload?: unknown[];
-    verticalAlign?: "top" | "bottom" | "middle";
-    hideIcon?: boolean;
-    nameKey?: string;
+    readonly payload?: unknown[];
+    readonly verticalAlign?: "top" | "bottom" | "middle";
+    readonly hideIcon?: boolean;
+    readonly nameKey?: string;
   }
 >(({ className, hideIcon = false, payload, verticalAlign = "bottom", nameKey }, ref) => {
   const { config } = useChart();

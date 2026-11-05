@@ -24,12 +24,21 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   ActionClass: "workspace_inherited_resource",
   ApiKey: "relationship_or_grant_source",
   ApiKeyWorkspace: "relationship_or_grant_source",
+  // Read through the survey's read access, and only by the user who requested it (ENG-6862).
+  AttachmentExport: "parent_derived_or_data_integrity",
   AuthzedProjectionOutbox: "authentication_or_application",
   AuthzedProjectionScopeState: "authentication_or_application",
   Chart: "workspace_inherited_resource",
   Contact: "workspace_inherited_resource",
   ContactAttribute: "parent_derived_or_data_integrity",
   ContactAttributeKey: "workspace_inherited_resource",
+  // Creatives are authorized at the workspace level with no SpiceDB definition of their own
+  // (`modules/ee/creatives/lib/authorization.ts`); their triggers, languages and counts follow the creative.
+  Creative: "workspace_inherited_resource",
+  CreativeDailyPageStat: "parent_derived_or_data_integrity",
+  CreativeDailyStat: "parent_derived_or_data_integrity",
+  CreativeLanguage: "parent_derived_or_data_integrity",
+  CreativeTrigger: "parent_derived_or_data_integrity",
   Dashboard: "direct_authorization_resource",
   DashboardWidget: "parent_derived_or_data_integrity",
   DataMigration: "public_or_out_of_scope",
@@ -49,6 +58,8 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   OnlineUpgradeState: "authentication_or_application",
   Organization: "direct_authorization_resource",
   OrganizationBilling: "authentication_or_application",
+  OutboundEmailAudit: "authentication_or_application",
+  OutboundEmailAuditErasureIntent: "authentication_or_application",
   // This is a Prisma model name and a classification label, not a credential or credential value.
   PasswordResetToken: "authentication_or_application", // NOSONAR
   Response: "direct_authorization_resource",
@@ -101,6 +112,7 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   chart: "workspace_inherited_resource",
   contact: "workspace_inherited_resource",
   contactAttributeKey: "workspace_inherited_resource",
+  creative: "workspace_inherited_resource",
   cubeQuery: "parent_derived_or_data_integrity",
   dashboard: "direct_authorization_resource",
   dashboardWidget: "parent_derived_or_data_integrity",

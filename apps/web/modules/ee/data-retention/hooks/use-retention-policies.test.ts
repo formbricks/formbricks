@@ -49,7 +49,7 @@ const requests = (method: string, url: string) =>
     .mock.calls.filter(([input, init]) => String(input) === url && (init?.method ?? "GET") === method);
 
 const wrapperFor = (queryClient: QueryClient) => {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: { readonly children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseRetentionPoliciesTestWrapper";
   return Wrapper;

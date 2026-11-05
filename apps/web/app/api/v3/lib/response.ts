@@ -2,6 +2,7 @@
  * V3 API response helpers — RFC 9457 Problem Details (application/problem+json)
  * and list envelope for success responses.
  */
+import { clipInvalidParam } from "./invalid-params";
 
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
@@ -63,8 +64,11 @@ export const V3_PROBLEM_CODES = [
   "ai_smart_tools_disabled",
   "bad_gateway",
   "bad_request",
+  "chart_in_use",
   "conflict",
+  "creatives_not_entitled",
   "custom_css_plan_required",
+  "dashboards_plan_required",
   "forbidden",
   "internal_server_error",
   "invalid_workflow_state",
@@ -74,6 +78,7 @@ export const V3_PROBLEM_CODES = [
   "projection_pending",
   "service_unavailable",
   "stored_survey_invalid",
+  "survey_has_linked_creatives",
   "survey_not_workspace_visible",
   "too_many_requests",
   "unprocessable_content",
@@ -98,7 +103,11 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  */
 export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_empty",
+  "attachment_export_expired",
+  "attachment_export_filter_conflict",
+  "attachment_export_not_ready",
   "attachment_export_too_large",
+  "attachment_export_unavailable",
   "capacity_reached",
   "concurrency_limit_reached",
   "member_in_other_organizations",
@@ -126,9 +135,15 @@ export const INVALID_PARAM_CODES = [
   "duplicate_identifier",
   "duplicate_locale",
   "forbidden_identifier",
+  "immutable_answer_code",
   "immutable_identifier",
+  "immutable_option_deletion",
+  "immutable_option_text",
+  "immutable_question_code",
+  "immutable_question_type",
   "invalid_locale",
   "invalid_reference",
+  "limit_exceeded",
   "misordered_reference",
   "missing_required_field",
   "missing_translation",
@@ -204,7 +219,9 @@ function problemResponse(
     ...(options?.instance && { instance: options.instance }),
     ...(options?.code && { code: options.code }),
     ...(options?.details && { details: options.details }),
-    ...(options?.invalid_params && { invalid_params: options.invalid_params }),
+    // Clipped here as well as where the bounded reporters build them: dozens of routes build params
+    // inline, and any of them may carry caller text.
+    ...(options?.invalid_params && { invalid_params: options.invalid_params.map(clipInvalidParam) }),
   };
 
   const headers: Record<string, string> = {
@@ -312,6 +329,42 @@ export function problemCustomCssPlanRequired(requestId: string, detail: string, 
 }
 
 /**
+ * ENG-6584: charts and dashboards need the Dashboards add-on on Formbricks Cloud or a license that
+ * includes it. Checked after authorization, so it reveals nothing to a caller without access, and
+ * independent of any one resource.
+ */
+export function problemDashboardsPlanRequired(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "Dashboards are not enabled for this organization. They require the Dashboards add-on or an Enterprise license that includes it — an organization owner can enable them from the organization's billing or license settings.",
+    requestId,
+    { code: "dashboards_plan_required", instance }
+  );
+}
+
+/**
+ * ENG-6602: the instance's license doesn't include Creatives. In wind-down (the workspace still has
+ * creatives) only reading them and taking them down stay allowed, and the detail says so; otherwise
+ * every creatives operation answers this. Only ever answered after the caller's own access to the
+ * workspace, so it reveals nothing about a workspace the caller can't see.
+ */
+export function problemCreativesNotEntitled(
+  requestId: string,
+  options: { windDown: boolean; instance?: string }
+): Response {
+  const detail = options.windDown
+    ? "Creatives is not included in this instance's license: existing creatives can only be listed, read, paused, closed or deleted"
+    : // Not "license": Formbricks Cloud has none, and Creatives isn't offered there.
+      "Creatives is not available on this instance";
+
+  return problemResponse(403, "Forbidden", detail, requestId, {
+    code: "creatives_not_entitled",
+    instance: options.instance,
+  });
+}
+
+/**
  * ENG-3641: custom CSS that the processor rejected (syntax, size or complexity limits, processing
  * failure). A 422 like any other semantic document failure; `details.errors` carries the processor's
  * located errors (code, scope, appearance, line, column, reason), `invalid_params` the same as fields.
@@ -358,6 +411,28 @@ export function problemVisibilityBlocked(
     "Remove the connections that use this survey before restricting it",
     requestId,
     { code: "visibility_blocked_by_connections", details: { blockers }, instance }
+  );
+}
+
+/**
+ * A survey delete refused while non-archived creatives open the survey; lists them so the caller
+ * can delete each one (pausing or closing a creative keeps its link).
+ */
+export function problemSurveyHasLinkedCreatives(
+  requestId: string,
+  creatives: ReadonlyArray<Readonly<{ id: string; name: string }>>,
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "Delete the creatives that open this survey before deleting it",
+    requestId,
+    {
+      code: "survey_has_linked_creatives",
+      details: { creatives: creatives.map(({ id, name }) => ({ id, name })) },
+      instance,
+    }
   );
 }
 
@@ -409,6 +484,25 @@ export function problemWorkspaceSurveyLimit(
   );
 }
 
+/**
+ * ENG-6590: a chart still on a dashboard cannot be deleted — deleting it would break every dashboard that
+ * shows it. `details.dashboards` names them, so the caller can take the chart off first. There is no force
+ * option.
+ */
+export function problemChartInUse(
+  requestId: string,
+  dashboards: { id: string; name: string }[],
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    `This chart is on ${dashboards.length} dashboard(s), so it was not deleted. Remove it from them first.`,
+    requestId,
+    { code: "chart_in_use", instance, details: { dashboards } }
+  );
+}
+
 export function problemConflict(
   requestId: string,
   detail: string,
@@ -416,12 +510,24 @@ export function problemConflict(
   // ENG-3069: `details` carries the machine-readable half of an optimistic-concurrency failure
   // (`expectedUpdatedAt` / `currentUpdatedAt`). Without it a client can only re-read and guess,
   // and the human `detail` string is the wrong place for a value a retry has to compare.
-  options?: { details?: Record<string, unknown> }
+  options?: { details?: Record<string, unknown>; code?: ProblemCode }
 ): Response {
   return problemResponse(409, "Conflict", detail, requestId, {
-    code: "conflict",
+    code: options?.code ?? "conflict",
     instance,
     ...(options?.details && { details: options.details }),
+  });
+}
+
+/** 410 for a resource that existed and is gone for good, e.g. an export archive past its expiry. */
+export function problemGone(
+  requestId: string,
+  detail: string,
+  options?: { instance?: string; code?: ProblemCode }
+): Response {
+  return problemResponse(410, "Gone", detail, requestId, {
+    code: options?.code,
+    instance: options?.instance,
   });
 }
 
@@ -557,7 +663,7 @@ export function successListResponse<T, TMeta extends Record<string, unknown>>(
  * custom CSS writes use it for `warnings` (ENG-3641), which describe the request rather than the
  * resource, so they stay out of `data` and a PATCH that round-trips `data` never sends them back.
  */
-type TSuccessExtensions = { warnings?: unknown[] };
+type TSuccessExtensions = { warnings?: unknown[]; meta?: Record<string, unknown> };
 
 export function successResponse<T>(
   data: T,

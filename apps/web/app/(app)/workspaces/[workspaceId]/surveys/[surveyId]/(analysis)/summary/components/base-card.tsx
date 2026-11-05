@@ -5,15 +5,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 import { cn } from "@/modules/ui/lib/utils";
 
 interface BaseCardProps {
-  label: ReactNode;
-  percentage?: number | null;
-  tooltipText?: ReactNode;
-  isLoading?: boolean;
-  onClick?: () => void;
-  children: ReactNode;
-  className?: string;
-  testId?: string;
-  id?: string;
+  readonly label: ReactNode;
+  readonly percentage?: number | null;
+  readonly tooltipText?: ReactNode;
+  readonly isLoading?: boolean;
+  readonly onClick?: () => void;
+  readonly children: ReactNode;
+  readonly className?: string;
+  readonly testId?: string;
+  readonly id?: string;
 }
 
 export const BaseCard = ({

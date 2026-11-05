@@ -11,6 +11,8 @@ const tabsVariants = cva(
     variants: {
       variant: {
         default: "",
+        // Underlined tabs: a hairline under the row, the active tab marked by a brand bar.
+        underline: "h-auto w-full gap-3 rounded-none bg-transparent p-0 border-b border-slate-200",
         disabled: "opacity-50 pointer-events-none",
       },
       size: {
@@ -37,6 +39,8 @@ const tabsTriggerVariants = cva(
       variant: {
         default:
           "data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs data-[state=inactive]:text-slate-600",
+        underline:
+          "-mb-px rounded-none border-b-2 border-transparent text-slate-500 hover:text-slate-900 data-[state=active]:border-brand-dark data-[state=active]:text-slate-900",
         disabled: "opacity-50 pointer-events-none",
       },
       size: {

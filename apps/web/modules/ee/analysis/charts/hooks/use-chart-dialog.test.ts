@@ -1,17 +1,27 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook as renderHookBase, waitFor } from "@testing-library/react";
+import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 
-const mockCreateChartAction = vi.fn();
-const mockUpdateChartAction = vi.fn();
-const mockDeleteChartAction = vi.fn();
-const mockGetChartAction = vi.fn();
-const mockExecuteQueryAction = vi.fn();
-const mockAddChartToDashboardAction = vi.fn();
-const mockGetDashboardsAction = vi.fn();
+/** The dialog invalidates the chart queries after a save, so it renders inside a query client. */
+const renderHook = <T>(callback: () => T) => {
+  const queryClient = new QueryClient();
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return renderHookBase(callback, { wrapper });
+};
+
+const mockCreateChart = vi.fn();
+const mockUpdateChart = vi.fn();
+const mockDeleteChart = vi.fn();
+const mockGetChart = vi.fn();
+const mockGetChartData = vi.fn();
+const mockAddDashboardWidget = vi.fn();
 
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
@@ -20,17 +30,14 @@ const mockRouterPush = vi.fn();
 const mockRouterRefresh = vi.fn();
 let mockPathname = "/other-page";
 
-vi.mock("@/modules/ee/analysis/charts/actions", () => ({
-  createChartAction: (...args: any[]) => mockCreateChartAction(...args),
-  updateChartAction: (...args: any[]) => mockUpdateChartAction(...args),
-  deleteChartAction: (...args: any[]) => mockDeleteChartAction(...args),
-  getChartAction: (...args: any[]) => mockGetChartAction(...args),
-  executeQueryAction: (...args: any[]) => mockExecuteQueryAction(...args),
-}));
-
-vi.mock("@/modules/ee/analysis/dashboards/actions", () => ({
-  addChartToDashboardAction: (...args: any[]) => mockAddChartToDashboardAction(...args),
-  getDashboardsAction: (...args: any[]) => mockGetDashboardsAction(...args),
+vi.mock("@/modules/ee/analysis/lib/api-client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/analysis/lib/api-client")>()),
+  createChart: (...args: unknown[]) => mockCreateChart(...args),
+  updateChart: (...args: unknown[]) => mockUpdateChart(...args),
+  getChart: (...args: unknown[]) => mockGetChart(...args),
+  getChartData: (...args: unknown[]) => mockGetChartData(...args),
+  addDashboardWidget: (...args: unknown[]) => mockAddDashboardWidget(...args),
+  deleteChart: (...args: unknown[]) => mockDeleteChart(...args),
 }));
 
 vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({
@@ -38,13 +45,13 @@ vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({
 }));
 
 vi.mock("@/lib/utils/error-message", () => ({
-  getFormattedErrorMessage: (result: any) => result?.serverError ?? "formatted-error",
+  getFormattedErrorMessage: (result?: { serverError?: string }) => result?.serverError ?? "formatted-error",
 }));
 
 vi.mock("react-hot-toast", () => ({
   default: {
-    success: (...args: any[]) => mockToastSuccess(...args),
-    error: (...args: any[]) => mockToastError(...args),
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
   },
 }));
 
@@ -99,8 +106,8 @@ describe("useChartDialog", () => {
 
   describe("handleSaveChart - create + auto-add", () => {
     test("creates chart and adds to dashboard on success without cleanup", async () => {
-      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
-      mockAddChartToDashboardAction.mockResolvedValue({ data: { ok: true } });
+      mockCreateChart.mockResolvedValue({ id: NEW_CHART_ID });
+      mockAddDashboardWidget.mockResolvedValue({ id: "widget_1" });
 
       const onOpenChange = vi.fn();
       const onSuccess = vi.fn();
@@ -118,23 +125,19 @@ describe("useChartDialog", () => {
         await result.current.handleSaveChart();
       });
 
-      expect(mockCreateChartAction).toHaveBeenCalledTimes(1);
-      expect(mockAddChartToDashboardAction).toHaveBeenCalledWith({
-        workspaceId: WORKSPACE_ID,
-        chartId: NEW_CHART_ID,
-        dashboardId: DASHBOARD_ID,
-      });
-      expect(mockDeleteChartAction).not.toHaveBeenCalled();
+      expect(mockCreateChart).toHaveBeenCalledTimes(1);
+      expect(mockAddDashboardWidget).toHaveBeenCalledWith(DASHBOARD_ID, { chartId: NEW_CHART_ID });
+      expect(mockDeleteChart).not.toHaveBeenCalled();
       expect(mockToastSuccess).toHaveBeenCalledWith("workspace.analysis.charts.chart_added_to_dashboard");
       expect(onOpenChange).toHaveBeenCalledWith(false);
       expect(mockRouterPush).toHaveBeenCalledWith(`/workspaces/${WORKSPACE_ID}/dashboards/${DASHBOARD_ID}`);
-      expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
+      expect(mockRouterRefresh).not.toHaveBeenCalled();
       expect(onSuccess).toHaveBeenCalledTimes(1);
     });
 
     test("skips navigation when already on the target dashboard page", async () => {
-      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
-      mockAddChartToDashboardAction.mockResolvedValue({ data: { ok: true } });
+      mockCreateChart.mockResolvedValue({ id: NEW_CHART_ID });
+      mockAddDashboardWidget.mockResolvedValue({ id: "widget_1" });
       mockPathname = `/workspaces/${WORKSPACE_ID}/dashboards/${DASHBOARD_ID}`;
 
       const { result } = renderHook(() =>
@@ -150,13 +153,13 @@ describe("useChartDialog", () => {
       });
 
       expect(mockRouterPush).not.toHaveBeenCalled();
-      expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
+      expect(mockRouterRefresh).not.toHaveBeenCalled();
     });
 
     test("cleans up newly created chart when auto-add fails", async () => {
-      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
-      mockAddChartToDashboardAction.mockResolvedValue({ serverError: "boom" });
-      mockDeleteChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+      mockCreateChart.mockResolvedValue({ id: NEW_CHART_ID });
+      mockAddDashboardWidget.mockRejectedValue(new Error("boom"));
+      mockDeleteChart.mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
         useChartDialog({
@@ -170,18 +173,15 @@ describe("useChartDialog", () => {
         await result.current.handleSaveChart();
       });
 
-      expect(mockCreateChartAction).toHaveBeenCalledTimes(1);
-      expect(mockDeleteChartAction).toHaveBeenCalledWith({
-        workspaceId: WORKSPACE_ID,
-        chartId: NEW_CHART_ID,
-      });
+      expect(mockCreateChart).toHaveBeenCalledTimes(1);
+      expect(mockDeleteChart).toHaveBeenCalledWith(NEW_CHART_ID);
       expect(mockToastError).toHaveBeenCalled();
     });
 
     test("cleans up newly created chart when auto-add throws unexpectedly", async () => {
-      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
-      mockAddChartToDashboardAction.mockRejectedValue(new Error("network down"));
-      mockDeleteChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+      mockCreateChart.mockResolvedValue({ id: NEW_CHART_ID });
+      mockAddDashboardWidget.mockRejectedValue(new Error("network down"));
+      mockDeleteChart.mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
         useChartDialog({
@@ -195,16 +195,13 @@ describe("useChartDialog", () => {
         await result.current.handleSaveChart();
       });
 
-      expect(mockDeleteChartAction).toHaveBeenCalledWith({
-        workspaceId: WORKSPACE_ID,
-        chartId: NEW_CHART_ID,
-      });
+      expect(mockDeleteChart).toHaveBeenCalledWith(NEW_CHART_ID);
       expect(mockToastError).toHaveBeenCalledWith("network down");
     });
 
     test("does not delete pre-existing chart when auto-add fails on update path", async () => {
-      mockUpdateChartAction.mockResolvedValue({ data: { id: CHART_ID } });
-      mockAddChartToDashboardAction.mockResolvedValue({ serverError: "boom" });
+      mockUpdateChart.mockResolvedValue({ id: CHART_ID });
+      mockAddDashboardWidget.mockRejectedValue(new Error("boom"));
 
       const { result } = renderHook(() =>
         useChartDialog({
@@ -219,10 +216,114 @@ describe("useChartDialog", () => {
         await result.current.handleSaveChart();
       });
 
-      expect(mockUpdateChartAction).toHaveBeenCalledTimes(1);
-      expect(mockCreateChartAction).not.toHaveBeenCalled();
-      expect(mockDeleteChartAction).not.toHaveBeenCalled();
+      expect(mockUpdateChart).toHaveBeenCalledTimes(1);
+      expect(mockCreateChart).not.toHaveBeenCalled();
+      expect(mockDeleteChart).not.toHaveBeenCalled();
       expect(mockToastError).toHaveBeenCalled();
+    });
+  });
+
+  describe("saving an edited chart", () => {
+    const chartOf = (id: string, type: string) => ({
+      id,
+      name: `Chart ${id}`,
+      type,
+      config: {},
+      feedbackDirectoryId: DIRECTORY_ID,
+    });
+    const loadedQuery = { measures: ["FeedbackRecords.count"] };
+
+    test("sends the type and query only when they changed from the chart as loaded", async () => {
+      mockGetChart.mockResolvedValue(chartOf(CHART_ID, "bar"));
+      mockGetChartData.mockResolvedValue({ query: loadedQuery, rows: [] });
+      mockUpdateChart.mockResolvedValue({ id: CHART_ID });
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.chartData).not.toBeNull());
+      act(() => result.current.setChartName("Renamed"));
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(mockUpdateChart.mock.calls[0][1]).toEqual({ name: "Renamed", config: {} });
+    });
+
+    test("renames a chart whose data cannot load, sending the name alone even after a type was picked", async () => {
+      mockGetChart.mockResolvedValue({ ...chartOf(CHART_ID, "bar"), query: loadedQuery });
+      mockGetChartData.mockRejectedValue(
+        new V3ApiError({ status: 403, detail: "You are not authorized to use this Feedback Dataset" })
+      );
+      mockUpdateChart.mockResolvedValue({ id: CHART_ID });
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.canSaveDetailsOnly).toBe(true));
+      expect(result.current.chartData).toBeNull();
+      // Opened from a dashboard, with no initialChart: the builder still starts from the stored query.
+      expect(result.current.initialQuery).toEqual(loadedQuery);
+
+      act(() => {
+        result.current.setChartName("Renamed orphan");
+        result.current.handleChartTypeChange("pie");
+      });
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(mockUpdateChart).toHaveBeenCalledWith(CHART_ID, { name: "Renamed orphan" });
+    });
+
+    test("keeps the full editor when the data failed for another reason, and drops the error once a query runs", async () => {
+      mockGetChart.mockResolvedValue({ ...chartOf(CHART_ID, "bar"), query: loadedQuery });
+      mockGetChartData.mockRejectedValue(
+        new V3ApiError({ status: 422, detail: "The date range spans too many buckets" })
+      );
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.chartLoadError).not.toBeNull());
+
+      expect(result.current.isChartLoaded).toBe(true);
+      expect(result.current.canSaveDetailsOnly).toBe(false);
+      act(() => result.current.handleChartGenerated(sampleChartData));
+      expect(result.current.chartLoadError).toBeNull();
+    });
+
+    test("offers no rename when the chart itself could not load", async () => {
+      mockGetChart.mockRejectedValue(new Error("You are not authorized to access this chart"));
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.chartLoadError).not.toBeNull());
+
+      expect(result.current.canSaveDetailsOnly).toBe(false);
+    });
+
+    test("never compares a chart with the one opened before it, whose data loaded when its own did not", async () => {
+      mockGetChart.mockImplementation(async (id: string) => chartOf(id, id === CHART_ID ? "area" : "bar"));
+      mockGetChartData.mockImplementation(async ({ chartId }: { chartId: string }) => {
+        if (chartId === CHART_ID) return { query: loadedQuery, rows: [] };
+        throw new Error("no access to its dataset");
+      });
+      mockUpdateChart.mockResolvedValue({ id: "chart-2" });
+
+      let chartId = CHART_ID;
+      const { result, rerender } = renderHook(() => useChartDialog({ ...baseProps, chartId }));
+      await waitFor(() => expect(result.current.chartData).not.toBeNull());
+
+      chartId = "chart-2";
+      rerender();
+      await waitFor(() => expect(mockGetChartData).toHaveBeenCalledTimes(2));
+      // The user builds the first chart's area query again for the second chart, a bar, and saves.
+      await act(async () => {
+        result.current.handleChartGenerated({ query: loadedQuery, chartType: "area", data: [] });
+        result.current.setChartName("Second");
+      });
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(mockUpdateChart.mock.calls.at(-1)).toEqual([
+        "chart-2",
+        expect.objectContaining({ type: "area", query: loadedQuery }),
+      ]);
     });
   });
 
@@ -232,7 +333,7 @@ describe("useChartDialog", () => {
     // untouched builder already has work in it — which is how "Discard chart?" appeared on an
     // empty dialog nobody had touched.
     test("a successful save leaves nothing behind for the next open", async () => {
-      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+      mockCreateChart.mockResolvedValue({ id: NEW_CHART_ID });
 
       const onOpenChange = vi.fn();
       const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange }));
@@ -267,7 +368,7 @@ describe("useChartDialog", () => {
 
   describe("starting from a preset (ENG-3331)", () => {
     test("adopts the preset's chart type, display settings and name, and saves them", async () => {
-      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+      mockCreateChart.mockResolvedValue({ id: NEW_CHART_ID });
       const { result } = renderHook(() => useChartDialog(baseProps));
 
       act(() =>
@@ -286,10 +387,8 @@ describe("useChartDialog", () => {
       await act(async () => {
         await result.current.handleSaveChart();
       });
-      expect(mockCreateChartAction).toHaveBeenCalledWith(
-        expect.objectContaining({
-          chartInput: expect.objectContaining({ type: "area", config: { areaDisplay: "line" } }),
-        })
+      expect(mockCreateChart).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "area", config: { areaDisplay: "line" } })
       );
     });
 
@@ -303,9 +402,9 @@ describe("useChartDialog", () => {
 
   describe("handleAddToDashboard - cleanup behavior", () => {
     test("cleans up newly created chart when widget add fails", async () => {
-      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
-      mockAddChartToDashboardAction.mockResolvedValue({ serverError: "boom" });
-      mockDeleteChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+      mockCreateChart.mockResolvedValue({ id: NEW_CHART_ID });
+      mockAddDashboardWidget.mockRejectedValue(new Error("boom"));
+      mockDeleteChart.mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useChartDialog(baseProps));
 
@@ -317,20 +416,13 @@ describe("useChartDialog", () => {
         await result.current.handleAddToDashboard();
       });
 
-      expect(mockCreateChartAction).toHaveBeenCalledTimes(1);
-      expect(mockAddChartToDashboardAction).toHaveBeenCalledWith({
-        workspaceId: WORKSPACE_ID,
-        chartId: NEW_CHART_ID,
-        dashboardId: DASHBOARD_ID,
-      });
-      expect(mockDeleteChartAction).toHaveBeenCalledWith({
-        workspaceId: WORKSPACE_ID,
-        chartId: NEW_CHART_ID,
-      });
+      expect(mockCreateChart).toHaveBeenCalledTimes(1);
+      expect(mockAddDashboardWidget).toHaveBeenCalledWith(DASHBOARD_ID, { chartId: NEW_CHART_ID });
+      expect(mockDeleteChart).toHaveBeenCalledWith(NEW_CHART_ID);
     });
 
     test("does not delete pre-existing chart when widget add fails", async () => {
-      mockAddChartToDashboardAction.mockResolvedValue({ serverError: "boom" });
+      mockAddDashboardWidget.mockRejectedValue(new Error("boom"));
 
       const { result } = renderHook(() =>
         useChartDialog({
@@ -352,8 +444,8 @@ describe("useChartDialog", () => {
         await result.current.handleAddToDashboard();
       });
 
-      expect(mockCreateChartAction).not.toHaveBeenCalled();
-      expect(mockDeleteChartAction).not.toHaveBeenCalled();
+      expect(mockCreateChart).not.toHaveBeenCalled();
+      expect(mockDeleteChart).not.toHaveBeenCalled();
       expect(mockToastError).toHaveBeenCalled();
     });
   });
@@ -372,8 +464,8 @@ describe("useChartDialog", () => {
       });
 
       expect(mockToastError).toHaveBeenCalledWith("workspace.analysis.charts.please_enter_chart_name");
-      expect(mockCreateChartAction).not.toHaveBeenCalled();
-      expect(mockAddChartToDashboardAction).not.toHaveBeenCalled();
+      expect(mockCreateChart).not.toHaveBeenCalled();
+      expect(mockAddDashboardWidget).not.toHaveBeenCalled();
     });
 
     test("toasts when no dashboard selected", async () => {
@@ -385,7 +477,7 @@ describe("useChartDialog", () => {
       });
 
       expect(mockToastError).toHaveBeenCalledWith("workspace.analysis.charts.please_select_dashboard");
-      expect(mockAddChartToDashboardAction).not.toHaveBeenCalled();
+      expect(mockAddDashboardWidget).not.toHaveBeenCalled();
     });
 
     test("toasts when no directory available for new chart creation", async () => {
@@ -408,7 +500,7 @@ describe("useChartDialog", () => {
       });
 
       expect(mockToastError).toHaveBeenCalledWith("workspace.analysis.charts.select_data_source_first");
-      expect(mockCreateChartAction).not.toHaveBeenCalled();
+      expect(mockCreateChart).not.toHaveBeenCalled();
     });
   });
 
@@ -528,16 +620,19 @@ describe("useChartDialog", () => {
 
   describe("savedChartName", () => {
     test("holds the loaded chart name and stays stable while the user renames", async () => {
-      mockGetChartAction.mockResolvedValue({
-        data: {
-          id: CHART_ID,
-          name: "Loaded Chart",
-          type: "bar",
-          query: sampleChartData.query,
-          feedbackDirectoryId: DIRECTORY_ID,
-        },
+      mockGetChart.mockResolvedValue({
+        id: CHART_ID,
+        name: "Loaded Chart",
+        type: "bar",
+        query: sampleChartData.query,
+        feedbackDirectoryId: DIRECTORY_ID,
       });
-      mockExecuteQueryAction.mockResolvedValue({ data: [] });
+      mockGetChartData.mockResolvedValue({
+        rows: [],
+        optionLabels: {},
+        fieldLabels: {},
+        query: sampleChartData.query,
+      });
 
       const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
 
@@ -555,16 +650,19 @@ describe("useChartDialog", () => {
     });
 
     test("resets savedChartName when the dialog is closed without saving", async () => {
-      mockGetChartAction.mockResolvedValue({
-        data: {
-          id: CHART_ID,
-          name: "Loaded Chart",
-          type: "bar",
-          query: sampleChartData.query,
-          feedbackDirectoryId: DIRECTORY_ID,
-        },
+      mockGetChart.mockResolvedValue({
+        id: CHART_ID,
+        name: "Loaded Chart",
+        type: "bar",
+        query: sampleChartData.query,
+        feedbackDirectoryId: DIRECTORY_ID,
       });
-      mockExecuteQueryAction.mockResolvedValue({ data: [] });
+      mockGetChartData.mockResolvedValue({
+        rows: [],
+        optionLabels: {},
+        fieldLabels: {},
+        query: sampleChartData.query,
+      });
 
       const onOpenChange = vi.fn();
       const { result } = renderHook(() => useChartDialog({ ...baseProps, onOpenChange, chartId: CHART_ID }));
@@ -604,11 +702,11 @@ describe("useChartDialog", () => {
       });
 
       expect(mockToastError).toHaveBeenCalledWith("workspace.analysis.charts.please_enter_chart_name");
-      expect(mockCreateChartAction).not.toHaveBeenCalled();
+      expect(mockCreateChart).not.toHaveBeenCalled();
     });
 
     test("toasts when create fails on the create branch", async () => {
-      mockCreateChartAction.mockResolvedValue({ serverError: "create-failed" });
+      mockCreateChart.mockRejectedValue(new Error("create-failed"));
 
       const { result } = renderHook(() => useChartDialog(baseProps));
 
@@ -618,11 +716,11 @@ describe("useChartDialog", () => {
       });
 
       expect(mockToastError).toHaveBeenCalledWith("create-failed");
-      expect(mockAddChartToDashboardAction).not.toHaveBeenCalled();
+      expect(mockAddDashboardWidget).not.toHaveBeenCalled();
     });
 
     test("toasts when update fails on the update branch", async () => {
-      mockUpdateChartAction.mockResolvedValue({ serverError: "update-failed" });
+      mockUpdateChart.mockRejectedValue(new Error("update-failed"));
 
       const { result } = renderHook(() =>
         useChartDialog({
@@ -642,7 +740,7 @@ describe("useChartDialog", () => {
         await result.current.handleSaveChart();
       });
 
-      expect(mockUpdateChartAction).toHaveBeenCalledTimes(1);
+      expect(mockUpdateChart).toHaveBeenCalledTimes(1);
       expect(mockToastError).toHaveBeenCalledWith("update-failed");
     });
   });

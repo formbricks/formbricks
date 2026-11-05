@@ -9,7 +9,8 @@ description: >
   Deliberately **not** accepted here, because the routes derive them from the request itself and a
   caller-supplied value would be fiction: `country`, `userAgent` (the browser/OS/device breakdown is
   nested under it, there is no top-level `device` key) and `ipAddress`. `ipAddress` is additionally
-  never projected by v3 on read, in any view.
+  never projected by v3 on read, in any view. Nor are `openedByCreativeId` and `openedByCreativeName`:
+  only the client ingest routes stamp them, after checking the creative opened that survey.
 
 
   The stored `meta` is wider than this input. It also carries a block of browser-runtime context —

@@ -1,0 +1,92 @@
+---
+title: "Feedback Button"
+description: "An always-available tab on the edge of your website that opens a survey or a link on every click. Set its label, icon, colors, size and position, with separate values for phones."
+icon: "message"
+---
+
+A feedback button is a tab fixed to the left, right or bottom edge of the page. Visitors can press it at any time to open a survey, for example to report a problem or suggest an idea, and it stays on the page after they answer. It has no close control: to keep it off some pages or devices, use [Show when](/surveys/creatives/when-it-shows#show-when).
+
+<Note>
+  Feedback buttons are a [Creatives](/surveys/creatives/overview) feature, part of the Formbricks [Enterprise
+  Edition](/self-hosting/advanced/license) on self-hosted instances. Using Formbricks Cloud? Build your own
+  button as described in the [Feedback Box](/surveys/best-practices/feedback-box#without-creatives) guide.
+</Note>
+
+![A feedback button in the editor, with the desktop preview](/images/surveys/creatives/feedback-button/content.webp)
+
+## Content
+
+On the **Content** tab:
+
+- **Label:** the text on the button, "Feedback" by default.
+- **Icon** (optional): **Message** (the default), **Chat bubble**, **Megaphone**, **Sparkles** or **None**.
+- **On click:** what the button opens. A feedback button always needs one before you can publish it.
+
+### On click
+
+- **Open a survey:** pick an app or link survey from the workspace. The line under the picker tells you how it opens:
+  - **App survey · opens as a popup:** the survey opens on the page, right away, on every click, even if the visitor already answered it. Its own delay, auto-close, targeting and recontact settings don't apply to clicks.
+  - **Link survey · opens in a new tab:** if your site sets a language with `setLanguage`, the survey opens in that language.
+- **Open a link:** sends visitors to a full `https://` or `http://` address in a new tab, for example your support center.
+
+A button can't open a Restricted, single-use or PIN-protected survey. See [Which surveys a creative can open](/surveys/creatives/overview#which-surveys-a-creative-can-open).
+
+If the survey the button opens is already on screen, another press does nothing. If a different survey is on screen, it closes and the button's survey opens.
+
+## Styling
+
+By default, the button looks like the survey button in your workspace [Look & Feel](/platform/features/styling-theme): same colors, font, size and corners. Change those settings and your feedback buttons follow.
+
+Turn on **Add custom styles** to give the button its own look:
+
+| Card | Fields |
+| --- | --- |
+| **Colors** | **Background**, **Text** and **Border**, for light mode and for dark mode. A dark color can only be set once its light color is set; left empty, it follows the workspace's dark colors. |
+| **Shape & size** | **Font** (the workspace setting, **Page font** or **Survey font**), **Font weight**, **Corner radius** (0–100 px), **Font size** (8–72 px), **Padding X** and **Padding Y** (0–64 px). |
+| **Custom CSS** | CSS for this button only. See [Custom CSS](#custom-css). |
+
+If the text on the background drops below a 4.5 : 1 contrast ratio, in light or in dark mode, the editor warns you so the label stays readable for everyone.
+
+Font size and padding can be different on phones: switch the card to **Phone** and change them. Phone values apply below 768 px wide; a phone field you leave as it is uses the desktop value.
+
+![The Styling tab of a feedback button with its own colors, on the left edge of the preview](/images/surveys/creatives/feedback-button/styling.webp)
+
+### Position
+
+**Position** applies whether or not custom styles are on:
+
+- **Edge:** **Left**, **Right** (the default) or **Bottom**.
+- **Offset:** where the button's center sits along that edge, in percent: from the top for the left and right edges, from the left for the bottom edge. The default is 50 %, the middle.
+
+On the left and right edges, the label runs from bottom to top and the corners facing the page are rounded. Near a corner, the button stops at the end of the edge, so it is always fully on screen.
+
+Switch the card to **Phone** to give phones their own edge and offset, for example the bottom edge so the tab doesn't cover text. **Use the desktop position on phones** brings them back to the desktop values.
+
+### Dark mode
+
+A feedback button shows its dark colors when your site asks for dark mode through the SDK, with `formbricks.setAppearance("dark")`, or with `"system"` to follow the visitor's device. Without it, buttons show their light colors. See [Dark Mode](/surveys/website-app-surveys/framework-guides#dark-mode).
+
+### Custom CSS
+
+**Custom CSS** applies to this button only, and only while **Add custom styles** is on. The button's element is `.fb-creative-button`. **Base CSS** applies in light and dark mode; switch the card to **Dark** for **Dark CSS**, which adds rules for dark mode only. Your workspace [Custom CSS](/surveys/general-features/custom-css) doesn't apply to creatives.
+
+```css
+.fb-creative-button {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+```
+
+Custom CSS can't load anything from another site: `@import`, `@font-face`, `url()` and similar are removed when you save, and the editor tells you. It can hold up to 20 KB.
+
+## On your website
+
+- The button is a real button in the page's tab order, with a visible focus ring. It never takes the visitor's focus by itself and doesn't animate.
+- It is drawn in its own isolated layer (a Shadow DOM), so your page's CSS doesn't change it and its styles don't leak into your page. With **Page font**, it uses your page's font.
+- It moves aside so [Overlay banners](/surveys/creatives/banner#position) don't cover it. An open survey always sits on top of it.
+- It stays on the page after a click and after a response.
+- If your site uses a Content Security Policy with nonces, pass the nonce with [`formbricks.setNonce()`](/surveys/website-app-surveys/framework-guides#passing-a-nonce-for-survey-styles), or the button's styles are blocked.
+
+---
+
+Still have questions? [Join us in GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'll be glad to help.

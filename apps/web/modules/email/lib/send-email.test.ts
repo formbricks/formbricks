@@ -1,9 +1,16 @@
+import { type Socket, createServer } from "node:net";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { sendEmail } from "./send-email";
 
 const mocks = vi.hoisted(() => ({
   sendMail: vi.fn(),
   createTransport: vi.fn(),
+  applyEmailRateLimits: vi.fn(),
+  beginEmailSendAudit: vi.fn(),
+  finishEmailSendAudit: vi.fn(),
+  reportEmailAuditFailure: vi.fn(),
+  loggerError: vi.fn(),
   constants: {
     DEBUG: false,
     IS_SMTP_CONFIGURED: true,
@@ -11,35 +18,109 @@ const mocks = vi.hoisted(() => ({
     MAIL_FROM_NAME: "Formbricks",
     SES_CONFIGURATION_SET: undefined as string | undefined,
     SES_EMAIL_ENVIRONMENT: undefined as string | undefined,
+    EMAIL_SEND_AUDIT_ENABLED: false,
     SMTP_AUTHENTICATED: false,
     SMTP_HOST: "localhost",
-    SMTP_PASSWORD: undefined,
+    SMTP_PASSWORD: undefined as string | undefined,
     SMTP_PORT: "1025",
+    SMTP_REQUIRE_TLS: false,
     SMTP_REJECT_UNAUTHORIZED_TLS: true,
     SMTP_SECURE_ENABLED: false,
-    SMTP_USER: undefined,
+    SMTP_USER: undefined as string | undefined,
   },
 }));
 
 vi.mock("@/lib/constants", () => mocks.constants);
+vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: mocks.loggerError } }));
 vi.mock("nodemailer", () => ({
   createTransport: mocks.createTransport,
 }));
+vi.mock("./email-rate-limits", () => ({ applyEmailRateLimits: mocks.applyEmailRateLimits }));
+vi.mock("./email-send-audit", () => ({
+  beginEmailSendAudit: mocks.beginEmailSendAudit,
+  finishEmailSendAudit: mocks.finishEmailSendAudit,
+}));
+vi.mock("./email-audit-monitoring", () => ({ reportEmailAuditFailure: mocks.reportEmailAuditFailure }));
 
 const email = {
   emailType: "invite" as const,
+  auditContext: { trigger: "system" as const },
   to: "recipient@example.com",
   subject: "Invitation",
   html: "<p>Join</p>",
 };
 
+const startPlainSmtpServer = async () => {
+  const commands: string[] = [];
+  const sockets = new Set<Socket>();
+  const server = createServer((socket) => {
+    sockets.add(socket);
+    socket.on("close", () => sockets.delete(socket));
+    socket.setEncoding("utf8");
+    socket.write("220 local test SMTP\r\n");
+    let pending = "";
+    let readingData = false;
+    socket.on("data", (chunk: string) => {
+      pending += chunk;
+      while (pending.includes("\r\n")) {
+        const lineEnd = pending.indexOf("\r\n");
+        const line = pending.slice(0, lineEnd);
+        pending = pending.slice(lineEnd + 2);
+        if (readingData) {
+          if (line === ".") {
+            readingData = false;
+            socket.write("250 accepted\r\n");
+          }
+          continue;
+        }
+        commands.push(line);
+        if (line.startsWith("EHLO")) socket.write("250-localhost\r\n250 SIZE 100000\r\n");
+        else if (line.startsWith("HELO")) socket.write("250 localhost\r\n");
+        else if (line.startsWith("MAIL FROM") || line.startsWith("RCPT TO")) socket.write("250 OK\r\n");
+        else if (line === "DATA") {
+          readingData = true;
+          socket.write("354 go ahead\r\n");
+        } else if (line === "QUIT") socket.end("221 bye\r\n");
+        else socket.write("502 unsupported\r\n");
+      }
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("SMTP test server has no port");
+  return {
+    port: address.port,
+    commands,
+    close: async () => {
+      for (const socket of sockets) socket.destroy();
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve()))
+      );
+    },
+  };
+};
+
 describe("sendEmail SES event publishing", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.applyEmailRateLimits.mockResolvedValue(undefined);
     mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail });
     mocks.sendMail.mockResolvedValue({ messageId: "smtp-message-id" });
+    mocks.beginEmailSendAudit.mockResolvedValue(null);
+    mocks.finishEmailSendAudit.mockResolvedValue(undefined);
+    mocks.reportEmailAuditFailure.mockResolvedValue(undefined);
     mocks.constants.IS_SMTP_CONFIGURED = true;
     mocks.constants.SES_CONFIGURATION_SET = undefined;
     mocks.constants.SES_EMAIL_ENVIRONMENT = undefined;
+    mocks.constants.EMAIL_SEND_AUDIT_ENABLED = false;
+    mocks.constants.SMTP_REQUIRE_TLS = false;
+    mocks.constants.SMTP_SECURE_ENABLED = false;
+    mocks.constants.SMTP_REJECT_UNAUTHORIZED_TLS = true;
+    mocks.constants.SMTP_AUTHENTICATED = false;
+    mocks.constants.SMTP_HOST = "localhost";
+    mocks.constants.SMTP_PORT = "1025";
+    mocks.constants.SMTP_USER = undefined;
+    mocks.constants.SMTP_PASSWORD = undefined;
   });
 
   test("keeps ordinary SMTP messages free of SES headers and internal metadata", async () => {
@@ -65,6 +146,53 @@ describe("sendEmail SES event publishing", () => {
     await sendEmail(email);
     expect(mocks.createTransport).toHaveBeenLastCalledWith(expect.objectContaining({ secure: true }));
     mocks.constants.SMTP_SECURE_ENABLED = false;
+  });
+
+  test("requires STARTTLS for an explicit SMTP connection when opted in", async () => {
+    mocks.constants.SMTP_REQUIRE_TLS = true;
+    await sendEmail(email);
+    expect(mocks.createTransport).toHaveBeenLastCalledWith(expect.objectContaining({ requireTLS: true }));
+
+    mocks.constants.SMTP_SECURE_ENABLED = true;
+    await sendEmail(email);
+    expect(mocks.createTransport).toHaveBeenLastCalledWith(expect.objectContaining({ requireTLS: false }));
+    mocks.constants.SMTP_SECURE_ENABLED = false;
+  });
+
+  test("refuses a server without STARTTLS before sending credentials or message data", async () => {
+    const smtp = await startPlainSmtpServer();
+    const nodemailer = await vi.importActual<typeof import("nodemailer")>("nodemailer");
+    try {
+      mocks.constants.SMTP_HOST = "127.0.0.1";
+      mocks.constants.SMTP_PORT = String(smtp.port);
+      mocks.constants.SMTP_REQUIRE_TLS = true;
+      mocks.constants.SMTP_AUTHENTICATED = true;
+      mocks.constants.SMTP_USER = "test-user";
+      mocks.constants.SMTP_PASSWORD = "test-secret";
+      mocks.createTransport.mockImplementationOnce((options) => nodemailer.createTransport(options));
+
+      await expect(sendEmail(email)).rejects.toThrow("Incorrect SMTP credentials");
+      expect(smtp.commands.some((command) => /^(AUTH|MAIL|RCPT|DATA)\b/i.test(command))).toBe(false);
+      expect(smtp.commands.some((command) => /^EHLO\b/i.test(command))).toBe(true);
+    } finally {
+      await smtp.close();
+    }
+  });
+
+  test("still sends through an unauthenticated plaintext local relay by default", async () => {
+    const smtp = await startPlainSmtpServer();
+    const nodemailer = await vi.importActual<typeof import("nodemailer")>("nodemailer");
+    try {
+      mocks.constants.SMTP_HOST = "127.0.0.1";
+      mocks.constants.SMTP_PORT = String(smtp.port);
+      mocks.createTransport.mockImplementationOnce((options) => nodemailer.createTransport(options));
+
+      await expect(sendEmail(email)).resolves.toBe(true);
+      expect(smtp.commands.some((command) => /^MAIL FROM\b/i.test(command))).toBe(true);
+      expect(smtp.commands).toContain("DATA");
+    } finally {
+      await smtp.close();
+    }
   });
 
   test("adds the invite category and deployment to SES SMTP headers", async () => {
@@ -123,14 +251,117 @@ describe("sendEmail SES event publishing", () => {
     expect(message).toContain("To: recipient@example.com");
   });
 
-  test("skips unconfigured SMTP", async () => {
+  test.each([
+    "a@example.com, b@example.com",
+    "a@example.com; b@example.com",
+    '"Bob" <b@example.com>',
+    "group: a@example.com, b@example.com;",
+    "a@example.com b@example.com",
+    "<a@example.com>",
+    "a@b@example.com",
+    `${"a".repeat(320)}@example.com`,
+    "not-an-address",
+  ])("refuses %j as a recipient before opening an SMTP connection", async (to) => {
+    await expect(sendEmail({ ...email, to })).rejects.toThrow("exactly one valid recipient");
+    expect(mocks.createTransport).not.toHaveBeenCalled();
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  // An address regex would refuse these too, and stop someone with a valid address getting any email.
+  test("sends to one internationalized address", async () => {
+    await expect(sendEmail({ ...email, to: "josé@bücher.example" })).resolves.toBe(true);
+    expect(mocks.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: "josé@bücher.example" }));
+  });
+
+  // nodemailer delivers these to one inbox; refusing them (as an input comparison would) blocks valid mail.
+  test.each(['"a b"@example.com', '"a@b"@example.com', "a@example.com,"])(
+    "sends to one address the parser normalizes: %j",
+    async (to) => {
+      await expect(sendEmail({ ...email, to })).resolves.toBe(true);
+      expect(mocks.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to }));
+    }
+  );
+
+  test("skips unconfigured SMTP without spending any email budget", async () => {
     mocks.constants.IS_SMTP_CONFIGURED = false;
     expect(await sendEmail(email)).toBe(false);
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+    expect(mocks.applyEmailRateLimits).not.toHaveBeenCalled();
+  });
+
+  test("charges the email's type, recipient and sender context, and keeps the context out of the message", async () => {
+    const rateLimit = { organizationId: "org-1" };
+    await sendEmail({ ...email, rateLimit });
+
+    expect(mocks.applyEmailRateLimits).toHaveBeenCalledWith("invite", "recipient@example.com", rateLimit);
+    expect(mocks.sendMail.mock.calls[0][0]).not.toHaveProperty("rateLimit");
+  });
+
+  test("refuses a capped email as rate limited, before opening an SMTP connection", async () => {
+    mocks.applyEmailRateLimits.mockRejectedValue(new TooManyRequestsError("Maximum number of requests"));
+
+    await expect(sendEmail(email)).rejects.toBeInstanceOf(TooManyRequestsError);
+    expect(mocks.createTransport).not.toHaveBeenCalled();
     expect(mocks.sendMail).not.toHaveBeenCalled();
   });
 
   test("preserves the existing SMTP failure contract", async () => {
     mocks.sendMail.mockRejectedValue(new Error("SMTP failed"));
     await expect(sendEmail(email)).rejects.toThrow("Incorrect SMTP credentials");
+  });
+
+  test("audits before SMTP and treats acceptance separately from delivery", async () => {
+    const state = { id: "audit-id", rowCreated: true, auditGap: false };
+    const info = { response: "250 Ok ses-id" };
+    mocks.beginEmailSendAudit.mockResolvedValueOnce(state);
+    mocks.sendMail.mockResolvedValueOnce(info);
+
+    await expect(sendEmail(email)).resolves.toBe(true);
+
+    expect(mocks.beginEmailSendAudit).toHaveBeenCalledWith(
+      "invite",
+      email.to,
+      { subject: email.subject, html: email.html, text: undefined },
+      email.auditContext
+    );
+    expect(mocks.beginEmailSendAudit.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.sendMail.mock.invocationCallOrder[0]
+    );
+    expect(mocks.finishEmailSendAudit).toHaveBeenCalledWith(
+      state,
+      "invite",
+      email.auditContext,
+      "accepted",
+      info
+    );
+  });
+
+  test("continues sending if audit preparation or finalization fails", async () => {
+    mocks.beginEmailSendAudit.mockRejectedValueOnce(new Error("audit unavailable"));
+    await expect(sendEmail(email)).resolves.toBe(true);
+    expect(mocks.reportEmailAuditFailure).toHaveBeenCalledWith("email_audit_gap", {
+      phase: "unhandled_begin",
+    });
+
+    mocks.finishEmailSendAudit.mockRejectedValueOnce(new Error("audit unavailable"));
+    await expect(sendEmail(email)).resolves.toBe(true);
+    expect(mocks.reportEmailAuditFailure).toHaveBeenCalledWith("email_audit_gap", {
+      phase: "unhandled_finish",
+    });
+  });
+
+  test("records only an allowlisted SMTP error code", async () => {
+    const failure = Object.assign(new Error("recipient@example.com was rejected"), {
+      code: "EENVELOPE",
+      response: "recipient@example.com was rejected",
+    });
+    mocks.sendMail.mockRejectedValueOnce(failure);
+
+    await expect(sendEmail(email)).rejects.toThrow("Incorrect SMTP credentials");
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      { emailType: "invite", event: "email_send_failed", errorCode: "EENVELOPE" },
+      "Error in sendEmail"
+    );
+    expect(JSON.stringify(mocks.loggerError.mock.calls)).not.toContain("recipient@example.com");
   });
 });

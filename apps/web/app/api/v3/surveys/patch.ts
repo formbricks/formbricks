@@ -9,6 +9,7 @@ import {
   describeDeclaredFieldNameError,
   validateNewDeclaredFieldNames,
 } from "@formbricks/types/surveys/declared-field-guard";
+import { carryOverCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
@@ -16,14 +17,12 @@ import { getActionClasses } from "@/lib/actionClass/service";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
+import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE } from "@/lib/survey/publish-rule";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
-import {
-  APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
-  isAppSurveyMissingTriggersToPublish,
-  stripIsDraftFromBlocks,
-  transformPrismaSurvey,
-} from "@/lib/survey/utils";
+import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
+import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -324,11 +323,19 @@ export async function executeV3SurveyPatch(params: {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
   }
 
-  // An app survey can never be shown without a trigger, so reject setting a non-draft status with no
-  // effective triggers. Triggers only change when the patch carries a `distribution` (top-level
-  // replacement); otherwise the survey keeps its current triggers.
+  // An app survey can never be shown without a trigger or a creative that opens it, so reject setting a
+  // non-draft status with neither. Triggers only change when the patch carries a `distribution`
+  // (top-level replacement); otherwise the survey keeps its current triggers.
   const effectiveTriggers = document.distribution ? document.distribution.triggers : currentSurvey.triggers;
-  if (isAppSurveyMissingTriggersToPublish(currentSurvey.type, document.status, effectiveTriggers)) {
+  if (
+    await isAppSurveyBlockedFromPublishing({
+      surveyId: currentSurvey.id,
+      workspaceId: currentSurvey.workspaceId,
+      type: currentSurvey.type,
+      status: document.status,
+      triggers: effectiveTriggers,
+    })
+  ) {
     throw new V3SurveyReferenceValidationError([
       { name: "triggers", reason: APP_SURVEY_TRIGGER_REQUIRED_MESSAGE },
     ]);
@@ -368,7 +375,12 @@ export async function executeV3SurveyPatch(params: {
     showLanguageSwitch: document.showLanguageSwitch,
     autoSelectLanguage: document.autoSelectLanguage,
     welcomeCard: document.welcomeCard,
-    blocks: stripIsDraftFromBlocks(document.blocks),
+    // ENG-6782: a block `update` replaces the whole block, so a caller that sends none of the codes
+    // would otherwise wipe the stored ones. Carry them over by id first, then code what is new.
+    blocks: fillSurveyBlockCodes(
+      carryOverCodes(currentSurvey.blocks, stripIsDraftFromBlocks(document.blocks)),
+      document
+    ),
     endings: document.endings,
     closeOn: normalizedScheduling.closeOn,
     publishOn: normalizedScheduling.publishOn,

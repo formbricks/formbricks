@@ -44,6 +44,7 @@ export const parseListWorkflowsQuery = (searchParams: URLSearchParams): TListWor
     statusIn: multiValue(searchParams, "filter[status][in]"),
     nameContains: searchParams.get("filter[name][contains]") ?? undefined,
     sortBy: searchParams.get("sortBy") ?? undefined,
+    includeTotalCount: parseBooleanParam(searchParams.get("includeTotalCount")),
   };
 
   if (searchParams.has("limit")) {

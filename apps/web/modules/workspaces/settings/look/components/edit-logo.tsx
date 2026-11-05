@@ -21,10 +21,10 @@ import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-n
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface EditLogoProps {
-  workspace: TWorkspace;
-  workspaceId: string;
-  isReadOnly: boolean;
-  isStorageConfigured: boolean;
+  readonly workspace: TWorkspace;
+  readonly workspaceId: string;
+  readonly isReadOnly: boolean;
+  readonly isStorageConfigured: boolean;
 }
 
 export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigured }: EditLogoProps) => {

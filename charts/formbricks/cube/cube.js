@@ -88,6 +88,30 @@ function collectQueryMembers(query) {
   return Array.from(new Set(members)).sort((a, b) => a.localeCompare(b));
 }
 
+function hasClaim(securityContext, claim) {
+  return securityContext?.[claim] !== undefined && securityContext?.[claim] !== null;
+}
+
+// Who the query runs for: a user (session or OAuth) or an API key, which has no user behind it. The token
+// carries exactly one of the two claims, so the audit line can never attribute a key's query to a person;
+// a token naming both, or neither, is refused rather than guessed at.
+function getActor(securityContext) {
+  const hasUser = hasClaim(securityContext, "userId");
+  const hasApiKey = hasClaim(securityContext, "apiKeyId");
+
+  if (hasUser && hasApiKey) {
+    throw new Error("Cube query rejected: userId and apiKeyId security context are mutually exclusive");
+  }
+  if (hasApiKey) {
+    return { type: "apiKey", id: getRequiredStringClaim(securityContext, "apiKeyId") };
+  }
+  if (hasUser) {
+    return { type: "user", id: getRequiredStringClaim(securityContext, "userId") };
+  }
+
+  throw new Error("Cube query rejected: missing userId or apiKeyId security context");
+}
+
 function assertValidSecurityContext(securityContext) {
   const tenantId = getRequiredStringClaim(securityContext, "tenantId");
   const feedbackDirectoryId = getRequiredStringClaim(securityContext, "feedbackDirectoryId");
@@ -106,7 +130,7 @@ function assertValidSecurityContext(securityContext) {
     feedbackDirectoryId,
     workspaceId,
     organizationId: getRequiredStringClaim(securityContext, "organizationId"),
-    userId: getRequiredStringClaim(securityContext, "userId"),
+    actor: getActor(securityContext),
     requestId: getRequiredStringClaim(securityContext, "jti"),
     source: getRequiredStringClaim(securityContext, "source"),
   };
@@ -134,7 +158,7 @@ function logCubeQueryAuditEvent(context, query, { error, status = "success" } = 
       feedbackDirectoryId: context.feedbackDirectoryId,
       workspaceId: context.workspaceId,
       organizationId: context.organizationId,
-      userId: context.userId,
+      actor: context.actor,
       requestId: context.requestId,
       source: context.source,
       members: collectQueryMembers(query),

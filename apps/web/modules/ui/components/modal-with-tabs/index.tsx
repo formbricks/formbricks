@@ -9,13 +9,13 @@ import {
 } from "@/modules/ui/components/dialog";
 
 interface ModalWithTabsProps {
-  open: boolean;
-  setOpen: (v: boolean) => void;
-  icon?: React.ReactNode;
-  label?: string;
-  description?: string;
-  tabs: TabProps[];
-  closeOnOutsideClick?: boolean;
+  readonly open: boolean;
+  readonly setOpen: (v: boolean) => void;
+  readonly icon?: React.ReactNode;
+  readonly label?: string;
+  readonly description?: string;
+  readonly tabs: TabProps[];
+  readonly closeOnOutsideClick?: boolean;
 }
 
 interface TabProps {

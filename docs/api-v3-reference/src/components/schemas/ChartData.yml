@@ -1,0 +1,45 @@
+type: object
+description: >-
+  What a chart query returns: one row per group, keyed by field name, the label maps to display
+  stored ids with, and the query as it ran.
+required:
+  - rows
+  - optionLabels
+  - fieldLabels
+  - query
+properties:
+  rows:
+    type: array
+    items:
+      type: object
+      additionalProperties:
+        type:
+          - string
+          - number
+          - boolean
+          - "null"
+    example:
+      - FeedbackRecords.sourceName: Web
+        FeedbackRecords.count: 42
+  optionLabels:
+    type: object
+    description: >-
+      Choice option ids to their labels in the survey's default language, in survey order. Filled
+      when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server
+      rewrote to it); empty otherwise.
+    additionalProperties:
+      type: string
+  fieldLabels:
+    type: object
+    description: >-
+      Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when
+      the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
+    additionalProperties:
+      type: string
+  query:
+    type: object
+    description: >-
+      The query as it ran: after the requested date range replaced the saved one, and after a
+      `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys
+      follow this query.
+additionalProperties: false

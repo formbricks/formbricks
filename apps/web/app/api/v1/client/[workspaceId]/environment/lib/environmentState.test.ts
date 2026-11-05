@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { DEFAULT_CREATIVE_STYLE } from "@formbricks/creatives";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsWorkspaceStateSurvey, TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
@@ -11,6 +13,8 @@ import { WorkspaceStateData, getWorkspaceStateData } from "./data";
 import { getWorkspaceState } from "./environmentState";
 
 vi.mock("server-only", () => ({}));
+// Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
+vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
@@ -20,7 +24,8 @@ vi.mock("@/modules/survey/lib/utils", () => ({ transformPrismaSurvey: vi.fn() })
 // Mock dependencies
 vi.mock("@/lib/cache", () => ({
   cache: {
-    withCache: vi.fn(),
+    get: vi.fn(),
+    set: vi.fn(),
   },
 }));
 
@@ -36,12 +41,15 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    debug: vi.fn(),
     error: vi.fn(),
   },
 }));
 vi.mock("./data");
-// `./data` is auto-mocked, which still loads its imports; keep the custom CSS delivery chain out of it.
+// `./data` is auto-mocked, which still loads its imports; keep the custom CSS delivery chain and the
+// licence check out of it.
 vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({ resolveRespondentCustomCss: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsCreativesEnabled: vi.fn() }));
 vi.mock("@/app/lib/api/api-backwards-compat", () => ({
   addLegacyProjectOverwritesToList: vi.fn((surveys: unknown[]) =>
     surveys.map((survey) => {
@@ -80,6 +88,10 @@ vi.mock("@/lib/utils/helper", () => ({
 
 // Mock @formbricks/cache
 vi.mock("@formbricks/cache", () => ({
+  ErrorCode: {
+    RedisConnectionError: "redis_connection_error",
+    RedisOperationError: "redis_operation_error",
+  },
   createCacheKey: {
     workspace: {
       state: vi.fn((workspaceId: string) => `fb:env:${workspaceId}:state`),
@@ -161,14 +173,15 @@ const mockWorkspaceStateData: WorkspaceStateData = {
   // The fixtures are full surveys; the state carries the respondent shape (compiled custom CSS only).
   surveys: mockSurveys as unknown as TJsWorkspaceStateSurvey[],
   actionClasses: mockActionClasses,
+  creatives: [],
 };
 
 describe("getWorkspaceState", () => {
   beforeEach(() => {
     vi.resetAllMocks();
 
-    // Mock cache.withCache to simply execute the function without caching for tests
-    vi.mocked(cache.withCache).mockImplementation(async (fn) => await fn());
+    vi.mocked(cache.get).mockResolvedValue({ ok: true, data: null });
+    vi.mocked(cache.set).mockResolvedValue({ ok: true, data: undefined });
 
     // Default mocks for successful retrieval
     vi.mocked(getWorkspaceStateData).mockResolvedValue(mockWorkspaceStateData);
@@ -221,6 +234,37 @@ describe("getWorkspaceState", () => {
     expect(JSON.stringify(data).split(compiledCss)).toHaveLength(2);
   });
 
+  test("adds creatives only when the workspace has deliverable ones (ENG-3994)", async () => {
+    const creative: WorkspaceStateData["creatives"][number] = {
+      id: "creative-1",
+      type: "feedbackButton",
+      defaultLanguage: "en-US",
+      languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+      languageMatch: { keys: {}, bases: {} },
+      surveyLanguageMatch: { keys: {}, bases: {} },
+      autoSelectLanguage: false,
+      style: DEFAULT_CREATIVE_STYLE,
+      content: { label: { "en-US": "Feedback" }, icon: null },
+      position: { desktop: { edge: "right", offset: 50 }, phone: null },
+      destination: { type: "link", url: "https://example.com" },
+      showOn: "pageView",
+      triggers: [],
+      conditions: null,
+      displayPercentage: null,
+      startAt: null,
+      endAt: null,
+    };
+    vi.mocked(getWorkspaceStateData).mockResolvedValue({ ...mockWorkspaceStateData, creatives: [creative] });
+
+    const withCreatives = await getWorkspaceState(workspaceId);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(mockWorkspaceStateData);
+    const withoutCreatives = await getWorkspaceState(workspaceId);
+
+    expect(withCreatives.data.creatives).toEqual([creative]);
+    // Old SDKs and cached states never see the key unless there is something to show.
+    expect(withoutCreatives.data).not.toHaveProperty("creatives");
+  });
+
   test("should throw ResourceNotFoundError if workspace not found", async () => {
     vi.mocked(getWorkspaceStateData).mockRejectedValue(new ResourceNotFoundError("workspace", workspaceId));
     await expect(getWorkspaceState(workspaceId)).rejects.toThrow(ResourceNotFoundError);
@@ -256,14 +300,101 @@ describe("getWorkspaceState", () => {
     expect(result.data.recaptchaSiteKey).toBe("mock_recaptcha_site_key");
   });
 
-  test("should use cache.withCache for caching with correct cache key and TTL", () => {
-    getWorkspaceState(workspaceId);
+  test("should cache workspace state with the correct key and TTL", async () => {
+    await getWorkspaceState(workspaceId);
 
-    expect(cache.withCache).toHaveBeenCalledWith(
-      expect.any(Function),
+    expect(cache.get).toHaveBeenCalledWith(`fb:env:${workspaceId}:state`);
+    expect(cache.set).toHaveBeenCalledWith(
       `fb:env:${workspaceId}:state`,
-      60 * 1000 // 1 minutes in milliseconds
+      expect.objectContaining({ data: expect.any(Object) }),
+      60 * 1000
     );
+  });
+
+  test("bounds database refreshes for a hot workspace while Redis is unavailable", async () => {
+    const outageWorkspaceId = "outage-workspace";
+    const now = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    vi.mocked(cache.get).mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+
+    await getWorkspaceState(outageWorkspaceId);
+    await getWorkspaceState(outageWorkspaceId);
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(1);
+    expect(cache.set).not.toHaveBeenCalled();
+
+    clock.mockReturnValue(now + 10_001);
+    await getWorkspaceState(outageWorkspaceId);
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(2);
+    clock.mockRestore();
+  });
+
+  test("uses Redis again when it recovers after an outage", async () => {
+    const recoveringWorkspaceId = "recovering-workspace";
+    vi.mocked(cache.get).mockResolvedValueOnce({
+      ok: false,
+      error: { code: "redis_connection_error" },
+    });
+
+    const duringOutage = await getWorkspaceState(recoveringWorkspaceId);
+    const recovered = { data: { ...duringOutage.data, recaptchaSiteKey: "recovered" } };
+    vi.mocked(cache.get).mockResolvedValue({ ok: true, data: recovered });
+
+    await expect(getWorkspaceState(recoveringWorkspaceId)).resolves.toEqual(recovered);
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+  });
+
+  test("coalesces concurrent database refreshes during a Redis outage", async () => {
+    vi.mocked(cache.get).mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+    let finishLoad: ((value: WorkspaceStateData) => void) | undefined;
+    vi.mocked(getWorkspaceStateData).mockReturnValue(
+      new Promise<WorkspaceStateData>((resolve) => {
+        finishLoad = resolve;
+      })
+    );
+
+    const first = getWorkspaceState("concurrent-outage-workspace");
+    const second = getWorkspaceState("concurrent-outage-workspace");
+    await vi.waitFor(() => expect(getWorkspaceStateData).toHaveBeenCalledOnce());
+    finishLoad?.(mockWorkspaceStateData);
+
+    await expect(Promise.all([first, second])).resolves.toHaveLength(2);
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+  });
+
+  test("falls back and logs safely when the cache read throws", async () => {
+    vi.mocked(cache.get).mockRejectedValueOnce(new Error("cache read failed"));
+
+    await expect(getWorkspaceState("thrown-read-workspace")).resolves.toHaveProperty("data");
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+    expect(logger.debug).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error" }),
+      "Workspace state cache read threw; using outage fallback"
+    );
+    expect(JSON.stringify(vi.mocked(logger.debug).mock.calls)).not.toContain("cache read failed");
+  });
+
+  test("returns fresh state and logs safely when the cache write throws", async () => {
+    vi.mocked(cache.set).mockRejectedValueOnce(new Error("cache write failed"));
+
+    await expect(getWorkspaceState("thrown-write-workspace")).resolves.toHaveProperty("data");
+    expect(getWorkspaceStateData).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error" }),
+      "Workspace state cache write threw"
+    );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("cache write failed");
+  });
+
+  test("evicts the oldest fallback state when a Redis outage exceeds the local entry limit", async () => {
+    vi.mocked(cache.get).mockResolvedValue({ ok: false, error: { code: "redis_connection_error" } });
+
+    for (let index = 0; index < 101; index += 1) {
+      await getWorkspaceState(`eviction-workspace-${index}`);
+    }
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(101);
+
+    await getWorkspaceState("eviction-workspace-0");
+    expect(getWorkspaceStateData).toHaveBeenCalledTimes(102);
   });
 
   test("should propagate database update errors", async () => {

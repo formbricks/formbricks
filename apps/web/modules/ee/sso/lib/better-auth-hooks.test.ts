@@ -460,6 +460,24 @@ describe("ssoDatabaseHooks.user.create.after", () => {
   });
 });
 
+describe("ssoDatabaseHooks.account.create.before", () => {
+  const before = ssoDatabaseHooks.account!.create!.before!;
+
+  // Better Auth 1.7.7 no longer writes the issuer; a 1.7.0 pod still looks accounts up by it.
+  test.each([
+    ["credential", "local:credential"],
+    ["google", "https://accounts.google.com"],
+    ["azuread", "local:oauth:azuread"],
+    ["saml", "local:oauth:saml"],
+  ])("stamps the 1.7.0 issuer on a new %s account", async (providerId, issuer) => {
+    const account = { userId: "u1", providerId, accountId: "acc-1" };
+
+    await expect(before(account as never, undefined as never)).resolves.toEqual({
+      data: { ...account, issuer },
+    });
+  });
+});
+
 describe("ssoDatabaseHooks.account.create.after", () => {
   const after = ssoDatabaseHooks.account!.create!.after!;
   const ctxWith = (updateUser: unknown) => ({ context: { internalAdapter: { updateUser } } });

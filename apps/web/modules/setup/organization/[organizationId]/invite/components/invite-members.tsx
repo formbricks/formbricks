@@ -23,8 +23,8 @@ import { Input } from "@/modules/ui/components/input";
 const MAX_INVITE_MEMBERS = 10;
 
 interface InviteMembersProps {
-  IS_SMTP_CONFIGURED: boolean;
-  organizationId: string;
+  readonly IS_SMTP_CONFIGURED: boolean;
+  readonly organizationId: string;
 }
 
 export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMembersProps) => {

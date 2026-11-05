@@ -17,6 +17,7 @@ import {
 import { getI18nLanguage } from "@/lib/i18n-utils";
 import { setLocaleBaseUrl } from "@/lib/i18n.config";
 import { getPreviewPortalContainer } from "@/lib/preview-boundary";
+import { setFontBaseUrl } from "@/lib/signature-font-url";
 import { addCustomThemeToDom, addStylesToDom, setStyleNonce } from "@/lib/styles";
 
 // survey-ui is typed against React; in this bundle `react` resolves to preact/compat, so at runtime its
@@ -59,11 +60,17 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
 
   // Where the on-demand locale bundles live, beside the renderer itself.
   setLocaleBaseUrl(appUrl);
+  // And the typed-signature font, fetched only if a respondent opens a Signature's Type tab.
+  setFontBaseUrl(appUrl);
 
   // Before the first render, so the survey never paints in the wrong appearance.
   setAppearance(renderProps.appearance);
   addStylesToDom();
-  addCustomThemeToDom({ styling: renderProps.styling });
+  // Page font only for an app survey: a link survey keeps the survey font on any page (ENG-3864).
+  addCustomThemeToDom({
+    styling: renderProps.styling,
+    pageFont: renderProps.pageFont === true && renderProps.survey.type !== "link",
+  });
   // Only from the explicit prop (ENG-3552): CSS on `props.survey` or `props.styling` is never read.
   // Before the render, so the first paint already has it; replaces whatever an earlier survey applied.
   applyCustomCss(renderProps.customCss);

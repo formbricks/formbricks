@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
-const valkeyIndexDigest = "sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84";
+const valkeyIndexDigest = "sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd";
 const valkeyImage = `valkey/valkey@${valkeyIndexDigest}`;
 const legacyValkeyImage =
   "valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d";

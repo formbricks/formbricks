@@ -1,0 +1,17 @@
+type: object
+description: >-
+  A custom colour per appearance, `#rrggbb`, as the survey styling stores its colours. `light` applies in
+  light appearance. `dark` applies when the visitor's appearance is dark; `null` (or absent) derives it
+  as the theme describes.
+required:
+  - light
+properties:
+  light:
+    type: string
+    pattern: ^#[0-9a-fA-F]{6}$
+  dark:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+additionalProperties: false

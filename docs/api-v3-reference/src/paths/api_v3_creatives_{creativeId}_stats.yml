@@ -1,0 +1,142 @@
+get:
+  operationId: getCreativeStatsV3
+  summary: Get a creative's counts
+  description: >
+    Returns a creative's Impressions and Clicks per UTC day from `from` to `to` (both inclusive), their
+    totals and Click rate, and, with `groupBy`, the same counts by page or by device type. Read access
+    to the creative's workspace; an unknown or inaccessible `creativeId` answers **403**.
+
+
+    Counts are kept per day, not per event. The web SDK reports what visitors see, and a background
+    job adds it here about once a minute, so a count can lag by up to a minute. An instance running
+    without its BullMQ worker never adds counts. Archived creatives keep their counts, deleting a
+    creative deletes them, and a duplicate starts with none.
+
+
+    **400** when `from` is after `to`, or the range spans more than 366 days.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+    - in: query
+      name: from
+      schema:
+        type: string
+        format: date
+      description: First UTC day, inclusive (`YYYY-MM-DD`). Defaults to 29 days before `to`.
+    - in: query
+      name: to
+      schema:
+        type: string
+        format: date
+      description: Last UTC day, inclusive (`YYYY-MM-DD`). Defaults to today, in UTC.
+    - in: query
+      name: groupBy
+      schema:
+        type: string
+        enum:
+          - page
+          - device
+      description: >-
+        Adds a breakdown: `page` adds `pages` (host + path), `device` adds `devices` (phone, tablet,
+        desktop). Omit for totals and days only.
+  responses:
+    "200":
+      description: Counts retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeStats.yml
+          examples:
+            byPage:
+              summary: Two days by page
+              value:
+                data:
+                  creativeId: clcr1234567890123456789012
+                  from: "2026-10-15"
+                  to: "2026-10-16"
+                  groupBy: page
+                  totals:
+                    impressions: 1200
+                    clicks: 30
+                    clickRate: 0.025
+                  days:
+                    - date: "2026-10-15"
+                      impressions: 500
+                      clicks: 10
+                      clickRate: 0.02
+                    - date: "2026-10-16"
+                      impressions: 700
+                      clicks: 20
+                      clickRate: 0.02857142857142857
+                  pages:
+                    - page: example.com/pricing
+                      impressions: 800
+                      clicks: 24
+                      clickRate: 0.03
+                    - page: example.com/
+                      impressions: 390
+                      clicks: 6
+                      clickRate: 0.015384615384615385
+                    - page: (other)
+                      impressions: 10
+                      clicks: 0
+                      clickRate: 0
+            byDevice:
+              summary: One day by device type
+              value:
+                data:
+                  creativeId: clcr1234567890123456789012
+                  from: "2026-10-16"
+                  to: "2026-10-16"
+                  groupBy: device
+                  totals:
+                    impressions: 700
+                    clicks: 20
+                    clickRate: 0.02857142857142857
+                  days:
+                    - date: "2026-10-16"
+                      impressions: 700
+                      clicks: 20
+                      clickRate: 0.02857142857142857
+                  devices:
+                    - deviceType: phone
+                      impressions: 300
+                      clicks: 12
+                      clickRate: 0.04
+                    - deviceType: tablet
+                      impressions: 0
+                      clicks: 0
+                      clickRate: null
+                    - deviceType: desktop
+                      impressions: 400
+                      clicks: 8
+                      clickRate: 0.02
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getOrganization: vi.fn(),
   updateSegment: vi.fn(),
   getSegment: vi.fn(),
+  restoreHiddenSegmentSurveyIds: vi.fn(),
   getUserVisibleSurveyWhere: vi.fn(),
   assertSurveysInWorkspace: vi.fn(),
   assertSurveyInteractionSurveyIds: vi.fn(),
@@ -72,6 +73,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
   assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace: mocks.assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter: vi.fn(),
+  restoreHiddenSegmentSurveyIds: mocks.restoreHiddenSegmentSurveyIds,
 }));
 
 // Import after mocks so the action client / audit wrappers are the passthrough versions.
@@ -222,11 +224,50 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
 
   test("interaction filters are checked against the caller's visibility on create and update", async () => {
     actAs(true);
+    mocks.getSegment.mockResolvedValue({ id: "seg1", filters: [] });
+    mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
 
     await run(createSegmentAction, { workspaceId: "ws1", title: "Seg", filters: [], isPrivate: true });
     await run(updateSegmentAction, { segmentId: "seg1", data: { filters: [] } });
 
     expect(mocks.assertSurveyInteractionSurveyIds).toHaveBeenNthCalledWith(1, [], "ws1", visibleWhere);
     expect(mocks.assertSurveyInteractionSurveyIds).toHaveBeenNthCalledWith(2, [], "ws1", visibleWhere);
+  });
+
+  test("an update keeps the stored survey ids the caller cannot see", async () => {
+    actAs(true);
+    const stored = [{ id: "f1", connector: null, resource: [] }];
+    const restored = [{ id: "f1", connector: null, resource: [] }];
+    mocks.getSegment.mockResolvedValue({ id: "seg1", filters: stored });
+    mocks.restoreHiddenSegmentSurveyIds.mockResolvedValue(restored);
+
+    await run(updateSegmentAction, { segmentId: "seg1", data: { filters: [] } });
+
+    expect(mocks.restoreHiddenSegmentSurveyIds).toHaveBeenCalledWith([], stored, "ws1", visibleWhere);
+    expect(mocks.updateSegment).toHaveBeenCalledWith("seg1", { filters: restored });
+  });
+
+  test("the merged tree is held to the bounds, so restored ids cannot push a filter past them", async () => {
+    actAs(true);
+    const surveyIds = Array.from({ length: 101 }, (_, index) => `clsv${String(index).padStart(20, "0")}`);
+    const overLimit = [
+      {
+        id: "clfilter0000000000000001",
+        connector: null,
+        resource: {
+          id: "clresource00000000000001",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveCompleted" },
+          value: { surveyScope: "specific", surveyIds, within: { amount: 30, unit: "days" } },
+        },
+      },
+    ];
+    mocks.getSegment.mockResolvedValue({ id: "seg1", filters: [] });
+    mocks.restoreHiddenSegmentSurveyIds.mockResolvedValue(overLimit);
+
+    await expect(run(updateSegmentAction, { segmentId: "seg1", data: { filters: [] } })).rejects.toThrow(
+      InvalidInputError
+    );
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 });

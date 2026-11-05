@@ -44,7 +44,12 @@ const toColumnNames = (fields: unknown[]): string[] =>
  * resolving to the wrong columns.
  */
 const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
+  // Partial (`WHERE "status" IN ('queued', 'running')`): the `active` suffix names the predicate.
+  AttachmentExport_surveyId_requestedById_active_key: ["surveyId", "requestedById"],
   AuthzedProjectionScopeState_pkey: ["scope"],
+  CreativeDailyPageStat_pkey: ["creativeId", "date", "page"],
+  CreativeDailyStat_pkey: ["creativeId", "date", "deviceType"],
+  CreativeLanguage_pkey: ["languageId", "creativeId"],
   FeedbackDirectoryWorkspace_pkey: ["feedbackDirectoryId", "workspaceId"],
   FeedbackSourceFieldMapping_workspaceId_feedbackSourceId_sourceF: [
     "workspaceId",

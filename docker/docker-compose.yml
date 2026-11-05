@@ -96,8 +96,11 @@ x-environment: &environment
     # SMTP_PASSWORD:
     # SMTP_AUTHENTICATED:
 
-    # (Additional option for TLS (port 465) only)
+    # Set to 1 for implicit TLS (typically port 465).
     # SMTP_SECURE_ENABLED:
+
+    # Set to 1 to require STARTTLS for explicit TLS (typically port 587). Default is 0 for local relays.
+    # SMTP_REQUIRE_TLS: 1
 
     # Keep certificate verification enabled in production (default is 1). If your SMTP server uses a private CA,
     # mount the CA and configure NODE_EXTRA_CA_CERTS instead of setting this to 0.
@@ -232,6 +235,8 @@ x-environment: &environment
     # OTEL_LOGS_ENABLED: 1
     # OTEL_TRACES_SAMPLER: parentbased_traceidratio
     # OTEL_TRACES_SAMPLER_ARG: 1
+    # OTLP metric export interval in milliseconds; 15000 or lower if you alert on the AuthZed outbox
+    # OTEL_METRIC_EXPORT_INTERVAL: 60000
 
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 
@@ -281,12 +286,26 @@ services:
   authzed-db-bootstrap:
     image: pgvector/pgvector:pg18
     restart: "no"
-    entrypoint: ["/bin/sh", "/usr/local/bin/authzed-postgres-bootstrap.sh"]
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        if [ -n "$$SPICEDB_EXTERNAL_POSTGRES" ]; then
+          echo "External SpiceDB requires docker-compose.spicedb-external.yml; refusing bundled bootstrap." >&2
+          exit 1
+        fi
+        if [ -z "$$AUTHZED_DATABASE_PASSWORD" ]; then
+          echo "AUTHZED_DATABASE_PASSWORD is required for bundled SpiceDB." >&2
+          exit 1
+        fi
+        exec /usr/local/bin/authzed-postgres-bootstrap.sh
     environment:
       POSTGRES_ADMIN_URL: postgresql://postgres:${POSTGRES_PASSWORD_URL_ENCODED:-${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}}@postgres:5432/postgres?sslmode=disable
       AUTHZED_DATABASE_NAME: spicedb
       AUTHZED_DATABASE_USERNAME: spicedb
-      AUTHZED_DATABASE_PASSWORD: ${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}
+      # Bundled bootstrap checks this after Compose interpolates each file. External mode removes this service.
+      AUTHZED_DATABASE_PASSWORD: ${AUTHZED_DATABASE_PASSWORD:-}
+      SPICEDB_EXTERNAL_POSTGRES: ${SPICEDB_DATASTORE_CONN_URI:+true}
     volumes:
       - ./authzed-postgres-bootstrap.sh:/usr/local/bin/authzed-postgres-bootstrap.sh:ro
     depends_on:
@@ -294,24 +313,24 @@ services:
         condition: service_healthy
 
   spicedb-migrate:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.0}
     restart: "no"
     command: datastore migrate head
     environment:
       SPICEDB_DATASTORE_ENGINE: postgres
-      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+      SPICEDB_DATASTORE_CONN_URI: ${SPICEDB_DATASTORE_CONN_URI:-postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:-}@postgres:5432/spicedb?sslmode=disable}
     depends_on:
       authzed-db-bootstrap:
         condition: service_completed_successfully
 
   spicedb:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.0}
     restart: always
     command: serve
     mem_limit: 512m
     environment:
       SPICEDB_DATASTORE_ENGINE: postgres
-      SPICEDB_DATASTORE_CONN_URI: postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:?AUTHZED_DATABASE_PASSWORD is required}@postgres:5432/spicedb?sslmode=disable
+      SPICEDB_DATASTORE_CONN_URI: ${SPICEDB_DATASTORE_CONN_URI:-postgresql://spicedb:${AUTHZED_DATABASE_PASSWORD:-}@postgres:5432/spicedb?sslmode=disable}
       SPICEDB_GRPC_PRESHARED_KEY: ${AUTHZED_TOKEN:?AUTHZED_TOKEN is required}
       SPICEDB_LOG_FORMAT: json
       SPICEDB_LOG_LEVEL: info
@@ -334,7 +353,7 @@ services:
   # host firewalls like ufw). Same treatment as the postgres service above.
   redis:
     restart: always
-    image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+    image: valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
     command: valkey-server --appendonly yes --maxmemory-policy noeviction
     volumes:
       - redis:/data
@@ -360,7 +379,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    <<: *environment
+    # validate-env requires these when .env enables AuthZed, so the migration gets the app's defaults too.
+    environment:
+      <<: *app-environment
+      AUTHZED_ENDPOINT: ${AUTHZED_ENDPOINT:-spicedb:50051}
+      AUTHZED_SYSTEM_KEY: ${AUTHZED_SYSTEM_KEY:-formbricks}
 
   formbricks:
     restart: always
@@ -533,7 +556,7 @@ services:
   vllm:
     restart: always
     profiles: ["qwen"]
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.32.0}
     deploy:
       resources:
         reservations:
@@ -588,7 +611,7 @@ services:
   # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: ghcr.io/formbricks/cube:1.8.8-1
+    image: ghcr.io/formbricks/cube:1.8.8-2
     depends_on:
       hub-migrate:
         condition: service_completed_successfully

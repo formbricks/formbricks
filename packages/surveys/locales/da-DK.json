@@ -102,5 +102,18 @@
     "value_must_equal": "Værdien skal være lig med {value}",
     "value_must_not_contain": "Værdien må ikke indeholde {value}",
     "value_must_not_equal": "Værdien må ikke være lig med {value}"
+  },
+  "signature": {
+    "clear": "Ryd",
+    "draw": "Tegn",
+    "method": "Signaturmetode",
+    "not_signed": "Ikke underskrevet",
+    "pad_label": "Signaturfelt. Tegn din signatur med fingeren, en stylus eller en mus.",
+    "pad_label_with_type": "Signaturfelt. Tegn din signatur med fingeren, en stylus eller en mus, eller skift til Skriv for at indtaste dit navn med tastaturet.",
+    "saved": "Din signatur er gemt. Ryd den for at underskrive igen.",
+    "sign_here": "Underskriv her",
+    "signed": "Underskrevet",
+    "type": "Skriv",
+    "type_your_name": "Skriv dit navn"
   }
 }

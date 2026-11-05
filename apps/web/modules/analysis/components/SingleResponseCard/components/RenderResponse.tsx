@@ -10,21 +10,27 @@ import { getChoiceIdByValue } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
 import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
+import { getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
 import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
 import { RankingResponse } from "@/modules/ui/components/ranking-response";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
+import { SignatureResponse } from "@/modules/ui/components/signature-response";
 
 interface RenderResponseProps {
-  responseData: TResponseDataValue;
-  element: TSurveyElement;
-  survey: TSurvey;
-  language: string | null;
-  locale: TUserLocale;
-  isExpanded?: boolean;
-  showId: boolean;
+  readonly responseData: TResponseDataValue;
+  readonly element: TSurveyElement;
+  readonly survey: TSurvey;
+  readonly language: string | null;
+  readonly locale: TUserLocale;
+  readonly isExpanded?: boolean;
+  readonly showId: boolean;
+  /** Layout of a Signature answer: `thumbnail` for table cells, `full` (large image and download) for the single response card. */
+  readonly signatureVariant?: "thumbnail" | "full";
+  /** The response the answer belongs to; names a downloaded signature. */
+  readonly responseId?: string;
 }
 
 export const RenderResponse: React.FC<RenderResponseProps> = ({
@@ -35,6 +41,8 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   locale,
   isExpanded = true,
   showId,
+  signatureVariant = "thumbnail",
+  responseId,
 }) => {
   if (
     (typeof responseData === "string" && responseData === "") ||
@@ -89,6 +97,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.FileUpload:
       if (Array.isArray(responseData)) {
         return <FileUploadResponse selected={responseData} />;
+      }
+      break;
+    case TSurveyElementTypeEnum.Signature:
+      if (typeof responseData === "string") {
+        return <SignatureResponse value={responseData} variant={signatureVariant} responseId={responseId} />;
       }
       break;
     case TSurveyElementTypeEnum.Matrix:
@@ -156,10 +169,14 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
     case TSurveyElementTypeEnum.Ranking:
       if (typeof responseData === "string" || typeof responseData === "number") {
-        const choiceId = getChoiceIdByValue(responseData.toString(), element);
+        const choiceId = getChoiceIdByValue(
+          responseData.toString(),
+          element,
+          getLanguageCode(survey.languages, language)
+        );
         return (
           <ResponseBadges
-            items={[{ value: responseData.toString(), id: choiceId }]}
+            items={[{ value: responseData.toString(), id: getChoiceBadgeText(element, choiceId) }]}
             isExpanded={isExpanded}
             showId={showId}
           />
@@ -168,8 +185,8 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
         const itemsArray = responseData
           .filter((choice) => choice !== "")
           .map((choice) => {
-            const choiceId = getChoiceIdByValue(choice, element);
-            return { value: choice, id: choiceId };
+            const choiceId = getChoiceIdByValue(choice, element, getLanguageCode(survey.languages, language));
+            return { value: choice, id: getChoiceBadgeText(element, choiceId) };
           });
         return (
           <>

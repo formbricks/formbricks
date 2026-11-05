@@ -36,7 +36,9 @@ import { RecaptchaBranding } from "@/components/general/recaptcha-branding";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { Subheader } from "@/components/general/subheader";
 import {
+  SURVEY_CLOSE_BUTTON_HEADLINE_CLEARANCE_CLASS_NAME,
   SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME,
+  SURVEY_CLOSE_BUTTON_SCROLL_FADE_CLASS_NAME,
   SurveyCloseButton,
 } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
@@ -46,6 +48,7 @@ import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-conta
 import { ApiClient } from "@/lib/api-client";
 import { advanceFromBlock } from "@/lib/block-flow";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
+import { getCardStartsWithMedia } from "@/lib/card-header";
 import { getLocalizedValue } from "@/lib/i18n";
 import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
 import {
@@ -57,6 +60,7 @@ import {
 } from "@/lib/offline-storage";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
+import { clearSignatureDrafts, createSignatureDraftStore } from "@/lib/signature-answer";
 import { getPreviousBlockId, getRestorableHistory, isFinishedBlockId } from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
@@ -98,6 +102,9 @@ interface VariableStackEntry {
 const getHoverColor = (styling: SurveyContainerProps["styling"]) =>
   `var(--fb-hover-bg-color, ${styling.inputBgColor?.light ?? "#f8fafc"})`;
 
+// Counts the displays mounted in this page, see `displayKey` in the response queue config.
+let displayCounter = 0;
+
 export function Survey({
   appUrl,
   workspaceId: workspaceIdProp,
@@ -134,6 +141,7 @@ export function Survey({
   fullSizeCards = false,
   autoFocus,
   action,
+  creativeId,
   visit,
   singleUseId,
   singleUseResponseId,
@@ -209,6 +217,16 @@ export function Survey({
   // the ack (ENG-1846). Same post-ack semantics as `onDisplayCreated`, which fires after
   // createDisplay. Preview mode never reaches the queue and fires this without an id at submit time.
   const responseCreatedRef = useRef(false);
+  // Signature drawings, kept here (not in the card) so Back and the card window do not lose them.
+  const signatureDraftsRef = useRef(createSignatureDraftStore());
+  const signatureDrafts = signatureDraftsRef.current;
+  // Dropped when the survey finishes and when it unmounts: a drawing or typed name does not outlive its response.
+  useEffect(() => {
+    const drafts = signatureDraftsRef.current;
+    return () => {
+      clearSignatureDrafts(drafts);
+    };
+  }, []);
   const triggerResponseCreatedOnce = useCallback(
     (responseId?: string) => {
       if (responseCreatedRef.current) return;
@@ -217,6 +235,11 @@ export function Survey({
     },
     [onResponseCreated]
   );
+
+  // One per mounted display, so the queue shared by this display's ResponseQueue instances is not the
+  // one an earlier display of the same survey left behind.
+  const displayKeyRef = useRef<string | null>(null);
+  displayKeyRef.current ??= String(++displayCounter);
 
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
@@ -227,6 +250,7 @@ export function Survey({
           retryAttempts: 4,
           persistOffline: offlinePersistEnabled,
           surveyId: survey.id,
+          displayKey: displayKeyRef.current ?? undefined,
           onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
             setErrorType(errorCode);
@@ -345,6 +369,9 @@ export function Survey({
     !getSetIsResponseSendingFinished
   );
   const [isSurveyFinished, setIsSurveyFinished] = useState(false);
+  useEffect(() => {
+    if (isSurveyFinished) clearSignatureDrafts(signatureDraftsRef.current);
+  }, [isSurveyFinished]);
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -446,7 +473,12 @@ export function Survey({
         name: file.name,
         base64: file.base64,
       },
-      params
+      {
+        ...params,
+        pinAuthToken: surveyState?.pinAuthToken,
+        singleUseId: surveyState?.singleUseId,
+        url: getWebSurveyMeta().url,
+      }
     );
 
     return response;
@@ -462,12 +494,9 @@ export function Survey({
   const createDisplay = useCallback(async () => {
     // Skip display creation in preview mode but still trigger the onDisplayCreated callback
     if (isPreviewMode) {
-      if (onDisplayCreated) {
-        onDisplayCreated();
-      }
-      if (onDisplay) {
-        onDisplay();
-      }
+      // Fire and forget, as before: a preview has no display to wait for.
+      void onDisplayCreated?.();
+      void onDisplay?.();
       return;
     }
 
@@ -477,6 +506,7 @@ export function Survey({
           surveyId: survey.id,
           ...(userId && { userId }),
           ...(contactId && { contactId }),
+          ...(creativeId && { creativeId }),
         });
 
         if (!display.ok) {
@@ -502,6 +532,7 @@ export function Survey({
     survey.id,
     userId,
     contactId,
+    creativeId,
     onDisplayCreated,
     isPreviewMode,
     onDisplay,
@@ -934,6 +965,8 @@ export function Survey({
           meta: {
             ...getWebSurveyMeta(),
             action,
+            // Meta is written on create only, so the id rides on every write to be on the first.
+            ...(creativeId && { openedByCreativeId: creativeId }),
           },
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
@@ -958,6 +991,7 @@ export function Survey({
       userId,
       survey,
       action,
+      creativeId,
       ingestedFieldsRecord,
       getWebSurveyMeta,
     ]
@@ -1358,6 +1392,7 @@ export function Survey({
               dir={dir}
               fullSizeCards={fullSizeCards}
               isCardless={isCardless}
+              signatureDrafts={signatureDrafts}
             />
           )
         );
@@ -1366,6 +1401,11 @@ export function Survey({
 
     const isLanguageSwitchVisible = getShowLanguageSwitch(offset);
     const isCloseButtonVisible = getShowSurveyCloseButton(offset);
+    // The close button floats in the corner beside the question instead of taking a row of its own.
+    // It keeps the row when the language switch shares it (the switch's width follows the language
+    // name) and when the card opens with media it would cover.
+    const isCloseButtonBesideContent =
+      isCloseButtonVisible && !isLanguageSwitchVisible && !getCardStartsWithMedia(localSurvey, blockId);
 
     return (
       <AutoCloseWrapper
@@ -1390,7 +1430,13 @@ export function Survey({
                 ) : null}
 
                 {isCloseButtonVisible || isLanguageSwitchVisible ? (
-                  <div className="relative w-full">
+                  <div
+                    className={cn(
+                      isCloseButtonBesideContent ? "absolute end-0 w-fit" : "relative w-full",
+                      // Below the progress bar (h-2) when there is one.
+                      isCloseButtonBesideContent && !isCardless && showProgressBar && "top-2",
+                      isCloseButtonBesideContent && (isCardless || !showProgressBar) && "top-0"
+                    )}>
                     <div
                       className={cn(
                         "flex w-full items-center justify-end",
@@ -1428,7 +1474,9 @@ export function Survey({
               ref={contentRef}
               className={cn(
                 loadingElement ? "animate-pulse opacity-60" : "",
-                fullSizeCards ? "" : "my-auto"
+                fullSizeCards ? "" : "my-auto",
+                isCloseButtonBesideContent && SURVEY_CLOSE_BUTTON_HEADLINE_CLEARANCE_CLASS_NAME,
+                isCloseButtonBesideContent && SURVEY_CLOSE_BUTTON_SCROLL_FADE_CLASS_NAME
               )}>
               {content()}
             </div>

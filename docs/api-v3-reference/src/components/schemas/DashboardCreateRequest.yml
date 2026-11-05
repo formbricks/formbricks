@@ -1,0 +1,15 @@
+type: object
+description: A new, empty dashboard. Put charts on it with `POST /api/v3/dashboards/{dashboardId}/widgets`.
+required:
+  - workspaceId
+  - name
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: Unique within the workspace; leading and trailing whitespace is trimmed.
+additionalProperties: false

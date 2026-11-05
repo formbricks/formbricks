@@ -43,10 +43,10 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
     ![Integrations Tab](/images/platform/features/integrations/webhooks/integrations-tab.webp)
   </Step>
   <Step title="Add a Parse JSON Block">
-    Submit a test response, then add a **Parse JSON** block. Set **Input** to **Webhook Payload Body** and generate the schema by pasting the sample Formbricks payload. Answers are under `data.data`, keyed by `questionId`.
+    Submit a test response, then add a **Parse JSON** block. Set **Input** to **Webhook Payload Body** and generate the schema by pasting the sample Formbricks payload. Answers are under `data.dataByQuestionCode`, keyed by question code (`data.data` holds the same answers keyed by Question ID).
   </Step>
   <Step title="Add a Create/Update Record Action">
-    Choose **People** or **Companies** and map the parsed fields. To avoid duplicates, match People on email (e.g. `data.data.email`) and Companies on domain.
+    Choose **People** or **Companies** and map the parsed fields. To avoid duplicates, match People on email (e.g. `data.dataByQuestionCode.email`) and Companies on domain.
   </Step>
   <Step title="Test and Activate">
     Submit another response, confirm the record in Attio, and turn the workflow on.
@@ -58,10 +58,8 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 ## Method 2: Make.com
 
 <Steps>
-  <Step title="Set Question IDs">
-    Give each question a meaningful `questionId` so mapping is easier. These can only be changed before publishing; for a published survey, duplicate it first.
-
-    ![Update Question ID](/images/platform/features/integrations/make/update-question-id.webp)
+  <Step title="Check Question Codes">
+    Give each question you want to map a meaningful question code, such as `email`, so mapping is easier. Find it in the **Settings** tab of the question, under **Recode**. Codes can only be changed before the survey is published and are locked afterwards. See [Question codes and answer codes](/surveys/analysis/question-codes).
   </Step>
   <Step title="Add the Formbricks Trigger">
     In a new [Make](https://make.com) scenario, add **Formbricks** → **Watch Response Finished**. Click **Create a webhook**, enter your API host (default `https://app.formbricks.com`) and [API key](/api-reference/rest-api#how-to-generate-an-api-key), and select your survey.
@@ -75,9 +73,9 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
   <Step title="Map Fields">
     | Attio Attribute | Formbricks Field |
     | --------------- | ---------------- |
-    | Email Addresses | `data.email` |
-    | Name | `data.firstName` / `data.lastName` |
-    | Custom Attribute | Any `data.*` or `meta.*` field |
+    | Email Addresses | `dataByQuestionCode.email` |
+    | Name | `dataByQuestionCode.first_name` / `dataByQuestionCode.last_name` |
+    | Custom Attribute | Any `dataByQuestionCode.*` or `meta.*` field |
   </Step>
   <Step title="Test and Activate">
     Submit a test response, confirm the record in Attio, and turn on the scenario.
@@ -89,7 +87,7 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 ## Method 3: n8n
 
 <Note>
-  The Formbricks and Attio nodes are community nodes for self-hosted n8n. On n8n Cloud, use a **Webhook** node as the trigger (with a Formbricks webhook pointing at it) and an **HTTP Request** node with the API call from Method 4. The Webhook node nests the request under `body`, so use `$json.body.data.data.*` in place of `$json.data.data.*`.
+  The Formbricks and Attio nodes are community nodes for self-hosted n8n. On n8n Cloud, use a **Webhook** node as the trigger (with a Formbricks webhook pointing at it) and an **HTTP Request** node with the API call from Method 4. The Webhook node nests the request under `body`, so use `$json.body.data.dataByQuestionCode.*` in place of `$json.data.dataByQuestionCode.*`.
 </Note>
 
 <Steps>
@@ -102,16 +100,16 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
     Install `n8n-nodes-attio` via **Settings** → **Community Nodes**, add it with the **Assert Record** operation, and authenticate with your access token.
   </Step>
   <Step title="Configure the Record">
-    Set **object** to `people` and **matching_attribute** to `email_addresses`, then set the `data` body (replace the keys with your `questionId`s):
+    Set **object** to `people` and **matching_attribute** to `email_addresses`, then set the `data` body (replace the keys with your question codes):
 
     ```json
     {
       "values": {
-        "email_addresses": ["{{ $json.data.data.email }}"],
+        "email_addresses": ["{{ $json.data.dataByQuestionCode.email }}"],
         "name": [{
-          "first_name": "{{ $json.data.data.firstName }}",
-          "last_name": "{{ $json.data.data.lastName }}",
-          "full_name": "{{ $json.data.data.firstName }} {{ $json.data.data.lastName }}"
+          "first_name": "{{ $json.data.dataByQuestionCode.first_name }}",
+          "last_name": "{{ $json.data.dataByQuestionCode.last_name }}",
+          "full_name": "{{ $json.data.dataByQuestionCode.first_name }} {{ $json.data.dataByQuestionCode.last_name }}"
         }]
       }
     }
@@ -131,7 +129,7 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
     Go to **Configuration** → **Integrations** → **Manage Webhooks** → **Add Webhook**, enter your endpoint URL, select **Response Finished**, and choose your surveys.
   </Step>
   <Step title="Build the Handler">
-    Read the answers from `data.data` (keyed by `questionId`) and call Attio's [Assert Record endpoint](https://docs.attio.com/rest-api/endpoint-reference/records/assert-a-record), which creates or updates in one call:
+    Read the answers from `data.dataByQuestionCode` (keyed by question code; `data.data` holds the same answers keyed by Question ID) and call Attio's [Assert Record endpoint](https://docs.attio.com/rest-api/endpoint-reference/records/assert-a-record), which creates or updates in one call:
 
     ```
     PUT /v2/objects/people/records?matching_attribute=email_addresses
@@ -160,7 +158,7 @@ Attio [Workflows](https://attio.com/help/reference/automations/workflows/overvie
 ## Troubleshooting
 
 **No record created**
-- Check that you're mapping the correct email `questionId`.
+- Check that you're mapping the correct email question code.
 - Check the token has `record_permission:read-write` and `object_configuration:read`.
 
 **Duplicate records**

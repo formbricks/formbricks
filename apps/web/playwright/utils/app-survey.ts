@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { type TShowConditionGroup } from "@formbricks/types/show-conditions";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
-import { type UsersFixture } from "../fixtures/users";
+import { type UserFixture, type UsersFixture } from "../fixtures/users";
 
 /**
  * Self-seeding helper for app-survey widget specs.
@@ -33,6 +33,8 @@ export interface SeededAppSurvey {
   surveyId: string;
   /** `key` of the code action that triggers the survey — pass to `formbricks.track()`. */
   actionKey: string;
+  /** The workspace owner, for a spec that also needs a session (`user.login()`). */
+  user: UserFixture;
 }
 
 export interface SeedAppSurveyOptions {
@@ -117,5 +119,5 @@ export const seedAppSurvey = async (
     select: { id: true },
   });
 
-  return { workspaceId, surveyId: survey.id, actionKey };
+  return { workspaceId, actionKey, surveyId: survey.id, user };
 };

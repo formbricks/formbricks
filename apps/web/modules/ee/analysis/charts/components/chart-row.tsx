@@ -7,10 +7,10 @@ import { formatDate, timeSinceDate } from "@/lib/time";
 import { ChartDropdownMenu } from "@/modules/ee/analysis/charts/components/chart-dropdown-menu";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { CHART_TYPE_ICONS } from "@/modules/ee/analysis/charts/lib/chart-types";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import type { TAppChart } from "@/modules/ee/analysis/lib/api-client";
 
 interface ChartRowProps {
-  chart: TChartWithCreator;
+  chart: TAppChart;
   workspaceId: string;
   isReadOnly: boolean;
   directories: { id: string; name: string }[];
@@ -67,6 +67,7 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
             <div className="ph-no-capture text-slate-900">{timeSinceDate(new Date(chart.updatedAt))}</div>
           </div>
         </div>
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- see NOSONAR below */}
         <div // NOSONAR - stopPropagation wrapper to prevent row click when interacting with dropdown
           className="col-span-1 my-auto flex items-center justify-end pr-6"
           onClick={(e) => e.stopPropagation()}

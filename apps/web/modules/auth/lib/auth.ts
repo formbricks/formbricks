@@ -8,6 +8,7 @@ import { nextCookies } from "better-auth/next-js";
 import { genericOAuth, jwt, twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
   AUTH_SECRET,
@@ -126,7 +127,18 @@ export const auth = betterAuth({
   // still created the account. The form, `/setup` included, calls `auth.api.signUpEmail` in-process, so
   // closing the route leaves the action as the only way in. `signupPolicyBeforeHandler` and the
   // `user.create.before` backstop stay as defence in depth for any other in-process caller.
-  disabledPaths: ["/token", "/update-user", "/request-password-reset", "/sign-up/email"],
+  //
+  // `/send-verification-email` (ENG-3823). Anyone could call it for any address, limited only per IP, and
+  // spend that address's verification-email cap so the user's own resend went nowhere. Nothing calls it
+  // over HTTP: `resendVerificationEmailAction` uses `auth.api.sendVerificationEmail` in-process and limits
+  // each account, and the resend on sign-in runs inside `/sign-in/email`.
+  disabledPaths: [
+    "/token",
+    "/update-user",
+    "/request-password-reset",
+    "/sign-up/email",
+    "/send-verification-email",
+  ],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
@@ -242,6 +254,12 @@ export const auth = betterAuth({
           throw new Error("Verification email was not sent (mailer reported no delivery)");
         }
       } catch (error) {
+        // A capped verification email (ENG-3823) must look the same as a sent one: the resend paths
+        // rethrow, so an error here only for unverified accounts would tell anyone which addresses have
+        // one. The limit is logged where it refused.
+        if (error instanceof TooManyRequestsError) {
+          return;
+        }
         // Domain only — never the address, the token, or the verify URL (all three are sensitive and
         // the URL grants account access).
         logger.error(
@@ -293,6 +311,11 @@ export const auth = betterAuth({
       accessToken: "access_token",
       refreshToken: "refresh_token",
       idToken: "id_token",
+    },
+    // Better Auth 1.7.3 dropped `issuer` from its account model; 1.7.0 keys accounts on it. Declared so
+    // the `account.create.before` hook in better-auth-hooks.ts can keep writing it for a 1.7.0 rollback.
+    additionalFields: {
+      issuer: { type: "string", required: false, input: false, returned: false },
     },
   },
 
@@ -386,18 +409,13 @@ export const auth = betterAuth({
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
       "/reset-password": { window: 60, max: 5 },
-      // ENG-2562: the two verification endpoints, deliberately asymmetric because their risk is.
-      //
-      // Sending is the amplification vector — unauthenticated, attacker-triggerable, and it puts mail in
-      // someone else's inbox. Without a cap the 1-hour link expiry is not a real constraint on
-      // pre-hijacking either, since fresh links can be re-issued until the victim clicks. Same budget the
-      // reset request had before `disabledPaths` closed it.
-      "/send-verification-email": { window: 60, max: 3 },
-      // Verifying is the opposite case and must stay generous. It is a top-level GET clicked out of a
-      // mail client — frequently behind a corporate NAT shared by many users, and often prefetched by a
-      // mail-security scanner before the human clicks. It also already requires a signed, expiring
-      // token, so a tight per-IP cap buys very little and risks locking a legitimate user out of
-      // verifying at all. This is a flood guard, not an authorization control.
+      // ENG-2562: verifying must stay generous. (Sending, the amplification vector, is closed over HTTP by
+      // `disabledPaths`; its only way in is `resendVerificationEmailAction`, limited per IP and account.)
+      // It is a top-level GET clicked out of a mail client — frequently behind a corporate NAT shared by
+      // many users, and often prefetched by a mail-security scanner before the human clicks. It also
+      // already requires a signed, expiring token, so a tight per-IP cap buys very little and risks
+      // locking a legitimate user out of verifying at all. This is a flood guard, not an authorization
+      // control.
       "/verify-email": { window: 60, max: 30 },
       "/oauth2/register": { window: 60, max: 5 },
       "/oauth2/token": { window: 60, max: 20 },
@@ -420,7 +438,16 @@ export const auth = betterAuth({
     // service layer). Better Auth's default id format is NOT cuid2, so without this every Formbricks
     // service that validates a user id via ZId (e.g. updateUser, called from the SSO provisioning
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
-    database: { generateId: () => createId() },
+    database: {
+      generateId: () => createId(),
+      // Prisma owns the schema (`main.prisma` + migrations), not Better Auth. Since 1.7.3 every auth request
+      // awaits a schema check against the model Better Auth derives from its plugins. That model declares
+      // `user.image`, a column we dropped (the SSO create hook strips the provider image), so with the check
+      // on, every request and every `getSession` would throw `SchemaMismatchError`. What it would enforce is
+      // pinned by `better-auth-schema-contract.test.ts`, which diffs the models Better Auth owns against
+      // `main.prisma`.
+      validateSchema: false,
+    },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
     // The OAuth state cookie would otherwise expire 5 minutes before the state it guards (ENG-3314).
     cookies: { state: { attributes: { maxAge: OAUTH_STATE_COOKIE_MAX_AGE_SECONDS } } },

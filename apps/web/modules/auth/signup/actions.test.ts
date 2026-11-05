@@ -14,11 +14,12 @@ import { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { auth } from "@/modules/auth/lib/auth";
 import { readSignupIntent } from "@/modules/auth/lib/signup-intent";
 import { updateUser } from "@/modules/auth/lib/user";
-import { getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
+import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
+import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createUserAction } from "./actions";
 
 vi.mock("next/headers", () => ({
@@ -206,6 +207,30 @@ describe("createUserAction — signup verification email callbackURL", () => {
       },
       headers: requestHeaders,
     });
+  });
+
+  // The notice to the inviter is sent after the membership exists, so a failed send must not fail the
+  // sign-up or leave the used invite behind.
+  test("completes an invite sign-up and deletes the invite when the inviter's notice fails", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
+    vi.mocked(getInvite).mockResolvedValue({
+      id: "invite-1",
+      organizationId: "org-1",
+      role: "member",
+      teamIds: null,
+      creator: { name: "Owner", email: "owner@example.com", locale: "en-US" },
+    } as never);
+    vi.mocked(sendInviteAcceptedEmail).mockRejectedValue(new Error("smtp unavailable"));
+
+    const result = await createUserAction({
+      ctx: newCtx(),
+      parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
+    } as never);
+
+    expect(result).toEqual({ success: true });
+    expect(createMembership).toHaveBeenCalled();
+    expect(deleteInvite).toHaveBeenCalledWith("invite-1");
   });
 
   // Regression: signup-form.tsx sends `inviteToken: inviteToken ?? ""`, so an uninvited sign-up arrives

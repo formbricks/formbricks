@@ -16,6 +16,77 @@ generator json {
   provider = "prisma-json-types-generator"
 }
 
+/// Metadata for an outbound email attempt. Content and recipient addresses are never stored here.
+/// Identifiers are deliberately not foreign keys so erasure can scrub a row without retaining source data.
+model OutboundEmailAudit {
+  id                    String    @id @default(uuid())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  expiresAt             DateTime
+  contentExpiresAt      DateTime
+  environment           String
+  emailType             String
+  trigger               String
+  actorKind             String
+  actorUserId           String?
+  configuredByUserId    String?
+  actorUserHash         String?
+  configuredByUserHash  String?
+  organizationId        String?
+  surveyId              String?
+  responseId            String?
+  followUpId            String?
+  workflowId            String?
+  workflowRunId         String?
+  inviteId              String?
+  recipientMac          String?
+  sesMessageHash        String?
+  snapshotKey           String?
+  snapshotSha256        String?
+  status                String    @default("prepared")
+  statusRecordedAt      DateTime?
+  auditGap              Boolean   @default(false)
+  erasureRequestedAt    DateTime?
+  erasedAt              DateTime?
+  contentDeleteRetryAt  DateTime?
+  contentDeleteFailures Int       @default(0)
+
+  @@index([environment, createdAt, id])
+  @@index([organizationId, createdAt, id])
+  @@index([surveyId, createdAt, id])
+  @@index([responseId, createdAt, id])
+  @@index([actorUserId, createdAt, id])
+  @@index([configuredByUserId, createdAt, id])
+  @@index([actorUserHash, createdAt, id])
+  @@index([configuredByUserHash, createdAt, id])
+  @@index([recipientMac, createdAt, id])
+  @@index([sesMessageHash])
+  @@index([status, createdAt, id])
+  @@index([contentExpiresAt, id])
+  @@index([expiresAt, id])
+  @@index([erasureRequestedAt, id])
+  @@index([contentDeleteRetryAt, id])
+}
+
+/// Holds an account erasure request across an in-flight email send. The address is never stored.
+/// The user id is removed once deletion is confirmed; one-way recovery keys expire after 90 days.
+model OutboundEmailAuditErasureIntent {
+  id           String    @id @default(uuid())
+  userId       String?
+  userHash     String
+  recipientMac String
+  createdAt    DateTime  @default(now())
+  activatedAt  DateTime?
+  checkedAt    DateTime?
+  expiresAt    DateTime
+
+  @@index([userId])
+  @@index([recipientMac, activatedAt])
+  @@index([userHash, activatedAt])
+  @@index([checkedAt, id])
+  @@index([expiresAt])
+}
+
 enum PipelineTriggers {
   responseCreated
   responseUpdated
@@ -180,6 +251,10 @@ model Response {
   /// and surfacing that in the UI (v2) would have nothing to read.
   /// [ResponseIngestFlags]
   ingestFlags       Json?               @map(name: "ingest_flags")
+  /// A reviewer's verdict on the response; null means none. `lowQuality` hides it from the Analysis
+  /// export by default and from Feedback Records, and nothing else: it is never deleted and every
+  /// count, list, webhook and integration still includes it (ENG-6780).
+  outcome           ResponseOutcome?
   tags              TagsOnResponses[]
   quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]
@@ -207,6 +282,11 @@ model Response {
   @@index([contactId, createdAt]) // superseded; also the monthly identified users (persons)
   @@index([contactId, createdAt, id])
   @@index([surveyId, finished]) // survey list's (surveyId, finished) count aggregation — keeps it an index-only scan
+}
+
+/// What a reviewer decided about a response. One value today; null on `Response.outcome` means none.
+enum ResponseOutcome {
+  lowQuality
 }
 
 /// Represents a label that can be applied to survey responses.
@@ -257,15 +337,17 @@ enum SurveyStatus {
 /// @property survey - The survey that was displayed
 /// @property contact - The contact who saw the survey
 /// @property response - The associated response if one exists
+/// @property creativeId - The creative that opened the survey. No foreign key, so the record survives the creative's deletion.
 model Display {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now()) @map(name: "created_at")
-  updatedAt DateTime  @updatedAt @map(name: "updated_at")
-  survey    Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId  String
-  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId String?
-  response  Response?
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now()) @map(name: "created_at")
+  updatedAt  DateTime  @updatedAt @map(name: "updated_at")
+  survey     Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId   String
+  contact    Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId  String?
+  response   Response?
+  creativeId String?
 
   @@index([surveyId])
   @@index([contactId, createdAt])
@@ -486,6 +568,12 @@ model Survey {
   /// by the shared custom CSS save service. null = no survey CSS. Kept outside `styling` (M2.07).
   customCss Json?
 
+  /// Creatives whose Destination is this survey (ENG-3993).
+  creatives Creative[]
+
+  /// Background attachment ZIP exports of this survey (ENG-6862).
+  attachmentExports AttachmentExport[]
+
   /// [SurveyShowConditions] App surveys: conditions checked in the browser when a trigger fires
   /// (ENG-3873). null = no conditions, which is what every existing survey keeps.
   showConditions Json?
@@ -580,18 +668,19 @@ enum ActionType {
 /// @property noCodeConfig - Configuration for no-code setup
 /// @property workspace - The workspace this action belongs to
 model ActionClass {
-  id             String          @id @default(cuid())
-  createdAt      DateTime        @default(now()) @map(name: "created_at")
-  updatedAt      DateTime        @updatedAt @map(name: "updated_at")
-  name           String
-  description    String?
-  type           ActionType
-  key            String?
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now()) @map(name: "created_at")
+  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
+  name             String
+  description      String?
+  type             ActionType
+  key              String?
   /// [ActionClassNoCodeConfig]
-  noCodeConfig   Json?
-  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId    String
-  surveyTriggers SurveyTrigger[]
+  noCodeConfig     Json?
+  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId      String
+  surveyTriggers   SurveyTrigger[]
+  creativeTriggers CreativeTrigger[]
 
   @@unique([key, workspaceId])
   @@unique([name, workspaceId])
@@ -707,6 +796,8 @@ model Workspace {
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]
+  creatives                   Creative[]
+  attachmentExports           AttachmentExport[]
 
   surveys              Survey[]
   contacts             Contact[]
@@ -944,20 +1035,21 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
 
-  /// Better Auth 1.7 (ENG-2343): the account's identity namespace. 1.7 keys accounts on
-  /// (issuer, accountId) and filters EVERY lookup on it — findAccountByKey, findAccountOwnerByKey,
-  /// findCredentialAccount and updatePassword. A null here is not cosmetic: password sign-in stops
-  /// finding the credential row (rejects as if the password were wrong) and a password reset matches
-  /// zero rows, so it silently succeeds while changing nothing.
+  /// Better Auth 1.7.0 (ENG-2343): the account's identity namespace. 1.7.0 keyed accounts on
+  /// (issuer, accountId) and filtered every lookup on it — findAccountByKey, findAccountOwnerByKey,
+  /// findCredentialAccount and updatePassword — so on 1.7.0 a null here locks the user out.
+  /// 1.7.3 dropped the field and 1.7.7 keys accounts on (provider, providerAccountId) again
+  /// (ENG-3880). We keep writing it (see `account.create.before` in better-auth-hooks.ts) so a
+  /// rollback to 1.7.0 still finds every row; drop it once that rollback is off the table.
   ///
-  /// NULLABLE on purpose, even though better-auth declares it required. A NOT NULL column would fail
-  /// every INSERT from a 1.6 pod still serving during a rolling deploy. The migration backfills every
-  /// existing row; see the migration SQL for the value derivation.
+  /// NULLABLE on purpose. A NOT NULL column would fail every INSERT from a 1.6 pod still serving
+  /// during a rolling deploy. The migration backfills every existing row; see the migration SQL for
+  /// the value derivation.
   issuer String?
 
-  // Kept alongside the new (issuer, accountId) key rather than replaced: it is what 1.6 matched on,
-  // so it keeps a rollback to 1.6 working and guards against a backfill that collapses two providers
-  // onto one issuer.
+  // The key Better Auth 1.6 and 1.7.7 look accounts up by. The (issuer, providerAccountId) one is
+  // 1.7.0's, kept for a rollback; together they also guard against a backfill that collapses two
+  // providers onto one issuer.
   @@unique([provider, providerAccountId])
   @@unique([issuer, providerAccountId])
   @@index([userId])
@@ -1292,6 +1384,7 @@ model User {
   ownedSurveys              Survey[]             @relation("SurveyOwner")
   charts                    Chart[]              @relation("chartCreatedBy")
   dashboards                Dashboard[]          @relation("dashboardCreatedBy")
+  creatives                 Creative[]           @relation("CreativeCreator")
   feedbackSources           FeedbackSource[]
   teamUsers                 TeamUser[]
   workflows                 Workflow[]           @relation("workflowCreatedBy")
@@ -1300,6 +1393,7 @@ model User {
   exemptionsCreated         RetentionExemption[] @relation("retentionExemptionCreatedBy")
   exemptionsRevoked         RetentionExemption[] @relation("retentionExemptionRevokedBy")
   retentionNotices          RetentionNotice[]
+  attachmentExports         AttachmentExport[]
   lastLoginAt               DateTime?
   isActive                  Boolean              @default(true)
   /// When an admin last reactivated this user. Restarts the members retention clock (ENG-3713)
@@ -1352,14 +1446,15 @@ model Segment {
 /// @property alias - Optional friendly name
 /// @property workspace - The workspace this language is enabled for
 model Language {
-  id              String           @id @default(cuid())
-  createdAt       DateTime         @default(now()) @map(name: "created_at")
-  updatedAt       DateTime         @updatedAt @map(name: "updated_at")
-  code            String
-  alias           String?
-  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId     String
-  surveyLanguages SurveyLanguage[]
+  id                String             @id @default(cuid())
+  createdAt         DateTime           @default(now()) @map(name: "created_at")
+  updatedAt         DateTime           @updatedAt @map(name: "updated_at")
+  code              String
+  alias             String?
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  surveyLanguages   SurveyLanguage[]
+  creativeLanguages CreativeLanguage[]
 
   @@unique([workspaceId, code])
 }
@@ -1704,6 +1799,9 @@ enum DeletionCleanupKind {
   storageFiles
   /// A deleted survey's whole upload folder, `{workspaceId}/private/surveys/{surveyId}/`.
   storageSurveyFolder
+  /// One live response whose Low quality outcome changed: its Hub records are removed or rebuilt to match
+  /// the response's outcome as the drain reads it (ENG-6785). The only kind whose response still exists.
+  hubResponseOutcome
 }
 
 /// Work left over after a delete commits (ENG-3612, ENG-3614: deleted means deleted): Hub records and
@@ -1721,7 +1819,7 @@ model DeletionCleanup {
   surveyId       String
   /// Hub kinds: the organisation's feedback directories, read inside the delete's transaction.
   tenantIds      String[]            @default([])
-  /// `hubResponses`: the deleted responses whose records go.
+  /// `hubResponses`: the deleted responses whose records go. `hubResponseOutcome`: exactly one live response.
   responseIds    String[]            @default([])
   /// `storageFiles`: the object keys or URLs to delete.
   fileKeys       String[]            @default([])
@@ -1734,6 +1832,59 @@ model DeletionCleanup {
   @@index([nextAttemptAt])
   /// An organisation's oldest pending cleanup, for the Data retention health banner.
   @@index([organizationId, createdAt])
+}
+
+enum AttachmentExportStatus {
+  queued
+  running
+  completed
+  failed
+  expired
+}
+
+/// A survey's response attachments built into one ZIP in object storage by a background job and
+/// downloaded through a short-lived presigned URL, so an interrupted download can resume (ENG-6862).
+/// Only the requester reads it. The reconcile job deletes the archive at `expiresAt`; deleting the
+/// survey deletes it with the survey's storage prefix.
+///
+/// A partial unique index in the migration allows one queued or running export per requester and
+/// survey, so a double click returns the export already in flight.
+model AttachmentExport {
+  id                String                 @id @default(cuid(2))
+  createdAt         DateTime               @default(now()) @map(name: "created_at")
+  updatedAt         DateTime               @updatedAt @map(name: "updated_at")
+  survey            Survey                 @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  surveyId          String
+  workspace         Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  requestedBy       User?                  @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+  requestedById     String?
+  status            AttachmentExportStatus @default(queued)
+  /// The response filter at request time, a `TResponseFilterCriteria`; null exports every response.
+  filterCriteria    Json?
+  /// IANA zone the archive's folder names are stamped in: the org's display zone at request time.
+  timeZone          String
+  /// Bumped on every enqueue and part of the job id, so a re-dispatch never dedupes against a job an
+  /// older pod dropped as unknown during a rolling upgrade.
+  dispatchCount     Int                    @default(0)
+  /// The pre-flight's counts, shown while the archive builds.
+  fileCount         Int
+  responseCount     Int
+  /// What the archive actually holds, once built.
+  includedFileCount Int?
+  totalBytes        BigInt?
+  truncated         Boolean                @default(false)
+  storageKey        String?
+  /// A short code (`stale`, `storage_upload_failed`, …), never a message or file name.
+  errorCode         String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  expiresAt         DateTime?
+
+  @@index([surveyId, requestedById, createdAt])
+  @@index([status, createdAt])
+  @@index([expiresAt])
+  @@index([workspaceId])
 }
 
 /// A feedback source — connects external data into Unify Feedback for record creation.

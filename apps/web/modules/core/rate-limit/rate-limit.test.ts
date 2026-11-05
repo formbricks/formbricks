@@ -1,4 +1,5 @@
 // Import modules after mocking
+import * as Sentry from "@sentry/nextjs";
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 // Import after mocking
@@ -15,12 +16,15 @@ const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
   const _mockEval = vi.fn();
   const _mockGet = vi.fn();
   const _mockRedisClient = {
-    eval: _mockEval,
+    evalSha: _mockEval,
     get: _mockGet,
   } as any;
 
   const _mockCache = {
     getRedisClient: vi.fn().mockResolvedValue(_mockRedisClient),
+    runRedisOperation: vi.fn(async (operation: (client: typeof _mockRedisClient) => Promise<unknown>) =>
+      operation(_mockRedisClient)
+    ),
   };
 
   return {
@@ -29,6 +33,11 @@ const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
     mockRedisClient: _mockRedisClient,
     mockCache: _mockCache,
   };
+});
+
+const cacheWithClient = <T>(client: T) => ({
+  getRedisClient: vi.fn().mockResolvedValue(client),
+  runRedisOperation: vi.fn((operation: (redis: T) => Promise<unknown>) => operation(client)),
 });
 
 // Mock all dependencies (will use the hoisted mocks above)
@@ -52,6 +61,13 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@sentry/nextjs", () => ({
   addBreadcrumb: vi.fn(),
   captureException: vi.fn(),
+}));
+
+const { mockRecordRateLimiterUnavailable } = vi.hoisted(() => ({
+  mockRecordRateLimiterUnavailable: vi.fn(),
+}));
+vi.mock("./rate-limit-metrics", () => ({
+  recordRateLimiterUnavailable: mockRecordRateLimiterUnavailable,
 }));
 
 describe("checkRateLimit", () => {
@@ -166,13 +182,10 @@ describe("checkRateLimit", () => {
 
     await checkRateLimit(testConfig, "test-user");
 
-    expect(mockEval).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        keys: [expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/)],
-        arguments: ["5", expect.any(String), "1"],
-      })
-    );
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
+      keys: [expect.stringMatching(/^fb:rate_limit:test:test-user:\d+$/)],
+      arguments: ["5", expect.any(String), "1"],
+    });
   });
 
   test("should use provided namespace", async () => {
@@ -186,13 +199,10 @@ describe("checkRateLimit", () => {
 
     await checkRateLimit(configWithCustomNamespace, "test-user");
 
-    expect(mockEval).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        keys: [expect.stringMatching(/^fb:rate_limit:custom:test-user:\d+$/)],
-        arguments: ["5", expect.any(String), "1"],
-      })
-    );
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
+      keys: [expect.stringMatching(/^fb:rate_limit:custom:test-user:\d+$/)],
+      arguments: ["5", expect.any(String), "1"],
+    });
   });
 
   test("should calculate correct TTL for window expiration", async () => {
@@ -212,12 +222,10 @@ describe("checkRateLimit", () => {
     const result = await checkRateLimit(testConfig, "test-user", 5);
 
     expect(result).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
-    expect(mockEval).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        arguments: ["5", expect.any(String), "5"],
-      })
-    );
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
+      keys: [expect.any(String)],
+      arguments: ["5", expect.any(String), "5"],
+    });
   });
 
   test("should return an exact-window receipt for a weighted reservation", async () => {
@@ -252,7 +260,7 @@ describe("checkRateLimit", () => {
 
     await settleRateLimit(reservation, 2);
 
-    expect(mockEval).toHaveBeenCalledWith(expect.any(String), {
+    expect(mockEval).toHaveBeenCalledWith(expect.stringMatching(/^[0-9a-f]{40}$/), {
       keys: [reservation.key],
       arguments: ["3"],
     });
@@ -340,11 +348,7 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          eval: vi.fn().mockResolvedValue([6, 0]),
-        }),
-      },
+      cache: cacheWithClient({ evalSha: vi.fn().mockResolvedValue([6, 0]) }),
     }));
 
     // Dynamic import after mocking
@@ -383,11 +387,7 @@ describe("checkRateLimit", () => {
     }));
 
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          eval: vi.fn().mockResolvedValue([6, 0]),
-        }),
-      },
+      cache: cacheWithClient({ evalSha: vi.fn().mockResolvedValue([6, 0]) }),
     }));
 
     // Dynamic import after mocking
@@ -436,11 +436,7 @@ describe("checkRateLimit", () => {
 
     const redisError = new Error("Redis connection failed");
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          eval: vi.fn().mockRejectedValue(redisError),
-        }),
-      },
+      cache: cacheWithClient({ evalSha: vi.fn().mockRejectedValue(redisError) }),
     }));
 
     // Dynamic import after mocking
@@ -586,11 +582,7 @@ describe("peekRateLimit", () => {
 
     const redisError = new Error("Redis connection failed");
     vi.doMock("@/lib/cache", () => ({
-      cache: {
-        getRedisClient: vi.fn().mockResolvedValue({
-          get: vi.fn().mockRejectedValue(redisError),
-        }),
-      },
+      cache: cacheWithClient({ get: vi.fn().mockRejectedValue(redisError) }),
     }));
 
     const { peekRateLimit: peekRateLimitMocked } = await import("./rate-limit");
@@ -615,5 +607,59 @@ describe("peekRateLimit", () => {
         }),
       })
     );
+  });
+});
+
+describe("when the limiter cannot reach Redis", () => {
+  const openConfig: TRateLimitConfig = { interval: 300, allowedPerInterval: 5, namespace: "test" };
+  const closedConfig: TRateLimitConfig = { ...openConfig, failClosed: true };
+  const checks = [
+    ["checkRateLimit", checkRateLimit],
+    ["reserveRateLimit", reserveRateLimit],
+    ["peekRateLimit", peekRateLimit],
+  ] as const;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEval.mockReset();
+    mockGet.mockReset();
+    mockCache.getRedisClient.mockResolvedValue(mockRedisClient);
+  });
+
+  test.each(checks)("%s refuses a failClosed limit when there is no Redis client", async (_, check) => {
+    mockCache.getRedisClient.mockResolvedValue(null);
+
+    const result = await check(closedConfig, "test-user");
+
+    expect(result.ok).toBe(false);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "test", failClosed: true }),
+      "Redis unavailable"
+    );
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({
+      failMode: "closed",
+      reason: "no_client",
+    });
+  });
+
+  test.each(checks)("%s refuses a failClosed limit when the Redis call throws", async (_, check) => {
+    const redisError = new Error("Redis connection failed");
+    mockEval.mockRejectedValue(redisError);
+    mockGet.mockRejectedValue(redisError);
+
+    const result = await check(closedConfig, "test-user");
+
+    expect(result.ok).toBe(false);
+    expect(Sentry.captureException).toHaveBeenCalledWith(redisError, expect.anything());
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({ failMode: "closed", reason: "error" });
+  });
+
+  test.each(checks)("%s still lets a limit without failClosed through", async (_, check) => {
+    mockCache.getRedisClient.mockResolvedValue(null);
+
+    const result = await check(openConfig, "test-user");
+
+    expect(result).toEqual({ ok: true, data: { allowed: true } });
+    expect(mockRecordRateLimiterUnavailable).toHaveBeenCalledWith({ failMode: "open", reason: "no_client" });
   });
 });

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { updateUserAction } from "./actions";
+import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { resetPasswordAction, updateUserAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -10,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
   updateBrevoCustomer: vi.fn(),
   sendVerificationNewEmail: vi.fn(),
+  requestPasswordReset: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -32,8 +34,17 @@ vi.mock("@/lib/user/password", () => ({ verifyUserPassword: mocks.verifyUserPass
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ updateBrevoCustomer: mocks.updateBrevoCustomer }));
 vi.mock("@/modules/email", () => ({ sendVerificationNewEmail: mocks.sendVerificationNewEmail }));
-vi.mock("@/modules/auth/lib/auth", () => ({ auth: { api: { revokeUserSessions: vi.fn() } } }));
+vi.mock("@/modules/auth/lib/auth", () => ({
+  auth: { api: { revokeUserSessions: vi.fn(), requestPasswordReset: mocks.requestPasswordReset } },
+}));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
+// CI's environment turns password reset and email verification off; these tests are about the paths where
+// they are on.
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  PASSWORD_RESET_DISABLED: false,
+  EMAIL_VERIFICATION_DISABLED: false,
+}));
 
 const ctxFor = (identityProvider: string, name = "Doe, Jane") => ({
   user: { id: "user-1", name, email: "jane@corp.test", locale: "en-US", identityProvider },
@@ -86,5 +97,60 @@ describe("updateUserAction — name is IdP-owned for SSO users", () => {
       parsedInput: { locale: "de-DE" },
     });
     expect(mocks.updateUser).toHaveBeenCalledWith("user-1", { locale: "de-DE" });
+  });
+});
+
+// The signed-in reset has a budget of its own (ENG-3823): it was the one way to have reset emails sent with no
+// limit, and sharing forgot-password's per-account budget would let strangers spend it.
+describe("resetPasswordAction — its own reset email budget", () => {
+  const reset = resetPasswordAction as unknown as (a: unknown) => Promise<unknown>;
+
+  test("charges the account's reset budget before asking for a reset", async () => {
+    await reset({ ctx: ctxFor("email") });
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+      rateLimitConfigs.actions.passwordResetRequest,
+      "user-1"
+    );
+    expect(mocks.requestPasswordReset).toHaveBeenCalledOnce();
+  });
+
+  test("sends nothing once the budget is spent", async () => {
+    mocks.applyRateLimit.mockRejectedValueOnce(new TooManyRequestsError("Maximum number of requests"));
+
+    await expect(reset({ ctx: ctxFor("email") })).rejects.toBeInstanceOf(TooManyRequestsError);
+    expect(mocks.requestPasswordReset).not.toHaveBeenCalled();
+  });
+});
+
+// A taken address returns quietly, so a capped verification email must too, or the refusal would tell the
+// user which addresses are free (ENG-3823).
+describe("updateUserAction — a capped email-change email looks like a sent one", () => {
+  test("answers the same as for a taken address when the email is rate limited", async () => {
+    mocks.verifyUserPassword.mockResolvedValue(true);
+    mocks.getIsEmailUnique.mockResolvedValue(true);
+    mocks.sendVerificationNewEmail.mockRejectedValueOnce(
+      new TooManyRequestsError("Maximum number of requests")
+    );
+
+    await expect(
+      (updateUserAction as unknown as (a: unknown) => Promise<unknown>)({
+        ctx: ctxFor("email"),
+        parsedInput: { email: "free@corp.test", password: "secret" },
+      })
+    ).resolves.toBeDefined();
+  });
+
+  test("still reports any other send failure", async () => {
+    mocks.verifyUserPassword.mockResolvedValue(true);
+    mocks.getIsEmailUnique.mockResolvedValue(true);
+    mocks.sendVerificationNewEmail.mockRejectedValueOnce(new Error("smtp down"));
+
+    await expect(
+      (updateUserAction as unknown as (a: unknown) => Promise<unknown>)({
+        ctx: ctxFor("email"),
+        parsedInput: { email: "free@corp.test", password: "secret" },
+      })
+    ).rejects.toThrow("smtp down");
   });
 });

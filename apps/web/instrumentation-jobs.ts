@@ -1,5 +1,6 @@
 import { type JobHandlerOverrides, type JobsRuntimeHandle, startJobsRuntime } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { observeAuthzedOutboxHealth } from "@/lib/authzed/outbox-processor";
 import { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { RECURRING_JOB_REGISTRATIONS, getJobHandlerOverrides } from "@/lib/jobs/recurring-registrations";
 import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
@@ -141,6 +142,9 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     logger.debug("BullMQ worker startup skipped");
     return null;
   }
+
+  // Before the runtime starts, and whether or not it does: it reads PostgreSQL, not Redis.
+  observeAuthzedOutboxHealth();
 
   if (globalForJobsRuntime.formbricksJobsRuntime) {
     return globalForJobsRuntime.formbricksJobsRuntime;

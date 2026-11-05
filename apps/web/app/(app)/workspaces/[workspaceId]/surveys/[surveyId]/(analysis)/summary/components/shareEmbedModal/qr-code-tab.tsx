@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/ale
 import { Button } from "@/modules/ui/components/button";
 
 interface QRCodeTabProps {
-  surveyUrl: string;
+  readonly surveyUrl: string;
 }
 
 export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {

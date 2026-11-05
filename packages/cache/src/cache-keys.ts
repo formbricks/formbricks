@@ -21,6 +21,24 @@ export const createCacheKey = {
     config: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "config"),
     segments: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "segments"),
     languages: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "languages"),
+    /**
+     * Which of the creatives a client events request names it may count for (ENG-4000), keyed by the
+     * workspace id the SDK sends and a hash of the set of creative ids.
+     */
+    creativeIds: (workspaceId: string, creativeIdsHash: string): CacheKey =>
+      makeCacheKey("env", workspaceId, "creative-ids", creativeIdsHash),
+  },
+
+  // Creative counters (ENG-4000): one UTC day's running totals, which the flush job copies to
+  // Postgres, and the sets of creatives with totals not yet copied. Counters, not a cache: they carry a
+  // TTL of about two days and are never invalidated.
+  creativeStats: {
+    devices: (day: string, creativeId: string): CacheKey =>
+      makeCacheKey("creative-stats", day, creativeId, "devices"),
+    pages: (day: string, creativeId: string): CacheKey =>
+      makeCacheKey("creative-stats", day, creativeId, "pages"),
+    pending: (day: string): CacheKey => makeCacheKey("creative-stats", day, "pending"),
+    flushing: (day: string): CacheKey => makeCacheKey("creative-stats", day, "flushing"),
   },
 
   // Organization-related keys
@@ -64,6 +82,9 @@ export const createCacheKey = {
   rateLimit: {
     core: (namespace: string, identifier: string, windowStart: number): CacheKey =>
       makeCacheKey("rate_limit", namespace, identifier, String(windowStart)),
+    // A sorted set of the operations a principal has running now, for a limit on how many run at once.
+    inFlight: (namespace: string, identifier: string): CacheKey =>
+      makeCacheKey("rate_limit", namespace, identifier, "in_flight"),
   },
 
   // Custom keys with validation

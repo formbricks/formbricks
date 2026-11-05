@@ -26,13 +26,13 @@ import { Input } from "@/modules/ui/components/input";
 import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
 
 interface VerifyEmailProps {
-  survey: TSurvey;
-  isErrorComponent?: boolean;
-  singleUseId?: string;
-  singleUseToken?: string;
-  languageCode: string;
-  styling: TWorkspaceStyling;
-  locale: TUserLocale;
+  readonly survey: TSurvey;
+  readonly isErrorComponent?: boolean;
+  readonly singleUseId?: string;
+  readonly singleUseToken?: string;
+  readonly languageCode: string;
+  readonly styling: TWorkspaceStyling;
+  readonly locale: TUserLocale;
 }
 
 const ZVerifyEmailInput = z.object({
@@ -81,7 +81,6 @@ export const VerifyEmail = ({
     const data = {
       surveyId: localSurvey.id,
       email: email,
-      surveyName: localSurvey.name,
       suId: singleUseId ?? "",
       suToken: singleUseToken,
       locale,

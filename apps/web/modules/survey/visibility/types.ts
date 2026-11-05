@@ -20,7 +20,7 @@ type TSurveyVisibilityFields = {
 export type TSurveyVisibilityBlocker = {
   id: string;
   name: string;
-  type: "dashboard" | "feedbackSource" | "integration" | "webhook" | "workflow";
+  type: "creative" | "dashboard" | "feedbackSource" | "integration" | "webhook" | "workflow";
 };
 
 export type TSurveyVisibilityState = TSurveyVisibilityFields & {

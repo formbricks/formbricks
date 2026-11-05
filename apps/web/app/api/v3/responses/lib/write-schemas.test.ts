@@ -12,11 +12,13 @@ import {
   unenforcedKey,
   validatorFor,
 } from "@formbricks/api-v3-schemas/testing";
+import { MAX_RESPONSE_DATA_KEYS, MAX_RESPONSE_DATA_VALUES } from "@formbricks/types/responses";
 import {
-  MAX_RESPONSE_DATA_KEYS,
-  MAX_RESPONSE_DATA_VALUES,
+  V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS,
   ZV3BatchDeleteResponsesBody,
   ZV3BatchDeleteResponsesQuery,
+  ZV3BatchSetResponsesOutcomeBody,
+  ZV3BatchSetResponsesOutcomeQuery,
   ZV3CreateResponseBody,
   ZV3PatchResponseBody,
   ZV3ResponseIdParams,
@@ -77,12 +79,62 @@ describe("ZV3CreateResponseBody", () => {
     expect(create({ data: { q1: rows(1_001) } }).success).toBe(false);
   });
 
-  test("a response is capped at 500 answered fields", () => {
+  test("a response is capped at the answered-field limit", () => {
     const fields = (count: number) =>
       Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`q${i}`, "text"]));
 
-    expect(create({ data: fields(500) }).success).toBe(true);
-    expect(create({ data: fields(501) }).success).toBe(false);
+    expect(create({ data: fields(MAX_RESPONSE_DATA_KEYS) }).success).toBe(true);
+    expect(create({ data: fields(MAX_RESPONSE_DATA_KEYS + 1) }).success).toBe(false);
+  });
+
+  // Every oversized matrix is checked before parsing, and the first one is the one issue reported.
+  test("several oversized matrices are refused with one issue, at the first", () => {
+    const rows = (count: number) =>
+      Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`r${i}`, "c"]));
+    const result = create({ data: { a: rows(1_001), b: rows(1_001), c: rows(1_001) } });
+
+    expect(result.success ? [] : result.error.issues).toEqual([
+      expect.objectContaining({ code: "custom", path: ["data", "a"] }),
+    ]);
+  });
+
+  // The key cap runs before Zod reads a value, so bad values past it add no issues of their own.
+  test.each([
+    ["data", { q: { nested: 1 } }],
+    ["embeddedData", ["not a scalar"]],
+    ["ttc", "not a number"],
+  ])("%s past the key cap is refused in a single issue, whatever its values hold", (field, value) => {
+    const map = Object.fromEntries(Array.from({ length: 100_000 }, (_unused, i) => [`k${i}`, value]));
+    const result = create({ [field]: map });
+
+    expect(result.success ? [] : result.error.issues).toHaveLength(1);
+  });
+
+  test("a matrix past its row cap is refused in a single issue, whatever its rows hold", () => {
+    const rows = Object.fromEntries(Array.from({ length: 100_000 }, (_unused, i) => [`r${i}`, 1]));
+    const result = create({ data: { matrix: rows } });
+    const issues = result.success ? [] : result.error.issues;
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({ code: "custom", path: ["data", "matrix"] });
+  });
+
+  // Each answer's shape is checked before parsing too, so a map full of wrong values is one issue, not
+  // one per value or per matrix row.
+  test.each([
+    ["data", { row: 1 }],
+    ["data", [1, 2, 3]],
+    ["data", true],
+    ["embeddedData", ["not a scalar"]],
+    ["ttc", "not a number"],
+  ])("%s full of wrong values (%j) is refused in a single issue, at the first", (field, value) => {
+    const count = field === "embeddedData" ? V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS : MAX_RESPONSE_DATA_KEYS;
+    const map = Object.fromEntries(Array.from({ length: count }, (_unused, i) => [`k${i}`, value]));
+    const result = create({ [field]: map });
+
+    expect(result.success ? [] : result.error.issues).toEqual([
+      expect.objectContaining({ code: "custom", path: [field, "k0"] }),
+    ]);
   });
 
   test("data refuses a shape no element can store", () => {
@@ -155,7 +207,9 @@ describe("ZV3PatchResponseBody", () => {
   // The patch body reuses the create body's capped `data` schema, so the caps must come with it — a
   // separate schema here would be the obvious way to lose them.
   test("inherits the create body's data caps", () => {
-    const wide = Object.fromEntries(Array.from({ length: 501 }, (_unused, i) => [`q${i}`, "text"]));
+    const wide = Object.fromEntries(
+      Array.from({ length: MAX_RESPONSE_DATA_KEYS + 1 }, (_unused, i) => [`q${i}`, "text"])
+    );
 
     expect(ZV3PatchResponseBody.safeParse({ data: wide }).success).toBe(false);
     expect(
@@ -186,11 +240,61 @@ describe("ZV3PatchResponseBody", () => {
     }
   );
 
+  describe("outcome", () => {
+    test.each(["lowQuality", null])("%s is a valid patch on its own — null restores", (outcome) => {
+      expect(ZV3PatchResponseBody.safeParse({ outcome }).success).toBe(true);
+    });
+
+    test.each(["spam", "", "LowQuality", 1, true])("%j is not an outcome", (outcome) => {
+      expect(ZV3PatchResponseBody.safeParse({ outcome }).success).toBe(false);
+    });
+  });
+
   /** Unlike create: a patch applies tags as a set, so a repeat is redundant rather than ambiguous. */
   test("repeated tag ids are accepted on patch", () => {
     const dup = "cltg000000000000000000001";
 
     expect(ZV3PatchResponseBody.safeParse({ tags: [dup, dup] }).success).toBe(true);
+  });
+});
+
+describe("ZV3BatchSetResponsesOutcomeBody", () => {
+  const ID_A = "clrsaaaaaaaaaaaaaaaaaaaa";
+  const parse = (body: unknown) => ZV3BatchSetResponsesOutcomeBody.safeParse(body);
+
+  test.each(["lowQuality", null])("accepts ids with outcome %s", (outcome) => {
+    expect(parse({ ids: [ID_A], outcome }).success).toBe(true);
+  });
+
+  test("outcome is required: omitting it must not read as a restore", () => {
+    expect(parse({ ids: [ID_A] }).success).toBe(false);
+  });
+
+  test.each([
+    ["an empty ids array", { ids: [], outcome: null }],
+    [
+      "more than 100 ids",
+      {
+        ids: Array.from({ length: 101 }, (_unused, i) => `clrs${String(i).padStart(20, "a")}`),
+        outcome: null,
+      },
+    ],
+    ["duplicate ids", { ids: [ID_A, ID_A], outcome: "lowQuality" }],
+    ["an unknown outcome", { ids: [ID_A], outcome: "spam" }],
+    ["an unsupported field", { ids: [ID_A], outcome: null, finished: true }],
+  ])("rejects %s", (_label, body) => {
+    expect(parse(body).success).toBe(false);
+  });
+
+  test("the scope is a required workspaceId query, closed", () => {
+    expect(ZV3BatchSetResponsesOutcomeQuery.safeParse({}).success).toBe(false);
+    expect(
+      ZV3BatchSetResponsesOutcomeQuery.safeParse({ workspaceId: "clsww11111111111111111111", extra: "x" })
+        .success
+    ).toBe(false);
+    expect(
+      ZV3BatchSetResponsesOutcomeQuery.safeParse({ workspaceId: "clsww11111111111111111111" }).success
+    ).toBe(true);
   });
 });
 
@@ -225,7 +329,7 @@ describe("ResponseDataMap contract bounds match the schema", () => {
 
   /**
    * The bounds are enforced by the request schema only. `ResponseDataMap` is what the read returns,
-   * and the v1 and v2 write paths store the same map uncapped — so a response can legitimately carry
+   * and other write paths cap it per request at most — so a stored response can carry
    * more than these bounds allow, and publishing them on the read shape would make
    * `GET /api/v3/responses/{responseId}` describe payloads it actually returns as invalid. Putting
    * them there is the mistake this guards, because nothing else would fail: the Zod bounds are
@@ -251,10 +355,10 @@ describe("ResponseDataMap contract bounds match the schema", () => {
    * `$ref` it), so the bound sits on them directly rather than needing an input split.
    */
   test.each([
-    ["ResponseEmbeddedDataInput", "embeddedData"],
-    ["ResponseTtcMap", "ttc"],
-  ])("%s publishes the same key cap the schema enforces on %s", (file) => {
-    expect(declared(file, "maxProperties")).toEqual([MAX_RESPONSE_DATA_KEYS]);
+    ["ResponseEmbeddedDataInput", "embeddedData", V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS],
+    ["ResponseTtcMap", "ttc", MAX_RESPONSE_DATA_KEYS],
+  ])("%s publishes the key cap the schema enforces on %s", (file, _field, cap) => {
+    expect(declared(file, "maxProperties")).toEqual([cap]);
   });
 
   test("the input map bounds the read map without re-declaring its value union", () => {
@@ -287,11 +391,11 @@ describe("the other element-keyed maps carry the same key cap", () => {
     Object.fromEntries(Array.from({ length: n }, (_, i) => [`k${i}`, value]));
 
   test.each([
-    ["embeddedData", "v"],
-    ["ttc", 1],
-  ])("%s accepts the cap and refuses one more", (field, value) => {
-    const at = ZV3CreateResponseBody.safeParse(body({ [field]: keys(MAX_RESPONSE_DATA_KEYS, value) }));
-    const over = ZV3CreateResponseBody.safeParse(body({ [field]: keys(MAX_RESPONSE_DATA_KEYS + 1, value) }));
+    ["embeddedData", "v", V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS],
+    ["ttc", 1, MAX_RESPONSE_DATA_KEYS],
+  ])("%s accepts the cap and refuses one more", (field, value, cap) => {
+    const at = ZV3CreateResponseBody.safeParse(body({ [field]: keys(cap, value) }));
+    const over = ZV3CreateResponseBody.safeParse(body({ [field]: keys(cap + 1, value) }));
 
     expect(at.success).toBe(true);
     expect(over.success).toBe(false);
@@ -330,6 +434,13 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "BatchDeleteResponsesRequest $.ids uniqueItems": [
       { schema: ZV3BatchDeleteResponsesBody, input: { ids: [ID, ID] }, path: ["ids"] },
     ],
+    "BatchSetResponsesOutcomeRequest $.ids uniqueItems": [
+      {
+        schema: ZV3BatchSetResponsesOutcomeBody,
+        input: { ids: [ID, ID], outcome: "lowQuality" },
+        path: ["ids"],
+      },
+    ],
     "CreateResponseRequest $.data maxProperties": [createData(keys(MAX_RESPONSE_DATA_KEYS + 1, "a"))],
     "CreateResponseRequest $.data{} conditional": [
       { ...createData({ q: tooManyValues }), path: ["data", "q"] },
@@ -338,7 +449,7 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "CreateResponseRequest $.embeddedData maxProperties": [
       {
         schema: ZV3CreateResponseBody,
-        input: createBody({ embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") }),
+        input: createBody({ embeddedData: keys(V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS + 1, "v") }),
         path: ["embeddedData"],
       },
     ],
@@ -367,7 +478,7 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "PatchResponseRequest $.embeddedData maxProperties": [
       {
         schema: ZV3PatchResponseBody,
-        input: { embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") },
+        input: { embeddedData: keys(V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS + 1, "v") },
         path: ["embeddedData"],
       },
     ],
@@ -377,7 +488,7 @@ describe("every constraint the generator cannot express is enforced here", () =>
     "ResponseEmbeddedDataInput $ maxProperties": [
       {
         schema: ZV3CreateResponseBody,
-        input: createBody({ embeddedData: keys(MAX_RESPONSE_DATA_KEYS + 1, "v") }),
+        input: createBody({ embeddedData: keys(V3_RESPONSE_MAX_EMBEDDED_DATA_KEYS + 1, "v") }),
         path: ["embeddedData"],
       },
     ],
@@ -445,6 +556,7 @@ describe("the route schemas match the contract", () => {
     ["CreateResponseRequest", ZV3CreateResponseBody],
     ["PatchResponseRequest", ZV3PatchResponseBody],
     ["BatchDeleteResponsesRequest", ZV3BatchDeleteResponsesBody],
+    ["BatchSetResponsesOutcomeRequest", ZV3BatchSetResponsesOutcomeBody],
     ["ValidateResponseRequest", ZV3ResponseValidationRequestBody],
     // The envelope is a union, which the runtime required-key check does not enter; each arm is
     // compared on its own so the `data` presence rule is proven per variant.
@@ -462,6 +574,7 @@ describe("the route schemas match the contract", () => {
   test.each([
     ["getResponseV3", "path", ZV3ResponseIdParams],
     ["batchDeleteResponsesV3", "query", ZV3BatchDeleteResponsesQuery],
+    ["batchSetResponsesOutcomeV3", "query", ZV3BatchSetResponsesOutcomeQuery],
   ] as const)("%s %s parameters match the contract, closed", (operationId, location, schema) => {
     const spec = parametersAsObjectSchema(bundle, operationId, location);
     expect(spec).toBeDefined();
@@ -478,11 +591,18 @@ describe("the route schemas match the contract", () => {
     ["CreateResponseRequest", ZV3CreateResponseBody],
     ["PatchResponseRequest", ZV3PatchResponseBody],
     ["BatchDeleteResponsesRequest", ZV3BatchDeleteResponsesBody],
+    ["BatchSetResponsesOutcomeRequest", ZV3BatchSetResponsesOutcomeBody],
     ["ValidateResponseRequest", ZV3ResponseValidationRequestBody],
   ]);
   const requestExamples = collectOperationExamples(
     bundle,
-    new Set(["createResponseV3", "updateResponseV3", "batchDeleteResponsesV3", "validateResponseV3"])
+    new Set([
+      "createResponseV3",
+      "updateResponseV3",
+      "batchDeleteResponsesV3",
+      "batchSetResponsesOutcomeV3",
+      "validateResponseV3",
+    ])
   ).filter((example) => example.label.includes(" request "));
 
   test.each(requestExamples.map((example) => [example.label, example] as const))(

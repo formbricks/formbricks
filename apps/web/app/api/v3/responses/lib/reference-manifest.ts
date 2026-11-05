@@ -145,6 +145,8 @@ export const V3_RESPONSE_BODY_FIELDS: Record<string, TV3ReferenceKind> = {
   // Element ids are survey-local and the survey is authorized before the write, so there is no tenant
   // question here; if `ttc` ever gains meaning beyond telemetry this is the line that has to change.
   finished: "none",
+  // The response's own reviewer verdict, a two-value enum; it names nothing outside the response.
+  outcome: "none",
   meta: "none",
   ttc: "none",
   // The validate envelope's discriminator. Picks which planner runs, names nothing.
@@ -194,6 +196,13 @@ export const V3_RESPONSE_DENIED_FIELDS = [
 
 /**
  * Nested fields that must never appear. The routes derive these from the request, so a caller-supplied
- * value would be fiction — and, stored in `meta`, a forgeable one.
+ * value would be fiction — and, stored in `meta`, a forgeable one. The opened-by-creative pair (ENG-4001)
+ * is stamped only by the client ingest routes, after they check the creative opens that survey.
  */
-export const V3_RESPONSE_DENIED_NESTED_FIELDS = ["meta.country", "meta.userAgent", "meta.ipAddress"] as const;
+export const V3_RESPONSE_DENIED_NESTED_FIELDS = [
+  "meta.country",
+  "meta.userAgent",
+  "meta.ipAddress",
+  "meta.openedByCreativeId",
+  "meta.openedByCreativeName",
+] as const;

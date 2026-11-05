@@ -1,0 +1,20 @@
+---
+title: "Creatives"
+description: "Put a feedback button or a notice banner on your website with no code beyond the Formbricks snippet."
+icon: "megaphone"
+sidebarTitle: "Creatives"
+---
+
+Creatives put a feedback button or a banner on the websites that run the Formbricks JavaScript SDK. Your team builds, schedules and pauses them in Formbricks, and each one opens a survey or a link on every click.
+
+<Note>
+  Creatives are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license) and need a license
+  that includes them. They are not available on Formbricks Cloud. If your license stops including Creatives,
+  they are hidden from your sites. You can still see them and their numbers, and pause, close or delete them;
+  everything else, from creating and editing to resuming, duplicating, archiving and restoring, is locked until
+  the license includes Creatives again.
+</Note>
+
+Impressions and clicks are written to the database by the background [job worker](/self-hosting/configuration/job-runner), which runs inside Formbricks by default. If you turned it off for a [custom external worker](/self-hosting/configuration/job-runner#use-a-custom-external-worker), that worker has to run `creative-stats.flush`, or the counts never reach the summary pages.
+
+Read the full guide: [Creatives](/surveys/creatives/overview).

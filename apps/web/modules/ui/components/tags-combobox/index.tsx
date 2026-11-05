@@ -13,14 +13,14 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface ITagsComboboxProps {
-  tags: Tag[];
-  currentTags: Tag[];
-  addTag: (tagId: string) => void;
-  createTag?: (tagName: string) => void;
-  searchValue: string;
-  setSearchValue: React.Dispatch<React.SetStateAction<string>>;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  readonly tags: Tag[];
+  readonly currentTags: Tag[];
+  readonly addTag: (tagId: string) => void;
+  readonly createTag?: (tagName: string) => void;
+  readonly searchValue: string;
+  readonly setSearchValue: React.Dispatch<React.SetStateAction<string>>;
+  readonly open: boolean;
+  readonly setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type Tag = {

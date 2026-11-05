@@ -40,7 +40,7 @@ import {
   StylingAppearanceProvider,
   StylingAppearanceToggle,
 } from "@/modules/ui/components/styling-appearance";
-import { ColorField } from "@/modules/ui/components/styling-fields";
+import { ColorField, PageFontField } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
 import { ThemeStylingPreviewSurvey } from "@/modules/ui/components/theme-styling-preview-survey";
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
@@ -119,15 +119,22 @@ export const ThemeStyling = ({
   // A stable prop, so the preview only re-applies custom CSS when the validated output changes.
   const previewCustomCss = useMemo(() => ({ workspace: customCssPreview }), [customCssPreview]);
   const onReset = useCallback(async () => {
+    // Page font is not part of the theme: there is no single default to reset it to (new workspaces start
+    // with it on, older ones without it), so a reset keeps the saved choice (ENG-3864).
+    const savedPageFont = savedStyling?.pageFont;
+    const resetStyling: TWorkspaceStyling = {
+      ...STYLE_DEFAULTS,
+      ...(typeof savedPageFont === "boolean" ? { pageFont: savedPageFont } : {}),
+    };
     const updatedWorkspaceResponse = await updateWorkspaceAction({
       workspaceId: workspace.id,
       data: {
-        styling: { ...STYLE_DEFAULTS },
+        styling: resetStyling,
       },
     });
 
     if (updatedWorkspaceResponse?.data) {
-      form.reset({ ...STYLE_DEFAULTS });
+      form.reset(resetStyling);
       setPreviewBrandColor(STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
       toast.success(t("workspace.look.styling_updated_successfully"));
       router.refresh();
@@ -135,7 +142,7 @@ export const ThemeStyling = ({
       const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
       toast.error(errorMessage);
     }
-  }, [form, workspace.id, router, t]);
+  }, [form, workspace.id, router, t, savedStyling?.pageFont]);
 
   const handleSuggestColors = () => {
     const brandColor = form.getValues().brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light;
@@ -280,6 +287,15 @@ export const ThemeStyling = ({
                   setOpen={setCustomCssOpen}
                   onPreviewCssChange={setCustomCssPreview}
                   saveRef={customCssSaveRef}
+                />
+              </div>
+
+              {/* Page font (ENG-3864): one setting for app surveys and creatives, not part of the survey theme. */}
+              <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4">
+                <PageFontField
+                  form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+                  description={t("workspace.look.font_workspace_description")}
+                  fallback={false}
                 />
               </div>
 

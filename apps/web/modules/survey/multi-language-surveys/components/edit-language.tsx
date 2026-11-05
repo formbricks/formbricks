@@ -36,9 +36,9 @@ import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
-  workspace: TWorkspace;
-  locale: TUserLocale;
-  isReadOnly: boolean;
+  readonly workspace: TWorkspace;
+  readonly locale: TUserLocale;
+  readonly isReadOnly: boolean;
 }
 
 const checkIfDuplicateExists = (arr: string[]) => {

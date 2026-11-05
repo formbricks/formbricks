@@ -125,9 +125,22 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
    * rules are already scoped to `#fbjs[data-appearance="dark"]`, so `setAppearance` switches them.
    */
   customCss?: TRendererCustomCss;
+  /**
+   * Page font (ENG-3864): the survey renders in the font of the page it is on instead of the survey
+   * font. Only an app survey on a web page has a page font to take, so only the web SDK (and the editor
+   * preview of an app survey) passes it; it is never read from `styling`, so a mobile SDK's WebView or a
+   * link survey keeps the survey font.
+   */
+  pageFont?: boolean;
   overlay?: "none" | "light" | "dark";
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   action?: string;
+  /**
+   * The creative whose click opened the survey (ENG-4001): js-core for a popup Destination, the link
+   * page for a validated `?creativeId=`. Sent with the display and, as `meta.openedByCreativeId`, with
+   * the response; the server checks it and stamps the creative's name. An older server ignores both.
+   */
+  creativeId?: string;
   /** The visit when the survey shows, from the web SDK (ENG-3926); saved as the `visit*` meta fields. */
   visit?: TVisitSnapshot;
   singleUseId?: string;

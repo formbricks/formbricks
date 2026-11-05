@@ -1,0 +1,165 @@
+get:
+  operationId: getChartV3
+  summary: Get a chart
+  description: |
+    Returns one chart with the dashboards that hold it. The workspace is resolved from the chart, so
+    the operation takes no query parameters — a `workspaceId` is refused with 400. Needs read access
+    to the chart's workspace; a chart the caller cannot see, or that does not exist, answers 403.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/ChartIdPath.yml
+  responses:
+    "200":
+      description: The chart
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: updateChartV3
+  summary: Update a chart
+  description: |
+    Edits a chart's name, type, chart query or display settings. The chart may sit on several
+    dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
+    the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
+    cannot change. Needs write access to the chart's workspace and, while its Feedback Dataset is
+    assigned to that workspace and not archived, to the dataset, as a delete does. Once the dataset is
+    unassigned or archived, the chart can still be renamed or restyled, but its `query` and `type` can
+    no longer change.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/ChartIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ChartUpdateRequest.yml
+  responses:
+    "200":
+      description: The updated chart
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteChartV3
+  summary: Delete a chart
+  description: |
+    Deletes a chart that sits on no dashboard. A chart still on one is refused with 409
+    `chart_in_use`, naming those dashboards in `details.dashboards` — remove it from them first
+    (`DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`); there is no force option. The
+    check and the delete are one transaction, so a widget added at the same moment is never removed
+    with the chart. Needs write access to the chart's workspace and, while its Feedback Dataset is
+    assigned to that workspace and not archived, to the dataset; a chart whose dataset was unassigned
+    or archived can still be deleted.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/ChartIdPath.yml
+  responses:
+    "204":
+      description: Chart deleted
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      description: >-
+        Conflict (`code: chart_in_use`) — the chart is on at least one dashboard, so nothing was
+        deleted. `details.dashboards` lists them as `{ id, name }`.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Conflict
+            status: 409
+            detail: This chart is on 1 dashboard(s), so it was not deleted. Remove it from them first.
+            code: chart_in_use
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            details:
+              dashboards:
+                - id: cldash00000000000000000001
+                  name: Matchday 1
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

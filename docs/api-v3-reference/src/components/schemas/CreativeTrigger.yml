@@ -1,0 +1,12 @@
+type: object
+description: >-
+  An action that shows the creative when it fires. Discover action-class ids with
+  `GET /api/v3/action-classes`.
+required:
+  - actionClassId
+properties:
+  actionClassId:
+    type: string
+    format: cuid2
+    description: Id of an action class in the creative's workspace.
+additionalProperties: false

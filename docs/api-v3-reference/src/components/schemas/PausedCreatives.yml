@@ -1,0 +1,17 @@
+type: object
+description: The creatives one `POST /api/v3/creatives/pause` paused.
+required:
+  - paused
+  - creativeIds
+properties:
+  paused:
+    type: integer
+    minimum: 0
+    description: How many creatives this request paused.
+  creativeIds:
+    type: array
+    items:
+      type: string
+      format: cuid2
+    description: The ids of the creatives this request paused, in no particular order.
+additionalProperties: false

@@ -104,6 +104,12 @@ describe("@formbricks/cache cacheKeys", () => {
         expect(loginKey).toBe("fb:rate_limit:auth:login:user-456:1640995300");
       });
 
+      test("should create an in-flight key apart from every window's key", () => {
+        expect(createCacheKey.rateLimit.inFlight("api:v3:charts:in-flight", "key-abc")).toBe(
+          "fb:rate_limit:api:v3:charts:in-flight:key-abc:in_flight"
+        );
+      });
+
       test("should convert window start number to string", () => {
         const key = createCacheKey.rateLimit.core("webhook", "endpoint-789", 0);
         expect(key).toBe("fb:rate_limit:webhook:endpoint-789:0");
@@ -116,6 +122,27 @@ describe("@formbricks/cache cacheKeys", () => {
         expect(() => createCacheKey.rateLimit.core("api", "", 1640995200)).toThrow(
           "Invalid Cache key: Parts cannot be empty"
         );
+      });
+    });
+
+    describe("creative stats namespace", () => {
+      test("keys one UTC day's counters of a creative, and the day's flush sets", () => {
+        expect(createCacheKey.creativeStats.devices("2026-10-16", "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:devices"
+        );
+        expect(createCacheKey.creativeStats.pages("2026-10-16", "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:pages"
+        );
+        expect(createCacheKey.creativeStats.pending("2026-10-16")).toBe(
+          "fb:creative-stats:2026-10-16:pending"
+        );
+        expect(createCacheKey.creativeStats.flushing("2026-10-16")).toBe(
+          "fb:creative-stats:2026-10-16:flushing"
+        );
+      });
+
+      test("keys the countable creative ids by workspace, next to its state, and by the ids' hash", () => {
+        expect(createCacheKey.workspace.creativeIds("clws1", "ab12")).toBe("fb:env:clws1:creative-ids:ab12");
       });
     });
 

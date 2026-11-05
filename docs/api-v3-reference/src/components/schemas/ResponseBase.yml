@@ -17,6 +17,7 @@ required:
   - finished
   - endingId
   - language
+  - outcome
   - resolution
   - answers
   - embeddedData
@@ -78,6 +79,18 @@ properties:
       The survey language this response was collected in, as a survey language code (not
       necessarily a BCP-47 locale — `default` is a legitimate value). `null` when the survey is
       single-language or no language was stamped.
+  outcome:
+    type:
+      - string
+      - "null"
+    enum:
+      - lowQuality
+      - null
+    description: >-
+      A reviewer's verdict on the response; `null` when none. `lowQuality` hides the response from the
+      Analysis export by default and from Feedback Records, and from nothing else: it is never deleted
+      and every count, list, webhook and integration still includes it. Set through `PATCH
+      /api/v3/responses/{responseId}` or `POST /api/v3/responses/batch-outcome`.
   durationSeconds:
     readOnly: true
     type: number

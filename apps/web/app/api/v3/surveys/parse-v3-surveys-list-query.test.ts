@@ -35,7 +35,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "foo",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
       });
   });
 
@@ -46,7 +46,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "after",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
       });
     }
   });
@@ -58,7 +58,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "name",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
       });
     }
   });
@@ -113,6 +113,21 @@ describe("parseV3SurveysListQuery", () => {
     }
   });
 
+  test("maps the single-use and PIN filters to booleans in the filter criteria", () => {
+    const r = parseV3SurveysListQuery(
+      params(`workspaceId=${wid}&filter[singleUse][eq]=false&filter[pinProtected][eq]=true`)
+    );
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.filterCriteria).toEqual({ singleUse: false, pinProtected: true });
+  });
+
+  test("rejects a single-use or PIN filter that is not true or false", () => {
+    for (const qs of ["filter[singleUse][eq]=no", "filter[pinProtected][eq]=1"]) {
+      const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&${qs}`));
+      expect(r.ok).toBe(false);
+    }
+  });
+
   test("invalid status", () => {
     const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&filter[status][in]=notastatus`));
     expect(r.ok).toBe(false);
@@ -146,7 +161,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "filter[createdBy][in]",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
       });
     }
   });

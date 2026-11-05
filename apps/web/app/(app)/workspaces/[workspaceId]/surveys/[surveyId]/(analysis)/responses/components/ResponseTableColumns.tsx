@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TFunction } from "i18next";
 import { CircleHelpIcon, EyeOffIcon, MailIcon, TagIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import {
   getComputedEmbeddedFields,
@@ -20,14 +21,19 @@ import { getContactIdentifier } from "@/lib/utils/contact";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { OutcomeBadge } from "@/modules/analysis/response-outcome/components/outcome-badge";
+import { responseStatus } from "@/modules/analysis/response-outcome/lib/outcome";
 import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { formatCodedLabel, getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { VARIABLES_ICON_MAP, getElementIconMap } from "@/modules/survey/lib/elements";
+import { Badge } from "@/modules/ui/components/badge";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
+import { isEmptyCellContent, isEmptyResponseValue } from "../lib/empty-cell";
 import {
   RESERVED_COLUMN_ENTRIES,
   getAddressFieldLabel,
@@ -37,6 +43,31 @@ import {
   reservedColumnId,
 } from "../lib/utils";
 
+/** What a cell with no value shows, as in every other table. */
+const EMPTY_CELL = <span className="text-slate-400">—</span>;
+
+/** A column whose cell shows a dash instead of rendering nothing. */
+const withEmptyDash = (column: ColumnDef<TResponseTableData>): ColumnDef<TResponseTableData> => {
+  const render = column.cell;
+  if (render !== undefined && typeof render !== "function") return column;
+  return {
+    ...column,
+    cell: (context) => {
+      // A column without a cell renderer shows its raw value, which may be empty too.
+      const content = (render ? render(context) : context.getValue()) as ReactNode;
+      return isEmptyCellContent(content) ? EMPTY_CELL : content;
+    },
+  };
+};
+
+const COMPACT_DATE_TIME: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+};
+
 const getElementColumnsData = (
   element: TSurveyElement,
   survey: TSurvey,
@@ -45,12 +76,13 @@ const getElementColumnsData = (
   t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
+  const elementCode = "code" in element ? element.code : undefined;
   const addressFields = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
   const contactInfoFields = ["firstName", "lastName", "email", "phone", "company"];
 
   // Helper function to create consistent column headers
   const createElementHeader = (elementType: TSurveyElementTypeEnum, headline: string, suffix?: string) => {
-    const title = suffix ? `${headline} - ${suffix}` : headline;
+    const title = formatCodedLabel(elementCode, suffix ? `${headline} - ${suffix}` : headline);
     const ElementHeader = () => (
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-x-2 overflow-hidden">
@@ -77,7 +109,7 @@ const getElementColumnsData = (
     return (
       <div className={containerClasses}>
         {choiceIds.map((choiceId, index) => (
-          <IdBadge key={`${choiceId}-${index}`} id={choiceId} />
+          <IdBadge key={`${choiceId}-${index}`} id={getChoiceBadgeText(element, choiceId)} />
         ))}
       </div>
     );
@@ -88,15 +120,21 @@ const getElementColumnsData = (
       return element.rows.map((matrixRow) => {
         return {
           accessorKey: "ELEMENT_" + element.id + "_" + matrixRow.label.default,
+          meta: {
+            label: `${getTextContent(getLocalizedValue(element.headline, "default"))} - ${getLocalizedValue(matrixRow.label, "default")}`,
+          },
           header: () => {
             return (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-x-2 overflow-hidden">
                   <span className="size-4">{ELEMENTS_ICON_MAP["matrix"]}</span>
                   <span className="truncate">
-                    {getTextContent(getLocalizedValue(element.headline, "default")) +
-                      " - " +
-                      getLocalizedValue(matrixRow.label, "default")}
+                    {formatCodedLabel(
+                      elementCode,
+                      getTextContent(getLocalizedValue(element.headline, "default")) +
+                        " - " +
+                        getLocalizedValue(matrixRow.label, "default")
+                    )}
                   </span>
                 </div>
               </div>
@@ -115,6 +153,7 @@ const getElementColumnsData = (
       return addressFields.map((addressField) => {
         return {
           accessorKey: "ELEMENT_" + element.id + "_" + addressField,
+          meta: { label: getAddressFieldLabel(addressField, t) },
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -138,6 +177,7 @@ const getElementColumnsData = (
       return contactInfoFields.map((contactInfoField) => {
         return {
           accessorKey: "ELEMENT_" + element.id + "_" + contactInfoField,
+          meta: { label: getContactInfoFieldLabel(contactInfoField, t) },
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -166,8 +206,10 @@ const getElementColumnsData = (
         {
           accessorKey: "ELEMENT_" + element.id,
           header: createElementHeader(element.type, elementHeadline),
+          meta: { label: elementHeadline },
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
+            if (isEmptyResponseValue(responseValue)) return EMPTY_CELL;
             const language = row.original.language;
             return (
               <RenderResponse
@@ -184,7 +226,8 @@ const getElementColumnsData = (
         },
         {
           accessorKey: "ELEMENT_" + element.id + "optionIds",
-          header: createElementHeader(element.type, elementHeadline, t("common.option_id")),
+          meta: { label: `${t("common.answer_code")}: ${elementHeadline}` },
+          header: createElementHeader(element.type, elementHeadline, t("common.answer_code")),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
             // Type guard to ensure responseValue is the correct type
@@ -206,13 +249,24 @@ const getElementColumnsData = (
       return [
         {
           accessorKey: "ELEMENT_" + element.id,
+          meta: {
+            label: getTextContent(
+              getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default")
+            ),
+          },
           header: () => (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-x-2 overflow-hidden">
                 <span className="size-4">{ELEMENTS_ICON_MAP[element.type]}</span>
                 <span className="truncate">
-                  {getTextContent(
-                    getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default")
+                  {formatCodedLabel(
+                    elementCode,
+                    getTextContent(
+                      getLocalizedValue(
+                        recallToHeadline(element.headline, survey, false, "default"),
+                        "default"
+                      )
+                    )
                   )}
                 </span>
               </div>
@@ -220,6 +274,7 @@ const getElementColumnsData = (
           ),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
+            if (isEmptyResponseValue(responseValue)) return EMPTY_CELL;
             const language = row.original.language;
             return (
               <RenderResponse
@@ -230,6 +285,7 @@ const getElementColumnsData = (
                 locale={locale}
                 isExpanded={isExpanded}
                 showId={false}
+                signatureVariant="thumbnail"
               />
             );
           },
@@ -253,6 +309,7 @@ const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] =
 
     return {
       accessorKey: columnId,
+      meta: { label: getReservedColumnLabel(entry.name, t) },
       header: () => (
         <div className="flex items-center gap-x-2 overflow-hidden">
           <span className="size-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
@@ -284,16 +341,23 @@ export const generateResponseTableColumns = (
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
+    meta: { label: t("common.date") },
     header: () => t("common.date"),
     size: 200,
     cell: ({ row }) => {
       const date = new Date(row.original.createdAt);
-      return <p className="text-slate-900">{formatDateTimeForDisplay(date, locale)}</p>;
+      // A short month keeps date and time inside the column; the tooltip carries the long form.
+      return (
+        <p className="truncate text-slate-900" title={formatDateTimeForDisplay(date, locale)}>
+          {formatDateTimeForDisplay(date, locale, COMPACT_DATE_TIME)}
+        </p>
+      );
     },
   };
 
   const personColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "personId",
+    meta: { label: t("common.person") },
     header: () => (
       <div className="flex items-center gap-x-1.5">
         {t("common.person")}
@@ -327,6 +391,7 @@ export const generateResponseTableColumns = (
 
   const singleUseIdColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "singleUseId",
+    meta: { label: t("workspace.surveys.responses.single_use_id") },
     header: () => <div className="gap-x-1.5">{t("workspace.surveys.responses.single_use_id")}</div>,
     cell: ({ row }) => {
       return <p className="truncate text-slate-900">{row.original.singleUseId}</p>;
@@ -335,6 +400,7 @@ export const generateResponseTableColumns = (
 
   const responseIdColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "responseId",
+    meta: { label: t("common.response_id") },
     header: () => <div className="gap-x-1.5">{t("common.response_id")}</div>,
     cell: ({ row }) => {
       return <IdBadge id={row.original.responseId} />;
@@ -343,6 +409,7 @@ export const generateResponseTableColumns = (
 
   const quotasColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "quota",
+    meta: { label: t("common.quota") },
     header: t("common.quota"),
     cell: ({ row }) => {
       const quotas = row.original.quotas;
@@ -354,16 +421,23 @@ export const generateResponseTableColumns = (
 
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
+    meta: { label: t("common.status") },
     size: 200,
     header: () => <div className="gap-x-1.5">{t("common.status")}</div>,
     cell: ({ row }) => {
-      const status = row.original.status;
-      return <ResponseBadges items={[{ value: status }]} showId={false} />;
+      const status = responseStatus(row.original.status, row.original.outcome);
+      if (status === "lowQuality") return <OutcomeBadge outcome="lowQuality" />;
+      return status === "notCompleted" ? (
+        <Badge type="gray" size="normal" text={t("workspace.surveys.responses.status_not_completed")} />
+      ) : (
+        <Badge type="success" size="normal" text={t("workspace.surveys.responses.status_complete")} />
+      );
     },
   };
 
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
+    meta: { label: t("common.tags") },
     header: () => <div className="gap-x-1.5">{t("common.tags")}</div>,
     cell: ({ row }) => {
       const tags = row.original.tags;
@@ -388,6 +462,7 @@ export const generateResponseTableColumns = (
     ({ field, link }) => {
       return {
         accessorKey: "VARIABLE_" + link.storageKey,
+        meta: { label: field.name },
         header: () => (
           <div className="flex items-center gap-x-2 overflow-hidden">
             <span className="size-4">
@@ -413,6 +488,7 @@ export const generateResponseTableColumns = (
   ).map(({ link, label }) => {
     return {
       accessorKey: "HIDDEN_FIELD_" + link.storageKey,
+      meta: { label },
       header: () => (
         <div className="flex items-center gap-x-2 overflow-hidden">
           <span className="size-4">
@@ -434,6 +510,7 @@ export const generateResponseTableColumns = (
 
   const verifiedEmailColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "verifiedEmail",
+    meta: { label: t("common.verified_email") },
     header: () => (
       <div className="flex items-center gap-x-2 overflow-hidden">
         <span className="size-4">
@@ -460,5 +537,6 @@ export const generateResponseTableColumns = (
     tagsColumn,
   ];
 
-  return isReadOnly ? baseColumns : [getSelectionColumn(), ...baseColumns];
+  const columns = baseColumns.map(withEmptyDash);
+  return isReadOnly ? columns : [getSelectionColumn(), ...columns];
 };

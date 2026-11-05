@@ -1,0 +1,187 @@
+"use client";
+
+import {
+  CalendarClockIcon,
+  ClockIcon,
+  LinkIcon,
+  MessageCircleIcon,
+  RefreshCcwIcon,
+  SquarePenIcon,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { Button } from "@/modules/ui/components/button";
+import { IconBar } from "@/modules/ui/components/iconbar";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { useCreativeResource } from "../../hooks/use-creative-editor";
+import { useCreativeStatusChange } from "../../hooks/use-creative-status-change";
+import { useCreativeStats } from "../../hooks/use-creative-summary";
+import { type TCreativesAccess, canWriteCreatives } from "../../lib/access-rules";
+import type { TCreativeResource } from "../../lib/editor-form";
+import { getCreativeEditPath } from "../../lib/paths";
+import { getSummaryStatusControl, isWaitingForStart } from "../../lib/summary";
+import { getUiLocale } from "../../lib/ui-locale";
+import { CreativeTypeIcon } from "../creative-icons";
+import { CreativeStatusPill } from "../creative-status-pill";
+import { CreativesWindDownNotice } from "../creatives-wind-down-notice";
+import { CreativeSummaryStatsSkeleton } from "../skeletons";
+import { CreativeStatusDropdown } from "./creative-status-dropdown";
+import { CreativeSummaryStats } from "./creative-summary-stats";
+import { StatsRangeFilter } from "./stats-range-filter";
+
+const SCHEDULE_OPTIONS: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "short" };
+
+/** What it opens and when it shows, under the title where the survey summary has its tabs. */
+const CreativeFacts = ({ creative }: Readonly<{ creative: TCreativeResource }>) => {
+  const { t, i18n } = useTranslation();
+  const locale = getUiLocale(i18n);
+  const { destination, schedule } = creative;
+  const formatAt = (at: string) => formatDateTimeForDisplay(new Date(at), locale, SCHEDULE_OPTIONS);
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pb-4 text-sm text-slate-600">
+      {destination?.type === "survey" && (
+        <span className="inline-flex items-center gap-1.5">
+          <MessageCircleIcon className="size-4 text-slate-400" aria-hidden="true" />
+          {t("workspace.creatives.summary.opens_survey", { name: destination.surveyName })}
+        </span>
+      )}
+      {destination?.type === "link" && (
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <LinkIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
+          <span className="truncate">{destination.url}</span>
+        </span>
+      )}
+      {(schedule.startAt || schedule.endAt) && (
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarClockIcon className="size-4 text-slate-400" aria-hidden="true" />
+          {schedule.startAt ? formatAt(schedule.startAt) : t("workspace.creatives.editor.starts_placeholder")}
+          {" – "}
+          {schedule.endAt ? formatAt(schedule.endAt) : t("workspace.creatives.editor.ends_placeholder")}
+        </span>
+      )}
+    </div>
+  );
+};
+
+interface CreativeSummaryProps {
+  workspaceId: string;
+  initialCreative: TCreativeResource;
+  isReadOnly: boolean;
+  /** `full` or `windDown`: in wind-down there is no editor, and the status menu only pauses or closes. */
+  creativesAccess: TCreativesAccess;
+}
+
+export const CreativeSummary = ({
+  workspaceId,
+  initialCreative,
+  isReadOnly,
+  creativesAccess,
+}: Readonly<CreativeSummaryProps>) => {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { data: creative, refetch: refetchCreative } = useCreativeResource(initialCreative);
+  const { stats, selection, range, now, select, refresh: refreshStats } = useCreativeStats(creative.id);
+  const statusChange = useCreativeStatusChange(creative.id);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const fallbackError = t("common.something_went_wrong_please_try_again");
+
+  const refresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchCreative({ throwOnError: true }), refreshStats()]);
+      toast.success(t("common.data_refreshed_successfully"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, fallbackError));
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const statusControl = getSummaryStatusControl(creative, isReadOnly, creativesAccess);
+  const state = { status: creative.displayStatus, reason: creative.displayStatusReason };
+
+  let body: ReactNode;
+  if (stats.data) {
+    body = <CreativeSummaryStats stats={stats.data} isUpdating={stats.isPlaceholderData} />;
+  } else if (stats.isError) {
+    body = (
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-slate-200 bg-white py-16 text-sm text-slate-600">
+        <p>{getV3ApiErrorMessage(stats.error, fallbackError)}</p>
+        <Button variant="secondary" size="sm" onClick={() => stats.refetch()}>
+          {t("common.try_again")}
+        </Button>
+      </div>
+    );
+  } else {
+    body = <CreativeSummaryStatsSkeleton />;
+  }
+
+  return (
+    <PageContentWrapper>
+      <PageHeader
+        pageTitle={
+          <span className="flex min-w-0 items-center gap-3">
+            <CreativeTypeIcon type={creative.type} className="size-7" />
+            <span className="min-w-0 truncate">
+              {creative.name || t("workspace.creatives.untitled_creative")}
+            </span>
+          </span>
+        }
+        cta={
+          <div className="flex shrink-0 items-center gap-x-1.5">
+            {statusControl.kind === "select" ? (
+              <CreativeStatusDropdown
+                value={statusControl.value}
+                options={statusControl.options}
+                state={state}
+                isWaitingForStart={isWaitingForStart(creative.schedule, new Date())}
+                disabled={statusChange.isPending}
+                onChange={statusChange.changeStatus}
+              />
+            ) : (
+              <CreativeStatusPill state={state} />
+            )}
+            <IconBar
+              actions={[
+                {
+                  icon: RefreshCcwIcon,
+                  tooltip: t("common.refresh"),
+                  onClick: refresh,
+                  disabled: isRefreshing,
+                  isVisible: true,
+                },
+                {
+                  icon: SquarePenIcon,
+                  tooltip: t("common.edit"),
+                  onClick: () => router.push(getCreativeEditPath(workspaceId, creative.id)),
+                  // Read-only members can't open the editor; it sends them back to the list. In
+                  // wind-down there is nothing it could save.
+                  isVisible: !isReadOnly && canWriteCreatives(creativesAccess),
+                },
+              ]}
+            />
+          </div>
+        }>
+        <CreativeFacts creative={creative} />
+      </PageHeader>
+
+      {creativesAccess === "windDown" && <CreativesWindDownNotice />}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <StatsRangeFilter selection={selection} range={range} now={now} onChange={select} />
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+          <ClockIcon className="size-3.5" aria-hidden="true" />
+          {t("workspace.creatives.summary.freshness")}
+        </span>
+      </div>
+
+      {body}
+    </PageContentWrapper>
+  );
+};

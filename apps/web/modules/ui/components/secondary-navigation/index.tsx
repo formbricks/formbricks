@@ -15,20 +15,20 @@ interface TSecondaryNavItem {
 }
 
 interface SecondaryNavbarProps {
-  navigation: TSecondaryNavItem[];
-  activeId: string;
-  loading?: boolean;
+  readonly navigation: TSecondaryNavItem[];
+  readonly activeId: string;
+  readonly loading?: boolean;
   /**
    * "tabs" (default) renders items side by side. "steps" renders them as a
    * step-by-step guide with chevron separators between items (wizard style).
    */
-  variant?: "tabs" | "steps";
+  readonly variant?: "tabs" | "steps";
   /**
    * Accessible name for the nav landmark. This is a shared, server-renderable primitive, so it
    * can't translate itself — callers pass an already-translated label (especially for the "steps"
    * variant, which shouldn't be announced as "Tabs"). Defaults to "Tabs".
    */
-  ariaLabel?: string;
+  readonly ariaLabel?: string;
 }
 
 const getTabTextClassName = (isActive: boolean) =>

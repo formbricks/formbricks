@@ -354,11 +354,23 @@ The script will automatically stop all the Formbricks related containers, remove
 
 ## Debug
 
-If you encounter any issues, you can check the logs of the containers with:
+Run these from the directory that contains your `formbricks/` folder. To see every service, including the
+one-time setup jobs that already exited, run:
+
+```
+./formbricks.sh status
+```
+
+To read the logs of all containers, or of the services you name, run:
 
 ```
 ./formbricks.sh logs
+./formbricks.sh logs --tail 200 formbricks-migrate
 ```
+
+If the first startup stops, the installer names the step that failed and the services that exited with an
+error, along with the `./formbricks.sh logs <service>` command for each. Fix the cause, then run
+`./formbricks.sh install` again. It keeps the PostgreSQL password and AuthZed credentials from the first run.
 
 ## Troubleshooting
 
@@ -374,8 +386,9 @@ If you encounter any issues, consider the following steps:
   your domain has an AAAA record, ports 80 and 443 must also be open for IPv6; with only an AAAA record, there
   is no IPv4 to fall back to.
 
-- **Check Docker Instances**: Run `docker ps` to check the status of the Docker instances.
+- **Check Docker Instances**: Run `./formbricks.sh status` to check the status of every Formbricks container.
 
-- **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
+- **Check Formbricks Logs**: Run `./formbricks.sh logs <service>` to check the logs of one service, or
+  `./formbricks.sh logs` for the whole stack.
 
 If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃

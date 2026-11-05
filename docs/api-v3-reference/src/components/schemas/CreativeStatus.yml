@@ -1,0 +1,15 @@
+type: string
+enum:
+  - draft
+  - inProgress
+  - paused
+  - completed
+description: >
+  The author's intent, and the only status a write sets: `draft` (never published), `inProgress`
+  (published), `paused` (paused by its author) or `completed` (closed by its author). The same values
+  as a survey's `status`.
+
+
+  What visitors get is `displayStatus`, which the server derives from this value, `archivedAt`, the
+  schedule and the Destination survey. Nothing writes `status` on its own: a schedule ending or a
+  survey pausing changes `displayStatus` only.

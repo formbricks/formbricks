@@ -63,6 +63,18 @@ describe("normalizeV3SurveyWriteLanguageCode", () => {
     expect(normalizeV3SurveyWriteLanguageCode("vi", ["en-US"])).toBeNull();
   });
 
+  // The configured list is indexed once (ENG-4100); the answer must stay the first configured code
+  // that matches by spelling or by canonical form, as a scan in list order finds it.
+  test("returns the first configured code that matches either way", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("zh-cn", ["zh-Hans-CN", "zh-CN"])).toBe("zh-Hans-CN");
+    expect(normalizeV3SurveyWriteLanguageCode("zh-cn", ["zh-CN", "zh-Hans-CN"])).toBe("zh-CN");
+
+    const configured = ["gu-IN", "en-US"];
+    expect(normalizeV3SurveyWriteLanguageCode("gu", configured)).toBe("gu-IN");
+    expect(normalizeV3SurveyWriteLanguageCode("EN-us", configured)).toBe("en-US");
+    expect(normalizeV3SurveyWriteLanguageCode("de-DE", configured)).toBe("de-DE");
+  });
+
   test("maps a legacy code to its canonical configured tag (post-migration inbound)", () => {
     // After the migration flips a stored `gu` to `gu-IN`, a client still sending `gu` keeps working.
     expect(normalizeV3SurveyWriteLanguageCode("gu", ["gu-IN", "en-US"])).toBe("gu-IN");

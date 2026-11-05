@@ -1,4 +1,3 @@
-import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
@@ -9,9 +8,11 @@ import {
   problemBadRequest,
   problemConflict,
   problemForbidden,
+  problemSurveyHasLinkedCreatives,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -23,6 +24,7 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
+import { type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
@@ -576,6 +578,26 @@ describe("registerSurveyTools", () => {
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
   });
 
+  test("delete_survey relays the 409 naming the creatives that still open the survey", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+    const creatives = [{ id: "clcr1234567890123456789012", name: "Feedback tab" }];
+    vi.mocked(deleteV3Survey).mockResolvedValue(
+      problemSurveyHasLinkedCreatives("req_conflict", creatives, "/api/mcp")
+    );
+
+    const result = await tools
+      .get("delete_survey")!
+      .handler({ surveyId: "clxx1234567890123456789012" }, { http: { authInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 409,
+      code: "survey_has_linked_creatives",
+      details: { creatives },
+    });
+  });
+
   test("write tools return MCP errors for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
     const surveyId = "clxx1234567890123456789012";
@@ -662,71 +684,8 @@ describe("registerSurveyTools", () => {
  * the strictness is genuinely load-bearing and removing it fails this test.
  */
 describe("tool arguments are validated by the SDK (ENG-2256)", () => {
-  type ToolCallOutcome = {
-    result?: { isError?: boolean; content?: { type: string; text?: string }[] };
-  };
-
-  // Both protocol legs are exercised: the one endpoint answers both (`mcp-handler` serves with
-  // `legacy: "stateless"`), and validation must not differ between them. A 2026-07-28 request carries
-  // the `Mcp-Method`/`Mcp-Name` headers and the `_meta` envelope the revision requires; a legacy one is
-  // a plain JSON-RPC POST whose response comes back SSE-framed.
-  const callTool = async (
-    name: string,
-    args: Record<string, unknown>,
-    era: "modern" | "legacy" = "modern"
-  ): Promise<ToolCallOutcome> => {
-    const handler = createMcpHandler(() => {
-      const server = new McpServer({ name: "test", version: "0.0.0" });
-      registerSurveyTools(server);
-      return server;
-    });
-
-    const modern = era === "modern";
-    const response = await handler.fetch(
-      new Request("https://formbricks.test/api/mcp", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json, text/event-stream",
-          ...(modern
-            ? { "Mcp-Method": "tools/call", "Mcp-Name": name, "MCP-Protocol-Version": "2026-07-28" }
-            : {}),
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "tools/call",
-          params: {
-            name,
-            arguments: args,
-            ...(modern
-              ? {
-                  _meta: {
-                    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
-                    "io.modelcontextprotocol/clientCapabilities": {},
-                  },
-                }
-              : {}),
-          },
-        }),
-      }),
-      { authInfo }
-    );
-
-    const text = await response.text();
-    const payload = response.headers.get("content-type")?.includes("text/event-stream")
-      ? text
-          .split("\n")
-          .filter((line) => line.startsWith("data:"))
-          .map((line) => line.slice("data:".length).trim())
-          .join("")
-      : text;
-
-    return JSON.parse(payload) as ToolCallOutcome;
-  };
-
-  const errorText = (outcome: ToolCallOutcome) =>
-    outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
+  const callTool = (name: string, args: Record<string, unknown>, era?: ToolCallEra) =>
+    callToolOverHttp({ registerTools: registerSurveyTools, authInfo, name, args, era });
 
   test.each(["modern", "legacy"] as const)(
     "rejects an undeclared argument instead of silently dropping it (%s era)",

@@ -6,9 +6,9 @@ export const LoadingCard = ({
   description,
   skeletonLines,
 }: {
-  title: string;
-  description: string;
-  skeletonLines: Array<{ classes: string }>;
+  readonly title: string;
+  readonly description: string;
+  readonly skeletonLines: Array<{ classes: string }>;
 }) => {
   return (
     <SettingsCard title={title} description={description}>

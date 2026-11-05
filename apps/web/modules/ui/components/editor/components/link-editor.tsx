@@ -28,9 +28,9 @@ const getSelectedNode = (selection: RangeSelection) => {
 };
 
 interface LinkEditorProps {
-  editor: LexicalEditor;
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  readonly editor: LexicalEditor;
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
 }
 
 const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
@@ -138,7 +138,13 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
   );
 };
 
-export const LinkEditor = ({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) => {
+export const LinkEditor = ({
+  open,
+  setOpen,
+}: {
+  readonly open: boolean;
+  readonly setOpen: (open: boolean) => void;
+}) => {
   const [editor] = useLexicalComposerContext();
   return <LinkEditorContent editor={editor} open={open} setOpen={setOpen} />;
 };

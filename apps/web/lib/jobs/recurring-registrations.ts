@@ -3,6 +3,7 @@ import {
   type JobHandlerOverrides,
   ONE_SHOT_JOB_NAMES,
   type RecurringJobHandle,
+  type TAttachmentExportJobData,
   type TGlobalScopeJobData,
   type TRecurringBackgroundJobSchedule,
   type TRecurringJobKey,
@@ -21,6 +22,10 @@ import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetr
 import { DELETION_CLEANUP_DRAIN_INTERVAL_MS } from "@/modules/deletion-cleanup/lib/constants";
 import { processDeletionCleanupDrainJob } from "@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job";
 import {
+  CREATIVE_STATS_FLUSH_INTERVAL_MS,
+  processCreativeStatsFlushJob,
+} from "@/modules/ee/creatives/lib/process-creative-stats-flush-job";
+import {
   DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN,
   DATA_RETENTION_SWEEP_TIME_ZONE,
 } from "@/modules/ee/data-retention/sweep/constants";
@@ -33,8 +38,11 @@ import { processWorkflowsUsageSnapshotJob } from "@/modules/ee/workflows/lib/ana
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
+import { processEmailAuditMaintenanceJob } from "@/modules/email/lib/email-audit-maintenance";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 import { processWebhookDeliveryJob } from "@/modules/response-pipeline/lib/process-webhook-delivery-job";
+import { processAttachmentExportJob } from "@/modules/storage/attachment-export/process-attachment-export-job";
+import { processAttachmentExportReconcileJob } from "@/modules/storage/attachment-export/process-attachment-export-reconcile-job";
 import {
   SURVEY_ARCHIVE_PURGE_DAILY_CRON_PATTERN,
   SURVEY_ARCHIVE_PURGE_TIME_ZONE,
@@ -78,6 +86,18 @@ interface RecurringJobRegistration {
  * registered at all). A test pins the pairing instead.
  */
 export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, RecurringJobRegistration> = {
+  attachmentExportReconcile: {
+    requiresReleaseActivation: true,
+    handler: processAttachmentExportReconcileJob,
+    job: recurringJobs.attachmentExportReconcile,
+    schedule: { everyMs: 5 * 60_000, kind: "every" },
+  },
+  emailAuditMaintenance: {
+    requiresReleaseActivation: true,
+    handler: processEmailAuditMaintenanceJob,
+    job: recurringJobs.emailAuditMaintenance,
+    schedule: { everyMs: 5 * 60_000, kind: "every" },
+  },
   authzedProjectionDelivery: {
     handler: processAuthzedProjectionDeliveryJob,
     job: recurringJobs.authzedProjectionDelivery,
@@ -101,6 +121,17 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     job: recurringJobs.authzedSurveyAudit,
     schedule: {
       everyMs: 24 * 60 * 60 * 1_000,
+      kind: "every",
+    },
+  },
+  // ENG-4000: new in this release, so scheduled only once the release is activated (older replicas
+  // have no handler). Idempotent, so an overlapping or retried run is harmless.
+  creativeStatsFlush: {
+    requiresReleaseActivation: true,
+    handler: processCreativeStatsFlushJob,
+    job: recurringJobs.creativeStatsFlush,
+    schedule: {
+      everyMs: CREATIVE_STATS_FLUSH_INTERVAL_MS,
       kind: "every",
     },
   },
@@ -192,6 +223,8 @@ export const RECURRING_JOB_REGISTRATIONS: readonly RecurringJobRegistration[] = 
 
 /** Handler overrides for every job whose real implementation lives in this app. */
 export const getJobHandlerOverrides = (): JobHandlerOverrides => ({
+  [ONE_SHOT_JOB_NAMES.attachmentExport]:
+    toJobHandlerOverride<TAttachmentExportJobData>(processAttachmentExportJob),
   [ONE_SHOT_JOB_NAMES.responsePipeline]:
     toJobHandlerOverride<TResponsePipelineJobData>(processResponsePipelineJob),
   [ONE_SHOT_JOB_NAMES.webhookDelivery]:

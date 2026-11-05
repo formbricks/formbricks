@@ -14,6 +14,7 @@ import { TWorkspace } from "@formbricks/types/workspace";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteFile, deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import { createWorkspace, deleteWorkspace, deleteWorkspaceIfNotLast, updateWorkspace } from "./workspace";
 
@@ -113,6 +114,9 @@ vi.mock("@/modules/storage/service", () => ({
   deleteWorkspaceFilesBestEffort: vi.fn(),
   deleteFile: vi.fn(),
 }));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspaceLegacyStoragePrefixes: vi.fn(),
@@ -127,6 +131,7 @@ describe("workspace lib", () => {
     // createWorkspace runs its ownership check and both writes in one transaction. Hand the callback
     // the same prisma mock so assertions stay on `prisma.*` and a rollback surfaces as a throw.
     vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
+    vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
     vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValue([]);
   });
 
@@ -506,6 +511,30 @@ describe("workspace lib", () => {
       expectNoFrdSideEffects();
     });
 
+    // ENG-3864: new workspaces start with Page font on; existing ones (no flag) keep the survey font.
+    test("starts a new workspace with Page font on, unless the caller's styling says otherwise", async () => {
+      vi.mocked(prisma.workspace.create).mockResolvedValue(baseWorkspace);
+
+      await createWorkspace("org1", { name: "New" }, NEW_ORGANIZATION);
+      await createWorkspace(
+        "org1",
+        { name: "Branded", styling: { allowStyleOverwrite: false, brandColor: { light: "#0b5394" } } },
+        NEW_ORGANIZATION
+      );
+      await createWorkspace(
+        "org1",
+        { name: "Survey font", styling: { allowStyleOverwrite: true, pageFont: false } },
+        NEW_ORGANIZATION
+      );
+
+      const stylings = vi.mocked(prisma.workspace.create).mock.calls.map(([args]) => args.data.styling);
+      expect(stylings).toEqual([
+        { allowStyleOverwrite: true, pageFont: true },
+        { allowStyleOverwrite: false, brandColor: { light: "#0b5394" }, pageFont: true },
+        { allowStyleOverwrite: true, pageFont: false },
+      ]);
+    });
+
     // ENG-1922: a caller must not link a team from another organization to their workspace.
     test("rejects teamIds that belong to another organization", async () => {
       // Foreign team: the org-scoped lookup returns nothing.
@@ -740,11 +769,20 @@ describe("workspace lib", () => {
 
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
+      expect(requestEmailAuditErasureRequired).toHaveBeenCalledWith({ workspaceId: "p1" }, prisma);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ workspaceIds: ["p1"] });
       expect(reconcileFeedbackDirectoryRelationships).toHaveBeenCalledWith({
         assignments: [feedbackDirectoryAssignment],
       });
       expect(deleteWorkspaceFilesBestEffort).toHaveBeenCalledWith(baseWorkspace);
+    });
+
+    test("keeps the workspace when email erasure cannot be requested", async () => {
+      vi.mocked(requestEmailAuditErasureRequired).mockRejectedValueOnce(new Error("audit unavailable"));
+
+      await expect(deleteWorkspace("p1")).rejects.toThrow("audit unavailable");
+
+      expect(prisma.workspace.delete).not.toHaveBeenCalled();
     });
 
     // ENG-3197: this used to pass a hardcoded [] for the legacy prefixes, so files uploaded before

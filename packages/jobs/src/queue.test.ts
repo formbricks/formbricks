@@ -2,7 +2,10 @@ import { Queue } from "bullmq";
 import type IORedis from "ioredis";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  ATTACHMENT_EXPORT_JOB_OPTIONS,
+  ATTACHMENT_EXPORT_QUEUE_NAME,
   AUTHZED_PROJECTION_QUEUE_NAME,
+  AUTHZED_RECONCILIATION_QUEUE_NAME,
   DATA_RETENTION_QUEUE_NAME,
   JOBS_DEFAULT_JOB_OPTIONS,
   JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
@@ -15,6 +18,7 @@ import {
 import { backgroundJobDefinitions } from "./definitions";
 import {
   createJobsQueue,
+  enqueueAttachmentExportJob,
   enqueueResponsePipelineJob,
   enqueueTestLogJob,
   enqueueWebhookDeliveryJob,
@@ -216,16 +220,19 @@ describe("@formbricks/jobs queue helpers", () => {
     );
   });
 
-  // A delivery queued behind a long sweep makes every authorization check fail closed, and the sweep
-  // itself would hold up every default-queue job, so this pins the routing of every job: those two have
+  // A delivery queued behind a long sweep makes every authorization check fail closed, and the sweeps
+  // themselves would hold up every default-queue job, so this pins the routing of every job: those have
   // queues of their own, everything else shares the default one.
-  test("routes AuthZed projection delivery and the data retention sweep to their own queues, and only them", () => {
+  test("routes AuthZed delivery, the AuthZed audits, the data retention sweep and attachment exports to their own queues, and only them", () => {
     const queueNameByJob = Object.fromEntries(
       Object.values(backgroundJobDefinitions).map((definition) => [definition.name, definition.queueName])
     );
     const dedicated: Record<string, string> = {
       [JOB_NAMES.authzedProjectionDelivery]: AUTHZED_PROJECTION_QUEUE_NAME,
+      [JOB_NAMES.authzedReconciliationAudit]: AUTHZED_RECONCILIATION_QUEUE_NAME,
+      [JOB_NAMES.authzedSurveyAudit]: AUTHZED_RECONCILIATION_QUEUE_NAME,
       [JOB_NAMES.dataRetentionSweep]: DATA_RETENTION_QUEUE_NAME,
+      [JOB_NAMES.attachmentExport]: ATTACHMENT_EXPORT_QUEUE_NAME,
     };
 
     for (const [jobName, queueName] of Object.entries(queueNameByJob)) {
@@ -242,6 +249,25 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(queueNamesOf(mockQueueUpsertJobScheduler)).toEqual([DATA_RETENTION_QUEUE_NAME]);
     expect(queueNamesOf(mockQueueRemoveJobScheduler)).toEqual([JOBS_QUEUE_NAME]);
   });
+
+  test.each([
+    ["authzedReconciliationAudit", 6 * 60 * 60 * 1_000],
+    ["authzedSurveyAudit", 24 * 60 * 60 * 1_000],
+  ] as const)(
+    "upserts the %s schedule on the AuthZed reconciliation queue, then retires the legacy one",
+    async (key, everyMs) => {
+      mockQueueUpsertJobScheduler.mockResolvedValue({ id: `${key}-1` });
+      mockQueueRemoveJobScheduler.mockResolvedValue(true);
+
+      await recurringJobs[key].upsert({ everyMs, kind: "every" });
+
+      expect(queueNamesOf(mockQueueUpsertJobScheduler)).toEqual([AUTHZED_RECONCILIATION_QUEUE_NAME]);
+      expect(queueNamesOf(mockQueueRemoveJobScheduler)).toEqual([JOBS_QUEUE_NAME]);
+      expect(mockQueueUpsertJobScheduler.mock.invocationCallOrder[0]).toBeLessThan(
+        mockQueueRemoveJobScheduler.mock.invocationCallOrder[0]
+      );
+    }
+  );
 
   test("upserts the AuthZed delivery schedule on its own queue, then retires the legacy one", async () => {
     mockQueueUpsertJobScheduler.mockResolvedValue({ id: "delivery-1" });
@@ -359,6 +385,36 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, {
       jobId: workflowRunJobData.workflowRunId,
     });
+  });
+
+  test("enqueues an attachment export on its own queue with a short retry budget and the caller's jobId", async () => {
+    const data = {
+      attachmentExportId: "cm8cmpnjj000108jfdr9exp01",
+      workspaceId: "cm8cmpnjj000108jfdr9wks01",
+      dispatchCount: 0,
+    };
+    mockQueueAdd.mockResolvedValue({ id: "cm8cmpnjj000108jfdr9exp01-0" });
+
+    await enqueueAttachmentExportJob(data, { jobId: "cm8cmpnjj000108jfdr9exp01-0" });
+
+    expect(queueNamesOf(mockQueueAdd)).toEqual([ATTACHMENT_EXPORT_QUEUE_NAME]);
+    // A retry rebuilds the whole archive, so the budget is below the shared default.
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.attachmentExport, data, {
+      attempts: 2,
+      backoff: { type: "fixed", delay: 30_000 },
+      jobId: "cm8cmpnjj000108jfdr9exp01-0",
+    });
+    expect(ATTACHMENT_EXPORT_JOB_OPTIONS.attempts).toBeLessThan(JOBS_DEFAULT_JOB_OPTIONS.attempts);
+  });
+
+  test("rejects an attachment export payload without valid ids before enqueueing", async () => {
+    await expect(
+      enqueueAttachmentExportJob(
+        { attachmentExportId: "not a cuid", workspaceId: "ws", dispatchCount: 0 },
+        { jobId: "x" }
+      )
+    ).rejects.toThrow();
+    expect(mockQueueAdd).not.toHaveBeenCalled();
   });
 
   test("enqueues a webhook delivery with its own retry policy and the caller's deterministic jobId", async () => {
@@ -541,6 +597,7 @@ describe("@formbricks/jobs queue helpers", () => {
     ["authzedProjectionDelivery", "authzed-projection.deliver:global:authzed-projection-delivery"],
     ["authzedReconciliationAudit", "authzed-reconciliation.audit:global:authzed-reconciliation-audit"],
     ["authzedSurveyAudit", "authzed-survey.audit:global:daily-authzed-survey-audit"],
+    ["creativeStatsFlush", "creative-stats.flush:global:creative-stats-flush"],
     ["dataRetentionSweep", "data-retention.sweep:global:daily-data-retention-sweep"],
     ["deletionCleanupDrain", "deletion-cleanup.drain:global:deletion-cleanup-drain"],
     ["surveyArchivePurge", "survey-archive-purge.process:global:daily-survey-archive-purge"],

@@ -31,7 +31,8 @@ permissions:
 jobs:
   contract-tests:
     name: v3 OpenAPI contract tests
-    runs-on: ubuntu-latest
+    # The deployment-check browser uses Playwright 1.58.2, which does not support Ubuntu 26.04.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
       # Same pinned images as e2e.yml so both jobs exercise the same engine versions.
@@ -49,7 +50,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
       valkey:
-        image: valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84
+        image: valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
         ports:
           - 6379:6379
     steps:

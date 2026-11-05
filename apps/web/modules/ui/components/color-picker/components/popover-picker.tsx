@@ -3,9 +3,9 @@ import { HexColorPicker } from "react-colorful";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface PopoverPickerProps {
-  color: string;
-  onChange: (v: string) => void;
-  disabled?: boolean;
+  readonly color: string;
+  readonly onChange: (v: string) => void;
+  readonly disabled?: boolean;
 }
 
 export const PopoverPicker = ({ color, onChange, disabled = false }: PopoverPickerProps) => {

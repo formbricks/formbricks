@@ -1,10 +1,13 @@
 import * as Sentry from "@sentry/nextjs";
 import { randomUUID } from "node:crypto";
+import { type CommandParser, defineScript } from "redis";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
-import { Result, ok } from "@formbricks/types/error-handlers";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { cache } from "@/lib/cache";
 import { RATE_LIMITING_DISABLED, SENTRY_DSN } from "@/lib/constants";
+import { recordRateLimiterUnavailable } from "./rate-limit-metrics";
+import { runRateLimitScript } from "./redis-script";
 import { TRateLimitConfig, type TRateLimitResponse } from "./types/rate-limit";
 
 export type TRateLimitReservation = {
@@ -18,6 +21,47 @@ export type TRateLimitReservation = {
 type TRateLimitReservationResponse = TRateLimitResponse & {
   reservation?: TRateLimitReservation;
 };
+
+const consumeScript = defineScript({
+  NUMBER_OF_KEYS: 1,
+  SCRIPT: `
+    local key = KEYS[1]
+    local limit = tonumber(ARGV[1])
+    local ttl = tonumber(ARGV[2])
+    local requested = tonumber(ARGV[3])
+    local current = tonumber(redis.call('GET', key) or '0')
+    local next = current + requested
+    if next > limit then return {next, 0} end
+    local updated = redis.call('INCRBY', key, requested)
+    if current == 0 then redis.call('EXPIRE', key, ttl) end
+    return {updated, 1}
+  `,
+  parseCommand(parser: CommandParser, key: string, limit: string, ttl: string, requested: string) {
+    parser.pushKey(key);
+    parser.push(limit, ttl, requested);
+  },
+  transformReply: (reply: unknown) => reply,
+});
+
+const settleScript = defineScript({
+  NUMBER_OF_KEYS: 1,
+  SCRIPT: `
+    local key = KEYS[1]
+    local unused = tonumber(ARGV[1])
+    local current = tonumber(redis.call('GET', key) or '0')
+    if current == 0 then return {0, 0} end
+    local released = math.min(current, unused)
+    local updated = current - released
+    if updated == 0 then redis.call('DEL', key)
+    else redis.call('DECRBY', key, released) end
+    return {updated, released}
+  `,
+  parseCommand(parser: CommandParser, key: string, unused: string) {
+    parser.pushKey(key);
+    parser.push(unused);
+  },
+  transformReply: (reply: unknown) => reply,
+});
 
 const getRateLimitWindow = (config: TRateLimitConfig, identifier: string, now = Date.now()) => {
   const windowStart = Math.floor(now / (config.interval * 1000)) * config.interval;
@@ -42,6 +86,19 @@ const buildRateLimitResponse = (
 };
 
 /**
+ * The answer to a check that could not reach Redis. Abuse limits (`failClosed`: email, account creation,
+ * brute-force guards) refuse; every other limit lets the request through unchecked, so a Redis outage does
+ * not take the whole app down with it (docs/adr/0016-abuse-limits-fail-closed.md).
+ */
+const limiterUnavailable = (
+  config: TRateLimitConfig,
+  reason: "no_client" | "error"
+): Result<TRateLimitReservationResponse, string> => {
+  recordRateLimiterUnavailable({ failMode: config.failClosed ? "closed" : "open", reason });
+  return config.failClosed ? err("Rate limiter unavailable") : ok({ allowed: true });
+};
+
+/**
  * Read the current rate limit usage without incrementing the counter.
  */
 export const peekRateLimit = async (
@@ -58,14 +115,15 @@ export const peekRateLimit = async (
   try {
     const redis = await cache.getRedisClient();
     if (!redis) {
-      logger.debug(`Redis unavailable`);
-      return ok({
-        allowed: true,
-      });
+      logger.error(
+        { namespace: config.namespace, failClosed: config.failClosed === true },
+        `Redis unavailable`
+      );
+      return limiterUnavailable(config, "no_client");
     }
 
     const { key, ttlSeconds } = getRateLimitWindow(config, identifier);
-    const rawCount = await redis.get(key);
+    const rawCount = await cache.runRedisOperation((client) => client.get(key));
     const currentCount = rawCount ? Number.parseInt(rawCount, 10) : 0;
     const response = buildRateLimitResponse(config, currentCount, ttlSeconds);
 
@@ -87,7 +145,12 @@ export const peekRateLimit = async (
     return ok(response);
   } catch (error) {
     const errorMessage = `Rate limit check failed`;
-    const errorContext = { error, identifier, namespace: config.namespace };
+    const errorContext = {
+      error,
+      identifier,
+      namespace: config.namespace,
+      failClosed: config.failClosed === true,
+    };
 
     logger.error(errorContext, errorMessage);
 
@@ -101,9 +164,7 @@ export const peekRateLimit = async (
       });
     }
 
-    return ok({
-      allowed: true,
-    });
+    return limiterUnavailable(config, "error");
   }
 };
 
@@ -129,43 +190,24 @@ const consumeRateLimit = async (
     // Get Redis client
     const redis = await cache.getRedisClient();
     if (!redis) {
-      logger.debug(`Redis unavailable`);
-      return ok({
-        allowed: true,
-      });
+      logger.error(
+        { namespace: config.namespace, failClosed: config.failClosed === true },
+        `Redis unavailable`
+      );
+      return limiterUnavailable(config, "no_client");
     }
 
     const { key, windowEnd, ttlSeconds } = getRateLimitWindow(config, identifier);
 
-    // Lua script for atomic weighted increment and conditional expire.
     // Refusing before INCRBY prevents an oversized request from consuming the remaining budget.
-    const luaScript = `
-      local key = KEYS[1]
-      local limit = tonumber(ARGV[1])
-      local ttl = tonumber(ARGV[2])
-      local requested = tonumber(ARGV[3])
-
-      local current = tonumber(redis.call('GET', key) or '0')
-      local next = current + requested
-
-      if next > limit then
-        return {next, 0}
-      end
-
-      local updated = redis.call('INCRBY', key, requested)
-
-      -- Set TTL only when creating the counter (avoids extending windows)
-      if current == 0 then
-        redis.call('EXPIRE', key, ttl)
-      end
-
-      return {updated, 1}
-    `;
-
-    const result = (await redis.eval(luaScript, {
-      keys: [key],
-      arguments: [config.allowedPerInterval.toString(), ttlSeconds.toString(), requested.toString()],
-    })) as [number, number];
+    const result = (await cache.runRedisOperation((client) =>
+      runRateLimitScript(
+        client,
+        consumeScript,
+        [key],
+        [config.allowedPerInterval.toString(), ttlSeconds.toString(), requested.toString()]
+      )
+    )) as [number, number];
     const [currentCount, isAllowed] = result;
 
     // Log debug information for every Redis count increase
@@ -226,7 +268,12 @@ const consumeRateLimit = async (
     return ok(response);
   } catch (error) {
     const errorMessage = `Rate limit check failed`;
-    const errorContext = { error, identifier, namespace: config.namespace };
+    const errorContext = {
+      error,
+      identifier,
+      namespace: config.namespace,
+      failClosed: config.failClosed === true,
+    };
 
     logger.error(errorContext, errorMessage);
 
@@ -241,11 +288,7 @@ const consumeRateLimit = async (
       });
     }
 
-    // Fail open - allow request if rate limiting fails
-    // This ensures system availability over perfect rate limiting
-    return ok({
-      allowed: true,
-    });
+    return limiterUnavailable(config, "error");
   }
 };
 
@@ -311,31 +354,9 @@ export const settleRateLimit = async (
       return;
     }
 
-    const luaScript = `
-      local key = KEYS[1]
-      local unused = tonumber(ARGV[1])
-      local current = tonumber(redis.call('GET', key) or '0')
-
-      if current == 0 then
-        return {0, 0}
-      end
-
-      local released = math.min(current, unused)
-      local updated = current - released
-
-      if updated == 0 then
-        redis.call('DEL', key)
-      else
-        redis.call('DECRBY', key, released)
-      end
-
-      return {updated, released}
-    `;
-
-    const [currentCount, released] = (await redis.eval(luaScript, {
-      keys: [reservation.key],
-      arguments: [unused.toString()],
-    })) as [number, number];
+    const [currentCount, released] = (await cache.runRedisOperation((client) =>
+      runRateLimitScript(client, settleScript, [reservation.key], [unused.toString()])
+    )) as [number, number];
 
     logger.debug(
       {

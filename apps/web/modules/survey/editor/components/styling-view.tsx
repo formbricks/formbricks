@@ -37,25 +37,25 @@ import {
 import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
-  workspaceId: string;
-  workspace: TWorkspaceWithoutCustomCss;
-  localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  colors: string[];
-  styling: TSurveyStyling | null;
-  setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
-  localStylingChanges: TSurveyStyling | null;
-  setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
-  isUnsplashConfigured: boolean;
-  isCxMode: boolean;
-  isStorageConfigured: boolean;
+  readonly workspaceId: string;
+  readonly workspace: TWorkspaceWithoutCustomCss;
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
+  readonly colors: string[];
+  readonly styling: TSurveyStyling | null;
+  readonly setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
+  readonly localStylingChanges: TSurveyStyling | null;
+  readonly setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
+  readonly isUnsplashConfigured: boolean;
+  readonly isCxMode: boolean;
+  readonly isStorageConfigured: boolean;
   /** Which palette the form edits and the preview shows. Only app surveys can render dark (D4). */
-  appearance?: TStylingAppearance;
-  setAppearance?: (appearance: TStylingAppearance) => void;
-  customCssEditor: TSurveyCustomCssEditorConfig;
-  customCssValidation: TCustomCssValidationState;
+  readonly appearance?: TStylingAppearance;
+  readonly setAppearance?: (appearance: TStylingAppearance) => void;
+  readonly customCssEditor: TSurveyCustomCssEditorConfig;
+  readonly customCssValidation: TCustomCssValidationState;
   /** The survey's Custom CSS as last persisted. */
-  savedCustomCss: TCustomCssStored | null;
+  readonly savedCustomCss: TCustomCssStored | null;
 }
 
 export const StylingView = ({
@@ -273,6 +273,9 @@ export const StylingView = ({
                 overwriteThemeStyling && (
                   <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
                 )
+              }
+              pageFontFallback={
+                localSurvey.type === "app" ? savedWorkspaceStyling?.pageFont === true : undefined
               }
             />
 

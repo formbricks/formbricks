@@ -83,7 +83,9 @@ export const sendTestEmailAction = authenticatedActionClient
       ctx.user.email,
       ctx.user.name,
       ctx.user.locale,
-      organization?.whitelabel?.logoUrl || ""
+      ctx.user.id,
+      organization?.whitelabel?.logoUrl || "",
+      organization.id
     );
 
     return { success: true };

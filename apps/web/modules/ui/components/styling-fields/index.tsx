@@ -7,13 +7,14 @@ import React from "react";
 export { ColorField } from "./components/color-field";
 export { DimensionInput } from "./components/dimension-input";
 export { NumberField } from "./components/number-field";
+export { PageFontField } from "./components/page-font-field";
 export { TextField } from "./components/text-field";
 
 interface StylingSectionProps {
-  title: string;
-  open: boolean;
-  setOpen: (o: boolean) => void;
-  children: React.ReactNode;
+  readonly title: string;
+  readonly open: boolean;
+  readonly setOpen: (o: boolean) => void;
+  readonly children: React.ReactNode;
 }
 
 export const StylingSection = ({ title, open, setOpen, children }: StylingSectionProps) => {

@@ -69,6 +69,7 @@ export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT || E2E_TESTI
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 export const INVITE_RATE_LIMIT_PER_24_HOURS = env.INVITE_RATE_LIMIT_PER_24_HOURS;
+export const EMAIL_RATE_LIMIT_MULTIPLIER = env.EMAIL_RATE_LIMIT_MULTIPLIER;
 
 export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;
 export const SLACK_CLIENT_ID = env.SLACK_CLIENT_ID;
@@ -88,6 +89,10 @@ export const AIRTABLE_CLIENT_ID = env.AIRTABLE_CLIENT_ID;
 
 export const SES_CONFIGURATION_SET = env.SES_CONFIGURATION_SET;
 export const SES_EMAIL_ENVIRONMENT = env.SES_EMAIL_ENVIRONMENT;
+export const EMAIL_SEND_AUDIT_ENABLED = env.EMAIL_SEND_AUDIT_ENABLED === "1";
+export const EMAIL_SEND_AUDIT_BUCKET = env.EMAIL_SEND_AUDIT_BUCKET;
+export const EMAIL_SEND_AUDIT_KMS_KEY_ARN = env.EMAIL_SEND_AUDIT_KMS_KEY_ARN;
+export const EMAIL_SEND_AUDIT_HMAC_KEY_ARN = env.EMAIL_SEND_AUDIT_HMAC_KEY_ARN;
 export const SMTP_HOST = env.SMTP_HOST;
 export const SMTP_PORT = env.SMTP_PORT;
 
@@ -102,6 +107,7 @@ export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
+export const SMTP_REQUIRE_TLS = env.SMTP_REQUIRE_TLS === "1";
 export const MAIL_FROM = env.MAIL_FROM;
 export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
 
@@ -270,6 +276,9 @@ export const STRIPE_API_VERSION = "2026-02-25.clover";
 
 // Maximum number of attribute classes allowed:
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150;
+// Most attributes one identify request may carry. Over three times what an environment can define, so
+// no real call reaches it; it stops a body from making the attribute validation walk an unbounded map.
+export const MAX_CONTACT_ATTRIBUTES_PER_REQUEST = 500;
 
 export const DEFAULT_LOCALE = "en-US";
 export const AVAILABLE_LOCALES: TUserLocale[] = [
@@ -314,9 +323,10 @@ export const RECAPTCHA_SITE_KEY = env.RECAPTCHA_SITE_KEY;
 export const RECAPTCHA_SECRET_KEY = env.RECAPTCHA_SECRET_KEY;
 export const IS_RECAPTCHA_CONFIGURED = Boolean(RECAPTCHA_SITE_KEY && RECAPTCHA_SECRET_KEY);
 
-// Use the app version for Sentry release (updated during build in production)
-// Fallback to environment variable if package.json is not accessible
-export const SENTRY_RELEASE = (() => {
+// The app's release version (CI bumps package.json during the production build); undefined for a
+// development, local or self-built (0.0.0) build. Sentry tags events with it, and the link survey
+// page loads the survey renderer under it so a release never waits out the CDN copy of the last one.
+export const APP_RELEASE_VERSION = (() => {
   if (!IS_PRODUCTION) {
     return undefined;
   }
@@ -331,6 +341,7 @@ export const SENTRY_RELEASE = (() => {
     return undefined;
   }
 })();
+export const SENTRY_RELEASE = APP_RELEASE_VERSION;
 export const SENTRY_ENVIRONMENT = env.SENTRY_ENVIRONMENT;
 export const SENTRY_DSN = env.SENTRY_DSN;
 

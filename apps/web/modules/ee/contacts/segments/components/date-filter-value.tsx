@@ -17,10 +17,10 @@ import {
 } from "@/modules/ui/components/select";
 
 interface DateFilterValueProps {
-  operator: TDateOperator;
-  value: TSegmentFilterValue;
-  onChange: (value: TSegmentFilterValue) => void;
-  viewOnly?: boolean;
+  readonly operator: TDateOperator;
+  readonly value: TSegmentFilterValue;
+  readonly onChange: (value: TSegmentFilterValue) => void;
+  readonly viewOnly?: boolean;
 }
 
 export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFilterValueProps) {

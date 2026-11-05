@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 
-export const LoadingSpinner = ({ className = "h-6 w-6" }: { className?: string }) => {
+export const LoadingSpinner = ({ className = "h-6 w-6" }: { readonly className?: string }) => {
   return (
     <div className="flex h-full w-full items-center justify-center">
       <svg

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import {
   deleteScopedResponse,
   deleteScopedResponses,
@@ -8,6 +9,9 @@ import {
 } from "./service";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
 
 const {
   mockTxDelete,
@@ -71,7 +75,10 @@ vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({ drainDeletionCleanups: 
 // only the element-id lookup is pinned, to keep the survey fixtures free of upload elements.
 vi.mock("@/modules/storage/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/storage/utils")>()),
-  getSurveyFileUploadElementIds: () => new Set(["screenshots"]),
+  getSurveyUploadElementIds: () => ({
+    fileUpload: new Set(["screenshots"]),
+    signature: new Set(["signature"]),
+  }),
 }));
 
 const RESPONSE_ID = "clrsaaaaaaaaaaaaaaaaaaaa";
@@ -117,6 +124,25 @@ describe("deleteScopedResponse", () => {
     expect(mockTxDelete).toHaveBeenCalledTimes(1);
     const { where } = mockTxDelete.mock.calls[0][0];
     expect(where).toStrictEqual({ id: RESPONSE_ID, survey: { workspaceId: "ws_1" } });
+  });
+
+  test("marks the deleted response for email copy erasure in the transaction", async () => {
+    runTransaction(deletedRow());
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(requestEmailAuditErasureRequired).toHaveBeenCalledWith(
+      { responseId: RESPONSE_ID },
+      expect.any(Object)
+    );
+  });
+
+  test("rolls back when the email erasure request fails", async () => {
+    runTransaction(deletedRow());
+    vi.mocked(requestEmailAuditErasureRequired).mockRejectedValueOnce(new Error("audit unavailable"));
+
+    await expect(deleteScopedResponse(RESPONSE_ID, SCOPE)).rejects.toThrow("audit unavailable");
+    expect(mockDeleteFiles).not.toHaveBeenCalled();
   });
 
   /**
@@ -258,6 +284,51 @@ describe("deleteScopedResponse", () => {
     await deleteScopedResponse(RESPONSE_ID, SCOPE);
 
     expect(mockDeleteFiles).toHaveBeenCalledWith([ownFile], "ws_1");
+  });
+
+  // A Signature answer is one URL string (ADR 0023); the element id decides it is a delete target.
+  test("removes the signature image of the response's own survey and element", async () => {
+    const ownSignature = "/storage/ws_1/private/surveys/svy_1/elements/signature/s--fid--abc.png";
+    runTransaction(deletedRow({ data: { signature: ownSignature } }));
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([ownSignature], "ws_1");
+  });
+
+  test("removes the signature image left by an element since deleted from the survey", async () => {
+    const orphan = "/storage/ws_1/private/surveys/svy_1/elements/removed-signature/s--fid--abc.png";
+    runTransaction(deletedRow({ data: { "removed-signature": orphan } }));
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([orphan], "ws_1");
+  });
+
+  // Changing a Signature to Free text keeps the id, so the PNG sits under a live text element and is
+  // still this response's to remove.
+  test("removes the signature image of an element since retyped to Free text", async () => {
+    const retyped = "/storage/ws_1/private/surveys/svy_1/elements/text/s--fid--abc.png";
+    runTransaction(deletedRow({ data: { text: retyped } }));
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([retyped], "ws_1");
+  });
+
+  test("never removes a signature URL from another survey or element, or one pasted into another text answer", async () => {
+    runTransaction(
+      deletedRow({
+        data: {
+          signature: "/storage/ws_1/private/surveys/svy_other/elements/signature/s--fid--abc.png",
+          text: "/storage/ws_1/private/surveys/svy_1/elements/signature/s--fid--abc.png",
+        },
+      })
+    );
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).not.toHaveBeenCalled();
   });
 
   test("does not call storage at all when the response held no files", async () => {

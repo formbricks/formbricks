@@ -235,12 +235,20 @@ async function handleInviteAcceptance(
     },
   });
 
-  await sendInviteAcceptedEmail(
-    invite.creator.name ?? "",
-    user.name,
-    invite.creator.email,
-    invite.creator.locale
-  );
+  // Best-effort: the membership exists by now, so a notice the SMTP server refuses must not leave the used
+  // invite behind.
+  try {
+    await sendInviteAcceptedEmail(
+      invite.creator.name ?? "",
+      user.name,
+      invite.creator.email,
+      invite.creator.locale,
+      user.id,
+      invite.organizationId
+    );
+  } catch (error) {
+    logger.error({ err: error }, "Failed to send invite accepted email");
+  }
   await deleteInvite(invite.id);
 }
 

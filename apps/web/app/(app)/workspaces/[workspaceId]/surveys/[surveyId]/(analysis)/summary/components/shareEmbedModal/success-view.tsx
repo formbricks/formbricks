@@ -12,15 +12,15 @@ import {
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 
 interface SuccessViewProps {
-  survey: TSurvey;
-  surveyUrl: string;
-  publicDomain: string;
-  setSurveyUrl: (url: string) => void;
-  user: TUser;
-  tabs: { id: ShareViaType | ShareSettingsType; label: string; icon: React.ElementType }[];
-  handleViewChange: (view: "start" | "share") => void;
-  handleEmbedViewWithTab: (tabId: ShareViaType | ShareSettingsType) => void;
-  isReadOnly: boolean;
+  readonly survey: TSurvey;
+  readonly surveyUrl: string;
+  readonly publicDomain: string;
+  readonly setSurveyUrl: (url: string) => void;
+  readonly user: TUser;
+  readonly tabs: { id: ShareViaType | ShareSettingsType; label: string; icon: React.ElementType }[];
+  readonly handleViewChange: (view: "start" | "share") => void;
+  readonly handleEmbedViewWithTab: (tabId: ShareViaType | ShareSettingsType) => void;
+  readonly isReadOnly: boolean;
 }
 
 export const SuccessView: React.FC<SuccessViewProps> = ({
