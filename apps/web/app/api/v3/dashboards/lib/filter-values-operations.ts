@@ -159,6 +159,13 @@ const valuesCacheKey = (parts: {
   };
 };
 
+/** The first refusal among the datasets, all asked at once, or `null` when every one is readable. */
+const refuseUnlessAllReadable = async (
+  datasetIds: readonly string[],
+  refuse: (datasetId: string) => Promise<Response | null>
+): Promise<Response | null> =>
+  (await Promise.all(datasetIds.map(refuse))).find((refusal) => refusal !== null) ?? null;
+
 /** Which of `fields` each dataset has, read once per dataset, as one `(datasetId, field)` check. */
 const matchDatasetFields = async (
   datasetIds: readonly string[],
@@ -288,12 +295,10 @@ export async function listV3DashboardFilterValues({
 
     // Every dataset whose charts can offer values must be readable, so the one cached list is everyone's.
     // Checked together (C8): one dashboard can read many datasets.
-    const refusals = await Promise.all(
-      datasetIds
-        .filter((id) => datasetHasField(id, filter.field))
-        .map((datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, row, context))
+    const refused = await refuseUnlessAllReadable(
+      datasetIds.filter((id) => datasetHasField(id, filter.field)),
+      (datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, row, context)
     );
-    const refused = refusals.find((refusal) => refusal !== null);
     if (refused) return refused;
 
     const picks = keepCurrentPicks(locked.filters, locked.picks);

@@ -19,6 +19,29 @@ import type { TFilterOption, TFilterProperty } from "../lib/types";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
+/** The values a search lists: what the lookup returned, or the fixed options whose label holds it. */
+const listedOptions = (
+  property: TFilterProperty,
+  loadedOptions: readonly TFilterOption[] | undefined,
+  needle: string
+): TFilterOption[] => {
+  if (property.loadOptions) return [...(loadedOptions ?? [])];
+  const lowered = needle.toLowerCase();
+  return (property.options ?? []).filter((option) => option.label.toLowerCase().includes(lowered));
+};
+
+/** The listed values, after every picked one the search did not return, so each can still be unticked. */
+const withPickedFirst = (
+  picked: readonly string[],
+  listed: readonly TFilterOption[],
+  labelOf: (value: string) => string
+): TFilterOption[] => [
+  ...picked
+    .filter((value) => !listed.some((option) => option.value === value))
+    .map((value) => ({ value, label: labelOf(value) })),
+  ...listed,
+];
+
 /**
  * Whether what is typed can be taken as a value of its own: the property takes free values (not an enum),
  * it is a number where a number is due, and the list does not already hold it.
@@ -88,9 +111,7 @@ export const FilterValuePicker = ({
 
   const needle = search.trim();
   const staticOptions = property.options ?? [];
-  const listed: TFilterOption[] = loadOptions
-    ? (loaded.data?.options ?? [])
-    : staticOptions.filter((option) => option.label.toLowerCase().includes(needle.toLowerCase()));
+  const listed = listedOptions(property, loaded.data?.options, needle);
   const selected: readonly string[] = selection.multiple
     ? selection.value
     : [selection.value].filter((value) => value !== "");
@@ -99,14 +120,7 @@ export const FilterValuePicker = ({
     pickedLabels.get(value) ??
     listed.find((option) => option.value === value)?.label ??
     value;
-  const shown: TFilterOption[] = selection.multiple
-    ? [
-        ...selected
-          .filter((value) => !listed.some((option) => option.value === value))
-          .map((value) => ({ value, label: labelOf(value) })),
-        ...listed,
-      ]
-    : listed;
+  const shown = selection.multiple ? withPickedFirst(selected, listed, labelOf) : listed;
   const typedIsNew = isNewTypedValue(property, needle, shown);
   const isLoading = Boolean(loadOptions) && loaded.isLoading;
   const isSearching = Boolean(loadOptions) && (loaded.isFetching || needle !== debouncedSearch);
