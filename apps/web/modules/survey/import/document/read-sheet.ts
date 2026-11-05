@@ -95,9 +95,17 @@ const originOf = (sheet: XLSX.WorkSheet): { row: number; column: number } => {
 const textExtentOf = (sheet: XLSX.WorkSheet): { row: number; column: number } | null => {
   let lastRow = -1;
   let lastColumn = -1;
-  // Dense mode: rows and cells by their absolute indices, holes where the file has none.
-  (sheet["!data"] ?? []).forEach((row, rowIndex) => {
-    row?.forEach((cell, columnIndex) => {
+  // Dense mode: rows and cells by their absolute indices, holes where the file has none. Only the
+  // indices present are visited: one cell at column XFD would make `forEach` walk all 16,384 slots of
+  // its row, and the XML budget allows tens of thousands of such rows.
+  const data = sheet["!data"] ?? [];
+  Object.keys(data).forEach((rowKey) => {
+    const rowIndex = Number(rowKey);
+    const row = data[rowIndex];
+    if (!row) return;
+    Object.keys(row).forEach((columnKey) => {
+      const columnIndex = Number(columnKey);
+      const cell = row[columnIndex];
       // An error cell (`#N/A`) reads as empty, as `sheet_to_json` reads it.
       if (!cell || cell.t === "e" || XLSX.utils.format_cell(cell).trim() === "") return;
       if (rowIndex >= SURVEY_IMPORT_SHEET_MAX_ROWS) {

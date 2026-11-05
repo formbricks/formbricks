@@ -180,6 +180,27 @@ describe("readSheetDocument", () => {
     }
   });
 
+  test("visits only the cells a sheet holds, not every slot up to its widest one", () => {
+    // 20,000 rows, each with only an error cell at column XFD: walked slot by slot, 327 million visits.
+    // Written as XML: SheetJS would fill every slot of the 20,000 × 16,384 range to write it.
+    const rows = 20_000;
+    const errorRows = Array.from(
+      { length: rows - 1 },
+      (_, index) => `<row r="${index + 2}"><c r="XFD${index + 2}" t="e"><v>#N/A</v></c></row>`
+    ).join("");
+    const base = workbook({ Sheet1: [["Q1"]] });
+    const parts = unzipSync(base);
+    const sheetXml = strFromU8(parts["xl/worksheets/sheet1.xml"])
+      .replace('<dimension ref="A1"/>', `<dimension ref="A1:XFD${rows}"/>`)
+      .replace("</sheetData>", `${errorRows}</sheetData>`);
+    expect(sheetXml).toContain(`XFD${rows}`);
+    const sparse = zipSync({ ...parts, "xl/worksheets/sheet1.xml": strToU8(sheetXml) });
+
+    const startedAt = performance.now();
+    expect(read(sparse).lines).toEqual([{ key: "R1", cells: [{ key: "A1", text: "Q1" }] }]);
+    expect(performance.now() - startedAt).toBeLessThan(2_000);
+  });
+
   test("takes a sheet whose dimension covers formatted empty rows past the limit", () => {
     // Excel stretches the dimension over cells that only carry formatting, such as a table style.
     const stretched = patched(
