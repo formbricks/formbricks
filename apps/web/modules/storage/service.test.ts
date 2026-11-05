@@ -95,6 +95,39 @@ describe("storage service", () => {
       );
     });
 
+    // The write check for a Signature answer requires exactly this name (`fileNamePattern`), so the
+    // renaming here and the pattern in `uploadElementKinds` have to agree, and the per-kind size cap
+    // has to reach the presigned policy rather than stop at the route.
+    test("should store a signature upload under the name the Signature file name pattern requires, with the cap in the policy", async () => {
+      const { uploadElementKinds } = await import("./survey-upload-elements");
+      vi.mocked(randomUUID).mockReturnValue("0b8a4a3e-1111-4222-8333-444455556666");
+      vi.mocked(getSignedUploadUrl).mockResolvedValue({
+        ok: true,
+        data: { signedUrl: "https://s3.example.com/upload", presignedFields: {} },
+      } as MockedSignedUploadReturn);
+
+      const result = await getSignedUrlForUpload(
+        "signature.png",
+        "ws-1",
+        "image/png",
+        "private",
+        uploadElementKinds.signature.maxFileSizeBytes,
+        ["surveys", "survey-1", "elements", "sig-1"]
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const storedName = result.data.fileUrl.split("/").pop() ?? "";
+        expect(uploadElementKinds.signature.fileNamePattern.test(storedName)).toBe(true);
+      }
+      expect(getSignedUploadUrl).toHaveBeenCalledWith(
+        "signature--fid--0b8a4a3e-1111-4222-8333-444455556666.png",
+        "image/png",
+        "ws-1/private/surveys/survey-1/elements/sig-1",
+        1024 * 1024
+      );
+    });
+
     test("should return relative URL for private files", async () => {
       const mockSignedUrlResponse = {
         ok: true,
@@ -413,12 +446,32 @@ describe("storage service", () => {
     test.each([
       "../../ws-victim/private/secret.pdf",
       "sub/../../../ws-victim/private/secret.pdf",
+      "%2e%2e/%2e%2e/ws-victim/private/secret.pdf",
       "./file.jpg",
+      // A bare `%` elsewhere in the name must not stop the encoded traversal being read.
+      "%2e%2e/100%--fid--1.png",
+      "%2e%2e%2f100%--fid--1.png",
+      "a%2f..%2fb",
     ])("should reject traversal in the file name: %s", async (fileName) => {
       const result = await deleteFile("ws-456", "public" as TAccessType, fileName);
 
       expect(result.ok).toBe(false);
       expect(deleteFileFromS3).not.toHaveBeenCalled();
+    });
+
+    // Regression (ENG-3077): the route used to decode the name a second time before calling deleteFile, so
+    // a file with `%` in its name was deleted under a key that does not exist.
+    test.each([
+      ["a literal %20", "Test%20tiara--fid--1.png"],
+      ["a bare %", "100%--fid--1.png"],
+    ])("should delete under the name as given, with %s", async (_label, fileName) => {
+      const mockSuccess = { ok: true, data: undefined } as MockedDeleteFileReturn;
+      vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccess);
+
+      const result = await deleteFile("ws-456", "private" as TAccessType, fileName, "env-123");
+
+      expect(result).toEqual(mockSuccess);
+      expect(deleteFileFromS3).toHaveBeenCalledWith(`ws-456/private/${fileName}`);
     });
 
     // A backend or proxy that merges `//` or maps `\` to `/` would read these as another survey's key.
@@ -584,13 +637,18 @@ describe("storage service", () => {
     // Regression: `fileName` comes from the `[...filePath]` route param and the key is
     // `${id}/${accessType}/${fileName}`, so a `..` segment let a caller name an object outside their
     // own workspace prefix — reachable with no auth at all through the `public/` access type, which
-    // skips authorizePrivateDownload. The `%252e`/`%2e` cases cover the extra decodeURIComponent the
-    // handler applies on top of Next's own param decoding.
+    // skips authorizePrivateDownload. The `%2e` case is a `%252e%252e` URL after Next's own param decoding:
+    // the name is not decoded into the key, but it is still refused so the guard does not depend on a proxy
+    // or backend leaving `%2e` alone.
     test.each([
       "../../ws-victim/private/secret.pdf",
       "sub/../../../ws-victim/private/secret.pdf",
       "%2e%2e/%2e%2e/ws-victim/private/secret.pdf",
       "./secret.pdf",
+      // A bare `%` elsewhere in the name must not stop the encoded traversal being read.
+      "%2e%2e/100%--fid--1.png",
+      "%2e%2e%2f100%--fid--1.png",
+      "a%2f..%2fb",
     ])("should reject traversal in the file name: %s", async (fileName) => {
       const result = await getFileStreamForDownload(fileName, "ws-attacker", "public" as TAccessType);
 
@@ -661,25 +719,46 @@ describe("storage service", () => {
       expect(getFileStream).toHaveBeenCalledWith("env-456/private/document.pdf");
     });
 
-    test("should decode URL-encoded filename", async () => {
-      const mockStream = new ReadableStream();
+    // Regression (ENG-3077): the route hands over the name its router already decoded once, and objects
+    // are stored under that name. A second decode turned a stored `%20` into a space (a key that does not
+    // exist) and threw on a bare `%`.
+    test.each([
+      ["a literal %20", "Test%20tiara--fid--1.png"],
+      ["a bare %", "100%--fid--1.png"],
+    ])("should build the key from the name as given, with %s", async (_label, fileName) => {
       const mockStreamResult = {
         ok: true,
-        data: {
-          body: mockStream,
-          contentType: "image/png",
-          contentLength: 1000,
-        },
+        data: { body: new ReadableStream(), contentType: "image/png", contentLength: 1000 },
       } as MockedFileStreamReturn;
-
       vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
 
-      // URL-encoded filename with spaces: "my file.png" -> "my%20file.png"
-      const result = await getFileStreamForDownload("my%20file.png", "env-123", "public" as TAccessType);
+      const result = await getFileStreamForDownload(fileName, "env-123", "private" as TAccessType);
 
       expect(result.ok).toBe(true);
-      // Should decode %20 to space before passing to getFileStream
-      expect(getFileStream).toHaveBeenCalledWith("env-123/public/my file.png");
+      expect(getFileStream).toHaveBeenCalledWith(`env-123/private/${fileName}`);
+    });
+
+    test("should retry the fallback id with the same name as given", async () => {
+      vi.mocked(getFileStream)
+        .mockResolvedValueOnce({
+          ok: false,
+          error: { code: StorageErrorCode.FileNotFoundError },
+        } as MockedFileStreamReturn)
+        .mockResolvedValueOnce({
+          ok: true,
+          data: { body: new ReadableStream(), contentType: "image/png", contentLength: 1 },
+        } as MockedFileStreamReturn);
+
+      const result = await getFileStreamForDownload(
+        "Test%20tiara--fid--1.png",
+        "ws-456",
+        "private" as TAccessType,
+        "env-123"
+      );
+
+      expect(result.ok).toBe(true);
+      expect(getFileStream).toHaveBeenNthCalledWith(1, "ws-456/private/Test%20tiara--fid--1.png");
+      expect(getFileStream).toHaveBeenNthCalledWith(2, "env-123/private/Test%20tiara--fid--1.png");
     });
 
     test("should return error when getFileStream fails with FileNotFoundError and no fallback", async () => {

@@ -102,5 +102,18 @@
     "value_must_equal": "值必須等於 {value}",
     "value_must_not_contain": "值不得包含 {value}",
     "value_must_not_equal": "值不得等於 {value}"
+  },
+  "signature": {
+    "clear": "清除",
+    "draw": "手寫",
+    "method": "簽名方式",
+    "not_signed": "尚未簽名",
+    "pad_label": "簽名板。可用手指、觸控筆或滑鼠繪製你的簽名。",
+    "pad_label_with_type": "簽名板。可用手指、觸控筆或滑鼠繪製你的簽名,或切換到「輸入」,用鍵盤輸入你的姓名。",
+    "saved": "你的簽名已儲存。若要重新簽名,請先清除。",
+    "sign_here": "請在此簽名",
+    "signed": "已簽名",
+    "type": "輸入",
+    "type_your_name": "輸入你的姓名"
   }
 }

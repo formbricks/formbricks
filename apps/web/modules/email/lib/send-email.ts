@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import {
   DEBUG,
+  EMAIL_SEND_AUDIT_ENABLED,
   IS_SMTP_CONFIGURED,
   MAIL_FROM,
   MAIL_FROM_NAME,
@@ -15,10 +16,13 @@ import {
   SMTP_PASSWORD,
   SMTP_PORT,
   SMTP_REJECT_UNAUTHORIZED_TLS,
+  SMTP_REQUIRE_TLS,
   SMTP_SECURE_ENABLED,
   SMTP_USER,
 } from "@/lib/constants";
+import { reportEmailAuditFailure } from "./email-audit-monitoring";
 import { type TEmailRateLimitContext, applyEmailRateLimits } from "./email-rate-limits";
+import { type TEmailAuditContext, beginEmailSendAudit, finishEmailSendAudit } from "./email-send-audit";
 
 // Fixed categories keep CloudWatch cardinality independent of users and surveys.
 export type TEmailType =
@@ -34,6 +38,7 @@ export type TEmailType =
   | "sso_recovery_notification"
   | "sso_sign_in_hint"
   | "data_retention_notice"
+  | "attachment_export"
   | "response_notification"
   | "survey_preview"
   | "customization_preview"
@@ -53,9 +58,61 @@ interface SendEmailDataProps {
   messageId?: string;
   /** Who the email is sent for; `emailRateLimits` says which fields each type needs. */
   rateLimit?: TEmailRateLimitContext;
+  /** Audit identity and source, kept out of the SMTP payload. */
+  auditContext: TEmailAuditContext;
 }
 
 const MAX_ADDRESS_LENGTH = 320;
+const safeSmtpErrorCodes = new Set([
+  "EAUTH",
+  "ECONNECTION",
+  "ECONNREFUSED",
+  "EENVELOPE",
+  "EMESSAGE",
+  "ENOTFOUND",
+  "ESOCKET",
+  "ETIMEDOUT",
+  "ETLS",
+]);
+
+const getSafeSmtpErrorCode = (error: unknown): string => {
+  const code = error && typeof error === "object" && "code" in error ? error.code : undefined;
+  return typeof code === "string" && safeSmtpErrorCodes.has(code) ? code : "unknown";
+};
+
+const getSesHeaders = (emailType: TEmailType) =>
+  SES_CONFIGURATION_SET && SES_EMAIL_ENVIRONMENT
+    ? {
+        headers: {
+          "X-SES-CONFIGURATION-SET": SES_CONFIGURATION_SET,
+          "X-SES-MESSAGE-TAGS": `email_type=${emailType}, environment=${SES_EMAIL_ENVIRONMENT}`,
+        },
+      }
+    : {};
+
+const submitEmailToSmtp = async (
+  emailData: Omit<SendEmailDataProps, "emailType" | "rateLimit" | "auditContext">,
+  emailType: TEmailType
+): Promise<unknown> => {
+  const transportOptions: SMTPTransport.Options = {
+    host: SMTP_HOST,
+    port: Number.parseInt(SMTP_PORT ?? "", 10),
+    secure: SMTP_SECURE_ENABLED,
+    requireTLS: SMTP_REQUIRE_TLS && !SMTP_SECURE_ENABLED,
+    ...(SMTP_AUTHENTICATED ? { auth: { type: "LOGIN", user: SMTP_USER, pass: SMTP_PASSWORD } } : {}),
+    tls: { rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS },
+    // SMTP debug output can include message content. Audited sends keep it out of ordinary logs.
+    logger: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
+    debug: DEBUG && !EMAIL_SEND_AUDIT_ENABLED,
+  };
+  const transporter = createTransport(transportOptions);
+  const defaultFrom = `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`;
+  return transporter.sendMail({
+    ...emailData,
+    from: emailData.from ?? defaultFrom,
+    ...getSesHeaders(emailType),
+  });
+};
 
 /**
  * One plain address, read the way nodemailer will read it: no list, no group, no display name, no angle
@@ -94,6 +151,7 @@ const isSingleRecipient = (to: string): boolean => {
 export const sendEmail = async ({
   emailType,
   rateLimit,
+  auditContext,
   ...emailData
 }: SendEmailDataProps): Promise<boolean> => {
   // nodemailer reads `to` as an address list, so "a@x, b@y" would reach both. Every email goes to one
@@ -108,45 +166,40 @@ export const sendEmail = async ({
   // Outside the try below, so a capped email reaches the caller as `TooManyRequestsError`, not as an SMTP
   // failure, and never opens a connection.
   await applyEmailRateLimits(emailType, emailData.to, rateLimit);
+  let auditState: Awaited<ReturnType<typeof beginEmailSendAudit>> = null;
   try {
-    const transportOptions: SMTPTransport.Options = {
-      host: SMTP_HOST,
-      port: Number.parseInt(SMTP_PORT ?? "", 10),
-      secure: SMTP_SECURE_ENABLED,
-      ...(SMTP_AUTHENTICATED
-        ? {
-            auth: {
-              type: "LOGIN",
-              user: SMTP_USER,
-              pass: SMTP_PASSWORD,
-            },
-          }
-        : {}),
-      tls: {
-        rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
-      },
-      logger: DEBUG,
-      debug: DEBUG,
-    };
-    const transporter = createTransport(transportOptions);
-
-    const defaultFrom = `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`;
-    await transporter.sendMail({
-      ...emailData,
-      from: emailData.from ?? defaultFrom,
-      ...(SES_CONFIGURATION_SET && SES_EMAIL_ENVIRONMENT
-        ? {
-            headers: {
-              "X-SES-CONFIGURATION-SET": SES_CONFIGURATION_SET,
-              "X-SES-MESSAGE-TAGS": `email_type=${emailType}, environment=${SES_EMAIL_ENVIRONMENT}`,
-            },
-          }
-        : {}),
-    });
-
-    return true;
+    auditState = await beginEmailSendAudit(
+      emailType,
+      emailData.to,
+      { subject: emailData.subject, html: emailData.html, text: emailData.text },
+      auditContext
+    );
+  } catch {
+    await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_begin" });
+  }
+  let sendInfo: unknown;
+  try {
+    sendInfo = await submitEmailToSmtp(emailData, emailType);
   } catch (error) {
-    logger.error(error, "Error in sendEmail");
+    try {
+      await finishEmailSendAudit(auditState, emailType, auditContext, "failed");
+    } catch {
+      await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_finish" });
+    }
+    logger.error(
+      {
+        emailType,
+        event: "email_send_failed",
+        errorCode: getSafeSmtpErrorCode(error),
+      },
+      "Error in sendEmail"
+    );
     throw new InvalidInputError("Incorrect SMTP credentials");
   }
+  try {
+    await finishEmailSendAudit(auditState, emailType, auditContext, "accepted", sendInfo);
+  } catch {
+    await reportEmailAuditFailure("email_audit_gap", { phase: "unhandled_finish" });
+  }
+  return true;
 };

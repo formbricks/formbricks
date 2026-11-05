@@ -10,6 +10,8 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
+import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import { deleteDisplay } from "../display";
 import {
   deleteResponse,
@@ -64,6 +66,10 @@ vi.mock("../utils", () => ({
   findAndDeleteUploadedFilesInResponse: vi.fn(),
 }));
 
+vi.mock("@/modules/storage/lib/replaced-signature-files", () => ({
+  enqueueReplacedSignatureFileCleanup: vi.fn(),
+}));
+
 vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: vi.fn(),
   loadQuotaEvaluationContext: vi.fn(),
@@ -73,8 +79,13 @@ vi.mock("@/lib/display/service", () => ({
   getDisplayForResponseValidation: vi.fn(),
 }));
 
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     response: {
       findUnique: vi.fn(),
       delete: vi.fn(),
@@ -95,6 +106,8 @@ vi.mock("@formbricks/database", () => ({
 describe("Response Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+    vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
   });
 
   describe("getResponse", () => {
@@ -320,6 +333,7 @@ describe("Response Lib", () => {
       expect(prisma.response.delete).toHaveBeenCalledWith({
         where: { id: responseId },
       });
+      expect(requestEmailAuditErasureRequired).toHaveBeenCalledWith({ responseId }, prisma);
       expect(deleteDisplay).toHaveBeenCalledWith(response.displayId);
       expect(getSurveyQuestions).toHaveBeenCalledWith(response.surveyId);
       // The survey id comes from the deleted row: it is what binds a survey-scoped upload key to this
@@ -334,6 +348,17 @@ describe("Response Lib", () => {
       if (result.ok) {
         expect(result.data).toEqual(response);
       }
+    });
+
+    test("stops the delete when email copy erasure cannot be requested", async () => {
+      vi.mocked(prisma.response.delete).mockResolvedValue(response);
+      vi.mocked(requestEmailAuditErasureRequired).mockRejectedValueOnce(new Error("audit unavailable"));
+
+      const result = await deleteResponse(responseId);
+
+      expect(result.ok).toBe(false);
+      expect(prisma.response.delete).toHaveBeenCalledOnce();
+      expect(deleteDisplay).not.toHaveBeenCalled();
     });
 
     test("return an error if deleteDisplay fails", async () => {
@@ -417,6 +442,47 @@ describe("Response Lib", () => {
       vi.mocked(getDisplayForResponseValidation).mockResolvedValue(validDisplay);
     });
 
+    describe("replaced Signature images (ENG-6810)", () => {
+      const storedRow = { ...existingResponseRow, data: { sig: "/storage/ws/private/old.png" } };
+
+      test("queues the cleanup after the write, from the stored data to the written data", async () => {
+        vi.mocked(prisma.response.findUnique).mockResolvedValue(storedRow as any);
+        vi.mocked(prisma.response.update).mockResolvedValue(response);
+
+        await updateResponse(responseId, responseInput);
+
+        expect(enqueueReplacedSignatureFileCleanup).toHaveBeenCalledExactlyOnceWith(
+          prisma,
+          { surveyId: storedRow.surveyId, previousData: storedRow.data, nextData: response.data },
+          { bestEffort: true }
+        );
+        expect(vi.mocked(prisma.response.update).mock.invocationCallOrder[0]).toBeLessThan(
+          vi.mocked(enqueueReplacedSignatureFileCleanup).mock.invocationCallOrder[0]
+        );
+      });
+
+      test("queues nothing when the update fails", async () => {
+        vi.mocked(prisma.response.findUnique).mockResolvedValue(storedRow as any);
+        vi.mocked(prisma.response.update).mockRejectedValue(new Error("write failed"));
+
+        const result = await updateResponse(responseId, responseInput);
+
+        expect(result.ok).toBe(false);
+        expect(enqueueReplacedSignatureFileCleanup).not.toHaveBeenCalled();
+      });
+
+      test("reads and queues nothing for a write that carries no data", async () => {
+        vi.mocked(prisma.response.update).mockResolvedValue(response);
+        const { data: _data, ...withoutData } = responseInput;
+        vi.mocked(prisma.response.findUnique).mockClear();
+
+        await updateResponse(responseId, { ...withoutData, contactId: null, displayId: null } as any);
+
+        expect(prisma.response.findUnique).not.toHaveBeenCalled();
+        expect(enqueueReplacedSignatureFileCleanup).not.toHaveBeenCalled();
+      });
+    });
+
     test("update the response and revalidate caches including singleUseId", async () => {
       vi.mocked(prisma.response.update).mockResolvedValue(response);
 
@@ -480,7 +546,11 @@ describe("Response Lib", () => {
       const result = await updateResponse(responseId, inputWithoutLinks);
 
       expect(result.ok).toBe(true);
-      expect(prisma.response.findUnique).not.toHaveBeenCalled();
+      // The only read is the stored data for the replaced-signature cleanup, not the tenant anchor.
+      expect(prisma.response.findUnique).toHaveBeenCalledExactlyOnceWith({
+        where: { id: responseId },
+        select: { surveyId: true, data: true },
+      });
       expect(prisma.contact.findUnique).not.toHaveBeenCalled();
       expect(getDisplayForResponseValidation).not.toHaveBeenCalled();
       expect(prisma.response.update).toHaveBeenCalledTimes(1);

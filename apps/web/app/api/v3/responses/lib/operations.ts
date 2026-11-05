@@ -1,6 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
+import type { TResponseData, TResponseDataValue, TResponseOutcome } from "@formbricks/types/responses";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -19,6 +20,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { validateResponseData } from "@/modules/api/lib/validation";
+import { getSurveyUploadElementConfigs } from "@/modules/storage/survey-upload-elements";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { buildAnswerPlan } from "./answers";
 import { resolveV3LabelContext } from "./label-resolution";
@@ -61,7 +63,9 @@ import {
   createScopedResponse,
   dispatchV3ResponsePipeline,
   getSurveyForV3Write,
+  listScopedResponseSurveyRefs,
   readbackV3Response,
+  setScopedResponsesOutcome,
   updateScopedResponse,
 } from "./write-service";
 
@@ -242,6 +246,128 @@ export async function batchDeleteV3Responses({
       requestId,
       instance: instance ?? "",
       operation: "responses.batchDelete",
+    });
+  }
+}
+
+type TBatchOutcomeParams = {
+  workspaceId: string;
+  ids: string[];
+  outcome: TResponseOutcome | null;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+  auditLog?: TV3AuditLog;
+};
+
+/**
+ * `POST /api/v3/responses/batch-outcome` → 200 `{ data: { updated } }`.
+ *
+ * Marks up to 100 responses Low quality, or restores them. It is modelled on `batchDeleteV3Responses` and
+ * scope-filters the same way — the workspace the caller is authorized against is the one every statement
+ * filters by, and a foreign or missing id simply matches nothing — but it asks for less: `readWrite`, like
+ * the single PATCH, because marking is a review decision and not a destructive one.
+ *
+ * Workspace access is necessary but not sufficient. A read-only seat holds `read` on the workspace, and
+ * a restricted survey is its owner's, so `response.write` is also checked — once per distinct survey in
+ * scope, since responses follow their survey. A survey the caller may not write refuses the whole batch
+ * with the same 403 rather than marking a subset: a partial success would leave the caller to work out
+ * which responses it was.
+ *
+ * `updated` counts responses in scope that now carry the outcome, including ones that already did, so a
+ * retry reports what the first call did. Only the responses that actually changed send `responseUpdated`.
+ */
+export async function batchSetV3ResponsesOutcome({
+  workspaceId,
+  ids,
+  outcome,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TBatchOutcomeParams): Promise<Response> {
+  const log = logger.withContext({ requestId, workspaceId });
+
+  try {
+    const access = await requireV3WorkspaceAccess(
+      authentication,
+      workspaceId,
+      "readWrite",
+      requestId,
+      instance
+    );
+
+    if (access instanceof Response) {
+      return access;
+    }
+
+    const scope = {
+      visibleSurveyWhere: buildVisibleSurveyWhere(
+        await resolveV3ResponsesActorContext(authentication, access.organizationId)
+      ),
+      workspaceId,
+    };
+
+    const refs = await listScopedResponseSurveyRefs(ids, scope);
+
+    // One response stands for its survey: `response.write` is decided on the survey.
+    const representatives = new Map<string, string>();
+    for (const { id, surveyId } of refs) {
+      if (!representatives.has(surveyId)) representatives.set(surveyId, id);
+    }
+
+    const refusals = await Promise.all(
+      [...representatives.values()].map((id) =>
+        refuseUnlessV3SurveyVisible(
+          authentication,
+          "response.write",
+          { type: "response", id },
+          requestId,
+          instance
+        )
+      )
+    );
+    const refused = refusals.find((refusal) => refusal !== null);
+    if (refused) return refused;
+
+    const { matched, changes, rows } = await setScopedResponsesOutcome(ids, outcome, scope);
+
+    if (auditLog) {
+      auditLog.organizationId = access.organizationId;
+      // Identity and outcome only, like the batch delete: up to a hundred rows must not become a blob.
+      auditLog.oldObject = {
+        workspaceId,
+        requested: ids.length,
+        responses: changes.map(({ id, previous }) => ({ id, outcome: previous })),
+      };
+      auditLog.newObject = { outcome, updated: matched, responseIds: changes.map(({ id }) => id) };
+    }
+
+    // After commit, and never fatal — see `dispatchV3ResponsePipeline`. Independent per response.
+    await Promise.all(
+      rows.map((row) =>
+        dispatchV3ResponsePipeline({
+          event: "responseUpdated",
+          workspaceId,
+          surveyId: row.surveyId,
+          response: row,
+          alsoFinished: false,
+        })
+      )
+    );
+
+    log.info(
+      { requested: ids.length, updated: matched, changed: changes.length },
+      "V3 responses outcome set"
+    );
+
+    return successResponse({ updated: matched }, { requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId,
+      instance: instance ?? "",
+      operation: "responses.batchSetOutcome",
     });
   }
 }
@@ -645,31 +771,60 @@ function composeV3ResponseWrite({
  * 422 rather than v1/v2's 400, because the check needs the survey definition — the line this
  * contract draws between the two.
  */
-async function fileUploadIssues(
+async function uploadIssues(
   survey: TV3WriteSurveyRow,
   data: TResponseData | undefined
 ): Promise<InvalidParam[]> {
   if (!data) return [];
 
-  const valid = validateClientFileUploads({
-    data,
+  const check = {
     workspaceId: survey.workspaceId,
     surveyId: survey.id,
     blocks: survey.blocks as never,
     questions: survey.questions as never,
     legacyOwnedStoragePrefixes: await getWorkspaceLegacyStoragePrefixes(survey.workspaceId),
-  });
+  };
 
-  if (valid) return [];
+  // File uploads are checked apart from Signatures, so a bad file-upload answer keeps the reason it has
+  // always had and only a Signature failure gets its own.
+  const signatureIds = new Set(
+    getSurveyUploadElementConfigs({ blocks: check.blocks, questions: check.questions })
+      .filter((element) => element.type === TSurveyElementTypeEnum.Signature)
+      .map((element) => element.id)
+  );
+  const entries = Object.entries(data);
+  const signatureData = Object.fromEntries(entries.filter(([id]) => signatureIds.has(id)));
+  const fileUploadData = Object.fromEntries(entries.filter(([id]) => !signatureIds.has(id)));
+  const hasSignatureAnswer = Object.keys(signatureData).length > 0;
 
-  return [
-    {
-      name: "data",
-      reason: "A file-upload answer references a file that does not belong to this survey's upload element.",
-      code: "invalid_reference",
-      referenceType: "element",
-    },
-  ];
+  if (
+    (Object.keys(fileUploadData).length > 0 || !hasSignatureAnswer) &&
+    !validateClientFileUploads({ ...check, data: fileUploadData })
+  ) {
+    return [
+      {
+        name: "data",
+        reason:
+          "A file-upload answer references a file that does not belong to this survey's upload element.",
+        code: "invalid_reference",
+        referenceType: "element",
+      },
+    ];
+  }
+
+  if (hasSignatureAnswer && !validateClientFileUploads({ ...check, data: signatureData })) {
+    return [
+      {
+        name: "data",
+        reason:
+          "A signature answer is malformed or references a file that does not belong to this survey's signature element.",
+        code: "invalid_reference",
+        referenceType: "element",
+      },
+    ];
+  }
+
+  return [];
 }
 
 /** Survey validation-rule failures, itemized per element rather than collapsed into one message. */
@@ -746,7 +901,7 @@ export async function planV3ResponseCreate({
       (issue): issue is InvalidParam => issue !== null
     ),
     ...answerValidationIssues(survey, composed.data, storedLanguage),
-    ...(await fileUploadIssues(survey, composed.data)),
+    ...(await uploadIssues(survey, composed.data)),
   ];
 
   if (issues.length > 0) return { ok: false, issues };
@@ -940,7 +1095,7 @@ export async function planV3ResponsePatch({
     // so an `embeddedData`-only patch would otherwise re-run stored upload URLs through today's
     // `allowedFileExtensions`: narrow those after collection and every later patch 422s naming `data`,
     // a field the request never carried.
-    ...(body.data === undefined ? [] : await fileUploadIssues(survey, composed.data)),
+    ...(body.data === undefined ? [] : await uploadIssues(survey, composed.data)),
   ];
 
   if (issues.length > 0) return { ok: false, issues };
@@ -1034,6 +1189,8 @@ export async function updateV3Response({
         endingId: body.endingId,
         // Only when the payload carried it — and then as the survey's own code, never the caller's.
         language: body.language === undefined ? undefined : effectiveLanguage,
+        // `null` restores; absent leaves it. Authorized above as `response.write` like every other key.
+        outcome: body.outcome,
         data: composed.data,
         variables: composed.variables,
         tagIds: body.tags,
@@ -1056,8 +1213,8 @@ export async function updateV3Response({
     if (auditLog) {
       auditLog.targetId = responseId;
       auditLog.organizationId = access.organizationId;
-      auditLog.oldObject = { id: stored.id, finished: stored.finished };
-      auditLog.newObject = { id: row.id, finished: row.finished };
+      auditLog.oldObject = { id: stored.id, finished: stored.finished, outcome: stored.outcome };
+      auditLog.newObject = { id: row.id, finished: row.finished, outcome: row.outcome };
     }
 
     const resource = createV3ResponseSerializer().toResource(row, survey);

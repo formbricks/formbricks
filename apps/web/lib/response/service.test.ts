@@ -7,6 +7,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { deleteResponse, getResponseDownloadFile, responseSelection, updateResponse } from "./service";
@@ -21,6 +22,9 @@ vi.mock("@formbricks/database", () => ({
       update: vi.fn(),
     },
   },
+}));
+vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
+  requestEmailAuditErasureRequired: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/utils/validate", () => ({
@@ -77,6 +81,10 @@ vi.mock("@/modules/storage/lib/delete-response-files", () => ({
   deleteResponseFileUrls: vi.fn(),
 }));
 
+vi.mock("@/modules/storage/lib/replaced-signature-files", () => ({
+  enqueueReplacedSignatureFileCleanup: vi.fn(),
+}));
+
 vi.mock("../utils/file-conversion", () => ({
   convertToCsv: vi.fn(() => Promise.resolve("csv-content")),
   convertToXlsxBuffer: vi.fn(() => Buffer.from("xlsx-content")),
@@ -118,6 +126,7 @@ const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {})
   singleUseId: null,
   language: "en",
   displayId: "display-123",
+  outcome: null,
   contact: null,
   tags: [],
   contactId: null,
@@ -131,9 +140,76 @@ const createMockResponseInput = (overrides: Partial<TResponseUpdateInput> = {}):
   ...overrides,
 });
 
+describe("responseSelection", () => {
+  // The webhook body and the management sample route spread what this select returns, so a column left
+  // out of it is a key missing from the payload rather than a `null` (ENG-6780).
+  test("selects the outcome", () => {
+    expect(responseSelection.outcome).toBe(true);
+  });
+});
+
 describe("updateResponse", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("replaced Signature images (ENG-6810)", () => {
+    const oldImage = "/storage/ws/private/surveys/survey-123/elements/sig/signature--fid--old.png";
+
+    test("queues the cleanup after the write, against the stored data and the merged data", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage, other: "kept" } });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { sig: "" } }));
+
+      expect(enqueueReplacedSignatureFileCleanup).toHaveBeenCalledExactlyOnceWith(
+        prisma,
+        { surveyId: "survey-123", previousData: currentResponse.data, nextData: { sig: "", other: "kept" } },
+        { bestEffort: true }
+      );
+      expect(vi.mocked(prisma.response.update).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(enqueueReplacedSignatureFileCleanup).mock.invocationCallOrder[0]
+      );
+    });
+
+    test("queues on the caller's transaction, where a failure must propagate", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage } });
+      const tx = {
+        response: {
+          findUnique: vi.fn().mockResolvedValue(currentResponse),
+          update: vi.fn().mockResolvedValue(currentResponse),
+        },
+      };
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { sig: "" } }), tx as never);
+
+      expect(enqueueReplacedSignatureFileCleanup).toHaveBeenCalledWith(tx, expect.anything(), {
+        bestEffort: false,
+      });
+    });
+
+    test("queues nothing when the update fails", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage } });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockRejectedValue(new Error("write failed"));
+
+      await expect(
+        updateResponse(mockResponseId, createMockResponseInput({ data: { sig: "" } }))
+      ).rejects.toThrow("write failed");
+
+      expect(enqueueReplacedSignatureFileCleanup).not.toHaveBeenCalled();
+    });
+
+    test("queues nothing for an update that carries no data", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage } });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, { finished: true });
+
+      expect(enqueueReplacedSignatureFileCleanup).not.toHaveBeenCalled();
+    });
   });
 
   describe("language canonicalization (ENG-1067)", () => {

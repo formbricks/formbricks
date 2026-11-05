@@ -3,12 +3,17 @@ import { cache } from "@/lib/cache";
 import { acquireInFlightSlot, releaseInFlightSlot } from "./in-flight";
 
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
-vi.mock("@/lib/cache", () => ({ cache: { getRedisClient: vi.fn() } }));
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    getRedisClient: vi.fn(),
+    runRedisOperation: vi.fn((operation: (client: typeof redis) => Promise<unknown>) => operation(redis)),
+  },
+}));
 const constants = vi.hoisted(() => ({ RATE_LIMITING_DISABLED: false }));
 vi.mock("@/lib/constants", () => constants);
 
 const config = { interval: 120, allowedPerInterval: 2, namespace: "api:v3:charts:in-flight" };
-const redis = { eval: vi.fn(), zRem: vi.fn() };
+const redis = { evalSha: vi.fn(), zRem: vi.fn() };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -18,7 +23,7 @@ beforeEach(() => {
 
 describe("acquireInFlightSlot", () => {
   test("takes a slot keyed to the principal, with the limit and the lease in milliseconds", async () => {
-    redis.eval.mockResolvedValueOnce(1);
+    redis.evalSha.mockResolvedValueOnce(1);
 
     const { allowed, slot } = await acquireInFlightSlot(config, "key_1");
 
@@ -27,13 +32,15 @@ describe("acquireInFlightSlot", () => {
       key: "fb:rate_limit:api:v3:charts:in-flight:key_1:in_flight",
       released: false,
     });
-    const [, { keys, arguments: args }] = redis.eval.mock.calls[0];
-    expect(keys).toEqual([slot?.key]);
-    expect(args).toEqual(["2", "120000", slot?.member]);
+    const [, options] = redis.evalSha.mock.calls[0];
+    expect(options).toEqual({
+      keys: [slot?.key],
+      arguments: ["2", "120000", slot?.member],
+    });
   });
 
   test("refuses when Redis says every slot is taken", async () => {
-    redis.eval.mockResolvedValueOnce(0);
+    redis.evalSha.mockResolvedValueOnce(0);
     expect(await acquireInFlightSlot(config, "key_1")).toEqual({ allowed: false });
   });
 
@@ -45,7 +52,7 @@ describe("acquireInFlightSlot", () => {
     vi.mocked(cache.getRedisClient).mockResolvedValueOnce(null as never);
     expect(await acquireInFlightSlot(config, "key_1")).toEqual({ allowed: true });
 
-    redis.eval.mockRejectedValueOnce(new Error("connection reset"));
+    redis.evalSha.mockRejectedValueOnce(new Error("connection reset"));
     expect(await acquireInFlightSlot(config, "key_1")).toEqual({ allowed: true });
   });
 });

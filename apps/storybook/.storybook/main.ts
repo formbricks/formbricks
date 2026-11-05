@@ -17,6 +17,8 @@ function getAbsolutePath(value: string): string {
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.mdx", "../../../packages/survey-ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  // The Signature story loads its typed-signature font from the path the real app serves it at.
+  staticDirs: [{ from: "../../../packages/surveys/assets/fonts", to: "/js/fonts" }],
   addons: [
     getAbsolutePath("@storybook/addon-onboarding"),
     getAbsolutePath("@storybook/addon-links"),

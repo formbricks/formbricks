@@ -16,6 +16,9 @@ const mocks = vi.hoisted(() => {
   // would overflow) and settle (hand unused units back).
   const store = new Map<string, number>();
   const redis = {
+    evalSha: vi.fn(async () => {
+      throw new Error("NOSCRIPT No matching script");
+    }),
     eval: vi.fn(
       async (script: string, { keys, arguments: args }: { keys: string[]; arguments: string[] }) => {
         const [key] = keys;
@@ -49,7 +52,12 @@ const mocks = vi.hoisted(() => {
 
 vi.mock("@/lib/constants", () => mocks.constants);
 vi.mock("@/lib/cache", () => ({
-  cache: { getRedisClient: vi.fn(async () => (mocks.redisAvailable ? mocks.redis : null)) },
+  cache: {
+    getRedisClient: vi.fn(async () => (mocks.redisAvailable ? mocks.redis : null)),
+    runRedisOperation: vi.fn((operation: (client: typeof mocks.redis) => Promise<unknown>) =>
+      operation(mocks.redis)
+    ),
+  },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 

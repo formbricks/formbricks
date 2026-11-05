@@ -102,5 +102,18 @@
     "value_must_equal": "Nilai mesti sama dengan {value}",
     "value_must_not_contain": "Nilai tidak boleh mengandungi {value}",
     "value_must_not_equal": "Nilai tidak boleh sama dengan {value}"
+  },
+  "signature": {
+    "clear": "Kosongkan",
+    "draw": "Lukis",
+    "method": "Kaedah tandatangan",
+    "not_signed": "Belum ditandatangani",
+    "pad_label": "Pad tandatangan. Lukis tandatangan anda menggunakan jari, stilus atau tetikus.",
+    "pad_label_with_type": "Pad tandatangan. Lukis tandatangan anda menggunakan jari, stilus atau tetikus, atau tukar kepada Taip untuk memasukkan nama anda menggunakan papan kekunci.",
+    "saved": "Tandatangan anda telah disimpan. Kosongkan untuk menandatangani semula.",
+    "sign_here": "Tandatangan di sini",
+    "signed": "Telah ditandatangani",
+    "type": "Taip",
+    "type_your_name": "Taip nama anda"
   }
 }

@@ -18,8 +18,10 @@ interface EmbeddedFieldModalProps {
   entry: TLinkedEmbeddedField;
   open: boolean;
   setOpen: (open: boolean) => void;
-  /** Ids already spoken for in the survey's namespace: its elements and ending cards. */
+  /** Ids already spoken for in the survey's namespace: its elements' ids and codes, and ending cards. */
   takenIds: string[];
+  /** The refusal for a name that is a question's code, naming that question. */
+  describeQuestionCodeClash: (name: string) => string | undefined;
   /** The addresses this survey's other fields occupy. */
   takenStorageKeys: string[];
   /** Every other field's declared name — what makes a repeat a duplicate. */
@@ -47,6 +49,7 @@ export const EmbeddedFieldModal = ({
   open,
   setOpen,
   takenIds,
+  describeQuestionCodeClash,
   takenStorageKeys,
   otherDeclaredNames,
   otherDisplayNames,
@@ -73,6 +76,7 @@ export const EmbeddedFieldModal = ({
           <EmbeddedFieldForm
             entry={entry}
             takenIds={takenIds}
+            describeQuestionCodeClash={describeQuestionCodeClash}
             takenStorageKeys={takenStorageKeys}
             otherDeclaredNames={otherDeclaredNames}
             otherDisplayNames={otherDisplayNames}

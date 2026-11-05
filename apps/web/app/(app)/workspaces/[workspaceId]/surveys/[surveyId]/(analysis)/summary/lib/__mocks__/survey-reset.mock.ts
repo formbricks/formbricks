@@ -1,6 +1,10 @@
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
+import {
+  TSurveyElementTypeEnum,
+  TSurveyFileUploadElement,
+  TSurveySignatureElement,
+} from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const surveyId = "clq5n7p1q0000m7z0h5p6g3r2";
@@ -35,6 +39,20 @@ export const surveyWithFileUpload: SurveyFileUploadFields = {
 
 export const surveyWithoutFileUpload: SurveyFileUploadFields = {
   blocks: [],
+  questions: [],
+  workspaceId,
+};
+
+export const signatureElement: TSurveySignatureElement = {
+  id: "k2sig3td2iq09wa599cxo1me",
+  type: TSurveyElementTypeEnum.Signature,
+  headline: { default: "Sign here" },
+  required: false,
+  allowTypedSignature: true,
+};
+
+export const surveyWithSignature: SurveyFileUploadFields = {
+  blocks: [{ id: "signature-block", name: "Signature block", elements: [signatureElement] }],
   questions: [],
   workspaceId,
 };

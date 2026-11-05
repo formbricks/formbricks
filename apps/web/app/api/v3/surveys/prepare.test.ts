@@ -1262,3 +1262,121 @@ describe("visibility fields on PATCH (ENG-3282)", () => {
     );
   });
 });
+
+describe("prepareV3SurveyPatchInput published lock (ENG-6783)", () => {
+  const apple = { id: "apple", label: { "en-US": "Apple", "de-DE": "Apfel" }, code: "1" };
+  const pear = { id: "pear", label: { "en-US": "Pear", "de-DE": "Birne" }, code: "2" };
+  const plum = { id: "plum", label: { "en-US": "Plum", "de-DE": "Pflaume" }, code: "3" };
+
+  const lockedBlock = (overrides: Record<string, unknown> = {}) => ({
+    id: "clbk1234567890123456789012",
+    name: "Main Block",
+    elements: [
+      {
+        id: "fruit",
+        type: "multipleChoiceSingle",
+        headline: { "en-US": "Pick one", "de-DE": "Wähle eins" },
+        required: true,
+        code: "fruit",
+        choices: [apple, pear, plum],
+        ...overrides,
+      },
+    ],
+  });
+
+  const storedWith = (status: TSurvey["status"]) =>
+    ({
+      ...survey,
+      status,
+      blocks: ZV3CreateSurveyBody.parse({ ...rawCreateBody, blocks: [lockedBlock()] }).blocks,
+    }) as TSurvey;
+
+  const invalidParamsOf = (stored: TSurvey, blocks: unknown[]) => {
+    const preparation = prepareV3SurveyPatchInput(stored, { blocks });
+    return preparation.ok ? null : preparation.validation.invalidParams;
+  };
+
+  test.each([
+    ["a question code", { code: "renamed" }, "immutable_question_code", "blocks.0.elements.0.code"],
+    [
+      "an answer code",
+      { choices: [{ ...apple, code: "9" }, pear, plum] },
+      "immutable_answer_code",
+      "blocks.0.elements.0.choices.0.code",
+    ],
+    [
+      "option text in the default language",
+      { choices: [{ ...apple, label: { "en-US": "Apples", "de-DE": "Apfel" } }, pear, plum] },
+      "immutable_option_text",
+      "blocks.0.elements.0.choices.0.label.en-US",
+    ],
+    [
+      "option text in another language",
+      { choices: [{ ...apple, label: { "en-US": "Apple", "de-DE": "Äpfel" } }, pear, plum] },
+      "immutable_option_text",
+      "blocks.0.elements.0.choices.0.label.de-DE",
+    ],
+    [
+      "an option that existed at launch (deleted)",
+      { choices: [apple, plum] },
+      "immutable_option_deletion",
+      "blocks.0.elements.0.choices",
+    ],
+    [
+      "the question type",
+      { type: "multipleChoiceMulti" },
+      "immutable_question_type",
+      "blocks.0.elements.0.type",
+    ],
+  ])("refuses %s on a published survey", (_label, change, code, name) => {
+    const params = invalidParamsOf(storedWith("inProgress"), [lockedBlock(change)]);
+
+    expect(params).toEqual([expect.objectContaining({ code, name, referenceType: "element" })]);
+  });
+
+  test.each(["paused", "completed"] as const)("also refuses on a %s survey", (status) => {
+    expect(invalidParamsOf(storedWith(status), [lockedBlock({ code: "renamed" })])).toEqual([
+      expect.objectContaining({ code: "immutable_question_code" }),
+    ]);
+  });
+
+  test("lets a draft change all of it", () => {
+    const preparation = prepareV3SurveyPatchInput(storedWith("draft"), {
+      blocks: [
+        lockedBlock({
+          code: "renamed",
+          type: "multipleChoiceMulti",
+          choices: [{ ...apple, label: { "en-US": "Apples", "de-DE": "Äpfel" }, code: "9" }, plum],
+        }),
+      ],
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+
+  test("lets a published survey add an option and edit the headline", () => {
+    const preparation = prepareV3SurveyPatchInput(storedWith("inProgress"), {
+      blocks: [
+        lockedBlock({
+          headline: { "en-US": "Pick one, please", "de-DE": "Bitte wähle eins" },
+          choices: [apple, pear, plum, { id: "fig", label: { "en-US": "Fig", "de-DE": "Feige" } }],
+        }),
+      ],
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+
+  test("lets a published survey keep its codes when the client omits them", () => {
+    const { code: _appleCode, ...appleWithoutCode } = apple;
+    const { code: _pearCode, ...pearWithoutCode } = pear;
+    const { code: _plumCode, ...plumWithoutCode } = plum;
+    const preparation = prepareV3SurveyPatchInput(storedWith("inProgress"), {
+      blocks: [
+        lockedBlock({ code: undefined, choices: [appleWithoutCode, pearWithoutCode, plumWithoutCode] }),
+      ],
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+});

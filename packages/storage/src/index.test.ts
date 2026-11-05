@@ -8,6 +8,7 @@ describe("@formbricks/storage public API", () => {
     expect(storage.getFileStream).toBeTypeOf("function");
     expect(storage.deleteFile).toBeTypeOf("function");
     expect(storage.deleteFilesByPrefix).toBeTypeOf("function");
+    expect(storage.uploadFileStream).toBeTypeOf("function");
     expect(storage.StorageErrorCode).toBeDefined();
   });
 });
