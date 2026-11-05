@@ -12,8 +12,6 @@ interface StylingTabsProps<T> {
   readonly id: string;
   readonly options: Option<T>[];
   readonly defaultSelected?: T;
-  /** The selection, when the parent owns it; the tabs then show this rather than their own state. */
-  readonly value?: T;
   readonly onChange: (value: T) => void;
   readonly className?: string;
   readonly tabsContainerClassName?: string;
@@ -22,15 +20,12 @@ interface StylingTabsProps<T> {
   readonly subLabel?: string;
   readonly activeTabClassName?: string;
   readonly inactiveTabClassName?: string;
-  /** Locks the selection: the options show, but none can be chosen. */
-  readonly disabled?: boolean;
 }
 
 export const StylingTabs = <T extends string | number>({
   id,
   options,
   defaultSelected,
-  value,
   onChange,
   className,
   tabsContainerClassName,
@@ -38,22 +33,19 @@ export const StylingTabs = <T extends string | number>({
   subLabel,
   activeTabClassName,
   inactiveTabClassName,
-  disabled = false,
 }: StylingTabsProps<T>) => {
-  const [uncontrolledOption, setUncontrolledOption] = useState<T | undefined>(defaultSelected);
-  const selectedOption = value ?? uncontrolledOption;
+  const [selectedOption, setSelectedOption] = useState<T | undefined>(defaultSelected);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const next = event.target.value as T;
-    setUncontrolledOption(next);
-    onChange(next);
+    const value = event.target.value as T;
+    setSelectedOption(value);
+    onChange(value);
   };
 
   return (
     <div
       role="radiogroup"
       aria-labelledby={`${id}-toggle-label`}
-      aria-disabled={disabled || undefined}
       className={cn("flex flex-col gap-2", className)}>
       <>
         {label && <Label className="font-semibold">{label}</Label>}
@@ -70,9 +62,8 @@ export const StylingTabs = <T extends string | number>({
               key={option.value}
               htmlFor={optionId}
               className={cn(
-                "flex flex-1 items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
+                "flex flex-1 cursor-pointer items-center justify-center gap-4 rounded-md py-2 text-center text-sm",
                 selectedOption === option.value ? "bg-slate-100" : "bg-white",
-                disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
                 "focus:ring-2 focus:ring-brand-dark/50 focus:outline-hidden",
                 selectedOption === option.value ? activeTabClassName : inactiveTabClassName
               )}>
@@ -83,7 +74,6 @@ export const StylingTabs = <T extends string | number>({
                 value={option.value.toString()}
                 checked={selectedOption === option.value}
                 onChange={handleChange}
-                disabled={disabled}
                 className="sr-only"
               />
               <span className="text-slate-900">{option.label}</span>
