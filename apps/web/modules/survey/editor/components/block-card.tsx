@@ -39,6 +39,7 @@ import { PictureSelectionForm } from "@/modules/survey/editor/components/picture
 import { QuestionTabs } from "@/modules/survey/editor/components/question-tabs";
 import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
 import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
+import { SignatureElementForm } from "@/modules/survey/editor/components/signature-element-form";
 import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
 import { getElementCodeIssues } from "@/modules/survey/editor/lib/element-codes";
@@ -246,6 +247,7 @@ const BlockCardComponent = ({
     [TSurveyElementTypeEnum.Date]: DateElementForm,
     [TSurveyElementTypeEnum.PictureSelection]: PictureSelectionForm,
     [TSurveyElementTypeEnum.FileUpload]: FileUploadElementForm,
+    [TSurveyElementTypeEnum.Signature]: SignatureElementForm,
     [TSurveyElementTypeEnum.Cal]: CalElementForm,
     [TSurveyElementTypeEnum.Matrix]: MatrixElementForm,
     [TSurveyElementTypeEnum.Address]: AddressElementForm,

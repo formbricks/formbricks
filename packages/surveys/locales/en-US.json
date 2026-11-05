@@ -102,5 +102,18 @@
     "value_must_equal": "Value must equal {value}",
     "value_must_not_contain": "Value must not contain {value}",
     "value_must_not_equal": "Value must not equal {value}"
+  },
+  "signature": {
+    "clear": "Clear",
+    "draw": "Draw",
+    "method": "Signature method",
+    "not_signed": "Not signed",
+    "pad_label": "Signature pad. Draw your signature with your finger, a stylus or a mouse.",
+    "pad_label_with_type": "Signature pad. Draw your signature with your finger, a stylus or a mouse, or switch to Type to enter your name with the keyboard.",
+    "saved": "Your signature is saved. Clear it to sign again.",
+    "sign_here": "Sign here",
+    "signed": "Signed",
+    "type": "Type",
+    "type_your_name": "Type your name"
   }
 }

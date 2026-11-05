@@ -3,10 +3,12 @@ import { StorageErrorCode } from "@formbricks/storage";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TAttachmentEntry } from "@/modules/storage/lib/collect-response-attachments";
 import { getFileStreamForDownload } from "@/modules/storage/service";
+import { MAX_ATTACHMENT_BYTES } from "./constants";
 import {
-  MAX_ATTACHMENT_BYTES,
   buildAttachmentArchiveFileName,
+  createAttachmentArchive,
   streamAttachmentsAsZip,
+  writeAttachmentArchive,
 } from "./export-attachments";
 import { buildAttachmentManifestCsv } from "./manifest";
 
@@ -77,6 +79,52 @@ describe("buildAttachmentArchiveFileName", () => {
   });
 });
 
+describe("writeAttachmentArchive", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** Writes the archive while draining it, as the upload does, and returns the writer's summary. */
+  const writeAndDrain = async (entries: TAttachmentEntry[]) => {
+    const { archive, activeSource } = createAttachmentArchive();
+    const chunks: Buffer[] = [];
+    archive.on("data", (chunk: Buffer) => chunks.push(chunk));
+    // Listened for before writing: the archive can end before `finalize()` resolves.
+    const ended = new Promise((resolve) => archive.once("end", resolve));
+    const summary = await writeAttachmentArchive(entries, archive, activeSource);
+    await ended;
+    return { summary, size: archive.pointer(), bytes: Buffer.concat(chunks) };
+  };
+
+  test("reports what the archive holds", async () => {
+    mockedGetFileStream.mockResolvedValue(streamOf("photo-bytes") as never);
+
+    const { summary, size, bytes } = await writeAndDrain([
+      okEntry(),
+      okEntry({ status: "skipped_foreign_workspace", storage: undefined, responseId: "res-2" }),
+    ]);
+
+    expect(summary).toEqual({ appendedFiles: 1, attachmentBytes: "photo-bytes".length, truncated: false });
+    // The archive's own size, which is what the export records and the user downloads.
+    expect(size).toBe(bytes.length);
+  });
+
+  test("flags a truncated archive", async () => {
+    mockedGetFileStream.mockResolvedValue({
+      ok: true,
+      data: {
+        body: streamOf("x").data.body,
+        contentType: "image/jpeg",
+        contentLength: MAX_ATTACHMENT_BYTES + 1,
+      },
+    } as never);
+
+    const { summary } = await writeAndDrain([okEntry()]);
+
+    expect(summary).toEqual({ appendedFiles: 0, attachmentBytes: 0, truncated: true });
+  });
+});
+
 describe("streamAttachmentsAsZip", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -90,7 +138,7 @@ describe("streamAttachmentsAsZip", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/zip");
     expect(response.headers.get("Content-Disposition")).toBe(
-      'attachment; filename="survey-1-attachments-2026-09-01.zip"'
+      `attachment; filename="survey-1-attachments-2026-09-01.zip"; filename*=UTF-8''survey-1-attachments-2026-09-01.zip`
     );
     expect(response.headers.get("Cache-Control")).toBe("no-store");
 

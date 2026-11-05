@@ -2,6 +2,8 @@ import { Queue } from "bullmq";
 import type IORedis from "ioredis";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  ATTACHMENT_EXPORT_JOB_OPTIONS,
+  ATTACHMENT_EXPORT_QUEUE_NAME,
   AUTHZED_PROJECTION_QUEUE_NAME,
   AUTHZED_RECONCILIATION_QUEUE_NAME,
   DATA_RETENTION_QUEUE_NAME,
@@ -16,6 +18,7 @@ import {
 import { backgroundJobDefinitions } from "./definitions";
 import {
   createJobsQueue,
+  enqueueAttachmentExportJob,
   enqueueResponsePipelineJob,
   enqueueTestLogJob,
   enqueueWebhookDeliveryJob,
@@ -220,7 +223,7 @@ describe("@formbricks/jobs queue helpers", () => {
   // A delivery queued behind a long sweep makes every authorization check fail closed, and the sweeps
   // themselves would hold up every default-queue job, so this pins the routing of every job: those have
   // queues of their own, everything else shares the default one.
-  test("routes AuthZed delivery, the AuthZed audits and the data retention sweep to their own queues, and only them", () => {
+  test("routes AuthZed delivery, the AuthZed audits, the data retention sweep and attachment exports to their own queues, and only them", () => {
     const queueNameByJob = Object.fromEntries(
       Object.values(backgroundJobDefinitions).map((definition) => [definition.name, definition.queueName])
     );
@@ -229,6 +232,7 @@ describe("@formbricks/jobs queue helpers", () => {
       [JOB_NAMES.authzedReconciliationAudit]: AUTHZED_RECONCILIATION_QUEUE_NAME,
       [JOB_NAMES.authzedSurveyAudit]: AUTHZED_RECONCILIATION_QUEUE_NAME,
       [JOB_NAMES.dataRetentionSweep]: DATA_RETENTION_QUEUE_NAME,
+      [JOB_NAMES.attachmentExport]: ATTACHMENT_EXPORT_QUEUE_NAME,
     };
 
     for (const [jobName, queueName] of Object.entries(queueNameByJob)) {
@@ -381,6 +385,36 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, {
       jobId: workflowRunJobData.workflowRunId,
     });
+  });
+
+  test("enqueues an attachment export on its own queue with a short retry budget and the caller's jobId", async () => {
+    const data = {
+      attachmentExportId: "cm8cmpnjj000108jfdr9exp01",
+      workspaceId: "cm8cmpnjj000108jfdr9wks01",
+      dispatchCount: 0,
+    };
+    mockQueueAdd.mockResolvedValue({ id: "cm8cmpnjj000108jfdr9exp01-0" });
+
+    await enqueueAttachmentExportJob(data, { jobId: "cm8cmpnjj000108jfdr9exp01-0" });
+
+    expect(queueNamesOf(mockQueueAdd)).toEqual([ATTACHMENT_EXPORT_QUEUE_NAME]);
+    // A retry rebuilds the whole archive, so the budget is below the shared default.
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.attachmentExport, data, {
+      attempts: 2,
+      backoff: { type: "fixed", delay: 30_000 },
+      jobId: "cm8cmpnjj000108jfdr9exp01-0",
+    });
+    expect(ATTACHMENT_EXPORT_JOB_OPTIONS.attempts).toBeLessThan(JOBS_DEFAULT_JOB_OPTIONS.attempts);
+  });
+
+  test("rejects an attachment export payload without valid ids before enqueueing", async () => {
+    await expect(
+      enqueueAttachmentExportJob(
+        { attachmentExportId: "not a cuid", workspaceId: "ws", dispatchCount: 0 },
+        { jobId: "x" }
+      )
+    ).rejects.toThrow();
+    expect(mockQueueAdd).not.toHaveBeenCalled();
   });
 
   test("enqueues a webhook delivery with its own retry policy and the caller's deterministic jobId", async () => {

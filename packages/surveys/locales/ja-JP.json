@@ -102,5 +102,18 @@
     "value_must_equal": "値は{value}と等しい必要があります",
     "value_must_not_contain": "値に{value}を含めることはできません",
     "value_must_not_equal": "値は{value}と等しくない必要があります"
+  },
+  "signature": {
+    "clear": "クリア",
+    "draw": "手書き",
+    "method": "署名方法",
+    "not_signed": "未署名",
+    "pad_label": "署名パッド。指、スタイラス、またはマウスで署名を描いてください。",
+    "pad_label_with_type": "署名パッド。指、スタイラス、またはマウスで署名を描くか、「入力」に切り替えてキーボードで名前を入力してください。",
+    "saved": "署名を保存しました。もう一度署名するには、クリアしてください。",
+    "sign_here": "ここに署名",
+    "signed": "署名済み",
+    "type": "入力",
+    "type_your_name": "名前を入力してください"
   }
 }

@@ -118,4 +118,28 @@ describe("storage route", () => {
       expect.objectContaining({ failureReason: "file_not_found_error" })
     );
   });
+
+  describe("attachment export archives", () => {
+    test.each([
+      ["by path segments", ["surveys", "srv1", "exports", "exp1.zip"]],
+      ["percent-encoded into one segment", ["surveys%2Fsrv1%2Fexports%2Fexp1.zip"]],
+    ])("GET refuses an archive %s", async (_label, filePath) => {
+      const response = await GET(request, params(filePath));
+
+      expect(response.status).toBe(404);
+      // Refused before any lookup: the only way to an archive is the audited, requester-scoped route.
+      expect(mocks.authorizePrivateDownload).not.toHaveBeenCalled();
+      expect(mocks.getFileStreamForDownload).not.toHaveBeenCalled();
+    });
+
+    test("GET still serves a survey's uploaded files", async () => {
+      const response = await GET(
+        request,
+        params(["surveys", "srv1", "elements", "el1", "photo--fid--1.jpg"])
+      );
+
+      expect(response.status).toBe(200);
+      expect(mocks.getFileStreamForDownload).toHaveBeenCalled();
+    });
+  });
 });

@@ -26,11 +26,19 @@ export const DATA_RETENTION_QUEUE_NAME = "data-retention";
  */
 export const AUTHZED_RECONCILIATION_QUEUE_NAME = "authzed-reconciliation";
 
+/**
+ * Attachment exports build multi-GB ZIPs for minutes at a time (ENG-6862). On the default queue they
+ * would hold its only worker slot and stall webhook deliveries and response pipelines behind them; here
+ * one export at a time runs per process, and nothing else waits.
+ */
+export const ATTACHMENT_EXPORT_QUEUE_NAME = "attachment-export";
+
 /** Queues that each get exactly one worker of their own, outside `workerCount`/`concurrency`. */
 export const DEDICATED_JOBS_QUEUE_NAMES = [
   AUTHZED_PROJECTION_QUEUE_NAME,
   AUTHZED_RECONCILIATION_QUEUE_NAME,
   DATA_RETENTION_QUEUE_NAME,
+  ATTACHMENT_EXPORT_QUEUE_NAME,
 ] as const;
 
 export const JOBS_QUEUE_NAMES = [JOBS_QUEUE_NAME, ...DEDICATED_JOBS_QUEUE_NAMES] as const;
@@ -42,6 +50,8 @@ export type TDedicatedJobsQueueName = (typeof DEDICATED_JOBS_QUEUE_NAMES)[number
 export const JOBS_PREFIX = "{formbricks:jobs}";
 
 export const JOB_NAMES = {
+  attachmentExport: "attachment-export.process",
+  attachmentExportReconcile: "attachment-export.reconcile",
   emailAuditMaintenance: "email-audit.maintain",
   authzedProjectionDelivery: "authzed-projection.deliver",
   authzedReconciliationAudit: "authzed-reconciliation.audit",
@@ -72,6 +82,19 @@ export const WEBHOOK_DELIVERY_JOB_OPTIONS = Object.freeze({
   attempts: 5,
   backoff: Object.freeze({
     type: "exponential",
+    delay: 30_000,
+  } as const),
+}) satisfies JobsOptions;
+
+/**
+ * Retry policy for one attachment export build. A retry rebuilds the archive from the first file, up to
+ * 5 GB of reads and writes, so it gets one second chance (a stalled job after a pod restart, a storage
+ * blip) and no more; the export then fails and the user starts a new one.
+ */
+export const ATTACHMENT_EXPORT_JOB_OPTIONS = Object.freeze({
+  attempts: 2,
+  backoff: Object.freeze({
+    type: "fixed",
     delay: 30_000,
   } as const),
 }) satisfies JobsOptions;

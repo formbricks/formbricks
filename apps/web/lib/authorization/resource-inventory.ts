@@ -24,6 +24,8 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   ActionClass: "workspace_inherited_resource",
   ApiKey: "relationship_or_grant_source",
   ApiKeyWorkspace: "relationship_or_grant_source",
+  // Read through the survey's read access, and only by the user who requested it (ENG-6862).
+  AttachmentExport: "parent_derived_or_data_integrity",
   AuthzedProjectionOutbox: "authentication_or_application",
   AuthzedProjectionScopeState: "authentication_or_application",
   Chart: "workspace_inherited_resource",

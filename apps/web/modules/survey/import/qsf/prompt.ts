@@ -331,7 +331,7 @@ export function buildQsfPlanSystemPrompt(): string {
     "- TE with selector FORM: contactInfo when its fields are a first name, last name, email, phone or company (map each in contactFields); otherwise skip it.",
     "- Slider with one statement: rating with scale number (star for STAR). Formbricks sizes its range from the slider, so any allowed range will do. A slider with several statements: skip it.",
     "- A rating-like scale question may be csat (range 5) or ces (range 5 or 7) when its wording asks for satisfaction or effort.",
-    "- DB (descriptive text): cta. FileUpload: fileUpload.",
+    "- DB (descriptive text): cta. FileUpload: fileUpload. Signature: signature.",
     "- Any other question type Formbricks cannot represent: skip it.",
     "",
     "Logic notes:",

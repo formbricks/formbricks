@@ -85,6 +85,21 @@ export type TUsageTelemetryJobData = TGlobalScopeJobData;
 export const ZWorkflowsUsageSnapshotJobData = ZGlobalScopeJobData;
 export type TWorkflowsUsageSnapshotJobData = TGlobalScopeJobData;
 
+export const ZAttachmentExportJobData = z.object({
+  attachmentExportId: z.cuid2(),
+  workspaceId: z.cuid2(),
+  // The export's dispatch count when this job was enqueued. A re-dispatch raises the count, so a job it
+  // superseded (still waiting behind a long build) can tell and skip, rather than build the export twice.
+  dispatchCount: z.number().int().nonnegative(),
+});
+
+export type TAttachmentExportJobData = z.infer<typeof ZAttachmentExportJobData>;
+
+// A global sweep over every export, like the workflow run reconciler; it carries no export ids.
+export const ZAttachmentExportReconcileJobData = ZGlobalScopeJobData;
+
+export type TAttachmentExportReconcileJobData = TGlobalScopeJobData;
+
 export const ZWorkflowRunJobData = z.object({
   workflowRunId: z.cuid2(),
   workflowId: z.cuid2(),
