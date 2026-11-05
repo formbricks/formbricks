@@ -34,14 +34,17 @@ import { MatrixElementForm } from "@/modules/survey/editor/components/matrix-ele
 import { MultipleChoiceElementForm } from "@/modules/survey/editor/components/multiple-choice-element-form";
 import { NPSElementForm } from "@/modules/survey/editor/components/nps-element-form";
 import { OpenElementForm } from "@/modules/survey/editor/components/open-element-form";
+import { type TSetOptionHidden } from "@/modules/survey/editor/components/option-hide-button";
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
 import { QuestionTabs } from "@/modules/survey/editor/components/question-tabs";
 import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
 import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
+import { QuestionShowIfSettings } from "@/modules/survey/editor/components/show-if-settings";
 import { SignatureElementForm } from "@/modules/survey/editor/components/signature-element-form";
 import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
 import { getElementCodeIssues } from "@/modules/survey/editor/lib/element-codes";
+import { setOptionHiddenById } from "@/modules/survey/editor/lib/option-hide-toggle";
 import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
@@ -202,6 +205,11 @@ const BlockCardComponent = ({
     isStorageConfigured,
     isExternalUrlsAllowed,
     lock: getElementLock(persistedSurvey, element.id),
+    // The Hide quick action on options, rows and columns (ENG-6949). Read only by the forms with options.
+    onSetOptionHidden: ((listKey, optionId, hidden) =>
+      setLocalSurvey((survey) =>
+        setOptionHiddenById(survey, element.id, listKey, optionId, hidden)
+      )) satisfies TSetOptionHidden,
   });
 
   // Element form components mapped by type
@@ -499,6 +507,14 @@ const BlockCardComponent = ({
                                   updateElement={updateElement}
                                   workspace={workspace}
                                   isFormbricksCloud={isFormbricksCloud}
+                                  showIfSettings={
+                                    <QuestionShowIfSettings
+                                      localSurvey={localSurvey}
+                                      setLocalSurvey={setLocalSurvey}
+                                      blockIdx={blockIdx}
+                                      elementIdx={elementIndex}
+                                    />
+                                  }
                                 />
                               }
                             />
