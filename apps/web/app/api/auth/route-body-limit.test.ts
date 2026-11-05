@@ -5,6 +5,7 @@ import {
   AUTH_REQUEST_BODY_LIMIT_BYTES,
   isAuthRequestBodyLimited,
 } from "@/modules/auth/lib/auth-request-body-limit";
+import { AUTH_REQUEST_MAX_ENTRIES } from "@/modules/auth/lib/auth-request-bounds";
 
 // The handlers behind the routes are mocked out: what is under test is that the route FILES put the body
 // guard in front of them, and the guard answers before any of these is reached. If a route lost its
@@ -107,6 +108,133 @@ describe("/api/auth route surface", () => {
       ]) {
         const response = await post(request);
         expect(response.status).toBe(413);
+      }
+      expect(handlerCalls).not.toHaveBeenCalled();
+      expect(jacksonMock).not.toHaveBeenCalled();
+      expect(normalizeDcrRequestMock).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(postRouteFiles)(
+    "%s POST refuses a JSON body with an over-wide array with 400 before doing any work",
+    async (file) => {
+      const mod = await loadRoute(file);
+      const post = mod.POST as (request: Request) => Promise<Response>;
+      const url = `http://localhost/api/auth/${file
+        .replace(/^\.\/|\/route\.ts$/g, "")
+        .replace("[...all]", "oauth2/register")}`;
+
+      const response = await post(
+        new Request(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ contacts: Array(AUTH_REQUEST_MAX_ENTRIES + 1).fill(1) }),
+        })
+      );
+
+      expect(response.status).toBe(400);
+      expect(handlerCalls).not.toHaveBeenCalled();
+      expect(jacksonMock).not.toHaveBeenCalled();
+      expect(normalizeDcrRequestMock).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(postRouteFiles)(
+    "%s POST refuses a form body with too many distinct parameters with 400 before doing any work",
+    async (file) => {
+      const mod = await loadRoute(file);
+      const post = mod.POST as (request: Request) => Promise<Response>;
+      const url = `http://localhost/api/auth/${file
+        .replace(/^\.\/|\/route\.ts$/g, "")
+        .replace("[...all]", "oauth2/authorize")}`;
+      const params = Array.from({ length: AUTH_REQUEST_MAX_ENTRIES + 1 }, (_, index) => `p${index}=`);
+
+      const response = await post(
+        new Request(url, {
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
+          body: params.join("&"),
+        })
+      );
+
+      expect(response.status).toBe(400);
+      expect(handlerCalls).not.toHaveBeenCalled();
+      expect(jacksonMock).not.toHaveBeenCalled();
+    }
+  );
+
+  // The guard counts form fields only for a form media type; the token route must not then read a
+  // multipart body that names the form type in a parameter, or its fields would go uncounted.
+  test("the SAML token route refuses a multipart body disguised as a form before jackson sees it", async () => {
+    const { POST } = (await loadRoute("./saml/token/route.ts")) as {
+      POST: (request: Request) => Promise<Response>;
+    };
+    const fields = Array.from(
+      { length: AUTH_REQUEST_MAX_ENTRIES + 1 },
+      (_, index) => `--x\r\nContent-Disposition: form-data; name="f${index}"\r\n\r\nv\r\n`
+    ).join("");
+
+    const response = await POST(
+      new Request("http://localhost/api/auth/saml/token", {
+        method: "POST",
+        headers: { "content-type": 'multipart/form-data; boundary=x; p="application/x-www-form-urlencoded"' },
+        body: `${fields}--x--\r\n`,
+      })
+    );
+
+    expect(response.status).toBe(415);
+    expect(jacksonMock).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["./[...all]/route.ts", "oauth2/authorize"],
+    ["./saml/token/route.ts", "saml/token"],
+  ])("%s refuses a Content-Type listing several media types before any handler", async (file, path) => {
+    const { POST } = (await loadRoute(file)) as { POST: (request: Request) => Promise<Response> };
+    const fields = Array.from({ length: AUTH_REQUEST_MAX_ENTRIES + 1 }, (_, index) => `k${index}=1`).join(
+      "&"
+    );
+
+    for (const contentType of [
+      "text/plain, application/x-www-form-urlencoded",
+      "application/x-www-form-urlencoded; a=b, multipart/form-data; boundary=x",
+    ]) {
+      const response = await POST(
+        new Request(`http://localhost/api/auth/${path}`, {
+          method: "POST",
+          headers: { "content-type": contentType },
+          body: fields,
+        })
+      );
+
+      expect(response.status).toBe(415);
+    }
+    expect(handlerCalls).not.toHaveBeenCalled();
+    expect(jacksonMock).not.toHaveBeenCalled();
+  });
+
+  // A hybrid type reads as JSON to better-call and as a form to oauth-provider; multipart reaches the SAML
+  // routes' formData() uncounted. Every route refuses both before its handler, jackson or the DCR step runs.
+  test.each(postRouteFiles)(
+    "%s POST refuses a body that is not plain JSON or a form with 415",
+    async (file) => {
+      const mod = await loadRoute(file);
+      const post = mod.POST as (request: Request) => Promise<Response>;
+      const url = `http://localhost/api/auth/${file.replace(/^\.\/|\/route\.ts$/g, "").replace("[...all]", "oauth2/token")}`;
+
+      for (const contentType of [
+        "application/x-www-form-urlencoded+json",
+        "multipart/form-data; boundary=x",
+      ]) {
+        const response = await post(
+          new Request(url, {
+            method: "POST",
+            headers: { "content-type": contentType },
+            body: '{"grant_type":"x","z":"a&a&a"}',
+          })
+        );
+
+        expect(response.status, contentType).toBe(415);
       }
       expect(handlerCalls).not.toHaveBeenCalled();
       expect(jacksonMock).not.toHaveBeenCalled();

@@ -130,7 +130,9 @@ describe("normalizeDcrRequest", () => {
   // otherwise the body it consumed would be gone by the time Better Auth reads it.
   test("still yields a readable body when nothing is inferred", async () => {
     const body = JSON.stringify({ redirect_uris: ["https://app.example.com/cb"] });
-    const normalized = await normalizeDcrRequest(new Request(REGISTER, { method: "POST", body }));
+    const normalized = await normalizeDcrRequest(
+      new Request(REGISTER, { method: "POST", headers: { "content-type": "application/json" }, body })
+    );
 
     await expect(normalized.text()).resolves.toBe(body);
   });
@@ -139,5 +141,19 @@ describe("normalizeDcrRequest", () => {
     const request = new Request(`${BASE}/api/auth/sign-in/email`, { method: "POST", body: "{}" });
 
     expect(await normalizeDcrRequest(request)).toBe(request);
+  });
+
+  // better-call answers any other content type with 415, so a body it will never parse is not read here.
+  test("leaves a registration that is not JSON to Better Auth, unread", async () => {
+    const request = new Request(REGISTER, {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: JSON.stringify({ redirect_uris: ["https://evil.example/cb"] }),
+    });
+
+    const normalized = await normalizeDcrRequest(request);
+
+    expect(normalized).toBe(request);
+    expect(request.bodyUsed).toBe(false);
   });
 });
