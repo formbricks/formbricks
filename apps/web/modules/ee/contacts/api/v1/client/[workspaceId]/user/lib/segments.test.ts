@@ -104,6 +104,8 @@ describe("segments lib", () => {
     const mockWhereClause = { AND: [{ workspaceId: mockWorkspaceId }, {}] };
 
     beforeEach(() => {
+      // ENG-6870: the `any`-scope visibility lookup finds no restricted survey unless a test says so.
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
       vi.mocked(prisma.segment.findMany).mockResolvedValue(
         mockSegmentsData as Prisma.Result<typeof prisma.segment, unknown, "findMany">
       );
@@ -246,10 +248,6 @@ describe("segments lib", () => {
 
       expect(result).toEqual(["segment1"]);
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    });
-
-    beforeEach(() => {
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
     });
 
     const buildInteractionSegment = (id: string, operator: string) => ({

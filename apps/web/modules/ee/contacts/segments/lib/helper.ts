@@ -1,7 +1,7 @@
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { TBaseFilters, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
+import { TBaseFilters, TSegmentFilter, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
 import {
@@ -155,6 +155,32 @@ export const restoreHiddenSegmentSurveyIds = async (
  * segment filters, the way evaluation resolves them (`buildSegmentFilterWhereClause`): a segment is
  * followed once, and a missing one or another workspace's reads nothing.
  */
+/** The survey ids a `specific` survey-interaction filter names; none for `any` or a half-built node. */
+const specificSurveyIdsOf = (resource: TSegmentFilter): string[] => {
+  // `any` scope only reads workspace-visible surveys (see `survey-interaction.ts`).
+  const { value } = resource as Partial<TSegmentSurveyInteractionFilter>;
+  if (value?.surveyScope !== "specific" || !Array.isArray(value.surveyIds)) return [];
+  return value.surveyIds.filter((surveyId): surveyId is string => typeof surveyId === "string");
+};
+
+/**
+ * The filters of a nested segment as evaluation reads them, or `null` when it reads nothing: a dangling or
+ * malformed reference matches nobody, and another workspace's segment is ignored
+ * (`buildSegmentFilterWhereClause`).
+ */
+const getNestedSegmentFilters = async (
+  segmentId: string,
+  workspaceId: string
+): Promise<TBaseFilters | null> => {
+  try {
+    const nested = await getSegment(segmentId);
+    return nested.workspaceId === workspaceId ? nested.filters : null;
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError || error instanceof ValidationError) return null;
+    throw error;
+  }
+};
+
 const collectReachableSurveyIds = async (
   filters: TBaseFilters,
   workspaceId: string,
@@ -166,39 +192,33 @@ const collectReachableSurveyIds = async (
   if (!Array.isArray(filters)) return;
   for (const filter of filters) {
     const resource = filter?.resource;
-    if (!resource) continue;
     if (Array.isArray(resource)) {
       await collectReachableSurveyIds(resource, workspaceId, surveyIds, visitedSegmentIds);
-      continue;
+    } else if (resource && isResourceFilter(resource)) {
+      await collectFromLeaf(resource, workspaceId, surveyIds, visitedSegmentIds);
     }
-    if (!isResourceFilter(resource)) continue;
-
-    if (resource.root?.type === "surveyInteraction") {
-      const { value } = resource as Partial<TSegmentSurveyInteractionFilter>;
-      // `any` scope only reads workspace-visible surveys (see `survey-interaction.ts`).
-      if (value?.surveyScope !== "specific" || !Array.isArray(value.surveyIds)) continue;
-      for (const surveyId of value.surveyIds) if (typeof surveyId === "string") surveyIds.add(surveyId);
-      continue;
-    }
-
-    if (resource.root?.type !== "segment") continue;
-
-    const { segmentId } = resource.root;
-    if (typeof segmentId !== "string" || visitedSegmentIds.has(segmentId)) continue;
-    visitedSegmentIds.add(segmentId);
-
-    let nested: Awaited<ReturnType<typeof getSegment>>;
-    try {
-      nested = await getSegment(segmentId);
-    } catch (error) {
-      // A dangling or malformed reference matches nobody and reads no survey.
-      if (error instanceof ResourceNotFoundError || error instanceof ValidationError) continue;
-      throw error;
-    }
-    if (nested.workspaceId !== workspaceId) continue;
-
-    await collectReachableSurveyIds(nested.filters, workspaceId, surveyIds, visitedSegmentIds);
   }
+};
+
+const collectFromLeaf = async (
+  resource: TSegmentFilter,
+  workspaceId: string,
+  surveyIds: Set<string>,
+  visitedSegmentIds: Set<string>
+): Promise<void> => {
+  if (resource.root?.type === "surveyInteraction") {
+    for (const surveyId of specificSurveyIdsOf(resource)) surveyIds.add(surveyId);
+    return;
+  }
+  if (resource.root?.type !== "segment") return;
+
+  const { segmentId } = resource.root;
+  if (typeof segmentId !== "string" || visitedSegmentIds.has(segmentId)) return;
+  visitedSegmentIds.add(segmentId);
+
+  const nestedFilters = await getNestedSegmentFilters(segmentId, workspaceId);
+  if (nestedFilters)
+    await collectReachableSurveyIds(nestedFilters, workspaceId, surveyIds, visitedSegmentIds);
 };
 
 const findHiddenSurvey = (where: Prisma.SurveyWhereInput) =>
