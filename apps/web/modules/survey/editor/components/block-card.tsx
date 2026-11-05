@@ -337,6 +337,8 @@ const BlockCardComponent = ({
                         // (see workflow-page-title.tsx): slate while hovered, brand while editing.
                         "border border-dashed transition-colors",
                         "hover:border-slate-300 focus:border-brand-dark",
+                        // While editing, the field lifts off the grey header so it reads as a text box.
+                        "focus:bg-white",
                         // Same specificity means source order decides, and Tailwind emits hover
                         // last — without this the border drops to slate on a hovered focused field.
                         "focus:hover:border-brand-dark",
