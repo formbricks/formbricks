@@ -60,6 +60,7 @@ import {
 } from "@/lib/offline-storage";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
+import { clearSignatureDrafts, createSignatureDraftStore } from "@/lib/signature-answer";
 import { getPreviousBlockId, getRestorableHistory, isFinishedBlockId } from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
@@ -100,6 +101,9 @@ interface VariableStackEntry {
 // replace it; light mode resolves to the same literal as before (ENG-2939).
 const getHoverColor = (styling: SurveyContainerProps["styling"]) =>
   `var(--fb-hover-bg-color, ${styling.inputBgColor?.light ?? "#f8fafc"})`;
+
+// Counts the displays mounted in this page, see `displayKey` in the response queue config.
+let displayCounter = 0;
 
 export function Survey({
   appUrl,
@@ -213,6 +217,16 @@ export function Survey({
   // the ack (ENG-1846). Same post-ack semantics as `onDisplayCreated`, which fires after
   // createDisplay. Preview mode never reaches the queue and fires this without an id at submit time.
   const responseCreatedRef = useRef(false);
+  // Signature drawings, kept here (not in the card) so Back and the card window do not lose them.
+  const signatureDraftsRef = useRef(createSignatureDraftStore());
+  const signatureDrafts = signatureDraftsRef.current;
+  // Dropped when the survey finishes and when it unmounts: a drawing or typed name does not outlive its response.
+  useEffect(() => {
+    const drafts = signatureDraftsRef.current;
+    return () => {
+      clearSignatureDrafts(drafts);
+    };
+  }, []);
   const triggerResponseCreatedOnce = useCallback(
     (responseId?: string) => {
       if (responseCreatedRef.current) return;
@@ -221,6 +235,11 @@ export function Survey({
     },
     [onResponseCreated]
   );
+
+  // One per mounted display, so the queue shared by this display's ResponseQueue instances is not the
+  // one an earlier display of the same survey left behind.
+  const displayKeyRef = useRef<string | null>(null);
+  displayKeyRef.current ??= String(++displayCounter);
 
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
@@ -231,6 +250,7 @@ export function Survey({
           retryAttempts: 4,
           persistOffline: offlinePersistEnabled,
           surveyId: survey.id,
+          displayKey: displayKeyRef.current ?? undefined,
           onResponseSendingFailed: (_, errorCode?: TResponseErrorCodesEnum) => {
             setShowError(true);
             setErrorType(errorCode);
@@ -349,6 +369,9 @@ export function Survey({
     !getSetIsResponseSendingFinished
   );
   const [isSurveyFinished, setIsSurveyFinished] = useState(false);
+  useEffect(() => {
+    if (isSurveyFinished) clearSignatureDrafts(signatureDraftsRef.current);
+  }, [isSurveyFinished]);
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -1369,6 +1392,7 @@ export function Survey({
               dir={dir}
               fullSizeCards={fullSizeCards}
               isCardless={isCardless}
+              signatureDrafts={signatureDrafts}
             />
           )
         );

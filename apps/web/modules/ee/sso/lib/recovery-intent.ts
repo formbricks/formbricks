@@ -256,7 +256,7 @@ export const refreshSsoRecoveryIntent = async (stateId: string, ttlSeconds: numb
     // already gone, so a resend racing a completion cannot resurrect the intent that completion just
     // consumed — a rewrite would, and would quietly undo single use. And it never touches the stored
     // value, so there is no path by which a stale copy read moments earlier gets written back.
-    await redis.expire(getIntentCacheKey(stateIdHash), ttlSeconds);
+    await cache.runRedisOperation((client) => client.expire(getIntentCacheKey(stateIdHash), ttlSeconds));
   } catch (error) {
     logger.error({ error, stateIdHash }, "Failed to refresh the SSO recovery intent");
   }

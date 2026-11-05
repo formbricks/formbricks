@@ -14,7 +14,6 @@ const UNSUPPORTED_TYPES: ReadonlyMap<string, TQsfImportIssue["severity"]> = new 
   ["DD", "warning"],
   ["PGR", "warning"],
   ["Highlight", "warning"],
-  ["Signature", "warning"],
   ["Draw", "warning"],
   ["GAP", "warning"],
   ["Timing", "info"],

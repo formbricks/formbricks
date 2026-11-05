@@ -107,6 +107,7 @@ export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
+export const SMTP_REQUIRE_TLS = env.SMTP_REQUIRE_TLS === "1";
 export const MAIL_FROM = env.MAIL_FROM;
 export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
 
@@ -275,6 +276,9 @@ export const STRIPE_API_VERSION = "2026-02-25.clover";
 
 // Maximum number of attribute classes allowed:
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150;
+// Most attributes one identify request may carry. Over three times what an environment can define, so
+// no real call reaches it; it stops a body from making the attribute validation walk an unbounded map.
+export const MAX_CONTACT_ATTRIBUTES_PER_REQUEST = 500;
 
 export const DEFAULT_LOCALE = "en-US";
 export const AVAILABLE_LOCALES: TUserLocale[] = [

@@ -20,7 +20,7 @@ vi.mock("crypto", async () => await vi.importActual<typeof import("crypto")>("cr
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
 vi.mock("@/lib/cache", () => ({
-  cache: { get: vi.fn(), set: vi.fn(), del: vi.fn(), getRedisClient: vi.fn() },
+  cache: { get: vi.fn(), set: vi.fn(), del: vi.fn(), getRedisClient: vi.fn(), runRedisOperation: vi.fn() },
 }));
 
 const mockCache = vi.mocked(cache);
@@ -74,6 +74,11 @@ describe("SSO recovery intent", () => {
         return 1;
       }),
     } as never);
+    mockCache.runRedisOperation.mockImplementation(async (operation) => {
+      const redis = await mockCache.getRedisClient();
+      if (!redis) throw new Error("Redis unavailable");
+      return operation(redis);
+    });
   });
 
   describe("create", () => {

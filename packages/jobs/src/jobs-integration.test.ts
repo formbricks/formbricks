@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import {
   AUTHZED_PROJECTION_QUEUE_NAME,
+  AUTHZED_RECONCILIATION_QUEUE_NAME,
   JOBS_DEFAULT_JOB_OPTIONS,
   JOBS_PREFIX,
   JOBS_QUEUE_NAME,
@@ -260,6 +261,75 @@ describe("BullMQ integration tests", () => {
       expect(await defaultQueue.getWaitingCount()).toBe(1);
     } finally {
       releaseLongJob();
+      await Promise.all(Object.values(queues).map((queue) => queue.obliterate({ force: true })));
+      await isolatedRuntime.close();
+    }
+  }, 15000);
+
+  /**
+   * ENG-3764: the six-hourly AuthZed audit walks every organization inside one job. On the default queue
+   * it held the only slot for the whole sweep, so response pipelines and webhook deliveries waited behind
+   * it. Held open by a promise, it must leave both the default queue and delivery free to run.
+   */
+  test("runs default-queue jobs and AuthZed delivery while an AuthZed audit holds its own queue", async () => {
+    if (!isRedisAvailable || !redisUrl) {
+      logger.info("Skipping BullMQ integration test: Redis not available");
+      return;
+    }
+
+    let markAuditStarted: () => void = () => undefined;
+    let releaseAudit: () => void = () => undefined;
+    const auditStarted = new Promise<void>((resolve) => {
+      markAuditStarted = resolve;
+    });
+    const auditReleased = new Promise<void>((resolve) => {
+      releaseAudit = resolve;
+    });
+    const processed: string[] = [];
+
+    const isolatedRuntime = await startJobsRuntime({
+      redisUrl,
+      prefix: `{formbricks:jobs-it-${Date.now().toString()}}`,
+      concurrency: 1,
+      workerCount: 1,
+      jobHandlerOverrides: {
+        [JOB_NAMES.authzedReconciliationAudit]: async () => {
+          markAuditStarted();
+          await auditReleased;
+        },
+        [JOB_NAMES.testLog]: (_data, context) => {
+          processed.push(context.queueName);
+          return Promise.resolve();
+        },
+        [JOB_NAMES.authzedProjectionDelivery]: (_data, context) => {
+          processed.push(context.queueName);
+          return Promise.resolve();
+        },
+      },
+    });
+    const { queue: defaultQueue, queues } = isolatedRuntime;
+
+    try {
+      await queues[AUTHZED_RECONCILIATION_QUEUE_NAME].add(JOB_NAMES.authzedReconciliationAudit, {
+        scope: "global",
+      });
+      await auditStarted;
+
+      await defaultQueue.add(JOB_NAMES.testLog, { message: "response pipeline stand-in" });
+      await queues[AUTHZED_PROJECTION_QUEUE_NAME].add(JOB_NAMES.authzedProjectionDelivery, {
+        scope: "global",
+      });
+
+      await vi.waitFor(
+        () => {
+          expect([...processed].sort()).toEqual([AUTHZED_PROJECTION_QUEUE_NAME, JOBS_QUEUE_NAME].sort());
+        },
+        { interval: 50, timeout: 5_000 }
+      );
+      // The audit provably still held its slot while both ran.
+      expect(await queues[AUTHZED_RECONCILIATION_QUEUE_NAME].getActiveCount()).toBe(1);
+    } finally {
+      releaseAudit();
       await Promise.all(Object.values(queues).map((queue) => queue.obliterate({ force: true })));
       await isolatedRuntime.close();
     }

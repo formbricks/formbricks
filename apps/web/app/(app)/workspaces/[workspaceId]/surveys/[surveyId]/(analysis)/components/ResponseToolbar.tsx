@@ -44,6 +44,7 @@ export const ResponseToolbar = ({
       <ResponseDownloadMenu
         survey={survey}
         getFilters={filterState.resolveFreshCriteria}
+        hasFilters={filterState.hasFilters}
         disabled={!filterState.isReady}
       />
     }

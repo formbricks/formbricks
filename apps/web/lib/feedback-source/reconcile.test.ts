@@ -141,6 +141,28 @@ describe("reconcileFeedbackRecords", () => {
     expect(mockListFeedbackRecords).not.toHaveBeenCalled();
   });
 
+  // Seen against the real Hub: while a tenant purge runs, a create answers 409 with code
+  // `tenant_write_conflict` (the SDK has already retried it). That is not "already exists": there is
+  // nothing to look up, and reading it as a conflict logged an invariant breach for a plain retryable wait.
+  test("a 409 from a tenant purge is a retryable failure, not a conflict to reconcile", async () => {
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        {
+          data: null,
+          error: { status: 409, message: "Conflict", detail: "", code: "tenant_write_conflict" },
+        },
+      ],
+    });
+
+    const result = await reconcileFeedbackRecords([record()], TENANT_ID);
+
+    expect(result.failures).toEqual([
+      expect.objectContaining({ index: 0, error: expect.objectContaining({ status: 409 }) }),
+    ]);
+    expect(mockListFeedbackRecords).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
   test("a failed lookup does not lead to an update", async () => {
     mockCreateFeedbackRecordsBatch.mockResolvedValue({ results: [conflict()] });
     mockListFeedbackRecords.mockResolvedValue({ data: null, error: { status: 500 } });

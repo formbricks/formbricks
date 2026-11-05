@@ -251,6 +251,10 @@ model Response {
   /// and surfacing that in the UI (v2) would have nothing to read.
   /// [ResponseIngestFlags]
   ingestFlags       Json?               @map(name: "ingest_flags")
+  /// A reviewer's verdict on the response; null means none. `lowQuality` hides it from the Analysis
+  /// export by default and from Feedback Records, and nothing else: it is never deleted and every
+  /// count, list, webhook and integration still includes it (ENG-6780).
+  outcome           ResponseOutcome?
   tags              TagsOnResponses[]
   quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]
@@ -278,6 +282,11 @@ model Response {
   @@index([contactId, createdAt]) // superseded; also the monthly identified users (persons)
   @@index([contactId, createdAt, id])
   @@index([surveyId, finished]) // survey list's (surveyId, finished) count aggregation — keeps it an index-only scan
+}
+
+/// What a reviewer decided about a response. One value today; null on `Response.outcome` means none.
+enum ResponseOutcome {
+  lowQuality
 }
 
 /// Represents a label that can be applied to survey responses.
@@ -562,6 +571,9 @@ model Survey {
   /// Creatives whose Destination is this survey (ENG-3993).
   creatives Creative[]
 
+  /// Background attachment ZIP exports of this survey (ENG-6862).
+  attachmentExports AttachmentExport[]
+
   /// [SurveyShowConditions] App surveys: conditions checked in the browser when a trigger fires
   /// (ENG-3873). null = no conditions, which is what every existing survey keeps.
   showConditions Json?
@@ -785,6 +797,7 @@ model Workspace {
   charts                      Chart[]
   dashboards                  Dashboard[]
   creatives                   Creative[]
+  attachmentExports           AttachmentExport[]
 
   surveys              Survey[]
   contacts             Contact[]
@@ -1380,6 +1393,7 @@ model User {
   exemptionsCreated         RetentionExemption[] @relation("retentionExemptionCreatedBy")
   exemptionsRevoked         RetentionExemption[] @relation("retentionExemptionRevokedBy")
   retentionNotices          RetentionNotice[]
+  attachmentExports         AttachmentExport[]
   lastLoginAt               DateTime?
   isActive                  Boolean              @default(true)
   /// When an admin last reactivated this user. Restarts the members retention clock (ENG-3713)
@@ -1785,6 +1799,9 @@ enum DeletionCleanupKind {
   storageFiles
   /// A deleted survey's whole upload folder, `{workspaceId}/private/surveys/{surveyId}/`.
   storageSurveyFolder
+  /// One live response whose Low quality outcome changed: its Hub records are removed or rebuilt to match
+  /// the response's outcome as the drain reads it (ENG-6785). The only kind whose response still exists.
+  hubResponseOutcome
 }
 
 /// Work left over after a delete commits (ENG-3612, ENG-3614: deleted means deleted): Hub records and
@@ -1802,7 +1819,7 @@ model DeletionCleanup {
   surveyId       String
   /// Hub kinds: the organisation's feedback directories, read inside the delete's transaction.
   tenantIds      String[]            @default([])
-  /// `hubResponses`: the deleted responses whose records go.
+  /// `hubResponses`: the deleted responses whose records go. `hubResponseOutcome`: exactly one live response.
   responseIds    String[]            @default([])
   /// `storageFiles`: the object keys or URLs to delete.
   fileKeys       String[]            @default([])
@@ -1815,6 +1832,59 @@ model DeletionCleanup {
   @@index([nextAttemptAt])
   /// An organisation's oldest pending cleanup, for the Data retention health banner.
   @@index([organizationId, createdAt])
+}
+
+enum AttachmentExportStatus {
+  queued
+  running
+  completed
+  failed
+  expired
+}
+
+/// A survey's response attachments built into one ZIP in object storage by a background job and
+/// downloaded through a short-lived presigned URL, so an interrupted download can resume (ENG-6862).
+/// Only the requester reads it. The reconcile job deletes the archive at `expiresAt`; deleting the
+/// survey deletes it with the survey's storage prefix.
+///
+/// A partial unique index in the migration allows one queued or running export per requester and
+/// survey, so a double click returns the export already in flight.
+model AttachmentExport {
+  id                String                 @id @default(cuid(2))
+  createdAt         DateTime               @default(now()) @map(name: "created_at")
+  updatedAt         DateTime               @updatedAt @map(name: "updated_at")
+  survey            Survey                 @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  surveyId          String
+  workspace         Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  requestedBy       User?                  @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+  requestedById     String?
+  status            AttachmentExportStatus @default(queued)
+  /// The response filter at request time, a `TResponseFilterCriteria`; null exports every response.
+  filterCriteria    Json?
+  /// IANA zone the archive's folder names are stamped in: the org's display zone at request time.
+  timeZone          String
+  /// Bumped on every enqueue and part of the job id, so a re-dispatch never dedupes against a job an
+  /// older pod dropped as unknown during a rolling upgrade.
+  dispatchCount     Int                    @default(0)
+  /// The pre-flight's counts, shown while the archive builds.
+  fileCount         Int
+  responseCount     Int
+  /// What the archive actually holds, once built.
+  includedFileCount Int?
+  totalBytes        BigInt?
+  truncated         Boolean                @default(false)
+  storageKey        String?
+  /// A short code (`stale`, `storage_upload_failed`, …), never a message or file name.
+  errorCode         String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  expiresAt         DateTime?
+
+  @@index([surveyId, requestedById, createdAt])
+  @@index([status, createdAt])
+  @@index([expiresAt])
+  @@index([workspaceId])
 }
 
 /// A feedback source — connects external data into Unify Feedback for record creation.

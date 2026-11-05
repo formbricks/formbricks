@@ -70,6 +70,38 @@ describe("validateElementResponse", () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    describe("Signature element", () => {
+      const signatureElement = (required: boolean) =>
+        ({
+          id: "sig1",
+          type: TSurveyElementTypeEnum.Signature,
+          headline: { default: "Sign here" },
+          required,
+          allowTypedSignature: true,
+        }) as unknown as TSurveyElement;
+      const signatureUrl = "/storage/ws1/private/surveys/survey1/elements/sig1/signature--fid--abc.png";
+
+      test.each([
+        ["an empty string", ""],
+        ["undefined", undefined],
+      ])("should block a required Signature left as %s with the required error", (_label, value) => {
+        const result = validateElementResponse(signatureElement(true), value as never, "en");
+
+        expect(result.valid).toBe(false);
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].ruleId).toBe("required");
+      });
+
+      test("should accept a required Signature that holds a stored URL", () => {
+        expect(validateElementResponse(signatureElement(true), signatureUrl, "en").valid).toBe(true);
+      });
+
+      test("should let an optional Signature be skipped", () => {
+        expect(validateElementResponse(signatureElement(false), "", "en").valid).toBe(true);
+        expect(validateElementResponse(signatureElement(false), undefined as never, "en").valid).toBe(true);
+      });
+    });
+
     test("should return valid when field is not required", () => {
       const element: TSurveyElement = {
         id: "text1",

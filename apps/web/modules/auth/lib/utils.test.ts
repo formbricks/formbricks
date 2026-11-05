@@ -49,6 +49,7 @@ vi.mock("@/lib/constants", () => ({
 const { mockCache, mockLogger } = vi.hoisted(() => ({
   mockCache: {
     getRedisClient: vi.fn(),
+    runRedisOperation: vi.fn(),
   },
   mockLogger: {
     warn: vi.fn(),
@@ -82,6 +83,9 @@ vi.mock("@formbricks/cache", () => ({
 describe("Auth Utils", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCache.runRedisOperation.mockImplementation(async (operation) =>
+      operation(await mockCache.getRedisClient())
+    );
   });
 
   afterEach(() => {

@@ -1,6 +1,7 @@
 import { mockValidateFileUploads } from "./__mocks__/storage-utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import { can } from "@/lib/authorization";
 import { createV3Response, updateV3Response } from "./operations";
 
 // Exercise response writes with an authorized actor; denial behavior is covered in visibility.test.ts.
@@ -348,6 +349,79 @@ describe("updateV3Response", () => {
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ alsoFinished: true }));
   });
 
+  /**
+   * Marking and restoring go through the patch the response already has: the same workspace gate
+   * (`readWrite`) and the same per-response `response.write` check, so a read-only seat is refused.
+   */
+  test.each(["lowQuality", null] as const)("outcome %s is handed to the write", async (outcome) => {
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome } as never });
+
+    expect(mockUpdate.mock.calls[0][0].patch.outcome).toBe(outcome);
+  });
+
+  test("an outcome-only patch leaves every other key out of the write", async () => {
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome: "lowQuality" } as never });
+
+    const { patch } = mockUpdate.mock.calls[0][0];
+    expect(patch.finished).toBeUndefined();
+    expect(patch.tagIds).toBeUndefined();
+  });
+
+  test("a caller without response.write is refused before anything is written", async () => {
+    vi.mocked(can).mockResolvedValueOnce(false);
+
+    const response = await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { outcome: "lowQuality" } as never,
+    });
+
+    expect(response.status).toBe(403);
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
+    expect(can).toHaveBeenCalledWith(expect.anything(), "response.write", {
+      type: "response",
+      id: RESPONSE_ID,
+    });
+  });
+
+  test("the audit record carries the old and the new outcome", async () => {
+    const auditLog = {} as never;
+    mockGetScoped.mockResolvedValueOnce(row({ outcome: null }));
+    mockReadback.mockResolvedValueOnce(row({ outcome: "lowQuality" }));
+
+    await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { outcome: "lowQuality" } as never,
+      auditLog,
+    });
+
+    expect(auditLog).toMatchObject({
+      targetId: RESPONSE_ID,
+      oldObject: { id: RESPONSE_ID, outcome: null },
+      newObject: { id: RESPONSE_ID, outcome: "lowQuality" },
+    });
+  });
+
+  test.each([
+    ["marking", null, "lowQuality"],
+    ["restoring", "lowQuality", null],
+  ] as const)("%s sends responseUpdated with the read-back row", async (_label, before, after) => {
+    mockGetScoped.mockResolvedValueOnce(row({ outcome: before }));
+    mockReadback.mockResolvedValueOnce(row({ outcome: after }));
+
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome: after } as never });
+
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "responseUpdated",
+        response: expect.objectContaining({ outcome: after }),
+        alsoFinished: false,
+      })
+    );
+  });
+
   /** An absent key must not reach Prisma as `undefined` — for a nullable column that is a null-out. */
   test("only the keys the payload carried are handed to the write", async () => {
     await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
@@ -565,7 +639,7 @@ describe("file-upload answers", () => {
    * The survey has to DECLARE the file-upload element, or these tests prove nothing.
    *
    * With the default fixture — one `openText` called `q1` — the key `upload` is not publishable, so
-   * `planAnswerDataWrite` raises `unsupported_field` and the 422 arrives before `fileUploadIssues`
+   * `planAnswerDataWrite` raises `unsupported_field` and the 422 arrives before `uploadIssues`
    * is ever consulted. Both refusal tests then pass with the storage check deleted, which is the one
    * check here that carries a security property.
    */
@@ -606,6 +680,15 @@ describe("file-upload answers", () => {
     });
 
     expect(response.status).toBe(422);
+    // The reason a file-upload failure has always carried: it is part of the API's responses.
+    expect((await bodyOf(response)).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "data",
+        code: "invalid_reference",
+        reason:
+          "A file-upload answer references a file that does not belong to this survey's upload element.",
+      }),
+    ]);
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
@@ -617,6 +700,103 @@ describe("file-upload answers", () => {
 
     expect(mockValidateFileUploads).toHaveBeenCalledWith(
       expect.objectContaining({ workspaceId: WORKSPACE_ID, surveyId: SURVEY_ID })
+    );
+  });
+
+  test("wiring: a signature answer is a single string and reaches the storage check", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [
+              { id: "q1", type: "openText", headline: { default: "Q1" } },
+              { id: "sig", type: "signature", headline: { default: "Sign" }, required: false },
+            ],
+          },
+        ],
+      })
+    );
+    const signatureUrl = `/storage/${WORKSPACE_ID}/private/surveys/${SURVEY_ID}/elements/sig/s--fid--abc.png`;
+
+    const response = await createV3Response({
+      ...params,
+      body: { surveyId: SURVEY_ID, finished: true, data: { sig: signatureUrl } } as never,
+    });
+
+    expect(response.status).toBe(201);
+    expect(mockValidateFileUploads).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { sig: signatureUrl }, workspaceId: WORKSPACE_ID, surveyId: SURVEY_ID })
+    );
+  });
+
+  test("wiring: a signature URL the storage check refuses is a 422 and nothing is stored", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [{ id: "sig", type: "signature", headline: { default: "Sign" }, required: false }],
+          },
+        ],
+      })
+    );
+    mockValidateFileUploads.mockReturnValueOnce(false);
+
+    const response = await createV3Response({
+      ...params,
+      body: {
+        surveyId: SURVEY_ID,
+        finished: true,
+        data: { sig: "/storage/other-ws/private/surveys/other/elements/sig/s.png" },
+      } as never,
+    });
+
+    expect(response.status).toBe(422);
+    expect((await bodyOf(response)).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "data",
+        code: "invalid_reference",
+        reason:
+          "A signature answer is malformed or references a file that does not belong to this survey's signature element.",
+      }),
+    ]);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  test("a bad file-upload answer next to a Signature keeps the file-upload reason, and the Signature is checked apart", async () => {
+    mockGetSurveyForWrite.mockResolvedValue(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [
+              { id: "upload", type: "fileUpload", headline: { default: "Upload" } },
+              { id: "sig", type: "signature", headline: { default: "Sign" }, required: false },
+            ],
+          },
+        ],
+      })
+    );
+    mockValidateFileUploads.mockReturnValueOnce(false);
+
+    const response = await createV3Response({
+      ...params,
+      body: {
+        surveyId: SURVEY_ID,
+        finished: true,
+        data: { upload: ["bad"], sig: "/storage/ws/private/surveys/s/elements/sig/s--fid--abc.png" },
+      } as never,
+    });
+
+    expect(response.status).toBe(422);
+    expect((await bodyOf(response)).invalid_params[0].reason).toMatch(/^A file-upload answer/);
+    expect(mockValidateFileUploads).toHaveBeenCalledTimes(1);
+    expect(mockValidateFileUploads).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { upload: ["bad"] } })
     );
   });
 

@@ -13,8 +13,9 @@ import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { checkRateLimit } from "@/modules/core/rate-limit/rate-limit";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { MAX_ATTACHMENT_FILES } from "@/modules/storage/attachment-export/constants";
+import { streamAttachmentsAsZip } from "@/modules/storage/attachment-export/export-attachments";
 import { collectResponseAttachments } from "@/modules/storage/lib/collect-response-attachments";
-import { MAX_ATTACHMENT_FILES, streamAttachmentsAsZip } from "./lib/export-attachments";
 
 /**
  * `GET /api/surveys/{surveyId}/attachments` — the response-attachment ZIP export (ENG-1256).

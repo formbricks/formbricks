@@ -1,5 +1,6 @@
 import {
   AUTHZED_PROJECTION_QUEUE_NAME,
+  AUTHZED_RECONCILIATION_QUEUE_NAME,
   DATA_RETENTION_QUEUE_NAME,
   JOB_NAMES,
   type TJobsQueueName,
@@ -71,6 +72,12 @@ export const defineRecurringJob = ({
 
 /** Every recurring job in the system. Adding one here wires the registry, the producer and the exports. */
 export const recurringJobDescriptors = {
+  // Re-dispatches lost attachment exports, fails stale ones and deletes expired archives (ENG-6862).
+  attachmentExportReconcile: defineRecurringJob({
+    label: "attachment export reconcile",
+    name: JOB_NAMES.attachmentExportReconcile,
+    scheduleId: "attachment-export-reconcile",
+  }),
   emailAuditMaintenance: defineRecurringJob({
     label: "email audit maintenance",
     name: JOB_NAMES.emailAuditMaintenance,
@@ -84,14 +91,18 @@ export const recurringJobDescriptors = {
     queueName: AUTHZED_PROJECTION_QUEUE_NAME,
     scheduleId: "authzed-projection-delivery",
   }),
+  // Its own queue, shared with the survey audit: it walks every organization in one job and must not
+  // hold up the default queue's jobs for the whole sweep.
   authzedReconciliationAudit: defineRecurringJob({
     label: "AuthZed reconciliation audit",
     name: JOB_NAMES.authzedReconciliationAudit,
+    queueName: AUTHZED_RECONCILIATION_QUEUE_NAME,
     scheduleId: "authzed-reconciliation-audit",
   }),
   authzedSurveyAudit: defineRecurringJob({
     label: "AuthZed survey audit",
     name: JOB_NAMES.authzedSurveyAudit,
+    queueName: AUTHZED_RECONCILIATION_QUEUE_NAME,
     scheduleId: "daily-authzed-survey-audit",
   }),
   // Copies creative counters from Redis to Postgres every minute (ENG-4000); idempotent by design.

@@ -15,7 +15,7 @@ import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
-import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
+import { collectResponseFileUrls, getSurveyUploadElementIds } from "@/modules/storage/utils";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
 
 /**
@@ -170,7 +170,7 @@ export async function deleteScopedResponse(
       });
 
       // The survey outlives the response, so this reads correctly after the delete. Both shapes:
-      // `getSurveyFileUploadElementIds` documents the union as mandatory and v1/v2 pass both.
+      // `getSurveyUploadElementIds` documents the union as mandatory and v1/v2 pass both.
       const survey = await tx.survey.findUnique({
         where: { id: deletedRow.surveyId },
         select: { blocks: true, questions: true },
@@ -198,7 +198,7 @@ export async function deleteScopedResponse(
         row: deletedRow,
         fileUrls: collectResponseFileUrls(
           deletedRow.data,
-          getSurveyFileUploadElementIds({ blocks: survey?.blocks, questions: survey?.questions }),
+          getSurveyUploadElementIds({ blocks: survey?.blocks, questions: survey?.questions }),
           deletedRow.surveyId
         ),
       };
@@ -333,6 +333,7 @@ export const v3ResponseReadSelect = {
   finished: true,
   endingId: true,
   language: true,
+  outcome: true,
   data: true,
   variables: true,
   ttc: true,

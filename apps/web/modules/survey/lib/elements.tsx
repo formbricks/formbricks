@@ -18,6 +18,7 @@ import {
   PhoneIcon,
   PresentationIcon,
   Rows3Icon,
+  SignatureIcon,
   SmilePlusIcon,
   StarIcon,
 } from "lucide-react";
@@ -253,6 +254,18 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     preset: {
       headline: createI18nString("", []),
       allowMultipleFiles: false,
+    },
+  },
+  {
+    id: TSurveyElementTypeEnum.Signature,
+    label: t("templates.signature"),
+    description: t("templates.signature_description"),
+    icon: SignatureIcon,
+    category: TElementCategory.Input,
+    preset: {
+      headline: createI18nString("", []),
+      required: true,
+      allowTypedSignature: true,
     },
   },
   {

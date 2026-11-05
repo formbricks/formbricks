@@ -16,6 +16,7 @@ import {
   SMTP_PASSWORD,
   SMTP_PORT,
   SMTP_REJECT_UNAUTHORIZED_TLS,
+  SMTP_REQUIRE_TLS,
   SMTP_SECURE_ENABLED,
   SMTP_USER,
 } from "@/lib/constants";
@@ -37,6 +38,7 @@ export type TEmailType =
   | "sso_recovery_notification"
   | "sso_sign_in_hint"
   | "data_retention_notice"
+  | "attachment_export"
   | "response_notification"
   | "survey_preview"
   | "customization_preview"
@@ -96,6 +98,7 @@ const submitEmailToSmtp = async (
     host: SMTP_HOST,
     port: Number.parseInt(SMTP_PORT ?? "", 10),
     secure: SMTP_SECURE_ENABLED,
+    requireTLS: SMTP_REQUIRE_TLS && !SMTP_SECURE_ENABLED,
     ...(SMTP_AUTHENTICATED ? { auth: { type: "LOGIN", user: SMTP_USER, pass: SMTP_PASSWORD } } : {}),
     tls: { rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS },
     // SMTP debug output can include message content. Audited sends keep it out of ordinary logs.

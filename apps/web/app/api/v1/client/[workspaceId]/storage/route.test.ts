@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   getSignedUrlForUpload: vi.fn(),
   getSurvey: vi.fn(),
   resolveClientApiIds: vi.fn(),
-  validateSurveyAllowsFileUpload: vi.fn(),
+  validateSurveyAllowsUpload: vi.fn(),
   verifyLinkSurveyPinToken: vi.fn(),
 }));
 
@@ -42,7 +42,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 vi.mock("@/modules/storage/service", () => ({ getSignedUrlForUpload: mocks.getSignedUrlForUpload }));
 vi.mock("@/modules/storage/utils", () => ({
   getErrorResponseFromStorageError: vi.fn(),
-  validateSurveyAllowsFileUpload: mocks.validateSurveyAllowsFileUpload,
+  validateSurveyAllowsUpload: mocks.validateSurveyAllowsUpload,
 }));
 
 const WORKSPACE_ID = "cm0wwwwwwwwwwwwwwwwwwwww1";
@@ -89,7 +89,7 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
     mocks.applyRateLimit.mockResolvedValue(undefined);
     mocks.getBiggerUploadFileSizePermission.mockResolvedValue(false);
     mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
-    mocks.validateSurveyAllowsFileUpload.mockReturnValue({ ok: true });
+    mocks.validateSurveyAllowsUpload.mockReturnValue({ ok: true });
     mocks.getSignedUrlForUpload.mockResolvedValue({
       ok: true,
       data: { signedUrl: "https://s3/upload", fileUrl: "/storage/x", presignedFields: {} },
@@ -110,6 +110,22 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
 
     expect(response.status).toBe(403);
     expect(mocks.verifyLinkSurveyPinToken).toHaveBeenCalledWith("bad", SURVEY_ID);
+    expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
+  });
+
+  test("refuses a file name the element does not accept, before any upload URL is issued", async () => {
+    mocks.getSurvey.mockResolvedValue({
+      id: SURVEY_ID,
+      workspaceId: WORKSPACE_ID,
+      type: "link",
+      status: "inProgress",
+    });
+    mocks.validateSurveyAllowsUpload.mockReturnValue({ ok: false, reason: "file_name_not_allowed" });
+
+    const { response } = await callPost({ fileName: "sig.png" });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ message: "File name is not allowed for this element" });
     expect(mocks.getSignedUrlForUpload).not.toHaveBeenCalled();
   });
 
@@ -165,6 +181,78 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
     expect(mocks.verifyLinkSurveyPinToken).not.toHaveBeenCalled();
     expect(mocks.getSignedUrlForUpload).toHaveBeenCalledOnce();
   });
+
+  describe("the upload size ceiling", () => {
+    const MB = 1024 * 1024;
+    const surveyWithUploads = {
+      id: SURVEY_ID,
+      workspaceId: WORKSPACE_ID,
+      type: "link",
+      status: "inProgress",
+      blocks: [
+        {
+          id: "block-1",
+          name: "Block 1",
+          elements: [
+            { id: "file-el", type: "fileUpload" },
+            { id: "sig-el", type: "signature" },
+          ],
+        },
+      ],
+      questions: [],
+    };
+    const maxSizeOfIssuedUpload = () => mocks.getSignedUrlForUpload.mock.calls[0][4];
+
+    beforeEach(() => {
+      mocks.getSurvey.mockResolvedValue(surveyWithUploads);
+    });
+
+    test("caps a Signature upload at 1 MB without the bigger-upload license", async () => {
+      await callPost({ elementId: "sig-el", fileName: "signature.png" });
+
+      expect(maxSizeOfIssuedUpload()).toBe(1 * MB);
+    });
+
+    // The cap is the kind's, so the license that lifts File upload to 1 GB must not lift a Signature.
+    test("caps a Signature upload at 1 MB with the bigger-upload license", async () => {
+      mocks.getBiggerUploadFileSizePermission.mockResolvedValue(true);
+
+      await callPost({ elementId: "sig-el", fileName: "signature.png" });
+
+      expect(maxSizeOfIssuedUpload()).toBe(1 * MB);
+    });
+
+    test("leaves a File upload at the general limits", async () => {
+      await callPost({ elementId: "file-el" });
+      expect(maxSizeOfIssuedUpload()).toBe(10 * MB);
+
+      vi.clearAllMocks();
+      mocks.getBiggerUploadFileSizePermission.mockResolvedValue(true);
+      mocks.getSignedUrlForUpload.mockResolvedValue({
+        ok: true,
+        data: { signedUrl: "https://s3/upload", fileUrl: "/storage/x", presignedFields: {} },
+      });
+      mocks.getOrganization.mockResolvedValue({ id: "org-1" });
+      mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org-1");
+      mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: WORKSPACE_ID });
+      mocks.getSurvey.mockResolvedValue(surveyWithUploads);
+
+      await callPost({ elementId: "file-el" });
+      expect(maxSizeOfIssuedUpload()).toBe(1024 * MB);
+    });
+
+    test("reads the cap from a legacy Signature question too", async () => {
+      mocks.getSurvey.mockResolvedValue({
+        ...surveyWithUploads,
+        blocks: [],
+        questions: [{ id: "sig-el", type: "signature" }],
+      });
+
+      await callPost({ elementId: "sig-el", fileName: "signature.png" });
+
+      expect(maxSizeOfIssuedUpload()).toBe(1 * MB);
+    });
+  });
 });
 
 /**
@@ -219,7 +307,7 @@ const expectRefusedBeforeSigning = async (result: { response: Response }) => {
   expect(mocks.applyRateLimit).not.toHaveBeenCalled();
   // The element and file-type checks are skipped rather than answered, so a closed survey cannot be
   // probed for which elements it carries.
-  expect(mocks.validateSurveyAllowsFileUpload).not.toHaveBeenCalled();
+  expect(mocks.validateSurveyAllowsUpload).not.toHaveBeenCalled();
 };
 
 describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (ENG-4044)", () => {
@@ -231,7 +319,7 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
     mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org_1");
     mocks.getOrganization.mockResolvedValue({ id: "org_1" });
     mocks.applyRateLimit.mockResolvedValue(undefined);
-    mocks.validateSurveyAllowsFileUpload.mockReturnValue({ ok: true });
+    mocks.validateSurveyAllowsUpload.mockReturnValue({ ok: true });
     mocks.getBiggerUploadFileSizePermission.mockResolvedValue(false);
     mocks.getSignedUrlForUpload.mockResolvedValue({
       ok: true,
@@ -273,7 +361,7 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
       rateLimitConfigs.storage.uploadPerWorkspace,
       workspaceId
     );
-    expect(mocks.validateSurveyAllowsFileUpload).toHaveBeenCalledWith({
+    expect(mocks.validateSurveyAllowsUpload).toHaveBeenCalledWith({
       fileName: uploadBody.fileName,
       elementId,
       blocks: survey.blocks,
