@@ -242,6 +242,26 @@ describe("writeExcelExport", () => {
     expect(row?.slice(3, 5)).toEqual(["Thanks for @Pick one!", "Danke für @Wähle eins!"]);
   });
 
+  test("keeps the language columns in one order whatever order the survey's languages come back in", () => {
+    // A survey stores no order for its languages, so the database may return them in any.
+    const [english, german] = SURVEY.languages;
+    const language = (code: string) => ({ ...german, language: { ...german.language, code, alias: null } });
+    const shuffled = { ...SURVEY, languages: [language("ja"), german, language("fr"), english] } as TSurvey;
+
+    const [header] = rowsOf(export_(shuffled).Sheets.Survey);
+
+    expect(header).toEqual([
+      "key",
+      "Question ID",
+      "Type",
+      "English (en) — default",
+      "German (de)",
+      "French (fr)",
+      "Japanese (ja)",
+      "Logic",
+    ]);
+  });
+
   test("writes one Text column for a survey without languages", () => {
     const [header, firstRow] = rowsOf(export_({ ...SURVEY, languages: [] } as TSurvey).Sheets.Survey);
 

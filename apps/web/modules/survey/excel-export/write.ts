@@ -79,8 +79,12 @@ const getLanguageColumns = (survey: TSurvey, t: TFunction, locale: string): TLan
     return [{ code: "default", header: t("workspace.surveys.export.excel.text_column") }];
   }
 
-  // The default language first, then the others in the survey's order.
-  const languages = [...survey.languages].sort((a, b) => Number(b.default) - Number(a.default));
+  // The default language first, then the others by code. A survey stores no order for its languages
+  // (`SurveyLanguage` has no position), so they come back in whatever order the database returns, and
+  // only a sort of our own keeps the columns where they were from one export to the next.
+  const languages = [...survey.languages].sort(
+    (a, b) => Number(b.default) - Number(a.default) || a.language.code.localeCompare(b.language.code, "en")
+  );
   return languages.map(({ language, default: isDefault }) => {
     const params = {
       name: getLanguageLabel(language.code, locale) ?? language.alias ?? language.code,
