@@ -9,6 +9,7 @@ import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import { resolveOverlayAppearance } from "@formbricks/types/overlay";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
+import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -16,7 +17,6 @@ import { cn } from "@/lib/cn";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
-import { describeRuleSummary } from "@/modules/survey/editor/lib/flow-outline-text";
 import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
@@ -69,6 +69,12 @@ interface PreviewSurveyProps {
    * straight to the renderer, which applies CSS from this prop only — never from `survey`.
    */
   customCss?: TRendererCustomCss;
+  /**
+   * The rule before the first question that screened the preview out, as one line ("If @panel_id is
+   * not set → …"), for the banner that explains the ending (ENG-6969 T13 ①). The survey editor says
+   * how a rule reads; without it, no banner.
+   */
+  describeStartRule?: (rule: TSurveyBlockLogic, survey: TSurvey) => string;
 }
 
 let surveyNameTemp: string;
@@ -87,6 +93,7 @@ export const PreviewSurvey = ({
   appearance = "light",
   onAppearanceChange,
   customCss,
+  describeStartRule,
 }: Readonly<PreviewSurveyProps>) => {
   // Both callers hand over a survey that already carries its `embeddedFields`: the editor's working
   // copy is rows-native (ENG-2628), and the templates gallery builds its never-written survey through
@@ -96,7 +103,7 @@ export const PreviewSurvey = ({
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
@@ -144,11 +151,8 @@ export const PreviewSurvey = ({
       }),
     [jsSurvey, hiddenFieldsRecord, languageCode]
   );
-  const startScreenOutSummary = startScreenOut
-    ? describeRuleSummary(startScreenOut.rule, survey, t, {
-        locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
-      })
-    : undefined;
+  const startScreenOutSummary =
+    startScreenOut && describeStartRule ? describeStartRule(startScreenOut.rule, survey) : undefined;
   const openTestValuesForScreenOut =
     startScreenOut && testValueFields.length > 0
       ? () =>
