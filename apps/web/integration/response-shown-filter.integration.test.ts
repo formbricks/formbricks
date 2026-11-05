@@ -1,17 +1,20 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import type { TResponseFilterCriteriaShown } from "@formbricks/types/responses";
+import { type TResponseFilterCriteriaShown, ZResponseFilterCriteria } from "@formbricks/types/responses";
 import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import {
   SURVEY_FLOW_FIXTURE_IDS,
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { getSurveySummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
+import { countExportResponses } from "@/app/api/(internal)/surveys/[surveyId]/export/lib/export-response";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { resetDb } from "@/integration/reset-db";
 import { getRecordedNotShown } from "@/lib/response/filtering-values";
+import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { buildWhereClause } from "@/lib/response/where-clause";
 
 /**
@@ -244,6 +247,42 @@ describe("shown / not shown filters (real Postgres)", () => {
     expect(rows.map((row) => row.id).sort((a, b) => a.localeCompare(b))).toEqual(
       [responseIds.hidden, responseIds.questionHidden].sort((a, b) => a.localeCompare(b))
     );
+  });
+});
+
+/**
+ * What the Responses list, its count, the Summary and the export each answer for one shown criteria,
+ * after it went where a request takes it: JSON over the wire, then `ZResponseFilterCriteria` (the
+ * schema every server action, the export route and the services validate with, which drops a key it
+ * does not know). The URL-to-criteria half is covered in `response-table-filters.test.ts`.
+ */
+describe("the app's read paths keep the shown criteria", () => {
+  const sent = (shown: TResponseFilterCriteriaShown[]) =>
+    ZResponseFilterCriteria.parse(JSON.parse(JSON.stringify({ shown })));
+  const blockNotShown = () => sent([{ target: "block", blockId: heavyUsers, op: "notShown" }]);
+
+  test("the request schema keeps the group", () => {
+    expect(blockNotShown().shown).toEqual([{ target: "block", blockId: heavyUsers, op: "notShown" }]);
+  });
+
+  test("the Responses list and its count", async () => {
+    expect(await getResponseCountBySurveyId(survey.id, blockNotShown())).toBe(1);
+    const listed = await getResponses(survey.id, 25, 0, blockNotShown(), undefined, { withNotShown: true });
+    expect(listed.map((response) => response.id)).toEqual([responseIds.hidden]);
+  });
+
+  test("the Summary", async () => {
+    const summary = await getSurveySummary(survey.id, blockNotShown());
+    expect(summary.meta.totalResponses).toBe(1);
+  });
+
+  test("the export", async () => {
+    const counts = await countExportResponses({
+      survey,
+      plan: { kind: "standard", format: "csv" },
+      filter: blockNotShown(),
+    });
+    expect(counts.included).toBe(1);
   });
 });
 
