@@ -1278,7 +1278,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-0-0-conditionMatchValue").first().click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[1] }).click();
-  await page.locator("html").click();
+  // Escape closes the multi-select list; a click on the page centre can land inside the open list.
+  await page.keyboard.press("Escape");
   await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
@@ -1310,7 +1311,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: params.multiSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[1] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[2] }).click();
-  await page.locator("html").click();
+  // Escape closes the multi-select list; a click on the page centre can land inside the open list.
+  await page.keyboard.press("Escape");
   await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
