@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Filtres actifs",
       "add_filter": "Ajouter un filtre",
+      "advance_filter": "Filtre avancé",
       "advanced_filter": "Filtre avancé",
       "advanced_filter_description": "Afficher uniquement les lignes qui respectent toutes les règles.",
       "attribute_type": "Type",

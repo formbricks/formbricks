@@ -44,12 +44,14 @@ const RuleEditor = ({
   onDraftChange,
   invalid,
   onSubmit,
+  onOpenAdvancedFilter,
 }: Readonly<{
   property: TFilterProperty;
   draft: TRuleDraft;
   onDraftChange: (draft: TRuleDraft) => void;
   invalid: boolean;
   onSubmit: () => void;
+  onOpenAdvancedFilter?: () => void;
 }>) => {
   const { t } = useTranslation();
   const valueId = useId();
@@ -88,7 +90,12 @@ const RuleEditor = ({
         onChange={(value) => onDraftChange({ ...draft, value })}
         onValuesChange={(values) => onDraftChange({ ...draft, values })}
       />
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {onOpenAdvancedFilter && (
+          <Button type="button" size="sm" variant="secondary" onClick={onOpenAdvancedFilter}>
+            {t("common.table_toolbar.advance_filter")}
+          </Button>
+        )}
         <Button type="submit" size="sm">
           {t("common.done")}
         </Button>
@@ -101,7 +108,9 @@ const RuleEditor = ({
  * A rule's chip whose body opens one rule's operator and value in a popover (TableToolbar
  * `filter.simpleRules`), rather than the whole Advanced filter. Without `rule` it is a new rule's draft:
  * the chip shows what is picked so far and `onClose` drops it. Done, or a click outside, saves a finished
- * rule; an unfinished one is never saved, and Escape leaves the rule as it was.
+ * rule; an unfinished one is never saved, and Escape leaves the rule as it was. With
+ * `onOpenAdvancedFilter`, an Advanced filter button next to Done hands the finished rule (or null when
+ * there is nothing new to save) over and closes the popover; the caller saves it and opens the dialog.
  */
 export const RuleFilterChip = ({
   property,
@@ -110,6 +119,7 @@ export const RuleFilterChip = ({
   onCommit,
   onRemove,
   onClose,
+  onOpenAdvancedFilter,
   disabled,
 }: Readonly<{
   property: TFilterProperty;
@@ -118,6 +128,7 @@ export const RuleFilterChip = ({
   onCommit: (rule: TTableFilter) => void;
   onRemove: () => void;
   onClose?: () => void;
+  onOpenAdvancedFilter?: (rule: TTableFilter | null) => void;
   disabled?: boolean;
 }>) => {
   const { t, i18n } = useTranslation();
@@ -144,6 +155,12 @@ export const RuleFilterChip = ({
     }
     if (next && !isSameRule(next, rule)) onCommit(next);
     close();
+  };
+
+  const openAdvancedFilter = () => {
+    const next = draftToRule(property, draft);
+    close();
+    onOpenAdvancedFilter?.(next && !isSameRule(next, rule) ? next : null);
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -178,6 +195,7 @@ export const RuleFilterChip = ({
           }}
           invalid={invalid}
           onSubmit={() => save(true)}
+          onOpenAdvancedFilter={onOpenAdvancedFilter ? openAdvancedFilter : undefined}
         />
       </PopoverContent>
     </Popover>

@@ -92,7 +92,8 @@ const RuleChip = ({
   filters: readonly TTableFilter[];
   index: number;
   onFiltersChange: (filters: TTableFilter[]) => void;
-  onEditRules?: () => void;
+  /** Opens Advanced filter, starting from `filters` when a chip has just saved its rule. */
+  onEditRules?: (filters?: TTableFilter[]) => void;
   simpleRules?: boolean;
   /** How a saved rule is stored: as it is, or back as the quick filter it was opened from. */
   toStored?: (rule: TTableFilter) => TTableFilter;
@@ -108,11 +109,27 @@ const RuleChip = ({
         disabled={disabled}
         onCommit={(rule) => onFiltersChange(replaceFilterAt(filters, index, toStored(rule)))}
         onRemove={onRemove}
+        onOpenAdvancedFilter={
+          onEditRules &&
+          ((rule) => {
+            if (!rule) return onEditRules();
+            const next = replaceFilterAt(filters, index, toStored(rule));
+            onFiltersChange(next);
+            onEditRules(next);
+          })
+        }
       />
     );
   }
   const parts = getChipParts(filter, property, t, i18n.resolvedLanguage ?? i18n.language ?? "en-US");
-  return <FilterChip {...parts} disabled={disabled} onClick={onEditRules} onRemove={onRemove} />;
+  return (
+    <FilterChip
+      {...parts}
+      disabled={disabled}
+      onClick={onEditRules && (() => onEditRules())}
+      onRemove={onRemove}
+    />
+  );
 };
 
 /**
@@ -137,7 +154,8 @@ export const FilterChipRow = ({
   filters: readonly TTableFilter[];
   onFiltersChange: (filters: TTableFilter[]) => void;
   onAddFilter: () => void;
-  onEditRules?: () => void;
+  /** Opens Advanced filter, starting from `filters` when a chip has just saved its rule. */
+  onEditRules?: (filters?: TTableFilter[]) => void;
   simpleRules?: boolean;
   draftProperty?: TFilterProperty;
   onDraftClose?: () => void;
@@ -200,6 +218,7 @@ export const FilterChipRow = ({
                   filters={filters}
                   index={index}
                   onFiltersChange={onFiltersChange}
+                  onEditRules={onEditRules}
                   simpleRules
                   toStored={(rule) => ruleAsQuickFilter(property, rule)}
                   disabled={disabled}
@@ -246,6 +265,15 @@ export const FilterChipRow = ({
               onCommit={(rule) => onFiltersChange([...filters, rule])}
               onRemove={() => onDraftClose?.()}
               onClose={onDraftClose}
+              onOpenAdvancedFilter={
+                onEditRules &&
+                ((rule) => {
+                  if (!rule) return onEditRules();
+                  const next = [...filters, rule];
+                  onFiltersChange(next);
+                  onEditRules(next);
+                })
+              }
             />
           </li>
         )}

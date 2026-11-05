@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Etkin filtreler",
       "add_filter": "Filtre ekle",
+      "advance_filter": "Gelişmiş filtre",
       "advanced_filter": "Gelişmiş filtre",
       "advanced_filter_description": "Yalnızca tüm kurallarla eşleşen satırları göster.",
       "attribute_type": "Tür",

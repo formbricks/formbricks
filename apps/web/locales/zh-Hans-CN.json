@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "已启用的筛选条件",
       "add_filter": "添加筛选条件",
+      "advance_filter": "高级筛选",
       "advanced_filter": "高级筛选",
       "advanced_filter_description": "仅显示符合所有规则的行。",
       "attribute_type": "类型",

@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Actieve filters",
       "add_filter": "Filter toevoegen",
+      "advance_filter": "Geavanceerd filter",
       "advanced_filter": "Geavanceerd filter",
       "advanced_filter_description": "Toon alleen de rijen die aan alle regels voldoen.",
       "attribute_type": "Type",

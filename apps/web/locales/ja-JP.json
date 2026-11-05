@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "適用中のフィルター",
       "add_filter": "フィルターを追加",
+      "advance_filter": "高度なフィルター",
       "advanced_filter": "詳細フィルター",
       "advanced_filter_description": "すべてのルールに一致する行のみを表示します。",
       "attribute_type": "タイプ",

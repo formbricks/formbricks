@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Aktív szűrők",
       "add_filter": "Szűrő hozzáadása",
+      "advance_filter": "Speciális szűrő",
       "advanced_filter": "Speciális szűrő",
       "advanced_filter_description": "Kizárólag azok a sorok jelennek meg, amelyek minden szabálynak megfelelnek.",
       "attribute_type": "Típus",

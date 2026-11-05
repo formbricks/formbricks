@@ -116,6 +116,17 @@ export const TableToolbar = ({
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  // Filters a chip has just saved on its way to Advanced filter: the URL catches up a render later, so
+  // the dialog starts from these rather than from the filters it would read now.
+  const [advancedSeed, setAdvancedSeed] = useState<TTableFilter[] | null>(null);
+  const openAdvancedFilter = (seed?: TTableFilter[]) => {
+    setAdvancedSeed(seed ?? null);
+    setIsAdvancedOpen(true);
+  };
+  const handleAdvancedOpenChange = (open: boolean) => {
+    setIsAdvancedOpen(open);
+    if (!open) setAdvancedSeed(null);
+  };
   // A rule just picked in the simple-first Filter menu, not saved until its popover finishes it.
   const [draftPropertyId, setDraftPropertyId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -175,7 +186,7 @@ export const TableToolbar = ({
                 properties={visibleProperties}
                 filters={visibleFilters}
                 onFiltersChange={onVisibleFiltersChange}
-                onOpenAdvancedFilter={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
+                onOpenAdvancedFilter={hasRuleProperties ? () => openAdvancedFilter() : undefined}
                 onPickRuleProperty={simpleRules ? setDraftPropertyId : undefined}
                 open={isFilterMenuOpen}
                 onOpenChange={setIsFilterMenuOpen}
@@ -203,7 +214,7 @@ export const TableToolbar = ({
           filters={visibleFilters}
           onFiltersChange={onVisibleFiltersChange}
           onAddFilter={() => setIsFilterMenuOpen(true)}
-          onEditRules={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
+          onEditRules={hasRuleProperties ? openAdvancedFilter : undefined}
           simpleRules={simpleRules}
           draftProperty={draftProperty}
           onDraftClose={closeDraft}
@@ -215,9 +226,9 @@ export const TableToolbar = ({
       {filter && isAdvancedOpen && (
         <AdvancedFilterDialog
           open={isAdvancedOpen}
-          onOpenChange={setIsAdvancedOpen}
+          onOpenChange={handleAdvancedOpenChange}
           properties={visibleProperties}
-          filters={visibleFilters}
+          filters={advancedSeed ?? visibleFilters}
           onFiltersChange={onVisibleFiltersChange}
         />
       )}

@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Active filters",
       "add_filter": "Add filter",
+      "advance_filter": "Advance filter",
       "advanced_filter": "Advanced filter",
       "advanced_filter_description": "Show only the rows that match every rule.",
       "attribute_type": "Type",

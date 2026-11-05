@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Filtre active",
       "add_filter": "Adaugă filtru",
+      "advance_filter": "Filtru avansat",
       "advanced_filter": "Filtru avansat",
       "advanced_filter_description": "Afișează doar rândurile care respectă toate regulile.",
       "attribute_type": "Tip",

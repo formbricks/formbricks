@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Aktiva filter",
       "add_filter": "Lägg till filter",
+      "advance_filter": "Avancerat filter",
       "advanced_filter": "Avancerat filter",
       "advanced_filter_description": "Visa bara de rader som matchar alla regler.",
       "attribute_type": "Typ",

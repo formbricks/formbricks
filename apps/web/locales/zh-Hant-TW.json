@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "已啟用的篩選條件",
       "add_filter": "新增篩選條件",
+      "advance_filter": "進階篩選",
       "advanced_filter": "進階篩選",
       "advanced_filter_description": "僅顯示符合所有規則的列。",
       "attribute_type": "類型",

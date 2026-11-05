@@ -568,6 +568,7 @@
     "table_toolbar": {
       "active_filters": "Активные фильтры",
       "add_filter": "Добавить фильтр",
+      "advance_filter": "Расширенный фильтр",
       "advanced_filter": "Расширенный фильтр",
       "advanced_filter_description": "Показывать только строки, которые соответствуют всем правилам.",
       "attribute_type": "Тип",
