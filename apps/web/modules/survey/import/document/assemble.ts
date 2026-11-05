@@ -29,7 +29,11 @@ import {
   type TDocumentText,
   collapseWhitespace,
 } from "./plan-checks";
-import { DOCUMENT_PLAN_FORM_FIELDS, type TDocumentPlanRule } from "./plan-schema";
+import {
+  DOCUMENT_PLAN_FORM_FIELDS,
+  type TDocumentPlanFormField,
+  type TDocumentPlanRule,
+} from "./plan-schema";
 
 /**
  * The assembly of a document import (ENG-6852): the checked plan's entries become the draft the dialog
@@ -429,7 +433,7 @@ class DocumentDraftBuilder {
    * An address or contact form's fields: each the file lists is shown, labelled with the file's text and
    * required as the question is; any other is hidden, with no label.
    */
-  private formFields<TField extends string>(
+  private formFields<TField extends TDocumentPlanFormField>(
     entry: TDocumentPlannedEntry,
     fields: readonly TField[]
   ): Record<TField, TDraftToggleInput> {
