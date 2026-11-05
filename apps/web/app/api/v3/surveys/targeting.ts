@@ -12,7 +12,7 @@ import type {
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getAddedSegmentSurveyIds } from "@/modules/ee/contacts/segments/lib/helper";
+import { getSurveyIdsReadBySegments } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   getExistingWorkspaceSurveyIds,
@@ -256,29 +256,27 @@ async function getV3SegmentReferenceIssues(
   const referencedSegments = segments.filter((candidate) =>
     segmentRefs.some((ref) => ref.value === candidate.id)
   );
-  const readSurveyIdsBySegment = new Map(
-    await Promise.all(
-      referencedSegments.map(
-        async (segment) =>
-          [segment.id, await getAddedSegmentSurveyIds(segment.filters, [], workspaceId, segment.id)] as const
-      )
-    )
-  );
-  const readSurveyIds = [...new Set([...readSurveyIdsBySegment.values()].flat())];
+  const readSurveyIds = [...(await getSurveyIdsReadBySegments(referencedSegments, workspaceId))];
   if (readSurveyIds.length === 0) return issues;
 
   const [existing, visible] = await Promise.all([
     getExistingWorkspaceSurveyIds(workspaceId, readSurveyIds, {}),
     getExistingWorkspaceSurveyIds(workspaceId, readSurveyIds, visibleSurveyWhere),
   ]);
-  const readsHiddenSurvey = (segmentId: string) =>
-    (readSurveyIdsBySegment.get(segmentId) ?? []).some(
-      (surveyId) => existing.has(surveyId) && !visible.has(surveyId)
-    );
-  for (const reference of segmentRefs.filter((ref) => readsHiddenSurvey(ref.value))) {
-    issues.push(
-      issue(reference, `Segment '${reference.value}' filters on a survey you don't have access to`)
-    );
+  const hidden = new Set(
+    readSurveyIds.filter((surveyId) => existing.has(surveyId) && !visible.has(surveyId))
+  );
+  if (hidden.size === 0) return issues;
+
+  // Only on refusal: walk each referenced segment on its own to name the ones that read a hidden survey.
+  for (const segment of referencedSegments) {
+    const read = await getSurveyIdsReadBySegments([segment], workspaceId); // NOSONAR
+    if (![...read].some((surveyId) => hidden.has(surveyId))) continue;
+    for (const reference of segmentRefs.filter((ref) => ref.value === segment.id)) {
+      issues.push(
+        issue(reference, `Segment '${reference.value}' filters on a survey you don't have access to`)
+      );
+    }
   }
   return issues;
 }

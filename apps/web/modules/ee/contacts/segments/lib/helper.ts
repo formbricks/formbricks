@@ -293,6 +293,24 @@ export const assertSegmentSurveyFiltersVisible = async (
   }
 };
 
+/**
+ * Every survey id a set of stored segments reads, nested segments followed, in one walk with one visited
+ * set: each segment is read at most once however many of them share a nested chain, so the work is
+ * bounded by the workspace's segments rather than by references times chain length.
+ */
+export const getSurveyIdsReadBySegments = async (
+  segments: ReadonlyArray<{ id: string; filters: TBaseFilters }>,
+  workspaceId: string
+): Promise<Set<string>> => {
+  const reachable = new Set<string>();
+  const visited = new Set(segments.map((segment) => segment.id));
+  for (const segment of segments) {
+    // Sequential on purpose: the shared visited set is what keeps the walk linear.
+    await collectReachableSurveyIds(segment.filters, workspaceId, reachable, visited); // NOSONAR
+  }
+  return reachable;
+};
+
 /** The survey ids `filters` reads that `storedFilters` did not, nested segments followed in both. */
 export const getAddedSegmentSurveyIds = async (
   filters: TBaseFilters,

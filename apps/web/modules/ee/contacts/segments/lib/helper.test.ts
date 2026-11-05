@@ -13,6 +13,7 @@ import {
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   collectSurveyIdsFromSegmentFilters,
+  getSurveyIdsReadBySegments,
   segmentFiltersReadHiddenSurvey,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
@@ -605,6 +606,23 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     ).toBe(true);
     expect(mockSurveyFindFirst).toHaveBeenCalledTimes(2);
     expect(mockSurveyFindFirst.mock.calls[0][0].where.id.in).toHaveLength(200);
+  });
+
+  // CodeRabbit on #9935: many references sharing one nested chain must not each walk it again.
+  test("getSurveyIdsReadBySegments reads a chain shared by several segments once", async () => {
+    const shared = "clshared00000000000000001";
+    vi.mocked(getSegment).mockImplementation(async (id: string) =>
+      segment(id, tree(interaction("specific", [restrictedId])))
+    );
+    const referencing = Array.from({ length: 5 }, (_, i) => ({
+      id: `clref${String(i).padStart(21, "0")}`,
+      filters: tree(nestedSegment(shared), interaction("specific", [visibleId])),
+    }));
+
+    const read = await getSurveyIdsReadBySegments(referencing, workspaceId);
+
+    expect([...read].sort()).toEqual([restrictedId, visibleId].sort());
+    expect(getSegment).toHaveBeenCalledTimes(1);
   });
 
   test("assertSegmentSurveyFiltersVisible turns a hidden survey into InvalidInputError", async () => {
