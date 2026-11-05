@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import enUS from "@/locales/en-US.json";
-import { SURVEY_IMPORT_MAX_TAKEN_NAMES } from "../limits";
+import { SURVEY_IMPORT_MAX_NAME_CHARS, SURVEY_IMPORT_MAX_TAKEN_NAMES } from "../limits";
 import { getImportedSurveyName } from "./imported-survey-name";
 
 vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn() }));
@@ -44,5 +44,23 @@ describe("getImportedSurveyName", () => {
     expect(vi.mocked(prisma.survey.findMany).mock.calls[0][0]?.where?.name).toEqual({
       startsWith: String.raw`Q3 \\ Q4 100\%\_done (imported`,
     });
+  });
+
+  test("cuts the name to 200 characters before the suffix, whichever lane it came from", async () => {
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
+
+    const name = await getImportedSurveyName(WORKSPACE_ID, "a".repeat(300), t);
+
+    expect(name).toBe(`${"a".repeat(SURVEY_IMPORT_MAX_NAME_CHARS)} (imported)`);
+  });
+
+  test("cuts an imported name's own suffix off first, and never splits an emoji at the cut", async () => {
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
+    // The emoji's two units sit across the 200th character.
+    const long = `${"b".repeat(SURVEY_IMPORT_MAX_NAME_CHARS - 1)}😀 tail (imported 4)`;
+
+    expect(await getImportedSurveyName(WORKSPACE_ID, long, t)).toBe(
+      `${"b".repeat(SURVEY_IMPORT_MAX_NAME_CHARS - 1)} (imported)`
+    );
   });
 });

@@ -13,11 +13,7 @@ import { getImportedSurveyName, getImporterTranslate } from "../core/imported-su
 import type { TSurveyImportResult, TSurveyImportRunParams } from "../core/lane";
 import { type TSurveyImportPipelineIssue, buildSurveyImportReport } from "../core/report";
 import { sanitizeName } from "../core/sanitize-text";
-import {
-  SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
-  SURVEY_IMPORT_MAX_NAME_CHARS,
-  SURVEY_IMPORT_MAX_QUESTIONS,
-} from "../limits";
+import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_MAX_QUESTIONS } from "../limits";
 import { planDocumentImport } from "./ai-plan";
 import { assembleDocumentDraft } from "./assemble";
 import {
@@ -89,8 +85,11 @@ async function nameDraft(
     candidates
       .map((candidate) => (candidate === null ? "" : sanitizeName(collapseWhitespace(candidate))))
       .find((candidate) => candidate.length > 0) ?? "";
-  const capped = base.slice(0, SURVEY_IMPORT_MAX_NAME_CHARS).trim() || "Imported survey";
-  return getImportedSurveyName(params.workspaceId, capped, await getImporterTranslate(params.userId));
+  return getImportedSurveyName(
+    params.workspaceId,
+    base || "Imported survey",
+    await getImporterTranslate(params.userId)
+  );
 }
 
 const countQuestions = (entries: readonly TDocumentPlannedEntry[]): number =>
