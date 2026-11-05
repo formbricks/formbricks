@@ -286,6 +286,22 @@ jobs:
               -H "x-api-key: fbk_${SEED_API_KEY}" \
               "http://localhost:3000/api/v3/charts/${chart_id}/data")
             if [ "${chart_status}" -eq 200 ]; then
+              # Schemathesis passes a documented 4xx too, so it would not notice preview or field values
+              # failing to reach Cube. With Dashboards active, all three Cube-backed operations must 200.
+              dataset_id=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').read.datasetId")
+              preview_status=$(curl -o /tmp/preflight-preview.json -s -w "%{http_code}" \
+                -H "x-api-key: fbk_${SEED_API_KEY}" -H "Content-Type: application/json" \
+                --data "{\"workspaceId\":\"${workspace_id}\",\"datasetId\":\"${dataset_id}\",\"type\":\"bar\",\"query\":{\"measures\":[\"FeedbackRecords.npsScore\"],\"dimensions\":[\"FeedbackRecords.sourceName\"]}}" \
+                "http://localhost:3000/api/v3/charts/preview")
+              values_status=$(curl -o /tmp/preflight-values.json -s -w "%{http_code}" \
+                -H "x-api-key: fbk_${SEED_API_KEY}" \
+                "http://localhost:3000/api/v3/charts/fields/FeedbackRecords.sourceName/values?workspaceId=${workspace_id}&datasetId=${dataset_id}")
+              if [ "${preview_status}" -ne 200 ] || [ "${values_status}" -ne 200 ]; then
+                echo "::error::With Dashboards active, chart preview returned ${preview_status} and field values returned ${values_status}; both should be 200."
+                cat /tmp/preflight-preview.json /tmp/preflight-values.json
+                docker logs formbricks-cube-ci 2>&1 | tail -n 50 || true
+                exit 1
+              fi
               echo "::notice::Dashboards entitlement active — chart and dashboard operations run against real data, with Cube answering the chart queries."
             elif [ "${chart_status}" -eq 403 ]; then
               # Only the entitlement 403 is a licence answer. Any other 403 (the seeded key lost access

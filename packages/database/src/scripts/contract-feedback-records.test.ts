@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { CONTRACT_FEEDBACK_RECORDS, seedContractFeedbackRecords } from "./contract-feedback-records";
+import { seedContractFeedbackRecords } from "./contract-feedback-records";
 
 const DATASET_ID = "clctdataset0000000000001";
 
@@ -27,9 +27,16 @@ describe("seedContractFeedbackRecords", () => {
 
   test("upserts one NPS row per fixture score, scoped to the dataset as Cube's tenant", async () => {
     const { client, executeRaw } = createClient(true);
-    const expectedRows = CONTRACT_FEEDBACK_RECORDS.flatMap(([sourceName, scores]) =>
-      scores.map((score) => ({ sourceName, score }))
-    );
+    // Spelled out rather than derived from CONTRACT_FEEDBACK_RECORDS, so emptying the fixture fails here
+    // instead of passing with nothing for Cube to answer from.
+    const expectedRows = [
+      { sourceName: "Contract fixture — web", score: 10 },
+      { sourceName: "Contract fixture — web", score: 9 },
+      { sourceName: "Contract fixture — web", score: 6 },
+      { sourceName: "Contract fixture — email", score: 8 },
+      { sourceName: "Contract fixture — email", score: 3 },
+      { sourceName: "Contract fixture — email", score: 10 },
+    ];
 
     await expect(seedContractFeedbackRecords(client, DATASET_ID)).resolves.toBe(expectedRows.length);
 
