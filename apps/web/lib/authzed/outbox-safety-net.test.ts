@@ -130,6 +130,20 @@ describe("AuthZed projection outbox safety net", () => {
     expect(hasUnclaimedAuthzedOutboxEvent).not.toHaveBeenCalled();
   });
 
+  test("does not start a drain when shutdown begins while the probe is in flight", async () => {
+    let draining = false;
+    vi.mocked(hasUnclaimedAuthzedOutboxEvent).mockImplementation(() => {
+      draining = true;
+      return Promise.resolve(true);
+    });
+    startAuthzedOutboxSafetyNet(() => !draining);
+
+    await vi.advanceTimersByTimeAsync(AUTHZED_OUTBOX_SAFETY_NET_INTERVAL_MS);
+
+    expect(hasUnclaimedAuthzedOutboxEvent).toHaveBeenCalledOnce();
+    expect(drainAuthzedOutbox).not.toHaveBeenCalled();
+  });
+
   test("starts one timer however often worker startup is retried", async () => {
     startAuthzedOutboxSafetyNet();
     startAuthzedOutboxSafetyNet();

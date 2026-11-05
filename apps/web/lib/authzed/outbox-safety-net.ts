@@ -46,12 +46,16 @@ const globalForSafetyNet = globalThis as typeof globalThis & {
  * no event is delivered twice and none is lost. Dead letters are never claimed, so a genuine
  * PostgreSQL/SpiceDB disagreement keeps the freshness guard armed; a failing SpiceDB backs events off
  * exactly as the job would.
+ *
+ * @param shouldRun re-checked after the probe, so a server that began draining while it was in flight
+ * does not start a drain during shutdown.
  */
-export const runAuthzedOutboxSafetyNet = async (): Promise<void> => {
+export const runAuthzedOutboxSafetyNet = async (shouldRun: () => boolean = () => true): Promise<void> => {
   if (!isAuthzedEnabled()) return;
 
   try {
     if (!(await hasUnclaimedAuthzedOutboxEvent(AUTHZED_OUTBOX_SAFETY_NET_UNCLAIMED_MS))) return;
+    if (!shouldRun()) return;
 
     const result = await drainAuthzedOutbox(AUTHZED_OUTBOX_SAFETY_NET_MAX_BATCHES);
     // Warn on every take-over: a healthy job never leaves work this long, so each line means the job is
@@ -81,7 +85,7 @@ export const runAuthzedOutboxSafetyNet = async (): Promise<void> => {
 const tick = (state: TSafetyNetState): void => {
   // A slow drain must not stack ticks behind it.
   if (state.running || !state.shouldRun()) return;
-  state.running = runAuthzedOutboxSafetyNet().finally(() => {
+  state.running = runAuthzedOutboxSafetyNet(state.shouldRun).finally(() => {
     state.running = null;
   });
 };
