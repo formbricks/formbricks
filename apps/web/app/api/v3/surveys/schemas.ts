@@ -18,6 +18,7 @@ import {
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import { boundedSchema } from "@/app/api/v3/lib/bounded-parse";
 import { BoundedInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
 import { V3_EMBEDDED_FIELD_KEYS, ZV3SurveyEmbeddedField } from "./embedded-fields";
@@ -669,32 +670,58 @@ const REQUIRE_ANSWER_ACTION_KEYS = new Set(["id", "objective", "target"]);
 const JUMP_TO_BLOCK_ACTION_KEYS = REQUIRE_ANSWER_ACTION_KEYS;
 const MARK_LOW_QUALITY_ACTION_KEYS = new Set(["id", "objective"]);
 
+/**
+ * The pre-pass's problems, with the distinct locale keys it has looked up: both bounded per document.
+ * A new locale key costs a lookup here and again in the normalizer, and a cap per field alone let a body
+ * spread 150k distinct keys over 600 fields: ~6 s of CPU on a body that then parsed (ENG-4100).
+ */
+class SurveyDocumentProblems extends BoundedInvalidParams {
+  private readonly localeKeys = new Set<string>();
+  private localeKeysRefused = false;
+
+  /** Whether `key` may be looked up: one already seen, or a new one under the cap. Refused once, at `path`. */
+  admitLocaleKey(key: string, path: string): boolean {
+    if (this.localeKeys.has(key)) {
+      return true;
+    }
+    if (this.localeKeys.size < V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS) {
+      this.localeKeys.add(key);
+      return true;
+    }
+    if (!this.localeKeysRefused) {
+      this.localeKeysRefused = true;
+      this.push(() => ({
+        name: path,
+        reason: `Too big: expected at most ${V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS} distinct translation keys in the survey`,
+        code: "limit_exceeded",
+      }));
+    }
+    return false;
+  }
+}
+
 function addUnknownKeyIssues(
   value: unknown,
   allowedKeys: Set<string>,
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   context?: string
 ): void {
   if (!isPlainObject(value)) {
     return;
   }
 
-  const allowedFields = context
-    ? Array.from(allowedKeys)
-        .sort((left, right) => left.localeCompare(right))
-        .join(", ")
-    : "";
-
   for (const key of Object.keys(value)) {
     if (!allowedKeys.has(key)) {
-      issues.push({
+      issues.push(() => ({
         name: path ? `${path}.${key}` : key,
         reason: context
-          ? `Unsupported field '${key}' for ${context}. Allowed fields: ${allowedFields}`
+          ? `Unsupported field '${key}' for ${context}. Allowed fields: ${Array.from(allowedKeys)
+              .sort((left, right) => left.localeCompare(right))
+              .join(", ")}`
           : `Unsupported field '${key}'`,
         code: "unsupported_field",
-      });
+      }));
     }
   }
 }
@@ -703,7 +730,7 @@ function addMissingRequiredKeyIssues(
   value: unknown,
   requiredKeys: readonly string[],
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   context: string
 ): void {
   if (!isPlainObject(value)) {
@@ -712,11 +739,11 @@ function addMissingRequiredKeyIssues(
 
   for (const key of requiredKeys) {
     if (value[key] === undefined) {
-      issues.push({
+      issues.push(() => ({
         name: path ? `${path}.${key}` : key,
         reason: `Missing required field '${key}' for ${context}`,
         code: "missing_required_field",
-      });
+      }));
     }
   }
 }
@@ -740,7 +767,7 @@ function addInvalidParamZodIssue(ctx: z.RefinementCtx, issue: InvalidParam): voi
 function validateTranslatableField(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -748,39 +775,53 @@ function validateTranslatableField(
     return;
   }
 
+  // Each key costs a locale lookup here and again in the normalizer, so the count is checked first.
+  const keys = Object.keys(value);
+  if (keys.length > V3_SURVEY_MAX_TRANSLATIONS) {
+    issues.push(() => ({
+      name: path,
+      reason: `Too big: expected at most ${V3_SURVEY_MAX_TRANSLATIONS} translations`,
+      code: "limit_exceeded",
+    }));
+    return;
+  }
+
   if ("default" in value) {
-    issues.push({
+    issues.push(() => ({
       name: `${path}.default`,
       reason: "Use the defaultLanguage locale code instead of the internal 'default' translation key",
-    });
+    }));
   }
 
   const normalizedKeys = new Map<string, string>();
   let includesDefaultLanguage = defaultLanguage === null;
 
-  for (const key of Object.keys(value)) {
+  for (const key of keys) {
     if (key === "default") {
       continue;
+    }
+    if (!issues.admitLocaleKey(key, path)) {
+      return;
     }
 
     const normalizedKey = normalizeV3SurveyWriteLanguageCode(key, options?.allowedLanguageCodes);
     if (!normalizedKey) {
-      issues.push({
+      issues.push(() => ({
         name: `${path}.${key}`,
         reason: `Language key '${key}' is not a valid locale code`,
         code: "invalid_locale",
-      });
+      }));
       continue;
     }
 
     const normalizedKeyLookup = normalizedKey.toLowerCase();
     const previousKey = normalizedKeys.get(normalizedKeyLookup);
     if (previousKey) {
-      issues.push({
+      issues.push(() => ({
         name: `${path}.${key}`,
         reason: `Language key '${key}' duplicates '${previousKey}' after locale normalization`,
         code: "duplicate_locale",
-      });
+      }));
       continue;
     }
 
@@ -791,17 +832,17 @@ function validateTranslatableField(
   }
 
   if (!includesDefaultLanguage) {
-    issues.push({
+    issues.push(() => ({
       name: path,
       reason: `Translatable field must include the defaultLanguage locale '${defaultLanguage}'`,
-    });
+    }));
   }
 }
 
 function validateChoice(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   allowedKeys: Set<string>,
   options?: TV3LanguageCompatibilityOptions
@@ -820,7 +861,7 @@ function validateChoice(
 function validateToggleInput(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -830,7 +871,7 @@ function validateToggleInput(
   }
 }
 
-function validateValidation(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateValidation(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, VALIDATION_KEYS, path, issues);
   if (!isPlainObject(value) || !Array.isArray(value.rules)) {
     return;
@@ -842,11 +883,11 @@ function validateValidation(value: unknown, path: string, issues: InvalidParam[]
   });
 }
 
-function validateDynamicReference(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateDynamicReference(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, DYNAMIC_REFERENCE_KEYS, path, issues);
 }
 
-function validateLogicOperand(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateLogicOperand(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   if (!isPlainObject(value)) {
     return;
   }
@@ -859,7 +900,7 @@ function validateLogicOperand(value: unknown, path: string, issues: InvalidParam
   validateDynamicReference(value, path, issues);
 }
 
-function validateConditionGroup(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateConditionGroup(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, CONDITION_GROUP_KEYS, path, issues);
   if (!isPlainObject(value) || !Array.isArray(value.conditions)) {
     return;
@@ -884,7 +925,12 @@ function validateConditionGroup(value: unknown, path: string, issues: InvalidPar
  * ENG-6935: unknown keys at every level of a Set value expression tree. The walk stops one level past
  * the tree's depth limit, which the shared schema reports with its own path.
  */
-function validateExpressionNode(value: unknown, path: string, issues: InvalidParam[], depth: number): void {
+function validateExpressionNode(
+  value: unknown,
+  path: string,
+  issues: SurveyDocumentProblems,
+  depth: number
+): void {
   if (!isPlainObject(value) || depth > EXPRESSION_MAX_DEPTH + 1) {
     return;
   }
@@ -902,7 +948,7 @@ function validateExpressionNode(value: unknown, path: string, issues: InvalidPar
   validateLogicOperand(value, path, issues);
 }
 
-function validateAction(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateAction(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   if (!isPlainObject(value)) {
     return;
   }
@@ -934,7 +980,7 @@ function validateAction(value: unknown, path: string, issues: InvalidParam[]): v
   }
 }
 
-function validateBlockLogic(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateBlockLogic(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, LOGIC_KEYS, path, issues);
   if (!isPlainObject(value)) {
     return;
@@ -950,7 +996,7 @@ function validateBlockLogic(value: unknown, path: string, issues: InvalidParam[]
 function validateElement(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -1009,7 +1055,7 @@ function validateElement(
 function validateBlock(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -1045,7 +1091,7 @@ function validateBlock(
 function validateEnding(
   value: unknown,
   path: string,
-  issues: InvalidParam[],
+  issues: SurveyDocumentProblems,
   defaultLanguage: string | null,
   options?: TV3LanguageCompatibilityOptions
 ): void {
@@ -1064,35 +1110,44 @@ function validateEnding(
   );
 }
 
-function validateTrigger(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateTrigger(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addMissingRequiredKeyIssues(value, ["actionClassId"], path, issues, "survey trigger");
   addUnknownKeyIssues(value, TRIGGER_KEYS, path, issues, "survey trigger");
 }
 
-function validateDistribution(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateDistribution(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, DISTRIBUTION_KEYS, path, issues, "survey distribution");
   if (isPlainObject(value) && Array.isArray(value.triggers)) {
     value.triggers.forEach((trigger, index) => validateTrigger(trigger, `${path}.triggers.${index}`, issues));
   }
 }
 
-function validateTargeting(value: unknown, path: string, issues: InvalidParam[]): void {
+function validateTargeting(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   addUnknownKeyIssues(value, TARGETING_KEYS, path, issues, "survey targeting");
 }
 
+/**
+ * The document-shape problems of a survey write: unknown fields, missing required fields, bad locale keys.
+ *
+ * Runs before the Zod parse and decides whether it runs at all, so it is where a hostile document fans
+ * out: an array entry of `{}` is four problems (ENG-4100), and 49k of them fit in 150 KB, inside every
+ * request bound. The list is therefore collected through `BoundedInvalidParams`, which builds no entry
+ * past the response cap and only counts the rest. The walk itself still visits every entry, so the
+ * summary's count stays exact, and its cost is the traversal alone.
+ */
 function getUnsupportedV3SurveyDocumentFields(
   value: unknown,
   rootKeys: Set<string>,
   fallbackDefaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE,
   options?: TV3LanguageCompatibilityOptions
 ): InvalidParam[] {
-  const issues: InvalidParam[] = [];
+  const issues = new SurveyDocumentProblems();
   // Include the allowed top-level fields in the error so agents/clients can self-correct from the
   // message alone (mirrors the per-element/block unknown-key errors).
   addUnknownKeyIssues(value, rootKeys, "", issues, "the survey document");
 
   if (!isPlainObject(value)) {
-    return issues;
+    return issues.report("", "survey document");
   }
 
   const defaultLanguage =
@@ -1147,7 +1202,7 @@ function getUnsupportedV3SurveyDocumentFields(
     validateTargeting(value.targeting, "targeting", issues);
   }
 
-  return issues;
+  return issues.report("", "survey document");
 }
 
 function addLanguageIssues(
@@ -1226,6 +1281,19 @@ export const V3_SURVEY_MAX_TRIGGERS = 50;
 export const V3_SURVEY_MAX_START_LOGIC_RULES = MAX_START_LOGIC_RULES;
 /** Typed Embedded Data fields on one survey (ENG-6930). */
 export const V3_SURVEY_MAX_EMBEDDED_FIELDS = 300;
+
+/**
+ * Locale keys one translatable field may carry (ENG-4100). It holds one per survey language, and those
+ * come from a catalog of 208 canonical codes, so no stored survey comes near this. Without a cap a single
+ * field could hold every key a 2 MB body fits, each one a locale lookup: ~2.7 s of CPU for 150k keys.
+ */
+export const V3_SURVEY_MAX_TRANSLATIONS = 256;
+
+/**
+ * Distinct locale keys a whole document may carry across its translatable fields (ENG-4100). In practice
+ * that is one per survey language, at most 50 from the same 208-code catalog, so the same generous 256.
+ */
+export const V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS = 256;
 
 /**
  * A document array, capped for request input or plain for the stored document. Typed on the output
@@ -1470,7 +1538,7 @@ export const ZV3CreateSurveyBody = z
       addInvalidParamZodIssue(ctx, issue);
     }
   })
-  .pipe(ZV3CreateSurveyBodyBase);
+  .pipe(boundedSchema(ZV3CreateSurveyBodyBase));
 
 /**
  * Where a created survey came from, for the `survey_created` analytics event and, through the request
@@ -1526,7 +1594,7 @@ export function createZV3PatchSurveyBodySchema(
         addInvalidParamZodIssue(ctx, issue);
       }
     })
-    .pipe(createV3PatchSurveyBodyBase(defaultLanguage, options, surveyType));
+    .pipe(boundedSchema(createV3PatchSurveyBodyBase(defaultLanguage, options, surveyType)));
 }
 
 export const ZV3PatchSurveyBody = createZV3PatchSurveyBodySchema();
