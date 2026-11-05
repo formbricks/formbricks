@@ -21,16 +21,17 @@ const openWelcomeCardPanel = async (page: Page): Promise<void> => {
   await page.locator("#welcome-toggle").check();
   await expect(page.locator('label:has-text("Welcome message")')).toBeVisible();
 
-  // Enabling the card remounts the live preview's card, which focuses its first
-  // control (the welcome card's "Next" button) once it re-renders. Wait for that
-  // one-time focus steal to complete, otherwise it lands mid-typing and both
-  // drops characters and breaks focus assertions. Stacked off-screen preview
-  // cards render dummy buttons with tabindex="-1"; the real one is tabbable.
+  // Enabling the card remounts the live preview's card. The editor preview doesn't
+  // focus its cards on start (it would take focus from the field being typed in),
+  // so wait for the welcome card's "Next" button to render and check it stays
+  // unfocused. Stacked off-screen preview cards render dummy buttons with
+  // tabindex="-1"; the real one is tabbable.
   const previewNext = page
     .locator("#formbricks-survey-container")
     .getByRole("button", { name: "Next", exact: true })
     .and(page.locator('[tabindex="0"]'));
-  await expect(previewNext).toBeFocused({ timeout: 15000 });
+  await expect(previewNext).toBeVisible({ timeout: 15000 });
+  await expect(previewNext).not.toBeFocused();
 };
 
 /**
