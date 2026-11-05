@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { cn } from "@/lib/cn";
 import { parseStoredDay } from "@/lib/utils/datetime";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { DataTypeBadge } from "@/modules/ui/components/data-type-badge";
 import { DatePicker } from "@/modules/ui/components/date-picker";
@@ -170,20 +169,20 @@ export const TestValuesControl = ({
       <PopoverTrigger asChild>
         <Button
           type="button"
-          variant={activeCount > 0 ? "default" : "ghost"}
+          variant="ghost"
           id="preview-test-values"
           className={cn(
             "mr-1 h-fit px-2 py-0 font-sans text-sm",
-            activeCount > 0 ? "gap-1.5" : "bg-white text-slate-500"
+            // Solid slate-900 while values are on, as in the ENG-6969 mock; white while none are.
+            activeCount > 0
+              ? "gap-1.5 bg-slate-900 text-white hover:bg-slate-800 hover:text-white"
+              : "bg-white text-slate-500"
           )}>
           {t("workspace.surveys.edit.test_values")}
           {activeCount > 0 && (
-            <Badge
-              type="gray"
-              size="tiny"
-              text={String(activeCount)}
-              className="border-transparent py-0 tabular-nums"
-            />
+            <span className="rounded-full bg-white px-1.5 text-xs font-semibold text-slate-900 tabular-nums">
+              {activeCount}
+            </span>
           )}
           <FlaskConicalIcon className={cn("size-4", activeCount === 0 && "ml-2")} />
         </Button>
