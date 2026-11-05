@@ -104,8 +104,8 @@ export function ShowIfPopover({
             // The block header's chip sits inside the row's toggle: don't collapse the block.
             onClick={(event) => event.stopPropagation()}>
             <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
-            <span className="truncate">
-              <FlowTextParts parts={chipParts} elementIcons={elementIcons} />
+            <span className="flex min-w-0 items-center gap-1">
+              <FlowTextParts parts={chipParts} elementIcons={elementIcons} centered />
             </span>
           </button>
         ) : (

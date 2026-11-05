@@ -4925,7 +4925,7 @@
         "low_quality_responses": "低质量回复",
         "not_shown": "未显示",
         "partial_responses": "部分 反馈",
-        "shown_field_label": "可见性:{target}",
+        "shown_field_label": "是否显示:{target}",
         "shown_group": "已显示或未显示",
         "shown_help": "已显示:受访者看到了该内容。未显示:显示条件或“隐藏”设置使受访者没有看到。在记录此项之前的回复,两种情况都不匹配。",
         "shown_target_block": "区块:{name}",

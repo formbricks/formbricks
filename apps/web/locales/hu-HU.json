@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Alacsony minőségű válaszok",
         "not_shown": "Nem jelent meg",
         "partial_responses": "Részleges válaszok",
-        "shown_field_label": "Láthatóság: {target}",
+        "shown_field_label": "Megjelenítve vagy sem: {target}",
         "shown_group": "Megjelent vagy nem jelent meg",
         "shown_help": "Megjelenített: a válaszadó látta. Nem megjelenített: megjelenítési feltétel vagy az Elrejtés beállítás miatt nem jelent meg számára. A rögzítés bevezetése előtt beérkezett válaszok egyik kategóriába sem tartoznak.",
         "shown_target_block": "Blokk: {name}",

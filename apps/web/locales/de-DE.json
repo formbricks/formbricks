@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Antworten mit geringer Qualität",
         "not_shown": "Nicht angezeigt",
         "partial_responses": "Teilantworten",
-        "shown_field_label": "Sichtbarkeit: {target}",
+        "shown_field_label": "Angezeigt oder nicht: {target}",
         "shown_group": "Angezeigt oder nicht angezeigt",
         "shown_help": "Angezeigt: Die befragte Person hat es gesehen. Nicht angezeigt: Eine Anzeigebedingung oder „Ausblenden“ hat es vor ihr verborgen. Antworten aus der Zeit, bevor dies erfasst wurde, passen auf keines von beiden.",
         "shown_target_block": "Block: {name}",

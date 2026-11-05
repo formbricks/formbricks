@@ -444,10 +444,11 @@ export const FlowView = ({
       return (
         <span className={SHOW_IF_CELL_CLASS.readOnly} title={t("workspace.surveys.edit.flow.read_only_hint")}>
           <EyeIcon aria-hidden="true" />
-          <span className="truncate">
+          <span className="flex min-w-0 items-center gap-1">
             <FlowTextParts
               parts={describeConditionGroupParts(cell.conditions, localSurvey, t, textFormat)}
               elementIcons={elementIcons}
+              centered
             />
           </span>
         </span>
@@ -574,10 +575,11 @@ export const FlowView = ({
           className="inline-flex min-w-0 cursor-default items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
           title={t("workspace.surveys.edit.flow.read_only_hint")}>
           <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
-          <span className="truncate">
+          <span className="flex min-w-0 items-center gap-1">
             <FlowTextParts
               parts={describeBlockShowIfParts(badge.conditions, localSurvey, t, textFormat)}
               elementIcons={elementIcons}
+              centered
             />
           </span>
         </span>

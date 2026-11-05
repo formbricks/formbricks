@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Düşük kaliteli yanıtlar",
         "not_shown": "Gösterilmedi",
         "partial_responses": "Yarım yanıtlar",
-        "shown_field_label": "Görünürlük: {target}",
+        "shown_field_label": "Gösterildi mi: {target}",
         "shown_group": "Gösterildi veya gösterilmedi",
         "shown_help": "Gösterildi: katılımcı gördü. Gösterilmedi: bir gösterim koşulu veya Gizle onu katılımcıdan sakladı. Bu bilgi kaydedilmeden önceki yanıtlar ikisiyle de eşleşmez.",
         "shown_target_block": "Blok: {name}",

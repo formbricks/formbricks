@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Respostas de baixa qualidade",
         "not_shown": "Não exibido",
         "partial_responses": "Respostas parciais",
-        "shown_field_label": "Visibilidade: {target}",
+        "shown_field_label": "Exibido ou não: {target}",
         "shown_group": "Exibido ou não exibido",
         "shown_help": "Exibido: o respondente viu. Não exibido: uma condição de exibição ou Ocultar impediu que ele visse. Respostas anteriores ao registro desse dado não se enquadram em nenhuma das opções.",
         "shown_target_block": "Bloco: {name}",

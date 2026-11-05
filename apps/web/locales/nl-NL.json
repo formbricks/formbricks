@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Reacties van lage kwaliteit",
         "not_shown": "Niet getoond",
         "partial_responses": "Gedeeltelijke reacties",
-        "shown_field_label": "Zichtbaarheid: {target}",
+        "shown_field_label": "Getoond of niet: {target}",
         "shown_group": "Getoond of niet getoond",
         "shown_help": "Getoond: de respondent heeft het gezien. Niet getoond: een toon-als-voorwaarde of Verbergen heeft het voor hem of haar verborgen. Reacties van vóór de registratie hiervan vallen onder geen van beide.",
         "shown_target_block": "Blok: {name}",

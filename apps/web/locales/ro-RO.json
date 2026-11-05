@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Răspunsuri de calitate scăzută",
         "not_shown": "Neafișat",
         "partial_responses": "Răspunsuri parțiale",
-        "shown_field_label": "Vizibilitate: {target}",
+        "shown_field_label": "Afișat sau nu: {target}",
         "shown_group": "Afișat sau neafișat",
         "shown_help": "Afișat: respondentul l-a văzut. Neafișat: o condiție de afișare sau opțiunea Ascunde l-a ascuns față de el. Răspunsurile de dinainte de începerea înregistrării acestei informații nu se potrivesc cu niciuna dintre variante.",
         "shown_target_block": "Bloc: {name}",

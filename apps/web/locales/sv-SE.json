@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Svar av låg kvalitet",
         "not_shown": "Visades inte",
         "partial_responses": "Delvisa svar",
-        "shown_field_label": "Synlighet: {target}",
+        "shown_field_label": "Visas eller inte: {target}",
         "shown_group": "Visades eller visades inte",
         "shown_help": "Visad: respondenten såg den. Inte visad: ett visa-om-villkor eller Dölj hindrade den från att visas. Svar från innan detta registrerades matchar ingetdera.",
         "shown_target_block": "Block: {name}",

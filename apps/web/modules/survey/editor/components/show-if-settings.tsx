@@ -107,9 +107,10 @@ const ShowIfField = ({
     return (
       <ReadOnlyCell>
         <EyeIcon aria-hidden="true" />
-        <span className="truncate">
+        <span className="flex min-w-0 items-center gap-1">
           {/* References as chips (ENG-6969 T3), as on the Flow tab. */}
           <FlowTextParts
+            centered
             parts={describeConditionGroupParts(section.conditions, localSurvey, t, {
               locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
             })}
@@ -292,8 +293,8 @@ export const ShowIfBadge = ({ localSurvey, target }: ShowIfBadgeProps) => {
       title={`${label} ${toPlainText(parts)}`}>
       <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
       <span className="sr-only">{label}</span>
-      <span className="truncate">
-        <FlowTextParts parts={parts} elementIcons={elementIcons} />
+      <span className="flex min-w-0 items-center gap-1">
+        <FlowTextParts parts={parts} elementIcons={elementIcons} centered />
       </span>
     </span>
   );

@@ -224,7 +224,9 @@ export function ShowIfConditionsEditor({
   onConditionsChange,
 }: ShowIfConditionsEditorProps) {
   return (
-    <div className="overflow-x-auto pb-1 text-sm">
+    // "If" sits at the popover's left edge (review of ENG-6969): the rule editor's right-aligned label
+    // column lines "If" up with "Then", which a show-if doesn't have.
+    <div className="overflow-x-auto pb-1 text-sm [&_[data-sentence-lead]]:justify-start [&_[data-sentence-row]]:grid-cols-[3.75rem_minmax(0,1fr)_3.75rem]">
       <LogicEditorConditions
         conditions={conditions}
         localSurvey={scope.survey}

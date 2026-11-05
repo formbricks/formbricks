@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Réponses de mauvaise qualité",
         "not_shown": "Non affiché",
         "partial_responses": "Réponses partielles",
-        "shown_field_label": "Visibilité : {target}",
+        "shown_field_label": "Affiché ou non : {target}",
         "shown_group": "Affiché ou non affiché",
         "shown_help": "Affiché : le répondant l'a vu. Non affiché : une condition d'affichage ou l'option Masquer l'a empêché de le voir. Les réponses antérieures à l'enregistrement de cette information ne correspondent à aucun des deux.",
         "shown_target_block": "Bloc : {name}",

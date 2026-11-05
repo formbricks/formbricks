@@ -331,7 +331,7 @@ const shownEntries = (survey: TSurvey, t: TFunction): TModelEntry[] => {
     { value: "notShown", label: t("workspace.surveys.filter.not_shown") },
   ];
   return getShownFilterTargets(survey, t).map(({ propertyId, target, label: targetLabel }) => {
-    // "Visibility: …", so the entry and the chosen rule never read like the answer filter for the
+    // "Shown or not: …", so the entry and the chosen rule never read like the answer filter for the
     // same question (review of ENG-6951).
     const label = t("workspace.surveys.filter.shown_field_label", { target: targetLabel });
     return {

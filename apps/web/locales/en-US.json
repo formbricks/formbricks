@@ -4925,7 +4925,7 @@
         "low_quality_responses": "Low quality responses",
         "not_shown": "Not shown",
         "partial_responses": "Partial responses",
-        "shown_field_label": "Visibility: {target}",
+        "shown_field_label": "Shown or not: {target}",
         "shown_group": "Shown or not shown",
         "shown_help": "Shown: the respondent saw it. Not shown: a show-if or Hide kept it from them. Responses from before this was recorded match neither.",
         "shown_target_block": "Block: {name}",

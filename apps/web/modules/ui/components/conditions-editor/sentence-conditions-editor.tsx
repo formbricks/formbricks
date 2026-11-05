@@ -100,8 +100,10 @@ export function SentenceConditionsEditor({
   };
 
   const renderGroup = (group: TGenericConditionGroup, index: number) => (
-    <div key={group.id} className={SENTENCE_ROW_CLASS}>
-      <div className={SENTENCE_LEAD_CLASS}>{renderLead(index)}</div>
+    <div key={group.id} className={SENTENCE_ROW_CLASS} data-sentence-row="">
+      <div className={SENTENCE_LEAD_CLASS} data-sentence-lead="">
+        {renderLead(index)}
+      </div>
       <div className="min-w-0 rounded-lg border border-slate-200 p-2">
         <SentenceConditionsEditor
           conditions={group}
@@ -184,8 +186,10 @@ export function SentenceConditionsEditor({
 
     return (
       <div key={condition.id} className="flex flex-col">
-        <div className={SENTENCE_ROW_CLASS}>
-          <div className={SENTENCE_LEAD_CLASS}>{renderLead(index)}</div>
+        <div className={SENTENCE_ROW_CLASS} data-sentence-row="">
+          <div className={SENTENCE_LEAD_CLASS} data-sentence-lead="">
+            {renderLead(index)}
+          </div>
 
           <div className={SENTENCE_FIELDS_CLASS}>
             <InputCombobox

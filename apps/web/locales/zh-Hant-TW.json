@@ -4925,7 +4925,7 @@
         "low_quality_responses": "低品質回覆",
         "not_shown": "未顯示",
         "partial_responses": "部分回應",
-        "shown_field_label": "顯示狀態:{target}",
+        "shown_field_label": "是否顯示:{target}",
         "shown_group": "已顯示或未顯示",
         "shown_help": "已顯示:受訪者有看到。未顯示:因顯示條件或「隱藏」設定而未讓受訪者看到。在開始記錄此資訊之前的回覆,兩種情況都不會符合。",
         "shown_target_block": "區塊：{name}",

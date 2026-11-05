@@ -255,7 +255,7 @@ export function LogicEditorActions({
             <div
               className={cn(
                 SENTENCE_FIELDS_CLASS,
-                "@xl:grid-cols-[minmax(0,11rem)_minmax(0,1fr)_minmax(0,1fr)]"
+                "@xl:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_minmax(0,1fr)]"
               )}>
               <div
                 // ENG-6933: takes nothing else, so the objective is the whole action.
@@ -340,7 +340,7 @@ export function LogicEditorActions({
                         </span>
                       ) : (
                         <>
-                          <div className="w-36 shrink-0">
+                          <div className="w-32 shrink-0">
                             <InputCombobox
                               id={`action-${idx}-operator`}
                               key={`operator-${action.id}`}
@@ -358,7 +358,7 @@ export function LogicEditorActions({
                             />
                           </div>
 
-                          <div className="min-w-32 flex-1">
+                          <div className="min-w-28 flex-1">
                             <InputCombobox
                               id={`action-${idx}-value`}
                               key={`value-${action.id}`}
