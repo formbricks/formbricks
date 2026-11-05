@@ -159,6 +159,22 @@ const valuesCacheKey = (parts: {
   };
 };
 
+/** Which of `fields` each dataset has, read once per dataset, as one `(datasetId, field)` check. */
+const matchDatasetFields = async (
+  datasetIds: readonly string[],
+  fields: readonly string[],
+  scopeOf: (datasetId: string) => Parameters<typeof getDatasetFieldMatcher>[0]
+): Promise<(datasetId: string, field: string) => boolean> => {
+  const matchers = new Map(
+    await Promise.all(
+      datasetIds.map(
+        async (datasetId) => [datasetId, await getDatasetFieldMatcher(scopeOf(datasetId), fields)] as const
+      )
+    )
+  );
+  return (datasetId, field) => matchers.get(datasetId)?.(field) ?? false;
+};
+
 /**
  * What a value-list request names, checked before anything is read: its filters, the one whose values are
  * asked for (a list filter of the request), its picks and its date range. A problem is the caller's to fix,
@@ -263,21 +279,12 @@ export async function listV3DashboardFilterValues({
     // The values offered are those left once the dashboard's locked filters apply, as on its charts.
     const locked = withLockedFilters(row.filters, filters, query.picks ?? {});
     const filterFields = locked.filters.map(({ field }) => field);
-    const matchers = new Map(
-      await Promise.all(
-        datasetIds.map(
-          async (datasetId) =>
-            [
-              datasetId,
-              await getDatasetFieldMatcher(
-                { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
-                filterFields
-              ),
-            ] as const
-        )
-      )
-    );
-    const datasetHasField = (datasetId: string, field: string) => matchers.get(datasetId)?.(field) ?? false;
+    const datasetHasField = await matchDatasetFields(datasetIds, filterFields, (datasetId) => ({
+      datasetId,
+      workspaceId: access.workspaceId,
+      organizationId: access.organizationId,
+      actor,
+    }));
 
     // Every dataset whose charts can offer values must be readable, so the one cached list is everyone's.
     // Checked together (C8): one dashboard can read many datasets.
