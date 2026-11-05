@@ -13,6 +13,7 @@ import type {
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getSurveyFilterDataAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
+import { getShownFilterTargets } from "@/app/lib/surveys/shown-filter-targets";
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
@@ -30,15 +31,18 @@ import {
 const FILTER_KEY_PATTERN = /^filter\[([^\]]+)\]\[[^\]]+\]$/;
 
 /**
- * Attribute keys and quotas are known only once the filter data has loaded. Until then a rule on one
- * in the URL stands in as a plain property, so a write made meanwhile (ticking a status) keeps it.
+ * Attribute keys, quotas and shown / not shown targets known only from responses' records are known
+ * only once the filter data has loaded. Until then a rule on one in the URL stands in as a plain
+ * property, so a write made meanwhile (ticking a status) keeps it.
  */
+const PENDING_PREFIXES = ["attribute.", "quota.", "shown."];
+
 const pendingProperties = (known: readonly TFilterProperty[], search: string): TFilterProperty[] => {
   const knownIds = new Set(known.map((property) => property.id));
   const pending = new Set<string>();
   for (const key of new URLSearchParams(search).keys()) {
     const id = FILTER_KEY_PATTERN.exec(key)?.[1];
-    if (id && !knownIds.has(id) && (id.startsWith("attribute.") || id.startsWith("quota."))) pending.add(id);
+    if (id && !knownIds.has(id) && PENDING_PREFIXES.some((prefix) => id.startsWith(prefix))) pending.add(id);
   }
   return [...pending].map((id) => ({
     id,
@@ -50,19 +54,23 @@ const pendingProperties = (known: readonly TFilterProperty[], search: string): T
 
 const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-data"] as const;
 
-/** Properties the survey alone describes; every other one (attributes, tags, meta…) needs the filter data. */
-const isSurveyOnlyProperty = (id: string) =>
+/**
+ * Properties the survey alone describes; every other one (attributes, tags, meta…) needs the filter
+ * data. A shown / not shown target is the survey's when it can hide it today (`surveyShownIds`); one
+ * only a response's record names comes with the filter data.
+ */
+const isSurveyOnlyProperty = (id: string, surveyShownIds: ReadonlySet<string>) =>
   id === "status" ||
   id === "createdAt" ||
   id === "language" ||
   id.startsWith("question.") ||
-  id.startsWith("shown.");
+  surveyShownIds.has(id);
 
 /** Whether the URL's filter names a property only the filter data can describe. */
-const urlNeedsFilterData = (search: URLSearchParams) =>
+const urlNeedsFilterData = (search: URLSearchParams, surveyShownIds: ReadonlySet<string>) =>
   [...search.keys()].some((key) => {
     const id = FILTER_KEY_PATTERN.exec(key)?.[1];
-    return id !== undefined && !isSurveyOnlyProperty(id);
+    return id !== undefined && !isSurveyOnlyProperty(id, surveyShownIds);
   });
 
 /**
@@ -79,7 +87,17 @@ export const useResponseTableFilters = (survey: TSurvey) => {
   // The filter data reads every response of the survey for its observed values, so it is fetched only
   // once the filter is opened, or when the URL already names a property that needs it.
   const searchParams = useSearchParams();
-  const needsFilterData = urlNeedsFilterData(new URLSearchParams(searchParams?.toString() ?? ""));
+  // `survey` is a fresh object after every route refresh; its id and edit time say when it changed.
+  const surveyKey = `${survey.id}:${String(survey.updatedAt)}`;
+  const surveyShownIds = useMemo(
+    () => new Set(getShownFilterTargets(survey, t).map((entry) => entry.propertyId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `surveyKey` stands in for `survey`
+    [surveyKey, t]
+  );
+  const needsFilterData = urlNeedsFilterData(
+    new URLSearchParams(searchParams?.toString() ?? ""),
+    surveyShownIds
+  );
   const [isFilterDataRequested, setIsFilterDataRequested] = useState(false);
   const filterData = useQuery({
     queryKey: surveyFilterDataKey(survey.id),
@@ -98,8 +116,6 @@ export const useResponseTableFilters = (survey: TSurvey) => {
     if (isFilterDataError) toast.error(t("common.something_went_wrong_please_try_again"));
   }, [isFilterDataError, t]);
 
-  // `survey` is a fresh object after every route refresh; its id and edit time say when it changed.
-  const surveyKey = `${survey.id}:${String(survey.updatedAt)}`;
   const model = useMemo(() => {
     const data = filterData.data;
     const { elementOptions, elementFilterOptions } = generateElementAndFilterOptions({
@@ -117,6 +133,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
       elementOptions,
       elementFilterOptions,
       tagNames: (data?.environmentTags ?? []).map((tag) => tag.name),
+      recordedNotShown: data?.recordedNotShown,
       t,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `surveyKey` stands in for `survey`

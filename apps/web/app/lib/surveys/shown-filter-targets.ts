@@ -1,7 +1,8 @@
 import type { TFunction } from "i18next";
 import type { TResponseFilterCriteriaShown } from "@formbricks/types/responses";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
-import { type TOptionLike, getOptionLists } from "@formbricks/types/surveys/show-if";
+import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
+import { type TOptionLike, type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -41,57 +42,93 @@ const elementCanBeNotShown = (element: TElement): boolean =>
 const blockCanBeNotShown = (block: TBlock): boolean =>
   hasShowIf(block) || block.elements.every(elementCanBeNotShown);
 
+const RECORD_KEY_OF: Record<TOptionListKey, "options" | "rows" | "columns"> = {
+  choices: "options",
+  rows: "rows",
+  columns: "columns",
+};
+
+const KIND_OF: Record<TOptionListKey, "option" | "row" | "column"> = {
+  choices: "option",
+  rows: "row",
+  columns: "column",
+};
+
 const headlineOf = (element: TElement, survey: TSurvey): string =>
   getTextContent(getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default"));
 
-const itemEntries = (element: TElement, headline: string, t: TFunction): TShownFilterTargetEntry[] =>
+const itemLabelOf = (listKey: TOptionListKey, headline: string, itemLabel: string, t: TFunction): string => {
+  if (listKey === "rows") {
+    return t("workspace.surveys.filter.shown_target_row", { question: headline, row: itemLabel });
+  }
+  if (listKey === "columns") {
+    return t("workspace.surveys.filter.shown_target_column", { question: headline, column: itemLabel });
+  }
+  return `${headline} · ${itemLabel}`;
+};
+
+const itemEntries = (
+  element: TElement,
+  headline: string,
+  recorded: TResponseNotShown,
+  t: TFunction
+): TShownFilterTargetEntry[] =>
   getOptionLists(element).flatMap(({ listKey, items }) =>
     items.flatMap((item, index): TShownFilterTargetEntry[] => {
-      if (!itemCanBeNotShown(item)) return [];
+      const wasRecorded = recorded[RECORD_KEY_OF[listKey]]?.[element.id]?.includes(item.id) ?? false;
+      if (!itemCanBeNotShown(item) && !wasRecorded) return [];
       const label = (item as { label?: Record<string, string> }).label;
+      // Picture choices have no label: "Picture 2", as the rest of the filter names them.
       const itemLabel = label
         ? getTextContent(getLocalizedValue(label, "default"))
         : t("workspace.surveys.filter.shown_target_picture", { number: index + 1 });
-      if (listKey === "rows") {
-        return [
-          {
-            propertyId: `shown.row.${element.id}.${item.id}`,
-            target: { target: "row", elementId: element.id, itemId: item.id },
-            label: t("workspace.surveys.filter.shown_target_row", { question: headline, row: itemLabel }),
-          },
-        ];
-      }
-      if (listKey === "columns") {
-        return [
-          {
-            propertyId: `shown.column.${element.id}.${item.id}`,
-            target: { target: "column", elementId: element.id, itemId: item.id },
-            label: t("workspace.surveys.filter.shown_target_column", {
-              question: headline,
-              column: itemLabel,
-            }),
-          },
-        ];
-      }
+      const kind = KIND_OF[listKey];
       return [
         {
-          propertyId: `shown.option.${element.id}.${item.id}`,
-          target: { target: "option", elementId: element.id, itemId: item.id },
-          label: `${headline} · ${itemLabel}`,
+          propertyId: `shown.${kind}.${element.id}.${item.id}`,
+          target: { target: kind, elementId: element.id, itemId: item.id },
+          label: itemLabelOf(listKey, headline, itemLabel, t),
         },
       ];
     })
   );
 
+const elementEntries = (
+  element: TElement,
+  survey: TSurvey,
+  recorded: TResponseNotShown,
+  t: TFunction
+): TShownFilterTargetEntry[] => {
+  const headline = headlineOf(element, survey);
+  const offered = elementCanBeNotShown(element) || (recorded.elements?.includes(element.id) ?? false);
+  return [
+    ...(offered
+      ? [
+          {
+            propertyId: `shown.question.${element.id}`,
+            target: { target: "element", elementId: element.id } as const,
+            label: headline,
+          },
+        ]
+      : []),
+    ...itemEntries(element, headline, recorded, t),
+  ];
+};
+
 /**
  * The blocks, questions, options, rows and columns a shown / not shown filter offers, in survey order:
  * the ones the survey can keep from a respondent today (a show-if, Hidden, or everything inside them
- * hideable). Anything else is never in a not-shown record, so a filter on it would only ever split
- * reached from not reached.
+ * hideable), and the ones `recorded` says some response was not shown, so a show-if removed after
+ * responses came in stays filterable. Anything else was never in a not-shown record, so a filter on it
+ * would only split reached from not reached.
  */
-export const getShownFilterTargets = (survey: TSurvey, t: TFunction): TShownFilterTargetEntry[] =>
+export const getShownFilterTargets = (
+  survey: TSurvey,
+  t: TFunction,
+  recorded: TResponseNotShown = {}
+): TShownFilterTargetEntry[] =>
   survey.blocks.flatMap((block) => [
-    ...(blockCanBeNotShown(block)
+    ...(blockCanBeNotShown(block) || recorded.blocks?.includes(block.id)
       ? [
           {
             propertyId: `shown.block.${block.id}`,
@@ -100,19 +137,5 @@ export const getShownFilterTargets = (survey: TSurvey, t: TFunction): TShownFilt
           },
         ]
       : []),
-    ...block.elements.flatMap((element) => {
-      const headline = headlineOf(element, survey);
-      return [
-        ...(elementCanBeNotShown(element)
-          ? [
-              {
-                propertyId: `shown.question.${element.id}`,
-                target: { target: "element", elementId: element.id } as const,
-                label: headline,
-              },
-            ]
-          : []),
-        ...itemEntries(element, headline, t),
-      ];
-    }),
+    ...block.elements.flatMap((element) => elementEntries(element, survey, recorded, t)),
   ]);

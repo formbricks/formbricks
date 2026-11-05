@@ -11,6 +11,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { resetDb } from "@/integration/reset-db";
+import { getRecordedNotShown } from "@/lib/response/filtering-values";
 import { buildWhereClause } from "@/lib/response/where-clause";
 
 /**
@@ -81,6 +82,15 @@ const SEEDS = {
     notShown: { elements: ["fav", "brand_grid"] },
     data: { services: ["Netflix"], hours: "10", apple_reason: "x" },
     ttc: { services: 1000, hours: 1000, apple_reason: 1000 },
+  },
+  /** A record naming ids the survey does not hold (deleted, or crafted), and nothing else. */
+  strangeIds: {
+    notShown: {
+      blocks: ["ghost_block"],
+      elements: ["ghost"],
+      options: { fav: ["ghost_option"], ghost: ["x"] },
+      rows: "not a map" as never,
+    },
   },
 } satisfies Record<string, TSeed>;
 
@@ -234,5 +244,37 @@ describe("shown / not shown filters (real Postgres)", () => {
     expect(rows.map((row) => row.id).sort((a, b) => a.localeCompare(b))).toEqual(
       [responseIds.hidden, responseIds.questionHidden].sort((a, b) => a.localeCompare(b))
     );
+  });
+});
+
+describe("getRecordedNotShown (real Postgres)", () => {
+  test("lists what any response's record names, once, and only ids the survey holds", async () => {
+    // Another survey's records never reach this one.
+    await prisma.response.create({
+      data: {
+        surveyId: (
+          await prisma.survey.create({
+            data: {
+              name: "Other",
+              type: "link",
+              status: "inProgress",
+              workspaceId: survey.workspaceId,
+              blocks: surveyFlowFixture.blocks,
+            },
+            select: { id: true },
+          })
+        ).id,
+        finished: true,
+        notShown: { elements: ["hours"], options: { fav: ["netflix"] } },
+      },
+    });
+
+    expect(await getRecordedNotShown(survey)).toEqual({
+      blocks: [heavyUsers],
+      elements: ["apple_reason", "brand_grid", "fav"],
+      options: { fav: ["apple"] },
+      rows: { brand_grid: ["row_disney"] },
+      columns: { brand_grid: ["col_good"] },
+    });
   });
 });
