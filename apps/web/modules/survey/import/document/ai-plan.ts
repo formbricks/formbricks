@@ -87,7 +87,7 @@ export interface TDocumentPlanResult {
    * answered, so an empty plan means the file has nothing to import rather than a failed import.
    */
   conclusive: boolean;
-  /** Whether a call ran past its output tokens or prompt size (`TImportPlanRun.hitOutputLimit`). */
+  /** Whether a call ran past its output tokens or prompt size even split (`TImportPlanRun.hitOutputLimit`). */
   hitOutputLimit: boolean;
   /** Lines no call answered for (`isUnreadLine`): each could be a question the draft is missing. */
   unreadLines: number;

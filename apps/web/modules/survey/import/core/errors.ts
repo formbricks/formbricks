@@ -106,7 +106,7 @@ export class SurveyImportFailedError extends Error {
    * past which the file is imported through MCP instead. `nothing_importable`: the file was read whole
    * and holds no question the import can bring over, so trying again cannot help; `no_questions` is
    * the same outcome with failures on the way, which a retry may not repeat. `too_large_for_ai`: no
-   * question came back and a call ran past its output tokens, so the file is too large for the AI
+   * question came back and a call ran past its output tokens even split, so the file is too large for the AI
    * lane and goes through MCP instead.
    */
   readonly reason:
@@ -128,7 +128,7 @@ export class SurveyImportFailedError extends Error {
 /**
  * A plan with no question in it: `nothing_importable` when the plan is conclusive (every unit answered
  * as a skip or no question, nothing failing on the way), `too_large_for_ai` when a call ran past its
- * output tokens (the file is too large for one AI import, so MCP is the way), and `no_questions`
+ * output tokens even split (the file is too large for one AI import, so MCP is the way), and `no_questions`
  * otherwise, since another try may plan what failed.
  */
 export const noQuestionsPlanned = ({

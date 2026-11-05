@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import { AIOutputTokenLimitError } from "@formbricks/ai";
 import {
   type TImportCheckedPlan,
   type TImportPlanLane,
@@ -169,5 +170,39 @@ describe("runImportPlan: a silent answer", () => {
 
     expect(generate).toHaveBeenCalledTimes(9);
     expect(most).toBe(3);
+  });
+});
+
+describe("runImportPlan: hitOutputLimit", () => {
+  const tooLong = () => new AIOutputTokenLimitError({ maxOutputTokens: 100, outputTokens: 100 });
+
+  const runWith = (generate: () => Promise<{ object: { answer: string } }>) =>
+    runImportPlan({
+      lane: { ...laneWith(100_000), callCap: 20 },
+      refs: ["Q1", "Q2"],
+      generate: vi.fn(generate),
+      signal: new AbortController().signal,
+      deadline: performance.now() + 60_000,
+      callTimeoutMs: 30_000,
+    });
+
+  test("is not set by a chunk too long once whose halves answered: one long-winded answer, not a large file", async () => {
+    let calls = 0;
+    const result = await runWith(async () => {
+      calls += 1;
+      if (calls === 1) throw tooLong();
+      return { object: { answer: "yes" } };
+    });
+
+    expect(calls).toBe(3);
+    expect(result.hitOutputLimit).toBe(false);
+  });
+
+  test("is set when the halves are too long as well", async () => {
+    const result = await runWith(async () => {
+      throw tooLong();
+    });
+
+    expect(result.hitOutputLimit).toBe(true);
   });
 });

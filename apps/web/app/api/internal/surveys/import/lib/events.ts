@@ -20,7 +20,7 @@ export const SURVEY_IMPORT_STREAM_ERROR_CODES = {
   PARTLY_UNREAD: "import_partly_unread",
   /** A file read whole with no question the import can bring over: trying again cannot help. */
   NOTHING_IMPORTABLE: "import_nothing_importable",
-  /** No question came back and a call ran past its output tokens: the dialog points at MCP. */
+  /** No question came back and a call ran past its output tokens even split: the dialog points at MCP. */
   TOO_LARGE_FOR_AI: "import_too_large_for_ai",
   /** No question came back after calls failed on the way: try again, or import through MCP. */
   NO_QUESTIONS: "import_no_questions",

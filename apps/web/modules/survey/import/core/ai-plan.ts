@@ -486,13 +486,14 @@ async function planRound<TFailure extends string, TPlan extends TImportCheckedPl
         countQuestions(context, outcome.response);
         return;
       }
-      if (outcome.kind === "too_long") context.hitOutputLimit = true;
       if ((outcome.kind === "too_long" || outcome.kind === "timed_out") && splittable && refs.length > 1) {
         const middle = Math.ceil(refs.length / 2);
         enqueue(ask(refs.slice(0, middle), false));
         enqueue(ask(refs.slice(middle), false));
         return;
       }
+      // Too long even split, or a single unit too long: the content, not one long-winded answer.
+      if (outcome.kind === "too_long") context.hitOutputLimit = true;
       for (const ref of refs) failed.set(ref, [FAILURE_OF_OUTCOME[outcome.kind]]);
     };
 
