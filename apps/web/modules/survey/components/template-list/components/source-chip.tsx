@@ -54,7 +54,8 @@ export const SourceChip = ({
           {detail ? <span className="ml-1 text-xs text-slate-500">{detail}</span> : null}
         </p>
         {meta ? (
-          <p className="truncate text-xs text-slate-500 tabular-nums">
+          // The whole line on hover when it is cut short at a narrow width.
+          <p className="truncate text-xs text-slate-500 tabular-nums" title={meta}>
             {metaLabel ? <span className="sr-only">{metaLabel}: </span> : null}
             {meta}
           </p>

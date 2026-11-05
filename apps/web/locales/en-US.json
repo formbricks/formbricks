@@ -5001,7 +5001,7 @@
           "create_new_survey": "Create a new survey",
           "exported_from": "This file was exported from “{name}”.",
           "refused_description": "This file can’t update “{name}”, for the reasons below. It is saved as a new draft named “{newName}”.",
-          "stale_line": "Changed since this file was exported. Updating overwrites those changes.",
+          "stale_line": "Changed since this file was exported. Choose Update to overwrite those changes anyway.",
           "triggers_differ": "They differ from the survey’s. Untick to keep its current triggers.",
           "triggers_locked_description": "The file’s triggers would leave this live survey with nothing to show it, so its current triggers are kept.",
           "triggers_use_file": "Use the file’s triggers",

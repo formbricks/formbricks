@@ -31,6 +31,7 @@ const ChoiceCard = ({
   description,
   isSelected,
   disabled = false,
+  describedBy,
   testId,
   children,
 }: Readonly<{
@@ -39,6 +40,8 @@ const ChoiceCard = ({
   description: string;
   isSelected: boolean;
   disabled?: boolean;
+  /** More ids that describe the radio, after its description: a notice in the card. */
+  describedBy?: string;
   testId: string;
   children?: ReactNode;
 }>) => {
@@ -48,15 +51,14 @@ const ChoiceCard = ({
       data-testid={testId}
       className={cn(
         "flex flex-col gap-2 rounded-lg border p-3 transition-colors",
-        isSelected ? "border-slate-400 bg-slate-50" : "border-slate-200 bg-white",
-        disabled && "opacity-60"
+        isSelected ? "border-slate-400 bg-slate-50" : "border-slate-200 bg-white"
       )}>
       <div className="flex items-start gap-3">
         <RadioGroupItem
           id={id}
           value={value}
           disabled={disabled}
-          aria-describedby={`${id}-description`}
+          aria-describedby={[`${id}-description`, describedBy].filter(Boolean).join(" ")}
           className="mt-0.5 shrink-0"
         />
         {/* The title alone names the radio; what it does is its description, read after it. */}
@@ -64,8 +66,9 @@ const ChoiceCard = ({
           <label
             htmlFor={id}
             className={cn(
-              "block truncate text-sm font-medium text-slate-800",
-              !disabled && "cursor-pointer"
+              "block truncate text-sm font-medium",
+              // Only the radio and its title dim: the text saying why it is locked stays readable.
+              disabled ? "text-slate-500" : "cursor-pointer text-slate-800"
             )}>
             {title}
           </label>
@@ -101,6 +104,8 @@ export const ImportMatchChoice = ({
   const { t } = useTranslation();
   const legendId = useId();
   const triggersId = useId();
+  const staleId = useId();
+  const staleNotice = t("workspace.surveys.import.match.stale_line");
   const isLocked = conflict === "active" || conflict === "refused";
   const triggersLocked = match.triggers === "keep_only";
 
@@ -125,6 +130,9 @@ export const ImportMatchChoice = ({
       <p id={legendId} className="text-slate-700">
         {t("workspace.surveys.import.match.exported_from", { name: match.name })}
       </p>
+      {/* Read out when an Update answers that the survey changed and the choice moves to Create: the
+          region is there from the start, so screen readers announce what is put in it. */}
+      <output className="sr-only">{conflict === "stale" ? staleNotice : ""}</output>
       <RadioGroup
         className="gap-y-2"
         value={choice}
@@ -137,13 +145,14 @@ export const ImportMatchChoice = ({
           description={updateDescription()}
           isSelected={choice === "update"}
           disabled={isLocked}
+          describedBy={conflict === "stale" ? staleId : undefined}
           testId="survey-import-match-update">
           {conflict === "refused" ? (
             <ImportFieldProblems problems={match.updateRefusal} testId="survey-import-update-refusal" />
           ) : null}
           {conflict === "stale" ? (
-            <p className="text-xs font-medium text-amber-700" data-testid="survey-import-stale">
-              {t("workspace.surveys.import.match.stale_line")}
+            <p id={staleId} className="text-xs font-medium text-amber-700" data-testid="survey-import-stale">
+              {staleNotice}
             </p>
           ) : null}
           {choice === "update" && match.triggers !== "same" ? (
