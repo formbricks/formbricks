@@ -4200,7 +4200,7 @@
           "always_shown": "Always shown",
           "and": "and",
           "before_first_question": "Before the first question",
-          "before_first_question_hint": "Rules here run as soon as the survey loads, before the welcome card. They read URL parameters and hidden fields to screen respondents out, send them to a block, or set a value.",
+          "before_first_question_hint": "Rules here run as soon as the survey loads, before the welcome card. They read URL parameters and hidden fields to screen respondents out, send them to a block, set a value, or mark the response Low quality.",
           "collapse": "Collapse",
           "columns": "Columns",
           "count_blocks": "{count, plural, one {{count} block} other {{count} blocks}}",

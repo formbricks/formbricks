@@ -105,8 +105,8 @@ interface FlowViewProps {
 const SHOW_IF_HINT_CLASS =
   "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden";
 
-/** What Add logic starts, in the rule types' order: before the first question only a jump or Set value. */
-const START_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue"];
+/** What Add logic starts, in the rule types' order: before the first question, every type (ENG-6952). */
+const START_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "markLowQuality"];
 const BLOCK_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "markLowQuality"];
 
 /** One icon for every ending, card or redirect, on its row and on a chip that jumps to it. */

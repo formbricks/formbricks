@@ -207,8 +207,12 @@ describe("the rules before the first question (ENG-6932)", () => {
     expect(setStartRules(surveyFlowFixture, []).startLogic).toBeNull();
   });
 
-  test("offer only a jump and a calculation; a block's rules also offer require answer and Mark as low quality", () => {
-    expect(getAllowedActionObjectives(START_SCOPE_BLOCK_IDX)).toEqual(["calculate", "jumpToBlock"]);
+  test("offer a jump, a calculation and Mark as low quality (ENG-6952); a block's rules also offer require answer", () => {
+    expect(getAllowedActionObjectives(START_SCOPE_BLOCK_IDX)).toEqual([
+      "calculate",
+      "jumpToBlock",
+      "markLowQuality",
+    ]);
     expect(getAllowedActionObjectives(0)).toEqual([
       "calculate",
       "requireAnswer",
@@ -228,6 +232,11 @@ describe("the rules before the first question (ENG-6932)", () => {
     expect(getObjectivesForAction(actions, 1, 2)).toEqual(["calculate", "requireAnswer", "markLowQuality"]);
     expect(getObjectivesForAction(actions, 2, 2)).toEqual(["calculate", "requireAnswer"]);
     expect(getObjectivesForAction(actions.slice(0, 1), 0, START_SCOPE_BLOCK_IDX)).toEqual([
+      "calculate",
+      "jumpToBlock",
+      "markLowQuality",
+    ]);
+    expect(getObjectivesForAction(actions.slice(0, 2), 0, START_SCOPE_BLOCK_IDX)).toEqual([
       "calculate",
       "jumpToBlock",
     ]);
@@ -250,6 +259,7 @@ describe("the rules before the first question (ENG-6932)", () => {
     ]);
     expect(getObjectivesForAction(setValue, 0, START_SCOPE_BLOCK_IDX, { alwaysRuns: true })).toEqual([
       "calculate",
+      "markLowQuality",
     ]);
     expect(getNextActionObjective(setValue, 2, { alwaysRuns: true })).toBe("calculate");
     expect(getNextActionObjective(setValue, START_SCOPE_BLOCK_IDX, { alwaysRuns: true })).toBe("calculate");
