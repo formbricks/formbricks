@@ -11,7 +11,7 @@ description: >
   out of range.
 
 
-  The number of **entries** is capped at 500, matching `data`: a response holds one timing per
+  The number of **entries** is capped at 2,000, matching `data`: a response holds one timing per
   element, so anything beyond that is not telemetry the server can use. A map with more entries is
   **rejected** — `maxProperties` below is enforced during request validation, so the whole write
   fails rather than the excess being trimmed or stored.
@@ -26,6 +26,6 @@ description: >
   **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the
   response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of
   zero, which reads as "completed instantly".
-maxProperties: 500
+maxProperties: 2000
 additionalProperties:
   type: number

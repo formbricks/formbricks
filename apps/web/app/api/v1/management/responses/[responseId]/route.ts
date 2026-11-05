@@ -154,9 +154,20 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
+      // Parsed first, so the size caps refuse an oversized body before the validators below walk it.
+      const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
+      if (!inputValidation.success) {
+        return {
+          response: responses.badRequestResponse(
+            "Fields are missing or incorrectly formatted",
+            transformErrorToDetails(inputValidation.error)
+          ),
+        };
+      }
+
       if (
         !validateClientFileUploads({
-          data: responseUpdate.data,
+          data: inputValidation.data.data,
           workspaceId: result.survey.workspaceId,
           surveyId: result.survey.id,
           blocks: result.survey.blocks,
@@ -176,8 +187,8 @@ export const PUT = withV1ApiWrapper({
       // Validate response data against validation rules
       const validationErrors = validateResponseData(
         result.survey.blocks,
-        responseUpdate.data,
-        responseUpdate.language ?? "en",
+        inputValidation.data.data,
+        inputValidation.data.language ?? "en",
         result.survey.questions
       );
 
@@ -187,16 +198,6 @@ export const PUT = withV1ApiWrapper({
             "Validation failed",
             formatValidationErrorsForV1Api(validationErrors),
             true
-          ),
-        };
-      }
-
-      const inputValidation = ZResponseUpdateInput.safeParse(responseUpdate);
-      if (!inputValidation.success) {
-        return {
-          response: responses.badRequestResponse(
-            "Fields are missing or incorrectly formatted",
-            transformErrorToDetails(inputValidation.error)
           ),
         };
       }
