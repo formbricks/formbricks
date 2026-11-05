@@ -77,3 +77,14 @@ export const ZV3DashboardFilterValues = z
   })
   .strict();
 export type TV3DashboardFilterValues = z.infer<typeof ZV3DashboardFilterValues>;
+
+/**
+ * The embedded-data fields a dashboard's filters can use: each key of the Feedback Datasets its charts read,
+ * once, in key order, with the member a filter names (`FeedbackRecords.ed_*`) and the label it is shown by.
+ */
+export const ZV3DashboardFilterFields = z
+  .object({
+    fields: z.array(z.object({ name: z.string(), key: z.string(), label: z.string() }).strict()),
+  })
+  .strict();
+export type TV3DashboardFilterFields = z.infer<typeof ZV3DashboardFilterFields>;

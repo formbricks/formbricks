@@ -156,6 +156,7 @@ export const TableToolbar = ({
                 onOpenAdvancedFilter={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
                 open={isFilterMenuOpen}
                 onOpenChange={setIsFilterMenuOpen}
+                locked={filter.locked}
               />
             )}
           </div>

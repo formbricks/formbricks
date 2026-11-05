@@ -1,0 +1,53 @@
+get:
+  operationId: listDashboardFilterFieldsV3
+  summary: List a dashboard's embedded-data filter fields
+  description: |
+    The embedded-data fields a filter on this dashboard can use: the keys of the Feedback Datasets its
+    charts read, and of no other dataset, each once as the `FeedbackRecords.ed_*` member a
+    `filter[<id>]` names. The other fields a dashboard filter can use are the same for every dataset
+    (see `GET /api/v3/charts/fields`).
+
+    A dashboard-bound read: it needs read access to the dashboard's workspace, which a Dashboard viewer
+    has, unlike the field catalog. A Feedback Dataset the caller cannot read through the dashboard is
+    left out rather than failing the list. A dashboard with no charts lists nothing. The workspace is
+    resolved from the dashboard, so the operation takes no query parameters; a dashboard the caller
+    cannot see, or that does not exist, answers 403.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  responses:
+    "200":
+      description: The dashboard's embedded-data filter fields
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardFilterFields.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

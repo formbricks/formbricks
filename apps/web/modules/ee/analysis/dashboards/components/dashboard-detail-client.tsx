@@ -688,7 +688,6 @@ function DashboardDetailView({
   );
 
   const toolbar = useDashboardToolbarFilters({
-    workspaceId,
     dashboardId: dashboard.id,
     datasetIds,
     filters,
@@ -769,8 +768,16 @@ function DashboardDetailView({
             <>
               {lockedFilters.canLock && (
                 <LockFiltersButton
+                  mode="lock"
                   isSaving={lockedFilters.isSaving}
-                  onLock={() => void lockedFilters.lockPersonalFilters()}
+                  onClick={() => void lockedFilters.lockPersonalFilters()}
+                />
+              )}
+              {lockedFilters.canUnlockAll && (
+                <LockFiltersButton
+                  mode="unlock"
+                  isSaving={lockedFilters.isSaving}
+                  onClick={() => void lockedFilters.unlockAllFilters()}
                 />
               )}
               <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />

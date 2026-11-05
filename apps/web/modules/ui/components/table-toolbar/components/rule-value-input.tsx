@@ -10,9 +10,11 @@ import { FilterValuePicker } from "./filter-value-picker";
 
 /**
  * The value slot of one Advanced filter rule, drawn for its property and operator: a pick-list where the
- * property has values to pick from, a date picker for a date, a number box for a number and a text box
- * for the rest. `undefined` leaves the slot to the editor's own combobox (a list operator's multi-pick,
- * typed text with seen values as suggestions); `null` means the operator compares against nothing.
+ * property has values to pick from (several at once for a list operator), a date picker for a date, a
+ * number box for a number and a text box for the rest. `undefined` leaves the slot to the editor's own
+ * combobox (a list operator's multi-pick over fixed options, typed text with seen values as suggestions);
+ * `null` means the operator compares against nothing. `value` is the one value of a single-value rule;
+ * `values` and `onValuesChange` are a list operator's.
  */
 export const RuleValueInput = ({
   id,
@@ -20,6 +22,8 @@ export const RuleValueInput = ({
   operator,
   value,
   onChange,
+  values,
+  onValuesChange,
   invalid,
 }: Readonly<{
   id: string;
@@ -27,6 +31,8 @@ export const RuleValueInput = ({
   operator: TRuleOperator | "";
   value: string;
   onChange: (value: string) => void;
+  values: readonly string[];
+  onValuesChange: (values: string[]) => void;
   invalid: boolean;
 }>) => {
   const { t, i18n } = useTranslation();
@@ -50,6 +56,17 @@ export const RuleValueInput = ({
     case "picker":
       return property ? (
         <FilterValuePicker id={id} property={property} value={value} onChange={onChange} invalid={invalid} />
+      ) : null;
+    case "multiPicker":
+      return property ? (
+        <FilterValuePicker
+          id={id}
+          property={property}
+          multiple
+          value={values}
+          onChange={onValuesChange}
+          invalid={invalid}
+        />
       ) : null;
     case "date":
       return (

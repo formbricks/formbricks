@@ -2,6 +2,7 @@ import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import type { TV3ChartData, TV3ChartFieldCatalog, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
 import type {
   TV3DashboardChartData,
+  TV3DashboardFilterFields,
   TV3DashboardFilterValues,
   TV3DashboardListItem,
   TV3DashboardResource,
@@ -281,6 +282,18 @@ export const listDashboardFilterValues = async ({
     await fetch(query ? `${base}?${query}` : base, { cache: "no-store", signal })
   );
 };
+
+/**
+ * The embedded-data fields a filter on the dashboard can use: the keys of the Feedback Datasets its charts
+ * read. A dashboard-bound read, so it answers a Dashboard viewer too, whom the field catalog refuses.
+ */
+export const listDashboardFilterFields = async (
+  dashboardId: string,
+  signal?: AbortSignal
+): Promise<TV3DashboardFilterFields> =>
+  readData<TV3DashboardFilterFields>(
+    await fetch(`${dashboardPath(dashboardId)}/filter-fields`, { cache: "no-store", signal })
+  );
 
 /** A saved chart's rows, for its own date range or a requested one that narrows it. */
 export const getChartData = async ({

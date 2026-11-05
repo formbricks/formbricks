@@ -19,9 +19,17 @@ describe("toToolbarFilters", () => {
     ).toEqual([{ property: SENTIMENT, operator: "in", values: ["positive", "mixed"] }]);
   });
 
-  test("equals on any other field is a rule on its one value", () => {
-    expect(toToolbarFilters([{ field: SOURCE, operator: "equals", values: ["Web", "App"] }])).toEqual([
-      { property: SOURCE, operator: "equals", values: ["Web"] },
+  test("a list field's equals and not equals are is any of / is none of, with every value", () => {
+    expect(
+      toToolbarFilters([
+        { field: SOURCE, operator: "equals", values: ["Web", "App"] },
+        { field: SOURCE, operator: "notEquals", values: ["Web", "App"] },
+        { field: SENTIMENT, operator: "notEquals", values: ["negative", "very_negative"] },
+      ])
+    ).toEqual([
+      { property: SOURCE, operator: "isAnyOf", values: ["Web", "App"] },
+      { property: SOURCE, operator: "isNoneOf", values: ["Web", "App"] },
+      { property: SENTIMENT, operator: "isNoneOf", values: ["negative", "very_negative"] },
     ]);
   });
 
@@ -30,13 +38,17 @@ describe("toToolbarFilters", () => {
       toToolbarFilters([
         { field: SCORE, operator: "gt", values: ["7"] },
         { field: TEXT, operator: "notContains", values: ["late"] },
-        { field: SOURCE, operator: "notEquals", values: ["Web", "App"] },
+        { field: SOURCE, operator: "contains", values: ["We", "Ap"] },
       ])
     ).toEqual([
       { property: SCORE, operator: "greaterThan", values: ["7"] },
       { property: TEXT, operator: "doesNotContain", values: ["late"] },
-      { property: SOURCE, operator: "notEquals", values: ["Web"] },
+      { property: SOURCE, operator: "contains", values: ["We"] },
     ]);
+  });
+
+  test("a filter with no values is left out", () => {
+    expect(toToolbarFilters([{ field: SCORE, operator: "gt", values: [] }])).toEqual([]);
   });
 
   test("a time field is compared with after and before, and has no name for the rest", () => {
@@ -57,7 +69,9 @@ describe("fromToolbarFilters", () => {
   test("is the inverse of the above", () => {
     const filters = [
       { field: SENTIMENT, operator: "equals" as const, values: ["positive", "mixed"] },
-      { field: SOURCE, operator: "equals" as const, values: ["Web"] },
+      { field: SOURCE, operator: "equals" as const, values: ["Web", "App"] },
+      { field: SOURCE, operator: "notEquals" as const, values: ["Email"] },
+      { field: SENTIMENT, operator: "notEquals" as const, values: ["negative", "mixed"] },
       { field: SCORE, operator: "gte" as const, values: ["7"] },
       { field: TEXT, operator: "notContains" as const, values: ["late"] },
       { field: COLLECTED_AT, operator: "lt" as const, values: ["2026-02-01"] },
@@ -71,8 +85,16 @@ describe("fromToolbarFilters", () => {
         { property: SOURCE, operator: "isSet", values: [] },
         { property: SOURCE, operator: "in", values: [] },
         { property: SOURCE, operator: "startsWith", values: ["x"] },
+        { property: SOURCE, operator: "isAnyOf", values: [] },
       ])
     ).toEqual([]);
+  });
+
+  test("an is-any-of rule on a quick field becomes its quick filter, keeping every value", () => {
+    const rule = { property: SENTIMENT, operator: "isAnyOf" as const, values: ["positive", "mixed"] };
+    expect(toToolbarFilters(fromToolbarFilters([rule]))).toEqual([
+      { property: SENTIMENT, operator: "in", values: ["positive", "mixed"] },
+    ]);
   });
 });
 
@@ -87,7 +109,20 @@ describe("getToolbarRuleOperators", () => {
       "lessEqual",
     ]);
     expect(getToolbarRuleOperators(COLLECTED_AT)).toEqual(["isAfter", "isBefore"]);
+    expect(getToolbarRuleOperators(TEXT)).toEqual(["equals", "notEquals", "contains", "doesNotContain"]);
     expect(getToolbarRuleOperators("FeedbackRecords.notAField")).toEqual([]);
+  });
+
+  test("a list field picks several values, and partial text only where its values are not a fixed set", () => {
+    expect(getToolbarRuleOperators(SOURCE)).toEqual(["isAnyOf", "isNoneOf", "contains", "doesNotContain"]);
+    expect(getToolbarRuleOperators(SENTIMENT)).toEqual(["isAnyOf", "isNoneOf"]);
+    expect(getToolbarRuleOperators("FeedbackRecords.valueBand")).toEqual(["isAnyOf", "isNoneOf"]);
+    expect(getToolbarRuleOperators("FeedbackRecords.ed_region")).toEqual([
+      "isAnyOf",
+      "isNoneOf",
+      "contains",
+      "doesNotContain",
+    ]);
   });
 });
 
@@ -108,7 +143,7 @@ describe("buildToolbarProperties", () => {
         .filter((property) => property.quick)
         .map(({ id }) => id)
         .sort()
-    ).toEqual(["FeedbackRecords.fieldType", "FeedbackRecords.sentiment", "FeedbackRecords.valueBand"]);
+    ).toEqual(["FeedbackRecords.sentiment", "FeedbackRecords.valueBand"]);
     expect(byId(SENTIMENT)?.options?.map(({ value }) => value)).toEqual([
       "very_negative",
       "negative",
@@ -127,6 +162,16 @@ describe("buildToolbarProperties", () => {
       expect(byId(id)?.loadOptions).toBeTypeOf("function");
       expect(byId(id)?.ruleOperators?.length).toBeGreaterThan(0);
     }
+  });
+
+  test("leaves out a record's question type and question id, which only a chart groups by", () => {
+    expect(byId("FeedbackRecords.fieldType")).toBeUndefined();
+    expect(byId("FeedbackRecords.fieldId")).toBeUndefined();
+  });
+
+  test("a boolean is picked from yes and no, one value at a time", () => {
+    const booleanField = properties.find((property) => property.options?.[0]?.label === "common.yes");
+    expect(booleanField?.ruleOperators).toEqual(["equals", "notEquals"]);
   });
 
   test("free text is typed, not listed", () => {

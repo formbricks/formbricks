@@ -12,6 +12,7 @@ import {
   getV3Dashboard,
   listV3Dashboards,
   renameV3Dashboard,
+  setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
 import { MAX_WIDGETS_PER_WRITE } from "@/app/api/v3/dashboards/lib/schemas";
@@ -21,6 +22,7 @@ import {
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
 import { successListResponse, successResponse } from "@/app/api/v3/lib/response";
+import { MAX_DASHBOARD_FILTERS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
   ZMcpGetChartDataInput,
   ZMcpGetChartDataOutput,
@@ -55,6 +57,7 @@ vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
   getV3Dashboard: vi.fn(),
   listV3Dashboards: vi.fn(),
   renameV3Dashboard: vi.fn(),
+  setV3DashboardFilters: vi.fn(),
   updateV3DashboardLayout: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/widget-operations", () => ({
@@ -460,6 +463,50 @@ describe("chart and dashboard MCP tools", () => {
     );
   });
 
+  test("set_dashboard_filters needs dashboards:write, keeps sent ids and gives new filters one", async () => {
+    vi.mocked(setV3DashboardFilters).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    const kept = {
+      id: "clfi000000000000000000001",
+      field: "FeedbackRecords.sourceName",
+      operator: "equals" as const,
+      label: "Source",
+      values: ["Web"],
+    };
+    const added = {
+      field: "FeedbackRecords.ed_plan_64879f7d",
+      operator: "equals" as const,
+      label: "Plan",
+      values: ["Pro"],
+    };
+    const input = {
+      dashboardId: DASHBOARD_ID,
+      expectedUpdatedAt: "2026-10-22T10:00:00.000Z",
+      filters: [kept, added],
+    };
+
+    expect((await call("set_dashboard_filters", input, ["dashboards:read"])).isError).toBe(true);
+    expect(setV3DashboardFilters).not.toHaveBeenCalled();
+
+    await call("set_dashboard_filters", input, ["dashboards:write"]);
+    const { body } = vi.mocked(setV3DashboardFilters).mock.calls[0][0];
+    expect(body.expectedUpdatedAt).toBe(input.expectedUpdatedAt);
+    expect(body.filters[0]).toEqual(kept);
+    expect(body.filters[1]).toEqual({ ...added, id: expect.stringMatching(/^[a-z][a-z0-9]{23}$/) });
+    expect(vi.mocked(setV3DashboardFilters).mock.calls[0][0].dashboardId).toBe(DASHBOARD_ID);
+  });
+
+  test("set_dashboard_filters removes every locked filter with an empty list", async () => {
+    vi.mocked(setV3DashboardFilters).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    await call(
+      "set_dashboard_filters",
+      { dashboardId: DASHBOARD_ID, expectedUpdatedAt: "2026-10-22T10:00:00.000Z", filters: [] },
+      ["dashboards:write"]
+    );
+    expect(setV3DashboardFilters).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { expectedUpdatedAt: "2026-10-22T10:00:00.000Z", filters: [] } })
+    );
+  });
+
   test("duplicate_chart needs dashboards:write and can place the copy in the same call", async () => {
     vi.mocked(duplicateV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
     const input = { chartId: CHART_ID, dashboardId: DASHBOARD_ID, layout: { x: 0, y: 4, w: 6, h: 4 } };
@@ -507,6 +554,38 @@ describe("chart and dashboard MCP tools", () => {
       false
     );
     expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_WIDGETS_PER_WRITE)))).toBe(true);
+
+    // The locked filters carry the PUT body's checks: a field outside the catalog, an operator the field
+    // does not allow, a repeated id, more than MAX_DASHBOARD_FILTERS. New filters (no id) never clash.
+    const filter = {
+      field: "FeedbackRecords.sourceName",
+      operator: "equals",
+      label: "Source",
+      values: ["Web"],
+    };
+    const filtersInput = (filters: unknown[]) => ({ dashboardId: DASHBOARD_ID, expectedUpdatedAt, filters });
+    expect(accepts("set_dashboard_filters", filtersInput([filter, filter]))).toBe(true);
+    expect(
+      accepts("set_dashboard_filters", filtersInput([{ ...filter, field: "FeedbackRecords.count" }]))
+    ).toBe(false);
+    expect(accepts("set_dashboard_filters", filtersInput([{ ...filter, operator: "gt" }]))).toBe(false);
+    const id = "clfi000000000000000000001";
+    expect(
+      accepts(
+        "set_dashboard_filters",
+        filtersInput([
+          { ...filter, id },
+          { ...filter, id },
+        ])
+      )
+    ).toBe(false);
+    expect(
+      accepts(
+        "set_dashboard_filters",
+        filtersInput(Array.from({ length: MAX_DASHBOARD_FILTERS + 1 }, () => filter))
+      )
+    ).toBe(false);
+    expect(accepts("set_dashboard_filters", { ...filtersInput([]), workspaceId: WORKSPACE_ID })).toBe(false);
   });
 
   test("marks the tools that overwrite or remove something destructive, as the other update tools are", () => {
@@ -519,6 +598,7 @@ describe("chart and dashboard MCP tools", () => {
     expect(destructive).toEqual(
       [
         "remove_chart_from_dashboard",
+        "set_dashboard_filters",
         "update_chart",
         "update_dashboard",
         "update_dashboard_layout",

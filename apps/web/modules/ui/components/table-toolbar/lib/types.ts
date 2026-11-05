@@ -10,7 +10,8 @@ import type { TDateRangePreset } from "@/lib/date-ranges";
  * - `preset` / `between`: a date quick filter. `between` holds two calendar days (`yyyy-MM-dd`); the URL
  *   writes them as `gte` / `lte`.
  * - The rest are Advanced filter rules. `includesOneOf` / `includesAllOf` hold a list of values (a
- *   multi-select question's choices); every other rule holds one value or none.
+ *   multi-select question's choices), and so do `isAnyOf` / `isNoneOf` (the row's one value is, or is not,
+ *   any of the picked values); every other rule holds one value or none.
  */
 export const TABLE_FILTER_OPERATORS = [
   "in",
@@ -34,6 +35,8 @@ export const TABLE_FILTER_OPERATORS = [
   "isNotSet",
   "includesOneOf",
   "includesAllOf",
+  "isAnyOf",
+  "isNoneOf",
 ] as const;
 
 export type TTableFilterOperator = (typeof TABLE_FILTER_OPERATORS)[number];
@@ -124,5 +127,7 @@ export type TLockedFilters = {
   labels?: readonly string[];
   /** Why the chips are locked, shown on hover. */
   hint: string;
+  /** Why a locked value cannot be ticked in the Filter menu, shown on hover. Absent: `hint`. */
+  valueHint?: string;
   onRemove?: (index: number) => void;
 };

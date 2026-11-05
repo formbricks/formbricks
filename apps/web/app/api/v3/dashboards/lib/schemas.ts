@@ -8,6 +8,7 @@ import {
   MAX_DASHBOARD_FILTERS,
   MAX_DASHBOARD_FILTER_PICK_VALUES,
   MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+  type TLockedDashboardFilter,
   ZLockedDashboardFilter,
   findDashboardFilterIssues,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
@@ -137,24 +138,31 @@ export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.Re
 };
 
 /**
- * A dashboard's locked filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each a catalog
- * dimension or an embedded-data field with an operator it allows and values it can hold, ids unique, and
- * all their values within the budget a read's picks have. Every problem is named at its position.
+ * The checks a list of locked filters must pass beyond each filter's own shape: each a catalog dimension
+ * or an embedded-data field with an operator it allows, ids unique, and all their values within the budget
+ * a read's picks have. Every problem is named at its position. Shared with the MCP `set_dashboard_filters`
+ * input.
  */
+export const refuseInvalidDashboardFilters = (
+  filters: readonly TLockedDashboardFilter[],
+  ctx: z.RefinementCtx
+): void => {
+  // The cap is the array's own `max`; only the per-filter problems are added here.
+  for (const issue of findDashboardFilterIssues(filters)) {
+    if (issue.path.length > 0) ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
+  }
+  const picks = Object.fromEntries(filters.map((filter) => [filter.id, filter.values]));
+  for (const issue of findPickIssues(filters, picks)) {
+    const index = filters.findIndex((filter) => `picks[${filter.id}]` === issue.name);
+    ctx.addIssue({ code: "custom", message: issue.reason, path: index >= 0 ? [index, "values"] : [] });
+  }
+};
+
+/** A dashboard's locked filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each checked as above. */
 export const ZV3DashboardFilters = z
   .array(ZLockedDashboardFilter)
   .max(MAX_DASHBOARD_FILTERS)
-  .superRefine((filters, ctx) => {
-    // The cap is the array's own `max`; only the per-filter problems are added here.
-    for (const issue of findDashboardFilterIssues(filters)) {
-      if (issue.path.length > 0) ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
-    }
-    const picks = Object.fromEntries(filters.map((filter) => [filter.id, filter.values]));
-    for (const issue of findPickIssues(filters, picks)) {
-      const index = filters.findIndex((filter) => `picks[${filter.id}]` === issue.name);
-      ctx.addIssue({ code: "custom", message: issue.reason, path: index >= 0 ? [index, "values"] : [] });
-    }
-  });
+  .superRefine(refuseInvalidDashboardFilters);
 
 /**
  * `PUT /api/v3/dashboards/{dashboardId}`: the name, every widget's place and, optionally, the filters, in
@@ -197,6 +205,16 @@ export const ZV3DashboardLayoutBody = z
   .strict()
   .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));
 export type TV3DashboardLayoutBody = z.infer<typeof ZV3DashboardLayoutBody>;
+
+/**
+ * What `setV3DashboardFilters` takes: the dashboard's locked filters, all of them, replacing the saved ones
+ * (an empty list removes them all), and nothing else. The MCP `set_dashboard_filters` input; over HTTP the
+ * same write is `PUT /api/v3/dashboards/{dashboardId}` with `filters`.
+ */
+export const ZV3DashboardFiltersBody = z
+  .object({ expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt, filters: ZV3DashboardFilters })
+  .strict();
+export type TV3DashboardFiltersBody = z.infer<typeof ZV3DashboardFiltersBody>;
 
 /** `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. */
 export const ZV3DashboardChartParams = z.object({ dashboardId: z.cuid2(), chartId: z.cuid2() }).strict();

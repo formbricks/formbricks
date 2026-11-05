@@ -17,14 +17,12 @@ import { useDashboardEmbeddedFields } from "./use-dashboard-embedded-fields";
  * embedded-data keys), the filters as the toolbar holds them, and how a change reaches the dashboard.
  */
 export const useDashboardToolbarFilters = ({
-  workspaceId,
   dashboardId,
   datasetIds,
   filters,
   dateRange,
   onFiltersChange,
 }: Readonly<{
-  workspaceId: string;
   dashboardId: string;
   datasetIds: readonly string[];
   filters: readonly TDashboardFilterState[];
@@ -32,7 +30,7 @@ export const useDashboardToolbarFilters = ({
   onFiltersChange: (filters: TDashboardFilterState[]) => void;
 }>) => {
   const { t } = useTranslation();
-  const fields = useDashboardEmbeddedFields(workspaceId, datasetIds, true);
+  const fields = useDashboardEmbeddedFields({ dashboardId, datasetIds });
   const properties = useMemo(
     () =>
       buildToolbarProperties({ t, embeddedFields: fields.embeddedFields, dashboardId, filters, dateRange }),

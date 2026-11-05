@@ -21,7 +21,7 @@ describe("canDropEmptyMeasureRows", () => {
     expect(canDropEmptyMeasureRows(groupedQuery)).toBe(true);
   });
 
-  test("keeps a measure-only query intact, so a big number still renders its no-data glyph", () => {
+  test("keeps a measure-only query intact, so the renderers decide whether its one row is empty", () => {
     expect(canDropEmptyMeasureRows({ measures: [CES_AVG] })).toBe(false);
     expect(canDropEmptyMeasureRows({ measures: [CES_AVG], dimensions: [] })).toBe(false);
   });

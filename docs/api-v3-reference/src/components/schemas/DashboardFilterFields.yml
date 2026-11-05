@@ -1,0 +1,32 @@
+type: object
+description: >-
+  The embedded-data fields a filter on the dashboard can use: each key of the Feedback Datasets its
+  charts read, once, in key order. Datasets the caller cannot read through the dashboard are left out.
+required:
+  - fields
+properties:
+  fields:
+    type: array
+    items:
+      type: object
+      required:
+        - name
+        - key
+        - label
+      properties:
+        name:
+          type: string
+          description: >-
+            The member a filter names in `filter[<id>]=<operator>:<name>`, derived from the key alone, so
+            the same key in two datasets is one field.
+          example: FeedbackRecords.ed_plan_64879f7d
+        key:
+          type: string
+          description: The embedded-data key as collected, case included.
+          example: plan
+        label:
+          type: string
+          description: How the field is shown; the key itself.
+          example: plan
+      additionalProperties: false
+additionalProperties: false

@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { createId } from "@paralleldrive/cuid2";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
@@ -11,6 +12,7 @@ import {
   getV3Dashboard,
   listV3Dashboards,
   renameV3Dashboard,
+  setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
 import {
@@ -38,6 +40,7 @@ import {
   type TMcpListDashboardsInput,
   type TMcpPreviewChartInput,
   type TMcpRemoveChartFromDashboardInput,
+  type TMcpSetDashboardFiltersInput,
   type TMcpUpdateChartInput,
   type TMcpUpdateDashboardInput,
   type TMcpUpdateDashboardLayoutInput,
@@ -66,6 +69,7 @@ import {
   ZMcpListDashboardsInput,
   ZMcpPreviewChartInput,
   ZMcpRemoveChartFromDashboardInput,
+  ZMcpSetDashboardFiltersInput,
   ZMcpUpdateChartInput,
   ZMcpUpdateDashboardInput,
   ZMcpUpdateDashboardLayoutInput,
@@ -533,6 +537,33 @@ export function registerDashboardTools(server: McpServer): void {
     async ({ dashboardId, ...body }: TMcpUpdateDashboardLayoutInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         updateV3DashboardLayout({ dashboardId, body, ...context })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "set_dashboard_filters",
+    {
+      title: "Set dashboard filters",
+      description:
+        "Set a dashboard's locked filters: the filters every reader sees applied, Dashboard viewers included, which they cannot remove. Send the whole list — it replaces the saved one, so keep a filter by sending it back as get_dashboard read it, change it by sending it changed, and remove it by leaving it out; an empty list removes them all. Each filter is a field (a dimension from list_chart_fields, or an embedded-data field of a dataset the dashboard's charts read), an operator, a label and its values; all of them apply together. Pass the updatedAt from get_dashboard as expectedUpdatedAt; if the dashboard changed since, nothing is saved.",
+      inputSchema: ZMcpSetDashboardFiltersInput,
+      outputSchema: ZMcpDashboardOutput,
+      audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, expectedUpdatedAt, filters }: TMcpSetDashboardFiltersInput, ctx) =>
+      runMutation(ctx, "updated", "dashboard", (context) =>
+        setV3DashboardFilters({
+          dashboardId,
+          // A new filter gets its id here, as the app gives one when a filter is locked.
+          body: {
+            expectedUpdatedAt,
+            filters: filters.map((filter) => ({ ...filter, id: filter.id ?? createId() })),
+          },
+          ...context,
+        })
       )
   );
 

@@ -11,6 +11,15 @@ export const getQuickFilter = (
 ): TTableFilter | undefined =>
   filters.find((filter) => filter.property === property && isQuickFilter(filter));
 
+/** The values a property's locked quick filters already tick: one list, each value once. */
+export const getLockedQuickValues = (locked: readonly TTableFilter[], property: string): string[] => [
+  ...new Set(
+    locked
+      .filter((filter) => filter.property === property && filter.operator === "in")
+      .flatMap((f) => f.values)
+  ),
+];
+
 /**
  * Ticks or unticks one value of an enum quick filter. Unticking the last value removes the filter.
  * Ticking every value keeps it: one tick too many is undone with one untick, not by rebuilding it.

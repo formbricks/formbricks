@@ -33,30 +33,45 @@ const isNewTypedValue = (
   (property.valueType !== "number" || Number.isFinite(Number(typed))) &&
   !listed.some((option) => option.value === typed);
 
+type TPickOne = {
+  multiple?: false;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+type TPickSeveral = {
+  multiple: true;
+  value: readonly string[];
+  onChange: (values: string[]) => void;
+};
+
 /**
- * One value of an Advanced filter rule, picked from the property's values: its fixed `options`, or the
+ * The value of an Advanced filter rule, picked from the property's values: its fixed `options`, or the
  * values `loadOptions` looks up one search at a time. A property whose values are free (a string or a
  * number) also takes what is typed, offered as the list's first row; an enum takes only a listed value.
+ * With `multiple`, each pick ticks or unticks a value and the list stays open, and the values already
+ * ticked stay listed whatever the search returns, so they can be unticked.
  */
 export const FilterValuePicker = ({
   id,
   property,
-  value,
-  onChange,
   invalid = false,
-}: Readonly<{
-  id: string;
-  property: TFilterProperty;
-  value: string;
-  onChange: (value: string) => void;
-  invalid?: boolean;
-}>) => {
+  ...selection
+}: Readonly<
+  {
+    id: string;
+    property: TFilterProperty;
+    invalid?: boolean;
+  } & (TPickOne | TPickSeveral)
+>) => {
   const { t } = useTranslation();
   const listboxId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  // Labels of the looked-up values picked here, so the trigger names them after the search moves on.
+  const [pickedLabels, setPickedLabels] = useState<ReadonlyMap<string, string>>(new Map());
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS);
@@ -76,14 +91,37 @@ export const FilterValuePicker = ({
   const listed: TFilterOption[] = loadOptions
     ? (loaded.data?.options ?? [])
     : staticOptions.filter((option) => option.label.toLowerCase().includes(needle.toLowerCase()));
-  const typedIsNew = isNewTypedValue(property, needle, listed);
+  const selected: readonly string[] = selection.multiple
+    ? selection.value
+    : [selection.value].filter((value) => value !== "");
+  const labelOf = (value: string) =>
+    staticOptions.find((option) => option.value === value)?.label ??
+    pickedLabels.get(value) ??
+    listed.find((option) => option.value === value)?.label ??
+    value;
+  const shown: TFilterOption[] = selection.multiple
+    ? [
+        ...selected
+          .filter((value) => !listed.some((option) => option.value === value))
+          .map((value) => ({ value, label: labelOf(value) })),
+        ...listed,
+      ]
+    : listed;
+  const typedIsNew = isNewTypedValue(property, needle, shown);
   const isLoading = Boolean(loadOptions) && loaded.isLoading;
   const isSearching = Boolean(loadOptions) && (loaded.isFetching || needle !== debouncedSearch);
-  const selectedLabel = staticOptions.find((option) => option.value === value)?.label ?? value;
+  const selectedLabel = selected.map(labelOf).join(", ");
 
-  const pick = (next: string) => {
-    onChange(next);
-    setOpen(false);
+  const pick = (next: string, label = next) => {
+    setPickedLabels((current) => new Map(current).set(next, label));
+    if (!selection.multiple) {
+      selection.onChange(next);
+      setOpen(false);
+      return;
+    }
+    selection.onChange(
+      selected.includes(next) ? selected.filter((value) => value !== next) : [...selected, next]
+    );
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -106,9 +144,13 @@ export const FilterValuePicker = ({
             invalid && "border-red-400 hover:border-red-500"
           )}>
           <span
-            className={cn("truncate", !value && "text-slate-400")}
-            title={value ? selectedLabel : undefined}>
-            {value ? selectedLabel : t("common.table_toolbar.select_value")}
+            className={cn("truncate", selected.length === 0 && "text-slate-400")}
+            title={selected.length > 0 ? selectedLabel : undefined}>
+            {selected.length > 0 && selectedLabel}
+            {selected.length === 0 &&
+              (selection.multiple
+                ? t("common.table_toolbar.select_values")
+                : t("common.table_toolbar.select_value"))}
           </span>
           <ChevronDownIcon className="size-4 shrink-0 text-slate-400" />
         </button>
@@ -137,7 +179,7 @@ export const FilterValuePicker = ({
                 // Enter confirms an IME candidate while composing; the text is not the value yet.
                 if (event.nativeEvent.isComposing) return;
                 // Enter with nothing highlighted takes what was typed, for a property that accepts it.
-                if (event.key === "Enter" && typedIsNew && listed.length === 0) {
+                if (event.key === "Enter" && typedIsNew && shown.length === 0) {
                   event.preventDefault();
                   pick(needle);
                 }
@@ -167,7 +209,7 @@ export const FilterValuePicker = ({
                   : t("common.table_toolbar.no_values")}
               </CommandEmpty>
             )}
-            {!isLoading && (typedIsNew || listed.length > 0) && (
+            {!isLoading && (typedIsNew || shown.length > 0) && (
               <CommandGroup className="overflow-visible">
                 {typedIsNew && (
                   <CommandItem value={`typed:${needle}`} onSelect={() => pick(needle)} className="gap-2">
@@ -177,13 +219,13 @@ export const FilterValuePicker = ({
                     </span>
                   </CommandItem>
                 )}
-                {listed.map((option) => {
-                  const isSelected = option.value === value;
+                {shown.map((option) => {
+                  const isSelected = selected.includes(option.value);
                   return (
                     <CommandItem
                       key={option.value}
                       value={`option:${option.value}`}
-                      onSelect={() => pick(option.value)}
+                      onSelect={() => pick(option.value, option.label)}
                       className="gap-2">
                       <span
                         className={cn("flex-1 truncate", isSelected && "font-medium text-slate-900")}

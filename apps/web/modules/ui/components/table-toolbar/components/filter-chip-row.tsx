@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { getChipParts } from "../lib/chip-label";
 import {
+  getLockedQuickValues,
   isQuickFilter,
   removeFilterAt,
   setDateQuickFilter,
@@ -23,6 +24,7 @@ const QuickFilterChip = ({
   filters,
   index,
   onFiltersChange,
+  locked,
   disabled,
 }: Readonly<{
   filter: TTableFilter;
@@ -30,6 +32,7 @@ const QuickFilterChip = ({
   filters: readonly TTableFilter[];
   index: number;
   onFiltersChange: (filters: TTableFilter[]) => void;
+  locked?: TLockedFilters;
   disabled?: boolean;
 }>) => {
   const { t, i18n } = useTranslation();
@@ -59,6 +62,8 @@ const QuickFilterChip = ({
           <FilterValueList
             property={property}
             selected={filter.values}
+            locked={getLockedQuickValues(locked?.filters ?? [], property.id)}
+            lockedHint={locked?.valueHint ?? locked?.hint}
             onToggle={(value) => onFiltersChange(toggleQuickFilterValue(filters, property.id, value))}
           />
         )}
@@ -139,6 +144,7 @@ export const FilterChipRow = ({
                   filters={filters}
                   index={index}
                   onFiltersChange={onFiltersChange}
+                  locked={locked}
                   disabled={disabled}
                 />
               </li>

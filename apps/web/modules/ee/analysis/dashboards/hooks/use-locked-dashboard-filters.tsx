@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import {
@@ -28,7 +28,8 @@ const sameFilter = (a: TDashboardFilterState, b: TDashboardFilterState): boolean
 /**
  * The filters an editor locks on a dashboard (ADR-0026): saved on it with their values, applied by the
  * server to every read whoever reads it, and shown locked before each person's own. An editor locks the
- * filters they have set, which then leave their own; a locked one comes off only by an editor's unlock.
+ * filters they have set, which then leave their own; a locked one comes off only by an editor's unlock, one
+ * at a time from its chip or all at once.
  */
 export const useLockedDashboardFilters = ({
   dashboard,
@@ -52,20 +53,24 @@ export const useLockedDashboardFilters = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const save = useCallback(
-    async (next: TLockedDashboardFilter[], success: string): Promise<boolean> => {
+    async (next: TLockedDashboardFilter[], success: string | ((toastId: string) => ReactElement)) => {
       setIsSaving(true);
       beginWrite();
       try {
+        // The dashboard as last read or written, so a write right after another (an undo) is not stale.
+        const current =
+          queryClient.getQueryData<TAppDashboard>(dashboardKeys.detail(dashboard.id)) ?? dashboard;
         // A whole-dashboard write that keeps the name and widgets as they are and replaces the filters.
         const saved = await replaceDashboard(dashboard.id, {
-          name: dashboard.name,
-          expectedUpdatedAt: dashboard.updatedAt,
-          widgets: toSavedWidgets(dashboard.widgets),
+          name: current.name,
+          expectedUpdatedAt: current.updatedAt,
+          widgets: toSavedWidgets(current.widgets),
           filters: next,
         });
         queryClient.setQueryData(dashboardKeys.detail(dashboard.id), saved);
         await queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
-        toast.success(success);
+        if (typeof success === "string") toast.success(success);
+        else toast.success((instance) => success(instance.id), { duration: 6000 });
         return true;
       } catch (error) {
         if (isStaleDashboardError(error)) {
@@ -109,6 +114,28 @@ export const useLockedDashboardFilters = ({
     if (await save(next, t("workspace.analysis.dashboards.filters_locked"))) onPersonalFiltersChange([]);
   }, [dashboard.filters, fieldLabel, onPersonalFiltersChange, personalFilters, save, t]);
 
+  /**
+   * Unlock every locked filter at once, with an undo in the toast that locks them again — as removing a
+   * chart from the dashboard does.
+   */
+  const unlockAllFilters = useCallback(async () => {
+    const previous = dashboard.filters;
+    await save([], (toastId) => (
+      <div className="flex items-center gap-3">
+        <span>{t("workspace.analysis.dashboards.filters_unlocked")}</span>
+        <button
+          type="button"
+          className="text-sm font-medium text-black underline hover:text-slate-700"
+          onClick={() => {
+            toast.dismiss(toastId);
+            void save(previous, t("workspace.analysis.dashboards.filters_locked"));
+          }}>
+          {t("common.undo")}
+        </button>
+      </div>
+    ));
+  }, [dashboard.filters, save, t]);
+
   // The toolbar shows only the locked filters it can name; each keeps its place in the saved list.
   const shown = useMemo(
     () =>
@@ -124,6 +151,7 @@ export const useLockedDashboardFilters = ({
     hint: canEdit
       ? t("workspace.analysis.dashboards.locked_filter_hint_editor")
       : t("workspace.analysis.dashboards.locked_filter_hint"),
+    valueHint: t("workspace.analysis.dashboards.locked_value_hint"),
     onRemove: canEdit
       ? (shownIndex) => {
           const source = shown[shownIndex];
@@ -140,6 +168,9 @@ export const useLockedDashboardFilters = ({
     locked,
     canLock: canEdit && personalFilters.length > 0,
     lockPersonalFilters,
+    // Locking wins the one place both would take: an editor with filters of their own locks them first.
+    canUnlockAll: canEdit && personalFilters.length === 0 && dashboard.filters.length > 0,
+    unlockAllFilters,
     isSaving,
   };
 };

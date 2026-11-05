@@ -1,11 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { SearchIcon } from "lucide-react";
+import { LockIcon, SearchIcon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { getFilterValuesQuery } from "../lib/filter-values-query";
 import type { TFilterOption, TFilterProperty } from "../lib/types";
 
@@ -17,15 +18,21 @@ const SEARCHABLE_FROM = 8;
  * The ticked values of one quick filter. Fixed options come with the property; long or dynamic ones
  * are loaded per search through `loadOptions`, so a property with thousands of values never ships them
  * all. Ticked values that the current search does not return stay listed, so they can be unticked.
+ * `locked` values were set for everyone (a dashboard's locked filters): they show ticked, with a lock and
+ * `lockedHint` on hover, and cannot be ticked again as a person's own.
  */
 export const FilterValueList = ({
   property,
   selected,
   onToggle,
+  locked = [],
+  lockedHint,
 }: Readonly<{
   property: TFilterProperty;
   selected: readonly string[];
   onToggle: (value: string) => void;
+  locked?: readonly string[];
+  lockedHint?: string;
 }>) => {
   const { t } = useTranslation();
   const baseId = useId();
@@ -53,10 +60,9 @@ export const FilterValueList = ({
 
   const knownValues = new Set(baseOptions.map((option) => option.value));
   const labelFor = (value: string) => staticOptions.find((option) => option.value === value)?.label ?? value;
+  const pinned = [...new Set([...locked, ...selected])];
   const options: TFilterOption[] = [
-    ...selected
-      .filter((value) => !knownValues.has(value))
-      .map((value) => ({ value, label: labelFor(value) })),
+    ...pinned.filter((value) => !knownValues.has(value)).map((value) => ({ value, label: labelFor(value) })),
     ...baseOptions,
   ];
 
@@ -91,6 +97,22 @@ export const FilterValueList = ({
         ) : null}
         {options.map((option, index) => {
           const id = `${baseId}-${index}`;
+          if (locked.includes(option.value)) {
+            return (
+              <li key={option.value}>
+                <label
+                  htmlFor={id}
+                  className="flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-500">
+                  <Checkbox id={id} checked disabled />
+                  <span className="flex-1 truncate">{option.label}</span>
+                  <TooltipRenderer tooltipContent={lockedHint} shouldRender={Boolean(lockedHint)}>
+                    <LockIcon className="size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+                  </TooltipRenderer>
+                  {lockedHint && <span className="sr-only">{lockedHint}</span>}
+                </label>
+              </li>
+            );
+          }
           return (
             <li key={option.value}>
               <label

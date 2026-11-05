@@ -20,6 +20,7 @@ import {
   ZV3DashboardName,
   ZV3WidgetLayoutInput,
   refuseEmptyWidgetUpdate,
+  refuseInvalidDashboardFilters,
   refuseRepeatedWidgets,
 } from "@/app/api/v3/dashboards/lib/schemas";
 import { zPostgresText } from "@/lib/utils/postgres-text";
@@ -28,6 +29,7 @@ import {
   MAX_DASHBOARD_FILTERS,
   MAX_DASHBOARD_FILTER_PICK_VALUES,
   MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+  ZLockedDashboardFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
@@ -357,6 +359,59 @@ export const ZMcpUpdateDashboardLayoutInput = z
   .strict()
   .superRefine((input, ctx) => refuseRepeatedWidgets(input.widgets, ctx));
 export type TMcpUpdateDashboardLayoutInput = z.infer<typeof ZMcpUpdateDashboardLayoutInput>;
+
+/** A locked filter as an agent sends it: as `get_dashboard` reads it, its id optional for a new one. */
+const ZMcpLockedDashboardFilter = z
+  .object({
+    id: ZLockedDashboardFilter.shape.id
+      .optional()
+      .describe(
+        "The filter's id from get_dashboard, to keep an existing filter. Leave it out for a new one."
+      ),
+    field: ZLockedDashboardFilter.shape.field.describe(
+      "A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…) of a dataset the dashboard's charts read."
+    ),
+    operator: ZLockedDashboardFilter.shape.operator.describe(
+      "How the field is compared with the values; the field must allow it."
+    ),
+    label: ZLockedDashboardFilter.shape.label.describe(
+      "What readers see the filter as, e.g. the field's label."
+    ),
+    values: ZLockedDashboardFilter.shape.values.describe(
+      "What to compare with: several values for equals/notEquals on a text field (any of), one value otherwise."
+    ),
+  })
+  .strict();
+
+/** A placeholder id for a new filter, outside cuid2's alphabet so it never matches a sent one. */
+export const newDashboardFilterPlaceholderId = (index: number): string => `new:${index}`;
+
+export const ZMcpSetDashboardFiltersInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard whose locked filters to set."),
+    expectedUpdatedAt: z.iso
+      .datetime({ offset: true })
+      .describe(
+        "The dashboard's updatedAt from your get_dashboard read. If it changed since, nothing is saved: read it again and retry."
+      ),
+    filters: z
+      .array(ZMcpLockedDashboardFilter)
+      .max(MAX_DASHBOARD_FILTERS)
+      .superRefine((filters, ctx) =>
+        refuseInvalidDashboardFilters(
+          filters.map((filter, index) => ({
+            ...filter,
+            id: filter.id ?? newDashboardFilterPlaceholderId(index),
+          })),
+          ctx
+        )
+      )
+      .describe(
+        `Every locked filter the dashboard should have, at most ${MAX_DASHBOARD_FILTERS}, replacing the saved ones: keep one by sending it back as get_dashboard read it, change one by sending it changed, remove one by leaving it out. An empty list removes them all. Every filter applies to every reader, ANDed together.`
+      ),
+  })
+  .strict();
+export type TMcpSetDashboardFiltersInput = z.infer<typeof ZMcpSetDashboardFiltersInput>;
 
 export const ZMcpDuplicateChartInput = z
   .object({

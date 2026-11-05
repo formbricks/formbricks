@@ -15,14 +15,27 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { getQuickFilter, setDateQuickFilter, toggleQuickFilterValue } from "../lib/filter-state";
-import type { TFilterProperty, TTableFilter } from "../lib/types";
+import {
+  getLockedQuickValues,
+  getQuickFilter,
+  setDateQuickFilter,
+  toggleQuickFilterValue,
+} from "../lib/filter-state";
+import type { TFilterProperty, TLockedFilters, TTableFilter } from "../lib/types";
 import { DateFilterEditor } from "./date-filter-editor";
 import { FilterValueList } from "./filter-value-list";
 
+/** How many values a quick filter holds, its locked ones included: a date filter counts as one. */
+const countQuickValues = (current: TTableFilter | undefined, lockedValues: readonly string[]): number => {
+  const lockedOnly = lockedValues.filter((value) => !current?.values.includes(value)).length;
+  if (!current) return lockedOnly;
+  return (current.operator === "in" ? current.values.length : 1) + lockedOnly;
+};
+
 /**
  * The Filter button and its menu: one submenu per quick filter, then Advanced filter. The button shows
- * how many filters are active; the chips under the toolbar show which.
+ * how many filters are active, the locked ones included; the chips under the toolbar show which. A locked
+ * quick filter's values show ticked and locked in its submenu, so they are not ticked again.
  */
 export const FilterMenu = ({
   properties,
@@ -31,6 +44,7 @@ export const FilterMenu = ({
   onOpenAdvancedFilter,
   open,
   onOpenChange,
+  locked,
 }: Readonly<{
   properties: readonly TFilterProperty[];
   filters: readonly TTableFilter[];
@@ -39,10 +53,13 @@ export const FilterMenu = ({
   onOpenAdvancedFilter?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Filters set for everyone: counted on the button, and shown locked in their quick filter's list. */
+  locked?: TLockedFilters;
 }>) => {
   const { t } = useTranslation();
   const quickProperties = properties.filter((property) => property.quick);
-  const activeCount = filters.length;
+  const lockedFilters = locked?.filters ?? [];
+  const activeCount = filters.length + lockedFilters.length;
   const isActive = activeCount > 0;
   const buttonLabel = isActive
     ? t("common.table_toolbar.filter_with_count", { count: activeCount })
@@ -81,16 +98,14 @@ export const FilterMenu = ({
           </DropdownMenuLabel>
           {quickProperties.map((property) => {
             const current = getQuickFilter(filters, property.id);
+            const lockedValues = getLockedQuickValues(lockedFilters, property.id);
+            const count = countQuickValues(current, lockedValues);
             return (
               <DropdownMenuSub key={property.id}>
                 <DropdownMenuSubTrigger className="font-normal text-slate-700">
                   <span className="truncate">
                     {property.label}
-                    {current && (
-                      <span className="font-semibold text-slate-900">
-                        {` (${current.operator === "in" ? current.values.length : 1})`}
-                      </span>
-                    )}
+                    {count > 0 && <span className="font-semibold text-slate-900">{` (${count})`}</span>}
                   </span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="max-h-none p-1">
@@ -104,6 +119,8 @@ export const FilterMenu = ({
                     <FilterValueList
                       property={property}
                       selected={current?.values ?? []}
+                      locked={lockedValues}
+                      lockedHint={locked?.valueHint ?? locked?.hint}
                       onToggle={(value) =>
                         onFiltersChange(toggleQuickFilterValue(filters, property.id, value))
                       }

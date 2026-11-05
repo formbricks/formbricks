@@ -97,6 +97,17 @@ describe("getChipParts", () => {
     expect(parts.value).toBe("Draft, In progress");
   });
 
+  test("an is-none-of rule lists every value after its operator", () => {
+    const parts = getChipParts(
+      { property: "status", operator: "isNoneOf", values: ["draft", "inProgress"] },
+      status,
+      t,
+      "en-US"
+    );
+    expect(parts.label).toBe("Status common.table_toolbar.operator_is_none_of");
+    expect(parts.value).toBe("Draft, In progress");
+  });
+
   test("a date rule formats its day", () => {
     const parts = getChipParts(
       { property: "createdAt", operator: "isBefore", values: ["2026-01-31"] },

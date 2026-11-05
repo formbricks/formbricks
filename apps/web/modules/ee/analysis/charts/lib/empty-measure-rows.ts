@@ -21,10 +21,9 @@ const isEmptyMeasureValue = (value: unknown): boolean =>
  *
  * Only grouped, non-time queries qualify:
  *
- * - **A dimension is required.** Without one the result is a single measure-only row, and dropping
- *   it would turn "this measure computed to nothing" into "no data available" — a big number
- *   renders that case as an en dash on purpose, and a measure-pivot bar chart keeps the measure's
- *   slot on the axis as a gap.
+ * - **A dimension is required.** Without one the result is a single measure-only row. Whether that
+ *   row is empty is the renderers' call (`isChartResultEmpty`), and when only some of its measures
+ *   are empty a measure-pivot bar chart keeps each empty measure's slot on the axis as a gap.
  * - **A time granularity disqualifies it.** An empty bucket in a time series is information: area
  *   charts render it as a gap (`connectNulls={false}`), and silently removing the bucket would
  *   close the gap and misdate every point after it.

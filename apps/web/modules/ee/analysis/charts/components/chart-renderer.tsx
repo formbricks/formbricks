@@ -16,6 +16,7 @@ import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/po
 import { ResponseBaseFooter } from "@/modules/ee/analysis/charts/components/response-base-footer";
 import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
+import { isChartResultEmpty } from "@/modules/ee/analysis/charts/lib/chart-emptiness";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
@@ -309,12 +310,9 @@ const PieChartView = ({
     ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t), responseBaseKey)
     : sortedData;
   const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
+  // Every slice is zero: there is no whole to take a share of.
   if (!pieResult) {
-    return (
-      <div className="text-muted-foreground flex h-full min-h-64 items-center justify-center">
-        {t("workspace.analysis.charts.no_valid_data_to_display")}
-      </div>
-    );
+    return <ChartEmptyState message={t("workspace.analysis.charts.no_data_available")} />;
   }
   const { processedData, colors } = pieResult;
   const total = processedData.reduce((sum, row) => sum + (Number(row[pieDataKey]) || 0), 0);
@@ -648,8 +646,14 @@ function SeriesChart({
 }
 
 export function ChartRenderer({ fieldLabels, ...props }: Readonly<ChartRendererProps>) {
+  const { t } = useTranslation();
+  // One empty state for every chart type: a result with nothing in it would otherwise read as a
+  // "0" big number or a bar chart with a single zero bar (see isChartResultEmpty for the rule).
+  if (isChartResultEmpty(props.data, props.query)) {
+    return <ChartEmptyState message={t("workspace.analysis.charts.no_data_available")} />;
+  }
   // A matrix lays out two groupings on its own two axes, so none of the single-axis setup applies.
-  if (props.chartType === "matrix" && props.data.length > 0) {
+  if (props.chartType === "matrix") {
     return (
       <MatrixChart
         data={props.data}

@@ -594,6 +594,7 @@ describe("POST /api/mcp", () => {
       "update_widget",
       "remove_chart_from_dashboard",
       "update_dashboard_layout",
+      "set_dashboard_filters",
       "duplicate_chart",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));

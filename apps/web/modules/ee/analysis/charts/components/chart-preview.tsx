@@ -5,9 +5,11 @@ import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
+import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
 import { ChartErrorBoundary } from "@/modules/ee/analysis/charts/components/chart-error-boundary";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
+import { isChartResultEmpty } from "@/modules/ee/analysis/charts/lib/chart-emptiness";
 import { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
@@ -45,7 +47,10 @@ export function ChartPreview({
   const { t } = useTranslation();
 
   const data = chartData?.data ?? [];
-  const hasRenderableData = !isLoading && !error && !chartData?.error && data.length > 0;
+  // A result with nothing in it, as every chart type judges it (see isChartResultEmpty) — not only
+  // zero rows, since a measure-only query returns its one aggregate row even when nothing matched.
+  const isEmptyResult = !chartData || isChartResultEmpty(data, chartData.query);
+  const hasRenderableData = !isLoading && !error && !chartData?.error && !isEmptyResult;
 
   const handleTabChange = (value: string) => {
     if (value === "chart" || value === "data") {
@@ -78,12 +83,9 @@ export function ChartPreview({
       );
     }
 
-    if (data.length === 0) {
-      return (
-        <div className="flex h-full min-h-48 items-center justify-center px-6 text-center text-sm text-slate-500">
-          {t("workspace.analysis.charts.no_data_returned")}
-        </div>
-      );
+    // The builder is where the settings change, so its empty state says to change them.
+    if (isEmptyResult) {
+      return <ChartEmptyState message={t("workspace.analysis.charts.no_data_returned")} />;
     }
 
     return (

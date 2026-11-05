@@ -40,6 +40,12 @@ export const dashboardKeys = {
   details: () => [...dashboardKeys.all, "detail"] as const,
   detail: (dashboardId: string) => [...dashboardKeys.details(), dashboardId] as const,
   /**
+   * The embedded-data fields a dashboard's filters can use; under the dashboard's detail key so a widget
+   * change refreshes it, and keyed by its charts' datasets so a chart moved to another dataset does too.
+   */
+  filterFields: (dashboardId: string, datasetIds: readonly string[]) =>
+    [...dashboardKeys.detail(dashboardId), "filterFields", datasetIds] as const,
+  /**
    * One search of a field's value list on a dashboard; under the chart data keys so a chart edit refreshes
    * it too.
    */

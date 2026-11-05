@@ -27,11 +27,13 @@ import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import type {
   TV3DashboardCreateBody,
   TV3DashboardDuplicateBody,
+  TV3DashboardFiltersBody,
   TV3DashboardLayoutBody,
   TV3DashboardListQuery,
   TV3DashboardRenameBody,
@@ -447,6 +449,34 @@ const runDashboardReplace = async (
 };
 
 /**
+ * A filters write that names an embedded-data key no kept widget's Feedback Dataset has, as the 422 naming
+ * each; `null` when every key is one a chart reads (or was already saved).
+ */
+const refuseUnknownEmbeddedFilterFields = async ({
+  dashboardId,
+  filters,
+  widgetIds,
+  access,
+  context: { authentication, requestId, instance },
+}: {
+  dashboardId: string;
+  filters: TLockedDashboardFilter[];
+  widgetIds?: readonly string[];
+  access: V3WorkspaceContext;
+  context: TV3DashboardOperationContext;
+}): Promise<Response | null> => {
+  const actor = getV3AuthorizationActor(authentication);
+  if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
+  const issues = await findUnknownEmbeddedFilterFields({ dashboardId, filters, widgetIds, access, actor });
+  return issues.length === 0
+    ? null
+    : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {
+        instance,
+        invalid_params: issues,
+      });
+};
+
+/**
  * `PUT /api/v3/dashboards/{dashboardId}` → 200 `{ data }`: the name, every widget's place and, when sent,
  * the dashboard filters in one transaction, or nothing. Widgets left out are removed. A stale `updatedAt` answers 409 with the
  * current one in `details`.
@@ -471,24 +501,16 @@ export async function replaceV3Dashboard({
           filters: body.filters,
           widgets: body.widgets,
         }),
-      async (access) => {
-        if (!body.filters) return null;
-        const actor = getV3AuthorizationActor(context.authentication);
-        if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
-        const issues = await findUnknownEmbeddedFilterFields({
-          dashboardId,
-          filters: body.filters,
-          widgetIds: body.widgets.map(({ widgetId }) => widgetId),
-          access,
-          actor,
-        });
-        return issues.length === 0
-          ? null
-          : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {
-              instance,
-              invalid_params: issues,
-            });
-      }
+      async (access) =>
+        body.filters
+          ? refuseUnknownEmbeddedFilterFields({
+              dashboardId,
+              filters: body.filters,
+              widgetIds: body.widgets.map(({ widgetId }) => widgetId),
+              access,
+              context,
+            })
+          : null
     );
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.replace" });
@@ -521,5 +543,36 @@ export async function updateV3DashboardLayout({
     );
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.layout" });
+  }
+}
+
+/**
+ * The MCP `set_dashboard_filters`: replaces the dashboard's locked filters, all of them, keeping its name
+ * and every widget — the `filters` of `PUT /api/v3/dashboards/{dashboardId}` without the rest of the save.
+ * An empty list removes every locked filter. A stale `expectedUpdatedAt` answers 409, and an embedded-data
+ * key none of the dashboard's charts reads 422, as the save does.
+ */
+export async function setV3DashboardFilters({
+  dashboardId,
+  body,
+  auditLog,
+  ...context
+}: TV3DashboardWriteContext & { dashboardId: string; body: TV3DashboardFiltersBody }): Promise<Response> {
+  const { requestId, instance } = context;
+  const log = logger.withContext({ requestId, dashboardId });
+
+  try {
+    return await runDashboardReplace(
+      { dashboardId, expectedUpdatedAt: body.expectedUpdatedAt, auditLog, context },
+      () =>
+        replaceDashboardRow({
+          dashboardId,
+          expectedUpdatedAt: new Date(body.expectedUpdatedAt),
+          filters: body.filters,
+        }),
+      (access) => refuseUnknownEmbeddedFilterFields({ dashboardId, filters: body.filters, access, context })
+    );
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.filters" });
   }
 }

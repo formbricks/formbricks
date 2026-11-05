@@ -13,6 +13,7 @@ import {
   listV3Dashboards,
   renameV3Dashboard,
   replaceV3Dashboard,
+  setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "./operations";
 import {
@@ -790,5 +791,81 @@ describe("updateV3DashboardLayout (MCP update_dashboard_layout)", () => {
     vi.mocked(getDashboardWorkspaceRow).mockRejectedValue(new Error("boom"));
 
     expect((await rearrange()).status).toBe(500);
+  });
+});
+
+describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
+  const EXPECTED_UPDATED_AT = "2026-02-02T00:00:00.000Z";
+  const filters = [
+    {
+      id: "clfi000000000000000000001",
+      field: "FeedbackRecords.sourceName",
+      operator: "equals" as const,
+      label: "Source",
+      values: ["Web"],
+    },
+  ];
+  const setFilters = (log?: TV3AuditLog, sent = filters) =>
+    setV3DashboardFilters({
+      dashboardId: DASHBOARD_ID,
+      body: { expectedUpdatedAt: EXPECTED_UPDATED_AT, filters: sent },
+      auditLog: log,
+      ...contextOf(),
+    });
+
+  beforeEach(() => {
+    vi.mocked(getDashboardWorkspaceRow).mockResolvedValue({ id: DASHBOARD_ID, workspaceId: WORKSPACE_ID });
+  });
+
+  test("replaces only the filters, keeping the name and every widget", async () => {
+    vi.mocked(replaceDashboardRow).mockResolvedValue({
+      kind: "ok",
+      row: dashboardRow(),
+      previous: { name: "Board", filters: [], widgets: [] },
+    });
+    const log = auditLog();
+
+    const response = await setFilters(log);
+
+    expect(response.status).toBe(200);
+    expect(replaceDashboardRow).toHaveBeenCalledWith({
+      dashboardId: DASHBOARD_ID,
+      expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
+      filters,
+    });
+    expect(log).toMatchObject({ targetId: DASHBOARD_ID, organizationId: ORGANIZATION_ID });
+  });
+
+  test("removes every locked filter with an empty list", async () => {
+    vi.mocked(replaceDashboardRow).mockResolvedValue({
+      kind: "ok",
+      row: dashboardRow(),
+      previous: { name: "Board", filters, widgets: [] },
+    });
+
+    expect((await setFilters(undefined, [])).status).toBe(200);
+    expect(vi.mocked(replaceDashboardRow).mock.calls[0][0]).toMatchObject({ filters: [] });
+  });
+
+  test("answers 409 with the current version when the dashboard changed since the read", async () => {
+    const current = new Date("2026-02-03T00:00:00.000Z");
+    vi.mocked(replaceDashboardRow).mockResolvedValue({ kind: "stale", currentUpdatedAt: current });
+
+    const response = await setFilters();
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).details).toEqual({
+      expectedUpdatedAt: EXPECTED_UPDATED_AT,
+      currentUpdatedAt: current.toISOString(),
+    });
+  });
+
+  test("returns the access refusal without writing, and maps an unexpected failure to 500", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValueOnce(refused());
+    expect((await setFilters()).status).toBe(403);
+    expect(replaceDashboardRow).not.toHaveBeenCalled();
+
+    vi.mocked(getDashboardWorkspaceRow).mockRejectedValue(new Error("boom"));
+    expect((await setFilters()).status).toBe(500);
   });
 });

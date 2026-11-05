@@ -68,7 +68,8 @@ info:
     /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE
     /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard,
     **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values,
-    **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**).
+    **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its
+    filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
 
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
@@ -468,6 +469,8 @@ paths:
     $ref: paths/api_v3_dashboards_{dashboardId}_charts_{chartId}_data.yml
   /api/v3/dashboards/{dashboardId}/filters/{filterId}/values:
     $ref: paths/api_v3_dashboards_{dashboardId}_filters_{filterId}_values.yml
+  /api/v3/dashboards/{dashboardId}/filter-fields:
+    $ref: paths/api_v3_dashboards_{dashboardId}_filter-fields.yml
   /api/v3/creatives:
     $ref: paths/api_v3_creatives.yml
   /api/v3/creatives/pause:

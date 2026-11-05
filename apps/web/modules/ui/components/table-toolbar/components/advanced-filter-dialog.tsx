@@ -97,12 +97,14 @@ export const AdvancedFilterDialog = ({
     }
     const isOperatorSwitch =
       updates.operator !== undefined && updates.operator !== condition.operator && !updates.leftOperand;
+    const previousControl = getRuleValueControl(property, condition.operator as TRuleOperator);
     if (
       isOperatorSwitch &&
       condition.rightOperand &&
-      !Array.isArray(condition.rightOperand.value) &&
-      getRuleValueControl(property, condition.operator as TRuleOperator) ===
-        getRuleValueControl(property, next.operator as TRuleOperator)
+      // A list keeps its picks across list operators (is any of → is none of); a single value only
+      // between controls that take one.
+      (previousControl === "multiPicker" || !Array.isArray(condition.rightOperand.value)) &&
+      previousControl === getRuleValueControl(property, next.operator as TRuleOperator)
     ) {
       next.rightOperand = condition.rightOperand;
     }
@@ -163,10 +165,16 @@ export const AdvancedFilterDialog = ({
           property={property}
           operator={operator}
           value={value === undefined || Array.isArray(value) ? "" : String(value)}
+          values={Array.isArray(value) ? value : []}
           invalid={incompleteIds.includes(condition.id)}
           onChange={(next) =>
             callbacks.onUpdateCondition(condition.id, {
               rightOperand: next === "" ? undefined : { value: next, type: "static" },
+            })
+          }
+          onValuesChange={(next) =>
+            callbacks.onUpdateCondition(condition.id, {
+              rightOperand: next.length === 0 ? undefined : { value: next, type: "static" },
             })
           }
         />

@@ -23,8 +23,17 @@ describe("getRuleValueControl", () => {
     expect(getRuleValueControl(property({}), "isNotSet")).toBe("none");
   });
 
-  test("leaves a list operator to the editor's multi-pick", () => {
+  test("leaves a list operator on fixed options to the editor's multi-pick", () => {
     expect(getRuleValueControl(property({ valueType: "enum", options: [] }), "includesOneOf")).toBe("editor");
+  });
+
+  test("picks several values for is any of / is none of, and for any list operator on looked-up values", () => {
+    const fixed = property({ valueType: "enum", options: [{ value: "a", label: "A" }] });
+    expect(getRuleValueControl(fixed, "isAnyOf")).toBe("multiPicker");
+    expect(getRuleValueControl(fixed, "isNoneOf")).toBe("multiPicker");
+    const categorical = property({ valueType: "enum", loadOptions });
+    expect(getRuleValueControl(categorical, "isAnyOf")).toBe("multiPicker");
+    expect(getRuleValueControl(categorical, "includesOneOf")).toBe("multiPicker");
   });
 
   test("picks a day for a date", () => {

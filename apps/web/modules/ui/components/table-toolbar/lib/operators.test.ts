@@ -9,6 +9,8 @@ describe("operatorTakesValues", () => {
   test("is true only for the list operators", () => {
     expect(operatorTakesValues("includesOneOf")).toBe(true);
     expect(operatorTakesValues("includesAllOf")).toBe(true);
+    expect(operatorTakesValues("isAnyOf")).toBe(true);
+    expect(operatorTakesValues("isNoneOf")).toBe(true);
     expect(operatorTakesValues("equals")).toBe(false);
     expect(operatorTakesValues("in")).toBe(false);
   });
@@ -47,6 +49,8 @@ describe("getOperatorLabel", () => {
     ["isSet", "common.table_toolbar.operator_is_set"],
     ["isNotSet", "common.table_toolbar.operator_is_not_set"],
     ["in", "common.table_toolbar.operator_is_any_of"],
+    ["isAnyOf", "common.table_toolbar.operator_is_any_of"],
+    ["isNoneOf", "common.table_toolbar.operator_is_none_of"],
   ])("shows %s in words", (operator, key) => {
     expect(getOperatorLabel(operator, t)).toBe(key);
   });

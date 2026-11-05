@@ -25,7 +25,8 @@ export const findUnknownEmbeddedFilterFields = async ({
 }: {
   dashboardId: string;
   filters: readonly TDashboardFilter[];
-  widgetIds: readonly string[];
+  /** The widgets the write keeps; every widget of the dashboard when omitted. */
+  widgetIds?: readonly string[];
   access: V3WorkspaceContext;
   actor: TCubeQueryActor;
 }): Promise<InvalidParam[]> => {
@@ -39,7 +40,7 @@ export const findUnknownEmbeddedFilterFields = async ({
     select: {
       filters: true,
       widgets: {
-        where: { id: { in: [...widgetIds] } },
+        ...(widgetIds ? { where: { id: { in: [...widgetIds] } } } : {}),
         select: { chart: { select: { feedbackDirectoryId: true } } },
       },
     },
