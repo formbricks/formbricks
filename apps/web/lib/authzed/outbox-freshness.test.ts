@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { hasStaleAuthzedRevocation } from "./outbox-repository";
 
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 vi.mock("./outbox-repository", () => ({ hasStaleAuthzedRevocation: vi.fn() }));
 
 /**
@@ -66,6 +68,44 @@ describe("AuthZed projection freshness guard", () => {
     vi.advanceTimersByTime(AUTHZED_FRESHNESS_MEMO_TTL_MS);
     await assertAuthzedProjectionFreshness();
     expect(hasStaleAuthzedRevocation).toHaveBeenCalledTimes(2);
+  });
+
+  test("tells the operator how to recover once when the guard arms, and once when it clears", async () => {
+    // Every authenticated request fails while the guard holds (formbricks#9697), so the log line has to
+    // carry the remedy — and has to be one line, not one per denied check.
+    vi.useFakeTimers({ toFake: ["performance"] });
+    vi.mocked(hasStaleAuthzedRevocation).mockResolvedValue(true);
+    const { AUTHZED_FRESHNESS_MEMO_TTL_MS, assertAuthzedProjectionFreshness } = await loadGuard();
+
+    for (let check = 0; check < 3; check++) {
+      await expect(assertAuthzedProjectionFreshness()).rejects.toMatchObject({
+        code: "authzed_projection_stale",
+      });
+      vi.advanceTimersByTime(AUTHZED_FRESHNESS_MEMO_TTL_MS);
+    }
+    expect(hasStaleAuthzedRevocation).toHaveBeenCalledTimes(3);
+    expect(logger.error).toHaveBeenCalledOnce();
+    expect(vi.mocked(logger.error).mock.calls[0][0]).toMatchObject({
+      code: "authzed_projection_stale",
+      hint: expect.stringMatching(/outbox replay.*outbox drain/),
+    });
+
+    vi.mocked(hasStaleAuthzedRevocation).mockResolvedValue(false);
+    await assertAuthzedProjectionFreshness();
+    vi.advanceTimersByTime(AUTHZED_FRESHNESS_MEMO_TTL_MS);
+    await assertAuthzedProjectionFreshness();
+    // At `warn`, so the production default level keeps the all-clear next to the alarm.
+    expect(logger.warn).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledOnce();
+  });
+
+  test("logs nothing while the graph stays fresh", async () => {
+    vi.mocked(hasStaleAuthzedRevocation).mockResolvedValue(false);
+    const { assertAuthzedProjectionFreshness } = await loadGuard();
+
+    await assertAuthzedProjectionFreshness();
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   test("keeps denying rather than memoizing a failed read", async () => {
