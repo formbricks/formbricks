@@ -1,6 +1,6 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as XLSX from "xlsx";
-import { prisma } from "@formbricks/database";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import type { TImportPlanGenerate, TImportPlanRequest } from "../core/ai-plan";
 import type { TSurveyImportDraft } from "../core/draft";
@@ -32,7 +32,6 @@ vi.mock("server-only", () => ({}));
 // Only the AI call and the database the naming reads are replaced; the readers, checks, assembly and
 // the create's own checks run for real.
 vi.mock("@/lib/ai/service", () => ({ generateOrganizationAIObject: mocks.generateOrganizationAIObject }));
-vi.mock("@formbricks/database", () => ({ prisma: { survey: { findMany: vi.fn() } } }));
 vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn(async () => "en-US") }));
 vi.mock("@/lingodotdev/server", () => import("../core/__fixtures__/lingodotdev-server-en-us"));
 vi.mock("../core/final-gate", async (importOriginal) => {
