@@ -94,12 +94,22 @@ export const getPersonSegmentIds = async (
       return [];
     }
 
-    // Only segments the in-memory path can answer read the rows, and only `any` needs the lookup.
-    const interactionData = await buildContactInteractionData(
-      workspaceId,
-      interactionRows,
-      segments.some((segment) => hasAnyScopeInteractionFilter((segment.filters ?? []) as TBaseFilters))
-    );
+    // Only segments the in-memory path can answer read the rows, and only `any` needs the lookup. If the
+    // lookup fails, interaction segments fall through to the Prisma path, which applies the same
+    // visibility rule itself — one failed query must not empty every other segment's result.
+    let interactionData: TContactInteractionData | null = null;
+    try {
+      interactionData = await buildContactInteractionData(
+        workspaceId,
+        interactionRows,
+        segments.some((segment) => hasAnyScopeInteractionFilter((segment.filters ?? []) as TBaseFilters))
+      );
+    } catch (error) {
+      logger.warn(
+        { workspaceId, contactId, error },
+        "Failed to classify interaction rows, evaluating interaction segments through the DB"
+      );
+    }
 
     // A single evaluation instant shared across every segment so all relative windows agree.
     const now = new Date();
@@ -128,7 +138,9 @@ export const getPersonSegmentIds = async (
       // so this segment falls through to the Prisma path instead of being silently dropped.
       let inMemoryResult: boolean | null = null;
       try {
-        inMemoryResult = tryEvaluateSurveyInteractionSegmentInMemory(filters, interactionData, now);
+        inMemoryResult = interactionData
+          ? tryEvaluateSurveyInteractionSegmentInMemory(filters, interactionData, now)
+          : null;
       } catch (error) {
         logger.warn(
           { segmentId: segment.id, workspaceId, error },

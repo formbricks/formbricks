@@ -292,6 +292,27 @@ describe("segments lib", () => {
       });
     });
 
+    test("falls back to the DB path for interaction segments when the visibility lookup fails", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        buildInteractionSegment("interaction-segment", "haveSeen"),
+        { id: "always-segment", filters: [] },
+      ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
+      vi.mocked(prisma.survey.findMany).mockRejectedValue(new Error("pool timeout"));
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }]);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        { displays: [{ surveyId: "survey-1", createdAt: new Date() }], responses: [] }
+      );
+
+      // The other segments still resolve; the interaction one is answered by the Prisma query instead.
+      expect(result).toEqual(["always-segment", "interaction-segment"]);
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledTimes(1);
+    });
+
     test("skips the visibility lookup when no segment uses `any` scope", async () => {
       const segment = buildInteractionSegment("specific-segment", "haveSeen");
       (segment.filters[0].resource.value as { surveyScope: string; surveyIds: string[] }).surveyScope =

@@ -253,15 +253,17 @@ async function getV3SegmentReferenceIssues(
     issues.push(issue(reference, `Segment '${reference.value}' was not found in this workspace`));
   }
 
-  const readSurveyIdsBySegment = new Map<string, string[]>();
-  for (const segment of segments.filter((candidate) =>
+  const referencedSegments = segments.filter((candidate) =>
     segmentRefs.some((ref) => ref.value === candidate.id)
-  )) {
-    readSurveyIdsBySegment.set(
-      segment.id,
-      await getAddedSegmentSurveyIds(segment.filters, [], workspaceId, segment.id)
-    );
-  }
+  );
+  const readSurveyIdsBySegment = new Map(
+    await Promise.all(
+      referencedSegments.map(
+        async (segment) =>
+          [segment.id, await getAddedSegmentSurveyIds(segment.filters, [], workspaceId, segment.id)] as const
+      )
+    )
+  );
   const readSurveyIds = [...new Set([...readSurveyIdsBySegment.values()].flat())];
   if (readSurveyIds.length === 0) return issues;
 
