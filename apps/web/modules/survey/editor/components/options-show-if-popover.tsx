@@ -25,6 +25,7 @@ import {
   canAddShowIf,
   createDraftShowIf,
   getShowIf,
+  hasUnchosenField,
   isShowIfComplete,
   setOptionHidden,
   updateShowIf,
@@ -383,7 +384,7 @@ function OptionRow({
   if (isHidden) {
     shownWhen = <span className="text-slate-400">{t("workspace.surveys.edit.flow.never_shown")}</span>;
   } else if (showIf && !isShowIfComplete(showIf)) {
-    // A condition being drafted, its field still to be chosen (ENG-6969 T6): no sentence to read yet.
+    // A condition being drafted: its field still to be chosen (ENG-6969 T6), or its value. No sentence yet.
     shownWhen = (
       <button
         type="button"
@@ -393,7 +394,9 @@ function OptionRow({
           event.stopPropagation();
           onToggleEditing();
         }}>
-        {t("workspace.surveys.edit.flow.choose_question_or_field")}
+        {hasUnchosenField(showIf)
+          ? t("workspace.surveys.edit.flow.choose_question_or_field")
+          : t("workspace.surveys.edit.flow.condition_incomplete")}
       </button>
     );
   } else if (showIf) {

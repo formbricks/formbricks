@@ -8,9 +8,10 @@ import type { TConnector } from "@formbricks/types/surveys/logic";
 
 /**
  * One row of the sentence: label · fields · actions. The label and actions columns have fixed widths,
- * so every row (a condition, or one of the rule's actions with the same classes) lines up.
+ * so every row (a condition, or one of the rule's actions with the same classes) lines up. The label
+ * column fits the and/or select ("and ▾"), the widest thing it holds, not only "If" and "Then".
  */
-export const SENTENCE_ROW_CLASS = "grid grid-cols-[2.75rem_minmax(0,1fr)_3.75rem] items-start gap-x-2";
+export const SENTENCE_ROW_CLASS = "grid grid-cols-[4rem_minmax(0,1fr)_3.75rem] items-start gap-x-2";
 
 /**
  * A row's fields: field · operator · value side by side when the editor has room (a container query
