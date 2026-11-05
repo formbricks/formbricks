@@ -6,8 +6,18 @@ import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import type { TExpressionTypeIssue } from "@formbricks/types/surveys/expression-types";
+import {
+  EXPRESSION_TARGET_TYPES,
+  type TExpressionValueType,
+  getDataTypeExpressionType,
+} from "@formbricks/types/surveys/expression-types";
 import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import {
+  REFERENCE_HIGHLIGHT_TONE,
+  getReferenceTone,
+} from "@/modules/survey/editor/components/reference-chip";
 import {
   FORMULA_CHIP_FUNCTIONS,
   FORMULA_FUNCTION_EXAMPLES,
@@ -15,18 +25,27 @@ import {
   type TFormulaChipFunction,
   type TFormulaError,
   type TFormulaReference,
+  type TFormulaSlot,
   formatFormula,
   formatReferenceToken,
   getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
+  getFormulaSlot,
   getFormulaToWriteOnBlur,
+  getFunctionFit,
   getFunctionSnippet,
   getShownFormulaError,
   insertIntoFormula,
   parseFormula,
+  segmentFormulaText,
 } from "@/modules/survey/editor/lib/expression-formula";
-import { formatSampleResult, getSampleResult } from "@/modules/survey/editor/lib/expression-sample";
+import {
+  formatSampleInput,
+  formatSampleResult,
+  getSampleExplanation,
+} from "@/modules/survey/editor/lib/expression-sample";
+import { getFormulaSegmentChip } from "@/modules/survey/editor/lib/reference-chips";
 import { type TCaretCoordinates, getCaretCoordinates } from "@/modules/survey/editor/lib/textarea-caret";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -102,6 +121,12 @@ export function SetValueFormula({
 
   const formatted = isEmptyFormula(expression) ? "" : formatFormula(expression, references);
   const [text, setText] = useState(formatted);
+  // The box's selection, for which function chips fit at the cursor (ENG-6950).
+  const [selection, setSelection] = useState({ start: formatted.length, end: formatted.length });
+  const trackSelection = (textarea: HTMLTextAreaElement) =>
+    setSelection({ start: textarea.selectionStart, end: textarea.selectionEnd });
+  // The chips drawn behind the text scroll with it.
+  const highlightRef = useRef<HTMLDivElement>(null);
   const [parseError, setParseError] = useState<TFormulaError | null>(null);
   // Which reference menu is open: the one at the caret (an `@` typed) or the one at the @ button.
   const [referenceMenu, setReferenceMenu] = useState<"caret" | "button" | null>(null);
@@ -128,9 +153,14 @@ export function SetValueFormula({
     setParseError(null);
   }, [expression, formatted]);
 
-  const targetDataType: TEmbeddedDataType | undefined = getSurveyEmbeddedFields(localSurvey).find(
+  const targetField = getSurveyEmbeddedFields(localSurvey).find(
     ({ field, link }) => field.source === "computed" && link.storageKey === variableId
-  )?.field.dataType;
+  )?.field;
+  const targetDataType: TEmbeddedDataType | undefined = targetField?.dataType;
+  const targetType: TExpressionValueType | undefined =
+    targetDataType && EXPRESSION_TARGET_TYPES.includes(targetDataType)
+      ? getDataTypeExpressionType(targetDataType)
+      : undefined;
 
   const applyText = (nextText: string) => {
     setText(nextText);
@@ -152,12 +182,13 @@ export function SetValueFormula({
     options: { cursorOffset?: number; replaceTypedAt?: boolean } = {}
   ) => {
     const textarea = textareaRef.current;
-    const selection = {
+    const range = {
       start: textarea?.selectionStart ?? text.length,
       end: textarea?.selectionEnd ?? text.length,
     };
-    const result = insertIntoFormula(text, selection, insert, options);
+    const result = insertIntoFormula(text, range, insert, options);
     applyText(result.text);
+    setSelection({ start: result.cursor, end: result.cursor });
     caretAfterMenuRef.current = result.cursor;
     requestAnimationFrame(() => {
       textarea?.focus();
@@ -195,10 +226,11 @@ export function SetValueFormula({
     [parseError, expression, variableId, localSurvey]
   );
 
-  const sampleResult =
+  const sample =
     !parseError && formulaIssues.length === 0 && !isEmptyFormula(expression) && targetDataType
-      ? getSampleResult(expression, targetDataType, localSurvey)
+      ? getSampleExplanation(expression, targetDataType, localSurvey)
       : null;
+  const sampleResult = sample?.result ?? null;
 
   const describeParseError = (error: TFormulaError): string => {
     switch (error.code) {
@@ -262,6 +294,46 @@ export function SetValueFormula({
       case "daysBetween":
         return t("workspace.surveys.edit.flow.formula_function_days_between");
     }
+  };
+
+  /** A type as a value of it ("a number", "text"), for the function chips' reasons. Literal keys. */
+  const describeValuePhrase = (type: TExpressionValueType): string => {
+    switch (type) {
+      case "number":
+        return t("workspace.surveys.edit.flow.formula_value_number");
+      case "date":
+        return t("workspace.surveys.edit.flow.formula_value_date");
+      case "boolean":
+        return t("workspace.surveys.edit.flow.formula_value_boolean");
+      default:
+        return t("workspace.surveys.edit.flow.formula_value_text");
+    }
+  };
+
+  /**
+   * Why a function chip doesn't fit at the cursor (ENG-6950): "concat() returns text; score holds a
+   * number", or "round() returns a number; daysBetween() needs a date here".
+   */
+  const describeUnfitFunction = (
+    fn: TFormulaChipFunction,
+    returns: TExpressionValueType,
+    slot: TFormulaSlot
+  ) => {
+    const wanted = slot.wanted === "any" ? "text" : slot.wanted;
+    if (slot.context.kind === "field") {
+      return t("workspace.surveys.edit.flow.formula_function_unfit_field", {
+        fn: `${fn}()`,
+        returns: describeValuePhrase(returns),
+        field: targetField?.name ?? "",
+        wanted: describeValuePhrase(wanted),
+      });
+    }
+    return t("workspace.surveys.edit.flow.formula_function_unfit_here", {
+      fn: `${fn}()`,
+      returns: describeValuePhrase(returns),
+      context: slot.context.kind === "function" ? `${slot.context.fn}()` : slot.context.symbol,
+      wanted: describeValuePhrase(wanted),
+    });
   };
 
   /** The save check's problem (the shared validator's), worded in the author's language. */
@@ -337,13 +409,63 @@ export function SetValueFormula({
       ? formatSampleResult(sampleResult, targetDataType, locale)
       : null;
 
+  /**
+   * The sample result with its inputs named (ENG-6950): "If @sat_netflix is 4 and @sat_disney is 4,
+   * the result is 12". A formula that reads nothing says just its result.
+   */
+  const describeSample = (): string => {
+    if (!sample || sample.inputs.length === 0) {
+      return shownSample
+        ? t("workspace.surveys.edit.flow.formula_sample_result", { result: shownSample.text })
+        : t("workspace.surveys.edit.flow.formula_sample_empty");
+    }
+    const inputs = new Intl.ListFormat(locale, { type: "conjunction" }).format(
+      sample.inputs.map((input) => {
+        const value = formatSampleInput(input, locale);
+        return value === undefined
+          ? t("workspace.surveys.edit.flow.formula_sample_input_empty", { name: input.name })
+          : t("workspace.surveys.edit.flow.formula_sample_input", { name: input.name, value });
+      })
+    );
+    return shownSample
+      ? t("workspace.surveys.edit.flow.formula_sample_explained", { inputs, result: shownSample.text })
+      : t("workspace.surveys.edit.flow.formula_sample_explained_empty", { inputs });
+  };
+
+  const slot = getFormulaSlot(text, selection, targetType);
+  const segments = segmentFormulaText(text, references);
+
   const pickReference = (reference: TFormulaReference) =>
     insertAtCursor(formatReferenceToken(reference.token), { replaceTypedAt: true });
 
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex items-start gap-2">
-        <div className="relative w-full">
+        <div className="relative w-full rounded-md bg-white">
+          {/* References as chips (ENG-6950), the way recall pills sit in question text: drawn behind
+              the transparent box under the very characters of each reference, so the text stays the
+              one the author types and the tree it parses into. A reference nothing answers to is red. */}
+          <div
+            ref={highlightRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-md border border-transparent px-3 py-2 font-mono text-sm break-words whitespace-pre-wrap text-transparent">
+            {segments.map((segment) =>
+              segment.kind === "text" ? (
+                <span key={segment.start}>{segment.text}</span>
+              ) : (
+                <span
+                  key={segment.start}
+                  className={cn(
+                    "rounded-sm ring-1",
+                    REFERENCE_HIGHLIGHT_TONE[getReferenceTone(getFormulaSegmentChip(segment, localSurvey))]
+                  )}>
+                  {segment.text}
+                </span>
+              )
+            )}
+            {/* Keeps a last empty line as tall as the box's. */}
+            {"​"}
+          </div>
           <Textarea
             id={id}
             ref={textareaRef}
@@ -351,7 +473,11 @@ export function SetValueFormula({
             maxLength={FORMULA_MAX_LENGTH}
             rows={2}
             spellCheck={false}
-            className="min-h-10 bg-white font-mono"
+            className="relative min-h-10 bg-transparent font-mono"
+            onSelect={(event) => trackSelection(event.currentTarget)}
+            onScroll={(event) => {
+              if (highlightRef.current) highlightRef.current.scrollTop = event.currentTarget.scrollTop;
+            }}
             placeholder={t("workspace.surveys.edit.flow.formula_placeholder", {
               example: getFormulaExample(references, scopeBlockIdx),
             })}
@@ -377,6 +503,7 @@ export function SetValueFormula({
               clearTimeout(typingTimer.current);
               typingTimer.current = setTimeout(() => setIsTyping(false), FORMULA_PROBLEM_DELAY_MS);
               applyText(nextText);
+              trackSelection(event.target);
               const cursor = event.target.selectionStart;
               if (nextText.length > text.length && nextText[cursor - 1] === "@") {
                 openReferenceMenuAtCaret(event.target, cursor);
@@ -444,25 +571,40 @@ export function SetValueFormula({
       <TooltipProvider delayDuration={300}>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs text-slate-500">{t("workspace.surveys.edit.flow.formula_functions")}</span>
-          {FORMULA_CHIP_FUNCTIONS.map((fn) => (
-            <Tooltip key={fn}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 hover:bg-slate-100 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
-                  onClick={() => {
-                    const snippet = getFunctionSnippet(fn);
-                    insertAtCursor(snippet.text, { cursorOffset: snippet.cursorOffset });
-                  }}>
-                  {fn}()
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-64 text-xs">
-                <p>{describeFunction(fn)}</p>
-                <p className="mt-1 font-mono text-slate-500">{FORMULA_FUNCTION_EXAMPLES[fn]}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
+          {FORMULA_CHIP_FUNCTIONS.map((fn) => {
+            // A chip whose result can't go where the cursor is stays visible but off, and says why
+            // (ENG-6950): aria-disabled rather than disabled, so its tooltip still opens.
+            const fit = getFunctionFit(fn, slot);
+            return (
+              <Tooltip key={fn}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-disabled={fit.fits ? undefined : true}
+                    className={cn(
+                      "rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden",
+                      fit.fits ? "hover:bg-slate-100" : "cursor-not-allowed opacity-50"
+                    )}
+                    // Keeps the caret in the box: the chip goes where the cursor was.
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      if (!fit.fits) return;
+                      const snippet = getFunctionSnippet(fn);
+                      insertAtCursor(snippet.text, { cursorOffset: snippet.cursorOffset });
+                    }}>
+                    {fn}()
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-64 text-xs">
+                  {!fit.fits && (
+                    <p className="mb-1 font-medium">{describeUnfitFunction(fn, fit.returns, slot)}</p>
+                  )}
+                  <p>{describeFunction(fn)}</p>
+                  <p className="mt-1 font-mono text-slate-500">{FORMULA_FUNCTION_EXAMPLES[fn]}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
         </div>
       </TooltipProvider>
 
@@ -473,13 +615,7 @@ export function SetValueFormula({
       )}
       {!problem && sampleResult !== null && (
         <p className="text-xs text-slate-600" title={t("workspace.surveys.edit.flow.formula_sample_hint")}>
-          {shownSample ? (
-            <span title={shownSample.title}>
-              {t("workspace.surveys.edit.flow.formula_sample_result", { result: shownSample.text })}
-            </span>
-          ) : (
-            t("workspace.surveys.edit.flow.formula_sample_empty")
-          )}
+          <span title={shownSample?.title}>{describeSample()}</span>
         </p>
       )}
     </div>
