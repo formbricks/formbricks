@@ -5,7 +5,10 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { getSessionUserId } from "@/app/api/v3/charts/lib/access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
-import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
+import {
+  refuseUnlessFeedbackDatasetAccess,
+  requireDashboardsAccess,
+} from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   buildKeysetPage,
@@ -467,7 +470,23 @@ const refuseUnknownEmbeddedFilterFields = async ({
 }): Promise<Response | null> => {
   const actor = getV3AuthorizationActor(authentication);
   if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
-  const issues = await findUnknownEmbeddedFilterFields({ dashboardId, filters, widgetIds, access, actor });
+  const canReadDataset = async (datasetId: string) =>
+    (await refuseUnlessFeedbackDatasetAccess(
+      authentication,
+      access,
+      datasetId,
+      "read",
+      requestId,
+      instance
+    )) === null;
+  const issues = await findUnknownEmbeddedFilterFields({
+    dashboardId,
+    filters,
+    widgetIds,
+    access,
+    actor,
+    canReadDataset,
+  });
   return issues.length === 0
     ? null
     : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {

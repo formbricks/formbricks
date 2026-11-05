@@ -120,8 +120,10 @@ const withExtraFilters = (query: unknown, extraFilters: readonly TCubeFilter[]):
 };
 
 /**
- * Validate a dashboard's picks as filters of the query they narrow: alone, under the name `picks`, so a
- * problem is named as the caller's pick rather than as the saved chart's filter.
+ * Validate a dashboard's picks as filters of the query they narrow: alone first, under the name `picks`, so
+ * a problem is named as the caller's pick rather than as the saved chart's filter; then ANDed onto the
+ * (already valid) saved filters, so the query that runs keeps to the same budgets as any other —
+ * `MAX_FILTER_CONDITIONS` and `MAX_ANSWER_RULES` across the saved filters and the picks together.
  */
 const validatePicks = (
   query: TChartQuery,
@@ -129,13 +131,12 @@ const validatePicks = (
   dataset: TDatasetChartFields | undefined
 ): { ok: true; filters: TCubeFilter[] } | { ok: false; issues: InvalidParam[] } => {
   if (extraFilters.length === 0) return { ok: true, filters: [] };
-  const checked = validateChartQuery(
-    { ...query, filters: extraFilters },
-    { path: "picks", timeBuckets: false, legacyDateRanges: true, dataset }
-  );
-  return checked.ok
-    ? { ok: true, filters: checked.query.filters ?? [] }
-    : { ok: false, issues: checked.issues };
+  const options = { path: "picks", timeBuckets: false, legacyDateRanges: true, dataset } as const;
+  const checked = validateChartQuery({ ...query, filters: extraFilters }, options);
+  if (!checked.ok) return { ok: false, issues: checked.issues };
+  const filters = checked.query.filters ?? [];
+  const combined = validateChartQuery(narrowWithFilters(query, filters), options);
+  return combined.ok ? { ok: true, filters } : { ok: false, issues: combined.issues };
 };
 
 /**

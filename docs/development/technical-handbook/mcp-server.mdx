@@ -263,7 +263,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard` | `read` |
 | `preview_chart`, `get_chart_data`, `list_chart_field_values` | `read`, and read access to the chart's feedback dataset |
 | `list_dashboard_filter_fields` | `read`; a feedback dataset the caller cannot read through the dashboard is left out of the list |
-| `list_dashboard_filter_values` | `read`, and read access to each feedback dataset whose charts have the filter's field |
+| `list_dashboard_filter_values` | `read`, and read access to each feedback dataset its charts read |
 | `create_chart`, `duplicate_chart` | `write` or `manage`, and write access to the feedback dataset |
 | `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
 

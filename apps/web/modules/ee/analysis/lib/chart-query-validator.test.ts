@@ -10,6 +10,7 @@ import {
   MAX_OFFSET,
   MAX_ORDER_ENTRIES,
   checkTimeBucketLimit,
+  countFilterConditions,
   legacyRangeBounds,
   parseQueryDateRange,
   parseRequestedDateRange,
@@ -171,6 +172,18 @@ describe("validateChartQuery", () => {
           filters: [{ and: conditions(MAX_FILTER_CONDITIONS) }, condition()],
         })
       ).toEqual(["query.filters"]);
+    });
+
+    test("countFilterConditions counts as the cap does: conditions through every group, groups none", () => {
+      const conditions = (count: number) => Array.from({ length: count }, () => condition());
+      const atCap = [{ or: [{ and: conditions(10) }, ...conditions(5)] }, ...conditions(10)];
+      const overCap = [...atCap, condition()];
+
+      expect(countFilterConditions(atCap)).toBe(MAX_FILTER_CONDITIONS);
+      expect(validateChartQuery({ measures: [COUNT], filters: atCap }).ok).toBe(true);
+      expect(countFilterConditions(overCap)).toBe(MAX_FILTER_CONDITIONS + 1);
+      expect(namesOf({ measures: [COUNT], filters: overCap })).toEqual(["query.filters"]);
+      expect(countFilterConditions(undefined)).toBe(0);
     });
 
     test("allows a group inside a group, and no deeper", () => {

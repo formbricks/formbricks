@@ -1,5 +1,9 @@
 import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/analysis";
 import { MAX_ANSWER_RULES, countAnswerRules } from "@/modules/ee/analysis/lib/answer-filter";
+import {
+  MAX_FILTER_CONDITIONS,
+  countFilterConditions,
+} from "@/modules/ee/analysis/lib/chart-query-validator";
 import { getChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
   type TDashboardDateFilter,
@@ -55,24 +59,29 @@ export const chartRuleSet = (query: TChartQuery, clock: TDateClock): TCubeFilter
 ];
 
 /**
- * The rule sets cut into runs whose answer rules fit one query (`MAX_ANSWER_RULES`), in order: each run is
- * one value query, so an OR of several charts' answer rules never exceeds what one query may hold. A rule
- * set over the cap on its own is left out — its chart is refused when it runs, so it shows no value.
+ * The rule sets cut into runs that fit one query, in order: each run is one value query, so an OR of
+ * several charts' rules never holds more answer rules than `MAX_ANSWER_RULES` nor more filter conditions
+ * than `conditionBudget` — what is left of `MAX_FILTER_CONDITIONS` once the picks and value rules every
+ * query ends with are spent. A rule set over either cap on its own is left out: no query can hold it, and a
+ * chart over the answer cap is refused when it runs, so it shows no value.
  */
-const chunkByAnswerRules = (ruleSets: readonly TCubeFilter[][]): TCubeFilter[][][] => {
+const chunkRuleSets = (ruleSets: readonly TCubeFilter[][], conditionBudget: number): TCubeFilter[][][] => {
   const chunks: TCubeFilter[][][] = [];
   let current: TCubeFilter[][] = [];
-  let answers = 0;
+  let spent = { answers: 0, conditions: 0 };
   for (const rules of ruleSets) {
-    const count = countAnswerRules(rules);
-    if (count > MAX_ANSWER_RULES) continue;
-    if (current.length > 0 && answers + count > MAX_ANSWER_RULES) {
+    const cost = { answers: countAnswerRules(rules), conditions: countFilterConditions(rules) };
+    if (cost.answers > MAX_ANSWER_RULES || cost.conditions > conditionBudget) continue;
+    const fits =
+      spent.answers + cost.answers <= MAX_ANSWER_RULES &&
+      spent.conditions + cost.conditions <= conditionBudget;
+    if (current.length > 0 && !fits) {
       chunks.push(current);
       current = [];
-      answers = 0;
+      spent = { answers: 0, conditions: 0 };
     }
     current.push(rules);
-    answers += count;
+    spent = { answers: spent.answers + cost.answers, conditions: spent.conditions + cost.conditions };
   }
   if (current.length > 0) chunks.push(current);
   return chunks;
@@ -147,6 +156,11 @@ export const buildFilterValueQueries = ({
 
     const otherPicks = resolvePicksForDataset(filters, picks, hasField, { except: filter.id });
     if (otherPicks.unfilterable.length > 0) return [];
+    // Every query of the dataset ends with the picks and the value rules; the rest of the budget is the
+    // charts'. Picks over the budget on their own refuse every chart on the dashboard, so none shows a value.
+    const conditionBudget =
+      MAX_FILTER_CONDITIONS - countFilterConditions(otherPicks.rules) - countFilterConditions(valueRules);
+    if (conditionBudget < 0) return [];
 
     // Charts with the same saved rules let the same values through: one branch for each distinct set.
     const branches = new Map<string, TCubeFilter[]>();
@@ -156,12 +170,11 @@ export const buildFilterValueQueries = ({
       branches.set(JSON.stringify(rules), rules);
     }
 
-    const ruleSets = [...branches.values()].filter((rules) => countAnswerRules(rules) <= MAX_ANSWER_RULES);
-    if (ruleSets.length === 0) return [];
+    const ruleSets = [...branches.values()];
     // A chart without saved rules lets every record through, so the OR of all branches is no narrowing.
     if (ruleSets.some((rules) => rules.length === 0)) return [toQuery(datasetId, [], otherPicks.rules)];
 
-    return chunkByAnswerRules(ruleSets).map((chunk) =>
+    return chunkRuleSets(ruleSets, conditionBudget).map((chunk) =>
       toQuery(datasetId, chunk.length === 1 ? chunk[0] : [{ or: chunk.map(asOneRule) }], otherPicks.rules)
     );
   });
@@ -214,6 +227,9 @@ export const buildBoundedChartQueries = ({
     if (!hasField(filter.field)) return [];
     const otherPicks = resolvePicksForDataset(filters, picks, hasField, { except: filter.id });
     if (otherPicks.unfilterable.length > 0) return [];
+    // Its saved filters and the picks over MAX_FILTER_CONDITIONS together: the chart is refused when it runs.
+    const conditions = countFilterConditions(chart.query.filters) + countFilterConditions(otherPicks.rules);
+    if (conditions > MAX_FILTER_CONDITIONS) return [];
 
     const query = applyDashboardDateFilter(chart.query, dateFilter);
     return [

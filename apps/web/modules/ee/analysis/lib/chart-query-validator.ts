@@ -53,6 +53,21 @@ export const MAX_TIME_DIMENSIONS = 2;
 export const MAX_FIELDS = 15;
 /** Most filter conditions in one query, counted through every group. */
 export const MAX_FILTER_CONDITIONS = 25;
+
+/**
+ * The filter conditions `filters` spend of `MAX_FILTER_CONDITIONS`, counted as the validator counts them:
+ * every entry that is not an `and`/`or` group is one condition, at any depth; a group itself is none. For
+ * queries the server builds without the validator, so they keep to the same budget.
+ */
+export const countFilterConditions = (filters: readonly TCubeFilter[] | undefined): number => {
+  let count = 0;
+  for (const filter of filters ?? []) {
+    if ("and" in filter) count += countFilterConditions(filter.and);
+    else if ("or" in filter) count += countFilterConditions(filter.or);
+    else count += 1;
+  }
+  return count;
+};
 /** Deepest `and`/`or` group nesting; a top-level filter sits at depth 1. */
 export const MAX_FILTER_DEPTH = 3;
 /** Most values one filter condition may compare against — the size of a field-value lookup. */

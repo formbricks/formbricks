@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TChartQuery, TCubeFilter } from "@formbricks/types/analysis";
+import {
+  MAX_FILTER_CONDITIONS,
+  countFilterConditions,
+  validateChartQuery,
+} from "@/modules/ee/analysis/lib/chart-query-validator";
 import { type TMemoryRecord, recordMatches, runMemoryDimensionQuery } from "./cube-memory-test-utils";
 import type { TDashboardDateFilter } from "./dashboard-date-filter";
 import type { TDashboardFilter, TDashboardFilterPicks } from "./dashboard-filters";
@@ -706,5 +711,86 @@ describe("answer rules in the merged value queries", () => {
 
     expect(queries).toHaveLength(1);
     expect(countAnswers(queries[0].query.filters)).toBe(5);
+  });
+});
+
+describe("filter conditions in the value queries", () => {
+  /** `count` conditions on the product field, distinct per `tag` so charts never share a branch. */
+  const conditions = (tag: string, count: number): TCubeFilter[] =>
+    Array.from({ length: count }, (_, index) => ({
+      member: PRODUCT,
+      operator: "notEquals",
+      values: [`${tag}_${index}`],
+    }));
+  const input = (charts: TFilterValueChart[], picks: TDashboardFilterPicks = {}) => ({
+    filter: ACCOUNT_FILTER,
+    filters: FILTERS,
+    charts,
+    picks,
+    dateFilter: null,
+    clock: CLOCK,
+    datasetHasField: everyField,
+  });
+  const branchesOf = (queries: ReturnType<typeof buildFilterValueQueries>): string[] =>
+    queries.flatMap(({ query }) => JSON.stringify(query.filters).match(/chart\d+_0"/g) ?? []);
+
+  test("no query holds more than MAX_FILTER_CONDITIONS: 250 charts of 10 conditions split across queries, none lost", () => {
+    const charts = Array.from({ length: 250 }, (_, index) => chart("ds_a", conditions(`chart${index}`, 10)));
+
+    const queries = buildFilterValueQueries(input(charts, { [REGION_FILTER.id]: ["North"] }));
+
+    // 10 per chart, and 1 pick + 1 value rule per query: two charts per query.
+    expect(queries).toHaveLength(125);
+    for (const { query } of queries) {
+      expect(countFilterConditions(query.filters)).toBeLessThanOrEqual(MAX_FILTER_CONDITIONS);
+      expect(validateChartQuery(query).ok).toBe(true);
+    }
+    expect(new Set(branchesOf(queries)).size).toBe(250);
+  });
+
+  test("the picks and the search spend the budget before the charts do", () => {
+    const charts = [chart("ds_a", conditions("chart1", 11)), chart("ds_a", conditions("chart2", 11))];
+
+    // 22 + set = 23: one query.
+    expect(buildFilterValueQueries(input(charts))).toHaveLength(1);
+    // 22 + set + contains + one pick = 25: still one.
+    expect(
+      buildFilterValueQueries({ ...input(charts, { [REGION_FILTER.id]: ["North"] }), search: "acme" })
+    ).toHaveLength(1);
+    // A second pick makes 26: the charts split.
+    expect(
+      buildFilterValueQueries({
+        ...input(charts, { [REGION_FILTER.id]: ["North"], [CHANNEL_FILTER.id]: ["web"] }),
+        search: "acme",
+      })
+    ).toHaveLength(2);
+  });
+
+  test("a chart that cannot fit one query on its own is left out, the others still listed", () => {
+    const queries = buildFilterValueQueries(
+      input([
+        chart("ds_a", conditions("chart1", MAX_FILTER_CONDITIONS)),
+        chart("ds_a", conditions("chart2", 3)),
+      ])
+    );
+
+    expect(queries).toHaveLength(1);
+    expect(branchesOf(queries)).toEqual(['chart2_0"']);
+  });
+
+  test("a bounded chart whose saved filters and the picks pass MAX_FILTER_CONDITIONS together is left out", () => {
+    const bounded = (count: number): TFilterValueChart => ({
+      datasetId: "ds_a",
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: [PRODUCT],
+        limit: 5,
+        filters: conditions("c", count),
+      },
+    });
+    const picks = { [REGION_FILTER.id]: ["North"] };
+
+    expect(buildBoundedChartQueries(input([bounded(MAX_FILTER_CONDITIONS - 1)], picks))).toHaveLength(1);
+    expect(buildBoundedChartQueries(input([bounded(MAX_FILTER_CONDITIONS)], picks))).toEqual([]);
   });
 });

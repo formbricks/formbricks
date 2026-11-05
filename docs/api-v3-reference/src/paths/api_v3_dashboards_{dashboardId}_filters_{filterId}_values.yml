@@ -19,11 +19,11 @@ get:
     carries it (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks`
     with `limit_exceeded`. A list whose charts would need more than 40 Cube queries
     (`MAX_FILTER_VALUE_QUERIES`: one per Feedback Dataset, up to two per chart showing only its top
-    groups, more when the charts' answer filters do not fit one query) answers 422 naming
+    groups, more when the charts' answer filters or filter conditions do not fit one query) answers 422 naming
     `filterId` with `limit_exceeded`: type a value instead, or split the dashboard.
 
-    Needs read access to the dashboard's workspace and to every Feedback Dataset whose charts have
-    the field. Every request counts against the default v3 budget, cached or not. Lists are cached
+    Needs read access to the dashboard's workspace and to every Feedback Dataset its charts read.
+    Every request counts against the default v3 budget, cached or not. Lists are cached
     for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
     shared by everyone who may read the dashboard; an uncached list also counts one unit of the
     chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.

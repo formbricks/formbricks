@@ -421,6 +421,46 @@ describe("chart queries within budget", () => {
         expect.objectContaining({ query: expect.objectContaining({ filters: [pick] }) })
       );
     });
+
+    test("counts the saved filters and the picks together against MAX_FILTER_CONDITIONS: 422 naming picks", async () => {
+      const conditions = (count: number) =>
+        Array.from({ length: count }, (_, index) => ({
+          member: "FeedbackRecords.sourceName",
+          operator: "notEquals",
+          values: [`s${index}`],
+        }));
+      const runOver = (saved: number, picks: number) =>
+        runV3ChartQuery({
+          access: access as never,
+          datasetId,
+          type: "bar",
+          query: { ...BY_SOURCE, filters: conditions(saved) },
+          dateRange: undefined,
+          source: "v3.dashboards.chartData",
+          extraFilters: conditions(picks) as never,
+          context,
+        });
+
+      // 20 + 5 is the cap: it runs.
+      expect((await runOver(20, 5)).status).toBe(200);
+      vi.mocked(runChartQuery).mockClear();
+
+      // 20 saved and 10 picks each pass alone, but run as one query of 30.
+      const response = await runOver(20, 10);
+      expect(response.status).toBe(422);
+      const body = (await response.json()) as {
+        detail: string;
+        invalid_params: { name: string; reason: string }[];
+      };
+      expect(body.detail).toBe("The filter picks are not valid");
+      expect(body.invalid_params).toEqual([
+        expect.objectContaining({
+          name: "picks.filters",
+          reason: expect.stringContaining("25 filter conditions"),
+        }),
+      ]);
+      expect(runChartQuery).not.toHaveBeenCalled();
+    });
   });
 
   describe("getV3ChartData", () => {

@@ -15,6 +15,10 @@ import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fi
  * named at its position. A `FeedbackRecords.ed_*` field passes the schema by its name pattern alone, so a
  * key nobody's charts read would otherwise be saved as a filter that can narrow nothing. A field already
  * saved on the dashboard is not asked again: a filter keeps saving after its key leaves every chart.
+ *
+ * Only the datasets the caller may read are asked for their keys, and asked only once found readable: a
+ * key that only an unreadable dataset has is refused like one no dataset has, so a write never tells its
+ * caller which keys a dataset they cannot read holds — as `GET …/filter-fields` never lists them.
  */
 export const findUnknownEmbeddedFilterFields = async ({
   dashboardId,
@@ -22,6 +26,7 @@ export const findUnknownEmbeddedFilterFields = async ({
   widgetIds,
   access,
   actor,
+  canReadDataset,
 }: {
   dashboardId: string;
   filters: readonly TDashboardFilter[];
@@ -29,14 +34,16 @@ export const findUnknownEmbeddedFilterFields = async ({
   widgetIds?: readonly string[];
   access: V3WorkspaceContext;
   actor: TCubeQueryActor;
+  /** Whether the caller may read a Feedback Dataset: checked before its keys are read. */
+  canReadDataset: (datasetId: string) => Promise<boolean>;
 }): Promise<InvalidParam[]> => {
   const embedded = filters.flatMap((filter, index) =>
     isEmbeddedMemberName(filter.field) ? [{ field: filter.field, index }] : []
   );
   if (embedded.length === 0) return [];
 
-  const dashboard = await prisma.dashboard.findUnique({
-    where: { id: dashboardId },
+  const dashboard = await prisma.dashboard.findFirst({
+    where: { id: dashboardId, workspaceId: access.workspaceId },
     select: {
       filters: true,
       widgets: {
@@ -51,13 +58,16 @@ export const findUnknownEmbeddedFilterFields = async ({
 
   const fields = [...new Set(asked.map(({ field }) => field))];
   const datasetIds = [...new Set((dashboard?.widgets ?? []).map(({ chart }) => chart.feedbackDirectoryId))];
+  const readable = await Promise.all(datasetIds.map(canReadDataset));
   const matchers = await Promise.all(
-    datasetIds.map((datasetId) =>
-      getDatasetFieldMatcher(
-        { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
-        fields
+    datasetIds
+      .filter((_datasetId, index) => readable[index])
+      .map((datasetId) =>
+        getDatasetFieldMatcher(
+          { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
+          fields
+        )
       )
-    )
   );
 
   return asked

@@ -194,6 +194,15 @@ const resolveValueListRequest = async ({
   const actor = getV3AuthorizationActor(context.authentication);
   if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
+  // Every dataset whose charts can offer values must be readable, so the one cached list is everyone's.
+  // Checked together (C8): one dashboard can read many datasets. Checked before any dataset's embedded
+  // keys are read, as the filter-fields read does: which keys a dataset has is not asked for a caller who
+  // may not read it — so every widget's dataset counts, whether or not it turns out to have the field.
+  const refused = await refuseUnlessAllReadable(datasetIds, (datasetId) =>
+    refuseUnlessDashboardDatasetReadable(access, datasetId, row, context)
+  );
+  if (refused) return refused;
+
   // The values offered are those left once the dashboard's locked filters apply, as on its charts.
   const locked = withLockedFilters(row.filters, filters, requestPicks(query));
   const filterFields = locked.filters.map(({ field }) => field);
@@ -203,14 +212,6 @@ const resolveValueListRequest = async ({
     organizationId: access.organizationId,
     actor,
   }));
-
-  // Every dataset whose charts can offer values must be readable, so the one cached list is everyone's.
-  // Checked together (C8): one dashboard can read many datasets.
-  const refused = await refuseUnlessAllReadable(
-    datasetIds.filter((id) => datasetHasField(id, filter.field)),
-    (datasetId) => refuseUnlessDashboardDatasetReadable(access, datasetId, row, context)
-  );
-  if (refused) return refused;
 
   return { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested };
 };
@@ -378,7 +379,7 @@ const checkValuesRequest = (
  * by a case-insensitive `search`. Up to 100, alphabetical, `hasMore` when more match. `filterId` is one of
  * the request's `filter[<id>]` parameters; one that is not, or one that takes a typed value, answers 422.
  *
- * Needs read access to the dashboard and to each Feedback Dataset whose charts have the field. Every
+ * Needs read access to the dashboard and to each Feedback Dataset its charts read. Every
  * request spends from the default v3 budget first, before the cache is read, so a cached list is charged
  * too. Answered from a 60-second cache shared by every reader; a miss also reserves one unit of the
  * chart-query budget per Cube query it may run and gives back the ones it did not, and each Cube query

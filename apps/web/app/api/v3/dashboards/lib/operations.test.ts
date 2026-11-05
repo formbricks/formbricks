@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
+import {
+  refuseUnlessFeedbackDatasetAccess,
+  requireDashboardsAccess,
+} from "@/app/api/v3/lib/dashboards-access";
 import { problemDashboardsPlanRequired, problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import {
   createV3Dashboard,
   deleteV3Dashboard,
@@ -36,7 +40,11 @@ vi.mock("@formbricks/database", () => ({ prisma: {} }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })) },
 }));
-vi.mock("@/app/api/v3/lib/dashboards-access", () => ({ requireDashboardsAccess: vi.fn() }));
+vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
+  requireDashboardsAccess: vi.fn(),
+  refuseUnlessFeedbackDatasetAccess: vi.fn(),
+}));
+vi.mock("./embedded-filter-fields", () => ({ findUnknownEmbeddedFilterFields: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("./service", () => ({
   createDashboardRow: vi.fn(),
@@ -120,6 +128,7 @@ const auditLog = () => ({}) as TV3AuditLog;
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(requireDashboardsAccess).mockResolvedValue(granted);
+  vi.mocked(findUnknownEmbeddedFilterFields).mockResolvedValue([]);
 });
 
 describe("listV3Dashboards", () => {
@@ -858,6 +867,32 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
       expectedUpdatedAt: EXPECTED_UPDATED_AT,
       currentUpdatedAt: current.toISOString(),
     });
+  });
+
+  test("asks for embedded keys only of datasets the caller may read, by the dataset read check", async () => {
+    vi.mocked(replaceDashboardRow).mockResolvedValue({
+      kind: "ok",
+      row: dashboardRow(),
+      previous: { name: "Board", filters: [], widgets: [] },
+    });
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockImplementation(async (_auth, _access, datasetId) =>
+      datasetId === "clds000000000000000000002" ? refused() : null
+    );
+
+    expect((await setFilters()).status).toBe(200);
+
+    const { canReadDataset, access } = vi.mocked(findUnknownEmbeddedFilterFields).mock.calls[0][0];
+    expect(access).toMatchObject({ workspaceId: WORKSPACE_ID });
+    expect(await canReadDataset("clds000000000000000000001")).toBe(true);
+    expect(await canReadDataset("clds000000000000000000002")).toBe(false);
+    expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ workspaceId: WORKSPACE_ID }),
+      "clds000000000000000000002",
+      "read",
+      REQUEST_ID,
+      INSTANCE
+    );
   });
 
   test("returns the access refusal without writing, and maps an unexpected failure to 500", async () => {

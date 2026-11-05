@@ -258,6 +258,52 @@ describe("checking the datasets (C8)", () => {
     expect((await list(SOURCE_FILTER.id)).status).toBe(200);
     expect(most).toBe(2);
   });
+
+  test("reads no dataset's embedded keys until every widget's dataset is found readable", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([
+        chartOf(1, { measures: [COUNT] }, "clds000000000000000000001"),
+        chartOf(2, { measures: [COUNT] }, "clds000000000000000000002"),
+      ]) as never
+    );
+    const order: string[] = [];
+    vi.mocked(refuseUnlessDashboardDatasetReadable).mockImplementation(async (_access, datasetId) => {
+      order.push(`authorize:${datasetId}`);
+      return null;
+    });
+    vi.mocked(getDatasetFieldMatcher).mockImplementation(async ({ datasetId }) => {
+      order.push(`keys:${datasetId}`);
+      return () => true;
+    });
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(200);
+    expect(order.slice(0, 2).sort()).toEqual([
+      "authorize:clds000000000000000000001",
+      "authorize:clds000000000000000000002",
+    ]);
+    expect(order.slice(2).sort()).toEqual([
+      "keys:clds000000000000000000001",
+      "keys:clds000000000000000000002",
+    ]);
+  });
+
+  test("a dataset the caller may not read refuses the list before any key of any dataset is read", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([
+        chartOf(1, { measures: [COUNT] }, "clds000000000000000000001"),
+        chartOf(2, { measures: [COUNT] }, "clds000000000000000000002"),
+      ]) as never
+    );
+    // The unreadable dataset lacks the field: it is refused all the same, as nobody asked whether it has it.
+    vi.mocked(getDatasetFieldMatcher).mockResolvedValue(() => false);
+    vi.mocked(refuseUnlessDashboardDatasetReadable).mockImplementation(async (_access, datasetId) =>
+      datasetId === "clds000000000000000000002" ? new Response(null, { status: 403 }) : null
+    );
+
+    expect((await list(SOURCE_FILTER.id)).status).toBe(403);
+    expect(getDatasetFieldMatcher).not.toHaveBeenCalled();
+    expect(executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
 });
 
 describe("a top-N chart (S6)", () => {
