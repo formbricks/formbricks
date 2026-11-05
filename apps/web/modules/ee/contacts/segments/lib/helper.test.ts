@@ -625,6 +625,21 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     expect(getSegment).toHaveBeenCalledTimes(1);
   });
 
+  // CodeRabbit on #9935: a draft may store a non-id; it reads nothing and must not reach id validation.
+  test("getSurveyIdsReadBySegments skips survey ids that are not ids", async () => {
+    const read = await getSurveyIdsReadBySegments(
+      [
+        {
+          id: "clseg0000000000000000001",
+          filters: tree(interaction("specific", ["not an id", "", visibleId])),
+        },
+      ],
+      workspaceId
+    );
+
+    expect([...read]).toEqual([visibleId]);
+  });
+
   test("assertSegmentSurveyFiltersVisible turns a hidden survey into InvalidInputError", async () => {
     mockSurveyFindFirst.mockResolvedValue({ id: restrictedId });
 

@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
+import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { TBaseFilters, TSegmentFilter, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
@@ -160,7 +161,9 @@ const specificSurveyIdsOf = (resource: TSegmentFilter): string[] => {
   // `any` scope only reads workspace-visible surveys (see `survey-interaction.ts`).
   const { value } = resource as Partial<TSegmentSurveyInteractionFilter>;
   if (value?.surveyScope !== "specific" || !Array.isArray(value.surveyIds)) return [];
-  return value.surveyIds.filter((surveyId): surveyId is string => typeof surveyId === "string");
+  // A value that is not an id can name no survey, and must not reach an id-validated lookup (a draft may
+  // have stored one): it reads nothing, like a dangling nested segment.
+  return value.surveyIds.filter((surveyId): surveyId is string => ZId.safeParse(surveyId).success);
 };
 
 /**

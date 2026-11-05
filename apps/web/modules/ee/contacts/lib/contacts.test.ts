@@ -904,6 +904,7 @@ describe("Contacts Lib", () => {
     describe("survey visibility of the segment's filters (ENG-6870)", () => {
       const restrictedSurveyId = "clrestricted00000000000001";
       const visibleSurveyId = "clvisible000000000000000001";
+      const destinationSurveyId = "cldestination000000000001";
       const within = { amount: 30, unit: "days" } as const;
 
       const completed = (id: string, surveyScope: "any" | "specific", surveyIds: string[] = []) => ({
@@ -920,7 +921,7 @@ describe("Contacts Lib", () => {
           id: "f2",
           connector: "and",
           resource: {
-            ...completed("i2", "specific", [visibleSurveyId, mockSurveyId]),
+            ...completed("i2", "specific", [visibleSurveyId, destinationSurveyId]),
             qualifier: { operator: "haveNotCompleted" },
           },
         },
@@ -991,7 +992,7 @@ describe("Contacts Lib", () => {
         expect(prisma.survey.findFirst).toHaveBeenCalledOnce();
         expect(prisma.survey.findFirst).toHaveBeenCalledWith({
           where: {
-            id: { in: [visibleSurveyId, mockSurveyId] },
+            id: { in: [visibleSurveyId, destinationSurveyId] },
             workspaceId: mockWorkspaceId,
             AND: [memberHiddenSurveyWhere],
           },
