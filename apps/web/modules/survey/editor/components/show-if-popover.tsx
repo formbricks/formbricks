@@ -1,7 +1,7 @@
 "use client";
 
 import { EyeIcon, TrashIcon } from "lucide-react";
-import { type Dispatch, type RefObject, type ReactNode, type SetStateAction, useState } from "react";
+import { type Dispatch, type ReactNode, type RefObject, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";

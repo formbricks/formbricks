@@ -2,7 +2,14 @@
 
 import type { TFunction } from "i18next";
 import { EyeIcon, EyeOffIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { type Dispatch, type RefObject, type ReactNode, type SetStateAction, useContext, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type RefObject,
+  type SetStateAction,
+  useContext,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { type TOptionLike, type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
