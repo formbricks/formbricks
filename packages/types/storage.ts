@@ -142,11 +142,38 @@ export type TUploadFileAccess = {
   url?: string | null;
 };
 
+/**
+ * An upload request's extension list: the element's own, picked from the allowed set. The survey schema
+ * does not make a saved list unique, so repeats are dropped first; what is left can never be longer than
+ * the allowed set, and an over-long list is refused before any entry is checked. A list past
+ * {@link MAX_RAW_ALLOWED_FILE_EXTENSIONS} is refused as sent, with that limit named, before it is
+ * deduplicated, so a huge one costs no more than the one issue that refuses it.
+ */
+export const MAX_RAW_ALLOWED_FILE_EXTENSIONS = 1_000;
+
+const ZAllowedFileExtensionsInput = z
+  .preprocess((value, ctx) => {
+    if (!Array.isArray(value)) return value;
+    const list: unknown[] = value;
+    if (list.length > MAX_RAW_ALLOWED_FILE_EXTENSIONS) {
+      ctx.addIssue({
+        code: "too_big",
+        origin: "array",
+        maximum: MAX_RAW_ALLOWED_FILE_EXTENSIONS,
+        inclusive: true,
+        input: list,
+      });
+      return list;
+    }
+    return [...new Set(list)];
+  }, z.array(ZAllowedFileExtension).max(ALLOWED_FILE_EXTENSIONS_TUPLE.length))
+  .optional();
+
 export const ZUploadPrivateFileRequest = z
   .object({
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
-    allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
+    allowedFileExtensions: ZAllowedFileExtensionsInput,
     surveyId: z.cuid2(),
     elementId: z
       .string()
@@ -199,7 +226,7 @@ export const ZUploadPublicFileRequest = z
     fileName: z.string().trim().min(1),
     fileType: z.string().trim().min(1),
     workspaceId: z.cuid2(),
-    allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
+    allowedFileExtensions: ZAllowedFileExtensionsInput,
   })
   .superRefine((data, ctx) => {
     refineFileUploadInput({
