@@ -1,4 +1,3 @@
-import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import {
   RESPONSE_ALREADY_FINISHED_ERROR_CODE,
   ResourceNotFoundError,
@@ -166,18 +165,11 @@ const validateUpdateRequest = (
 };
 
 const getUpdatedResponse = async (
-  responseId: string,
-  surveyId: string,
-  responseUpdateInput: TResponseUpdateInput,
-  ingestFlags: readonly TIngestFlag[]
+  update: Parameters<typeof updateResponseWithQuotaEvaluation>[0]
 ): Promise<TUpdatedResponseResult> => {
+  const { responseId } = update;
   try {
-    const updatedResponse = await updateResponseWithQuotaEvaluation(
-      responseId,
-      surveyId,
-      responseUpdateInput,
-      ingestFlags
-    );
+    const updatedResponse = await updateResponseWithQuotaEvaluation(update);
     return { updatedResponse };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
@@ -269,12 +261,13 @@ export const putResponseHandler = async ({
   }
 
   // `survey` was loaded from the stored response's surveyId, never from the request body.
-  const updatedResponseResult = await getUpdatedResponse(
+  const updatedResponseResult = await getUpdatedResponse({
     responseId,
-    survey.id,
-    responseUpdateInput,
-    ingestResult.flags
-  );
+    workspaceId,
+    surveyId: survey.id,
+    responseInput: responseUpdateInput,
+    ingestFlags: ingestResult.flags,
+  });
   if ("response" in updatedResponseResult) {
     return updatedResponseResult;
   }

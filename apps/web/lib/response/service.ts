@@ -569,8 +569,9 @@ export const getResponsesByWorkspaceId = reactCache(
 );
 
 /**
- * Locks a response row for the rest of `tx` and returns its `finished` flag, or `null` when there is no such
- * response. A check that guards a response write belongs on this result: under the lock, no other write can
+ * Locks a response row for the rest of `tx` and returns its `finished` flag, or `null` when the workspace has
+ * no such response. Scoped through the response's survey, so a caller holding another workspace's response
+ * id can neither lock nor read it. A check that guards a response write belongs on this result: under the lock, no other write can
  * commit between the check and the write, and the read in `updateResponse` that follows sees the latest
  * committed row, so its merge of `data`/`variables`/`ttc` cannot drop a concurrent update's keys.
  *
@@ -579,13 +580,14 @@ export const getResponsesByWorkspaceId = reactCache(
  */
 export const lockResponseForUpdate = async (
   tx: Prisma.TransactionClient,
-  responseId: string
+  { responseId, workspaceId }: { responseId: string; workspaceId: string }
 ): Promise<{ finished: boolean } | null> => {
   const [locked] = await tx.$queryRaw<{ finished: boolean }[]>`
-    SELECT "finished"
-    FROM "Response"
-    WHERE "id" = ${responseId}
-    FOR NO KEY UPDATE
+    SELECT r."finished"
+    FROM "Response" r
+    JOIN "Survey" s ON s."id" = r."surveyId"
+    WHERE r."id" = ${responseId} AND s."workspaceId" = ${workspaceId}
+    FOR NO KEY UPDATE OF r
   `;
   return locked ?? null;
 };

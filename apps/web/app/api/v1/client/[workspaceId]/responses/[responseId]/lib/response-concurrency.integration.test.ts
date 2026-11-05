@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { ResponseAlreadyFinishedError } from "@formbricks/types/errors";
+import { Prisma } from "@formbricks/database/prisma";
+import { ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
+import { lockResponseForUpdate } from "@/lib/response/service";
 import { updateResponseWithQuotaEvaluation } from "./response";
 
 /**
@@ -21,10 +23,10 @@ beforeEach(async () => {
   await resetDb();
 });
 
-const seedUnfinishedResponse = async () => {
-  const organization = await prisma.organization.create({ data: { name: "ENG-6869 org" } });
+const seedUnfinishedResponse = async (name = "ENG-6869") => {
+  const organization = await prisma.organization.create({ data: { name: `${name} org` } });
   const workspace = await prisma.workspace.create({
-    data: { name: "ENG-6869 workspace", organizationId: organization.id },
+    data: { name: `${name} workspace`, organizationId: organization.id },
   });
   const survey = await prisma.survey.create({
     data: { name: "ENG-6869 survey", workspaceId: workspace.id, status: "inProgress" },
@@ -32,17 +34,14 @@ const seedUnfinishedResponse = async () => {
   const response = await prisma.response.create({
     data: { surveyId: survey.id, data: {}, finished: false },
   });
-  return { surveyId: survey.id, responseId: response.id };
+  return { workspaceId: workspace.id, surveyId: survey.id, responseId: response.id };
 };
 
 /**
  * Writes the row inside a transaction and keeps it open, so the row lock is held until `commit()`.
  * `holderPid` is that transaction's backend, so the wait below can look for writers blocked on it alone.
  */
-const writeInOpenTransaction = async (
-  responseId: string,
-  data: { finished?: boolean; data: Record<string, string> }
-) => {
+const holdOpenTransaction = async (work: (tx: Prisma.TransactionClient) => Promise<unknown>) => {
   let commit!: () => void;
   const commitSignal = new Promise<void>((resolve) => {
     commit = resolve;
@@ -55,7 +54,7 @@ const writeInOpenTransaction = async (
   const committed = prisma.$transaction(
     async (tx) => {
       const [{ pid }] = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS "pid"`;
-      await tx.response.update({ where: { id: responseId }, data });
+      await work(tx);
       markWritten(pid);
       await commitSignal;
     },
@@ -66,6 +65,11 @@ const writeInOpenTransaction = async (
   const holderPid = await Promise.race([written, committed.then(() => -1)]);
   return { holderPid, commit, committed };
 };
+
+type TResponseWrite = Parameters<typeof prisma.response.update>[0]["data"];
+
+const writeInOpenTransaction = (responseId: string, data: TResponseWrite) =>
+  holdOpenTransaction((tx) => tx.response.update({ where: { id: responseId }, data }));
 
 /** Resolves once another backend is blocked on the holder's lock, i.e. the update under test reached it. */
 const waitForBlockedWriter = async (holderPid: number) => {
@@ -108,43 +112,110 @@ const raceAgainst = async <T>(
 const readResponse = (responseId: string) =>
   prisma.response.findUniqueOrThrow({
     where: { id: responseId },
-    select: { finished: true, data: true },
+    select: { finished: true, data: true, variables: true, ttc: true },
   });
 
 describe("updateResponseWithQuotaEvaluation with a concurrent write (ENG-6869)", () => {
   test("an update racing the finishing write cannot reopen the response", async () => {
-    const { surveyId, responseId } = await seedUnfinishedResponse();
+    const { workspaceId, surveyId, responseId } = await seedUnfinishedResponse();
     const finishing = await writeInOpenTransaction(responseId, { finished: true, data: { q1: "A" } });
 
     const outcome = await raceAgainst(finishing, () =>
-      updateResponseWithQuotaEvaluation(responseId, surveyId, { finished: false, data: { q1: "B" } })
+      updateResponseWithQuotaEvaluation({
+        responseId,
+        workspaceId,
+        surveyId,
+        responseInput: { finished: false, data: { q1: "B" } },
+      })
     );
 
     expect(outcome).toBeInstanceOf(ResponseAlreadyFinishedError);
-    expect(await readResponse(responseId)).toEqual({ finished: true, data: { q1: "A" } });
+    expect(await readResponse(responseId)).toMatchObject({ finished: true, data: { q1: "A" } });
   });
 
   test("an update racing the finishing write cannot change the finished answers", async () => {
-    const { surveyId, responseId } = await seedUnfinishedResponse();
+    const { workspaceId, surveyId, responseId } = await seedUnfinishedResponse();
     const finishing = await writeInOpenTransaction(responseId, { finished: true, data: { q1: "A" } });
 
     const outcome = await raceAgainst(finishing, () =>
-      updateResponseWithQuotaEvaluation(responseId, surveyId, { data: { q1: "B" } })
+      updateResponseWithQuotaEvaluation({
+        responseId,
+        workspaceId,
+        surveyId,
+        responseInput: { data: { q1: "B" } },
+      })
     );
 
     expect(outcome).toBeInstanceOf(ResponseAlreadyFinishedError);
-    expect(await readResponse(responseId)).toEqual({ finished: true, data: { q1: "A" } });
+    expect(await readResponse(responseId)).toMatchObject({ finished: true, data: { q1: "A" } });
   });
 
-  test("two overlapping updates of an unfinished response keep each other's answers", async () => {
-    const { surveyId, responseId } = await seedUnfinishedResponse();
-    const first = await writeInOpenTransaction(responseId, { data: { q1: "A" } });
+  test("two overlapping updates of an unfinished response keep each other's answers, variables and timings", async () => {
+    const { workspaceId, surveyId, responseId } = await seedUnfinishedResponse();
+    const first = await writeInOpenTransaction(responseId, {
+      data: { q1: "A" },
+      variables: { v1: "A" },
+      ttc: { q1: 100 },
+    });
 
     const outcome = await raceAgainst(first, () =>
-      updateResponseWithQuotaEvaluation(responseId, surveyId, { finished: true, data: { q2: "B" } })
+      updateResponseWithQuotaEvaluation({
+        responseId,
+        workspaceId,
+        surveyId,
+        responseInput: { finished: true, data: { q2: "B" }, variables: { v2: "B" }, ttc: { q2: 200 } },
+      })
     );
 
-    expect(outcome).toMatchObject({ finished: true, data: { q1: "A", q2: "B" } });
-    expect(await readResponse(responseId)).toEqual({ finished: true, data: { q1: "A", q2: "B" } });
+    const merged = {
+      finished: true,
+      data: { q1: "A", q2: "B" },
+      variables: { v1: "A", v2: "B" },
+      // Finishing totals the merged timings, so a dropped key would also show in `_total`.
+      ttc: { q1: 100, q2: 200, _total: 300 },
+    };
+    expect(outcome).toMatchObject(merged);
+    expect(await readResponse(responseId)).toEqual(merged);
+  });
+});
+
+describe("lockResponseForUpdate (ENG-6869)", () => {
+  test("does not lock or update another workspace's response", async () => {
+    const { surveyId, responseId } = await seedUnfinishedResponse();
+    const other = await seedUnfinishedResponse("Other tenant");
+
+    await expect(
+      prisma.$transaction((tx) => lockResponseForUpdate(tx, { responseId, workspaceId: other.workspaceId }))
+    ).resolves.toBeNull();
+    await expect(
+      updateResponseWithQuotaEvaluation({
+        responseId,
+        workspaceId: other.workspaceId,
+        surveyId,
+        responseInput: { finished: true, data: { q1: "B" } },
+      })
+    ).rejects.toThrow(ResourceNotFoundError);
+    expect(await readResponse(responseId)).toMatchObject({ finished: false, data: {} });
+  });
+
+  test("lets rows that reference the response be inserted while it is locked", async () => {
+    // FOR NO KEY UPDATE, not FOR UPDATE: a foreign-key insert takes FOR KEY SHARE on the response, which
+    // FOR UPDATE would block for the whole update (quota links, tags and notes written by other requests).
+    const { workspaceId, responseId } = await seedUnfinishedResponse();
+    const tag = await prisma.tag.create({ data: { name: "ENG-6869 tag", workspaceId } });
+    const holder = await holdOpenTransaction((tx) => lockResponseForUpdate(tx, { responseId, workspaceId }));
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        // Fail fast instead of queueing behind the holder if the lock mode ever blocks the insert.
+        await tx.$executeRaw`SET LOCAL lock_timeout = '2s'`;
+        await tx.tagsOnResponses.create({ data: { responseId, tagId: tag.id } });
+      });
+    } finally {
+      holder.commit();
+      await holder.committed;
+    }
+
+    await expect(prisma.tagsOnResponses.count({ where: { responseId } })).resolves.toBe(1);
   });
 });

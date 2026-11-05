@@ -154,10 +154,7 @@ describe("putResponseHandler", () => {
     expect(result.response.status).toBe(200);
     expect(mocks.getSurvey).toHaveBeenCalledWith(surveyId);
     expect(mocks.updateResponseWithQuotaEvaluation).toHaveBeenCalledWith(
-      responseId,
-      surveyId,
-      expect.anything(),
-      expect.anything()
+      expect.objectContaining({ responseId, workspaceId, surveyId })
     );
   });
 
@@ -639,8 +636,8 @@ describe("putResponseHandler", () => {
 
     /** What the handler actually persisted, and the flags it computed for it. */
     const persisted = () => {
-      const [, , updateInput, ingestFlags] = mocks.updateResponseWithQuotaEvaluation.mock.calls[0];
-      return { data: updateInput.data, ingestFlags };
+      const [{ responseInput, ingestFlags }] = mocks.updateResponseWithQuotaEvaluation.mock.calls[0];
+      return { data: responseInput.data, ingestFlags };
     };
 
     test("drops a key no ingested field declares", async () => {

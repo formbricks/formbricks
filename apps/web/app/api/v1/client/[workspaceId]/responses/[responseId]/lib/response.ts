@@ -10,7 +10,8 @@ import {
 } from "@/modules/ee/quotas/lib/evaluation-service";
 
 /**
- * `surveyId` is the stored response's survey, as the caller already loaded it — passed in so the quota
+ * `workspaceId` is the workspace the caller authorized; the row lock is scoped to it. `surveyId` is the stored
+ * response's survey, as the caller already loaded it — passed in so the quota
  * definitions are read before the transaction opens. Evaluation still checks it against the updated
  * row and skips on a mismatch.
  *
@@ -19,16 +20,23 @@ import {
  * otherwise be overwritten or reopened (ENG-6869). Because the row is locked and unfinished here, a result
  * with `finished: true` is always this update's own false→true transition.
  */
-export const updateResponseWithQuotaEvaluation = async (
-  responseId: string,
-  surveyId: string,
-  responseInput: TResponseUpdateInput,
-  ingestFlags?: readonly TIngestFlag[]
-): Promise<TResponseWithQuotaFull> => {
+export const updateResponseWithQuotaEvaluation = async ({
+  responseId,
+  workspaceId,
+  surveyId,
+  responseInput,
+  ingestFlags,
+}: {
+  responseId: string;
+  workspaceId: string;
+  surveyId: string;
+  responseInput: TResponseUpdateInput;
+  ingestFlags?: readonly TIngestFlag[];
+}): Promise<TResponseWithQuotaFull> => {
   const quotaContext = await loadQuotaEvaluationContext(surveyId);
 
   const txResponse = await prisma.$transaction(async (tx) => {
-    const locked = await lockResponseForUpdate(tx, responseId);
+    const locked = await lockResponseForUpdate(tx, { responseId, workspaceId });
     if (!locked) {
       throw new ResourceNotFoundError("Response", responseId);
     }
