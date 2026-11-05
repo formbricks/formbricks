@@ -158,6 +158,25 @@ export const FlowView = ({
   // The block whose Add logic menu is open: a collapsed block's hover "Add logic" expands it and opens
   // the menu at the end of its rules (ENG-6969 T15).
   const [addLogicMenuBlockId, setAddLogicMenuBlockId] = useState<string | null>(null);
+  // A collapsed block's hover "Add logic": the block just expanded, its Add logic button may sit far
+  // below (a long block's questions come first), so scroll it into view, then open the menu there.
+  const [pendingAddLogicBlockId, setPendingAddLogicBlockId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (pendingAddLogicBlockId === null) return;
+    const trigger = document.getElementById(`flow-add-logic-${pendingAddLogicBlockId}`);
+    if (!trigger) return;
+    const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    trigger.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+    const timer = globalThis.setTimeout(
+      () => {
+        setAddLogicMenuBlockId(pendingAddLogicBlockId);
+        setPendingAddLogicBlockId(null);
+      },
+      reduceMotion ? 0 : 350
+    );
+    return () => globalThis.clearTimeout(timer);
+  }, [pendingAddLogicBlockId, expandedBlockIds]);
 
   // A save or publish that flags a rule opens the rule its toast names, and its block, and scrolls
   // there. The pass handled last is kept by the editor, so coming back to the tab doesn't reopen it.
@@ -509,7 +528,9 @@ export const FlowView = ({
   };
 
   const renderAddLogicMenu = (block: TFlowBlockSection, blockShowIfBlocker: string | null) => (
+    // Not modal: an open menu must not lock the page's scroll (it can open near the screen's edge).
     <DropdownMenu
+      modal={false}
       open={addLogicMenuBlockId === block.id}
       onOpenChange={(open) => setAddLogicMenuBlockId(open ? block.id : null)}>
       <DropdownMenuTrigger asChild>
@@ -533,7 +554,14 @@ export const FlowView = ({
           tooltipContent={blockShowIfBlocker}
           triggerClass="block">
           <DropdownMenuItem
-            icon={<EyeIcon className="size-4" />}
+            // A tile the size of the rule types' above, so its label lines up with theirs.
+            icon={
+              <span
+                className="inline-flex size-5 shrink-0 items-center justify-center rounded-md bg-slate-500 text-white [&_svg]:size-3.5"
+                aria-hidden="true">
+                <EyeIcon />
+              </span>
+            }
             disabled={blockShowIfBlocker !== null}
             onClick={() => addShowIf(`block:${block.id}`)}>
             {t("workspace.surveys.edit.flow.show_block_if")}
@@ -584,7 +612,7 @@ export const FlowView = ({
               renderRuleRow(row, localSurvey.startLogic ?? [], START_SCOPE_BLOCK_IDX)
             )}
             <div className="flex items-center gap-1.5">
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button type="button" size="sm" variant="secondary" id="flow-add-logic-start">
                     {t("workspace.surveys.edit.flow.add_logic_before_first_question")}
@@ -667,7 +695,7 @@ export const FlowView = ({
                       onClick={(event) => {
                         event.stopPropagation();
                         setExpandedBlockIds((current) => expandBlock(current, block.id));
-                        setAddLogicMenuBlockId(block.id);
+                        setPendingAddLogicBlockId(block.id);
                       }}>
                       {t("workspace.surveys.edit.add_logic")}
                       <PlusIcon />
