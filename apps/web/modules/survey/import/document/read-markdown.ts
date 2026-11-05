@@ -32,8 +32,20 @@ type TToken = ReturnType<MarkdownIt["parse"]>[number];
 /** `html`: HTML is markup, not text; tags are dropped and the text between them kept. */
 const markdown = new MarkdownIt("default", { html: true, linkify: false, typographer: false });
 
-/** A GFM table's delimiter row: `|---|:--:|`, at least one pipe and one dash. */
-const TABLE_DELIMITER_ROW = /^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/;
+/** One cell of a GFM table's delimiter row: dashes, with an alignment colon at either end. */
+const TABLE_DELIMITER_CELL = /^:?-+:?$/;
+
+/**
+ * Whether a line is a GFM table's delimiter row, `|---|:--:|`: cells of dashes between pipes, the outer
+ * pipes optional. Split and checked cell by cell, so it stays linear on any line an upload holds.
+ */
+const isTableDelimiterRow = (line: string): boolean => {
+  if (!line.includes("|") || !line.includes("-")) return false;
+  const cells = line.trim().split("|");
+  if (cells[0].trim() === "") cells.shift();
+  if (cells.length > 0 && cells[cells.length - 1].trim() === "") cells.pop();
+  return cells.length > 0 && cells.every((cell) => TABLE_DELIMITER_CELL.test(cell.trim()));
+};
 /** An ATX heading: `# Title`. */
 const HEADING_LINE = /^ {0,3}#{1,6}\s+\S/;
 /** A list item: `- text`, `* text`, `+ text`, `1. text`, `1) text`. */
@@ -69,9 +81,7 @@ export const looksLikeMarkdown = (text: string): boolean => {
   if (lines.length === 0) return false;
 
   for (let index = 1; index < lines.length; index += 1) {
-    if (lines[index].includes("|") && lines[index].includes("-") && TABLE_DELIMITER_ROW.test(lines[index])) {
-      if (lines[index - 1].includes("|")) return true;
-    }
+    if (isTableDelimiterRow(lines[index]) && lines[index - 1].includes("|")) return true;
   }
 
   const marked = lines.filter((line) => HEADING_LINE.test(line) || LIST_LINE.test(line)).length;
@@ -134,7 +144,7 @@ const addTextLines = (state: TReadState, text: string, label: string): void => {
     .forEach((line, index) => addParagraph(state, index === 0 ? `${label}${line}` : line));
 };
 
-/** A table's rows, from its `table_open` token on, as lines; returns the index after `table_close`. */
+/** A table's rows, from its `table_open` token on, as lines; returns the index of its `table_close`. */
 const readTable = (state: TReadState, tokens: readonly TToken[], start: number): number => {
   state.tables += 1;
   if (state.tables > SURVEY_IMPORT_WORD_MAX_TABLES) {
@@ -200,8 +210,11 @@ export const readMarkdownDocument = (
   let label = "";
   let headingLevel = 0;
 
-  for (let index = 0; index < tokens.length; index += 1) {
+  let index = 0;
+  while (index < tokens.length) {
     const token = tokens[index];
+    // The next token to read: the one after this, or after the table this one opens.
+    let next = index + 1;
     switch (token.type) {
       case "list_item_open":
         // An ordered item's number is in `info`, its `.` or `)` in `markup`; a bullet's marker in `markup`.
@@ -226,13 +239,14 @@ export const readMarkdownDocument = (
         label = "";
         break;
       case "table_open":
-        index = readTable(state, tokens, index);
+        next = readTable(state, tokens, index) + 1;
         label = "";
         break;
       default:
         // Block structure (paragraph, list and blockquote marks), rules and HTML blocks carry no text.
         break;
     }
+    index = next;
   }
 
   if (state.lines.length === 0) throw surveyImportFileUnreadable("The document has no text");

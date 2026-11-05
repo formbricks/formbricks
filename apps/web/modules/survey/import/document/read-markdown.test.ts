@@ -37,6 +37,32 @@ describe("looksLikeMarkdown", () => {
     expect(looksLikeMarkdown(SAMPLE_TABLE)).toBe(true);
   });
 
+  test.each([
+    ["|---|:--:|", true],
+    ["---|---", true],
+    ["| --- | :--- | ---: |", true],
+    ["|-x-|---|", false],
+    ["| a | b |", false],
+    ["|", false],
+  ])("reads %s under a row of pipes as a delimiter row: %s", (row, isTable) => {
+    expect(looksLikeMarkdown(`| A | B |\n${row}`)).toBe(isTable);
+  });
+
+  test("decides on a long hostile line in linear time", () => {
+    // The old delimiter-row pattern was quadratic in a run of spaces after a dash, its two adjacent
+    // whitespace runs splitting it every way: 40k spaces took 0.6 s, 200k would take about 15 s.
+    const hostile = [
+      `|-${" ".repeat(200_000)}x`,
+      `| --- |${" ".repeat(200_000)}x`,
+      `|${" -".repeat(100_000)}x`,
+    ];
+    for (const line of hostile) {
+      const started = performance.now();
+      expect(looksLikeMarkdown(`| A | B |\n${line}`)).toBe(false);
+      expect(performance.now() - started).toBeLessThan(200);
+    }
+  });
+
   test("headings and list items in text that is no grid are Markdown", () => {
     expect(looksLikeMarkdown("# Survey\n\n1. Your name?\n2. Your age?\n   - Under 18\n   - 18 or over")).toBe(
       true

@@ -498,6 +498,26 @@ const settleTitleCell = (context: DocumentPlanContext, titleCell: string | null)
 const firstLine = (context: DocumentPlanContext, refs: ReadonlySet<string>): number =>
   Math.min(...[...refs].map((ref) => context.lineAt(ref) ?? Number.MAX_SAFE_INTEGER));
 
+/**
+ * An answer that named none of its lines. A thinking model sometimes plans a chunk in its thoughts and
+ * returns an empty answer, so a silent answer is asked once more: by the core, in halves (`askedAgain`),
+ * or here, by failing its lines for the retry round. A second silent answer is `believed`: the lines hold
+ * no question start (a chunk of notes, or the rest of a question), not unread ones. A line an entry named
+ * but the schema refused already has its failure.
+ */
+const recordSilentAnswer = (
+  plan: TDocumentCheckedPlan,
+  refs: ReadonlySet<string>,
+  { believed }: { believed: boolean },
+  addFailure: (ref: string, reason: TDocumentPlanFailure) => void
+): void => {
+  plan.silentResponses += 1;
+  for (const ref of refs) {
+    plan.silentRefs.add(ref);
+    if (!believed && !plan.failures.has(ref)) addFailure(ref, "silent_answer");
+  }
+};
+
 function judgeResponse(
   context: DocumentPlanContext,
   plan: TDocumentCheckedPlan,
@@ -511,16 +531,7 @@ function judgeResponse(
   );
   const skips = collectPlanSkips(envelope.skipped, refs, ZDocumentPlanSkip);
   if (entries.size === 0 && skips.size === 0) {
-    plan.silentResponses += 1;
-    for (const ref of refs) plan.silentRefs.add(ref);
-    // A thinking model sometimes plans a chunk in its thoughts and returns an empty answer, so a silent
-    // answer is asked once more: by the core, in halves (`askedAgain`), or here, by failing its lines
-    // for the retry round. A second silent answer is believed: the lines hold no question start (a
-    // chunk of notes, or the rest of a question), not unread ones. A line an entry named but the schema
-    // refused already has its failure.
-    if (!round.retry && !askedAgain) {
-      for (const ref of refs) if (!plan.failures.has(ref)) addFailure(ref, "silent_answer");
-    }
+    recordSilentAnswer(plan, refs, { believed: round.retry || askedAgain === true }, addFailure);
   }
 
   // A line that is no entry's start — a header, a continuation, a comment — is not a failure: the AI
