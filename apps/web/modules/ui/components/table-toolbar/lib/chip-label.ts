@@ -19,7 +19,11 @@ export type TChipParts = {
 
 const formatValue = (property: TFilterProperty, value: string, locale: string): string => {
   if (property.valueType === "date") return formatDateForDisplay(parseCalendarDay(value), locale, DAY_FORMAT);
-  return property.options?.find((option) => option.value === value)?.label ?? value;
+  return (
+    property.options?.find((option) => option.value === value)?.label ??
+    property.valueLabels?.[value] ??
+    value
+  );
 };
 
 /**

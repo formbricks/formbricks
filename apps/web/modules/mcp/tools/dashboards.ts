@@ -332,7 +332,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "List dashboard filter values",
       description:
-        "List up to 100 values a field offers for a dashboard, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange, the filters already applied and search. Only a categorical field (one marked valueLookup in list_chart_fields), a yes/no field or an embedded-data field, with equals or notEquals, has a list; others take a typed value. The list holds only values that occur, so a fixed-option field (sentiment, value band, yes/no) shows which of its options the charts have. Pass the values as a filter to get_chart_data.",
+        "List up to 100 values a field offers for a dashboard, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange, the filters already applied and search. Only a categorical field (one marked valueLookup in list_chart_fields, or FeedbackRecords.valueId), a yes/no field or an embedded-data field, with equals or notEquals, has a list; others take a typed value. The list holds only values that occur, so a fixed-option field (sentiment, value band, yes/no) shows which of its options the charts have. A value stored as an id a survey names (an answer's option, a source id, an ending) carries the label it is shown by; search matches the label too. Pass the values, not the labels, as a filter to get_chart_data.",
       inputSchema: ZMcpListDashboardFilterValuesInput,
       outputSchema: ZMcpDashboardFilterValuesOutput,
       annotations: READ_ANNOTATIONS,

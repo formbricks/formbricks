@@ -3,6 +3,7 @@ import { listDashboardFilterValues } from "@/modules/ee/analysis/lib/api-client"
 import { NO_VALUE_PICK } from "./dashboard-filters";
 import {
   buildToolbarProperties,
+  disambiguateEmbeddedLabels,
   fromToolbarFilters,
   getToolbarRuleOperators,
   toToolbarFilters,
@@ -304,5 +305,73 @@ describe("buildToolbarProperties", () => {
     expect(byId(SCORE)).toMatchObject({ valueType: "number" });
     expect(byId(COLLECTED_AT)).toMatchObject({ valueType: "date" });
     expect(byId("FeedbackRecords.count")).toBeUndefined();
+  });
+  test("an answer's option is a list field whose values are looked up by their labels", async () => {
+    const option = byId("FeedbackRecords.valueId");
+    expect(option).toMatchObject({ valueType: "enum", multiValueEquals: true, labelledValues: true });
+    expect(option?.ruleOperators).toContain("equals");
+    vi.mocked(listDashboardFilterValues).mockResolvedValueOnce({
+      values: [{ value: "late", label: "Late" }, { value: "raw" }],
+      hasMore: false,
+    } as never);
+    expect((await option?.loadOptions?.(""))?.options).toEqual([
+      { value: NO_VALUE_PICK, label: "workspace.analysis.dashboards.filter_no_value" },
+      { value: "late", label: "Late" },
+      { value: "raw", label: "raw" },
+    ]);
+    expect(byId(SOURCE)?.labelledValues).toBe(false);
+  });
+
+  test("Language's (No value) reads Default; every other field's (No value)", () => {
+    expect(byId("FeedbackRecords.language")?.options).toEqual([
+      { value: NO_VALUE_PICK, label: "workspace.analysis.dashboards.filter_no_value_language" },
+    ]);
+    expect(byId(SOURCE)?.options?.[0]?.label).toBe("workspace.analysis.dashboards.filter_no_value");
+  });
+
+  test("the sentiment score's typed value hints at its range; other numbers keep the default", () => {
+    expect(byId("FeedbackRecords.sentimentScore")?.placeholder).toBe(
+      "workspace.analysis.dashboards.filter_sentiment_score_placeholder"
+    );
+    expect(byId(SCORE)?.placeholder).toBeUndefined();
+  });
+
+  test("an embedded-data key named like a dimension says it is embedded data; others keep their name", () => {
+    const interpolate = ((key: string, options?: { field?: string }) => {
+      if (options?.field) return `${options.field} (${key})`;
+      return key === "workspace.analysis.charts.field_label_language" ? "Language" : key;
+    }) as never;
+    const named = buildToolbarProperties({
+      t: interpolate,
+      embeddedFields: [
+        { name: "FeedbackRecords.ed_language", key: "language" },
+        { name: "FeedbackRecords.ed_plan", key: "Plan" },
+      ],
+      dashboardId: "d1",
+      filters: [],
+      dateRange: null,
+    });
+    const labelOf = (id: string) => named.find((property) => property.id === id)?.label;
+    expect(labelOf("FeedbackRecords.ed_language")).toBe(
+      "language (workspace.analysis.dashboards.filter_embedded_field_label)"
+    );
+    expect(labelOf("FeedbackRecords.ed_plan")).toBe("Plan");
+    expect(labelOf("FeedbackRecords.language")).toBe("Language");
+  });
+});
+
+describe("disambiguateEmbeddedLabels", () => {
+  test("relabels only the embedded properties whose label another property shares", () => {
+    const properties = [
+      { id: "dim", label: "Channel", valueType: "string" as const },
+      { id: "ed_channel", label: "Channel", valueType: "string" as const },
+      { id: "ed_plan", label: "Plan", valueType: "string" as const },
+    ];
+    const relabelled = disambiguateEmbeddedLabels(
+      properties,
+      (property) => property.id.startsWith("ed_"),
+      (label) => `${label} · Embedded data`
+    );
+    expect(relabelled.map(({ label }) => label)).toEqual(["Channel", "Channel · Embedded data", "Plan"]);
   });
 });

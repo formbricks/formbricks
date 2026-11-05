@@ -822,3 +822,97 @@ describe("GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values (ENG-69
     expect((await readValues(dashboard.id, "account", RULES, fixture.users.outsider)).status).toBe(403);
   });
 });
+
+describe("a value list's labels: an answer's option (PR #9925 review)", () => {
+  const OPTION = "FeedbackRecords.valueId";
+  const RULES = { "filter[option]": `equals:${OPTION}` };
+
+  /** A survey with one single-select question, mapped into `datasetId` through a feedback source. */
+  const mapSurvey = async (datasetId: string, choices: { id: string; label: string }[]) => {
+    const survey = await prisma.survey.create({
+      data: {
+        name: `Survey ${++sequence}`,
+        workspaceId: fixture.workspaceId,
+        status: "inProgress",
+        blocks: [
+          {
+            id: `block${sequence}`,
+            name: "Block",
+            elements: [
+              {
+                id: "delivery",
+                type: "multipleChoiceSingle",
+                headline: { default: "How was delivery?" },
+                required: false,
+                shuffleOption: "none",
+                choices: choices.map(({ id, label }) => ({ id, label: { default: label } })),
+              },
+            ],
+          },
+        ] as never,
+      },
+    });
+    const source = await prisma.feedbackSource.create({
+      data: {
+        name: `Source ${sequence}`,
+        type: "formbricks_survey",
+        workspaceId: fixture.workspaceId,
+        feedbackDirectoryId: datasetId,
+      },
+    });
+    await prisma.feedbackSourceFormbricksMapping.create({
+      data: {
+        feedbackSourceId: source.id,
+        workspaceId: fixture.workspaceId,
+        surveyId: survey.id,
+        elementId: "delivery",
+        hubFieldType: "categorical",
+      },
+    });
+  };
+
+  test("gives each option its label from the dashboard's datasets only, and finds an option by its label", async () => {
+    // A dataset of the same workspace that no chart on the dashboard reads: its survey names "secret".
+    const outside = await prisma.feedbackDirectory.create({
+      data: {
+        name: "Not on the dashboard",
+        organizationId: fixture.organizationId,
+        workspaces: { create: { workspaceId: fixture.workspaceId } },
+      },
+    });
+    await mapSurvey(fixture.datasetId, [
+      { id: "lbl-late", label: "Late" },
+      { id: "lbl-ontime", label: "On time" },
+    ]);
+    await mapSurvey(outside.id, [{ id: "lbl-secret", label: "Hidden label" }]);
+    // The dashboard's records hold the outside option's id too, as a record from another source might.
+    records[fixture.datasetId] = [
+      { [OPTION]: "lbl-late" },
+      { [OPTION]: "lbl-ontime" },
+      { [OPTION]: "lbl-secret" },
+    ];
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id]);
+    answerFromRecords();
+
+    const response = await readValues(dashboard.id, "option", RULES, fixture.users.viewer);
+    expect(response.status).toBe(200);
+    expect(ZV3DashboardFilterValues.parse((await response.json()).data)).toEqual({
+      values: [
+        // In label order: an id without a label sorts by its own text.
+        { value: "lbl-late", label: "Late" },
+        { value: "lbl-secret" },
+        { value: "lbl-ontime", label: "On time" },
+      ],
+      hasMore: false,
+    });
+
+    expect(await valuesOf(await readValues(dashboard.id, "option", { ...RULES, search: "on t" }))).toEqual([
+      "lbl-ontime",
+    ]);
+    // A label from outside the dashboard's datasets finds nothing either.
+    expect(await valuesOf(await readValues(dashboard.id, "option", { ...RULES, search: "hidden" }))).toEqual(
+      []
+    );
+  });
+});

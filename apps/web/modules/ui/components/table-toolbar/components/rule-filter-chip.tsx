@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { useLabelledProperty } from "../hooks/use-value-labels";
 import { getChipParts } from "../lib/chip-label";
 import { getOperatorName } from "../lib/operators";
 import {
@@ -113,7 +114,7 @@ const RuleEditor = ({
  * there is nothing new to save) over and closes the popover; the caller saves it and opens the dialog.
  */
 export const RuleFilterChip = ({
-  property,
+  property: listedProperty,
   rule,
   defaultOpen = false,
   onCommit,
@@ -133,14 +134,12 @@ export const RuleFilterChip = ({
 }>) => {
   const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [draft, setDraft] = useState(() => draftFromRule(property, rule));
+  const [draft, setDraft] = useState(() => draftFromRule(listedProperty, rule));
   const [invalid, setInvalid] = useState(false);
-  const parts = getChipParts(
-    rule ?? draftAsFilter(property, draft),
-    property,
-    t,
-    i18n.resolvedLanguage ?? i18n.language ?? "en-US"
-  );
+  const shownFilter = rule ?? draftAsFilter(listedProperty, draft);
+  // Picked values named by their labels, looked up for a property whose values are ids.
+  const property = useLabelledProperty(listedProperty, shownFilter.values);
+  const parts = getChipParts(shownFilter, property, t, i18n.resolvedLanguage ?? i18n.language ?? "en-US");
 
   const close = () => {
     setIsOpen(false);

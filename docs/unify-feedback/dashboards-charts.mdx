@@ -124,14 +124,17 @@ of the dashboard next to the date range.
   </Step>
 </Steps>
 
-A filter can use any field the charts can be grouped by, including embedded-data fields. Answer filters are not
-offered here: they belong in each chart, in the chart builder.
+A filter can use any field the charts can be grouped by, including embedded-data fields. An embedded-data field
+named like another field reads, for example, "Channel · Embedded data", so the two are told apart. Answer filters are
+not offered here: they belong in each chart, in the chart builder.
 
 ### Values to pick from
 
 - **Fields whose values are looked up**, such as the source name, the field label, or an embedded-data field, list
   the values that occur in the dashboard's charts for **is** and **is not**, narrowed by the date range and the other
   filters. Search the list to find more; it shows up to 100 values at a time. For **contains** you type the text.
+  **Value (Option)**, **Source ID** and **Ending** store ids, so their lists show each option's label, the survey's
+  name or the ending's headline instead, and you can search by that text.
 - **Fields with a fixed set of options**, such as sentiment, value band or a yes/no field, list all of their options,
   greying out the ones the dashboard's charts don't have. A field with none at all is shown disabled; sentiment then
   reads "No sentiment yet: turn on AI enrichment".
@@ -142,7 +145,8 @@ offered here: they belong in each chart, in the chart builder.
 **Is** and **is not** on a field with a list take one value or several: the chip reads "Product is Alpha", "Product is
 any of Alpha, Beta" or "Product is none of Alpha, Beta". Lists also offer **(No value)**: picked with values, **is**
 keeps records with any of them or with no value; **is not** keeps records that have a value and it is none of the
-others. Every field can also be **is set** (has a value) or **is not set** (has none).
+others. For **Language** this option reads **Default**: a response without a language code was answered in its
+survey's default language. Every field can also be **is set** (has a value) or **is not set** (has none).
 
 Use the date range to pick the period every chart shows. It replaces the period each chart was saved with, so
 you can look further back or ahead than the chart's author did; on a chart grouped by time, **All time** keeps the
@@ -166,7 +170,8 @@ An owner, manager or member who can edit the dashboard can lock filters for ever
 </Steps>
 
 A locked filter applies to every reader, Dashboard viewers included, and they can't remove it; their own filters
-narrow further. To unlock a filter, an editor clicks the **×** on its chip. A dashboard holds up to 10 locked filters.
+narrow further. To unlock a filter, an editor clicks the **×** on its chip; **Unlock filters** takes every locked filter
+off at once, after you confirm. A dashboard holds up to 10 locked filters.
 The date range is never locked.
 
 ### Filters only narrow a chart

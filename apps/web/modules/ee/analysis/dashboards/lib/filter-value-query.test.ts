@@ -17,6 +17,8 @@ import {
   isGroupBoundedChart,
   mergeFilterValues,
   resolveBoundedChartValues,
+  valuesWhoseLabelMatches,
+  withValueLabels,
 } from "./filter-value-query";
 
 const CLOCK = { timeZone: "UTC", now: new Date("2026-11-03T12:00:00Z") };
@@ -792,5 +794,87 @@ describe("filter conditions in the value queries", () => {
 
     expect(buildBoundedChartQueries(input([bounded(MAX_FILTER_CONDITIONS - 1)], picks))).toHaveLength(1);
     expect(buildBoundedChartQueries(input([bounded(MAX_FILTER_CONDITIONS)], picks))).toEqual([]);
+  });
+});
+
+describe("values shown by a label (an answer's option)", () => {
+  const OPTION = "FeedbackRecords.valueId";
+  const OPTION_FILTER = filter("5", OPTION, "Value (Option)");
+  const LABELS = { late: "Late", ontime: "On time", other: "Other" };
+  const records = [
+    record({ [OPTION]: "late" }),
+    record({ [OPTION]: "ontime" }),
+    record({ [OPTION]: "other" }),
+  ];
+  const base = {
+    filter: OPTION_FILTER,
+    filters: [OPTION_FILTER],
+    charts: [chart("ds_a")],
+    picks: {},
+    dateFilter: null,
+    clock: CLOCK,
+    datasetHasField: everyField,
+  };
+
+  test("the values whose label holds a search, ignoring case and spaces around it", () => {
+    expect(valuesWhoseLabelMatches(LABELS, " TIME ")).toEqual(["ontime"]);
+    expect(valuesWhoseLabelMatches(LABELS, "")).toEqual([]);
+    expect(valuesWhoseLabelMatches(LABELS, undefined)).toEqual([]);
+  });
+
+  test("at most MAX_FILTER_VALUES values, so they fit one condition", () => {
+    const many = Object.fromEntries(Array.from({ length: 150 }, (_, i) => [`id${i}`, `Option ${i}`]));
+    expect(valuesWhoseLabelMatches(many, "option")).toHaveLength(100);
+  });
+
+  test("a search finds a value by its label as well as by its own text", () => {
+    const search = "on t";
+    const searchIds = valuesWhoseLabelMatches(LABELS, search);
+    const { values } = runValues(records, { ...base, search, searchIds });
+    expect(values.map((v) => v.value)).toEqual(["ontime"]);
+    // Without the labels, "on t" names no stored value.
+    expect(runValues(records, { ...base, search }).values).toEqual([]);
+    // Its own text still finds it.
+    expect(runValues(records, { ...base, search: "lat", searchIds: [] }).values).toEqual([{ value: "late" }]);
+  });
+
+  test("the label search costs one more condition, counted in the budget", () => {
+    const [query] = buildFilterValueQueries({ ...base, search: "on t", searchIds: ["ontime"] });
+    expect(countFilterConditions(query.query.filters)).toBe(3);
+    expect(validateChartQuery(query.query).ok).toBe(true);
+  });
+
+  test("a chart bounded by its own groups finds a value by its label too", () => {
+    const top: TFilterValueChart = {
+      datasetId: "ds_a",
+      query: { measures: ["FeedbackRecords.count"], dimensions: [OPTION], limit: 5 },
+    };
+    const [group] = buildBoundedChartQueries({ ...base, charts: [top] });
+    const rows = [{ [OPTION]: "late" }, { [OPTION]: "ontime" }];
+    expect(
+      resolveBoundedChartValues({ filter: OPTION_FILTER, group, rows, search: "on t", searchIds: ["ontime"] })
+    ).toEqual({ type: "values", values: ["ontime"] });
+    expect(resolveBoundedChartValues({ filter: OPTION_FILTER, group, rows, search: "on t" })).toEqual({
+      type: "values",
+      values: [],
+    });
+  });
+
+  test("each listed value carries its label, in label order; one without a label keeps its text", () => {
+    const list = { values: [{ value: "late" }, { value: "ontime" }, { value: "b-unknown" }], hasMore: true };
+    expect(withValueLabels(list, LABELS)).toEqual({
+      values: [
+        { value: "b-unknown" },
+        { value: "late", label: "Late" },
+        { value: "ontime", label: "On time" },
+      ],
+      hasMore: true,
+    });
+    expect(withValueLabels(list, {})).toBe(list);
+  });
+
+  test("a label is never taken from the object prototype", () => {
+    const list = { values: [{ value: "constructor" }], hasMore: false };
+    expect(withValueLabels(list, LABELS).values).toEqual([{ value: "constructor" }]);
   });
 });

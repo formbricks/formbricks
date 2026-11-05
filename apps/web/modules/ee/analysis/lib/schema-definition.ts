@@ -820,6 +820,18 @@ export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS
 export const isSelectableValueDimension = (id: string): id is TSelectableValueDimensionId =>
   (SELECTABLE_VALUE_DIMENSION_IDS as readonly string[]).includes(id);
 
+/**
+ * Dimensions whose stored values are ids that a survey gives a name to: an option id, a survey id as the
+ * source id, an ending id. Where a list shows them, it shows each id's label (`resolveDatasetValueLabels`).
+ */
+const LABELLED_VALUE_DIMENSION_IDS: ReadonlySet<string> = new Set([
+  VALUE_ID_DIMENSION_ID,
+  "FeedbackRecords.sourceId",
+  "FeedbackRecords.metadataEndingId",
+]);
+
+export const isLabelledValueDimension = (id: string): boolean => LABELLED_VALUE_DIMENSION_IDS.has(id);
+
 export type FilterOperator =
   | "equals"
   | "notEquals"

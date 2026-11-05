@@ -1,5 +1,6 @@
 import { type TChartDateRangeInput, listDashboardFilterValues } from "@/modules/ee/analysis/lib/api-client";
 import { dashboardKeys } from "@/modules/ee/analysis/lib/query";
+import { isLabelledValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import type {
   TAvailableValues,
   TFilterOption,
@@ -43,7 +44,9 @@ const offersNoValue = (noValueOption: TFilterOption, search: string, valueCount:
  * for the filters already applied and the date range, one search at a time, after the "(No value)" option
  * (`noValueOption`). Each search is cached under the chart data keys (`dashboardKeys.filterValues`), so
  * editing a chart refreshes the list as it refreshes the charts. The "(No value)" option is also the
- * property's one fixed option, so a chip names it.
+ * property's one fixed option, so a chip names it. A value stored as an id a survey names (an answer's
+ * option, a source, an ending) is listed by the label the server gives it, and a chip or picker looks that
+ * label up for a picked value (`labelledValues`).
  */
 export const getDashboardFieldValueProperty = ({
   label,
@@ -58,6 +61,7 @@ export const getDashboardFieldValueProperty = ({
   label,
   valueType: "enum",
   options: [noValueOption],
+  labelledValues: isLabelledValueDimension(scope.field),
   queryKey: (search) => valueListKey(scope, search),
   loadOptions: async (search, signal) => {
     const { values, hasMore } = await listDashboardFilterValues({
@@ -72,7 +76,7 @@ export const getDashboardFieldValueProperty = ({
     return {
       options: [
         ...(offersNoValue(noValueOption, search, values.length) ? [noValueOption] : []),
-        ...values.map(({ value }) => ({ value, label: value })),
+        ...values.map(({ value, label: valueLabel }) => ({ value, label: valueLabel ?? value })),
       ],
       hasMore,
     };

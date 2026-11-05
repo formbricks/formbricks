@@ -42,8 +42,8 @@ properties:
       - notSet
     description: >-
       One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a
-      categorical field — one whose catalog entry has `valueLookup`, a yes/no (`boolean`) field, or an
-      embedded-data field — pick from a list of values (`GET
+      categorical field — one whose catalog entry has `valueLookup`, `FeedbackRecords.valueId` (the
+      answer's option), a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET
       /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of);
       `contains` and `notContains` on `FeedbackRecords.emotions` take several of its labels (`joy`,
       `anger`, `sadness`, `fear`, `surprise`, `disgust`): contains any of them, contains none of them;

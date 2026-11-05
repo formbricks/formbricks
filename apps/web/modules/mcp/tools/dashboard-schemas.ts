@@ -236,7 +236,7 @@ export const ZMcpListDashboardFilterValuesInput = z
       .min(1)
       .max(255)
       .describe(
-        "A categorical dimension from list_chart_fields (one marked valueLookup), a yes/no (boolean) dimension, or an embedded-data field from list_dashboard_filter_fields."
+        "A categorical dimension from list_chart_fields (one marked valueLookup, or FeedbackRecords.valueId), a yes/no (boolean) dimension, or an embedded-data field from list_dashboard_filter_fields."
       ),
     operator: z
       .enum(["equals", "notEquals"])

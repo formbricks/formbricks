@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { pruneChartLabels, pruneOptionLabels, resolveOptionGrouping } from "./option-grouping";
+import {
+  pruneChartLabels,
+  pruneOptionLabels,
+  resolveDatasetValueLabels,
+  resolveOptionGrouping,
+} from "./option-grouping";
 
 const mocks = vi.hoisted(() => ({
   getFeedbackSourcesWithMappings: vi.fn(),
@@ -546,5 +551,78 @@ describe("matrix label maps (ENG-3312)", () => {
 
     expect(result.optionLabels).toBeUndefined();
     expect(Object.keys(result.fieldLabels ?? {})).toEqual(["el-matrix__r-easy", "el-matrix__r-fast"]);
+  });
+});
+
+describe("resolveDatasetValueLabels", () => {
+  const delivery = {
+    ...surveyWith(
+      "survey-1",
+      singleSelect("q1", "Delivery", [
+        { id: "late", label: "Late" },
+        { id: "other", label: "Somewhere else" },
+      ])
+    ),
+    name: "Delivery survey",
+    endings: [
+      { id: "end-1", type: "endScreen", headline: { default: "<p>Thanks!</p>" } },
+      { id: "end-2", type: "redirectToUrl", url: "https://example.com", label: "Shop" },
+      { id: "end-3", type: "endScreen", headline: { default: "" } },
+    ],
+  };
+  const elsewhere = {
+    ...surveyWith("survey-2", singleSelect("q2", "Other dataset", [{ id: "secret", label: "Secret" }])),
+    name: "Another dataset's survey",
+    endings: [{ id: "end-9", type: "redirectToUrl", label: "Elsewhere" }],
+  };
+
+  beforeEach(() => {
+    mocks.getFeedbackSourcesWithMappings.mockReset();
+    mocks.getSurvey.mockReset();
+    mocks.getFeedbackSourcesWithMappings.mockResolvedValue([
+      { feedbackDirectoryId: "dir-1", formbricksMappings: [{ elementId: "q1", surveyId: "survey-1" }] },
+      { feedbackDirectoryId: "dir-2", formbricksMappings: [{ elementId: "q2", surveyId: "survey-2" }] },
+    ]);
+    mocks.getSurvey.mockImplementation(async (surveyId: string) =>
+      [delivery, elsewhere].find((survey) => survey.id === surveyId)
+    );
+  });
+
+  test("an answer's option reads its label, and the shared other bucket the generic Other", async () => {
+    expect(await resolveDatasetValueLabels("FeedbackRecords.valueId", "ws-1", "dir-1")).toEqual({
+      late: "Late",
+      other: "Other",
+    });
+  });
+
+  test("a source id reads its survey's name", async () => {
+    expect(await resolveDatasetValueLabels("FeedbackRecords.sourceId", "ws-1", "dir-1")).toEqual({
+      "survey-1": "Delivery survey",
+    });
+  });
+
+  test("an ending reads its headline or a redirect's label; a blank one has none", async () => {
+    expect(await resolveDatasetValueLabels("FeedbackRecords.metadataEndingId", "ws-1", "dir-1")).toEqual({
+      "end-1": "Thanks!",
+      "end-2": "Shop",
+    });
+  });
+
+  test("never labels from a survey mapped into another dataset", async () => {
+    const labels = await Promise.all(
+      ["FeedbackRecords.valueId", "FeedbackRecords.sourceId", "FeedbackRecords.metadataEndingId"].map(
+        (field) => resolveDatasetValueLabels(field, "ws-1", "dir-1")
+      )
+    );
+    const all = Object.assign({}, ...labels);
+    expect(all).not.toHaveProperty("secret");
+    expect(all).not.toHaveProperty("survey-2");
+    expect(all).not.toHaveProperty("end-9");
+    expect(mocks.getSurvey).not.toHaveBeenCalledWith("survey-2");
+  });
+
+  test("any other field has no labels, and reads nothing", async () => {
+    expect(await resolveDatasetValueLabels("FeedbackRecords.sourceName", "ws-1", "dir-1")).toEqual({});
+    expect(mocks.getFeedbackSourcesWithMappings).not.toHaveBeenCalled();
   });
 });

@@ -3,7 +3,8 @@ get:
   summary: List a dashboard filter's values
   description: |
     The values a list filter offers — one whose operator is `equals` or `notEquals` on a categorical
-    field (`valueLookup` in the field catalog, a yes/no field, or an embedded-data field): only values
+    field (`valueLookup` in the field catalog, `FeedbackRecords.valueId`, a yes/no field, or an
+    embedded-data field): only values
     that occur, so for a fixed-option field (sentiment, value band, yes/no) it says which options the
     charts have. A yes/no field lists `true` / `false` and ignores `search`. They are the values the dashboard's
     charts let through under their own saved filters, narrowed by the dashboard date range and the
@@ -12,7 +13,12 @@ get:
     filter's field, offer nothing.
 
     Up to 100 values, alphabetical; `hasMore` says more match, and `search` narrows them
-    (case-insensitive, contains). A filter the request does not name, or one that takes a typed
+    (case-insensitive, contains). Values stored as ids a survey names carry the `label` they are
+    shown by: an answer's option (`FeedbackRecords.valueId`) its option label, a source id
+    (`FeedbackRecords.sourceId`) its survey's name, an ending (`FeedbackRecords.metadataEndingId`) its
+    headline. Labels come only from the surveys mapped into the dashboard's Feedback Datasets; an id
+    none of them names has no `label`. Such a list is in label order, and `search` also finds a value
+    whose label contains it. A filter the request does not name, or one that takes a typed
     value (free text such as `FeedbackRecords.valueText`), answers 422.
 
     Picks may take at most 4000 characters in all, each value counted percent-encoded as the URL
@@ -43,7 +49,7 @@ get:
         type: string
         minLength: 1
         maxLength: 255
-      description: Only values containing this text, ignoring case.
+      description: Only values containing this text, or whose `label` contains it, ignoring case.
       example: bian
   responses:
     "200":
@@ -123,7 +129,7 @@ get:
                 requestId: req_01JB7X0000000000000000000
                 invalid_params:
                   - name: filterId
-                    reason: Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, or embedded data) pick from a list; this one takes a typed value.
+                    reason: Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, an answer's option, embedded data, or a yes/no field) pick from a list; this one takes a typed value.
                     code: invalid_reference
     "429":
       $ref: ../components/responses/V3ChartQueryTooManyRequests.yml

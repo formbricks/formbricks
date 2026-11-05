@@ -2,6 +2,7 @@ import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/
 import { MAX_ANSWER_RULES, countAnswerRules } from "@/modules/ee/analysis/lib/answer-filter";
 import {
   MAX_FILTER_CONDITIONS,
+  MAX_FILTER_VALUES,
   countFilterConditions,
 } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { getChartField } from "@/modules/ee/analysis/lib/field-catalog";
@@ -91,15 +92,62 @@ const chunkRuleSets = (ruleSets: readonly TCubeFilter[][], conditionBudget: numb
 const asOneRule = (rules: TCubeFilter[]): TCubeFilter => (rules.length === 1 ? rules[0] : { and: rules });
 
 /**
- * The rules every value query ends with: the field has a value, containing `search` when given. A yes/no
- * field has no text to search: its two values are listed whatever the search.
+ * The rules every value query ends with: the field has a value, containing `search` when given — or, for
+ * a field whose values are shown by a label, being one of `searchIds`, the values whose label holds it
+ * (`valuesWhoseLabelMatches`). A yes/no field has no text to search: its two values are listed whatever
+ * the search.
  */
-const valueRulesOf = (filter: TDashboardFilter, search?: string): TCubeFilter[] => [
-  { member: filter.field, operator: "set" },
-  ...(search && getDashboardFilterField(filter.field)?.type === "string"
-    ? [{ member: filter.field, operator: "contains", values: [search] }]
-    : []),
-];
+const valueRulesOf = (
+  filter: TDashboardFilter,
+  search?: string,
+  searchIds: readonly string[] = []
+): TCubeFilter[] => {
+  if (!search || getDashboardFilterField(filter.field)?.type !== "string") {
+    return [{ member: filter.field, operator: "set" }];
+  }
+  const contains: TCubeFilter = { member: filter.field, operator: "contains", values: [search] };
+  const matches: TCubeFilter =
+    searchIds.length > 0
+      ? { or: [contains, { member: filter.field, operator: "equals", values: [...searchIds] }] }
+      : contains;
+  return [{ member: filter.field, operator: "set" }, matches];
+};
+
+/** One page of a value list: each value with the label it is shown by, if any, and whether more match. */
+export type TFilterValueList = { values: { value: string; label?: string }[]; hasMore: boolean };
+
+/**
+ * The values whose label holds `search`, ignoring case: what a search finds besides the values that hold
+ * it themselves. At most `MAX_FILTER_VALUES`, so they fit one condition; past that a search finds the
+ * first of them, and a longer search narrows them.
+ */
+export const valuesWhoseLabelMatches = (
+  labels: Readonly<Record<string, string>>,
+  search: string | undefined
+): string[] => {
+  const needle = search?.trim().toLowerCase();
+  if (!needle) return [];
+  return Object.entries(labels)
+    .filter(([, label]) => label.toLowerCase().includes(needle))
+    .map(([value]) => value)
+    .slice(0, MAX_FILTER_VALUES);
+};
+
+/**
+ * A list's values with the label each is shown by (`labels`), in the order of their labels; a value
+ * without one keeps its stored text and sorts by it. Only the listed values' labels are sent.
+ */
+export const withValueLabels = (
+  list: TFilterValueList,
+  labels: Readonly<Record<string, string>>
+): TFilterValueList => {
+  if (Object.keys(labels).length === 0) return list;
+  const labelled = list.values.map(({ value }) =>
+    Object.hasOwn(labels, value) ? { value, label: labels[value] } : { value }
+  );
+  const shown = (item: TFilterValueList["values"][number]) => item.label ?? item.value;
+  return { ...list, values: labelled.sort((a, b) => shown(a).localeCompare(shown(b))) };
+};
 
 /**
  * A row's value of the field as a list shows it: text as it is, a yes/no as `true` / `false` (Cube may
@@ -127,6 +175,7 @@ export const buildFilterValueQueries = ({
   clock,
   datasetHasField,
   search,
+  searchIds,
 }: {
   filter: TDashboardFilter;
   filters: readonly TDashboardFilter[];
@@ -136,8 +185,10 @@ export const buildFilterValueQueries = ({
   clock: TDateClock;
   datasetHasField: (datasetId: string, field: string) => boolean;
   search?: string;
+  /** The values whose label holds `search` (`valuesWhoseLabelMatches`): found as well. */
+  searchIds?: readonly string[];
 }): TFilterValueQuery[] => {
-  const valueRules = valueRulesOf(filter, search);
+  const valueRules = valueRulesOf(filter, search, searchIds);
 
   const toQuery = (datasetId: string, scope: TCubeFilter[], narrowing: TCubeFilter[]): TFilterValueQuery => ({
     datasetId,
@@ -221,7 +272,7 @@ export const buildBoundedChartQueries = ({
   dateFilter,
   clock,
   datasetHasField,
-}: Omit<Parameters<typeof buildFilterValueQueries>[0], "search">): TFilterValueGroupQuery[] => {
+}: Omit<Parameters<typeof buildFilterValueQueries>[0], "search" | "searchIds">): TFilterValueGroupQuery[] => {
   return charts.flatMap((chart) => {
     if (!isGroupBoundedChart(chart.query)) return [];
     // A chart over the answer-rule cap is refused when it runs, so it shows no value.
@@ -264,21 +315,25 @@ export const resolveBoundedChartValues = ({
   group,
   rows,
   search,
+  searchIds = [],
 }: {
   filter: TDashboardFilter;
   group: TFilterValueGroupQuery;
   rows: readonly unknown[];
   search?: string;
+  /** The values whose label holds `search`: found as well. */
+  searchIds?: readonly string[];
 }): TBoundedChartValues => {
   if (rows.length === 0) return { type: "none" };
   const dimensions = group.query.dimensions ?? [];
 
   if (dimensions.includes(filter.field)) {
     const needle = search?.toLowerCase();
+    const found = (value: string) =>
+      !needle || value.toLowerCase().includes(needle) || searchIds.includes(value);
     const values = rows.flatMap((row) => {
       const value = listedValueOf(row, filter.field);
-      if (value === null) return [];
-      return needle && !value.toLowerCase().includes(needle) ? [] : [value];
+      return value !== null && found(value) ? [value] : [];
     });
     return { type: "values", values };
   }
@@ -314,7 +369,7 @@ export const resolveBoundedChartValues = ({
       datasetId: group.datasetId,
       query: {
         dimensions: [filter.field],
-        filters: [...group.scope, ...groupRules, ...valueRulesOf(filter, search)],
+        filters: [...group.scope, ...groupRules, ...valueRulesOf(filter, search, searchIds)],
         order: [[filter.field, "asc"]],
         limit: FILTER_VALUE_LIST_LIMIT + 1,
       },

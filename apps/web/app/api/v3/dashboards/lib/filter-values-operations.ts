@@ -31,6 +31,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { resolveDatasetValueLabels } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import {
   findPickIssues,
   keepCurrentPicks,
@@ -48,9 +49,12 @@ import {
   buildFilterValueQueries,
   mergeFilterValues,
   resolveBoundedChartValues,
+  valuesWhoseLabelMatches,
+  withValueLabels,
 } from "@/modules/ee/analysis/dashboards/lib/filter-value-query";
 import { parseRequestedDateRange } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { createRequestEmbeddedKeys } from "@/modules/ee/analysis/lib/request-embedded-keys";
+import { isLabelledValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
 import type { TV3DashboardFilterValues } from "./resources";
 import type { TV3DashboardFilterValuesQuery } from "./schemas";
@@ -307,6 +311,23 @@ const splitBoundedOutcomes = (
   ),
 });
 
+/**
+ * The labels of a field's values (`isLabelledValueDimension`), from the surveys mapped into the datasets
+ * that have the field and no others: the datasets of the dashboard's charts, each readable by the caller.
+ * Empty for any other field.
+ */
+const resolveValueLabels = async (
+  field: string,
+  datasetIds: readonly string[],
+  workspaceId: string
+): Promise<Record<string, string>> => {
+  if (!isLabelledValueDimension(field)) return {};
+  const maps = await Promise.all(
+    datasetIds.map((datasetId) => resolveDatasetValueLabels(field, workspaceId, datasetId))
+  );
+  return Object.assign({}, ...maps);
+};
+
 /** The first refusal among the datasets, all asked at once, or `null` when every one is readable. */
 const refuseUnlessAllReadable = async (
   datasetIds: readonly string[],
@@ -353,7 +374,7 @@ const checkValuesRequest = (
   if (!isListDashboardFilter(filter)) {
     return filterProblem(
       "filterId",
-      "Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, embedded data, or a yes/no field) pick from a list; this one takes a typed value.",
+      "Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, an answer's option, embedded data, or a yes/no field) pick from a list; this one takes a typed value.",
       context
     );
   }
@@ -379,12 +400,15 @@ const checkValuesRequest = (
 };
 
 /**
- * `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values` → 200 `{ data: { values: [{ value }],
- * hasMore } }`.
+ * `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values` → 200 `{ data: { values: [{ value,
+ * label? }], hasMore } }`.
  *
  * The values a list filter offers: those the dashboard's charts let through under their saved filters,
  * narrowed by the dashboard date range and the other filters' picks — never by this filter's own pick — and
- * by a case-insensitive `search`. Up to 100, alphabetical, `hasMore` when more match. `filterId` is one of
+ * by a case-insensitive `search`. Up to 100, alphabetical, `hasMore` when more match. A field whose values
+ * are ids a survey names (an answer's option, a source, an ending: `isLabelledValueDimension`) gives each
+ * value the `label` it is shown by, read only from the surveys mapped into the dashboard's datasets; the
+ * list is then in label order, and `search` finds a value by its label too. `filterId` is one of
  * the request's `filter[<id>]` parameters; one that is not, or one that takes a typed value, answers 422.
  *
  * Needs read access to the dashboard and to each Feedback Dataset its charts read. Every
@@ -433,6 +457,14 @@ export async function listV3DashboardFilterValues({
     const cached = await cache.get<TV3DashboardFilterValues>(cacheKey);
     if (cached.ok && cached.data) return successResponse(cached.data, { requestId });
 
+    const labels = await resolveValueLabels(
+      filter.field,
+      [...new Set(charts.map(({ datasetId }) => datasetId))].filter((id) =>
+        datasetHasField(id, filter.field)
+      ),
+      access.workspaceId
+    );
+    const searchIds = valuesWhoseLabelMatches(labels, query.search);
     const plan = {
       filter,
       filters: locked.filters,
@@ -442,7 +474,7 @@ export async function listV3DashboardFilterValues({
       clock: { timeZone: await getOrganizationReportingTimeZone(access.organizationId) },
       datasetHasField,
     };
-    const queries = buildFilterValueQueries({ ...plan, search: query.search });
+    const queries = buildFilterValueQueries({ ...plan, search: query.search, searchIds });
     const groups = buildBoundedChartQueries(plan);
     if (queries.length + 2 * groups.length > MAX_FILTER_VALUE_QUERIES) {
       return problemUnprocessableContent(requestId, "This filter's value list needs too many queries", {
@@ -484,16 +516,21 @@ export async function listV3DashboardFilterValues({
         const results = firstStep.slice(0, queries.length);
         const groupRows = firstStep.slice(queries.length);
         const resolved = groups.map((group, index) =>
-          resolveBoundedChartValues({ filter, group, rows: groupRows[index], search: query.search })
+          resolveBoundedChartValues({
+            filter,
+            group,
+            rows: groupRows[index],
+            search: query.search,
+            searchIds,
+          })
         );
         const { secondStep, groupValues } = splitBoundedOutcomes(resolved, filter.field);
         const secondResults = await mapWithConcurrency(secondStep, FILTER_VALUE_QUERY_CONCURRENCY, counted);
 
-        const data: TV3DashboardFilterValues = mergeFilterValues(filter.field, [
-          ...results,
-          ...groupValues,
-          ...secondResults,
-        ]);
+        const data: TV3DashboardFilterValues = withValueLabels(
+          mergeFilterValues(filter.field, [...results, ...groupValues, ...secondResults]),
+          labels
+        );
         const stored = await cache.set(cacheKey, data, FILTER_VALUES_CACHE_TTL_MS);
         if (!stored.ok) log.warn({ error: stored.error }, "Could not cache a dashboard filter's values");
         return { data };

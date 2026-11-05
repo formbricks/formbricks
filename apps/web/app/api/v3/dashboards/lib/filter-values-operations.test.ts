@@ -8,6 +8,7 @@ import {
 } from "@/app/api/v3/lib/operation-rate-limit";
 import { cache } from "@/lib/cache";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { resolveDatasetValueLabels } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { MAX_DASHBOARD_FILTER_PICKS_CHARS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { encodeFilterRule } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
@@ -51,6 +52,10 @@ vi.mock("@/modules/ee/analysis/api/lib/cube-client", async (importOriginal) => (
   executeTenantScopedQuery: vi.fn(),
 }));
 vi.mock("@/modules/ee/analysis/dashboards/lib/dataset-fields", () => ({ getDatasetFieldMatcher: vi.fn() }));
+vi.mock("@/modules/ee/analysis/charts/lib/option-grouping", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/analysis/charts/lib/option-grouping")>()),
+  resolveDatasetValueLabels: vi.fn(async () => ({})),
+}));
 vi.mock("@/modules/ee/analysis/lib/dataset-embedded-keys", () => ({
   getEmbeddedKeysForQuery: vi.fn(async () => ["Plan"]),
 }));
@@ -324,6 +329,88 @@ describe("a top-N chart (S6)", () => {
     });
     expect(executeTenantScopedQuery).toHaveBeenCalledTimes(1);
     expect(vi.mocked(executeTenantScopedQuery).mock.calls[0][0].query).toMatchObject({ limit: 1 });
+  });
+});
+
+describe("values shown by a label (an answer's option)", () => {
+  const OPTION_FILTER: TDashboardFilter = {
+    id: filterId(4),
+    field: "FeedbackRecords.valueId",
+    operator: "equals",
+    label: "Option",
+  };
+  const listOptions = (params: Record<string, string> = {}) =>
+    list(OPTION_FILTER.id, { [`filter[${OPTION_FILTER.id}]`]: encodeFilterRule(OPTION_FILTER), ...params });
+  const DATASET_A = "clds000000000000000000001";
+  const DATASET_B = "clds000000000000000000002";
+
+  beforeEach(() => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(
+      rowWith([
+        chartOf(1, { measures: [COUNT] }, DATASET_A),
+        chartOf(2, { measures: [COUNT] }, DATASET_B),
+      ]) as never
+    );
+    vi.mocked(resolveDatasetValueLabels).mockImplementation(
+      async (_field, _workspaceId, datasetId): Promise<Record<string, string>> =>
+        datasetId === DATASET_A ? { late: "Late" } : { ontime: "On time" }
+    );
+  });
+
+  test("gives each value its label from the dashboard's own datasets, in the dashboard's workspace", async () => {
+    vi.mocked(executeTenantScopedQuery)
+      .mockResolvedValueOnce([
+        { "FeedbackRecords.valueId": "late" },
+        { "FeedbackRecords.valueId": "raw" },
+      ] as never)
+      .mockResolvedValueOnce([{ "FeedbackRecords.valueId": "ontime" }] as never);
+
+    const response = await listOptions();
+
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { data: unknown }).data).toEqual({
+      values: [{ value: "late", label: "Late" }, { value: "ontime", label: "On time" }, { value: "raw" }],
+      hasMore: false,
+    });
+    expect(vi.mocked(resolveDatasetValueLabels).mock.calls.map((call) => call.slice(1))).toEqual([
+      ["clws000000000000000000009", DATASET_A],
+      ["clws000000000000000000009", DATASET_B],
+    ]);
+  });
+
+  test("a search finds a value by its label: Cube is asked for the ids whose label holds it", async () => {
+    vi.mocked(executeTenantScopedQuery).mockResolvedValue([] as never);
+
+    await listOptions({ search: "on t" });
+
+    const filters = vi.mocked(executeTenantScopedQuery).mock.calls[0][0].query.filters;
+    expect(filters).toContainEqual({
+      or: [
+        { member: "FeedbackRecords.valueId", operator: "contains", values: ["on t"] },
+        { member: "FeedbackRecords.valueId", operator: "equals", values: ["ontime"] },
+      ],
+    });
+  });
+
+  test("a dataset lacking the field gives no labels", async () => {
+    vi.mocked(getDatasetFieldMatcher).mockImplementation(
+      async ({ datasetId }) =>
+        () =>
+          datasetId === DATASET_A
+    );
+    vi.mocked(executeTenantScopedQuery).mockResolvedValue([] as never);
+
+    await listOptions();
+
+    expect(vi.mocked(resolveDatasetValueLabels).mock.calls.map(([, , datasetId]) => datasetId)).toEqual([
+      DATASET_A,
+    ]);
+  });
+
+  test("a field whose values are their own labels reads no survey", async () => {
+    vi.mocked(executeTenantScopedQuery).mockResolvedValue([] as never);
+    await list(SOURCE_FILTER.id);
+    expect(resolveDatasetValueLabels).not.toHaveBeenCalled();
   });
 });
 

@@ -97,6 +97,16 @@ export type TFilterProperty = {
    * refreshes the list too.
    */
   queryKey?: (search: string) => QueryKey;
+  /**
+   * The values `loadOptions` lists are ids shown by a label of their own (an answer's option, a survey):
+   * a chip or picker naming a picked value looks its label up in the list (`useLabelledProperty`), so the
+   * label shows after a reload too, not only once the list has been opened.
+   */
+  labelledValues?: boolean;
+  /** Labels of picked values looked up for `labelledValues`, by value. Set by `useLabelledProperty`. */
+  valueLabels?: Readonly<Record<string, string>>;
+  /** Shown in an empty typed value, as a hint of what the property takes (a range, a format). */
+  placeholder?: string;
   /** Shown before the label in Advanced filter's picker, so kinds of property read apart at a glance. */
   icon?: LucideIcon;
   /** Heading the property sits under in Advanced filter's picker. Absent: the table's one list. */

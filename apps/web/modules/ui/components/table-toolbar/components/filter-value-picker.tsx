@@ -15,6 +15,7 @@ import {
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { isUnavailableValue, useAvailableValues } from "../hooks/use-available-values";
+import { useLabelledProperty } from "../hooks/use-value-labels";
 import { getFilterValuesQuery } from "../lib/filter-values-query";
 import type { TFilterOption, TFilterProperty } from "../lib/types";
 
@@ -26,7 +27,7 @@ const selectedValues = (selection: TPickOne | TPickSeveral): readonly string[] =
 
 /**
  * A value's label: from the fixed options, else the label it had when picked here, else from the listed
- * values, else the value itself.
+ * values, else the one looked up for it (`valueLabels`), else the value itself.
  */
 const labelFor = (
   value: string,
@@ -34,11 +35,13 @@ const labelFor = (
     fixed: readonly TFilterOption[];
     picked: ReadonlyMap<string, string>;
     listed: readonly TFilterOption[];
+    lookedUp?: Readonly<Record<string, string>>;
   }
 ): string =>
   sources.fixed.find((option) => option.value === value)?.label ??
   sources.picked.get(value) ??
   sources.listed.find((option) => option.value === value)?.label ??
+  sources.lookedUp?.[value] ??
   value;
 
 /** The values a search lists: what the lookup returned, or the fixed options whose label holds it. */
@@ -137,7 +140,10 @@ export const FilterValuePicker = ({
   const staticOptions = property.options ?? [];
   const listed = listedOptions(property, loaded.data?.options, needle);
   const selected = selectedValues(selection);
-  const labelOf = (value: string) => labelFor(value, { fixed: staticOptions, picked: pickedLabels, listed });
+  // Picked values named by their labels before the list is opened, for a property whose values are ids.
+  const lookedUp = useLabelledProperty(property, selected).valueLabels;
+  const labelOf = (value: string) =>
+    labelFor(value, { fixed: staticOptions, picked: pickedLabels, listed, lookedUp });
   const shown = selection.multiple ? withPickedFirst(selected, listed, labelOf) : listed;
   const typedIsNew = isNewTypedValue(property, needle, shown);
   const isLoading = Boolean(loadOptions) && loaded.isLoading;

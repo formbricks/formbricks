@@ -17,6 +17,13 @@ properties:
       properties:
         value:
           type: string
+          description: The value as stored, which a pick names.
+        label:
+          type: string
+          description: >-
+            What the value is shown by, when it is an id a survey names: an answer option's label
+            (`FeedbackRecords.valueId`), a survey's name (`FeedbackRecords.sourceId`), an ending's
+            headline (`FeedbackRecords.metadataEndingId`). Absent for every other value.
       additionalProperties: false
   hasMore:
     type: boolean

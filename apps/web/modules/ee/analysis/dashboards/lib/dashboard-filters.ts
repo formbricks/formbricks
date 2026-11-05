@@ -11,6 +11,7 @@ import {
   EMOTIONS_DIMENSION_ID,
   EMOTION_VALUES,
   type FilterOperator,
+  isLabelledValueDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
 
 /**
@@ -134,14 +135,16 @@ export const getDashboardFilterOperators = (fieldName: string): TDashboardFilter
 /**
  * Whether the filter picks from a list of values that occur (is, is not — each of any of several values)
  * rather than taking one typed value. Lists exist only for categorical fields: those the catalog has a
- * value lookup for (`valueLookup`), embedded-data keys, and yes/no fields. A free-text field
+ * value lookup for (`valueLookup`), embedded-data keys, yes/no fields, and the fields whose values are ids
+ * a survey names (`isLabelledValueDimension`: the answer's option, listed by its label). A free-text field
  * (`valueText`, `userId`, a page URL) can still be a filter, but its value is typed: listing its values
  * would hand every reader of the dashboard the raw text of every record the charts read.
  */
 export const isListDashboardFilter = (filter: Pick<TDashboardFilter, "field" | "operator">): boolean => {
   if (filter.operator !== "equals" && filter.operator !== "notEquals") return false;
   const field = getDashboardFilterField(filter.field);
-  return field?.type === "boolean" || (field?.type === "string" && field.valueLookup);
+  if (field?.type === "boolean") return true;
+  return field?.type === "string" && (field.valueLookup || isLabelledValueDimension(field.name));
 };
 
 /**

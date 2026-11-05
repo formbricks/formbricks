@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useLabelledProperty } from "../hooks/use-value-labels";
 import { getChipParts } from "../lib/chip-label";
 import {
   getLockedQuickValues,
@@ -23,7 +24,7 @@ import { RuleFilterChip } from "./rule-filter-chip";
 /** One quick filter's chip, whose body reopens that filter's values in place. */
 const QuickFilterChip = ({
   filter,
-  property,
+  property: listedProperty,
   filters,
   index,
   onFiltersChange,
@@ -40,6 +41,7 @@ const QuickFilterChip = ({
 }>) => {
   const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const property = useLabelledProperty(listedProperty, filter.values);
   const parts = getChipParts(filter, property, t, i18n.resolvedLanguage ?? i18n.language ?? "en-US");
 
   return (
@@ -100,6 +102,8 @@ const RuleChip = ({
   disabled?: boolean;
 }>) => {
   const { t, i18n } = useTranslation();
+  // The simple-rule chip looks its labels up itself; this one only for its own chip.
+  const labelled = useLabelledProperty(property, simpleRules ? [] : filter.values);
   const onRemove = () => onFiltersChange(removeFilterAt(filters, index));
   if (simpleRules) {
     return (
@@ -121,7 +125,7 @@ const RuleChip = ({
       />
     );
   }
-  const parts = getChipParts(filter, property, t, i18n.resolvedLanguage ?? i18n.language ?? "en-US");
+  const parts = getChipParts(filter, labelled, t, i18n.resolvedLanguage ?? i18n.language ?? "en-US");
   return (
     <FilterChip
       {...parts}
@@ -130,6 +134,26 @@ const RuleChip = ({
       onRemove={onRemove}
     />
   );
+};
+
+/** A locked filter's chip: taken off by whoever may, never edited here. */
+const LockedChip = ({
+  filter,
+  property: listedProperty,
+  hint,
+  onRemove,
+  disabled,
+}: Readonly<{
+  filter: TTableFilter;
+  property: TFilterProperty;
+  hint?: string;
+  onRemove?: () => void;
+  disabled?: boolean;
+}>) => {
+  const { t, i18n } = useTranslation();
+  const property = useLabelledProperty(listedProperty, filter.values);
+  const parts = getChipParts(filter, property, t, i18n.resolvedLanguage ?? i18n.language ?? "en-US");
+  return <FilterChip {...parts} lockedHint={hint} disabled={disabled} onRemove={onRemove} />;
 };
 
 /**
@@ -162,8 +186,7 @@ export const FilterChipRow = ({
   locked?: TLockedFilters;
   disabled?: boolean;
 }>) => {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const { t } = useTranslation();
   const propertyById = new Map(properties.map((property) => [property.id, property]));
 
   const lockedFilters = locked?.filters ?? [];
@@ -184,13 +207,13 @@ export const FilterChipRow = ({
             label: locked?.labels?.[index] ?? filter.property,
             valueType: "string" as const,
           };
-          const parts = getChipParts(filter, property, t, locale);
           const onRemoveLocked = locked?.onRemove;
           return (
             <li key={`locked-${filter.property}-${filter.operator}-${index}`} className="max-w-full">
-              <FilterChip
-                {...parts}
-                lockedHint={locked?.hint}
+              <LockedChip
+                filter={filter}
+                property={property}
+                hint={locked?.hint}
                 disabled={disabled}
                 onRemove={onRemoveLocked ? () => onRemoveLocked(index) : undefined}
               />

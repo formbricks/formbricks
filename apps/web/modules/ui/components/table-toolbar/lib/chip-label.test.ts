@@ -33,6 +33,23 @@ describe("getChipParts", () => {
     });
   });
 
+  test("a picked value looked up for its label shows by that label", () => {
+    const option: TFilterProperty = {
+      id: "option",
+      label: "Value (Option)",
+      valueType: "enum",
+      multiValueEquals: true,
+      valueLabels: { late: "Late" },
+    };
+    const parts = getChipParts(
+      { property: "option", operator: "equals", values: ["late", "unknown"] },
+      option,
+      t,
+      "en-US"
+    );
+    expect(parts.value).toBe("Late, unknown");
+  });
+
   test("a value with no matching option shows as it is", () => {
     const parts = getChipParts(
       { property: "status", operator: "in", values: ["archived"] },

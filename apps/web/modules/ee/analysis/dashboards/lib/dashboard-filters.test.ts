@@ -89,6 +89,13 @@ describe("isListDashboardFilter", () => {
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.metadataUrl" }))).toBe(false);
   });
 
+  test("an answer's option picks from a list: its values are option ids, shown by their labels", () => {
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueId" }))).toBe(true);
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueId", operator: "contains" }))).toBe(
+      false
+    );
+  });
+
   test("a yes/no field picks from its two values", () => {
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueBoolean" }))).toBe(true);
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueNumber" }))).toBe(false);

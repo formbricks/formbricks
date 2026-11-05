@@ -69,10 +69,13 @@ export const ZV3DashboardChartData = ZV3ChartData.extend({
 }).strict();
 export type TV3DashboardChartData = z.infer<typeof ZV3DashboardChartData>;
 
-/** One page of a dashboard filter's value list: up to 100 values in order, and whether more match. */
+/**
+ * One page of a dashboard filter's value list: up to 100 values in order, and whether more match. A value
+ * stored as an id a survey names (an answer's option, a source, an ending) carries the `label` it is shown by.
+ */
 export const ZV3DashboardFilterValues = z
   .object({
-    values: z.array(z.object({ value: z.string() }).strict()),
+    values: z.array(z.object({ value: z.string(), label: z.string().optional() }).strict()),
     hasMore: z.boolean(),
   })
   .strict();

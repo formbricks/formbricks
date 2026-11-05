@@ -89,8 +89,10 @@ export const RuleValueInput = ({
           id={id}
           type={control === "number" ? "number" : "text"}
           inputMode={control === "number" ? "decimal" : undefined}
+          // Any decimal: the browser's default step of 1 would refuse 0.5 when the rule is submitted.
+          step={control === "number" ? "any" : undefined}
           value={value}
-          placeholder={t("common.table_toolbar.enter_value")}
+          placeholder={property?.placeholder ?? t("common.table_toolbar.enter_value")}
           aria-label={t("common.table_toolbar.value_of", { property: property?.label ?? "" })}
           isInvalid={invalid}
           onChange={(event) => onChange(event.target.value)}

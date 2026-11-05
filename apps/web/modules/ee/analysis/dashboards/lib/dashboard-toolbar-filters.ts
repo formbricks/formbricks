@@ -5,6 +5,7 @@ import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalo
 import {
   EMOTIONS_DIMENSION_ID,
   EMOTION_VALUES,
+  LANGUAGE_DIMENSION_ID,
   SENTIMENT_DIMENSION_ID,
   SENTIMENT_VALUE_ORDER,
   VALUE_BAND_DIMENSION_ID,
@@ -47,12 +48,15 @@ import {
  * (`availableValues`).
  */
 
+/** The sentiment score runs from -1 (negative) to 1 (positive): its typed value says so. */
+const SENTIMENT_SCORE_FIELD = "FeedbackRecords.sentimentScore";
+
 /**
  * The typed fields AI enrichment fills together with the sentiment label. Without a sentiment on the
  * dashboard's records none of them has a value either, so each is listed disabled beside Sentiment, with
  * its hint. Emotions, filled with it too, is a multi-label field and gets the same (`labelAvailability`).
  */
-const ENRICHED_WITH_SENTIMENT: ReadonlySet<string> = new Set(["FeedbackRecords.sentimentScore"]);
+const ENRICHED_WITH_SENTIMENT: ReadonlySet<string> = new Set([SENTIMENT_SCORE_FIELD]);
 
 /**
  * Fields of one record's question rather than of the feedback: which question type and which question id
@@ -78,6 +82,18 @@ const getFixedValueOptions = (field: string, t: TFunction): TFilterOption[] | un
   }
   return undefined;
 };
+
+/**
+ * What "(No value)" reads for a field. A record without a language was answered in its survey's default
+ * language (transform.ts stores none then), so for Language it reads "Default".
+ */
+const noValueOptionOf = (field: string, t: TFunction): TFilterOption => ({
+  value: NO_VALUE_PICK,
+  label:
+    field === LANGUAGE_DIMENSION_ID
+      ? t("workspace.analysis.dashboards.filter_no_value_language")
+      : t("workspace.analysis.dashboards.filter_no_value"),
+});
 
 /** How the toolbar takes a catalog field's values: a number, a day, or text. */
 const TOOLBAR_VALUE_TYPE: Partial<Record<string, TFilterProperty["valueType"]>> = {
@@ -301,10 +317,33 @@ const fixedValueProperty = (
 };
 
 /**
+ * An embedded-data key is named as collected, so it can read like a dimension ("Channel"). Where its label
+ * is also another property's, it is named "Channel · Embedded data", in the Filter menu and on its chip, so
+ * the two read apart; every other label is kept.
+ */
+export const disambiguateEmbeddedLabels = (
+  properties: readonly TFilterProperty[],
+  isEmbedded: (property: TFilterProperty) => boolean,
+  embeddedLabel: (label: string) => string
+): TFilterProperty[] => {
+  const counts = new Map<string, number>();
+  for (const { label } of properties) {
+    const key = label.trim().toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return properties.map((property) =>
+    isEmbedded(property) && (counts.get(property.label.trim().toLowerCase()) ?? 0) > 1
+      ? { ...property, label: embeddedLabel(property.label) }
+      : property
+  );
+};
+
+/**
  * The toolbar's properties for a dashboard: every dimension of the catalog and every embedded-data key of
  * its datasets a person can filter by. A field with a fixed set of values is a quick filter and picks from
  * them in Advanced filter too (a multi-label field only there); a categorical field lists the values the
- * charts let through there, and the rest take a typed value.
+ * charts let through there, and the rest take a typed value. An embedded-data key whose label is also a
+ * dimension's is told apart (`disambiguateEmbeddedLabels`).
  */
 export const buildToolbarProperties = ({
   t,
@@ -319,12 +358,8 @@ export const buildToolbarProperties = ({
   filters: readonly TDashboardFilterState[];
   dateRange: TChartDateRangeInput | null;
 }>): TFilterProperty[] => {
-  const noValueOption: TFilterOption = {
-    value: NO_VALUE_PICK,
-    label: t("workspace.analysis.dashboards.filter_no_value"),
-  };
   const propertyScope: TPropertyScope = { t, dashboardId, filters, dateRange };
-  return getFilterFieldOptions(t, { embeddedFields: [...embeddedFields], answerQuestions: [] })
+  const properties = getFilterFieldOptions(t, { embeddedFields: [...embeddedFields], answerQuestions: [] })
     .filter((group) => group.value === "dimensions" || group.value === "embeddedData")
     .flatMap((group) =>
       (group.options ?? []).flatMap<TFilterProperty>((option) => {
@@ -334,6 +369,7 @@ export const buildToolbarProperties = ({
         const ruleOperators = getToolbarRuleOperators(field);
         if (!definition || ruleOperators.length === 0) return [];
         const shared = { id: field, label: option.label, group: group.label, ruleOperators };
+        const noValueOption = noValueOptionOf(field, t);
 
         const fixed = getFixedValueOptions(field, t);
         if (fixed) return [{ ...shared, ...fixedValueProperty(field, fixed, noValueOption, propertyScope) }];
@@ -350,9 +386,24 @@ export const buildToolbarProperties = ({
         const valueType = TOOLBAR_VALUE_TYPE[definition.type] ?? "string";
         if (ENRICHED_WITH_SENTIMENT.has(field)) {
           // This property has no values of its own to grey, only the menu's disabled state reads it.
-          return [{ ...shared, valueType, availableValues: sentimentAvailability(field, propertyScope) }];
+          return [
+            {
+              ...shared,
+              valueType,
+              availableValues: sentimentAvailability(field, propertyScope),
+              ...(field === SENTIMENT_SCORE_FIELD
+                ? { placeholder: t("workspace.analysis.dashboards.filter_sentiment_score_placeholder") }
+                : {}),
+            },
+          ];
         }
         return [{ ...shared, valueType }];
       })
     );
+  const embedded = new Set(embeddedFields.map(({ name }) => name));
+  return disambiguateEmbeddedLabels(
+    properties,
+    (property) => embedded.has(property.id),
+    (label) => t("workspace.analysis.dashboards.filter_embedded_field_label", { field: label })
+  );
 };
