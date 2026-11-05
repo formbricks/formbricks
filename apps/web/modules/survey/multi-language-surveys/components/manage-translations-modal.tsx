@@ -252,6 +252,10 @@ export const ManageTranslationsModal = ({
         }
 
         setDraftTranslations((prev) => ({ ...prev, ...translations }));
+        if (result?.data?.errorCode) {
+          failedMessage = getAIErrorMessage(result.data.errorCode);
+          break;
+        }
       }
       if (runId !== translationRunId.current) return;
 

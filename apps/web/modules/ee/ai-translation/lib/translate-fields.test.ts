@@ -132,8 +132,10 @@ describe("translateFields", () => {
     const result = await translateFields({ ...baseInput, fields });
 
     expect(result).toEqual({
-      "welcomeCard.headline.default": "Willkommen",
-      "questions.0.html.default": "<p>Hallo</p>",
+      translations: {
+        "welcomeCard.headline.default": "Willkommen",
+        "questions.0.html.default": "<p>Hallo</p>",
+      },
     });
   });
 
@@ -214,9 +216,63 @@ describe("translateFields", () => {
 
     const result = await translateFields({ ...baseInput, fields: largeBatchFields });
 
-    expect(Object.keys(result)).toHaveLength(24);
+    expect(Object.keys(result.translations)).toHaveLength(24);
     expect(mockGenerateOrganizationAIObject).toHaveBeenCalledTimes(3);
     expect(maxActive).toBe(3);
+  });
+
+  test("returns completed sibling translations when another model batch fails", async () => {
+    const actionFields = makeFields(16);
+    mockGenerateOrganizationAIObject
+      .mockRejectedValueOnce(
+        new AIOutputTokenLimitError({ maxOutputTokens: 8192, outputTokens: 8192, reasoningTokens: 0 })
+      )
+      .mockResolvedValueOnce({
+        object: Object.fromEntries(
+          Array.from({ length: 8 }, (_, index) => [`t${index}`, `Translated ${index}`])
+        ),
+      });
+
+    const result = await translateFields({ ...baseInput, fields: actionFields });
+
+    expect(result).toEqual({
+      translations: Object.fromEntries(
+        actionFields.slice(8).map((field, index) => [field.path, `Translated ${index}`])
+      ),
+      errorCode: AI_TRANSLATION_OUTPUT_TOO_LONG,
+    });
+  });
+
+  test("does not return an error message or prompt with partial results", async () => {
+    const actionFields = makeFields(16);
+    mockGenerateOrganizationAIObject
+      .mockRejectedValueOnce(new Error("private survey text from provider"))
+      .mockResolvedValueOnce({
+        object: Object.fromEntries(
+          Array.from({ length: 8 }, (_, index) => [`t${index}`, `Translated ${index}`])
+        ),
+      });
+
+    const result = await translateFields({ ...baseInput, fields: actionFields });
+
+    expect(result.errorCode).toBe("ai_translation_failed");
+    expect(JSON.stringify(result)).not.toContain("private survey text");
+    expect(Object.keys(result.translations)).toHaveLength(8);
+  });
+
+  test("keeps the quota error code with partial results", async () => {
+    mockGenerateOrganizationAIObject
+      .mockRejectedValueOnce(new TooManyRequestsError("ai_quota_exceeded", 30))
+      .mockResolvedValueOnce({
+        object: Object.fromEntries(
+          Array.from({ length: 8 }, (_, index) => [`t${index}`, `Translated ${index}`])
+        ),
+      });
+
+    const result = await translateFields({ ...baseInput, fields: makeFields(16) });
+
+    expect(result.errorCode).toBe("ai_quota_exceeded");
+    expect(Object.keys(result.translations)).toHaveLength(8);
   });
 
   test("rejects a fourth model batch before making any AI calls", async () => {
@@ -229,7 +285,7 @@ describe("translateFields", () => {
   test("returns empty object without calling the model when no fields are provided", async () => {
     const result = await translateFields({ ...baseInput, fields: [] });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ translations: {} });
     expect(mockGenerateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
@@ -300,8 +356,10 @@ describe("translateFields", () => {
     const result = await translateFields({ ...baseInput, fields: allEmpty });
 
     expect(result).toEqual({
-      "welcomeCard.subheader.default": "",
-      "endings.0.subheader.default": "",
+      translations: {
+        "welcomeCard.subheader.default": "",
+        "endings.0.subheader.default": "",
+      },
     });
     expect(mockGenerateOrganizationAIObject).not.toHaveBeenCalled();
   });
@@ -322,9 +380,11 @@ describe("translateFields", () => {
     const result = await translateFields({ ...baseInput, fields: mixed });
 
     expect(result).toEqual({
-      "welcomeCard.headline.default": "Willkommen",
-      "welcomeCard.subheader.default": "",
-      "questions.0.headline.default": "Wie geht es dir?",
+      translations: {
+        "welcomeCard.headline.default": "Willkommen",
+        "welcomeCard.subheader.default": "",
+        "questions.0.headline.default": "Wie geht es dir?",
+      },
     });
 
     // Confirm the model never saw the empty field in the payload.

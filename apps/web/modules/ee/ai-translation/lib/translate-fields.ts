@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, TooManyRequestsError } from "@formbricks/types/errors";
 import { redactAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
@@ -49,6 +49,21 @@ interface TranslateFieldsInput {
   targetLanguage: string;
 }
 
+interface TranslationOutcome {
+  translations: Record<string, string>;
+  errorCode?: string;
+}
+
+const getTranslationFailureCode = (error: unknown): string => {
+  if (error instanceof InvalidInputError && error.message === AI_TRANSLATION_OUTPUT_TOO_LONG) {
+    return AI_TRANSLATION_OUTPUT_TOO_LONG;
+  }
+  if (error instanceof TooManyRequestsError && error.message === "ai_quota_exceeded") {
+    return "ai_quota_exceeded";
+  }
+  return "ai_translation_failed";
+};
+
 export const translateFields = async ({
   organizationId,
   workspaceId,
@@ -56,9 +71,9 @@ export const translateFields = async ({
   fields,
   sourceLanguage,
   targetLanguage,
-}: TranslateFieldsInput): Promise<Record<string, string>> => {
+}: TranslateFieldsInput): Promise<TranslationOutcome> => {
   if (fields.length === 0) {
-    return {};
+    return { translations: {} };
   }
 
   // Empty defaultText is valid per the schema but has no meaningful translation.
@@ -76,7 +91,7 @@ export const translateFields = async ({
   }
 
   if (translatableFields.length === 0) {
-    return passthroughTranslations;
+    return { translations: passthroughTranslations };
   }
 
   const systemPrompt = `You are a professional translator for survey content. Translate each item from ${sourceLanguage} to ${targetLanguage}.
@@ -156,9 +171,19 @@ Rules:
   if (modelBatches.length > AI_TRANSLATION_MODEL_BATCHES_PER_ACTION) {
     throw new InvalidInputError(AI_TRANSLATION_BATCH_TOO_LARGE);
   }
-  const results = await Promise.all(modelBatches.map(translateBatch));
-  const translations: Record<string, string> = {};
-  for (const result of results) Object.assign(translations, result);
+  const results = await Promise.allSettled(modelBatches.map(translateBatch));
+  const translations = { ...passthroughTranslations };
+  let successfulBatches = 0;
+  let failure: PromiseRejectedResult | undefined;
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      successfulBatches++;
+      Object.assign(translations, result.value);
+    } else {
+      failure ??= result;
+    }
+  }
 
-  return { ...passthroughTranslations, ...translations };
+  if (failure && successfulBatches === 0) throw failure.reason;
+  return { translations, ...(failure ? { errorCode: getTranslationFailureCode(failure.reason) } : {}) };
 };

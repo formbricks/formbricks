@@ -57,7 +57,7 @@ export const translateSurveyFieldsAction = authenticatedActionClient
 
     await assertOrganizationAIConfigured(organizationId);
 
-    const translations = await translateFields({
+    const outcome = await translateFields({
       organizationId,
       workspaceId: parsedInput.workspaceId,
       userId: ctx.user.id,
@@ -66,5 +66,5 @@ export const translateSurveyFieldsAction = authenticatedActionClient
       targetLanguage: parsedInput.targetLanguage,
     });
 
-    return { translations };
+    return outcome;
   });
