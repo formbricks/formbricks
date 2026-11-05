@@ -7,7 +7,10 @@ icon: "robot"
 Applies to any code that sends text to a language model or acts on what comes back: survey generation, chart
 generation, enrichments, embeddings. MCP tools are included too: we do not call the model there, but a tool's
 result enters an agent's context we do not control, so the same rules apply to what a tool returns and what it can
-do. It does not cover using AI tools to write or review our own code; AI-assisted review is described in
+do. An MCP-only tool is not gated by the AI toggle or entitlement below; its access control is its MCP scope and
+v3 authorization (see [MCP server](/development/technical-handbook/mcp-server)).
+
+It does not cover using AI tools to write or review our own code; AI-assisted review is described in
 [Code reviews](/development/standards/qa/code-reviews).
 
 In `apps/web`, calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and
@@ -52,9 +55,8 @@ Nothing the model reads or writes is trusted.
   Never pass model output to SQL, a file path, a URL fetch, a shell, or rendered HTML without the same
   validation you would give a request body.
 - **The model has no authority of its own.** A tool the model can call runs as the requesting user, never as a
-  service. Re-check that
-  user's permission and tenant scope on the exact resource inside the tool handler, as you would for an API
-  route. Do not give a model a shared service credential, and do not let one call's result widen what the next
+  service. Re-check that user's permission and tenant scope on the exact resource inside the tool handler, as you
+  would for an API route. Do not give a model a shared service credential, and do not let one call's result widen what the next
   call may do.
 - **Side effects need the user's intent.** If content the user did not write (a response, a document) can cause
   a write, send, or delete, require an explicit user action before it runs. Keep the model's action list small and
@@ -89,7 +91,7 @@ edge, and return an error that names the limit. A missing limit is a bug, not a 
 | Output shape bounds | Limits what a bad answer can create (blocks, questions, items) | The Zod schema (survey generation: at most 8 blocks, 4 questions per block) |
 | Call count and concurrency | Fan-out multiplies cost and provider load | The operation that plans the calls |
 | Per-caller rate limit | One user or API key must not spend everyone's quota | `rateLimitConfigs`, keyed by the authenticated caller (survey generation: 10 per minute) |
-| Provider quota errors | A 429 from the provider is not a server error | `lib/ai/service.ts` maps it to `TooManyRequestsError` |
+| Provider quota errors | A provider 429 is a server fault, not the caller's, and is logged at `error` | `lib/ai/service.ts` logs it (a call that runs its own retries logs a warning instead) and answers the client with `TooManyRequestsError` |
 
 Cancellation (the user pressing Stop) is not an incident: pass the abort signal through and do not log it at
 error level.
@@ -106,13 +108,16 @@ error level.
 
 ## Metrics
 
-Every call records input, output, and reasoning tokens (`result.usage`), plus the model, the feature, the
-organization, and the outcome: ok, refused, token limit, timeout, provider 429, or schema-invalid. This gives cost
-per feature and per organization, alerts on spikes, and proof that a limit holds.
+Every call records input, output, and reasoning tokens, plus the model, the feature, the organization, and the
+outcome: ok, refused, token limit, timeout, provider 429, or schema-invalid. This gives cost per feature and per
+organization, alerts on spikes, and proof that a limit holds.
 
 What exists today:
 
-- `@formbricks/ai` returns `usage` on every result and puts the token counts on `AIOutputTokenLimitError`.
+- `generateObject` and `generateText` return `usage`. `streamObject` does not: its result is `partialObjectStream`
+  and `completion`. A streamed feature gets counts only from the PostHog trace until the stream wrapper exposes
+  usage, which is a gap to close.
+- A generation that hits the output limit puts the token counts on `AIOutputTokenLimitError`.
 - `wrapAiModelWithTracing` sends a per-call trace to PostHog, tagged with the feature, organization, and workspace.
   Privacy mode is on, so no prompt or completion text is sent.
 - Tracing does nothing when PostHog is not configured, so instances without it have no token metrics.
@@ -176,6 +181,7 @@ Use it when planning, and again against the finished diff before the PR is ready
 - Every tool re-checks the requesting user's permission and tenant scope.
 - `maxOutputTokens`, timeout, call count, and a per-caller rate limit are all hardcoded constants.
 - Token usage is recorded per call, tagged with the feature and organization.
-- Toggle, entitlement, and instance configuration are checked through `lib/ai/service.ts`.
+- When Formbricks calls the model: toggle, entitlement, and instance configuration are checked through
+  `lib/ai/service.ts`. An MCP-only tool has its MCP scope and v3 authorization instead.
 - Nothing customer-authored is logged.
 - Tests run on a cheap model and include an injection fixture.
