@@ -36,17 +36,12 @@ const hasTraversalSegment = (fileName: string): boolean =>
  * The key is built from the name as given: the route hands over the name its router has already decoded
  * once, and objects are stored under that name. The extra decode here never feeds the key. It only catches
  * a `%252e%252e` that arrives as `%2e%2e`, so the traversal guard does not depend on whether a proxy or
- * storage backend decodes paths. A name that does not decode (a bare `%`) cannot hide a traversal that way.
+ * storage backend decodes paths. Only the `%2e` (dot) and `%2f` (slash) escapes are read, so a bare `%`
+ * elsewhere in the name cannot stop the check, as a full `decodeURIComponent` would.
  */
-const hasTraversalSegmentOrEncodedForm = (fileName: string): boolean => {
-  if (hasTraversalSegment(fileName)) return true;
-
-  try {
-    return hasTraversalSegment(decodeURIComponent(fileName));
-  } catch {
-    return false;
-  }
-};
+const hasTraversalSegmentOrEncodedForm = (fileName: string): boolean =>
+  hasTraversalSegment(fileName) ||
+  hasTraversalSegment(fileName.replaceAll(/%2e/gi, ".").replaceAll(/%2f/gi, "/"));
 
 export const getSignedUrlForUpload = async (
   fileName: string,

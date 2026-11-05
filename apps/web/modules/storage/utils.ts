@@ -176,7 +176,7 @@ const getResponseFileUrlOwner = ({
   const fileName = parsed ? decodeStorageUrlFileName(parsed.fileName) : null;
   const scope = fileName === null ? undefined : getStorageFileNameScope(fileName);
 
-  if (!parsed || !scope || scope.surveyId === null) return isUploadElementAnswer ? "own" : "none";
+  if (!parsed || !scope?.surveyId) return isUploadElementAnswer ? "own" : "none";
   if (parsed.accessType !== "private") return "none";
   return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
 };

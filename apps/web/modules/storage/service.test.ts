@@ -415,6 +415,10 @@ describe("storage service", () => {
       "sub/../../../ws-victim/private/secret.pdf",
       "%2e%2e/%2e%2e/ws-victim/private/secret.pdf",
       "./file.jpg",
+      // A bare `%` elsewhere in the name must not stop the encoded traversal being read.
+      "%2e%2e/100%--fid--1.png",
+      "%2e%2e%2f100%--fid--1.png",
+      "a%2f..%2fb",
     ])("should reject traversal in the file name: %s", async (fileName) => {
       const result = await deleteFile("ws-456", "public" as TAccessType, fileName);
 
@@ -608,6 +612,10 @@ describe("storage service", () => {
       "sub/../../../ws-victim/private/secret.pdf",
       "%2e%2e/%2e%2e/ws-victim/private/secret.pdf",
       "./secret.pdf",
+      // A bare `%` elsewhere in the name must not stop the encoded traversal being read.
+      "%2e%2e/100%--fid--1.png",
+      "%2e%2e%2f100%--fid--1.png",
+      "a%2f..%2fb",
     ])("should reject traversal in the file name: %s", async (fileName) => {
       const result = await getFileStreamForDownload(fileName, "ws-attacker", "public" as TAccessType);
 
