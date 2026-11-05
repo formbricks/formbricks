@@ -44,7 +44,6 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/onboarding-invites` | POST | session | dashboard | `/api/internal` | `app/api/internal/onboarding-invites/route.ts` |
 | `/api/internal/organizations` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
-| `/api/internal/organizations/{organizationId}/billing` | GET | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/route.ts` |
 | `/api/internal/password-resets` | POST | none | dashboard | `/api/internal` | `app/api/internal/password-resets/route.ts` |
 | `/api/internal/releases/latest` | GET | session | dashboard | `/api/internal` | `app/api/internal/releases/latest/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |
@@ -67,6 +66,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/workspaces/{workspaceId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/deletions` | POST | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/deletions/route.ts` |
+| `/api/internal/workspaces/{workspaceId}/file-upload-limit` | GET | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/file-upload-limit/route.ts` |
 | `/api/organizations/{organizationId}/usage` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/organizations/[organizationId]/usage/route.ts` |
 | `/api/surveys/{surveyId}/attachment-exports` | POST | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachment-exports/route.ts` |
 | `/api/surveys/{surveyId}/attachment-exports/{exportId}/download` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachment-exports/[exportId]/download/route.ts` |
