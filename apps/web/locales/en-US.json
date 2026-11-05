@@ -4208,6 +4208,7 @@
           "choose_question_or_field": "Choose a question or field",
           "collapse": "Collapse",
           "columns": "Columns",
+          "condition_incomplete": "Condition incomplete",
           "condition_placeholder": "Condition",
           "connector_label": "Combine conditions with",
           "count_blocks": "{count, plural, one {{count} block} other {{count} blocks}}",

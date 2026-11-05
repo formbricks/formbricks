@@ -9,6 +9,7 @@ import {
   createDraftShowIf,
   getShowIf,
   getShowIfScope,
+  hasUnchosenField,
   isShowIfComplete,
   setOptionHidden,
   updateShowIf,
@@ -249,5 +250,29 @@ describe("show-if drafts: a popover saves only on Done", () => {
 
     expect(saved.name).toBe("Renamed meanwhile");
     expect(getShowIf(saved, bundleOption("no_bundle"))).toEqual(complete);
+  });
+});
+
+describe("hasUnchosenField: the options popover's cell while a condition is drafted", () => {
+  const cond = (value: string) =>
+    ({
+      id: `c${value || "empty"}0000000000000000000`.slice(0, 24),
+      leftOperand: { type: "element", value },
+      operator: "equals",
+    }) as const;
+
+  test("a condition without its field reads as one to choose", () => {
+    expect(hasUnchosenField({ id: "g1", connector: "and", conditions: [cond("fav"), cond("")] })).toBe(true);
+  });
+
+  test("conditions with every field chosen, values missing or not, have none to choose", () => {
+    expect(hasUnchosenField({ id: "g1", connector: "and", conditions: [cond("fav"), cond("bundle")] })).toBe(
+      false
+    );
+  });
+
+  test("an unchosen field inside a nested group counts", () => {
+    const nested: TConditionGroup = { id: "g2", connector: "or", conditions: [cond("")] };
+    expect(hasUnchosenField({ id: "g1", connector: "and", conditions: [cond("fav"), nested] })).toBe(true);
   });
 });
