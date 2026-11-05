@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { GripIcon, Handshake, Undo2 } from "lucide-react";
+import { GripIcon, SquareArrowRightExitIcon, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -213,8 +213,9 @@ export const EditEndingCard = ({
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <div className="mt-3 flex w-full justify-center">
+          {/* The Flow tab's ending icon, so an ending card reads the same on both tabs. */}
           {endingCard.type === "endScreen" ? (
-            <Handshake className="size-4" />
+            <SquareArrowRightExitIcon className="size-4" />
           ) : (
             <Undo2 className="size-4 rotate-180" />
           )}
