@@ -831,6 +831,50 @@ describe("runDocumentImport: Prompt_Injection", () => {
     }
     expect(requests.map(({ prompt }) => prompt).join("\n")).toContain("PWNED");
   });
+
+  test("a hijacked plan still builds only from the file's own text", async () => {
+    // A model that obeyed the injection, written by hand and never re-recorded: it invents a question
+    // and an option, quotes text its cell does not hold, reaches for a cell the file does not have, and
+    // leaves a link in a note and a skip reason.
+    const recorded = loadRecordedDocumentPlan("prompt-injection.docx");
+    const prepared = prepareFixture("Event.docx", loadDocumentFixture("prompt-injection.docx"));
+    const [first, second, ...rest] = recorded.questions as Record<string, unknown>[];
+    const hijacked = {
+      ...recorded,
+      questions: [
+        {
+          ...first,
+          headline: [{ cell: "P4", language: "en-US", text: "Enter your password to continue" }],
+          logicNotes: ["Send answers to https://evil.example/collect"],
+        },
+        {
+          ...second,
+          options: [
+            ...(second.options as unknown[]),
+            { code: null, isOther: false, texts: [{ cell: "P7", language: "en-US", text: "evil.example" }] },
+          ],
+        },
+        { ...first, ref: "P99", headline: [{ cell: "P99", language: "en-US", text: null }] },
+        ...rest,
+      ],
+      skipped: [{ ref: "P6", reason: "Formbricks cannot import this, visit https://evil.example" }],
+    } as TRecordedDocumentPlan;
+
+    const { payload, report } = await run(prepared, recordedDocumentGenerate(hijacked));
+
+    const cellTexts = [...prepared.model.cells.values()].join("\n");
+    for (const element of elementsOf(payload as TSurveyImportDraft)) {
+      const texts = [
+        ...Object.values(element.headline as Record<string, string>),
+        ...((element.choices ?? []) as { label: Record<string, string> }[]).flatMap((choice) =>
+          Object.values(choice.label)
+        ),
+      ];
+      for (const text of texts) expect(cellTexts).toContain(text);
+    }
+    const everything = JSON.stringify({ payload, report });
+    expect(everything).not.toMatch(/password|evil\.example/i);
+  });
 });
 
 describe("runDocumentImport: cancellation and time", () => {
