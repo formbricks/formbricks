@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
+  SHOW_IF_CELL_CLASS,
   ShowIfConditionsEditor,
   ShowIfPopoverFrame,
   useShowIfScope,
@@ -20,7 +21,6 @@ import {
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
 import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
-import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverTrigger } from "@/modules/ui/components/popover";
 
@@ -31,26 +31,21 @@ interface ShowIfPopoverProps {
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
   /**
-   * What opens a new show-if when the target has none yet: the faint "Show … if…" hint. Without it,
-   * a target with no show-if renders nothing.
+   * What opens a new show-if when the target has none yet: the faint "Show block if…" hint, or a
+   * question's "Add condition" cell. Without it, a target with no show-if renders nothing.
    */
   readonly newTrigger?: ReactNode;
 }
 
-/** A show-if chip names its level: "Show block if …" on a block, "Show question if …" on a question. */
-export const getShowIfChipText = (
-  targetType: TShowIfTarget["type"],
-  conditions: string,
-  t: TFunction
-): string =>
-  targetType === "block"
-    ? t("workspace.surveys.edit.flow.show_block_if_chip", { conditions })
-    : t("workspace.surveys.edit.flow.show_question_if_chip", { conditions });
+/** A block's show-if chip on its header: "Show block if …". */
+export const getBlockShowIfChipText = (conditions: string, t: TFunction): string =>
+  t("workspace.surveys.edit.flow.show_block_if_chip", { conditions });
 
 /**
- * The "Show if" badge of a block or a question on the Flow tab (ENG-6931), or its "Show … if…" hint
- * when it has none, and the popover that edits its conditions with the logic editor's conditions
- * editor. The editor offers only what the reference rule allows (`getShowIfScope`).
+ * The show-if of a block or a question on the Flow tab (ENG-6931): a block's "Show block if …" chip on
+ * its header, or a question's condition in its "Show question if…" cell (ENG-6969 T10), or what opens
+ * a new one when it has none; and the popover that edits its conditions with the logic editor's
+ * conditions editor. The editor offers only what the reference rule allows (`getShowIfScope`).
  *
  * The popover edits a draft: only Done writes it to the survey, so opening one to look, then Escape,
  * a click outside or Cancel, changes nothing (ENG-6969 T1).
@@ -72,6 +67,7 @@ export function ShowIfPopover({
         locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
       })
     : "";
+  const isBlock = target.type === "block";
 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
@@ -79,16 +75,17 @@ export function ShowIfPopover({
         {showIf ? (
           <button
             type="button"
-            className="inline-flex rounded-full focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+            className={
+              isBlock
+                ? "inline-flex min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600 hover:border-slate-300 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+                : SHOW_IF_CELL_CLASS.set
+            }
             aria-label={t("workspace.surveys.edit.flow.edit_show_if", { conditions: summary })}
-            // The block header's badge sits inside the row's toggle: don't collapse the block.
+            // The block header's chip sits inside the row's toggle: don't collapse the block.
             onClick={(event) => event.stopPropagation()}>
-            <Badge
-              type="gray"
-              size="tiny"
-              icon={<EyeIcon />}
-              text={getShowIfChipText(target.type, summary, t)}
-            />
+            <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
+            {/* The question's column header already says "Show question if…". */}
+            <span className="truncate">{isBlock ? getBlockShowIfChipText(summary, t) : summary}</span>
           </button>
         ) : (
           newTrigger
@@ -152,10 +149,11 @@ function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: 
 
   return (
     <ShowIfPopoverFrame
+      // The popover is named like the chip or hint that opens it (ENG-6969 T9).
       title={
         isBlock
-          ? t("workspace.surveys.edit.flow.show_block_only_if")
-          : t("workspace.surveys.edit.flow.show_question_only_if")
+          ? t("workspace.surveys.edit.flow.show_block_if")
+          : t("workspace.surveys.edit.flow.show_question_if")
       }
       help={
         isBlock
@@ -171,7 +169,7 @@ function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: 
           ) : (
             <Button type="button" size="sm" variant="secondary" onClick={() => save(undefined)}>
               <TrashIcon />
-              {t("workspace.surveys.edit.flow.remove_show_if")}
+              {t("workspace.surveys.edit.flow.remove_condition")}
             </Button>
           )}
           <Button type="button" size="sm" disabled={!isShowIfComplete(draft)} onClick={() => save(draft)}>

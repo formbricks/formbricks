@@ -5,7 +5,14 @@ import {
   SURVEY_FLOW_FIXTURE_IDS as ids,
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
-import { describeAction, describeConditionGroup, describeRuleActions } from "./flow-outline-text";
+import {
+  describeAction,
+  describeBlockCounts,
+  describeConditionGroup,
+  describeRuleSummary,
+  getFallbackTargetOptions,
+  summarizeRuleActions,
+} from "./flow-outline-text";
 
 // Every key reads as its last segment, so the operator labels below are the i18n keys' names.
 const t = ((key: string, options?: { blockNumber?: number }) =>
@@ -225,37 +232,108 @@ describe("describeAction", () => {
   });
 });
 
-describe("describeRuleActions: a rule's actions read as separate steps", () => {
-  test("steps after the first are set apart, and the jump comes last behind “then”", () => {
+describe("summarizeRuleActions: a rule row keeps to one line (ENG-6969 T2)", () => {
+  test("the first action reads in full, the others fold into +N, and the jump is a trailing pill", () => {
     // Two calculations, then a jump to the Profile block.
-    expect(describeRuleActions(rule(4, 3).actions, surveyFlowFixture, t)).toEqual([
-      { lead: "none", action: { kind: "calculate", label: "segment = “hot-lead”" } },
-      { lead: "and", action: { kind: "calculate", label: "tenure_days = score" } },
-      { lead: "then", action: { kind: "jump", target: "block", label: "Profile" } },
-    ]);
+    expect(summarizeRuleActions(rule(4, 3).actions, surveyFlowFixture, t)).toEqual({
+      first: { kind: "calculate", label: "segment = “hot-lead”" },
+      moreCount: 1,
+      jump: { kind: "jump", target: "block", label: "Profile" },
+    });
   });
 
-  test("a jump listed before the other actions still reads last, because it happens last", () => {
+  test("a jump listed before the other actions still trails, because it happens last", () => {
     const [first, second, jump] = rule(4, 3).actions;
-    const steps = describeRuleActions([jump, first, second], surveyFlowFixture, t);
+    const summary = summarizeRuleActions([jump, first, second], surveyFlowFixture, t);
 
-    expect(steps.map((step) => [step.lead, step.action.kind])).toEqual([
-      ["none", "calculate"],
-      ["and", "calculate"],
-      ["then", "jump"],
-    ]);
+    expect(summary.first).toEqual({ kind: "calculate", label: "segment = “hot-lead”" });
+    expect(summary.moreCount).toBe(1);
+    expect(summary.jump).toEqual({ kind: "jump", target: "block", label: "Profile" });
   });
 
-  test("a rule that only jumps has no lead", () => {
-    expect(describeRuleActions(rule(4, 1).actions, surveyFlowFixture, t)).toEqual([
-      {
-        lead: "none",
-        action: {
-          kind: "jump",
-          target: "ending",
-          label: "Good to know bundles aren't for you",
-        },
-      },
-    ]);
+  test("a rule that only jumps is its pill alone", () => {
+    expect(summarizeRuleActions(rule(4, 1).actions, surveyFlowFixture, t)).toEqual({
+      moreCount: 0,
+      jump: { kind: "jump", target: "ending", label: "Good to know bundles aren't for you" },
+    });
+  });
+
+  test("without a jump every action after the first is counted", () => {
+    const [first, second] = rule(4, 3).actions;
+    expect(summarizeRuleActions([first, second, first], surveyFlowFixture, t)).toEqual({
+      first: { kind: "calculate", label: "segment = “hot-lead”" },
+      moreCount: 2,
+    });
+  });
+
+  test("a second jump, written through the API, is counted rather than dropped", () => {
+    const jump = rule(4, 3).actions[2];
+    const summary = summarizeRuleActions([jump, jump], surveyFlowFixture, t);
+    expect(summary.first).toBeUndefined();
+    expect(summary.moreCount).toBe(1);
+    expect(summary.jump?.label).toBe("Profile");
+  });
+});
+
+describe("describeRuleSummary: the whole sentence, for the tooltip and the row's accessible name", () => {
+  test("lists every action, with the destination last", () => {
+    expect(describeRuleSummary(rule(4, 3), surveyFlowFixture, t)).toBe(
+      "if “bundle” does_not_equal No bundle and score > tenure_days → segment = “hot-lead” · tenure_days = score → Profile"
+    );
+  });
+
+  test("names what an action does when its text alone would not say it", () => {
+    const requireAnswer = surveyFlowFixture.blocks
+      .flatMap((block) => block.logic ?? [])
+      .find((item) => item.actions.some((action) => action.objective === "requireAnswer"));
+    expect(describeRuleSummary(requireAnswer!, surveyFlowFixture, t)).toMatch(/→ require_answer_to$/);
+
+    const lowQuality = surveyFlowFixture.blocks
+      .flatMap((block) => block.logic ?? [])
+      .find((item) => item.id === ids.lowQuality.rule);
+    expect(describeRuleSummary(lowQuality!, surveyFlowFixture, t)).toMatch(/→ mark_as_low_quality$/);
+  });
+
+  test("a rule without conditions always runs", () => {
+    const always = { ...rule(4, 1), conditions: { id: "g", connector: "and" as const, conditions: [] } };
+    expect(describeRuleSummary(always, surveyFlowFixture, t)).toBe(
+      "always_runs → Good to know bundles aren't for you"
+    );
+  });
+});
+
+describe("describeBlockCounts (ENG-6969 T15)", () => {
+  const count = ((key: string, options?: { count?: number }) =>
+    `${key.split(".").pop()}:${options?.count}`) as never;
+
+  test("names the questions and the rules", () => {
+    expect(describeBlockCounts({ elementCount: 4, ruleCount: 2 }, count)).toBe(
+      "count_questions:4 · count_rules:2"
+    );
+  });
+
+  test("leaves the rule count out when there are none", () => {
+    expect(describeBlockCounts({ elementCount: 1, ruleCount: 0 }, count)).toBe("count_questions:1");
+  });
+});
+
+describe("getFallbackTargetOptions: where Otherwise go to can send everyone else (ENG-6969 T7)", () => {
+  test("the next block by name first, then the later blocks, then the endings", () => {
+    const options = getFallbackTargetOptions(surveyFlowFixture, 0, t);
+    expect(options[0]).toEqual({ label: "next_block_named", value: "defaultSelection" });
+    expect(options.slice(1, 1 + surveyFlowFixture.blocks.length - 1).map((option) => option.value)).toEqual(
+      surveyFlowFixture.blocks.slice(1).map((block) => block.id)
+    );
+    expect(options.slice(-surveyFlowFixture.endings.length).map((option) => option.value)).toEqual(
+      surveyFlowFixture.endings.map((ending) => ending.id)
+    );
+  });
+
+  test("the last block's default has no next block to name", () => {
+    const lastIdx = surveyFlowFixture.blocks.length - 1;
+    expect(getFallbackTargetOptions(surveyFlowFixture, lastIdx, t)[0]).toEqual({
+      label: "next_block",
+      value: "defaultSelection",
+    });
   });
 });

@@ -312,3 +312,56 @@ export const buildFlowOutline = (survey: TSurvey): TFlowOutline => {
     counts: { blocks: blocks.length, endings: endings.length },
   };
 };
+
+/**
+ * A question's two show-if cells on its block card, always in this order: the question's own show-if,
+ * then its options' (ENG-6969 T8, T10). The order follows what a respondent sees, a question before
+ * its options, and stays put whether or not either is set.
+ *
+ * - `set`: there is something to show; `editable: false` when the Flow tab can only show it
+ * - `add`: nothing set yet, a faint "Add condition"
+ * - `none`: an empty cell. A question with nothing before it to read, or one without options
+ */
+export type TFlowShowIfCell =
+  | { level: "question"; state: "set"; conditions: TConditionGroup; editable: boolean }
+  | { level: "question"; state: "add" | "none" }
+  | { level: "options"; state: "set"; showIfCount: number; hiddenCount: number; editable: boolean }
+  | { level: "options"; state: "add" | "none" };
+
+export const getElementShowIfCells = (
+  item: TFlowElementItem,
+  canAddQuestionShowIf: boolean
+): [TFlowShowIfCell, TFlowShowIfCell] => {
+  const showIf = item.badges.find((badge) => badge.kind === "showIf");
+  let questionCell: TFlowShowIfCell = { level: "question", state: canAddQuestionShowIf ? "add" : "none" };
+  if (showIf) {
+    questionCell = {
+      level: "question",
+      state: "set",
+      conditions: showIf.conditions,
+      editable: showIf.editable,
+    };
+  }
+
+  const optionBadges = item.badges.filter(
+    (badge) => badge.kind === "optionsShowIf" || badge.kind === "hiddenOptions"
+  );
+  const countOf = (kind: "optionsShowIf" | "hiddenOptions") => {
+    const badge = optionBadges.find((candidate) => candidate.kind === kind);
+    return badge && "count" in badge ? badge.count : 0;
+  };
+  let optionsCell: TFlowShowIfCell = { level: "options", state: "none" };
+  if (optionBadges.length > 0) {
+    optionsCell = {
+      level: "options",
+      state: "set",
+      showIfCount: countOf("optionsShowIf"),
+      hiddenCount: countOf("hiddenOptions"),
+      editable: item.optionLists.length > 0 && optionBadges.every((badge) => badge.editable),
+    };
+  } else if (item.optionLists.length > 0) {
+    optionsCell = { level: "options", state: "add" };
+  }
+
+  return [questionCell, optionsCell];
+};

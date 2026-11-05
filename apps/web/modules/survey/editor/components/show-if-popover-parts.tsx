@@ -1,9 +1,19 @@
 "use client";
 
-import { type ReactNode, createContext, useContext, useMemo, useRef } from "react";
+import { PlusIcon } from "lucide-react";
+import {
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+  createContext,
+  forwardRef,
+  useContext,
+  useMemo,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import { type TShowIfTarget, getShowIfScope } from "@/modules/survey/editor/lib/show-if-editing";
@@ -21,6 +31,41 @@ import { PopoverContent } from "@/modules/ui/components/popover";
  * Flow tab provides it; without it they fall back to the viewport.
  */
 export const ShowIfPopoverBoundary = createContext<Element | null>(null);
+
+const SHOW_IF_CELL_BASE =
+  "inline-flex h-6 max-w-full min-w-0 items-center gap-1 rounded-md border px-2 text-xs whitespace-nowrap focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden [&_svg]:size-3 [&_svg]:shrink-0";
+
+/**
+ * The box of every show-if cell on a block card (ENG-6969 T10), set or empty, so their left edges line
+ * up: a set condition, a faint "Add condition", or a set condition the Flow tab can only show.
+ */
+export const SHOW_IF_CELL_CLASS = {
+  set: cn(SHOW_IF_CELL_BASE, "border-slate-200 bg-slate-100 text-slate-700 hover:border-slate-300"),
+  add: cn(SHOW_IF_CELL_BASE, "border-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-700"),
+  readOnly: cn(SHOW_IF_CELL_BASE, "cursor-default border-slate-200 bg-slate-100 text-slate-500"),
+} as const;
+
+/** A faint "Add condition" in an empty show-if cell; also the trigger of the popover it opens. */
+export const AddConditionCell = forwardRef<HTMLButtonElement, ComponentPropsWithoutRef<"button">>(
+  function AddConditionCell({ className, onClick, ...props }, ref) {
+    const { t } = useTranslation();
+    return (
+      <button
+        ref={ref}
+        type="button"
+        className={cn(SHOW_IF_CELL_CLASS.add, className)}
+        {...props}
+        onClick={(event) => {
+          // The block card toggles on click: adding a condition must not collapse it.
+          event.stopPropagation();
+          onClick?.(event);
+        }}>
+        <PlusIcon aria-hidden="true" />
+        {t("workspace.surveys.edit.flow.add_show_if_condition")}
+      </button>
+    );
+  }
+);
 
 interface ShowIfPopoverFrameProps {
   readonly title: string;
@@ -64,7 +109,7 @@ export function ShowIfPopoverFrame({ title, help, info, children, footer }: Show
           <p className="text-sm font-semibold text-slate-900">{title}</p>
           {/* To the right, level with the title: above or below it would cover the heading. */}
           {info && (
-            <InfoTooltip label={info.label} side="right" align="start">
+            <InfoTooltip label={info.label} side="right" align="start" collisionBoundary={boundary}>
               {info.content}
             </InfoTooltip>
           )}
