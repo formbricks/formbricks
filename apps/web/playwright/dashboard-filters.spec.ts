@@ -44,7 +44,7 @@ test.describe("Dashboard filters", () => {
 
     await addFilterRule(page, { field: "Sentiment", operator: "is", value: "Positive" });
 
-    await expect(filterChips(page)).toContainText("Sentiment:");
+    await expect(filterChips(page)).toContainText("Sentiment is");
     await expect(filterChips(page)).toContainText("Positive");
     await expect
       .poll(() => urlFilters(page))
