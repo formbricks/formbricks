@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { SurveyImportInputError } from "../core/errors";
-import { SURVEY_IMPORT_WORD_MAX_PARAGRAPHS } from "../limits";
+import { SURVEY_IMPORT_MARKDOWN_MAX_CHARS, SURVEY_IMPORT_WORD_MAX_PARAGRAPHS } from "../limits";
 import { prepareDocumentImport } from "./prepare";
 import { looksLikeMarkdown, readMarkdownDocument } from "./read-markdown";
 
@@ -173,6 +173,31 @@ describe("readMarkdownDocument", () => {
       code: "document_limit_exceeded",
       identifier: "paragraphs",
     });
+  });
+});
+
+describe("readMarkdownDocument: the character cap", () => {
+  const heading = "# Survey\n\n";
+
+  test("refuses text past the cap before parsing it, as too large for the AI", () => {
+    // Brackets are slow to parse: 15 MB of them took 11 s.
+    const text = heading + "[".repeat(SURVEY_IMPORT_MARKDOWN_MAX_CHARS);
+    const started = performance.now();
+
+    expect(refusal(() => readMarkdownDocument(text))).toMatchObject({
+      code: "document_limit_exceeded",
+      identifier: "source_size",
+    });
+    expect(performance.now() - started).toBeLessThan(100);
+  });
+
+  test("reads text at the cap", () => {
+    const line = `1. ${"What do you think of it? ".repeat(8)}\n`;
+    const text =
+      heading + line.repeat(Math.floor((SURVEY_IMPORT_MARKDOWN_MAX_CHARS - heading.length) / line.length));
+
+    expect(text.length).toBeLessThanOrEqual(SURVEY_IMPORT_MARKDOWN_MAX_CHARS);
+    expect(readMarkdownDocument(text).lines.length).toBeGreaterThan(4_000);
   });
 });
 

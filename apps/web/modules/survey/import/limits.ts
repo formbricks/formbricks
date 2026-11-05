@@ -252,6 +252,14 @@ export const SURVEY_IMPORT_MAX_DRAFT_BYTES = DEFAULT_REQUEST_BODY_LIMIT_BYTES - 
 export const SURVEY_IMPORT_AI_MAX_SOURCE_CHARS = 240_000;
 
 /**
+ * A Markdown file's characters, markup included, before it is parsed: four times what one import may
+ * send to the AI, so no file that could fit is refused. The parser reads the whole text before any
+ * other limit applies, and crafted markup is slow to parse (15 MB of brackets took 11 s of the read
+ * thread's 15), so the text is held to this first; past it, the file could not be planned anyway.
+ */
+export const SURVEY_IMPORT_MARKDOWN_MAX_CHARS = 4 * SURVEY_IMPORT_AI_MAX_SOURCE_CHARS;
+
+/**
  * The model's output budget per call, reasoning tokens included. With thinking on (`core/ai-plan.ts`),
  * Gemini 2.5 Flash thinks 1,000–6,600 tokens before a plan, and a plan of a 17-question table is about
  * 4,400 tokens, so 8,192 cut off most calls on such a file; at 16,384 the largest seen was 9,668. Token

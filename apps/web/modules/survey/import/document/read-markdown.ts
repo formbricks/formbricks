@@ -2,6 +2,7 @@ import MarkdownIt from "markdown-it";
 import { surveyImportFileUnreadable } from "../core/errors";
 import type { TSurveyImportTextEncoding } from "../core/sniff";
 import {
+  SURVEY_IMPORT_MARKDOWN_MAX_CHARS,
   SURVEY_IMPORT_WORD_MAX_PARAGRAPHS,
   SURVEY_IMPORT_WORD_MAX_TABLES,
   SURVEY_IMPORT_WORD_MAX_TABLE_CELLS,
@@ -22,7 +23,8 @@ import { type TDocumentCell, type TDocumentLine, type TDocumentModel, buildDocum
  *   kept, and escapes are read (`\|` is a `|`). Images are counted, for the report.
  *
  * Markdown is plain text, so the sniffer reads it as a CSV; `looksLikeMarkdown` tells the two apart.
- * Paragraphs, tables and cells are held to the Word limits.
+ * Paragraphs, tables and cells are held to the Word limits, and the text, before it is parsed, to
+ * `SURVEY_IMPORT_MARKDOWN_MAX_CHARS`.
  */
 
 type TToken = ReturnType<MarkdownIt["parse"]>[number];
@@ -176,13 +178,21 @@ const readTable = (state: TReadState, tokens: readonly TToken[], start: number):
 
 /**
  * Read a Markdown questionnaire (text, and the encoding the upload was decoded as) into the document
- * model, laid out as a Word file's. Throws `SurveyImportInputError` — a 422 — past the Word limits
- * (`document_limit_exceeded`) or for a file with no text (`file_unreadable`).
+ * model, laid out as a Word file's. Throws `SurveyImportInputError` — a 422 — past the Word limits or
+ * the Markdown character cap (`document_limit_exceeded`) or for a file with no text (`file_unreadable`).
  */
 export const readMarkdownDocument = (
   text: string,
   encoding: TSurveyImportTextEncoding = "utf-8"
 ): TDocumentModel => {
+  // Before parsing: the parser reads all of it, and markup can be crafted to be slow to parse.
+  if (text.length > SURVEY_IMPORT_MARKDOWN_MAX_CHARS) {
+    throw documentLimitExceeded(
+      "source_size",
+      "file",
+      `The Markdown file must not exceed ${SURVEY_IMPORT_MARKDOWN_MAX_CHARS} characters`
+    );
+  }
   const tokens = markdown.parse(text.replace(FRONT_MATTER, ""), {});
   const state: TReadState = { lines: [], paragraphs: 0, tables: 0, tableCells: 0, images: 0, title: null };
 
