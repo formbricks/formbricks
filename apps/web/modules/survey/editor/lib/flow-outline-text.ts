@@ -429,6 +429,35 @@ export const getActionPlainText = (action: TFlowActionText, t: TFunction): strin
   }
 };
 
+/**
+ * A condition group after "If", as parts: how a rule's row starts, and an option's "Shown when" cell
+ * (ENG-6969 T3).
+ */
+export const describeIfConditionParts = (
+  group: TConditionGroup,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): TFlowTextPart[] => [
+  text(`${t("workspace.surveys.edit.flow.if")} `),
+  ...describeConditionGroupParts(group, survey, t, format),
+];
+
+/**
+ * A block's show-if chip as parts: "Show block if …", its questions and fields as chips (ENG-6969 T3).
+ * Its plain text is the chip's sentence, for the `aria-label`.
+ */
+export const describeBlockShowIfParts = (
+  group: TConditionGroup,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): TFlowTextPart[] =>
+  fillSentence(
+    t("workspace.surveys.edit.flow.show_block_if_chip", { conditions: SLOT }),
+    describeConditionGroupParts(group, survey, t, format)
+  );
+
 /** A rule's condition as its row starts, as parts: "If …", or "Always" for a rule without conditions. */
 export const describeRuleConditionParts = (
   rule: TSurveyBlockLogic,
@@ -438,10 +467,7 @@ export const describeRuleConditionParts = (
 ): TFlowTextPart[] =>
   rule.conditions.conditions.length === 0
     ? [text(t("workspace.surveys.edit.flow.always_runs"))]
-    : [
-        text(`${t("workspace.surveys.edit.flow.if")} `),
-        ...describeConditionGroupParts(rule.conditions, survey, t, format),
-      ];
+    : describeIfConditionParts(rule.conditions, survey, t, format);
 
 /** A rule's condition as its row starts, as plain text. */
 export const describeRuleCondition = (
