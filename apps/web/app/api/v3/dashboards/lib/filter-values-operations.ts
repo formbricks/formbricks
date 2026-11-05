@@ -199,7 +199,7 @@ const resolveValueListRequest = async ({
   if (ungrouped) return ungrouped;
   const nonNumeric = await refuseNonNumericComparisons(filters, {
     workspaceId: access.workspaceId,
-    datasetIds: async () => row.widgets.map(({ chart }) => chart.feedbackDirectoryId),
+    datasetIds: () => Promise.resolve(row.widgets.map(({ chart }) => chart.feedbackDirectoryId)),
     requestId,
     instance,
   });
