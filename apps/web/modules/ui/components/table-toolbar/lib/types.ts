@@ -79,6 +79,11 @@ export type TFilterProperty = {
   loadOptions?: (search: string) => Promise<TFilterOption[]>;
   /** Shown before the label in Advanced filter's picker, so kinds of property read apart at a glance. */
   icon?: LucideIcon;
+  /**
+   * Help Advanced filter shows under the rules while one uses this property: what its values mean,
+   * when that is not obvious from the label.
+   */
+  description?: string;
   /** Heading the property sits under in Advanced filter's picker. Absent: the table's one list. */
   group?: string;
   /** Operators offered in Advanced filter. Empty or absent: the property is not offered there. */

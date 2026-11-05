@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import {
+  EyeIcon,
   EyeOffIcon,
   HashIcon,
   LanguagesIcon,
@@ -21,6 +22,7 @@ import {
   type ElementOptions,
   OptionsType,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
+import { type TShownFilterTarget, getShownFilterTargets } from "@/app/lib/surveys/shown-filter-targets";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getReservedFieldIcon } from "@/modules/embedded-data/lib/field-display";
@@ -42,7 +44,8 @@ import type {
 //
 // Property ids follow the v3 syntax: `status`, `createdAt`, `tag`, `language` (the quick filters,
 // ENG-6703), then `question.<id>`, `question.<id>.<rowId>`, `attribute.<key>`, `hiddenField.<key>`,
-// `variable.<key>`, `meta.<name>` and `quota.<id>` for Advanced filter.
+// `variable.<key>`, `meta.<name>` and `quota.<id>` for Advanced filter, and `shown.<kind>.<id>[.<itemId>]`
+// for shown / not shown (ENG-6951).
 
 const STATUS_PROPERTY = "status";
 const CREATED_AT_PROPERTY = "createdAt";
@@ -58,7 +61,8 @@ type TResponseFieldKind =
   | "hiddenField"
   | "variable"
   | "meta"
-  | "quota";
+  | "quota"
+  | "shown";
 
 /** What a rule property points at, so a rule can be turned back into the filter row it stands for. */
 export type TResponseFilterField = {
@@ -69,6 +73,8 @@ export type TResponseFilterField = {
   elementType?: TSurveyElementTypeEnum;
   /** Matrix rows: the row label the filter row carries. */
   rowLabel?: string;
+  /** Shown / not shown: the block, question, option, row or column the rule names. */
+  shownTarget?: TShownFilterTarget;
 };
 
 export type TResponseFilterModel = {
@@ -160,7 +166,9 @@ const questionProperty = (
   return { id, label, valueType: "enum", options, ruleOperators };
 };
 
-const TYPED_KINDS: Partial<Record<OptionsType, Exclude<TResponseFieldKind, "question" | "matrixRow">>> = {
+const TYPED_KINDS: Partial<
+  Record<OptionsType, Exclude<TResponseFieldKind, "question" | "matrixRow" | "shown">>
+> = {
   [OptionsType.ATTRIBUTES]: "attribute",
   [OptionsType.HIDDEN_FIELDS]: "hiddenField",
   [OptionsType.VARIABLES]: "variable",
@@ -189,7 +197,10 @@ const groupLabel = (kind: TResponseFieldKind, t: TFunction): string => {
 type TModelEntry = { property: TFilterProperty; field?: TResponseFilterField };
 
 /** The icon Advanced filter shows before each field, so questions, contact data and metadata read apart. */
-const fieldIcon = (kind: Exclude<TResponseFieldKind, "question" | "matrixRow">, id: string): LucideIcon => {
+const fieldIcon = (
+  kind: Exclude<TResponseFieldKind, "question" | "matrixRow" | "shown">,
+  id: string
+): LucideIcon => {
   switch (kind) {
     case "attribute":
       return UserIcon;
@@ -306,6 +317,34 @@ const optionEntries = (option: ElementOptions["option"][number], context: TBuild
   return typedFieldEntries(id, label, option.type as OptionsType, context);
 };
 
+/** The two values a shown / not shown rule takes; `is` is its only operator (ENG-6951). */
+const SHOWN_VALUES = new Set(["shown", "notShown"]);
+
+/**
+ * Shown / not shown properties, one per block, question, option, row or column the survey can keep from
+ * a respondent. Only `is`: "is not shown" is not "is not (shown)", because a response with no record is
+ * neither, and the help text says so.
+ */
+const shownEntries = (survey: TSurvey, t: TFunction): TModelEntry[] => {
+  const options = [
+    { value: "shown", label: t("common.shown") },
+    { value: "notShown", label: t("workspace.surveys.filter.not_shown") },
+  ];
+  return getShownFilterTargets(survey, t).map(({ propertyId, target, label }) => ({
+    property: {
+      id: propertyId,
+      label,
+      group: t("workspace.surveys.filter.shown_group"),
+      icon: EyeIcon,
+      valueType: "enum",
+      options,
+      ruleOperators: ["equals"],
+      description: t("workspace.surveys.filter.shown_help"),
+    },
+    field: { kind: "shown", id: propertyId, label, shownTarget: target },
+  }));
+};
+
 const leadingProperties = (t: TFunction): TFilterProperty[] => [
   {
     id: STATUS_PROPERTY,
@@ -386,9 +425,12 @@ export const buildResponseFilterModel = ({
       elementFilterOptions.find((option) => option.type === type && option.id === id),
     surveyElements: getElementsFromBlocks(survey.blocks),
   };
-  const entries = elementOptions.flatMap((group) =>
-    group.option.flatMap((option) => optionEntries(option, context))
-  );
+  const groupEntries = (isQuestions: boolean) =>
+    elementOptions
+      .filter((group) => (group.header === OptionsType.ELEMENTS) === isQuestions)
+      .flatMap((group) => group.option.flatMap((option) => optionEntries(option, context)));
+  // Shown / not shown sits right under the questions it is about.
+  const entries = [...groupEntries(true), ...shownEntries(survey, t), ...groupEntries(false)];
   const fields = new Map<string, TResponseFilterField>();
   for (const { property, field } of entries) {
     if (field) fields.set(property.id, field);
@@ -411,6 +453,7 @@ const KIND_OPTIONS_TYPE: Record<TResponseFieldKind, OptionsType> = {
   variable: OptionsType.VARIABLES,
   meta: OptionsType.META,
   quota: OptionsType.QUOTAS,
+  shown: OptionsType.SHOWN,
 };
 
 const questionFilterType = (
@@ -453,6 +496,15 @@ const ruleToFilterValue = (field: TResponseFilterField, filter: TTableFilter): F
   if (field.kind === "question") {
     const filterType = questionFilterType(field, filter);
     return filterType ? { elementType, filterType } : null;
+  }
+  if (field.kind === "shown") {
+    const value = filter.values[0];
+    if (filter.operator !== "equals" || !field.shownTarget || !SHOWN_VALUES.has(value)) return null;
+    return {
+      elementType,
+      filterType: { filterValue: "is", filterComboBoxValue: value },
+      shownTarget: field.shownTarget,
+    };
   }
   if (field.kind === "quota") {
     if (filter.operator !== "equals") return null;
