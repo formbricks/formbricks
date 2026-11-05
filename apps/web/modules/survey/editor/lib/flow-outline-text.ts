@@ -296,24 +296,58 @@ const describeCalculateParts = (
   const target = fieldChip(survey, action.variableId);
   // ENG-6935: a Set value step reads as its formula, in the formula box's own text form.
   if (action.value.type === "expression") {
-    return [target, text(" = "), ...describeFormulaParts(action.value.value, survey)];
+    const tree = action.value.value;
+    // A date picked with the date picker reads as the picker shows it ("Nov 18, 2026"), not as the
+    // quoted ISO text the formula box holds.
+    if (
+      tree.type === "static" &&
+      typeof tree.value === "string" &&
+      tree.value !== "" &&
+      isDateField(survey, action.variableId)
+    ) {
+      return [target, text(" = "), text(describeDateValue(tree.value, format))];
+    }
+    return [target, text(" = "), ...describeFormulaParts(tree, survey)];
   }
   let value: TFlowTextPart[];
   if (action.value.type !== "static") value = describeOperandParts(action.value, survey);
+  // A step just added has no value until one is picked or typed, as an empty formula reads.
+  else if (action.value.value === "") value = [text("…")];
   else if (typeof action.value.value === "number") value = [text(String(action.value.value))];
   else if (isDateField(survey, action.variableId)) {
     value = [text(describeDateValue(action.value.value, format))];
   } else value = [text(quote(action.value.value))];
+  // Appending text reads as words: a "+" would read as adding numbers (review of ENG-6969).
+  if (action.operator === "concat") {
+    return fillSentence(
+      t("workspace.surveys.edit.flow.append_value_to_field", { value: VALUE_SLOT, field: SLOT }),
+      [target],
+      value
+    );
+  }
   const symbol = CALCULATE_SYMBOLS[action.operator] ?? action.operator;
   return [target, text(` ${symbol} `), ...value];
 };
 
-/** Splits a sentence around the one placeholder its translation holds, for a chip in its place. */
+/**
+ * Splits a sentence around the placeholders its translation holds, for chips in their place: `SLOT`
+ * for `fill`, and `VALUE_SLOT` for `valueFill` when the sentence has a second one.
+ */
 const SLOT = "\u0000";
-const fillSentence = (sentence: string, fill: TFlowTextPart[]): TFlowTextPart[] => {
-  const [before, after = ""] = sentence.split(SLOT);
-  return [text(before), ...fill, text(after)].filter((part) => part.kind !== "text" || part.text !== "");
-};
+const VALUE_SLOT = "\u0001";
+const fillSentence = (
+  sentence: string,
+  fill: TFlowTextPart[],
+  valueFill: TFlowTextPart[] = []
+): TFlowTextPart[] =>
+  sentence
+    .split(new RegExp(`(${SLOT}|${VALUE_SLOT})`))
+    .flatMap((piece): TFlowTextPart[] => {
+      if (piece === SLOT) return fill;
+      if (piece === VALUE_SLOT) return valueFill;
+      return [text(piece)];
+    })
+    .filter((part) => part.kind !== "text" || part.text !== "");
 
 /**
  * The first step of a collapsed rule row: the first action that isn't a jump, which trails as a pill

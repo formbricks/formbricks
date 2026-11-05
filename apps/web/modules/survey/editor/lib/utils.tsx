@@ -1103,7 +1103,6 @@ export const getActionOperatorOptions = (
       {
         label: t("workspace.surveys.edit.concat"),
         value: "concat",
-        symbol: CALCULATE_SYMBOLS.concat,
       },
     ];
   }

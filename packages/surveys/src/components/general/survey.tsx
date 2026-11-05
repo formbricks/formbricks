@@ -182,6 +182,7 @@ export function Survey({
   responseCount,
   startAtQuestionId,
   hiddenFieldsRecord,
+  previewPageUrl,
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
@@ -253,7 +254,11 @@ export function Survey({
    * the survey, not when some earlier action queued it.
    */
   const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
-  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment, visit);
+  webSurveyMetaRef.current ??= (() => {
+    const snapshot = createWebSurveyMetaSnapshot(isWebEnvironment, visit);
+    // The editor preview's Test values can stand in for the page address (`previewPageUrl`).
+    return previewPageUrl ? () => ({ ...snapshot(), url: previewPageUrl }) : snapshot;
+  })();
 
   /**
    * The Embedded Data ingest contract (ENG-1845) applied to whatever the host handed us — URL params

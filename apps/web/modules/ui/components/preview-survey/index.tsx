@@ -41,10 +41,12 @@ import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/contain
 import { INITIAL_FOLLOW_STATE, followActiveElement } from "./lib/follow-active-element";
 import { findStartScreenOut, getScreenOutFieldKey } from "./lib/start-screen-out";
 import {
+  PAGE_URL_TEST_VALUE_KEY,
   getPreviewStartKey,
   getTestValueEntries,
   getTestValueFields,
   restartsPreviewOnFinish,
+  withPageUrlField,
 } from "./lib/test-values";
 import { mirrorPlacementForDir } from "./lib/utils";
 
@@ -112,20 +114,36 @@ export const PreviewSurvey = ({
   // rules before the first question run when the survey loads, so the preview is keyed by the values
   // and those rules, and starts over whenever they change.
   const [testValues, setTestValues] = useState<Record<string, string>>({});
-  const testValueFields = useMemo(() => getTestValueFields(survey), [survey]);
+  const testValueFields = useMemo(() => withPageUrlField(getTestValueFields(survey), survey), [survey]);
   // What the preview runs with: each value as its field's link would carry it (ENG-6953).
   const testValueEntries = useMemo(
     () => getTestValueEntries(testValues, testValueFields),
     [testValues, testValueFields]
   );
-  const hiddenFieldsRecord = useMemo(() => Object.fromEntries(testValueEntries), [testValueEntries]);
+  // The page address is not a hidden field: the renderer reads it as the page it runs on.
+  const pageUrlField = testValueFields.find((field) => field.isPageUrl);
+  const previewPageUrl = pageUrlField ? testValues[PAGE_URL_TEST_VALUE_KEY]?.trim() || undefined : undefined;
+  const hiddenFieldsRecord = useMemo(
+    () =>
+      Object.fromEntries(
+        testValueEntries.filter(([key]) => !(pageUrlField && key === PAGE_URL_TEST_VALUE_KEY))
+      ),
+    [testValueEntries, pageUrlField]
+  );
   // The strip's Clear (ENG-6969 T13 ②): no values means a new start key, so the preview restarts.
   const clearTestValues = () => setTestValues({});
   // Bumped when an app survey without endings finishes, to start it over (see `onFinished`).
   const [previewRun, setPreviewRun] = useState(0);
   const previewStartKey = useMemo(
-    () => getPreviewStartKey(hiddenFieldsRecord, survey.startLogic ?? [], previewRun),
-    [hiddenFieldsRecord, survey.startLogic, previewRun]
+    () =>
+      getPreviewStartKey(
+        previewPageUrl
+          ? { ...hiddenFieldsRecord, [PAGE_URL_TEST_VALUE_KEY]: previewPageUrl }
+          : hiddenFieldsRecord,
+        survey.startLogic ?? [],
+        previewRun
+      ),
+    [hiddenFieldsRecord, previewPageUrl, survey.startLogic, previewRun]
   );
   // "Set test values" on the banner opens the Test values panel on the field its rule reads.
   const [testValuesOpenRequest, setTestValuesOpenRequest] = useState<TTestValuesOpenRequest>();
@@ -146,10 +164,11 @@ export const PreviewSurvey = ({
         survey: jsSurvey,
         hiddenFieldsRecord,
         languageCode,
-        // The renderer runs in the editor's page, so a reserved `url` reads the editor's address.
-        meta: typeof window === "undefined" ? {} : { url: window.location.href },
+        // The renderer runs in the editor's page, so a reserved `url` reads the editor's address,
+        // unless Test values give one.
+        meta: { url: previewPageUrl ?? (typeof window === "undefined" ? undefined : window.location.href) },
       }),
-    [jsSurvey, hiddenFieldsRecord, languageCode]
+    [jsSurvey, hiddenFieldsRecord, languageCode, previewPageUrl]
   );
   const startScreenOutSummary =
     startScreenOut && describeStartRule ? describeStartRule(startScreenOut.rule, survey) : undefined;
@@ -469,6 +488,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       key={previewStartKey}
                       hiddenFieldsRecord={hiddenFieldsRecord}
+                      previewPageUrl={previewPageUrl}
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       // The preview restarts when a rule before the first question changes; a card focusing itself then
@@ -527,6 +547,7 @@ export const PreviewSurvey = ({
                         <SurveyInline
                           key={previewStartKey}
                           hiddenFieldsRecord={hiddenFieldsRecord}
+                          previewPageUrl={previewPageUrl}
                           appUrl={publicDomain}
                           isPreviewMode={true}
                           // The preview restarts when a rule before the first question changes; a card focusing itself then
@@ -619,6 +640,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       key={previewStartKey}
                       hiddenFieldsRecord={hiddenFieldsRecord}
+                      previewPageUrl={previewPageUrl}
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       // The preview restarts when a rule before the first question changes; a card focusing itself then
@@ -683,6 +705,7 @@ export const PreviewSurvey = ({
                           <SurveyInline
                             key={previewStartKey}
                             hiddenFieldsRecord={hiddenFieldsRecord}
+                            previewPageUrl={previewPageUrl}
                             appUrl={publicDomain}
                             isPreviewMode={true}
                             // The preview restarts when a rule before the first question changes; a card focusing itself then

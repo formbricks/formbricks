@@ -138,7 +138,7 @@ describe("new rules from the Add logic menu", () => {
     expect(rule.actions).toEqual([{ id: expect.any(String), objective: "markLowQuality" }]);
   });
 
-  test("a Set value step always runs: an empty and group, and an empty formula (ENG-6935)", () => {
+  test("a Set value step always runs, and starts on Assign with an empty value (ENG-6935)", () => {
     const rule = createRule("setValue", { condition, variableId: ids.variables.score });
 
     expect(rule.conditions).toEqual({ id: expect.any(String), connector: "and", conditions: [] });
@@ -147,6 +147,20 @@ describe("new rules from the Add logic menu", () => {
         id: expect.any(String),
         objective: "calculate",
         variableId: ids.variables.score,
+        operator: "assign",
+        value: { type: "static", value: "" },
+      },
+    ]);
+  });
+
+  test("a Set value step on a field only an expression can set starts as an empty formula (P38)", () => {
+    const rule = createRule("setValue", { condition, variableId: "date_field", expressionOnly: true });
+
+    expect(rule.actions).toEqual([
+      {
+        id: expect.any(String),
+        objective: "calculate",
+        variableId: "date_field",
         operator: "assign",
         value: { type: "expression", value: { type: "static", value: "" } },
       },

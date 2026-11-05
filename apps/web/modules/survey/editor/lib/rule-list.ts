@@ -89,9 +89,18 @@ export interface TNewRuleOptions {
   condition: Omit<TSingleCondition, "id">;
   /** The computed field a Set value step sets; empty when the survey has none yet. */
   variableId?: string;
+  /**
+   * The field can only be set by an expression (a date field, P38): the step starts as an empty
+   * formula. Any other field starts on the operator picker (Assign), with Expression one switch away.
+   */
+  expressionOnly?: boolean;
 }
 
-const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): TSurveyBlockLogicAction => {
+const createFirstAction = (
+  kind: TNewRuleKind,
+  variableId: string | undefined,
+  expressionOnly: boolean
+): TSurveyBlockLogicAction => {
   switch (kind) {
     case "jump":
       return { id: createId(), objective: "jumpToBlock", target: "" };
@@ -99,15 +108,23 @@ const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): 
     case "markLowQuality":
       return { id: createId(), objective: "markLowQuality" };
     case "setValue":
-      return createEmptyFormulaAction(createId(), variableId);
+      return expressionOnly
+        ? createEmptyFormulaAction(createId(), variableId)
+        : {
+            id: createId(),
+            objective: "calculate",
+            variableId: variableId ?? "",
+            operator: "assign",
+            value: { type: "static", value: "" },
+          };
   }
 };
 
 export const createRule = (
   kind: TNewRuleKind,
-  { condition, variableId }: TNewRuleOptions
+  { condition, variableId, expressionOnly = false }: TNewRuleOptions
 ): TSurveyBlockLogic => {
-  const action = createFirstAction(kind, variableId);
+  const action = createFirstAction(kind, variableId, expressionOnly);
 
   return {
     id: createId(),

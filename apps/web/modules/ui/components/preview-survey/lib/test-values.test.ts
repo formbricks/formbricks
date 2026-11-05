@@ -11,6 +11,7 @@ import {
   getTestValuesKey,
   restartsPreviewOnFinish,
   toTestDateValue,
+  withPageUrlField,
 } from "./test-values";
 
 /** The renderer's `hiddenFieldsRecord`, as the preview builds it from the entries. */
@@ -114,5 +115,35 @@ describe("preview test values", () => {
     expect(restartsPreviewOnFinish({ type: "app", endings: [{}] })).toBe(false);
     expect(restartsPreviewOnFinish({ type: "link", endings: [] })).toBe(false);
     expect(getPreviewStartKey({}, startLogic, 1)).not.toBe(getPreviewStartKey({}, startLogic, 0));
+  });
+});
+
+describe("withPageUrlField", () => {
+  const field = { key: "panel_id", dataType: "string" as const };
+  const readsUrl = {
+    startLogic: [
+      {
+        conditions: {
+          conditions: [{ leftOperand: { type: "reserved", value: "url" }, operator: "contains" }],
+        },
+      },
+    ],
+    blocks: [],
+  };
+
+  test("adds the page address when a rule reads url", () => {
+    expect(withPageUrlField([field], readsUrl)).toEqual([
+      field,
+      { key: "url", dataType: "string", isPageUrl: true },
+    ]);
+  });
+
+  test("leaves the fields as they are when nothing reads url", () => {
+    expect(withPageUrlField([field], { startLogic: [], blocks: [] })).toEqual([field]);
+  });
+
+  test("doesn't add it when a field of the survey is named url, which shadows the reserved one", () => {
+    const urlField = { key: "url", dataType: "string" as const };
+    expect(withPageUrlField([urlField], readsUrl)).toEqual([urlField]);
   });
 });

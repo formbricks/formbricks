@@ -1,7 +1,7 @@
 "use client";
 
 import { EyeIcon, TrashIcon } from "lucide-react";
-import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
+import { type Dispatch, type RefObject, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -10,6 +10,7 @@ import {
   SHOW_IF_CELL_CLASS,
   ShowIfConditionsEditor,
   ShowIfPopoverFrame,
+  useShowIfAnchor,
   useShowIfScope,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
 import {
@@ -26,7 +27,7 @@ import {
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
 import { Button } from "@/modules/ui/components/button";
-import { Popover, PopoverTrigger } from "@/modules/ui/components/popover";
+import { Popover, PopoverAnchor, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface ShowIfPopoverProps {
   readonly localSurvey: TSurvey;
@@ -44,6 +45,8 @@ interface ShowIfPopoverProps {
    * (the block's Settings tab on the Questions tab, ENG-6949).
    */
   readonly summaryOnly?: boolean;
+  /** The trigger sits right under its own heading (the Questions tab): the popover leaves it out. */
+  readonly hideHeading?: boolean;
 }
 
 /**
@@ -64,9 +67,11 @@ export function ShowIfPopover({
   onOpenChange,
   newTrigger,
   summaryOnly = false,
+  hideHeading = false,
 }: ShowIfPopoverProps) {
   const { t, i18n } = useTranslation();
   const elementIcons = useElementIcons();
+  const { triggerRef, anchorRef, hasAnchor } = useShowIfAnchor();
   const showIf = getShowIf(localSurvey, target);
   if (!showIf && !newTrigger) return null;
 
@@ -83,7 +88,8 @@ export function ShowIfPopover({
 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
+      {hasAnchor && <PopoverAnchor virtualRef={anchorRef as RefObject<Element>} />}
+      <PopoverTrigger asChild ref={triggerRef}>
         {showIf ? (
           <button
             type="button"
@@ -113,6 +119,7 @@ export function ShowIfPopover({
           setLocalSurvey={setLocalSurvey}
           target={target}
           showIf={showIf}
+          hideHeading={hideHeading}
           onClose={() => onOpenChange(false)}
         />
       )}
@@ -126,6 +133,7 @@ interface ShowIfEditorProps {
   readonly target: TShowIfTarget;
   /** The saved show-if; absent for a new one. */
   readonly showIf: TConditionGroup | undefined;
+  readonly hideHeading: boolean;
   readonly onClose: () => void;
 }
 
@@ -133,7 +141,14 @@ interface ShowIfEditorProps {
  * The popover's content, mounted only while it is open, so each opening starts a fresh draft: a copy
  * of the saved show-if, or a new one whose first field is still to be chosen (ENG-6969 T6).
  */
-function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: ShowIfEditorProps) {
+function ShowIfEditor({
+  localSurvey,
+  setLocalSurvey,
+  target,
+  showIf,
+  hideHeading,
+  onClose,
+}: ShowIfEditorProps) {
   const { t } = useTranslation();
   const isBlock = target.type === "block";
   const isNew = showIf === undefined;
@@ -170,6 +185,7 @@ function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: 
           ? t("workspace.surveys.edit.flow.show_if_block_help")
           : t("workspace.surveys.edit.flow.show_if_question_help")
       }
+      hideHeading={hideHeading}
       footer={
         <div className="flex justify-between gap-2">
           {isNew || isEmptied ? (

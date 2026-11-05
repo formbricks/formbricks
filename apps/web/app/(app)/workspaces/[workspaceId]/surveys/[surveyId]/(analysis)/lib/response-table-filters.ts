@@ -330,19 +330,24 @@ const shownEntries = (survey: TSurvey, t: TFunction): TModelEntry[] => {
     { value: "shown", label: t("common.shown") },
     { value: "notShown", label: t("workspace.surveys.filter.not_shown") },
   ];
-  return getShownFilterTargets(survey, t).map(({ propertyId, target, label }) => ({
-    property: {
-      id: propertyId,
-      label,
-      group: t("workspace.surveys.filter.shown_group"),
-      icon: EyeIcon,
-      valueType: "enum",
-      options,
-      ruleOperators: ["equals"],
-      description: t("workspace.surveys.filter.shown_help"),
-    },
-    field: { kind: "shown", id: propertyId, label, shownTarget: target },
-  }));
+  return getShownFilterTargets(survey, t).map(({ propertyId, target, label: targetLabel }) => {
+    // "Visibility: …", so the entry and the chosen rule never read like the answer filter for the
+    // same question (review of ENG-6951).
+    const label = t("workspace.surveys.filter.shown_field_label", { target: targetLabel });
+    return {
+      property: {
+        id: propertyId,
+        label,
+        group: t("workspace.surveys.filter.shown_group"),
+        icon: EyeIcon,
+        valueType: "enum",
+        options,
+        ruleOperators: ["equals"],
+        description: t("workspace.surveys.filter.shown_help"),
+      },
+      field: { kind: "shown", id: propertyId, label, shownTarget: target },
+    };
+  });
 };
 
 const leadingProperties = (t: TFunction): TFilterProperty[] => [

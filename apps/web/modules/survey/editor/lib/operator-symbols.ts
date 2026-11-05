@@ -10,5 +10,4 @@ export const CALCULATE_SYMBOLS: Readonly<Record<string, string>> = {
   multiply: "×",
   divide: "÷",
   assign: "=",
-  concat: "+",
 };

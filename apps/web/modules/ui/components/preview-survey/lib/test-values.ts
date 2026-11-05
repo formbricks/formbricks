@@ -16,6 +16,8 @@ import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
 export interface TTestValueField {
   key: string;
   dataType: TEmbeddedDataType;
+  /** The page address (`withPageUrlField`), which the preview passes as the page, not as a field. */
+  isPageUrl?: boolean;
 }
 
 /** The fields a test value can be given for: the survey's ingested fields, in order, with their type. */
@@ -108,3 +110,32 @@ export const getPreviewStartKey = (
  */
 export const restartsPreviewOnFinish = (survey: { type: string; endings: readonly unknown[] }): boolean =>
   survey.type === "app" && survey.endings.length === 0;
+
+/**
+ * The page address as a test value (review of ENG-6969): a rule that reads `url` would otherwise
+ * read the editor's own address, which no rule expects. The preview hands it to the renderer as the
+ * page address (`previewPageUrl`), not as a hidden field.
+ */
+export const PAGE_URL_TEST_VALUE_KEY = "url";
+
+/** Whether anything in the survey reads the reserved `url` field: a rule, a show-if, start logic. */
+const readsPageUrl = (value: unknown): boolean => {
+  if (Array.isArray(value)) return value.some(readsPageUrl);
+  if (value === null || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  if (record.type === "reserved" && record.value === PAGE_URL_TEST_VALUE_KEY) return true;
+  return Object.values(record).some(readsPageUrl);
+};
+
+/**
+ * The Test values fields with the page address added when a rule reads `url` and no field of the
+ * survey already goes by that name (a field named `url` shadows the reserved one).
+ */
+export const withPageUrlField = (
+  fields: readonly TTestValueField[],
+  survey: { startLogic?: unknown; blocks: unknown }
+): TTestValueField[] =>
+  readsPageUrl([survey.startLogic, survey.blocks]) &&
+  !fields.some((field) => field.key === PAGE_URL_TEST_VALUE_KEY)
+    ? [...fields, { key: PAGE_URL_TEST_VALUE_KEY, dataType: "string", isPageUrl: true }]
+    : [...fields];

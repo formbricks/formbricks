@@ -86,6 +86,14 @@ export const AdvancedFilterDialog = ({
     setIncompleteIds([]);
   };
 
+  // A property with one operator (shown / not shown: "is") gets it at once, so the value comes next.
+  const withOnlyOperator = (condition: TGenericCondition): TGenericCondition => {
+    const operators = propertyFor(condition)?.ruleOperators ?? [];
+    return !condition.operator && operators.length === 1
+      ? { ...condition, operator: operators[0] }
+      : condition;
+  };
+
   const config: TConditionsEditorConfig = {
     getLeftOperandOptions: () => groupProperties(ruleProperties, t("common.table_toolbar.properties")),
     getOperatorOptions: (condition) =>
@@ -157,7 +165,9 @@ export const AdvancedFilterDialog = ({
     onUpdateCondition: (id, updates) =>
       updateConditions((conditions) =>
         conditions.map((condition) =>
-          condition.id === id && isCondition(condition) ? { ...condition, ...updates } : condition
+          condition.id === id && isCondition(condition)
+            ? withOnlyOperator({ ...condition, ...updates })
+            : condition
         )
       ),
     // AND only: there is no connector to toggle.
