@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, one {{count} bitiş} other {{count} bitiş}}",
           "count_rules": "{count, plural, one {{count} kural} other {{count} kural}}",
           "create_calculated_field": "Bir tane oluştur",
+          "date_field_expression_only": "Tarih alanı bir ifadeyle ayarlanır, örneğin now() veya tırnak içinde bir tarih, mesela \"2026-11-05\".",
+          "date_field_expression_only_label": "Tarih alanı ayarlama hakkında",
           "edit_options_shown_if": "Hangi seçeneklerin gösterileceğini düzenle",
           "edit_show_if": "Gösterme koşulunu düzenle: {conditions}",
           "end_label": "Bitiş: {label}",

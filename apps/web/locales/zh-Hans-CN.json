@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, other {{count} 个结束页}}",
           "count_rules": "{count, plural, other {{count} 条规则}}",
           "create_calculated_field": "去创建",
+          "date_field_expression_only": "日期字段需通过表达式来设置,例如 now(),或带引号的日期,如 \"2026-11-05\"。",
+          "date_field_expression_only_label": "关于设置日期字段",
           "edit_options_shown_if": "编辑显示哪些选项",
           "edit_show_if": "编辑显示条件:{conditions}",
           "end_label": "结束:{label}",

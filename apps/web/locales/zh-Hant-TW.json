@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, other {{count} 個結尾}}",
           "count_rules": "{count, plural, other {{count} 條規則}}",
           "create_calculated_field": "建立一個",
+          "date_field_expression_only": "日期欄位需使用運算式來設定，例如 now()，或以引號括住的日期，如 \"2026-11-05\"。",
+          "date_field_expression_only_label": "關於設定日期欄位",
           "edit_options_shown_if": "編輯要顯示哪些選項",
           "edit_show_if": "編輯顯示條件:{conditions}",
           "end_label": "結尾:{label}",

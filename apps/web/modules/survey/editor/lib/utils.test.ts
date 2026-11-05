@@ -30,6 +30,7 @@ import {
   getFormatLeftOperandValue,
   getFormatRightOperandValue,
   getMatchValueProps,
+  isExpressionOnlyField,
 } from "./utils";
 
 /**
@@ -452,6 +453,20 @@ describe("calculate action options", () => {
       }),
       expect.objectContaining({ value: "note", label: "Note", meta: { variableType: "text" } }),
     ]);
+  });
+
+  test("only a computed date field is set with an expression only", () => {
+    // P38: one-step "assign" has no date input, so the Expression switch stays on for a date field.
+    const withDate = survey([
+      field({ storageKey: "signup", name: "Signup", dataType: "date" }),
+      field({ storageKey: "checked", name: "Checked", source: "computed", dataType: "date" }),
+      field({ storageKey: "score", name: "Score", source: "computed", dataType: "number" }),
+    ]);
+
+    expect(isExpressionOnlyField(withDate, "checked")).toBe(true);
+    expect(isExpressionOnlyField(withDate, "score")).toBe(false);
+    expect(isExpressionOnlyField(withDate, "signup")).toBe(false);
+    expect(isExpressionOnlyField(withDate, "")).toBe(false);
   });
 
   test("the value picker draws the same Embedded Data group, with no auto-captured one", () => {

@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, one {{count} encerramento} many {{count} de encerramentos} other {{count} encerramentos}}",
           "count_rules": "{count, plural, one {{count} regra} many {{count} de regras} other {{count} regras}}",
           "create_calculated_field": "Crie um",
+          "date_field_expression_only": "Um campo de data é definido com uma expressão, por exemplo, now() ou uma data entre aspas, como \"2026-11-05\".",
+          "date_field_expression_only_label": "Sobre como definir um campo de data",
           "edit_options_shown_if": "Editar quais opções são exibidas",
           "edit_show_if": "Editar condição de exibição: {conditions}",
           "end_label": "Fim: {label}",

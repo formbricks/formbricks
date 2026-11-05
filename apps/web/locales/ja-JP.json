@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, other {{count}個のエンディング}}",
           "count_rules": "{count, plural, other {{count}個のルール}}",
           "create_calculated_field": "作成する",
+          "date_field_expression_only": "日付フィールドは、now() や引用符で囲んだ日付(例: \"2026-11-05\")などの式で設定します。",
+          "date_field_expression_only_label": "日付フィールドの設定について",
           "edit_options_shown_if": "表示する選択肢を編集",
           "edit_show_if": "表示条件を編集: {conditions}",
           "end_label": "終了: {label}",

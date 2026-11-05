@@ -1043,6 +1043,14 @@ export const getActionTargetOptions = (
  * `meta.variableType` rather than `meta.type`: this option feeds `getActionOperatorOptions`, which
  * asks what kind of value it is assigning, not what kind of reference it is.
  */
+/**
+ * A computed date field is set with an expression only (P38): one-step "assign" has no date input, so the
+ * Set value row keeps its Expression switch on for it.
+ */
+export const isExpressionOnlyField = (localSurvey: TSurvey, storageKey: string): boolean =>
+  getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
+    .dataType === "date";
+
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] =>
   getComputedEmbeddedFields(localSurvey).map((embeddedField) => ({
     ...toEmbeddedFieldOption(embeddedField),

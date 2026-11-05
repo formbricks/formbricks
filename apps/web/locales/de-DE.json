@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, one {{count} Abschluss} other {{count} Abschlüsse}}",
           "count_rules": "{count, plural, one {{count} Regel} other {{count} Regeln}}",
           "create_calculated_field": "Neues Feld erstellen",
+          "date_field_expression_only": "Ein Datumsfeld wird mit einem Ausdruck festgelegt, z. B. now() oder einem Datum in Anführungszeichen wie \"2026-11-05\".",
+          "date_field_expression_only_label": "Informationen zum Festlegen eines Datumsfelds",
           "edit_options_shown_if": "Bearbeiten, welche Optionen angezeigt werden",
           "edit_show_if": "Anzeigebedingung bearbeiten: {conditions}",
           "end_label": "Ende: {label}",

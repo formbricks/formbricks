@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, one {{count} einde} other {{count} eindes}}",
           "count_rules": "{count, plural, one {{count} regel} other {{count} regels}}",
           "create_calculated_field": "Maak er een aan",
+          "date_field_expression_only": "Een datumveld stel je in met een expressie, bijvoorbeeld now() of een datum tussen aanhalingstekens, zoals \"2026-11-05\".",
+          "date_field_expression_only_label": "Over het instellen van een datumveld",
           "edit_options_shown_if": "Bewerk welke opties worden getoond",
           "edit_show_if": "Weergavevoorwaarde bewerken: {conditions}",
           "end_label": "Einde: {label}",

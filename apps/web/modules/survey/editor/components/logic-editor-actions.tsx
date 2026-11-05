@@ -11,7 +11,7 @@ import {
   TActionTextVariableCalculateOperator,
 } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getUpdatedActionBody } from "@/lib/surveyLogic/utils";
+import { createEmptyFormulaAction, getUpdatedActionBody } from "@/lib/surveyLogic/utils";
 import { CalculatedFieldPicker } from "@/modules/survey/editor/components/calculated-field-picker";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
 import { formulaToOneStep, oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
@@ -22,6 +22,7 @@ import {
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
+  isExpressionOnlyField,
 } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -31,6 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -282,10 +284,13 @@ export function LogicEditorActions({
                             onChange={(variableId) =>
                               handleValuesChange(
                                 idx,
-                                // A formula stays: a field of another type shows what no longer fits.
+                                // A formula stays: a field of another type shows what no longer fits. A date
+                                // field is set with an expression only (P38), so one step turns into one.
                                 isFormulaAction(action)
                                   ? { variableId }
-                                  : { variableId, value: { type: "static", value: "" } }
+                                  : isExpressionOnlyField(localSurvey, variableId)
+                                    ? { ...createEmptyFormulaAction(action.id, variableId) }
+                                    : { variableId, value: { type: "static", value: "" } }
                               )
                             }
                             onAddCalculatedField={onAddCalculatedField}
@@ -370,6 +375,11 @@ export function LogicEditorActions({
                         <Switch
                           id={`action-${idx}-formula-toggle`}
                           checked={action.value.type === "expression"}
+                          // A date field has no one-step input: it stays an expression (P38).
+                          disabled={
+                            action.value.type === "expression" &&
+                            isExpressionOnlyField(localSurvey, action.variableId)
+                          }
                           onCheckedChange={(on) => (on ? turnFormulaOn(idx) : turnFormulaOff(idx))}
                         />
                         <Label
@@ -377,6 +387,12 @@ export function LogicEditorActions({
                           className="text-sm font-normal text-slate-600">
                           {t("workspace.surveys.edit.flow.formula")}
                         </Label>
+                        {isExpressionOnlyField(localSurvey, action.variableId) && (
+                          <InfoTooltip
+                            label={t("workspace.surveys.edit.flow.date_field_expression_only_label")}>
+                            {t("workspace.surveys.edit.flow.date_field_expression_only")}
+                          </InfoTooltip>
+                        )}
                       </div>
                     </div>
 

@@ -4207,6 +4207,8 @@
           "count_endings": "{count, plural, one {{count} avslut} other {{count} avslut}}",
           "count_rules": "{count, plural, one {{count} regel} other {{count} regler}}",
           "create_calculated_field": "Skapa ett",
+          "date_field_expression_only": "Ett datumfält anges med ett uttryck, t.ex. now() eller ett datum inom citattecken, som \"2026-11-05\".",
+          "date_field_expression_only_label": "Om att ange ett datumfält",
           "edit_options_shown_if": "Redigera vilka alternativ som visas",
           "edit_show_if": "Redigera visningsvillkor: {conditions}",
           "end_label": "Slut: {label}",
