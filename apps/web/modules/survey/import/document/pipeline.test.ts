@@ -402,6 +402,60 @@ describe("runDocumentImport: naming", () => {
   });
 });
 
+describe("runDocumentImport: lines no call answered for", () => {
+  const listOf = (count: number) => ({
+    fileName: "many.csv",
+    model: buildGridModel(
+      "csv",
+      Array.from({ length: count }, (_, index) => [`Q${index + 1}`])
+    ),
+  });
+  const plannedAll = (count: number) =>
+    planOf(Array.from({ length: count }, (_, index) => openTextEntry(`R${index + 1}`, `A${index + 1}`)));
+  /** Answers the first call; every later one, the retry's included, comes back unreadable. */
+  const firstCallOnly = (generate: TImportPlanGenerate): TImportPlanGenerate => {
+    let calls = 0;
+    return (request) => (calls++ === 0 ? generate(request) : Promise.resolve({ object: {} }));
+  };
+  const firstChunkOf = (file: ReturnType<typeof listOf>) =>
+    chunkDocumentLines(
+      file.model,
+      file.model.lines.map((line) => line.key)
+    )[0].length;
+
+  test("a draft that may be missing questions says so first, with how many lines were never read", async () => {
+    const lines = 150;
+    const file = listOf(lines);
+    const answered = firstChunkOf(file);
+    expect(answered).toBeLessThan(lines);
+
+    const { report } = await run(file, firstCallOnly(recordedDocumentGenerate(plannedAll(lines))));
+
+    expect(report.summary.questions).toBe(answered);
+    expect(report.issues[0]).toEqual({
+      code: "lines_unread",
+      severity: "warning",
+      params: { count: lines - answered },
+    });
+  });
+
+  test(`a file whose unread lines could take it past ${SURVEY_IMPORT_MAX_QUESTIONS} questions is refused, not imported short`, async () => {
+    const lines = SURVEY_IMPORT_MAX_QUESTIONS + 50;
+    const file = listOf(lines);
+    expect(firstChunkOf(file)).toBeLessThan(SURVEY_IMPORT_MAX_QUESTIONS);
+
+    expect(await failureOf(run(file, firstCallOnly(recordedDocumentGenerate(plannedAll(lines)))))).toBe(
+      "too_many_questions"
+    );
+  });
+
+  test("a file every call answered for says nothing of unread lines", async () => {
+    const { report } = await run(listOf(20), recordedDocumentGenerate(plannedAll(20)));
+
+    expect(report.issues.map((issue) => issue.code)).not.toContain("lines_unread");
+  });
+});
+
 describe("runDocumentImport: the AI ceiling", () => {
   const listOf = (count: number) => ({
     fileName: "many.csv",

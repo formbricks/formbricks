@@ -192,7 +192,7 @@ A document import shows its progress, **Reading the file**, **Building questions
 
 ### Very large surveys
 
-A document import builds up to **200 questions** from up to **240,000 characters** of text. A document with more text is refused before any AI runs; one the AI plans into more than 200 questions is refused once the plan is back, before anything is created.
+A document import builds up to **200 questions** from up to **240,000 characters** of text. A document with more text is refused before any AI runs; one the AI plans into more than 200 questions is refused once the plan is back, before anything is created. If the AI could not read some lines of the file, they count toward the 200 as if each were a question, so a file that might be too large is refused rather than imported short. Otherwise the review warns that the draft may be missing questions; import the file again to try those lines once more.
 
 Import it with Claude or ChatGPT instead. [Connect your assistant to Formbricks through MCP](/platform/mcp/overview), give it the document, and ask it to create the survey. Or split the document and import each part.
 

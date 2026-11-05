@@ -25,6 +25,7 @@ import {
   type TDocumentCheckedPlan,
   type TDocumentPlanFailure,
   checkDocumentPlanResponses,
+  isUnreadLine,
   mergeDocumentPlans,
 } from "./plan-checks";
 import {
@@ -72,6 +73,8 @@ export interface TDocumentPlanResult {
    * answered, so an empty plan means the file has nothing to import rather than a failed import.
    */
   conclusive: boolean;
+  /** Lines no call answered for (`isUnreadLine`): each could be a question the draft is missing. */
+  unreadLines: number;
 }
 
 /**
@@ -151,5 +154,6 @@ export async function planDocumentImport(params: {
   // Every line was answered: placed, skipped, or left out by an answer that named others.
   const conclusive =
     !run.failedOnTheWay && plan.silentResponses === 0 && plan.entries.size + plan.skipped.size > 0;
-  return { plan, context, issues, usage: run.usage, calls: run.calls, conclusive };
+  const unreadLines = [...plan.failures.values()].filter(isUnreadLine).length;
+  return { plan, context, issues, usage: run.usage, calls: run.calls, conclusive, unreadLines };
 }

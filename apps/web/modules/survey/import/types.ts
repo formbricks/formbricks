@@ -88,6 +88,9 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `text_not_split` — a cell whose question and options could not be told apart word for word, imported
  *   whole as the question's text (`params.cell`)
  * - `sheets_skipped` — the workbook's other sheets, which an import never reads (`params.sheets`)
+ * - `lines_unread` — lines of a document no AI call answered for (they timed out, ran past the import's
+ *   budget, or came back unreadable), so the draft may be missing questions (`params.count`). The review
+ *   says so above the report too
  * - `file_encoding` — a text file decoded by a guess, whose accents may be wrong (`params.encoding`:
  *   `windows-1252`, the only one sent today; the dialog names any encoding it is given)
  * - `table_as_matrix` — a question a Word file lays out as a table, its statements down the rows and its
@@ -254,6 +257,7 @@ export type TSurveyImportIssueCode =
   | "logic_imported"
   | "text_not_split"
   | "sheets_skipped"
+  | "lines_unread"
   | "file_encoding"
   | "table_as_matrix"
   | "images_not_imported"

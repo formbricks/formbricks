@@ -506,6 +506,14 @@ const CALL_FAILURES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Whether a line was never read: every reason it failed was its whole call's, so nothing says whether it
+ * is a question, a note or an option. Once the plan is merged, these are the lines a call never answered
+ * for, and the import cannot tell how many questions they hold.
+ */
+export const isUnreadLine = (reasons: readonly string[]): boolean =>
+  reasons.length > 0 && reasons.every((reason) => CALL_FAILURES.has(reason));
+
+/**
  * The retry's failures, plus the first round's for each line the AI placed as a question there and the
  * retry left out: a document answer judges only the lines it names, so that line would otherwise have
  * no verdict and no line in the report. Not for a line whose first-round failure was the whole call's
@@ -529,7 +537,7 @@ const keepUnresolvedFailures = (
   );
   for (const [ref, reasons] of first.failures) {
     if (retry.entries.has(ref) || retry.skipped.has(ref) || failures.has(ref)) continue;
-    if (reasons.every((reason) => CALL_FAILURES.has(reason))) continue;
+    if (isUnreadLine(reasons)) continue;
     const line = context.lineAt(ref);
     if (line !== undefined && linesRead.has(line)) continue;
     failures.set(ref, reasons);

@@ -207,12 +207,16 @@ export async function runDocumentImport(
   signal.throwIfAborted();
   onProgress("assembling");
   const { entries, overlapping } = orderedEntries(planned.context, planned.plan);
+  const questionCount = countQuestions(entries);
   // The AI ceiling on questions (decision 18): a survey this large is imported through MCP instead.
   // Planning already stopped once its answers held more (`questionCeiling`); this holds it to the plan
-  // as checked.
-  if (countQuestions(entries) > SURVEY_IMPORT_MAX_QUESTIONS)
+  // as checked. A line no call answered for may be a question too, so a file that could pass the
+  // ceiling with them is refused rather than imported short: a short draft of a file too large to
+  // import would look like a complete one.
+  if (questionCount + planned.unreadLines > SURVEY_IMPORT_MAX_QUESTIONS) {
     throw new SurveyImportFailedError("too_many_questions");
-  if (countQuestions(entries) === 0) throw noQuestionsPlanned(planned.conclusive);
+  }
+  if (questionCount === 0) throw noQuestionsPlanned(planned.conclusive);
   const languages = planned.context.languages;
   if (!languages) throw new SurveyImportFailedError("no_questions");
 
@@ -257,7 +261,13 @@ export async function runDocumentImport(
     entries,
     new Set(dropped.flatMap((issue) => (issue.questionRef === undefined ? [] : [issue.questionRef])))
   );
+  // Lines no call answered for: the draft may be missing questions, which the review says up front.
+  const unreadNote: TSurveyImportPipelineIssue[] =
+    planned.unreadLines > 0
+      ? [{ code: "lines_unread", severity: "warning", params: { count: planned.unreadLines } }]
+      : [];
   const issues = [
+    ...unreadNote,
     ...encodingNote,
     ...skippedSheets,
     ...notes,

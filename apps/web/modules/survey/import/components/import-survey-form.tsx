@@ -14,7 +14,7 @@ import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { getSurveyImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
 import { getSurveyImportFileExtensions } from "@/modules/survey/import/lib/import-file";
-import { getSwitchedOffLanguages } from "@/modules/survey/import/lib/import-report";
+import { getSwitchedOffLanguages, getUnreadLineCount } from "@/modules/survey/import/lib/import-report";
 import type { TSurveyImportReport, TSurveyImportStage } from "@/modules/survey/import/types";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -65,6 +65,24 @@ const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TSurveyImportR
           languages: languages.join(", "),
         })}
       </AlertDescription>
+    </Alert>
+  );
+};
+
+/**
+ * Lines of the file the AI never read: the draft may be missing questions, and nothing in it shows
+ * where. Said above the save button, not only in the report, so the draft is not taken for the whole
+ * file.
+ */
+const UnreadLinesAlert = ({ report }: Readonly<{ report: TSurveyImportReport }>) => {
+  const { t } = useTranslation();
+  const count = getUnreadLineCount(report);
+  if (count === 0) return null;
+
+  return (
+    <Alert variant="warning">
+      <AlertTitle>{t("workspace.surveys.import.lines_unread_title")}</AlertTitle>
+      <AlertDescription>{t("workspace.surveys.import.lines_unread_description", { count })}</AlertDescription>
     </Alert>
   );
 };
@@ -360,6 +378,7 @@ export const ImportSurveyForm = ({
         <ImportFilePicker canReadWithAI={canReadWithAI} onFileSelect={importer.selectFile} />
       )}
 
+      {reviewReport ? <UnreadLinesAlert report={reviewReport} /> : null}
       {reviewReport ? <SwitchedOffLanguagesAlert report={reviewReport} /> : null}
 
       <div className="mt-auto">

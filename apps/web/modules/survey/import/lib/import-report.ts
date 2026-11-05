@@ -183,6 +183,7 @@ const ISSUE_MESSAGES: Record<
   },
   text_not_split: (issue, t) =>
     t("workspace.surveys.import.issues.text_not_split", { cell: param(issue, "cell") }),
+  lines_unread: (issue, t) => t("workspace.surveys.import.issues.lines_unread", { count: count(issue) }),
   file_encoding: (issue, t) =>
     t("workspace.surveys.import.issues.file_encoding", {
       encoding: getEncodingName(param(issue, "encoding"), t),
@@ -231,6 +232,12 @@ export const sortSurveyImportIssues = (issues: readonly TSurveyImportIssue[]): T
   ...issues.filter((issue) => issue.severity === "warning"),
   ...issues.filter((issue) => issue.severity !== "warning"),
 ];
+
+/** How many lines of the file the AI never read (`lines_unread`); 0 when it read them all. */
+export const getUnreadLineCount = (report: TSurveyImportReport): number =>
+  report.issues
+    .filter((issue) => issue.code === "lines_unread")
+    .reduce((total, issue) => total + count(issue), 0);
 
 /**
  * The languages the draft imports switched off, because texts are missing in them: the review names

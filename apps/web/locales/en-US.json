@@ -4955,6 +4955,7 @@
           "language_skipped_duplicate": "Translations under \"{code}\" were left out: the file already has {language} under another code.",
           "language_skipped_too_large": "Language \"{code}\" was left out: the survey was too large to create with every language.",
           "language_skipped_unnamed": "A language with no Formbricks equivalent was left out.",
+          "lines_unread": "{count, plural, one {# line of the file was} other {# lines of the file were}} not read by the AI, so the draft may be missing questions. Import the file again to try once more.",
           "logic_imported": "Logic imported from the file. Check it in the editor: {description}",
           "logic_imported_no_description": "Logic imported from the file. Check it in the editor.",
           "logic_not_imported": "Logic not imported: {description}",
@@ -4993,6 +4994,8 @@
         },
         "languages_off_description": "Texts are missing in {languages}. Add them in the editor, then switch {count, plural, one {the language} other {the languages}} on under Languages.",
         "languages_off_title": "{count, plural, one {# language is} other {# languages are}} imported switched off",
+        "lines_unread_description": "The AI could not read {count, plural, one {# line} other {# lines}} of the file, so questions may be missing from this draft. Import the file again to try once more, or add what is missing in the editor.",
+        "lines_unread_title": "This draft may be missing questions",
         "match": {
           "active_description": "“{name}” is active, and active surveys can’t be overwritten. This file is saved as a new draft named “{newName}”.",
           "create_description": "This file is saved as a new draft named “{newName}”.",

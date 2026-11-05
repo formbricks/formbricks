@@ -6,6 +6,7 @@ import {
   getSurveyImportIssueLine,
   getSurveyImportReportFileName,
   getSwitchedOffLanguages,
+  getUnreadLineCount,
   hasSurveyImportWarnings,
   sortSurveyImportIssues,
 } from "./import-report";
@@ -351,6 +352,26 @@ describe("getSwitchedOffLanguages", () => {
       )
     ).toEqual(["zh-Hant-TW", "zh-Hans-CN"]);
     expect(getSwitchedOffLanguages(report([]))).toEqual([]);
+  });
+});
+
+describe("getUnreadLineCount", () => {
+  test("is what raises the review's alert, and 0 when every line was read", () => {
+    expect(
+      getUnreadLineCount(
+        report([
+          { code: "image_dropped", severity: "warning", questionTag: "Q1" },
+          { code: "lines_unread", severity: "warning", params: { count: 33 } },
+        ])
+      )
+    ).toBe(33);
+    expect(getUnreadLineCount(report([]))).toBe(0);
+  });
+
+  test("its report line counts the lines", () => {
+    expect(
+      getSurveyImportIssueLine({ code: "lines_unread", severity: "warning", params: { count: 33 } }, t)
+    ).toBe('lines_unread {"count":33}');
   });
 });
 
