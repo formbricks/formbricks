@@ -17,7 +17,7 @@ Read the outline from top to bottom. That is the order a respondent moves throug
 * **Show if.** A block shown only to some respondents carries a **Show block if …** badge that reads its condition; a question shows its condition in the **Show question if…** column. See [Show If](/surveys/general-features/show-if).
 * **Options.** The **Show options if…** column says how many of a question's options are shown only to some respondents (**N options**) and how many are Hidden (**N hidden**). Click it, or **Add condition** on a question with options, to edit them. See [Show if on options](/surveys/general-features/show-if#show-if-on-options).
 * **Rules.** The rows indented under a block run after the respondent submits that block. Each row reads as a sentence on one line, for example *If “services” includes one of Apple TV+ → Require an answer to “apple_reason”*. Hover a row cut short to read the whole sentence.
-  * Each kind of rule has its own colour and icon, the same on its row, in **Add logic** and in the rule's action list: **blue** for Jump to block, **green** for Set value, which changes a calculated [Embedded Data](/surveys/general-features/variables) field, **violet** for Require answer and **orange** for Mark response as Low quality, for example *If “hours” > 112 → Mark response as Low quality*.
+  * Each kind of rule has its own colour and icon, the same on its row, in **Add logic** and in the rule's action list: **blue** for Jump to, **green** for Set value, which changes a calculated [Embedded Data](/surveys/general-features/variables) field, **violet** for Require answer and **orange** for Mark response as Low quality, for example *If “hours” > 112 → Mark response as Low quality*.
   * A rule with several kinds of action takes the colour of its first action.
   * A rule with several actions shows the first one and **+N** for the others, and where it jumps comes last, as a pill: *score + 10 +1 Block 4*. Open the row to see every action.
 * **Everyone else.** A block's last line, **Otherwise go to**, says where respondents go when none of the rules jumped. It is the next block unless you choose another block or an ending.
@@ -27,7 +27,7 @@ The Flow tab opens with every block folded down to its row. Click a block's row 
 
 ## Editing logic
 
-Click any rule row to open its settings right there on the outline. The rule editor is the same one described in [Conditional Logic](/surveys/general-features/conditional-logic): choose what to test, an operator and a value, then one or more actions.
+Click any rule row to open its settings right there on the outline. The rule editor is the same one described in [Conditional Logic](/surveys/general-features/conditional-logic), and reads like the row: **If** what to test, an operator and a value, **Then** one or more actions.
 
 The buttons at the right of a rule's row, as on a question card, let you:
 
@@ -37,12 +37,12 @@ The buttons at the right of a rule's row, as on a question card, let you:
 
 To add a rule, use **Add logic** under a block:
 
-* **Jump to block** starts a rule that sends respondents to a later block or an ending.
+* **Jump to** starts a rule that sends respondents to a later block or an ending.
 * **Set value** starts a step that sets a calculated field from an expression. It always runs until you give it a condition with **Add a condition**. See [Set Value and Expressions](/surveys/general-features/set-value).
 * **Mark response as Low quality** starts a rule that marks the response Low quality when it matches. The respondent sees nothing. See [Mark as low quality](/surveys/general-features/conditional-logic#mark-as-low-quality).
 * **Show block if…** shows the block only to the respondents a condition matches. An open block also shows **Show block if…** in its header, and **Show question if…** next to each question, to show a single question only to some respondents. See [Show If](/surveys/general-features/show-if).
 
-You can switch any action of a rule between Jump to block, Set value, Require answer and Mark response as Low quality, and add more actions to the same rule. A rule jumps at most once and marks a response at most once.
+You can switch any action of a rule between Jump to, Set value, Require answer and Mark response as Low quality, and add more actions to the same rule. A rule jumps at most once and marks a response at most once.
 
 Changes on the Flow tab are part of your survey draft, like changes on the Questions tab. They are kept when you save or publish the survey.
 
@@ -65,7 +65,7 @@ And they can only:
 * **Set value**: change a calculated field. Its value is saved with the response when the respondent submits the first page.
 * **Mark response as Low quality**: flag the response, for example for a panel source you don't trust, while the respondent answers as usual. The response is marked when the respondent submits the first page, or straight away when another rule screens them out. See [Mark as low quality](/surveys/general-features/conditional-logic#mark-as-low-quality).
 
-Rules are checked from top to bottom: the first jump that matches wins, and every matching Set value or Mark response as Low quality step runs. When no rule jumps, the survey starts as it always does. Use **Add logic before first question** to add a **Jump to block**, **Set value** or **Mark response as Low quality** rule.
+Rules are checked from top to bottom: the first jump that matches wins, and every matching Set value or Mark response as Low quality step runs. When no rule jumps, the survey starts as it always does. Use **Add logic before first question** to add a **Jump to**, **Set value** or **Mark response as Low quality** rule.
 
 ### What a screen-out records
 
