@@ -195,3 +195,12 @@ export const applyOptionsShowIfDraft = (
   }
   return next;
 };
+
+/**
+ * Whether a drafted show-if still has a condition whose field isn't chosen ("Choose a question or
+ * field"), as opposed to one that only lacks a value. Read anywhere in nested groups.
+ */
+export const hasUnchosenField = (group: TConditionGroup): boolean =>
+  group.conditions.some((item) =>
+    "conditions" in item ? hasUnchosenField(item) : item.leftOperand.value === ""
+  );

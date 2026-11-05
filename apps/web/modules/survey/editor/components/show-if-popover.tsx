@@ -34,6 +34,11 @@ interface ShowIfPopoverProps {
    * question's "Add condition" cell. Without it, a target with no show-if renders nothing.
    */
   readonly newTrigger?: ReactNode;
+  /**
+   * A block's chip reads only its condition, for a place whose heading already says "Show block if…"
+   * (the block's Settings tab on the Questions tab, ENG-6949).
+   */
+  readonly summaryOnly?: boolean;
 }
 
 /** A block's show-if chip on its header: "Show block if …". */
@@ -56,6 +61,7 @@ export function ShowIfPopover({
   isOpen,
   onOpenChange,
   newTrigger,
+  summaryOnly = false,
 }: ShowIfPopoverProps) {
   const { t, i18n } = useTranslation();
   const showIf = getShowIf(localSurvey, target);
@@ -84,7 +90,9 @@ export function ShowIfPopover({
             onClick={(event) => event.stopPropagation()}>
             <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
             {/* The question's column header already says "Show question if…". */}
-            <span className="truncate">{isBlock ? getBlockShowIfChipText(summary, t) : summary}</span>
+            <span className="truncate">
+              {isBlock && !summaryOnly ? getBlockShowIfChipText(summary, t) : summary}
+            </span>
           </button>
         ) : (
           newTrigger
