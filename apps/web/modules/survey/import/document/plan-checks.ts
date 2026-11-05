@@ -119,6 +119,8 @@ export interface TDocumentCheckedPlan extends TImportCheckedPlan<TDocumentPlanFa
    * rest of a question), but such an answer says nothing about whether its lines are questions.
    */
   silentResponses: number;
+  /** The lines those silent answers were asked about: a silent answer is no evidence they were read. */
+  silentRefs: Set<string>;
   entries: Map<string, TDocumentPlannedEntry>;
   /** Skipped by the AI, with its cleaned reason (or `null`). */
   skipped: Map<string, string | null>;
@@ -418,6 +420,7 @@ export function checkDocumentPlanResponses(
     skipped: new Map(),
     failures: new Map(),
     silentResponses: 0,
+    silentRefs: new Set(),
   };
   const addFailure = (ref: string, reason: TDocumentPlanFailure) =>
     addPlanFailure(plan.failures, ref, reason);
@@ -466,7 +469,10 @@ function judgeResponse(
     addFailure(ref, "invalid_entry")
   );
   const skips = collectPlanSkips(envelope.skipped, refs, ZDocumentPlanSkip);
-  if (entries.size === 0 && skips.size === 0) plan.silentResponses += 1;
+  if (entries.size === 0 && skips.size === 0) {
+    plan.silentResponses += 1;
+    for (const ref of refs) plan.silentRefs.add(ref);
+  }
 
   // A line that is no entry's start — a header, a continuation, a comment — is not a failure: the AI
   // decides which lines are questions.
@@ -517,8 +523,8 @@ export const isUnreadLine = (reasons: readonly string[]): boolean =>
  * The retry's failures, plus the first round's for each line the AI placed as a question there and the
  * retry left out: a document answer judges only the lines it names, so that line would otherwise have
  * no verdict and no line in the report. Not for a line whose first-round failure was the whole call's
- * (a heading or an option line, rightly named nowhere on the retry), nor for one an entry of the merged
- * plan reads, which the retry placed as part of another question.
+ * and whose retry answer named other lines (a heading or an option line, rightly named nowhere), nor for
+ * one an entry of the merged plan reads, which the retry placed as part of another question.
  */
 const keepUnresolvedFailures = (
   first: TDocumentCheckedPlan,
@@ -537,7 +543,9 @@ const keepUnresolvedFailures = (
   );
   for (const [ref, reasons] of first.failures) {
     if (retry.entries.has(ref) || retry.skipped.has(ref) || failures.has(ref)) continue;
-    if (isUnreadLine(reasons)) continue;
+    // A line whose whole call failed is cleared by a retry answer that named others (it is a heading or
+    // an option line), not by one that named nothing: that says nothing about it, so it stays unread.
+    if (isUnreadLine(reasons) && !retry.silentRefs.has(ref)) continue;
     const line = context.lineAt(ref);
     if (line !== undefined && linesRead.has(line)) continue;
     failures.set(ref, reasons);
@@ -557,6 +565,7 @@ export function mergeDocumentPlans(
     skipped: new Map([...first.skipped, ...retry.skipped]),
     failures: keepUnresolvedFailures(first, retry, entries, context),
     silentResponses: first.silentResponses + retry.silentResponses,
+    silentRefs: new Set([...first.silentRefs, ...retry.silentRefs]),
   };
 }
 

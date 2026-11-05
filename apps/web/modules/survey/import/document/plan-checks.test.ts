@@ -4,6 +4,7 @@ import { buildGridModel } from "./model";
 import {
   DocumentPlanContext,
   checkDocumentPlanResponses,
+  isUnreadLine,
   mergeDocumentPlans,
   orderedEntries,
 } from "./plan-checks";
@@ -430,6 +431,21 @@ describe("mergeDocumentPlans", () => {
 
     expect(first.failures.get("R1")).toEqual(["invalid_output"]);
     expect(merged.failures.size).toBe(0);
+  });
+
+  test("keeps a whole-call failure when the retry answers but names none of its lines: still unread", () => {
+    const first = check([
+      { refs: new Set(["R1", "R2", "R3"]), object: { questions: "unreadable" } } as unknown as ReturnType<
+        typeof answer
+      >,
+    ]).plan;
+    // A valid answer that places, skips and reads nothing: no evidence the lines were read.
+    const retry = check([answer(["R1", "R2", "R3"], [])], true).plan;
+
+    const merged = mergeDocumentPlans(first, retry, new DocumentPlanContext(model));
+
+    expect([...merged.failures.keys()].sort()).toEqual(["R1", "R2", "R3"]);
+    expect([...merged.failures.values()].every(isUnreadLine)).toBe(true);
   });
 
   test("keeps no failure for a line the retry placed as part of another question", () => {
