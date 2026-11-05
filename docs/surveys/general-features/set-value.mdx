@@ -14,7 +14,11 @@ Under a block on the Flow tab, open **Add logic** and choose **Set value**. The 
 
 Choose the calculated field to set, then type the expression. To set the value only for some respondents, use **Add a condition** on the step: it then runs only when the condition matches. Removing the condition makes it always run again.
 
-A one-step calculation you already have, such as *score + 1*, keeps working exactly as before. To turn it into an expression, switch on **Expression** in its row. Switching it off turns an expression back into one step when it is one, such as *ifEmpty(@score, 0) + 1*; any other expression is cleared after you confirm. Changing an existing action to **Set value** starts it with **Expression** on, like a new step.
+A one-step calculation you already have, such as *score + 1*, keeps working exactly as before. With **Expression** off, a step reads field, operator and value; for a number field, the operator list shows each operator with its symbol: **Add**, **Subtract**, **Multiply**, **Divide** and **Assign**.
+
+![A Set value step with Expression off: score, its operator list open with Add, Subtract, Multiply, Divide and Assign, and the value 1](/images/surveys/general-features/set-value/one-step-operators.webp)
+
+To turn a one-step calculation into an expression, switch on **Expression** in its row. Switching it off turns an expression back into one step when it is one, such as *ifEmpty(@score, 0) + 1*; any other expression is cleared after you confirm. Changing an existing action to **Set value** starts it with **Expression** on, like a new step.
 
 ## Writing an expression
 
@@ -24,6 +28,8 @@ A one-step calculation you already have, such as *score + 1*, keeps working exac
 * **Functions.** Click a function chip to insert it, or type its name.
 
 Below the expression, the box shows what a save would refuse, or the **sample result**: what the step computes for a made-up response with a typical answer to every question.
+
+![A Set value step that always runs: fee_score is set to round(ifEmpty(@fee_clarity, 0) * 20), with the function chips below the expression and the sample result If @fee_clarity is 4, the result is 80](/images/surveys/general-features/set-value/expression.webp)
 
 ### What an answer is in an expression
 

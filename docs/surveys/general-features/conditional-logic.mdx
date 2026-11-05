@@ -18,9 +18,11 @@ Logic belongs to the block, not to a single question. You add and edit it on the
 
 ## Building a rule
 
-On the Flow tab, click `Add logic +` under a block, choose **Jump to** or **Set value**, and fill in the sentence: **If** … **Then** …. A Set value step always runs until you give it a condition with **Add a condition**.
+On the Flow tab, click `Add logic +` under a block, choose **Jump to**, **Set value** or **Mark response as Low quality**, and fill in the sentence: **If** … **Then** …. A Set value step always runs until you give it a condition with **Add a condition**.
 
-![A rule that routes savings-account respondents to a second block](/images/surveys/general-features/conditional-logic/logic-rule.webp)
+Click a rule's row to open it. The row above the editor reads the whole rule as a sentence, with the questions and fields it uses as chips:
+
+![An open rule on the Flow tab: If fee_clarity is 2 or less and fee_surprise equals Yes, then Jump to the Callback block](/images/surveys/general-features/conditional-logic/logic-rule.webp)
 
 <Steps>
   <Step title="Choose what to test">
@@ -28,9 +30,9 @@ On the Flow tab, click `Add logic +` under a block, choose **Jump to** or **Set 
   </Step>
 
   <Step title="Choose an operator">
-    The operators on offer depend on the source. A single-select question can be compared with `Equals`, `Does not equal`, `Equals one of` and `Is submitted`; a free text question adds `Contains`, `Starts with`, `Ends with` and their negations.
+    The operators on offer depend on the source. A rating or a number is compared with the symbols `=`, `!=`, `>`, `<`, `>=` and `<=`, or with `Is submitted`. A single-select question can be compared with `Equals`, `Does not equal`, `Equals one of` and `Is submitted`; a free text question adds `Contains`, `Starts with`, `Ends with` and their negations.
 
-    ![The operator list for a single-select question](/images/surveys/general-features/conditional-logic/condition-operators.webp)
+    ![The operator list for a rating question, each operator as its symbol: equals, not equal, greater than, less than, greater than or equal, less than or equal, and Is submitted](/images/surveys/general-features/conditional-logic/condition-operators.webp)
   </Step>
 
   <Step title="Choose a value">
@@ -40,7 +42,7 @@ On the Flow tab, click `Add logic +` under a block, choose **Jump to** or **Set 
   <Step title="Choose an action">
     The **Then** row is what happens when the condition holds.
 
-    ![The actions: Jump to, Set value, Require answer and Mark response as Low quality](/images/surveys/general-features/conditional-logic/action-options.webp)
+    ![The Then list of a rule, each action with its icon: Jump to, Set value, Require answer and Mark response as Low quality](/images/surveys/general-features/conditional-logic/action-options.webp)
   </Step>
 </Steps>
 
