@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon, ChevronRightIcon, CornerDownRightIcon, LockIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, LockIcon } from "lucide-react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -9,8 +9,9 @@ import { cn } from "@/lib/cn";
  * respondent moves. Blocks are rows; what runs after a block sits indented under it; endings come
  * last. Presentational only — the Flow tab builds the rows from its outline model.
  *
- * Tones: white for a block, pink (`ENDING_TONE`) for an ending, and one colour per rule type — blue for a
- * jump, green for Set value (an Embedded Data step), violet for Require answer, orange for Low quality.
+ * Tones: white for a block and for an ending (its tile is pink, `ENDING_TONE`), and one colour per rule
+ * type — blue for a jump, green for Set value (an Embedded Data step), violet for Require answer, orange
+ * for Low quality.
  */
 
 export type TFlowOutlineTone = "block" | "jump" | "setValue" | "requireAnswer" | "markLowQuality" | "ending";
@@ -34,9 +35,9 @@ export const FlowOutline = ({ actions, count, children, className }: FlowOutline
   </div>
 );
 
-/** A section label on the spine: "Before the first question", "Endings". */
+/** A section label on the spine: "Before the first question", "Endings · 4". Blocks line up with it. */
 export const FlowOutlineSectionLabel = ({ children }: { readonly children: ReactNode }) => (
-  <p className="pt-1 pl-6 text-[11px] font-medium tracking-wide text-slate-400 uppercase">{children}</p>
+  <p className="pt-1 pl-0.5 text-[11px] font-medium tracking-wide text-slate-400 uppercase">{children}</p>
 );
 
 /** A block and everything indented under it. */
@@ -52,7 +53,10 @@ export const FlowOutlineChildren = ({ children }: { readonly children: ReactNode
   <div className="ml-5 space-y-2 border-l-2 border-slate-200 pl-3">{children}</div>
 );
 
-/** A quiet line on the spine, e.g. where everyone else goes after a block. */
+/**
+ * The last line under a block's rules: where everyone else goes (ENG-6969 T7). As tall as a rule row,
+ * with a dashed neutral border, as it is not a rule of any type.
+ */
 export const FlowOutlineNote = ({
   icon,
   children,
@@ -60,32 +64,32 @@ export const FlowOutlineNote = ({
   readonly icon?: ReactNode;
   readonly children: ReactNode;
 }) => (
-  <div className="flex items-center gap-1.5 pl-6 text-xs text-slate-500 [&_svg]:size-3.5 [&_svg]:shrink-0">
+  <div className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-slate-300 py-1.5 pr-1.5 pl-3 text-sm text-slate-600 [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-slate-400">
     {icon}
     {children}
   </div>
 );
 
 /**
- * Every colour an ending shows in, on its own row and on a chip that jumps to it: pink, in the rule
- * types' pattern of one colour for the outline and tile and a lighter tint for the row. Change an
- * ending's colour here only.
+ * Every colour an ending shows in, on its own row and on a chip that jumps to it. Pink means "the
+ * survey ends" without shouting (ENG-6969 T4, T14): the row is white like a block card and only its
+ * tile is solid pink; a destination chip is an outline. Change an ending's colour here only.
  */
 export const ENDING_TONE = {
-  /** The row's outline and background tint. */
-  card: "border-pink-500 bg-pink-50",
+  /** The row's outline and background: a block card's. */
+  card: "border-slate-200 bg-white shadow-xs",
   /** The icon tile's background (the icon is white). */
   tile: "bg-pink-500",
   /** The line under an open row's header. */
-  divider: "border-pink-500",
+  divider: "border-slate-200",
   /** The header's hover tint. */
-  hover: "hover:bg-pink-100/70",
-  /** The row's title ("End: …"), dark enough to read on the tint. */
-  title: "text-pink-700",
+  hover: "hover:bg-slate-50",
+  /** The row's title. */
+  title: "text-slate-900",
   /** Secondary text on the row, e.g. a redirect's URL. */
-  detail: "text-pink-700",
-  /** A jump-target chip that points to an ending: its background and text. */
-  pill: "bg-pink-500 text-white",
+  detail: "text-slate-500",
+  /** A jump-target chip that points to an ending: an outline with a pink border, icon and text. */
+  pill: "border-pink-300 bg-white text-pink-700",
 } as const;
 
 /**
@@ -182,8 +186,7 @@ export const FlowOutlineRow = ({
   const hasContentBelow = Boolean(body) || (isOpen && Boolean(details));
 
   return (
-    <div className="flex scroll-mt-20 items-start gap-1.5" id={id}>
-      <CornerDownRightIcon className="mt-2.5 size-4 shrink-0 text-slate-300" aria-hidden="true" />
+    <div className="flex scroll-mt-20 items-start" id={id}>
       <div
         className={cn(
           "min-w-0 flex-1 rounded-lg border",
@@ -200,8 +203,9 @@ export const FlowOutlineRow = ({
           aria-label={ariaLabel}
           onClick={onToggle}
           onKeyDown={handleKeyDown}
+          // One line (ENG-6969 T2): the summary truncates, and the controls keep their slot on the right.
           className={cn(
-            "flex flex-wrap items-center gap-2 px-3 py-2",
+            "group/row flex min-h-11 items-center gap-2 px-3 py-1.5",
             hasContentBelow ? "rounded-t-[calc(0.5rem-1px)]" : "rounded-[calc(0.5rem-1px)]",
             onToggle && [
               "cursor-pointer focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden",
@@ -217,12 +221,12 @@ export const FlowOutlineRow = ({
             aria-hidden="true">
             {icon}
           </span>
-          {children}
+          <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
           {(readOnlyLabel || actions) && (
             // Clicks and keys here act on the control, never open or close the row.
             // eslint-disable-next-line jsx-a11y/no-static-element-interactions
             <div
-              className="ml-auto flex shrink-0 items-center gap-2"
+              className="flex shrink-0 items-center gap-2"
               onClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => event.stopPropagation()}>
               {readOnlyLabel && (

@@ -4,7 +4,7 @@ import {
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { type TFlowOutline, buildFlowOutline } from "./flow-outline";
+import { type TFlowOutline, buildFlowOutline, getElementShowIfCells } from "./flow-outline";
 
 const allRuleRows = (outline: TFlowOutline) => [
   ...outline.start.rules,
@@ -357,5 +357,84 @@ describe("buildFlowOutline: constructs the Flow tab cannot edit yet come out rea
     expect(listsOf("ad_pick")).toEqual(["choices"]);
     expect(listsOf("brand_grid")).toEqual(["rows", "columns"]);
     expect(listsOf("hours")).toEqual([]);
+  });
+});
+
+describe("getElementShowIfCells: a question's show-if columns (ENG-6969 T8, T10)", () => {
+  const outline = buildFlowOutline(surveyFlowFixture);
+  const item = (elementId: string) => {
+    const found = outline.blocks
+      .flatMap((block) => block.elements)
+      .find((element) => element.id === elementId);
+    if (!found) throw new Error(`no question ${elementId}`);
+    return found;
+  };
+  const levels = (elementId: string, canAdd = true) =>
+    getElementShowIfCells(item(elementId), canAdd).map((cell) => `${cell.level}:${cell.state}`);
+
+  test("the question's cell always comes before its options' cell, set or not", () => {
+    // Nothing set on the question, options set.
+    expect(levels("fav")).toEqual(["question:add", "options:set"]);
+    // The question set, its options not.
+    const appleReason = structuredClone(surveyFlowFixture);
+    const overall = appleReason.blocks[4];
+    overall.elements[0] = { ...overall.elements[0], showIf: overall.elements[1].showIf };
+    const favSet = buildFlowOutline(appleReason).blocks[4].elements[0];
+    expect(getElementShowIfCells(favSet, true).map((cell) => `${cell.level}:${cell.state}`)).toEqual([
+      "question:set",
+      "options:set",
+    ]);
+    // Neither set.
+    expect(levels("services")).toEqual(["question:add", "options:add"]);
+  });
+
+  test("a set question show-if carries its conditions, and whether it can be edited here", () => {
+    const appleReason = surveyFlowFixture.blocks[4].elements[1];
+    expect(getElementShowIfCells(item("apple_reason"), true)[0]).toEqual({
+      level: "question",
+      state: "set",
+      conditions: appleReason.showIf,
+      editable: true,
+    });
+  });
+
+  test("a question with nothing before it to read offers no question show-if", () => {
+    expect(levels("services", false)).toEqual(["question:none", "options:add"]);
+  });
+
+  test("the options cell counts conditional and Hidden options, and stays empty without options", () => {
+    expect(getElementShowIfCells(item("fav"), true)[1]).toEqual({
+      level: "options",
+      state: "set",
+      showIfCount: 1,
+      hiddenCount: 0,
+      editable: true,
+    });
+    expect(getElementShowIfCells(item("bundle"), true)[1]).toEqual({
+      level: "options",
+      state: "set",
+      showIfCount: 0,
+      hiddenCount: 1,
+      editable: true,
+    });
+    expect(levels("email")).toEqual(["question:add", "options:none"]);
+  });
+
+  test("an options show-if the editor can't show is read-only", () => {
+    const survey = withUnknown((draft) => {
+      draft.blocks[4].elements[0].choices[0].showIf = {
+        id: "unknowngroup000000000001",
+        connector: "and",
+        conditions: [
+          {
+            id: "unknownoperand0000000009",
+            leftOperand: { type: "contactAttribute", value: "plan" },
+            operator: "isSet",
+          },
+        ],
+      };
+    });
+    const [, options] = getElementShowIfCells(buildFlowOutline(survey).blocks[4].elements[0], true);
+    expect(options).toMatchObject({ level: "options", state: "set", editable: false });
   });
 });
