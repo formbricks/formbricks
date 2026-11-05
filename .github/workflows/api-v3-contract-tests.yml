@@ -156,6 +156,16 @@ jobs:
         run: pnpm --filter=@formbricks/database db:migrate:ci
         shell: bash
 
+      # The chart preview, data and field-values operations run a Cube query. Without Cube they can only
+      # answer their documented 502, which proves nothing about the query path. The script applies the
+      # Hub schema Cube reads (`feedback_records`) and starts the pinned Cube image on the app's
+      # CUBEJS_API_URL; the contract seed below then gives it rows for the fixture dataset. Before the
+      # seed, because the seed only writes those rows when the Hub table exists.
+      - name: Start Cube
+        if: steps.harness.outputs.present == 'true' && hashFiles('scripts/start-cube-ci.sh') != ''
+        run: bash scripts/start-cube-ci.sh
+        shell: bash
+
       - name: Seed the workspace and a throwaway API key
         if: steps.harness.outputs.present == 'true'
         shell: bash
@@ -264,6 +274,28 @@ jobs:
             echo "::error::Workflow entitlement probe returned ${workflows_status}, expected 200 or 403."
             cat /tmp/preflight-workflows.json
             exit 1
+          fi
+
+          # The chart and dashboard operations are gated on Dashboards. With it, the seeded chart's data
+          # comes from Cube; a 502 here means Cube or its schema is broken, which the contract run would
+          # only report as three server errors. Without it, they all answer their documented 403 —
+          # say so, since the licence's feature set changes outside this repository.
+          if [ -f scripts/start-cube-ci.sh ]; then
+            chart_id=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').read.chartId")
+            chart_status=$(curl -o /tmp/preflight-chart.json -s -w "%{http_code}" \
+              -H "x-api-key: fbk_${SEED_API_KEY}" \
+              "http://localhost:3000/api/v3/charts/${chart_id}/data")
+            if [ "${chart_status}" -eq 200 ]; then
+              echo "::notice::Dashboards entitlement active — chart and dashboard operations run against real data, with Cube answering the chart queries."
+            elif [ "${chart_status}" -eq 403 ]; then
+              echo "::warning::Dashboards entitlement inactive (GET /api/v3/charts/{chartId}/data → ${chart_status}). The chart and dashboard operations are only checked against their documented 403."
+              cat /tmp/preflight-chart.json
+            else
+              echo "::error::Chart data probe returned ${chart_status}, expected 200 or 403. Cube is unreachable or rejected the query."
+              cat /tmp/preflight-chart.json
+              docker logs formbricks-cube-ci 2>&1 | tail -n 50 || true
+              exit 1
+            fi
           fi
 
       # Dogfoods the post-deployment check (apps/deployment-check) against this already-booted instance:
