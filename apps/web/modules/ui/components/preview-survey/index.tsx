@@ -30,14 +30,14 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { PreviewModeSwitches, PreviewWindowBar } from "./components/preview-frame";
-import { TestValuesControl } from "./components/test-values-control";
+import { TestValuesControl, TestValuesStrip } from "./components/test-values-control";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/containment";
 import { INITIAL_FOLLOW_STATE, followActiveElement } from "./lib/follow-active-element";
 import {
   getPreviewStartKey,
+  getTestValueEntries,
   getTestValueFields,
   restartsPreviewOnFinish,
-  toHiddenFieldsRecord,
 } from "./lib/test-values";
 import { mirrorPlacementForDir } from "./lib/utils";
 
@@ -99,10 +99,14 @@ export const PreviewSurvey = ({
   // and those rules, and starts over whenever they change.
   const [testValues, setTestValues] = useState<Record<string, string>>({});
   const testValueFields = useMemo(() => getTestValueFields(survey), [survey]);
-  const hiddenFieldsRecord = useMemo(
-    () => toHiddenFieldsRecord(testValues, testValueFields),
+  // What the preview runs with: each value as its field's link would carry it (ENG-6953).
+  const testValueEntries = useMemo(
+    () => getTestValueEntries(testValues, testValueFields),
     [testValues, testValueFields]
   );
+  const hiddenFieldsRecord = useMemo(() => Object.fromEntries(testValueEntries), [testValueEntries]);
+  // The strip's Clear (ENG-6969 T13 ②): no values means a new start key, so the preview restarts.
+  const clearTestValues = () => setTestValues({});
   // Bumped when an app survey without endings finishes, to start it over (see `onFinished`).
   const [previewRun, setPreviewRun] = useState(0);
   const previewStartKey = useMemo(
@@ -366,9 +370,19 @@ export const PreviewSurvey = ({
                     locale={locale}
                   />
                 )}
-                <TestValuesControl fields={testValueFields} values={testValues} onApply={setTestValues} />
+                <TestValuesControl
+                  fields={testValueFields}
+                  values={testValues}
+                  activeCount={testValueEntries.length}
+                  onApply={setTestValues}
+                />
                 <ResetProgressButton onClick={resetProgress} />
               </div>
+              <TestValuesStrip
+                entries={testValueEntries}
+                onClear={clearTestValues}
+                className="absolute inset-x-2 top-10 z-20 w-auto rounded-md border"
+              />
               <MediaBackground
                 surveyType={survey.type}
                 styling={styling}
@@ -502,9 +516,16 @@ export const PreviewSurvey = ({
                     }}
                   />
                 )}
-                <TestValuesControl fields={testValueFields} values={testValues} onApply={setTestValues} />
+                <TestValuesControl
+                  fields={testValueFields}
+                  values={testValues}
+                  activeCount={testValueEntries.length}
+                  onApply={setTestValues}
+                />
                 <ResetProgressButton onClick={resetProgress} />
               </PreviewWindowBar>
+
+              <TestValuesStrip entries={testValueEntries} onClear={clearTestValues} />
 
               {/* The trusted box the survey is contained in, below the chrome and its controls. */}
               <div
