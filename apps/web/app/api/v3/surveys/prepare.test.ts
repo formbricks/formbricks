@@ -2079,14 +2079,23 @@ describe("Mark as low quality on the v3 survey document (ENG-6933)", () => {
     ]);
   });
 
-  test("is refused before the first question, with the exact path", () => {
+  test("is accepted before the first question, and patches back unchanged (ENG-6952)", () => {
+    const action = { id: "clact923456789012345678901", objective: "markLowQuality" };
+    const preparation = withAction(action, "start");
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
+    if (!preparation.ok) return;
+    expect(preparation.document.startLogic?.[0].actions).toEqual([action]);
+  });
+
+  test("takes nothing but its id and objective before the first question either", () => {
     const preparation = withAction(
-      { id: "clact923456789012345678901", objective: "markLowQuality" },
+      { id: "clact923456789012345678901", objective: "markLowQuality", target: "x" },
       "start"
     );
 
-    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([
-      expect.objectContaining({ name: "startLogic.0.actions.0" }),
+    expect(preparation.ok ? [] : preparation.validation.invalidParams.map((param) => param.name)).toEqual([
+      "startLogic.0.actions.0.target",
     ]);
   });
 });
