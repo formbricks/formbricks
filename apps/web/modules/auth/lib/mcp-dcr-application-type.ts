@@ -1,4 +1,5 @@
 import "server-only";
+import { authBodyKindOf } from "./auth-request-bounds";
 
 /**
  * Default `application_type` to `"native"` on Dynamic Client Registration when the client asked for
@@ -84,7 +85,11 @@ export const withInferredApplicationType = (body: string): string => {
  * with the body it read — a Request body is single-use, so it cannot be inspected and then reused.
  */
 export const normalizeDcrRequest = async (request: Request): Promise<Request> => {
-  if (!isDcrRegistration(request)) return request;
+  // Registration is JSON-only, and withAuthRequestBodyLimit has already refused any other body shape and
+  // capped the JSON one, so a form body is never worth parsing here.
+  if (!isDcrRegistration(request) || authBodyKindOf(request.headers.get("content-type")) !== "json") {
+    return request;
+  }
 
   const raw = await request.text();
   return new Request(request.url, {
