@@ -8,7 +8,7 @@ export const NO_VALUE_OPERATORS: readonly TTableFilterOperator[] = ["isSet", "is
 export const MULTI_VALUE_OPERATORS: readonly TTableFilterOperator[] = ["includesOneOf", "includesAllOf"];
 
 /** The exact matches, which hold a list on a property with `multiValueEquals`: is (not) any of them. */
-const EQUALITY_OPERATORS: readonly TTableFilterOperator[] = ["equals", "notEquals"];
+const EQUALITY_OPERATORS: ReadonlySet<TTableFilterOperator> = new Set(["equals", "notEquals"]);
 
 /**
  * Whether `equals` / `notEquals` on the property pick several values, always from the property's own:
@@ -17,7 +17,7 @@ const EQUALITY_OPERATORS: readonly TTableFilterOperator[] = ["equals", "notEqual
 export const isMultiValueEquality = (
   operator: TTableFilterOperator,
   property: Pick<TFilterProperty, "multiValueEquals"> | undefined
-): boolean => Boolean(property?.multiValueEquals) && EQUALITY_OPERATORS.includes(operator);
+): boolean => Boolean(property?.multiValueEquals) && EQUALITY_OPERATORS.has(operator);
 
 /** Whether a rule with the operator keeps a list of values, so every value it holds counts. */
 export const operatorTakesValues = (

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useId, useState } from "react";
+import { type SyntheticEvent, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
@@ -25,8 +25,7 @@ import { FilterChip } from "./filter-chip";
 import { RuleValueInput } from "./rule-value-input";
 
 const isSameRule = (a: TTableFilter, b: TTableFilter | undefined) =>
-  b !== undefined &&
-  a.property === b.property &&
+  a.property === b?.property &&
   a.operator === b.operator &&
   a.values.length === b.values.length &&
   a.values.every((value, index) => value === b.values[index]);
@@ -54,7 +53,7 @@ const RuleEditor = ({
 }>) => {
   const { t } = useTranslation();
   const valueId = useId();
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     onSubmit();
   };
