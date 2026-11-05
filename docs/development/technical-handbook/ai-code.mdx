@@ -1,15 +1,18 @@
 ---
 title: "Code That Calls an AI Model"
-description: "The rules for any feature that sends text to an LLM: what to trust, which limits to set, how to gate it, and how to test it"
+description: "The rules for any feature that sends text to an LLM: assess the injection risk, sandbox the model, set limits, track tokens, gate it, and test it"
 icon: "robot"
 ---
 
 Applies to any code that sends text to a language model or acts on what comes back: survey generation, chart
-generation, enrichments, embeddings, MCP tools. It does not cover using AI tools to write or review our own
-code; AI-assisted review is described in [Code reviews](/development/standards/qa/code-reviews).
+generation, enrichments, embeddings. MCP tools are included too: we do not call the model there, but a tool's
+result enters an agent's context we do not control, so the same rules apply to what a tool returns and what it can
+do. It does not cover using AI tools to write or review our own code; AI-assisted review is described in
+[Code reviews](/development/standards/qa/code-reviews).
 
-All calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and, in `apps/web`, through
-`lib/ai/service.ts`. Do not import a provider SDK directly.
+In `apps/web`, calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and
+`lib/ai/service.ts`. Do not import a provider SDK directly. The code references below are for `apps/web`; the Hub
+applies the same rules through its own LLM client.
 
 The rules follow the OWASP Top 10 for LLM Applications. The table near the end maps each risk to the rule that
 covers it, and names the gaps. When in doubt, check a design against that list.
@@ -42,13 +45,14 @@ Do this twice:
 Nothing the model reads or writes is trusted.
 
 - **Input is data, not instructions.** Survey responses, feedback text, uploaded files, imported documents, and
-  tool or MCP results are written by people we do not control. A prompt that tells the model to ignore them
-  does not make them safe: a guardrail prompt is not a security boundary.
+  tool or MCP results are written by people we do not control. A prompt that tells the model to disregard
+  instructions inside that text does not make it safe: a guardrail prompt is not a security boundary.
 - **Output is untrusted input.** Ask for structured output with a Zod schema, then validate it again on the
   server before use. A schema fixes the shape, not the meaning: it does not make an id, URL, path, or filter safe.
   Never pass model output to SQL, a file path, a URL fetch, a shell, or rendered HTML without the same
   validation you would give a request body.
-- **The model has no authority of its own.** A tool the model can call runs as the requesting user. Re-check that
+- **The model has no authority of its own.** A tool the model can call runs as the requesting user, never as a
+  service. Re-check that
   user's permission and tenant scope on the exact resource inside the tool handler, as you would for an API
   route. Do not give a model a shared service credential, and do not let one call's result widen what the next
   call may do.
@@ -66,8 +70,8 @@ Limit what a hijacked model can reach. The goal is a small blast radius, whateve
   the same restrictions as a URL a user supplies. Never run model-written code.
 - **No sharing across users.** Conversation history, memory, embeddings, and caches are keyed by tenant and user.
   One tenant's text never enters another tenant's context.
-- **Safe output rendering.** Render model output as plain text. Markdown or HTML that auto-loads images or links
-  can leak the context through the URL.
+- **Safe output rendering.** Render model output as plain text. Markdown or HTML that loads an image can leak the
+  context through the image URL.
 - **No egress except the provider.** A tool does not send data anywhere else.
 
 ## Limits every call needs
@@ -84,7 +88,7 @@ edge, and return an error that names the limit. A missing limit is a bug, not a 
 | Timeout | A stuck provider must not hold a worker | Per call, through `getAITimeoutMs`, which applies `AI_TIMEOUT_MULTIPLIER` |
 | Output shape bounds | Limits what a bad answer can create (blocks, questions, items) | The Zod schema (survey generation: at most 8 blocks, 4 questions per block) |
 | Call count and concurrency | Fan-out multiplies cost and provider load | The operation that plans the calls |
-| Per-tenant rate limit | One tenant must not spend everyone's quota | `rateLimitConfigs` (survey generation: 10 per minute) |
+| Per-caller rate limit | One user or API key must not spend everyone's quota | `rateLimitConfigs`, keyed by the authenticated caller (survey generation: 10 per minute) |
 | Provider quota errors | A 429 from the provider is not a server error | `lib/ai/service.ts` maps it to `TooManyRequestsError` |
 
 Cancellation (the user pressing Stop) is not an incident: pass the abort signal through and do not log it at
@@ -113,7 +117,7 @@ What exists today:
   Privacy mode is on, so no prompt or completion text is sent.
 - Tracing does nothing when PostHog is not configured, so instances without it have no token metrics.
 
-A new AI feature adds its name to `AITracingFeature` and passes a tracing context on every call.
+A new AI feature adds its name to `AI_TRACING_FEATURE` and passes a tracing context on every call.
 
 ## Gating
 
@@ -122,8 +126,8 @@ A feature that sends customer data to a model is off until the organization turn
 whether the instance has a provider configured. Each failure has its own error code in `AI_ERROR_CODES`.
 Return that code to the client instead of a generic failure.
 
-Feedback and response data should use the self-hosted path where the instance has one, and is never used for
-training. A new outbound flow to a model provider is called out in the PR description.
+Feedback and response data should use the self-hosted path where the instance has one. It is never used as
+training input. A new outbound flow to a model provider is called out in the PR description.
 
 ## Logging
 
@@ -140,8 +144,8 @@ codes, and timings. Tracing goes through `wrapAiModelWithTracing`; check what it
   cheap model and assert that nothing outside the requesting user's scope was read or changed.
 - **Unit tests stub the provider.** Cover the failure paths with a fake: provider 429, refusal, output cut off
   by the token limit, malformed or schema-invalid output, and timeout.
-- **Load and failure runs use an OpenAI-compatible stub server** that returns synthetic results with injected
-  latency and errors, so a pipeline can be driven at volume without spending anything.
+- **For load and failure runs, point the provider at an OpenAI-compatible stub server** that returns synthetic
+  results with injected latency and errors, so a pipeline can be driven at volume without spending anything.
 
 ## OWASP Top 10 for LLM Applications
 
@@ -170,7 +174,7 @@ Use it when planning, and again against the finished diff before the PR is ready
 - Input is bounded before the first call.
 - Output is schema-validated on the server, and no unvalidated value reaches a sink.
 - Every tool re-checks the requesting user's permission and tenant scope.
-- `maxOutputTokens`, timeout, call count, and a per-tenant rate limit are all hardcoded constants.
+- `maxOutputTokens`, timeout, call count, and a per-caller rate limit are all hardcoded constants.
 - Token usage is recorded per call, tagged with the feature and organization.
 - Toggle, entitlement, and instance configuration are checked through `lib/ai/service.ts`.
 - Nothing customer-authored is logged.
