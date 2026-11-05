@@ -162,6 +162,21 @@ export function LogicEditorActions({
   const clearFormula = (actionIdx: number) =>
     handleValuesChange(actionIdx, { operator: "assign", value: { type: "static", value: "" } });
 
+  // Picking the field a Set value step writes. A formula stays: a field of another type shows what no
+  // longer fits. A date field is set with an expression only (P38), so a one-step action turns into one.
+  const changeCalculatedField = (actionIdx: number, variableId: string) => {
+    const action = actions[actionIdx];
+    if (isFormulaAction(action)) {
+      handleValuesChange(actionIdx, { variableId });
+      return;
+    }
+    if (isExpressionOnlyField(localSurvey, variableId)) {
+      handleValuesChange(actionIdx, { ...createEmptyFormulaAction(action.id, variableId) });
+      return;
+    }
+    handleValuesChange(actionIdx, { variableId, value: { type: "static", value: "" } });
+  };
+
   // Before the first question a rule may only jump or set a value (ENG-6932); a rule jumps once and
   // marks Low quality once (ENG-6933).
   const objectiveOptions = getActionObjectiveOptions(t);
@@ -281,18 +296,7 @@ export function LogicEditorActions({
                             key={`variableId-${action.id}`}
                             options={getActionVariableOptions(localSurvey)}
                             value={action.variableId}
-                            onChange={(variableId) =>
-                              handleValuesChange(
-                                idx,
-                                // A formula stays: a field of another type shows what no longer fits. A date
-                                // field is set with an expression only (P38), so one step turns into one.
-                                isFormulaAction(action)
-                                  ? { variableId }
-                                  : isExpressionOnlyField(localSurvey, variableId)
-                                    ? { ...createEmptyFormulaAction(action.id, variableId) }
-                                    : { variableId, value: { type: "static", value: "" } }
-                              )
-                            }
+                            onChange={(variableId) => changeCalculatedField(idx, variableId)}
                             onAddCalculatedField={onAddCalculatedField}
                           />
                         </div>
