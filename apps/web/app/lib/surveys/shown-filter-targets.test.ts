@@ -67,7 +67,7 @@ describe("getShownFilterTargets", () => {
     expect(offered).toContain("shown.question.fav");
     expect(offered).toContain("shown.column.brand_grid.col_good");
     expect(offered.some((id) => id.includes("ghost"))).toBe(false);
-    expect(offered.length).toBe(ids().length + 2);
+    expect(offered).toHaveLength(ids().length + 2);
   });
 
   test("a block every element of which can be hidden is offered as a block", () => {

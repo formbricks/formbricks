@@ -672,8 +672,10 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
-  whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
-  whereClause.push(...buildShownFilterClauses(survey, filterCriteria?.shown, spend));
+  whereClause.push(
+    ...buildEmbeddedDataFilterClauses(survey, filterCriteria),
+    ...buildShownFilterClauses(survey, filterCriteria?.shown, spend)
+  );
 
   // `dataAnd` carries further conditions on keys `data` already holds; every one of them must hold.
   const dataEntries = [
