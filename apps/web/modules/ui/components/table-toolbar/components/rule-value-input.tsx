@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
-import { getRuleValueControl } from "../lib/rule-value-control";
+import { type TRuleValueControl, getRuleValueControl } from "../lib/rule-value-control";
 import type { TFilterProperty, TRuleOperator } from "../lib/types";
 import { FilterValuePicker } from "./filter-value-picker";
 
@@ -14,7 +14,8 @@ import { FilterValuePicker } from "./filter-value-picker";
  * number box for a number and a text box for the rest. `undefined` leaves the slot to the editor's own
  * combobox (a list operator's multi-pick over fixed options, typed text with seen values as suggestions);
  * `null` means the operator compares against nothing. `value` is the one value of a single-value rule;
- * `values` and `onValuesChange` are a list operator's.
+ * `values` and `onValuesChange` are a list operator's. `control` overrides the control the property and
+ * operator call for, for a caller without the editor's own combobox.
  */
 export const RuleValueInput = ({
   id,
@@ -25,6 +26,7 @@ export const RuleValueInput = ({
   values,
   onValuesChange,
   invalid,
+  control: controlOverride,
 }: Readonly<{
   id: string;
   property: TFilterProperty | undefined;
@@ -34,9 +36,10 @@ export const RuleValueInput = ({
   values: readonly string[];
   onValuesChange: (values: string[]) => void;
   invalid: boolean;
+  control?: TRuleValueControl;
 }>) => {
   const { t, i18n } = useTranslation();
-  const control = getRuleValueControl(property, operator);
+  const control = controlOverride ?? getRuleValueControl(property, operator);
 
   switch (control) {
     case "none":

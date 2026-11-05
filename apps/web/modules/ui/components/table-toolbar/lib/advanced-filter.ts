@@ -21,9 +21,10 @@ const toRightOperand = (rule: TTableFilter): TGenericCondition["rightOperand"] =
   return rule.values[0] === undefined ? undefined : { value: rule.values[0], type: "static" };
 };
 
+type TRawValue = NonNullable<TGenericCondition["rightOperand"]>["value"] | undefined;
+
 /** A list operator's picked values, trimmed and de-duplicated. */
-const toValues = (condition: TGenericCondition): string[] => {
-  const value = condition.rightOperand?.value;
+const toValues = (value: TRawValue): string[] => {
   const raw = Array.isArray(value) ? value : [value];
   const values = raw.map((item) => (item === undefined || item === null ? "" : String(item).trim()));
   return [...new Set(values.filter((item) => item.length > 0))];
@@ -43,8 +44,7 @@ export const rulesToConditionGroup = (rules: readonly TTableFilter[]): TGenericC
       : [emptyCondition()],
 });
 
-const toValue = (condition: TGenericCondition): string => {
-  const value = condition.rightOperand?.value;
+const toValue = (value: TRawValue): string => {
   if (Array.isArray(value)) return value[0] ?? "";
   return value === undefined || value === null ? "" : String(value).trim();
 };
@@ -56,19 +56,22 @@ const isValidSingleValue = (property: TFilterProperty, value: string): boolean =
   (property.valueType !== "number" || Number.isFinite(Number(value))) &&
   (property.valueType !== "date" || isCalendarDay(value));
 
-/** One row as a rule, or null when it was started but left unfinished. */
-const conditionToRule = (
-  condition: TGenericCondition,
-  property: TFilterProperty | undefined
+/**
+ * A property, an operator and the value or values picked for them as a rule, or null while it is
+ * unfinished: an operator the property does not offer, or a missing or malformed value.
+ */
+export const buildRule = (
+  property: TFilterProperty | undefined,
+  operator: TRuleOperator | "",
+  rawValue: TRawValue
 ): TTableFilter | null => {
-  const operator = condition.operator as TRuleOperator;
-  if (!property?.ruleOperators?.includes(operator)) return null;
+  if (!operator || !property?.ruleOperators?.includes(operator)) return null;
   if (!operatorTakesValue(operator)) return { property: property.id, operator, values: [] };
   if (operatorTakesValues(operator)) {
-    const values = toValues(condition);
+    const values = toValues(rawValue);
     return values.length > 0 ? { property: property.id, operator, values } : null;
   }
-  const value = toValue(condition);
+  const value = toValue(rawValue);
   return isValidSingleValue(property, value) ? { property: property.id, operator, values: [value] } : null;
 };
 
@@ -87,7 +90,11 @@ export const conditionGroupToRules = (
 
   for (const item of group.conditions) {
     if ("conditions" in item || !item.leftOperand.value) continue;
-    const rule = conditionToRule(item, propertyById.get(item.leftOperand.value));
+    const rule = buildRule(
+      propertyById.get(item.leftOperand.value),
+      item.operator as TRuleOperator,
+      item.rightOperand?.value
+    );
     if (rule) rules.push(rule);
     else incomplete.push(item.id);
   }

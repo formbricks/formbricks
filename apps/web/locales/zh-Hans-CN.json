@@ -613,6 +613,7 @@
       "reorder_column": "重新排序{column}",
       "result_count": "{count, plural, other {{formattedCount} 个结果}}",
       "result_count_capped": "{formattedCount}+ 个结果",
+      "search_fields": "搜索字段",
       "search_values": "搜索{property}的值",
       "select_operator": "运算符",
       "select_property": "字段",

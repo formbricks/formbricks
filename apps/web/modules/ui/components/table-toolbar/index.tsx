@@ -81,6 +81,11 @@ export type TTableToolbarProps = {
     onOpen?: () => void;
     /** Filters set for everyone, shown locked before the person's own. */
     locked?: TLockedFilters;
+    /**
+     * Simple-first filtering: the Filter menu lists and searches every property, and a rule is added
+     * and edited one at a time in a popover on its chip. Advanced filter stays for several rules at once.
+     */
+    simpleRules?: boolean;
   };
   /** Rows matching the filters, not rows loaded. Null while unknown. */
   matchCount?: { count: number | null; isCapped?: boolean };
@@ -111,10 +116,13 @@ export const TableToolbar = ({
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  // A rule just picked in the simple-first Filter menu, not saved until its popover finishes it.
+  const [draftPropertyId, setDraftPropertyId] = useState<string | null>(null);
   const onFilterOpen = filter?.onOpen;
   useEffect(() => {
     if (isFilterMenuOpen || isAdvancedOpen) onFilterOpen?.();
   }, [isFilterMenuOpen, isAdvancedOpen, onFilterOpen]);
+  const simpleRules = Boolean(filter?.simpleRules);
   const hasRuleProperties = Boolean(
     filter?.properties.some((property) => !property.hidden && (property.ruleOperators?.length ?? 0) > 0)
   );
@@ -130,6 +138,7 @@ export const TableToolbar = ({
   const hiddenFilters = filter?.filters.filter((f) => hiddenIds.has(f.property)) ?? [];
   const onVisibleFiltersChange = (next: TTableFilter[]) =>
     filter?.onFiltersChange([...hiddenFilters, ...next]);
+  const draftProperty = visibleProperties.find((property) => property.id === draftPropertyId);
 
   let countText: string | null = null;
   if (matchCount && matchCount.count !== null) {
@@ -154,6 +163,7 @@ export const TableToolbar = ({
                 filters={visibleFilters}
                 onFiltersChange={onVisibleFiltersChange}
                 onOpenAdvancedFilter={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
+                onPickRuleProperty={simpleRules ? setDraftPropertyId : undefined}
                 open={isFilterMenuOpen}
                 onOpenChange={setIsFilterMenuOpen}
                 locked={filter.locked}
@@ -181,6 +191,9 @@ export const TableToolbar = ({
           onFiltersChange={onVisibleFiltersChange}
           onAddFilter={() => setIsFilterMenuOpen(true)}
           onEditRules={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
+          simpleRules={simpleRules}
+          draftProperty={draftProperty}
+          onDraftClose={() => setDraftPropertyId(null)}
           locked={filter.locked}
           disabled={isLoading}
         />

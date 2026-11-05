@@ -613,6 +613,7 @@
       "reorder_column": "Reordenar {column}",
       "result_count": "{count, plural, one {{formattedCount} resultado} many {{formattedCount} de resultados} other {{formattedCount} resultados}}",
       "result_count_capped": "{formattedCount}+ resultados",
+      "search_fields": "Pesquisar campos",
       "search_values": "Pesquisar valores de {property}",
       "select_operator": "Operador",
       "select_property": "Campo",

@@ -579,6 +579,7 @@ checksums:
     common/table_toolbar/reorder_column: 3cf041d5a9cc252f99c48fddb87d2fad
     common/table_toolbar/result_count: eeaaef6044758a554987b92d5d30283b
     common/table_toolbar/result_count_capped: 5c9eb1f333275e866da1de778af5f455
+    common/table_toolbar/search_fields: 7de972ec4a0417e149ce4e63ab8ec668
     common/table_toolbar/search_values: 1a8eedfc49ce6ab17b2d066c8406c5c8
     common/table_toolbar/select_operator: c8e105116d65a17dcf68f6026a5e35fc
     common/table_toolbar/select_property: cfd632297d7809a3539e90c9cd4728d9

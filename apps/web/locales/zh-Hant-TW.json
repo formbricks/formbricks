@@ -613,6 +613,7 @@
       "reorder_column": "重新排序{column}",
       "result_count": "{count, plural, other {{formattedCount} 筆結果}}",
       "result_count_capped": "{formattedCount}+ 筆結果",
+      "search_fields": "搜尋欄位",
       "search_values": "搜尋{property}的值",
       "select_operator": "運算子",
       "select_property": "欄位",

@@ -763,6 +763,7 @@ function DashboardDetailView({
             filters: toolbar.filters,
             onFiltersChange: toolbar.setFilters,
             locked: lockedFilters.locked,
+            simpleRules: true,
           }}
           actions={
             <>

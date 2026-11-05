@@ -58,6 +58,13 @@ export const setDateQuickFilter = (
 export const removeFilterAt = (filters: readonly TTableFilter[], index: number): TTableFilter[] =>
   filters.filter((_, i) => i !== index);
 
+/** Puts `filter` in place of the one at `index`, keeping the rest and their order. */
+export const replaceFilterAt = (
+  filters: readonly TTableFilter[],
+  index: number,
+  filter: TTableFilter
+): TTableFilter[] => filters.map((existing, i) => (i === index ? filter : existing));
+
 /** Rules are the filters Advanced filter owns: every filter that is not a quick filter. */
 export const getRules = (filters: readonly TTableFilter[]): TTableFilter[] =>
   filters.filter((filter) => !isQuickFilter(filter));

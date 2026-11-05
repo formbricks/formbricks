@@ -613,6 +613,7 @@
       "reorder_column": "{column} opnieuw ordenen",
       "result_count": "{count, plural, one {{formattedCount} resultaat} other {{formattedCount} resultaten}}",
       "result_count_capped": "{formattedCount}+ resultaten",
+      "search_fields": "Velden doorzoeken",
       "search_values": "Zoek in waarden van {property}",
       "select_operator": "Operator",
       "select_property": "Veld",

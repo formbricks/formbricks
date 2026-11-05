@@ -613,6 +613,7 @@
       "reorder_column": "{column} sütununu yeniden sırala",
       "result_count": "{count, plural, one {{formattedCount} sonuç} other {{formattedCount} sonuç}}",
       "result_count_capped": "{formattedCount}+ sonuç",
+      "search_fields": "Alanlarda ara",
       "search_values": "{property} değerlerini ara",
       "select_operator": "Operatör",
       "select_property": "Alan",

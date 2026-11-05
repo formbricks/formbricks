@@ -613,6 +613,7 @@
       "reorder_column": "{column} átrendezése",
       "result_count": "{count, plural, one {{formattedCount} találat} other {{formattedCount} találat}}",
       "result_count_capped": "{formattedCount}+ találat",
+      "search_fields": "Mezők keresése",
       "search_values": "{property} értékeinek keresése",
       "select_operator": "Operátor",
       "select_property": "Mező",

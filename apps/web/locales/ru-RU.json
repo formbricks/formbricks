@@ -613,6 +613,7 @@
       "reorder_column": "Изменить порядок: {column}",
       "result_count": "{count, plural, one {{formattedCount} результат} few {{formattedCount} результата} many {{formattedCount} результатов} other {{formattedCount} результата}}",
       "result_count_capped": "{formattedCount}+ результатов",
+      "search_fields": "Поиск по полям",
       "search_values": "Поиск по значениям {property}",
       "select_operator": "Оператор",
       "select_property": "Поле",

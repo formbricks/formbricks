@@ -24,6 +24,7 @@ import { conditionGroupToRules, emptyCondition, rulesToConditionGroup } from "..
 import { getRules, replaceRules } from "../lib/filter-state";
 import { getOperatorName, operatorTakesValue } from "../lib/operators";
 import { getRuleValueControl } from "../lib/rule-value-control";
+import { groupFilterProperties } from "../lib/simple-rule";
 import type { TFilterProperty, TRuleOperator, TTableFilter } from "../lib/types";
 import { RuleValueInput } from "./rule-value-input";
 
@@ -35,13 +36,8 @@ const INPUT_TYPE_BY_VALUE_TYPE: Record<TFilterProperty["valueType"], string> = {
 };
 
 /** The picker's option groups, in the order the properties first name them. */
-const groupProperties = (properties: readonly TFilterProperty[], defaultGroup: string) => {
-  const groups = new Map<string, TFilterProperty[]>();
-  for (const property of properties) {
-    const group = property.group ?? defaultGroup;
-    groups.set(group, [...(groups.get(group) ?? []), property]);
-  }
-  return [...groups].map(([label, members]) => ({
+const groupProperties = (properties: readonly TFilterProperty[], defaultGroup: string) =>
+  groupFilterProperties(properties, defaultGroup).map(({ label, properties: members }) => ({
     label,
     value: label,
     options: members.map((property) => ({
@@ -51,7 +47,6 @@ const groupProperties = (properties: readonly TFilterProperty[], defaultGroup: s
       meta: { type: "property" },
     })),
   }));
-};
 
 const isCondition = (item: TGenericCondition | TGenericConditionGroup): item is TGenericCondition =>
   !("conditions" in item);

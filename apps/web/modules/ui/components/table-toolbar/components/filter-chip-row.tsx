@@ -9,6 +9,7 @@ import {
   getLockedQuickValues,
   isQuickFilter,
   removeFilterAt,
+  replaceFilterAt,
   setDateQuickFilter,
   toggleQuickFilterValue,
 } from "../lib/filter-state";
@@ -16,6 +17,7 @@ import type { TFilterProperty, TLockedFilters, TTableFilter } from "../lib/types
 import { DateFilterEditor } from "./date-filter-editor";
 import { FilterChip } from "./filter-chip";
 import { FilterValueList } from "./filter-value-list";
+import { RuleFilterChip } from "./rule-filter-chip";
 
 /** One quick filter's chip, whose body reopens that filter's values in place. */
 const QuickFilterChip = ({
@@ -72,9 +74,48 @@ const QuickFilterChip = ({
   );
 };
 
+/** One rule's chip: reopens that rule alone in a popover with `simpleRules`, else Advanced filter. */
+const RuleChip = ({
+  filter,
+  property,
+  filters,
+  index,
+  onFiltersChange,
+  onEditRules,
+  simpleRules,
+  disabled,
+}: Readonly<{
+  filter: TTableFilter;
+  property: TFilterProperty;
+  filters: readonly TTableFilter[];
+  index: number;
+  onFiltersChange: (filters: TTableFilter[]) => void;
+  onEditRules?: () => void;
+  simpleRules?: boolean;
+  disabled?: boolean;
+}>) => {
+  const { t, i18n } = useTranslation();
+  const onRemove = () => onFiltersChange(removeFilterAt(filters, index));
+  if (simpleRules) {
+    return (
+      <RuleFilterChip
+        property={property}
+        rule={filter}
+        disabled={disabled}
+        onCommit={(rule) => onFiltersChange(replaceFilterAt(filters, index, rule))}
+        onRemove={onRemove}
+      />
+    );
+  }
+  const parts = getChipParts(filter, property, t, i18n.resolvedLanguage ?? i18n.language ?? "en-US");
+  return <FilterChip {...parts} disabled={disabled} onClick={onEditRules} onRemove={onRemove} />;
+};
+
 /**
  * The bar under the toolbar, shown while at least one filter is active: one chip per filter, `+` to
- * add another, and Clear all. Chips wrap; the page never scrolls sideways.
+ * add another, and Clear all. Chips wrap; the page never scrolls sideways. `draftProperty` is a rule
+ * just started from the Filter menu (`simpleRules`): its chip opens at once, and is saved only once
+ * finished.
  */
 export const FilterChipRow = ({
   properties,
@@ -82,6 +123,9 @@ export const FilterChipRow = ({
   onFiltersChange,
   onAddFilter,
   onEditRules,
+  simpleRules,
+  draftProperty,
+  onDraftClose,
   locked,
   disabled,
 }: Readonly<{
@@ -90,6 +134,9 @@ export const FilterChipRow = ({
   onFiltersChange: (filters: TTableFilter[]) => void;
   onAddFilter: () => void;
   onEditRules?: () => void;
+  simpleRules?: boolean;
+  draftProperty?: TFilterProperty;
+  onDraftClose?: () => void;
   locked?: TLockedFilters;
   disabled?: boolean;
 }>) => {
@@ -98,7 +145,7 @@ export const FilterChipRow = ({
   const propertyById = new Map(properties.map((property) => [property.id, property]));
 
   const lockedFilters = locked?.filters ?? [];
-  if (filters.length === 0 && lockedFilters.length === 0) return null;
+  if (filters.length === 0 && lockedFilters.length === 0 && !draftProperty) return null;
 
   return (
     <div
@@ -128,7 +175,7 @@ export const FilterChipRow = ({
             </li>
           );
         })}
-        {lockedFilters.length > 0 && filters.length > 0 && (
+        {lockedFilters.length > 0 && (filters.length > 0 || draftProperty) && (
           <li aria-hidden="true" className="mx-0.5 h-5 w-px bg-slate-300" />
         )}
         {filters.map((filter, index) => {
@@ -150,18 +197,33 @@ export const FilterChipRow = ({
               </li>
             );
           }
-          const parts = getChipParts(filter, property, t, locale);
           return (
             <li key={key} className="max-w-full">
-              <FilterChip
-                {...parts}
+              <RuleChip
+                filter={filter}
+                property={property}
+                filters={filters}
+                index={index}
+                onFiltersChange={onFiltersChange}
+                onEditRules={onEditRules}
+                simpleRules={simpleRules}
                 disabled={disabled}
-                onClick={onEditRules}
-                onRemove={() => onFiltersChange(removeFilterAt(filters, index))}
               />
             </li>
           );
         })}
+        {draftProperty && (
+          <li key={`draft-${draftProperty.id}`} className="max-w-full">
+            <RuleFilterChip
+              property={draftProperty}
+              defaultOpen
+              disabled={disabled}
+              onCommit={(rule) => onFiltersChange([...filters, rule])}
+              onRemove={() => onDraftClose?.()}
+              onClose={onDraftClose}
+            />
+          </li>
+        )}
         <li>
           <button
             type="button"
