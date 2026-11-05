@@ -13,31 +13,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: dependabot-to-linear-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
-    name: Sync Dependabot alerts to Linear (${{ matrix.repository }})
+    name: Sync Dependabot alerts to Linear
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Per repository, not one group for the run. A matrix leg that is queued behind
-    # another leg counts as `pending`, and the default queue replaces a pending
-    # entry — so one shared group lets the next trigger cancel the legs that have
-    # not started, silently skipping that repository's alerts.
-    concurrency:
-      group: dependabot-to-linear-sync-${{ matrix.repository }}
-      cancel-in-progress: false
-    strategy:
-      # One repository's API failure must not hide the others' alerts.
-      fail-fast: false
-      # Sequential: a leg cross-references the tickets an earlier leg filed for the
-      # same advisory (findSiblingIssues), which a parallel leg could not see yet.
-      max-parallel: 1
-      matrix:
-        # DEPENDABOT_ALERTS_TOKEN needs "Dependabot alerts: read" on every repository listed.
-        # formbricks/taxonomy joins once its Dependabot alerts are enabled (ENG-6884).
-        repository:
-          - formbricks/formbricks
-          - formbricks/ee
-          - formbricks/hub
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -56,7 +40,6 @@ jobs:
 
       - name: Sync alerts to Linear
         env:
-          DEPENDABOT_REPOSITORY: ${{ matrix.repository }}
           DEPENDABOT_ALERTS_TOKEN: ${{ secrets.DEPENDABOT_ALERTS_TOKEN }}
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           # Fallback used by the script if LINEAR_API_KEY is not set; must be
