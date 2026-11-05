@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -8,6 +9,7 @@ import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/ty
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { deleteIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
@@ -41,6 +43,7 @@ export const ManageIntegration = ({
   handleNotionAuthorization,
 }: Readonly<ManageIntegrationProps>) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
 
@@ -59,6 +62,8 @@ export const ManageIntegration = ({
     if (deleteIntegrationActionResult?.data) {
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setIsConnected(false);
+      // The layout's query cache outlives this page; drop the deleted connection so a revisit cannot show it.
+      queryClient.setQueryData(integrationKeys.byType(notionIntegration.workspaceId, "notion"), null);
     } else {
       const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
       toast.error(errorMessage);
