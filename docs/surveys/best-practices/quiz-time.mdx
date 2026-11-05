@@ -26,9 +26,9 @@ This is the part the old version of this page got wrong, so it is worth being pr
 
 Add one rule per question:
 
-![A rule adding one to the score when the answer is correct](/images/surveys/best-practices/quiz-time/calculate.webp)
+![A rule on the Flow tab: If interest equals High-Yield Savings, then Set value score to the expression @score + 1](/images/surveys/best-practices/quiz-time/set-value-rule.webp)
 
-Read it as a sentence: **when** the answer equals the correct choice, **then Set value** `score` to `@score + 1`.
+Read it as a sentence: **If** the answer equals the correct choice, **Then Set value** `score` to `@score + 1`.
 
 <Note>
   A **Set value** action writes an expression into the field, so adding a point is `@score + 1` on a number field.
@@ -40,7 +40,7 @@ Read it as a sentence: **when** the answer equals the correct choice, **then Set
 
 Add two endings — a fail card and a pass card. In either card's text, type `@` to recall the score, exactly as you would recall an answer. See [Recall Data](/surveys/general-features/recall).
 
-Then add a final rule that routes on the total: **when** `score` is greater than or equal to your pass mark, **then jump to** the pass ending.
+Then add a final rule that routes on the total: **If** `score` is greater than or equal to your pass mark, **Then Jump to** the pass ending.
 
 <Warning>
   Order matters. Put the **fail** card above the **pass** card. Endings are reached in order, so anything

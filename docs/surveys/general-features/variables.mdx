@@ -49,13 +49,13 @@ Variables are different from hidden fields in the following ways:
 
 ## How to use Variables
 
-1. Once you have added the variables to your survey, you'll be able to access them in the logic editor. You can use the variables to create logic actions and conditions.
+1. Once you have added variables to your survey, open the [Flow tab](/surveys/general-features/flow-tab) and a rule. The list of what a condition can test has an **Embedded Data** group with your variables, between the hidden fields and the survey info.
 
-![Variables usage](/images/surveys/general-features/variables/variables-usage.webp)
+![The If list of a rule, scrolled to the Embedded Data group with the variables fee_score, tenure_days and segment](/images/surveys/general-features/variables/variables-usage.webp)
 
-1. You can create logic based on the variables and questions in your survey and can update the variables based on the user's response.
+1. Use a variable in a condition, and update it with a [Set value](/surveys/general-features/set-value) action as the respondent answers. This rule sends quiz takers whose `score` is 2 or more to the pass ending:
 
-![Logic with variables](/images/surveys/general-features/variables/logic-with-variables.webp)
+![A rule that tests a variable: If score is 2 or more, then Jump to the ending Well done, you know your money basics](/images/surveys/general-features/variables/logic-with-variables.webp)
 
 ### Recalling Variables in the Survey
 
