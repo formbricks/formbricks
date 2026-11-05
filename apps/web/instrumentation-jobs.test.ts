@@ -794,7 +794,22 @@ describe("instrumentation-jobs", () => {
       await import("./instrumentation-jobs");
 
     await expect(registerJobsWorker()).resolves.toBe(failingRuntime);
-    await expect(resetJobsWorkerRegistrationForTests()).resolves.toBeUndefined();
+    // The reset waits for the safety net to stop, so a drain it started cannot outlive the test.
+    let releaseSafetyNet!: () => void;
+    mockStopAuthzedOutboxSafetyNet.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        releaseSafetyNet = resolve;
+      })
+    );
+    let reset = false;
+    const resetting = resetJobsWorkerRegistrationForTests().then(() => {
+      reset = true;
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mockStopAuthzedOutboxSafetyNet).toHaveBeenCalledOnce();
+    expect(reset).toBe(false);
+    releaseSafetyNet();
+    await resetting;
     await expect(registerJobsWorker()).resolves.toBe(nextRuntime);
 
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);

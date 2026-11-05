@@ -14,7 +14,11 @@ test.each(["SIGTERM", "SIGINT"])(
     });
     const callbacks = new Map<string, () => void>();
     const closeWorkers = vi.fn(async () => {});
-    const closeSafetyNet = vi.fn(async () => {});
+    let releaseSafetyNet!: () => void;
+    const safetyNetClosed = new Promise<void>((resolve) => {
+      releaseSafetyNet = resolve;
+    });
+    const closeSafetyNet = vi.fn(() => safetyNetClosed);
     const closeApp = vi.fn(async () => {});
     const exit = vi.fn();
     const server = { listening: false, on: vi.fn(), listen: vi.fn(), close: vi.fn() };
@@ -38,12 +42,15 @@ test.each(["SIGTERM", "SIGINT"])(
     expect(lifecycle.draining).toBe(true);
     expect(exit).not.toHaveBeenCalled();
     finish({ server: { close: closeApp }, upgradeHandler: vi.fn() });
+    // A drain the AuthZed safety net already started finishes before exit, rather than leaving its
+    // claimed events leased for a minute.
+    await vi.waitFor(() => expect(closeSafetyNet).toHaveBeenCalledOnce());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(exit).not.toHaveBeenCalled();
+    releaseSafetyNet();
     await vi.waitFor(() => expect(exit).toHaveBeenCalledWith(0));
     expect(server.listen).not.toHaveBeenCalled();
     expect(closeWorkers).toHaveBeenCalledOnce();
-    // A drain the AuthZed safety net already started finishes before exit, rather than leaving its
-    // claimed events leased for a minute.
-    expect(closeSafetyNet).toHaveBeenCalledOnce();
     expect(closeApp).toHaveBeenCalledOnce();
   }
 );
