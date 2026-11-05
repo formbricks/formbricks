@@ -1,17 +1,54 @@
 "use client";
 
 import { type Row, type Table as TTable, flexRender } from "@tanstack/react-table";
-import { type CSSProperties, Fragment, type ReactNode } from "react";
+import { type CSSProperties, Fragment, type ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
+import { InfoTooltipContent } from "@/modules/ui/components/info-tooltip";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { Tooltip, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { isHeaderElementCutOff } from "../lib/header-truncation";
 import { TableNoMatch } from "./table-no-match";
 
 const SKELETON_ROWS = 6;
 /** Columns that hold a control (checkbox, row menu) rather than text: tight padding, never clipped. */
 const CONTROL_COLUMNS = new Set(["select", "actions"]);
+
+/**
+ * A column header that shows its whole text in a tooltip while it is cut off (ENG-6953 point 35),
+ * e.g. "services · Which streaming s…". Only then: a header that fits opens nothing. The check runs
+ * on open rather than on render, so a column resized since still answers for its current width.
+ */
+const HeaderLabel = ({
+  children,
+  disabled,
+}: {
+  readonly children: ReactNode;
+  readonly disabled: boolean;
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [text, setText] = useState<string | null>(null);
+  if (disabled) return <>{children}</>;
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip
+        open={text !== null}
+        onOpenChange={(next) => {
+          const fullText = ref.current?.textContent?.trim() ?? "";
+          setText(next && fullText !== "" && isHeaderElementCutOff(ref.current) ? fullText : null);
+        }}>
+        <TooltipTrigger asChild>
+          <div ref={ref} className="min-w-0">
+            {children}
+          </div>
+        </TooltipTrigger>
+        <InfoTooltipContent align="start">{text}</InfoTooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 /**
  * The table body every toolbar table shares: one header row, hairline rows, a skeleton while the first
@@ -218,9 +255,12 @@ export const ListTable = <TData,>({
                       pinClass(header.column.id, true),
                       CONTROL_COLUMNS.has(header.column.id) ? "px-2" : "px-4"
                     )}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {!header.isPlaceholder && (
+                      // A control header (the select-all checkbox) holds no text to cut off.
+                      <HeaderLabel disabled={CONTROL_COLUMNS.has(header.column.id)}>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </HeaderLabel>
+                    )}
                     {canResize && header.column.getCanResize() && !CONTROL_COLUMNS.has(header.column.id) && (
                       // Drag to resize; double-click puts the column back to its default width. A pointer
                       // affordance only, kept out of the header's accessible name.
