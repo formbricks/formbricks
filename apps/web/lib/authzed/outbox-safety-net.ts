@@ -27,6 +27,8 @@ export const AUTHZED_OUTBOX_SAFETY_NET_UNCLAIMED_MS = AUTHZED_OUTBOX_REVOCATION_
 const AUTHZED_OUTBOX_SAFETY_NET_MAX_BATCHES = 10;
 
 type TSafetyNetState = {
+  /** For `scripts/docker/server.js`, which is CommonJS and reaches this module only through the global. */
+  close: () => Promise<void>;
   running: Promise<void> | null;
   shouldRun: () => boolean;
   timer: ReturnType<typeof setInterval>;
@@ -100,6 +102,7 @@ export const startAuthzedOutboxSafetyNet = (shouldRun: () => boolean = () => tru
   if (globalForSafetyNet.formbricksAuthzedOutboxSafetyNet) return;
 
   const state: TSafetyNetState = {
+    close: stopAuthzedOutboxSafetyNet,
     running: null,
     shouldRun,
     timer: setInterval(() => tick(state), AUTHZED_OUTBOX_SAFETY_NET_INTERVAL_MS),
@@ -109,7 +112,10 @@ export const startAuthzedOutboxSafetyNet = (shouldRun: () => boolean = () => tru
   globalForSafetyNet.formbricksAuthzedOutboxSafetyNet = state;
 };
 
-/** Stop the timer and wait out a drain already in progress. */
+/**
+ * Stop the timer and wait out a drain already in progress. The server's shutdown awaits this, so the
+ * events a drain claimed are settled before exit rather than left leased for a minute.
+ */
 export const stopAuthzedOutboxSafetyNet = async (): Promise<void> => {
   const state = globalForSafetyNet.formbricksAuthzedOutboxSafetyNet;
   if (!state) return;

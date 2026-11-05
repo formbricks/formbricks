@@ -153,6 +153,35 @@ describe("AuthZed projection outbox safety net", () => {
     expect(hasUnclaimedAuthzedOutboxEvent).toHaveBeenCalledOnce();
   });
 
+  test("lets the server's shutdown wait out a drain already in progress", async () => {
+    // `scripts/docker/server.js` is CommonJS and reaches the safety net only through this global.
+    vi.mocked(hasUnclaimedAuthzedOutboxEvent).mockResolvedValue(true);
+    let finish: () => void = () => undefined;
+    vi.mocked(drainAuthzedOutbox).mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = () => resolve(drained as never);
+      })
+    );
+    startAuthzedOutboxSafetyNet();
+    await vi.advanceTimersByTimeAsync(AUTHZED_OUTBOX_SAFETY_NET_INTERVAL_MS);
+    expect(drainAuthzedOutbox).toHaveBeenCalledOnce();
+
+    const shared = (globalThis as { formbricksAuthzedOutboxSafetyNet?: { close: () => Promise<void> } })
+      .formbricksAuthzedOutboxSafetyNet;
+    let closed = false;
+    const closing = shared?.close().then(() => {
+      closed = true;
+    });
+    await flush();
+    expect(closed).toBe(false);
+
+    finish();
+    await closing;
+    expect(closed).toBe(true);
+    await vi.advanceTimersByTimeAsync(AUTHZED_OUTBOX_SAFETY_NET_INTERVAL_MS * 2);
+    expect(drainAuthzedOutbox).toHaveBeenCalledOnce();
+  });
+
   test("stops polling once stopped", async () => {
     startAuthzedOutboxSafetyNet();
     await stopAuthzedOutboxSafetyNet();
