@@ -2,6 +2,13 @@ import { describe, expect, test } from "vitest";
 import { ZDocumentImportPlanEnvelope, ZDocumentImportPlanForAI, ZDocumentPlanEntry } from "./plan-schema";
 
 describe("ZDocumentImportPlanForAI", () => {
+  test("refuses an answer with no questions list: a thinking model left it out after planning in its thoughts", () => {
+    expect(
+      ZDocumentImportPlanForAI.safeParse({ defaultLanguage: "en", languages: ["en"], titleCell: "P1" })
+        .success
+    ).toBe(false);
+  });
+
   test("fills what a provider leaves out when it omits empty fields", () => {
     // DeepSeek, for one, omits empty arrays and nulls; the checks are what validate content, so the
     // model-facing schema fills them instead of failing the call.

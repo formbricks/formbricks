@@ -326,7 +326,7 @@ export function buildQsfPlanSystemPrompt(): string {
     '- RO: ranking, choicesFrom "choices", 2 to 25 options; otherwise skip it.',
     "- TE with selector SL, ML or ESTB: openText. inputType from contentType: ValidEmail email, ValidNumber number, ValidPhone or ValidUSPhone phone, ValidURL url, otherwise text.",
     "- TE with contentType ValidDate: date. format from dateFormat: d-M-y for day-first, y-M-d for year-first, otherwise M-d-y.",
-    "- TE with selector FORM: contactInfo when its fields are a first name, last name, email, phone or company (map each in contactFields); otherwise skip it.",
+    "- TE with selector FORM: contactInfo when its fields are a first name, last name, email, phone or company; address when they are address lines, city, state, zip or country. Map each field in contactFields to its choice key; leave out a field neither fits; skip a form whose fields are neither.",
     "- Slider with one statement: rating with scale number (star for STAR). Formbricks sizes its range from the slider, so any allowed range will do. A slider with several statements: skip it.",
     "- A rating-like scale question may be csat (range 5) or ces (range 5 or 7) when its wording asks for satisfaction or effort.",
     "- DB (descriptive text): cta. FileUpload: fileUpload. Signature: signature.",
@@ -355,7 +355,6 @@ const FAILURE_HINTS: Record<TQsfPlanFailure, string> = {
   too_few_options: "too few options are left for its type",
   too_many_options: "too many options for its type (ranking takes at most 25)",
   invalid_range: "its range does not fit its type (rating 3, 4, 5, 6, 7 or 10; csat 5; ces 5 or 7)",
-  missing_scale: "rating, csat and ces need a scale",
   missing_format: "date needs a format",
 };
 

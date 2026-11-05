@@ -4741,6 +4741,7 @@ checksums:
     workspace/surveys/import/errors/limits/texts: 60b07fac087053e81e60b31a3f7d1dce
     workspace/surveys/import/errors/more_problems: b27d0ece8da4ac556c28d29deb3a3521
     workspace/surveys/import/errors/needs_ai: 4b6504a486e949f714b34713c754b072
+    workspace/surveys/import/errors/no_questions: e2ea7f4417931d2787334ff6c63b06f9
     workspace/surveys/import/errors/not_a_qsf: eae6bcdf94253ba638d55d02dc8045ff
     workspace/surveys/import/errors/not_allowed: bcc61ba80bd0a2692b5a688e67b7d1e3
     workspace/surveys/import/errors/nothing_importable: bb406029713d983bf7986311e76c6e8a
@@ -4753,6 +4754,7 @@ checksums:
     workspace/surveys/import/errors/survey_too_large: f47005c0f6ee1f1d9e59efb0e50eb971
     workspace/surveys/import/errors/timed_out: 5a36b136e670480b5fb2dcb1d2ee650c
     workspace/surveys/import/errors/too_complex: 2b316d4c04fd3331c8f6b0ca1aabb7d8
+    workspace/surveys/import/errors/too_large_for_ai: 0bccd395bf4c35ef21c2d32f163c7b90
     workspace/surveys/import/errors/too_many_questions: 2b3a9711584f778f5dc8442d1163dc2d
     workspace/surveys/import/errors/unreadable: 9f36969ffb0d34e8aa091d75e2b9ab61
     workspace/surveys/import/errors/wrong_extension: 9d43b7f9e3c90d8ba888623242a03b9b

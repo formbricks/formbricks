@@ -4911,6 +4911,7 @@
           },
           "more_problems": "{count, plural, one {# problem till} other {# problem till}}",
           "needs_ai": "Qualtrics-, Word-, Excel- och CSV-filer läses med Formbricks AI, vilket din organisation inte har. Välj en Formbricks-fil (.json).",
+          "no_questions": "Formbricks AI kunde inte läsa några frågor från den här filen. Försök igen eller importera den med Claude eller ChatGPT via MCP.",
           "not_a_qsf": "Det här är inte en exporterad Qualtrics-enkät. Exportera enkäten som en .qsf-fil i Qualtrics och försök igen.",
           "not_allowed": "Du har inte behörighet att importera enkäter till den här arbetsytan.",
           "nothing_importable": "Den här filen innehåller inga frågor som importen kan ta med. Kontrollera att det är rätt fil, eller skapa enkäten i redigeraren.",
@@ -4923,6 +4924,7 @@
           "survey_too_large": "Enkäten i den här filen är för stor för att importeras.",
           "timed_out": "Importen tog för lång tid och avbröts. Försök igen eller dela upp enkäten i mindre delar.",
           "too_complex": "Den här filen är för stor eller för komplex för att importeras. Dela upp enkäten i mindre delar och försök igen.",
+          "too_large_for_ai": "Den här enkäten är för stor för att Formbricks AI ska kunna importera den på en gång. Importera den med Claude eller ChatGPT via MCP i stället.",
           "too_many_questions": "Den här enkäten har fler än 200 frågor, vilket är fler än en import kan bygga. Importera den med Claude eller ChatGPT via MCP i stället.",
           "unreadable": "Den här filen kunde inte läsas. Exportera den igen och försök en gång till.",
           "wrong_extension": "Välj en Formbricks-fil (.json), en Qualtrics-export (.qsf) eller ett frågeformulär i Word (.docx), Excel (.xlsx) eller CSV (.csv)."

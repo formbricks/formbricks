@@ -20,6 +20,10 @@ const STREAM_ERROR_DETAILS = {
     "The AI could not read part of the file, and with it the survey may have more questions than one import takes. Try again.",
   [SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE]:
     "The file has no question the import can bring over. Check the file, or create the survey in the editor.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE_FOR_AI]:
+    "The file is too large for the AI to import in one go. Import it through MCP with an AI assistant instead.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.NO_QUESTIONS]:
+    "The AI could not read any questions from the file. Try again, or import it through MCP with an AI assistant.",
   [SURVEY_IMPORT_STREAM_ERROR_CODES.FAILED]: "The file could not be imported. Try again.",
 } as const;
 
@@ -32,6 +36,8 @@ const FAILED_REASON_CODES: Partial<
   too_many_questions: SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE,
   partly_unread: SURVEY_IMPORT_STREAM_ERROR_CODES.PARTLY_UNREAD,
   nothing_importable: SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE,
+  too_large_for_ai: SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE_FOR_AI,
+  no_questions: SURVEY_IMPORT_STREAM_ERROR_CODES.NO_QUESTIONS,
 };
 
 /** The in-band event for an import that hit its deadline. */

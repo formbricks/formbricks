@@ -8,6 +8,7 @@ import { getDefaultEndingTexts } from "../core/default-ending";
 import type {
   TDraftChoice,
   TDraftElementBase,
+  TDraftToggleInput,
   TSurveyImportAssembly,
   TSurveyImportDraft,
   TSurveyImportDraftBlock,
@@ -28,7 +29,7 @@ import {
   type TDocumentText,
   collapseWhitespace,
 } from "./plan-checks";
-import type { TDocumentPlanRule } from "./plan-schema";
+import { DOCUMENT_PLAN_FORM_FIELDS, type TDocumentPlanRule } from "./plan-schema";
 
 /**
  * The assembly of a document import (ENG-6852): the checked plan's entries become the draft the dialog
@@ -402,6 +403,14 @@ class DocumentDraftBuilder {
         const { subheader: _subheader, ...consent } = base;
         return { ...consent, type: "consent", label: subheader ?? base.headline };
       }
+      case "address":
+        return { ...base, type: "address", ...this.formFields(entry, DOCUMENT_PLAN_FORM_FIELDS.address) };
+      case "contactInfo":
+        return {
+          ...base,
+          type: "contactInfo",
+          ...this.formFields(entry, DOCUMENT_PLAN_FORM_FIELDS.contactInfo),
+        };
       case "cta":
       case "welcome":
         return { ...base, type: "cta", buttonExternal: false };
@@ -414,6 +423,29 @@ class DocumentDraftBuilder {
           charLimit: { enabled: false },
         };
     }
+  }
+
+  /**
+   * An address or contact form's fields: each the file lists is shown, labelled with the file's text and
+   * required as the question is; any other is hidden, with no label.
+   */
+  private formFields<TField extends string>(
+    entry: TDocumentPlannedEntry,
+    fields: readonly TField[]
+  ): Record<TField, TDraftToggleInput> {
+    const listedAt = new Map(entry.options.map((option, index) => [option.field, index]));
+    const hidden = Object.fromEntries(this.languageCodes.map((code) => [code, ""]));
+    return Object.fromEntries(
+      fields.map((field) => {
+        const index = listedAt.get(field);
+        return [
+          field,
+          index === undefined
+            ? { show: false, required: false, placeholder: { ...hidden } }
+            : { show: true, required: entry.required, placeholder: this.localeText(entry.ref, `o${index}`) },
+        ];
+      })
+    ) as Record<TField, TDraftToggleInput>;
   }
 
   private scaleLabels(entry: TDocumentPlannedEntry) {

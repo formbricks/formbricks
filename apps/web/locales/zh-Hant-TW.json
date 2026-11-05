@@ -4911,6 +4911,7 @@
           },
           "more_problems": "{count, plural, other {還有 # 個問題}}",
           "needs_ai": "Qualtrics、Word、Excel 和 CSV 檔案需透過 Formbricks AI 讀取,但你的組織目前沒有這項功能。請選擇 Formbricks 檔案 (.json)。",
+          "no_questions": "Formbricks AI 無法從這個檔案中讀取任何問題。請再試一次，或透過 MCP 使用 Claude 或 ChatGPT 來匯入。",
           "not_a_qsf": "這不是 Qualtrics 問卷匯出檔。請在 Qualtrics 中將問卷匯出為 .qsf 檔案,然後再試一次。",
           "not_allowed": "你沒有權限將問卷匯入此工作區。",
           "nothing_importable": "這個檔案中沒有可以匯入的問題。請確認是否選對檔案，或直接在編輯器中建立問卷。",
@@ -4923,6 +4924,7 @@
           "survey_too_large": "這個檔案中的問卷太大,無法匯入。",
           "timed_out": "匯入耗時過長,已被中止。請再試一次,或將問卷拆分成較小的部分。",
           "too_complex": "這個檔案太大或太複雜,無法匯入。請將問卷拆分成較小的部分,然後再試一次。",
+          "too_large_for_ai": "這份問卷太大，Formbricks AI 無法一次匯入。請改用 Claude 或 ChatGPT 並透過 MCP 來匯入。",
           "too_many_questions": "這份問卷的問題超過 200 題,超出單次匯入可建立的數量。請改用 Claude 或 ChatGPT 透過 MCP 匯入。",
           "unreadable": "無法讀取這個檔案。請重新匯出後再試一次。",
           "wrong_extension": "請選擇 Formbricks 檔案 (.json)、Qualtrics 匯出檔 (.qsf),或是 Word (.docx)、Excel (.xlsx) 或 CSV (.csv) 問卷。"

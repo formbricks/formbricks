@@ -69,7 +69,11 @@ const planSurvey = async (qsf: Record<string, unknown>, generate: TQsfPlanGenera
   });
 };
 
-const tooLong = () => new AIOutputTokenLimitError({ maxOutputTokens: 8192, outputTokens: 8192 });
+const tooLong = () =>
+  new AIOutputTokenLimitError({
+    maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+    outputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+  });
 
 /** A model that answers every question asked as a two-choice question. */
 const answerEverything: TQsfPlanGenerate = async (request) => ({
@@ -230,7 +234,9 @@ describe("planQsfImport", () => {
     expect(Number.isFinite(result.usage.inputTokens) && result.usage.inputTokens > 0).toBe(true);
     expect(result.usage.outputTokens).toBeGreaterThan(0);
     expect(requests.every((request) => request.timeout === SURVEY_IMPORT_AI_CALL_TIMEOUT_MS)).toBe(true);
-    expect(requests.every((request) => request.maxOutputTokens === 8192)).toBe(true);
+    expect(
+      requests.every((request) => request.maxOutputTokens === SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL)
+    ).toBe(true);
   });
 
   test("skips types Formbricks cannot represent without asking the model about them", async () => {
@@ -360,7 +366,10 @@ describe("planQsfImport", () => {
     const generate: TQsfPlanGenerate = async () => {
       calls.push(calls.length);
       if (calls.length === 1)
-        throw new AIOutputTokenLimitError({ maxOutputTokens: 8192, reasoningTokens: 6000 });
+        throw new AIOutputTokenLimitError({
+          maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+          reasoningTokens: 6000,
+        });
       if (calls.length === 2) {
         throw new NoObjectGeneratedError({
           response: { id: "r", timestamp: new Date(), modelId: "m" },
@@ -376,9 +385,11 @@ describe("planQsfImport", () => {
 
     const result = await plan("simple.qsf", generate);
 
-    // The chunk ran out of its 8,192 (reasoning included), its first half failed the schema, the
+    // The chunk ran out of its whole budget (reasoning included), its first half failed the schema, the
     // rest answered with nothing: 10 tokens a call.
-    expect(result.usage.outputTokens).toBe(8192 + 1234 + 10 * (result.calls - 2));
+    expect(result.usage.outputTokens).toBe(
+      SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL + 1234 + 10 * (result.calls - 2)
+    );
     expect(result.usage.inputTokens).toBe(900 + 100 * (result.calls - 2));
   });
 
@@ -418,7 +429,10 @@ describe("planQsfImport", () => {
   test("never makes more calls than the cap, and drops what is left instead of failing", async () => {
     // Out of tokens after a hundred, so the output budget is not what stops it.
     const generate = vi.fn<TQsfPlanGenerate>(async () => {
-      throw new AIOutputTokenLimitError({ maxOutputTokens: 8192, outputTokens: 100 });
+      throw new AIOutputTokenLimitError({
+        maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+        outputTokens: 100,
+      });
     });
 
     const result = await plan("large-150.qsf", generate);
@@ -468,7 +482,7 @@ describe("planQsfImport", () => {
     // 200 questions on 200 pages, three rules described on each: 200 × (70 + 10 + 2 × 3 × 45) =
     // 70,000 tokens in 1,400-token chunks, 50 of them.
     expect(QSF_MAX_AI_CALLS).toBe(152);
-    expect(QSF_MAX_OUTPUT_TOKENS).toBe(835_584);
+    expect(QSF_MAX_OUTPUT_TOKENS).toBe((2 * 50 + 2) * SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL);
   });
 
   test("stops calling once the import's output tokens are spent, dropping the rest", async () => {
@@ -478,10 +492,10 @@ describe("planQsfImport", () => {
 
     const result = await plan("large-150.qsf", generate);
 
-    // Eight chunks: (2 × 8 + 2) × 8,192 tokens, eighteen calls that use all of theirs, before the call
+    // Eight chunks: (2 × 8 + 2) × the per-call budget, eighteen calls that use all of theirs, before the call
     // cap of 26. At most the three other calls already in flight run past it.
     expect(generate.mock.calls.length).toBeLessThanOrEqual(18 + 3);
-    expect(result.usage.outputTokens).toBeLessThanOrEqual(21 * 8192);
+    expect(result.usage.outputTokens).toBeLessThanOrEqual(21 * SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL);
     expect(result.issues.map((issue) => issue.params?.cause)).toContain("ai_budget");
   });
 

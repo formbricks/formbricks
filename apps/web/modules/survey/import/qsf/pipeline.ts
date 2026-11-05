@@ -146,7 +146,7 @@ export async function runQsfImport(
 
   signal.throwIfAborted();
   onProgress("assembling");
-  if (planned.plan.questions.size === 0) throw noQuestionsPlanned(planned.conclusive);
+  if (planned.plan.questions.size === 0) throw noQuestionsPlanned(planned);
 
   const name = await getImportedSurveyName(
     workspaceId,

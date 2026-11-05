@@ -6,6 +6,7 @@ import type { TSurveyImportDraft } from "../core/draft";
 import { SurveyImportFailedError, SurveyImportInputError, SurveyImportTimeoutError } from "../core/errors";
 import { checkImportDraft } from "../core/final-gate";
 import { isObjectMemberName } from "../core/id-registry";
+import { SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL } from "../limits";
 import type { TSurveyImportReport } from "../types";
 import {
   IMPORTABLE_QSF_FIXTURES,
@@ -362,7 +363,7 @@ describe("runQsfImport on recorded plans", () => {
       expect.objectContaining({
         organizationId: "org_1",
         aiTracing: { distinctId: "user_1", feature: "ai_survey_import", workspaceId: WORKSPACE_ID },
-        maxOutputTokens: 8192,
+        maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
         abortSignal: expect.any(AbortSignal),
       })
     );
@@ -480,7 +481,7 @@ describe("runQsfImport on recorded plans", () => {
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
-  test("fails, not times out, when the AI calls run out before any question is planned", async () => {
+  test("fails as too large for the AI, not times out, when every call runs out of output tokens", async () => {
     mocks.generateOrganizationAIObject.mockRejectedValue(
       new AIOutputTokenLimitError({ maxOutputTokens: 8192 })
     );
@@ -488,7 +489,7 @@ describe("runQsfImport on recorded plans", () => {
     const error = await run("simple.qsf").catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(SurveyImportFailedError);
-    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
+    expect((error as SurveyImportFailedError).reason).toBe("too_large_for_ai");
   });
 
   test("has nothing to import when the AI skips every question", async () => {

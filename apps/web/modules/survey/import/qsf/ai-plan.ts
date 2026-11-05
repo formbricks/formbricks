@@ -72,7 +72,7 @@ const QSF_MAX_CHUNKS = Math.ceil(
 
 /**
  * The ceilings, whatever the file: the costliest valid survey's own allowance, so a hostile file
- * cannot cost more than it. 152 calls (3 × 50 + 2) and 835,584 output tokens ((2 × 50 + 2) × 8,192) —
+ * cannot cost more than it. 152 calls (3 × 50 + 2) and 1,671,168 output tokens ((2 × 50 + 2) × 16,384) —
  * every call's whole budget, reasoning included, for a survey expected to need 70,000.
  */
 export const QSF_MAX_AI_CALLS = importCallCapFor(QSF_MAX_CHUNKS);
@@ -92,6 +92,8 @@ export interface TQsfPlanResult {
    * answered, so an empty plan means the file has nothing to import rather than a failed import.
    */
   conclusive: boolean;
+  /** Whether a call ran past its output tokens or prompt size (`TImportPlanRun.hitOutputLimit`). */
+  hitOutputLimit: boolean;
 }
 
 /** What chunking reads: the survey, its texts and the prompt's limits. */
@@ -243,5 +245,12 @@ export async function planQsfImport(params: {
 
   // Every question is asked about and one left out of an answer fails, so no failure on the way means
   // every question was answered.
-  return { plan, issues, usage: run.usage, calls: run.calls, conclusive: !run.failedOnTheWay };
+  return {
+    plan,
+    issues,
+    usage: run.usage,
+    calls: run.calls,
+    conclusive: !run.failedOnTheWay,
+    hitOutputLimit: run.hitOutputLimit,
+  };
 }

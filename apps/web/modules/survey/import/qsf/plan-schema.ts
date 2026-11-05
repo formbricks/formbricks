@@ -25,8 +25,8 @@ import {
  */
 
 /**
- * The element types an import may produce. Never `pictureSelection` (it needs image URLs), `cal` (an
- * external host) or `address`; a CTA is always built without an external button.
+ * The element types an import may produce. Never `pictureSelection` (it needs image URLs) or `cal` (an
+ * external host); a CTA is always built without an external button.
  */
 export const QSF_PLAN_ELEMENT_TYPES = [
   "openText",
@@ -42,6 +42,7 @@ export const QSF_PLAN_ELEMENT_TYPES = [
   "fileUpload",
   "signature",
   "contactInfo",
+  "address",
   "consent",
   "cta",
 ] as const satisfies readonly `${TSurveyElementTypeEnum}`[];
@@ -50,6 +51,18 @@ export type TQsfPlanElementType = (typeof QSF_PLAN_ELEMENT_TYPES)[number];
 
 export const QSF_PLAN_CONTACT_FIELDS = ["firstName", "lastName", "email", "phone", "company"] as const;
 export type TQsfPlanContactField = (typeof QSF_PLAN_CONTACT_FIELDS)[number];
+export const QSF_PLAN_ADDRESS_FIELDS = [
+  "addressLine1",
+  "addressLine2",
+  "city",
+  "state",
+  "zip",
+  "country",
+] as const;
+export type TQsfPlanAddressField = (typeof QSF_PLAN_ADDRESS_FIELDS)[number];
+/** A form question's fields: a contact form's or an address's, both mapped in `contactFields`. */
+export const QSF_PLAN_FORM_FIELDS = [...QSF_PLAN_CONTACT_FIELDS, ...QSF_PLAN_ADDRESS_FIELDS] as const;
+export type TQsfPlanFormField = (typeof QSF_PLAN_FORM_FIELDS)[number];
 
 export const QSF_PLAN_INPUT_TYPES = ["text", "email", "url", "number", "phone"] as const;
 export const QSF_PLAN_SCALES = ["number", "smiley", "star"] as const;
@@ -78,9 +91,10 @@ export const ZQsfImportPlanForAI = z.object({
         labelKey: z.string().nullable().default(null),
         excludedKeys: z.array(z.string()).nullable().default([]),
         contactFields: z
-          .array(z.object({ field: z.enum(QSF_PLAN_CONTACT_FIELDS), key: z.string() }))
+          .array(z.object({ field: z.enum(QSF_PLAN_FORM_FIELDS), key: z.string() }))
           .nullable()
-          .default([]),
+          .default([])
+          .describe("contactInfo and address only: which choice key each field of the form is"),
         inputType: z.enum(QSF_PLAN_INPUT_TYPES).nullable().default(null),
         scale: z.enum(QSF_PLAN_SCALES).nullable().default(null),
         range: z
@@ -169,8 +183,8 @@ export const ZQsfPlanQuestion = z.object({
     .nullish()
     .transform((keys) => keys ?? []),
   contactFields: z
-    .array(z.object({ field: z.enum(QSF_PLAN_CONTACT_FIELDS), key: ZKey }))
-    .max(QSF_PLAN_CONTACT_FIELDS.length)
+    .array(z.object({ field: z.enum(QSF_PLAN_FORM_FIELDS), key: ZKey }))
+    .max(QSF_PLAN_FORM_FIELDS.length)
     .nullish()
     .transform((fields) => fields ?? []),
   inputType: z.enum(QSF_PLAN_INPUT_TYPES).nullable(),

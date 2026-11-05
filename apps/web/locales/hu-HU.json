@@ -4911,6 +4911,7 @@
           },
           "more_problems": "{count, plural, one {# további probléma} other {# további probléma}}",
           "needs_ai": "A Qualtrics-, Word-, Excel- és CSV-fájlokat a Formbricks AI olvassa be, amellyel az Ön szervezete nem rendelkezik. Kérjük, válasszon Formbricks-fájlt (.json).",
+          "no_questions": "A Formbricks AI nem tudott kérdéseket beolvasni ebből a fájlból. Kérjük, próbálja meg újra, vagy importálja a fájlt a Claude vagy a ChatGPT segítségével az MCP-n keresztül.",
           "not_a_qsf": "Ez nem egy Qualtrics-felmérésexport. Kérjük, exportálja a felmérést a Qualtricsben .qsf fájlként, majd próbálja meg újra.",
           "not_allowed": "Önnek nincs jogosultsága felmérések importálására ebbe a munkaterületbe.",
           "nothing_importable": "Ez a fájl nem tartalmaz olyan kérdést, amelyet az importálás át tudna vinni. Kérjük, ellenőrizze, hogy a megfelelő fájlt választotta-e ki, vagy hozza létre a felmérést a szerkesztőben.",
@@ -4923,6 +4924,7 @@
           "survey_too_large": "A fájlban található felmérés túl nagy az importáláshoz.",
           "timed_out": "Az importálás túl sokáig tartott, ezért leállításra került. Kérjük, próbálja meg újra, vagy ossza fel a felmérést kisebb részekre.",
           "too_complex": "Ez a fájl túl nagy vagy túl összetett az importáláshoz. Kérjük, ossza fel a felmérést kisebb részekre, majd próbálja meg újra.",
+          "too_large_for_ai": "Ez a kérdőív túl nagy ahhoz, hogy a Formbricks AI egy lépésben importálni tudja. Kérjük, importálja inkább a Claude vagy a ChatGPT segítségével az MCP-n keresztül.",
           "too_many_questions": "Ez a felmérés több mint 200 kérdést tartalmaz, ami meghaladja az egyetlen importálással létrehozható mennyiséget. Kérjük, importálja inkább a Claude vagy a ChatGPT segítségével, MCP-n keresztül.",
           "unreadable": "Ezt a fájlt nem sikerült beolvasni. Kérjük, exportálja újra, majd próbálkozzon ismét.",
           "wrong_extension": "Kérjük, válasszon Formbricks-fájlt (.json), Qualtrics-exportot (.qsf), illetve Word- (.docx), Excel- (.xlsx) vagy CSV-kérdőívet (.csv)."

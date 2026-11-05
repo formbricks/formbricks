@@ -246,7 +246,10 @@ describe("runDocumentImport, on files shaped like the ones it was built for", ()
 
 describe("runDocumentImport: the AI's plan", () => {
   test("an entry still wrong on the retry is dropped with a report line, by the line it starts on", async () => {
-    const plan = planOf([openTextEntry("R1", "B1"), { ...openTextEntry("R2", "B2"), kind: "address" }]);
+    const plan = planOf([
+      openTextEntry("R1", "B1"),
+      { ...openTextEntry("R2", "B2"), kind: "pictureSelection" },
+    ]);
     const prompts: string[] = [];
     const generate = recordedDocumentGenerate(plan, (request) => {
       prompts.push(request.prompt);

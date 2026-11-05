@@ -4911,6 +4911,7 @@
           },
           "more_problems": "{count, plural, one {# problema a mais} many {# de problemas a mais} other {# problemas a mais}}",
           "needs_ai": "Arquivos do Qualtrics, Word, Excel e CSV são lidos com a IA do Formbricks, que sua organização não tem. Escolha um arquivo do Formbricks (.json).",
+          "no_questions": "A Formbricks AI não conseguiu ler nenhuma pergunta deste arquivo. Tente novamente ou importe-o com o Claude ou o ChatGPT por meio do MCP.",
           "not_a_qsf": "Este arquivo não é uma exportação de pesquisa do Qualtrics. No Qualtrics, exporte a pesquisa como um arquivo .qsf e tente novamente.",
           "not_allowed": "Você não tem permissão para importar pesquisas para este workspace.",
           "nothing_importable": "Este arquivo não tem nenhuma pergunta que a importação consiga trazer. Confira se é o arquivo certo ou crie a pesquisa no editor.",
@@ -4923,6 +4924,7 @@
           "survey_too_large": "A pesquisa neste arquivo é grande demais para ser importada.",
           "timed_out": "A importação demorou demais e foi interrompida. Tente novamente ou divida a pesquisa em pesquisas menores.",
           "too_complex": "Este arquivo é grande ou complexo demais para ser importado. Divida a pesquisa em pesquisas menores e tente novamente.",
+          "too_large_for_ai": "Esta pesquisa é grande demais para a Formbricks AI importar de uma só vez. Importe-a com o Claude ou o ChatGPT por meio do MCP.",
           "too_many_questions": "Esta pesquisa tem mais de 200 perguntas, mais do que uma importação consegue criar. Importe-a com o Claude ou o ChatGPT por meio do MCP.",
           "unreadable": "Não foi possível ler este arquivo. Exporte-o novamente e tente mais uma vez.",
           "wrong_extension": "Escolha um arquivo do Formbricks (.json), uma exportação do Qualtrics (.qsf) ou um questionário em Word (.docx), Excel (.xlsx) ou CSV (.csv)."

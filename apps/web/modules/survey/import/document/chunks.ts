@@ -1,4 +1,4 @@
-import { SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS, SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS } from "../limits";
+import { SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS, SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS } from "../limits";
 import type { TDocumentModel } from "./model";
 import { describedLineChars } from "./prompt";
 
@@ -31,7 +31,7 @@ const lineCost = (line: TDocumentModel["lines"][number]): { tokens: number; char
 };
 
 /**
- * Group lines into chunks of at most `SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS` expected output and
+ * Group lines into chunks of at most `SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS` expected output and
  * `DOCUMENT_CHUNK_DATA_CHARS` of data, in document order, as many as it takes.
  */
 export function chunkDocumentLines(model: TDocumentModel, refs: readonly string[]): string[][] {
@@ -47,7 +47,7 @@ export function chunkDocumentLines(model: TDocumentModel, refs: readonly string[
     const cost = lineCost(line);
     if (
       current.length > 0 &&
-      (tokens + cost.tokens > SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS ||
+      (tokens + cost.tokens > SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS ||
         chars + cost.chars > DOCUMENT_CHUNK_DATA_CHARS)
     ) {
       chunks.push(current);

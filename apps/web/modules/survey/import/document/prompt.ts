@@ -1,7 +1,11 @@
 import { promptDataJson } from "../core/prompt-data";
 import type { TDocumentKind, TDocumentModel } from "./model";
 import type { TDocumentPlanFailure } from "./plan-checks";
-import { DOCUMENT_PLAN_ELEMENT_TYPES, DOCUMENT_PLAN_OPERATORS } from "./plan-schema";
+import {
+  DOCUMENT_PLAN_ELEMENT_TYPES,
+  DOCUMENT_PLAN_FORM_FIELDS,
+  DOCUMENT_PLAN_OPERATORS,
+} from "./plan-schema";
 
 /**
  * The prompt for a document import's plan (ENG-6852), for a sheet or CSV, or a Word file (ENG-6853).
@@ -103,9 +107,10 @@ export function buildDocumentPlanSystemPrompt(kind: TDocumentKind): string {
     "",
     "Rules:",
     "- A line that is not a question — a column header, a section heading, a note, a comment — is not an entry. List it nowhere.",
-    "- A question Formbricks cannot represent (a picture choice, a meeting booking, an address form, a hidden or computed question) goes in skipped[] with its ref and a one-sentence reason.",
+    "- Every question that starts in lines[] gets an entry, however many there are. Leave questions[] empty only when no line in lines[] starts one.",
+    "- A question Formbricks cannot represent (a choice between pictures, a meeting booking, a hidden or computed question) goes in skipped[] with its ref and a one-sentence reason. Every other question in lines[] still gets its entry in questions[]: a skipped line never empties the plan.",
     "- Keep every option, including 'Other', 'N/A' and 'Don't know'. An option's code is the number or letter the file gives it (\"1\" in \"1 = Yes\", \"1.\" stays \"1\"); copy it exactly, else null. Set isOther on an 'Other' option that asks the respondent to say what.",
-    '- Leave codes and list markers out of option texts: for "1 = Yes" the option text is "Yes", for "Choices: Red; Blue" the options are "Red" and "Blue".',
+    '- Leave codes and list markers out of option texts: for "1 = Yes" the option text is "Yes", for "Choices: Red; Blue" the options are "Red" and "Blue". Leave a question\'s number out of its headline the same way: for "5. Rate it" the headline is "Rate it".',
     "- Every language the file has a text in gets a piece, in the same order of options across languages.",
     "- required is true when the file marks the question as required or mandatory.",
     "- dropdown is true when the file says the choices show as a dropdown.",
@@ -119,10 +124,13 @@ export function buildDocumentPlanSystemPrompt(kind: TDocumentKind): string {
     "- A date: date with format M-d-y, d-M-y or y-M-d as the file shows (YYYY/MM/DD is y-M-d). A time of day is openText.",
     "- Ranking: ranking, 2 to 25 options. A grid of statements by a scale: matrix, statements in options, scale in columns.",
     "- File upload: fileUpload. Consent with a single checkbox: consent, the text to agree to in subheader. A text with no answer: cta.",
+    `- An address form: address. A contact details form (name, email, phone, company): contactInfo. Each field the file lists is an option, its field one of ${DOCUMENT_PLAN_FORM_FIELDS.address.join(", ")} for address, ${DOCUMENT_PLAN_FORM_FIELDS.contactInfo.join(", ")} for contactInfo, each field once; leave out a listed field none of these fits. A form that lists no fields: skipped.`,
     "",
     `Operators: ${DOCUMENT_PLAN_OPERATORS.join(", ")}. isAnyOf takes several values; isSubmitted and isSkipped take none.`,
     "",
     "Logic notes: name questions by their ID or text and options by their text. Plain text, at most 300 characters, no links, no HTML. Write in the survey's language.",
+    "",
+    "Your reasoning is not part of the answer: write every planned entry into questions[] and every skip into skipped[] in the JSON you return.",
   ].join("\n");
 }
 
@@ -142,9 +150,13 @@ const FAILURE_HINTS: Record<TDocumentPlanFailure, string> = {
     "a piece's text is not in its cell exactly; copy the part character for character, or use null for the whole cell",
   missing_headline: "a text has no piece in the default language",
   role_not_for_type: "it set options, columns or labels its kind does not use",
-  too_few_options: "too few options for its kind",
+  too_few_options:
+    "too few options for its kind (a choice or ranking needs 2, a matrix its statements in options and at least 2 columns, an address or contactInfo its fields); take them from following[] when they are on the next lines",
   too_many_options: "too many options for its kind (ranking takes at most 25)",
   invalid_range: "its range does not fit its kind (rating 3, 4, 5, 6, 7 or 10; csat 5; ces 5 or 7)",
+  silent_answer: "your previous answer listed no question and no skip; plan every question in lines[]",
+  invalid_field:
+    "each option of an address or contactInfo needs its field, one of the kind's own, each field once",
 };
 
 export function buildDocumentPlanPrompt(params: {

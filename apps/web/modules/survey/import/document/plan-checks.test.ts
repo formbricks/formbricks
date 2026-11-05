@@ -126,9 +126,9 @@ describe("checkDocumentPlanResponses", () => {
 
   test("refuses a language the plan did not declare, and a kind off the allowlist", () => {
     const french = entry("R3", { headline: [piece("en", "B3"), piece("fr", "C3")] });
-    const address = entry("R2", { kind: "address" });
+    const picture = entry("R2", { kind: "pictureSelection" });
 
-    const { plan } = check([answer(["R2", "R3"], [address, french])]);
+    const { plan } = check([answer(["R2", "R3"], [picture, french])]);
 
     expect(plan.failures.get("R3")).toEqual(["unknown_language"]);
     expect(plan.failures.get("R2")).toEqual(["type_not_allowed"]);
@@ -201,7 +201,26 @@ describe("checkDocumentPlanResponses: an entry's shape", () => {
       { kind: "ranking", options: Array.from({ length: 26 }, () => opt("B2", "18-24")) },
       ["too_many_options"],
     ],
-    ["a rating with no range", { kind: "rating", range: null }, ["invalid_range"]],
+    ["an address with no fields", { kind: "address" }, ["too_few_options"]],
+    [
+      "an address field with no field named",
+      { kind: "address", options: [opt("B2", "18-24")] },
+      ["invalid_field"],
+    ],
+    [
+      "a contact form naming an address field",
+      { kind: "contactInfo", options: [opt("B2", "18-24", { field: "city" })] },
+      ["invalid_field"],
+    ],
+    [
+      "a contact form naming one field twice",
+      {
+        kind: "contactInfo",
+        options: [opt("B2", "18-24", { field: "email" }), opt("B2", "25-34", { field: "email" })],
+      },
+      ["invalid_field"],
+    ],
+    ["a rating on 8 points", { kind: "rating", range: 8 }, ["invalid_range"]],
     ["a CSAT on 7 points", { kind: "csat", range: "7" }, ["invalid_range"]],
     ["a headline only in German", { headline: [piece("de", "C2")] }, ["missing_headline"]],
     ["two English headlines", { headline: [piece("en", "B2"), piece("en", "B2")] }, ["duplicate_language"]],
@@ -221,11 +240,34 @@ describe("checkDocumentPlanResponses: an entry's shape", () => {
   test.each([
     ["a rating on 10 points", { kind: "rating", range: "10" }, 10],
     ["a CES on 7 points", { kind: "ces", range: "7" }, 7],
+    ["a CES whose points the file does not give", { kind: "ces", range: null }, 5],
     ["an open question", {}, null],
   ])("keeps the range of %s", (_name, fields, range) => {
     const { plan } = check([answer(["R2"], [entry("R2", fields)])]);
 
     expect(plan.entries.get("R2")?.range).toBe(range);
+  });
+
+  test("keeps an address form's fields, each option naming the field it is", () => {
+    const { plan } = check([
+      answer(
+        ["R2"],
+        [
+          entry("R2", {
+            kind: "address",
+            options: [opt("B2", "18-24", { field: "city" }), opt("B2", "25-34", { field: "zip" })],
+          }),
+        ]
+      ),
+    ]);
+
+    expect(plan.failures.size).toBe(0);
+    expect(plan.entries.get("R2")?.options.map((option) => [option.field, option.text.get("en-US")])).toEqual(
+      [
+        ["city", "18-24"],
+        ["zip", "25-34"],
+      ]
+    );
   });
 
   test("keeps an option's code only when its cell holds it", () => {
@@ -370,15 +412,24 @@ describe("checkDocumentPlanResponses: an answer", () => {
 });
 
 describe("an answer that names none of its lines", () => {
-  test("is no failure, but is counted, beside one that skipped its lines", () => {
+  test("fails its lines for the retry, and is counted, beside one that skipped its lines", () => {
     const { plan } = check([
       answer(["R1"], [], [{ ref: "R1", reason: "The header" }]),
       answer(["R2", "R3", "R4"], [], []),
     ]);
 
-    expect(plan.failures.size).toBe(0);
+    expect(Object.fromEntries(plan.failures)).toEqual({
+      R2: ["silent_answer"],
+      R3: ["silent_answer"],
+      R4: ["silent_answer"],
+    });
+    expect(isUnreadLine(["silent_answer"])).toBe(true);
     expect(plan.skipped.has("R1")).toBe(true);
     expect(plan.silentResponses).toBe(1);
+  });
+
+  test("on the retry is believed: no failure", () => {
+    expect(check([answer(["R2"], [], [])], true).plan.failures.size).toBe(0);
   });
 
   test("is counted across a retry", () => {
@@ -395,7 +446,9 @@ describe("an answer that names none of its lines", () => {
 
 describe("mergeDocumentPlans", () => {
   test("the retry's verdicts replace the first round's failures, and its entries join the first's", () => {
-    const first = check([answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "address" })])]).plan;
+    const first = check([
+      answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "pictureSelection" })]),
+    ]).plan;
     const retry = check([answer(["R3"], [entry("R3")])]).plan;
 
     const merged = mergeDocumentPlans(first, retry, new DocumentPlanContext(model));
@@ -405,7 +458,9 @@ describe("mergeDocumentPlans", () => {
   });
 
   test("keeps the first round's failure for a line the retry leaves out, so the report still names it", () => {
-    const first = check([answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "address" })])]).plan;
+    const first = check([
+      answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "pictureSelection" })]),
+    ]).plan;
     // Asked about R3 again, the retry says nothing about it.
     const retry = check([answer(["R3"], [])], true).plan;
 
@@ -449,7 +504,9 @@ describe("mergeDocumentPlans", () => {
   });
 
   test("keeps no failure for a line the retry placed as part of another question", () => {
-    const first = check([answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "address" })])]).plan;
+    const first = check([
+      answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "pictureSelection" })]),
+    ]).plan;
     // The retry reads R3's texts as Q1's subheader, and names R3 nowhere itself.
     const retry = check([answer(["R3"], [])], true).plan;
     const absorbing = check([

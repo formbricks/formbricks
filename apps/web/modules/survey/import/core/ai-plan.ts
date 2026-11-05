@@ -21,8 +21,8 @@ import { SurveyImportFailedError } from "./errors";
  * the calls.
  *
  * The units are split into chunks by the output they are expected to need — a fixed budget per chunk,
- * as many chunks as the file needs — and at most four run at once. The provider's tokens-per-minute is
- * the real limit there, and nothing in the app holds it back. Per chunk:
+ * as many chunks as the file needs — and at most the lane's `maxParallelCalls` run at once. The
+ * provider's tokens-per-minute is the real limit there, and nothing in the app holds it back. Per chunk:
  *
  * - a 429 or a 5xx is retried here, the SDK's own retries off (`call-retry.ts`): a 429 while its
  *   `Retry-After` fits in the call's time, a 5xx with backoff while the call has time left;
@@ -32,7 +32,9 @@ import { SurveyImportFailedError } from "./errors";
  *   which the AI SDK's abort check does not match, and a 5xx with no time left to retry it), is ours to
  *   fix: the chunk is split in two (once) and each half asked again, queued behind the other chunks. A
  *   half that fails the same way is dropped with a report line, never the end of the import;
- * - output that fails the schema fails the chunk's units, which go to the retry round.
+ * - output that fails the schema fails the chunk's units, which go to the retry round;
+ * - an answer that names none of its units, for a lane that says so (`isSilent`), is asked again once,
+ *   split like an overflow; a second silent answer is believed.
  *
  * Only the import's own signal ends the import: Stop, a disconnect, or the route's deadline. Each call's
  * timeout is sized to what is left before that deadline, less the assembly reserve, so the calls left
@@ -52,7 +54,7 @@ export const importCallCapFor = (chunks: number): number => 3 * chunks + 2;
 /**
  * Output tokens one import may spend, reasoning and failed calls included: every chunk's whole call
  * budget twice (an overflow, then its halves or its retry), and two more calls for the retry round —
- * `(2 × chunks + 2) × 8,192`. Checked before each call, so at most the calls already in flight run
+ * `(2 × chunks + 2) × SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL`. Checked before each call, so at most the calls already in flight run
  * past it.
  */
 export const importOutputBudgetFor = (chunks: number): number =>
@@ -72,10 +74,11 @@ export interface TImportPlanRequest<TSchema extends z.ZodType = z.ZodType> {
   /** Always 0: the import retries its calls itself (`call-retry.ts`), the SDK must not. */
   maxRetries: 0;
   /**
-   * Always on: a plan is extraction, not reasoning, and a thinking model's thoughts count against the
-   * call's output tokens and spend its time — on Gemini, enough to time out or overflow most chunks.
+   * Always false, so the model thinks: with thinking turned down, Gemini 2.5 Flash answered real
+   * questionnaires (a bilingual table, a numbered Markdown list, a CSV) with an empty plan. Thinking costs output tokens and time,
+   * which the per-call cap and the deadline leave room for; an import that works is worth both.
    */
-  lowReasoning: true;
+  lowReasoning: false;
   abortSignal: AbortSignal;
 }
 
@@ -154,6 +157,15 @@ export interface TImportPlanLane<TFailure extends string, TPlan extends TImportC
    * may still drop some, so a lane sets `max` with a margin above its exact ceiling.
    */
   questionCeiling?: { max: number; questionRefs: (response: TImportPlanResponse) => readonly string[] };
+  /**
+   * Whether an answer names none of the units it was asked about, for a lane whose checks let such an
+   * answer pass (a document's: a chunk can hold only the rest of a question). A thinking model
+   * sometimes answers a chunk full of questions that way, so such an answer is asked again once, in
+   * halves, before it is believed.
+   */
+  isSilent?: (response: TImportPlanResponse) => boolean;
+  /** Calls in flight at once; `SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS` when not set. */
+  maxParallelCalls?: number;
 }
 
 export interface TImportPlanRun<TPlan> {
@@ -167,6 +179,11 @@ export interface TImportPlanRun<TPlan> {
    * it: a plan that came out empty after such a failure might not on another try.
    */
   failedOnTheWay: boolean;
+  /**
+   * Whether a call came back too long for one answer, or its prompt was too big to send, even split:
+   * a plan that came out empty after that is a file too large for the AI, not one to try again.
+   */
+  hitOutputLimit: boolean;
 }
 
 interface TPlanContext<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>> {
@@ -185,6 +202,7 @@ interface TPlanContext<TFailure extends string, TPlan extends TImportCheckedPlan
   usage: TImportPlanUsage;
   calls: number;
   ranOutOfTime: boolean;
+  hitOutputLimit: boolean;
   /** Units an answer started a question on, across both rounds: a retried unit counts once. */
   questionRefs: Set<string>;
 }
@@ -357,13 +375,13 @@ async function attemptCall<TFailure extends string, TPlan extends TImportChecked
       maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
       timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
       maxRetries: 0,
-      lowReasoning: true,
+      lowReasoning: false,
       abortSignal: context.signal,
     });
     addUsage(context, result.usage);
     return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
   } catch (error) {
-    // A call that failed still spent tokens — one that ran out of them spent all 8,192.
+    // A call that failed still spent tokens — one that ran out of them spent its whole budget.
     addUsage(context, usageOfFailure(error));
     // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
     // route's to classify. Any other abort is this attempt's own timeout.
@@ -430,9 +448,9 @@ const FAILURE_OF_OUTCOME: Record<Exclude<TCallOutcome["kind"], "ok">, TImportCal
 };
 
 /**
- * One round of calls: every chunk asked, at most `SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS` at once. A
- * chunk whose call ran out of output tokens or of time is split into halves once, queued behind the
- * rest; its halves are not split again.
+ * One round of calls: every chunk asked, at most the lane's `maxParallelCalls` at once. A
+ * chunk whose call ran out of output tokens or of time, or whose answer was silent (`isSilent`), is
+ * split into halves once, queued behind the rest; its halves are not split again.
  */
 async function planRound<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
   context: TPlanContext<TFailure, TPlan>,
@@ -449,11 +467,21 @@ async function planRound<TFailure extends string, TPlan extends TImportCheckedPl
     async (enqueue) => {
       // Sized when the call starts: a split's halves run later than the chunk did.
       const outcome = await callOnce(context, refs, timeout(), failures);
+      if (outcome.kind === "ok" && splittable && context.lane.isSilent?.(outcome.response)) {
+        // Not believed yet: asked again, in halves, which are believed whatever they say.
+        const middle = Math.ceil(refs.length / 2);
+        if (refs.length > 1) {
+          enqueue(ask(refs.slice(0, middle), false));
+          enqueue(ask(refs.slice(middle), false));
+        } else enqueue(ask(refs, false));
+        return;
+      }
       if (outcome.kind === "ok") {
         responses.push(outcome.response);
         countQuestions(context, outcome.response);
         return;
       }
+      if (outcome.kind === "too_long") context.hitOutputLimit = true;
       if ((outcome.kind === "too_long" || outcome.kind === "timed_out") && splittable && refs.length > 1) {
         const middle = Math.ceil(refs.length / 2);
         enqueue(ask(refs.slice(0, middle), false));
@@ -465,7 +493,7 @@ async function planRound<TFailure extends string, TPlan extends TImportCheckedPl
 
   await runPool(
     chunks.map((chunk) => ask(chunk, true)),
-    SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
+    context.lane.maxParallelCalls ?? SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
     abort
   );
 
@@ -504,6 +532,7 @@ export async function runImportPlan<
     usage: { inputTokens: 0, outputTokens: 0 },
     calls: 0,
     ranOutOfTime: false,
+    hitOutputLimit: false,
     questionRefs: new Set(),
   };
 
@@ -532,6 +561,7 @@ export async function runImportPlan<
     calls: context.calls,
     ranOutOfTime: context.ranOutOfTime,
     failedOnTheWay,
+    hitOutputLimit: context.hitOutputLimit,
   };
 }
 

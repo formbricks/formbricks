@@ -59,7 +59,7 @@ describe("checkQuestionRoles", () => {
     ]);
   });
 
-  test.each(["pictureSelection", "cal", "address", "consent2", ""])("refuses the type %j", (type) => {
+  test.each(["pictureSelection", "cal", "consent2", ""])("refuses the type %j", (type) => {
     expect(failureOf(checkQuestionRoles(question(simple, "QID1"), entry("QID1", type)))).toEqual([
       "type_not_allowed",
     ]);
@@ -118,7 +118,6 @@ describe("checkQuestionRoles", () => {
       entry("QID1", "multipleChoiceSingle", { choicesFrom: "choices", excludedKeys: ["c1", "c2"] }),
       "too_few_options",
     ],
-    ["a rating without a scale", "QID2", entry("QID2", "rating", { range: "5" }), "missing_scale"],
     [
       "a rating range Formbricks has no scale for",
       "QID2",
@@ -148,6 +147,18 @@ describe("checkQuestionRoles", () => {
         checkQuestionRoles(matrix, entry("QID1", "matrix", { rowsFrom: "choices", columnsFrom: "choices" }))
       )
     ).toEqual(["missing_role"]);
+  });
+
+  test("settles a matrix's other list from the one the AI named", () => {
+    const matrix = question(advanced, "QID1");
+    const rowsOnly = checkQuestionRoles(matrix, entry("QID1", "matrix", { rowsFrom: "choices" }));
+    const both = checkQuestionRoles(
+      matrix,
+      entry("QID1", "matrix", { rowsFrom: "choices", columnsFrom: "answers" })
+    );
+
+    expect(rowsOnly.ok && both.ok && rowsOnly.question.columns).toEqual(both.ok && both.question.columns);
+    expect(failureOf(checkQuestionRoles(matrix, entry("QID1", "matrix")))).toEqual(["missing_role"]);
   });
 
   test("caps a ranking at 25 options", () => {
@@ -183,6 +194,32 @@ describe("checkQuestionRoles", () => {
               { field: "firstName", key: "c12" },
             ],
           })
+        )
+      )
+    ).toEqual(["missing_role"]);
+  });
+
+  test("takes a rating with no scale as a number scale, and a range left out from its choices", () => {
+    // QID2 has eleven choices, which only a CSAT's fixed five can stand in for.
+    const csat = checkQuestionRoles(question(simple, "QID2"), entry("QID2", "csat", { scale: "number" }));
+    const noScale = checkQuestionRoles(question(simple, "QID2"), entry("QID2", "rating", { range: "5" }));
+
+    expect(csat.ok && csat.question.range).toBe(5);
+    expect(noScale.ok).toBe(true);
+  });
+
+  test("checks an address form's fields are address fields", () => {
+    const form = question(advanced, "QID8");
+
+    expect(
+      checkQuestionRoles(form, entry("QID8", "address", { contactFields: [{ field: "city", key: "c11" }] }))
+        .ok
+    ).toBe(true);
+    expect(
+      failureOf(
+        checkQuestionRoles(
+          form,
+          entry("QID8", "address", { contactFields: [{ field: "email", key: "c11" }] })
         )
       )
     ).toEqual(["missing_role"]);

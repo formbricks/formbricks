@@ -15,8 +15,10 @@ import {
 } from "../limits";
 import type { TDocumentModel } from "./model";
 import {
+  DOCUMENT_PLAN_FORM_FIELDS,
   DOCUMENT_PLAN_KINDS,
   type TDocumentPlanEntry,
+  type TDocumentPlanFormField,
   type TDocumentPlanKind,
   type TDocumentPlanOption,
   type TDocumentPlanPiece,
@@ -47,6 +49,9 @@ const CHOICE_KINDS: ReadonlySet<TDocumentPlanKind> = new Set([
   "ranking",
 ]);
 const LABEL_KINDS: ReadonlySet<TDocumentPlanKind> = new Set(["rating", "csat", "ces", "nps"]);
+/** The form kinds, whose options are the fields the file lists, each naming one of the kind's fields. */
+const isFormKind = (kind: TDocumentPlanKind): kind is keyof typeof DOCUMENT_PLAN_FORM_FIELDS =>
+  kind === "address" || kind === "contactInfo";
 
 export type TDocumentPlanFailure =
   | TImportCallFailure
@@ -63,7 +68,9 @@ export type TDocumentPlanFailure =
   | "role_not_for_type"
   | "too_few_options"
   | "too_many_options"
-  | "invalid_range";
+  | "invalid_range"
+  | "invalid_field"
+  | "silent_answer";
 
 /** A text the file holds, in each of its languages, as the cells hold it (whitespace collapsed). */
 export type TDocumentText = ReadonlyMap<string, string>;
@@ -73,6 +80,8 @@ export interface TDocumentPlannedOption {
   code: string | null;
   isOther: boolean;
   text: TDocumentText;
+  /** The field an address or contact form's option is; `null` on any other kind. */
+  field: TDocumentPlanFormField | null;
 }
 
 export interface TDocumentPlannedEntry {
@@ -157,6 +166,25 @@ export class DocumentPlanContext {
     return this.cellLine.get(key);
   }
 
+  /**
+   * The stored code a piece's language names: as the settling answer spelled it, or as another answer
+   * spells the same language — calls are independent, and one says `en` where the first said `en-US`.
+   * A bare language matches the one settled code of that language. `null` for a language the file was
+   * not settled to hold.
+   */
+  codeOf(raw: string): string | null {
+    const languages = this.languages;
+    if (!languages) return null;
+    const trimmed = raw.trim();
+    const known = languages.byPlanCode.get(trimmed);
+    if (known) return known;
+    const normalized = normalizeImportLanguageCode(trimmed);
+    if (normalized && languages.codes.includes(normalized)) return normalized;
+    const primary = (code: string) => code.split(/[-_]/u)[0].toLowerCase();
+    const sameLanguage = languages.codes.filter((code) => primary(code) === primary(trimmed));
+    return sameLanguage.length === 1 ? sameLanguage[0] : null;
+  }
+
   /** Settle the file's languages from the first usable answer. */
   settleLanguages(defaultLanguage: string, languages: readonly string[]): boolean {
     if (this.languages) return true;
@@ -183,7 +211,8 @@ type TFail = (reason: TDocumentPlanFailure) => void;
  */
 const hasDefaultPiece = (context: DocumentPlanContext, pieces: readonly TDocumentPlanPiece[]): boolean =>
   pieces.some(
-    (piece) => context.languages?.byPlanCode.get(piece.language.trim()) === context.languages?.defaultLanguage
+    (piece) =>
+      context.languages !== null && context.codeOf(piece.language) === context.languages.defaultLanguage
   );
 
 /** The piece's text, found in its cell word for word, as the cell holds it; `null` when it is not there. */
@@ -208,10 +237,9 @@ function readText(
   fail: TFail
 ): TDocumentText | null {
   if (pieces.length === 0) return null;
-  const languages = context.languages;
   const text = new Map<string, string>();
   for (const piece of pieces) {
-    const code = languages?.byPlanCode.get(piece.language.trim()) ?? null;
+    const code = context.codeOf(piece.language);
     if (code === null) {
       fail("unknown_language");
       continue;
@@ -268,12 +296,12 @@ const readOptions = (
       option.texts.some((piece) =>
         collapseWhitespace(context.model.cells.get(piece.cell) ?? "").includes(code)
       );
-    return { code: hasCode ? code : null, isOther: option.isOther, text };
+    return { code: hasCode ? code : null, isOther: option.isOther, text, field: option.field };
   });
 
 /** Whether the entry uses a role its kind has no place for: options, columns, labels, an "Other". */
 const usesRoleNotForKind = (kind: TDocumentPlanKind, entry: TDocumentPlanEntry): boolean => {
-  const usesOptions = CHOICE_KINDS.has(kind) || kind === "matrix";
+  const usesOptions = CHOICE_KINDS.has(kind) || kind === "matrix" || isFormKind(kind);
   const takesOther = kind === "multipleChoiceSingle" || kind === "multipleChoiceMulti";
   return (
     (!usesOptions && entry.options.length > 0) ||
@@ -286,6 +314,7 @@ const usesRoleNotForKind = (kind: TDocumentPlanKind, entry: TDocumentPlanEntry):
 /** Whether the entry has fewer options, or rows and columns, than its kind needs. */
 const hasTooFewOptions = (kind: TDocumentPlanKind, entry: TDocumentPlanEntry): boolean =>
   (CHOICE_KINDS.has(kind) && entry.options.length < 2) ||
+  (isFormKind(kind) && entry.options.length < 1) ||
   (kind === "matrix" && (entry.options.length < 1 || entry.columns.length < 2));
 
 /** The kind's own rules on its options, ranges and labels. */
@@ -294,9 +323,21 @@ function checkShape(kind: TDocumentPlanKind, entry: TDocumentPlanEntry, fail: TF
   if (hasTooFewOptions(kind, entry)) fail("too_few_options");
   if (kind === "ranking" && entry.options.length > SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS)
     fail("too_many_options");
+  if (isFormKind(kind)) {
+    // Each option a field of the form's own, named once: a field shows one label.
+    const allowed: ReadonlySet<string> = new Set(DOCUMENT_PLAN_FORM_FIELDS[kind]);
+    const fields = entry.options.map((option) => option.field);
+    if (
+      fields.some((field) => field === null || !allowed.has(field)) ||
+      new Set(fields).size !== fields.length
+    )
+      fail("invalid_field");
+  }
 
   if (kind === "rating" || kind === "csat" || kind === "ces") {
-    const range = entry.range === null ? null : Number(entry.range);
+    // A scale whose points the file does not give is the editor's default five, which every one of
+    // these kinds takes: a thinking model left the range out of a CES on the retry, failing it twice.
+    const range = entry.range === null ? 5 : Number(entry.range);
     if (!isImportPlanRange(kind, range)) fail("invalid_range");
     return range;
   }
@@ -313,7 +354,7 @@ const wholeCellHeadline = (
   const cells = new Set<string>();
   let defaultCell: string | null = null;
   for (const piece of entry.headline) {
-    const code = context.languages?.byPlanCode.get(piece.language.trim());
+    const code = context.codeOf(piece.language);
     const text = context.model.cells.get(piece.cell);
     // Only the entry's own lines, as every other piece is read: a cell elsewhere is another entry's.
     const line = context.cellLineAt(piece.cell);
@@ -472,6 +513,10 @@ function judgeResponse(
   if (entries.size === 0 && skips.size === 0) {
     plan.silentResponses += 1;
     for (const ref of refs) plan.silentRefs.add(ref);
+    // A thinking model sometimes plans a chunk in its thoughts and returns an empty answer: its lines
+    // are asked once more, and still silent then, they count as unread (`isUnreadLine`).
+    // A line an entry named but the schema refused already has its failure.
+    if (!round.retry) for (const ref of refs) if (!plan.failures.has(ref)) addFailure(ref, "silent_answer");
   }
 
   // A line that is no entry's start — a header, a continuation, a comment — is not a failure: the AI
@@ -501,11 +546,12 @@ const judgeEntry = (
 };
 
 /**
- * Failures that say nothing about the line itself: the whole call's answer could not be read, or its
+ * Failures that say nothing about the line itself: the whole call's answer could not be read, named none of its lines, or its
  * languages could not be. Every line the call was asked about gets one, questions and notes alike.
  */
 const CALL_FAILURES: ReadonlySet<string> = new Set([
   "invalid_output",
+  "silent_answer",
   "invalid_languages",
   "ai_budget",
   "ai_timeout",
