@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
   AI_TRANSLATION_FIELDS_PER_BATCH,
+  AI_TRANSLATION_MAX_FIELD_CHARS,
   AI_TRANSLATION_SOURCE_CHARS_PER_BATCH,
   createTranslationActionBatches,
   createTranslationBatches,
+  partitionTranslationFieldsByLength,
 } from "./translation-batches";
 
 const field = (index: number, length: number) => ({
@@ -13,6 +15,15 @@ const field = (index: number, length: number) => ({
 });
 
 describe("createTranslationBatches", () => {
+  test("skips an oversized field while retaining eligible fields in order", () => {
+    const fields = [field(0, 10), field(1, AI_TRANSLATION_MAX_FIELD_CHARS + 1), field(2, 10)];
+    const { eligible, skipped } = partitionTranslationFieldsByLength(fields);
+
+    expect(eligible).toEqual([fields[0], fields[2]]);
+    expect(skipped).toEqual([fields[1]]);
+    expect(createTranslationActionBatches(eligible).flat()).toEqual([fields[0], fields[2]]);
+  });
+
   test("splits a 228-field survey while preserving every field in order", () => {
     const fields = Array.from({ length: 228 }, (_, index) => field(index, 100));
     const batches = createTranslationBatches(fields);

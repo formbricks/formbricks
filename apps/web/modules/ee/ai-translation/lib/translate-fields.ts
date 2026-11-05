@@ -9,8 +9,10 @@ import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import {
   AI_TRANSLATION_FIELD_TOO_LONG,
+  AI_TRANSLATION_MAX_FIELDS_PER_ACTION,
   AI_TRANSLATION_MAX_FIELD_CHARS,
   AI_TRANSLATION_MODEL_BATCHES_PER_ACTION,
+  AI_TRANSLATION_TOO_MANY_FIELDS,
   createTranslationBatches,
 } from "./translation-batches";
 
@@ -23,6 +25,7 @@ export const ZAITranslationField = z.object({
 export const ZAITranslationFields = z
   .array(ZAITranslationField)
   .min(1)
+  .max(AI_TRANSLATION_MAX_FIELDS_PER_ACTION, { message: AI_TRANSLATION_TOO_MANY_FIELDS })
   .refine((fields) => fields.every((field) => field.defaultText.length <= AI_TRANSLATION_MAX_FIELD_CHARS), {
     message: AI_TRANSLATION_FIELD_TOO_LONG,
   });

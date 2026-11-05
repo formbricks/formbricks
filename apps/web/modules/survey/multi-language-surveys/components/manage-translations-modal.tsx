@@ -14,8 +14,8 @@ import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/act
 import {
   AI_TRANSLATION_ACTIONS_PER_RUN,
   AI_TRANSLATION_FIELD_TOO_LONG,
-  AI_TRANSLATION_MAX_FIELD_CHARS,
   createTranslationActionBatches,
+  partitionTranslationFieldsByLength,
 } from "@/modules/ee/ai-translation/lib/translation-batches";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -57,6 +57,32 @@ interface ManageTranslationsModalProps {
   readonly isAIAvailable: boolean;
   readonly aiUnavailableReason?: TAIUnavailableReason;
 }
+
+type TranslationFunction = ReturnType<typeof useTranslation>["t"];
+
+const showTranslationRunResult = (
+  t: TranslationFunction,
+  toastId: string,
+  failedMessage: string | undefined,
+  hasOversizedFields: boolean,
+  hasRemainingBatches: boolean
+) => {
+  if (failedMessage) {
+    toast.error(failedMessage, { id: toastId });
+    return;
+  }
+
+  const messages = [
+    hasOversizedFields ? t("workspace.surveys.edit.ai_translation_field_too_long") : undefined,
+    hasRemainingBatches ? t("workspace.surveys.edit.ai_translation_run_limit_reached") : undefined,
+  ].filter((message): message is string => Boolean(message));
+  if (messages.length > 0) {
+    toast.error(messages.join(" "), { id: toastId });
+    return;
+  }
+
+  toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
+};
 
 export const ManageTranslationsModal = ({
   open,
@@ -182,18 +208,20 @@ export const ManageTranslationsModal = ({
   const handleTranslateWithAI = async () => {
     if (emptyFields.length === 0) return;
 
-    if (emptyFields.some((field) => (field.value.default || "").length > AI_TRANSLATION_MAX_FIELD_CHARS)) {
+    const { eligible, skipped } = partitionTranslationFieldsByLength(
+      emptyFields.map((field) => ({
+        path: field.path,
+        defaultText: field.value.default || "",
+        isRichText: field.isRichText,
+      }))
+    );
+    const hasOversizedFields = skipped.length > 0;
+    if (eligible.length === 0) {
       toast.error(t("workspace.surveys.edit.ai_translation_field_too_long"));
       return;
     }
 
-    const batches = createTranslationActionBatches(
-      emptyFields.map((s) => ({
-        path: s.path,
-        defaultText: s.value.default || "",
-        isRichText: s.isRichText,
-      }))
-    );
+    const batches = createTranslationActionBatches(eligible);
     const selectedBatches = batches.slice(0, AI_TRANSLATION_ACTIONS_PER_RUN);
     const paths = new Set(selectedBatches.flatMap((batch) => batch.map((field) => field.path)));
     const runId = ++translationRunId.current;
@@ -227,13 +255,13 @@ export const ManageTranslationsModal = ({
       }
       if (runId !== translationRunId.current) return;
 
-      if (failedMessage || batches.length > selectedBatches.length) {
-        toast.error(failedMessage ?? t("workspace.surveys.edit.ai_translation_run_limit_reached"), {
-          id: toastId,
-        });
-      } else {
-        toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
-      }
+      showTranslationRunResult(
+        t,
+        toastId,
+        failedMessage,
+        hasOversizedFields,
+        batches.length > selectedBatches.length
+      );
     } catch {
       if (runId === translationRunId.current) {
         toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });

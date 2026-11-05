@@ -11,8 +11,10 @@ import {
 } from "./translate-fields";
 import {
   AI_TRANSLATION_FIELD_TOO_LONG,
+  AI_TRANSLATION_MAX_FIELDS_PER_ACTION,
   AI_TRANSLATION_MAX_FIELD_CHARS,
   AI_TRANSLATION_SOURCE_CHARS_PER_BATCH,
+  AI_TRANSLATION_TOO_MANY_FIELDS,
 } from "./translation-batches";
 
 const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
@@ -91,6 +93,26 @@ describe("translation action field limit", () => {
       expect(result.error.issues[0]).toMatchObject({
         path: [],
         message: AI_TRANSLATION_FIELD_TOO_LONG,
+      });
+    }
+  });
+
+  test("rejects a direct action call above the field-count limit", () => {
+    const fields = Array.from({ length: AI_TRANSLATION_MAX_FIELDS_PER_ACTION + 1 }, (_, index) => ({
+      path: `field-${index}`,
+      defaultText: "",
+      isRichText: false,
+    }));
+
+    expect(
+      ZAITranslationFields.safeParse(fields.slice(0, AI_TRANSLATION_MAX_FIELDS_PER_ACTION)).success
+    ).toBe(true);
+    const result = ZAITranslationFields.safeParse(fields);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]).toMatchObject({
+        path: [],
+        message: AI_TRANSLATION_TOO_MANY_FIELDS,
       });
     }
   });
