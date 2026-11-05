@@ -153,6 +153,12 @@ describe("openSurveyImportUpload: a file read in a thread of its own", () => {
     expect(refusal).toEqual(await refusalOf(() => openSurveyImportUploadInProcess(bytes())));
   });
 
+  test("carries where a JSON file stops parsing back from the worker", async () => {
+    const refusal = await refusalOf(() => open(encode('{"SurveyEntry": ')));
+
+    expect(refusal).toMatchObject({ kind: "input", details: { line: 1, column: 17 } });
+  });
+
   test("refuses a file its lane cannot read when it reads it, with the lane's problem code", async () => {
     const bytes = () => encode(JSON.stringify(formbricksFile(2)));
     const upload = await open(bytes());

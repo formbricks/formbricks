@@ -15,7 +15,8 @@ import type {
 /** One problem with a refused file, coded for the dialog (see `TSurveyImportRefusalCode`). */
 export type TSurveyImportInvalidParam = InvalidParam &
   (
-    | { code: "file_unreadable" | "qsf_not_recognized" }
+    | { code: "file_unreadable"; identifier?: "json_syntax" }
+    | { code: "qsf_not_recognized" }
     | { code: "file_type_unsupported"; identifier?: TSurveyImportUnsupportedFile }
     | { code: "file_limit_exceeded"; identifier: TSurveyImportFileLimit }
     | { code: "qsf_limit_exceeded"; identifier: TSurveyImportLimit }
@@ -68,17 +69,27 @@ export class SurveyImportInputError extends Error {
    * whose params are the file's fields rather than a refusal code.
    */
   readonly problemCode?: TSurveyImportProblemCode;
+  /** The problem's `details`: where a JSON file stops parsing (`surveyImportJsonSyntaxError`). */
+  readonly details?: TSurveyImportJsonPosition;
 
   constructor(
     invalidParams: (TSurveyImportInvalidParam | InvalidParam)[],
     message: string,
-    problemCode?: TSurveyImportProblemCode
+    problemCode?: TSurveyImportProblemCode,
+    details?: TSurveyImportJsonPosition
   ) {
     super(message);
     this.name = "SurveyImportInputError";
     this.invalidParams = invalidParams;
     this.problemCode = problemCode;
+    this.details = details;
   }
+}
+
+/** Where a JSON file stops parsing, 1-based. */
+export interface TSurveyImportJsonPosition {
+  line: number;
+  column: number;
 }
 
 /**
@@ -138,6 +149,30 @@ export const surveyImportFileUnreadable = (reason: string): SurveyImportInputErr
   );
 
 /**
+ * A JSON file that does not parse (`file_unreadable`, identifier `json_syntax`): most often one edited
+ * by hand or by an AI, whose edits a fixed line and column let the user keep. The position travels as
+ * the problem's `details`; the reason holds the numbers alone, never text from the file.
+ */
+export const surveyImportJsonSyntaxError = (
+  position: TSurveyImportJsonPosition | null
+): SurveyImportInputError =>
+  new SurveyImportInputError(
+    [
+      {
+        name: "file",
+        reason: position
+          ? `The file is not valid JSON (line ${position.line}, column ${position.column})`
+          : "The file is not valid JSON",
+        code: "file_unreadable",
+        identifier: "json_syntax",
+      },
+    ],
+    "The file is not valid JSON.",
+    undefined,
+    position ?? undefined
+  );
+
+/**
  * A refusal on its way out of the upload's worker thread (`upload-thread.ts`). A structured clone keeps
  * an error's message but not its class, so the class travels as `kind` and is built again on this side.
  */
@@ -148,6 +183,7 @@ export type TSurveyImportRefusal =
       message: string;
       invalidParams: (TSurveyImportInvalidParam | InvalidParam)[];
       problemCode?: TSurveyImportProblemCode;
+      details?: TSurveyImportJsonPosition;
     };
 
 /** `error` as a refusal that can be posted to another thread, or `null` for an error that is none. */
@@ -164,6 +200,7 @@ export const toSurveyImportRefusal = (error: unknown): TSurveyImportRefusal | nu
       message: error.message,
       invalidParams: error.invalidParams,
       ...(error.problemCode ? { problemCode: error.problemCode } : {}),
+      ...(error.details ? { details: error.details } : {}),
     };
   }
   return null;
@@ -172,7 +209,12 @@ export const toSurveyImportRefusal = (error: unknown): TSurveyImportRefusal | nu
 /** The error a posted refusal was, built again so `toRefusalResponse` answers it as it would have. */
 export const fromSurveyImportRefusal = (refusal: TSurveyImportRefusal): Error => {
   if (refusal.kind === "input") {
-    return new SurveyImportInputError(refusal.invalidParams, refusal.message, refusal.problemCode);
+    return new SurveyImportInputError(
+      refusal.invalidParams,
+      refusal.message,
+      refusal.problemCode,
+      refusal.details
+    );
   }
   // Each of the other two carries the one param its constructor makes from these.
   const [param] = refusal.invalidParams;
@@ -213,6 +255,7 @@ export const toRefusalResponse = (error: unknown, requestId: string, instance: s
       instance,
       invalid_params: error.invalidParams,
       ...(error.problemCode ? { code: error.problemCode } : {}),
+      ...(error.details ? { details: { ...error.details } } : {}),
     });
   }
   return null;

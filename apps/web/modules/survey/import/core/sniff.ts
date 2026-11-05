@@ -8,7 +8,9 @@ import type { TSurveyImportFileLimit } from "../types";
 import {
   SurveyImportInputError,
   SurveyImportUnsupportedFileError,
+  type TSurveyImportJsonPosition,
   surveyImportFileUnreadable,
+  surveyImportJsonSyntaxError,
 } from "./errors";
 import { type TZipArchive, openZipArchive } from "./zip";
 
@@ -79,6 +81,28 @@ const refuseOverBudget = (violation: TArrayBudgetViolation): SurveyImportInputEr
 };
 
 /**
+ * Where `JSON.parse` stopped reading `text`, as a 1-based line and column, or `null` when its error does
+ * not say. V8 names the character offset (`… in JSON at position 1234`); an input that ends too soon
+ * stops at its end. Only the offset is read from the message, which can quote the file.
+ */
+export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJsonPosition | null => {
+  const message = error instanceof Error ? error.message : "";
+  const offset = /\bposition (\d+)\b/.exec(message);
+  let index: number;
+  if (offset) index = Math.min(Number(offset[1]), text.length);
+  else if (message.includes("end of JSON input")) index = text.length;
+  else return null;
+
+  let line = 1;
+  let lineStart = 0;
+  for (let i = text.indexOf("\n"); i !== -1 && i < index; i = text.indexOf("\n", i + 1)) {
+    line += 1;
+    lineStart = i + 1;
+  }
+  return { line, column: index - lineStart + 1 };
+};
+
+/**
  * A JSON file, held to the v3 request budget on its raw text before it is parsed — parsing is where a
  * hostile file costs memory: 15 MiB of `[[[…]]]` is ~470 MB of arrays (ENG-3653) — and again on the
  * parsed value, which drops a repeated key's earlier values. Then told apart by its shape: a Formbricks
@@ -92,8 +116,8 @@ const sniffJson = (text: string): TSurveyImportFile => {
   let json: unknown;
   try {
     json = JSON.parse(text);
-  } catch {
-    throw surveyImportFileUnreadable("The file is not valid JSON");
+  } catch (error) {
+    throw surveyImportJsonSyntaxError(jsonErrorPosition(text, error));
   }
 
   const violation = findArrayBudgetViolation(json);

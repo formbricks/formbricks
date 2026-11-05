@@ -94,6 +94,34 @@ describe("getSurveyImportRequestErrorCode", () => {
     expect(getSurveyImportRequestErrorCode(error)).toBe("qsf_limit_exceeded:questions");
   });
 
+  test("says where a JSON file stops parsing, from the refusal's details", () => {
+    const error = new V3ApiError({
+      status: 422,
+      detail: "refused",
+      code: "unprocessable_content",
+      invalid_params: [{ name: "file", reason: "bad", code: "file_unreadable", identifier: "json_syntax" }],
+      details: { line: 40, column: 3 },
+    });
+
+    expect(getSurveyImportRequestErrorCode(error)).toBe("json_invalid:40:3");
+  });
+
+  test.each([
+    ["no details", undefined],
+    ["a line that is no line", { line: 0, column: 3 }],
+    ["a column that is no number", { line: 4, column: "3" }],
+  ])("a JSON file that does not parse, with %s, is still not an unreadable one", (_case, details) => {
+    const error = new V3ApiError({
+      status: 422,
+      detail: "refused",
+      code: "unprocessable_content",
+      invalid_params: [{ name: "file", reason: "bad", code: "file_unreadable", identifier: "json_syntax" }],
+      details,
+    });
+
+    expect(getSurveyImportRequestErrorCode(error)).toBe("json_invalid");
+  });
+
   test.each([
     "rows",
     "columns",
@@ -107,6 +135,17 @@ describe("getSurveyImportRequestErrorCode", () => {
   ])("names the limit a question list is past (%s)", (limit) => {
     expect(getSurveyImportRequestErrorCode(fileRefusal(422, "document_limit_exceeded", limit))).toBe(
       `document_limit_exceeded:${limit}`
+    );
+  });
+});
+
+describe("getSurveyImportErrorMessage for a JSON file that does not parse", () => {
+  test("names the line and column, rather than asking for a new export that would lose the edits", () => {
+    expect(getSurveyImportErrorMessage("json_invalid:40:3", t)).toBe(
+      'workspace.surveys.import.errors.invalid_json_at {"line":40,"column":3}'
+    );
+    expect(getSurveyImportErrorMessage("json_invalid", t)).toBe(
+      "workspace.surveys.import.errors.invalid_json"
     );
   });
 });

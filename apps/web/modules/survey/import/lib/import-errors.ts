@@ -44,6 +44,34 @@ const getImportLimitMessage = (limit: string, t: TTranslate): string => {
 /** The dialog's code for a document past one of the import's limits: this prefix, then the limit. */
 export const SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX = "document_limit_exceeded:";
 
+/**
+ * The dialog's code for a JSON file that does not parse: this, then `:line:column` when the route said
+ * where it stops (the problem's `details`).
+ */
+export const SURVEY_IMPORT_JSON_INVALID_CODE = "json_invalid";
+
+const isPositiveInteger = (value: unknown): value is number =>
+  Number.isSafeInteger(value) && Number(value) > 0;
+
+/** `json_invalid:3:26` from the refusal's `details`, or `json_invalid` when they say nothing usable. */
+const jsonInvalidCode = (details: unknown): string => {
+  const { line, column } = (details ?? {}) as { line?: unknown; column?: unknown };
+  return isPositiveInteger(line) && isPositiveInteger(column)
+    ? `${SURVEY_IMPORT_JSON_INVALID_CODE}:${line}:${column}`
+    : SURVEY_IMPORT_JSON_INVALID_CODE;
+};
+
+/** The sentence for `json_invalid[:line:column]`. */
+const getJsonInvalidMessage = (code: string, t: TTranslate): string => {
+  const [line, column] = code
+    .slice(SURVEY_IMPORT_JSON_INVALID_CODE.length + 1)
+    .split(":")
+    .map(Number);
+  return isPositiveInteger(line) && isPositiveInteger(column)
+    ? t("workspace.surveys.import.errors.invalid_json_at", { line, column })
+    : t("workspace.surveys.import.errors.invalid_json");
+};
+
 /** Which limit a document is past (`TSurveyImportDocumentLimit`); an unknown one generically. */
 const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
   switch (limit) {
@@ -141,6 +169,9 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
       // A file past the JSON budget is too complex; a broken one unreadable. A Qualtrics export past
       // one of the import's limits names the limit, and one the reader does not recognise says so.
       if (hasParam("file_limit_exceeded")) return "file_too_complex";
+      // A JSON file that does not parse was most likely edited, so it says where, rather than "export
+      // it again", which would throw the edits away.
+      if (hasParamIdentifier(error, "json_syntax")) return jsonInvalidCode(error.details);
       if (hasParam("file_unreadable")) return "file_unreadable";
       // A question list past the sheet's limits, or the AI's, names the limit.
       const documentLimit = error.invalid_params?.find(
@@ -173,6 +204,9 @@ export const getSurveyImportErrorMessage = (
   }
   if (code.startsWith(SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX)) {
     return getDocumentLimitMessage(code.slice(SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX.length), t);
+  }
+  if (code === SURVEY_IMPORT_JSON_INVALID_CODE || code.startsWith(`${SURVEY_IMPORT_JSON_INVALID_CODE}:`)) {
+    return getJsonInvalidMessage(code, t);
   }
 
   switch (code) {

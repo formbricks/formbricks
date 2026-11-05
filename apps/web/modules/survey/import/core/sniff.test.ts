@@ -15,7 +15,7 @@ import {
   SurveyImportInputError,
   SurveyImportUnsupportedFileError,
 } from "./errors";
-import { sniffSurveyImportFile } from "./sniff";
+import { jsonErrorPosition, sniffSurveyImportFile } from "./sniff";
 
 const QSF_FIXTURE = join(dirname(fileURLToPath(import.meta.url)), "../qsf/__fixtures__/simple.qsf");
 const DOCUMENT_FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "../document/__fixtures__");
@@ -171,6 +171,53 @@ describe("sniffSurveyImportFile: the type comes from the content", () => {
 
     const error = refusal(() => sniffSurveyImportFile(zipOf(entries)));
     expect(error).toBeInstanceOf(SurveyImportFileTooLargeError);
+  });
+});
+
+describe("sniffSurveyImportFile: a JSON file that does not parse", () => {
+  const syntaxRefusal = (text: string) => {
+    const error = refusal(() => sniffSurveyImportFile(encode(text)));
+    expect(error).toBeInstanceOf(SurveyImportInputError);
+    return error as SurveyImportInputError;
+  };
+
+  test("says where it stops, as a line and column, so an edited file can be fixed rather than exported again", () => {
+    // A trailing comma on line 3, the kind a hand or an AI edit leaves.
+    const error = syntaxRefusal('{\n  "formbricks": {},\n  "survey": {"name": "A",}\n}');
+
+    expect(error.invalidParams).toEqual([
+      {
+        name: "file",
+        code: "file_unreadable",
+        identifier: "json_syntax",
+        reason: "The file is not valid JSON (line 3, column 26)",
+      },
+    ]);
+    expect(error.details).toEqual({ line: 3, column: 26 });
+  });
+
+  test("a file that ends too soon stops at its end", () => {
+    expect(syntaxRefusal('{"formbricks": {\n  "version": 1').details).toEqual({ line: 2, column: 15 });
+  });
+
+  test("never quotes the file: the reason holds the position alone", () => {
+    const error = syntaxRefusal('{"formbricks": {"secret": tru}}');
+
+    expect(error.invalidParams[0]).toMatchObject({ code: "file_unreadable", identifier: "json_syntax" });
+    expect(JSON.stringify(error.invalidParams)).not.toContain("secret");
+  });
+});
+
+describe("jsonErrorPosition", () => {
+  test("reads only V8's offset, and gives up when the message has none", () => {
+    expect(jsonErrorPosition("ab\ncd", new SyntaxError("x in JSON at position 4 (line 2 column 2)"))).toEqual(
+      {
+        line: 2,
+        column: 2,
+      }
+    );
+    expect(jsonErrorPosition("{", new SyntaxError(`Unexpected token '}', "{" is not valid JSON`))).toBeNull();
+    expect(jsonErrorPosition("{", "not an error")).toBeNull();
   });
 });
 

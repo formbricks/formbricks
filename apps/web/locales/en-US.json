@@ -4888,6 +4888,8 @@
           "file_type_unsupported": "This kind of file cannot be imported. Choose a Formbricks file (.json), a Qualtrics export (.qsf), or a Word (.docx), Excel (.xlsx) or CSV (.csv) questionnaire.",
           "formbricks_file_invalid": "This Formbricks file has problems. Fix them and import it again:",
           "formbricks_file_too_new": "This file was exported from a newer version of Formbricks. Update Formbricks, then import it again.",
+          "invalid_json": "This file is not valid JSON. If you edited it, check your edit; otherwise export the survey again.",
+          "invalid_json_at": "This file is not valid JSON: it breaks at line {line}, column {column}. Fix it there and try again.",
           "limits": {
             "block_entries": "A block in this survey holds more items than the import can read.",
             "blocks": "This survey has more blocks than the import can read.",
