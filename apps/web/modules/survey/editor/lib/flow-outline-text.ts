@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import { RESERVED_FIELD_CATALOG, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import type { TI18nString } from "@formbricks/types/i18n";
-import type { TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type {
   TConditionGroup,
@@ -278,35 +278,122 @@ export const describeAction = (
   }
 };
 
-/**
- * How one action of a rule is introduced on its row: the first reads on its own, later ones are set
- * apart ("·"), and the jump is announced with "then". Run together, "Require an answer to “q3” What
- * went wrong" read the jump's destination as part of the question's name.
- */
-export type TFlowActionLead = "none" | "and" | "then";
+type TFlowJumpText = Extract<TFlowActionText, { kind: "jump" }>;
 
-export interface TFlowActionStep {
-  lead: TFlowActionLead;
-  action: TFlowActionText;
+/**
+ * A collapsed rule row's actions on one line (ENG-6969 T2): the first action in full, how many more
+ * the row folds into "+N", and the destination as a trailing pill. The jump comes last whatever its
+ * position in the list: every other action runs before the respondent moves on. The open row lists
+ * every action.
+ */
+export interface TFlowRuleActionSummary {
+  first?: TFlowActionText;
+  moreCount: number;
+  jump?: TFlowJumpText;
 }
 
-/**
- * A rule's actions as the steps its row shows. The jump goes last whatever its position in the
- * list: every other action runs before the respondent moves on.
- */
-export const describeRuleActions = (
+export const summarizeRuleActions = (
   actions: TSurveyBlockLogicAction[],
   survey: TSurvey,
   t: TFunction,
   format: TFlowTextFormat = {}
-): TFlowActionStep[] => {
+): TFlowRuleActionSummary => {
   const described = actions.map((action) => describeAction(action, survey, t, format));
-  const ordered = [
-    ...described.filter((action) => action.kind !== "jump"),
-    ...described.filter((action) => action.kind === "jump"),
+  const jumps = described.filter((action): action is TFlowJumpText => action.kind === "jump");
+  const others = described.filter((action) => action.kind !== "jump");
+  // A second jump can only come through the API; it is counted rather than dropped.
+  const moreCount = Math.max(others.length - 1, 0) + Math.max(jumps.length - 1, 0);
+  return {
+    ...(others[0] ? { first: others[0] } : {}),
+    moreCount,
+    ...(jumps[0] ? { jump: jumps[0] } : {}),
+  };
+};
+
+/** An action as plain words: what its row shows, spelled out where the row uses a pill or an icon. */
+export const getActionPlainText = (action: TFlowActionText, t: TFunction): string => {
+  switch (action.kind) {
+    case "jump":
+      return action.target === "missing" ? t("workspace.surveys.edit.flow.no_destination") : action.label;
+    case "requireAnswer":
+      return t("workspace.surveys.edit.flow.require_answer_to", { question: action.label });
+    case "markLowQuality":
+      return t("workspace.surveys.edit.mark_as_low_quality");
+    default:
+      return action.label;
+  }
+};
+
+/** A rule's condition as its row starts: "If …", or "Always" for a rule without conditions. */
+export const describeRuleCondition = (
+  rule: TSurveyBlockLogic,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): string =>
+  rule.conditions.conditions.length === 0
+    ? t("workspace.surveys.edit.flow.always_runs")
+    : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(rule.conditions, survey, t, format)}`;
+
+/**
+ * A rule as one plain sentence with every action ("If … → a · b → Destination"): the tooltip of a
+ * truncated row and the row's accessible name (ENG-6969 T2, guardrail 4).
+ */
+export const describeRuleSummary = (
+  rule: TSurveyBlockLogic,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): string => {
+  const described = rule.actions.map((action) => describeAction(action, survey, t, format));
+  const steps = [
+    described
+      .filter((action) => action.kind !== "jump")
+      .map((action) => getActionPlainText(action, t))
+      .join(" · "),
+    ...described.filter((action) => action.kind === "jump").map((action) => getActionPlainText(action, t)),
+  ].filter((step) => step !== "");
+  return [describeRuleCondition(rule, survey, t, format), ...steps].join(" → ");
+};
+
+/** A block header's counts: its questions, and its rules once it has any (ENG-6969 T15). */
+export const describeBlockCounts = (
+  block: { elementCount: number; ruleCount: number },
+  t: TFunction
+): string =>
+  [
+    t("common.count_questions", { count: block.elementCount }),
+    ...(block.ruleCount > 0
+      ? [t("workspace.surveys.edit.flow.count_rules", { count: block.ruleCount })]
+      : []),
+  ].join(" · ");
+
+/**
+ * Where a block's "Otherwise go to" can send everyone the rules didn't move (ENG-6969 T7): the next
+ * block by name (the default, stored as no fallback), the later blocks, then the endings. The same set
+ * as before; only the default's label changed.
+ */
+export const getFallbackTargetOptions = (
+  survey: TSurvey,
+  blockIdx: number,
+  t: TFunction
+): { label: string; value: string }[] => {
+  const nextBlock = survey.blocks[blockIdx + 1];
+  return [
+    {
+      label: nextBlock
+        ? t("workspace.surveys.edit.flow.next_block_named", {
+            name: getBlockDisplayName(nextBlock, blockIdx + 1, t),
+          })
+        : t("workspace.surveys.edit.next_block"),
+      value: "defaultSelection",
+    },
+    ...survey.blocks
+      .slice(blockIdx + 1)
+      .map((block, idx) => ({ label: getBlockDisplayName(block, blockIdx + 1 + idx, t), value: block.id })),
+    ...survey.endings.map((ending) => ({
+      label: t("workspace.surveys.edit.flow.end_label", { label: getEndingLabel(ending, survey, t) }),
+      value: ending.id,
+    })),
   ];
-  return ordered.map((action, idx): TFlowActionStep => {
-    if (idx === 0) return { lead: "none", action };
-    return { lead: action.kind === "jump" ? "then" : "and", action };
-  });
 };

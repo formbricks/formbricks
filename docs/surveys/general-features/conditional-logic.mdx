@@ -67,11 +67,11 @@ Some answers show that a response can't be trusted: someone who streams more tha
 * **You can restore it.** A response a rule marked is restored like any other Low quality response.
 * **A rule can only mark.** Nothing a respondent does later clears the mark, and a rule never changes a response a reviewer already marked.
 
-The action is available in a block's rules. It isn't offered in the rules before the first question, because nothing has been answered yet; use a jump to an ending there to screen respondents out.
+The action is available in a block's rules and in the [rules before the first question](/surveys/general-features/flow-tab#rules-before-the-first-question). There it reads URL parameters and hidden fields, for example *If “source” equals “panel-x” → Mark response as Low quality* for a panel source you don't trust: the respondent still answers the whole survey, and the response is marked as soon as it is saved. To keep such respondents out instead, jump to an ending there to screen them out.
 
 ## Everyone else
 
-Under the rules sits **All other answers will continue to**. This is the fallback for respondents who match none of the conditions, and it is set to the next block unless you change it.
+The last line of a block, under its rules and **Add logic**, is **Otherwise go to**. This is the fallback for respondents whom none of the rules sent anywhere, including those who answered nothing, and it is set to the next block unless you change it.
 
 ## Several conditions in one rule
 

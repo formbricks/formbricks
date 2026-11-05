@@ -1089,8 +1089,9 @@ const blocks: TSurveyBlock[] = [
 
 /**
  * Rules before the first question (ENG-6932), in the shape of json-shapes.md section 4: a screen-out
- * on a missing panel id, a jump with a Set value from a URL parameter, and a Set value on a reserved
- * field. Defined after the blocks so the sequential ids of the block rules above do not shift.
+ * on a missing panel id, a jump with a Set value from a URL parameter, a Set value on a reserved
+ * field, and Mark as low quality for a known-bad panel (ENG-6952). Defined after the blocks so the
+ * sequential ids of the block rules above do not shift.
  */
 const startLogic: TSurveyBlockLogic[] = [
   {
@@ -1156,6 +1157,22 @@ const startLogic: TSurveyBlockLogic[] = [
         value: { type: "static", value: "-preview" },
       },
     ],
+  },
+  {
+    id: nextId("rule"),
+    conditions: {
+      id: nextId("group"),
+      connector: "and",
+      conditions: [
+        {
+          id: nextId("cond"),
+          leftOperand: { type: "hiddenField", value: ids.hiddenFields.panelId },
+          operator: "equals",
+          rightOperand: { type: "static", value: "known-bad-panel" },
+        },
+      ],
+    },
+    actions: [{ id: nextId("action"), objective: "markLowQuality" }],
   },
 ];
 

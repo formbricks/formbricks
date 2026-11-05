@@ -414,6 +414,11 @@ export interface TStartSurveyResult {
   /** The ending of a screen-out, for the response the survey creates at once. */
   endingId: string | undefined;
   variables: TResponseVariables;
+  /**
+   * A rule marked the response Low quality (ENG-6952). The caller sends `markLowQuality: true` with
+   * the response's first write: the first page's, or the finished response of a screen-out.
+   */
+  markLowQuality: boolean;
 }
 
 /**
@@ -426,6 +431,8 @@ export interface TStartSurveyResult {
  * answers yet. A jump to an ending is a screen-out: the respondent sees only that ending. A jump to
  * a block wins over a start-at link, and the welcome card (when there is one and no start-at link)
  * still shows first and leads there. Without a jump the survey starts exactly as it always did.
+ * A rule may also mark the response Low quality (ENG-6952), say for a known-bad panel source: the
+ * respondent carries on, or is screened out, as the rules decide, and sees nothing of the mark.
  */
 export const startSurvey = (input: TStartSurveyInput): TStartSurveyResult => {
   const { survey, responseData, selectedLanguage, reservedFieldValues, startAtBlockId } = input;
@@ -433,6 +440,7 @@ export const startSurvey = (input: TStartSurveyInput): TStartSurveyResult => {
 
   let variables = { ...input.variables };
   let jumpTarget: string | undefined;
+  let markLowQuality = false;
 
   for (const rule of survey.startLogic ?? []) {
     if (!evaluateLogic(survey, responseData, variables, rule.conditions, selectedLanguage, embeddedValues)) {
@@ -445,12 +453,20 @@ export const startSurvey = (input: TStartSurveyInput): TStartSurveyResult => {
     });
     if (actions.jumpTarget && !jumpTarget) jumpTarget = actions.jumpTarget;
     variables = { ...variables, ...actions.calculations };
+    markLowQuality ||= actions.markLowQuality;
   }
 
   // A stale target (a deleted block or ending) counts as no jump, as it does after a block.
   const endingId = survey.endings.find((ending) => ending.id === jumpTarget)?.id;
   if (endingId) {
-    return { firstCardId: endingId, startBlockId: undefined, finished: true, endingId, variables };
+    return {
+      firstCardId: endingId,
+      startBlockId: undefined,
+      finished: true,
+      endingId,
+      variables,
+      markLowQuality,
+    };
   }
   const startBlockId = survey.blocks.find((block) => block.id === jumpTarget)?.id;
 
@@ -465,5 +481,5 @@ export const startSurvey = (input: TStartSurveyInput): TStartSurveyResult => {
     firstCardId = survey.blocks[0]?.id ?? survey.endings[0]?.id ?? END_BLOCK_ID;
   }
 
-  return { firstCardId, startBlockId, finished: false, endingId: undefined, variables };
+  return { firstCardId, startBlockId, finished: false, endingId: undefined, variables, markLowQuality };
 };

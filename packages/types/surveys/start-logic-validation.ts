@@ -12,9 +12,10 @@ import type { TConditionGroup, TSingleCondition } from "./logic";
  * They use the block-rule format, but run when the survey loads, before the welcome card and before
  * any answer exists:
  *
- * - **Actions** may only jump (to any block, or to an ending, which screens the respondent out) and
- *   set a value (`calculate`). Every other objective, `requireAnswer` and `markLowQuality` included,
- *   is refused at its exact path.
+ * - **Actions** may only jump (to any block, or to an ending, which screens the respondent out), set a
+ *   value (`calculate`) and mark the response Low quality (`markLowQuality`, ENG-6952: the survey
+ *   sends the flag with the response's first write). Every other objective, `requireAnswer`
+ *   included, is refused at its exact path.
  * - **Conditions and values** may read hidden fields (URL parameters), computed fields and reserved
  *   fields. An `element` operand is refused: there is no answer to read yet.
  *
@@ -40,7 +41,8 @@ export interface TStartLogicSurvey {
 
 type TIssue = z.core.$ZodIssue;
 
-const ALLOWED_OBJECTIVES = new Set<string>(["jumpToBlock", "calculate"]);
+// `markLowQuality` (ENG-6952) takes no target, so it has nothing to check.
+const ALLOWED_OBJECTIVES = new Set<string>(["jumpToBlock", "calculate", "markLowQuality"]);
 
 const ruleLabel = (ruleIdx: number) => `rule ${String(ruleIdx + 1)} before the first question`;
 
@@ -185,19 +187,10 @@ const validateAction = (
 ): TIssue | undefined => {
   const path = ["startLogic", ruleIdx, "actions", actionIdx];
 
-  if (action.objective === "markLowQuality") {
-    // ENG-6933: there is no response to judge yet. A screener sends the respondent to an ending.
-    return {
-      code: "custom",
-      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can't mark the response Low quality: nothing has been answered yet. Jump to an ending to screen the respondent out instead.`,
-      path,
-    };
-  }
-
   if (!ALLOWED_OBJECTIVES.has(action.objective)) {
     return {
       code: "custom",
-      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can only jump to a block or an ending, or set a value; "${action.objective}" is not allowed before the first question.`,
+      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can only jump to a block or an ending, set a value, or mark the response Low quality; "${action.objective}" is not allowed before the first question.`,
       path,
     };
   }
