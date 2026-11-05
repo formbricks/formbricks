@@ -421,8 +421,10 @@ describe("segmentFormulaText: references drawn as chips, the text unchanged (ENG
 
 describe("getFormulaSlot and getFunctionFit: function chips that fit at the cursor (ENG-6950)", () => {
   const at = (text: string, target: "number" | "text" | "date" = "number") => {
+    // One "|" marks the cursor: cut it out by position.
     const cursor = text.indexOf("|");
-    return getFormulaSlot(text.replace("|", ""), { start: cursor, end: cursor }, target);
+    const formula = text.slice(0, cursor) + text.slice(cursor + 1);
+    return getFormulaSlot(formula, { start: cursor, end: cursor }, target);
   };
   const fitting = (slot: ReturnType<typeof getFormulaSlot>) =>
     FORMULA_CHIP_FUNCTIONS.filter((fn) => getFunctionFit(fn, slot).fits);
