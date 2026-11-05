@@ -231,6 +231,9 @@ describe("getSurveyImportErrorMessage for each refusal and stream error", () => 
     ["import_failed", "failed"],
     ["import_too_large", "too_many_questions"],
     ["import_nothing_importable", "nothing_importable"],
+    ["import_no_questions", "no_questions"],
+    ["import_too_large_for_ai", "too_large_for_ai"],
+    ["import_partly_unread", "partly_unread"],
   ])("%s", (code, key) => {
     expect(getSurveyImportErrorMessage(code, t)).toBe(`workspace.surveys.import.errors.${key}`);
   });

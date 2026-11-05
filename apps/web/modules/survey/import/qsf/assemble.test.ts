@@ -477,6 +477,32 @@ describe("assembleQsfDraft", () => {
   });
 });
 
+describe("assembleQsfDraft: Address", () => {
+  test("builds an address form from the fields the plan maps, every other field hidden", async () => {
+    const { document } = await assembleFixture("matrix-slider-ranking.qsf", {
+      editPlan: (plan) => {
+        // QID8 is a FORM question; mapped as an address, its first field is the city.
+        const form = plan.questions.get("QID8");
+        if (!form) throw new Error("QID8 is not planned");
+        plan.questions.set("QID8", {
+          ...form,
+          type: "address",
+          contactFields: [{ field: "city", key: form.contactFields[0].key }],
+        });
+      },
+    });
+
+    expect(element(document, "Q8")).toMatchObject({
+      type: "address",
+      city: { show: true, placeholder: { "en-US": "First name" } },
+      addressLine1: { show: false, required: false, placeholder: { "en-US": "" } },
+      country: { show: false },
+    });
+    expect(element(document, "Q8")).not.toHaveProperty("firstName");
+    expect(checkImportDraft(document)).toEqual([]);
+  });
+});
+
 describe("assembleQsfDraft: Signature", () => {
   test("builds a Signature element that allows typing, required as Qualtrics forced it", async () => {
     const { document, issues } = await assembleFixture("signature.qsf");

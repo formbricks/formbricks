@@ -158,6 +158,8 @@ describe("checkQuestionRoles", () => {
     );
 
     expect(rowsOnly.ok && both.ok && rowsOnly.question.columns).toEqual(both.ok && both.question.columns);
+    const columnsOnly = checkQuestionRoles(matrix, entry("QID1", "matrix", { columnsFrom: "answers" }));
+    expect(columnsOnly.ok && both.ok && columnsOnly.question.rows).toEqual(both.ok && both.question.rows);
     expect(failureOf(checkQuestionRoles(matrix, entry("QID1", "matrix")))).toEqual(["missing_role"]);
   });
 

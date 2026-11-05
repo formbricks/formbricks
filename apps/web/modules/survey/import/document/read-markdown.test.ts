@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { SurveyImportInputError } from "../core/errors";
-import { SURVEY_IMPORT_MARKDOWN_MAX_CHARS, SURVEY_IMPORT_WORD_MAX_PARAGRAPHS } from "../limits";
+import {
+  SURVEY_IMPORT_MARKDOWN_MAX_CHARS,
+  SURVEY_IMPORT_WORD_MAX_PARAGRAPHS,
+  SURVEY_IMPORT_WORD_MAX_TABLE_CELLS,
+} from "../limits";
 import { prepareDocumentImport } from "./prepare";
 import { looksLikeMarkdown, readMarkdownDocument } from "./read-markdown";
 
@@ -162,6 +166,19 @@ describe("readMarkdownDocument", () => {
     expect(refusal(() => readMarkdownDocument("---\n\n<!-- nothing -->\n"))).toMatchObject({
       code: "file_unreadable",
     });
+  });
+
+  test("holds the file's tables to the Word table-cell limit", () => {
+    const rows = Array.from(
+      { length: SURVEY_IMPORT_WORD_MAX_TABLE_CELLS / 2 },
+      (_, index) => `| ${index} | x |`
+    );
+    expect(refusal(() => readMarkdownDocument(["| A | B |", "| - | - |", ...rows].join("\n")))).toMatchObject(
+      {
+        code: "document_limit_exceeded",
+        identifier: "table_cells",
+      }
+    );
   });
 
   test("holds the file to the Word paragraph limit", () => {
