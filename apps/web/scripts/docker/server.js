@@ -41,6 +41,8 @@ const stop = (exitCode = 0) => {
           ? new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
           : Promise.resolve(),
       closeWorkers: async () => {
+        // Draining already stops new safety-net ticks; this waits out a drain one of them started.
+        await globalThis.formbricksAuthzedOutboxSafetyNet?.close();
         await globalThis.formbricksJobsRuntimeInitializing?.catch(() => undefined);
         await globalThis.formbricksJobsRuntime?.close();
         await globalThis.formbricksOnlinePauseDelivery?.close();
