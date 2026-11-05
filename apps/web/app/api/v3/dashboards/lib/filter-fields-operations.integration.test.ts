@@ -10,8 +10,11 @@ import {
   sessionOf,
 } from "@/integration/dashboards-fixture";
 import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
+import { getV3DashboardChartData } from "./chart-data-operations";
 import { listV3DashboardFilterFields } from "./filter-fields-operations";
+import { listV3DashboardFilterValues } from "./filter-values-operations";
 import { ZV3DashboardFilterFields } from "./resources";
+import { ZV3DashboardChartDataQuery, ZV3DashboardFilterValuesQuery } from "./schemas";
 
 /**
  * `GET /api/v3/dashboards/{dashboardId}/filter-fields` against real PostgreSQL, SpiceDB and Valkey, with
@@ -45,7 +48,7 @@ const createDataset = async () =>
     })
   ).id;
 
-const createChart = async (datasetId: string) =>
+const createChart = async (datasetId: string, dimensions: string[] = []) =>
   (
     await prisma.chart.create({
       data: {
@@ -53,7 +56,7 @@ const createChart = async (datasetId: string) =>
         type: "bar",
         workspaceId: fixture.workspaceId,
         feedbackDirectoryId: datasetId,
-        query: { measures: ["FeedbackRecords.count"] },
+        query: { measures: ["FeedbackRecords.count"], ...(dimensions.length > 0 ? { dimensions } : {}) },
         config: {},
       },
     })
@@ -132,12 +135,26 @@ describe("a dashboard's embedded-data filter fields", () => {
     expect(await fieldsOf(await read(dashboard))).toEqual([field("Plan"), field("Region"), field("Tier")]);
   });
 
-  test("are listed to a Dashboard viewer and a read-only API key, as for an editor", async () => {
+  test("are listed in full to a read-only API key, as for an editor", async () => {
     const dashboard = await createDashboard([await createChart(datasets.onBoard)]);
 
-    for (const authentication of [sessionOf(dashboardViewer), apiKeyOf(fixture, "readKey")]) {
-      expect(await fieldsOf(await read(dashboard, authentication))).toEqual([field("Plan"), field("Region")]);
-    }
+    expect(await fieldsOf(await read(dashboard, apiKeyOf(fixture, "readKey")))).toEqual([
+      field("Plan"),
+      field("Region"),
+    ]);
+  });
+
+  // ADR-0025: a key can hold anything, so a viewer gets only the keys the charts already show them.
+  test("are, for a Dashboard viewer, only the keys some chart on the dashboard groups by", async () => {
+    const ungrouped = await createDashboard([await createChart(datasets.onBoard)]);
+    expect(await fieldsOf(await read(ungrouped, sessionOf(dashboardViewer)))).toEqual([]);
+
+    const grouped = await createDashboard([
+      await createChart(datasets.onBoard, [getEmbeddedMemberName("Region")]),
+      await createChart(datasets.alsoOnBoard),
+    ]);
+    expect(await fieldsOf(await read(grouped, sessionOf(dashboardViewer)))).toEqual([field("Region")]);
+    expect(await fieldsOf(await read(grouped))).toEqual([field("Plan"), field("Region"), field("Tier")]);
   });
 
   test("are refused to a member outside the workspace, and for a dashboard that does not exist", async () => {
@@ -153,5 +170,45 @@ describe("a dashboard's embedded-data filter fields", () => {
   test("are none for a dashboard without charts, without scanning any dataset", async () => {
     expect(await fieldsOf(await read(await createDashboard([])))).toEqual([]);
     expect(cubeFake.discoveries).toHaveLength(0);
+  });
+});
+
+describe("a Dashboard viewer naming embedded data no chart groups by", () => {
+  const values = (dashboardId: string, key: string, authentication = sessionOf(dashboardViewer)) =>
+    listV3DashboardFilterValues({
+      dashboardId,
+      filterId: "f1",
+      query: ZV3DashboardFilterValuesQuery.parse({ "filter[f1]": `equals:${getEmbeddedMemberName(key)}` }),
+      authentication,
+      requestId: "req",
+      instance: "/api/v3",
+    });
+  const chartData = (dashboardId: string, chartId: string, key: string) =>
+    getV3DashboardChartData({
+      dashboardId,
+      chartId,
+      query: ZV3DashboardChartDataQuery.parse({
+        "filter[f1]": `equals:${getEmbeddedMemberName(key)}`,
+        "picks[f1]": "x",
+      }),
+      authentication: sessionOf(dashboardViewer),
+      requestId: "req",
+      instance: "/api/v3",
+    });
+
+  test("is refused its values and its filter on the charts, and allowed both for a grouped key", async () => {
+    const chart = await createChart(datasets.onBoard, [getEmbeddedMemberName("Region")]);
+    const dashboard = await createDashboard([chart]);
+
+    expect(await outcomeOf(await values(dashboard, "Plan"))).toEqual({ status: 403, code: "forbidden" });
+    expect(await outcomeOf(await chartData(dashboard, chart, "Plan"))).toEqual({
+      status: 403,
+      code: "forbidden",
+    });
+
+    expect((await values(dashboard, "Region")).status).toBe(200);
+    expect((await chartData(dashboard, chart, "Region")).status).toBe(200);
+    // Anyone else may still list any key's values.
+    expect((await values(dashboard, "Plan", sessionOf(fixture.users.editor))).status).toBe(200);
   });
 });

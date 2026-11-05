@@ -5466,6 +5466,10 @@ paths:
         left out rather than failing the list. A dashboard with no charts lists nothing. The workspace is
         resolved from the dashboard, so the operation takes no query parameters; a dashboard the caller
         cannot see, or that does not exist, answers 403.
+
+        A Dashboard viewer gets only the keys some chart on the dashboard groups by: a key can hold anything,
+        so a viewer filters by, and lists the values of, only what the charts already show them. Naming any
+        other key in a filter, or listing its values, answers them 403.
       tags:
         - V3 Dashboards
       parameters:

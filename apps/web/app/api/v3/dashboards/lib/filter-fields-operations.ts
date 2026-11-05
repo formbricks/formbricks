@@ -10,6 +10,7 @@ import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalo
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
 import type { TV3DashboardFilterFields } from "./resources";
 import { getDashboardChartsRow } from "./service";
+import { getGroupedEmbeddedFields, mayFilterBy } from "./viewer-filter-fields";
 
 /** How many of a dashboard's Feedback Datasets have their keys read at once. */
 const DATASET_KEYS_CONCURRENCY = 5;
@@ -32,7 +33,8 @@ const mergeFields = (perDataset: ReadonlyArray<readonly TEmbeddedChartField[]>):
  * read, and of no other dataset. A dashboard-bound read (ADR-0025), so a Dashboard viewer may make it: it is
  * how the dashboard's filter picker offers embedded-data keys to someone the field catalog
  * (`GET /api/v3/charts/fields`) refuses. A dataset the caller cannot read through the dashboard is left out
- * rather than failing the list, so its keys are never named to them; its charts refuse them anyway.
+ * rather than failing the list, so its keys are never named to them; its charts refuse them anyway. A
+ * Dashboard viewer gets only the keys some chart on the dashboard groups by (`viewer-filter-fields`).
  *
  * Needs read access to the dashboard's workspace. Spends from the default v3 budget (the route wrapper).
  */
@@ -66,7 +68,12 @@ export async function listV3DashboardFilterFields({
       return embeddedFields;
     });
 
-    return successResponse(mergeFields(perDataset), { requestId });
+    const merged = mergeFields(perDataset);
+    const grouped = getGroupedEmbeddedFields(row.widgets);
+    return successResponse(
+      { fields: merged.fields.filter(({ name }) => mayFilterBy(access, name, grouped)) },
+      { requestId }
+    );
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.filterFields" });
   }

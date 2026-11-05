@@ -304,7 +304,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "List dashboard filter fields",
       description:
-        "List the embedded-data fields a dashboard can be filtered on: the keys of the Feedback Datasets its charts read, each once, in key order, with the name a filter uses (FeedbackRecords.ed_…) and its label. Use a name as the field of a filter in set_dashboard_filters, in get_chart_data with dashboardId, and in list_dashboard_filter_values. A Dashboard viewer, who cannot call list_chart_fields, finds a dashboard's embedded-data fields here.",
+        "List the embedded-data fields a dashboard can be filtered on: the keys of the Feedback Datasets its charts read, each once, in key order, with the name a filter uses (FeedbackRecords.ed_…) and its label. Use a name as the field of a filter in set_dashboard_filters, in get_chart_data with dashboardId, and in list_dashboard_filter_values. A Dashboard viewer, who cannot call list_chart_fields, finds a dashboard's embedded-data fields here, and gets only the keys some chart on the dashboard groups by.",
       inputSchema: ZMcpDashboardIdInput,
       outputSchema: ZMcpDashboardFilterFieldsOutput,
       annotations: READ_ANNOTATIONS,

@@ -33,11 +33,13 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { resolveFilterRules } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
+import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import { withCachedDashboardDecision } from "./read-decision-cache";
 import type { TV3DashboardChartData } from "./resources";
 import type { TV3DashboardChartDataQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
 import { refuseUnreadableLockedFilters } from "./unreadable-locked-filters";
+import { refuseUngroupedFieldsForViewer } from "./viewer-filter-fields";
 
 /**
  * Dashboard-bound reads: a chart's data, and a dashboard filter's value list, read through the dashboard
@@ -158,6 +160,17 @@ export async function getV3DashboardChartData({
         instance: context.instance,
         invalid_params: filterIssues,
       });
+    }
+    // A viewer's own filters may name only the embedded data the dashboard's charts group by. This read
+    // carries one chart, so the dashboard's others are read for it, and only when an embedded key is named.
+    if (access.asDashboardViewer && requestFilters.some(({ field }) => isEmbeddedMemberName(field))) {
+      const ungrouped = refuseUngroupedFieldsForViewer(
+        access,
+        requestFilters.map(({ field }) => field),
+        (await getDashboardChartsRow(dashboardId))?.widgets ?? [],
+        context
+      );
+      if (ungrouped) return ungrouped;
     }
     // Picks are checked before any query: a value its field cannot hold, or more than the total budget,
     // is the caller's to fix (422), not a Cube failure (C6, C9).

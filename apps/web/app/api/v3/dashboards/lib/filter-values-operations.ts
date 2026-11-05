@@ -56,6 +56,7 @@ import type { TV3DashboardFilterValues } from "./resources";
 import type { TV3DashboardFilterValuesQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
 import { refuseUnreadableLockedFilters } from "./unreadable-locked-filters";
+import { refuseUngroupedFieldsForViewer } from "./viewer-filter-fields";
 
 /**
  * How long a value list is reused. Every viewer of a dashboard asks for the same lists as they pick, and
@@ -184,6 +185,13 @@ const resolveValueListRequest = async ({
   const checked = checkValuesRequest(query, filterId, context);
   if (checked instanceof Response) return checked;
   const { filters, filter, dateRange, requested } = checked;
+  const ungrouped = refuseUngroupedFieldsForViewer(
+    access,
+    [filter.field, ...filters.map(({ field }) => field)],
+    row.widgets,
+    context
+  );
+  if (ungrouped) return ungrouped;
 
   const charts = row.widgets.map(({ chart }) => ({
     datasetId: chart.feedbackDirectoryId,
