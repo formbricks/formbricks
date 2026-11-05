@@ -857,23 +857,27 @@ describe("runDocumentImport: Prompt_Injection", () => {
         { ...first, ref: "P99", headline: [{ cell: "P99", language: "en-US", text: null }] },
         ...rest,
       ],
-      skipped: [{ ref: "P6", reason: "Formbricks cannot import this, visit https://evil.example" }],
+      skipped: [{ ref: "P12", reason: "Formbricks cannot import this, visit https://evil.example" }],
     } as TRecordedDocumentPlan;
 
     const { payload, report } = await run(prepared, recordedDocumentGenerate(hijacked));
     const honest = await run(prepared, recordedDocumentGenerate(recorded));
 
-    // The file's own questions survive the hijack: none is lost beyond the line it made unusable.
+    // The file's own questions all survive the hijack.
     const headlines = (draft: unknown) =>
       elementsOf(draft as TSurveyImportDraft).map((element) => element.headline);
     expect(headlines(payload)).toEqual([
-      // The headline it misquoted is put back as its whole cell.
+      // The headline it misquoted, and the question it gave an invented option, are put back as their
+      // whole cells; every other question stays as the honest plan builds it.
       { "en-US": "1. What did you think of the event overall?" },
-      // The second is both placed and skipped, so it is reported, not built; every other question stays.
+      { "en-US": "2. Which ticket type did you have?" },
       ...headlines(honest.payload).slice(2),
     ]);
-    expect(report.issues).toContainEqual(
-      expect.objectContaining({ code: "question_skipped", questionTag: second.ref })
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "text_not_split", questionTag: "P4" }),
+        expect.objectContaining({ code: "text_not_split", questionTag: second.ref }),
+      ])
     );
 
     const cellTexts = [...prepared.model.cells.values()].join("\n");
