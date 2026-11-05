@@ -653,6 +653,7 @@ describe("startSurvey: rules before the first question (ENG-6932)", () => {
       finished: false,
       endingId: undefined,
       variables: { score: 0 },
+      markLowQuality: false,
     });
   });
 
@@ -743,6 +744,49 @@ describe("startSurvey: rules before the first question (ENG-6932)", () => {
     expect(start(survey, { reservedFieldValues: { language: "de" } })).toMatchObject({
       firstCardId: "end1",
       finished: true,
+    });
+  });
+
+  describe("Mark as low quality before the first question (ENG-6952)", () => {
+    const markLowQuality = { id: "lq", objective: "markLowQuality" as const };
+
+    test("a rule on a URL parameter asks for Low quality, and the respondent carries on", () => {
+      const survey = withStart([startRule("panel", "source", "bad-panel", [markLowQuality])], {
+        welcome: true,
+      });
+
+      expect(start(survey, { responseData: { source: "bad-panel" } })).toMatchObject({
+        firstCardId: "start",
+        finished: false,
+        markLowQuality: true,
+      });
+      expect(start(survey, { responseData: { source: "good-panel" } }).markLowQuality).toBe(false);
+    });
+
+    test("runs alongside a jump and a set value: the respondent goes there with the value set", () => {
+      const survey = withStart([
+        startRule("panel", "source", "bad-panel", [markLowQuality, setScore(7), jumpTo("b2")]),
+      ]);
+
+      expect(start(survey, { responseData: { source: "bad-panel" } })).toMatchObject({
+        firstCardId: "b2",
+        variables: { score: 7 },
+        markLowQuality: true,
+      });
+    });
+
+    test("a rule that marks it counts even when another rule screens the respondent out", () => {
+      const survey = withStart([
+        startRule("screen-out", "panel", "none", [jumpTo("end2")]),
+        startRule("bad", "source", "bad-panel", [markLowQuality]),
+      ]);
+
+      expect(start(survey, { responseData: { panel: "none", source: "bad-panel" } })).toMatchObject({
+        firstCardId: "end2",
+        finished: true,
+        endingId: "end2",
+        markLowQuality: true,
+      });
     });
   });
 
@@ -868,28 +912,5 @@ describe("Mark as low quality (ENG-6933)", () => {
         reservedFieldValues: {},
       })
     ).toMatchObject({ markLowQuality: true, nextCardId: "b3" });
-  });
-
-  test("is ignored before the first question, where the validator refuses it", () => {
-    const survey = {
-      ...makeSurvey([block("b1")]),
-      startLogic: [always("start", [markLowQuality("lq")])],
-    } as TJsWorkspaceStateSurvey;
-
-    expect(
-      startSurvey({
-        survey,
-        responseData: {},
-        variables: {},
-        selectedLanguage: "default",
-        reservedFieldValues: {},
-      })
-    ).toEqual({
-      firstCardId: "b1",
-      startBlockId: undefined,
-      finished: false,
-      endingId: undefined,
-      variables: {},
-    });
   });
 });

@@ -17,6 +17,21 @@ export const INITIAL_LOW_QUALITY_FLAG: TLowQualityFlag = { pending: false, sent:
 export const raiseLowQualityFlag = (flag: TLowQualityFlag): TLowQualityFlag =>
   flag.sent ? flag : { ...flag, pending: true };
 
+/**
+ * The flag as the survey loads: raised when a rule before the first question marked the response
+ * (ENG-6952), so it rides on the response's first write, a screen-out's finished response included.
+ */
+export const startLowQualityFlag = (markedBeforeFirstQuestion: boolean): TLowQualityFlag =>
+  markedBeforeFirstQuestion ? raiseLowQualityFlag(INITIAL_LOW_QUALITY_FLAG) : INITIAL_LOW_QUALITY_FLAG;
+
+/**
+ * The flag of a session resumed from offline progress: exactly what that session saved. Its rules
+ * before the first question ran when it began, and their flag went with its first write, which saved
+ * progress records; what they decided on this load is not applied, like the rest of their outcome.
+ */
+export const resumeLowQualityFlag = (lowQualitySent: boolean | undefined): TLowQualityFlag =>
+  lowQualitySent ? { pending: false, sent: true } : INITIAL_LOW_QUALITY_FLAG;
+
 /** Whether this write carries the flag, and the state after it. */
 export const takeLowQualityFlag = (flag: TLowQualityFlag): { send: boolean; next: TLowQualityFlag } =>
   flag.pending && !flag.sent
