@@ -71,7 +71,9 @@ describe("pnpm document:eval", () => {
 
       // `tsx` alone stopped here, before any call: `@formbricks/ai` only exports `import`.
       expect(result.stderr).not.toContain("ERR_PACKAGE_PATH_NOT_EXPORTED");
-      expect(provider.calls).toEqual(["/v1/chat/completions"]);
+      // A fixture may plan in more than one chunk: each call reaches the provider.
+      expect(provider.calls.length).toBeGreaterThan(0);
+      expect(new Set(provider.calls)).toEqual(new Set(["/v1/chat/completions"]));
       expect(result.status).toBe(1);
       // The run's line names the provider's refusal, and nothing of its message.
       const lines = result.stdout

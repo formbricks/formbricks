@@ -1,4 +1,8 @@
-import { SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS, SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS } from "../limits";
+import {
+  SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS,
+  SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS,
+  SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
+} from "../limits";
 import type { TDocumentModel } from "./model";
 import { describedLineChars } from "./prompt";
 
@@ -31,10 +35,14 @@ const lineCost = (line: TDocumentModel["lines"][number]): { tokens: number; char
 };
 
 /**
- * Group lines into chunks of at most `SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS` expected output and
+ * Group lines into chunks of at most `outputTokens` expected output (the planning size by default) and
  * `DOCUMENT_CHUNK_DATA_CHARS` of data, in document order, as many as it takes.
  */
-export function chunkDocumentLines(model: TDocumentModel, refs: readonly string[]): string[][] {
+export function chunkDocumentLines(
+  model: TDocumentModel,
+  refs: readonly string[],
+  outputTokens: number = SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS
+): string[][] {
   const lineByKey = new Map(model.lines.map((line) => [line.key, line]));
   const chunks: string[][] = [];
   let current: string[] = [];
@@ -47,8 +55,7 @@ export function chunkDocumentLines(model: TDocumentModel, refs: readonly string[
     const cost = lineCost(line);
     if (
       current.length > 0 &&
-      (tokens + cost.tokens > SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS ||
-        chars + cost.chars > DOCUMENT_CHUNK_DATA_CHARS)
+      (tokens + cost.tokens > outputTokens || chars + cost.chars > DOCUMENT_CHUNK_DATA_CHARS)
     ) {
       chunks.push(current);
       current = [];
@@ -63,9 +70,15 @@ export function chunkDocumentLines(model: TDocumentModel, refs: readonly string[
   return chunks;
 }
 
-/** How many chunks the whole document plans in: what `prepare` holds to `SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS`. */
+/**
+ * The document's size in chunks of the shared size (`SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS`): what
+ * `prepare` holds to `SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS`. Planning cuts smaller chunks, about three to
+ * one of these, so the ceiling stays what a file of 240k characters needs rather than shrinking with
+ * the planning size; the call cap and output budget (`ai-plan.ts`) still bound what those calls spend.
+ */
 export const countDocumentChunks = (model: TDocumentModel): number =>
   chunkDocumentLines(
     model,
-    model.lines.map((line) => line.key)
+    model.lines.map((line) => line.key),
+    SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS
   ).length;
