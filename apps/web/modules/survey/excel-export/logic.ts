@@ -17,6 +17,8 @@ import type {
 } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { toReadableText } from "./cell-text";
+import { EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS } from "./limits";
 
 /**
  * A block's logic in plain words, for the Excel export's Logic column (ADR 0025): one sentence per rule
@@ -24,9 +26,11 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
  * to …"). Written in the exporting user's locale; the values quoted from the survey (choice labels,
  * ending headlines) are its default-language texts, as the editor's logic panel shows them.
  *
- * Questions are named by their id, which the sheet shows in its Question ID column, so a reviewer can
- * find exactly which question a rule means. Anything a rule names that the survey no longer has is
- * shown by its stored id rather than dropped.
+ * Questions are named by their default-language headline, cut to 60 characters, so the sheet reads
+ * without Formbricks. A question whose headline is empty, or reads the same as another's once cut, is
+ * named by its id instead, which the sheet shows in its Question ID column, so a rule never names two
+ * questions alike. Anything a rule names that the survey no longer has is shown by its stored id rather
+ * than dropped.
  */
 
 type TOperatorPhrase = (operands: { left: string; right: string }) => string;
@@ -71,6 +75,8 @@ type TLogicContext = {
   t: TFunction;
   operatorPhrases: Record<TSurveyLogicConditionsOperator, TOperatorPhrase>;
   elements: Map<string, TSurveyElement>;
+  /** Each question's name in a rule, by id: its headline, cut; none when that names no single question. */
+  questionLabels: Map<string, string>;
   blocks: Map<string, TSurveyBlock>;
   endings: TSurvey["endings"];
   embeddedFields: TLinkedEmbeddedField[];
@@ -89,8 +95,46 @@ const fieldName = (ctx: TLogicContext, storageKey: string, source: "computed" | 
   return linked?.field.name.trim() || storageKey;
 };
 
-const questionPhrase = (ctx: TLogicContext, elementId: string): string =>
-  ctx.t("workspace.surveys.export.logic.question", { id: elementId });
+const ELLIPSIS = "…";
+
+/** `text` cut to `max` characters, ending in an ellipsis when cut; never splitting a surrogate pair. */
+const cutLabel = (text: string, max: number): string => {
+  if (text.length <= max) return text;
+  let end = max - ELLIPSIS.length;
+  // The UTF-16 unit, not the code point: a lone high surrogate is what must not end the label.
+  const code = text.charCodeAt(end - 1); // NOSONAR(typescript:S7758) -- a unit, on purpose
+  if (code >= 0xd800 && code <= 0xdbff) end -= 1;
+  return `${text.slice(0, end).trimEnd()}${ELLIPSIS}`;
+};
+
+/**
+ * Each question's headline as a rule names it: as the sheet shows it (rich text flattened, recall as
+ * `@Label`), on one line, cut. A headline that is empty, or that reads the same as another question's
+ * once cut, is left out, so that question is named by its id.
+ */
+const buildQuestionLabels = (survey: TSurvey, elements: Iterable<TSurveyElement>): Map<string, string> => {
+  const labels = new Map<string, string>();
+  const uses = new Map<string, number>();
+  for (const element of elements) {
+    const headline = element.headline.default ?? "";
+    const text = toReadableText({ text: headline, isRichText: true, survey, languageCode: "default" })
+      .replaceAll(/\s+/gu, " ")
+      .trim();
+    if (!text) continue;
+    const label = cutLabel(text, EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS);
+    labels.set(element.id, label);
+    uses.set(label, (uses.get(label) ?? 0) + 1);
+  }
+  for (const [id, label] of labels) if ((uses.get(label) ?? 0) > 1) labels.delete(id);
+  return labels;
+};
+
+const questionPhrase = (ctx: TLogicContext, elementId: string): string => {
+  const name = ctx.questionLabels.get(elementId);
+  return name
+    ? ctx.t("workspace.surveys.export.logic.question_named", { name })
+    : ctx.t("workspace.surveys.export.logic.question", { id: elementId });
+};
 
 /** A field a condition reads or a calculation uses: a question, a variable, a hidden field or a reserved field. */
 const fieldPhrase = (ctx: TLogicContext, operand: TDynamicLogicFieldValue): string => {
@@ -101,7 +145,7 @@ const fieldPhrase = (ctx: TLogicContext, operand: TDynamicLogicFieldValue): stri
       const row = element?.type === TSurveyElementTypeEnum.Matrix ? element.rows[rowIndex] : undefined;
       if (row) {
         return ctx.t("workspace.surveys.export.logic.question_row", {
-          id: operand.value,
+          question: questionPhrase(ctx, operand.value),
           row: plain(row.label.default),
         });
       }
@@ -257,12 +301,14 @@ export const createLogicRenderer = ({
   t: TFunction;
   locale: string;
 }): ((block: TSurveyBlock) => string) => {
+  const elements = new Map(
+    survey.blocks.flatMap((block) => block.elements.map((element) => [element.id, element]))
+  );
   const ctx: TLogicContext = {
     t,
     operatorPhrases: getOperatorPhrases(t),
-    elements: new Map(
-      survey.blocks.flatMap((block) => block.elements.map((element) => [element.id, element]))
-    ),
+    elements,
+    questionLabels: buildQuestionLabels(survey, elements.values()),
     blocks: new Map(survey.blocks.map((block) => [block.id, block])),
     endings: survey.endings,
     embeddedFields: getSurveyEmbeddedFields(survey),

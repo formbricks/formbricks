@@ -8,3 +8,9 @@
  * marked as cut, and its row is kept.
  */
 export const EXCEL_EXPORT_MAX_CELL_CHARS = 32_767;
+
+/**
+ * The most characters of a headline the Logic column names a question by ("If question “How likely
+ * are you to…” is less than 7"). Enough to recognize it; longer ones are cut with an ellipsis.
+ */
+export const EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS = 60;

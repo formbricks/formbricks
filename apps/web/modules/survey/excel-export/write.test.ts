@@ -144,7 +144,7 @@ describe("writeExcelExport", () => {
     expect(withLogic.map((row) => [row[0], row[5]])).toEqual([
       [
         "element.multi.headline",
-        "If question multi includes one of “Red”, then jump to the ending “Thank you!”.\nOtherwise, jump to question open.",
+        "If question “Pick many” includes one of “Red”, then jump to the ending “Thank you!”.\nOtherwise, jump to question “What should we improve?”.",
       ],
     ]);
   });

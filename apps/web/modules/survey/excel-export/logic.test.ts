@@ -142,106 +142,114 @@ describe("createLogicRenderer: conditions", () => {
     [
       "equals",
       { leftOperand: onElement("fruit"), rightOperand: { type: "static", value: "apple" } },
-      "question fruit equals “Apple”",
+      "question “Headline of fruit” equals “Apple”",
     ],
     [
       "doesNotEqual",
       { leftOperand: onElement("fruit"), rightOperand: { type: "static", value: "pear" } },
-      "question fruit does not equal “Pear”",
+      "question “Headline of fruit” does not equal “Pear”",
     ],
     [
       "contains",
       { leftOperand: onElement("comment"), rightOperand: { type: "static", value: "bug" } },
-      "question comment contains “bug”",
+      "question “Headline of comment” contains “bug”",
     ],
     [
       "doesNotContain",
       { leftOperand: onElement("comment"), rightOperand: { type: "static", value: "bug" } },
-      "question comment does not contain “bug”",
+      "question “Headline of comment” does not contain “bug”",
     ],
     [
       "startsWith",
       { leftOperand: onElement("comment"), rightOperand: { type: "static", value: "Hi" } },
-      "question comment starts with “Hi”",
+      "question “Headline of comment” starts with “Hi”",
     ],
     [
       "doesNotStartWith",
       { leftOperand: onElement("comment"), rightOperand: { type: "static", value: "Hi" } },
-      "question comment does not start with “Hi”",
+      "question “Headline of comment” does not start with “Hi”",
     ],
     [
       "endsWith",
       { leftOperand: onElement("comment"), rightOperand: { type: "static", value: "!" } },
-      "question comment ends with “!”",
+      "question “Headline of comment” ends with “!”",
     ],
     [
       "doesNotEndWith",
       { leftOperand: onElement("comment"), rightOperand: { type: "static", value: "!" } },
-      "question comment does not end with “!”",
+      "question “Headline of comment” does not end with “!”",
     ],
-    ["isSubmitted", { leftOperand: onElement("comment") }, "question comment is submitted"],
-    ["isSkipped", { leftOperand: onElement("comment") }, "question comment is skipped"],
+    ["isSubmitted", { leftOperand: onElement("comment") }, "question “Headline of comment” is submitted"],
+    ["isSkipped", { leftOperand: onElement("comment") }, "question “Headline of comment” is skipped"],
     [
       "isGreaterThan",
       { leftOperand: onElement("score"), rightOperand: { type: "static", value: 8 } },
-      "question score is greater than 8",
+      "question “Headline of score” is greater than 8",
     ],
     [
       "isLessThan",
       { leftOperand: onElement("score"), rightOperand: { type: "static", value: 7 } },
-      "question score is less than 7",
+      "question “Headline of score” is less than 7",
     ],
     [
       "isGreaterThanOrEqual",
       { leftOperand: onElement("score"), rightOperand: { type: "static", value: 9 } },
-      "question score is greater than or equal to 9",
+      "question “Headline of score” is greater than or equal to 9",
     ],
     [
       "isLessThanOrEqual",
       { leftOperand: onElement("score"), rightOperand: { type: "static", value: 6 } },
-      "question score is less than or equal to 6",
+      "question “Headline of score” is less than or equal to 6",
     ],
     [
       "equalsOneOf",
       { leftOperand: onElement("fruit"), rightOperand: { type: "static", value: ["apple", "pear"] } },
-      "question fruit equals one of “Apple”, “Pear”",
+      "question “Headline of fruit” equals one of “Apple”, “Pear”",
     ],
     [
       "includesAllOf",
       { leftOperand: onElement("toppings"), rightOperand: { type: "static", value: ["nuts", "cream"] } },
-      "question toppings includes all of “Nuts”, “Cream”",
+      "question “Headline of toppings” includes all of “Nuts”, “Cream”",
     ],
     [
       "includesOneOf",
       { leftOperand: onElement("toppings"), rightOperand: { type: "static", value: ["fudge"] } },
-      "question toppings includes one of “Fudge”",
+      "question “Headline of toppings” includes one of “Fudge”",
     ],
     [
       "doesNotIncludeOneOf",
       { leftOperand: onElement("toppings"), rightOperand: { type: "static", value: ["nuts", "fudge"] } },
-      "question toppings includes none of “Nuts”, “Fudge”",
+      "question “Headline of toppings” includes none of “Nuts”, “Fudge”",
     ],
     [
       "doesNotIncludeAllOf",
       { leftOperand: onElement("toppings"), rightOperand: { type: "static", value: ["nuts", "cream"] } },
-      "question toppings does not include all of “Nuts”, “Cream”",
+      "question “Headline of toppings” does not include all of “Nuts”, “Cream”",
     ],
-    ["isClicked", { leftOperand: onElement("guide") }, "question guide is clicked"],
-    ["isNotClicked", { leftOperand: onElement("guide") }, "question guide is not clicked"],
-    ["isAccepted", { leftOperand: onElement("terms") }, "question terms is accepted"],
+    ["isClicked", { leftOperand: onElement("guide") }, "question “Headline of guide” is clicked"],
+    ["isNotClicked", { leftOperand: onElement("guide") }, "question “Headline of guide” is not clicked"],
+    ["isAccepted", { leftOperand: onElement("terms") }, "question “Headline of terms” is accepted"],
     [
       "isBefore",
       { leftOperand: onElement("when"), rightOperand: { type: "static", value: "2026-12-24" } },
-      "question when is before “2026-12-24”",
+      "question “Headline of when” is before “2026-12-24”",
     ],
     [
       "isAfter",
       { leftOperand: onElement("when"), rightOperand: { type: "static", value: "2026-01-01" } },
-      "question when is after “2026-01-01”",
+      "question “Headline of when” is after “2026-01-01”",
     ],
-    ["isBooked", { leftOperand: onElement("meeting") }, "question meeting is booked"],
-    ["isPartiallySubmitted", { leftOperand: onElement("grid") }, "question grid is partially submitted"],
-    ["isCompletelySubmitted", { leftOperand: onElement("grid") }, "question grid is completely submitted"],
+    ["isBooked", { leftOperand: onElement("meeting") }, "question “Headline of meeting” is booked"],
+    [
+      "isPartiallySubmitted",
+      { leftOperand: onElement("grid") },
+      "question “Headline of grid” is partially submitted",
+    ],
+    [
+      "isCompletelySubmitted",
+      { leftOperand: onElement("grid") },
+      "question “Headline of grid” is completely submitted",
+    ],
     ["isSet", { leftOperand: { type: "reserved", value: "country" } }, "Country is set"],
     ["isNotSet", { leftOperand: { type: "hiddenField", value: "plan" } }, "hidden field Plan is not set"],
     ["isEmpty", { leftOperand: { type: "variable", value: VARIABLE_ID } }, "variable Total score is empty"],
@@ -256,7 +264,7 @@ describe("createLogicRenderer: conditions", () => {
     ],
   ])("states %s in plain words", (operator, operands, phrase) => {
     expect(renderCondition({ operator, ...operands } as Omit<TSingleCondition, "id">)).toBe(
-      `If ${phrase}, then jump to question followup.`
+      `If ${phrase}, then jump to question “Headline of followup”.`
     );
   });
 
@@ -267,14 +275,18 @@ describe("createLogicRenderer: conditions", () => {
         operator: "equals",
         rightOperand: { type: "static", value: "1" },
       })
-    ).toBe("If question grid, row “Price” equals “Good”, then jump to question followup.");
+    ).toBe(
+      "If question “Headline of grid”, row “Price” equals “Good”, then jump to question “Headline of followup”."
+    );
     expect(
       renderCondition({
         leftOperand: onElement("pics"),
         operator: "includesOneOf",
         rightOperand: { type: "static", value: ["pic-b"] },
       })
-    ).toBe("If question pics includes one of “Picture 2”, then jump to question followup.");
+    ).toBe(
+      "If question “Headline of pics” includes one of “Picture 2”, then jump to question “Headline of followup”."
+    );
   });
 
   test("compares against another question or field when the right side is one", () => {
@@ -284,14 +296,18 @@ describe("createLogicRenderer: conditions", () => {
         operator: "isGreaterThan",
         rightOperand: { type: "variable", value: VARIABLE_ID },
       })
-    ).toBe("If question score is greater than variable Total score, then jump to question followup.");
+    ).toBe(
+      "If question “Headline of score” is greater than variable Total score, then jump to question “Headline of followup”."
+    );
     expect(
       renderCondition({
         leftOperand: onElement("comment"),
         operator: "equals",
         rightOperand: { type: "element", value: "fruit" },
       })
-    ).toBe("If question comment equals question fruit, then jump to question followup.");
+    ).toBe(
+      "If question “Headline of comment” equals question “Headline of fruit”, then jump to question “Headline of followup”."
+    );
   });
 
   test("shows what the survey no longer has by its stored id instead of dropping it", () => {
@@ -301,9 +317,9 @@ describe("createLogicRenderer: conditions", () => {
         operator: "equals",
         rightOperand: { type: "static", value: "banana" },
       })
-    ).toBe("If question fruit equals “banana”, then jump to question followup.");
+    ).toBe("If question “Headline of fruit” equals “banana”, then jump to question “Headline of followup”.");
     expect(renderCondition({ leftOperand: onElement("deleted"), operator: "isSubmitted" })).toBe(
-      "If question deleted is submitted, then jump to question followup."
+      "If question deleted is submitted, then jump to question “Headline of followup”."
     );
   });
 
@@ -336,7 +352,7 @@ describe("createLogicRenderer: conditions", () => {
         ])
       )
     ).toBe(
-      "If question fruit is submitted and (question score is submitted or question comment is submitted) and question when is submitted, then jump to question followup."
+      "If question “Headline of fruit” is submitted and (question “Headline of score” is submitted or question “Headline of comment” is submitted) and question “Headline of when” is submitted, then jump to question “Headline of followup”."
     );
   });
 
@@ -347,7 +363,7 @@ describe("createLogicRenderer: conditions", () => {
           { conditions: { id: createId(), connector: "and", conditions: [] }, actions: [jumpToNext] },
         ])
       )
-    ).toBe("Always jump to question followup.");
+    ).toBe("Always jump to question “Headline of followup”.");
   });
 });
 
@@ -379,7 +395,7 @@ describe("createLogicRenderer: actions and fallback", () => {
         ])
       )
     ).toBe(
-      "If question score is submitted, then require an answer to question comment, add 10 to Total score, and jump to question followup."
+      "If question “Headline of score” is submitted, then require an answer to question “Headline of comment”, add 10 to Total score, and jump to question “Headline of followup”."
     );
   });
 
@@ -393,7 +409,7 @@ describe("createLogicRenderer: actions and fallback", () => {
         operator: "assign",
         value: { type: "element", value: "score" },
       },
-      "set Total score to question score",
+      "set Total score to question “Headline of score”",
     ],
     [
       "concat",
@@ -461,7 +477,7 @@ describe("createLogicRenderer: actions and fallback", () => {
     ],
   ])("states %s", (_case, action, phrase) => {
     expect(render(blockWith([{ conditions: always, actions: [action] }]))).toBe(
-      `If question score is submitted, then ${phrase}.`
+      `If question “Headline of score” is submitted, then ${phrase}.`
     );
   });
 
@@ -481,8 +497,8 @@ describe("createLogicRenderer: actions and fallback", () => {
       )
     ).toBe(
       [
-        "If question score is submitted, then jump to question followup.",
-        "If question score is submitted, then jump to the ending “Thanks!”.",
+        "If question “Headline of score” is submitted, then jump to question “Headline of followup”.",
+        "If question “Headline of score” is submitted, then jump to the ending “Thanks!”.",
         "Otherwise, jump to the ending “Thanks!”.",
       ].join("\n")
     );
@@ -504,7 +520,74 @@ describe("createLogicRenderer: actions and fallback", () => {
     );
 
     expect(sentence).toBe(
-      "If question score is submitted, then require an answer to question comment und jump to question followup."
+      "If question “Headline of score” is submitted, then require an answer to question “Headline of comment” und jump to question “Headline of followup”."
+    );
+  });
+});
+
+describe("createLogicRenderer: how a rule names a question", () => {
+  const ruleOn = (elementId: string): TSurveyBlock =>
+    ({
+      id: createId(),
+      name: "Block",
+      elements: [],
+      logic: [
+        {
+          id: createId(),
+          conditions: {
+            id: createId(),
+            connector: "and",
+            conditions: [
+              {
+                id: createId(),
+                leftOperand: { type: "element", value: elementId },
+                operator: "isSubmitted",
+              },
+            ],
+          },
+          actions: [{ id: createId(), objective: "requireAnswer", target: elementId }],
+        },
+      ],
+    }) as unknown as TSurveyBlock;
+
+  const renderWith = (headlines: Record<string, string>, elementId: string) => {
+    const survey = {
+      ...SURVEY,
+      blocks: [
+        {
+          id: createId(),
+          name: "Block",
+          elements: Object.entries(headlines).map(([id, headline]) =>
+            element(id, TSurveyElementTypeEnum.OpenText, { headline: { default: headline } })
+          ),
+        },
+      ],
+    } as unknown as TSurvey;
+    return createLogicRenderer({ survey, t, locale: "en-US" })(ruleOn(elementId));
+  };
+
+  test("by its headline as the reader sees it: markup gone, on one line", () => {
+    expect(renderWith({ q1: "<p>How did you\n  hear <b>about</b> us?</p>" }, "q1")).toBe(
+      "If question “How did you hear about us?” is submitted, then require an answer to question “How did you hear about us?”."
+    );
+  });
+
+  test("cut to 60 characters, with an ellipsis", () => {
+    const headline = `${"a".repeat(70)} end`;
+
+    expect(renderWith({ q1: headline }, "q1")).toContain(`question “${"a".repeat(59)}…”`);
+  });
+
+  test.each([
+    ["is empty", { q1: "<p> </p>", q2: "Other" }],
+    ["reads the same as another's", { q1: "Why?", q2: "Why?" }],
+    [
+      "reads the same as another's once cut",
+      { q1: `${"b".repeat(60)} first`, q2: `${"b".repeat(60)} second` },
+    ],
+  ])("by its id when its headline %s, so no two questions read alike", (_case, headlines) => {
+    expect(renderWith(headlines, "q1")).toBe(
+      "If question q1 is submitted, then require an answer to question q1."
     );
   });
 });
