@@ -14,6 +14,7 @@ import {
 import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
 import {
   REFERENCE_HIGHLIGHT_TONE,
   getReferenceTone,
@@ -45,9 +46,11 @@ import {
   formatSampleResult,
   getSampleExplanation,
 } from "@/modules/survey/editor/lib/expression-sample";
+import { getFixedDate, toFixedDateExpression } from "@/modules/survey/editor/lib/fixed-date-expression";
 import { getFormulaSegmentChip } from "@/modules/survey/editor/lib/reference-chips";
 import { type TCaretCoordinates, getCaretCoordinates } from "@/modules/survey/editor/lib/textarea-caret";
 import { Button } from "@/modules/ui/components/button";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -531,6 +534,26 @@ export function SetValueFormula({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {/* A date field (expression only, P38) can take a fixed date without typing quotes (ENG-6968):
+            the picker writes the date literal, and shows it again when that is all the box holds. */}
+        {targetDataType === "date" && (
+          <DatePicker
+            value={parseStoredDay(getFixedDate(expression))}
+            locale={locale}
+            className="shrink-0"
+            triggerClassName="h-10 w-auto max-w-44"
+            align="end"
+            onChange={(date) => {
+              const next = toFixedDateExpression(formatLocalDay(date));
+              const nextText = formatFormula(next, references);
+              lastWritten.current = JSON.stringify(next);
+              setText(nextText);
+              setSelection({ start: nextText.length, end: nextText.length });
+              setParseError(null);
+              onExpressionChange(next);
+            }}
+          />
+        )}
         <DropdownMenu
           open={referenceMenu === "button"}
           onOpenChange={(open) => openReferenceMenu(open ? "button" : null)}>
