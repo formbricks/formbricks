@@ -9,9 +9,11 @@ import {
 } from "../core/plan-checks";
 import { SURVEY_IMPORT_PLAN_MAX_RANKING_OPTIONS } from "../limits";
 import {
+  QSF_PLAN_ADDRESS_FIELDS,
+  QSF_PLAN_CONTACT_FIELDS,
   QSF_PLAN_ELEMENT_TYPES,
-  type TQsfPlanContactField,
   type TQsfPlanElementType,
+  type TQsfPlanFormField,
   type TQsfPlanQuestion,
   ZQsfImportPlanEnvelope,
   ZQsfPlanPage,
@@ -52,7 +54,6 @@ export type TQsfPlanFailure =
   | "too_few_options"
   | "too_many_options"
   | "invalid_range"
-  | "missing_scale"
   | "missing_format";
 
 export interface TQsfPlannedOption {
@@ -68,7 +69,7 @@ export interface TQsfPlannedQuestion {
   rows: TQsfTextKey[];
   columns: TQsfTextKey[];
   labelKey: TQsfTextKey | null;
-  contactFields: { field: TQsfPlanContactField; key: TQsfTextKey }[];
+  contactFields: { field: TQsfPlanFormField; key: TQsfTextKey }[];
   inputType: NonNullable<TQsfPlanQuestion["inputType"]>;
   scale: TQsfPlanQuestion["scale"];
   range: number | null;
@@ -112,7 +113,7 @@ const ROLE_TYPES: Record<
   otherChoiceKey: ["multipleChoiceSingle", "multipleChoiceMulti"],
   noneChoiceKey: ["multipleChoiceMulti"],
   labelKey: ["consent"],
-  contactFields: ["contactInfo"],
+  contactFields: ["contactInfo", "address"],
 };
 
 const usesRole = (type: TQsfPlanElementType, role: keyof typeof ROLE_TYPES): boolean =>
@@ -169,18 +170,26 @@ function planChoices(
   return choices;
 }
 
-/** A matrix's rows and columns, from two different lists. */
+const otherSource = (source: "choices" | "answers"): "choices" | "answers" =>
+  source === "choices" ? "answers" : "choices";
+
+/**
+ * A matrix's rows and columns, from two different lists. A matrix has only two, so one the AI named
+ * settles the other: Gemini named the rows and left the scale out of a plain Likert matrix, twice.
+ */
 function planMatrix(
   entry: TQsfPlanQuestion,
   listed: (source: "choices" | "answers") => TQsfTextKey[],
   fail: TFail
 ): { rows: TQsfTextKey[]; columns: TQsfTextKey[] } {
-  if (entry.rowsFrom === null || entry.columnsFrom === null || entry.rowsFrom === entry.columnsFrom) {
+  const rowsFrom = entry.rowsFrom ?? (entry.columnsFrom === null ? null : otherSource(entry.columnsFrom));
+  const columnsFrom = entry.columnsFrom ?? (rowsFrom === null ? null : otherSource(rowsFrom));
+  if (rowsFrom === null || columnsFrom === null || rowsFrom === columnsFrom) {
     fail("missing_role");
     return { rows: [], columns: [] };
   }
-  const rows = listed(entry.rowsFrom);
-  const columns = listed(entry.columnsFrom);
+  const rows = listed(rowsFrom);
+  const columns = listed(columnsFrom);
   if (rows.length < 1 || columns.length < 2) fail("too_few_options");
   return { rows, columns };
 }
@@ -208,11 +217,14 @@ function planRange(
   type: "rating" | "csat" | "ces",
   entry: TQsfPlanQuestion,
   fail: TFail,
-  sliderSize: number | null
+  { sliderSize, choiceCount }: { sliderSize: number | null; choiceCount: number }
 ): number | null {
-  if (entry.scale === null) fail("missing_scale");
+  // No scale is a number scale, as the assembly builds it: the file says nothing else.
   if (type === "rating" && sliderSize !== null) return ratingRangeFor(sliderSize);
-  const range = entry.range === null ? null : Number(entry.range);
+  // A range left out is a CSAT's only one, or the question's own number of choices when that is one the
+  // type takes: on a retry asked only for the scale, Gemini dropped the range it had given.
+  const leftOut = type === "csat" ? 5 : choiceCount;
+  const range = entry.range === null ? leftOut : Number(entry.range);
   if (!isImportPlanRange(type, range)) fail("invalid_range");
   return range;
 }
@@ -228,9 +240,13 @@ function checkChoiceRoles(
   if (type === "consent" && (entry.labelKey === null || !choiceKeys.has(entry.labelKey))) {
     fail("missing_role");
   }
-  if (type === "contactInfo") {
+  if (type === "contactInfo" || type === "address") {
+    const own: ReadonlySet<string> = new Set(
+      type === "address" ? QSF_PLAN_ADDRESS_FIELDS : QSF_PLAN_CONTACT_FIELDS
+    );
     const fields = entry.contactFields.map((field) => field.field);
-    if (fields.length === 0 || new Set(fields).size !== fields.length) fail("missing_role");
+    if (fields.length === 0 || new Set(fields).size !== fields.length || fields.some((f) => !own.has(f)))
+      fail("missing_role");
     if (entry.contactFields.some((field) => !choiceKeys.has(field.key))) fail("foreign_key");
   }
 }
@@ -277,7 +293,12 @@ export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuesti
   const { rows, columns } = usesRole(type, "rowsFrom")
     ? planMatrix(entry, listed, fail)
     : { rows: [], columns: [] };
-  const range = isRatingType(type) ? planRange(type, entry, fail, sliderPoints(question.slider)) : null;
+  const range = isRatingType(type)
+    ? planRange(type, entry, fail, {
+        sliderSize: sliderPoints(question.slider),
+        choiceCount: sourceKeys(question, "choices").length,
+      })
+    : null;
   if (type === "date" && entry.format === null) fail("missing_format");
   checkChoiceRoles(type, question, entry, fail);
 

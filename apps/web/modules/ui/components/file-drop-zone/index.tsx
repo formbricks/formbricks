@@ -33,7 +33,9 @@ export const FileDropZone = ({
 }: Readonly<FileDropZoneProps>) => {
   const { t } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const isBusy = isLoading || isProcessing;
+  const canDrop = !isBusy && !disabled;
   const resolvedLoadingText = loadingText ?? t("common.loading");
 
   const handleFile = async (file: File | undefined) => {
@@ -53,12 +55,21 @@ export const FileDropZone = ({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    e.dataTransfer.dropEffect = canDrop ? "copy" : "none";
+    if (canDrop && !isDragOver) setIsDragOver(true);
+  };
+
+  // Leaving into a child of the zone is still inside it: only a leave to outside clears the state.
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setIsDragOver(false);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isBusy || disabled) return;
+    setIsDragOver(false);
+    if (!canDrop) return;
     void handleFile(e.dataTransfer.files[0]);
   };
 
@@ -70,7 +81,11 @@ export const FileDropZone = ({
   return (
     <div
       className={cn(
-        "rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6",
+        "rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 transition-colors",
+        // The same light slate as the editor's file uploader on hover; a file held over it also
+        // darkens the dashed edge, so the zone says it will take the drop.
+        canDrop && "hover:bg-slate-100",
+        isDragOver && "border-slate-400 bg-slate-100",
         isBusy && "opacity-70",
         className
       )}
@@ -79,10 +94,11 @@ export const FileDropZone = ({
       <label
         htmlFor={id}
         className={cn(
-          "flex flex-col items-center justify-center",
-          isBusy || disabled ? "cursor-not-allowed" : "cursor-pointer"
+          "flex flex-col items-center justify-center p-6",
+          canDrop ? "cursor-pointer" : "cursor-not-allowed"
         )}
         onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={handleDrop}>
         {isBusy ? (
           <>
@@ -91,7 +107,10 @@ export const FileDropZone = ({
           </>
         ) : (
           <>
-            <ArrowUpFromLineIcon className="size-8 text-slate-400" aria-hidden="true" />
+            <ArrowUpFromLineIcon
+              className={cn("size-8 transition-colors", isDragOver ? "text-slate-600" : "text-slate-400")}
+              aria-hidden="true"
+            />
             <p className="mt-2 text-sm text-slate-600">
               <span className="font-semibold">{primaryText}</span>
               {secondaryText ? ` ${secondaryText}` : null}

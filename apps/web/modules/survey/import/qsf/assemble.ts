@@ -9,7 +9,6 @@ import { getDefaultEndingTexts } from "../core/default-ending";
 import type {
   TDraftChoice,
   TDraftElementBase,
-  TDraftToggleInput,
   TSurveyImportAssembly,
   TSurveyImportDraft,
   TSurveyImportDraftElement,
@@ -23,7 +22,7 @@ import { type TSurveyImportPipelineIssue, joinOptionNames } from "../core/report
 import { type TSanitizedTexts, sanitizeName } from "../core/sanitize-text";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
 import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
-import type { TQsfPlanContactField } from "./plan-schema";
+import { QSF_PLAN_ADDRESS_FIELDS, QSF_PLAN_CONTACT_FIELDS, type TQsfPlanFormField } from "./plan-schema";
 import type { TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 
 /**
@@ -67,13 +66,6 @@ export interface TAssembleQsfDraftParams {
   signal?: AbortSignal;
 }
 
-const CONTACT_FIELDS: readonly TQsfPlanContactField[] = [
-  "firstName",
-  "lastName",
-  "email",
-  "phone",
-  "company",
-];
 const LONG_ANSWER_SELECTORS = new Set(["ML", "ESTB"]);
 const MAX_HIDDEN_FIELD_ID_LENGTH = 64;
 
@@ -509,10 +501,13 @@ class QsfAssembler {
       case "signature":
         // Qualtrics' Signature question lets the respondent sign or type, as ours does.
         return { ...base, type: "signature", allowTypedSignature: true };
-      case "contactInfo": {
+      case "contactInfo":
+      case "address": {
         const keyByField = new Map(planned.contactFields.map((field) => [field.field, field.key]));
+        const formFields: readonly TQsfPlanFormField[] =
+          planned.type === "address" ? QSF_PLAN_ADDRESS_FIELDS : QSF_PLAN_CONTACT_FIELDS;
         const fields = Object.fromEntries(
-          CONTACT_FIELDS.map((field, index) => {
+          formFields.map((field, index) => {
             const key = keyByField.get(field);
             return [
               field,
@@ -528,8 +523,10 @@ class QsfAssembler {
                 : { show: false, required: false, placeholder: this.uniform("") },
             ];
           })
-        ) as Record<TQsfPlanContactField, TDraftToggleInput>;
-        return { ...base, type: "contactInfo", ...fields };
+        );
+        return planned.type === "address"
+          ? ({ ...base, type: "address", ...fields } as TSurveyImportDraftElement)
+          : ({ ...base, type: "contactInfo", ...fields } as TSurveyImportDraftElement);
       }
       case "consent":
         return {

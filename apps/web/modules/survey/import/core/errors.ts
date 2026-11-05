@@ -105,10 +105,13 @@ export class SurveyImportFailedError extends Error {
    * `too_many_questions`: a document's plan holds more questions than one import takes, the AI ceiling
    * past which the file is imported through MCP instead. `nothing_importable`: the file was read whole
    * and holds no question the import can bring over, so trying again cannot help; `no_questions` is
-   * the same outcome with failures on the way, which a retry may not repeat.
+   * the same outcome with failures on the way, which a retry may not repeat. `too_large_for_ai`: no
+   * question came back and a call ran past its output tokens, so the file is too large for the AI
+   * lane and goes through MCP instead.
    */
   readonly reason:
     | "no_questions"
+    | "too_large_for_ai"
     | "nothing_importable"
     | "prompt_budget"
     | "draft_invalid"
@@ -124,11 +127,20 @@ export class SurveyImportFailedError extends Error {
 
 /**
  * A plan with no question in it: `nothing_importable` when the plan is conclusive (every unit answered
- * as a skip or no question, nothing failing on the way), `no_questions` otherwise, since another try
- * may plan what failed.
+ * as a skip or no question, nothing failing on the way), `too_large_for_ai` when a call ran past its
+ * output tokens (the file is too large for one AI import, so MCP is the way), and `no_questions`
+ * otherwise, since another try may plan what failed.
  */
-export const noQuestionsPlanned = (conclusive: boolean): SurveyImportFailedError =>
-  new SurveyImportFailedError(conclusive ? "nothing_importable" : "no_questions");
+export const noQuestionsPlanned = ({
+  conclusive,
+  hitOutputLimit,
+}: {
+  conclusive: boolean;
+  hitOutputLimit: boolean;
+}): SurveyImportFailedError => {
+  if (conclusive) return new SurveyImportFailedError("nothing_importable");
+  return new SurveyImportFailedError(hitOutputLimit ? "too_large_for_ai" : "no_questions");
+};
 
 /**
  * The plan ran out of time before any question was planned: the AI calls that fit before the deadline

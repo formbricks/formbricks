@@ -4,6 +4,7 @@ import { countDocumentChunks } from "./chunks";
 import { documentLimitExceeded } from "./errors";
 import type { TDocumentKind, TDocumentModel } from "./model";
 import { readCsvDocument } from "./read-csv";
+import { looksLikeMarkdown, readMarkdownDocument } from "./read-markdown";
 import { readSheetDocument } from "./read-sheet";
 import { readWordDocument } from "./read-word";
 
@@ -20,13 +21,19 @@ export interface TPreparedDocumentImport {
   model: TDocumentModel;
 }
 
-/** Each kind of document's reader, each building the same model. */
+/**
+ * Each kind of document's reader, each building the same model. Markdown is plain text, which the
+ * sniffer reads as a CSV; a Markdown questionnaire is read as the flowing document it is, laid out as a
+ * Word file's, never as a grid of comma-split cells.
+ */
 const readDocument = (upload: TDocumentUpload): TDocumentModel => {
   switch (upload.type) {
     case "xlsx":
       return readSheetDocument(upload.archive);
     case "csv":
-      return readCsvDocument(upload.text, upload.encoding);
+      return looksLikeMarkdown(upload.text)
+        ? readMarkdownDocument(upload.text, upload.encoding)
+        : readCsvDocument(upload.text, upload.encoding);
     case "docx":
       return readWordDocument(upload.archive);
   }

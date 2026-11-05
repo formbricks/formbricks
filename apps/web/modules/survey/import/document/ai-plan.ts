@@ -15,6 +15,7 @@ import {
   SURVEY_IMPORT_AI_CALL_TIMEOUT_MS,
   SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
   SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS,
+  SURVEY_IMPORT_DOCUMENT_MAX_PARALLEL_CALLS,
   SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS,
   SURVEY_IMPORT_PLANNING_STOP_QUESTIONS,
 } from "../limits";
@@ -62,6 +63,19 @@ export const documentQuestionRefs = (response: TImportPlanResponse): string[] =>
   );
 };
 
+/**
+ * Whether an answer that parses names none of the lines it was asked about, as a question or a skip:
+ * what the checks count as silent (`silentResponses`). An answer that does not parse is no silence, it
+ * fails its lines.
+ */
+export const isSilentDocumentAnswer = (response: TImportPlanResponse): boolean => {
+  const envelope = ZDocumentImportPlanEnvelope.safeParse(response.object);
+  if (!envelope.success) return false;
+  const entries = collectPlanEntries(envelope.data.questions, response.refs, ZDocumentPlanEntry, () => {});
+  const skips = collectPlanSkips(envelope.data.skipped, response.refs, ZDocumentPlanSkip);
+  return entries.size === 0 && skips.size === 0;
+};
+
 export interface TDocumentPlanResult {
   plan: TDocumentCheckedPlan;
   context: DocumentPlanContext;
@@ -73,6 +87,8 @@ export interface TDocumentPlanResult {
    * answered, so an empty plan means the file has nothing to import rather than a failed import.
    */
   conclusive: boolean;
+  /** Whether a call ran past its output tokens or prompt size (`TImportPlanRun.hitOutputLimit`). */
+  hitOutputLimit: boolean;
   /** Lines no call answered for (`isUnreadLine`): each could be a question the draft is missing. */
   unreadLines: number;
 }
@@ -116,6 +132,8 @@ export async function planDocumentImport(params: {
     // so far hold clearly more questions than the import takes. The pipeline refuses past the exact
     // ceiling on the checked plan.
     questionCeiling: { max: SURVEY_IMPORT_PLANNING_STOP_QUESTIONS, questionRefs: documentQuestionRefs },
+    isSilent: isSilentDocumentAnswer,
+    maxParallelCalls: SURVEY_IMPORT_DOCUMENT_MAX_PARALLEL_CALLS,
   };
   const run = await runImportPlan({ lane, refs, generate, signal: params.signal, deadline, callTimeoutMs });
   const { plan } = run;
@@ -155,5 +173,14 @@ export async function planDocumentImport(params: {
   const conclusive =
     !run.failedOnTheWay && plan.silentResponses === 0 && plan.entries.size + plan.skipped.size > 0;
   const unreadLines = [...plan.failures.values()].filter(isUnreadLine).length;
-  return { plan, context, issues, usage: run.usage, calls: run.calls, conclusive, unreadLines };
+  return {
+    plan,
+    context,
+    issues,
+    usage: run.usage,
+    calls: run.calls,
+    conclusive,
+    hitOutputLimit: run.hitOutputLimit,
+    unreadLines,
+  };
 }

@@ -31,9 +31,10 @@ import {
  */
 
 /**
- * The element types a document may produce. Never `pictureSelection` (it needs images), `cal` (an
- * external host), `address` or `contactInfo` (their fields are not texts of the file); a CTA is always
- * built without an external button.
+ * The element types a document may produce. Never `pictureSelection` (it needs images) or `cal` (it
+ * needs a booking account the file does not name); a CTA is always built without an external button.
+ * An address or contact form is planned with the fields the file lists, each an option naming its field
+ * (`DOCUMENT_PLAN_FORM_FIELDS`), whose text becomes the field's label.
  */
 export const DOCUMENT_PLAN_ELEMENT_TYPES = [
   "openText",
@@ -48,6 +49,8 @@ export const DOCUMENT_PLAN_ELEMENT_TYPES = [
   "date",
   "fileUpload",
   "consent",
+  "address",
+  "contactInfo",
   "cta",
 ] as const satisfies readonly `${TSurveyElementTypeEnum}`[];
 
@@ -56,6 +59,17 @@ export type TDocumentPlanElementType = (typeof DOCUMENT_PLAN_ELEMENT_TYPES)[numb
 /** What a planned entry is: a question of one of the types, the welcome text, or the closing text. */
 export const DOCUMENT_PLAN_KINDS = [...DOCUMENT_PLAN_ELEMENT_TYPES, "welcome", "ending"] as const;
 export type TDocumentPlanKind = (typeof DOCUMENT_PLAN_KINDS)[number];
+
+/** The fields of each form kind: what an option of an address or contact form names. */
+export const DOCUMENT_PLAN_FORM_FIELDS = {
+  address: ["addressLine1", "addressLine2", "city", "state", "zip", "country"],
+  contactInfo: ["firstName", "lastName", "email", "phone", "company"],
+} as const;
+const FORM_FIELD_NAMES = [
+  ...DOCUMENT_PLAN_FORM_FIELDS.address,
+  ...DOCUMENT_PLAN_FORM_FIELDS.contactInfo,
+] as const;
+export type TDocumentPlanFormField = (typeof FORM_FIELD_NAMES)[number];
 
 export const DOCUMENT_PLAN_INPUT_TYPES = ["text", "email", "url", "number", "phone"] as const;
 export const DOCUMENT_PLAN_SCALES = ["number", "smiley", "star"] as const;
@@ -105,6 +119,11 @@ const ZOptionForAI = z.object({
     .default(false)
     .describe('Whether the option is an "Other" that asks the respondent to say what'),
   texts: z.array(ZPieceForAI).nullable().default([]).describe("The option's text, one piece per language"),
+  field: z
+    .enum(FORM_FIELD_NAMES)
+    .nullable()
+    .default(null)
+    .describe("address and contactInfo only: the field this option is; else null"),
 });
 
 const ZRuleForAI = z.object({
@@ -173,7 +192,7 @@ export const ZDocumentImportPlanForAI = z.object({
           .array(ZOptionForAI)
           .nullable()
           .default([])
-          .describe("Choices, ranking items or matrix rows"),
+          .describe("Choices, ranking items, matrix rows, or an address or contact form's fields"),
         columns: z.array(ZOptionForAI).nullable().default([]).describe("A matrix's columns"),
         lowerLabel: z
           .array(ZPieceForAI)
@@ -201,12 +220,14 @@ export const ZDocumentImportPlanForAI = z.object({
           .describe("One sentence per rule, in the file's language"),
       })
     )
+    // Required, not defaulted: a thinking model left an optional list out after planning in its thoughts.
     .nullable()
-    .default([])
     .describe("Every question, and the welcome and closing texts, that start on the lines asked about"),
   skipped: z
     .array(z.object({ ref: z.string(), reason: z.string().describe("Why, in one short sentence") }))
     .nullable()
+    // Defaulted: a provider that omits empty lists (DeepSeek) usually has no skip, and `questions`
+    // being required already catches an answer that left both out.
     .default([])
     .describe("Questions on the lines asked about that Formbricks cannot represent"),
 });
@@ -228,6 +249,10 @@ const ZOption = z.object({
   code: ZLabel.nullable(),
   isOther: z.boolean(),
   texts: ZPieces.nullish().transform((pieces) => pieces ?? []),
+  field: z
+    .enum(FORM_FIELD_NAMES)
+    .nullish()
+    .transform((field) => field ?? null),
 });
 
 /**

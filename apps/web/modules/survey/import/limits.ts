@@ -251,18 +251,33 @@ export const SURVEY_IMPORT_MAX_DRAFT_BYTES = DEFAULT_REQUEST_BODY_LIMIT_BYTES - 
  */
 export const SURVEY_IMPORT_AI_MAX_SOURCE_CHARS = 240_000;
 
-/** The model's output budget per call. Room for reasoning tokens as well as the plan. */
-export const SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL = 8192;
+/**
+ * The model's output budget per call, reasoning tokens included. With thinking on (`core/ai-plan.ts`),
+ * Gemini 2.5 Flash thinks 1,000–6,600 tokens before a plan, and a plan of a 17-question table is about
+ * 4,400 tokens, so 8,192 cut off most calls on such a file; at 16,384 the largest seen was 9,668. Token
+ * cost is not the bound here, a complete import is: a call that runs long is cut by its time instead.
+ */
+export const SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL = 16_384;
 
 /**
  * Output a chunk is sized to expect: about 20 questions without logic, or 8 with two rules each.
  *
- * Sized by time, not by the 8,192-token budget. Gemini 2.5 Flash, the default, writes about 150–250
+ * Sized by time, not by the per-call token budget. Gemini 2.5 Flash, the default, writes about 150–250
  * tokens a second with its thinking included, and thinks up to about 3,000 tokens before a plan. At
  * the slow end a chunk then takes about 2 s + (3,000 + 1,400) / 150 ≈ 31 s, well inside the 45 s call
  * timeout; a 3,000-token chunk took about 42 s, and on a live run one timed out.
  */
 export const SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS = 1_400;
+
+/**
+ * A document chunk's expected output, by `document/chunks.ts`'s estimate: about 28 lines of a
+ * questionnaire (7–10 questions with their options), well under the Qualtrics lane's. A document plan
+ * quotes its texts back, and with thinking on Gemini 2.5 Flash spent 120–180 output tokens a line,
+ * thoughts included, about six times the estimate: an 85-line chunk ran past 8,192 tokens in about 30 s,
+ * a 43-line one took 20–33 s. At this size a call takes about 10–20 s, so the 150-question survey's
+ * ~22 chunks plan in under two waves of `SURVEY_IMPORT_DOCUMENT_MAX_PARALLEL_CALLS`, with time left for a retry.
+ */
+export const SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS = 500;
 
 /**
  * Calls in flight at once, per import. The 150-question survey the import is built for is 8 chunks
@@ -273,8 +288,28 @@ export const SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS = 1_400;
  */
 export const SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS = 4;
 
+/**
+ * A document import's calls in flight at once, more than a Qualtrics import's: a document chunk is
+ * smaller (`SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS`), so the 150-question document plans in about
+ * 22 chunks of 10–25 s each. Sixteen at a time plans them in under two waves, leaving time for the halves
+ * of a chunk that ran out of time and for the retry round; at four a time it took six waves and ran out
+ * of time, and at ten a single slow chunk in the third wave left no time for its halves. Bounded, because
+ * the provider's tokens-per-minute is the real limit: sixteen calls of under 5k prompt tokens each.
+ */
+export const SURVEY_IMPORT_DOCUMENT_MAX_PARALLEL_CALLS = 16;
+
 /** One call's time budget, before `AI_TIMEOUT_MULTIPLIER`. */
 export { AI_DEFAULT_TIMEOUT_MS as SURVEY_IMPORT_AI_CALL_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
+
+/**
+ * One document call's time budget, before `AI_TIMEOUT_MULTIPLIER`: shorter than a Qualtrics call's.
+ * A document chunk is sized to take 10–20 s (`SURVEY_IMPORT_DOCUMENT_CHUNK_OUTPUT_TOKENS`), and the
+ * longest answer seen (9,668 tokens, a 12-question table in one chunk) took about 36 s; but now and then
+ * a thinking model keeps thinking until it is cut off, and at 45 s such a call and then its halves spent
+ * half the import's time. At 40 s it is split sooner, and the 150-question document still finishes in
+ * about a minute.
+ */
+export const SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS = 40_000;
 
 /** Retries per call after the first attempt: the AI SDK's default `maxRetries` (`core/call-retry.ts`). */
 export const SURVEY_IMPORT_MAX_CALL_RETRIES = 2;

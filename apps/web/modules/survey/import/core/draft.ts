@@ -15,6 +15,15 @@ import type { TSurveyImportPipelineIssue } from "./report";
 /** The fields a contact info element asks for. */
 export type TSurveyImportContactField = "firstName" | "lastName" | "email" | "phone" | "company";
 
+/** The fields an address element asks for. */
+export type TSurveyImportAddressField =
+  | "addressLine1"
+  | "addressLine2"
+  | "city"
+  | "state"
+  | "zip"
+  | "country";
+
 /** Text keyed by language code, default language first. */
 export type TSurveyImportLocaleText = Record<string, string>;
 
@@ -66,6 +75,7 @@ export type TSurveyImportDraftElement = TDraftElementBase &
     | { type: "fileUpload"; allowMultipleFiles: false }
     | { type: "signature"; allowTypedSignature: true }
     | ({ type: "contactInfo" } & Record<TSurveyImportContactField, TDraftToggleInput>)
+    | ({ type: "address" } & Record<TSurveyImportAddressField, TDraftToggleInput>)
     | { type: "consent"; label: TSurveyImportLocaleText }
     | { type: "cta"; buttonExternal: false }
   );

@@ -262,6 +262,10 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.partly_unread");
     case "import_nothing_importable":
       return t("workspace.surveys.import.errors.nothing_importable");
+    case "import_too_large_for_ai":
+      return t("workspace.surveys.import.errors.too_large_for_ai");
+    case "import_no_questions":
+      return t("workspace.surveys.import.errors.no_questions");
     case "too_many_requests":
       return retryAfterSeconds === null
         ? getAiErrorMessage(code, t)

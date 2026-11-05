@@ -2,12 +2,13 @@
 
 import { ArrowLeftIcon, UploadIcon } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import type { TUserLocale } from "@formbricks/types/user";
 import { V3_SURVEY_GENERATE_ALLOWED_LANGUAGES } from "@/app/api/v3/surveys/generate/schemas";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
+import { landFocusOnDraft } from "@/modules/survey/components/template-list/components/ai-draft-preview";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
@@ -52,7 +53,7 @@ type CreateWithAIFormProps = {
   /** Reports whether a generation is in flight, so the host can word its confirmation. */
   onGeneratingChange?: (isGenerating: boolean) => void;
   /**
-   * Opens the import instead, offered as the last row above the footer while the prompt is written.
+   * Opens the import instead, offered on the footer's left while the prompt is written.
    * Left out when the host has no import to offer (no AI: the import would take Formbricks files only).
    */
   onImportInstead?: () => void;
@@ -125,7 +126,7 @@ export const CreateWithAIForm = ({
   // that scrolls, and a user pressing Space to read further would otherwise navigate by accident.
   useEffect(() => {
     if (status === "review") {
-      draftRef.current?.focus();
+      landFocusOnDraft(draftRef.current);
     }
   }, [status]);
 
@@ -196,6 +197,18 @@ export const CreateWithAIForm = ({
 
     return (
       <>
+        {onImportInstead && (
+          // The other way in, on the footer's left, away from the dialog's own actions.
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-slate-600 sm:mr-auto"
+            title={t("workspace.surveys.ai_create.import_file_hint")}
+            onClick={onImportInstead}>
+            <UploadIcon aria-hidden="true" />
+            {t("workspace.surveys.ai_create.import_file")}
+          </Button>
+        )}
         {showCancel && onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel}>
             {t("common.cancel")}
@@ -330,26 +343,6 @@ export const CreateWithAIForm = ({
               </SelectContent>
             </Select>
           </div>
-
-          {onImportInstead ? (
-            <p className="mt-auto flex items-center gap-1.5 text-xs text-slate-500">
-              <UploadIcon className="size-3.5 shrink-0" aria-hidden="true" />
-              <span>
-                <Trans
-                  i18nKey="workspace.surveys.ai_create.import_hint_sentence"
-                  components={{
-                    importLink: (
-                      <button
-                        type="button"
-                        onClick={onImportInstead}
-                        className="rounded-sm text-slate-600 underline underline-offset-4 hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
-                      />
-                    ),
-                  }}
-                />
-              </span>
-            </p>
-          ) : null}
         </>
       )}
 

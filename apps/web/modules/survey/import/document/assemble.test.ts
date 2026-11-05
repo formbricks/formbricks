@@ -35,7 +35,7 @@ const text = (english: string, german?: string): TDocumentText =>
 const option = (
   english: string,
   { code = null, isOther = false, german }: { code?: string | null; isOther?: boolean; german?: string } = {}
-): TDocumentPlannedOption => ({ code, isOther, text: text(english, german) });
+): TDocumentPlannedOption => ({ code, isOther, text: text(english, german), field: null });
 
 /** A checked entry as `plan-checks.ts` hands it over: an open question unless `fields` say otherwise. */
 const entry = (ref: string, fields: Partial<TDocumentPlannedEntry> = {}): TDocumentPlannedEntry => ({
@@ -302,6 +302,35 @@ describe("assembleDocumentDraft: elements", () => {
     expect(byId.get("agree")).not.toHaveProperty("subheader");
     expect(byId.get("agree2")).toMatchObject({ type: "consent", label: { "en-US": "I agree." } });
     expect(byId.get("note")).toMatchObject({ type: "cta", buttonExternal: false });
+    expect(checkImportDraft(document)).toEqual([]);
+  });
+
+  test("an address or contact form shows the fields the file lists, labelled with its texts", async () => {
+    const field = (english: string, name: TDocumentPlannedOption["field"]) => ({
+      ...option(english),
+      field: name,
+    });
+    const { document } = await assemble([
+      entry("R1", {
+        kind: "address",
+        label: "addr",
+        required: true,
+        options: [field("Street", "addressLine1"), field("Town", "city")],
+      }),
+      entry("R2", { kind: "contactInfo", label: "contact", options: [field("E-mail", "email")] }),
+    ]);
+
+    expect(elementById(document, "addr")).toMatchObject({
+      type: "address",
+      addressLine1: { show: true, required: true, placeholder: { "en-US": "Street" } },
+      city: { show: true, required: true, placeholder: { "en-US": "Town" } },
+      country: { show: false, required: false, placeholder: { "en-US": "" } },
+    });
+    expect(elementById(document, "contact")).toMatchObject({
+      type: "contactInfo",
+      email: { show: true, required: false, placeholder: { "en-US": "E-mail" } },
+      firstName: { show: false },
+    });
     expect(checkImportDraft(document)).toEqual([]);
   });
 

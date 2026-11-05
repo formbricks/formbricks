@@ -111,7 +111,8 @@ describe("the prompt guards on each call", () => {
     budget.maxCallChars = null;
 
     expect(generate).not.toHaveBeenCalled();
-    expect((error as SurveyImportFailedError).reason).toBe("no_questions");
+    // Too big to send even split: too large for the AI lane.
+    expect((error as SurveyImportFailedError).reason).toBe("too_large_for_ai");
   });
 
   test("stop sending once the import's total is spent, dropping what is left as ai_budget", async () => {

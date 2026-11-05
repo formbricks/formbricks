@@ -13,7 +13,7 @@ import { getImportedSurveyName, getImporterTranslate } from "../core/imported-su
 import type { TSurveyImportResult, TSurveyImportRunParams } from "../core/lane";
 import { type TSurveyImportPipelineIssue, buildSurveyImportReport } from "../core/report";
 import { sanitizeName } from "../core/sanitize-text";
-import { SURVEY_IMPORT_AI_CALL_TIMEOUT_MS, SURVEY_IMPORT_MAX_QUESTIONS } from "../limits";
+import { SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS, SURVEY_IMPORT_MAX_QUESTIONS } from "../limits";
 import { planDocumentImport } from "./ai-plan";
 import { assembleDocumentDraft } from "./assemble";
 import {
@@ -201,7 +201,7 @@ export async function runDocumentImport(
     generate: params.generate ?? organizationGenerate(params),
     signal,
     deadline,
-    callTimeoutMs: getAITimeoutMs(SURVEY_IMPORT_AI_CALL_TIMEOUT_MS),
+    callTimeoutMs: getAITimeoutMs(SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS),
   });
 
   signal.throwIfAborted();
@@ -217,7 +217,7 @@ export async function runDocumentImport(
   if (questionCount + planned.unreadLines > SURVEY_IMPORT_MAX_QUESTIONS) {
     throw new SurveyImportFailedError("partly_unread");
   }
-  if (questionCount === 0) throw noQuestionsPlanned(planned.conclusive);
+  if (questionCount === 0) throw noQuestionsPlanned(planned);
   const languages = planned.context.languages;
   if (!languages) throw new SurveyImportFailedError("no_questions");
 
