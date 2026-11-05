@@ -60,3 +60,12 @@ describe("runImportPlan: the prompt budget", () => {
     expect(generate).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("runImportPlan: the request", () => {
+  test("asks for low reasoning: a thinking model's thoughts would spend the call's output tokens", async () => {
+    const { run, generate } = plan(100_000);
+    await run;
+
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ lowReasoning: true }));
+  });
+});

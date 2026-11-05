@@ -71,6 +71,11 @@ export interface TImportPlanRequest<TSchema extends z.ZodType = z.ZodType> {
   timeout: number;
   /** Always 0: the import retries its calls itself (`call-retry.ts`), the SDK must not. */
   maxRetries: 0;
+  /**
+   * Always on: a plan is extraction, not reasoning, and a thinking model's thoughts count against the
+   * call's output tokens and spend its time — on Gemini, enough to time out or overflow most chunks.
+   */
+  lowReasoning: true;
   abortSignal: AbortSignal;
 }
 
@@ -352,6 +357,7 @@ async function attemptCall<TFailure extends string, TPlan extends TImportChecked
       maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
       timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
       maxRetries: 0,
+      lowReasoning: true,
       abortSignal: context.signal,
     });
     addUsage(context, result.usage);

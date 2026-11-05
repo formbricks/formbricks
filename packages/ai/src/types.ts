@@ -84,6 +84,12 @@ export type TGenerateObjectOptions<T = unknown> = Omit<
    * provider's own behaviour.
    */
   strictSchema?: boolean;
+  /**
+   * `true` for a task that needs no reasoning, such as extraction: the model's thinking is turned down
+   * as far as the configured model allows, so it spends neither the call's output tokens nor its time.
+   * Mapped for Gemini on Vertex (`reasoning.ts`); other providers keep their own behaviour.
+   */
+  lowReasoning?: boolean;
 };
 export interface TGenerateObjectResult<T = unknown> {
   readonly object: T;
