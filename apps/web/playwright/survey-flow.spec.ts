@@ -168,7 +168,7 @@ test.describe("Survey flow @slow", () => {
       await page.getByRole("button", { name: "Expand", exact: true }).click();
 
       // Rules before the first question: the screen-out on a missing panel id jumps to its ending.
-      await expect(page.getByText("Before the first question")).toBeVisible();
+      await expect(page.getByText("Before the first question", { exact: true })).toBeVisible();
       for (const rule of fixture.startLogic ?? []) {
         await expect(page.locator(`[id="${rule.id}"]`)).toBeVisible();
       }
