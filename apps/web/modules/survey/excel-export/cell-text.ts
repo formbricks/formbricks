@@ -1,5 +1,6 @@
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { cutText } from "@/lib/utils/cut-text";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { EXCEL_EXPORT_MAX_CELL_CHARS } from "./limits";
 
@@ -12,8 +13,6 @@ const EXTRA_BLANK_LINES = /\n{3,}/g;
 // none is readable text), the non-characters U+FFFE/U+FFFF, and lone surrogates. SheetJS writes the C0
 // ones as `&#x1;`, which makes Excel refuse to open the file as corrupt.
 const XML_INVALID = /[^\P{Cc}\t\n\r]|[\uFFFE\uFFFF]|\p{Cs}/gu;
-
-const isHighSurrogate = (code: number): boolean => code >= 0xd800 && code <= 0xdbff;
 
 /** Rich text as the respondent reads it: the words only, one line per paragraph. */
 const flattenRichText = (html: string): string =>
@@ -28,13 +27,8 @@ const flattenRichText = (html: string): string =>
  * `text` cut to fit one spreadsheet cell (32,767 characters), ending in `truncatedSuffix` when it was cut.
  * Never splits a surrogate pair, so an emoji at the cut is dropped whole.
  */
-export const fitCell = (text: string, truncatedSuffix: string): string => {
-  if (text.length <= EXCEL_EXPORT_MAX_CELL_CHARS) return text;
-  let end = EXCEL_EXPORT_MAX_CELL_CHARS - truncatedSuffix.length;
-  // The UTF-16 unit, not the code point: a lone high surrogate is what must not end the cell.
-  if (isHighSurrogate(text.charCodeAt(end - 1))) end -= 1; // NOSONAR(typescript:S7758) -- a unit, on purpose
-  return `${text.slice(0, end)}${truncatedSuffix}`;
-};
+export const fitCell = (text: string, truncatedSuffix: string): string =>
+  cutText(text, EXCEL_EXPORT_MAX_CELL_CHARS, truncatedSuffix);
 
 /** `text` with the characters an xlsx file cannot hold removed. */
 export const toXmlSafeText = (text: string): string => text.replaceAll(XML_INVALID, "");

@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { getUserLocaleOrDefault } from "@/lib/user/locale";
+import { cutText } from "@/lib/utils/cut-text";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { getTranslate } from "@/lingodotdev/server";
 import { SURVEY_IMPORT_MAX_NAME_CHARS, SURVEY_IMPORT_MAX_TAKEN_NAMES } from "../limits";
@@ -26,12 +27,7 @@ export const getImporterTranslate = async (userId: string | null): Promise<TImpo
  */
 export const capImportedSurveyName = (name: string, t: TTranslate): string => {
   const base = stripImportedSuffix(name, t);
-  if (base.length <= SURVEY_IMPORT_MAX_NAME_CHARS) return base;
-  let end = SURVEY_IMPORT_MAX_NAME_CHARS;
-  // The UTF-16 unit, not the code point: a lone high surrogate is what must not end the name.
-  const code = base.charCodeAt(end - 1); // NOSONAR(typescript:S7758) -- a unit, on purpose
-  if (code >= 0xd800 && code <= 0xdbff) end -= 1;
-  return base.slice(0, end).trimEnd();
+  return cutText(base, SURVEY_IMPORT_MAX_NAME_CHARS).trimEnd();
 };
 
 /**
