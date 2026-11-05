@@ -10,9 +10,11 @@ import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-fi
 import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
+import { getSurveyFilteringValues } from "./filtering-values";
 import {
   deleteResponse,
   getResponseDownloadFile,
+  getResponseFilteringValues,
   lockResponseForUpdate,
   responseSelection,
   updateResponse,
@@ -55,6 +57,10 @@ vi.mock("./utils", async (importOriginal) => {
     getResponsesJson: vi.fn(() => []),
   };
 });
+
+vi.mock("./filtering-values", () => ({
+  getSurveyFilteringValues: vi.fn(),
+}));
 
 vi.mock("../survey/service", () => ({
   getSurvey: vi.fn(() =>
@@ -746,5 +752,43 @@ describe("getResponseDownloadFile", () => {
     expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
     expect(exportedIds).toHaveLength(rows.length);
     expect(new Set(exportedIds).size).toBe(rows.length);
+  });
+});
+
+describe("getResponseFilteringValues", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("derives the values from the loaded survey without reading every response (ENG-3755)", async () => {
+    const values = {
+      contactAttributes: {},
+      meta: {},
+      hiddenFields: {},
+      reservedValues: {},
+      variableValues: {},
+    };
+    vi.mocked(getSurveyFilteringValues).mockResolvedValue(values);
+
+    await expect(getResponseFilteringValues("survey-123")).resolves.toBe(values);
+
+    expect(getSurvey).toHaveBeenCalledWith("survey-123");
+    expect(getSurveyFilteringValues).toHaveBeenCalledWith(expect.objectContaining({ id: "survey-123" }));
+    expect(prisma.response.findMany).not.toHaveBeenCalled();
+  });
+
+  test("throws ResourceNotFoundError and queries nothing when the survey does not exist", async () => {
+    vi.mocked(getSurvey).mockResolvedValueOnce(null);
+
+    await expect(getResponseFilteringValues("survey-missing")).rejects.toThrow(ResourceNotFoundError);
+    expect(getSurveyFilteringValues).not.toHaveBeenCalled();
+  });
+
+  test("maps Prisma errors to DatabaseError", async () => {
+    vi.mocked(getSurveyFilteringValues).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("boom", { code: "P2010", clientVersion: "test" })
+    );
+
+    await expect(getResponseFilteringValues("survey-123")).rejects.toThrow(DatabaseError);
   });
 });

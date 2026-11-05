@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -11,6 +12,7 @@ import {
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { deleteIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
@@ -45,6 +47,7 @@ export const ManageIntegration = ({
   locale,
 }: Readonly<ManageIntegrationProps>) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   let integrationArray: TIntegrationGoogleSheetsConfigData[] = [];
   if (googleSheetIntegration?.config.data) {
@@ -62,6 +65,11 @@ export const ManageIntegration = ({
     if (deleteIntegrationActionResult?.data) {
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setIsConnected(false);
+      // The layout's query cache outlives this page; drop the deleted connection so a revisit cannot show it.
+      queryClient.setQueryData(
+        integrationKeys.byType(googleSheetIntegration.workspaceId, "googleSheets"),
+        null
+      );
     } else {
       const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
       toast.error(errorMessage);
