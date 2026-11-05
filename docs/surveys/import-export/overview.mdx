@@ -78,10 +78,10 @@ Every import runs through one dialog. Go to **Surveys**, open the **New Survey**
 
 Drop a file into the dialog, or click to choose one, up to 15 MB. Formbricks reads the file and shows you a draft before anything is created:
 
-- the questions it found, with a summary of questions, blocks and languages;
+- the questions it found, with a summary of questions, blocks and languages under the file's name;
 - the **Import report**, which lists everything left out, changed or worth checking. It opens by itself when there is a warning, and **Download** saves it as a text file.
 
-Click **Save and continue** to create the survey as a draft and open it in the editor. Nothing is published. **Pick another file** starts over.
+Click **Save and continue** to create the survey as a draft and open it in the editor. Nothing is published. The pencil next to the file's name starts over with another file.
 
 Formbricks tells the file type from its content, not its name. A file it can't read fails with the reason, and nothing is created.
 
@@ -131,7 +131,7 @@ When you import a Formbricks file into the workspace its survey came from, Formb
 
 Anything else creates a new survey. The dialog never hints that a survey exists if you can't edit it.
 
-On a Match, the review asks **How should we import it?**, with **Update** selected and **Create new** next to it. With Update selected, the button reads **Update survey**.
+On a Match, the review says **This file was exported from "Survey name"** and offers two choices: **Update "Survey name"**, selected, and **Create a new survey**. Each says what it does. With Update selected, the button reads **Update survey**.
 
 ### What Update replaces and keeps
 
@@ -139,7 +139,7 @@ Update replaces the survey's questions, blocks, endings, welcome card, languages
 
 It keeps the survey's ID, name, status, responses, settings and styling. Links, embeds and QR codes keep working.
 
-A file can't update the survey if its survey type (link or app) or default language differs from the survey's. Once the survey has left draft, it also can't change a question's ID, code or type, an answer code or an option's text, or remove an option the survey had: responses are matched to them. The review then lists the reasons and offers only **Create new**.
+A file can't update the survey if its survey type (link or app) or default language differs from the survey's. Once the survey has left draft, it also can't change a question's ID, code or type, an answer code or an option's text, or remove an option the survey had: responses are matched to them. The review then lists the reasons under Update and offers only **Create a new survey**.
 
 <Warning>
   If the survey has responses, the report warns about each question the file removes. Its answers stay
@@ -148,24 +148,21 @@ A file can't update the survey if its survey type (link or app) or default langu
 
 ### Active surveys are never updated
 
-If the survey is active (in progress), the choice is locked to **Create new** and the dialog says why. The same holds if the survey goes live between your review and your click: the Update fails, nothing is written, and the choice moves to **Create new**. Pause the survey first if you need to update it.
+If the survey is active (in progress), the choice is locked to **Create a new survey** and the Update choice says why. The same holds if the survey goes live between your review and your click: the Update fails, nothing is written, and the choice moves to **Create a new survey**. Pause the survey first if you need to update it.
 
 ### Changed since you exported
 
-Update first checks that nobody changed the survey after the file was exported. If someone did, nothing is written. The dialog shows **"Survey name" changed after this file was exported**, and the choice moves to **Create new**.
+Update first checks that nobody changed the survey after the file was exported. If someone did, nothing is written. The Update choice says **Changed since this file was exported**, and the choice moves to **Create a new survey**.
 
 You can save the file as a new survey, or choose **Update** again: the button now reads **Update anyway** and overwrites those changes. If the survey changes once more after this review, Update anyway fails too. Pick the file again to review it against the latest version.
 
 ### Triggers
 
-For app surveys, when the file's triggers differ from the survey's, the review asks which to use:
-
-- **Use the file's:** the survey is shown by the file's triggers.
-- **Keep current:** the survey keeps its own triggers.
+For app surveys, when the file's triggers differ from the survey's, the Update choice has a **Use the file's triggers** checkbox, ticked. Untick it to keep the survey's own triggers.
 
 Either way the survey keeps its display settings: how often and when it shows, its auto-close and response limit.
 
-If the file's triggers would leave a live survey with nothing that shows it, the choice is locked to **Keep current**. The question is hidden when the triggers are the same.
+If the file's triggers would leave a live survey with nothing that shows it, the checkbox is unticked and locked, and says why. It is hidden when the triggers are the same.
 
 ## Import a document
 
@@ -192,9 +189,11 @@ A document import shows its progress, **Reading the file**, **Building questions
 
 ### Very large surveys
 
-A document import builds up to **200 questions** from up to **240,000 characters** of text. A document with more text is refused before any AI runs; one the AI plans into more than 200 questions is refused once the plan is back, before anything is created. If the AI could not read some lines of the file, they count toward the 200 as if each were a question, so a file that might be too large is refused rather than imported short. Otherwise the review warns that the draft may be missing questions; import the file again to try those lines once more.
+A document import builds up to **200 questions** from up to **240,000 characters** of text. A document with more text is refused before any AI runs; one the AI plans into more than 200 questions is refused once the plan is back, before anything is created.
 
 Import it with Claude or ChatGPT instead. [Connect your assistant to Formbricks through MCP](/platform/mcp/overview), give it the document, and ask it to create the survey. Or split the document and import each part.
+
+If the AI could not read some lines of the file, they count toward the 200 as if each were a question, so a file that might be too large is refused, with a message to import it again, rather than imported short. Otherwise the review warns that the draft may be missing questions; import the file again to try those lines once more.
 
 ### Document limits
 
