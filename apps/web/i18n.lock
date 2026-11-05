@@ -4071,7 +4071,7 @@ checksums:
     workspace/surveys/edit/flow/count_endings: a6bf3e296af06553fa41064ddb64a2da
     workspace/surveys/edit/flow/count_rules: ab0a6ff628ff637a8fa80e6d0527b6f2
     workspace/surveys/edit/flow/create_calculated_field: 800eb47aaf313532cc36eafd7a3b53bd
-    workspace/surveys/edit/flow/date_field_expression_only: 470614c2fd92dfd210375755cf68027a
+    workspace/surveys/edit/flow/date_field_expression_only: b91d02467a5bc587ff17cfbbb74a014e
     workspace/surveys/edit/flow/date_field_expression_only_label: ecd75ffb276bb363c49ab5b9b0fb6b63
     workspace/surveys/edit/flow/edit_options_shown_if: 13b95036f3e8782c24fe6410285bb9f5
     workspace/surveys/edit/flow/edit_show_if: 78f82b3cb825355ceed51b5330d51068
@@ -4094,6 +4094,8 @@ checksums:
     workspace/surveys/edit/flow/formula_function_min: e696eb332e0d0ef9bc14c70b46e63625
     workspace/surveys/edit/flow/formula_function_now: 1c709a871f8ecbf35c06ecf365fea682
     workspace/surveys/edit/flow/formula_function_round: e3e4e1e6eb8a4742330d423e8f8d6a58
+    workspace/surveys/edit/flow/formula_function_unfit_field: 012b1fade3cc160ee0f8083eb719f370
+    workspace/surveys/edit/flow/formula_function_unfit_here: e5dd2d91ee6a30804f5d6911792c77c2
     workspace/surveys/edit/flow/formula_functions: 4e3a574a61daad572c26d58e83ef5521
     workspace/surveys/edit/flow/formula_hint: 6b7b451b4e72c2a3847de2e51df49efa
     workspace/surveys/edit/flow/formula_insert_reference: 873a19402815f4f172ce79cc909bbee2
@@ -4108,12 +4110,20 @@ checksums:
     workspace/surveys/edit/flow/formula_issue_unusable_question: 67910d7445afe12a9e389a7c4a852f51
     workspace/surveys/edit/flow/formula_placeholder: 87b90bd7ee4f8f515e149ffa3ef66e02
     workspace/surveys/edit/flow/formula_sample_empty: 8e741ab287558e188213d752c0eb4a86
+    workspace/surveys/edit/flow/formula_sample_explained: 8eb7c295430be0b42476cce78eb7f40d
+    workspace/surveys/edit/flow/formula_sample_explained_empty: ff12f552d9ff941a0ee50246f847e5ce
     workspace/surveys/edit/flow/formula_sample_hint: 250cae6f31e3b58dbf5dc4d177dad310
+    workspace/surveys/edit/flow/formula_sample_input: 3b294936816cbe60b109b76811f13050
+    workspace/surveys/edit/flow/formula_sample_input_empty: eb8a0a304398ed3e96255aff876308a0
     workspace/surveys/edit/flow/formula_sample_result: 1e98ee6358d21bf0214b9cf5892f4e3f
     workspace/surveys/edit/flow/formula_type_boolean: 4eb11fe48c5412a4968b065d4ad4f675
     workspace/surveys/edit/flow/formula_type_date: ca3e106a4ce8822351763c49642ea4d9
     workspace/surveys/edit/flow/formula_type_number: bce5f14f4f0f190d9e23897b28b1a2e8
     workspace/surveys/edit/flow/formula_type_text: 657ada753de2a4865fc55016aa9a035e
+    workspace/surveys/edit/flow/formula_value_boolean: 4eb11fe48c5412a4968b065d4ad4f675
+    workspace/surveys/edit/flow/formula_value_date: d36f7a7f2787b844ac36f3b5bc99eec3
+    workspace/surveys/edit/flow/formula_value_number: aa3a15d041975444b79d7b8d95c615e3
+    workspace/surveys/edit/flow/formula_value_text: 657ada753de2a4865fc55016aa9a035e
     workspace/surveys/edit/flow/hidden_badge: fa290c6ada5869d744ed35e9cca64699
     workspace/surveys/edit/flow/hidden_count: aca6e77f9f2f7a39a627f06b0ecfdb35
     workspace/surveys/edit/flow/hidden_option_help: c2e443c375f46108561d14001be4fe55
