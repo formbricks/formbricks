@@ -22,6 +22,7 @@ import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 import { SEED_CREDENTIALS, SEED_IDS } from "../seed/constants";
+import { seedContractFeedbackRecords } from "./contract-feedback-records";
 
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
 
@@ -418,7 +419,7 @@ async function seedWorkflow(
  * reach the dataset. Every mutating operation gets its own victim, as with surveys.
  *
  * The preview, data and field-values operations run a Cube query; the job starts Cube
- * (scripts/start-cube-ci.sh) and `seedFeedbackRecords` gives it rows for this dataset. All of them
+ * (scripts/start-cube-ci.sh) and `seedContractFeedbackRecords` gives it rows for this dataset. All of them
  * answer `dashboards_plan_required` where the instance's license does not grant Dashboards.
  */
 async function seedDashboards(organizationId: string): Promise<void> {
@@ -494,42 +495,6 @@ async function seedDashboards(organizationId: string): Promise<void> {
     }
     // Adding the widgets moved nothing, but pin it again so the replace precondition below holds.
     await prisma.dashboard.update({ where: { id }, data: { updatedAt: CONTRACT_FIXTURE_UPDATED_AT } });
-  }
-}
-
-/** NPS answers in the fixture dataset, by source: [sourceName, scores]. */
-const CONTRACT_FEEDBACK_RECORDS = [
-  ["Contract fixture — web", [10, 9, 6]],
-  ["Contract fixture — email", [8, 3, 10]],
-] as const;
-
-/**
- * Rows for Cube to answer the chart query operations from, so they validate real data rows instead of an
- * empty result. `feedback_records` belongs to the Hub, not Prisma: it exists only once the Hub schema is
- * applied (scripts/start-cube-ci.sh does that in CI), so without it this is skipped. Collected a day or
- * two ago, inside the "last 7 days" range the spec's examples ask for, and re-dated on every run.
- */
-async function seedFeedbackRecords(): Promise<void> {
-  const [{ present }] = await prisma.$queryRaw<{ present: boolean }[]>`
-    SELECT to_regclass('public.feedback_records') IS NOT NULL AS present`;
-  if (!present) {
-    logger.info("No feedback_records table (Hub schema not applied) — skipping the Cube fixture rows.");
-    return;
-  }
-
-  for (const [sourceName, scores] of CONTRACT_FEEDBACK_RECORDS) {
-    for (const [index, score] of scores.entries()) {
-      const submissionId = `contract-${sourceName.split(" — ")[1]}-${index}`;
-      await prisma.$executeRaw`
-        INSERT INTO feedback_records
-          (tenant_id, submission_id, field_id, field_type, source_type, source_name, value_number, collected_at)
-        VALUES
-          (${CONTRACT_IDS.DATASET}, ${submissionId}, 'contract-nps', 'nps', 'formbricks', ${sourceName},
-           ${score}, now() - make_interval(hours => ${24 + index}))
-        ON CONFLICT (tenant_id, submission_id, field_id)
-        DO UPDATE SET value_number = EXCLUDED.value_number, source_name = EXCLUDED.source_name,
-          collected_at = EXCLUDED.collected_at`;
-    }
   }
 }
 
@@ -693,7 +658,7 @@ async function main(): Promise<void> {
 
   await seedContactsAndSegment();
   await seedDashboards(workspace.organizationId);
-  await seedFeedbackRecords();
+  await seedContractFeedbackRecords(prisma, CONTRACT_IDS.DATASET);
 
   // After the read survey's languages, which seed the workspace's en-US and de-DE. The read creative opens
   // the read survey, which `read.surveyId` also points the list's `surveyId` filter at.
