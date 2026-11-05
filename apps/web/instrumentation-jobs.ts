@@ -1,6 +1,7 @@
 import { type JobHandlerOverrides, type JobsRuntimeHandle, startJobsRuntime } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { observeAuthzedOutboxHealth } from "@/lib/authzed/outbox-processor";
+import { startAuthzedOutboxSafetyNet, stopAuthzedOutboxSafetyNet } from "@/lib/authzed/outbox-safety-net";
 import { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { RECURRING_JOB_REGISTRATIONS, getJobHandlerOverrides } from "@/lib/jobs/recurring-registrations";
 import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
@@ -143,8 +144,10 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     return null;
   }
 
-  // Before the runtime starts, and whether or not it does: it reads PostgreSQL, not Redis.
+  // Before the runtime starts, and whether or not it does: both read PostgreSQL, not Redis. The safety
+  // net is what delivers the outbox when the runtime is up but its delivery job is not running.
   observeAuthzedOutboxHealth();
+  startAuthzedOutboxSafetyNet(() => !globalForJobsRuntime.formbricksServerLifecycle?.draining);
 
   if (globalForJobsRuntime.formbricksJobsRuntime) {
     return globalForJobsRuntime.formbricksJobsRuntime;
@@ -189,6 +192,7 @@ export const resetJobsWorkerRegistrationForTests = async (): Promise<void> => {
   const initializing = globalForJobsRuntime.formbricksJobsRuntimeInitializing;
   clearRecurringJobsRetryTimeout();
   clearJobsWorkerRetryTimeout();
+  await stopAuthzedOutboxSafetyNet();
   globalForJobsRuntime.formbricksJobsRecurringRegistered = undefined;
   globalForJobsRuntime.formbricksJobsRecurringRegistration = undefined;
   globalForJobsRuntime.formbricksJobsRuntime = undefined;
