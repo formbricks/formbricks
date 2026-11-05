@@ -71,18 +71,30 @@ A published survey can't lose an option that existed at launch: deleting it woul
 
 Hidden is a separate state, not a condition that never matches, so the Flow tab and results tell a retired option apart from one shown only to some respondents.
 
+To hide an option from the **Questions** tab, click the eye-off icon next to it, beside its lock and delete buttons. Matrix rows and columns have one too, and so does each picture of a picture selection question. Click it again to show the option again; a message confirms each change. A Hidden option stays in the editor, greyed out and labelled **Hidden**, and it works on a live survey too, where options can't be deleted.
+
 ## Adding and editing a show-if
 
-Show-if is edited on the [Flow tab](/surveys/general-features/flow-tab).
+Show-if can be edited on the [Flow tab](/surveys/general-features/flow-tab), or on the **Questions** tab, without leaving the question you're working on. Both edit the same show-if, so a change on one tab shows on the other.
+
+On the **Flow** tab:
 
 * **On a block:** open the block and click **Show block if…** in its header, or choose **Show block if…** under **Add logic**.
 * **On a question:** open its block and click **Add condition** in the question's **Show question if…** column.
 
+On the **Questions** tab:
+
+* **On a block:** open the block's **Settings** tab and click **Add condition** under **Show block if…**.
+* **On a question:** open the question's **Settings** tab and click **Add condition** under **Show question if…**.
+* **On options:** in the same **Settings** tab, a question with options also has **Show options if…**, which opens the options table described below.
+
+When nothing comes before a block or question for a show-if to read (no earlier question and no hidden field), **Add condition** is greyed out, and hovering it says why.
+
 In the popover that opens, the first field reads **Choose a question or field**: pick what to test, then an operator and a value, and add more conditions as needed. Nothing is saved until you click **Done**, which stays disabled until the condition is complete; **Cancel**, Escape or a click outside leaves the survey as it was.
 
-A block with a show-if carries a **Show block if …** badge in its header that reads the condition, and a question shows its condition in its **Show question if…** column. Click it to change the condition, or choose **Remove condition** to show it to everyone again. Removing the last condition removes the show-if too.
+A block with a show-if carries a **Show block if …** badge in its header that reads the condition, and a question shows its condition in its **Show question if…** column. The **Settings** tabs show the same condition. Click it to change the condition, or choose **Remove condition** to show it to everyone again. Removing the last condition removes the show-if too.
 
-**On options:** open the block and click **Add condition**, or the counts, in a question's **Show options if…** column. The popover is a table of every option (for a matrix, every row and column):
+**On options:** open the block and click **Add condition**, or the counts, in a question's **Show options if…** column (or under **Show options if…** on the question's **Settings** tab). The popover is a table of every option (for a matrix, every row and column):
 
 * **Shown when** reads **Always**, the option's condition, or **Never shown** for a Hidden option. Hover a row and click **Add condition** to add one; click the condition to change it, or **Remove condition**.
 * The toggle in the **Hidden** column hides the option for good, or shows it again.
