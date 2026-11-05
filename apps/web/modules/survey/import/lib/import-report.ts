@@ -84,7 +84,7 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
       const description = param(issue, "description");
       return description
         ? t("workspace.surveys.import.issues.question_skipped_by_ai", { description })
-        : t("workspace.surveys.import.issues.question_skipped");
+        : t("workspace.surveys.import.issues.question_skipped_ai_skipped");
     }
     case "plan_invalid":
       return t("workspace.surveys.import.issues.question_skipped_plan_invalid");

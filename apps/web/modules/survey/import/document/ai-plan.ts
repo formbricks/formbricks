@@ -118,13 +118,16 @@ export async function planDocumentImport(params: {
   const { plan } = run;
 
   const issues: TSurveyImportPipelineIssue[] = [];
-  for (const [ref, description] of plan.skipped) {
+  // The AI's own reason is not reported: it speaks for Formbricks ("Formbricks has no picture
+  // selection"), which it cannot know, when the truth is that a document import cannot build that kind
+  // of question. The report's fixed sentence says so.
+  for (const ref of plan.skipped.keys()) {
     issues.push({
       code: "question_skipped",
       severity: "warning",
       questionTag: ref,
       questionRef: ref,
-      params: { cause: "ai_skipped", ...(description ? { description } : {}) },
+      params: { cause: "ai_skipped" },
     });
   }
   for (const [ref, reasons] of plan.failures) {

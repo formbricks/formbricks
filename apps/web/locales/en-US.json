@@ -4963,6 +4963,7 @@
           "question_removed_no_headline": "This question is removed. Its answers stop showing in the summary.",
           "question_skipped": "Question skipped.",
           "question_skipped_ai_budget": "Question skipped: the import reached its AI limit before this question.",
+          "question_skipped_ai_skipped": "Question skipped: the import can't build this kind of question.",
           "question_skipped_ai_timeout": "Question skipped: the AI took too long to map it.",
           "question_skipped_by_ai": "Question skipped: {description}",
           "question_skipped_cells_taken": "Question skipped: its text is already part of the question before it.",

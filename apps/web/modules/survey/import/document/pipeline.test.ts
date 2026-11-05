@@ -229,10 +229,9 @@ describe("runDocumentImport, on files shaped like the ones it was built for", ()
     ]);
     const skipped = report.issues.filter((issue) => issue.code === "question_skipped");
     expect(skipped.map((issue) => issue.questionTag)).toEqual(["R6", "R14", "R17", "R18"]);
-    expect(skipped[0]).toMatchObject({
-      severity: "warning",
-      params: { cause: "ai_skipped", description: "Picture Selection questions cannot be imported." },
-    });
+    expect(skipped[0].severity).toBe("warning");
+    // The AI's reason is not passed on: it said Formbricks has no picture selection, which it has.
+    expect(skipped[0].params).toEqual({ cause: "ai_skipped" });
   });
 
   test("routing becomes logic, every rule reported by the question's ID for checking", async () => {

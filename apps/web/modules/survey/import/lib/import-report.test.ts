@@ -63,7 +63,7 @@ describe("getSurveyImportIssueLine", () => {
       { cause: "ai_skipped", description: "Too many options" },
       'question_skipped_by_ai {"description":"Too many options"}',
     ],
-    [{ cause: "ai_skipped" }, "question_skipped"],
+    [{ cause: "ai_skipped" }, "question_skipped_ai_skipped"],
     [{ cause: "ai_budget" }, "question_skipped_ai_budget"],
     [{ cause: "ai_timeout" }, "question_skipped_ai_timeout"],
     [{ cause: "draft_too_large" }, "question_skipped_draft_too_large"],
