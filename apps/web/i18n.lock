@@ -3757,7 +3757,8 @@ checksums:
     workspace/surveys/ai_create/edit_prompt: 789b263b56057a0c820437035e038990
     workspace/surveys/ai_create/generated_payload_invalid: 6b15c376fafd72298cb460107e82d4f2
     workspace/surveys/ai_create/generation_failed: cf68e9399104ba1ed48bd88a91d06270
-    workspace/surveys/ai_create/import_hint_sentence: fac0452e602be8c5074a465eb643ab5f
+    workspace/surveys/ai_create/import_file: 215d21a5229f223d9e003f36a2d8cde0
+    workspace/surveys/ai_create/import_file_hint: 38ad7d60a2aedc4a85ff7da967c1a7ac
     workspace/surveys/ai_create/keep_editing: 9778ce7d47a83d1d43b204fc177d2c4a
     workspace/surveys/ai_create/nothing_generated: 4df9bd9e49c3b63cddd2cb4336e00420
     workspace/surveys/ai_create/open_in_editor: fa60853b0e075c7c134e4bb3c7c59d82
@@ -4677,8 +4678,8 @@ checksums:
     workspace/surveys/import/card_description: e7a5f899c93e139220d44ab64a1908ba
     workspace/surveys/import/card_description_json_only: 94898e1540229b75b1467f2d0dc46ef5
     workspace/surveys/import/card_title: 5418ac88c503972c1b745f7681a6bacc
-    workspace/surveys/import/dialog_description: 968ff939963657d31bb4f098b6feed75
-    workspace/surveys/import/dialog_description_json_only: 93712a44310312b50acd8a4e985282e2
+    workspace/surveys/import/dialog_description: 1486f81bd319aa1fb1d757d49eb289cd
+    workspace/surveys/import/dialog_description_json_only: 5283f289880b30221ef9042e79e355c5
     workspace/surveys/import/dialog_title: b4f22597f58ec8b306483662e7f93674
     workspace/surveys/import/discard_draft_body: 5b819b1c928365b1210a5b705f96c21b
     workspace/surveys/import/discard_draft_title: e2d53fd47467d7a9f28d377d2bf0d255
