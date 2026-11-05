@@ -8,6 +8,7 @@ import {
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TResponseFilterCriteria,
+  TResponseFilterCriteriaShown,
   TResponseHiddenFieldsFilter,
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
@@ -834,20 +835,17 @@ const processQuotaFilters = (quotas: FilterValue[], filters: TResponseFilterCrit
   });
 };
 
-const SHOWN_FILTER_OPS = new Set<string>(["shown", "notShown"]);
+const isShownFilterOp = (value: unknown): value is TResponseFilterCriteriaShown["op"] =>
+  value === "shown" || value === "notShown";
 
 // Shown / not shown rows → the `shown` criteria group (ENG-6951). A row without a target or with any
 // other value is left out.
 const processShownFilters = (rows: FilterValue[], filters: TResponseFilterCriteria) => {
   for (const { filterType, shownTarget } of rows) {
     const op = filterType.filterComboBoxValue;
-    if (!shownTarget || typeof op !== "string" || !SHOWN_FILTER_OPS.has(op)) continue;
-    filters.shown = [
-      ...(filters.shown ?? []),
-      { ...shownTarget, op: op as "shown" | "notShown" } as NonNullable<
-        TResponseFilterCriteria["shown"]
-      >[number],
-    ];
+    if (!shownTarget || !isShownFilterOp(op)) continue;
+    const condition: TResponseFilterCriteriaShown = { ...shownTarget, op };
+    filters.shown = [...(filters.shown ?? []), condition];
   }
 };
 

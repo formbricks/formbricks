@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import type { TResponseFilterCriteriaShown } from "@formbricks/types/responses";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
+import { OPTION_LIST_NAMES } from "@formbricks/types/surveys/not-shown";
 import { type TOptionLike, type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -41,12 +42,6 @@ const elementCanBeNotShown = (element: TElement): boolean =>
 const blockCanBeNotShown = (block: TBlock): boolean =>
   hasShowIf(block) || block.elements.every(elementCanBeNotShown);
 
-const KIND_OF: Record<TOptionListKey, "option" | "row" | "column"> = {
-  choices: "option",
-  rows: "row",
-  columns: "column",
-};
-
 const headlineOf = (element: TElement, survey: TSurvey): string =>
   getTextContent(getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default"));
 
@@ -69,7 +64,7 @@ const itemEntries = (element: TElement, headline: string, t: TFunction): TShownF
       const itemLabel = label
         ? getTextContent(getLocalizedValue(label, "default"))
         : t("workspace.surveys.filter.shown_target_picture", { number: index + 1 });
-      const kind = KIND_OF[listKey];
+      const kind = OPTION_LIST_NAMES[listKey].noun;
       return [
         {
           propertyId: `shown.${kind}.${element.id}.${item.id}`,

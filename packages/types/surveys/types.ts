@@ -70,6 +70,7 @@ import {
   ZDynamicLogicFieldValueDeprecated,
 } from "./logic";
 import { type TFindMatrix, findUnknownMatrixIds, isMatrixRowCondition } from "./matrix-conditions";
+import { OPTION_LIST_NAMES } from "./not-shown";
 import { getOptionLists } from "./show-if";
 import { validateStartLogic } from "./start-logic-validation";
 import {
@@ -4051,7 +4052,7 @@ const validateShowIf = (
       items.forEach((item, itemIndex) => {
         if (!item.showIf) return;
         const path = ["blocks", blockIndex, "elements", elementIndex, listKey, itemIndex, "showIf"];
-        const owner = `${OPTION_LIST_NOUN[listKey]} ${String(itemIndex + 1)} of question ${String(elementIndex + 1)} of ${blockLabel}`;
+        const owner = `${OPTION_LIST_NAMES[listKey].noun} ${String(itemIndex + 1)} of question ${String(elementIndex + 1)} of ${blockLabel}`;
         issues.push(
           ...validateConditionGroupOperands(survey, blockIndex, item.showIf, allElements, {
             path,
@@ -4073,8 +4074,6 @@ const validateShowIf = (
 
   return issues;
 };
-
-const OPTION_LIST_NOUN = { choices: "option", rows: "row", columns: "column" } as const;
 
 /** How a logic error names a block: its editable title, or its position when the title is blank. */
 const getBlockLabel = (block: TSurveyBlock, blockIndex: number): string =>

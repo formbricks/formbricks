@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 import {
   MAX_NOT_SHOWN_IDS,
   MAX_NOT_SHOWN_MAP_KEYS,
+  OPTION_LIST_NAMES,
   ZResponseNotShownInput,
   getNotShownElementIds,
+  getOptionListKeyOfNoun,
 } from "./not-shown";
 import { SURVEY_FLOW_FIXTURE_IDS, surveyFlowFixtureNotShown } from "./test-fixtures/survey-flow-fixture";
 import { surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
@@ -70,5 +72,14 @@ describe("ZResponseNotShownInput", () => {
     ]) {
       expect(ZResponseNotShownInput.safeParse(record).success).toBe(false);
     }
+  });
+});
+
+describe("OPTION_LIST_NAMES: one name table for every option list", () => {
+  test("each noun leads back to its own list, whose record map holds it", () => {
+    for (const listKey of ["choices", "rows", "columns"] as const) {
+      expect(getOptionListKeyOfNoun(OPTION_LIST_NAMES[listKey].noun)).toBe(listKey);
+    }
+    expect(OPTION_LIST_NAMES.choices).toEqual({ recordKey: "options", noun: "option" });
   });
 });

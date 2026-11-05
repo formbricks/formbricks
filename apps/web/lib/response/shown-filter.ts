@@ -1,6 +1,7 @@
 import { Prisma } from "@formbricks/database/prisma";
 import type { TResponseFilterCriteriaShown } from "@formbricks/types/responses";
-import { getOptionListKeys } from "@formbricks/types/surveys/show-if";
+import { OPTION_LIST_NAMES, getOptionListKeyOfNoun } from "@formbricks/types/surveys/not-shown";
+import { getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
@@ -25,17 +26,6 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * narrowed by `surveyId`. Targets the survey does not hold emit nothing, like the other criteria
  * groups.
  */
-
-type TRecordMapKey = "options" | "rows" | "columns";
-
-const MAP_KEY_OF_TARGET: Record<"option" | "row" | "column", TRecordMapKey> = {
-  option: "options",
-  row: "rows",
-  column: "columns",
-};
-
-/** The element's option list a target names: `choices` for options, `rows` / `columns` for a matrix. */
-const LIST_KEY_OF_TARGET = { option: "choices", row: "rows", column: "columns" } as const;
 
 /** The record is there: not SQL `NULL`, and not a stored JSON `null` either. */
 const HAS_RECORD: Prisma.ResponseWhereInput = { notShown: { not: Prisma.AnyNull } };
@@ -124,12 +114,12 @@ const buildShownCondition = (
     return { clause, cost: 6 };
   }
 
-  const listKey = LIST_KEY_OF_TARGET[condition.target];
-  if (!getOptionListKeys(element.type).includes(listKey)) return null;
-  const items = (element as unknown as Record<string, { id: string }[] | undefined>)[listKey] ?? [];
-  if (!items.some((item) => item.id === condition.itemId)) return null;
+  const listKey = getOptionListKeyOfNoun(condition.target);
+  if (!listKey) return null;
+  // `[]` when the element's type has no such list.
+  if (!getOptionList(element, listKey).some((item) => item.id === condition.itemId)) return null;
 
-  const path = [MAP_KEY_OF_TARGET[condition.target], element.id];
+  const path = [OPTION_LIST_NAMES[listKey].recordKey, element.id];
   const clause =
     condition.op === "notShown"
       ? { OR: [listed(path, condition.itemId), elementNotShown(element.id, blockId)] }
