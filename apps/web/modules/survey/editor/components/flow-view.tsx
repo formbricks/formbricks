@@ -541,7 +541,11 @@ export const FlowView = ({
           <PlusIcon />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent
+        align="start"
+        // Non-modal, so it doesn't lock the page's scroll; a focus change elsewhere must not close it.
+        // A click outside and Escape still do.
+        onFocusOutside={(event) => event.preventDefault()}>
         {BLOCK_RULE_KINDS.map((kind) => (
           <DropdownMenuItem
             key={kind}
@@ -621,7 +625,11 @@ export const FlowView = ({
                     <PlusIcon />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
+                <DropdownMenuContent
+                  align="start"
+                  // Non-modal, so it doesn't lock the page's scroll; a focus change elsewhere must not close it.
+                  // A click outside and Escape still do.
+                  onFocusOutside={(event) => event.preventDefault()}>
                   {START_RULE_KINDS.map((kind) => (
                     <DropdownMenuItem
                       key={kind}
