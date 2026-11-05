@@ -1,5 +1,6 @@
 import { type JobHandlerOverrides, type JobsRuntimeHandle, startJobsRuntime } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { startAuthzedOutboxSafetyNet, stopAuthzedOutboxSafetyNet } from "@/lib/authzed/outbox-safety-net";
 import { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { RECURRING_JOB_REGISTRATIONS, getJobHandlerOverrides } from "@/lib/jobs/recurring-registrations";
 import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
@@ -27,7 +28,7 @@ const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
  * with no schedule, which a crash between the two calls makes permanent until the next boot.
  *
  * The remove-first this replaces was a reasonable workaround for bullmq#3378 — upsert not updating an
- * existing scheduler — which affected v5.56.9 and earlier. We are on 5.61.0, past that fix.
+ * existing scheduler — which affected v5.56.9 and earlier. We are on 5.81.5, past that fix.
  *
  * Known trade-off, verified against a real Redis: upsert updates the scheduler's repeat options but
  * leaves the run it has already queued alone, so a changed cron pattern or time zone takes effect from
@@ -142,6 +143,10 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     return null;
   }
 
+  // Before the runtime starts, and whether or not it does: it reads PostgreSQL, not Redis. The safety
+  // net is what delivers the outbox when the runtime is up but its delivery job is not running.
+  startAuthzedOutboxSafetyNet(() => !globalForJobsRuntime.formbricksServerLifecycle?.draining);
+
   if (globalForJobsRuntime.formbricksJobsRuntime) {
     return globalForJobsRuntime.formbricksJobsRuntime;
   }
@@ -185,6 +190,7 @@ export const resetJobsWorkerRegistrationForTests = async (): Promise<void> => {
   const initializing = globalForJobsRuntime.formbricksJobsRuntimeInitializing;
   clearRecurringJobsRetryTimeout();
   clearJobsWorkerRetryTimeout();
+  await stopAuthzedOutboxSafetyNet();
   globalForJobsRuntime.formbricksJobsRecurringRegistered = undefined;
   globalForJobsRuntime.formbricksJobsRecurringRegistration = undefined;
   globalForJobsRuntime.formbricksJobsRuntime = undefined;
