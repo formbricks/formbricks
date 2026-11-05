@@ -1,18 +1,22 @@
 "use client";
 
-import type { TFunction } from "i18next";
 import { EyeIcon, TrashIcon } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
 import {
   SHOW_IF_CELL_CLASS,
   ShowIfConditionsEditor,
   ShowIfPopoverFrame,
   useShowIfScope,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
-import { describeConditionGroup } from "@/modules/survey/editor/lib/flow-outline-text";
+import {
+  describeBlockShowIfParts,
+  describeConditionGroupParts,
+} from "@/modules/survey/editor/lib/flow-outline-text";
+import { toPlainText } from "@/modules/survey/editor/lib/reference-chips";
 import {
   type TShowIfTarget,
   createDraftShowIf,
@@ -41,10 +45,6 @@ interface ShowIfPopoverProps {
   readonly summaryOnly?: boolean;
 }
 
-/** A block's show-if chip on its header: "Show block if …". */
-export const getBlockShowIfChipText = (conditions: string, t: TFunction): string =>
-  t("workspace.surveys.edit.flow.show_block_if_chip", { conditions });
-
 /**
  * The show-if of a block or a question on the Flow tab (ENG-6931): a block's "Show block if …" chip on
  * its header, or a question's condition in its "Show question if…" cell (ENG-6969 T10), or what opens
@@ -64,15 +64,20 @@ export function ShowIfPopover({
   summaryOnly = false,
 }: ShowIfPopoverProps) {
   const { t, i18n } = useTranslation();
+  const elementIcons = useElementIcons();
   const showIf = getShowIf(localSurvey, target);
   if (!showIf && !newTrigger) return null;
 
-  const summary = showIf
-    ? describeConditionGroup(showIf, localSurvey, t, {
-        locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
-      })
-    : "";
   const isBlock = target.type === "block";
+  const format = { locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US" };
+  // References as chips (ENG-6969 T3); the aria-label reads the plain sentence (guardrail 4).
+  const conditionParts = showIf ? describeConditionGroupParts(showIf, localSurvey, t, format) : [];
+  // A question's column header already says "Show question if…", as does the block's Settings tab
+  // heading for `summaryOnly`.
+  const chipParts =
+    showIf && isBlock && !summaryOnly
+      ? describeBlockShowIfParts(showIf, localSurvey, t, format)
+      : conditionParts;
 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
@@ -85,13 +90,14 @@ export function ShowIfPopover({
                 ? "inline-flex min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600 hover:border-slate-300 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
                 : SHOW_IF_CELL_CLASS.set
             }
-            aria-label={t("workspace.surveys.edit.flow.edit_show_if", { conditions: summary })}
+            aria-label={t("workspace.surveys.edit.flow.edit_show_if", {
+              conditions: toPlainText(conditionParts),
+            })}
             // The block header's chip sits inside the row's toggle: don't collapse the block.
             onClick={(event) => event.stopPropagation()}>
             <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
-            {/* The question's column header already says "Show question if…". */}
             <span className="truncate">
-              {isBlock && !summaryOnly ? getBlockShowIfChipText(summary, t) : summary}
+              <FlowTextParts parts={chipParts} elementIcons={elementIcons} />
             </span>
           </button>
         ) : (

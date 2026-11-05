@@ -1,6 +1,7 @@
 "use client";
 
-import type { JSX } from "react";
+import { type JSX, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { cn } from "@/lib/cn";
 import type {
@@ -8,6 +9,7 @@ import type {
   TReferenceChip,
   TReferenceChipKind,
 } from "@/modules/survey/editor/lib/reference-chips";
+import { getElementIconMap } from "@/modules/survey/lib/elements";
 
 /**
  * Each reference's colours (ENG-6969 T3), on the recall pill's slate: a question slate, a hidden field
@@ -57,6 +59,12 @@ export const ReferenceChip = ({ chip, elementIcons }: ReferenceChipProps) => (
     <span className="truncate">{chip.label}</span>
   </span>
 );
+
+/** The question type icons chips draw, for a component with no icon map at hand. */
+export const useElementIcons = (): Record<TSurveyElementTypeEnum, JSX.Element> => {
+  const { t } = useTranslation();
+  return useMemo(() => getElementIconMap(t), [t]);
+};
 
 interface FlowTextPartsProps {
   readonly parts: TFlowTextPart[];
