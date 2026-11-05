@@ -198,7 +198,7 @@ describe("every report code", () => {
   });
 
   test("names every Qualtrics type the import skips, each differently", () => {
-    const types = ["CS", "SBS", "HeatMap", "HotSpot", "DD", "PGR", "Highlight", "Signature", "Draw", "GAP"];
+    const types = ["CS", "SBS", "HeatMap", "HotSpot", "DD", "PGR", "Highlight", "Draw", "GAP"];
     const lines = [...types, "Timing", "Meta", "Captcha"].map((qualtricsType) =>
       getQsfImportIssueLine(
         {

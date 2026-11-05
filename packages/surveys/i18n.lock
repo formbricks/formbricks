@@ -91,3 +91,14 @@ checksums:
     errors/value_must_equal: 227b5c87bb7761714ab9bc5a8adc6607
     errors/value_must_not_contain: 5349a544135c7d7fc6e01c4221004236
     errors/value_must_not_equal: cb25ed72166baeeaaa263bd5cf1c0e1c
+    signature/clear: d4c069de3111b7a5df96f3703f199f2f
+    signature/draw: 6f996a85398ed6add20fa08ecdb80d2b
+    signature/method: c8515b43a9c6d24fdee976c4d1a9147a
+    signature/not_signed: 08ce52c4f71c61d5c3dc4a2921a25cb6
+    signature/pad_label: abe5b1f9a0b2dc2d3f9b1ebbae4bad2b
+    signature/pad_label_with_type: a53403f9951a5c5428ab2b69efd3bb17
+    signature/saved: 5e0a55c2d0c20aeed56fbbae5e442484
+    signature/sign_here: a25a22e920e2c85ac9fc4ec4b02867e9
+    signature/signed: ffc6549736a9c79e19fec1df5aa29d47
+    signature/type: f04471a7ddac844b9ad145eb9911ef75
+    signature/type_your_name: c681aa1b8f0a8e2edfd656024340ab86

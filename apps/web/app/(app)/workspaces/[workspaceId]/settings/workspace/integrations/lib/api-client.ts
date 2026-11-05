@@ -1,4 +1,4 @@
-import type { TIntegrationItem } from "@formbricks/types/integration";
+import type { TIntegrationByType, TIntegrationItem, TIntegrationType } from "@formbricks/types/integration";
 import {
   type TIntegrationConnectionResource,
   type TIntegrationMappingsByType,
@@ -52,3 +52,30 @@ export const getSpreadsheet = (workspaceId: string, spreadsheetId: string) =>
 /** The Slack channels a mapping can post to. */
 export const getSlackChannels = (workspaceId: string) =>
   getApiData<TIntegrationItem[]>(integrationUrl(workspaceId, "slack", "/channels"));
+
+type TIntegrationWithData = { config: { data: { createdAt: Date | string }[] } };
+
+/**
+ * JSON carries each mapping's `createdAt` as a string, but the integration types hold a `Date`. Revive it so
+ * the query cache holds the same shape the server page passes.
+ */
+export const reviveIntegrationDates = <T extends TIntegrationWithData>(integration: T): T => ({
+  ...integration,
+  config: {
+    ...integration.config,
+    data: integration.config.data.map((mapping) => ({ ...mapping, createdAt: new Date(mapping.createdAt) })),
+  },
+});
+
+/** The workspace's integration of one type, credentials redacted, or `null` when it has none. */
+export async function getIntegration<T extends TIntegrationType>(params: {
+  workspaceId: string;
+  type: T;
+  signal?: AbortSignal;
+}): Promise<TIntegrationByType<T> | null> {
+  const data = await getApiData<TIntegrationByType<T> | null>(
+    `/api/workspaces/${encodeURIComponent(params.workspaceId)}/integrations/${params.type}`,
+    { signal: params.signal }
+  );
+  return data ? reviveIntegrationDates(data) : null;
+}

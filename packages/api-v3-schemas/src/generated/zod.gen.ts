@@ -170,6 +170,7 @@ export const zResponseAnswerBase = z.object({
     "address",
     "ranking",
     "contactInfo",
+    "signature",
   ]),
   elementLabel: z.string(),
   durationSeconds: z.number().gte(0).lte(86400).optional(),
@@ -303,6 +304,20 @@ export const zResponseAnswerFileUpload = z.strictObject({
 export type ResponseAnswerFileUploadZodType = z.infer<typeof zResponseAnswerFileUpload>;
 
 /**
+ * Signature answer. A `signature` element the respondent skipped is still returned, with an empty `imageUrl`, like an unchecked consent or an unfilled Other: `answers[]` carries every stored value, so a client can write it straight back.
+ */
+export const zResponseAnswerSignature = z.strictObject({
+  position: z.int().gte(1),
+  elementId: z.string(),
+  elementType: z.enum(["signature"]),
+  elementLabel: z.string(),
+  durationSeconds: z.number().gte(0).lte(86400).optional(),
+  imageUrl: z.string(),
+});
+
+export type ResponseAnswerSignatureZodType = z.infer<typeof zResponseAnswerSignature>;
+
+/**
  * Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
  */
 export const zResponseAnswerBooking = z.strictObject({
@@ -379,7 +394,7 @@ export type ResponseAnswerCompositeZodType = z.infer<typeof zResponseAnswerCompo
  *
  * Answers are a **typed array**, not a map keyed by element id, because a consumer holding only a response would otherwise see bare ids and have to fetch the survey and join to learn what was asked — a join that is easy to get wrong and that agent clients cannot make cheaply. The array also separates answers from hidden fields and variables, which the stored representation mixes into one flat map. Non-answer data lives in `embeddedData[]`.
  *
- * Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All seventeen element types are covered.
+ * Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All eighteen element types are covered.
  *
  * Only elements the respondent actually reached appear here. Data whose element has since been deleted appears in `unresolved[]` instead.
  *
@@ -391,6 +406,7 @@ export const zResponseAnswer = z.union([
   zResponseAnswerSelection,
   zResponseAnswerDate,
   zResponseAnswerFileUpload,
+  zResponseAnswerSignature,
   zResponseAnswerBooking,
   zResponseAnswerMatrix,
   zResponseAnswerComposite,
@@ -552,7 +568,7 @@ export type ResponseListMetaZodType = z.infer<typeof zResponseListMeta>;
  *
  * The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents each; `answers[]` on the read is the resolved view of this same map.
  *
- * **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: the v1 and v2 write paths store this same map with no cardinality limit, so a response written through them can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
+ * **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: responses written through the v1 and v2 APIs are not guaranteed to fit these bounds, and can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
  *
  */
 export const zResponseDataMap = z.record(z.string(), zResponseRawValue);
@@ -592,7 +608,7 @@ export type ResponseDataMapInputZodType = z.infer<typeof zResponseDataMapInput>;
  *
  * Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
  *
- * **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; a v3-only bound, as on `data`.
+ * **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A generous cap: a survey written through this API declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
  *
  */
 export const zResponseEmbeddedDataInput = z.record(
@@ -607,7 +623,7 @@ export type ResponseEmbeddedDataInputZodType = z.infer<typeof zResponseEmbeddedD
  *
  * This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite *value* is therefore accepted, and none is declared out of range.
  *
- * The number of **entries** is capped at 500, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
+ * The number of **entries** is capped at 2,000, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
  *
  * **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and writes its own when the response is finished, by summing the element entries. Sending one therefore changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed from the element entries regardless.
  *

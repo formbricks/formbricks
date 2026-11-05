@@ -28,6 +28,7 @@ export const IMPORTABLE_QSF_FIXTURES = [
   "logic-skip-display-branch.qsf",
   "matrix-slider-ranking.qsf",
   "pages-and-blocks.qsf",
+  "signature.qsf",
   "embedded-data.qsf",
   "large-150.qsf",
   "legacy-object-payload.qsf",

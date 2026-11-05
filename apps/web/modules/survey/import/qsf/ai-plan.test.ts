@@ -272,6 +272,18 @@ describe("planQsfImport", () => {
     );
   });
 
+  test("asks the model about a Signature question instead of skipping it for its type", async () => {
+    const prompts: string[] = [];
+    const result = await plan(
+      "signature.qsf",
+      recordedGenerate(loadRecordedPlan("signature.qsf"), (request) => prompts.push(request.prompt))
+    );
+
+    expect(prompts.flatMap(refsInPrompt)).toEqual(expect.arrayContaining(["QID1", "QID2"]));
+    expect(result.issues.filter((issue) => issue.params?.cause === "unsupported_type")).toEqual([]);
+    expect(result.plan.failures.size).toBe(0);
+  });
+
   test("splits a chunk that ran out of output tokens and asks for each half", async () => {
     const recorded = recordedGenerate(loadRecordedPlan("simple.qsf"));
     const sizes: number[] = [];

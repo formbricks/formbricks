@@ -185,7 +185,8 @@
         "dist/**",
         "$TURBO_ROOT$/apps/web/public/js/surveys.*",
         "$TURBO_ROOT$/apps/web/public/js/validation.*",
-        "$TURBO_ROOT$/apps/web/public/js/locales/**"
+        "$TURBO_ROOT$/apps/web/public/js/locales/**",
+        "$TURBO_ROOT$/apps/web/public/js/fonts/**"
       ]
     },
     "@formbricks/surveys#build:dev": {

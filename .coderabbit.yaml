@@ -247,15 +247,19 @@ reviews:
     - path: "apps/web/app/api/v1/**"
       instructions: |
         API v1 is the legacy public contract used by self-hosted deployments and existing
-        integrations. Treat any change to a request or response shape, status code, or default as
-        breaking: it must be intentional, and the PR's "Breaking changes" table must document it.
-        Prefer adding to v3 over changing v1.
+        integrations: shipped clients read it without updating. A released shape is breaking when it
+        is renamed, removed or retyped, when a field that was optional becomes required, or when a
+        default or an existing case's status code changes — it must be intentional, and the PR's
+        "Breaking changes" table must document it. A new optional field or endpoint is additive and
+        stays unticked. Prefer adding to v3 over changing v1.
 
     - path: "apps/web/{app/api/v2,modules/api/v2}/**"
       instructions: |
         Public API v2. Route handlers stay thin; logic lives in `apps/web/modules/api/v2/`. Any
         change to a request or response shape must be mirrored in the endpoint's `lib/openapi.ts`,
-        or the published `openapi.yml` silently goes stale. Response-shape changes are breaking.
+        or the published `openapi.yml` silently goes stale. Once a release carries the shape,
+        renaming, removing or retyping a field, or requiring one that was optional, is breaking; a
+        new optional field is additive and stays unticked.
 
     - path: "apps/web/app/api/v3/**"
       instructions: |
@@ -326,8 +330,9 @@ reviews:
     - path: "charts/formbricks/**"
       instructions: |
         Helm chart consumed by self-hosters. Flag changes that alter a `values.yaml` key name or
-        default, or that require manual action on upgrade, without a breaking-change entry. New
-        values need a default that keeps existing installs working unchanged.
+        default, or that require manual action on upgrade, without a breaking-change entry once a
+        release carries the key. New values need a default that keeps existing installs working
+        unchanged.
 
     - path: "apps/web/locales/en-US.json"
       instructions: |
@@ -339,7 +344,10 @@ reviews:
       instructions: |
         Ships to end users' websites as an embedded bundle. Be strict about added dependencies and
         bundle size, browser compatibility, and anything that leaks respondent data. No Node-only
-        APIs. Public SDK signatures are a compatibility contract — changes are breaking.
+        APIs. A published SDK signature is a compatibility contract: any change an existing caller
+        can trip over is breaking once a release publishes it — renaming, removing or retyping an
+        export, or requiring an argument that callers do not pass. A new optional export or
+        optional parameter is additive and stays unticked.
         The host page is hostile (CODING_STANDARDS.md "Survey Bundles"): flag global CSS (`*`,
         `:root`, `@property`), buttons without `type="button"`, code that needs `eval`, and reliance
         on host globals.
@@ -421,6 +429,11 @@ reviews:
           declaration that the PR has one; an unticked box declares that it has none. The prose or
           table under the checkbox is the explanation and does not change the declaration.
 
+          A change is breaking only when a published release already carries the shape it changes.
+          Prereleases count; a shape this PR introduces, one an unmerged PR in its stack
+          introduced, or one on `main` that no release contains yet has no consumer outside this
+          repo, so renaming or removing it is not a breaking change.
+
           Treat a change as breaking if the diff does any of the following:
           - Renames, removes, or retypes a field in an API request or response shape, requires a
             field that was optional, or changes an emitted value (for example `EN` becoming
@@ -456,7 +469,8 @@ reviews:
 
           Return inconclusive rather than failing when the diff alone does not let you determine
           an API response shape — for example when the shape comes from a serializer or type that
-          this PR does not touch.
+          this PR does not touch — or whether a published release already carries the shape, config
+          key, environment variable or SDK signature the change alters.
 
       - name: Only the ticket line carries a magic word
         mode: warning

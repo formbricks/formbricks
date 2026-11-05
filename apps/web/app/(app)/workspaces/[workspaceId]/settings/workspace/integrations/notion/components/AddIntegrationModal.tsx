@@ -1,8 +1,8 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -22,6 +22,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import {
   MappingRow,
   TMapping,
@@ -73,7 +74,9 @@ export const AddIntegrationModal = ({
   contactAttributeKeys,
 }: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
-  const router = useRouter();
+  const queryClient = useQueryClient();
+  const refetchIntegration = () =>
+    queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "notion") });
   const { handleSubmit } = useForm();
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
@@ -245,7 +248,7 @@ export const AddIntegrationModal = ({
       });
       integrationData.createdAt = new Date();
 
-      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the query refetches.
       const mappings = [...existingMappings];
       if (selectedIntegration) {
         mappings[selectedIntegration.index] = integrationData;
@@ -254,7 +257,6 @@ export const AddIntegrationModal = ({
       }
       await saveIntegrationMappings(workspaceId, "notion", mappings);
 
-      router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -262,6 +264,7 @@ export const AddIntegrationModal = ({
       }
       resetForm();
       setOpen(false);
+      void refetchIntegration();
     } catch (e) {
       toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
@@ -274,9 +277,9 @@ export const AddIntegrationModal = ({
     try {
       setIsDeleting(true);
       await saveIntegrationMappings(workspaceId, "notion", mappings);
-      router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
+      void refetchIntegration();
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {

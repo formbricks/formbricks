@@ -27,6 +27,7 @@ const {
   mockResponseFindMany,
   mockSurveyFindUnique,
   mockLoadQuotaContext,
+  mockEnqueueReplacedSignatures,
   mockEnqueueOutcomeCleanups,
   mockDrainCleanups,
 } = vi.hoisted(() => ({
@@ -38,6 +39,7 @@ const {
   mockResponseFindMany: vi.fn(),
   mockSurveyFindUnique: vi.fn(),
   mockLoadQuotaContext: vi.fn(),
+  mockEnqueueReplacedSignatures: vi.fn(),
   mockEnqueueOutcomeCleanups: vi.fn(),
   mockDrainCleanups: vi.fn(),
 }));
@@ -72,6 +74,9 @@ vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({ drainDeletionCleanups: 
 vi.mock("@/modules/ee/quotas/lib/evaluation-service", () => ({
   evaluateResponseQuotas: mockEvaluateQuotas,
   loadQuotaEvaluationContext: mockLoadQuotaContext,
+}));
+vi.mock("@/modules/storage/lib/replaced-signature-files", () => ({
+  enqueueReplacedSignatureFileCleanup: mockEnqueueReplacedSignatures,
 }));
 vi.mock("@/lib/embedded-data/survey-fields", () => ({
   inlineSurveyEmbeddedFields: () => [],
@@ -613,6 +618,80 @@ describe("createScopedResponse — what actually reaches Prisma", () => {
     for (const column of ["meta", "ttc", "createdAt", "updatedAt", "language", "surveyId"]) {
       expect(select).toHaveProperty(column, true);
     }
+  });
+});
+
+describe("updateScopedResponse — replaced Signature images (ENG-6810)", () => {
+  const oldImage = "/storage/ws/private/surveys/svy/elements/sig/signature--fid--old.png";
+
+  test("queues the cleanup in the transaction, after the write, from the stored to the written data", async () => {
+    const tx = runTx(
+      txStub({
+        response: {
+          findFirst: vi.fn().mockResolvedValue({ data: { sig: oldImage } }),
+          update: vi
+            .fn()
+            .mockResolvedValue({ id: "clrs1", finished: false, data: { sig: "" }, variables: {} }),
+        },
+      })
+    );
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { data: { sig: "" } },
+    });
+
+    // Read scoped by workspace, never by id alone.
+    expect(tx.response.findFirst).toHaveBeenCalledWith({
+      where: { id: "clrs1", survey: { workspaceId: survey.workspaceId } },
+      select: { data: true },
+    });
+    expect(mockEnqueueReplacedSignatures).toHaveBeenCalledExactlyOnceWith(
+      tx,
+      { surveyId: survey.id, previousData: { sig: oldImage }, nextData: { sig: "" } },
+      { bestEffort: false }
+    );
+    expect(tx.response.update.mock.invocationCallOrder[0]).toBeLessThan(
+      mockEnqueueReplacedSignatures.mock.invocationCallOrder[0]
+    );
+  });
+
+  test("queues nothing when the update fails", async () => {
+    runTx(
+      txStub({
+        response: {
+          findFirst: vi.fn().mockResolvedValue({ data: { sig: oldImage } }),
+          update: vi.fn().mockRejectedValue(knownRequestError("gone", "P2025")),
+        },
+      })
+    );
+
+    await expect(
+      updateScopedResponse({
+        responseId: "clrs1",
+        workspaceId: survey.workspaceId,
+        survey,
+        patch: { data: { sig: "" } },
+      })
+    ).rejects.toThrow(ResourceNotFoundError);
+
+    expect(mockEnqueueReplacedSignatures).not.toHaveBeenCalled();
+  });
+
+  test("neither reads the stored data nor queues anything for a patch with no data", async () => {
+    const tx = runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { finished: true },
+    });
+
+    expect(tx.response.findFirst).not.toHaveBeenCalled();
+    expect(mockEnqueueReplacedSignatures).not.toHaveBeenCalled();
   });
 });
 

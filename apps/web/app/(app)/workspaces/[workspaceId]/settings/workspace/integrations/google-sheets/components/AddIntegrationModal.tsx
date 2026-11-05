@@ -1,7 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -21,6 +21,7 @@ import {
   getSpreadsheet,
   saveIntegrationMappings,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
@@ -71,7 +72,9 @@ export const AddIntegrationModal = ({
   selectedIntegration,
 }: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
-  const router = useRouter();
+  const queryClient = useQueryClient();
+  const refetchIntegration = () =>
+    queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "googleSheets") });
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
@@ -184,7 +187,7 @@ export const AddIntegrationModal = ({
       integrationData.includeMetadata = includeMetadata;
       integrationData.includeCreatedAt = includeCreatedAt;
       integrationData.includeContactAttributes = includeContactAttributes;
-      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+      // Edit a copy: the cached integration stays as stored until the save succeeds and the query refetches.
       const mappings = [...existingMappings];
       if (selectedIntegration) {
         mappings[selectedIntegration.index] = integrationData;
@@ -192,7 +195,6 @@ export const AddIntegrationModal = ({
         mappings.push(integrationData);
       }
       await saveIntegrationMappings(workspaceId, "googleSheets", mappings);
-      router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -200,6 +202,7 @@ export const AddIntegrationModal = ({
       }
       resetForm();
       setOpen(false);
+      void refetchIntegration();
     } catch (e) {
       toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
@@ -233,9 +236,9 @@ export const AddIntegrationModal = ({
     try {
       setIsDeleting(true);
       await saveIntegrationMappings(workspaceId, "googleSheets", mappings);
-      router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
+      void refetchIntegration();
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {

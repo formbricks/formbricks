@@ -37,6 +37,7 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.attachment_export_ready_email_truncated":
     "Some files were left out because the export reached its {sizeLimit} limit. manifest.csv in the archive lists every file and marks the ones left out. To get those, start a new export with a narrower response filter.",
   "emails.click_or_drag_to_upload_files": "Click or drag to upload files.",
+  "emails.click_to_sign": "Click to sign.",
   "emails.delete_account_email_confirm_deletion": "Confirm account deletion",
   "emails.delete_account_email_did_not_request":
     "If you did not request this, please ignore this email and your account will remain active.",
@@ -88,6 +89,8 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.reject": "Reject",
   "emails.render_email_response_value_file_upload_response_link_not_included":
     "Link to uploaded file is not included for data privacy reasons",
+  "emails.render_email_response_value_signature_link_not_included":
+    "Link to the signature is not included for data privacy reasons",
   "emails.sso_recovery_factors_removed_email_api_keys":
     "API keys you had created were deleted. You can create new ones in your organization settings.",
   "emails.sso_recovery_factors_removed_email_did_not_expect":

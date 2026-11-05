@@ -1,9 +1,9 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { CircleHelpIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/type
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
+import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import SlackLogo from "@/images/slacklogo.png";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -62,7 +63,9 @@ export const AddChannelMappingModal = ({
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
   const { t } = useTranslation();
-  const router = useRouter();
+  const queryClient = useQueryClient();
+  const refetchIntegration = () =>
+    queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "slack") });
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -141,7 +144,7 @@ export const AddChannelMappingModal = ({
         includeCreatedAt,
         includeContactAttributes,
       };
-      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the query refetches.
       const mappings = [...existingMappings];
       if (selectedIntegration) {
         mappings[selectedIntegration.index] = integrationData;
@@ -149,7 +152,6 @@ export const AddChannelMappingModal = ({
         mappings.push(integrationData);
       }
       await saveIntegrationMappings(workspaceId, "slack", mappings);
-      router.refresh();
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -157,6 +159,7 @@ export const AddChannelMappingModal = ({
       }
       resetForm();
       setOpen(false);
+      void refetchIntegration();
     } catch (e) {
       toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
@@ -187,9 +190,9 @@ export const AddChannelMappingModal = ({
     try {
       setIsDeleting(true);
       await saveIntegrationMappings(workspaceId, "slack", mappings);
-      router.refresh();
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
+      void refetchIntegration();
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {

@@ -102,5 +102,18 @@
     "value_must_equal": "Valoarea trebuie să fie egală cu {value}",
     "value_must_not_contain": "Valoarea nu trebuie să conțină {value}",
     "value_must_not_equal": "Valoarea nu trebuie să fie egală cu {value}"
+  },
+  "signature": {
+    "clear": "Șterge",
+    "draw": "Desenează",
+    "method": "Metoda de semnare",
+    "not_signed": "Nesemnat",
+    "pad_label": "Câmp pentru semnătură. Desenează-ți semnătura cu degetul, cu un stylus sau cu mouse-ul.",
+    "pad_label_with_type": "Câmp pentru semnătură. Desenează-ți semnătura cu degetul, cu un stylus sau cu mouse-ul, sau comută la Tastează pentru a-ți introduce numele de la tastatură.",
+    "saved": "Semnătura ta este salvată. Șterge-o pentru a semna din nou.",
+    "sign_here": "Semnează aici",
+    "signed": "Semnat",
+    "type": "Tastează",
+    "type_your_name": "Tastează-ți numele"
   }
 }
