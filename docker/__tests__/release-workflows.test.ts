@@ -19,8 +19,6 @@ const releaseWorkflows = [
 ];
 
 const linearAction = "linear/linear-release-action";
-const linearActionSha = "30f9ae77461ec29f07fffe0c52edd1909bfbb6f5";
-const linearActionVersion = "v0.18.1";
 const releasedVersion = "${{ needs.docker-build-community.outputs.VERSION }}";
 
 type WorkflowStep = {
@@ -85,6 +83,21 @@ const linearUses = (workflow: Workflow): string[] =>
     .map((step) => step.uses)
     .filter((uses): uses is string => uses?.startsWith(`${linearAction}@`) ?? false);
 
+// The pin is read from the workflows rather than repeated here, so Dependabot's monthly bump — which
+// moves every use and its `# vX.Y.Z` annotation together — passes without a hand edit. What the tests
+// below hold is the shape: one commit SHA, one release tag, used and annotated everywhere.
+const linearPins = (): { ref: string; version: string | undefined }[] => {
+  const directory = join(repositoryRoot, workflowsDirectory);
+  const pattern = new RegExp(`${linearAction}@(\\S+)(?:\\s+#\\s+(v\\S+))?`, "g");
+  return readdirSync(directory)
+    .filter((entry) => entry.endsWith(".yml") || entry.endsWith(".yaml"))
+    .flatMap((entry) => [...readFileSync(join(directory, entry), "utf8").matchAll(pattern)])
+    .map((match) => ({ ref: match[1], version: match[2] }));
+};
+const [linearPin] = linearPins();
+const linearActionSha = linearPin?.ref ?? "";
+const linearActionVersion = linearPin?.version ?? "";
+
 describe("release workflows", () => {
   test.each(releaseWorkflows)("%s parses as YAML and declares jobs", (path) => {
     expect(Object.keys(readWorkflow(path).jobs ?? {})).not.toHaveLength(0);
@@ -109,15 +122,13 @@ describe("release workflows", () => {
     expect(annotated).toHaveLength(linearUses(readWorkflow(path)).length + 1);
   });
 
-  test("uses no other ref of the Linear release action across the workflows", () => {
-    const directory = join(repositoryRoot, workflowsDirectory);
-    const pattern = new RegExp(`${linearAction}@(\\S+)`, "g");
-    const refs = readdirSync(directory)
-      .filter((entry) => entry.endsWith(".yml") || entry.endsWith(".yaml"))
-      .flatMap((entry) => [...readFileSync(join(directory, entry), "utf8").matchAll(pattern)])
-      .map((match) => match[1]);
+  test("uses one commit SHA and one release tag of the Linear release action across the workflows", () => {
+    const pins = linearPins();
 
-    expect([...new Set(refs)]).toEqual([linearActionSha]);
+    expect(linearActionSha).toMatch(/^[0-9a-f]{40}$/);
+    expect(linearActionVersion).toMatch(/^v\d+\.\d+\.\d+$/);
+    expect([...new Set(pins.map((pin) => pin.ref))]).toEqual([linearActionSha]);
+    expect([...new Set(pins.map((pin) => pin.version))]).toEqual([linearActionVersion]);
   });
 
   test("completes the Linear release once the published artifacts are out", () => {

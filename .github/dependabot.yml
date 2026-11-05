@@ -94,6 +94,15 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 15
+    # Both are pinned in more places than a compose file, and docker/__tests__ holds every copy to one
+    # value, so a PR here can only ever move one of them and fail. Bump them by hand instead:
+    # - valkey/valkey: one digest across both compose files, the CI workflows, formbricks.sh,
+    #   migrate-to-v4.sh and the Helm values (valkey-image.test.ts lists them).
+    # - cubejs/cube: dev runs upstream Cube at the version docker/cube-image builds, so it moves with
+    #   the "cube" npm group above ("Bumping Cube" in docker/cube-image/README.md).
+    ignore:
+      - dependency-name: valkey/valkey
+      - dependency-name: cubejs/cube
     labels:
       - dependencies
     commit-message:

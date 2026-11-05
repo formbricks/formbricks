@@ -62,8 +62,9 @@ Three things to know before reading the result:
   Dataset assigned to the seed workspace, charts, dashboards and widgets — one disposable victim per
   mutating operation, with layouts and the save's `expectedUpdatedAt` pinned so each answers its success
   code. Where the licence does not grant Dashboards, every one of them answers the documented 403
-  `dashboards_plan_required` instead. The chart data and preview operations answer a documented 502
-  either way: the job runs no Cube.
+  `dashboards_plan_required` instead. Where it does, the chart data, preview and field-values
+  operations answer their documented 502, since the job runs no Cube; `schemathesis.toml` turns off
+  `not_a_server_error` for those three so that 502 is checked against the spec instead of failing.
 - **Creatives endpoints need a licence with `creatives`.** Without it the fixture workspace, which
   has seeded creatives, is in wind-down: list, get, stats and delete still run against real data, a
   `PATCH` that only pauses or closes runs too, as does the survey-wide pause
