@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, UploadIcon } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import type { TUserLocale } from "@formbricks/types/user";
 import { V3_SURVEY_GENERATE_ALLOWED_LANGUAGES } from "@/app/api/v3/surveys/generate/schemas";
@@ -51,6 +51,11 @@ type CreateWithAIFormProps = {
   onUnsavedWorkChange?: (hasUnsavedWork: boolean) => void;
   /** Reports whether a generation is in flight, so the host can word its confirmation. */
   onGeneratingChange?: (isGenerating: boolean) => void;
+  /**
+   * Opens the import instead, offered as the last row above the footer while the prompt is written.
+   * Left out when the host has no import to offer (no AI: the import would take Formbricks files only).
+   */
+  onImportInstead?: () => void;
 };
 
 export const CreateWithAIForm = ({
@@ -66,6 +71,7 @@ export const CreateWithAIForm = ({
   isHostNavigating = false,
   onUnsavedWorkChange,
   onGeneratingChange,
+  onImportInstead,
 }: Readonly<CreateWithAIFormProps>) => {
   const { t } = useTranslation();
 
@@ -279,6 +285,31 @@ export const CreateWithAIForm = ({
             </div>
           </div>
 
+          {/* Light chips straight under the prompt: examples to fill it with, not actions of the dialog. */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-0.5 text-xs text-slate-500">
+              {t("workspace.surveys.ai_create.try_prompt")}
+            </span>
+            {helperPrompts.map((helperPrompt) => (
+              <button
+                key={helperPrompt.label}
+                type="button"
+                className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700 transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
+                title={helperPrompt.prompt}
+                aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
+                onClick={() => {
+                  setPrompt(helperPrompt.prompt);
+                  clearError();
+                }}>
+                <helperPrompt.Icon
+                  className="size-3.5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 truncate">{helperPrompt.label}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-col gap-y-2">
             <Label htmlFor="ai-survey-language">{t("workspace.surveys.ai_create.survey_language")}</Label>
             <Select
@@ -300,30 +331,25 @@ export const CreateWithAIForm = ({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-700">
-              {t("workspace.surveys.ai_create.try_prompt")}
+          {onImportInstead ? (
+            <p className="mt-auto flex items-center gap-1.5 text-xs text-slate-500">
+              <UploadIcon className="size-3.5 shrink-0" aria-hidden="true" />
+              <span>
+                <Trans
+                  i18nKey="workspace.surveys.ai_create.import_hint_sentence"
+                  components={{
+                    importLink: (
+                      <button
+                        type="button"
+                        onClick={onImportInstead}
+                        className="rounded-sm text-slate-600 underline underline-offset-4 hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
+                      />
+                    ),
+                  }}
+                />
+              </span>
             </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {helperPrompts.map((helperPrompt) => (
-                <Button
-                  key={helperPrompt.label}
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="group w-full min-w-0 justify-start text-left"
-                  title={helperPrompt.prompt}
-                  aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
-                  onClick={() => {
-                    setPrompt(helperPrompt.prompt);
-                    clearError();
-                  }}>
-                  <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
-                  <span className="min-w-0 truncate">{helperPrompt.label}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
+          ) : null}
         </>
       )}
 

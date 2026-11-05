@@ -126,21 +126,6 @@ export const CreateWithAIDialog = ({
           <AiIcon aria-hidden="true" className="text-ai-dark!" />
           <DialogTitle>{t("workspace.surveys.ai_create.dialog_title")}</DialogTitle>
           <DialogDescription>{t("workspace.surveys.ai_create.dialog_description")}</DialogDescription>
-          {/* Without AI the Import dialog takes Formbricks files only, none of the files the hint names. */}
-          {hasUnsavedWork || !isAIAvailable ? null : (
-            <p className="text-xs text-slate-500">
-              {/* One inline run: the header makes its rows flex containers, which would drop the space. */}
-              <span>
-                {t("workspace.surveys.ai_create.import_hint")}{" "}
-                <button
-                  type="button"
-                  onClick={openImportInstead}
-                  className="rounded-sm text-slate-600 underline underline-offset-4 hover:text-slate-800 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none">
-                  {t("workspace.surveys.ai_create.import_hint_link")}
-                </button>
-              </span>
-            </p>
-          )}
         </DialogHeader>
 
         {/* Fixed height, not min-height: the modal reaches its final geometry on first paint and
@@ -168,6 +153,8 @@ export const CreateWithAIDialog = ({
               setHasUnsavedWork(unsaved);
             }}
             onGeneratingChange={setIsGenerating}
+            // Without AI the Import dialog takes Formbricks files only, none of the files the hint names.
+            onImportInstead={isAIAvailable && !hasUnsavedWork ? openImportInstead : undefined}
             onCancel={() => setDialogOpen(false)}
             renderFooter={(footer) => <DialogFooter>{footer}</DialogFooter>}
           />
