@@ -49,6 +49,7 @@ import {
   getReservedFieldLabel,
 } from "@/modules/embedded-data/lib/field-display";
 import { findElementLocation, getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
+import { CALCULATE_SYMBOLS } from "@/modules/survey/editor/lib/operator-symbols";
 import {
   RULE_TYPES,
   RULE_TYPE_COMBOBOX_ICON,
@@ -1069,22 +1070,27 @@ export const getActionOperatorOptions = (
       {
         label: t("workspace.surveys.edit.add"),
         value: "add",
+        symbol: CALCULATE_SYMBOLS.add,
       },
       {
         label: t("workspace.surveys.edit.subtract"),
         value: "subtract",
+        symbol: CALCULATE_SYMBOLS.subtract,
       },
       {
         label: t("workspace.surveys.edit.multiply"),
         value: "multiply",
+        symbol: CALCULATE_SYMBOLS.multiply,
       },
       {
         label: t("workspace.surveys.edit.divide"),
         value: "divide",
+        symbol: CALCULATE_SYMBOLS.divide,
       },
       {
         label: t("workspace.surveys.edit.assign"),
         value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
       },
     ];
   } else if (variableType === "text") {
@@ -1092,10 +1098,12 @@ export const getActionOperatorOptions = (
       {
         label: t("workspace.surveys.edit.assign"),
         value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
       },
       {
         label: t("workspace.surveys.edit.concat"),
         value: "concat",
+        symbol: CALCULATE_SYMBOLS.concat,
       },
     ];
   }

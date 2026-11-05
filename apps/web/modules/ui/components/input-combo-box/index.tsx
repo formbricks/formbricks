@@ -70,7 +70,23 @@ export interface TComboboxOption {
   disabled?: boolean;
   /** A short mark before the icon in the list, such as a block's number. Not shown once picked. */
   leading?: string;
+  /**
+   * An operator's symbol ("+", "×", ">="), drawn as a pill before the label, in the list and once
+   * picked, so pickers match how a rule reads elsewhere.
+   */
+  symbol?: string;
+  /** Shows only the `symbol` pill; `label` still names the option for search and screen readers. */
+  symbolOnly?: boolean;
 }
+
+/** An operator's symbol as a small pill. */
+const OptionSymbol = ({ symbol }: { readonly symbol: string }) => (
+  <span
+    className="inline-flex h-5 min-w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 px-1.5 font-mono text-xs font-semibold text-slate-700"
+    aria-hidden="true">
+    {symbol}
+  </span>
+);
 
 export interface TComboboxGroupedOption {
   label: string;
@@ -188,6 +204,7 @@ function ComboboxOptionLabel({
           {option.leading}
         </span>
       )}
+      {option.symbol !== undefined && <OptionSymbol symbol={option.symbol} />}
       {option.icon && <option.icon className={cn("shrink-0", iconClassName)} />}
       {option.imgSrc && (
         <Image
@@ -221,7 +238,9 @@ function ComboboxOptionLabel({
           )}
         </span>
       ) : (
-        <span className={labelClassName}>{option.label}</span>
+        <span className={option.symbolOnly && option.symbol !== undefined ? "sr-only" : labelClassName}>
+          {option.label}
+        </span>
       )}
     </>
   );
@@ -444,9 +463,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             unoptimized={isExternalImageSrc(opt.imgSrc)}
           />
         )}
-        <span className="truncate" title={opt.label}>
-          {opt.label}
-        </span>
+        {opt.symbol !== undefined && <OptionSymbol symbol={opt.symbol} />}
+        {opt.symbolOnly && opt.symbol !== undefined ? (
+          <span className="sr-only">{opt.label}</span>
+        ) : (
+          <span className="truncate" title={opt.label}>
+            {opt.label}
+          </span>
+        )}
       </div>
     );
   };

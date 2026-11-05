@@ -40,6 +40,16 @@ import {
   TGenericConditionGroup,
 } from "./types";
 
+/**
+ * The numeric comparisons ("=", "!=", ">", "<", ">=", "<=") already read as the symbols a rule row
+ * shows; in the sentence layout they are drawn as the same pills as Set value's operators.
+ */
+const COMPARISON_LABELS = new Set(["=", "!=", ">", "<", ">=", "<="]);
+const withComparisonPills = (options: TComboboxOption[]): TComboboxOption[] =>
+  options.map((option) =>
+    COMPARISON_LABELS.has(option.label) ? { ...option, symbol: option.label, symbolOnly: true } : option
+  );
+
 /** A condition's right-hand value, as the combobox hands it over. */
 type TConditionValue = string | number | string[];
 
@@ -250,7 +260,7 @@ export function SentenceConditionsEditor({
               id={`condition-${depth}-${index}-conditionOperator`}
               key="conditionOperator"
               showSearch={false}
-              options={hasField ? config.getOperatorOptions(condition) : []}
+              options={hasField ? withComparisonPills(config.getOperatorOptions(condition)) : []}
               placeholder={t("workspace.surveys.edit.flow.condition_placeholder")}
               value={hasField ? condition.operator : null}
               disabled={!hasField}

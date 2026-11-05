@@ -1245,7 +1245,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").first().click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").first().click();
-  await page.getByRole("option", { name: "Assign =" }).click();
+  await page.getByRole("option", { name: "Assign", exact: true }).click();
   await page.locator("#action-0-value-input").first().click();
   await page.locator("#action-0-value-input").first().fill("1");
   await page.locator("#actions-0-dropdown").first().click();
@@ -1262,7 +1262,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-2-operator").click();
-  await page.getByRole("option", { name: "Assign =" }).click();
+  await page.getByRole("option", { name: "Assign", exact: true }).click();
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("This ");
 
@@ -1287,7 +1287,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1298,7 +1298,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Concat", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("is ");
 
@@ -1329,7 +1329,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1346,7 +1346,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-2-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Concat", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("a ");
 
@@ -1365,7 +1365,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1376,7 +1376,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Concat", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("secret ");
 
@@ -1394,7 +1394,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1405,7 +1405,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Concat", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("message ");
 
@@ -1464,7 +1464,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1475,7 +1475,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Concat", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("for ");
 
@@ -1491,7 +1491,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1502,7 +1502,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Concat", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("e2e ");
 
@@ -1522,7 +1522,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1535,7 +1535,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Concat", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("tests");
   await page.locator("#actions-1-dropdown").click();
@@ -1573,7 +1573,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
 
@@ -1585,7 +1585,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("2");
 
@@ -1597,7 +1597,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
 
@@ -1638,7 +1638,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
 
@@ -1654,7 +1654,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
 
@@ -1666,7 +1666,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   await page.locator("#actions-0-dropdown").click();
@@ -1677,7 +1677,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-1-value-input").click();
   await page.locator("#action-1-value-input").fill("1");
   await page.locator("#actions-1-dropdown").click();
@@ -1688,7 +1688,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-2-operator").click();
-  await page.getByRole("option", { name: "Multiply *" }).click();
+  await page.getByRole("option", { name: "Multiply", exact: true }).click();
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("2");
 };

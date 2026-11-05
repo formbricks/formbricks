@@ -28,6 +28,7 @@ import {
   getFormulaReferences,
   segmentFormulaText,
 } from "@/modules/survey/editor/lib/expression-formula";
+import { CALCULATE_SYMBOLS } from "@/modules/survey/editor/lib/operator-symbols";
 import {
   type TFlowTextPart,
   getFormulaSegmentChip,
@@ -270,15 +271,6 @@ export type TFlowActionText =
   /** ENG-6933: names nothing, so the row reads "Mark as low quality". */
   | { kind: "markLowQuality"; label: string }
   | { kind: "unknown"; label: string };
-
-const CALCULATE_SYMBOLS: Record<string, string> = {
-  add: "+",
-  subtract: "−",
-  multiply: "×",
-  divide: "÷",
-  assign: "=",
-  concat: "+",
-};
 
 /** A formula in the formula box's text form, its references as chips (ENG-6950). */
 const describeFormulaParts = (tree: TExpression, survey: TSurvey): TFlowTextPart[] => {
