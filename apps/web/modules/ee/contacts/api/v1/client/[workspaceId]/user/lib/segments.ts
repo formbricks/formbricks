@@ -78,6 +78,57 @@ export const buildContactInteractionData = async (
   };
 };
 
+/**
+ * The interaction rows marked for in-memory evaluation, or `null` when the `any`-scope lookup fails. Only
+ * segments the in-memory path can answer read the rows, and only `any` needs the lookup. On failure the
+ * interaction segments fall through to the Prisma path, which applies the same visibility rule itself, so
+ * one failed query does not empty every other segment's result.
+ */
+const loadInteractionData = async (
+  workspaceId: string,
+  contactId: string,
+  rows: TContactInteractionRows,
+  segments: ReadonlyArray<{ filters: unknown }>
+): Promise<TContactInteractionData | null> => {
+  try {
+    return await buildContactInteractionData(
+      workspaceId,
+      rows,
+      segments.some((segment) => hasAnyScopeInteractionFilter((segment.filters ?? []) as TBaseFilters))
+    );
+  } catch (error) {
+    logger.warn(
+      { workspaceId, contactId, error },
+      "Failed to classify interaction rows, evaluating interaction segments through the DB"
+    );
+    return null;
+  }
+};
+
+/**
+ * In-memory membership, or `null` when this segment needs the Prisma path: it reads more than interactions,
+ * there is no interaction data, or evaluation threw. Failures are isolated per segment, like the DB path, so
+ * one throw does not wipe out every already-computed segment, and the segment is not silently dropped.
+ */
+const evaluateInMemory = (
+  filters: TBaseFilters,
+  interactionData: TContactInteractionData | null,
+  now: Date,
+  segmentId: string,
+  workspaceId: string
+): boolean | null => {
+  if (!interactionData) return null;
+  try {
+    return tryEvaluateSurveyInteractionSegmentInMemory(filters, interactionData, now);
+  } catch (error) {
+    logger.warn(
+      { segmentId, workspaceId, error },
+      "Failed to evaluate segment in memory, falling back to DB query"
+    );
+    return null;
+  }
+};
+
 export const getPersonSegmentIds = async (
   workspaceId: string,
   contactId: string,
@@ -94,22 +145,7 @@ export const getPersonSegmentIds = async (
       return [];
     }
 
-    // Only segments the in-memory path can answer read the rows, and only `any` needs the lookup. If the
-    // lookup fails, interaction segments fall through to the Prisma path, which applies the same
-    // visibility rule itself — one failed query must not empty every other segment's result.
-    let interactionData: TContactInteractionData | null = null;
-    try {
-      interactionData = await buildContactInteractionData(
-        workspaceId,
-        interactionRows,
-        segments.some((segment) => hasAnyScopeInteractionFilter((segment.filters ?? []) as TBaseFilters))
-      );
-    } catch (error) {
-      logger.warn(
-        { workspaceId, contactId, error },
-        "Failed to classify interaction rows, evaluating interaction segments through the DB"
-      );
-    }
+    const interactionData = await loadInteractionData(workspaceId, contactId, interactionRows, segments);
 
     // A single evaluation instant shared across every segment so all relative windows agree.
     const now = new Date();
@@ -133,20 +169,7 @@ export const getPersonSegmentIds = async (
         continue;
       }
 
-      // Isolate per-segment failures like the DB path below: an unexpected throw here must not bubble to
-      // the outer catch and wipe out every already-computed segment. On failure, leave the result null
-      // so this segment falls through to the Prisma path instead of being silently dropped.
-      let inMemoryResult: boolean | null = null;
-      try {
-        inMemoryResult = interactionData
-          ? tryEvaluateSurveyInteractionSegmentInMemory(filters, interactionData, now)
-          : null;
-      } catch (error) {
-        logger.warn(
-          { segmentId: segment.id, workspaceId, error },
-          "Failed to evaluate segment in memory, falling back to DB query"
-        );
-      }
+      const inMemoryResult = evaluateInMemory(filters, interactionData, now, segment.id, workspaceId);
 
       if (inMemoryResult !== null) {
         if (inMemoryResult) {
