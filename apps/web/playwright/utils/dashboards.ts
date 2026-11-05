@@ -166,7 +166,7 @@ export const filterChips = (page: Page): Locator => page.getByTestId("table-filt
 
 /**
  * Adds one filter through Filter → Advanced filter: picks the field, checks the operator the dialog picked
- * with it, then picks the value from the field's list, and saves.
+ * with it, then picks the value from the field's list, closes the list, and saves.
  */
 export const addFilterRule = async (
   page: Page,
@@ -182,6 +182,9 @@ export const addFilterRule = async (
   await dialog.getByRole("button", { name: `${rule.field} value` }).click();
   await page.getByRole("option", { name: rule.value, exact: true }).click();
   await expect(dialog.getByRole("button", { name: `${rule.field} value` })).toHaveText(rule.value);
+  // A list field picks several values, so its list stays open after a pick: close it, not the dialog.
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("option", { name: rule.value, exact: true })).toBeHidden();
   await dialog.getByRole("button", { name: "Save" }).click();
   await expect(dialog).toBeHidden();
 };
