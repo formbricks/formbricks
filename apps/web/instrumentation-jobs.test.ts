@@ -148,6 +148,11 @@ vi.mock("@/lib/authzed/outbox-processor", () => ({
   processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
 }));
 
+vi.mock("@/lib/authzed/outbox-safety-net", () => ({
+  startAuthzedOutboxSafetyNet: vi.fn(),
+  stopAuthzedOutboxSafetyNet: vi.fn(),
+}));
+
 vi.mock("@/lib/authzed/scheduled-reconciliation", () => ({
   processAuthzedScheduledReconciliationJob: mockProcessAuthzedScheduledReconciliationJob,
   processAuthzedSurveyAuditJob: vi.fn(),
