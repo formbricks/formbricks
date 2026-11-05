@@ -12,6 +12,7 @@ import {
 import { getV3DashboardWidget } from "@/app/api/v3/dashboards/lib/widget-operations";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { getAuthzedClient } from "@/lib/authzed/client";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 
 /**
  * S2 (ADR-0025, D3): between deploying this release and applying its AuthZed schema, SpiceDB still holds
@@ -156,5 +157,57 @@ describe("on the 6.1 AuthZed schema, before the release's schema is applied (S2)
       const response = await call();
       expect(response.status, `${name}: ${await response.clone().text()}`).toBe(403);
     }
+  });
+});
+
+describe("membership projection on the 6.1 AuthZed schema (S2)", () => {
+  /** The organization relations SpiceDB holds for a user, read straight from the graph. */
+  const relationsOf = async (userId: string) =>
+    (
+      await getAuthzedClient().readRelationships({
+        filter: {
+          resourceType: "organization",
+          resourceId: fixture.organizationId,
+          subject: { objectType: "user", objectId: userId },
+        },
+        limit: 10,
+      })
+    ).relationships.map(({ relation }) => relation);
+
+  // WriteRelationships is atomic: one update naming the unknown `dashboard_viewer` relation would refuse
+  // the whole batch. The projector writes it apart, so every other role still lands.
+  test("a new member, a promotion and a removal still project", async () => {
+    const user = await prisma.user.create({ data: { email: "member@previous-schema.test", name: "M" } });
+    await prisma.membership.create({
+      data: { accepted: true, organizationId: fixture.organizationId, role: "member", userId: user.id },
+    });
+    await expect(reconcileOrganizationMembership(fixture.organizationId, user.id)).resolves.toMatchObject({
+      status: "projected",
+    });
+    expect(await relationsOf(user.id)).toEqual(["member"]);
+
+    await prisma.membership.update({
+      where: { userId_organizationId: { organizationId: fixture.organizationId, userId: user.id } },
+      data: { role: "owner" },
+    });
+    await expect(reconcileOrganizationMembership(fixture.organizationId, user.id)).resolves.toMatchObject({
+      status: "projected",
+    });
+    expect(await relationsOf(user.id)).toEqual(["owner"]);
+
+    await prisma.membership.delete({
+      where: { userId_organizationId: { organizationId: fixture.organizationId, userId: user.id } },
+    });
+    await expect(reconcileOrganizationMembership(fixture.organizationId, user.id)).resolves.toMatchObject({
+      status: "projected",
+    });
+    expect(await relationsOf(user.id)).toEqual([]);
+  });
+
+  test("a Dashboard viewer projects without error, and holds no relation until the schema is applied", async () => {
+    await expect(reconcileOrganizationMembership(fixture.organizationId, ids.viewer)).resolves.toMatchObject({
+      status: "projected",
+    });
+    expect(await relationsOf(ids.viewer)).toEqual([]);
   });
 });

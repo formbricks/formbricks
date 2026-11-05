@@ -4,7 +4,7 @@ import { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
-import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
+import { AUTHZED_ERROR_CODES, AuthzedError, type TAuthzedErrorCode } from "./errors";
 import {
   deleteOrganizationRelationships,
   deleteUserOrganizationRelationships,
@@ -43,6 +43,12 @@ vi.mock("./config", () => ({
 const ORGANIZATION_ID = "organization-private-id";
 const USER_ID = "user-private-id";
 
+/** Every update written, across the legacy batches and the `dashboard_viewer` batches after them. */
+const allWrites = (): TAuthzedRelationshipUpdate[] =>
+  clientMocks.writeRelationships.mock.calls.flatMap(
+    ([updates]) => updates as ReadonlyArray<TAuthzedRelationshipUpdate>
+  );
+
 const membershipRows = (role: OrganizationRole, userId = USER_ID, organizationId = ORGANIZATION_ID) => [
   { organizationId, role, userId },
 ];
@@ -59,7 +65,7 @@ describe("organization membership projection", () => {
   });
 
   test.each(["owner", "manager", "member", "billing", "dashboard_viewer"] as const)(
-    "atomically touches the %s relationship and deletes the other organization roles",
+    "touches the %s relationship and deletes the other organization roles",
     async (role) => {
       vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows(role) as never);
 
@@ -68,8 +74,13 @@ describe("organization membership projection", () => {
         status: "projected",
       });
 
-      const updates = clientMocks.writeRelationships.mock
-        .calls[0][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
+      // The four legacy roles in one atomic request, `dashboard_viewer` in one of its own after it.
+      expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
+      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(4);
+      expect(clientMocks.writeRelationships.mock.calls[1][0]).toEqual([
+        expect.objectContaining({ relationship: expect.objectContaining({ relation: "dashboard_viewer" }) }),
+      ]);
+      const updates = allWrites();
       expect(updates).toHaveLength(5);
       expect(updates).toEqual(
         expect.arrayContaining([
@@ -105,7 +116,7 @@ describe("organization membership projection", () => {
         select: { organizationId: true, role: true, userId: true },
       })
     );
-    expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
+    expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
   });
 
   test("deletes every organization role when the source membership no longer exists", async () => {
@@ -140,8 +151,8 @@ describe("organization membership projection", () => {
       status: "projected",
     });
 
-    expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
-    expect(clientMocks.writeRelationships.mock.calls[1][0]).toEqual(
+    expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(4);
+    expect(clientMocks.writeRelationships.mock.calls[2][0]).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           operation: "touch",
@@ -166,7 +177,7 @@ describe("organization membership projection", () => {
       retryable: false,
       status: "failed",
     });
-    expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(3);
+    expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(6);
   });
 
   test("does not read the database or construct a client when AuthZed is disabled", async () => {
@@ -209,6 +220,64 @@ describe("organization membership projection", () => {
     expect(serializedLog).toContain(AUTHZED_ERROR_CODES.UNAVAILABLE);
   });
 
+  describe("on an AuthZed schema without dashboard_viewer (before the release's schema is applied)", () => {
+    const missingRelation = (
+      code: TAuthzedErrorCode = AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+      relation = "dashboard_viewer"
+    ) =>
+      new AuthzedError({
+        attempts: 1,
+        cause: { details: `relation/permission \`${relation}\` not found under definition \`organization\`` },
+        code,
+        operation: "write_relationships",
+        retryable: false,
+      });
+
+    test.each(["owner", "member", "dashboard_viewer"] as const)(
+      "still projects the legacy roles of a %s, and logs the dashboard_viewer write it skipped",
+      async (role) => {
+        vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows(role) as never);
+        clientMocks.writeRelationships
+          .mockResolvedValueOnce(undefined)
+          .mockRejectedValueOnce(missingRelation());
+
+        await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
+          passes: 1,
+          status: "projected",
+        });
+        expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(4);
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.objectContaining({ relation: "dashboard_viewer" }),
+          expect.stringContaining("dashboard_viewer")
+        );
+      }
+    );
+
+    test("treats SpiceDB's invalid-argument answer for the missing relation the same way", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows("member") as never);
+      clientMocks.writeRelationships
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(missingRelation(AUTHZED_ERROR_CODES.INVALID_REQUEST));
+
+      await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toEqual({
+        passes: 1,
+        status: "projected",
+      });
+    });
+
+    test("fails on any other error from the dashboard_viewer write", async () => {
+      vi.mocked(prisma.membership.findMany).mockResolvedValue(membershipRows("member") as never);
+      clientMocks.writeRelationships
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(missingRelation(AUTHZED_ERROR_CODES.FAILED_PRECONDITION, "owner"));
+
+      await expect(reconcileOrganizationMembership(ORGANIZATION_ID, USER_ID)).resolves.toMatchObject({
+        status: "failed",
+        code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+      });
+    });
+  });
+
   describe("batched reconciliation", () => {
     test("reads every named membership in one query and writes one group per target", async () => {
       vi.mocked(prisma.membership.findMany).mockResolvedValue([
@@ -225,10 +294,11 @@ describe("organization membership projection", () => {
         })
       ).resolves.toEqual({ passes: 1, status: "projected" });
 
-      // One read and one write for two memberships, rather than two of each.
+      // One read for two memberships, and one write of their legacy roles plus one of dashboard_viewer.
       expect(prisma.membership.findMany).toHaveBeenCalledTimes(2); // source + verify
-      expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
-      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(10);
+      expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
+      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(8);
+      expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(2);
     });
 
     test("deletes every role for a target with no source row while preserving other targets", async () => {
@@ -244,8 +314,7 @@ describe("organization membership projection", () => {
         ],
       });
 
-      const updates = clientMocks.writeRelationships.mock
-        .calls[0][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;
+      const updates = allWrites();
       const ghostUpdates = updates.filter(
         ({ relationship }) => relationship.subject.objectId === "ghost-user"
       );
@@ -268,7 +337,7 @@ describe("organization membership projection", () => {
         ],
       });
 
-      expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(5);
+      expect(allWrites()).toHaveLength(5);
     });
 
     test.each([[undefined], [[]]])(
@@ -297,11 +366,13 @@ describe("organization membership projection", () => {
         status: "projected",
       });
 
-      // 251 targets * 5 relations = 1255 updates, so it must split, and the five updates for a single
-      // membership must stay in one request or the role would not change atomically.
-      expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
+      // 251 targets * 4 legacy relations = 1004 updates, so they must split, and the four updates for a
+      // single membership must stay in one request or the role would not change atomically. The 251
+      // dashboard_viewer updates follow in a request of their own.
+      expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(3);
       expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(1_000);
-      expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(255);
+      expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(4);
+      expect(clientMocks.writeRelationships.mock.calls[2][0]).toHaveLength(251);
     });
   });
 

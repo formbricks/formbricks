@@ -297,8 +297,9 @@ migration adds the `dashboard_viewer` value to the organization role enum; no ex
 <Warning>
   **Apply the schema and run the backfill before you invite anyone as a Dashboard viewer.** Owners, managers and
   members never depend on the new relation or permissions: until the schema is applied they read and edit
-  dashboards exactly as before. Only Dashboard viewers are affected — SpiceDB rejects their dashboard reads
-  (`dashboard_read` does not exist yet), and assigning the role cannot be projected. The schema change only adds a
+  dashboards exactly as before, and invites, role changes and removals for them keep projecting. Only Dashboard
+  viewers are affected — SpiceDB rejects their dashboard reads (`dashboard_read` does not exist yet), and the role
+  is not projected until the schema is applied (the backfill projects it then). The schema change only adds a
   relation and permissions besides narrowing `team#manage`, so the previous release keeps working against the new
   schema during a rolling upgrade.
 </Warning>
