@@ -407,6 +407,14 @@ describe("buildFilterValueQueries", () => {
 describe("mergeFilterValues", () => {
   const rowsOf = (values: string[]) => values.map((value) => ({ [ACCOUNT]: value }));
 
+  test("lists a yes/no field's values as true / false, whether Cube returns booleans or text", () => {
+    const field = "FeedbackRecords.valueBoolean";
+    expect(mergeFilterValues(field, [[{ [field]: true }, { [field]: "false" }, { [field]: null }]])).toEqual({
+      values: [{ value: "true" }, { value: "false" }],
+      hasMore: false,
+    });
+  });
+
   test("answers nothing for no queries or no rows", () => {
     expect(mergeFilterValues(ACCOUNT, [])).toEqual({ values: [], hasMore: false });
     expect(mergeFilterValues(ACCOUNT, [[]])).toEqual({ values: [], hasMore: false });

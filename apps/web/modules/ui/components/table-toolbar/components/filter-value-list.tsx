@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { isUnavailableValue, useAvailableValues } from "../hooks/use-available-values";
 import { getFilterValuesQuery } from "../lib/filter-values-query";
 import type { TFilterOption, TFilterProperty } from "../lib/types";
 
@@ -19,7 +20,8 @@ const SEARCHABLE_FROM = 8;
  * are loaded per search through `loadOptions`, so a property with thousands of values never ships them
  * all. Ticked values that the current search does not return stay listed, so they can be unticked.
  * `locked` values were set for everyone (a dashboard's locked filters): they show ticked, with a lock and
- * `lockedHint` on hover, and cannot be ticked again as a person's own.
+ * `lockedHint` on hover, and cannot be ticked again as a person's own. A property that says which of its
+ * values occur (`availableValues`) shows the others greyed, not to be ticked.
  */
 export const FilterValueList = ({
   property,
@@ -51,6 +53,7 @@ export const FilterValueList = ({
     staleTime: 30_000,
   });
 
+  const available = useAvailableValues(property);
   const staticOptions = property.options ?? [];
   const isSearchable = Boolean(loadOptions) || staticOptions.length >= SEARCHABLE_FROM;
   const needle = search.trim().toLowerCase();
@@ -113,14 +116,20 @@ export const FilterValueList = ({
               </li>
             );
           }
+          const unavailable = isUnavailableValue(available, option.value, selected);
           return (
             <li key={option.value}>
               <label
                 htmlFor={id}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100">
+                className={
+                  unavailable
+                    ? "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-400"
+                    : "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+                }>
                 <Checkbox
                   id={id}
                   checked={selected.includes(option.value)}
+                  disabled={unavailable}
                   onCheckedChange={() => onToggle(option.value)}
                 />
                 <span className="truncate">{option.label}</span>

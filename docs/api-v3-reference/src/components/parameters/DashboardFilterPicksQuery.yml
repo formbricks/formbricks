@@ -14,8 +14,11 @@ schema:
       maxLength: 1000
 description: >-
   Values for the request's filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter
-  for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is
-  ANDed onto every chart's saved query; picks for a filter the request does not name are ignored.
+  for several values of a list filter (any of). A filter takes one typed value otherwise, and `set` /
+  `notSet` none (a pick for one answers 422). In a list filter, `%1Fnone` (`"\u001Fnone"`) stands for
+  "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only
+  records with one; any other filter refuses it with 422. Each pick is ANDed onto every chart's saved
+  query; picks for a filter the request does not name are ignored.
   All values together may take at most 4000 characters percent-encoded
   (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.
 example:

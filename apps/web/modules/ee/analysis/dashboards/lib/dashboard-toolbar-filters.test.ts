@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { NO_VALUE_PICK } from "./dashboard-filters";
 import {
   buildToolbarProperties,
   fromToolbarFilters,
@@ -11,6 +12,7 @@ const SENTIMENT = "FeedbackRecords.sentiment";
 const SCORE = "FeedbackRecords.valueNumber";
 const COLLECTED_AT = "FeedbackRecords.collectedAt";
 const TEXT = "FeedbackRecords.valueText";
+const BOOLEAN = "FeedbackRecords.valueBoolean";
 
 describe("toToolbarFilters", () => {
   test("equals on a field with a fixed set of values is the toolbar's quick filter with every value", () => {
@@ -19,7 +21,7 @@ describe("toToolbarFilters", () => {
     ).toEqual([{ property: SENTIMENT, operator: "in", values: ["positive", "mixed"] }]);
   });
 
-  test("a list field's equals and not equals are is any of / is none of, with every value", () => {
+  test("a list field's equals and not equals keep every value", () => {
     expect(
       toToolbarFilters([
         { field: SOURCE, operator: "equals", values: ["Web", "App"] },
@@ -27,9 +29,21 @@ describe("toToolbarFilters", () => {
         { field: SENTIMENT, operator: "notEquals", values: ["negative", "very_negative"] },
       ])
     ).toEqual([
-      { property: SOURCE, operator: "isAnyOf", values: ["Web", "App"] },
-      { property: SOURCE, operator: "isNoneOf", values: ["Web", "App"] },
-      { property: SENTIMENT, operator: "isNoneOf", values: ["negative", "very_negative"] },
+      { property: SOURCE, operator: "equals", values: ["Web", "App"] },
+      { property: SOURCE, operator: "notEquals", values: ["Web", "App"] },
+      { property: SENTIMENT, operator: "notEquals", values: ["negative", "very_negative"] },
+    ]);
+  });
+
+  test("is set and is not set hold no value", () => {
+    expect(
+      toToolbarFilters([
+        { field: SOURCE, operator: "set", values: [] },
+        { field: COLLECTED_AT, operator: "notSet", values: [] },
+      ])
+    ).toEqual([
+      { property: SOURCE, operator: "isSet", values: [] },
+      { property: COLLECTED_AT, operator: "isNotSet", values: [] },
     ]);
   });
 
@@ -75,23 +89,31 @@ describe("fromToolbarFilters", () => {
       { field: SCORE, operator: "gte" as const, values: ["7"] },
       { field: TEXT, operator: "notContains" as const, values: ["late"] },
       { field: COLLECTED_AT, operator: "lt" as const, values: ["2026-02-01"] },
+      { field: SOURCE, operator: "set" as const, values: [] },
+      { field: SENTIMENT, operator: "notSet" as const, values: [] },
+      { field: SOURCE, operator: "equals" as const, values: ["Web", NO_VALUE_PICK] },
     ];
     expect(fromToolbarFilters(toToolbarFilters(filters))).toEqual(filters);
   });
 
-  test("leaves out a filter that is not a comparison with a value", () => {
+  test("leaves out a filter with nothing to compare against, or an operator it has no name for", () => {
     expect(
       fromToolbarFilters([
-        { property: SOURCE, operator: "isSet", values: [] },
         { property: SOURCE, operator: "in", values: [] },
         { property: SOURCE, operator: "startsWith", values: ["x"] },
-        { property: SOURCE, operator: "isAnyOf", values: [] },
+        { property: SOURCE, operator: "equals", values: [] },
       ])
     ).toEqual([]);
   });
 
-  test("an is-any-of rule on a quick field becomes its quick filter, keeping every value", () => {
-    const rule = { property: SENTIMENT, operator: "isAnyOf" as const, values: ["positive", "mixed"] };
+  test("a free-text field's is keeps its one value", () => {
+    expect(fromToolbarFilters([{ property: TEXT, operator: "equals", values: ["a", "b"] }])).toEqual([
+      { field: TEXT, operator: "equals", values: ["a"] },
+    ]);
+  });
+
+  test("an is rule on a quick field becomes its quick filter, keeping every value", () => {
+    const rule = { property: SENTIMENT, operator: "equals" as const, values: ["positive", "mixed"] };
     expect(toToolbarFilters(fromToolbarFilters([rule]))).toEqual([
       { property: SENTIMENT, operator: "in", values: ["positive", "mixed"] },
     ]);
@@ -107,21 +129,32 @@ describe("getToolbarRuleOperators", () => {
       "greaterEqual",
       "lessThan",
       "lessEqual",
+      "isSet",
+      "isNotSet",
     ]);
-    expect(getToolbarRuleOperators(COLLECTED_AT)).toEqual(["isAfter", "isBefore"]);
-    expect(getToolbarRuleOperators(TEXT)).toEqual(["equals", "notEquals", "contains", "doesNotContain"]);
+    expect(getToolbarRuleOperators(COLLECTED_AT)).toEqual(["isBefore", "isAfter", "isSet", "isNotSet"]);
+    expect(getToolbarRuleOperators(TEXT)).toEqual([
+      "contains",
+      "doesNotContain",
+      "equals",
+      "notEquals",
+      "isSet",
+      "isNotSet",
+    ]);
+    expect(getToolbarRuleOperators(BOOLEAN)).toEqual(["equals", "isSet", "isNotSet"]);
     expect(getToolbarRuleOperators("FeedbackRecords.notAField")).toEqual([]);
   });
 
-  test("a list field picks several values, and partial text only where its values are not a fixed set", () => {
-    expect(getToolbarRuleOperators(SOURCE)).toEqual(["isAnyOf", "isNoneOf", "contains", "doesNotContain"]);
-    expect(getToolbarRuleOperators(SENTIMENT)).toEqual(["isAnyOf", "isNoneOf"]);
-    expect(getToolbarRuleOperators("FeedbackRecords.valueBand")).toEqual(["isAnyOf", "isNoneOf"]);
-    expect(getToolbarRuleOperators("FeedbackRecords.ed_region")).toEqual([
-      "isAnyOf",
-      "isNoneOf",
-      "contains",
-      "doesNotContain",
+  test("a looked-up field offers partial text too; a fixed set only is and is not", () => {
+    const looked = ["equals", "notEquals", "contains", "doesNotContain", "isSet", "isNotSet"];
+    expect(getToolbarRuleOperators(SOURCE)).toEqual(looked);
+    expect(getToolbarRuleOperators("FeedbackRecords.ed_region")).toEqual(looked);
+    expect(getToolbarRuleOperators(SENTIMENT)).toEqual(["equals", "notEquals", "isSet", "isNotSet"]);
+    expect(getToolbarRuleOperators("FeedbackRecords.valueBand")).toEqual([
+      "equals",
+      "notEquals",
+      "isSet",
+      "isNotSet",
     ]);
   });
 });
@@ -145,6 +178,7 @@ describe("buildToolbarProperties", () => {
         .sort()
     ).toEqual(["FeedbackRecords.sentiment", "FeedbackRecords.valueBand"]);
     expect(byId(SENTIMENT)?.options?.map(({ value }) => value)).toEqual([
+      NO_VALUE_PICK,
       "very_negative",
       "negative",
       "neutral",
@@ -154,11 +188,24 @@ describe("buildToolbarProperties", () => {
     ]);
   });
 
-  test("a categorical field and an embedded-data key are Advanced filter only, and list their values there", () => {
+  test("a fixed set says which of its values occur, with a hint for when none do", () => {
+    expect(byId(SENTIMENT)?.availableValues?.emptyHint).toBe(
+      "workspace.analysis.dashboards.filter_no_sentiment_yet"
+    );
+    expect(byId("FeedbackRecords.valueBand")?.availableValues?.emptyHint).toBe(
+      "workspace.analysis.dashboards.filter_no_values_yet"
+    );
+    expect(byId(BOOLEAN)?.availableValues).toBeDefined();
+    expect(byId(SOURCE)?.availableValues).toBeUndefined();
+  });
+
+  test("a categorical field and an embedded-data key list their values, after (No value)", () => {
     for (const id of [SOURCE, "FeedbackRecords.metadataDevice", "FeedbackRecords.ed_region"]) {
-      expect(byId(id)).toMatchObject({ valueType: "enum" });
+      expect(byId(id)).toMatchObject({ valueType: "enum", multiValueEquals: true });
       expect(byId(id)?.quick).toBeUndefined();
-      expect(byId(id)?.options).toBeUndefined();
+      expect(byId(id)?.options).toEqual([
+        { value: NO_VALUE_PICK, label: "workspace.analysis.dashboards.filter_no_value" },
+      ]);
       expect(byId(id)?.loadOptions).toBeTypeOf("function");
       expect(byId(id)?.ruleOperators?.length).toBeGreaterThan(0);
     }
@@ -169,9 +216,28 @@ describe("buildToolbarProperties", () => {
     expect(byId("FeedbackRecords.fieldId")).toBeUndefined();
   });
 
-  test("a boolean is picked from yes and no, one value at a time", () => {
-    const booleanField = properties.find((property) => property.options?.[0]?.label === "common.yes");
-    expect(booleanField?.ruleOperators).toEqual(["equals", "notEquals"]);
+  test("a boolean is picked from yes and no (or no value), and is only is", () => {
+    expect(byId(BOOLEAN)?.options?.map(({ value }) => value)).toEqual([NO_VALUE_PICK, "true", "false"]);
+    expect(byId(BOOLEAN)?.ruleOperators).toEqual(["equals", "isSet", "isNotSet"]);
+    expect(byId(BOOLEAN)?.multiValueEquals).toBe(true);
+    expect(byId(BOOLEAN)?.quick).toBe(false);
+  });
+
+  test("a field's list is not narrowed by its own list filters or set / not set", () => {
+    const narrowed = buildToolbarProperties({
+      t,
+      embeddedFields: [],
+      dashboardId: "d1",
+      filters: [
+        { field: SENTIMENT, operator: "notSet", values: [] },
+        { field: SENTIMENT, operator: "equals", values: ["positive"] },
+        { field: SOURCE, operator: "set", values: [] },
+      ],
+      dateRange: null,
+    }).find((property) => property.id === SENTIMENT);
+    expect(narrowed?.availableValues?.queryKey).toContainEqual(
+      expect.objectContaining({ filters: [{ field: SOURCE, operator: "set", values: [] }] })
+    );
   });
 
   test("free text is typed, not listed", () => {

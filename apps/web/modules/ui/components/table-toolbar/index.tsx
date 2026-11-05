@@ -1,7 +1,7 @@
 "use client";
 
 import { SearchIcon, XIcon } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { AdvancedFilterDialog } from "./components/advanced-filter-dialog";
@@ -118,6 +118,19 @@ export const TableToolbar = ({
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   // A rule just picked in the simple-first Filter menu, not saved until its popover finishes it.
   const [draftPropertyId, setDraftPropertyId] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // A draft's chip goes away as it is saved or dropped, and its popover's focus with it: focus moves to
+  // the chip row's "+" — or, when no chip is left, to the Filter button — rather than to the page.
+  const closeDraft = () => {
+    setDraftPropertyId(null);
+    requestAnimationFrame(() => {
+      const root = rootRef.current;
+      const target =
+        root?.querySelector<HTMLElement>("[data-filter-add]") ??
+        root?.querySelector<HTMLElement>("[data-testid=table-filter-button]");
+      target?.focus();
+    });
+  };
   const onFilterOpen = filter?.onOpen;
   useEffect(() => {
     if (isFilterMenuOpen || isAdvancedOpen) onFilterOpen?.();
@@ -149,7 +162,7 @@ export const TableToolbar = ({
   }
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div ref={rootRef} className={cn("flex flex-col gap-2", className)}>
       <div className="flex min-h-8 items-center justify-between gap-3">
         {selectionContent ? (
           <div className="flex min-w-0 items-center">{selectionContent}</div>
@@ -193,7 +206,7 @@ export const TableToolbar = ({
           onEditRules={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
           simpleRules={simpleRules}
           draftProperty={draftProperty}
-          onDraftClose={() => setDraftPropertyId(null)}
+          onDraftClose={closeDraft}
           locked={filter.locked}
           disabled={isLoading}
         />

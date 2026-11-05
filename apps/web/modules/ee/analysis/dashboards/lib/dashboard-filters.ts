@@ -29,8 +29,8 @@ export const MAX_DASHBOARD_FILTER_PICK_VALUES = 100;
 export const MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH = 1000;
 
 /**
- * The operators a dashboard filter may use: every operator that compares against a value. `set` and
- * `notSet` take none, so there would be nothing for a person to pick.
+ * The operators a dashboard filter may use: every operator that compares against values, and `set` /
+ * `notSet` ("is set", "is not set"), which compare against none.
  */
 export const DASHBOARD_FILTER_OPERATORS = [
   "equals",
@@ -41,9 +41,36 @@ export const DASHBOARD_FILTER_OPERATORS = [
   "gte",
   "lt",
   "lte",
+  "set",
+  "notSet",
 ] as const satisfies readonly FilterOperator[];
 
 export type TDashboardFilterOperator = (typeof DASHBOARD_FILTER_OPERATORS)[number];
+
+/** The operators that compare against no value: such a filter applies with no values at all. */
+const NO_VALUE_OPERATORS: ReadonlySet<TDashboardFilterOperator> = new Set(["set", "notSet"]);
+
+/** Whether a filter with this operator compares against values; `set` and `notSet` take none. */
+export const dashboardFilterTakesValues = (operator: TDashboardFilterOperator): boolean =>
+  !NO_VALUE_OPERATORS.has(operator);
+
+/**
+ * The value a list filter's "(No value)" option stands for: a record without a value for the field. A
+ * control character starts it, so no stored value can be it, and it never reaches Cube: picked with
+ * values, "is" matches any of them or no value, "is not" a value that is none of them
+ * (`toPickRule`). Only list filters take it (`findPickIssues`).
+ */
+export const NO_VALUE_PICK = "\u001Fnone";
+
+/** Why a locked filter's values do not suit its operator, or `null` when they do. */
+export const lockedValuesProblem = (
+  filter: Pick<TDashboardFilter, "operator"> & { values: readonly string[] }
+): string | null => {
+  if (!dashboardFilterTakesValues(filter.operator)) {
+    return filter.values.length === 0 ? null : "set and notSet compare against no value: leave values empty.";
+  }
+  return filter.values.length > 0 ? null : "Needs at least one value.";
+};
 
 export const ZDashboardFilter = z
   .object({
@@ -58,14 +85,19 @@ export type TDashboardFilter = z.infer<typeof ZDashboardFilter>;
 
 /**
  * A filter locked on the dashboard by an editor: saved with its values, so it applies to every read of the
- * dashboard, whoever reads it, and a viewer cannot take it off.
+ * dashboard, whoever reads it, and a viewer cannot take it off. A `set` / `notSet` filter holds no values;
+ * every other one at least one.
  */
 export const ZLockedDashboardFilter = ZDashboardFilter.extend({
   values: z
     .array(zPostgresText().trim().min(1).max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
-    .min(1)
     .max(MAX_DASHBOARD_FILTER_PICK_VALUES),
-}).strict();
+})
+  .strict()
+  .superRefine((filter, ctx) => {
+    const problem = lockedValuesProblem(filter);
+    if (problem) ctx.addIssue({ code: "custom", message: problem, path: ["values"] });
+  });
 
 export type TLockedDashboardFilter = z.infer<typeof ZLockedDashboardFilter>;
 
@@ -88,7 +120,7 @@ export const getDashboardFilterField = (name: string): TChartField | undefined =
   return field && field.kind !== "measure" && !FILTER_ONLY_FIELDS.has(field.name) ? field : undefined;
 };
 
-/** The operators a field allows as a dashboard filter: the catalog's, less those that take no value. */
+/** The operators a field allows as a dashboard filter: the catalog's that a dashboard filter may use. */
 export const getDashboardFilterOperators = (fieldName: string): TDashboardFilterOperator[] => {
   const field = getDashboardFilterField(fieldName);
   if (!field) return [];
@@ -98,14 +130,14 @@ export const getDashboardFilterOperators = (fieldName: string): TDashboardFilter
 /**
  * Whether the filter picks from a list of values that occur (is, is not — each of any of several values)
  * rather than taking one typed value. Lists exist only for categorical fields: those the catalog has a
- * value lookup for (`valueLookup`), and embedded-data keys. A free-text field (`valueText`, `userId`, a
- * page URL) can still be a filter, but its value is typed: listing its values would hand every reader
- * of the dashboard the raw text of every record the charts read.
+ * value lookup for (`valueLookup`), embedded-data keys, and yes/no fields. A free-text field
+ * (`valueText`, `userId`, a page URL) can still be a filter, but its value is typed: listing its values
+ * would hand every reader of the dashboard the raw text of every record the charts read.
  */
 export const isListDashboardFilter = (filter: Pick<TDashboardFilter, "field" | "operator">): boolean => {
   if (filter.operator !== "equals" && filter.operator !== "notEquals") return false;
   const field = getDashboardFilterField(filter.field);
-  return field?.type === "string" && field.valueLookup;
+  return field?.type === "boolean" || (field?.type === "string" && field.valueLookup);
 };
 
 export type TDashboardFilterIssue = { path: (string | number)[]; message: string };

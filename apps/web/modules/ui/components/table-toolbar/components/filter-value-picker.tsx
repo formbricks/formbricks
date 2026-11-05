@@ -14,6 +14,7 @@ import {
 } from "@/modules/ui/components/command";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { isUnavailableValue, useAvailableValues } from "../hooks/use-available-values";
 import { getFilterValuesQuery } from "../lib/filter-values-query";
 import type { TFilterOption, TFilterProperty } from "../lib/types";
 
@@ -94,7 +95,8 @@ type TPickSeveral = {
  * values `loadOptions` looks up one search at a time. A property whose values are free (a string or a
  * number) also takes what is typed, offered as the list's first row; an enum takes only a listed value.
  * With `multiple`, each pick ticks or unticks a value and the list stays open, and the values already
- * ticked stay listed whatever the search returns, so they can be unticked.
+ * ticked stay listed whatever the search returns, so they can be unticked. A property that says which of
+ * its values occur (`availableValues`) lists the others greyed, not to be picked.
  */
 export const FilterValuePicker = ({
   id,
@@ -130,6 +132,7 @@ export const FilterValuePicker = ({
     staleTime: 30_000,
   });
 
+  const available = useAvailableValues(property);
   const needle = search.trim();
   const staticOptions = property.options ?? [];
   const listed = listedOptions(property, loaded.data?.options, needle);
@@ -254,6 +257,7 @@ export const FilterValuePicker = ({
                     <CommandItem
                       key={option.value}
                       value={`option:${option.value}`}
+                      disabled={isUnavailableValue(available, option.value, selected)}
                       onSelect={() => pick(option.value, option.label)}
                       className="gap-2">
                       <span

@@ -2,6 +2,7 @@ import {
   DASHBOARD_FILTER_OPERATORS,
   type TDashboardFilter,
   type TDashboardFilterOperator,
+  dashboardFilterTakesValues,
   findDashboardFilterIssues,
 } from "./dashboard-filters";
 
@@ -49,7 +50,8 @@ export type TFilterSpec = Pick<TDashboardFilter, "field" | "operator"> & { value
 
 /**
  * Filters stated as a list, as the request's `filter[<id>]` and `picks[<id>]` parameters: numbered `f1`,
- * `f2`, … in the order given. A filter without values is named but picks nothing.
+ * `f2`, … in the order given. A filter without values is named but picks nothing, and a `set` / `notSet`
+ * filter, which compares against nothing, never has a pick.
  */
 export const toRequestFilters = (
   specs: readonly TFilterSpec[]
@@ -59,6 +61,7 @@ export const toRequestFilters = (
   specs.forEach((spec, index) => {
     const id = `f${index + 1}`;
     rules[id] = encodeFilterRule(spec);
+    if (!dashboardFilterTakesValues(spec.operator)) return;
     const values = (spec.values ?? []).filter((value) => value.trim() !== "");
     if (values.length > 0) picks[id] = [...values];
   });

@@ -1,25 +1,29 @@
 import type { TFunction } from "i18next";
-import type { TRuleOperator, TTableFilterOperator } from "./types";
+import type { TFilterProperty, TRuleOperator, TTableFilterOperator } from "./types";
 
 /** The rule operators that compare against nothing. */
 export const NO_VALUE_OPERATORS: readonly TTableFilterOperator[] = ["isSet", "isNotSet"];
 
-/** The rule operators that compare against a list of values, so a rule keeps every value it holds. */
-export const MULTI_VALUE_OPERATORS: readonly TTableFilterOperator[] = [
-  "includesOneOf",
-  "includesAllOf",
-  "isAnyOf",
-  "isNoneOf",
-];
+/** The rule operators that always compare against a list of values (a multi-select's choices). */
+export const MULTI_VALUE_OPERATORS: readonly TTableFilterOperator[] = ["includesOneOf", "includesAllOf"];
+
+/** The exact matches, which hold a list on a property with `multiValueEquals`: is (not) any of them. */
+const EQUALITY_OPERATORS: readonly TTableFilterOperator[] = ["equals", "notEquals"];
 
 /**
- * The list operators for a property that holds one value per row: it is, or is not, any of the picked
- * values. Their values are always picked from the property's own, several at a time.
+ * Whether `equals` / `notEquals` on the property pick several values, always from the property's own:
+ * the row's one value is, or is not, any of them.
  */
-export const PICK_LIST_OPERATORS: readonly TTableFilterOperator[] = ["isAnyOf", "isNoneOf"];
+export const isMultiValueEquality = (
+  operator: TTableFilterOperator,
+  property: Pick<TFilterProperty, "multiValueEquals"> | undefined
+): boolean => Boolean(property?.multiValueEquals) && EQUALITY_OPERATORS.includes(operator);
 
-export const operatorTakesValues = (operator: TTableFilterOperator): boolean =>
-  MULTI_VALUE_OPERATORS.includes(operator);
+/** Whether a rule with the operator keeps a list of values, so every value it holds counts. */
+export const operatorTakesValues = (
+  operator: TTableFilterOperator,
+  property?: Pick<TFilterProperty, "multiValueEquals">
+): boolean => MULTI_VALUE_OPERATORS.includes(operator) || isMultiValueEquality(operator, property);
 
 export const STRING_RULE_OPERATORS: TRuleOperator[] = [
   "equals",
@@ -90,10 +94,7 @@ export const getOperatorLabel = (operator: TTableFilterOperator, t: TFunction): 
     case "isNotSet":
       return t("common.table_toolbar.operator_is_not_set");
     case "in":
-    case "isAnyOf":
       return t("common.table_toolbar.operator_is_any_of");
-    case "isNoneOf":
-      return t("common.table_toolbar.operator_is_none_of");
     default:
       return operator;
   }

@@ -25,6 +25,25 @@ describe("keepValidFilters", () => {
     const many = Array.from({ length: 12 }, () => SCORE);
     expect(keepValidFilters(many)).toHaveLength(10);
   });
+
+  test("keeps set / notSet with no values, dropping any they were given", () => {
+    expect(
+      keepValidFilters([
+        { field: "FeedbackRecords.sourceType", operator: "set", values: ["x"] },
+        { field: "FeedbackRecords.sourceType", operator: "notSet" },
+      ])
+    ).toEqual([
+      { field: "FeedbackRecords.sourceType", operator: "set", values: [] },
+      { field: "FeedbackRecords.sourceType", operator: "notSet", values: [] },
+    ]);
+  });
+
+  test("a set filter round-trips through the URL with no picks", () => {
+    const isSet = { field: "FeedbackRecords.sourceType", operator: "set" as const, values: [] };
+    const params = writeFiltersToUrl(new URLSearchParams(), [isSet]);
+    expect([...params.keys()]).toEqual(["filter[f1]"]);
+    expect(readFiltersFromUrl(params)).toEqual([isSet]);
+  });
 });
 
 describe("filters in the URL", () => {

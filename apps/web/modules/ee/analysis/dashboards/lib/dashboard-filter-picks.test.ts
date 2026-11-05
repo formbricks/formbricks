@@ -11,9 +11,10 @@ import {
   pickValuesOf,
   resolvePicksForDataset,
   splitPickParams,
+  toPickRule,
   withLockedFilters,
 } from "./dashboard-filter-picks";
-import type { TDashboardFilter } from "./dashboard-filters";
+import { NO_VALUE_PICK, type TDashboardFilter } from "./dashboard-filters";
 
 const SOURCE = "FeedbackRecords.sourceName";
 const A = "clfi000000000000000000001";
@@ -49,6 +50,75 @@ describe("pickValuesOf", () => {
     expect(pickValuesOf(filters[1], ["late", "early"])).toEqual(["late"]);
     expect(pickValuesOf(filters[0], [" ", ""])).toBeNull();
     expect(pickValuesOf(filters[0], undefined)).toBeNull();
+  });
+});
+
+describe("set and notSet", () => {
+  const isSet: TDashboardFilter = { id: A, field: SOURCE, operator: "set", label: "Source" };
+
+  test("apply with no pick, as a rule without values", () => {
+    expect(pickValuesOf(isSet, undefined)).toEqual([]);
+    expect(resolvePicksForDataset([isSet], {}, () => true).rules).toEqual([
+      { member: SOURCE, operator: "set" },
+    ]);
+    expect(resolvePicksForDataset([{ ...isSet, operator: "notSet" }], {}, () => true).rules).toEqual([
+      { member: SOURCE, operator: "notSet" },
+    ]);
+  });
+
+  test("refuse a pick, since they compare against nothing", () => {
+    expect(findPickIssues([isSet], {})).toEqual([]);
+    expect(findPickIssues([isSet], { [A]: ["Web"] })).toEqual([
+      expect.objectContaining({ name: `picks[${A}]` }),
+    ]);
+  });
+
+  test("a locked one applies on every read", () => {
+    const locked = withLockedFilters([{ ...isSet, values: [] }], [], {});
+    expect(resolvePicksForDataset(locked.filters, locked.picks, () => true).rules).toEqual([
+      { member: SOURCE, operator: "set" },
+    ]);
+  });
+});
+
+describe("the no-value pick", () => {
+  const is: TDashboardFilter = { id: A, field: SOURCE, operator: "equals", label: "Source" };
+  const isNot: TDashboardFilter = { ...is, operator: "notEquals" };
+
+  test("is any of the values or no value", () => {
+    expect(toPickRule(is, ["Web", NO_VALUE_PICK])).toEqual({
+      or: [
+        { member: SOURCE, operator: "equals", values: ["Web"] },
+        { member: SOURCE, operator: "notSet" },
+      ],
+    });
+    expect(toPickRule(is, [NO_VALUE_PICK])).toEqual({ member: SOURCE, operator: "notSet" });
+  });
+
+  test("is not: has a value, and none of the others", () => {
+    expect(toPickRule(isNot, ["Web", NO_VALUE_PICK])).toEqual({
+      and: [
+        { member: SOURCE, operator: "set" },
+        { member: SOURCE, operator: "notEquals", values: ["Web"] },
+      ],
+    });
+    expect(toPickRule(isNot, [NO_VALUE_PICK])).toEqual({ member: SOURCE, operator: "set" });
+  });
+
+  test("without it, a pick is the plain rule", () => {
+    expect(toPickRule(is, ["Web"])).toEqual({ member: SOURCE, operator: "equals", values: ["Web"] });
+  });
+
+  test("is refused as a real value anywhere but a list filter", () => {
+    expect(findPickIssues([is], { [A]: [NO_VALUE_PICK] })).toEqual([]);
+    const contains: TDashboardFilter = { ...is, operator: "contains" };
+    expect(findPickIssues([contains], { [A]: [NO_VALUE_PICK] })).toEqual([
+      expect.objectContaining({ name: `picks[${A}]` }),
+    ]);
+    const freeText: TDashboardFilter = { ...is, field: "FeedbackRecords.valueText" };
+    expect(findPickIssues([freeText], { [A]: [NO_VALUE_PICK] })).toEqual([
+      expect.objectContaining({ name: `picks[${A}]` }),
+    ]);
   });
 });
 

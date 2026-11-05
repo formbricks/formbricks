@@ -302,7 +302,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "List dashboard filter values",
       description:
-        "List up to 100 values a field offers for a dashboard, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange, the filters already applied and search. Only a categorical field (one marked valueLookup in list_chart_fields) or an embedded-data field, with equals or notEquals, has a list; others take a typed value. Pass the values as a filter to get_chart_data.",
+        "List up to 100 values a field offers for a dashboard, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange, the filters already applied and search. Only a categorical field (one marked valueLookup in list_chart_fields), a yes/no field or an embedded-data field, with equals or notEquals, has a list; others take a typed value. The list holds only values that occur, so a fixed-option field (sentiment, value band, yes/no) shows which of its options the charts have. Pass the values as a filter to get_chart_data.",
       inputSchema: ZMcpListDashboardFilterValuesInput,
       outputSchema: ZMcpDashboardFilterValuesOutput,
       annotations: READ_ANNOTATIONS,
@@ -546,7 +546,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Set dashboard filters",
       description:
-        "Set a dashboard's locked filters: the filters every reader sees applied, Dashboard viewers included, which they cannot remove. Send the whole list — it replaces the saved one, so keep a filter by sending it back as get_dashboard read it, change it by sending it changed, and remove it by leaving it out; an empty list removes them all. Each filter is a field (a dimension from list_chart_fields, or an embedded-data field of a dataset the dashboard's charts read), an operator, a label and its values; all of them apply together. Pass the updatedAt from get_dashboard as expectedUpdatedAt; if the dashboard changed since, nothing is saved.",
+        "Set a dashboard's locked filters: the filters every reader sees applied, Dashboard viewers included, which they cannot remove. Send the whole list — it replaces the saved one, so keep a filter by sending it back as get_dashboard read it, change it by sending it changed, and remove it by leaving it out; an empty list removes them all. Each filter is a field (a dimension from list_chart_fields, or an embedded-data field of a dataset the dashboard's charts read), an operator, a label and its values (none for set/notSet); all of them apply together. Pass the updatedAt from get_dashboard as expectedUpdatedAt; if the dashboard changed since, nothing is saved.",
       inputSchema: ZMcpSetDashboardFiltersInput,
       outputSchema: ZMcpDashboardOutput,
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },

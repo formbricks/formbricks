@@ -27,13 +27,20 @@ describe("getRuleValueControl", () => {
     expect(getRuleValueControl(property({ valueType: "enum", options: [] }), "includesOneOf")).toBe("editor");
   });
 
-  test("picks several values for is any of / is none of, and for any list operator on looked-up values", () => {
-    const fixed = property({ valueType: "enum", options: [{ value: "a", label: "A" }] });
-    expect(getRuleValueControl(fixed, "isAnyOf")).toBe("multiPicker");
-    expect(getRuleValueControl(fixed, "isNoneOf")).toBe("multiPicker");
-    const categorical = property({ valueType: "enum", loadOptions });
-    expect(getRuleValueControl(categorical, "isAnyOf")).toBe("multiPicker");
-    expect(getRuleValueControl(categorical, "includesOneOf")).toBe("multiPicker");
+  test("picks several values for is / is not with multiValueEquals, and for any list operator on looked-up values", () => {
+    const fixed = property({
+      valueType: "enum",
+      options: [{ value: "a", label: "A" }],
+      multiValueEquals: true,
+    });
+    expect(getRuleValueControl(fixed, "equals")).toBe("multiPicker");
+    expect(getRuleValueControl(fixed, "notEquals")).toBe("multiPicker");
+    const categorical = property({ valueType: "enum", loadOptions, multiValueEquals: true });
+    expect(getRuleValueControl(categorical, "equals")).toBe("multiPicker");
+    expect(getRuleValueControl(categorical, "contains")).toBe("text");
+    expect(getRuleValueControl(property({ valueType: "enum", loadOptions }), "includesOneOf")).toBe(
+      "multiPicker"
+    );
   });
 
   test("picks a day for a date", () => {

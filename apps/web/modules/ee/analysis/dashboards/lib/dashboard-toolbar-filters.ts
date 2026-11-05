@@ -9,7 +9,6 @@ import {
   VALUE_BAND_VALUES,
   getTranslatedDimensionValueLabel,
 } from "@/modules/ee/analysis/lib/schema-definition";
-import { operatorTakesValues } from "@/modules/ui/components/table-toolbar/lib/operators";
 import type {
   TFilterOption,
   TFilterProperty,
@@ -18,10 +17,12 @@ import type {
   TTableFilterOperator,
 } from "@/modules/ui/components/table-toolbar/lib/types";
 import type { TDashboardFilterState } from "./dashboard-filter-state";
-import { getDashboardFieldValueProperty } from "./dashboard-filter-values";
+import { getDashboardFieldAvailableValues, getDashboardFieldValueProperty } from "./dashboard-filter-values";
 import {
+  NO_VALUE_PICK,
   type TDashboardFilterOperator,
   type TLockedDashboardFilter,
+  dashboardFilterTakesValues,
   getDashboardFilterField,
   getDashboardFilterOperators,
   isListDashboardFilter,
@@ -33,8 +34,10 @@ import {
  * datasets and their embedded-data keys. A field whose values are a fixed set the app already knows
  * (sentiment, value band) is a quick filter in the Filter menu; every other field, whose values would have
  * to be looked up in the data, is filtered in Advanced filter, which lists them when a rule on the field is
- * written. A field that holds one of a list of values (a list filter, `isListDashboardFilter`) is "is any
- * of" / "is none of" there, so a rule holds every value a quick filter would.
+ * written. On a field that holds one of a list of values (a list filter, `isListDashboardFilter`) "is" /
+ * "is not" take one value or several (`multiValueEquals`), so a rule holds every value a quick filter
+ * would; such a list also offers "(No value)" (`NO_VALUE_PICK`). Every field can be "is set" / "is not
+ * set". A fixed-option field greys the options the charts do not have (`availableValues`).
  */
 
 /**
@@ -52,6 +55,12 @@ const getFixedValueOptions = (field: string, t: TFunction): TFilterOption[] | un
     values.map((value) => ({ value, label: getTranslatedDimensionValueLabel(field, value, t) ?? value }));
   if (field === SENTIMENT_DIMENSION_ID) return translated(SENTIMENT_VALUE_ORDER);
   if (field === VALUE_BAND_DIMENSION_ID) return translated(VALUE_BAND_VALUES);
+  if (getDashboardFilterField(field)?.type === "boolean") {
+    return [
+      { value: "true", label: t("common.yes") },
+      { value: "false", label: t("common.no") },
+    ];
+  }
   return undefined;
 };
 
@@ -66,17 +75,35 @@ const QUICK_FIELDS: ReadonlySet<string> = new Set([SENTIMENT_DIMENSION_ID, VALUE
 
 const isQuickField = (field: string): boolean => QUICK_FIELDS.has(field);
 
-/** A field whose equals / not-equals filter holds several values: any of them, none of them. */
-const isListField = (field: string): boolean => isListDashboardFilter({ field, operator: "equals" });
+/**
+ * The kinds of field a dashboard filters by, each with its own operators: a fixed set of options
+ * (sentiment, value band), yes/no, values looked up in the data (source, language, embedded data…), free
+ * text (response text, user id), a number, and a date.
+ */
+type TFieldKind = "fixed" | "boolean" | "list" | "text" | "number" | "time";
 
-/** A list field's equals and not-equals, as the toolbar's list operators. */
-const LIST_RULE_OPERATOR: Partial<Record<TDashboardFilterOperator, TRuleOperator>> = {
-  equals: "isAnyOf",
-  notEquals: "isNoneOf",
+/**
+ * The operators each kind offers, in the order the toolbar lists them. "is" / "is not" on a field with a
+ * value list take one value or several (any of / none of); on free text, one typed value.
+ */
+const KIND_OPERATORS: Record<TFieldKind, readonly TDashboardFilterOperator[]> = {
+  fixed: ["equals", "notEquals", "set", "notSet"],
+  boolean: ["equals", "set", "notSet"],
+  list: ["equals", "notEquals", "contains", "notContains", "set", "notSet"],
+  text: ["contains", "notContains", "equals", "notEquals", "set", "notSet"],
+  number: ["equals", "notEquals", "gt", "gte", "lt", "lte", "set", "notSet"],
+  time: ["lt", "gt", "set", "notSet"],
 };
 
-/** Partial text matches, which say nothing about a field whose few values are all known. */
-const TEXT_MATCH_OPERATORS: ReadonlySet<TDashboardFilterOperator> = new Set(["contains", "notContains"]);
+const fieldKindOf = (field: string): TFieldKind | undefined => {
+  const definition = getDashboardFilterField(field);
+  if (!definition) return undefined;
+  if (isQuickField(field)) return "fixed";
+  if (definition.type === "boolean" || definition.type === "time" || definition.type === "number") {
+    return definition.type;
+  }
+  return isListDashboardFilter({ field, operator: "equals" }) ? "list" : "text";
+};
 
 const RULE_OPERATOR: Record<TDashboardFilterOperator, TRuleOperator> = {
   equals: "equals",
@@ -87,80 +114,89 @@ const RULE_OPERATOR: Record<TDashboardFilterOperator, TRuleOperator> = {
   gte: "greaterEqual",
   lt: "lessThan",
   lte: "lessEqual",
+  set: "isSet",
+  notSet: "isNotSet",
 };
 
-/** A time field is compared with the toolbar's date operators: after and before. */
+/** A time field is compared with the toolbar's date operators: after and before, set and not set. */
 const TIME_RULE_OPERATOR: Partial<Record<TDashboardFilterOperator, TRuleOperator>> = {
   gt: "isAfter",
   lt: "isBefore",
+  set: "isSet",
+  notSet: "isNotSet",
 };
 
-const isTimeField = (field: string): boolean => getDashboardFilterField(field)?.type === "time";
-
-const toRuleOperator = (field: string, operator: TDashboardFilterOperator): TRuleOperator | undefined => {
-  if (isTimeField(field)) return TIME_RULE_OPERATOR[operator];
-  if (isListField(field)) {
-    if (isQuickField(field) && TEXT_MATCH_OPERATORS.has(operator)) return undefined;
-    return LIST_RULE_OPERATOR[operator] ?? RULE_OPERATOR[operator];
-  }
-  return RULE_OPERATOR[operator];
-};
+const toRuleOperator = (field: string, operator: TDashboardFilterOperator): TRuleOperator | undefined =>
+  getDashboardFilterField(field)?.type === "time" ? TIME_RULE_OPERATOR[operator] : RULE_OPERATOR[operator];
 
 const fromRuleOperator = (operator: TTableFilterOperator): TDashboardFilterOperator | undefined => {
+  if (operator === "in") return "equals";
   if (operator === "isAfter") return "gt";
   if (operator === "isBefore") return "lt";
-  if (operator === "isAnyOf") return "equals";
-  if (operator === "isNoneOf") return "notEquals";
   return (Object.entries(RULE_OPERATOR).find(([, rule]) => rule === operator)?.[0] ?? undefined) as
     | TDashboardFilterOperator
     | undefined;
 };
 
-/** The toolbar rule operators a field offers: the dashboard's, as the toolbar names them. */
-export const getToolbarRuleOperators = (field: string): TRuleOperator[] =>
-  getDashboardFilterOperators(field).flatMap((operator) => {
-    const rule = toRuleOperator(field, operator);
+/** The toolbar rule operators a field offers: its kind's, as far as the field allows them. */
+export const getToolbarRuleOperators = (field: string): TRuleOperator[] => {
+  const kind = fieldKindOf(field);
+  if (!kind) return [];
+  const allowed = getDashboardFilterOperators(field);
+  return KIND_OPERATORS[kind].flatMap((operator) => {
+    const rule = allowed.includes(operator) ? toRuleOperator(field, operator) : undefined;
     return rule ? [rule] : [];
   });
+};
 
 /** A dashboard's locked filters as the filters a person states: field, operator and values. */
 export const toStatedFilters = (filters: readonly TLockedDashboardFilter[]): TDashboardFilterState[] =>
   filters.map(({ field, operator, values }) => ({ field, operator, values: [...values] }));
 
 /**
- * The filters as the toolbar holds them: equals on a quick field is its quick filter, and a list field's
- * equals and not-equals keep every value. One it cannot show (an operator it has no name for) is left out.
+ * The filters as the toolbar holds them: equals on a quick field is its quick filter, a list field's
+ * equals and not-equals keep every value, `set` / `notSet` hold none and any other filter its one value.
+ * One it cannot show (an operator it has no name for) is left out.
  */
 export const toToolbarFilters = (filters: readonly TDashboardFilterState[]): TTableFilter[] =>
   filters.flatMap<TTableFilter>((filter) => {
-    if (filter.values.length === 0) return [];
+    const takesValues = dashboardFilterTakesValues(filter.operator);
+    if (takesValues && filter.values.length === 0) return [];
     if (filter.operator === "equals" && isQuickField(filter.field)) {
       return [{ property: filter.field, operator: "in" as const, values: [...filter.values] }];
     }
     const operator = toRuleOperator(filter.field, filter.operator);
     if (!operator) return [];
-    const values = operatorTakesValues(operator) ? [...filter.values] : [filter.values[0]];
+    let values: string[] = [];
+    if (takesValues) values = isListDashboardFilter(filter) ? [...filter.values] : [filter.values[0]];
     return [{ property: filter.field, operator, values }];
   });
 
-/** The toolbar's filters as the dashboard takes them. One that is not a comparison with a value is left out. */
+/** The toolbar's filters as the dashboard takes them. One with an operator it has no name for is left out. */
 export const fromToolbarFilters = (filters: readonly TTableFilter[]): TDashboardFilterState[] =>
   filters.flatMap((filter) => {
-    if (filter.operator === "in") {
-      return filter.values.length > 0
-        ? [{ field: filter.property, operator: "equals" as const, values: [...filter.values] }]
-        : [];
-    }
-    if (operatorTakesValues(filter.operator)) {
-      const operator = fromRuleOperator(filter.operator);
-      return operator && filter.values.length > 0
-        ? [{ field: filter.property, operator, values: [...filter.values] }]
-        : [];
-    }
     const operator = fromRuleOperator(filter.operator);
-    const value = filter.values[0];
-    return operator && value !== undefined ? [{ field: filter.property, operator, values: [value] }] : [];
+    if (!operator) return [];
+    if (!dashboardFilterTakesValues(operator)) return [{ field: filter.property, operator, values: [] }];
+    const values = isListDashboardFilter({ field: filter.property, operator })
+      ? [...filter.values]
+      : filter.values.slice(0, 1);
+    return values.length > 0 ? [{ field: filter.property, operator, values }] : [];
   });
+
+/**
+ * The filters a field's value list is narrowed by: every one but the field's own list filters and its
+ * set / not set, so more of its values can be chosen, and the ones a "none of" rule leaves out stay
+ * there to untick.
+ */
+const otherFiltersOf = (field: string, filters: readonly TDashboardFilterState[]): TDashboardFilterState[] =>
+  filters.filter(
+    (filter) =>
+      !(
+        filter.field === field &&
+        (isListDashboardFilter(filter) || !dashboardFilterTakesValues(filter.operator))
+      )
+  );
 
 /**
  * The toolbar's properties for a dashboard: every dimension of the catalog and every embedded-data key of
@@ -180,8 +216,12 @@ export const buildToolbarProperties = ({
   dashboardId: string;
   filters: readonly TDashboardFilterState[];
   dateRange: TChartDateRangeInput | null;
-}>): TFilterProperty[] =>
-  getFilterFieldOptions(t, { embeddedFields: [...embeddedFields], answerQuestions: [] })
+}>): TFilterProperty[] => {
+  const noValueOption: TFilterOption = {
+    value: NO_VALUE_PICK,
+    label: t("workspace.analysis.dashboards.filter_no_value"),
+  };
+  return getFilterFieldOptions(t, { embeddedFields: [...embeddedFields], answerQuestions: [] })
     .filter((group) => group.value === "dimensions" || group.value === "embeddedData")
     .flatMap((group) =>
       (group.options ?? []).flatMap<TFilterProperty>((option) => {
@@ -191,40 +231,37 @@ export const buildToolbarProperties = ({
         const ruleOperators = getToolbarRuleOperators(field);
         if (!definition || ruleOperators.length === 0) return [];
         const shared = { id: field, label: option.label, group: group.label, ruleOperators };
+        const scope = { dashboardId, field, otherFilters: otherFiltersOf(field, filters), dateRange };
 
         const fixed = getFixedValueOptions(field, t);
-        if (fixed) return [{ ...shared, valueType: "enum", options: fixed, quick: true }];
-        if (definition.type === "boolean") {
+        if (fixed) {
           return [
             {
               ...shared,
               valueType: "enum",
-              options: [
-                { value: "true", label: t("common.yes") },
-                { value: "false", label: t("common.no") },
-              ],
+              options: [noValueOption, ...fixed],
+              quick: isQuickField(field),
+              multiValueEquals: true,
+              availableValues: getDashboardFieldAvailableValues({
+                ...scope,
+                emptyHint:
+                  field === SENTIMENT_DIMENSION_ID
+                    ? t("workspace.analysis.dashboards.filter_no_sentiment_yet")
+                    : t("workspace.analysis.dashboards.filter_no_values_yet"),
+              }),
             },
           ];
         }
         if (isListDashboardFilter({ field, operator: "equals" })) {
-          // The list never narrows by this field's own list filters, so more of its values can be chosen,
-          // and the ones a "none of" rule leaves out stay there to untick.
-          const otherFilters = filters.filter(
-            (filter) => !(filter.field === field && isListDashboardFilter(filter))
-          );
           return [
             {
-              ...getDashboardFieldValueProperty({
-                dashboardId,
-                field,
-                label: option.label,
-                otherFilters,
-                dateRange,
-              }),
+              ...getDashboardFieldValueProperty({ ...scope, label: option.label, noValueOption }),
               ...shared,
+              multiValueEquals: true,
             },
           ];
         }
         return [{ ...shared, valueType: TOOLBAR_VALUE_TYPE[definition.type] ?? "string" }];
       })
     );
+};

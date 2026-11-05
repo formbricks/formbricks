@@ -2,7 +2,8 @@ import { describe, expect, test, vi } from "vitest";
 import { listDashboardFilterValues } from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys } from "@/modules/ee/analysis/lib/query";
 import type { TDashboardFilterState } from "./dashboard-filter-state";
-import { getDashboardFieldValueProperty } from "./dashboard-filter-values";
+import { getDashboardFieldAvailableValues, getDashboardFieldValueProperty } from "./dashboard-filter-values";
+import { NO_VALUE_PICK } from "./dashboard-filters";
 
 vi.mock("@/modules/ee/analysis/lib/api-client", () => ({ listDashboardFilterValues: vi.fn() }));
 
@@ -13,6 +14,8 @@ const OTHER: TDashboardFilterState = {
   values: ["x"],
 };
 
+const NO_VALUE = { value: NO_VALUE_PICK, label: "(No value)" };
+
 const property = (
   otherFilters: TDashboardFilterState[] = [],
   dateRange: "last_7_days" | null = "last_7_days"
@@ -21,6 +24,7 @@ const property = (
     dashboardId: "d1",
     field: FIELD,
     label: "Source",
+    noValueOption: NO_VALUE,
     otherFilters,
     dateRange,
   });
@@ -30,7 +34,7 @@ const startsWith = (prefix: readonly unknown[], key: readonly unknown[]) =>
 
 describe("getDashboardFieldValueProperty", () => {
   test("is the field itself, as a categorical property", () => {
-    expect(property()).toMatchObject({ id: FIELD, label: "Source", valueType: "enum" });
+    expect(property()).toMatchObject({ id: FIELD, label: "Source", valueType: "enum", options: [NO_VALUE] });
   });
 
   test("caches each search under the chart data keys, so a chart edit refreshes the list", () => {
@@ -79,5 +83,55 @@ describe("getDashboardFieldValueProperty", () => {
     expect(listDashboardFilterValues).toHaveBeenLastCalledWith(
       expect.objectContaining({ dateRange: undefined, search: undefined })
     );
+  });
+});
+
+describe("the (No value) option", () => {
+  test("comes first when there is no search, or one its label holds", async () => {
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({
+      values: [{ value: "Web", count: 3 }],
+      hasMore: false,
+    } as never);
+    expect((await property().loadOptions!("")).options).toEqual([NO_VALUE, { value: "Web", label: "Web" }]);
+    expect((await property().loadOptions!("no v")).options[0]).toEqual(NO_VALUE);
+  });
+
+  test("is left out when no record on the charts has a value, so the list reads as empty", async () => {
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
+    expect((await property().loadOptions!("")).options).toEqual([]);
+  });
+});
+
+describe("getDashboardFieldAvailableValues", () => {
+  const available = () =>
+    getDashboardFieldAvailableValues({
+      dashboardId: "d1",
+      field: "FeedbackRecords.sentiment",
+      otherFilters: [OTHER],
+      dateRange: null,
+      emptyHint: "none yet",
+    });
+
+  test("is cached beside the value list, under the chart data keys", () => {
+    const key = available().queryKey;
+    expect(startsWith(chartKeys.allData(), key)).toBe(true);
+    expect(key.at(-1)).toBe("available");
+  });
+
+  test("lists the values that occur, and (No value) with them", async () => {
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({
+      values: [{ value: "positive" }],
+      hasMore: false,
+    } as never);
+    await expect(available().load()).resolves.toEqual(["positive", NO_VALUE_PICK]);
+    expect(listDashboardFilterValues).toHaveBeenLastCalledWith(
+      expect.objectContaining({ field: "FeedbackRecords.sentiment", filters: [OTHER] })
+    );
+    expect(vi.mocked(listDashboardFilterValues).mock.lastCall?.[0]).not.toHaveProperty("search");
+  });
+
+  test("is empty when no value occurs", async () => {
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
+    await expect(available().load()).resolves.toEqual([]);
   });
 });

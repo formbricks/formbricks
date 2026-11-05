@@ -3,7 +3,9 @@ get:
   summary: List a dashboard filter's values
   description: |
     The values a list filter offers — one whose operator is `equals` or `notEquals` on a categorical
-    field (`valueLookup` in the field catalog, or an embedded-data field): the values the dashboard's
+    field (`valueLookup` in the field catalog, a yes/no field, or an embedded-data field): only values
+    that occur, so for a fixed-option field (sentiment, value band, yes/no) it says which options the
+    charts have. A yes/no field lists `true` / `false` and ignores `search`. They are the values the dashboard's
     charts let through under their own saved filters, narrowed by the dashboard date range and the
     other filters' picks. `filterId` is the `<id>` of one of the request's `filter[<id>]` parameters. The filter's own pick
     never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked

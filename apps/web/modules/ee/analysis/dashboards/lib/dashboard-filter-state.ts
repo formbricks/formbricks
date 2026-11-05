@@ -8,7 +8,7 @@ import {
   resolveFilterRules,
   toRequestFilters,
 } from "./dashboard-filter-rules";
-import { MAX_DASHBOARD_FILTERS } from "./dashboard-filters";
+import { MAX_DASHBOARD_FILTERS, dashboardFilterTakesValues } from "./dashboard-filters";
 
 /**
  * The filters a person has put on a dashboard (ADR-0026): an ordered list, kept in the page URL so the view
@@ -16,16 +16,28 @@ import { MAX_DASHBOARD_FILTERS } from "./dashboard-filters";
  * them the same way, as `filter[f1]=<operator>:<field>` with the values in `picks[f1]`, numbered in order.
  */
 
-/** A filter with the values it is set to: nothing to apply without one. */
+/**
+ * A filter with the values it is set to: nothing to apply without one, except `set` / `notSet`, which
+ * hold none.
+ */
 export type TDashboardFilterState = TFilterSpec & { values: string[] };
 
 const PICK_PARAM = /^picks\[([^\]]+)\]$/;
 
-/** The filters worth keeping: at most `MAX_DASHBOARD_FILTERS`, each valid and holding a value. */
+/** What a filter holds: its non-blank values, or none for `set` / `notSet`. */
+const keptValues = (filter: TFilterSpec): string[] =>
+  dashboardFilterTakesValues(filter.operator)
+    ? (filter.values ?? []).filter((value) => value.trim() !== "")
+    : [];
+
+/**
+ * The filters worth keeping: at most `MAX_DASHBOARD_FILTERS`, each valid and holding a value — or, for
+ * `set` / `notSet`, none.
+ */
 export const keepValidFilters = (filters: readonly TFilterSpec[]): TDashboardFilterState[] => {
   const withValues = filters
-    .map((filter) => ({ ...filter, values: (filter.values ?? []).filter((value) => value.trim() !== "") }))
-    .filter((filter) => filter.values.length > 0)
+    .map((filter) => ({ ...filter, values: keptValues(filter) }))
+    .filter((filter) => filter.values.length > 0 || !dashboardFilterTakesValues(filter.operator))
     .slice(0, MAX_DASHBOARD_FILTERS);
   const { rules } = toRequestFilters(withValues);
   const { issues } = resolveFilterRules(rules);

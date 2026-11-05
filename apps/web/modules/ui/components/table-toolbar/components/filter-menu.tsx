@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useAvailableValues } from "../hooks/use-available-values";
 import {
   getLockedQuickValues,
   getQuickFilter,
@@ -41,6 +42,31 @@ const PropertyIcon = ({ property }: Readonly<{ property: TFilterProperty }>) => 
   return Icon ? <Icon className="size-4 shrink-0 text-slate-500" aria-hidden="true" /> : null;
 };
 
+/**
+ * A property that has no values to filter by (`availableValues` found none): listed, but disabled, with
+ * why under its name.
+ */
+const EmptyPropertyItem = ({
+  property,
+  showIcon,
+}: Readonly<{ property: TFilterProperty; showIcon?: boolean }>) => (
+  <DropdownMenuItem
+    disabled
+    icon={showIcon ? <PropertyIcon property={property} /> : undefined}
+    className="gap-2 font-normal text-slate-700">
+    <span className="flex min-w-0 flex-col">
+      <span className="truncate">{property.label}</span>
+      <span className="text-xs text-slate-500">{property.availableValues?.emptyHint}</span>
+    </span>
+  </DropdownMenuItem>
+);
+
+/** Whether the property is known to have no values at all, and nothing set on it to take off. */
+const useHasNoValues = (property: TFilterProperty, isSet: boolean): boolean => {
+  const available = useAvailableValues(property);
+  return !isSet && available !== null && available.size === 0;
+};
+
 /** One quick filter's submenu: its values to tick, or its date presets and range. */
 const QuickFilterSubmenu = ({
   property,
@@ -58,6 +84,8 @@ const QuickFilterSubmenu = ({
   const current = getQuickFilter(filters, property.id);
   const lockedValues = getLockedQuickValues(locked?.filters ?? [], property.id);
   const count = countQuickValues(current, lockedValues);
+  const hasNoValues = useHasNoValues(property, count > 0);
+  if (hasNoValues) return <EmptyPropertyItem property={property} showIcon={showIcon} />;
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="gap-2 font-normal text-slate-700">
@@ -131,6 +159,24 @@ const PropertySearch = ({
   );
 };
 
+/** A property that starts a rule on its chip, or lies disabled when it has no values to filter by. */
+const RulePropertyItem = ({
+  property,
+  isSet,
+  onPick,
+}: Readonly<{ property: TFilterProperty; isSet: boolean; onPick: (propertyId: string) => void }>) => {
+  const hasNoValues = useHasNoValues(property, isSet);
+  if (hasNoValues) return <EmptyPropertyItem property={property} showIcon />;
+  return (
+    <DropdownMenuItem
+      icon={<PropertyIcon property={property} />}
+      className="gap-2 font-normal text-slate-700"
+      onSelect={() => onPick(property.id)}>
+      <span className="truncate">{property.label}</span>
+    </DropdownMenuItem>
+  );
+};
+
 /** The simple-first menu's list: every property, searched and under its group's heading. */
 const GroupedProperties = ({
   properties,
@@ -158,13 +204,12 @@ const GroupedProperties = ({
       <DropdownMenuLabel className="text-xs font-semibold text-slate-500">{group.label}</DropdownMenuLabel>
       {group.properties.map((property) =>
         startsRule(property) ? (
-          <DropdownMenuItem
+          <RulePropertyItem
             key={property.id}
-            icon={<PropertyIcon property={property} />}
-            className="gap-2 font-normal text-slate-700"
-            onSelect={() => onPickRuleProperty(property.id)}>
-            <span className="truncate">{property.label}</span>
-          </DropdownMenuItem>
+            property={property}
+            isSet={quick.filters.some((filter) => filter.property === property.id)}
+            onPick={onPickRuleProperty}
+          />
         ) : (
           <QuickFilterSubmenu key={property.id} property={property} showIcon {...quick} />
         )

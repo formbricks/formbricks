@@ -5320,7 +5320,9 @@ paths:
       summary: List a dashboard filter's values
       description: |
         The values a list filter offers — one whose operator is `equals` or `notEquals` on a categorical
-        field (`valueLookup` in the field catalog, or an embedded-data field): the values the dashboard's
+        field (`valueLookup` in the field catalog, a yes/no field, or an embedded-data field): only values
+        that occur, so for a fixed-option field (sentiment, value band, yes/no) it says which options the
+        charts have. A yes/no field lists `true` / `false` and ignores `search`. They are the values the dashboard's
         charts let through under their own saved filters, narrowed by the dashboard date range and the
         other filters' picks. `filterId` is the `<id>` of one of the request's `filter[<id>]` parameters. The filter's own pick
         never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked
@@ -14315,7 +14317,9 @@ components:
             - gte
             - lt
             - lte
-          description: One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value.
+            - set
+            - notSet
+          description: One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value.
         label:
           type: string
           minLength: 1
@@ -14323,13 +14327,12 @@ components:
           description: What the top bar shows for the filter.
         values:
           type: array
-          minItems: 1
           maxItems: 100
           items:
             type: string
             minLength: 1
             maxLength: 1000
-          description: The values the filter is locked to. A list filter (`equals` or `notEquals` on a categorical field) matches any of them; every other filter takes the first. Each must be a value its field can hold, and all of a dashboard's locked values together stay within the 4000 percent-encoded characters a read's picks may take.
+          description: 'The values the filter is locked to: none for `set` and `notSet`, at least one otherwise. A list filter (`equals` or `notEquals` on a categorical field) matches any of them; every other filter takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it. Each must be a value its field can hold, and all of a dashboard''s locked values together stay within the 4000 percent-encoded characters a read''s picks may take.'
           example:
             - Website
       additionalProperties: false
@@ -17345,7 +17348,7 @@ components:
           type: string
           minLength: 3
           maxLength: 300
-      description: 'The filters the request applies, as `filter[<id>]=<operator>:<field>`: any dimension from the field catalog, or an embedded-data field (`FeedbackRecords.ed_…`), with `equals`, `notEquals`, `contains`, `notContains`, `gt`, `gte`, `lt` or `lte` as the field allows. The dashboard keeps no list of them; `<id>` only names a filter within the request, to give its values in `picks[<id>]`. A filter without a pick is ignored. A definition that is not `<operator>:<field>`, a field outside the catalog or an operator the field refuses answers 422 naming `filter[<id>]`.'
+      description: 'The filters the request applies, as `filter[<id>]=<operator>:<field>`: any dimension from the field catalog, or an embedded-data field (`FeedbackRecords.ed_…`), with `equals`, `notEquals`, `contains`, `notContains`, `gt`, `gte`, `lt`, `lte`, `set` or `notSet` as the field allows. The dashboard keeps no list of them; `<id>` only names a filter within the request, to give its values in `picks[<id>]`. A filter without a pick is ignored, except `set` and `notSet` (has a value, has none), which take no pick and apply as they are. A definition that is not `<operator>:<field>`, a field outside the catalog or an operator the field refuses answers 422 naming `filter[<id>]`.'
       example:
         f1: equals:FeedbackRecords.sourceName
     DashboardFilterPicksQuery:
@@ -17363,7 +17366,7 @@ components:
           items:
             type: string
             maxLength: 1000
-      description: Values for the request's filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise. Each pick is ANDed onto every chart's saved query; picks for a filter the request does not name are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.
+      description: 'Values for the request''s filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter for several values of a list filter (any of). A filter takes one typed value otherwise, and `set` / `notSet` none (a pick for one answers 422). In a list filter, `%1Fnone` (`"\u001Fnone"`) stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it with 422. Each pick is ANDed onto every chart''s saved query; picks for a filter the request does not name are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.'
       example:
         f1:
           - Web

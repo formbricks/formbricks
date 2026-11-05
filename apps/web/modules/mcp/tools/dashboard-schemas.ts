@@ -29,7 +29,9 @@ import {
   MAX_DASHBOARD_FILTERS,
   MAX_DASHBOARD_FILTER_PICK_VALUES,
   MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+  NO_VALUE_PICK,
   ZLockedDashboardFilter,
+  lockedValuesProblem,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
@@ -165,6 +167,21 @@ export const ZMcpUpdateChartInput = z
   .strict();
 export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;
 
+/**
+ * What a dashboard filter's values are, for an agent. The no-value pick is written out as JSON escapes,
+ * since it starts with a control character.
+ */
+const FILTER_VALUES_DESCRIPTION = `What to compare with: several values for equals/notEquals on a field with a value list (any of — list_dashboard_filter_values lists them), one value otherwise, none for set/notSet. With equals/notEquals on a field with a value list, "${JSON.stringify(NO_VALUE_PICK).slice(1, -1)}" stands for "no value": equals with it also matches records without a value, notEquals with it only records with one.`;
+
+/** Refuses values that do not suit the operator: some for set/notSet, none for any other operator. */
+const refuseValuesNotSuitingOperator = (
+  filter: { operator: (typeof DASHBOARD_FILTER_OPERATORS)[number]; values: readonly string[] },
+  ctx: z.RefinementCtx
+): void => {
+  const problem = lockedValuesProblem(filter);
+  if (problem) ctx.addIssue({ code: "custom", message: problem, path: ["values"] });
+};
+
 /** A filter an agent applies to a dashboard read: any dimension of the charts' datasets, or an embedded-data field. */
 const ZMcpDashboardFilter = z
   .object({
@@ -173,16 +190,19 @@ const ZMcpDashboardFilter = z
       .min(1)
       .max(255)
       .describe("A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…)."),
-    operator: z.enum(DASHBOARD_FILTER_OPERATORS).describe("How the field is compared with the values."),
+    operator: z
+      .enum(DASHBOARD_FILTER_OPERATORS)
+      .describe(
+        "How the field is compared with the values; set and notSet ask whether it has a value at all."
+      ),
     values: z
       .array(zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
-      .min(1)
       .max(MAX_DASHBOARD_FILTER_PICK_VALUES)
-      .describe(
-        "What to compare with: several values for equals/notEquals on a text field (any of), one value otherwise."
-      ),
+      .default([])
+      .describe(FILTER_VALUES_DESCRIPTION),
   })
-  .strict();
+  .strict()
+  .superRefine(refuseValuesNotSuitingOperator);
 
 const ZMcpDashboardFilters = z.array(ZMcpDashboardFilter).max(MAX_DASHBOARD_FILTERS);
 export type TMcpDashboardFilters = z.infer<typeof ZMcpDashboardFilters>;
@@ -213,7 +233,7 @@ export const ZMcpListDashboardFilterValuesInput = z
       .min(1)
       .max(255)
       .describe(
-        "A categorical dimension from list_chart_fields (one marked valueLookup), or an embedded-data field."
+        "A categorical dimension from list_chart_fields (one marked valueLookup), a yes/no (boolean) dimension, or an embedded-data field."
       ),
     operator: z
       .enum(["equals", "notEquals"])
@@ -377,11 +397,10 @@ const ZMcpLockedDashboardFilter = z
     label: ZLockedDashboardFilter.shape.label.describe(
       "What readers see the filter as, e.g. the field's label."
     ),
-    values: ZLockedDashboardFilter.shape.values.describe(
-      "What to compare with: several values for equals/notEquals on a text field (any of), one value otherwise."
-    ),
+    values: ZLockedDashboardFilter.shape.values.describe(FILTER_VALUES_DESCRIPTION),
   })
-  .strict();
+  .strict()
+  .superRefine(refuseValuesNotSuitingOperator);
 
 /** A placeholder id for a new filter, outside cuid2's alphabet so it never matches a sent one. */
 export const newDashboardFilterPlaceholderId = (index: number): string => `new:${index}`;

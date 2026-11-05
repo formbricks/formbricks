@@ -51,12 +51,14 @@ describe("findDashboardFilterIssues", () => {
 });
 
 describe("getDashboardFilterOperators", () => {
-  test("offers the catalog's operators that take a value, and none for an unknown field", () => {
+  test("offers the catalog's operators, set and notSet included, and none for an unknown field", () => {
     expect(getDashboardFilterOperators("FeedbackRecords.sourceName")).toEqual([
       "equals",
       "notEquals",
       "contains",
       "notContains",
+      "set",
+      "notSet",
     ]);
     expect(getDashboardFilterOperators("FeedbackRecords.collectedAt")).toEqual([
       "equals",
@@ -65,6 +67,8 @@ describe("getDashboardFilterOperators", () => {
       "gte",
       "lt",
       "lte",
+      "set",
+      "notSet",
     ]);
     expect(getDashboardFilterOperators("FeedbackRecords.nope")).toEqual([]);
   });
@@ -83,6 +87,11 @@ describe("isListDashboardFilter", () => {
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueText" }))).toBe(false);
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.userId" }))).toBe(false);
     expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.metadataUrl" }))).toBe(false);
+  });
+
+  test("a yes/no field picks from its two values", () => {
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueBoolean" }))).toBe(true);
+    expect(isListDashboardFilter(filter(1, { field: "FeedbackRecords.valueNumber" }))).toBe(false);
   });
 
   test("free-text fields remain valid filters, typed", () => {
@@ -124,6 +133,12 @@ describe("readStoredDashboardFilters", () => {
     expect(readStoredDashboardFilters({}).unreadable).toBe(1);
   });
 
+  test("a set / notSet filter reads with no values, and not with any", () => {
+    const isSet = { ...filter(1), operator: "set" as const, values: [] };
+    expect(readStoredDashboardFilters([isSet])).toEqual({ filters: [isSet], unreadable: 0 });
+    expect(readStoredDashboardFilters([{ ...isSet, values: ["x"] }]).unreadable).toBe(1);
+  });
+
   test("nothing stored is no filters, and a list that reads has nothing unreadable", () => {
     expect(readStoredDashboardFilters(null)).toEqual({ filters: [], unreadable: 0 });
     expect(readStoredDashboardFilters(undefined)).toEqual({ filters: [], unreadable: 0 });
@@ -136,7 +151,14 @@ describe("embedded-data fields as dashboard filters", () => {
 
   test("an embedded member is a text dimension filtered like any text field, and picks from a list", () => {
     expect(getDashboardFilterField(plan)).toMatchObject({ name: plan, kind: "dimension", type: "string" });
-    expect(getDashboardFilterOperators(plan)).toEqual(["equals", "notEquals", "contains", "notContains"]);
+    expect(getDashboardFilterOperators(plan)).toEqual([
+      "equals",
+      "notEquals",
+      "contains",
+      "notContains",
+      "set",
+      "notSet",
+    ]);
     expect(isListDashboardFilter(filter(1, { field: plan }))).toBe(true);
     expect(isListDashboardFilter(filter(1, { field: plan, operator: "contains" }))).toBe(false);
   });

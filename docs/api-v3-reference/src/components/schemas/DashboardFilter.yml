@@ -38,13 +38,15 @@ properties:
       - gte
       - lt
       - lte
+      - set
+      - notSet
     description: >-
       One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a
-      categorical field — one whose catalog entry has `valueLookup`, or an embedded-data field — pick
-      from a list of values (`GET
+      categorical field — one whose catalog entry has `valueLookup`, a yes/no (`boolean`) field, or an
+      embedded-data field — pick from a list of values (`GET
       /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of);
-      every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one
-      typed value.
+      `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields
+      such as `FeedbackRecords.valueText` included, takes one typed value.
   label:
     type: string
     minLength: 1
@@ -52,17 +54,18 @@ properties:
     description: What the top bar shows for the filter.
   values:
     type: array
-    minItems: 1
     maxItems: 100
     items:
       type: string
       minLength: 1
       maxLength: 1000
     description: >-
-      The values the filter is locked to. A list filter (`equals` or `notEquals` on a categorical field)
-      matches any of them; every other filter takes the first. Each must be a value its field can hold,
-      and all of a dashboard's locked values together stay within the 4000 percent-encoded characters a
-      read's picks may take.
+      The values the filter is locked to: none for `set` and `notSet`, at least one otherwise. A list
+      filter (`equals` or `notEquals` on a categorical field) matches any of them; every other filter
+      takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also
+      matches records without a value, with `notEquals` it keeps only records with one; any other filter
+      refuses it. Each must be a value its field can hold, and all of a dashboard's locked values
+      together stay within the 4000 percent-encoded characters a read's picks may take.
     example:
       - Website
 additionalProperties: false

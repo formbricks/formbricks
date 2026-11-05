@@ -97,15 +97,20 @@ describe("getChipParts", () => {
     expect(parts.value).toBe("Draft, In progress");
   });
 
-  test("an is-none-of rule lists every value after its operator", () => {
-    const parts = getChipParts(
-      { property: "status", operator: "isNoneOf", values: ["draft", "inProgress"] },
-      status,
-      t,
-      "en-US"
+  test("is / is not read by how many values they hold, on a property whose equality takes several", () => {
+    const list = { ...status, multiValueEquals: true };
+    const parts = (operator: "equals" | "notEquals", values: string[]) =>
+      getChipParts({ property: "status", operator, values }, list, t, "en-US");
+    expect(parts("equals", ["draft"]).label).toBe("Status common.table_toolbar.operator_equals");
+    expect(parts("equals", ["draft"]).value).toBe("Draft");
+    expect(parts("equals", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_is_any_of"
     );
-    expect(parts.label).toBe("Status common.table_toolbar.operator_is_none_of");
-    expect(parts.value).toBe("Draft, In progress");
+    expect(parts("equals", ["draft", "inProgress"]).value).toBe("Draft, In progress");
+    expect(parts("notEquals", ["draft"]).label).toBe("Status common.table_toolbar.operator_not_equals");
+    expect(parts("notEquals", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_is_none_of"
+    );
   });
 
   test("a date rule formats its day", () => {

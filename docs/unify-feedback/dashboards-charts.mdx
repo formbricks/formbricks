@@ -109,16 +109,18 @@ of the dashboard next to the date range.
 
 <Steps>
   <Step title="Open the Filter menu">
-    Open the dashboard and click the **Filter** button. Fields with a few fixed values, such as sentiment, value
-    band or field type, can be ticked right there.
+    Open the dashboard and click the **Filter** button. Every field you can filter by is listed there, grouped and
+    searchable. Fields with a few fixed options, such as sentiment or value band, can be ticked right there.
   </Step>
-  <Step title="Write a rule in Advanced filter">
-    Choose **Advanced filter**, pick a field, and the operator for it is chosen for you; change it if you need
-    (**is**, **is not**, **contains**, **is greater than**, **is after**, ...). Then set the value: pick it from a
-    list, type it, or choose a day, depending on the field.
+  <Step title="Set the filter">
+    Pick any other field and its filter opens on a chip: the operator is chosen for you; change it if you need
+    (**is**, **is not**, **contains**, **is greater than**, **is after**, **is set**, **is not set**, ...). Then set
+    the value: pick one or several from a list, type it, or choose a day, depending on the field. Click a chip to
+    change its filter, including a ticked one, whose chip offers the other operators too.
   </Step>
-  <Step title="Save">
-    Click **Save**. Each rule becomes a chip under the bar and narrows every chart right away.
+  <Step title="Done">
+    Click **Done**. The filter narrows every chart right away. To write several rules at once, use **Advanced
+    filter** at the bottom of the menu.
   </Step>
 </Steps>
 
@@ -130,11 +132,17 @@ offered here: they belong in each chart, in the chart builder.
 - **Fields whose values are looked up**, such as the source name, the field label, or an embedded-data field, list
   the values that occur in the dashboard's charts for **is** and **is not**, narrowed by the date range and the other
   filters. Search the list to find more; it shows up to 100 values at a time. For **contains** you type the text.
-- **Fields with a fixed set of options**, such as sentiment, value band or field type, always list all of their
-  options, whatever the charts hold.
+- **Fields with a fixed set of options**, such as sentiment, value band or a yes/no field, list all of their options,
+  greying out the ones the dashboard's charts don't have. A field with none at all is shown disabled; sentiment then
+  reads "No sentiment yet: turn on AI enrichment".
 - **Free-text fields**, such as the response text or the user ID, and number fields take a value you type, and date
   fields a day you pick. Free-text fields never list values, so the text of individual responses isn't shown to
   everyone who opens the dashboard.
+
+**Is** and **is not** on a field with a list take one value or several: the chip reads "Product is Alpha", "Product is
+any of Alpha, Beta" or "Product is none of Alpha, Beta". Lists also offer **(No value)**: picked with values, **is**
+keeps records with any of them or with no value; **is not** keeps records that have a value and it is none of the
+others. Every field can also be **is set** (has a value) or **is not set** (has none).
 
 Use the date range to pick the period every chart shows. It replaces the period each chart was saved with, so
 you can look further back or ahead than the chart's author did; on a chart grouped by time, **All time** keeps the

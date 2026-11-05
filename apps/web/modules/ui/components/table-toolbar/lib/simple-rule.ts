@@ -1,5 +1,5 @@
 import { buildRule } from "./advanced-filter";
-import { operatorTakesValues } from "./operators";
+import { isMultiValueEquality, operatorTakesValues } from "./operators";
 import { type TRuleValueControl, getRuleValueControl } from "./rule-value-control";
 import type { TFilterProperty, TRuleOperator, TTableFilter } from "./types";
 
@@ -55,7 +55,7 @@ export type TRuleDraft = {
 export const draftFromRule = (property: TFilterProperty, rule?: TTableFilter): TRuleDraft => {
   if (rule && property.ruleOperators?.includes(rule.operator as TRuleOperator)) {
     const operator = rule.operator as TRuleOperator;
-    return operatorTakesValues(operator)
+    return operatorTakesValues(operator, property)
       ? { operator, value: "", values: [...rule.values] }
       : { operator, value: rule.values[0] ?? "", values: [] };
   }
@@ -72,12 +72,12 @@ export const getPopoverValueControl = (
 ): TRuleValueControl => {
   const control = getRuleValueControl(property, operator);
   if (control !== "editor") return control;
-  return operator && operatorTakesValues(operator) ? "multiPicker" : "text";
+  return operator && operatorTakesValues(operator, property) ? "multiPicker" : "text";
 };
 
 /**
  * The draft after a switch of operator. What was picked or typed stays when the new operator takes the
- * same kind of value (is → is not, is any of → is none of); otherwise the value starts empty.
+ * same kind of value (is → is not); otherwise the value starts empty.
  */
 export const switchDraftOperator = (
   property: TFilterProperty,
@@ -96,6 +96,27 @@ export const draftToRule = (property: TFilterProperty, draft: TRuleDraft): TTabl
   return buildRule(
     property,
     draft.operator,
-    operatorTakesValues(draft.operator) ? draft.values : draft.value
+    operatorTakesValues(draft.operator, property) ? draft.values : draft.value
   );
 };
+
+/**
+ * A quick filter's ticked values as the rule they mean, so its chip's popover can offer the property's
+ * other operators too: "is" any of them. `null` for a quick filter without such a rule (a date's, or a
+ * property whose `equals` takes one value), whose chip keeps its own list.
+ */
+export const quickFilterAsRule = (property: TFilterProperty, filter: TTableFilter): TTableFilter | null =>
+  filter.operator === "in" &&
+  property.ruleOperators?.includes("equals") &&
+  isMultiValueEquality("equals", property)
+    ? { ...filter, operator: "equals" }
+    : null;
+
+/**
+ * A rule saved from a quick filter's chip, back as the quick filter when it is still "is" any of some
+ * values, so the Filter menu keeps showing them ticked; any other operator stays a rule.
+ */
+export const ruleAsQuickFilter = (property: TFilterProperty, rule: TTableFilter): TTableFilter =>
+  property.quick && rule.operator === "equals" && isMultiValueEquality("equals", property)
+    ? { ...rule, operator: "in" }
+    : rule;

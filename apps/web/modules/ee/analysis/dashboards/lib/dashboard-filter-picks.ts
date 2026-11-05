@@ -1,8 +1,10 @@
 import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/analysis";
 import { filterRuleIdOf } from "./dashboard-filter-rules";
 import {
+  NO_VALUE_PICK,
   type TDashboardFilter,
   type TDashboardFilterPicks,
+  dashboardFilterTakesValues,
   getDashboardFilterField,
   isListDashboardFilter,
   readStoredDashboardFilters,
@@ -53,7 +55,16 @@ export type TPickIssue = { name: string; reason: string; code?: "limit_exceeded"
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-][\d:]+)?)?$/;
 
 /** Why a picked value cannot be compared with the field, or `null` when it can. */
-const pickValueProblem = (type: string | undefined, value: string): string | null => {
+const pickValueProblem = (
+  filter: Pick<TDashboardFilter, "field" | "operator">,
+  type: string | undefined,
+  value: string
+): string | null => {
+  if (value === NO_VALUE_PICK) {
+    return isListDashboardFilter(filter)
+      ? null
+      : "The no-value pick only goes with equals or notEquals on a field that has a value list.";
+  }
   if (type === "number") {
     return value.trim() !== "" && Number.isFinite(Number(value)) ? null : "Must be a number.";
   }
@@ -68,9 +79,10 @@ const pickValueProblem = (type: string | undefined, value: string): string | nul
 
 /**
  * What is wrong with a person's picks before any of them reaches a chart query: more characters
- * in all than `MAX_DASHBOARD_FILTER_PICKS_CHARS`, or a value a filter's field cannot hold (a number field
- * picked with a word), named by the filter it was picked for. Picks for filters the dashboard does not
- * have are ignored, as the operations drop them.
+ * in all than `MAX_DASHBOARD_FILTER_PICKS_CHARS`, a value a filter's field cannot hold (a number field
+ * picked with a word, the no-value pick on a filter without a list), or values for a `set` / `notSet`
+ * filter, which takes none — each named by the filter it was picked for. Picks for filters the dashboard
+ * does not have are ignored, as the operations drop them.
  */
 export const findPickIssues = (
   filters: readonly TDashboardFilter[],
@@ -86,11 +98,19 @@ export const findPickIssues = (
     ];
   }
   return filters.flatMap((filter) => {
+    const name = `picks[${filter.id}]`;
+    if (!dashboardFilterTakesValues(filter.operator)) {
+      return (picks[filter.id]?.length ?? 0) > 0
+        ? [{ name, reason: "set and notSet compare against no value: send no picks for this filter." }]
+        : [];
+    }
     const values = pickValuesOf(filter, picks[filter.id]);
     if (!values) return [];
     const type = getDashboardFilterField(filter.field)?.type;
-    const problem = values.map((value) => pickValueProblem(type, value)).find((reason) => reason !== null);
-    return problem ? [{ name: `picks[${filter.id}]`, reason: problem }] : [];
+    const problem = values
+      .map((value) => pickValueProblem(filter, type, value))
+      .find((reason) => reason !== null);
+    return problem ? [{ name, reason: problem }] : [];
   });
 };
 
@@ -104,27 +124,41 @@ export const narrowWithFilters = (query: TChartQuery, filters: readonly TCubeFil
 
 /**
  * The values a pick applies: a list filter takes every chosen value ("is any of"), any other filter its one
- * typed value. Blank values are dropped; `null` when nothing is left, so the filter is not applied.
+ * typed value, and `set` / `notSet` none — they apply without a pick. Blank values are dropped; `null`
+ * when nothing is left, so the filter is not applied.
  */
 export const pickValuesOf = (
   filter: Pick<TDashboardFilter, "field" | "operator">,
   values: readonly string[] | undefined
 ): string[] | null => {
+  if (!dashboardFilterTakesValues(filter.operator)) return [];
   const kept = (values ?? []).filter((value) => value.trim() !== "");
   if (kept.length === 0) return null;
   return isListDashboardFilter(filter) ? kept : [kept[0]];
 };
 
-/** The filter rule one pick adds to a chart query. */
-export const toPickRule = (filter: TDashboardFilter, values: string[]): TMemberFilter => ({
-  member: filter.field,
-  operator: filter.operator,
-  values,
-});
+/**
+ * The filter rule one pick adds to a chart query. `set` / `notSet` compare against nothing. The no-value
+ * pick (`NO_VALUE_PICK`) never reaches Cube: "is" any of the values or no value is an OR with `notSet`,
+ * "is not" any of them with a value an AND with `set` (Cube's `notEquals` lets records without a value
+ * through), and the no-value pick alone is `notSet` or `set`.
+ */
+export const toPickRule = (filter: TDashboardFilter, values: string[]): TCubeFilter => {
+  const member = filter.field;
+  if (!dashboardFilterTakesValues(filter.operator)) return { member, operator: filter.operator };
+  const real = values.filter((value) => value !== NO_VALUE_PICK);
+  if (real.length === values.length) return { member, operator: filter.operator, values };
+
+  const isNot = filter.operator === "notEquals";
+  const presence: TMemberFilter = { member, operator: isNot ? "set" : "notSet" };
+  if (real.length === 0) return presence;
+  const rule: TMemberFilter = { member, operator: filter.operator, values: real };
+  return isNot ? { and: [presence, rule] } : { or: [rule, presence] };
+};
 
 export type TResolvedPicks = {
   /** The rules to AND onto the chart's query, in the dashboard's filter order. */
-  rules: TMemberFilter[];
+  rules: TCubeFilter[];
   /** Picked filters whose field the chart's Feedback Dataset lacks: the chart shows no data. */
   unfilterable: TDashboardFilter[];
 };
@@ -140,7 +174,7 @@ export const resolvePicksForDataset = (
   datasetHasField: (field: string) => boolean,
   { except }: { except?: string } = {}
 ): TResolvedPicks => {
-  const rules: TMemberFilter[] = [];
+  const rules: TCubeFilter[] = [];
   const unfilterable: TDashboardFilter[] = [];
 
   for (const filter of filters) {
@@ -182,7 +216,8 @@ export const splitPickParams = (params: unknown): unknown => {
 
 /**
  * Keep only picks for filters the dashboard still has, with at least one value. A remembered value that no
- * longer occurs in the data is kept: the person chose it, and the chart says it is empty.
+ * longer occurs in the data is kept: the person chose it, and the chart says it is empty. A `set` /
+ * `notSet` filter has no pick to keep; it applies without one.
  */
 export const keepCurrentPicks = (
   filters: readonly Pick<TDashboardFilter, "id">[],

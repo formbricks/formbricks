@@ -16,8 +16,11 @@ export const emptyCondition = (): TGenericCondition => ({
   operator: "",
 });
 
-const toRightOperand = (rule: TTableFilter): TGenericCondition["rightOperand"] => {
-  if (operatorTakesValues(rule.operator)) return { value: [...rule.values], type: "static" };
+const toRightOperand = (
+  rule: TTableFilter,
+  property: TFilterProperty | undefined
+): TGenericCondition["rightOperand"] => {
+  if (operatorTakesValues(rule.operator, property)) return { value: [...rule.values], type: "static" };
   return rule.values[0] === undefined ? undefined : { value: rule.values[0], type: "static" };
 };
 
@@ -30,7 +33,11 @@ const toValues = (value: TRawValue): string[] => {
   return [...new Set(values.filter((item) => item.length > 0))];
 };
 
-export const rulesToConditionGroup = (rules: readonly TTableFilter[]): TGenericConditionGroup => ({
+/** The rules as the editor's rows; `properties` say which rules hold a list (`multiValueEquals`). */
+export const rulesToConditionGroup = (
+  rules: readonly TTableFilter[],
+  properties: readonly TFilterProperty[] = []
+): TGenericConditionGroup => ({
   id: "advanced-filter",
   connector: "and",
   conditions:
@@ -39,7 +46,10 @@ export const rulesToConditionGroup = (rules: readonly TTableFilter[]): TGenericC
           id: createId(),
           leftOperand: { value: rule.property, type: "property" },
           operator: rule.operator,
-          rightOperand: toRightOperand(rule),
+          rightOperand: toRightOperand(
+            rule,
+            properties.find((property) => property.id === rule.property)
+          ),
         }))
       : [emptyCondition()],
 });
@@ -67,7 +77,7 @@ export const buildRule = (
 ): TTableFilter | null => {
   if (!operator || !property?.ruleOperators?.includes(operator)) return null;
   if (!operatorTakesValue(operator)) return { property: property.id, operator, values: [] };
-  if (operatorTakesValues(operator)) {
+  if (operatorTakesValues(operator, property)) {
     const values = toValues(rawValue);
     return values.length > 0 ? { property: property.id, operator, values } : null;
   }

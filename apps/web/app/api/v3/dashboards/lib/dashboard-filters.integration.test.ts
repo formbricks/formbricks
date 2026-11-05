@@ -18,9 +18,10 @@ import {
   type TFilterSpec,
   toRequestFilters,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
-import type {
-  TDashboardFilter,
-  TLockedDashboardFilter,
+import {
+  NO_VALUE_PICK,
+  type TDashboardFilter,
+  type TLockedDashboardFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getV3DashboardChartData } from "./chart-data-operations";
 import { listV3DashboardFilterValues } from "./filter-values-operations";
@@ -265,6 +266,18 @@ describe("saving dashboard filters (ENG-6900)", () => {
     ).toBe(false);
     // A locked filter applies its values to every read, so it cannot be saved without any.
     expect(ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "equals", [])])).success).toBe(false);
+    // set / notSet compare against nothing: saved with no values, and refused with any.
+    expect(ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "set", [])])).success).toBe(true);
+    expect(ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "notSet", ["x"])])).success).toBe(
+      false
+    );
+    // The no-value pick is a list filter's alone.
+    expect(
+      ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "equals", [NO_VALUE_PICK])])).success
+    ).toBe(true);
+    expect(
+      ZV3DashboardReplaceBody.safeParse(body([filterOf(1, FREE_TEXT, "equals", [NO_VALUE_PICK])])).success
+    ).toBe(false);
   });
 
   test("a copy of the dashboard keeps its filters", async () => {
@@ -446,6 +459,124 @@ describe("GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data (ENG-6898, 
     });
     expect(await outcomeOf(response)).toEqual({ status: 422, code: "unprocessable_content" });
     expect(cubeFake.calls).toHaveLength(0);
+  });
+});
+
+describe("set, not set and the no-value pick", () => {
+  test("a request's set / notSet filter applies with no pick", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id]);
+
+    const response = await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([
+        { field: SOURCE, operator: "set" },
+        { field: COLLECTED_AT, operator: "notSet" },
+      ])
+    );
+    expect(response.status).toBe(200);
+    expect(cubeFake.calls[0].query.filters).toEqual([
+      { member: SOURCE, operator: "set" },
+      { member: COLLECTED_AT, operator: "notSet" },
+    ]);
+  });
+
+  test("refuses a pick for a set filter, and the no-value pick on a typed filter, without asking Cube", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id]);
+
+    const setWithPick = await readData(dashboard.id, chart.id, {
+      "filter[f1]": `set:${SOURCE}`,
+      "picks[f1]": "Web",
+    });
+    expect(setWithPick.status).toBe(422);
+    const typed = await readData(
+      dashboard.id,
+      chart.id,
+      requestFilters([{ field: FREE_TEXT, operator: "equals", values: [NO_VALUE_PICK] }])
+    );
+    expect(typed.status).toBe(422);
+    expect(cubeFake.calls).toHaveLength(0);
+  });
+
+  test("is any of the values or no value; is not keeps a value that is none of them", async () => {
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard(
+      [chart.id],
+      [filterOf(1, LANGUAGE, "notEquals", ["de", NO_VALUE_PICK])]
+    );
+
+    expect(
+      (
+        await readData(
+          dashboard.id,
+          chart.id,
+          requestFilters([{ field: SOURCE, operator: "equals", values: ["Web", NO_VALUE_PICK] }])
+        )
+      ).status
+    ).toBe(200);
+    expect(cubeFake.calls[0].query.filters).toEqual([
+      {
+        and: [
+          { member: LANGUAGE, operator: "set" },
+          { member: LANGUAGE, operator: "notEquals", values: ["de"] },
+        ],
+      },
+      {
+        or: [
+          { member: SOURCE, operator: "equals", values: ["Web"] },
+          { member: SOURCE, operator: "notSet" },
+        ],
+      },
+    ]);
+  });
+
+  test("a set / notSet and a no-value pick narrow another field's value list as the charts", async () => {
+    records[fixture.datasetId] = [
+      { [ACCOUNT]: "with-country", [COUNTRY]: "IT" },
+      { [ACCOUNT]: "no-country" },
+      { [ACCOUNT]: "de", [COUNTRY]: "DE" },
+    ];
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id]);
+    answerFromRecords();
+
+    const notSet = await readValues(
+      dashboard.id,
+      "f1",
+      requestFilters([
+        { field: ACCOUNT, operator: "equals" },
+        { field: COUNTRY, operator: "notSet" },
+      ])
+    );
+    expect(await valuesOf(notSet)).toEqual(["no-country"]);
+
+    const itOrNone = await readValues(
+      dashboard.id,
+      "f1",
+      requestFilters([
+        { field: ACCOUNT, operator: "equals" },
+        { field: COUNTRY, operator: "equals", values: ["IT", NO_VALUE_PICK] },
+      ])
+    );
+    expect(await valuesOf(itOrNone)).toEqual(["no-country", "with-country"]);
+  });
+
+  test("lists which of a yes/no field's values occur", async () => {
+    const BOOLEAN = "FeedbackRecords.valueBoolean";
+    records[fixture.datasetId] = [{ [BOOLEAN]: "true" }, { [BOOLEAN]: "true" }, { [ACCOUNT]: "x" }];
+    const chart = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([chart.id]);
+    answerFromRecords();
+
+    const response = await readValues(
+      dashboard.id,
+      "f1",
+      requestFilters([{ field: BOOLEAN, operator: "equals" }])
+    );
+    expect(response.status).toBe(200);
+    expect(await valuesOf(response)).toEqual(["true"]);
   });
 });
 

@@ -8,7 +8,11 @@ import {
   toDateRangeRule,
 } from "./dashboard-date-filter";
 import { resolvePicksForDataset } from "./dashboard-filter-picks";
-import type { TDashboardFilter, TDashboardFilterPicks } from "./dashboard-filters";
+import {
+  type TDashboardFilter,
+  type TDashboardFilterPicks,
+  getDashboardFilterField,
+} from "./dashboard-filters";
 
 /**
  * A list dashboard filter's values (ENG-6892, ENG-6895): the values the dashboard's charts let through
@@ -77,11 +81,26 @@ const chunkByAnswerRules = (ruleSets: readonly TCubeFilter[][]): TCubeFilter[][]
 /** One rule standing for a branch: its rule, or the AND of its rules. */
 const asOneRule = (rules: TCubeFilter[]): TCubeFilter => (rules.length === 1 ? rules[0] : { and: rules });
 
-/** The rules every value query ends with: the field has a value, containing `search` when given. */
+/**
+ * The rules every value query ends with: the field has a value, containing `search` when given. A yes/no
+ * field has no text to search: its two values are listed whatever the search.
+ */
 const valueRulesOf = (filter: TDashboardFilter, search?: string): TCubeFilter[] => [
   { member: filter.field, operator: "set" },
-  ...(search ? [{ member: filter.field, operator: "contains", values: [search] }] : []),
+  ...(search && getDashboardFilterField(filter.field)?.type === "string"
+    ? [{ member: filter.field, operator: "contains", values: [search] }]
+    : []),
 ];
+
+/**
+ * A row's value of the field as a list shows it: text as it is, a yes/no as `true` / `false` (Cube may
+ * return either a boolean or its text); `null` for no value.
+ */
+const listedValueOf = (row: unknown, field: string): string | null => {
+  const value = (row as Record<string, unknown>)[field];
+  if (typeof value === "boolean") return String(value);
+  return typeof value === "string" && value !== "" ? value : null;
+};
 
 /**
  * The Cube queries for one list filter's values: one per Feedback Dataset that has the field, over its
@@ -235,8 +254,8 @@ export const resolveBoundedChartValues = ({
   if (dimensions.includes(filter.field)) {
     const needle = search?.toLowerCase();
     const values = rows.flatMap((row) => {
-      const value = (row as Record<string, unknown>)[filter.field];
-      if (typeof value !== "string" || value === "") return [];
+      const value = listedValueOf(row, filter.field);
+      if (value === null) return [];
       return needle && !value.toLowerCase().includes(needle) ? [] : [value];
     });
     return { type: "values", values };
@@ -294,8 +313,8 @@ export const mergeFilterValues = (
   for (const rows of results) {
     if (rows.length > FILTER_VALUE_LIST_LIMIT) truncated = true;
     for (const row of rows) {
-      const value = (row as Record<string, unknown>)[field];
-      if (typeof value === "string" && value !== "") distinct.add(value);
+      const value = listedValueOf(row, field);
+      if (value !== null) distinct.add(value);
     }
   }
 

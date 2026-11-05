@@ -344,7 +344,7 @@ const checkValuesRequest = (
   if (!isListDashboardFilter(filter)) {
     return filterProblem(
       "filterId",
-      "Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, or embedded data) pick from a list; this one takes a typed value.",
+      "Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, embedded data, or a yes/no field) pick from a list; this one takes a typed value.",
       context
     );
   }

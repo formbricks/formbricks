@@ -6,6 +6,8 @@ import {
   getPopoverValueControl,
   groupFilterProperties,
   isMenuProperty,
+  quickFilterAsRule,
+  ruleAsQuickFilter,
   searchMenuProperties,
   startsRule,
   switchDraftOperator,
@@ -17,9 +19,11 @@ const country: TFilterProperty = {
   label: "Country",
   valueType: "string",
   group: "Embedded data",
-  ruleOperators: ["equals", "notEquals", "contains", "isAnyOf", "isNoneOf", "isSet"],
+  ruleOperators: ["equals", "notEquals", "contains", "isSet"],
   loadOptions: async () => ({ options: [], hasMore: false }),
 };
+/** A list property: its is / is not take several values. */
+const region: TFilterProperty = { ...country, id: "region", label: "Region", multiValueEquals: true };
 const score: TFilterProperty = {
   id: "score",
   label: "Score",
@@ -82,9 +86,11 @@ describe("rule drafts", () => {
   });
 
   test("an existing rule opens with its operator and values", () => {
-    expect(
-      draftFromRule(country, { property: "country", operator: "isAnyOf", values: ["DE", "FR"] })
-    ).toEqual({ operator: "isAnyOf", value: "", values: ["DE", "FR"] });
+    expect(draftFromRule(region, { property: "region", operator: "equals", values: ["DE", "FR"] })).toEqual({
+      operator: "equals",
+      value: "",
+      values: ["DE", "FR"],
+    });
     expect(draftFromRule(score, { property: "score", operator: "greaterThan", values: ["5"] })).toEqual({
       operator: "greaterThan",
       value: "5",
@@ -94,7 +100,7 @@ describe("rule drafts", () => {
 
   test("an unfinished draft is no rule", () => {
     expect(draftToRule(country, { operator: "equals", value: "  ", values: [] })).toBeNull();
-    expect(draftToRule(country, { operator: "isAnyOf", value: "", values: [] })).toBeNull();
+    expect(draftToRule(region, { operator: "equals", value: "", values: [] })).toBeNull();
     expect(draftToRule(score, { operator: "greaterThan", value: "abc", values: [] })).toBeNull();
     expect(draftToRule(country, { operator: "", value: "DE", values: [] })).toBeNull();
     expect(draftToRule(country, { operator: "startsWith", value: "DE", values: [] })).toBeNull();
@@ -106,9 +112,9 @@ describe("rule drafts", () => {
       operator: "equals",
       values: ["DE"],
     });
-    expect(draftToRule(country, { operator: "isNoneOf", value: "", values: ["DE", "DE", "FR"] })).toEqual({
-      property: "country",
-      operator: "isNoneOf",
+    expect(draftToRule(region, { operator: "notEquals", value: "", values: ["DE", "DE", "FR"] })).toEqual({
+      property: "region",
+      operator: "notEquals",
       values: ["DE", "FR"],
     });
     expect(draftToRule(country, { operator: "isSet", value: "", values: [] })).toEqual({
@@ -126,8 +132,13 @@ describe("rule drafts", () => {
       value: "",
       values: [],
     });
-    const list = { operator: "isAnyOf" as const, value: "", values: ["DE"] };
-    expect(switchDraftOperator(country, list, "isNoneOf")).toEqual({ ...list, operator: "isNoneOf" });
+    const list = { operator: "equals" as const, value: "", values: ["DE"] };
+    expect(switchDraftOperator(region, list, "notEquals")).toEqual({ ...list, operator: "notEquals" });
+    expect(switchDraftOperator(region, list, "contains")).toEqual({
+      operator: "contains",
+      value: "",
+      values: [],
+    });
   });
 
   test("the popover draws a control wherever the dialog would fall back to its own combobox", () => {
@@ -135,8 +146,40 @@ describe("rule drafts", () => {
     expect(getPopoverValueControl({ ...score, valueType: "string", suggestions: ["a"] }, "greaterThan")).toBe(
       "text"
     );
-    expect(getPopoverValueControl(country, "isAnyOf")).toBe("multiPicker");
+    expect(getPopoverValueControl(region, "equals")).toBe("multiPicker");
+    expect(getPopoverValueControl(country, "equals")).toBe("picker");
     expect(getPopoverValueControl(score, "greaterThan")).toBe("number");
+  });
+});
+
+describe("quick filters edited as rules", () => {
+  const quickList: TFilterProperty = {
+    ...sentiment,
+    ruleOperators: ["equals", "notEquals", "isSet"],
+    multiValueEquals: true,
+  };
+  const ticked = { property: "sentiment", operator: "in" as const, values: ["positive", "mixed"] };
+
+  test("ticked values read as is any of them, where the property has that rule", () => {
+    expect(quickFilterAsRule(quickList, ticked)).toEqual({ ...ticked, operator: "equals" });
+    expect(quickFilterAsRule(sentiment, ticked)).toBeNull();
+    expect(quickFilterAsRule({ ...quickList, multiValueEquals: false }, ticked)).toBeNull();
+    expect(
+      quickFilterAsRule(quickList, { property: "sentiment", operator: "preset", values: ["today"] })
+    ).toBeNull();
+  });
+
+  test("a saved is goes back to ticked values; any other operator stays a rule", () => {
+    expect(ruleAsQuickFilter(quickList, { ...ticked, operator: "equals" })).toEqual(ticked);
+    const notSet = { property: "sentiment", operator: "isNotSet" as const, values: [] };
+    expect(ruleAsQuickFilter(quickList, notSet)).toEqual(notSet);
+    const isNot = { ...ticked, operator: "notEquals" as const };
+    expect(ruleAsQuickFilter(quickList, isNot)).toEqual(isNot);
+    expect(ruleAsQuickFilter(region, { property: "region", operator: "equals", values: ["DE"] })).toEqual({
+      property: "region",
+      operator: "equals",
+      values: ["DE"],
+    });
   });
 });
 

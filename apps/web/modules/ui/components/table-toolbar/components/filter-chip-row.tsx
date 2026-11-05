@@ -13,6 +13,7 @@ import {
   setDateQuickFilter,
   toggleQuickFilterValue,
 } from "../lib/filter-state";
+import { quickFilterAsRule, ruleAsQuickFilter } from "../lib/simple-rule";
 import type { TFilterProperty, TLockedFilters, TTableFilter } from "../lib/types";
 import { DateFilterEditor } from "./date-filter-editor";
 import { FilterChip } from "./filter-chip";
@@ -83,6 +84,7 @@ const RuleChip = ({
   onFiltersChange,
   onEditRules,
   simpleRules,
+  toStored = (rule) => rule,
   disabled,
 }: Readonly<{
   filter: TTableFilter;
@@ -92,6 +94,8 @@ const RuleChip = ({
   onFiltersChange: (filters: TTableFilter[]) => void;
   onEditRules?: () => void;
   simpleRules?: boolean;
+  /** How a saved rule is stored: as it is, or back as the quick filter it was opened from. */
+  toStored?: (rule: TTableFilter) => TTableFilter;
   disabled?: boolean;
 }>) => {
   const { t, i18n } = useTranslation();
@@ -102,7 +106,7 @@ const RuleChip = ({
         property={property}
         rule={filter}
         disabled={disabled}
-        onCommit={(rule) => onFiltersChange(replaceFilterAt(filters, index, rule))}
+        onCommit={(rule) => onFiltersChange(replaceFilterAt(filters, index, toStored(rule)))}
         onRemove={onRemove}
       />
     );
@@ -181,7 +185,28 @@ export const FilterChipRow = ({
         {filters.map((filter, index) => {
           const property = propertyById.get(filter.property);
           if (!property) return null;
-          const key = `${filter.property}-${filter.operator}-${index}`;
+          // Keyed without the operator, so a chip whose operator is changed in its popover stays mounted
+          // and keeps the focus.
+          const key = `${filter.property}-${index}`;
+          // With simple rules, a quick filter that means "is" any of its values opens as that rule, so
+          // its popover offers the property's other operators too; saved as "is", it is ticked values again.
+          const asRule = simpleRules ? quickFilterAsRule(property, filter) : null;
+          if (asRule) {
+            return (
+              <li key={key} className="max-w-full">
+                <RuleChip
+                  filter={asRule}
+                  property={property}
+                  filters={filters}
+                  index={index}
+                  onFiltersChange={onFiltersChange}
+                  simpleRules
+                  toStored={(rule) => ruleAsQuickFilter(property, rule)}
+                  disabled={disabled}
+                />
+              </li>
+            );
+          }
           if (isQuickFilter(filter)) {
             return (
               <li key={key} className="max-w-full">
@@ -229,6 +254,7 @@ export const FilterChipRow = ({
             type="button"
             onClick={onAddFilter}
             disabled={disabled}
+            data-filter-add=""
             aria-label={t("common.table_toolbar.add_filter")}
             className="focus-visible:ring-ring flex size-7 items-center justify-center rounded-md text-slate-600 hover:bg-white hover:text-slate-900 focus-visible:ring-1 focus-visible:outline-hidden">
             <PlusIcon className="size-4" />

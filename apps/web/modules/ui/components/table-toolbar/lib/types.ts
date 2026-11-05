@@ -10,8 +10,9 @@ import type { TDateRangePreset } from "@/lib/date-ranges";
  * - `preset` / `between`: a date quick filter. `between` holds two calendar days (`yyyy-MM-dd`); the URL
  *   writes them as `gte` / `lte`.
  * - The rest are Advanced filter rules. `includesOneOf` / `includesAllOf` hold a list of values (a
- *   multi-select question's choices), and so do `isAnyOf` / `isNoneOf` (the row's one value is, or is not,
- *   any of the picked values); every other rule holds one value or none.
+ *   multi-select question's choices), and so do `equals` / `notEquals` on a property with
+ *   `multiValueEquals` (the row's one value is, or is not, any of the picked values); every other rule
+ *   holds one value or none.
  */
 export const TABLE_FILTER_OPERATORS = [
   "in",
@@ -35,8 +36,6 @@ export const TABLE_FILTER_OPERATORS = [
   "isNotSet",
   "includesOneOf",
   "includesAllOf",
-  "isAnyOf",
-  "isNoneOf",
 ] as const;
 
 export type TTableFilterOperator = (typeof TABLE_FILTER_OPERATORS)[number];
@@ -103,6 +102,17 @@ export type TFilterProperty = {
   group?: string;
   /** Operators offered in Advanced filter. Empty or absent: the property is not offered there. */
   ruleOperators?: TRuleOperator[];
+  /**
+   * `equals` / `notEquals` hold several values, picked from the property's values: the row's one value
+   * is, or is not, any of them. The chip reads "is any of" / "is none of" once more than one is picked.
+   * Absent: they hold one value.
+   */
+  multiValueEquals?: boolean;
+  /**
+   * Which of the property's values occur, looked up when it is listed: values that do not show greyed
+   * and cannot be picked, and a property with none at all is listed disabled with `emptyHint`.
+   */
+  availableValues?: TAvailableValues;
   /** Date quick filters only: the presets offered, in order. */
   datePresets?: readonly TDateRangePreset[];
   /**
@@ -110,6 +120,14 @@ export type TFilterProperty = {
    * Filter menu: it never shows as a chip and does not count towards `Filter (n)`.
    */
   hidden?: boolean;
+};
+
+export type TAvailableValues = {
+  queryKey: QueryKey;
+  /** The values that occur; an empty list means the property has none to filter by. */
+  load: (signal?: AbortSignal) => Promise<readonly string[]>;
+  /** Why the property cannot be filtered by while it has no values. */
+  emptyHint: string;
 };
 
 export type TSortOption = {

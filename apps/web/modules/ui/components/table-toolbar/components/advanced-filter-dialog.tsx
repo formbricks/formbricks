@@ -70,7 +70,9 @@ export const AdvancedFilterDialog = ({
 }>) => {
   const { t } = useTranslation();
   const ruleProperties = properties.filter((property) => (property.ruleOperators?.length ?? 0) > 0);
-  const [group, setGroup] = useState<TGenericConditionGroup>(() => rulesToConditionGroup(getRules(filters)));
+  const [group, setGroup] = useState<TGenericConditionGroup>(() =>
+    rulesToConditionGroup(getRules(filters), ruleProperties)
+  );
   const [incompleteIds, setIncompleteIds] = useState<string[]>([]);
 
   const propertyFor = (condition: TGenericCondition) =>
@@ -96,7 +98,7 @@ export const AdvancedFilterDialog = ({
     if (
       isOperatorSwitch &&
       condition.rightOperand &&
-      // A list keeps its picks across list operators (is any of → is none of); a single value only
+      // A list keeps its picks across list operators (is → is not); a single value only
       // between controls that take one.
       (previousControl === "multiPicker" || !Array.isArray(condition.rightOperand.value)) &&
       previousControl === getRuleValueControl(property, next.operator as TRuleOperator)

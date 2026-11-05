@@ -8,10 +8,10 @@ describe("resolveEnumFilter", () => {
     expect(resolveEnumFilter(filters, "status", ["a", "b", "c"])).toEqual(["b"]);
   });
 
-  test("is any of narrows to its values, is none of to every value but its own", () => {
-    const anyOf: TTableFilter[] = [{ property: "status", operator: "isAnyOf", values: ["a", "c"] }];
+  test("is with several values narrows to them, is not to every value but its own", () => {
+    const anyOf: TTableFilter[] = [{ property: "status", operator: "equals", values: ["a", "c"] }];
     expect(resolveEnumFilter(anyOf, "status", ["a", "b", "c"])).toEqual(["a", "c"]);
-    const noneOf: TTableFilter[] = [{ property: "status", operator: "isNoneOf", values: ["a", "c"] }];
+    const noneOf: TTableFilter[] = [{ property: "status", operator: "notEquals", values: ["a", "c"] }];
     expect(resolveEnumFilter(noneOf, "status", ["a", "b", "c"])).toEqual(["b"]);
   });
 
