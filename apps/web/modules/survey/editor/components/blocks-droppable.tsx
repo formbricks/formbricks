@@ -30,8 +30,6 @@ interface BlocksDroppableProps {
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
-  responseCount: number;
-  onAlertTrigger: () => void;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed: boolean;
   duplicateBlock: (blockId: string) => void;
@@ -62,8 +60,6 @@ export const BlocksDroppable = ({
   isFormbricksCloud,
   isCxMode,
   locale,
-  responseCount,
-  onAlertTrigger,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   duplicateBlock,
@@ -114,8 +110,6 @@ export const BlocksDroppable = ({
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
-              responseCount={responseCount}
-              onAlertTrigger={onAlertTrigger}
               isStorageConfigured={isStorageConfigured}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
               duplicateBlock={duplicateBlock}

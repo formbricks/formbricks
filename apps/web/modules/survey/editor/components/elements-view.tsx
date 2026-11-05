@@ -83,7 +83,6 @@ interface ElementsViewProps {
   isCxMode: boolean;
   locale: TUserLocale;
   responseCount: number;
-  setIsCautionDialogOpen: (open: boolean) => void;
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
@@ -106,7 +105,6 @@ export const ElementsView = ({
   isCxMode,
   locale,
   responseCount,
-  setIsCautionDialogOpen,
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
@@ -754,7 +752,6 @@ export const ElementsView = ({
   const stableDuplicateElement = useStableCallback(duplicateElement);
   const stableDeleteElement = useStableCallback(deleteElement);
   const stableAddElement = useStableCallback(addElement);
-  const stableOnAlertTrigger = useStableCallback(() => setIsCautionDialogOpen(true));
   const stableDuplicateBlock = useStableCallback(duplicateBlock);
   const stableDeleteBlock = useStableCallback(deleteBlockById);
   const stableMoveBlock = useStableCallback(moveBlockById);
@@ -808,8 +805,6 @@ export const ElementsView = ({
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
           locale={locale}
-          responseCount={responseCount}
-          onAlertTrigger={stableOnAlertTrigger}
           isStorageConfigured={isStorageConfigured}
           isExternalUrlsAllowed={isExternalUrlsAllowed}
           duplicateBlock={stableDuplicateBlock}
