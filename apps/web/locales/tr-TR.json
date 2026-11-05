@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "Grafik verileri yüklenemedi",
         "failed_to_load_dashboard": "Bu pano yüklenemedi",
         "filter_limit_reached": "Bir panoya en fazla {max} filtre eklenebilir",
-        "filter_no_sentiment_yet": "Henüz duygu analizi yok: Yapay zekâ zenginleştirmeyi aç",
+        "filter_no_sentiment_yet": "Bu panonun grafiklerinde duygu verisi yok",
         "filter_no_value": "(Değer yok)",
         "filter_no_values_in_view": "Bu filtreler veya tarihler için sonuç yok",
         "filter_no_values_yet": "Bu panonun grafiklerinde henüz değer yok",

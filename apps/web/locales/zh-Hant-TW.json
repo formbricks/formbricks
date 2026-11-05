@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "載入圖表資料失敗",
         "failed_to_load_dashboard": "無法載入此儀表板",
         "filter_limit_reached": "一個儀表板最多可設定 {max} 個篩選條件",
-        "filter_no_sentiment_yet": "尚無情緒分析結果:請開啟 AI 強化功能",
+        "filter_no_sentiment_yet": "此儀表板的圖表尚無情緒資料",
         "filter_no_value": "(無值)",
         "filter_no_values_in_view": "所選篩選條件或日期範圍內沒有資料",
         "filter_no_values_yet": "此儀表板的圖表目前還沒有任何值",

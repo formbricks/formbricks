@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "Failed to load chart data",
         "failed_to_load_dashboard": "Failed to load this dashboard",
         "filter_limit_reached": "A dashboard holds up to {max} filters",
-        "filter_no_sentiment_yet": "No sentiment yet: turn on AI enrichment",
+        "filter_no_sentiment_yet": "No sentiment on this dashboard's charts",
         "filter_no_value": "(No value)",
         "filter_no_values_in_view": "None for these filters or dates",
         "filter_no_values_yet": "No values on this dashboard's charts yet",

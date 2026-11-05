@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "加载图表数据失败",
         "failed_to_load_dashboard": "无法加载此仪表板",
         "filter_limit_reached": "每个仪表板最多可添加 {max} 个筛选器",
-        "filter_no_sentiment_yet": "暂无情感分析结果：请开启 AI 增强功能",
+        "filter_no_sentiment_yet": "此看板的图表暂无情感数据",
         "filter_no_value": "（无值）",
         "filter_no_values_in_view": "当前筛选条件或日期范围内暂无数据",
         "filter_no_values_yet": "此仪表板的图表中暂无数值",

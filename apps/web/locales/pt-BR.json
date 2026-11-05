@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "Falha ao carregar os dados do gráfico",
         "failed_to_load_dashboard": "Falha ao carregar este painel",
         "filter_limit_reached": "Um painel comporta até {max} filtros",
-        "filter_no_sentiment_yet": "Ainda sem sentimento: ative o enriquecimento com IA",
+        "filter_no_sentiment_yet": "Nenhum sentimento nos gráficos deste painel",
         "filter_no_value": "(Sem valor)",
         "filter_no_values_in_view": "Nenhum para estes filtros ou datas",
         "filter_no_values_yet": "Ainda não há valores nos gráficos deste painel",

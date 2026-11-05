@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "Det gick inte att ladda diagramdata",
         "failed_to_load_dashboard": "Det gick inte att läsa in den här instrumentpanelen",
         "filter_limit_reached": "En instrumentpanel kan innehålla upp till {max} filter",
-        "filter_no_sentiment_yet": "Ingen sentimentanalys än: aktivera AI-berikning",
+        "filter_no_sentiment_yet": "Ingen sentimentanalys i den här dashboardens diagram",
         "filter_no_value": "(Inget värde)",
         "filter_no_values_in_view": "Inga för dessa filter eller datum",
         "filter_no_values_yet": "Inga värden i den här dashboardens diagram än",

@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "チャートデータの読み込みに失敗しました",
         "failed_to_load_dashboard": "このダッシュボードを読み込めませんでした",
         "filter_limit_reached": "1つのダッシュボードに設定できるフィルターは最大{max}個です",
-        "filter_no_sentiment_yet": "センチメントはまだありません：AIエンリッチメントをオンにしてください",
+        "filter_no_sentiment_yet": "このダッシュボードのグラフにセンチメントはありません",
         "filter_no_value": "(値なし)",
         "filter_no_values_in_view": "このフィルターまたは日付では該当なし",
         "filter_no_values_yet": "このダッシュボードのグラフには、まだ値がありません",

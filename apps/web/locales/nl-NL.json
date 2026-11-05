@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "Grafiekgegevens laden mislukt",
         "failed_to_load_dashboard": "Dit dashboard kan niet worden geladen",
         "filter_limit_reached": "Een dashboard kan maximaal {max} filters bevatten",
-        "filter_no_sentiment_yet": "Nog geen sentiment: schakel AI-verrijking in",
+        "filter_no_sentiment_yet": "Geen sentiment in de grafieken van dit dashboard",
         "filter_no_value": "(Geen waarde)",
         "filter_no_values_in_view": "Geen voor deze filters of datums",
         "filter_no_values_yet": "Nog geen waarden in de grafieken van dit dashboard",

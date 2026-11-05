@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "Échec du chargement des données du graphique",
         "failed_to_load_dashboard": "Impossible de charger ce tableau de bord",
         "filter_limit_reached": "Un tableau de bord peut contenir jusqu'à {max} filtres",
-        "filter_no_sentiment_yet": "Aucun sentiment pour l'instant : activez l'enrichissement par IA",
+        "filter_no_sentiment_yet": "Aucun sentiment dans les graphiques de ce tableau de bord",
         "filter_no_value": "(Aucune valeur)",
         "filter_no_values_in_view": "Aucune valeur pour ces filtres ou ces dates",
         "filter_no_values_yet": "Aucune valeur dans les graphiques de ce tableau de bord pour l'instant",

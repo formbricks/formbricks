@@ -2162,7 +2162,7 @@
         "failed_to_load_chart_data": "Încărcarea datelor graficului a eșuat",
         "failed_to_load_dashboard": "Nu s-a putut încărca acest tablou de bord",
         "filter_limit_reached": "Un dashboard poate conține maximum {max} filtre",
-        "filter_no_sentiment_yet": "Încă nu există sentiment: activează îmbogățirea cu AI",
+        "filter_no_sentiment_yet": "Niciun sentiment în graficele acestui dashboard",
         "filter_no_value": "(Fără valoare)",
         "filter_no_values_in_view": "Nicio valoare pentru aceste filtre sau date calendaristice",
         "filter_no_values_yet": "Încă nu există valori în graficele acestui tablou de bord",
