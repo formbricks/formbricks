@@ -9,8 +9,7 @@ import { getShownFilterTargets } from "./shown-filter-targets";
 const t = ((key: string, values?: Record<string, unknown>) =>
   values ? `${key} ${JSON.stringify(values)}` : key) as unknown as TFunction;
 
-const ids = (recorded?: Parameters<typeof getShownFilterTargets>[2]) =>
-  getShownFilterTargets(surveyFlowFixture, t, recorded).map((entry) => entry.propertyId);
+const ids = () => getShownFilterTargets(surveyFlowFixture, t).map((entry) => entry.propertyId);
 
 const { heavyUsers, overall } = SURVEY_FLOW_FIXTURE_IDS.blocks;
 
@@ -53,21 +52,6 @@ describe("getShownFilterTargets", () => {
     });
     // A picture has no label: its position names it.
     expect(byId.get("shown.option.ad_pick.poster_b")?.label).toContain('"number":2');
-  });
-
-  test("also offers what a response was recorded as not shown, so a removed show-if stays filterable", () => {
-    const offered = ids({
-      elements: ["fav"],
-      columns: { brand_grid: ["col_good"] },
-      // Ids the survey does not hold have nothing to name: left out.
-      blocks: ["ghost_block"],
-      options: { ghost: ["x"] },
-    });
-
-    expect(offered).toContain("shown.question.fav");
-    expect(offered).toContain("shown.column.brand_grid.col_good");
-    expect(offered.some((id) => id.includes("ghost"))).toBe(false);
-    expect(offered).toHaveLength(ids().length + 2);
   });
 
   test("a block every element of which can be hidden is offered as a block", () => {

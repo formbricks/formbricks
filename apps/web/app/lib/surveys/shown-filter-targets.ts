@@ -1,7 +1,6 @@
 import type { TFunction } from "i18next";
 import type { TResponseFilterCriteriaShown } from "@formbricks/types/responses";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
-import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import { type TOptionLike, type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -42,12 +41,6 @@ const elementCanBeNotShown = (element: TElement): boolean =>
 const blockCanBeNotShown = (block: TBlock): boolean =>
   hasShowIf(block) || block.elements.every(elementCanBeNotShown);
 
-const RECORD_KEY_OF: Record<TOptionListKey, "options" | "rows" | "columns"> = {
-  choices: "options",
-  rows: "rows",
-  columns: "columns",
-};
-
 const KIND_OF: Record<TOptionListKey, "option" | "row" | "column"> = {
   choices: "option",
   rows: "row",
@@ -67,16 +60,10 @@ const itemLabelOf = (listKey: TOptionListKey, headline: string, itemLabel: strin
   return `${headline} · ${itemLabel}`;
 };
 
-const itemEntries = (
-  element: TElement,
-  headline: string,
-  recorded: TResponseNotShown,
-  t: TFunction
-): TShownFilterTargetEntry[] =>
+const itemEntries = (element: TElement, headline: string, t: TFunction): TShownFilterTargetEntry[] =>
   getOptionLists(element).flatMap(({ listKey, items }) =>
     items.flatMap((item, index): TShownFilterTargetEntry[] => {
-      const wasRecorded = recorded[RECORD_KEY_OF[listKey]]?.[element.id]?.includes(item.id) ?? false;
-      if (!itemCanBeNotShown(item) && !wasRecorded) return [];
+      if (!itemCanBeNotShown(item)) return [];
       const label = (item as { label?: Record<string, string> }).label;
       // Picture choices have no label: "Picture 2", as the rest of the filter names them.
       const itemLabel = label
@@ -93,16 +80,10 @@ const itemEntries = (
     })
   );
 
-const elementEntries = (
-  element: TElement,
-  survey: TSurvey,
-  recorded: TResponseNotShown,
-  t: TFunction
-): TShownFilterTargetEntry[] => {
+const elementEntries = (element: TElement, survey: TSurvey, t: TFunction): TShownFilterTargetEntry[] => {
   const headline = headlineOf(element, survey);
-  const offered = elementCanBeNotShown(element) || (recorded.elements?.includes(element.id) ?? false);
   return [
-    ...(offered
+    ...(elementCanBeNotShown(element)
       ? [
           {
             propertyId: `shown.question.${element.id}`,
@@ -111,24 +92,19 @@ const elementEntries = (
           },
         ]
       : []),
-    ...itemEntries(element, headline, recorded, t),
+    ...itemEntries(element, headline, t),
   ];
 };
 
 /**
  * The blocks, questions, options, rows and columns a shown / not shown filter offers, in survey order:
  * the ones the survey can keep from a respondent today (a show-if, Hidden, or everything inside them
- * hideable), and the ones `recorded` says some response was not shown, so a show-if removed after
- * responses came in stays filterable. Anything else was never in a not-shown record, so a filter on it
- * would only split reached from not reached.
+ * hideable). Anything else is never in a not-shown record, so a filter on it would only ever split
+ * reached from not reached.
  */
-export const getShownFilterTargets = (
-  survey: TSurvey,
-  t: TFunction,
-  recorded: TResponseNotShown = {}
-): TShownFilterTargetEntry[] =>
+export const getShownFilterTargets = (survey: TSurvey, t: TFunction): TShownFilterTargetEntry[] =>
   survey.blocks.flatMap((block) => [
-    ...(blockCanBeNotShown(block) || recorded.blocks?.includes(block.id)
+    ...(blockCanBeNotShown(block)
       ? [
           {
             propertyId: `shown.block.${block.id}`,
@@ -137,5 +113,5 @@ export const getShownFilterTargets = (
           },
         ]
       : []),
-    ...block.elements.flatMap((element) => elementEntries(element, survey, recorded, t)),
+    ...block.elements.flatMap((element) => elementEntries(element, survey, t)),
   ]);

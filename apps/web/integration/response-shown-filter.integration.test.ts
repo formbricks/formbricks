@@ -13,7 +13,6 @@ import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surve
 import { countExportResponses } from "@/app/api/(internal)/surveys/[surveyId]/export/lib/export-response";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { resetDb } from "@/integration/reset-db";
-import { getRecordedNotShown } from "@/lib/response/filtering-values";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { buildWhereClause } from "@/lib/response/where-clause";
 
@@ -283,37 +282,5 @@ describe("the app's read paths keep the shown criteria", () => {
       filter: blockNotShown(),
     });
     expect(counts.included).toBe(1);
-  });
-});
-
-describe("getRecordedNotShown (real Postgres)", () => {
-  test("lists what any response's record names, once, and only ids the survey holds", async () => {
-    // Another survey's records never reach this one.
-    await prisma.response.create({
-      data: {
-        surveyId: (
-          await prisma.survey.create({
-            data: {
-              name: "Other",
-              type: "link",
-              status: "inProgress",
-              workspaceId: survey.workspaceId,
-              blocks: surveyFlowFixture.blocks,
-            },
-            select: { id: true },
-          })
-        ).id,
-        finished: true,
-        notShown: { elements: ["hours"], options: { fav: ["netflix"] } },
-      },
-    });
-
-    expect(await getRecordedNotShown(survey)).toEqual({
-      blocks: [heavyUsers],
-      elements: ["apple_reason", "brand_grid", "fav"],
-      options: { fav: ["apple"] },
-      rows: { brand_grid: ["row_disney"] },
-      columns: { brand_grid: ["col_good"] },
-    });
   });
 });

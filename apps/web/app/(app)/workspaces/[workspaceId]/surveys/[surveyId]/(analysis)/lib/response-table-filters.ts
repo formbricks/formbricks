@@ -10,7 +10,6 @@ import {
   UserIcon,
 } from "lucide-react";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type {
   DateRange,
@@ -323,15 +322,15 @@ const SHOWN_VALUES = new Set(["shown", "notShown"]);
 
 /**
  * Shown / not shown properties, one per block, question, option, row or column the survey can keep from
- * a respondent or a response was recorded as not shown. Only `is`: "is not shown" is not "is not
- * (shown)", because a response with no record is neither, and the help text says so.
+ * a respondent. Only `is`: "is not shown" is not "is not (shown)", because a response with no record is
+ * neither, and the help text says so.
  */
-const shownEntries = (survey: TSurvey, recorded: TResponseNotShown, t: TFunction): TModelEntry[] => {
+const shownEntries = (survey: TSurvey, t: TFunction): TModelEntry[] => {
   const options = [
     { value: "shown", label: t("common.shown") },
     { value: "notShown", label: t("workspace.surveys.filter.not_shown") },
   ];
-  return getShownFilterTargets(survey, t, recorded).map(({ propertyId, target, label }) => ({
+  return getShownFilterTargets(survey, t).map(({ propertyId, target, label }) => ({
     property: {
       id: propertyId,
       label,
@@ -412,15 +411,12 @@ export const buildResponseFilterModel = ({
   elementOptions,
   elementFilterOptions,
   tagNames,
-  recordedNotShown = {},
   t,
 }: {
   survey: TSurvey;
   elementOptions: readonly ElementOptions[];
   elementFilterOptions: readonly ElementFilterOptions[];
   tagNames: readonly string[];
-  /** What the survey's responses were recorded as not shown, from the filter data. */
-  recordedNotShown?: TResponseNotShown;
   t: TFunction;
 }): TResponseFilterModel => {
   const context: TBuildContext = {
@@ -434,11 +430,7 @@ export const buildResponseFilterModel = ({
       .filter((group) => (group.header === OptionsType.ELEMENTS) === isQuestions)
       .flatMap((group) => group.option.flatMap((option) => optionEntries(option, context)));
   // Shown / not shown sits right under the questions it is about.
-  const entries = [
-    ...groupEntries(true),
-    ...shownEntries(survey, recordedNotShown, t),
-    ...groupEntries(false),
-  ];
+  const entries = [...groupEntries(true), ...shownEntries(survey, t), ...groupEntries(false)];
   const fields = new Map<string, TResponseFilterField>();
   for (const { property, field } of entries) {
     if (field) fields.set(property.id, field);
