@@ -1,6 +1,6 @@
 "use client";
 
-import { FilterIcon, ListFilterIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { FilterIcon, ListFilterIcon, LockIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -159,20 +159,41 @@ const PropertySearch = ({
   );
 };
 
-/** A property that starts a rule on its chip, or lies disabled when it has no values to filter by. */
+/**
+ * A property that starts a rule on its chip, or lies disabled when it has no values to filter by. Like a
+ * quick filter's submenu, it says how many filters already use it, locked ones included, with a lock
+ * when an editor locked one: picking it again adds a filter of your own beside them.
+ */
 const RulePropertyItem = ({
   property,
-  isSet,
+  ownCount,
+  lockedCount,
+  lockedHint,
   onPick,
-}: Readonly<{ property: TFilterProperty; isSet: boolean; onPick: (propertyId: string) => void }>) => {
-  const hasNoValues = useHasNoValues(property, isSet);
+}: Readonly<{
+  property: TFilterProperty;
+  ownCount: number;
+  lockedCount: number;
+  lockedHint?: string;
+  onPick: (propertyId: string) => void;
+}>) => {
+  const count = ownCount + lockedCount;
+  const hasNoValues = useHasNoValues(property, count > 0);
   if (hasNoValues) return <EmptyPropertyItem property={property} showIcon />;
   return (
     <DropdownMenuItem
       icon={<PropertyIcon property={property} />}
       className="gap-2 font-normal text-slate-700"
       onSelect={() => onPick(property.id)}>
-      <span className="truncate">{property.label}</span>
+      <span className="min-w-0 flex-1 truncate">
+        {property.label}
+        {count > 0 && <span className="font-semibold text-slate-900">{` (${count})`}</span>}
+      </span>
+      {lockedCount > 0 && (
+        <TooltipRenderer tooltipContent={lockedHint}>
+          <LockIcon className="size-3.5 shrink-0 text-slate-500" aria-label={lockedHint} />
+        </TooltipRenderer>
+      )}
     </DropdownMenuItem>
   );
 };
@@ -207,7 +228,11 @@ const GroupedProperties = ({
           <RulePropertyItem
             key={property.id}
             property={property}
-            isSet={quick.filters.some((filter) => filter.property === property.id)}
+            ownCount={quick.filters.filter((filter) => filter.property === property.id).length}
+            lockedCount={
+              (quick.locked?.filters ?? []).filter((filter) => filter.property === property.id).length
+            }
+            lockedHint={quick.locked?.valueHint ?? quick.locked?.hint}
             onPick={onPickRuleProperty}
           />
         ) : (
