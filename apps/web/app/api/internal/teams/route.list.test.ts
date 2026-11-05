@@ -1,14 +1,19 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { GET } from "./route";
 
 const mocks = vi.hoisted(() => ({
   can: vi.fn(),
   getSession: vi.fn(),
   getTeamsByOrganizationId: vi.fn(),
+  checkRoleManagementPermission: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
+vi.mock("@/modules/ee/role-management/lib/permission", () => ({
+  checkRoleManagementPermission: mocks.checkRoleManagementPermission,
+}));
 vi.mock("@/modules/ee/teams/team-list/lib/team", () => ({
   getTeamsByOrganizationId: mocks.getTeamsByOrganizationId,
 }));
@@ -34,6 +39,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.can.mockImplementation(async (_actor: unknown, action: string) => action === "organization.manage");
+  mocks.checkRoleManagementPermission.mockResolvedValue(undefined);
   mocks.getTeamsByOrganizationId.mockResolvedValue([
     { id: "clteam1111111111111111111", name: "Product", memberCount: 4 },
   ]);
@@ -57,10 +63,23 @@ describe("GET /api/internal/teams", () => {
     expect((await (await list()).json()).data).toEqual([]);
   });
 
+  test("refuses without the role-management licence, checked after authorizing, and lists nothing", async () => {
+    mocks.checkRoleManagementPermission.mockRejectedValue(
+      new OperationNotAllowedError("Role management is not allowed for this organization")
+    );
+    const response = await list();
+
+    expect(response.status).toBe(403);
+    expect(mocks.can).toHaveBeenCalled();
+    expect(mocks.checkRoleManagementPermission).toHaveBeenCalledWith(ORG_ID);
+    expect(mocks.getTeamsByOrganizationId).not.toHaveBeenCalled();
+  });
+
   test("refuses a member without organization.manage with 403, and lists nothing", async () => {
     mocks.can.mockResolvedValue(false);
 
     expect((await list()).status).toBe(403);
+    expect(mocks.checkRoleManagementPermission).not.toHaveBeenCalled();
     expect(mocks.getTeamsByOrganizationId).not.toHaveBeenCalled();
   });
 

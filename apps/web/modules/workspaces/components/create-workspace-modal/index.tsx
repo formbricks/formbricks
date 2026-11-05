@@ -64,7 +64,8 @@ const CreateWorkspaceDialog = ({
   const { t } = useTranslation();
   const router = useRouter();
 
-  const teamsQuery = useOrganizationTeams(organizationId, { enabled: open });
+  // Teams are an enterprise feature: the list route refuses without the licence, so don't ask for it then.
+  const teamsQuery = useOrganizationTeams(organizationId, { enabled: open && isAccessControlAllowed });
   const organizationTeams = teamsQuery.data ?? [];
 
   const form = useForm<TCreateWorkspaceForm>({

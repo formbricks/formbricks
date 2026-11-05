@@ -229,6 +229,13 @@ export async function listTeamsOperation({
   });
   if (access instanceof Response) return access;
 
+  const notEntitled = await requireRoleManagementEntitlement({
+    organizationId: access.organizationId,
+    requestId,
+    instance,
+  });
+  if (notEntitled) return notEntitled;
+
   const teams = (await getTeamsByOrganizationId(access.organizationId)) ?? [];
   return successResponse(teams.map(serializeTeamOption), { requestId });
 }

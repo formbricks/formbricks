@@ -12,6 +12,7 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { INVITE_DISABLED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
   reserveInviteRateLimit,
@@ -83,7 +84,7 @@ export async function createOnboardingInviteOperation({
   try {
     await sendInviteMemberEmail(inviteId, body.email, user.name, "", body.organizationId, user.id);
   } catch (error) {
-    logger.error({ err: error }, "Failed to send onboarding invite email");
+    logger.error(loggableError(error), "Failed to send onboarding invite email");
   }
 
   if (auditLog) {
