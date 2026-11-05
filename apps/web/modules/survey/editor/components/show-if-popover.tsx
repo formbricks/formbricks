@@ -15,12 +15,11 @@ import {
 import { describeConditionGroup } from "@/modules/survey/editor/lib/flow-outline-text";
 import {
   type TShowIfTarget,
-  createShowIf,
+  createDraftShowIf,
   getShowIf,
   isShowIfComplete,
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
-import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverTrigger } from "@/modules/ui/components/popover";
 
@@ -116,19 +115,16 @@ interface ShowIfEditorProps {
 
 /**
  * The popover's content, mounted only while it is open, so each opening starts a fresh draft: a copy
- * of the saved show-if, or a new one on the nearest question it may use.
+ * of the saved show-if, or a new one whose first field is still to be chosen (ENG-6969 T6).
  */
 function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: ShowIfEditorProps) {
   const { t } = useTranslation();
   const isBlock = target.type === "block";
   const isNew = showIf === undefined;
   const { scope, getDefaultOperator } = useShowIfScope(localSurvey, target);
-  const [draft, setDraft] = useState<TConditionGroup | null>(() =>
-    showIf
-      ? structuredClone(showIf)
-      : createShowIf(localSurvey, target, (element) => getDefaultOperatorForElement(element, t))
+  const [draft, setDraft] = useState<TConditionGroup>(() =>
+    showIf ? structuredClone(showIf) : createDraftShowIf()
   );
-  if (!draft) return null;
 
   const save = (next: TConditionGroup | undefined) => {
     setLocalSurvey((survey) => updateShowIf(survey, target, () => next));

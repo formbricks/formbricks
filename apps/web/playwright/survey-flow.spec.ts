@@ -172,9 +172,16 @@ test.describe("Survey flow @slow", () => {
       for (const rule of fixture.startLogic ?? []) {
         await expect(page.locator(`[id="${rule.id}"]`)).toBeVisible();
       }
-      await expect(page.locator(`[id="${fixture.startLogic?.[0].id}"]`)).toContainText(
-        endingLabel(ids.endings.notForYou)
-      );
+      const screenOut = page.locator(`[id="${fixture.startLogic?.[0].id}"]`);
+      await expect(screenOut).toContainText(endingLabel(ids.endings.notForYou));
+      // Opened, the rule reads as a sentence: "If" before its condition, "Then" "Jump to" its ending
+      // (ENG-6969 T6). Closed again, so the outline below reads as before.
+      const screenOutToggle = screenOut.locator('[role="button"][aria-expanded]').first();
+      await screenOutToggle.click();
+      await expect(screenOut.getByText("If", { exact: true })).toBeVisible();
+      await expect(screenOut.getByText("Then", { exact: true })).toBeVisible();
+      await expect(screenOut.getByRole("combobox").filter({ hasText: "Jump to" })).toBeVisible();
+      await screenOutToggle.click();
 
       // Every block, by name.
       for (const surveyBlock of fixture.blocks) {

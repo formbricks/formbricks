@@ -46,7 +46,7 @@ const RULE_TYPE_COLOR: Record<TFlowRuleType, { tile: string; text: string }> = {
 export const getRuleTypeLabel = (type: TFlowRuleType, t: TFunction): string => {
   switch (type) {
     case "jump":
-      return t("workspace.surveys.edit.jump_to_block");
+      return t("workspace.surveys.edit.flow.jump_to");
     case "setValue":
       return t("workspace.surveys.edit.flow.set_value");
     case "requireAnswer":

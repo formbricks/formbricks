@@ -1,14 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
-import {
-  SURVEY_FLOW_FIXTURE_IDS as ids,
-  surveyFlowFixture,
-} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
+import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   applyOptionsShowIfDraft,
-  createShowIf,
+  canAddShowIf,
+  createDraftShowIf,
   getShowIf,
   getShowIfScope,
   isShowIfComplete,
@@ -23,7 +21,6 @@ import {
  */
 
 const elementIds = (survey: TSurvey) => survey.blocks.flatMap((block) => block.elements.map((e) => e.id));
-const operator = () => "isSubmitted" as const;
 
 describe("getShowIfScope: the conditions editor offers only what the reference rule allows", () => {
   test("a block's show-if sees the earlier blocks only", () => {
@@ -55,25 +52,34 @@ describe("getShowIfScope: the conditions editor offers only what the reference r
   });
 });
 
-describe("createShowIf: a new show-if starts from the nearest question it may use", () => {
-  test("a question's show-if starts on the question right above it", () => {
-    const showIf = createShowIf(surveyFlowFixture, { type: "element", blockIdx: 4, elementIdx: 2 }, operator);
+describe("createDraftShowIf: a new show-if starts with an empty field (ENG-6969 T6)", () => {
+  test("it opens on one condition with no field picked yet", () => {
+    const draft = createDraftShowIf();
 
-    expect(showIf).toMatchObject({
-      connector: "and",
-      conditions: [{ leftOperand: { type: "element", value: "apple_reason" }, operator: "isSubmitted" }],
-    });
+    expect(draft.connector).toBe("and");
+    expect(draft.conditions).toHaveLength(1);
+    expect(draft.conditions[0]).toMatchObject({ leftOperand: { value: "" } });
   });
 
-  test("a block's show-if starts on the last question of the block before it", () => {
-    expect(
-      createShowIf(surveyFlowFixture, { type: "block", blockIdx: 4 }, operator)?.conditions[0]
-    ).toMatchObject({ leftOperand: { type: "element", value: "concept" } });
+  test("Done stays disabled until a field is picked: a condition can't be stored without one", () => {
+    expect(isShowIfComplete(createDraftShowIf())).toBe(false);
+  });
+});
+
+describe("canAddShowIf: a show-if needs something before it to depend on", () => {
+  test("a question or a block with an earlier question can get one", () => {
+    expect(canAddShowIf(surveyFlowFixture, { type: "element", blockIdx: 4, elementIdx: 2 })).toBe(true);
+    expect(canAddShowIf(surveyFlowFixture, { type: "block", blockIdx: 4 })).toBe(true);
   });
 
-  test("a CTA without an external button can't be used, so it is passed over", () => {
+  test("with no question before it, a hidden field is enough", () => {
+    expect(canAddShowIf(surveyFlowFixture, { type: "block", blockIdx: 0 })).toBe(true);
+  });
+
+  test("a CTA without an external button records no answer, so it doesn't count", () => {
     const survey = structuredClone(surveyFlowFixture);
-    survey.blocks[3].elements = [
+    survey.hiddenFields = { enabled: false, fieldIds: [] };
+    survey.blocks[0].elements = [
       {
         id: "intro_cta",
         type: TSurveyElementTypeEnum.CTA,
@@ -83,25 +89,14 @@ describe("createShowIf: a new show-if starts from the nearest question it may us
       } as never,
     ];
 
-    expect(createShowIf(survey, { type: "block", blockIdx: 4 }, operator)?.conditions[0]).toMatchObject({
-      leftOperand: { type: "element", value: "hours" },
-    });
-  });
-
-  test("with no question before it, it starts on a hidden field", () => {
-    expect(
-      createShowIf(surveyFlowFixture, { type: "block", blockIdx: 0 }, operator)?.conditions[0]
-    ).toMatchObject({
-      leftOperand: { type: "hiddenField", value: ids.hiddenFields.panelId },
-      operator: "isSet",
-    });
+    expect(canAddShowIf(survey, { type: "block", blockIdx: 1 })).toBe(false);
   });
 
   test("with nothing to use at all, there is no show-if to start", () => {
     const survey = structuredClone(surveyFlowFixture);
     survey.hiddenFields = { enabled: false, fieldIds: [] };
 
-    expect(createShowIf(survey, { type: "block", blockIdx: 0 }, operator)).toBeNull();
+    expect(canAddShowIf(survey, { type: "block", blockIdx: 0 })).toBe(false);
   });
 });
 
@@ -171,12 +166,6 @@ describe("option show-if and Hidden (ENG-6937)", () => {
 
     expect(elementIds(scope.survey).slice(-2)).toEqual(["fav", "apple_reason"]);
     expect(scope.blockIdx).toBe(4);
-  });
-
-  test("a new option show-if starts on the question right above the option's question", () => {
-    expect(createShowIf(surveyFlowFixture, bundleOption("no_bundle"), operator)?.conditions).toEqual([
-      expect.objectContaining({ leftOperand: { type: "element", value: "apple_reason" } }),
-    ]);
   });
 
   test("sets and removes an option's and a matrix row's show-if, key and all", () => {

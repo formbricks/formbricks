@@ -85,9 +85,9 @@ export function LogicEditor({
   };
 
   return (
-    <div className="flex w-full min-w-full grow flex-col gap-4 overflow-x-auto pb-2 text-sm">
+    <div className="flex w-full min-w-full grow flex-col gap-3 text-sm">
       {alwaysRuns ? (
-        <div className="flex items-center gap-3">
+        <div className="flex min-h-10 items-center gap-3">
           <span className="font-medium text-slate-900">{t("workspace.surveys.edit.flow.always_runs")}</span>
           {canAddCondition && (
             <Button type="button" size="sm" variant="secondary" onClick={addFirstCondition}>
