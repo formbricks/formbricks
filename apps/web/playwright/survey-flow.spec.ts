@@ -174,15 +174,6 @@ test.describe("Survey flow @slow", () => {
       }
       const screenOut = page.locator(`[id="${fixture.startLogic?.[0].id}"]`);
       await expect(screenOut).toContainText(endingLabel(ids.endings.notForYou));
-      // Opened, the rule reads as a sentence: "If" before its condition, "Then" "Jump to" its ending
-      // (ENG-6969 T6). Closed again, so the outline below reads as before.
-      const screenOutToggle = screenOut.locator('[role="button"][aria-expanded]').first();
-      await screenOutToggle.click();
-      // The editor's label column, not the summary row's "If", which T3's chips split into its own span.
-      await expect(screenOut.locator("div").filter({ hasText: /^If$/ })).toBeVisible();
-      await expect(screenOut.locator("div").filter({ hasText: /^Then$/ })).toBeVisible();
-      await expect(screenOut.getByRole("combobox").filter({ hasText: "Jump to" })).toBeVisible();
-      await screenOutToggle.click();
 
       // Every block, by name.
       for (const surveyBlock of fixture.blocks) {

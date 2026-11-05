@@ -468,8 +468,25 @@ describe("field icons", () => {
 
 describe("shown / not shown (ENG-6951)", () => {
   const { heavyUsers } = SURVEY_FLOW_FIXTURE_IDS.blocks;
+  // The fixture hides no matrix column: this copy hides `col_good`, so every target kind is offered.
+  const flowSurvey: TSurvey = {
+    ...surveyFlowFixture,
+    blocks: surveyFlowFixture.blocks.map((block) => ({
+      ...block,
+      elements: block.elements.map((element) =>
+        element.id === "brand_grid" && "columns" in element
+          ? {
+              ...element,
+              columns: element.columns.map((column) =>
+                column.id === "col_good" ? { ...column, hidden: true } : column
+              ),
+            }
+          : element
+      ),
+    })),
+  };
   const flowOptions = generateElementAndFilterOptions({
-    survey: surveyFlowFixture,
+    survey: flowSurvey,
     environmentTags: [],
     attributes: {},
     reservedValues: {},
@@ -479,16 +496,15 @@ describe("shown / not shown (ENG-6951)", () => {
     t,
   });
   const flowModel = buildResponseFilterModel({
-    survey: surveyFlowFixture,
+    survey: flowSurvey,
     elementOptions: flowOptions.elementOptions,
     elementFilterOptions: flowOptions.elementFilterOptions,
     tagNames: [],
-    recordedNotShown: { columns: { brand_grid: ["col_good"] } },
     t,
   });
   const flowCriteria = (filters: TTableFilter[]) => {
     const { selectedFilter, dateRange } = toResponseFilterState(filters, flowModel.fields, "UTC");
-    return getFormattedFilters(surveyFlowFixture, selectedFilter, dateRange);
+    return getFormattedFilters(flowSurvey, selectedFilter, dateRange);
   };
 
   test("offers `is` Shown / Not shown, with help, grouped right under the questions", () => {
@@ -505,10 +521,6 @@ describe("shown / not shown (ENG-6951)", () => {
     expect(groups.indexOf("workspace.surveys.filter.shown_group")).toBe(
       groups.indexOf("common.elements") + 1
     );
-  });
-
-  test("a target only a response's record names is offered once the filter data brings it", () => {
-    expect(flowModel.fields.has("shown.column.brand_grid.col_good")).toBe(true);
   });
 
   test("each target kind reaches the `shown` criteria group with its operator", () => {

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { FieldErrors } from "react-hook-form";
+import type { TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TConnector } from "@formbricks/types/surveys/logic";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 
@@ -76,4 +78,16 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
   showWhenLabel?: boolean;
   /** Lets the first operand's list grow past its field and wrap long names (survey questions). */
   wideLeftOperandDropdown?: boolean;
+}
+
+/** The props of both layouts of the conditions editor; `variant` picks between them. */
+export interface ConditionsEditorProps {
+  conditions: TGenericConditionGroup;
+  config: TConditionsEditorConfig;
+  callbacks: TConditionsEditorCallbacks;
+  depth?: number;
+  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
+  isSubmitted?: boolean;
+  /** Hides the all/any picker: every condition combines with the group's fixed connector. */
+  isConnectorLocked?: boolean;
 }

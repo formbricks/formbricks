@@ -3,20 +3,23 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { FieldErrors } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import type { TConnector } from "@formbricks/types/surveys/logic";
 import { Button } from "@/modules/ui/components/button";
+import {
+  type TConditionValue,
+  createConditionHandlers,
+  isMultiSelectOperator,
+} from "@/modules/ui/components/conditions-editor/lib/condition-handlers";
 import {
   SENTENCE_FIELDS_CLASS,
   SENTENCE_ICON_BUTTON_CLASS,
   SENTENCE_LEAD_CLASS,
   SENTENCE_ROW_ACTIONS_CLASS,
   SENTENCE_ROW_CLASS,
-  getOperatorForField,
   getSentenceLead,
   pickConnector,
+  withComparisonPills,
 } from "@/modules/ui/components/conditions-editor/lib/sentence";
 import { isConditionGroup } from "@/modules/ui/components/conditions-editor/lib/utils";
 import {
@@ -25,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import {
   Select,
   SelectContent,
@@ -33,44 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import {
-  TConditionsEditorCallbacks,
-  TConditionsEditorConfig,
-  TGenericCondition,
-  TGenericConditionGroup,
-} from "./types";
-
-/**
- * The numeric comparisons ("=", "!=", ">", "<", ">=", "<=") already read as the symbols a rule row
- * shows; in the sentence layout they are drawn as the same pills as Set value's operators.
- */
-const COMPARISON_LABELS = new Set(["=", "!=", ">", "<", ">=", "<="]);
-const withComparisonPills = (options: TComboboxOption[]): TComboboxOption[] =>
-  options.map((option) =>
-    COMPARISON_LABELS.has(option.label) ? { ...option, symbol: option.label, symbolOnly: true } : option
-  );
-
-/** A condition's right-hand value, as the combobox hands it over. */
-type TConditionValue = string | number | string[];
-
-interface SentenceConditionsEditorProps {
-  conditions: TGenericConditionGroup;
-  config: TConditionsEditorConfig;
-  callbacks: TConditionsEditorCallbacks;
-  depth?: number;
-  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
-  isSubmitted?: boolean;
-  isConnectorLocked?: boolean;
-}
-
-const MULTI_SELECT_OPERATORS = new Set([
-  "equalsOneOf",
-  "includesAllOf",
-  "includesOneOf",
-  "doesNotIncludeOneOf",
-  "doesNotIncludeAllOf",
-  "isAnyOf",
-]);
+import { ConditionsEditorProps, TGenericCondition, TGenericConditionGroup } from "./types";
 
 /**
  * The conditions editor as a sentence (ENG-6969 T6), `variant="sentence"`: "If [field] [operator]
@@ -91,34 +57,14 @@ export function SentenceConditionsEditor({
   quotaErrors,
   isSubmitted = false,
   isConnectorLocked = false,
-}: Readonly<SentenceConditionsEditorProps>) {
+}: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
-  const handleLeftOperandChange = (condition: TGenericCondition, value: string, option?: TComboboxOption) => {
-    const leftOperand = { value, type: option?.meta?.type || "static", meta: option?.meta };
-    const operator = getOperatorForField(
-      config.getOperatorOptions({ ...condition, leftOperand, rightOperand: undefined }),
-      config.getDefaultOperator()
-    );
-    callbacks.onUpdateCondition(condition.id, { leftOperand, operator, rightOperand: undefined });
-  };
-
-  const handleOperatorChange = (condition: TGenericCondition, value: string) => {
-    if (value !== condition.operator) {
-      callbacks.onUpdateCondition(condition.id, { operator: value, rightOperand: undefined });
-    }
-  };
-
-  const handleRightOperandChange = (
-    condition: TGenericCondition,
-    value: TConditionValue,
-    option?: TComboboxOption
-  ) => {
-    callbacks.onUpdateCondition(condition.id, {
-      rightOperand: { value, type: option?.meta?.type || "static" },
-    });
-  };
+  const { handleLeftOperandChange, handleOperatorChange, handleRightOperandChange } = createConditionHandlers(
+    config,
+    callbacks
+  );
 
   const getConnectorText = (connector: TConnector) =>
     connector === "and" ? t("workspace.surveys.edit.flow.and") : t("workspace.surveys.edit.flow.or");
@@ -207,7 +153,7 @@ export function SentenceConditionsEditor({
     if (hasField) {
       const customValueInput = config.renderValueInput?.(condition);
       const { show = false, options, showInput = false, inputType } = config.getValueProps(condition);
-      const allowMultiSelect = MULTI_SELECT_OPERATORS.has(condition.operator);
+      const allowMultiSelect = isMultiSelectOperator(condition.operator);
       if (customValueInput !== undefined) {
         valueInput = customValueInput;
       } else if (show) {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { TOptionListKey } from "./show-if";
 
 /**
  * The not-shown record (ENG-6936, ADR 0024): what a respondent was **not shown**, decided by the
@@ -63,6 +64,26 @@ export const ZResponseNotShown = z.object({
 });
 
 export type TResponseNotShown = z.infer<typeof ZResponseNotShown>;
+
+/**
+ * How each option list of an element is named outside the element: `recordKey`, its map in the
+ * not-shown record (json-shapes §8), and `noun`, one item of it, as a shown / not shown filter targets
+ * it (ENG-6951) and as an error message names it. The one table every module reads these from.
+ */
+export const OPTION_LIST_NAMES = {
+  choices: { recordKey: "options", noun: "option" },
+  rows: { recordKey: "rows", noun: "row" },
+  columns: { recordKey: "columns", noun: "column" },
+} as const satisfies Record<TOptionListKey, { recordKey: keyof TResponseNotShown; noun: string }>;
+
+/** One item of an option list: an option, a matrix row or a matrix column. */
+export type TOptionItemNoun = (typeof OPTION_LIST_NAMES)[TOptionListKey]["noun"];
+
+const OPTION_LIST_KEYS = ["choices", "rows", "columns"] as const satisfies readonly TOptionListKey[];
+
+/** The option list whose items `noun` names: `choices` for an option, `rows` / `columns` for a matrix. */
+export const getOptionListKeyOfNoun = (noun: TOptionItemNoun): TOptionListKey | undefined =>
+  OPTION_LIST_KEYS.find((listKey) => OPTION_LIST_NAMES[listKey].noun === noun);
 
 type TBlockLike = { id: string; elements: readonly { id: string }[] };
 

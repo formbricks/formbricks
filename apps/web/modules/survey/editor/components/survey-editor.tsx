@@ -12,10 +12,12 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { ActionClass, Language, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
+import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import {
   TSurvey,
   TSurveyEditorTabs,
@@ -48,6 +50,7 @@ import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { describeRuleSummary } from "@/modules/survey/editor/lib/flow-outline-text";
 import { hasSeenFlowTab, markFlowTabSeen } from "@/modules/survey/editor/lib/flow-tab-notice";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { type TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
@@ -337,6 +340,16 @@ export const SurveyEditor = ({
     }
   }, [localSurvey?.languages, selectedLanguageCode]);
 
+  // How the preview's banner reads a rule before the first question that screened it out: as the
+  // Flow tab writes it (ENG-6969 T13 ①).
+  const { t, i18n } = useTranslation();
+  const textLocale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const describeStartRule = useCallback(
+    (rule: TSurveyBlockLogic, previewed: TSurvey) =>
+      describeRuleSummary(rule, previewed, t, { locale: textLocale }),
+    [t, textLocale]
+  );
+
   if (!localSurvey) {
     return <LoadingSkeleton />;
   }
@@ -524,6 +537,7 @@ export const SurveyEditor = ({
               activeView === "styling" && previewSurvey.type === "app" ? setStylingAppearance : undefined
             }
             customCss={previewCustomCss}
+            describeStartRule={describeStartRule}
           />
         </aside>
       </div>

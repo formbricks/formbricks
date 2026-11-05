@@ -4,7 +4,6 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { getRecordedNotShown } from "@/lib/response/filtering-values";
 import { getResponseFilteringValues } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
@@ -47,23 +46,11 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       tags,
       { contactAttributes: attributes, meta, hiddenFields, reservedValues, variableValues },
       quotas = [],
-      recordedNotShown,
     ] = await Promise.all([
       getTagsByWorkspaceId(survey.workspaceId),
       getResponseFilteringValues(parsedInput.surveyId),
       isQuotasAllowed ? getQuotas(parsedInput.surveyId) : [],
-      // What responses were recorded as not shown, for the shown / not shown filter (ENG-6951).
-      getRecordedNotShown(survey),
     ]);
 
-    return {
-      environmentTags: tags,
-      attributes,
-      meta,
-      hiddenFields,
-      reservedValues,
-      variableValues,
-      quotas,
-      recordedNotShown,
-    };
+    return { environmentTags: tags, attributes, meta, hiddenFields, reservedValues, variableValues, quotas };
   });

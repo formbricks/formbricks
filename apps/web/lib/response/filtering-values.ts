@@ -9,8 +9,6 @@ import type {
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
-import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
-import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   MAX_FILTER_VALUE_OPTIONS,
@@ -251,100 +249,4 @@ export const getSurveyFilteringValues = async (survey: TSurvey): Promise<TRespon
   ]);
 
   return buildFilteringValues(survey, { contactAttributes, meta, data, variables });
-};
-
-/** A not-shown record entry: a block or element id, or an option, row or column id of an element. */
-export interface TNotShownFilterRow {
-  list: "blocks" | "elements" | "options" | "rows" | "columns";
-  elementId: string | null;
-  id: string;
-}
-
-/** `expression` when it is a jsonb array, else `[]`. */
-const jsonbArrayOrEmpty = (expression: Prisma.Sql): Prisma.Sql =>
-  Prisma.sql`CASE WHEN jsonb_typeof(${expression}) = 'array' THEN ${expression} ELSE '[]'::jsonb END`;
-
-const NOT_SHOWN_BLOCKS = Prisma.raw(`(r.not_shown -> 'blocks')`);
-const NOT_SHOWN_ELEMENTS = Prisma.raw(`(r.not_shown -> 'elements')`);
-const NOT_SHOWN_MAP = Prisma.raw(`(r.not_shown -> l.list)`);
-const NOT_SHOWN_MAP_VALUE = Prisma.raw("m.value");
-
-type TNotShownQueryIds = {
-  blocks: string[];
-  elements: string[];
-  /** Every option, row and column of the survey, as the record keys them. */
-  items: { list: "options" | "rows" | "columns"; elementId: string; id: string }[];
-};
-
-/**
- * The distinct ids the survey's not-shown records list (ENG-6951), only those the survey still holds,
- * so the result is bounded by the survey's size whatever a record carries. Responses with no record
- * contribute nothing.
- */
-const queryNotShownRows = (surveyId: string, ids: TNotShownQueryIds): Promise<TNotShownFilterRow[]> =>
-  prisma.$queryRaw<TNotShownFilterRow[]>`
-    SELECT DISTINCT 'blocks' AS "list", NULL::text AS "elementId", b.id AS "id"
-    FROM "Response" r
-    CROSS JOIN LATERAL jsonb_array_elements_text(${jsonbArrayOrEmpty(NOT_SHOWN_BLOCKS)}) AS b(id)
-    WHERE r."surveyId" = ${surveyId} AND b.id = ANY(${ids.blocks}::text[])
-    UNION
-    SELECT DISTINCT 'elements', NULL::text, e.id
-    FROM "Response" r
-    CROSS JOIN LATERAL jsonb_array_elements_text(${jsonbArrayOrEmpty(NOT_SHOWN_ELEMENTS)}) AS e(id)
-    WHERE r."surveyId" = ${surveyId} AND e.id = ANY(${ids.elements}::text[])
-    UNION
-    SELECT DISTINCT l.list, m.key, i.id
-    FROM "Response" r
-    CROSS JOIN (VALUES ('options'), ('rows'), ('columns')) AS l(list)
-    CROSS JOIN LATERAL jsonb_each(${jsonbObjectOrEmpty(NOT_SHOWN_MAP)}) AS m
-    CROSS JOIN LATERAL jsonb_array_elements_text(${jsonbArrayOrEmpty(NOT_SHOWN_MAP_VALUE)}) AS i(id)
-    WHERE r."surveyId" = ${surveyId}
-      AND (l.list, m.key, i.id) IN (
-        SELECT * FROM unnest(
-          ${ids.items.map((item) => item.list)}::text[],
-          ${ids.items.map((item) => item.elementId)}::text[],
-          ${ids.items.map((item) => item.id)}::text[]
-        )
-      )
-    ORDER BY 1, 2 NULLS FIRST, 3
-  `;
-
-const RECORD_LIST_OF: Record<TOptionListKey, "options" | "rows" | "columns"> = {
-  choices: "options",
-  rows: "rows",
-  columns: "columns",
-};
-
-/** The query rows as one record: everything any response of the survey was not shown. */
-export const notShownRowsToRecord = (rows: TNotShownFilterRow[]): TResponseNotShown => {
-  const record: TResponseNotShown = {};
-  for (const { list, elementId, id } of rows) {
-    if (list === "blocks" || list === "elements") {
-      record[list] = [...(record[list] ?? []), id];
-    } else if (elementId !== null) {
-      const map = (record[list] ??= {});
-      map[elementId] = [...(map[elementId] ?? []), id];
-    }
-  }
-  return record;
-};
-
-/**
- * What the survey's responses were recorded as not shown (ENG-6951). The shown / not shown filter
- * offers these next to what the survey can hide today, so a show-if removed after responses came in
- * stays filterable. The caller authorizes and loads `survey`; the query is scoped to its id.
- */
-export const getRecordedNotShown = async (survey: TSurvey): Promise<TResponseNotShown> => {
-  const elements = survey.blocks.flatMap((block) => block.elements);
-  const items = elements.flatMap((element) =>
-    getOptionLists(element).flatMap(({ listKey, items: listItems }) =>
-      listItems.map((item) => ({ list: RECORD_LIST_OF[listKey], elementId: element.id, id: item.id }))
-    )
-  );
-  const rows = await queryNotShownRows(survey.id, {
-    blocks: survey.blocks.map((block) => block.id),
-    elements: elements.map((element) => element.id),
-    items,
-  });
-  return notShownRowsToRecord(rows);
 };

@@ -173,6 +173,22 @@ export const isShowIfComplete = (showIf: TConditionGroup): boolean =>
   showIf.conditions.length > 0 && ZConditionGroup.safeParse(showIf).success;
 
 /**
+ * What the show-if popover does after an edit to its draft: keep editing it, or close. Deleting the
+ * last condition of a saved show-if keeps the empty draft open, so Done removes the show-if and
+ * Escape, a click outside or Cancel keep it; a new one emptied that way had nothing to keep, so the
+ * popover just closes.
+ */
+export const editShowIfDraft = (
+  next: TConditionGroup,
+  isNew: boolean
+): { type: "keep"; draft: TConditionGroup } | { type: "close" } =>
+  isNew && next.conditions.length === 0 ? { type: "close" } : { type: "keep", draft: next };
+
+/** Whether the show-if popover's Done is enabled: a complete draft, or a saved one emptied (removes it). */
+export const canFinishShowIfDraft = (draft: TConditionGroup, isNew: boolean): boolean =>
+  (!isNew && draft.conditions.length === 0) || isShowIfComplete(draft);
+
+/**
  * Writes what the "Options shown if" popover drafted for one question into the survey: each option's,
  * row's or column's show-if and Hidden flag, matched by id. Options added or removed meanwhile are
  * left as they are, as is everything else about the question.

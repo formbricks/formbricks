@@ -4,6 +4,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { InfoIcon } from "lucide-react";
 import { type ReactNode, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { isElementCutOff } from "@/modules/ui/components/info-tooltip/lib/truncation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 type TSide = "top" | "right" | "bottom" | "left";
@@ -76,24 +77,19 @@ export const InfoTooltip = ({ children, label, className, ...contentProps }: Inf
   </TooltipProvider>
 );
 
-/** Whether the element, or a descendant marked `data-truncates`, is cut off by its width. */
-const isTruncated = (root: HTMLElement | null): boolean =>
-  root !== null &&
-  [root, ...Array.from(root.querySelectorAll<HTMLElement>("[data-truncates]"))].some(
-    (element) => element.scrollWidth > element.clientWidth
-  );
-
 interface TruncationTooltipProps extends Omit<InfoTooltipContentProps, "children"> {
-  /** The whole text, as plain words. */
-  readonly content: ReactNode;
-  /** The line that may be cut off; mark each part that truncates with `data-truncates`. */
+  /** The whole text, as plain words. Omitted: the line's own text, read as the tooltip opens. */
+  readonly content?: ReactNode;
+  /** The line that may be cut off. */
   readonly children: ReactNode;
   readonly className?: string;
 }
 
 /**
  * A one-line summary that shows its whole text in the info tooltip on hover, only while part of it is
- * cut off (ENG-6969 T2). Screen readers get the whole text from the row's accessible name instead.
+ * cut off (ENG-6969 T2, `isElementCutOff`). The check runs as the tooltip opens rather than on render,
+ * so a line resized since (a table column) still answers for its current width. Screen readers get
+ * the whole text from the row's accessible name instead.
  */
 export const TruncationTooltip = ({
   content,
@@ -103,16 +99,23 @@ export const TruncationTooltip = ({
 }: TruncationTooltipProps) => {
   const ref = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
+  const [ownText, setOwnText] = useState("");
   return (
     <TooltipProvider delayDuration={300}>
-      <Tooltip open={open} onOpenChange={(next) => setOpen(next && isTruncated(ref.current))}>
+      <Tooltip
+        open={open}
+        onOpenChange={(next) => {
+          const text = content === undefined ? (ref.current?.textContent?.trim() ?? "") : "";
+          setOwnText(text);
+          setOpen(next && (content !== undefined || text !== "") && isElementCutOff(ref.current));
+        }}>
         <TooltipTrigger asChild>
           <span ref={ref} className={className}>
             {children}
           </span>
         </TooltipTrigger>
         <InfoTooltipContent align="start" {...contentProps}>
-          {content}
+          {content ?? ownText}
         </InfoTooltipContent>
       </Tooltip>
     </TooltipProvider>
