@@ -205,6 +205,34 @@ export const ManageTranslationsModal = ({
     [t]
   );
 
+  const translateBatches = async (
+    batches: ReturnType<typeof createTranslationActionBatches>,
+    runId: number
+  ): Promise<string | undefined> => {
+    for (const batch of batches) {
+      const result = await translateSurveyFieldsAction({
+        workspaceId,
+        fields: batch,
+        sourceLanguage: defaultLanguageName,
+        targetLanguage: languageName,
+      });
+      if (runId !== translationRunId.current) return;
+
+      const translations = result?.data?.translations;
+      if (!translations) {
+        const errorMessage = getFormattedErrorMessage(result);
+        return errorMessage
+          ? getAIErrorMessage(errorMessage)
+          : t("workspace.surveys.edit.ai_translation_failed");
+      }
+
+      setDraftTranslations((prev) => ({ ...prev, ...translations }));
+      if (result?.data?.errorCode) {
+        return getAIErrorMessage(result.data.errorCode);
+      }
+    }
+  };
+
   const handleTranslateWithAI = async () => {
     if (emptyFields.length === 0) return;
 
@@ -230,33 +258,8 @@ export const ManageTranslationsModal = ({
 
     const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
     translationToastId.current = toastId;
-    let failedMessage: string | undefined;
-
     try {
-      for (const batch of selectedBatches) {
-        const result = await translateSurveyFieldsAction({
-          workspaceId,
-          fields: batch,
-          sourceLanguage: defaultLanguageName,
-          targetLanguage: languageName,
-        });
-        if (runId !== translationRunId.current) return;
-
-        const translations = result?.data?.translations;
-        if (!translations) {
-          const errorMessage = getFormattedErrorMessage(result);
-          failedMessage = errorMessage
-            ? getAIErrorMessage(errorMessage)
-            : t("workspace.surveys.edit.ai_translation_failed");
-          break;
-        }
-
-        setDraftTranslations((prev) => ({ ...prev, ...translations }));
-        if (result?.data?.errorCode) {
-          failedMessage = getAIErrorMessage(result.data.errorCode);
-          break;
-        }
-      }
+      const failedMessage = await translateBatches(selectedBatches, runId);
       if (runId !== translationRunId.current) return;
 
       showTranslationRunResult(
