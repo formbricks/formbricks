@@ -495,17 +495,44 @@ const judgeEntry = (
 };
 
 /**
- * The retry's failures, plus the first round's for each line the retry neither placed nor skipped: a
- * document answer judges only the lines it names, so a line that failed and was then left out would
- * otherwise have no verdict at all, and no line in the report.
+ * Failures that say nothing about the line itself: the whole call's answer could not be read, or its
+ * languages could not be. Every line the call was asked about gets one, questions and notes alike.
+ */
+const CALL_FAILURES: ReadonlySet<string> = new Set([
+  "invalid_output",
+  "invalid_languages",
+  "ai_budget",
+  "ai_timeout",
+]);
+
+/**
+ * The retry's failures, plus the first round's for each line the AI placed as a question there and the
+ * retry left out: a document answer judges only the lines it names, so that line would otherwise have
+ * no verdict and no line in the report. Not for a line whose first-round failure was the whole call's
+ * (a heading or an option line, rightly named nowhere on the retry), nor for one an entry of the merged
+ * plan reads, which the retry placed as part of another question.
  */
 const keepUnresolvedFailures = (
   first: TDocumentCheckedPlan,
-  retry: TDocumentCheckedPlan
+  retry: TDocumentCheckedPlan,
+  entries: TDocumentCheckedPlan["entries"],
+  context: DocumentPlanContext
 ): TDocumentCheckedPlan["failures"] => {
   const failures = new Map(retry.failures);
+  const linesRead = new Set(
+    [...entries.values()].flatMap((entry) =>
+      [...entry.cells].flatMap((cell) => {
+        const line = context.cellLineAt(cell);
+        return line === undefined ? [] : [line];
+      })
+    )
+  );
   for (const [ref, reasons] of first.failures) {
-    if (!retry.entries.has(ref) && !retry.skipped.has(ref) && !failures.has(ref)) failures.set(ref, reasons);
+    if (retry.entries.has(ref) || retry.skipped.has(ref) || failures.has(ref)) continue;
+    if (reasons.every((reason) => CALL_FAILURES.has(reason))) continue;
+    const line = context.lineAt(ref);
+    if (line !== undefined && linesRead.has(line)) continue;
+    failures.set(ref, reasons);
   }
   return failures;
 };
@@ -513,12 +540,14 @@ const keepUnresolvedFailures = (
 /** Merge a retry round into the first one: the retry's verdicts replace the first round's failures, for the lines it judged. */
 export function mergeDocumentPlans(
   first: TDocumentCheckedPlan,
-  retry: TDocumentCheckedPlan
+  retry: TDocumentCheckedPlan,
+  context: DocumentPlanContext
 ): TDocumentCheckedPlan {
+  const entries = new Map([...first.entries, ...retry.entries]);
   return {
-    entries: new Map([...first.entries, ...retry.entries]),
+    entries,
     skipped: new Map([...first.skipped, ...retry.skipped]),
-    failures: keepUnresolvedFailures(first, retry),
+    failures: keepUnresolvedFailures(first, retry, entries, context),
     silentResponses: first.silentResponses + retry.silentResponses,
   };
 }

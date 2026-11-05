@@ -105,7 +105,8 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type` with the Qualtrics
  * `params.qualtricsType`, `ai_skipped`, `plan_invalid`, `ai_budget`, `ai_timeout`, `not_in_flow`,
  * `invalid_id`, `validation_failed`, `draft_too_large` for a trailing question cut so the draft fits
- * the create's size limit); `choice_dropped` carries `invalid_id`. Params that carry text from the
+ * the create's size limit, `cells_taken` for a document entry whose texts an earlier entry already
+ * read); `choice_dropped` carries `invalid_id`. Params that carry text from the
  * file or the AI — `field_renamed`'s `from`, `description` on `logic_not_imported` and
  * `question_skipped`, `logic_not_imported`'s `block`, `options_left_out`'s `options`, `questionTag` — must
  * be rendered as plain text,

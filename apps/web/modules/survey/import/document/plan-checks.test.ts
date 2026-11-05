@@ -384,7 +384,7 @@ describe("an answer that names none of its lines", () => {
     const first = check([answer(["R2"], [], [])]).plan;
     const retry = check([answer(["R3"], [], [])], true).plan;
 
-    expect(mergeDocumentPlans(first, retry).silentResponses).toBe(2);
+    expect(mergeDocumentPlans(first, retry, new DocumentPlanContext(model)).silentResponses).toBe(2);
   });
 
   test("is not one that names a line it was asked about", () => {
@@ -397,7 +397,7 @@ describe("mergeDocumentPlans", () => {
     const first = check([answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "address" })])]).plan;
     const retry = check([answer(["R3"], [entry("R3")])]).plan;
 
-    const merged = mergeDocumentPlans(first, retry);
+    const merged = mergeDocumentPlans(first, retry, new DocumentPlanContext(model));
 
     expect([...merged.entries.keys()]).toEqual(["R2", "R3"]);
     expect(merged.failures.size).toBe(0);
@@ -408,11 +408,46 @@ describe("mergeDocumentPlans", () => {
     // Asked about R3 again, the retry says nothing about it.
     const retry = check([answer(["R3"], [])], true).plan;
 
-    const merged = mergeDocumentPlans(first, retry);
+    const merged = mergeDocumentPlans(first, retry, new DocumentPlanContext(model));
 
     expect(first.failures.has("R3")).toBe(true);
     expect(merged.failures.get("R3")).toEqual(first.failures.get("R3"));
     expect(merged.entries.has("R3")).toBe(false);
+  });
+
+  test("keeps no failure for a line whose whole first-round call failed, and the retry rightly names nowhere", () => {
+    // The first answer is unreadable, so every line it was asked about failed with the call.
+    const first = check([
+      // Not a plan at all: what a model sends when it ignores the schema.
+      { refs: new Set(["R1", "R2", "R3"]), object: { questions: "unreadable" } } as unknown as ReturnType<
+        typeof answer
+      >,
+    ]).plan;
+    // The retry places Q1 and leaves the header and Q2's line out.
+    const retry = check([answer(["R1", "R2", "R3"], [entry("R2")])], true).plan;
+
+    const merged = mergeDocumentPlans(first, retry, new DocumentPlanContext(model));
+
+    expect(first.failures.get("R1")).toEqual(["invalid_output"]);
+    expect(merged.failures.size).toBe(0);
+  });
+
+  test("keeps no failure for a line the retry placed as part of another question", () => {
+    const first = check([answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "address" })])]).plan;
+    // The retry reads R3's texts as Q1's subheader, and names R3 nowhere itself.
+    const retry = check([answer(["R3"], [])], true).plan;
+    const absorbing = check([
+      answer(["R2"], [entry("R2", { subheader: [piece("en", "B3"), piece("de", "C3")] })]),
+    ]).plan;
+
+    const merged = mergeDocumentPlans(
+      { ...first, entries: absorbing.entries },
+      retry,
+      new DocumentPlanContext(model)
+    );
+
+    expect(first.failures.has("R3")).toBe(true);
+    expect(merged.failures.has("R3")).toBe(false);
   });
 });
 

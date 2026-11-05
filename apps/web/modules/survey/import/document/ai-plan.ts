@@ -100,7 +100,7 @@ export async function planDocumentImport(params: {
     schemaDescription: "Which lines of a questionnaire are questions, and which cells hold their texts.",
     buildPrompt: (chunkRefs, failures) => buildDocumentPlanPrompt({ model, refs: chunkRefs, failures }),
     check: (responses, round) => checkDocumentPlanResponses(context, responses, round),
-    merge: mergeDocumentPlans,
+    merge: (first, retry) => mergeDocumentPlans(first, retry, context),
     maxCallChars: SURVEY_IMPORT_DOCUMENT_MAX_CALL_CHARS,
     maxTotalChars: SURVEY_IMPORT_DOCUMENT_MAX_TOTAL_CHARS,
     callCap: Math.min(importCallCapFor(chunkCount), importCallCapFor(SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS)),
