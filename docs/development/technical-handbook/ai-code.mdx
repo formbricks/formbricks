@@ -11,9 +11,8 @@ code; AI-assisted review is described in [Code reviews](/development/standards/q
 All calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and, in `apps/web`, through
 `lib/ai/service.ts`. Do not import a provider SDK directly.
 
-The rules follow the OWASP Top 10 for LLM Applications: prompt injection,
-sensitive information disclosure, improper output handling, excessive agency, and unbounded consumption. When in
-doubt, check a design against that list.
+The rules follow the OWASP Top 10 for LLM Applications. The table near the end maps each risk to the rule that
+covers it, and names the gaps. When in doubt, check a design against that list.
 
 ## Assess the injection risk first
 
@@ -143,6 +142,24 @@ codes, and timings. Tracing goes through `wrapAiModelWithTracing`; check what it
   by the token limit, malformed or schema-invalid output, and timeout.
 - **Load and failure runs use an OpenAI-compatible stub server** that returns synthetic results with injected
   latency and errors, so a pipeline can be driven at volume without spending anything.
+
+## OWASP Top 10 for LLM Applications
+
+Checked against the 2025 edition. The risk names are OWASP's; the rules are ours. Review this table when a new
+edition is published.
+
+| Risk | Where this page covers it |
+| --- | --- |
+| Prompt injection | Assess the injection risk first; Sandbox the model |
+| Sensitive information disclosure | Least data in context, no secrets in a prompt, Logging |
+| Supply chain | Gap: no rule yet for choosing and pinning models, providers, and AI dependencies |
+| Data and model poisoning | Gap: no rule yet. Customer data is never used as training input |
+| Improper output handling | What to trust: server-side schema validation, no unvalidated sink; safe output rendering |
+| Excessive agency | Least capability; side effects need the user's intent; tools re-check permissions |
+| System prompt leakage | Partly: no secrets in a prompt, so a leaked prompt exposes little |
+| Vector and embedding weaknesses | Partly: caches and embeddings are keyed by tenant and user |
+| Misinformation | Gap: no rule yet for output shown to users as fact |
+| Unbounded consumption | Limits every call needs; Performance; Metrics |
 
 ## Checklist for a new AI feature
 
