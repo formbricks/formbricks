@@ -18,8 +18,11 @@ import {
 import { describeConditionGroup } from "@/modules/survey/editor/lib/flow-outline-text";
 import {
   type TShowIfTarget,
+  applyOptionsShowIfDraft,
   canAddShowIf,
   createShowIf,
+  getShowIf,
+  isShowIfComplete,
   setOptionHidden,
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
@@ -141,10 +144,14 @@ const getListHeading = (listKey: TOptionListKey, t: TFunction): string => {
   }
 };
 
-/** The popover's content, mounted only while it is open. */
+/**
+ * The popover's content, mounted only while it is open. It edits a draft of the survey: only Done
+ * writes the options' show-ifs and Hidden flags back, so Escape, a click outside or Cancel changes
+ * nothing (ENG-6969 T1).
+ */
 function OptionsShowIfEditor({
-  localSurvey,
-  setLocalSurvey,
+  localSurvey: savedSurvey,
+  setLocalSurvey: setSavedSurvey,
   blockIdx,
   elementIdx,
   optionLists,
@@ -152,6 +159,7 @@ function OptionsShowIfEditor({
 }: OptionsShowIfEditorProps) {
   const { t } = useTranslation();
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [localSurvey, setLocalSurvey] = useState(savedSurvey);
   const element = localSurvey.blocks[blockIdx]?.elements[elementIdx];
 
   // An option's show-if sees what its question's sees.
@@ -175,6 +183,20 @@ function OptionsShowIfEditor({
     setEditingKey(null);
   };
 
+  // Every option's condition has what its operator needs, so Done can save them all.
+  const isDraftComplete = optionLists.every((listKey) =>
+    getOptionList<TEditableOption>(element, listKey).every((item) => {
+      const showIf = getShowIf(localSurvey, {
+        type: "option",
+        blockIdx,
+        elementIdx,
+        listKey,
+        optionId: item.id,
+      });
+      return !showIf || isShowIfComplete(showIf);
+    })
+  );
+
   return (
     <ShowIfPopoverFrame
       title={t("workspace.surveys.edit.flow.options_shown_if")}
@@ -184,8 +206,20 @@ function OptionsShowIfEditor({
         content: t("workspace.surveys.edit.flow.options_shown_if_info"),
       }}
       footer={
-        <div className="flex items-center justify-end gap-3">
-          <Button type="button" size="sm" onClick={onClose}>
+        <div className="flex items-center justify-between gap-3">
+          <Button type="button" size="sm" variant="secondary" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!isDraftComplete}
+            onClick={() => {
+              setSavedSurvey((survey) =>
+                applyOptionsShowIfDraft(survey, localSurvey, blockIdx, elementIdx, optionLists)
+              );
+              onClose();
+            }}>
             {t("common.done")}
           </Button>
         </div>

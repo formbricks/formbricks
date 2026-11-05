@@ -6,7 +6,15 @@ import {
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { createShowIf, getShowIf, getShowIfScope, setOptionHidden, updateShowIf } from "./show-if-editing";
+import {
+  applyOptionsShowIfDraft,
+  createShowIf,
+  getShowIf,
+  getShowIfScope,
+  isShowIfComplete,
+  setOptionHidden,
+  updateShowIf,
+} from "./show-if-editing";
 
 /**
  * Show-if editing on the Flow tab (ENG-6931). The fixture's blocks: 0 services (`services`),
@@ -198,5 +206,59 @@ describe("option show-if and Hidden (ENG-6937)", () => {
         shown.blocks[4].elements[2] as unknown as { choices: { id: string; hidden?: boolean }[] }
       ).choices.find((choice) => choice.id === "netflix_apple")
     ).not.toHaveProperty("hidden");
+  });
+});
+
+describe("show-if drafts: a popover saves only on Done", () => {
+  const condition = {
+    id: "draftcond000000000000001",
+    leftOperand: { type: "element", value: "fav" },
+    operator: "isSubmitted",
+  } as const;
+  const complete: TConditionGroup = {
+    id: "draftgroup00000000000001",
+    connector: "and",
+    conditions: [condition],
+  };
+
+  test("a draft can be saved once every condition has what its operator needs", () => {
+    expect(isShowIfComplete(complete)).toBe(true);
+    // `equals` needs a value: Done stays disabled until one is picked.
+    expect(isShowIfComplete({ ...complete, conditions: [{ ...condition, operator: "equals" }] })).toBe(false);
+  });
+
+  test("a draft without conditions can't be saved", () => {
+    expect(isShowIfComplete({ ...complete, conditions: [] })).toBe(false);
+  });
+
+  const bundleOption = (optionId: string) =>
+    ({ type: "option", blockIdx: 4, elementIdx: 2, listKey: "choices", optionId }) as const;
+
+  test("Done writes the options draft's show-ifs and Hidden flags into the survey", () => {
+    const draft = setOptionHidden(
+      updateShowIf(surveyFlowFixture, bundleOption("no_bundle"), () => complete),
+      bundleOption("netflix_apple"),
+      false
+    );
+
+    const saved = applyOptionsShowIfDraft(surveyFlowFixture, draft, 4, 2, ["choices"]);
+
+    expect(saved).toEqual(draft);
+  });
+
+  test("an untouched options draft leaves the survey equal to the saved one", () => {
+    expect(applyOptionsShowIfDraft(surveyFlowFixture, surveyFlowFixture, 4, 2, ["choices"])).toEqual(
+      surveyFlowFixture
+    );
+  });
+
+  test("Done keeps what changed elsewhere in the survey while the popover was open", () => {
+    const draft = updateShowIf(surveyFlowFixture, bundleOption("no_bundle"), () => complete);
+    const changedMeanwhile = { ...surveyFlowFixture, name: "Renamed meanwhile" };
+
+    const saved = applyOptionsShowIfDraft(changedMeanwhile, draft, 4, 2, ["choices"]);
+
+    expect(saved.name).toBe("Renamed meanwhile");
+    expect(getShowIf(saved, bundleOption("no_bundle"))).toEqual(complete);
   });
 });

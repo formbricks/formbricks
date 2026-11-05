@@ -52,12 +52,7 @@ import {
   setStartRules,
 } from "@/modules/survey/editor/lib/rule-list";
 import { RuleTypeIcon, RuleTypeTile, getRuleTypeLabel } from "@/modules/survey/editor/lib/rule-types";
-import {
-  type TShowIfTarget,
-  canAddShowIf,
-  createShowIf,
-  updateShowIf,
-} from "@/modules/survey/editor/lib/show-if-editing";
+import { type TShowIfTarget, canAddShowIf } from "@/modules/survey/editor/lib/show-if-editing";
 import {
   getActionVariableOptions,
   getDefaultOperatorForElement,
@@ -219,13 +214,32 @@ export const FlowView = ({
     setOpenRowId(rule.id);
   };
 
-  /** Adds a show-if to a block or a question, starting from the nearest question it may use, and opens it. */
-  const addShowIf = (target: TShowIfTarget, key: string) => {
-    const showIf = createShowIf(localSurvey, target, (element) => getDefaultOperatorForElement(element, t));
-    if (!showIf) return;
-    setLocalSurvey((survey) => updateShowIf(survey, target, () => showIf));
-    setOpenShowIfKey(key);
-  };
+  /**
+   * Opens a block's or a question's show-if popover on a new draft (from Add logic). Nothing is written
+   * to the survey until Done (ENG-6969 T1).
+   */
+  const addShowIf = (key: string) => setOpenShowIfKey(key);
+
+  /** A block's or a question's show-if popover, opened from its faint "Show … if…" hint. */
+  const renderNewShowIf = (target: TShowIfTarget, key: string, label: string, className?: string) => (
+    <ShowIfPopover
+      localSurvey={localSurvey}
+      setLocalSurvey={setLocalSurvey}
+      target={target}
+      isOpen={openShowIfKey === key}
+      onOpenChange={(open) => setOpenShowIfKey(open ? key : null)}
+      newTrigger={
+        <button
+          type="button"
+          className={cn(SHOW_IF_HINT_CLASS, className)}
+          // The hint sits inside the block row: don't collapse it.
+          onClick={(event) => event.stopPropagation()}>
+          <EyeIcon className="size-3" aria-hidden="true" />
+          {label}
+        </button>
+      }
+    />
+  );
 
   const blockToggle = getBlockToggle(outline.blocks, expandedBlockIds);
 
@@ -571,19 +585,13 @@ export const FlowView = ({
                                 })
                               )}
                               {renderOptionsShowIf(block.elements[elementIdx], block.blockIdx)}
-                              {!element.showIf && canAddShowIf(localSurvey, showIfTarget) && (
-                                <button
-                                  type="button"
-                                  className={SHOW_IF_HINT_CLASS}
-                                  onClick={(event) => {
-                                    // The question list sits inside the block row: don't collapse it.
-                                    event.stopPropagation();
-                                    addShowIf(showIfTarget, showIfKey);
-                                  }}>
-                                  <EyeIcon className="size-3" aria-hidden="true" />
-                                  {t("workspace.surveys.edit.flow.show_question_if")}
-                                </button>
-                              )}
+                              {!element.showIf &&
+                                canAddShowIf(localSurvey, showIfTarget) &&
+                                renderNewShowIf(
+                                  showIfTarget,
+                                  showIfKey,
+                                  t("workspace.surveys.edit.flow.show_question_if")
+                                )}
                             </li>
                           );
                         })}
@@ -603,19 +611,14 @@ export const FlowView = ({
                     })
                   )}
                   {/* An open block shows how to add its show-if; a collapsed one stays quiet. */}
-                  {isExpanded && blockShowIfBlocker === null && (
-                    <button
-                      type="button"
-                      className={cn(SHOW_IF_HINT_CLASS, "text-xs")}
-                      onClick={(event) => {
-                        // The hint sits in the block's header: don't collapse it.
-                        event.stopPropagation();
-                        addShowIf({ type: "block", blockIdx: block.blockIdx }, `block:${block.id}`);
-                      }}>
-                      <EyeIcon className="size-3" aria-hidden="true" />
-                      {t("workspace.surveys.edit.flow.show_block_if")}
-                    </button>
-                  )}
+                  {isExpanded &&
+                    blockShowIfBlocker === null &&
+                    renderNewShowIf(
+                      { type: "block", blockIdx: block.blockIdx },
+                      `block:${block.id}`,
+                      t("workspace.surveys.edit.flow.show_block_if"),
+                      "text-xs"
+                    )}
                   <span className="ml-auto text-xs text-slate-500">
                     {[
                       t("common.count_questions", { count: block.elementCount }),
@@ -687,9 +690,7 @@ export const FlowView = ({
                             <DropdownMenuItem
                               icon={<EyeIcon className="size-4" />}
                               disabled={blockShowIfBlocker !== null}
-                              onClick={() =>
-                                addShowIf({ type: "block", blockIdx: block.blockIdx }, `block:${block.id}`)
-                              }>
+                              onClick={() => addShowIf(`block:${block.id}`)}>
                               {t("workspace.surveys.edit.flow.show_block_if")}
                             </DropdownMenuItem>
                           </TooltipRenderer>

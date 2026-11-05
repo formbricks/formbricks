@@ -1,6 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import type { TConditionGroup, TSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
+import {
+  type TConditionGroup,
+  type TSurveyLogicConditionsOperator,
+  ZConditionGroup,
+} from "@formbricks/types/surveys/logic";
 import { type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -188,3 +192,34 @@ export const setOptionHidden = (survey: TSurvey, target: TOptionTarget, hidden: 
   });
 
 const createEmptyGroup = (): TConditionGroup => ({ id: createId(), connector: "and", conditions: [] });
+
+/**
+ * Whether a show-if being drafted in a popover can be saved: at least one condition, each with what
+ * its operator needs. Done stays disabled until then, so an incomplete draft never reaches the survey.
+ */
+export const isShowIfComplete = (showIf: TConditionGroup): boolean =>
+  showIf.conditions.length > 0 && ZConditionGroup.safeParse(showIf).success;
+
+/**
+ * Writes what the "Options shown if" popover drafted for one question into the survey: each option's,
+ * row's or column's show-if and Hidden flag, matched by id. Options added or removed meanwhile are
+ * left as they are, as is everything else about the question.
+ */
+export const applyOptionsShowIfDraft = (
+  survey: TSurvey,
+  draft: TSurvey,
+  blockIdx: number,
+  elementIdx: number,
+  listKeys: readonly TOptionListKey[]
+): TSurvey => {
+  const draftElement = draft.blocks[blockIdx]?.elements[elementIdx];
+  let next = survey;
+  for (const listKey of listKeys) {
+    for (const item of getOptionItems(draftElement, listKey)) {
+      const target: TOptionTarget = { type: "option", blockIdx, elementIdx, listKey, optionId: item.id };
+      next = updateShowIf(next, target, () => item.showIf);
+      next = setOptionHidden(next, target, item.hidden === true);
+    }
+  }
+  return next;
+};
