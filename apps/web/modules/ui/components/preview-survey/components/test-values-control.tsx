@@ -1,7 +1,7 @@
 "use client";
 
 import { FlaskConicalIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { cn } from "@/lib/cn";
@@ -99,17 +99,56 @@ interface TestValuesControlProps {
   readonly activeCount: number;
   /** Applies the values and restarts the preview with them. */
   readonly onApply: (values: Record<string, string>) => void;
+  /**
+   * Opens the panel from outside, e.g. the banner's "Set test values" (ENG-6969 T13 ①): each new `id`
+   * opens it once, with `fieldKey`'s field focused when the survey has it.
+   */
+  readonly openRequest?: TTestValuesOpenRequest;
 }
+
+export interface TTestValuesOpenRequest {
+  readonly id: number;
+  readonly fieldKey?: string;
+}
+
+/** Focuses the input of `fieldKey`'s row; false when there is none, so the default focus applies. */
+const focusField = (container: HTMLElement | null, fieldKey: string | undefined): boolean => {
+  if (!container || fieldKey === undefined) return false;
+  const row = Array.from(container.querySelectorAll<HTMLElement>("[data-test-value-key]")).find(
+    (element) => element.dataset.testValueKey === fieldKey
+  );
+  const input = row?.querySelector<HTMLElement>("input, button");
+  input?.focus();
+  return !!input;
+};
 
 /**
  * The preview's "Test values" control (ENG-6932, P15): values for URL parameters and hidden fields,
  * so rules before the first question can be tried without leaving the editor. Empty by default; the
  * values are edited as a draft and applied together, because applying restarts the preview.
  */
-export const TestValuesControl = ({ fields, values, activeCount, onApply }: TestValuesControlProps) => {
+export const TestValuesControl = ({
+  fields,
+  values,
+  activeCount,
+  onApply,
+  openRequest,
+}: TestValuesControlProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>(values);
+  const [handledRequestId, setHandledRequestId] = useState(openRequest?.id);
+  // The field to focus when the panel opens: the request's, none when the button opened it.
+  const [focusKey, setFocusKey] = useState<string>();
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // A new request opens the panel on the applied values, as a click on the button does.
+  if (openRequest && openRequest.id !== handledRequestId) {
+    setHandledRequestId(openRequest.id);
+    setFocusKey(openRequest.fieldKey);
+    setDraft(values);
+    setOpen(true);
+  }
 
   if (fields.length === 0) return null;
 
@@ -123,7 +162,10 @@ export const TestValuesControl = ({ fields, values, activeCount, onApply }: Test
       open={open}
       onOpenChange={(isOpen) => {
         setOpen(isOpen);
-        if (isOpen) setDraft(values);
+        if (isOpen) {
+          setDraft(values);
+          setFocusKey(undefined);
+        }
       }}>
       <PopoverTrigger asChild>
         <Button
@@ -146,7 +188,13 @@ export const TestValuesControl = ({ fields, values, activeCount, onApply }: Test
           <FlaskConicalIcon className={cn("size-4", activeCount === 0 && "ml-2")} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80">
+      <PopoverContent
+        ref={contentRef}
+        align="end"
+        className="w-80"
+        onOpenAutoFocus={(event) => {
+          if (focusField(contentRef.current, focusKey)) event.preventDefault();
+        }}>
         <form
           className="flex flex-col gap-3"
           onSubmit={(event) => {
@@ -158,7 +206,7 @@ export const TestValuesControl = ({ fields, values, activeCount, onApply }: Test
             <p className="text-xs text-slate-500">{t("workspace.surveys.edit.test_values_description")}</p>
           </div>
           {fields.map(({ key, dataType }) => (
-            <div key={key} className="flex flex-col gap-1">
+            <div key={key} data-test-value-key={key} className="flex flex-col gap-1">
               <Label htmlFor={`preview-test-value-${key}`} className="flex items-center gap-1.5">
                 <DataTypeBadge dataType={dataType} showLabel={false} className="[&_svg]:size-3.5" />
                 <span className="font-mono text-xs">{key}</span>
