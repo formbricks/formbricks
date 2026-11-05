@@ -408,7 +408,6 @@ export const SurveyEditor = ({
               isCxMode={isCxMode}
               locale={locale}
               responseCount={responseCount}
-              setIsCautionDialogOpen={setIsCautionDialogOpen}
               isStorageConfigured={isStorageConfigured}
               quotas={quotas}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
