@@ -64,14 +64,27 @@ interface FlowTextPartsProps {
 }
 
 /**
- * A summary's parts: its words as text, its references as chips. Parts have no identity beyond their
- * place (the same reference can appear twice), so they are keyed by it.
+ * Keys for a summary's parts, from what they say: the same word or reference can appear twice, so a
+ * repeat gets its occurrence number ("ref:score:1").
  */
-export const FlowTextParts = ({ parts, elementIcons }: FlowTextPartsProps) =>
-  parts.map((part, idx) =>
+const getPartKeys = (parts: TFlowTextPart[]): string[] => {
+  const seen = new Map<string, number>();
+  return parts.map((part) => {
+    const content = part.kind === "text" ? `text:${part.text}` : `ref:${part.plain}`;
+    const occurrence = seen.get(content) ?? 0;
+    seen.set(content, occurrence + 1);
+    return `${content}:${occurrence}`;
+  });
+};
+
+/** A summary's parts: its words as text, its references as chips. */
+export const FlowTextParts = ({ parts, elementIcons }: FlowTextPartsProps) => {
+  const keys = getPartKeys(parts);
+  return parts.map((part, idx) =>
     part.kind === "text" ? (
-      <span key={idx}>{part.text}</span>
+      <span key={keys[idx]}>{part.text}</span>
     ) : (
-      <ReferenceChip key={idx} chip={part.chip} elementIcons={elementIcons} />
+      <ReferenceChip key={keys[idx]} chip={part.chip} elementIcons={elementIcons} />
     )
   );
+};

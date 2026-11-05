@@ -881,8 +881,9 @@ const getOpenFrames = (tokens: TSlotToken[]) => {
       frames.push({ fn: fn ?? null, argIdx: 0 });
     } else if (token.value === ")") {
       frames.pop();
-    } else if (token.value === "," && frames.length > 0) {
-      frames[frames.length - 1].argIdx += 1;
+    } else if (token.value === ",") {
+      const innermost = frames.at(-1);
+      if (innermost) innermost.argIdx += 1;
     }
   });
   return frames;

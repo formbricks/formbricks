@@ -5,9 +5,9 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
-import type { TExpressionTypeIssue } from "@formbricks/types/surveys/expression-types";
 import {
   EXPRESSION_TARGET_TYPES,
+  type TExpressionTypeIssue,
   type TExpressionValueType,
   getDataTypeExpressionType,
 } from "@formbricks/types/surveys/expression-types";

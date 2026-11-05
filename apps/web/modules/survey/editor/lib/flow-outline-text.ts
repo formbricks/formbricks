@@ -154,7 +154,8 @@ const describeOperandParts = (
       return [fieldChip(survey, operand.value, "@")];
     default: {
       // A reserved field reads by its name ("language"), as people type it in a URL or a formula.
-      const name = String((operand as { value?: unknown }).value ?? "");
+      const value = (operand as { value?: unknown }).value;
+      const name = typeof value === "string" ? value : "";
       return [{ kind: "reference", chip: { kind: "reserved", label: name }, plain: name }];
     }
   }
