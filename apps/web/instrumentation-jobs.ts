@@ -28,7 +28,7 @@ const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
  * with no schedule, which a crash between the two calls makes permanent until the next boot.
  *
  * The remove-first this replaces was a reasonable workaround for bullmq#3378 — upsert not updating an
- * existing scheduler — which affected v5.56.9 and earlier. We are on 5.61.0, past that fix.
+ * existing scheduler — which affected v5.56.9 and earlier. We are on 5.81.5, past that fix.
  *
  * Known trade-off, verified against a real Redis: upsert updates the scheduler's repeat options but
  * leaves the run it has already queued alone, so a changed cron pattern or time zone takes effect from
