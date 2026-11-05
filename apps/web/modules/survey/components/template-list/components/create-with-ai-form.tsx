@@ -8,6 +8,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import { V3_SURVEY_GENERATE_ALLOWED_LANGUAGES } from "@/app/api/v3/surveys/generate/schemas";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
+import { landFocusOnDraft } from "@/modules/survey/components/template-list/components/ai-draft-preview";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
@@ -125,7 +126,7 @@ export const CreateWithAIForm = ({
   // that scrolls, and a user pressing Space to read further would otherwise navigate by accident.
   useEffect(() => {
     if (status === "review") {
-      draftRef.current?.focus();
+      landFocusOnDraft(draftRef.current);
     }
   }, [status]);
 

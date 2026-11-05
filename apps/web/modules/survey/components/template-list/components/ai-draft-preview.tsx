@@ -87,6 +87,16 @@ const AiDraftRow = memo(
 
 AiDraftRow.displayName = "AiDraftRow";
 
+/**
+ * Lands focus on the draft list when the review opens, so Space and the arrow keys scroll it, without
+ * drawing the list's focus ring: the user did not move there. The mark clears on blur.
+ */
+export const landFocusOnDraft = (element: HTMLElement | null, options?: FocusOptions) => {
+  if (!element) return;
+  element.dataset.landed = "";
+  element.focus(options);
+};
+
 type AiDraftPreviewProps = {
   draft: TAiDraftState;
   isGenerating: boolean;
@@ -195,9 +205,13 @@ export const AiDraftPreview = ({
         tabIndex={0} // NOSONAR
         aria-label={t("workspace.surveys.ai_create.draft_survey")}
         aria-busy={isGenerating}
-        // Inset, in the dialog's focus colour: the review opens with focus here, and a ring drawn
-        // outside the list showed only its top edge, as a dark line under the survey's name.
-        className="min-h-0 flex-1 overflow-y-auto focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden focus-visible:ring-inset">
+        // Focus that the review put here (`landFocusOnDraft`) shows no ring: the textarea before it
+        // makes every scripted focus "visible", so a mouse user would get a frame around the list.
+        // Tabbing back in clears the mark, and the ring shows as usual.
+        onBlur={(event) => {
+          delete event.currentTarget.dataset.landed;
+        }}
+        className="min-h-0 flex-1 overflow-y-auto focus-visible:ring-slate-400 focus-visible:outline-hidden focus-visible:ring-inset [&:focus-visible:not([data-landed])]:ring-1">
         {rowWindow ? (
           <ul className="relative" style={{ height: rowWindow.total * ROW_HEIGHT_PX }}>
             {draft.questions.slice(rowWindow.first, rowWindow.last).map((question, index) => (

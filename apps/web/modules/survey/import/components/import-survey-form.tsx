@@ -5,6 +5,7 @@ import { ArrowUpRightIcon, FileIcon } from "lucide-react";
 import { type ReactNode, type RefObject, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { landFocusOnDraft } from "@/modules/survey/components/template-list/components/ai-draft-preview";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { ImportFieldProblems } from "@/modules/survey/import/components/import-field-problems";
@@ -331,7 +332,7 @@ export const ImportSurveyForm = ({
   // preventScroll: in a short dialog the review body scrolls, and focusing the list would scroll the
   // file name out of view the moment the review opens.
   useEffect(() => {
-    if (importer.status === "review") draftRef.current?.focus({ preventScroll: true });
+    if (importer.status === "review") landFocusOnDraft(draftRef.current, { preventScroll: true });
   }, [importer.status]);
 
   useEffect(() => {
