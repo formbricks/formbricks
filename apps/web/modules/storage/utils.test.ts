@@ -169,6 +169,16 @@ describe("storage utils", () => {
       expect(getOriginalFileNameFromUrl(path)).toBe("Document Name.pdf");
     });
 
+    // ENG-3077: a literal `%` is stored as `%25` in the URL, and the display name is that URL decoded once.
+    test.each([
+      ["a literal %20", "/storage/env/private/Test%2520tiara--fid--abc.png", "Test%20tiara.png"],
+      ["a bare %", "/storage/env/private/100%25--fid--abc.png", "100%.png"],
+    ])("shows a file name with %s as it was uploaded", async (_label, url, expected) => {
+      const { getOriginalFileNameFromUrl } =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+      expect(getOriginalFileNameFromUrl(url)).toBe(expected);
+    });
+
     test("returns empty string on invalid URL input", async () => {
       const { getOriginalFileNameFromUrl } =
         await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");

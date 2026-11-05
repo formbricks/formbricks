@@ -9,6 +9,40 @@ import type { InvalidParam } from "./response";
  */
 export const V3_INVALID_PARAMS_MAX = 50;
 
+/**
+ * Longest `name` and `reason` a reply echoes. Both can carry caller text, such as an unknown field or a
+ * locale key, and a 1.5 MB key used to come back twice in the 400 and again in the warn log. Far above
+ * any real path or message: ids are at most 128 characters, and the longest fixed reason (an element's
+ * allowed fields) is under 1,000.
+ */
+export const V3_INVALID_PARAM_NAME_MAX_CHARS = 1024;
+export const V3_INVALID_PARAM_REASON_MAX_CHARS = 2048;
+
+/** `text` cut at `max` UTF-16 units, never between the two halves of a surrogate pair. */
+function clip(text: string, max: number): string {
+  if (text.length <= max) {
+    return text;
+  }
+  const end = /[\uD800-\uDBFF]/.test(text[max - 1]) ? max - 1 : max;
+  return `${text.slice(0, end)}…`;
+}
+
+const needsClip = (param: InvalidParam): boolean =>
+  param.name.length > V3_INVALID_PARAM_NAME_MAX_CHARS ||
+  param.reason.length > V3_INVALID_PARAM_REASON_MAX_CHARS;
+
+/** The param with its caller-shaped text held to the limits above. */
+export function clipInvalidParam(param: InvalidParam): InvalidParam {
+  if (!needsClip(param)) {
+    return param;
+  }
+  return {
+    ...param,
+    name: clip(param.name, V3_INVALID_PARAM_NAME_MAX_CHARS),
+    reason: clip(param.reason, V3_INVALID_PARAM_REASON_MAX_CHARS),
+  };
+}
+
 function omissionSummary(omitted: number, name: string, subject: string): InvalidParam {
   return {
     name,
@@ -25,10 +59,10 @@ function omissionSummary(omitted: number, name: string, subject: string): Invali
  */
 export function capInvalidParams(params: InvalidParam[], name: string, subject: string): InvalidParam[] {
   if (params.length <= V3_INVALID_PARAMS_MAX) {
-    return params;
+    return params.some(needsClip) ? params.map(clipInvalidParam) : params;
   }
 
-  const kept = params.slice(0, V3_INVALID_PARAMS_MAX - 1);
+  const kept = params.slice(0, V3_INVALID_PARAMS_MAX - 1).map(clipInvalidParam);
   return [...kept, omissionSummary(params.length - kept.length, name, subject)];
 }
 
@@ -39,8 +73,8 @@ export function capInvalidParams(params: InvalidParam[], name: string, subject: 
  * object literal — and its template strings — are never evaluated once the cap is reached. Capping only
  * the reply would still allocate every entry and then throw almost all of them away: a 2 MB body of
  * repeated block ids is ~419k entries, measured at ~500 MB of transient heap for an 8 KB 422. The kept
- * prefix is byte-identical to the uncapped output for every input, so callers that never reach the cap
- * see no change.
+ * prefix matches the uncapped output for every input except for text past `clipInvalidParam`'s limits, so
+ * callers that never reach the cap see no change.
  */
 export class BoundedInvalidParams {
   private readonly kept: InvalidParam[] = [];
@@ -50,7 +84,7 @@ export class BoundedInvalidParams {
 
   push(build: () => InvalidParam): void {
     if (this.kept.length < this.max) {
-      this.kept.push(build());
+      this.kept.push(clipInvalidParam(build()));
       return;
     }
     this.omitted += 1;

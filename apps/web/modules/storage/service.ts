@@ -30,6 +30,19 @@ const SAFE_FILE_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
 const hasTraversalSegment = (fileName: string): boolean =>
   fileName.split("/").some((segment) => segment === "." || segment === "..");
 
+/**
+ * `hasTraversalSegment` on the name as given and on one more decode of it.
+ *
+ * The key is built from the name as given: the route hands over the name its router has already decoded
+ * once, and objects are stored under that name. The extra decode here never feeds the key. It only catches
+ * a `%252e%252e` that arrives as `%2e%2e`, so the traversal guard does not depend on whether a proxy or
+ * storage backend decodes paths. Only the `%2e` (dot) and `%2f` (slash) escapes are read, so a bare `%`
+ * elsewhere in the name cannot stop the check, as a full `decodeURIComponent` would.
+ */
+const hasTraversalSegmentOrEncodedForm = (fileName: string): boolean =>
+  hasTraversalSegment(fileName) ||
+  hasTraversalSegment(fileName.replaceAll(/%2e/gi, ".").replaceAll(/%2f/gi, "/"));
+
 export const getSignedUrlForUpload = async (
   fileName: string,
   workspaceId: string,
@@ -103,20 +116,18 @@ export const getFileStreamForDownload = async (
   fallbackId?: string
 ): Promise<Result<FileStreamResult, StorageError>> => {
   try {
-    const fileNameDecoded = decodeURIComponent(fileName);
-
-    // Checked after the decode: the route param is already URL-decoded once, so a `%252e%252e`
-    // traversal only becomes `..` here.
-    if (hasTraversalSegment(fileName) || hasTraversalSegment(fileNameDecoded)) {
+    if (hasTraversalSegmentOrEncodedForm(fileName)) {
       return err({ code: StorageErrorCode.InvalidInput });
     }
 
-    const primaryKey = `${primaryId}/${accessType}/${fileNameDecoded}`;
+    // `fileName` is already decoded (once, by the route's router), which is how the object is stored.
+    // Decoding it again would turn a stored `%20` into a space and throw on a bare `%`.
+    const primaryKey = `${primaryId}/${accessType}/${fileName}`;
 
     const streamResult = await getFileStream(primaryKey);
 
     if (!streamResult.ok && streamResult.error.code === StorageErrorCode.FileNotFoundError && fallbackId) {
-      const fallbackKey = `${fallbackId}/${accessType}/${fileNameDecoded}`;
+      const fallbackKey = `${fallbackId}/${accessType}/${fileName}`;
       return await getFileStream(fallbackKey);
     }
 
@@ -142,7 +153,11 @@ export const deleteFile = async (
   // outside the workspace prefix they were authorized against. An empty segment or a `\` is refused too:
   // a backend or proxy that merges `//` or maps `\` to `/` would turn `surveys//{other}/…` into another
   // survey's key. Real keys never hold either, so refusing only leaves an object behind.
-  if (hasTraversalSegment(fileName) || fileName.includes("\\") || fileName.split("/").includes("")) {
+  if (
+    hasTraversalSegmentOrEncodedForm(fileName) ||
+    fileName.includes("\\") ||
+    fileName.split("/").includes("")
+  ) {
     return err({ code: StorageErrorCode.InvalidInput });
   }
 
