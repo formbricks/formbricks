@@ -13,7 +13,7 @@ Open any survey and you land on its results. There are two tabs, and they answer
 
 The Summary tab opens with five figures for the survey as a whole, then a card per question.
 
-![The survey summary, with completion stats and per-question breakdowns](/images/surveys/analysis/summary.webp)
+![The Summary tab of a fees survey: Impressions, Starts, Completed, Drop-Offs and Time to Complete, then the card of its first question](/images/surveys/analysis/summary.webp)
 
 The headline figures:
 
@@ -31,7 +31,7 @@ Below them, each question gets its own card in survey order. What the card shows
 
 The Responses tab is one row per submission, with a column per question.
 
-![The response table, one row per submission](/images/surveys/analysis/responses.webp)
+![The Responses tab: a table with one row per submission, with its date, person, response ID, status and answers](/images/surveys/analysis/responses.webp)
 
 The table also carries columns you did not ask for directly:
 
@@ -51,6 +51,10 @@ A [show-if](/surveys/general-features/show-if) can keep a question or a whole bl
 - **Responses.** A response shows a **Not shown** marker where its respondent never saw a question, instead of the dotted *skipped* line.
 - **Changed answers.** If a respondent answers a question, then goes back and changes an earlier answer so that the question is hidden, their answer to it is removed and the question is recorded as not shown.
 - **Options.** When [show-if on options](/surveys/general-features/show-if#show-if-on-options) kept an option, a matrix row or a picture from some respondents, it says **Shown to N out of M**, where M is everyone who answered the question, and its percentage is over those N rather than all M. A [Hidden option](/surveys/general-features/show-if#hidden-options) stays in the results, labelled **Hidden**, with the answers it got before it was hidden.
+
+![A question card on the Summary tab: 8 responses and Not shown to 8; Late payment fee is Shown to 7 out of 8, Foreign transaction fee Shown to 5 out of 8, and Statement fee is labelled Hidden](/images/surveys/analysis/not-shown.webp)
+
+![A response on the Responses tab, with a Not shown marker where its respondent never saw "Which fee was it?"](/images/surveys/analysis/response-not-shown.webp)
 
 "Not shown" is decided when the respondent answers, not by your current show-if. Editing or removing a show-if after responses have come in does not change how earlier responses read. Responses collected before this was recorded, or by an older cached copy of the survey, read as they always did: a question they did not answer counts as skipped.
 
