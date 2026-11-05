@@ -188,12 +188,15 @@ test.describe("Survey flow @slow", () => {
           .locator(`[id="flow-${blockId}"]`)
           .getByRole("listitem")
           .filter({ hasText: headline(elementId) });
-      await expect(question(ids.blocks.overall, "apple_reason")).toContainText("Show question if ");
-      await expect(question(ids.blocks.overall, "fav")).toContainText("Show options if … (1 option)");
-      await expect(question(ids.blocks.overall, "bundle")).toContainText("1 hidden option");
+      // Each question's "Show question if…" and "Show options if…" cells (ENG-6969 T10).
+      await expect(
+        question(ids.blocks.overall, "apple_reason").getByRole("button", { name: /^Edit show-if: / })
+      ).toBeVisible();
+      await expect(question(ids.blocks.overall, "fav")).toContainText("1 option");
+      await expect(question(ids.blocks.overall, "bundle")).toContainText("1 hidden");
       // Copied options carry the "picked in the source" show-ifs the copy gave them (the copy itself has
       // no badge of its own any more, P70).
-      await expect(question(ids.blocks.profile, "recommend")).toContainText("Show options if … (4 options)");
+      await expect(question(ids.blocks.profile, "recommend")).toContainText("4 options");
 
       // Set value with a formula, and Mark as low quality.
       await expect(page.locator(`[id="${ids.setValue.scoreRule}"]`)).toContainText(
@@ -203,11 +206,9 @@ test.describe("Survey flow @slow", () => {
         "Mark response as Low quality"
       );
 
-      // Endings, the redirect one by its label.
+      // Endings, the redirect one by its label, without an "End:" prefix under "Endings" (ENG-6969 T14).
       for (const ending of fixture.endings) {
-        await expect(page.locator(`[id="flow-${ending.id}"]`)).toContainText(
-          `End: ${endingLabel(ending.id)}`
-        );
+        await expect(page.locator(`[id="flow-${ending.id}"]`)).toContainText(endingLabel(ending.id));
       }
     });
 
