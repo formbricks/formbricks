@@ -288,7 +288,15 @@ jobs:
             if [ "${chart_status}" -eq 200 ]; then
               echo "::notice::Dashboards entitlement active — chart and dashboard operations run against real data, with Cube answering the chart queries."
             elif [ "${chart_status}" -eq 403 ]; then
-              echo "::warning::Dashboards entitlement inactive (GET /api/v3/charts/{chartId}/data → ${chart_status}). The chart and dashboard operations are only checked against their documented 403."
+              # Only the entitlement 403 is a licence answer. Any other 403 (the seeded key lost access
+              # to the dataset, say) is a broken setup that would leave every chart operation shallow.
+              chart_code=$(node -p "try { require('/tmp/preflight-chart.json').code ?? '' } catch { '' }")
+              if [ "${chart_code}" != "dashboards_plan_required" ]; then
+                echo "::error::Chart data probe returned 403 with code '${chart_code}', expected dashboards_plan_required. The seeded API key cannot reach the fixture chart."
+                cat /tmp/preflight-chart.json
+                exit 1
+              fi
+              echo "::warning::Dashboards entitlement inactive (GET /api/v3/charts/{chartId}/data → ${chart_status} ${chart_code}). The chart and dashboard operations are only checked against their documented 403."
               cat /tmp/preflight-chart.json
             else
               echo "::error::Chart data probe returned ${chart_status}, expected 200 or 403. Cube is unreachable or rejected the query."
