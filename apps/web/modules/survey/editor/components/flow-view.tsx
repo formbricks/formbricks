@@ -280,9 +280,7 @@ export const FlowView = ({
         ) : (
           <Rows3Icon className="size-3 shrink-0 text-slate-500" aria-hidden="true" />
         )}
-        <span data-truncates className="truncate">
-          {getActionPlainText(jump, t)}
-        </span>
+        <span className="truncate">{getActionPlainText(jump, t)}</span>
       </span>
     );
   };
@@ -341,7 +339,7 @@ export const FlowView = ({
           collisionBoundary={popoverBoundary}
           className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
           {/* Questions and fields as chips (ENG-6969 T3); the sentence above stays plain text. */}
-          <span data-truncates className="min-w-12 shrink-[999] truncate text-sm text-slate-700">
+          <span className="min-w-12 shrink-[999] truncate text-sm text-slate-700">
             <FlowTextParts
               parts={describeRuleConditionParts(row.rule, localSurvey, t, textFormat)}
               elementIcons={elementIcons}
@@ -351,7 +349,7 @@ export const FlowView = ({
             <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
           )}
           {actions.first && (
-            <span data-truncates className="min-w-0 truncate text-sm font-medium text-slate-900">
+            <span className="min-w-0 truncate text-sm font-medium text-slate-900">
               <FlowTextParts
                 parts={describeFirstStepParts(row.rule.actions, localSurvey, t, textFormat)}
                 elementIcons={elementIcons}
