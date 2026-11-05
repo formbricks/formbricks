@@ -219,6 +219,22 @@ describe("jsonErrorPosition", () => {
     expect(jsonErrorPosition("{", new SyntaxError(`Unexpected token '}', "{" is not valid JSON`))).toBeNull();
     expect(jsonErrorPosition("{", "not an error")).toBeNull();
   });
+
+  test("never reads a position out of the file's own text, which V8 may quote", () => {
+    const quoted = new SyntaxError(`Unexpected token 'x', "{"note": "at position 5"x}" is not valid JSON`);
+
+    expect(jsonErrorPosition('{"note": "at position 5"x}', quoted)).toBeNull();
+  });
+
+  test("counts an emoji earlier on the line as one column, as an editor does", () => {
+    const text = '{"a": "😀",}';
+    const offset = text.indexOf("}");
+
+    expect(jsonErrorPosition(text, new SyntaxError(`x in JSON at position ${offset}`))).toEqual({
+      line: 1,
+      column: 11,
+    });
+  });
 });
 
 describe("sniffSurveyImportFile: a text file's encoding", () => {

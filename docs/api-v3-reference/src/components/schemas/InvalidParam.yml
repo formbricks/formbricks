@@ -80,7 +80,8 @@ properties:
       too, about the uploaded file whatever its type: the import does not read this kind of file
       (`identifier` names what it recognized, if anything), the file is past an upload limit, which
       `identifier` names, or it is broken. A JSON file that does not parse has `identifier`
-      `json_syntax`, and the problem's `details` give the `line` and `column` where it stops.
+      `json_syntax`, and the problem's `details` give the `line` and `column` where it stops, when
+      the parser says.
 
 
       `document_limit_exceeded` comes from the survey import of a questionnaire (Word, Excel or CSV):

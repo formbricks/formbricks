@@ -87,7 +87,8 @@ const refuseOverBudget = (violation: TArrayBudgetViolation): SurveyImportInputEr
  */
 export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJsonPosition | null => {
   const message = error instanceof Error ? error.message : "";
-  const offset = /\bposition (\d+)\b/.exec(message);
+  // Anchored to V8's own words: the message can quote the file, which may itself say "position 5".
+  const offset = /in JSON at position (\d+)\b/.exec(message);
   let index: number;
   if (offset) index = Math.min(Number(offset[1]), text.length);
   else if (message.includes("end of JSON input")) index = text.length;
@@ -99,7 +100,8 @@ export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJs
     line += 1;
     lineStart = i + 1;
   }
-  return { line, column: index - lineStart + 1 };
+  // Characters, not UTF-16 units: an emoji earlier on the line is one column, as an editor counts it.
+  return { line, column: Array.from(text.slice(lineStart, index)).length + 1 };
 };
 
 /**
