@@ -2163,6 +2163,7 @@
         "filter_limit_reached": "Ein Dashboard kann bis zu {max} Filter enthalten",
         "filter_no_sentiment_yet": "Noch keine Stimmung: KI-Anreicherung aktivieren",
         "filter_no_value": "(Kein Wert)",
+        "filter_no_values_in_view": "Keine für diese Filter oder Zeiträume",
         "filter_no_values_yet": "Noch keine Werte in den Diagrammen dieses Dashboards",
         "filter_picks_too_long": "Diese Werte sind zu lang, um sie gemeinsam als Filter zu verwenden. Wähle weniger oder kürzere Werte aus.",
         "filter_unlocked": "Filter für alle entsperrt",

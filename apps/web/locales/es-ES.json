@@ -2163,6 +2163,7 @@
         "filter_limit_reached": "Un panel admite hasta {max} filtros",
         "filter_no_sentiment_yet": "Aún no hay sentimiento: activa el enriquecimiento con IA",
         "filter_no_value": "(Sin valor)",
+        "filter_no_values_in_view": "Ninguno para estos filtros o fechas",
         "filter_no_values_yet": "Aún no hay valores en los gráficos de este panel",
         "filter_picks_too_long": "Estos valores son demasiado largos para filtrar por ellos a la vez. Elige menos valores o más cortos.",
         "filter_unlocked": "Filtro desbloqueado para todos",

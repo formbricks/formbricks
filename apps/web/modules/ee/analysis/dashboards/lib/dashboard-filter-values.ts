@@ -79,26 +79,38 @@ export const getDashboardFieldValueProperty = ({
   },
 });
 
+/** The values of a field that occur on the dashboard's charts, for the scope's filters and date range. */
+const occurringValues = async (scope: TValueListScope, signal?: AbortSignal): Promise<string[]> => {
+  const { values } = await listDashboardFilterValues({
+    dashboardId: scope.dashboardId,
+    field: scope.field,
+    operator: "equals",
+    dateRange: scope.dateRange ?? undefined,
+    filters: scope.otherFilters,
+    signal,
+  });
+  return values.map(({ value }) => value);
+};
+
 /**
  * Which of a fixed-option field's values (sentiment, value band, yes/no) occur on the dashboard's charts,
  * for the filters already applied and the date range: asked of the same value list, and cached beside it.
- * "(No value)" counts as occurring whenever any value does; with none at all the field shows `emptyHint`.
+ * "(No value)" counts as occurring whenever any value does. With none at all the field shows `emptyHint`,
+ * unless the field has values outside the filters and date range: then `narrowedHint`, so the hint does
+ * not send anyone to switch on what is already on.
  */
 export const getDashboardFieldAvailableValues = ({
   emptyHint,
+  narrowedHint,
   ...scope
-}: TValueListScope & Readonly<{ emptyHint: string }>): TAvailableValues => ({
+}: TValueListScope & Readonly<{ emptyHint: string; narrowedHint: string }>): TAvailableValues => ({
   queryKey: [...valueListKey(scope, ""), "available"],
   emptyHint,
   load: async (signal) => {
-    const { values } = await listDashboardFilterValues({
-      dashboardId: scope.dashboardId,
-      field: scope.field,
-      operator: "equals",
-      dateRange: scope.dateRange ?? undefined,
-      filters: scope.otherFilters,
-      signal,
-    });
-    return values.length > 0 ? [...values.map(({ value }) => value), NO_VALUE_PICK] : [];
+    const values = await occurringValues(scope, signal);
+    if (values.length > 0) return { values: [...values, NO_VALUE_PICK] };
+    if (scope.otherFilters.length === 0 && scope.dateRange === null) return { values: [] };
+    const unnarrowed = await occurringValues({ ...scope, otherFilters: [], dateRange: null }, signal);
+    return { values: [], emptyHint: unnarrowed.length > 0 ? narrowedHint : undefined };
   },
 });

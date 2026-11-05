@@ -258,6 +258,7 @@ export const buildToolbarProperties = ({
                   field === SENTIMENT_DIMENSION_ID
                     ? t("workspace.analysis.dashboards.filter_no_sentiment_yet")
                     : t("workspace.analysis.dashboards.filter_no_values_yet"),
+                narrowedHint: t("workspace.analysis.dashboards.filter_no_values_in_view"),
               }),
             },
           ];
@@ -280,6 +281,7 @@ export const buildToolbarProperties = ({
             field: SENTIMENT_DIMENSION_ID,
             otherFilters: otherFiltersOf(SENTIMENT_DIMENSION_ID, filters),
             emptyHint: t("workspace.analysis.dashboards.filter_no_sentiment_yet"),
+            narrowedHint: t("workspace.analysis.dashboards.filter_no_values_in_view"),
           });
           return [{ ...shared, valueType, availableValues }];
         }

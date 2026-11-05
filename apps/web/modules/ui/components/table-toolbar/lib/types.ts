@@ -124,11 +124,16 @@ export type TFilterProperty = {
 
 export type TAvailableValues = {
   queryKey: QueryKey;
-  /** The values that occur; an empty list means the property has none to filter by. */
-  load: (signal?: AbortSignal) => Promise<readonly string[]>;
-  /** Why the property cannot be filtered by while it has no values. */
+  /**
+   * The values that occur; an empty list means the property has none to filter by. With none, `emptyHint`
+   * may say why better than the property's own, when the lookup can tell.
+   */
+  load: (signal?: AbortSignal) => Promise<TAvailableValuesResult>;
+  /** Why the property cannot be filtered by while it has no values, unless the lookup says otherwise. */
   emptyHint: string;
 };
+
+export type TAvailableValuesResult = Readonly<{ values: readonly string[]; emptyHint?: string }>;
 
 export type TSortOption = {
   value: string;

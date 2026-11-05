@@ -110,6 +110,7 @@ describe("getDashboardFieldAvailableValues", () => {
       otherFilters: [OTHER],
       dateRange: null,
       emptyHint: "none yet",
+      narrowedHint: "none here",
     });
 
   test("is cached beside the value list, under the chart data keys", () => {
@@ -123,15 +124,38 @@ describe("getDashboardFieldAvailableValues", () => {
       values: [{ value: "positive" }],
       hasMore: false,
     } as never);
-    await expect(available().load()).resolves.toEqual(["positive", NO_VALUE_PICK]);
+    await expect(available().load()).resolves.toEqual({ values: ["positive", NO_VALUE_PICK] });
     expect(listDashboardFilterValues).toHaveBeenLastCalledWith(
       expect.objectContaining({ field: "FeedbackRecords.sentiment", filters: [OTHER] })
     );
     expect(vi.mocked(listDashboardFilterValues).mock.lastCall?.[0]).not.toHaveProperty("search");
   });
 
-  test("is empty when no value occurs", async () => {
+  test("is empty with the field's own hint when no value occurs anywhere", async () => {
     vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
-    await expect(available().load()).resolves.toEqual([]);
+    await expect(available().load()).resolves.toEqual({ values: [], emptyHint: undefined });
+    expect(vi.mocked(listDashboardFilterValues).mock.lastCall?.[0]).toMatchObject({ filters: [] });
+  });
+
+  test("says the filters or dates leave none when values occur outside them", async () => {
+    vi.mocked(listDashboardFilterValues)
+      .mockResolvedValueOnce({ values: [], hasMore: false } as never)
+      .mockResolvedValueOnce({ values: [{ value: "positive" }], hasMore: false } as never);
+    await expect(available().load()).resolves.toEqual({ values: [], emptyHint: "none here" });
+  });
+
+  test("asks only once when nothing narrows the list", async () => {
+    vi.mocked(listDashboardFilterValues).mockClear();
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
+    const unnarrowed = getDashboardFieldAvailableValues({
+      dashboardId: "d1",
+      field: "FeedbackRecords.sentiment",
+      otherFilters: [],
+      dateRange: null,
+      emptyHint: "none yet",
+      narrowedHint: "none here",
+    });
+    await expect(unnarrowed.load()).resolves.toEqual({ values: [] });
+    expect(listDashboardFilterValues).toHaveBeenCalledTimes(1);
   });
 });

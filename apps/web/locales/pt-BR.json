@@ -2163,6 +2163,7 @@
         "filter_limit_reached": "Um painel comporta até {max} filtros",
         "filter_no_sentiment_yet": "Ainda sem sentimento: ative o enriquecimento com IA",
         "filter_no_value": "(Sem valor)",
+        "filter_no_values_in_view": "Nenhum para estes filtros ou datas",
         "filter_no_values_yet": "Ainda não há valores nos gráficos deste painel",
         "filter_picks_too_long": "Estes valores são muito longos para filtrar juntos. Escolha menos valores ou valores mais curtos.",
         "filter_unlocked": "Filtro desbloqueado para todos",

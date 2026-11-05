@@ -2163,6 +2163,7 @@
         "filter_limit_reached": "En instrumentpanel kan innehålla upp till {max} filter",
         "filter_no_sentiment_yet": "Ingen sentimentanalys än: aktivera AI-berikning",
         "filter_no_value": "(Inget värde)",
+        "filter_no_values_in_view": "Inga för dessa filter eller datum",
         "filter_no_values_yet": "Inga värden i den här dashboardens diagram än",
         "filter_picks_too_long": "Dessa värden är för långa för att filtrera på tillsammans. Välj färre eller kortare värden.",
         "filter_unlocked": "Filtret är upplåst för alla",

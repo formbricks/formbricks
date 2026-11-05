@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useAvailableValues } from "../hooks/use-available-values";
+import { useAvailableValues, useEmptyHint } from "../hooks/use-available-values";
 import {
   getLockedQuickValues,
   getQuickFilter,
@@ -49,17 +49,20 @@ const PropertyIcon = ({ property }: Readonly<{ property: TFilterProperty }>) => 
 const EmptyPropertyItem = ({
   property,
   showIcon,
-}: Readonly<{ property: TFilterProperty; showIcon?: boolean }>) => (
-  <DropdownMenuItem
-    disabled
-    icon={showIcon ? <PropertyIcon property={property} /> : undefined}
-    className="gap-2 font-normal text-slate-700">
-    <span className="flex min-w-0 flex-col">
-      <span className="truncate">{property.label}</span>
-      <span className="text-xs text-slate-500">{property.availableValues?.emptyHint}</span>
-    </span>
-  </DropdownMenuItem>
-);
+}: Readonly<{ property: TFilterProperty; showIcon?: boolean }>) => {
+  const hint = useEmptyHint(property);
+  return (
+    <DropdownMenuItem
+      disabled
+      icon={showIcon ? <PropertyIcon property={property} /> : undefined}
+      className="gap-2 font-normal text-slate-700">
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate">{property.label}</span>
+        <span className="text-xs text-slate-500">{hint}</span>
+      </span>
+    </DropdownMenuItem>
+  );
+};
 
 /** Whether the property is known to have no values at all, and nothing set on it to take off. */
 const useHasNoValues = (property: TFilterProperty, isSet: boolean): boolean => {

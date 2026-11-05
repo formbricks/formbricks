@@ -2163,6 +2163,7 @@
         "filter_limit_reached": "Un dashboard poate conține maximum {max} filtre",
         "filter_no_sentiment_yet": "Încă nu există sentiment: activează îmbogățirea cu AI",
         "filter_no_value": "(Fără valoare)",
+        "filter_no_values_in_view": "Nicio valoare pentru aceste filtre sau date calendaristice",
         "filter_no_values_yet": "Încă nu există valori în graficele acestui tablou de bord",
         "filter_picks_too_long": "Aceste valori sunt prea lungi pentru a filtra după ele împreună. Alege mai puține valori sau valori mai scurte.",
         "filter_unlocked": "Filtru deblocat pentru toată lumea",

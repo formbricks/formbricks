@@ -2163,6 +2163,7 @@
         "filter_limit_reached": "A dashboard holds up to {max} filters",
         "filter_no_sentiment_yet": "No sentiment yet: turn on AI enrichment",
         "filter_no_value": "(No value)",
+        "filter_no_values_in_view": "None for these filters or dates",
         "filter_no_values_yet": "No values on this dashboard's charts yet",
         "filter_picks_too_long": "These values are too long to filter by together. Pick fewer or shorter values.",
         "filter_unlocked": "Filter unlocked for everyone",

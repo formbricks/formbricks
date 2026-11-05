@@ -2163,6 +2163,7 @@
         "filter_limit_reached": "Een dashboard kan maximaal {max} filters bevatten",
         "filter_no_sentiment_yet": "Nog geen sentiment: schakel AI-verrijking in",
         "filter_no_value": "(Geen waarde)",
+        "filter_no_values_in_view": "Geen voor deze filters of datums",
         "filter_no_values_yet": "Nog geen waarden in de grafieken van dit dashboard",
         "filter_picks_too_long": "Deze waarden zijn samen te lang om op te filteren. Kies minder of kortere waarden.",
         "filter_unlocked": "Filter ontgrendeld voor iedereen",
