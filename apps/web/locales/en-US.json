@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "This block already has a show-if. Click its badge to edit it.",
           "show_block_if_nothing_before": "Nothing comes before this block for a show-if to read: no earlier question and no hidden field.",
           "show_if_block_help": "A block that doesn't match is skipped, and its logic still runs. Conditions can use earlier blocks only.",
+          "show_if_no_conditions": "No conditions. Done removes the show-if.",
           "show_if_question_help": "Shown and hidden live as the answers above it change. Conditions can use earlier blocks and the questions above it on this page.",
           "show_options_if": "Show options if…",
           "show_question_if": "Show question if…",

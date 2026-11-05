@@ -6,7 +6,9 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   applyOptionsShowIfDraft,
   canAddShowIf,
+  canFinishShowIfDraft,
   createDraftShowIf,
+  editShowIfDraft,
   getShowIf,
   getShowIfScope,
   hasUnchosenField,
@@ -64,6 +66,34 @@ describe("createDraftShowIf: a new show-if starts with an empty field (ENG-6969 
 
   test("Done stays disabled until a field is picked: a condition can't be stored without one", () => {
     expect(isShowIfComplete(createDraftShowIf())).toBe(false);
+  });
+});
+
+describe("editShowIfDraft / canFinishShowIfDraft: emptying a saved show-if waits for Done", () => {
+  const saved = getShowIf(surveyFlowFixture, { type: "block", blockIdx: 2 }) as TConditionGroup;
+  const emptied: TConditionGroup = { ...saved, conditions: [] };
+
+  test("deleting the last condition of a saved show-if keeps the empty draft open", () => {
+    expect(editShowIfDraft(emptied, false)).toEqual({ type: "keep", draft: emptied });
+  });
+
+  test("Done is enabled on the emptied draft, and saving it removes the show-if", () => {
+    expect(canFinishShowIfDraft(emptied, false)).toBe(true);
+
+    const updated = updateShowIf(surveyFlowFixture, { type: "block", blockIdx: 2 }, () => emptied);
+    expect(updated.blocks[2]).not.toHaveProperty("showIf");
+  });
+
+  test("a new show-if emptied the same way just closes: there is nothing to remove", () => {
+    expect(editShowIfDraft({ ...createDraftShowIf(), conditions: [] }, true)).toEqual({ type: "close" });
+    expect(canFinishShowIfDraft({ ...createDraftShowIf(), conditions: [] }, true)).toBe(false);
+  });
+
+  test("any other edit keeps the draft, and Done waits for it to be complete", () => {
+    const draft = createDraftShowIf();
+    expect(editShowIfDraft(draft, true)).toEqual({ type: "keep", draft });
+    expect(canFinishShowIfDraft(draft, false)).toBe(false);
+    expect(canFinishShowIfDraft(saved, false)).toBe(true);
   });
 });
 

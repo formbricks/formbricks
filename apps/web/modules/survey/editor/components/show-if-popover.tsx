@@ -19,9 +19,10 @@ import {
 import { toPlainText } from "@/modules/survey/editor/lib/reference-chips";
 import {
   type TShowIfTarget,
+  canFinishShowIfDraft,
   createDraftShowIf,
+  editShowIfDraft,
   getShowIf,
-  isShowIfComplete,
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
 import { Button } from "@/modules/ui/components/button";
@@ -52,7 +53,8 @@ interface ShowIfPopoverProps {
  * conditions editor. The editor offers only what the reference rule allows (`getShowIfScope`).
  *
  * The popover edits a draft: only Done writes it to the survey, so opening one to look, then Escape,
- * a click outside or Cancel, changes nothing (ENG-6969 T1).
+ * a click outside or Cancel, changes nothing (ENG-6969 T1). That holds for deleting the last condition
+ * too: the empty draft stays open, and Done removes the show-if (`editShowIfDraft`).
  */
 export function ShowIfPopover({
   localSurvey,
@@ -146,16 +148,14 @@ function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: 
   };
 
   const changeConditions = (updater: (conditions: TConditionGroup) => TConditionGroup) => {
-    const next = updater(structuredClone(draft));
-    if (next.conditions.length > 0) {
-      setDraft(next);
-      return;
-    }
-    // Removing the last condition removes the show-if, as Remove does; on a new one there is nothing
-    // to remove, so it is simply dropped.
-    if (isNew) onClose();
-    else save(undefined);
+    const edit = editShowIfDraft(updater(structuredClone(draft)), isNew);
+    if (edit.type === "close") onClose();
+    else setDraft(edit.draft);
   };
+
+  // A saved show-if whose last condition was deleted: Done removes it, so Remove would only repeat
+  // Done, and Cancel is what keeps it.
+  const isEmptied = !isNew && draft.conditions.length === 0;
 
   return (
     <ShowIfPopoverFrame
@@ -172,7 +172,7 @@ function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: 
       }
       footer={
         <div className="flex justify-between gap-2">
-          {isNew ? (
+          {isNew || isEmptied ? (
             <Button type="button" size="sm" variant="secondary" onClick={onClose}>
               {t("common.cancel")}
             </Button>
@@ -182,17 +182,27 @@ function ShowIfEditor({ localSurvey, setLocalSurvey, target, showIf, onClose }: 
               {t("workspace.surveys.edit.flow.remove_condition")}
             </Button>
           )}
-          <Button type="button" size="sm" disabled={!isShowIfComplete(draft)} onClick={() => save(draft)}>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!canFinishShowIfDraft(draft, isNew)}
+            onClick={() => save(draft)}>
             {t("common.done")}
           </Button>
         </div>
       }>
-      <ShowIfConditionsEditor
-        conditions={draft}
-        scope={scope}
-        getDefaultOperator={getDefaultOperator}
-        onConditionsChange={changeConditions}
-      />
+      {isEmptied ? (
+        <p className="py-2 text-sm text-slate-500">
+          {t("workspace.surveys.edit.flow.show_if_no_conditions")}
+        </p>
+      ) : (
+        <ShowIfConditionsEditor
+          conditions={draft}
+          scope={scope}
+          getDefaultOperator={getDefaultOperator}
+          onConditionsChange={changeConditions}
+        />
+      )}
     </ShowIfPopoverFrame>
   );
 }
