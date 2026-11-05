@@ -143,6 +143,34 @@ const hasParamIdentifier = (error: V3ApiError, identifier: string): boolean =>
   error.invalid_params?.some((param) => param.identifier === identifier) ?? false;
 
 /**
+ * The dialog's code for a 422: a Formbricks file's own problem code, or what the route's refusal of the
+ * file names in its `invalid_params`.
+ */
+const getUnprocessableFileCode = (error: V3ApiError): string => {
+  const hasParam = (code: string) => error.invalid_params?.some((param) => param.code === code) ?? false;
+  if (error.code === "formbricks_file_invalid" || error.code === "formbricks_file_too_new") {
+    return error.code;
+  }
+  // A file past the JSON budget is too complex; a broken one unreadable. A Qualtrics export past
+  // one of the import's limits names the limit, and one the reader does not recognise says so.
+  if (hasParam("file_limit_exceeded")) return "file_too_complex";
+  // A JSON file that does not parse was most likely edited, so it says where, rather than "export
+  // it again", which would throw the edits away.
+  if (hasParamIdentifier(error, "json_syntax")) return jsonInvalidCode(error.details);
+  if (hasParam("file_unreadable")) return "file_unreadable";
+  // A question list past the sheet's limits, or the AI's, names the limit.
+  const documentLimit = error.invalid_params?.find(
+    (param) => param.code === "document_limit_exceeded"
+  )?.identifier;
+  if (documentLimit) return `${SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX}${documentLimit}`;
+  const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
+  if (limit) return `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}`;
+  if (hasParam("qsf_not_recognized")) return "qsf_not_recognized";
+  // Any other 422 may come from any lane, so it gets the sentence that fits every file.
+  return "file_unreadable";
+};
+
+/**
  * The dialog's code for a request the route refused before streaming. The route codes each refusal of
  * the file in its `invalid_params` (`TSurveyImportRefusalCode`), which splits the 422s; a 400 is a body
  * the dialog sent wrong.
@@ -151,8 +179,6 @@ const hasParamIdentifier = (error: V3ApiError, identifier: string): boolean =>
  * code, which says whether to fix the file or to update Formbricks (ENG-6850).
  */
 export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
-  const hasParam = (code: string) => error.invalid_params?.some((param) => param.code === code) ?? false;
-
   switch (error.status) {
     case 400:
       return "file_unreadable";
@@ -162,28 +188,8 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
       return hasParamIdentifier(error, "survey_size") ? "survey_too_large" : "file_too_large";
     case 415:
       return "file_type_unsupported";
-    case 422: {
-      if (error.code === "formbricks_file_invalid" || error.code === "formbricks_file_too_new") {
-        return error.code;
-      }
-      // A file past the JSON budget is too complex; a broken one unreadable. A Qualtrics export past
-      // one of the import's limits names the limit, and one the reader does not recognise says so.
-      if (hasParam("file_limit_exceeded")) return "file_too_complex";
-      // A JSON file that does not parse was most likely edited, so it says where, rather than "export
-      // it again", which would throw the edits away.
-      if (hasParamIdentifier(error, "json_syntax")) return jsonInvalidCode(error.details);
-      if (hasParam("file_unreadable")) return "file_unreadable";
-      // A question list past the sheet's limits, or the AI's, names the limit.
-      const documentLimit = error.invalid_params?.find(
-        (param) => param.code === "document_limit_exceeded"
-      )?.identifier;
-      if (documentLimit) return `${SURVEY_IMPORT_DOCUMENT_LIMIT_CODE_PREFIX}${documentLimit}`;
-      const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
-      if (limit) return `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}`;
-      if (hasParam("qsf_not_recognized")) return "qsf_not_recognized";
-      // Any other 422 may come from any lane, so it gets the sentence that fits every file.
-      return "file_unreadable";
-    }
+    case 422:
+      return getUnprocessableFileCode(error);
     default:
       return error.code ?? "ai_unknown";
   }
