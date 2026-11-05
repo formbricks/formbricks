@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "此区块已设置显示条件。点击其徽标即可编辑。",
           "show_block_if_nothing_before": "此区块之前没有可供显示条件读取的内容:既没有更早的问题,也没有隐藏字段。",
           "show_if_block_help": "不符合条件的区块会被跳过,但其逻辑仍会运行。条件只能使用前面的区块。",
+          "show_if_no_conditions": "没有条件。点击“完成”将移除显示条件。",
           "show_if_question_help": "会随着上方答案的变化实时显示或隐藏。条件可以使用前面的区块以及本页中位于该问题上方的问题。",
           "show_options_if": "满足以下条件时显示选项…",
           "show_question_if": "满足以下条件时显示问题…",

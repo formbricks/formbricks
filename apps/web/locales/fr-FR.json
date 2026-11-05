@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Ce bloc a déjà une condition d'affichage. Clique sur son badge pour la modifier.",
           "show_block_if_nothing_before": "Rien ne précède ce bloc pour qu'une condition d'affichage puisse s'appuyer dessus : ni question antérieure, ni champ masqué.",
           "show_if_block_help": "Un bloc qui ne remplit pas les conditions est ignoré, mais sa logique s'exécute quand même. Les conditions ne peuvent utiliser que les blocs précédents.",
+          "show_if_no_conditions": "Aucune condition. « Terminé » supprime la condition d'affichage.",
           "show_if_question_help": "Affichée ou masquée en direct selon l'évolution des réponses ci-dessus. Les conditions peuvent utiliser les blocs précédents et les questions situées au-dessus sur cette page.",
           "show_options_if": "Afficher les options si…",
           "show_question_if": "Afficher la question si…",

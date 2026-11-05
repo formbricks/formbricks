@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Dit blok heeft al een weergavevoorwaarde. Klik op de badge om die te bewerken.",
           "show_block_if_nothing_before": "Er staat niets vóór dit blok waar een weergavevoorwaarde naar kan kijken: geen eerdere vraag en geen verborgen veld.",
           "show_if_block_help": "Een blok dat niet aan de voorwaarden voldoet, wordt overgeslagen, maar de bijbehorende logica wordt wel uitgevoerd. Voorwaarden kunnen alleen eerdere blokken gebruiken.",
+          "show_if_no_conditions": "Geen voorwaarden. Met Klaar verwijder je de toon-als-voorwaarde.",
           "show_if_question_help": "Wordt direct getoond of verborgen zodra de antwoorden hierboven veranderen. Voorwaarden kunnen eerdere blokken en de vragen hierboven op deze pagina gebruiken.",
           "show_options_if": "Opties tonen als…",
           "show_question_if": "Vraag tonen als…",

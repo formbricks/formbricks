@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Este bloco já tem uma condição de exibição. Clique no selo dela para editá-la.",
           "show_block_if_nothing_before": "Não há nada antes deste bloco para uma condição de exibição ler: nenhuma pergunta anterior e nenhum campo oculto.",
           "show_if_block_help": "Um bloco que não atende às condições é ignorado, mas a lógica dele ainda é executada. As condições só podem usar blocos anteriores.",
+          "show_if_no_conditions": "Sem condições. Ao concluir, a condição de exibição é removida.",
           "show_if_question_help": "A pergunta é exibida e ocultada em tempo real conforme as respostas acima dela mudam. As condições podem usar blocos anteriores e as perguntas acima dela nesta página.",
           "show_options_if": "Mostrar opções se…",
           "show_question_if": "Mostrar pergunta se…",

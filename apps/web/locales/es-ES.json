@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Este bloque ya tiene una condición de visualización. Haz clic en su insignia para editarla.",
           "show_block_if_nothing_before": "No hay nada antes de este bloque que una condición de visualización pueda leer: ni una pregunta anterior ni un campo oculto.",
           "show_if_block_help": "Un bloque que no cumple la condición se omite, pero su lógica se sigue ejecutando. Las condiciones solo pueden usar bloques anteriores.",
+          "show_if_no_conditions": "Sin condiciones. Al pulsar Hecho, se elimina la condición de visualización.",
           "show_if_question_help": "Se muestra u oculta en directo según cambian las respuestas anteriores. Las condiciones pueden usar bloques anteriores y las preguntas que están por encima de esta en esta página.",
           "show_options_if": "Mostrar opciones si…",
           "show_question_if": "Mostrar pregunta si…",

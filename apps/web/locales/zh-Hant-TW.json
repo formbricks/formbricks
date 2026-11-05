@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "此區塊已有顯示條件。點選其標記即可編輯。",
           "show_block_if_nothing_before": "此區塊之前沒有可供顯示條件讀取的內容:沒有更前面的題目,也沒有隱藏欄位。",
           "show_if_block_help": "不符合條件的區塊會被略過,但其中的邏輯仍會執行。條件只能使用前面的區塊。",
+          "show_if_no_conditions": "沒有條件。按一下「完成」即可移除顯示條件。",
           "show_if_question_help": "會隨著上方答案的變化即時顯示或隱藏。條件可以使用前面的區塊,以及此頁面中位於它上方的問題。",
           "show_options_if": "在以下情況顯示選項…",
           "show_question_if": "在以下情況顯示題目…",

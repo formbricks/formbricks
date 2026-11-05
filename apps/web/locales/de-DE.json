@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Dieser Block hat bereits eine Anzeigebedingung. Klicke auf das Badge, um sie zu bearbeiten.",
           "show_block_if_nothing_before": "Vor diesem Block gibt es nichts, was eine Anzeigebedingung auswerten könnte: keine frühere Frage und kein verstecktes Feld.",
           "show_if_block_help": "Ein Block, der nicht zutrifft, wird übersprungen, seine Logik wird aber trotzdem ausgeführt. Bedingungen können nur frühere Blöcke verwenden.",
+          "show_if_no_conditions": "Keine Bedingungen. Mit „Fertig“ wird die Anzeigebedingung entfernt.",
           "show_if_question_help": "Wird live ein- und ausgeblendet, sobald sich die Antworten darüber ändern. Bedingungen können frühere Blöcke und die Fragen darüber auf dieser Seite verwenden.",
           "show_options_if": "Optionen anzeigen, wenn …",
           "show_question_if": "Frage anzeigen, wenn …",

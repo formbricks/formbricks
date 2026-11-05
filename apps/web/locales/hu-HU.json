@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Ehhez a blokkhoz már tartozik megjelenítési feltétel. A szerkesztéséhez kattintson a jelvényére.",
           "show_block_if_nothing_before": "Ez a blokk előtt nincs olyan elem, amelyet a megjelenítési feltétel kiolvashatna: nincs korábbi kérdés és rejtett mező sem.",
           "show_if_block_help": "Az a blokk, amely nem felel meg a feltételeknek, kimarad, azonban a hozzá tartozó logika továbbra is lefut. A feltételek kizárólag a korábbi blokkokat használhatják.",
+          "show_if_no_conditions": "Nincsenek feltételek. A „Kész” gomb eltávolítja a megjelenítési feltételt.",
           "show_if_question_help": "A kérdés a felette lévő válaszok változásával párhuzamosan, valós időben jelenik meg vagy rejtőzik el. A feltételek a korábbi blokkokat, valamint az ezen az oldalon a kérdés felett található kérdéseket használhatják.",
           "show_options_if": "Lehetőségek megjelenítése, ha…",
           "show_question_if": "Kérdés megjelenítése, ha…",

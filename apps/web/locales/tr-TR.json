@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Bu bloğun zaten bir gösterme koşulu var. Düzenlemek için rozetine tıkla.",
           "show_block_if_nothing_before": "Bu bloktan önce bir gösterme koşulunun okuyabileceği hiçbir şey yok: önceki bir soru ve gizli bir alan bulunmuyor.",
           "show_if_block_help": "Koşulu karşılamayan blok atlanır, ancak mantığı yine de çalışır. Koşullarda yalnızca önceki bloklar kullanılabilir.",
+          "show_if_no_conditions": "Koşul yok. Bitti dersen göster koşulu kaldırılır.",
           "show_if_question_help": "Üstündeki yanıtlar değiştikçe anlık olarak gösterilir veya gizlenir. Koşullarda önceki bloklar ile bu sayfada bu sorunun üstündeki sorular kullanılabilir.",
           "show_options_if": "Seçenekleri şu durumda göster…",
           "show_question_if": "Soruyu şu durumda göster…",

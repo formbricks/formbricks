@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Det här blocket har redan ett visningsvillkor. Klicka på dess märke för att redigera det.",
           "show_block_if_nothing_before": "Det finns inget före det här blocket som ett visningsvillkor kan läsa av: ingen tidigare fråga och inget dolt fält.",
           "show_if_block_help": "Ett block som inte uppfyller villkoren hoppas över, men dess logik körs ändå. Villkoren kan bara använda tidigare block.",
+          "show_if_no_conditions": "Inga villkor. Om du klickar på Klar tas visa-om-regeln bort.",
           "show_if_question_help": "Visas och döljs direkt när svaren ovanför ändras. Villkoren kan använda tidigare block och frågorna ovanför på den här sidan.",
           "show_options_if": "Visa alternativ om…",
           "show_question_if": "Visa fråga om…",

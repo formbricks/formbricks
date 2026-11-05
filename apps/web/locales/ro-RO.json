@@ -4311,6 +4311,7 @@
           "show_block_if_exists": "Acest bloc are deja o condiție de afișare. Fă clic pe insigna ei pentru a o edita.",
           "show_block_if_nothing_before": "Nu există nimic înaintea acestui bloc pe care să-l poată citi o condiție de afișare: nicio întrebare anterioară și niciun câmp ascuns.",
           "show_if_block_help": "Un bloc care nu îndeplinește condițiile este omis, dar logica lui se execută în continuare. Condițiile pot folosi doar blocurile anterioare.",
+          "show_if_no_conditions": "Nicio condiție. Dacă apeși pe „Gata”, condiția de afișare este eliminată.",
           "show_if_question_help": "Se afișează sau se ascunde în timp real, pe măsură ce se schimbă răspunsurile de mai sus. Condițiile pot folosi blocurile anterioare și întrebările de mai sus de pe această pagină.",
           "show_options_if": "Afișează opțiunile dacă…",
           "show_question_if": "Afișează întrebarea dacă…",
