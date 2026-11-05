@@ -16,6 +16,7 @@ import { cn } from "@/lib/cn";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
+import { describeRuleSummary } from "@/modules/survey/editor/lib/flow-outline-text";
 import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
@@ -30,9 +31,15 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Modal } from "./components/modal";
 import { PreviewModeSwitches, PreviewWindowBar } from "./components/preview-frame";
-import { TestValuesControl, TestValuesStrip } from "./components/test-values-control";
+import { StartScreenOutBanner } from "./components/start-screen-out-banner";
+import {
+  type TTestValuesOpenRequest,
+  TestValuesControl,
+  TestValuesStrip,
+} from "./components/test-values-control";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "./lib/containment";
 import { INITIAL_FOLLOW_STATE, followActiveElement } from "./lib/follow-active-element";
+import { findStartScreenOut, getScreenOutFieldKey } from "./lib/start-screen-out";
 import {
   getPreviewStartKey,
   getTestValueEntries,
@@ -89,7 +96,7 @@ export const PreviewSurvey = ({
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");
@@ -113,6 +120,54 @@ export const PreviewSurvey = ({
     () => getPreviewStartKey(hiddenFieldsRecord, survey.startLogic ?? [], previewRun),
     [hiddenFieldsRecord, survey.startLogic, previewRun]
   );
+  // "Set test values" on the banner opens the Test values panel on the field its rule reads.
+  const [testValuesOpenRequest, setTestValuesOpenRequest] = useState<TTestValuesOpenRequest>();
+  // Whether the preview left where it started to show a question the author picked (see the follow
+  // effect below): the banner then no longer describes what the preview shows. A new start resets it.
+  const [hasFollowedQuestion, setHasFollowedQuestion] = useState(false);
+  const [followResetKey, setFollowResetKey] = useState(previewStartKey);
+  if (followResetKey !== previewStartKey) {
+    setFollowResetKey(previewStartKey);
+    setHasFollowedQuestion(false);
+  }
+  // Why the preview opened on an ending (ENG-6969 T13 ①): the rule before the first question that
+  // screened it out with these test values, worked out here as the renderer decides it. Endings
+  // reached later, by a block's rule, aren't explained: they depend on the answers typed in the preview.
+  const startScreenOut = useMemo(
+    () =>
+      findStartScreenOut({
+        survey: jsSurvey,
+        hiddenFieldsRecord,
+        languageCode,
+        // The renderer runs in the editor's page, so a reserved `url` reads the editor's address.
+        meta: typeof window === "undefined" ? {} : { url: window.location.href },
+      }),
+    [jsSurvey, hiddenFieldsRecord, languageCode]
+  );
+  const startScreenOutSummary = startScreenOut
+    ? describeRuleSummary(startScreenOut.rule, survey, t, {
+        locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
+      })
+    : undefined;
+  const openTestValuesForScreenOut =
+    startScreenOut && testValueFields.length > 0
+      ? () =>
+          setTestValuesOpenRequest((current) => ({
+            id: (current?.id ?? 0) + 1,
+            fieldKey: getScreenOutFieldKey(
+              startScreenOut.rule,
+              testValueFields.map(({ key }) => key)
+            ),
+          }))
+      : undefined;
+  const renderScreenOutBanner = (className?: string) =>
+    startScreenOutSummary && !hasFollowedQuestion ? (
+      <StartScreenOutBanner
+        ruleSummary={startScreenOutSummary}
+        onSetTestValues={openTestValuesForScreenOut}
+        className={className}
+      />
+    ) : null;
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const enabledLanguages = useMemo(() => survey.languages.filter((l) => l.enabled), [survey.languages]);
   const showLanguageSelector = setLanguageCode && enabledLanguages.length > 1;
@@ -247,6 +302,7 @@ export const PreviewSurvey = ({
     followStateRef.current = state;
     if (follow && elementId) {
       updateElementId(elementId);
+      setHasFollowedQuestion(true);
     }
   }, [elementId, updateElementId]);
 
@@ -272,6 +328,8 @@ export const PreviewSurvey = ({
   }, [survey]);
 
   const resetProgress = () => {
+    // A restart runs the rules before the first question again, so the banner may apply again.
+    setHasFollowedQuestion(false);
     let storePreviewMode = previewMode;
     setPreviewMode("null");
     setTimeout(() => {
@@ -375,14 +433,18 @@ export const PreviewSurvey = ({
                   values={testValues}
                   activeCount={testValueEntries.length}
                   onApply={setTestValues}
+                  openRequest={testValuesOpenRequest}
                 />
                 <ResetProgressButton onClick={resetProgress} />
               </div>
-              <TestValuesStrip
-                entries={testValueEntries}
-                onClear={clearTestValues}
-                className="absolute inset-x-2 top-10 z-20 w-auto rounded-md border"
-              />
+              <div className="absolute inset-x-2 top-10 z-20 flex flex-col gap-1">
+                <TestValuesStrip
+                  entries={testValueEntries}
+                  onClear={clearTestValues}
+                  className="w-auto rounded-md border"
+                />
+                {renderScreenOutBanner("w-auto rounded-md border")}
+              </div>
               <MediaBackground
                 surveyType={survey.type}
                 styling={styling}
@@ -521,11 +583,13 @@ export const PreviewSurvey = ({
                   values={testValues}
                   activeCount={testValueEntries.length}
                   onApply={setTestValues}
+                  openRequest={testValuesOpenRequest}
                 />
                 <ResetProgressButton onClick={resetProgress} />
               </PreviewWindowBar>
 
               <TestValuesStrip entries={testValueEntries} onClear={clearTestValues} />
+              {renderScreenOutBanner()}
 
               {/* The trusted box the survey is contained in, below the chrome and its controls. */}
               <div
