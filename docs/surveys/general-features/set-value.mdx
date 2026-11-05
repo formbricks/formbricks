@@ -63,6 +63,8 @@ One-step calculations keep their old behaviour: there, an empty field counts as 
 
 A calculated field can be a **date**. Set it with `now()` to record when the respondent reached a step, and use it in `daysBetween()` to count days, for example the days since a date passed in a URL parameter. Dates are stored as ISO 8601 timestamps in UTC, and they appear in exports like every other field.
 
+A date field's **Expression** switch stays on, because a date has no one-step input. To set a fixed date, pick it from the calendar next to the expression box: the picker writes the date in quotes, such as `"2026-11-05"`, into the expression.
+
 `daysBetween()` counts calendar days in UTC, not 24-hour periods: from 23:59 to 00:01 the next day is one day.
 
 ## Checks when you save

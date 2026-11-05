@@ -206,8 +206,15 @@ test.describe("Survey flow @slow", () => {
       await expect(question(ids.blocks.profile, "recommend")).toContainText("4 options");
 
       // Set value with a formula, and Mark as low quality.
-      await expect(page.locator(`[id="${ids.setValue.scoreRule}"]`)).toContainText(
-        "score = round(ifEmpty(@sat_netflix, 0) + ifEmpty(@sat_disney, 0) * 2, 1)"
+      // The row draws the field and the questions as chips, without the @ (ENG-6969 T3); its accessible
+      // name keeps the expression's text form.
+      const scoreRule = page.locator(`[id="${ids.setValue.scoreRule}"]`);
+      await expect(scoreRule).toContainText(
+        "score = round(ifEmpty(sat_netflix, 0) + ifEmpty(sat_disney, 0) * 2, 1)"
+      );
+      await expect(scoreRule.locator('[role="button"][aria-expanded]').first()).toHaveAttribute(
+        "aria-label",
+        /score = round\(ifEmpty\(@sat_netflix, 0\) \+ ifEmpty\(@sat_disney, 0\) \* 2, 1\)/
       );
       await expect(page.locator(`[id="${ids.lowQuality.rule}"]`)).toContainText(
         "Mark response as Low quality"

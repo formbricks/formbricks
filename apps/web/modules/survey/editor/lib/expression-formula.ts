@@ -6,13 +6,16 @@ import {
 } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import {
+  type TExpressionTypeContext,
   type TExpressionTypeIssue,
   type TExpressionValueType,
+  checkExpressionTypes,
   getElementExpressionType,
   getSetValueExpressionIssues,
 } from "@formbricks/types/surveys/expression-types";
 import {
   EXPRESSION_FUNCTIONS,
+  EXPRESSION_FUNCTION_ARITY,
   type TExpression,
   type TExpressionCall,
   type TExpressionFunction,
@@ -125,18 +128,21 @@ export const getFormulaIssues = (
   variableId: string,
   survey: TSurvey
 ): TExpressionTypeIssue[] => {
-  const fields = getSurveyEmbeddedFields(survey);
-  const target = fields.find(
+  const target = getSurveyEmbeddedFields(survey).find(
     ({ field, link }) => field.source === "computed" && link.storageKey === variableId
   )?.field;
   if (!target) return [];
+  return getSetValueExpressionIssues(expression, target.dataType, getFormulaTypeContext(survey));
+};
 
+/** How the shared type rules look up this survey's questions and fields. */
+export const getFormulaTypeContext = (survey: TSurvey): TExpressionTypeContext => {
+  const fields = getSurveyEmbeddedFields(survey);
   const elements = new Map(getElementsFromBlocks(survey.blocks).map((element) => [element.id, element]));
   const fieldType = (storageKey: string, source: "computed" | "ingested") =>
     fields.find(({ field, link }) => field.source === source && link.storageKey === storageKey)?.field
       .dataType;
-
-  return getSetValueExpressionIssues(expression, target.dataType, {
+  return {
     getElement: (elementId) => {
       const element = elements.get(elementId);
       if (!element) return undefined;
@@ -145,7 +151,7 @@ export const getFormulaIssues = (
     getComputedFieldType: (storageKey) => fieldType(storageKey, "computed"),
     getIngestedFieldType: (storageKey) => fieldType(storageKey, "ingested"),
     getReservedFieldType: (name) => RESERVED_FIELD_CATALOG.find((entry) => entry.name === name)?.dataType,
-  });
+  };
 };
 
 // ---- One-step calculations ----------------------------------------------------------------------
@@ -686,4 +692,245 @@ export const getShownFormulaError = (
     return null;
   }
   return error;
+};
+
+// ---- Reference chips (ENG-6950) ---------------------------------------------------------------------
+
+/**
+ * A stretch of the formula box's text: plain text, or a reference the box draws as a chip. A reference
+ * no survey entry answers to (deleted, or mistyped) carries no `reference`, and draws as a broken chip.
+ */
+export type TFormulaSegment =
+  | { kind: "text"; text: string; start: number }
+  | { kind: "reference"; text: string; start: number; token: string; reference?: TFormulaReference };
+
+/**
+ * Where quoted text that opens at `idx` ends (just after its closing quote), `\` escaping the next
+ * character; `undefined` while the quote is still open.
+ */
+const findQuotedTextEnd = (text: string, idx: number, closingQuote: string): number | undefined => {
+  let end = idx + 1;
+  while (end < text.length && text[end] !== closingQuote) end += text[end] === "\\" ? 2 : 1;
+  return end < text.length ? end + 1 : undefined;
+};
+
+/** The reference that starts with the `@` at `idx`: its token and where it ends, or none. */
+const readReferenceAt = (text: string, idx: number): { token: string; end: number } | undefined => {
+  if (text[idx + 1] === "{") {
+    const close = text.indexOf("}", idx + 2);
+    return close === -1 ? undefined : { token: text.slice(idx + 2, close).trim(), end: close + 1 };
+  }
+  const name = /^\w+/.exec(text.slice(idx + 1))?.[0];
+  return name ? { token: name, end: idx + 1 + name.length } : undefined;
+};
+
+/**
+ * Splits the formula box's text into text and references, for drawing the references as chips. The
+ * text is never changed: the segments join back into it, so the chips are only a way of showing the
+ * text form, which still parses into the stored tree. An `@` inside quotes is text; an `@` with no name
+ * after it is text until one is picked.
+ */
+export const segmentFormulaText = (text: string, references: TFormulaReference[]): TFormulaSegment[] => {
+  const byToken = new Map(references.map((reference) => [reference.token, reference]));
+  const segments: TFormulaSegment[] = [];
+  let textStart = 0;
+  let idx = 0;
+  while (idx < text.length) {
+    const closingQuote = QUOTES[text[idx]];
+    if (closingQuote) {
+      idx = findQuotedTextEnd(text, idx, closingQuote) ?? text.length;
+      continue;
+    }
+    const read = text[idx] === "@" ? readReferenceAt(text, idx) : undefined;
+    if (!read) {
+      idx += 1;
+      continue;
+    }
+    if (idx > textStart) segments.push({ kind: "text", text: text.slice(textStart, idx), start: textStart });
+    const reference = byToken.get(read.token);
+    segments.push({
+      kind: "reference",
+      text: text.slice(idx, read.end),
+      start: idx,
+      token: read.token,
+      ...(reference ? { reference } : {}),
+    });
+    textStart = read.end;
+    idx = read.end;
+  }
+  if (text.length > textStart) {
+    segments.push({ kind: "text", text: text.slice(textStart), start: textStart });
+  }
+  return segments;
+};
+
+// ---- What fits at the cursor (ENG-6950) -------------------------------------------------------------
+
+/** A type a slot of the formula takes, or `"any"` where every type fits (inside `concat()`). */
+export type TFormulaSlotType = TExpressionValueType | "any";
+
+/** What decides the type at the cursor: the target field, a function's argument, or an operator. */
+export type TFormulaSlotContext =
+  | { kind: "field" }
+  | { kind: "function"; fn: TExpressionFunction }
+  | { kind: "operator"; symbol: string };
+
+export interface TFormulaSlot {
+  wanted: TFormulaSlotType;
+  context: TFormulaSlotContext;
+}
+
+const PROBE_TYPES = ["number", "text", "date"] as const;
+
+/** One fixed value of each type, for asking the shared type rules what a function takes and gives. */
+const PROBE_VALUES: Record<(typeof PROBE_TYPES)[number], TExpression> = {
+  number: { type: "static", value: 1 },
+  text: { type: "static", value: "a" },
+  date: { type: "call", fn: "now", args: [] },
+};
+
+const PROBE_CONTEXT: TExpressionTypeContext = {
+  getElement: () => undefined,
+  getComputedFieldType: () => undefined,
+  getIngestedFieldType: () => undefined,
+  getReservedFieldType: () => undefined,
+};
+
+const probeCall = (fn: TExpressionFunction, argCount: number, value: TExpression) =>
+  checkExpressionTypes(
+    { type: "call", fn, args: Array.from({ length: argCount }, () => value) },
+    PROBE_CONTEXT
+  );
+
+/**
+ * What a function returns, asked of the shared type rules (`checkExpressionTypes`) rather than kept in
+ * a second list here: `"any"` for one whose result follows its arguments (`ifEmpty()`).
+ */
+export const getFunctionResultType = (fn: TExpressionFunction): TFormulaSlotType | undefined => {
+  const argCount = EXPRESSION_FUNCTION_ARITY[fn].min;
+  const results = new Set<TExpressionValueType>();
+  for (const probeType of PROBE_TYPES) {
+    const checked = probeCall(fn, argCount, PROBE_VALUES[probeType]);
+    if (checked.issues.length === 0 && checked.type) results.add(checked.type);
+  }
+  if (results.size > 1) return "any";
+  return results.values().next().value;
+};
+
+/** The type a function's argument at `argIdx` takes, asked of the shared type rules the same way. */
+const getArgumentType = (fn: TExpressionFunction, argIdx: number): TFormulaSlotType => {
+  const argCount = Math.max(EXPRESSION_FUNCTION_ARITY[fn].min, argIdx + 1);
+  const accepted = PROBE_TYPES.filter((probeType) => {
+    const checked = probeCall(fn, argCount, PROBE_VALUES[probeType]);
+    return !checked.issues.some((issue) => issue.path[0] === "args" && issue.path[1] === argIdx);
+  });
+  return accepted.length === 1 ? accepted[0] : "any";
+};
+
+const ARITHMETIC = new Set(["+", "-", "*", "/"]);
+
+type TSlotToken = { kind: "operator"; value: string } | { kind: "name"; value: string } | { kind: "value" };
+
+/** One lenient token of a formula being typed, which rarely parses: what it is, and where the next starts. */
+const readSlotToken = (prefix: string, idx: number): { token: TSlotToken; next: number } => {
+  const char = prefix[idx];
+  const operator = OPERATOR_ALIASES[char];
+  if (operator) return { token: { kind: "operator", value: operator }, next: idx + 1 };
+  if (char === "@") {
+    const read = readReferenceAt(prefix, idx);
+    return { token: { kind: "value" }, next: read?.end ?? idx + 1 };
+  }
+  const name = /^[A-Za-z_]\w*/.exec(prefix.slice(idx))?.[0];
+  if (name) return { token: { kind: "name", value: name }, next: idx + name.length };
+  const number = /^\d*\.?\d+/.exec(prefix.slice(idx))?.[0];
+  return { token: { kind: "value" }, next: idx + (number?.length || 1) };
+};
+
+/** The tokens before the cursor, or `insideText` when the cursor sits in quoted text. */
+const readSlotTokens = (prefix: string): { tokens: TSlotToken[]; insideText: boolean } => {
+  const tokens: TSlotToken[] = [];
+  let idx = 0;
+  while (idx < prefix.length) {
+    if (/\s/.test(prefix[idx])) {
+      idx += 1;
+      continue;
+    }
+    const closingQuote = QUOTES[prefix[idx]];
+    if (closingQuote) {
+      const end = findQuotedTextEnd(prefix, idx, closingQuote);
+      if (end === undefined) return { tokens, insideText: true };
+      tokens.push({ kind: "value" });
+      idx = end;
+      continue;
+    }
+    const read = readSlotToken(prefix, idx);
+    tokens.push(read.token);
+    idx = read.next;
+  }
+  return { tokens, insideText: false };
+};
+
+/** The brackets open at the cursor, innermost last, each with its function (if any) and argument. */
+const getOpenFrames = (tokens: TSlotToken[]) => {
+  const frames: { fn: TExpressionFunction | null; argIdx: number }[] = [];
+  tokens.forEach((token, idx) => {
+    if (token.kind !== "operator") return;
+    if (token.value === "(") {
+      const before = tokens[idx - 1];
+      const fn = before?.kind === "name" ? FUNCTION_BY_LOWERCASE.get(before.value.toLowerCase()) : undefined;
+      frames.push({ fn: fn ?? null, argIdx: 0 });
+    } else if (token.value === ")") {
+      frames.pop();
+    } else if (token.value === "," && frames.length > 0) {
+      frames[frames.length - 1].argIdx += 1;
+    }
+  });
+  return frames;
+};
+
+/**
+ * What type fits at the cursor of the formula box: next to `+ - * /` a number; inside a function's
+ * brackets what that argument takes (a date inside `daysBetween()`); through plain brackets and
+ * `ifEmpty()` whatever fits outside them; at the top the target field's type. Read from the text
+ * around the selection, so a half-typed formula still answers.
+ */
+export const getFormulaSlot = (
+  text: string,
+  selection: { start: number; end: number },
+  targetType: TExpressionValueType | undefined
+): TFormulaSlot => {
+  const start = Math.max(0, Math.min(selection.start, text.length));
+  const end = Math.max(start, Math.min(selection.end, text.length));
+  const { tokens, insideText } = readSlotTokens(text.slice(0, start));
+  if (insideText) return { wanted: "any", context: { kind: "field" } };
+
+  const previous = tokens.at(-1);
+  if (previous?.kind === "operator" && ARITHMETIC.has(previous.value)) {
+    return { wanted: "number", context: { kind: "operator", symbol: previous.value } };
+  }
+  const next = OPERATOR_ALIASES[text.slice(end).trimStart().charAt(0)];
+  if (next && ARITHMETIC.has(next)) {
+    return { wanted: "number", context: { kind: "operator", symbol: next } };
+  }
+
+  const frames = getOpenFrames(tokens);
+  for (let idx = frames.length - 1; idx >= 0; idx -= 1) {
+    const { fn, argIdx } = frames[idx];
+    // Plain brackets, and a function whose result follows its arguments, pass the outer type through.
+    if (!fn || getFunctionResultType(fn) === "any") continue;
+    return { wanted: getArgumentType(fn, argIdx), context: { kind: "function", fn } };
+  }
+  return { wanted: targetType ?? "any", context: { kind: "field" } };
+};
+
+/** Whether a function chip's result fits the slot at the cursor, and what it returns when it doesn't. */
+export const getFunctionFit = (
+  fn: TExpressionFunction,
+  slot: TFormulaSlot
+): { fits: true } | { fits: false; returns: TExpressionValueType } => {
+  const returns = getFunctionResultType(fn);
+  if (slot.wanted === "any" || returns === undefined || returns === "any" || returns === slot.wanted) {
+    return { fits: true };
+  }
+  return { fits: false, returns };
 };

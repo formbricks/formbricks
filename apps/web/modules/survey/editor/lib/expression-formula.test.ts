@@ -14,12 +14,16 @@ import {
   getFormulaExample,
   getFormulaIssues,
   getFormulaReferences,
+  getFormulaSlot,
   getFormulaToWriteOnBlur,
+  getFunctionFit,
+  getFunctionResultType,
   getFunctionSnippet,
   getShownFormulaError,
   insertIntoFormula,
   oneStepToFormula,
   parseFormula,
+  segmentFormulaText,
 } from "./expression-formula";
 
 const ids = SURVEY_FLOW_FIXTURE_IDS;
@@ -354,5 +358,130 @@ describe("formatFormula: a stored tree as text that parses back to the same tree
   test("a reference the survey no longer has reads as its stored id", () => {
     expect(formatFormula(call("add", answer("gone"), num(1)) as TExpression, references)).toBe("@gone + 1");
     expect(formatReferenceToken("a b")).toBe("@{a b}");
+  });
+});
+
+describe("segmentFormulaText: references drawn as chips, the text unchanged (ENG-6950)", () => {
+  const segments = (text: string) => segmentFormulaText(text, references);
+
+  test("splits references from the text around them, and joins back into the same text", () => {
+    const text = "round(@sat_netflix + @{Plan tier} * 2)";
+    const result = segments(text);
+
+    expect(result.map((segment) => segment.text).join("")).toBe(text);
+    expect(result.filter((segment) => segment.kind === "reference").map((segment) => segment.text)).toEqual([
+      "@sat_netflix",
+      "@{Plan tier}",
+    ]);
+  });
+
+  test("each chip names the leaf it stands for, so chips round-trip to the stored tree unchanged", () => {
+    const expressions = surveyFlowFixture.blocks
+      .flatMap((block) => block.logic ?? [])
+      .flatMap((rule) => rule.actions)
+      .flatMap((action) =>
+        action.objective === "calculate" && action.value.type === "expression" ? [action.value.value] : []
+      );
+    const leavesOf = (node: TExpression): TExpression[] => {
+      if (node.type === "call") return node.args.flatMap(leavesOf);
+      return node.type === "static" ? [] : [node];
+    };
+
+    expect(expressions.length).toBeGreaterThan(0);
+    for (const expression of expressions) {
+      const text = formatFormula(expression, references);
+      const chips = segments(text).flatMap((segment) =>
+        segment.kind === "reference" ? [segment.reference?.leaf] : []
+      );
+      expect(chips).toEqual(leavesOf(expression));
+      expect(
+        parse(
+          segments(text)
+            .map((segment) => segment.text)
+            .join("")
+        )
+      ).toEqual({ ok: true, expression });
+    }
+  });
+
+  test("a reference nothing answers to is a broken chip", () => {
+    const [chip] = segments("@gone + 1");
+    expect(chip).toMatchObject({ kind: "reference", token: "gone", text: "@gone" });
+    expect(chip.kind === "reference" && chip.reference).toBeUndefined();
+  });
+
+  test("an @ inside quotes, a lone @ and an unclosed brace stay text", () => {
+    expect(segments('concat("@sat_netflix", @)')).toEqual([
+      { kind: "text", text: 'concat("@sat_netflix", @)', start: 0 },
+    ]);
+    expect(segments("@{Plan").every((segment) => segment.kind === "text")).toBe(true);
+    expect(segments('"unclosed @hours').every((segment) => segment.kind === "text")).toBe(true);
+  });
+});
+
+describe("getFormulaSlot and getFunctionFit: function chips that fit at the cursor (ENG-6950)", () => {
+  const at = (text: string, target: "number" | "text" | "date" = "number") => {
+    const cursor = text.indexOf("|");
+    return getFormulaSlot(text.replace("|", ""), { start: cursor, end: cursor }, target);
+  };
+  const fitting = (slot: ReturnType<typeof getFormulaSlot>) =>
+    FORMULA_CHIP_FUNCTIONS.filter((fn) => getFunctionFit(fn, slot).fits);
+
+  test("function results come from the shared type rules", () => {
+    expect(getFunctionResultType("round")).toBe("number");
+    expect(getFunctionResultType("daysBetween")).toBe("number");
+    expect(getFunctionResultType("concat")).toBe("text");
+    expect(getFunctionResultType("now")).toBe("date");
+    expect(getFunctionResultType("ifEmpty")).toBe("any");
+  });
+
+  test("at the top of an empty box, the target field's type decides", () => {
+    expect(at("|", "number")).toEqual({ wanted: "number", context: { kind: "field" } });
+    expect(fitting(at("|", "number"))).toEqual(["round", "min", "max", "abs", "ifEmpty", "daysBetween"]);
+    expect(fitting(at("|", "text"))).toEqual(["ifEmpty", "concat"]);
+    expect(fitting(at("|", "date"))).toEqual(["ifEmpty", "now"]);
+  });
+
+  test("now() fits inside daysBetween() even when the target holds a number", () => {
+    const slot = at("daysBetween(|)");
+    expect(slot).toEqual({ wanted: "date", context: { kind: "function", fn: "daysBetween" } });
+    expect(getFunctionFit("now", slot)).toEqual({ fits: true });
+    expect(getFunctionFit("round", slot)).toEqual({ fits: false, returns: "number" });
+    expect(at("daysBetween(@last_purchase, |)").wanted).toBe("date");
+  });
+
+  test("concat() doesn't fit a number field, and says what it returns", () => {
+    expect(getFunctionFit("concat", at("|", "number"))).toEqual({ fits: false, returns: "text" });
+  });
+
+  test("next to an arithmetic operator a number fits, whatever the target", () => {
+    expect(at("@hours + |", "text")).toEqual({
+      wanted: "number",
+      context: { kind: "operator", symbol: "+" },
+    });
+    expect(at("| * 2", "text").wanted).toBe("number");
+    expect(at("@hours × |", "text").wanted).toBe("number");
+  });
+
+  test("plain brackets and ifEmpty() pass the outer type through; concat() takes anything", () => {
+    expect(at("round((|))").wanted).toBe("number");
+    expect(at("ifEmpty(|, 0)", "date")).toEqual({ wanted: "date", context: { kind: "field" } });
+    expect(at("daysBetween(ifEmpty(|, now()), now())").wanted).toBe("date");
+    expect(at('concat("a", |)', "number")).toEqual({
+      wanted: "any",
+      context: { kind: "function", fn: "concat" },
+    });
+  });
+
+  test("a closed function no longer counts, and a comma moves to the next argument", () => {
+    expect(at("daysBetween(now(), now()) + round(|)", "text")).toEqual({
+      wanted: "number",
+      context: { kind: "function", fn: "round" },
+    });
+    expect(at('concat("a(", |)', "number").wanted).toBe("any");
+  });
+
+  test("inside quoted text nothing is ruled out", () => {
+    expect(at('concat("ab|', "number").wanted).toBe("any");
   });
 });

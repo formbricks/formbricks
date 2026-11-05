@@ -2,10 +2,16 @@ import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { RESERVED_FIELD_CATALOG, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
+import { evaluateExpression, evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
+import { type TExpressionValueType, checkExpressionTypes } from "@formbricks/types/surveys/expression-types";
 import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { formatStoredDateValue } from "@/lib/utils/datetime";
+import {
+  formatFormula,
+  getFormulaReferences,
+  getFormulaTypeContext,
+} from "@/modules/survey/editor/lib/expression-formula";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 /**
@@ -94,16 +100,73 @@ export const getSampleResult = (
   targetDataType: TEmbeddedDataType,
   survey: TSurvey,
   now: Date = new Date()
-): string | number => {
+): string | number => getSampleExplanation(expression, targetDataType, survey, now).result;
+
+/** An answer or field the formula reads, and the value the sample response gives it (ENG-6950). */
+export interface TSampleInput {
+  /** The reference as the formula box writes it: `@sat_netflix`. */
+  name: string;
+  value: string | number | undefined;
+  valueType: TExpressionValueType | undefined;
+}
+
+type TReferenceLeaf = Exclude<TExpression, { type: "call" | "static" }>;
+
+/** Each answer and field the expression reads, once, in the order the formula names them. */
+const collectLeaves = (expression: TExpression): TReferenceLeaf[] => {
+  const seen = new Set<string>();
+  const leaves: TReferenceLeaf[] = [];
+  const visit = (node: TExpression) => {
+    if (node.type === "call") {
+      node.args.forEach(visit);
+      return;
+    }
+    if (node.type === "static") return;
+    const key = `${node.type}:${node.value}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    leaves.push(node);
+  };
+  visit(expression);
+  return leaves;
+};
+
+/**
+ * The sample result with its inputs spelled out (ENG-6950): "If @sat_netflix is 4 and @sat_disney is
+ * 4, the result is 12". Each input is read through the same evaluator the result is, so a single
+ * select shows the answer code a formula sees, not its label.
+ */
+export const getSampleExplanation = (
+  expression: TExpression,
+  targetDataType: TEmbeddedDataType,
+  survey: TSurvey,
+  now: Date = new Date()
+): { inputs: TSampleInput[]; result: string | number } => {
   const { data, variables, reservedValues } = buildSampleResponse(survey, now);
-  return evaluateSetValue(expression, targetDataType, {
-    survey,
-    data,
-    variables,
-    reservedValues,
-    language: "default",
-    now: () => now,
-  });
+  const ctx = { survey, data, variables, reservedValues, language: "default", now: () => now };
+  const references = getFormulaReferences(survey);
+  const typeContext = getFormulaTypeContext(survey);
+  const inputs = collectLeaves(expression).map((leaf) => ({
+    name: formatFormula(leaf, references),
+    value: evaluateExpression(leaf, ctx),
+    valueType: checkExpressionTypes(leaf, typeContext).type,
+  }));
+  return { inputs, result: evaluateSetValue(expression, targetDataType, ctx) };
+};
+
+/**
+ * An input's sample value as the sentence reads it: text in quotes, a date in the app's date format,
+ * a number as it is, `undefined` for empty.
+ */
+export const formatSampleInput = (
+  input: TSampleInput,
+  locale: string,
+  timeZone?: string
+): string | undefined => {
+  if (input.value === undefined || input.value === "") return undefined;
+  if (typeof input.value === "number") return String(input.value);
+  if (input.valueType === "date") return formatStoredDateValue(input.value, locale, timeZone) ?? input.value;
+  return `“${input.value}”`;
 };
 
 /**
