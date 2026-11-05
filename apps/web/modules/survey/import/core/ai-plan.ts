@@ -115,6 +115,11 @@ export type TImportCallFailure =
 export interface TImportPlanResponse {
   refs: ReadonlySet<string>;
   object: unknown;
+  /**
+   * Set on an answer to units asked again after a silent answer (`isSilent`): the lane believes it,
+   * whatever it says, rather than failing its units for a third ask.
+   */
+  askedAgain?: true;
 }
 
 /** What a lane's checks make of a round of answers: at least each failed unit and why. */
@@ -161,7 +166,7 @@ export interface TImportPlanLane<TFailure extends string, TPlan extends TImportC
    * Whether an answer names none of the units it was asked about, for a lane whose checks let such an
    * answer pass (a document's: a chunk can hold only the rest of a question). A thinking model
    * sometimes answers a chunk full of questions that way, so such an answer is asked again once, in
-   * halves, before it is believed.
+   * halves, before it is believed: the halves' answers reach `check` marked `askedAgain`.
    */
   isSilent?: (response: TImportPlanResponse) => boolean;
   /** Calls in flight at once; `SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS` when not set. */
@@ -463,7 +468,7 @@ async function planRound<TFailure extends string, TPlan extends TImportCheckedPl
   const failed = new Map<string, TImportCallFailure[]>();
 
   const ask =
-    (refs: string[], splittable: boolean): TPoolTask =>
+    (refs: string[], splittable: boolean, askedAgain = false): TPoolTask =>
     async (enqueue) => {
       // Sized when the call starts: a split's halves run later than the chunk did.
       const outcome = await callOnce(context, refs, timeout(), failures);
@@ -471,13 +476,13 @@ async function planRound<TFailure extends string, TPlan extends TImportCheckedPl
         // Not believed yet: asked again, in halves, which are believed whatever they say.
         const middle = Math.ceil(refs.length / 2);
         if (refs.length > 1) {
-          enqueue(ask(refs.slice(0, middle), false));
-          enqueue(ask(refs.slice(middle), false));
-        } else enqueue(ask(refs, false));
+          enqueue(ask(refs.slice(0, middle), false, true));
+          enqueue(ask(refs.slice(middle), false, true));
+        } else enqueue(ask(refs, false, true));
         return;
       }
       if (outcome.kind === "ok") {
-        responses.push(outcome.response);
+        responses.push(askedAgain ? { ...outcome.response, askedAgain: true } : outcome.response);
         countQuestions(context, outcome.response);
         return;
       }

@@ -484,7 +484,7 @@ export function checkDocumentPlanResponses(
       continue;
     }
     settleTitleCell(context, envelope.data.titleCell);
-    judgeResponse(context, plan, envelope.data, response.refs, round, addFailure);
+    judgeResponse(context, plan, envelope.data, response, round, addFailure);
   }
   return plan;
 }
@@ -502,7 +502,7 @@ function judgeResponse(
   context: DocumentPlanContext,
   plan: TDocumentCheckedPlan,
   envelope: { questions: unknown[]; skipped: unknown[] },
-  refs: ReadonlySet<string>,
+  { refs, askedAgain }: Pick<TImportPlanResponse, "refs" | "askedAgain">,
   round: { retry: boolean },
   addFailure: (ref: string, reason: TDocumentPlanFailure) => void
 ): void {
@@ -513,10 +513,14 @@ function judgeResponse(
   if (entries.size === 0 && skips.size === 0) {
     plan.silentResponses += 1;
     for (const ref of refs) plan.silentRefs.add(ref);
-    // A thinking model sometimes plans a chunk in its thoughts and returns an empty answer: its lines
-    // are asked once more, and still silent then, they count as unread (`isUnreadLine`).
-    // A line an entry named but the schema refused already has its failure.
-    if (!round.retry) for (const ref of refs) if (!plan.failures.has(ref)) addFailure(ref, "silent_answer");
+    // A thinking model sometimes plans a chunk in its thoughts and returns an empty answer, so a silent
+    // answer is asked once more: by the core, in halves (`askedAgain`), or here, by failing its lines
+    // for the retry round. A second silent answer is believed: the lines hold no question start (a
+    // chunk of notes, or the rest of a question), not unread ones. A line an entry named but the schema
+    // refused already has its failure.
+    if (!round.retry && !askedAgain) {
+      for (const ref of refs) if (!plan.failures.has(ref)) addFailure(ref, "silent_answer");
+    }
   }
 
   // A line that is no entry's start — a header, a continuation, a comment — is not a failure: the AI
@@ -591,7 +595,9 @@ const keepUnresolvedFailures = (
     if (retry.entries.has(ref) || retry.skipped.has(ref) || failures.has(ref)) continue;
     // A line whose whole call failed is cleared by a retry answer that named others (it is a heading or
     // an option line), not by one that named nothing: that says nothing about it, so it stays unread.
+    // A line that was only silent is the exception: silent twice, it is believed to hold no question.
     if (isUnreadLine(reasons) && !retry.silentRefs.has(ref)) continue;
+    if (reasons.every((reason) => reason === "silent_answer") && retry.silentRefs.has(ref)) continue;
     const line = context.lineAt(ref);
     if (line !== undefined && linesRead.has(line)) continue;
     failures.set(ref, reasons);

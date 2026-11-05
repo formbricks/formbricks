@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as XLSX from "xlsx";
+import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import type { TImportPlanGenerate, TImportPlanRequest } from "../core/ai-plan";
 import type { TSurveyImportDraft } from "../core/draft";
 import { SurveyImportFailedError, SurveyImportTimeoutError } from "../core/errors";
 import { openZipArchive } from "../core/zip";
-import { SURVEY_IMPORT_MAX_QUESTIONS } from "../limits";
+import { SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS, SURVEY_IMPORT_MAX_QUESTIONS } from "../limits";
 import { docx, p, r, tbl } from "./__fixtures__/docx-builders";
 import { loadDocumentFixture, loadDocumentFixtureText } from "./__fixtures__/load-fixture";
 import { promptInjectionWithoutInjectedText } from "./__fixtures__/prompt-injection";
@@ -947,6 +948,19 @@ describe("runDocumentImport: cancellation and time", () => {
 
     expect(timeouts.length).toBeGreaterThan(0);
     expect(Math.max(...timeouts)).toBeLessThanOrEqual(15_000);
+  });
+
+  test("with time to spare, each call gets a document call's own budget, shorter than a Qualtrics call's", async () => {
+    const timeouts: number[] = [];
+    await run(
+      prepared(),
+      recordedDocumentGenerate(plan(), (request) => {
+        timeouts.push(request.timeout);
+        return undefined;
+      })
+    );
+
+    expect(new Set(timeouts)).toEqual(new Set([getAITimeoutMs(SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS)]));
   });
 
   test("a call that times out on every line leaves nothing to assemble: the import took too long", async () => {

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { TImportPlanResponse } from "../core/ai-plan";
 import { SURVEY_IMPORT_MAX_NAME_CHARS } from "../limits";
 import { buildGridModel } from "./model";
 import {
@@ -52,7 +53,7 @@ const answer = (refs: string[], questions: unknown[], skipped: unknown[] = []) =
   },
 });
 
-const check = (responses: ReturnType<typeof answer>[], retry = false) => {
+const check = (responses: TImportPlanResponse[], retry = false) => {
   const context = new DocumentPlanContext(model);
   return { context, plan: checkDocumentPlanResponses(context, responses, { retry }) };
 };
@@ -411,6 +412,56 @@ describe("checkDocumentPlanResponses: an answer", () => {
   });
 });
 
+describe("language codes across calls", () => {
+  const spelled = (refs: string[], codes: [string, string], questions: unknown[]) => ({
+    refs: new Set(refs),
+    object: { defaultLanguage: codes[0], languages: codes, titleCell: null, questions, skipped: [] },
+  });
+  const inCodes = (ref: string, codes: [string, string]) =>
+    entry(ref, { headline: [piece(codes[0], `B${ref.slice(1)}`), piece(codes[1], `C${ref.slice(1)}`)] });
+
+  test("reads a later call's bare code as the one settled code of that language", () => {
+    // A bare "en" normalizes to en-US, which the file is not in: only the language matches.
+    const settled: [string, string] = ["en-GB", "de-AT"];
+    const bare: [string, string] = ["en", "de"];
+    const { plan } = check([
+      spelled(["R2"], settled, [inCodes("R2", settled)]),
+      spelled(["R3"], bare, [inCodes("R3", bare)]),
+    ]);
+
+    expect(plan.failures.size).toBe(0);
+    expect(plan.entries.get("R3")?.headline).toEqual(
+      new Map([
+        ["en-GB", "Anything else?"],
+        ["de-AT", "Sonst noch etwas?"],
+      ])
+    );
+  });
+
+  test("reads a code spelled another way as the settled code it normalizes to", () => {
+    // Two English codes: the language alone would not say which, the normalized code does.
+    const settled: [string, string] = ["en-US", "en-GB"];
+    const { plan } = check([
+      spelled(["R2"], settled, [inCodes("R2", settled)]),
+      spelled(["R3"], settled, [inCodes("R3", ["EN-us", "en_GB"])]),
+    ]);
+
+    expect(plan.failures.size).toBe(0);
+    expect([...(plan.entries.get("R3")?.headline.keys() ?? [])]).toEqual(["en-US", "en-GB"]);
+  });
+
+  test("refuses a bare code two settled codes share", () => {
+    const settled: [string, string] = ["en-GB", "en-AU"];
+    const { plan } = check([
+      spelled(["R2"], settled, [inCodes("R2", settled)]),
+      spelled(["R3"], settled, [inCodes("R3", ["en", "en-AU"])]),
+    ]);
+
+    expect(plan.entries.has("R2")).toBe(true);
+    expect(plan.failures.get("R3")).toContain("unknown_language");
+  });
+});
+
 describe("an answer that names none of its lines", () => {
   test("fails its lines for the retry, and is counted, beside one that skipped its lines", () => {
     const { plan } = check([
@@ -430,6 +481,31 @@ describe("an answer that names none of its lines", () => {
 
   test("on the retry is believed: no failure", () => {
     expect(check([answer(["R2"], [], [])], true).plan.failures.size).toBe(0);
+  });
+
+  test("asked again after a silent answer, is believed: no failure, so its lines are not unread", () => {
+    const { plan } = check([{ ...answer(["R2", "R3"], [], []), askedAgain: true }]);
+
+    expect(plan.failures.size).toBe(0);
+    expect(plan.silentRefs).toEqual(new Set(["R2", "R3"]));
+  });
+
+  test("silent in the first round and again on the retry, is believed: the lines hold no question", () => {
+    // Notes, or the rest of a question: what the prompt tells the model to leave out.
+    const first = check([answer(["R2", "R3"], [], [])]).plan;
+    const retry = check([answer(["R2", "R3"], [], [])], true).plan;
+
+    expect(mergeDocumentPlans(first, retry, new DocumentPlanContext(model)).failures.size).toBe(0);
+  });
+
+  test("a line whose call failed stays unread when the retry is silent about it", () => {
+    const first = check([{ refs: new Set(["R2"]), object: { questions: "not a plan" } }]).plan;
+    const retry = check([answer(["R2"], [], [])], true).plan;
+
+    const merged = mergeDocumentPlans(first, retry, new DocumentPlanContext(model));
+
+    expect(merged.failures.get("R2")).toEqual(["invalid_output"]);
+    expect(isUnreadLine(merged.failures.get("R2") ?? [])).toBe(true);
   });
 
   test("is counted across a retry", () => {
