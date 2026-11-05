@@ -7,13 +7,25 @@ import { redactAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
-import { AI_TRANSLATION_MODEL_BATCHES_PER_ACTION, createTranslationBatches } from "./translation-batches";
+import {
+  AI_TRANSLATION_FIELD_TOO_LONG,
+  AI_TRANSLATION_MAX_FIELD_CHARS,
+  AI_TRANSLATION_MODEL_BATCHES_PER_ACTION,
+  createTranslationBatches,
+} from "./translation-batches";
 
 export const ZAITranslationField = z.object({
   path: z.string(),
   defaultText: z.string(),
   isRichText: z.boolean(),
 });
+
+export const ZAITranslationFields = z
+  .array(ZAITranslationField)
+  .min(1)
+  .refine((fields) => fields.every((field) => field.defaultText.length <= AI_TRANSLATION_MAX_FIELD_CHARS), {
+    message: AI_TRANSLATION_FIELD_TOO_LONG,
+  });
 
 export type TAITranslationField = z.infer<typeof ZAITranslationField>;
 

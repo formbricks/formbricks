@@ -13,6 +13,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/actions";
 import {
   AI_TRANSLATION_ACTIONS_PER_RUN,
+  AI_TRANSLATION_FIELD_TOO_LONG,
+  AI_TRANSLATION_MAX_FIELD_CHARS,
   createTranslationActionBatches,
 } from "@/modules/ee/ai-translation/lib/translation-batches";
 import { Button } from "@/modules/ui/components/button";
@@ -167,6 +169,12 @@ export const ManageTranslationsModal = ({
         return t("workspace.surveys.edit.ai_translation_output_too_long");
       }
 
+      if (errorCode.includes(AI_TRANSLATION_FIELD_TOO_LONG)) {
+        return t("workspace.surveys.edit.ai_translation_field_too_long", {
+          maxCharacters: AI_TRANSLATION_MAX_FIELD_CHARS.toLocaleString(),
+        });
+      }
+
       // Fall back to the generic failure message rather than leaking a raw error code to the user.
       return t("workspace.surveys.edit.ai_translation_failed");
     },
@@ -175,6 +183,15 @@ export const ManageTranslationsModal = ({
 
   const handleTranslateWithAI = async () => {
     if (emptyFields.length === 0) return;
+
+    if (emptyFields.some((field) => (field.value.default || "").length > AI_TRANSLATION_MAX_FIELD_CHARS)) {
+      toast.error(
+        t("workspace.surveys.edit.ai_translation_field_too_long", {
+          maxCharacters: AI_TRANSLATION_MAX_FIELD_CHARS.toLocaleString(),
+        })
+      );
+      return;
+    }
 
     const batches = createTranslationActionBatches(
       emptyFields.map((s) => ({
@@ -217,7 +234,7 @@ export const ManageTranslationsModal = ({
       if (runId !== translationRunId.current) return;
 
       if (failedMessage || batches.length > selectedBatches.length) {
-        toast.error(failedMessage ?? t("workspace.surveys.edit.ai_translation_output_too_long"), {
+        toast.error(failedMessage ?? t("workspace.surveys.edit.ai_translation_run_limit_reached"), {
           id: toastId,
         });
       } else {

@@ -6,8 +6,14 @@ import {
   AI_TRANSLATION_BATCH_TOO_LARGE,
   AI_TRANSLATION_OUTPUT_TOO_LONG,
   type TAITranslationField,
+  ZAITranslationFields,
   translateFields,
 } from "./translate-fields";
+import {
+  AI_TRANSLATION_FIELD_TOO_LONG,
+  AI_TRANSLATION_MAX_FIELD_CHARS,
+  AI_TRANSLATION_SOURCE_CHARS_PER_BATCH,
+} from "./translation-batches";
 
 const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
 
@@ -59,6 +65,36 @@ const mockTranslationsFor = (fieldList: TAITranslationField[]): void => {
     object: Object.fromEntries(fieldList.map((_, index) => [`t${index}`, `Translated ${index}`])),
   });
 };
+
+describe("translation action field limit", () => {
+  test("accepts a field above the batching target and at the field limit", () => {
+    const field = { path: "long", defaultText: "x", isRichText: false };
+
+    expect(
+      ZAITranslationFields.safeParse([
+        { ...field, defaultText: "x".repeat(AI_TRANSLATION_SOURCE_CHARS_PER_BATCH + 1) },
+      ]).success
+    ).toBe(true);
+    expect(
+      ZAITranslationFields.safeParse([{ ...field, defaultText: "x".repeat(AI_TRANSLATION_MAX_FIELD_CHARS) }])
+        .success
+    ).toBe(true);
+  });
+
+  test("rejects an oversized field with an error naming the limit", () => {
+    const result = ZAITranslationFields.safeParse([
+      { path: "long", defaultText: "x".repeat(AI_TRANSLATION_MAX_FIELD_CHARS + 1), isRichText: false },
+    ]);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]).toMatchObject({
+        path: [],
+        message: AI_TRANSLATION_FIELD_TOO_LONG,
+      });
+    }
+  });
+});
 
 describe("translateFields", () => {
   beforeEach(() => {

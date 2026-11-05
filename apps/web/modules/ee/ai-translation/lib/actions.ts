@@ -6,7 +6,7 @@ import { assertOrganizationAIConfigured, getOrganizationAIConfig } from "@/lib/a
 import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId, getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { ZAITranslationField, translateFields } from "./translate-fields";
+import { ZAITranslationFields, translateFields } from "./translate-fields";
 
 const ZCheckAITranslationAvailableAction = z.object({
   surveyId: ZId,
@@ -40,7 +40,7 @@ export const checkAITranslationAvailableAction = authenticatedActionClient
 
 const ZTranslateSurveyFieldsAction = z.object({
   workspaceId: ZId,
-  fields: z.array(ZAITranslationField).min(1),
+  fields: ZAITranslationFields,
   sourceLanguage: z.string().min(1),
   targetLanguage: z.string().min(1),
 });
