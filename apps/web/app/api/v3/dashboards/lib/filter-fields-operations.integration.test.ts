@@ -88,7 +88,8 @@ const fieldsOf = async (response: Response) => {
   return ZV3DashboardFilterFields.parse(((await response.json()) as { data: unknown }).data).fields;
 };
 
-const field = (key: string) => ({ name: getEmbeddedMemberName(key), key, label: key });
+// No survey declares these keys, so each is text on the dashboard.
+const field = (key: string) => ({ name: getEmbeddedMemberName(key), key, label: key, type: "string" });
 
 beforeAll(async () => {
   fixture = await seedDashboardsFixture();

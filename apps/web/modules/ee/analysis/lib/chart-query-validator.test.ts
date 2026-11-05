@@ -480,6 +480,28 @@ describe("validateChartQuery: a dataset's embedded data and answer filters (ENG-
     expect(validateChartQuery(query, { dataset })).toEqual({ ok: true, query });
   });
 
+  test("accepts the numeric twin of the dataset's embedded field in a filter only, compared as a number", () => {
+    const TWIN = "FeedbackRecords.edn_plan_64879f7d";
+    const query = {
+      measures: [COUNT],
+      filters: [condition(TWIN, "gt", ["10"]), condition(TWIN, "lte", ["20"])],
+    };
+    expect(validateChartQuery(query, { dataset })).toEqual({ ok: true, query });
+    expect(issuesFor({ measures: [COUNT], dimensions: [TWIN] }, { dataset })).toEqual([
+      expect.objectContaining({ name: "query.dimensions[0]", code: "invalid_reference" }),
+    ]);
+    expect(
+      issuesFor({ measures: [COUNT], filters: [condition(TWIN, "contains", ["1"])] }, { dataset })
+    ).not.toEqual([]);
+    // Only a key of the dataset has a twin.
+    expect(
+      issuesFor(
+        { measures: [COUNT], filters: [condition("FeedbackRecords.edn_region_0a1b2c3d", "gt", ["1"])] },
+        { dataset }
+      )
+    ).toEqual([expect.objectContaining({ name: "query.filters[0].member", code: "invalid_reference" })]);
+  });
+
   test("refuses an embedded field of another dataset, and any embedded field without a dataset", () => {
     expect(issuesFor({ measures: [COUNT], dimensions: [OTHER_DATASET_KEY] }, { dataset })).toEqual([
       expect.objectContaining({ name: "query.dimensions[0]", code: "invalid_reference" }),

@@ -18,6 +18,7 @@ import {
   type TDashboardFilterPicks,
   getDashboardFilterField,
 } from "./dashboard-filters";
+import { ENRICHMENT_FIELDS, chartExcludesTextAnswers } from "./enrichment-filters";
 
 /**
  * A list dashboard filter's values (ENG-6892, ENG-6895): the values the dashboard's charts let through
@@ -87,6 +88,19 @@ const chunkRuleSets = (ruleSets: readonly TCubeFilter[][], conditionBudget: numb
   if (current.length > 0) chunks.push(current);
   return chunks;
 };
+
+/**
+ * Whether a chart offers no value for the filter however its dataset is narrowed: it reads no text answer
+ * (`chartExcludesTextAnswers`), and either the listed field is one only enrichment of text answers sets, or
+ * another pick needs a text answer — the chart is unfilterable by that pick and shows nothing.
+ */
+const chartCannotOfferValues = (
+  chart: TFilterValueChart,
+  filter: TDashboardFilter,
+  resolveFor: (excludesTextAnswers: boolean) => { unfilterable: readonly unknown[] }
+): boolean =>
+  chartExcludesTextAnswers(chart.query) &&
+  (ENRICHMENT_FIELDS.has(filter.field) || resolveFor(true).unfilterable.length > 0);
 
 /** One rule standing for a branch: its rule, or the AND of its rules. */
 const asOneRule = (rules: TCubeFilter[]): TCubeFilter => (rules.length === 1 ? rules[0] : { and: rules });
@@ -164,7 +178,8 @@ const listedValueOf = (row: unknown, field: string): string | null => {
  * charts that are not bounded by their own groups (`isGroupBoundedChart`; those take two steps, below).
  *
  * A dataset is left out when its charts cannot let anything through: it lacks the field, or another picked
- * filter's field, which leaves its charts empty.
+ * filter's field, which leaves its charts empty. A chart that reads no text answer is left out when the field
+ * is an enrichment field or another pick needs a text answer (`chartCannotOfferValues`): it shows nothing.
  */
 export const buildFilterValueQueries = ({
   filter,
@@ -205,10 +220,13 @@ export const buildFilterValueQueries = ({
     const hasField = (field: string) => datasetHasField(datasetId, field);
     if (!hasField(filter.field)) return [];
 
-    const otherPicks = resolvePicksForDataset(filters, picks, hasField, {
-      except: filter.id,
-      timeZone: clock.timeZone,
-    });
+    const resolveFor = (excludesTextAnswers: boolean) =>
+      resolvePicksForDataset(filters, picks, hasField, {
+        except: filter.id,
+        timeZone: clock.timeZone,
+        excludesTextAnswers,
+      });
+    const otherPicks = resolveFor(false);
     if (otherPicks.unfilterable.length > 0) return [];
     // Every query of the dataset ends with the picks and the value rules; the rest of the budget is the
     // charts'. Picks over the budget on their own refuse every chart on the dashboard, so none shows a value.
@@ -220,6 +238,7 @@ export const buildFilterValueQueries = ({
     const branches = new Map<string, TCubeFilter[]>();
     for (const chart of charts) {
       if (chart.datasetId !== datasetId || isGroupBoundedChart(chart.query)) continue;
+      if (chartCannotOfferValues(chart, filter, resolveFor)) continue;
       const rules = chartRuleSet(applyDashboardDateFilter(chart.query, dateFilter), clock);
       branches.set(JSON.stringify(rules), rules);
     }
@@ -282,8 +301,11 @@ export const buildBoundedChartQueries = ({
     const otherPicks = resolvePicksForDataset(filters, picks, hasField, {
       except: filter.id,
       timeZone: clock.timeZone,
+      excludesTextAnswers: chartExcludesTextAnswers(chart.query),
     });
     if (otherPicks.unfilterable.length > 0) return [];
+    // A chart reading no text answer offers no Sentiment or Emotions value.
+    if (ENRICHMENT_FIELDS.has(filter.field) && chartExcludesTextAnswers(chart.query)) return [];
     // Its saved filters and the picks over MAX_FILTER_CONDITIONS together: the chart is refused when it runs.
     const conditions = countFilterConditions(chart.query.filters) + countFilterConditions(otherPicks.rules);
     if (conditions > MAX_FILTER_CONDITIONS) return [];

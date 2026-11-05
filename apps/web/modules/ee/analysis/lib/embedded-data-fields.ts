@@ -38,6 +38,27 @@ const CONTROL_CHARACTER = /[\u0000-\u001F\u007F-\u009F]/;
 export const isEmbeddedMemberName = (name: string): boolean => EMBEDDED_MEMBER_PATTERN.test(name);
 
 /**
+ * The numeric twin of every embedded-data dimension: `FeedbackRecords.edn_<suffix>` beside
+ * `FeedbackRecords.ed_<suffix>`, the key's value read as a number, or no value when it is not one
+ * (docker/cube/cube.js `getEmbeddedDimensionSpecs`). Only a dashboard filter comparing a key with a number
+ * (`gt`, `gte`, `lt`, `lte`) names it, and only in a filter: the key's own member stays the one a chart
+ * groups by, and the one its `equals` reaches the GIN index through.
+ */
+export const EMBEDDED_NUMBER_MEMBER_PREFIX = "FeedbackRecords.edn_";
+const EMBEDDED_NUMBER_MEMBER_PATTERN = /^FeedbackRecords\.edn_[a-z0-9_]+$/;
+
+export const isEmbeddedNumberMemberName = (name: string): boolean =>
+  EMBEDDED_NUMBER_MEMBER_PATTERN.test(name);
+
+/** The numeric twin of an embedded-data member (`FeedbackRecords.ed_x` → `FeedbackRecords.edn_x`). */
+export const toEmbeddedNumberMember = (member: string): string =>
+  EMBEDDED_NUMBER_MEMBER_PREFIX + member.slice(EMBEDDED_MEMBER_PREFIX.length);
+
+/** The embedded-data member a numeric twin reads (`FeedbackRecords.edn_x` → `FeedbackRecords.ed_x`). */
+export const fromEmbeddedNumberMember = (member: string): string =>
+  EMBEDDED_MEMBER_PREFIX + member.slice(EMBEDDED_NUMBER_MEMBER_PREFIX.length);
+
+/**
  * Whether a key can compile at all: a string, not blank (a blank title breaks the whole Cube model), at
  * most `MAX_EMBEDDED_KEY_LENGTH`, no control character and nothing Postgres text cannot hold.
  */
@@ -91,7 +112,8 @@ const collectFilterMembers = (filters: unknown, into: Set<string>): void => {
 
 /**
  * The embedded-data members a chart query names, wherever it names one: measures, dimensions, time
- * dimensions, filters (nested `and`/`or` included) and order. Filter values are never read, so a value
+ * dimensions, filters (nested `and`/`or` included) and order. A numeric twin (`edn_`) counts as the member
+ * it reads. Filter values are never read, so a value
  * that happens to look like a member name is not mistaken for one. Read defensively: a stored query is
  * JSON and could hold anything.
  */
@@ -114,5 +136,10 @@ export const collectEmbeddedMemberNames = (query: unknown): string[] => {
   } else if (typeof order === "object" && order !== null) {
     Object.keys(order).forEach((name) => members.add(name));
   }
-  return [...members].filter(isEmbeddedMemberName);
+  // A numeric twin needs its key in the token like the key's own member does.
+  return [
+    ...new Set(
+      [...members].map((name) => (isEmbeddedNumberMemberName(name) ? fromEmbeddedNumberMember(name) : name))
+    ),
+  ].filter(isEmbeddedMemberName);
 };

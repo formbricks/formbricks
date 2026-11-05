@@ -569,7 +569,8 @@ export async function updateV3DashboardLayout({
  * The MCP `set_dashboard_filters`: replaces the dashboard's locked filters, all of them, keeping its name
  * and every widget — the `filters` of `PUT /api/v3/dashboards/{dashboardId}` without the rest of the save.
  * An empty list removes every locked filter. A stale `expectedUpdatedAt` answers 409, and an embedded-data
- * key none of the dashboard's charts reads 422, as the save does.
+ * key none of the dashboard's charts reads, or a number comparison on a key that is not a number there,
+ * 422, as the save does.
  */
 export async function setV3DashboardFilters({
   dashboardId,

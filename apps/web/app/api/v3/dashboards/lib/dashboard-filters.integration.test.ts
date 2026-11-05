@@ -441,6 +441,31 @@ describe("GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data (ENG-6898, 
     expect(cubeFake.calls).toHaveLength(1);
   });
 
+  test("names a Sentiment filter on a chart that reads no text answer instead of showing it empty", async () => {
+    const SENTIMENT = "FeedbackRecords.sentiment";
+    const nps = await createChart({ measures: ["FeedbackRecords.npsScore"] });
+    const pinned = await createChart({
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.fieldType", operator: "equals", values: ["rating"] }],
+    });
+    const open = await createChart({ measures: ["FeedbackRecords.count"] });
+    const dashboard = await createDashboard([nps.id, pinned.id, open.id]);
+    const positive = requestFilters([{ field: SENTIMENT, operator: "equals", values: ["positive"] }]);
+
+    for (const chart of [nps, pinned]) {
+      const data = await dataOf(await readData(dashboard.id, chart.id, positive));
+      expect(data.rows).toEqual([]);
+      expect(data.unfilterableFilters).toEqual([{ id: "f1", label: SENTIMENT }]);
+    }
+    expect(cubeFake.calls).toHaveLength(0);
+
+    // A chart that may read text answers is narrowed as before, and "is not" still narrows the NPS chart.
+    expect((await dataOf(await readData(dashboard.id, open.id, positive))).unfilterableFilters).toEqual([]);
+    const notPositive = requestFilters([{ field: SENTIMENT, operator: "notEquals", values: ["positive"] }]);
+    expect((await dataOf(await readData(dashboard.id, nps.id, notPositive))).unfilterableFilters).toEqual([]);
+    expect(cubeFake.calls).toHaveLength(2);
+  });
+
   test("ignores a pick for a filter the request does not name", async () => {
     const chart = await createChart({ measures: ["FeedbackRecords.count"] });
     const dashboard = await createDashboard([chart.id]);

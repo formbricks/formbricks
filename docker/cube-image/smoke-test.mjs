@@ -42,7 +42,12 @@ const CONTINUE_WAIT_ATTEMPTS = 60;
 const TRUTH_TENANT = "smoke-tenant-truth";
 const TRUTH_DEFAULT_SUBMISSIONS = 3000;
 const TRUTH_SINGLE_SELECTS = 5;
-const TRUTH_KEYS = { region: "region", plan: "Plan (billing)", tier: "Kundenstufe" };
+const TRUTH_KEYS = {
+  region: "region",
+  plan: "Plan (billing)",
+  tier: "Kundenstufe",
+  seats: "Seats (licensed)",
+};
 
 const fail = (message) => {
   console.error(`FAIL: ${message}`);
@@ -431,7 +436,10 @@ const printTruthSeedSql = (submissions) => {
     "jsonb_build_object('embedded_data', jsonb_build_object(" +
     `${sqlString(TRUTH_KEYS.region)}, (ARRAY['North','South','East'])[s % 3 + 1], ` +
     `${sqlString(TRUTH_KEYS.plan)}, (ARRAY['free','pro','team','enterprise'])[s % 4 + 1], ` +
-    `${sqlString(TRUTH_KEYS.tier)}, CASE WHEN s % 5 = 0 THEN 'gold' ELSE 'silver' END))`;
+    `${sqlString(TRUTH_KEYS.tier)}, CASE WHEN s % 5 = 0 THEN 'gold' ELSE 'silver' END, ` +
+    // A number stored as a JSON number, as numeric text, and now and then as text no number reads.
+    `${sqlString(TRUTH_KEYS.seats)}, CASE WHEN s % 6 = 0 THEN to_jsonb('n/a'::text) ` +
+    `WHEN s % 2 = 0 THEN to_jsonb(s % 50) ELSE to_jsonb(' ' || (s % 50)::text || '.0') END))`;
   const insert = (columns, select) =>
     console.log(
       `INSERT INTO feedback_records (source_type, tenant_id, submission_id, metadata, ${columns})\n` +
@@ -612,6 +620,23 @@ const checkCorrectness = async (composeJsonPath, baseUrl, postgresContainer) => 
     ).map(([region, count]) => [region, Number(count)]);
     if (expected.length === 0) fail("the embedded ground truth is empty; the seed is wrong");
     expectSame("two embedded filters and an embedded grouping", actual, expected, elapsed);
+  }
+
+  // A number comparison on an embedded key's numeric twin: JSON numbers and numeric text compare as
+  // numbers ("9" is not above "20"), and text no number reads ("n/a") is no value rather than an error.
+  {
+    const seats = member("seats").replace("FeedbackRecords.ed_", "FeedbackRecords.edn_");
+    const { rows, elapsed } = await timed(
+      "embedded number comparison",
+      npsQuery([
+        { member: seats, operator: "gt", values: ["20"] },
+        { member: seats, operator: "lte", values: ["45"] },
+      ])
+    );
+    const number = `CASE WHEN ${ed("seats")} <> 'n/a' THEN (${ed("seats")})::numeric END`;
+    const truth = npsTruth(`${number} > 20 AND ${number} <= 45`);
+    if (truth[0] === 0) fail("the embedded number ground truth is empty; the seed is wrong");
+    expectSame("an embedded number comparison", npsResult(rows), truth, elapsed);
   }
 
   // Disjoint picks: a dashboard pick that contradicts the chart's own filter narrows to nothing.

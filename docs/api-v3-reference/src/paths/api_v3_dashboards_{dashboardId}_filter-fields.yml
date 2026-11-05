@@ -5,7 +5,8 @@ get:
     The embedded-data fields a filter on this dashboard can use: the keys of the Feedback Datasets its
     charts read, and of no other dataset, each once as the `FeedbackRecords.ed_*` member a
     `filter[<id>]` names. The other fields a dashboard filter can use are the same for every dataset
-    (see `GET /api/v3/charts/fields`).
+    (see `GET /api/v3/charts/fields`). Each field carries its `type` on this dashboard: a `number`
+    key also compares with `gt`, `gte`, `lt` and `lte`.
 
     A dashboard-bound read: it needs read access to the dashboard's workspace, which a Dashboard viewer
     has, unlike the field catalog. A Feedback Dataset the caller cannot read through the dashboard is

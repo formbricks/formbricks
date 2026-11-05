@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
+import { getNumericEmbeddedFields } from "@/modules/ee/analysis/dashboards/lib/embedded-field-types";
 import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
@@ -19,6 +20,9 @@ vi.mock("./chart-data-operations", () => ({
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ getV3AuthorizationActor: vi.fn() }));
 vi.mock("@/modules/ee/analysis/lib/dataset-chart-fields", () => ({ getDatasetChartFields: vi.fn() }));
+vi.mock("@/modules/ee/analysis/dashboards/lib/embedded-field-types", () => ({
+  getNumericEmbeddedFields: vi.fn(),
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })) },
 }));
@@ -55,6 +59,7 @@ describe("listV3DashboardFilterFields", () => {
       .mockReset()
       .mockResolvedValue(ACCESS as never);
     vi.mocked(refuseUnlessDashboardDatasetReadable).mockReset().mockResolvedValue(null);
+    vi.mocked(getNumericEmbeddedFields).mockReset().mockResolvedValue(new Set());
     vi.mocked(getV3AuthorizationActor)
       .mockReset()
       .mockReturnValue({ type: "user", id: "user_1" } as never);
@@ -73,9 +78,9 @@ describe("listV3DashboardFilterFields", () => {
 
     expect(response.status).toBe(200);
     expect((await bodyOf(response)).data.fields).toEqual([
-      { ...fieldOf("Plan"), label: "Plan" },
-      { ...fieldOf("Region"), label: "Region" },
-      { ...fieldOf("Tier"), label: "Tier" },
+      { ...fieldOf("Plan"), label: "Plan", type: "string" },
+      { ...fieldOf("Region"), label: "Region", type: "string" },
+      { ...fieldOf("Tier"), label: "Tier", type: "string" },
     ]);
     expect(getDatasetChartFields).toHaveBeenCalledTimes(2);
     expect(getDatasetChartFields).toHaveBeenCalledWith({
@@ -95,10 +100,22 @@ describe("listV3DashboardFilterFields", () => {
 
     expect(response.status).toBe(200);
     expect((await bodyOf(response)).data.fields).toEqual([
-      { ...fieldOf("Plan"), label: "Plan" },
-      { ...fieldOf("Tier"), label: "Tier" },
+      { ...fieldOf("Plan"), label: "Plan", type: "string" },
+      { ...fieldOf("Tier"), label: "Tier", type: "string" },
     ]);
     expect(getDatasetChartFields).toHaveBeenCalledTimes(1);
+  });
+
+  test("types a key that is a number on the dashboard, read once over all of its charts' datasets", async () => {
+    vi.mocked(getDashboardChartsRow).mockResolvedValue(rowWith([DS_A, DS_B, DS_A]) as never);
+    vi.mocked(getNumericEmbeddedFields).mockResolvedValue(new Set([fieldOf("Tier").name]));
+
+    const { fields } = (await bodyOf(await list())).data;
+
+    expect(fields).toContainEqual({ ...fieldOf("Tier"), label: "Tier", type: "number" });
+    expect(fields).toContainEqual({ ...fieldOf("Plan"), label: "Plan", type: "string" });
+    expect(getNumericEmbeddedFields).toHaveBeenCalledTimes(1);
+    expect(getNumericEmbeddedFields).toHaveBeenCalledWith(ACCESS.workspaceId, [DS_A, DS_B]);
   });
 
   test("answers an empty list for a dashboard with no charts", async () => {

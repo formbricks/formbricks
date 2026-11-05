@@ -4,7 +4,8 @@ description: >-
   dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the
   caller's own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it.
   Like a caller's filter it is ANDed onto every chart's saved query and never widens it. A chart whose
-  Feedback Dataset lacks the field shows no data.
+  Feedback Dataset lacks the field shows no data, and so does a chart that reads no text answer under a
+  Sentiment, Sentiment Score or Emotions filter that needs a value.
 required:
   - id
   - field
@@ -50,7 +51,11 @@ properties:
       `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields
       such as `FeedbackRecords.valueText` included, takes one typed value. On a time field a day
       (`YYYY-MM-DD`) is the whole day in the organization's reporting time zone: `gt` is after it,
-      `lt` before it, `gte` and `lte` include it, `equals` is on it.
+      `lt` before it, `gte` and `lte` include it, `equals` is on it. `gt`, `gte`, `lt` and `lte` on an
+      embedded-data field take one number and compare the field as a number; they are saved only where
+      the field is `type` `number` on the dashboard (`GET
+      /api/v3/dashboards/{dashboardId}/filter-fields`), and a record whose value is no number does not
+      pass them.
   label:
     type: string
     minLength: 1

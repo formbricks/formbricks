@@ -130,6 +130,38 @@ describe("the no-value pick", () => {
   });
 });
 
+describe("embedded-data keys compared with a number", () => {
+  const SEATS = "FeedbackRecords.ed_seats_0a1b2c3d";
+  const above: TDashboardFilter = { id: A, field: SEATS, operator: "gt", label: "Seats" };
+
+  test("go to Cube on the key's numeric twin; equals and set stay on the key's own member", () => {
+    expect(toPickRule(above, ["10"], UTC_CLOCK)).toEqual({
+      member: "FeedbackRecords.edn_seats_0a1b2c3d",
+      operator: "gt",
+      values: ["10"],
+    });
+    expect(toPickRule({ ...above, operator: "lte" }, ["2.5"], UTC_CLOCK)).toMatchObject({
+      member: "FeedbackRecords.edn_seats_0a1b2c3d",
+    });
+    expect(toPickRule({ ...above, operator: "equals" }, ["10"], UTC_CLOCK)).toMatchObject({ member: SEATS });
+    expect(toPickRule({ ...above, operator: "set" }, [], UTC_CLOCK)).toEqual({
+      member: SEATS,
+      operator: "set",
+    });
+  });
+
+  test("take a finite number", () => {
+    expect(findPickIssues([above], { [A]: ["10.5"] })).toEqual([]);
+    for (const value of ["ten", "Infinity", "1e999", NO_VALUE_PICK]) {
+      expect(findPickIssues([above], { [A]: [value] })).toEqual([
+        { name: `picks[${A}]`, reason: expect.any(String) },
+      ]);
+    }
+    // An embedded key's is / is not still picks from its values, as text.
+    expect(findPickIssues([{ ...above, operator: "equals" }], { [A]: ["ten"] })).toEqual([]);
+  });
+});
+
 describe("resolvePicksForDataset", () => {
   const hasField = (field: string) => field !== "FeedbackRecords.ed_region";
 
@@ -157,6 +189,28 @@ describe("resolvePicksForDataset", () => {
       filters[2],
     ]);
     expect(resolvePicksForDataset(filters, {}, hasField, UTC_CLOCK).unfilterable).toEqual([]);
+  });
+
+  test("marks a Sentiment pick that needs a value unfilterable on a chart that reads no text answer", () => {
+    const sentiment: TDashboardFilter = {
+      id: C,
+      field: "FeedbackRecords.sentiment",
+      operator: "equals",
+      label: "Sentiment",
+    };
+    const notPositive: TDashboardFilter = { ...sentiment, id: B, operator: "notEquals" };
+    const picks = { [C]: ["positive"], [B]: ["positive"] };
+    const onNps = resolvePicksForDataset([sentiment, notPositive], picks, () => true, {
+      ...UTC_CLOCK,
+      excludesTextAnswers: true,
+    });
+    expect(onNps.unfilterable).toEqual([sentiment]);
+    // "is not" keeps the records without a sentiment, so it still narrows the chart.
+    expect(onNps.rules).toEqual([
+      { member: "FeedbackRecords.sentiment", operator: "notEquals", values: ["positive"] },
+    ]);
+    // A chart that may read text answers is filtered as before.
+    expect(resolvePicksForDataset([sentiment], picks, () => true, UTC_CLOCK).unfilterable).toEqual([]);
   });
 
   test("applies nothing with no filters or no picks", () => {

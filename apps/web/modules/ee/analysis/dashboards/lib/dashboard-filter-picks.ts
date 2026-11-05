@@ -2,6 +2,7 @@ import { addDays } from "date-fns";
 import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/analysis";
 import { getStartOfDayInTimeZone } from "@/lib/date-ranges";
 import { parseLocalDay } from "@/lib/utils/datetime";
+import { toEmbeddedNumberMember } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import { isRealIsoDate } from "./dashboard-date-filter";
 import { filterRuleIdOf } from "./dashboard-filter-rules";
 import {
@@ -13,10 +14,12 @@ import {
   dashboardFilterTakesValues,
   getDashboardFilterField,
   getMultiLabelValues,
+  isEmbeddedComparisonFilter,
   isListDashboardFilter,
   isMultiLabelDashboardFilter,
   readStoredDashboardFilters,
 } from "./dashboard-filters";
+import { pickNeedsTextAnswer } from "./enrichment-filters";
 
 /**
  * How a person's dashboard filter picks reach a chart query (ADR-0026). Pure functions over the Cube query
@@ -99,7 +102,8 @@ const pickValueProblem = (
 
 /**
  * What is wrong with a person's picks before any of them reaches a chart query: more characters
- * in all than `MAX_DASHBOARD_FILTER_PICKS_CHARS`, a value a filter's field cannot hold (a number field
+ * in all than `MAX_DASHBOARD_FILTER_PICKS_CHARS`, a value a filter's field cannot hold (a number field, or an
+ * embedded-data key compared with a number,
  * picked with a word, a label a multi-label field does not have, the no-value pick on a filter without a
  * list), or values for a `set` / `notSet` filter, which takes none — each named by the filter it was
  * picked for. Picks for filters the dashboard does not have are ignored, as the operations drop them.
@@ -126,7 +130,8 @@ export const findPickIssues = (
     }
     const values = pickValuesOf(filter, picks[filter.id]);
     if (!values) return [];
-    const type = getDashboardFilterField(filter.field)?.type;
+    // A number comparison on an embedded-data key compares it as a number (`isEmbeddedComparisonFilter`).
+    const type = isEmbeddedComparisonFilter(filter) ? "number" : getDashboardFilterField(filter.field)?.type;
     const problem = values
       .map((value) => pickValueProblem(filter, type, value))
       .find((reason) => reason !== null);
@@ -209,7 +214,9 @@ const toDayRule = (
 };
 
 /**
- * The filter rule one pick adds to a chart query. `set` / `notSet` compare against nothing. A calendar day
+ * The filter rule one pick adds to a chart query. `set` / `notSet` compare against nothing. `gt` / `gte` /
+ * `lt` / `lte` on an embedded-data key go to Cube on its numeric twin (`FeedbackRecords.edn_*`), which
+ * holds the key's value as a number and no value where it is not one. A calendar day
  * on a time field is whole days in `clock`'s zone (`DAY_RULES`). Several labels of a multi-label field go
  * to Cube as one `contains` (any of) or `notContains` (none of). The no-value pick (`NO_VALUE_PICK`) never
  * reaches Cube: "is" any of the values or no value is an OR with `notSet`, "is not" any of them with a
@@ -217,7 +224,8 @@ const toDayRule = (
  * alone is `notSet` or `set`.
  */
 export const toPickRule = (filter: TDashboardFilter, values: string[], clock: TPickClock): TCubeFilter => {
-  const member = filter.field;
+  // An embedded-data key compared with a number is read as one, on its numeric twin.
+  const member = isEmbeddedComparisonFilter(filter) ? toEmbeddedNumberMember(filter.field) : filter.field;
   if (!dashboardFilterTakesValues(filter.operator)) return { member, operator: filter.operator };
   const dayRule = toDayRule(filter, values, clock);
   if (dayRule) return dayRule;
@@ -234,21 +242,30 @@ export const toPickRule = (filter: TDashboardFilter, values: string[], clock: TP
 export type TResolvedPicks = {
   /** The rules to AND onto the chart's query, in the dashboard's filter order. */
   rules: TCubeFilter[];
-  /** Picked filters whose field the chart's Feedback Dataset lacks: the chart shows no data. */
+  /**
+   * Picked filters the chart cannot be narrowed by: its Feedback Dataset lacks their field, or the pick needs a
+   * text answer the chart never reads (`pickNeedsTextAnswer`). The chart shows no data.
+   */
   unfilterable: TDashboardFilter[];
 };
 
 /**
  * Resolve picks against one chart's Feedback Dataset. Picks for filters the dashboard no longer has are
  * dropped; a picked filter whose field the dataset lacks makes the chart unfilterable rather than being
- * skipped, since skipping it would show the chart wider than the pick. `timeZone` is the organization's
- * reporting zone, which a picked calendar day is cut in.
+ * skipped, since skipping it would show the chart wider than the pick. So does a pick on an enrichment field
+ * (Sentiment, Sentiment Score, Emotions) that needs a value, on a chart whose saved query reads no text answer
+ * (`excludesTextAnswers`, from `chartExcludesTextAnswers`): it could only ever show nothing. `timeZone` is
+ * the organization's reporting zone, which a picked calendar day is cut in.
  */
 export const resolvePicksForDataset = (
   filters: readonly TDashboardFilter[],
   picks: TDashboardFilterPicks,
   datasetHasField: (field: string) => boolean,
-  { except, timeZone }: { except?: string; timeZone: string }
+  {
+    except,
+    timeZone,
+    excludesTextAnswers = false,
+  }: { except?: string; timeZone: string; excludesTextAnswers?: boolean }
 ): TResolvedPicks => {
   const rules: TCubeFilter[] = [];
   const unfilterable: TDashboardFilter[] = [];
@@ -257,7 +274,9 @@ export const resolvePicksForDataset = (
     if (filter.id === except) continue;
     const values = pickValuesOf(filter, picks[filter.id]);
     if (!values) continue;
-    if (datasetHasField(filter.field)) rules.push(toPickRule(filter, values, { timeZone }));
+    const narrowable =
+      datasetHasField(filter.field) && !(excludesTextAnswers && pickNeedsTextAnswer(filter, values));
+    if (narrowable) rules.push(toPickRule(filter, values, { timeZone }));
     else unfilterable.push(filter);
   }
 

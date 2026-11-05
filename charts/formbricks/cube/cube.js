@@ -281,6 +281,27 @@ const EMBEDDED_MEMBER_PREFIX = "ed_";
  * `notEquals` or `contains` must never be narrowed by a containment.
  */
 const EMBEDDED_EQUALS_MEMBER_PREFIX = "edc_";
+/**
+ * Numeric twin of an embedded dimension: the key's value as a number, NULL where it is not one. A dashboard
+ * filter comparing a key with a number (`gt`, `gte`, `lt`, `lte`) names it (apps/web
+ * `EMBEDDED_NUMBER_MEMBER_PREFIX`), so "> 10" compares numbers rather than text.
+ */
+const EMBEDDED_NUMBER_MEMBER_PREFIX = "edn_";
+/**
+ * The text a Postgres numeric reads: an optional sign, digits with an optional point (or a point and
+ * digits), an optional exponent of at most three digits, blanks around. Written without `?`, which Cube
+ * rewrites in generated SQL.
+ */
+const NUMERIC_TEXT_PATTERN =
+  "^\\s*[-+]{0,1}([0-9]+[.]{0,1}[0-9]*|[.][0-9]+)([eE][-+]{0,1}[0-9]{1,3}){0,1}\\s*$";
+
+/**
+ * SQL reading `textSql` as a number, NULL when it is not one, so a value like "n/a" never fails the query
+ * with a cast error.
+ */
+function toSafeNumericSql(textSql) {
+  return `CASE WHEN ${textSql} ~ '${NUMERIC_TEXT_PATTERN}' THEN (${textSql})::numeric END`;
+}
 const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 // C0 and C1 control characters (NUL included): never a key anyone means, and a title or log line breaker.
 // eslint-disable-next-line no-control-regex -- matching control characters is the point
@@ -357,7 +378,8 @@ function toSafeSqlStringLiteral(value) {
 }
 
 /**
- * What schema/FeedbackRecords.js compiles for the token's keys: one dimension per key and the SQL its
+ * What schema/FeedbackRecords.js compiles for the token's keys: one dimension per key, its hidden `equals`
+ * twin, its hidden numeric twin (`toSafeNumericSql` over the value, in the dimension's SQL) and the SQL its
  * containment predicate needs. Two keys whose names would collide (an 8-hex collision among 100 keys)
  * keep the first, because a duplicate member fails the whole model.
  */
@@ -369,11 +391,13 @@ function getEmbeddedDimensionSpecs(compileContext) {
     if (names.has(suffix)) continue;
     names.add(suffix);
     const keyLiteral = toSafeSqlStringLiteral(key);
+    const valueSql = `metadata->'embedded_data'->>${keyLiteral}`;
     specs.push({
       key,
       name: `${EMBEDDED_MEMBER_PREFIX}${suffix}`,
       equalsName: `${EMBEDDED_EQUALS_MEMBER_PREFIX}${suffix}`,
-      valueSql: `metadata->'embedded_data'->>${keyLiteral}`,
+      numberName: `${EMBEDDED_NUMBER_MEMBER_PREFIX}${suffix}`,
+      valueSql,
       keyLiteral,
     });
   }
@@ -663,6 +687,7 @@ for (const [name, value] of Object.entries({
   getEmbeddedMemberSuffix,
   getEmbeddedKeys,
   toSafeSqlStringLiteral,
+  toSafeNumericSql,
   ANSWER_FILTER_ALIAS_COUNT,
   MAX_EMBEDDED_KEYS,
   MAX_EMBEDDED_KEYS_BYTES,

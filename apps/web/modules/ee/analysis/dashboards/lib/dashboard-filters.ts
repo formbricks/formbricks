@@ -125,12 +125,58 @@ export const getDashboardFilterField = (name: string): TChartField | undefined =
   return field && field.kind !== "measure" && !FILTER_ONLY_FIELDS.has(field.name) ? field : undefined;
 };
 
-/** The operators a field allows as a dashboard filter: the catalog's that a dashboard filter may use. */
+/**
+ * The operators that compare an embedded-data key with a number. Every key is text in the catalog, but a
+ * key whose Embedded Data fields are all numbers is a number on its dashboard (`getNumericEmbeddedFields`):
+ * these then compare it as one, on its numeric twin (`toEmbeddedNumberMember`). Which keys are numbers is
+ * the dashboard's to say, so the catalog allows them on every key and `findNonNumericComparisonIssues`
+ * refuses them on the rest.
+ */
+const EMBEDDED_COMPARISON_OPERATORS: ReadonlySet<TDashboardFilterOperator> = new Set([
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+]);
+
+/** Whether the filter compares an embedded-data key with a number: `gt`, `gte`, `lt` or `lte` on one. */
+export const isEmbeddedComparisonFilter = (filter: Pick<TDashboardFilter, "field" | "operator">): boolean =>
+  isEmbeddedMemberName(filter.field) && EMBEDDED_COMPARISON_OPERATORS.has(filter.operator);
+
+/**
+ * The operators a field allows as a dashboard filter: the catalog's that a dashboard filter may use, and on
+ * an embedded-data key the number comparisons too (`EMBEDDED_COMPARISON_OPERATORS`).
+ */
 export const getDashboardFilterOperators = (fieldName: string): TDashboardFilterOperator[] => {
   const field = getDashboardFilterField(fieldName);
   if (!field) return [];
-  return DASHBOARD_FILTER_OPERATORS.filter((operator) => field.filterOperators.includes(operator));
+  const embedded = isEmbeddedMemberName(fieldName);
+  return DASHBOARD_FILTER_OPERATORS.filter(
+    (operator) =>
+      field.filterOperators.includes(operator) || (embedded && EMBEDDED_COMPARISON_OPERATORS.has(operator))
+  );
 };
+
+/**
+ * What makes filters unusable on one dashboard although the catalog allows them: a number comparison
+ * (`isEmbeddedComparisonFilter`) on an embedded-data key that is not a number there. `numericFields` are the
+ * dashboard's numeric keys (`getNumericEmbeddedFields`). Each problem is at its filter's position.
+ */
+export const findNonNumericComparisonIssues = (
+  filters: readonly Pick<TDashboardFilter, "field" | "operator">[],
+  numericFields: ReadonlySet<string>
+): TDashboardFilterIssue[] =>
+  filters.flatMap((filter, index) =>
+    isEmbeddedComparisonFilter(filter) && !numericFields.has(filter.field)
+      ? [
+          {
+            path: [index, "operator"],
+            message:
+              "Greater and less than compare an embedded-data field only where every Embedded Data field it holds is a number.",
+          },
+        ]
+      : []
+  );
 
 /**
  * Whether the filter picks from a list of values that occur (is, is not — each of any of several values)

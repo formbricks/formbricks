@@ -3,8 +3,10 @@ import {
   MAX_DASHBOARD_FILTERS,
   type TDashboardFilter,
   findDashboardFilterIssues,
+  findNonNumericComparisonIssues,
   getDashboardFilterField,
   getDashboardFilterOperators,
+  isEmbeddedComparisonFilter,
   isListDashboardFilter,
   parseStoredDashboardFilters,
   readStoredDashboardFilters,
@@ -71,6 +73,30 @@ describe("getDashboardFilterOperators", () => {
       "notSet",
     ]);
     expect(getDashboardFilterOperators("FeedbackRecords.nope")).toEqual([]);
+  });
+});
+
+describe("findNonNumericComparisonIssues", () => {
+  const SEATS = "FeedbackRecords.ed_seats_0a1b2c3d";
+  const PLAN = "FeedbackRecords.ed_plan_64879f7d";
+
+  test("refuses gt / gte / lt / lte on an embedded key that is not a number on the dashboard", () => {
+    const filters = [
+      { field: SEATS, operator: "gt" as const },
+      { field: PLAN, operator: "lte" as const },
+      { field: PLAN, operator: "equals" as const },
+      { field: "FeedbackRecords.valueNumber", operator: "gt" as const },
+    ];
+    expect(findNonNumericComparisonIssues(filters, new Set([SEATS]))).toEqual([
+      { path: [1, "operator"], message: expect.stringContaining("is a number") },
+    ]);
+    expect(findNonNumericComparisonIssues(filters, new Set([SEATS, PLAN]))).toEqual([]);
+  });
+
+  test("names a filter comparing an embedded key with a number, and no other", () => {
+    expect(isEmbeddedComparisonFilter({ field: SEATS, operator: "gte" })).toBe(true);
+    expect(isEmbeddedComparisonFilter({ field: SEATS, operator: "equals" })).toBe(false);
+    expect(isEmbeddedComparisonFilter({ field: "FeedbackRecords.valueNumber", operator: "gt" })).toBe(false);
   });
 });
 
@@ -156,13 +182,18 @@ describe("readStoredDashboardFilters", () => {
 describe("embedded-data fields as dashboard filters", () => {
   const plan = "FeedbackRecords.ed_plan_64879f7d";
 
-  test("an embedded member is a text dimension filtered like any text field, and picks from a list", () => {
+  test("an embedded member is a text dimension that also compares with a number, and picks from a list", () => {
     expect(getDashboardFilterField(plan)).toMatchObject({ name: plan, kind: "dimension", type: "string" });
+    // gt / gte / lt / lte hold only where the key is a number on the dashboard (findNonNumericComparisonIssues).
     expect(getDashboardFilterOperators(plan)).toEqual([
       "equals",
       "notEquals",
       "contains",
       "notContains",
+      "gt",
+      "gte",
+      "lt",
+      "lte",
       "set",
       "notSet",
     ]);
@@ -175,8 +206,7 @@ describe("embedded-data fields as dashboard filters", () => {
     expect(findDashboardFilterIssues([filter(1, { field: "FeedbackRecords.ed_Plan!" })])).toEqual([
       expect.objectContaining({ path: [0, "field"] }),
     ]);
-    expect(findDashboardFilterIssues([filter(1, { field: plan, operator: "gt" })])).toEqual([
-      expect.objectContaining({ path: [0, "operator"] }),
-    ]);
+    // A number comparison is the dashboard's to refuse, where the key is not a number on it.
+    expect(findDashboardFilterIssues([filter(1, { field: plan, operator: "gt" })])).toEqual([]);
   });
 });

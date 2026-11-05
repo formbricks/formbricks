@@ -6,8 +6,11 @@ import {
   MAX_TOKEN_EMBEDDED_KEYS,
   MAX_TOKEN_EMBEDDED_KEYS_BYTES,
   collectEmbeddedMemberNames,
+  fromEmbeddedNumberMember,
   isEmbeddedMemberName,
+  isEmbeddedNumberMemberName,
   selectEmbeddedKeys,
+  toEmbeddedNumberMember,
 } from "./embedded-data-fields";
 import { getEmbeddedMemberName } from "./embedded-member-name";
 
@@ -56,6 +59,17 @@ describe("embedded member names", () => {
     expect(new Set(names).size).toBe(names.length);
     expect(getEmbeddedMemberName("plan")).toBe("FeedbackRecords.ed_plan_64879f7d");
     expect(getEmbeddedMemberName("区域")).toMatch(/^FeedbackRecords\.ed_[0-9a-f]{8}$/);
+  });
+
+  test("have a numeric twin edn_ named as the Cube model compiles it, told apart from the key's member", () => {
+    for (const key of AWKWARD_KEYS) {
+      const twin = toEmbeddedNumberMember(getEmbeddedMemberName(key));
+      expect(twin).toBe(`FeedbackRecords.edn_${cubeConfig.getEmbeddedMemberSuffix(key)}`);
+      expect(isEmbeddedNumberMemberName(twin)).toBe(true);
+      expect(isEmbeddedMemberName(twin)).toBe(false);
+      expect(fromEmbeddedNumberMember(twin)).toBe(getEmbeddedMemberName(key));
+    }
+    expect(isEmbeddedNumberMemberName("FeedbackRecords.ed_plan_64879f7d")).toBe(false);
   });
 
   test("are told apart from every other member", () => {
@@ -164,6 +178,18 @@ describe("collectEmbeddedMemberNames", () => {
     expect(collectEmbeddedMemberNames({})).toEqual([]);
     expect(collectEmbeddedMemberNames(null)).toEqual([]);
     expect(collectEmbeddedMemberNames("FeedbackRecords.ed_plan_64879f7d")).toEqual([]);
+  });
+
+  test("counts a numeric twin as the member it reads, so its key reaches the token", () => {
+    expect(
+      collectEmbeddedMemberNames({
+        dimensions: [plan],
+        filters: [
+          { member: "FeedbackRecords.edn_plan_64879f7d", operator: "gt", values: ["1"] },
+          { member: "FeedbackRecords.edn_tier_0a1b2c3d", operator: "lt", values: ["9"] },
+        ],
+      }).sort()
+    ).toEqual([plan, tier].sort());
   });
 
   test("collects every place a query names a member, nested filters included, once each", () => {

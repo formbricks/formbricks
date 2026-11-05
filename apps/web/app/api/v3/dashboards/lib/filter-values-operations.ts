@@ -56,6 +56,7 @@ import { parseRequestedDateRange } from "@/modules/ee/analysis/lib/chart-query-v
 import { createRequestEmbeddedKeys } from "@/modules/ee/analysis/lib/request-embedded-keys";
 import { isLabelledValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
+import { refuseNonNumericComparisons } from "./numeric-filter-fields";
 import type { TV3DashboardFilterValues } from "./resources";
 import type { TV3DashboardFilterValuesQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
@@ -196,6 +197,13 @@ const resolveValueListRequest = async ({
     context
   );
   if (ungrouped) return ungrouped;
+  const nonNumeric = await refuseNonNumericComparisons(filters, {
+    workspaceId: access.workspaceId,
+    datasetIds: async () => row.widgets.map(({ chart }) => chart.feedbackDirectoryId),
+    requestId,
+    instance,
+  });
+  if (nonNumeric) return nonNumeric;
 
   const charts = row.widgets.map(({ chart }) => ({
     datasetId: chart.feedbackDirectoryId,

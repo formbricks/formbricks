@@ -5,14 +5,18 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import type { TCubeQueryActor } from "@/modules/ee/analysis/api/lib/cube-config";
 import {
   type TDashboardFilter,
+  findNonNumericComparisonIssues,
+  isEmbeddedComparisonFilter,
   parseStoredDashboardFilters,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
+import { getNumericEmbeddedFields } from "@/modules/ee/analysis/dashboards/lib/embedded-field-types";
 import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 
 /**
  * The embedded-data filter fields of a dashboard write that no kept widget's Feedback Dataset has, each
- * named at its position. A `FeedbackRecords.ed_*` field passes the schema by its name pattern alone, so a
+ * named at its position, and its number comparisons on keys that are not numbers on the dashboard
+ * (`findNonNumericComparisons`). A `FeedbackRecords.ed_*` field passes the schema by its name pattern alone, so a
  * key nobody's charts read would otherwise be saved as a filter that can narrow nothing. A field already
  * saved on the dashboard is not asked again: a filter keeps saving after its key leaves every chart.
  *
@@ -52,12 +56,14 @@ export const findUnknownEmbeddedFilterFields = async ({
       },
     },
   });
-  const saved = new Set(parseStoredDashboardFilters(dashboard?.filters).map(({ field }) => field));
+  const savedFilters = parseStoredDashboardFilters(dashboard?.filters);
+  const saved = new Set(savedFilters.map(({ field }) => field));
   const asked = embedded.filter(({ field }) => !saved.has(field));
-  if (asked.length === 0) return [];
+  const datasetIds = [...new Set((dashboard?.widgets ?? []).map(({ chart }) => chart.feedbackDirectoryId))];
+  const nonNumeric = await findNonNumericComparisons(filters, savedFilters, access.workspaceId, datasetIds);
+  if (asked.length === 0) return nonNumeric;
 
   const fields = [...new Set(asked.map(({ field }) => field))];
-  const datasetIds = [...new Set((dashboard?.widgets ?? []).map(({ chart }) => chart.feedbackDirectoryId))];
   const readable = await Promise.all(datasetIds.map(canReadDataset));
   const matchers = await Promise.all(
     datasetIds
@@ -70,11 +76,37 @@ export const findUnknownEmbeddedFilterFields = async ({
       )
   );
 
-  return asked
+  const unknown = asked
     .filter(({ field }) => !matchers.some((hasField) => hasField(field)))
     .map(({ index }) => ({
       name: `filters[${index}].field`,
       reason: "No chart on this dashboard reads a Feedback Dataset with this embedded-data key.",
       code: "invalid_reference" as const,
     }));
+  return [...unknown, ...nonNumeric];
+};
+
+/**
+ * The filters of a write that compare an embedded-data key with a number (`gt`, `gte`, `lt`, `lte`) where
+ * the key is not a number on this dashboard (`getNumericEmbeddedFields`, over the kept widgets' datasets),
+ * each named at its operator. A comparison already saved on the dashboard, on the same key, is not asked
+ * again: it keeps saving should the key stop being a number. The numeric keys are read only when a
+ * comparison is new.
+ */
+const findNonNumericComparisons = async (
+  filters: readonly TDashboardFilter[],
+  savedFilters: readonly Pick<TDashboardFilter, "field" | "operator">[],
+  workspaceId: string,
+  datasetIds: readonly string[]
+): Promise<InvalidParam[]> => {
+  const isSaved = (filter: Pick<TDashboardFilter, "field" | "operator">) =>
+    savedFilters.some((saved) => saved.field === filter.field && saved.operator === filter.operator);
+  if (!filters.some((filter) => isEmbeddedComparisonFilter(filter) && !isSaved(filter))) return [];
+  const numeric = await getNumericEmbeddedFields(workspaceId, datasetIds);
+  return findNonNumericComparisonIssues(filters, numeric).flatMap(({ path, message }) => {
+    const index = path[0];
+    return typeof index === "number" && !isSaved(filters[index])
+      ? [{ name: `filters[${index}].operator`, reason: message }]
+      : [];
+  });
 };

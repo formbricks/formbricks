@@ -33,8 +33,15 @@ export const useDashboardToolbarFilters = ({
   const fields = useDashboardEmbeddedFields({ dashboardId, datasetIds });
   const properties = useMemo(
     () =>
-      buildToolbarProperties({ t, embeddedFields: fields.embeddedFields, dashboardId, filters, dateRange }),
-    [t, fields.embeddedFields, dashboardId, filters, dateRange]
+      buildToolbarProperties({
+        t,
+        embeddedFields: fields.embeddedFields,
+        numericFields: fields.numericFields,
+        dashboardId,
+        filters,
+        dateRange,
+      }),
+    [t, fields.embeddedFields, fields.numericFields, dashboardId, filters, dateRange]
   );
   const toolbarFilters = useMemo(() => toToolbarFilters(filters), [filters]);
   const labelOf = useMemo(() => {

@@ -15,7 +15,10 @@ description: >-
   `notContains`, `gt`, `gte`, `lt`, `lte`, `set` or `notSet` as the field allows. The dashboard keeps
   no list of them; `<id>` only names a filter within the request, to give its values in `picks[<id>]`.
   A filter without a pick is ignored, except `set` and `notSet` (has a value, has none), which take no
-  pick and apply as they are. A definition that is not `<operator>:<field>`, a field outside the catalog or an
-  operator the field refuses answers 422 naming `filter[<id>]`.
+  pick and apply as they are. `gt`, `gte`, `lt` and `lte` on an embedded-data field compare it as a
+  number, and only where it is `type` `number` on the dashboard (`GET
+  /api/v3/dashboards/{dashboardId}/filter-fields`). A definition that is not `<operator>:<field>`, a field
+  outside the catalog, an operator the field refuses, or a number comparison on an embedded-data field
+  that is not a number on the dashboard answers 422 naming `filter[<id>]`.
 example:
   f1: equals:FeedbackRecords.sourceName

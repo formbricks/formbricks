@@ -172,12 +172,50 @@ describe("getToolbarRuleOperators", () => {
     expect(getToolbarRuleOperators(SOURCE)).toEqual(looked);
     expect(getToolbarRuleOperators("FeedbackRecords.ed_region")).toEqual(looked);
     expect(getToolbarRuleOperators(SENTIMENT)).toEqual(["equals", "notEquals", "isSet", "isNotSet"]);
+    // Only an embedded-data key that is a number on the dashboard compares as one.
+    expect(getToolbarRuleOperators("FeedbackRecords.ed_region", true)).toEqual([
+      "equals",
+      "notEquals",
+      "greaterThan",
+      "greaterEqual",
+      "lessThan",
+      "lessEqual",
+      "isSet",
+      "isNotSet",
+    ]);
+    expect(getToolbarRuleOperators(SOURCE, true)).toEqual(looked);
     expect(getToolbarRuleOperators("FeedbackRecords.valueBand")).toEqual([
       "equals",
       "notEquals",
       "isSet",
       "isNotSet",
     ]);
+  });
+});
+
+describe("buildToolbarProperties: an embedded-data key that is a number on the dashboard", () => {
+  const t = ((key: string) => key) as never;
+  const build = (numericFields?: ReadonlySet<string>) =>
+    buildToolbarProperties({
+      t,
+      embeddedFields: [{ name: "FeedbackRecords.ed_seats", key: "Seats" }],
+      numericFields,
+      dashboardId: "d1",
+      filters: [],
+      dateRange: null,
+    }).find((property) => property.id === "FeedbackRecords.ed_seats");
+
+  test("picks is / is not from its values and takes a typed number for > / ≥ / < / ≤", () => {
+    const seats = build(new Set(["FeedbackRecords.ed_seats"]));
+    expect(seats).toMatchObject({ valueType: "number", multiValueEquals: true });
+    expect(seats?.loadOptions).toBeDefined();
+    expect(seats?.ruleOperators).toContain("greaterThan");
+  });
+
+  test("stays a text list otherwise", () => {
+    const seats = build();
+    expect(seats?.valueType).not.toBe("number");
+    expect(seats?.ruleOperators).not.toContain("greaterThan");
   });
 });
 

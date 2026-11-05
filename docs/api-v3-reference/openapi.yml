@@ -5209,7 +5209,8 @@ paths:
         - **Filters.** Each `filter[<id>]` with values in `picks[<id>]` is ANDed onto the chart's saved
           filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
           on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
-          `unfilterableFilters`. Picks may take at
+          `unfilterableFilters`, as does a Sentiment, Sentiment Score or Emotions filter that needs a
+          value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
           most 4000 characters in all, each value counted percent-encoded as the URL carries it
           (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
           `limit_exceeded`.
@@ -5465,7 +5466,8 @@ paths:
         The embedded-data fields a filter on this dashboard can use: the keys of the Feedback Datasets its
         charts read, and of no other dataset, each once as the `FeedbackRecords.ed_*` member a
         `filter[<id>]` names. The other fields a dashboard filter can use are the same for every dataset
-        (see `GET /api/v3/charts/fields`).
+        (see `GET /api/v3/charts/fields`). Each field carries its `type` on this dashboard: a `number`
+        key also compares with `gt`, `gte`, `lt` and `lte`.
 
         A dashboard-bound read: it needs read access to the dashboard's workspace, which a Dashboard viewer
         has, unlike the field catalog. A Feedback Dataset the caller cannot read through the dashboard is
@@ -14299,7 +14301,7 @@ components:
       additionalProperties: false
     DashboardFilter:
       type: object
-      description: 'A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the caller''s own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it. Like a caller''s filter it is ANDed onto every chart''s saved query and never widens it. A chart whose Feedback Dataset lacks the field shows no data.'
+      description: 'A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the caller''s own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it. Like a caller''s filter it is ANDed onto every chart''s saved query and never widens it. A chart whose Feedback Dataset lacks the field shows no data, and so does a chart that reads no text answer under a Sentiment, Sentiment Score or Emotions filter that needs a value.'
       required:
         - id
         - field
@@ -14330,7 +14332,7 @@ components:
             - lte
             - set
             - notSet
-          description: 'One of the field''s `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, `FeedbackRecords.valueId` (the answer''s option), a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); `contains` and `notContains` on `FeedbackRecords.emotions` take several of its labels (`joy`, `anger`, `sadness`, `fear`, `surprise`, `disgust`): contains any of them, contains none of them; `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value. On a time field a day (`YYYY-MM-DD`) is the whole day in the organization''s reporting time zone: `gt` is after it, `lt` before it, `gte` and `lte` include it, `equals` is on it.'
+          description: 'One of the field''s `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, `FeedbackRecords.valueId` (the answer''s option), a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); `contains` and `notContains` on `FeedbackRecords.emotions` take several of its labels (`joy`, `anger`, `sadness`, `fear`, `surprise`, `disgust`): contains any of them, contains none of them; `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value. On a time field a day (`YYYY-MM-DD`) is the whole day in the organization''s reporting time zone: `gt` is after it, `lt` before it, `gte` and `lte` include it, `equals` is on it. `gt`, `gte`, `lt` and `lte` on an embedded-data field take one number and compare the field as a number; they are saved only where the field is `type` `number` on the dashboard (`GET /api/v3/dashboards/{dashboardId}/filter-fields`), and a record whose value is no number does not pass them.'
         label:
           type: string
           minLength: 1
@@ -14506,7 +14508,7 @@ components:
       additionalProperties: false
     DashboardChartData:
       type: object
-      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters whose field the chart''s Feedback Dataset does not have; when it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
+      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters the chart cannot be narrowed by: its Feedback Dataset does not have their field, or they need a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on text answers only — on a chart whose saved query reads no text answer (its saved filters pin `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
       required:
         - rows
         - optionLabels
@@ -14568,7 +14570,7 @@ components:
       additionalProperties: false
     DashboardFilterFields:
       type: object
-      description: 'The embedded-data fields a filter on the dashboard can use: each key of the Feedback Datasets its charts read, once, in key order. Datasets the caller cannot read through the dashboard are left out.'
+      description: 'The embedded-data fields a filter on the dashboard can use: each key of the Feedback Datasets its charts read, once, in key order, with the type the key has on this dashboard. Datasets the caller cannot read through the dashboard are left out.'
       required:
         - fields
       properties:
@@ -14580,6 +14582,7 @@ components:
               - name
               - key
               - label
+              - type
             properties:
               name:
                 type: string
@@ -14593,6 +14596,13 @@ components:
                 type: string
                 description: How the field is shown; the key itself.
                 example: plan
+              type:
+                type: string
+                enum:
+                  - string
+                  - number
+                description: '`number` when every Embedded Data field the key holds, in the surveys a Feedback Source of the dashboard''s workspace maps into its charts'' datasets, is a number field: a filter may then compare it with `gt`, `gte`, `lt` and `lte`, as a number. `string` otherwise — a key no Embedded Data field declares, or one that fields of different types share.'
+                example: string
             additionalProperties: false
       additionalProperties: false
     CreativeType:
@@ -17363,7 +17373,7 @@ components:
           type: string
           minLength: 3
           maxLength: 300
-      description: 'The filters the request applies, as `filter[<id>]=<operator>:<field>`: any dimension from the field catalog, or an embedded-data field (`FeedbackRecords.ed_…`), with `equals`, `notEquals`, `contains`, `notContains`, `gt`, `gte`, `lt`, `lte`, `set` or `notSet` as the field allows. The dashboard keeps no list of them; `<id>` only names a filter within the request, to give its values in `picks[<id>]`. A filter without a pick is ignored, except `set` and `notSet` (has a value, has none), which take no pick and apply as they are. A definition that is not `<operator>:<field>`, a field outside the catalog or an operator the field refuses answers 422 naming `filter[<id>]`.'
+      description: 'The filters the request applies, as `filter[<id>]=<operator>:<field>`: any dimension from the field catalog, or an embedded-data field (`FeedbackRecords.ed_…`), with `equals`, `notEquals`, `contains`, `notContains`, `gt`, `gte`, `lt`, `lte`, `set` or `notSet` as the field allows. The dashboard keeps no list of them; `<id>` only names a filter within the request, to give its values in `picks[<id>]`. A filter without a pick is ignored, except `set` and `notSet` (has a value, has none), which take no pick and apply as they are. `gt`, `gte`, `lt` and `lte` on an embedded-data field compare it as a number, and only where it is `type` `number` on the dashboard (`GET /api/v3/dashboards/{dashboardId}/filter-fields`). A definition that is not `<operator>:<field>`, a field outside the catalog, an operator the field refuses, or a number comparison on an embedded-data field that is not a number on the dashboard answers 422 naming `filter[<id>]`.'
       example:
         f1: equals:FeedbackRecords.sourceName
     DashboardFilterPicksQuery:

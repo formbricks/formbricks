@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { getFilterFieldOptions } from "@/modules/ee/analysis/charts/lib/filter-conditions";
 import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
+import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
   EMOTIONS_DIMENSION_ID,
@@ -109,9 +110,11 @@ const isQuickField = (field: string): boolean => QUICK_FIELDS.has(field);
 /**
  * The kinds of field a dashboard filters by, each with its own operators: a fixed set of options
  * (sentiment, value band), a set of labels from a fixed list (emotions), yes/no, values looked up in the
- * data (source, language, embedded data…), free text (response text, user id), a number, and a date.
+ * data (source, language, embedded data…), an embedded-data key that is a number on the dashboard (its
+ * values looked up for is / is not, compared as a number otherwise), free text (response text, user id), a
+ * number, and a date.
  */
-type TFieldKind = "fixed" | "labels" | "boolean" | "list" | "text" | "number" | "time";
+type TFieldKind = "fixed" | "labels" | "boolean" | "list" | "numberList" | "text" | "number" | "time";
 
 /**
  * The operators each kind offers, in the order the toolbar lists them. "is" / "is not" on a field with a
@@ -122,14 +125,16 @@ const KIND_OPERATORS: Record<TFieldKind, readonly TDashboardFilterOperator[]> = 
   labels: ["contains", "notContains", "set", "notSet"],
   boolean: ["equals", "set", "notSet"],
   list: ["equals", "notEquals", "contains", "notContains", "set", "notSet"],
+  numberList: ["equals", "notEquals", "gt", "gte", "lt", "lte", "set", "notSet"],
   text: ["contains", "notContains", "equals", "notEquals", "set", "notSet"],
   number: ["equals", "notEquals", "gt", "gte", "lt", "lte", "set", "notSet"],
   time: ["lt", "gt", "set", "notSet"],
 };
 
-const fieldKindOf = (field: string): TFieldKind | undefined => {
+const fieldKindOf = (field: string, numeric: boolean): TFieldKind | undefined => {
   const definition = getDashboardFilterField(field);
   if (!definition) return undefined;
+  if (numeric && isEmbeddedMemberName(field)) return "numberList";
   if (isQuickField(field)) return "fixed";
   if (getMultiLabelValues(field)) return "labels";
   if (definition.type === "boolean" || definition.type === "time" || definition.type === "number") {
@@ -171,9 +176,12 @@ const fromRuleOperator = (operator: TTableFilterOperator): TDashboardFilterOpera
     | undefined;
 };
 
-/** The toolbar rule operators a field offers: its kind's, as far as the field allows them. */
-export const getToolbarRuleOperators = (field: string): TRuleOperator[] => {
-  const kind = fieldKindOf(field);
+/**
+ * The toolbar rule operators a field offers: its kind's, as far as the field allows them. `numeric` says an
+ * embedded-data key is a number on the dashboard (`TV3DashboardFilterFields` `type`).
+ */
+export const getToolbarRuleOperators = (field: string, numeric = false): TRuleOperator[] => {
+  const kind = fieldKindOf(field, numeric);
   if (!kind) return [];
   const allowed = getDashboardFilterOperators(field);
   return KIND_OPERATORS[kind].flatMap((operator) => {
@@ -342,18 +350,22 @@ export const disambiguateEmbeddedLabels = (
  * The toolbar's properties for a dashboard: every dimension of the catalog and every embedded-data key of
  * its datasets a person can filter by. A field with a fixed set of values is a quick filter and picks from
  * them in Advanced filter too (a multi-label field only there); a categorical field lists the values the
- * charts let through there, and the rest take a typed value. An embedded-data key whose label is also a
+ * charts let through there, and the rest take a typed value. An embedded-data key that is a number on the
+ * dashboard (`numericFields`) also compares with > / ≥ / < / ≤, on a typed number. An embedded-data key whose label is also a
  * dimension's is told apart (`disambiguateEmbeddedLabels`).
  */
 export const buildToolbarProperties = ({
   t,
   embeddedFields,
+  numericFields = new Set(),
   dashboardId,
   filters,
   dateRange,
 }: Readonly<{
   t: TFunction;
   embeddedFields: readonly TEmbeddedChartField[];
+  /** The embedded-data keys that are numbers on this dashboard, by member. */
+  numericFields?: ReadonlySet<string>;
   dashboardId: string;
   filters: readonly TDashboardFilterState[];
   dateRange: TChartDateRangeInput | null;
@@ -366,7 +378,8 @@ export const buildToolbarProperties = ({
         const field = String(option.value);
         if (RECORD_LEVEL_FIELDS.has(field)) return [];
         const definition = getDashboardFilterField(field);
-        const ruleOperators = getToolbarRuleOperators(field);
+        const numeric = numericFields.has(field);
+        const ruleOperators = getToolbarRuleOperators(field, numeric);
         if (!definition || ruleOperators.length === 0) return [];
         const shared = { id: field, label: option.label, group: group.label, ruleOperators };
         const noValueOption = noValueOptionOf(field, t);
@@ -380,6 +393,8 @@ export const buildToolbarProperties = ({
               ...getDashboardFieldValueProperty({ ...scope, label: option.label, noValueOption }),
               ...shared,
               multiValueEquals: true,
+              // A numeric key picks is / is not from its values, and takes a typed number for > and <.
+              ...(numeric ? { valueType: "number" as const } : {}),
             },
           ];
         }

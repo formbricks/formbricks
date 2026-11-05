@@ -11,6 +11,7 @@ import {
   createChartFieldLookup,
   getChartField,
   getChartFieldCatalog,
+  isFilterOnlyField,
 } from "./field-catalog";
 
 /** Every member the Cube model defines, read off the schema file the Cube image serves. */
@@ -117,6 +118,15 @@ describe("a dataset's field catalog (ENG-6893)", () => {
     expect(CHART_FIELD_CATALOG.every((field) => field.key === undefined)).toBe(true);
     // The public catalog schema carries it.
     expect(ZV3ChartField.parse(catalog[CHART_FIELD_CATALOG.length]).key).toBe("plan");
+  });
+
+  test("finds a dataset's embedded field's numeric twin, a filter-only number", () => {
+    const twin = createChartFieldLookup(dataset)("FeedbackRecords.edn_plan_64879f7d");
+    expect(twin).toMatchObject({ type: "number", key: "plan", valueLookup: false });
+    expect(twin?.filterOperators).toContain("gt");
+    expect(isFilterOnlyField("FeedbackRecords.edn_plan_64879f7d")).toBe(true);
+    expect(isFilterOnlyField("FeedbackRecords.ed_plan_64879f7d")).toBe(false);
+    expect(createChartFieldLookup()("FeedbackRecords.edn_plan_64879f7d")).toBeUndefined();
   });
 
   test("finds a dataset's embedded field only in that dataset", () => {

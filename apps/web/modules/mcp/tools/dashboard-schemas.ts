@@ -196,7 +196,7 @@ const ZMcpDashboardFilter = z
     operator: z
       .enum(DASHBOARD_FILTER_OPERATORS)
       .describe(
-        "How the field is compared with the values; set and notSet ask whether it has a value at all."
+        "How the field is compared with the values; set and notSet ask whether it has a value at all. gt, gte, lt and lte on an embedded-data field compare it as a number, only where list_dashboard_filter_fields types it number."
       ),
     values: z
       .array(zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
@@ -397,7 +397,7 @@ const ZMcpLockedDashboardFilter = z
       "A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…) of a dataset the dashboard's charts read, as list_dashboard_filter_fields lists them."
     ),
     operator: ZLockedDashboardFilter.shape.operator.describe(
-      "How the field is compared with the values; the field must allow it."
+      "How the field is compared with the values; the field must allow it. gt, gte, lt and lte on an embedded-data field need it to be type number in list_dashboard_filter_fields."
     ),
     label: ZLockedDashboardFilter.shape.label.describe(
       "What readers see the filter as, e.g. the field's label."

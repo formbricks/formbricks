@@ -411,6 +411,72 @@ describe("buildFilterValueQueries", () => {
   });
 });
 
+describe("charts that read no text answer", () => {
+  const SENTIMENT_FILTER: TDashboardFilter = {
+    ...filter("5", "FeedbackRecords.sentiment", "Sentiment"),
+  };
+  const npsChart: TFilterValueChart = {
+    datasetId: "ds_a",
+    query: {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.fieldType", operator: "equals", values: ["nps"] }],
+    },
+  };
+  const textChart = chart("ds_a", [{ member: REGION, operator: "equals", values: ["North"] }]);
+  const input = {
+    filters: [...FILTERS, SENTIMENT_FILTER],
+    dateFilter: null,
+    clock: CLOCK,
+    datasetHasField: everyField,
+  };
+
+  test("offer no value when another pick needs a Sentiment value", () => {
+    const queries = buildFilterValueQueries({
+      ...input,
+      filter: REGION_FILTER,
+      charts: [npsChart],
+      picks: { [SENTIMENT_FILTER.id]: ["positive"] },
+    });
+    expect(queries).toEqual([]);
+    // The chart that can read text answers still offers its values.
+    expect(
+      buildFilterValueQueries({
+        ...input,
+        filter: REGION_FILTER,
+        charts: [npsChart, textChart],
+        picks: { [SENTIMENT_FILTER.id]: ["positive"] },
+      })
+    ).toHaveLength(1);
+  });
+
+  test("offer no Sentiment value of their own, but other values when Sentiment is not picked", () => {
+    expect(
+      buildFilterValueQueries({ ...input, filter: SENTIMENT_FILTER, charts: [npsChart], picks: {} })
+    ).toEqual([]);
+    expect(
+      buildFilterValueQueries({ ...input, filter: REGION_FILTER, charts: [npsChart], picks: {} })
+    ).toHaveLength(1);
+  });
+
+  test("a bounded chart that reads no text answer offers no value under a Sentiment pick", () => {
+    const bounded: TFilterValueChart = { ...npsChart, query: { ...npsChart.query, limit: 5 } };
+    expect(
+      buildBoundedChartQueries({
+        ...input,
+        filter: REGION_FILTER,
+        charts: [bounded],
+        picks: { [SENTIMENT_FILTER.id]: ["positive"] },
+      })
+    ).toEqual([]);
+    expect(
+      buildBoundedChartQueries({ ...input, filter: SENTIMENT_FILTER, charts: [bounded], picks: {} })
+    ).toEqual([]);
+    expect(
+      buildBoundedChartQueries({ ...input, filter: REGION_FILTER, charts: [bounded], picks: {} })
+    ).toHaveLength(1);
+  });
+});
+
 describe("mergeFilterValues", () => {
   const rowsOf = (values: string[]) => values.map((value) => ({ [ACCOUNT]: value }));
 

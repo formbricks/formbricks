@@ -12,6 +12,7 @@ type TEmbeddedDimensionSpec = {
   key: string;
   name: string;
   equalsName: string;
+  numberName: string;
   valueSql: string;
   keyLiteral: string;
 };
@@ -30,6 +31,7 @@ const cubeConfig = require(cubeConfigPath) as {
   getEmbeddedContainmentSql: (keyLiteral: string, values: string[]) => string;
   getEmbeddedKeys: (securityContext?: Record<string, unknown>) => string[];
   toSafeSqlStringLiteral: (value: string) => string;
+  toSafeNumericSql: (textSql: string) => string;
   ANSWER_FILTER_ALIAS_COUNT: number;
 };
 const { queryRewrite } = cubeConfig;
@@ -822,6 +824,35 @@ describe("cube embedded-data members", () => {
     expect(sql).toContain("($1$::text)::numeric");
     expect(sql).toContain("($1$::text)::boolean");
     expect(cubeConfig.getEmbeddedContainmentSql("E'seats'", [])).toBe("1 = 1");
+  });
+
+  test("compiles a numeric twin edn_<suffix> beside every key", () => {
+    const [spec] = specsFor(["plan"]);
+    expect(spec.numberName).toBe("edn_plan_64879f7d");
+    expect(spec.numberName).toBe(spec.name.replace(/^ed_/, "edn_"));
+  });
+
+  test("reads a value as a number only when it is one, with no `?` for Cube to rewrite", () => {
+    const sql = cubeConfig.toSafeNumericSql("t.v");
+    expect(sql).toMatch(/^CASE WHEN t\.v ~ '(.+)' THEN \(t\.v\)::numeric END$/);
+    expect(sql).not.toContain("?");
+    // The pattern is a POSIX regex Postgres and JavaScript read alike for these characters.
+    const pattern = new RegExp(/~ '(.+)' THEN/.exec(sql)?.[1] ?? "$^");
+    for (const numeric of ["10", " 1.5 ", "-3e2", "+.5", "7.", "1E10", "0042"]) {
+      expect(pattern.test(numeric)).toBe(true);
+    }
+    for (const text of ["n/a", "", " ", "1.2.3", "1e1000", "1e", "--1", "1,5", "Infinity", "NaN", "0x1F"]) {
+      expect(pattern.test(text)).toBe(false);
+    }
+  });
+
+  test("leaves a numeric twin's filters as written: it is no reserved member, and equals stays on it", () => {
+    const filters = [
+      { member: "FeedbackRecords.edn_plan_64879f7d", operator: "gt", values: ["10"] },
+      { member: "FeedbackRecords.edn_plan_64879f7d", operator: "equals", values: ["12"] },
+    ];
+    const rewritten = queryRewrite({ measures: ["FeedbackRecords.count"], filters }, { securityContext });
+    expect(rewritten.filters).toEqual([...filters, TENANT_FILTER]);
   });
 
   test("moves only equals on an embedded member onto its containment twin", () => {

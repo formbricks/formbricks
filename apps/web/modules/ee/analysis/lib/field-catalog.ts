@@ -1,5 +1,6 @@
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { ANSWER_MEMBER, MAX_ANSWER_RULES, type TAnswerQuestion } from "./answer-filter";
+import { isEmbeddedNumberMemberName, toEmbeddedNumberMember } from "./embedded-data-fields";
 import {
   FEEDBACK_FIELDS,
   FILTER_OPERATORS,
@@ -140,11 +141,43 @@ export const getChartFieldCatalog = (dataset?: TDatasetChartFields): TChartField
   ...(dataset?.embeddedFields ?? []).map(toEmbeddedChartField),
 ];
 
-/** Looks a field up in one dataset's catalog; without a dataset, only the shared fields exist. */
+/**
+ * The numeric twin of an embedded-data field (`FeedbackRecords.edn_*`): the key's value as a number, compared
+ * with `gt` / `gte` / `lt` / `lte` (and equality) by a dashboard filter. Filter-only and never listed: a
+ * chart groups by the key's own field.
+ */
+export const toEmbeddedNumberChartField = ({ name, key }: TEmbeddedChartField): TChartField => ({
+  name: toEmbeddedNumberMember(name),
+  kind: "dimension",
+  type: "number",
+  label: key,
+  description: `Embedded data "${key}" read as a number; no value where it is not one. Filter only.`,
+  filterOperators: FILTER_OPERATORS.number,
+  granularities: [],
+  valueLookup: false,
+  key,
+});
+
+/** Whether a field may only be filtered on: the answer filter, and an embedded key's numeric twin. */
+export const isFilterOnlyField = (name: string): boolean =>
+  FILTER_ONLY_FIELDS.has(name) || isEmbeddedNumberMemberName(name);
+
+/**
+ * Looks a field up in one dataset's catalog; without a dataset, only the shared fields exist. A dataset's
+ * embedded-data key is found by its member and by its numeric twin (`toEmbeddedNumberChartField`).
+ */
 export const createChartFieldLookup = (
   dataset?: TDatasetChartFields
 ): ((name: string) => TChartField | undefined) => {
   if (!dataset || dataset.embeddedFields.length === 0) return getChartField;
-  const embedded = new Map(dataset.embeddedFields.map((field) => [field.name, toEmbeddedChartField(field)]));
+  const embedded = new Map(
+    dataset.embeddedFields.flatMap((field) => {
+      const numeric = toEmbeddedNumberChartField(field);
+      return [
+        [field.name, toEmbeddedChartField(field)],
+        [numeric.name, numeric],
+      ] as const;
+    })
+  );
   return (name) => CATALOG_BY_NAME.get(name) ?? embedded.get(name);
 };

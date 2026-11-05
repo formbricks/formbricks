@@ -60,9 +60,10 @@ export const ZV3DashboardResource = z
 export type TV3DashboardResource = z.infer<typeof ZV3DashboardResource>;
 
 /**
- * A chart's data read through its dashboard: the chart data body, plus the picked filters the chart's
- * Feedback Dataset has no field for. When there are any, `rows` is empty: the chart cannot be narrowed to
- * the pick, so it shows nothing rather than more than was picked.
+ * A chart's data read through its dashboard: the chart data body, plus the picked filters the chart cannot
+ * be narrowed by — its Feedback Dataset has no field for them, or they need a Sentiment or Emotions value
+ * the chart's answers (all non-text) never carry. When there are any, `rows` is empty: the chart cannot be
+ * narrowed to the pick, so it shows nothing rather than more than was picked.
  */
 export const ZV3DashboardChartData = ZV3ChartData.extend({
   unfilterableFilters: z.array(z.object({ id: z.string(), label: z.string() }).strict()),
@@ -83,11 +84,18 @@ export type TV3DashboardFilterValues = z.infer<typeof ZV3DashboardFilterValues>;
 
 /**
  * The embedded-data fields a dashboard's filters can use: each key of the Feedback Datasets its charts read,
- * once, in key order, with the member a filter names (`FeedbackRecords.ed_*`) and the label it is shown by.
+ * once, in key order, with the member a filter names (`FeedbackRecords.ed_*`), the label it is shown by, and
+ * its `type` on this dashboard: `number` when every Embedded Data field it holds is a number field
+ * (`getNumericEmbeddedFields`), which a filter may then compare with `gt` / `gte` / `lt` / `lte`; `string`
+ * otherwise.
  */
 export const ZV3DashboardFilterFields = z
   .object({
-    fields: z.array(z.object({ name: z.string(), key: z.string(), label: z.string() }).strict()),
+    fields: z.array(
+      z
+        .object({ name: z.string(), key: z.string(), label: z.string(), type: z.enum(["string", "number"]) })
+        .strict()
+    ),
   })
   .strict();
 export type TV3DashboardFilterFields = z.infer<typeof ZV3DashboardFilterFields>;

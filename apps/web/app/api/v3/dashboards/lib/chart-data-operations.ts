@@ -34,7 +34,9 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { resolveFilterRules } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
+import { chartExcludesTextAnswers } from "@/modules/ee/analysis/dashboards/lib/enrichment-filters";
 import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
+import { refuseNonNumericComparisons } from "./numeric-filter-fields";
 import { withCachedDashboardDecision } from "./read-decision-cache";
 import type { TV3DashboardChartData } from "./resources";
 import type { TV3DashboardChartDataQuery } from "./schemas";
@@ -115,7 +117,8 @@ const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartO
  * filters (`filter[<id>]`, with its values in `picks[<id>]`) is ANDed onto the chart's saved filters
  * (ADR-0026) — a saved rule on the same field is kept — and so is every filter an editor locked on the
  * dashboard, whoever reads it. A filter on a field the chart's Feedback Dataset
- * lacks leaves the chart empty, naming the filter.
+ * lacks leaves the chart empty, naming the filter; so does a filter on Sentiment, Sentiment Score or
+ * Emotions that needs a value, on a chart whose saved query reads no text answer (`chartExcludesTextAnswers`).
  *
  * Needs read access to the dashboard and to the chart's Feedback Dataset; spends from the chart-query budget.
  */
@@ -173,6 +176,17 @@ export async function getV3DashboardChartData({
       );
       if (ungrouped) return ungrouped;
     }
+    // A number comparison on an embedded-data key holds only where the key is a number on this dashboard.
+    const nonNumeric = await refuseNonNumericComparisons(requestFilters, {
+      workspaceId: access.workspaceId,
+      datasetIds: async () =>
+        ((await getDashboardChartsRow(dashboardId))?.widgets ?? []).map(
+          ({ chart }) => chart.feedbackDirectoryId
+        ),
+      requestId: context.requestId,
+      instance: context.instance,
+    });
+    if (nonNumeric) return nonNumeric;
     // Picks are checked before any query: a value its field cannot hold, or more than the total budget,
     // is the caller's to fix (422), not a Cube failure (C6, C9).
     const pickIssues = findPickIssues(requestFilters, query.picks ?? {});
@@ -199,8 +213,12 @@ export async function getV3DashboardChartData({
         },
         dashboardFilters.map(({ field }) => field)
       ),
-      // A picked day is a whole day where the organization reports, as its charts' date ranges are.
-      { timeZone: await getOrganizationReportingTimeZone(access.organizationId) }
+      {
+        // A picked day is a whole day where the organization reports, as its charts' date ranges are.
+        timeZone: await getOrganizationReportingTimeZone(access.organizationId),
+        // A chart that reads no text answer cannot be narrowed by Sentiment or Emotions: it says so.
+        excludesTextAnswers: chartExcludesTextAnswers(chart.query),
+      }
     );
     const unfilterableFilters = unfilterable.map(({ id, label }) => ({ id, label }));
     const respond = (data: TV3ChartData): TV3DashboardChartData => ({ ...data, unfilterableFilters });

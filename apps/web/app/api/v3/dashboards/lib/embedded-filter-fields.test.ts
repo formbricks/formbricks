@@ -2,11 +2,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
+import { getNumericEmbeddedFields } from "@/modules/ee/analysis/dashboards/lib/embedded-field-types";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({ prisma: { dashboard: { findFirst: vi.fn() } } }));
 vi.mock("@/modules/ee/analysis/dashboards/lib/dataset-fields", () => ({ getDatasetFieldMatcher: vi.fn() }));
+vi.mock("@/modules/ee/analysis/dashboards/lib/embedded-field-types", () => ({
+  getNumericEmbeddedFields: vi.fn(),
+}));
 
 const WORKSPACE_ID = "clws000000000000000000001";
 const DASHBOARD_ID = "clda000000000000000000001";
@@ -86,5 +90,47 @@ describe("findUnknownEmbeddedFilterFields", () => {
     expect(await find(canReadDataset)).toEqual([]);
     expect(canReadDataset).not.toHaveBeenCalled();
     expect(getDatasetFieldMatcher).not.toHaveBeenCalled();
+  });
+});
+
+describe("findUnknownEmbeddedFilterFields: number comparisons", () => {
+  const above: TDashboardFilter = { ...embeddedFilter, operator: "gt" };
+  const check = (filters: TDashboardFilter[]) =>
+    findUnknownEmbeddedFilterFields({
+      dashboardId: DASHBOARD_ID,
+      filters,
+      access,
+      actor,
+      canReadDataset: async () => true,
+    });
+
+  beforeEach(() => {
+    vi.mocked(getDatasetFieldMatcher).mockImplementation(async () => () => true);
+    vi.mocked(getNumericEmbeddedFields).mockResolvedValue(new Set());
+  });
+
+  test("refuses gt on a key that is not a number on the dashboard, read over the kept widgets' datasets", async () => {
+    expect(await check([embeddedFilter, above])).toEqual([
+      { name: "filters[1].operator", reason: expect.stringContaining("is a number") },
+    ]);
+    expect(getNumericEmbeddedFields).toHaveBeenCalledWith(WORKSPACE_ID, [READABLE, UNREADABLE]);
+  });
+
+  test("accepts it on a numeric key, and reads no types when nothing compares with a number", async () => {
+    vi.mocked(getNumericEmbeddedFields).mockResolvedValue(new Set([PLAN]));
+    expect(await check([above])).toEqual([]);
+
+    vi.mocked(getNumericEmbeddedFields).mockClear();
+    expect(await check([embeddedFilter])).toEqual([]);
+    expect(getNumericEmbeddedFields).not.toHaveBeenCalled();
+  });
+
+  test("keeps saving a comparison already saved on the dashboard", async () => {
+    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({
+      filters: [{ ...above, values: ["10"] }],
+      widgets: [{ chart: { feedbackDirectoryId: READABLE } }],
+    } as never);
+    expect(await check([above])).toEqual([]);
+    expect(getNumericEmbeddedFields).not.toHaveBeenCalled();
   });
 });

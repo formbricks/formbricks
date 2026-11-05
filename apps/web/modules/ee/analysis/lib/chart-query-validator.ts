@@ -14,11 +14,11 @@ import {
 } from "./answer-filter";
 import {
   ALL_TIME_DATE_RANGE,
-  FILTER_ONLY_FIELDS,
   type TChartField,
   type TChartFieldKind,
   type TDatasetChartFields,
   createChartFieldLookup,
+  isFilterOnlyField,
 } from "./field-catalog";
 import { TIME_GRANULARITIES } from "./schema-definition";
 import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
@@ -379,7 +379,7 @@ const checkField = (
     return undefined;
   }
 
-  if (!inFilter && FILTER_ONLY_FIELDS.has(field.name)) {
+  if (!inFilter && isFilterOnlyField(field.name)) {
     issues.add(path, "Can only be used in a filter.", "invalid_reference");
     return undefined;
   }

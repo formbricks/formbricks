@@ -2,12 +2,14 @@
 // If the Hub changes column names or types, this schema must be updated to match.
 //
 // Compiled once per Feedback Dataset and embedded-data key set (cube.js `contextToAppId`): the dataset's
-// keys arrive in the signed token and each becomes one `ed_<slug>_<hash>` dimension. A dataset
-// without keys compiles exactly the plain model. The helpers live in cube.js, as non-enumerable exports.
+// keys arrive in the signed token and each becomes one `ed_<slug>_<hash>` dimension, with hidden `edc_`
+// (equals) and `edn_` (number) twins. A dataset without keys compiles exactly the plain model. The helpers
+// live in cube.js, as non-enumerable exports.
 const {
   ANSWER_FILTER_ALIAS_COUNT,
   getEmbeddedContainmentSql,
   getEmbeddedDimensionSpecs,
+  toSafeNumericSql,
 } = require("/cube/conf/cube.js");
 
 asyncModule(async () => {
@@ -26,6 +28,12 @@ asyncModule(async () => {
     embeddedDimensions[spec.equalsName] = {
       sql: (CUBE) => `${CUBE}.${spec.valueSql}`,
       type: `string`,
+      shown: false,
+    };
+    // The key's value as a number, NULL where it is not one: what a dashboard's "> 10" on the key compares.
+    embeddedDimensions[spec.numberName] = {
+      sql: (CUBE) => toSafeNumericSql(`${CUBE}.${spec.valueSql}`),
+      type: `number`,
       shown: false,
     };
   }

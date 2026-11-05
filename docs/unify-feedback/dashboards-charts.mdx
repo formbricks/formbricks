@@ -148,6 +148,9 @@ keeps records with any of them or with no value; **is not** keeps records that h
 others. For **Language** this option reads **Default**: a response without a language code was answered in its
 survey's default language. Every field can also be **is set** (has a value) or **is not set** (has none).
 
+**Is not** and **contains none of** also keep records that have no value for that field: "Value (Number) is not 10"
+keeps text answers, which have no number.
+
 Use the date range to pick the period every chart shows. It replaces the period each chart was saved with, so
 you can look further back or ahead than the chart's author did; on a chart grouped by time, **All time** keeps the
 chart's own period.
@@ -183,6 +186,11 @@ only offers values that at least one chart on the dashboard can show.
 
 If a chart's Feedback Dataset doesn't have the field a filter uses, the chart can't be narrowed by it. The chart then
 says "This chart can't be filtered by" and names the filter, instead of showing data the filter would have left out.
+
+The same goes for **Sentiment**, **Sentiment Score** and **Emotions** on a chart that only shows answers without text,
+such as an NPS, CSAT or rating chart: AI enrichment only reads text answers, so these answers never carry them. Such a
+chart says "This chart can't be filtered by Sentiment" rather than showing no data. Filters that also keep records
+without a value, such as **is not**, **contains none of** or **is not set**, still apply to it.
 
 <Note>
   A filter's value list shows the values of that field to everyone who can open the dashboard. A Dashboard viewer

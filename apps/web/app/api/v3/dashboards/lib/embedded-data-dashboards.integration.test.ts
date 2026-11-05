@@ -10,9 +10,10 @@ import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/li
 import { MAX_EMBEDDED_KEYS } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
 import { getV3DashboardChartData } from "./chart-data-operations";
+import { listV3DashboardFilterFields } from "./filter-fields-operations";
 import { listV3DashboardFilterValues } from "./filter-values-operations";
 import { replaceV3Dashboard } from "./operations";
-import { ZV3DashboardChartData } from "./resources";
+import { ZV3DashboardChartData, ZV3DashboardFilterFields } from "./resources";
 import {
   ZV3DashboardChartDataQuery,
   ZV3DashboardFilterValuesQuery,
@@ -289,5 +290,136 @@ describe("a saved chart on an embedded-data key", () => {
 
     expect(response.status).toBe(422);
     expect(cubeFake.calls).toHaveLength(0);
+  });
+});
+
+describe("an embedded-data key whose Embedded Data fields are all numbers", () => {
+  const SEATS = getEmbeddedMemberName("Seats");
+
+  /** A survey of the fixture's workspace, mapped into `datasetId`, publishing one Embedded Data field per name. */
+  const mapSurveyWithFields = async (datasetId: string, fields: Record<string, "number" | "string">) => {
+    const survey = await prisma.survey.create({
+      data: {
+        name: `Survey ${++sequence}`,
+        type: "link",
+        status: "inProgress",
+        workspaceId: fixture.workspaceId,
+      },
+      select: { id: true },
+    });
+    let order = 0;
+    for (const [name, dataType] of Object.entries(fields)) {
+      const field = await prisma.embeddedData.create({
+        data: { name, source: "ingested", dataType, workspaceId: fixture.workspaceId, surveyId: survey.id },
+      });
+      await prisma.surveyEmbeddedData.create({
+        data: {
+          workspaceId: fixture.workspaceId,
+          surveyId: survey.id,
+          embeddedDataId: field.id,
+          storageKey: `${name}-${sequence}`,
+          order: order++,
+        },
+      });
+    }
+    const source = await prisma.feedbackSource.create({
+      data: {
+        name: `Source ${++sequence}`,
+        type: "formbricks_survey",
+        workspaceId: fixture.workspaceId,
+        feedbackDirectoryId: datasetId,
+      },
+    });
+    await prisma.feedbackSourceFormbricksMapping.create({
+      data: {
+        feedbackSourceId: source.id,
+        workspaceId: fixture.workspaceId,
+        surveyId: survey.id,
+        elementId: "q1",
+        hubFieldType: "nps",
+      },
+    });
+  };
+
+  const readChart = (
+    dashboardId: string,
+    chartId: string,
+    rules: Record<string, string>,
+    picks: Record<string, string[]>
+  ) =>
+    getV3DashboardChartData({
+      dashboardId,
+      chartId,
+      query: ZV3DashboardChartDataQuery.parse({ rules, picks }),
+      ...ctx(),
+    });
+
+  test("is listed as a number, and gt on it reaches Cube on its numeric twin", async () => {
+    const dataset = await createDataset(["Seats", "Plan"]);
+    await syncDatasets();
+    await mapSurveyWithFields(dataset, { Seats: "number", Plan: "string" });
+    const chart = await createChart(dataset, { measures: [COUNT], dimensions: [SOURCE] });
+    const dashboard = await createDashboard([chart], []);
+
+    const listed = await listV3DashboardFilterFields({ dashboardId: dashboard.id, ...ctx() });
+    expect(listed.status, await listed.clone().text()).toBe(200);
+    expect(ZV3DashboardFilterFields.parse((await listed.json()).data).fields).toEqual([
+      { name: PLAN, key: "Plan", label: "Plan", type: "string" },
+      { name: SEATS, key: "Seats", label: "Seats", type: "number" },
+    ]);
+
+    const read = await readChart(dashboard.id, chart, { f1: `gt:${SEATS}` }, { f1: ["10"] });
+    expect(read.status, await read.clone().text()).toBe(200);
+    expect(cubeFake.calls).toHaveLength(1);
+    expect(cubeFake.calls[0].query.filters).toEqual(
+      expect.arrayContaining([
+        {
+          member: SEATS.replace("FeedbackRecords.ed_", "FeedbackRecords.edn_"),
+          operator: "gt",
+          values: ["10"],
+        },
+      ])
+    );
+    // The twin's key travels in the token, so the dataset's model compiles it.
+    expect(cubeFake.calls[0].claims.edKeys).toContain("Seats");
+
+    // A pick that is no number is the caller's to fix.
+    expect((await readChart(dashboard.id, chart, { f1: `gt:${SEATS}` }, { f1: ["ten"] })).status).toBe(422);
+  });
+
+  test("answers 422 for gt on a key that is text on the dashboard, or that fields of two types share", async () => {
+    const dataset = await createDataset(["Seats", "Plan"]);
+    await syncDatasets();
+    await mapSurveyWithFields(dataset, { Seats: "number", Plan: "string" });
+    // A second survey declares Seats as text: the key is no longer a number on this dashboard.
+    await mapSurveyWithFields(dataset, { Seats: "string" });
+    const chart = await createChart(dataset, { measures: [COUNT], dimensions: [SOURCE] });
+    const dashboard = await createDashboard([chart], []);
+
+    for (const field of [PLAN, SEATS]) {
+      const refused = await readChart(dashboard.id, chart, { f1: `gt:${field}` }, { f1: ["10"] });
+      expect(refused.status).toBe(422);
+      const problem = (await refused.json()) as { invalid_params: { name: string }[] };
+      expect(problem.invalid_params.map(({ name }) => name)).toEqual(["filter[f1]"]);
+    }
+    expect(cubeFake.calls).toHaveLength(0);
+
+    // Locking one on the dashboard is refused the same way.
+    const saved = await replaceV3Dashboard({
+      dashboardId: dashboard.id,
+      body: ZV3DashboardReplaceBody.parse({
+        name: "Seats",
+        expectedUpdatedAt: dashboard.updatedAt.toISOString(),
+        filters: [{ id: FILTER_ID, field: SEATS, operator: "gt", label: "Seats", values: ["10"] }],
+        widgets: (
+          await prisma.dashboardWidget.findMany({
+            where: { dashboardId: dashboard.id },
+            select: { id: true, layout: true, order: true },
+          })
+        ).map(({ id, layout, order }) => ({ widgetId: id, layout, order })),
+      }),
+      ...ctx(),
+    });
+    expect(saved.status).toBe(422);
   });
 });
