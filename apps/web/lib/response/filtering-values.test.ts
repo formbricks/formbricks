@@ -57,24 +57,26 @@ interface TRows {
   variables?: TFilterValueRow[];
 }
 
-/** Routes each tagged-template call to its rows by the table/column it reads. */
-const mockRows = (rows: TRows) => {
-  vi.mocked(prisma.$queryRaw).mockImplementation(((strings: TemplateStringsArray) => {
-    const sql = strings.join("?");
-    if (sql.includes(`r."contactAttributes"`)) return Promise.resolve(rows.contact ?? []);
-    if (sql.includes("jsonb_typeof(r.meta)")) return Promise.resolve(rows.meta ?? []);
-    if (sql.includes("r.data -> k.key")) return Promise.resolve(rows.data ?? []);
-    if (sql.includes("r.variables -> k.key")) return Promise.resolve(rows.variables ?? []);
-    throw new Error(`unexpected query: ${sql}`);
-  }) as unknown as typeof prisma.$queryRaw);
+type TQuery = keyof TRows;
+
+/**
+ * Which query a tagged-template call is, read from its bound parameters rather than its SQL text, so
+ * rewording a query does not break these tests: only the variables query binds a limit, only the data
+ * query binds a key list without one, and only the meta query binds the survey id twice.
+ */
+const queryOf = (values: unknown[]): TQuery => {
+  if (values.some((value) => typeof value === "number")) return "variables";
+  if (values.some(Array.isArray)) return "data";
+  return values.filter((value) => value === survey.id).length > 1 ? "meta" : "contact";
 };
 
-const callFor = (fragment: string) =>
-  vi
-    .mocked(prisma.$queryRaw)
-    .mock.calls.find(([strings]) =>
-      (strings as unknown as TemplateStringsArray).join("?").includes(fragment)
-    );
+const mockRows = (rows: TRows) => {
+  vi.mocked(prisma.$queryRaw).mockImplementation(((_strings: TemplateStringsArray, ...values: unknown[]) =>
+    Promise.resolve(rows[queryOf(values)] ?? [])) as unknown as typeof prisma.$queryRaw);
+};
+
+const callFor = (query: TQuery) =>
+  vi.mocked(prisma.$queryRaw).mock.calls.find(([, ...values]) => queryOf(values) === query);
 
 describe("getSurveyFilteringValues (ENG-3755)", () => {
   beforeEach(() => {
@@ -88,17 +90,15 @@ describe("getSurveyFilteringValues (ENG-3755)", () => {
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(4);
     for (const [strings, ...values] of vi.mocked(prisma.$queryRaw).mock.calls) {
       const sql = (strings as unknown as TemplateStringsArray).join("?");
-      expect(sql).toContain("DISTINCT");
-      expect(sql).toContain(`WHERE r."surveyId" = ?`);
       expect(values).toContain("survey_1");
       // Survey-provided keys never reach the SQL text.
       expect(sql).not.toContain("campaign");
       expect(sql).not.toContain("var_plan");
     }
 
-    const [, dataKeys] = callFor("r.data -> k.key")!;
+    const [, dataKeys] = callFor("data")!;
     expect(dataKeys).toEqual(["campaign", "score"]);
-    const [, variableKeys, , limit] = callFor("r.variables -> k.key")!;
+    const [, variableKeys, , limit] = callFor("variables")!;
     expect(variableKeys).toEqual(["var_plan"]);
     expect(limit).toBe(MAX_FILTER_VALUE_OPTIONS);
   });

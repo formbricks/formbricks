@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import type {
@@ -23,7 +24,11 @@ import {
  *
  * Freshness: there is no cache. The values are computed on every filter-menu open, as before, but
  * each query below returns one row per DISTINCT value instead of one full row (`data`, `ttc`, …) per
- * response, so the work is bounded by the survey's value cardinality rather than its response count.
+ * response. What reaches Node is bounded by the number of distinct values, not by the response count.
+ * That is not a hard bound: for keys that differ per response (`ipAddress`, `pageReferrer`, a contact
+ * email) it is still about one row per response, and Postgres still scans every response of the
+ * survey. Only the variables query caps in SQL; capping the others would change which options the
+ * filter offers today, so it is left to a search/pagination follow-up.
  *
  * Every value comes back as its jsonb text (`value::text`) and is `JSON.parse`d here, which yields the
  * exact JS value the old `findMany` handed the helpers. Each distinct value is then wrapped in a
@@ -50,6 +55,14 @@ export interface TMetaFilterValueRow extends TFilterValueRow {
 
 type TFilterValueSlice = Pick<TResponse, "contactAttributes" | "data" | "meta">;
 
+/** `column` when it holds a jsonb object, else `{}`, so `jsonb_each` never sees a scalar or array. */
+const jsonbObjectOrEmpty = (column: Prisma.Sql): Prisma.Sql =>
+  Prisma.sql`CASE WHEN jsonb_typeof(${column}) = 'object' THEN ${column} ELSE '{}'::jsonb END`;
+
+const CONTACT_ATTRIBUTES = Prisma.raw(`r."contactAttributes"`);
+const META = Prisma.raw("r.meta");
+const META_VALUE = Prisma.raw("m.value");
+
 /**
  * Distinct contact attribute values. A jsonb `null` value is skipped: the schema stores strings only,
  * and `getResponseContactAttributes` calls `.toString()` on each value, which threw on `null` and
@@ -59,9 +72,7 @@ const queryContactAttributeValues = (surveyId: string): Promise<TFilterValueRow[
   prisma.$queryRaw<TFilterValueRow[]>`
     SELECT DISTINCT a.key AS "key", a.value::text AS "value"
     FROM "Response" r
-    CROSS JOIN LATERAL jsonb_each(
-      CASE WHEN jsonb_typeof(r."contactAttributes") = 'object' THEN r."contactAttributes" ELSE '{}'::jsonb END
-    ) AS a
+    CROSS JOIN LATERAL jsonb_each(${jsonbObjectOrEmpty(CONTACT_ATTRIBUTES)}) AS a
     WHERE r."surveyId" = ${surveyId}
       AND jsonb_typeof(a.value) <> 'null'
     ORDER BY 1, 2
@@ -93,16 +104,16 @@ const queryMetaValues = (surveyId: string): Promise<TMetaFilterValueRow[]> =>
           ELSE 'null'
         END AS "value"
       FROM "Response" r
-      CROSS JOIN LATERAL jsonb_each(CASE WHEN jsonb_typeof(r.meta) = 'object' THEN r.meta ELSE '{}'::jsonb END) AS m
+      CROSS JOIN LATERAL jsonb_each(${jsonbObjectOrEmpty(META)}) AS m
       WHERE r."surveyId" = ${surveyId}
         AND (m.key = 'url' OR jsonb_typeof(m.value) IN ('string', 'number', 'boolean'))
       UNION ALL
       SELECT DISTINCT m.key, n.key, n.value::text
       FROM "Response" r
-      CROSS JOIN LATERAL jsonb_each(CASE WHEN jsonb_typeof(r.meta) = 'object' THEN r.meta ELSE '{}'::jsonb END) AS m
+      CROSS JOIN LATERAL jsonb_each(${jsonbObjectOrEmpty(META)}) AS m
       CROSS JOIN LATERAL (
         SELECT e.key, e.value
-        FROM jsonb_each(CASE WHEN jsonb_typeof(m.value) = 'object' THEN m.value ELSE '{}'::jsonb END) AS e
+        FROM jsonb_each(${jsonbObjectOrEmpty(META_VALUE)}) AS e
         UNION ALL
         SELECT (a.ord - 1)::text, a.value
         FROM jsonb_array_elements(CASE WHEN jsonb_typeof(m.value) = 'array' THEN m.value ELSE '[]'::jsonb END)
@@ -152,17 +163,18 @@ const queryVariableValues = (surveyId: string, keys: string[], limit: number): P
 
 const emptySlice = (): TFilterValueSlice => ({ contactAttributes: null, data: {}, meta: {} });
 
-const contactAttributeRowsToSlices = (rows: TFilterValueRow[]): TFilterValueSlice[] =>
-  rows.map(({ key, value }) => ({ ...emptySlice(), contactAttributes: { [key]: JSON.parse(value) } }));
+/** One slice per row, holding only that key/value under `field`. */
+const scalarRowsToSlices = (
+  rows: TFilterValueRow[],
+  field: "contactAttributes" | "data"
+): TFilterValueSlice[] =>
+  rows.map(({ key, value }) => ({ ...emptySlice(), [field]: { [key]: JSON.parse(value) } }));
 
 export const metaRowsToSlices = (rows: TMetaFilterValueRow[]): TFilterValueSlice[] =>
   rows.map(({ key, nestedKey, value }) => {
     const parsed: unknown = JSON.parse(value);
     return { ...emptySlice(), meta: { [key]: nestedKey === null ? parsed : { [nestedKey]: parsed } } };
   });
-
-const dataRowsToSlices = (rows: TFilterValueRow[]): TFilterValueSlice[] =>
-  rows.map(({ key, value }) => ({ ...emptySlice(), data: { [key]: JSON.parse(value) } }));
 
 const variableRowsToSlices = (rows: TFilterValueRow[]): Pick<TResponse, "variables">[] =>
   rows.map(({ key, value }) => ({ variables: { [key]: JSON.parse(value) } }));
@@ -213,9 +225,11 @@ export const getSurveyFilteringValues = async (survey: TSurvey): Promise<TRespon
   const metaSlices = metaRowsToSlices(metaRows);
 
   return {
-    contactAttributes: getResponseContactAttributes(contactAttributeRowsToSlices(contactAttributeRows)),
+    contactAttributes: getResponseContactAttributes(
+      scalarRowsToSlices(contactAttributeRows, "contactAttributes")
+    ),
     meta: getResponseMeta(metaSlices),
-    hiddenFields: getResponseHiddenFields(survey, dataRowsToSlices(dataRows)),
+    hiddenFields: getResponseHiddenFields(survey, scalarRowsToSlices(dataRows, "data")),
     reservedValues: getResponseReservedFilterValues(
       survey,
       metaSlices.map((slice) => toReservedProjectionSlice(survey.id, slice))
