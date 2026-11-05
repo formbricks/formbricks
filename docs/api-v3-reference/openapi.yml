@@ -12430,7 +12430,7 @@ components:
 
         The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents each; `answers[]` on the read is the resolved view of this same map.
 
-        **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: the v1 and v2 write paths store this same map with no cardinality limit, so a response written through them can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
+        **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: responses written through the v1 and v2 APIs are not guaranteed to fit these bounds, and can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
       additionalProperties:
         $ref: '#/components/schemas/ResponseRawValue'
     ResponseDataMapInput:
@@ -12440,10 +12440,10 @@ components:
           description: |
             The same map on the way in, with the cardinality bounds a v3 write enforces.
 
-            At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit far above any real survey — a response holds one entry per element, a multi-select answer one per choice — and exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either is a **400** from the request schema, not a 422.
+            At most 2,000 keys, and at most 1000 entries in a multi-select array or matrix object. These are generous caps, set well above what surveys hold: the map has one key per answered element, and a survey written through this API has at most 1,000 blocks, so 2,000 keys covers one at that limit with one element per block; a multi-select answer holds one entry per choice. The bounds exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either, or sending a value of a shape `ResponseDataMap` does not allow, is a **400** from the request schema, not a 422, reported once, at the first such key.
 
-            Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only — the v1 and v2 write paths store the same map without them — so a stored response may exceed them, and the read schema must not claim otherwise.
-          maxProperties: 500
+            Deliberately separate from `ResponseDataMap`, which the read returns. The v1 and v2 client writes and the v1 management write apply these bounds to each request, plus a total of 10,000 entries in each request's `data` map, but a response built over several updates can still exceed them, the v2 management write does not apply them, and older responses predate them. A stored response may therefore exceed them, and the read schema must not claim otherwise.
+          maxProperties: 2000
           additionalProperties:
             if:
               type: array
@@ -12485,7 +12485,7 @@ components:
 
         Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
 
-        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; a v3-only bound, as on `data`.
+        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A generous cap: a survey written through this API declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
       maxProperties: 500
       additionalProperties:
         oneOf:
@@ -12500,12 +12500,12 @@ components:
 
         This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite *value* is therefore accepted, and none is declared out of range.
 
-        The number of **entries** is capped at 500, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
+        The number of **entries** is capped at 2,000, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
 
         **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and writes its own when the response is finished, by summing the element entries. Sending one therefore changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed from the element entries regardless.
 
         **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of zero, which reads as "completed instantly".
-      maxProperties: 500
+      maxProperties: 2000
       additionalProperties:
         type: number
     ResponseMetaInput:

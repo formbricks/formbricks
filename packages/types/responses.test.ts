@@ -1,11 +1,18 @@
 import { describe, expect, test } from "vitest";
 import {
+  MAX_RESPONSE_DATA_ENTRIES,
+  MAX_RESPONSE_DATA_KEYS,
+  MAX_RESPONSE_DATA_VALUES,
+  MAX_RESPONSE_VARIABLE_KEYS,
+  RESPONSE_DATA_LIMIT_MESSAGES,
   ZClientResponseInput,
   ZClientResponseUpdateInput,
   ZResponseFilterCriteria,
   ZResponseInput,
   ZResponseMeta,
   ZResponseUpdate,
+  ZResponseUpdateInput,
+  checkResponseDataSize,
   pickAutoCapturedResponseMeta,
 } from "./responses";
 
@@ -194,5 +201,159 @@ describe("ZResponseFilterCriteria.data", () => {
   test.each(["equals", "notEquals"] as const)("rejects a jsonb boolean under %s", (op) => {
     expect(parse({ op, value: true }).success).toBe(false);
     expect(parse({ op, value: "true" }).success).toBe(true);
+  });
+});
+
+describe("response input caps", () => {
+  const keyed = <T>(count: number, value: (index: number) => T): Record<string, T> =>
+    Object.fromEntries(Array.from({ length: count }, (_, index) => [`k${index}`, value(index)]));
+  const strings = (count: number) => Array.from({ length: count }, (_, index) => `choice-${index}`);
+  const create = (over: Record<string, unknown>) =>
+    ZResponseInput.safeParse({
+      workspaceId: "clx0000000000000000000w1",
+      surveyId: "clx0000000000000000000s2",
+      finished: true,
+      data: {},
+      ...over,
+    });
+  const issuesOf = (result: ReturnType<typeof create>) => (result.success ? [] : result.error.issues);
+
+  test("accepts a response at every cap at once", () => {
+    // 2,000 answers: a multi-select with every one of 1,000 choices ticked, a 1,000-row matrix, and
+    // 1,998 short arrays that land exactly on the entry budget between them.
+    const fillerKeys = MAX_RESPONSE_DATA_KEYS - 2;
+    const fillerItems = MAX_RESPONSE_DATA_ENTRIES - MAX_RESPONSE_DATA_KEYS - 2 * MAX_RESPONSE_DATA_VALUES;
+    const data: Record<string, unknown> = keyed(fillerKeys, (index) =>
+      strings(Math.floor(fillerItems / fillerKeys) + (index < fillerItems % fillerKeys ? 1 : 0))
+    );
+    data.multi = strings(MAX_RESPONSE_DATA_VALUES);
+    data.matrix = keyed(MAX_RESPONSE_DATA_VALUES, () => "column");
+
+    const result = create({
+      data,
+      variables: keyed(MAX_RESPONSE_VARIABLE_KEYS, (index) => index),
+      ttc: keyed(MAX_RESPONSE_DATA_KEYS, () => 1200),
+    });
+
+    expect(issuesOf(result)).toEqual([]);
+  });
+
+  // Every one is caught by the size check on the map, before Zod reads a single item, and reported at the
+  // answer it names when there is one.
+  test.each([
+    ["an array one past its cap", { q: strings(MAX_RESPONSE_DATA_VALUES + 1) }, ["data", "q"]],
+    [
+      "an array one past its cap, every item invalid",
+      { q: Array.from({ length: MAX_RESPONSE_DATA_VALUES + 1 }, () => 1) },
+      ["data", "q"],
+    ],
+    ["an array of a million invalid items", { q: Array.from({ length: 1_000_000 }, () => 1) }, ["data", "q"]],
+    [
+      "a matrix one row past its cap",
+      { q: keyed(MAX_RESPONSE_DATA_VALUES + 1, () => "column") },
+      ["data", "q"],
+    ],
+    ["one key past the cap", keyed(MAX_RESPONSE_DATA_KEYS + 1, () => "answer"), ["data"]],
+    ["a hundred thousand keys", keyed(100_000, () => true), ["data"]],
+    [
+      "every key at its array cap, every item invalid",
+      keyed(MAX_RESPONSE_DATA_KEYS, () => Array.from({ length: MAX_RESPONSE_DATA_VALUES }, () => 1)),
+      ["data", "k0"],
+    ],
+  ])("rejects data with %s in a single issue", (_, data, path) => {
+    const issues = issuesOf(create({ data }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual(path);
+  });
+
+  // Zod would report a wrong item inside the answer union once per item, nested; the pre-check refuses the
+  // answer with one plain issue instead.
+  test.each([
+    ["an array", { q: [1, 2, 3, "ok"] }],
+    ["a matrix", { q: { row: 1 } }],
+  ])("refuses %s holding non-text items with one issue naming the answer", (_, data) => {
+    const issues = issuesOf(create({ data }));
+
+    expect(issues).toEqual([
+      expect.objectContaining({
+        code: "custom",
+        path: ["data", "q"],
+        message: RESPONSE_DATA_LIMIT_MESSAGES.text,
+      }),
+    ]);
+  });
+
+  test("rejects data one entry past the budget, with every key and array within its own cap", () => {
+    const perKey = (MAX_RESPONSE_DATA_ENTRIES - MAX_RESPONSE_DATA_KEYS) / MAX_RESPONSE_DATA_KEYS;
+    const data: Record<string, unknown> = keyed(MAX_RESPONSE_DATA_KEYS, () => strings(perKey));
+    (data.k0 as string[]).push("one-too-many");
+
+    const issues = issuesOf(create({ data }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual(["data"]);
+  });
+
+  test.each([
+    ["variables", MAX_RESPONSE_VARIABLE_KEYS + 1],
+    ["variables", 100_000],
+    ["ttc", MAX_RESPONSE_DATA_KEYS + 1],
+    ["ttc", 100_000],
+  ])("rejects %s with %i keys in a single issue", (field, count) => {
+    const issues = issuesOf(create({ [field]: keyed(count, () => "not a number or string") }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual([field]);
+  });
+
+  // The budget counts keys as well as items, so it holds whatever the answers are.
+  test.each([
+    ["scalars", "text"],
+    ["empty lists", []],
+  ])("an entry budget smaller than the key count refuses a map of %s", (_, value) => {
+    expect(
+      checkResponseDataSize(
+        keyed(3, () => value),
+        2
+      )
+    ).toBe(RESPONSE_DATA_LIMIT_MESSAGES.entries);
+    expect(
+      checkResponseDataSize(
+        keyed(2, () => value),
+        2
+      )
+    ).toBeUndefined();
+  });
+
+  test("bounds the update input the same way", () => {
+    const update = (data: unknown) => ZResponseUpdateInput.safeParse({ data });
+
+    expect(update({ q: strings(MAX_RESPONSE_DATA_VALUES) }).success).toBe(true);
+    const over = update({ q: Array.from({ length: 1_000_000 }, () => 1) });
+    expect(over.success ? [] : over.error.issues).toHaveLength(1);
+  });
+
+  test("still reports a data value of the wrong shape where it is", () => {
+    const issues = issuesOf(create({ data: { q: true } }));
+
+    expect(issues).toEqual([
+      expect.objectContaining({ path: ["data", "q"], message: RESPONSE_DATA_LIMIT_MESSAGES.shape }),
+    ]);
+  });
+
+  // A wrong value is refused at the first one, so a map full of them costs one issue, not one per value.
+  test.each([
+    ["data", true, ["data", "k0"]],
+    ["data", null, ["data", "k0"]],
+    ["data", { row: 1 }, ["data", "k0"]],
+    ["ttc", "not a number", ["ttc", "k0"]],
+    ["variables", true, ["variables", "k0"]],
+  ])("refuses %s full of wrong values (%j) with one issue at the first", (field, value, path) => {
+    const count = field === "variables" ? MAX_RESPONSE_VARIABLE_KEYS : MAX_RESPONSE_DATA_KEYS;
+    const issues = issuesOf(create({ [field]: keyed(count, () => value) }));
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0].path).toEqual(path);
   });
 });
