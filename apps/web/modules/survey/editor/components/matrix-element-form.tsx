@@ -15,6 +15,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
+import { type TSetOptionHidden } from "@/modules/survey/editor/components/option-hide-button";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -31,6 +32,8 @@ interface MatrixElementFormProps {
   readonly isStorageConfigured: boolean;
   readonly isExternalUrlsAllowed?: boolean;
   readonly lock?: TElementLock;
+  /** The Hide quick action on each option (ENG-6949). */
+  readonly onSetOptionHidden?: TSetOptionHidden;
 }
 
 export const MatrixElementForm = ({
@@ -43,6 +46,7 @@ export const MatrixElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   lock = NO_ELEMENT_LOCK,
+  onSetOptionHidden,
 }: MatrixElementFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
@@ -253,6 +257,7 @@ export const MatrixElementForm = ({
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
                       lock={lock}
+                      onSetOptionHidden={onSetOptionHidden}
                     />
                   ))}
                 </div>
@@ -298,6 +303,7 @@ export const MatrixElementForm = ({
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
                       lock={lock}
+                      onSetOptionHidden={onSetOptionHidden}
                     />
                   ))}
                 </div>
