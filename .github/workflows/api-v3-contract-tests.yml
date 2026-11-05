@@ -156,6 +156,57 @@ jobs:
         run: pnpm --filter=@formbricks/database db:migrate:ci
         shell: bash
 
+      # Chart and dashboard reads query Cube, which reads Hub's database. Without them every licensed
+      # chart operation answers 502 "could not be run". Hub's API is not needed: Cube reads its tables
+      # directly, so the schema alone (empty) is enough for those operations to answer real, empty data.
+      # Images pinned to the tags docker-compose.dev.yml uses, by digest.
+      - name: Start Cube on an empty Hub database
+        if: steps.harness.outputs.present == 'true'
+        shell: bash
+        env:
+          HUB_IMAGE: ghcr.io/formbricks/hub@sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745 # 0.14.1
+          CUBE_IMAGE: cubejs/cube@sha256:fb9933de67b83c2ff9b1b61017d4f3cbafc8d248906b3e4923f57524b8c634d6 # v1.8.8
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec "${POSTGRES_CONTAINER}" psql -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE hub"
+          docker run --rm --network host \
+            -e DATABASE_URL="postgresql://postgres:postgres@localhost:5432/hub?sslmode=disable" \
+            --entrypoint sh "${HUB_IMAGE}" -c \
+            '/usr/local/bin/goose -dir /app/migrations postgres "$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$DATABASE_URL"'
+
+          # The app signs Cube's tokens with the secret `pnpm dev:setup` generated into .env.
+          cube_secret=$(grep '^CUBEJS_API_SECRET=' .env | cut -d'=' -f2-)
+          if [ -z "${cube_secret}" ]; then
+            echo "::error::CUBEJS_API_SECRET is empty in .env."
+            exit 1
+          fi
+          echo "::add-mask::${cube_secret}"
+          docker run -d --name cube --network host \
+            -e CUBEJS_DB_TYPE=postgres -e CUBEJS_DB_HOST=localhost -e CUBEJS_DB_PORT=5432 \
+            -e CUBEJS_DB_NAME=hub -e CUBEJS_DB_USER=postgres -e CUBEJS_DB_PASS=postgres \
+            -e CUBEJS_API_SECRET="${cube_secret}" \
+            -e CUBEJS_JWT_ISSUER=formbricks-web -e CUBEJS_JWT_AUDIENCE=formbricks-cube \
+            -e CUBEJS_DEFAULT_API_SCOPES=meta,data -e CUBEJS_CACHE_AND_QUEUE_DRIVER=memory \
+            -e CUBEJS_DB_QUERY_TIMEOUT=60s \
+            -v "${GITHUB_WORKSPACE}/docker/cube/cube.js:/cube/conf/cube.js:ro" \
+            -v "${GITHUB_WORKSPACE}/docker/cube/schema:/cube/conf/model:ro" \
+            "${CUBE_IMAGE}"
+          for attempt in {1..24}; do
+            if curl -fsS -o /dev/null http://localhost:4000/readyz; then
+              echo "Cube is ready."
+              exit 0
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' cube)" != "true" ]; then
+              docker logs cube
+              echo "::error::Cube exited before it was ready."
+              exit 1
+            fi
+            sleep 5
+          done
+          docker logs cube
+          echo "::error::Cube did not answer /readyz within 120s."
+          exit 1
+
       - name: Seed the workspace and a throwaway API key
         if: steps.harness.outputs.present == 'true'
         shell: bash
@@ -363,6 +414,11 @@ jobs:
           if-no-files-found: ignore
           path: schemathesis-report/
 
+      - name: Save Cube logs
+        if: failure() && steps.harness.outputs.present == 'true'
+        run: docker logs cube > cube.log 2>&1 || true
+        shell: bash
+
       # Failure only. A green run's log has nothing to say that the entitlement probe above does not,
       # and an application log is the wrong thing to ship as an artifact on every green PR.
       - name: Upload app logs
@@ -371,4 +427,6 @@ jobs:
         with:
           name: api-v3-contract-app-logs
           if-no-files-found: ignore
-          path: app.log
+          path: |
+            app.log
+            cube.log
