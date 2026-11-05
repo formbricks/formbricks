@@ -213,8 +213,9 @@ export async function runDocumentImport(
   // as checked. A line no call answered for may be a question too, so a file that could pass the
   // ceiling with them is refused rather than imported short: a short draft of a file too large to
   // import would look like a complete one.
+  if (questionCount > SURVEY_IMPORT_MAX_QUESTIONS) throw new SurveyImportFailedError("too_many_questions");
   if (questionCount + planned.unreadLines > SURVEY_IMPORT_MAX_QUESTIONS) {
-    throw new SurveyImportFailedError("too_many_questions");
+    throw new SurveyImportFailedError("partly_unread");
   }
   if (questionCount === 0) throw noQuestionsPlanned(planned.conclusive);
   const languages = planned.context.languages;

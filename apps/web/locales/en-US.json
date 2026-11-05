@@ -4914,6 +4914,7 @@
           "not_a_qsf": "This is not a Qualtrics survey export. In Qualtrics, export the survey as a .qsf file and try again.",
           "not_allowed": "You do not have permission to import surveys into this workspace.",
           "nothing_importable": "This file has no question the import can bring over. Check that it is the right file, or create the survey in the editor.",
+          "partly_unread": "The AI could not read part of this file, and with those parts the survey may have more than 200 questions. Import it again to try once more.",
           "rate_limited": "Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}.",
           "session_expired": "Your session has expired. Sign in again and retry.",
           "still_creating": "This survey is still being created. Wait a moment, then try again.",

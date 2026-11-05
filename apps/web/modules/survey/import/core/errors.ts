@@ -100,6 +100,8 @@ export interface TSurveyImportJsonPosition {
  */
 export class SurveyImportFailedError extends Error {
   /**
+   * `partly_unread`: the AI could not read part of a document, and with those lines it could pass that
+   * ceiling, so the import cannot tell whether it fits; another try may read them.
    * `too_many_questions`: a document's plan holds more questions than one import takes, the AI ceiling
    * past which the file is imported through MCP instead. `nothing_importable`: the file was read whole
    * and holds no question the import can bring over, so trying again cannot help; `no_questions` is
@@ -110,7 +112,8 @@ export class SurveyImportFailedError extends Error {
     | "nothing_importable"
     | "prompt_budget"
     | "draft_invalid"
-    | "too_many_questions";
+    | "too_many_questions"
+    | "partly_unread";
 
   constructor(reason: SurveyImportFailedError["reason"]) {
     super(`The survey import failed: ${reason}`);

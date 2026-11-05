@@ -5,6 +5,8 @@ import { toSurveyImportStreamErrorEvent } from "./error-events";
 describe("toSurveyImportStreamErrorEvent", () => {
   test.each([
     ["too_many_questions", "import_too_large"],
+    // Lines the AI never read: not "too many questions" and MCP, but try again.
+    ["partly_unread", "import_partly_unread"],
     ["nothing_importable", "import_nothing_importable"],
     // A plan that failed on the way may succeed on another try.
     ["no_questions", "import_failed"],

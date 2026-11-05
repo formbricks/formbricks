@@ -16,6 +16,8 @@ const STREAM_ERROR_DETAILS = {
   [SURVEY_IMPORT_STREAM_ERROR_CODES.TIMED_OUT]: "The import took too long and was stopped. Try again.",
   [SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE]:
     "The survey has more questions than one import takes. Import it through MCP with an AI assistant instead.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.PARTLY_UNREAD]:
+    "The AI could not read part of the file, and with it the survey may have more questions than one import takes. Try again.",
   [SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE]:
     "The file has no question the import can bring over. Check the file, or create the survey in the editor.",
   [SURVEY_IMPORT_STREAM_ERROR_CODES.FAILED]: "The file could not be imported. Try again.",
@@ -28,6 +30,7 @@ const FAILED_REASON_CODES: Partial<
   Record<SurveyImportFailedError["reason"], keyof typeof STREAM_ERROR_DETAILS>
 > = {
   too_many_questions: SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE,
+  partly_unread: SURVEY_IMPORT_STREAM_ERROR_CODES.PARTLY_UNREAD,
   nothing_importable: SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE,
 };
 

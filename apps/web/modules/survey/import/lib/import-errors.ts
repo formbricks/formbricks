@@ -252,6 +252,8 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.failed");
     case "import_too_large":
       return t("workspace.surveys.import.errors.too_many_questions");
+    case "import_partly_unread":
+      return t("workspace.surveys.import.errors.partly_unread");
     case "import_nothing_importable":
       return t("workspace.surveys.import.errors.nothing_importable");
     case "too_many_requests":

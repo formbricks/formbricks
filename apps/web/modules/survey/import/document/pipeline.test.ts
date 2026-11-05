@@ -439,13 +439,14 @@ describe("runDocumentImport: lines no call answered for", () => {
     });
   });
 
-  test(`a file whose unread lines could take it past ${SURVEY_IMPORT_MAX_QUESTIONS} questions is refused, not imported short`, async () => {
+  test(`a file whose unread lines could take it past ${SURVEY_IMPORT_MAX_QUESTIONS} questions is refused, to be tried again, not imported short`, async () => {
     const lines = SURVEY_IMPORT_MAX_QUESTIONS + 50;
     const file = listOf(lines);
     expect(firstChunkOf(file)).toBeLessThan(SURVEY_IMPORT_MAX_QUESTIONS);
 
+    // Not "too many questions": the lines unread may be options and notes, and another try may read them.
     expect(await failureOf(run(file, firstCallOnly(recordedDocumentGenerate(plannedAll(lines)))))).toBe(
-      "too_many_questions"
+      "partly_unread"
     );
   });
 
