@@ -29,8 +29,9 @@ let inFlight: Promise<boolean> | null = null;
 
 /**
  * Log only when the answer flips, so an incident is one line per process rather than one per denied
- * request. The arming line names the operator commands: every authenticated request is failing while it
- * holds, and the remedy should not depend on someone finding this module.
+ * request. The arming line names the operator commands, dead letters included since `drain` never
+ * claims them: every authenticated request is failing while it holds, and the remedy should not depend
+ * on someone finding this module.
  */
 const logTransition = (stale: boolean): void => {
   if (stale) {
@@ -38,14 +39,15 @@ const logTransition = (stale: boolean): void => {
       {
         code: AUTHZED_ERROR_CODES.PROJECTION_STALE,
         component: "authzed",
-        hint: "Run `formbricks-authzed outbox status`, then `formbricks-authzed outbox drain` once SpiceDB is healthy. See the AuthZed operations guide.",
+        hint: "Run `formbricks-authzed outbox status`. Dead letters are never drained: investigate them, then run `formbricks-authzed outbox replay`. Then run `formbricks-authzed outbox drain` once SpiceDB is healthy. See the AuthZed operations guide.",
         operation: "authorization_projection_freshness",
       },
       "AuthZed projection is stale: a revocation is overdue or dead-lettered, so authorization fails closed"
     );
     return;
   }
-  logger.info(
+  // `warn`, not `info`: production logs at `warn`, and the operator who saw the arming line needs this.
+  logger.warn(
     { component: "authzed", operation: "authorization_projection_freshness" },
     "AuthZed projection is fresh again: authorization no longer fails closed"
   );

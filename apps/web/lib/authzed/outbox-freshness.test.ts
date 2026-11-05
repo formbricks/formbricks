@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { hasStaleAuthzedRevocation } from "./outbox-repository";
 
-vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), info: vi.fn() } }));
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 vi.mock("./outbox-repository", () => ({ hasStaleAuthzedRevocation: vi.fn() }));
 
 /**
@@ -87,14 +87,15 @@ describe("AuthZed projection freshness guard", () => {
     expect(logger.error).toHaveBeenCalledOnce();
     expect(vi.mocked(logger.error).mock.calls[0][0]).toMatchObject({
       code: "authzed_projection_stale",
-      hint: expect.stringContaining("formbricks-authzed outbox drain"),
+      hint: expect.stringMatching(/outbox replay.*outbox drain/),
     });
 
     vi.mocked(hasStaleAuthzedRevocation).mockResolvedValue(false);
     await assertAuthzedProjectionFreshness();
     vi.advanceTimersByTime(AUTHZED_FRESHNESS_MEMO_TTL_MS);
     await assertAuthzedProjectionFreshness();
-    expect(logger.info).toHaveBeenCalledOnce();
+    // At `warn`, so the production default level keeps the all-clear next to the alarm.
+    expect(logger.warn).toHaveBeenCalledOnce();
     expect(logger.error).toHaveBeenCalledOnce();
   });
 
@@ -104,7 +105,7 @@ describe("AuthZed projection freshness guard", () => {
 
     await assertAuthzedProjectionFreshness();
     expect(logger.error).not.toHaveBeenCalled();
-    expect(logger.info).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   test("keeps denying rather than memoizing a failed read", async () => {

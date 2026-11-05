@@ -429,12 +429,14 @@ Treat repeated `projection_outbox_safety_net` warnings as a sign that the BullMQ
 Check the worker logs and Redis connectivity, and restart the web pods if needed.
 
 When the guard arms, each process logs one `authzed_projection_stale` error with a `hint` that names the
-commands above, and one info line when it clears. If the guard stays armed:
+commands above, and one warning when it clears. If the guard stays armed:
 
 1. Run `formbricks-authzed outbox status`. Pending overdue revocations with no dead letters mean delivery is
    not running. Dead letters mean SpiceDB rejected specific events.
 2. Run `formbricks-authzed health` to confirm SpiceDB is reachable.
-3. Run `formbricks-authzed outbox drain`, then `formbricks-authzed upgrade check`, and expect `status: ready`.
+3. For dead letters, find out why SpiceDB rejected them, then run `formbricks-authzed outbox replay`. `drain`
+   never claims a dead letter.
+4. Run `formbricks-authzed outbox drain`, then `formbricks-authzed upgrade check`, and expect `status: ready`.
 
 Every six hours Formbricks also runs a full applying audit without prune. It automatically repairs attributable
 missing and mismatched-permission relationships. It never deletes orphaned or unmanaged data and never repairs
