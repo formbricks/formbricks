@@ -146,7 +146,7 @@ export const withValueLabels = (
     Object.hasOwn(labels, value) ? { value, label: labels[value] } : { value }
   );
   const shown = (item: TFilterValueList["values"][number]) => item.label ?? item.value;
-  return { ...list, values: labelled.sort((a, b) => shown(a).localeCompare(shown(b))) };
+  return { ...list, values: labelled.toSorted((a, b) => shown(a).localeCompare(shown(b))) };
 };
 
 /**
