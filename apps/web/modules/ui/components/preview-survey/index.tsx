@@ -467,6 +467,9 @@ export const PreviewSurvey = ({
                       hiddenFieldsRecord={hiddenFieldsRecord}
                       appUrl={publicDomain}
                       isPreviewMode={true}
+                      // The preview restarts when a rule before the first question changes; a card focusing itself then
+                      // would take focus from the editor field being typed in. Cards focus once the author clicks Next or Back.
+                      autoFocus={false}
                       customCss={customCss}
                       survey={jsSurvey}
                       appearance={appearance}
@@ -522,6 +525,9 @@ export const PreviewSurvey = ({
                           hiddenFieldsRecord={hiddenFieldsRecord}
                           appUrl={publicDomain}
                           isPreviewMode={true}
+                          // The preview restarts when a rule before the first question changes; a card focusing itself then
+                          // would take focus from the editor field being typed in. Cards focus once the author clicks Next or Back.
+                          autoFocus={false}
                           customCss={customCss}
                           isBrandingEnabled={workspace.linkSurveyBranding}
                           survey={jsLinkSurvey}
@@ -611,6 +617,9 @@ export const PreviewSurvey = ({
                       hiddenFieldsRecord={hiddenFieldsRecord}
                       appUrl={publicDomain}
                       isPreviewMode={true}
+                      // The preview restarts when a rule before the first question changes; a card focusing itself then
+                      // would take focus from the editor field being typed in. Cards focus once the author clicks Next or Back.
+                      autoFocus={false}
                       customCss={customCss}
                       survey={jsSurvey}
                       appearance={appearance}
@@ -672,6 +681,9 @@ export const PreviewSurvey = ({
                             hiddenFieldsRecord={hiddenFieldsRecord}
                             appUrl={publicDomain}
                             isPreviewMode={true}
+                            // The preview restarts when a rule before the first question changes; a card focusing itself then
+                            // would take focus from the editor field being typed in. Cards focus once the author clicks Next or Back.
+                            autoFocus={false}
                             customCss={customCss}
                             survey={jsLinkSurvey}
                             isBrandingEnabled={workspace.linkSurveyBranding}
