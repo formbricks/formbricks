@@ -176,7 +176,8 @@ describe("renderSurvey custom CSS teardown", () => {
     const closeOlder = renderModal(undefined);
     renderModal(undefined, { survey: { light: "@layer fb-survey{#fbjs{color:green}}" } });
 
-    closeOlder?.();
+    expect(closeOlder).toBeTypeOf("function");
+    closeOlder!();
 
     expect(getCustomStyle()?.textContent).toContain("green");
   });
