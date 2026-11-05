@@ -9,9 +9,14 @@ import {
   describeAction,
   describeBlockCounts,
   describeConditionGroup,
+  describeConditionGroupParts,
+  describeFirstStepParts,
+  describeRuleCondition,
+  describeRuleConditionParts,
   describeRuleSummary,
   summarizeRuleActions,
 } from "./flow-outline-text";
+import { type TFlowTextPart, toPlainText } from "./reference-chips";
 
 // Every key reads as its last segment, so the operator labels below are the i18n keys' names.
 const t = ((key: string, options?: { blockNumber?: number }) =>
@@ -298,6 +303,96 @@ describe("describeRuleSummary: the whole sentence, for the tooltip and the row's
     expect(describeRuleSummary(always, surveyFlowFixture, t)).toBe(
       "always_runs → Good to know bundles aren't for you"
     );
+  });
+});
+
+describe("references as chips in rule summaries (ENG-6969 T3)", () => {
+  const chips = (parts: TFlowTextPart[]) =>
+    parts.flatMap((part) => (part.kind === "reference" ? [part.chip] : []));
+  const texts = (parts: TFlowTextPart[]) =>
+    parts.flatMap((part) => (part.kind === "text" ? [part.text] : []));
+
+  test("questions, hidden fields, Embedded Data and survey info are chips; typed values are quoted text", () => {
+    const parts = describeConditionGroupParts(rule(3, 2).conditions, surveyFlowFixture, t);
+    expect(chips(parts)).toEqual([
+      { kind: "reserved", label: "language" },
+      { kind: "hiddenField", label: "seg" },
+      { kind: "hiddenField", label: "seg" },
+      { kind: "reserved", label: "country" },
+    ]);
+
+    const condition = describeConditionGroupParts(rule(4, 1).conditions, surveyFlowFixture, t);
+    expect(chips(condition)[0]).toEqual({
+      kind: "question",
+      label: "bundle",
+      elementType: "multipleChoiceSingle",
+    });
+    // An option label stays plain; text typed into the rule is the only thing in quotes.
+    expect(texts(condition).join("")).toContain("No bundle");
+    expect(texts(condition).join("")).not.toContain("“No bundle”");
+    expect(texts(condition).join("")).toContain("“price”");
+  });
+
+  test("the plain form of the parts is the sentence the tooltip, aria-label and tests read", () => {
+    for (const [blockIdx, ruleIdx] of [
+      [0, 0],
+      [2, 0],
+      [3, 2],
+      [4, 1],
+      [5, 0],
+    ]) {
+      const parts = describeRuleConditionParts(rule(blockIdx, ruleIdx), surveyFlowFixture, t);
+      expect(toPlainText(parts)).toBe(describeRuleCondition(rule(blockIdx, ruleIdx), surveyFlowFixture, t));
+    }
+  });
+
+  test("a reference to something deleted is a missing chip", () => {
+    const gone: TConditionGroup = {
+      id: "g",
+      connector: "and",
+      conditions: [
+        { id: "c1", leftOperand: { type: "element", value: "gone_q" }, operator: "isSubmitted" },
+        { id: "c2", leftOperand: { type: "variable", value: "gone_field" }, operator: "isSet" },
+      ],
+    };
+    expect(chips(describeConditionGroupParts(gone, surveyFlowFixture, t))).toEqual([
+      { kind: "question", label: "gone_q", missing: true },
+      { kind: "field", label: "gone_field", missing: true },
+    ]);
+  });
+
+  test("a Set value step: the field set and the formula's references are chips", () => {
+    const parts = describeFirstStepParts(rule(1, 1).actions, surveyFlowFixture, t);
+    expect(chips(parts)).toEqual([
+      { kind: "field", label: "score" },
+      { kind: "question", label: "sat_netflix", elementType: "rating" },
+      { kind: "question", label: "sat_disney", elementType: "rating" },
+    ]);
+    expect(toPlainText(parts)).toBe(describeAction(rule(1, 1).actions[0], surveyFlowFixture, t).label);
+  });
+
+  test("a one-step calculation and Require answer, as chips in their sentence", () => {
+    expect(chips(describeFirstStepParts(rule(1, 0).actions, surveyFlowFixture, t))).toEqual([
+      { kind: "field", label: "score" },
+      { kind: "question", label: "sat_netflix", elementType: "rating" },
+    ]);
+    const sentence = ((key: string, options?: { question?: string }) =>
+      key.endsWith("require_answer_to") ? `Require an answer to ${options?.question}` : key) as never;
+    const requireAnswer = describeFirstStepParts(rule(0, 0).actions, surveyFlowFixture, sentence);
+    expect(requireAnswer).toEqual([
+      { kind: "text", text: "Require an answer to " },
+      {
+        kind: "reference",
+        chip: { kind: "question", label: "apple_reason", elementType: "openText" },
+        plain: "“apple_reason”",
+      },
+    ]);
+  });
+
+  test("the first step skips the jump, which trails as a pill", () => {
+    const jumpFirst = [rule(4, 3).actions[2], rule(4, 3).actions[0]];
+    expect(toPlainText(describeFirstStepParts(jumpFirst, surveyFlowFixture, t))).toBe("segment = “hot-lead”");
+    expect(describeFirstStepParts([rule(4, 3).actions[2]], surveyFlowFixture, t)).toEqual([]);
   });
 });
 

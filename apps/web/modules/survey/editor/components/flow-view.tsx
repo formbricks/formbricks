@@ -11,6 +11,7 @@ import {
   OptionsShowIfCounts,
   OptionsShowIfPopover,
 } from "@/modules/survey/editor/components/options-show-if-popover";
+import { FlowTextParts } from "@/modules/survey/editor/components/reference-chip";
 import { RuleRowActions } from "@/modules/survey/editor/components/rule-row-actions";
 import { ShowIfPopover, getBlockShowIfChipText } from "@/modules/survey/editor/components/show-if-popover";
 import {
@@ -36,7 +37,8 @@ import {
   type TFlowActionText,
   describeBlockCounts,
   describeConditionGroup,
-  describeRuleCondition,
+  describeFirstStepParts,
+  describeRuleConditionParts,
   describeRuleSummary,
   getActionPlainText,
   getEndingLabel,
@@ -319,15 +321,22 @@ export const FlowView = ({
           content={sentence}
           collisionBoundary={popoverBoundary}
           className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
+          {/* Questions and fields as chips (ENG-6969 T3); the sentence above stays plain text. */}
           <span data-truncates className="min-w-12 shrink-[999] truncate text-sm text-slate-700">
-            {describeRuleCondition(row.rule, localSurvey, t, textFormat)}
+            <FlowTextParts
+              parts={describeRuleConditionParts(row.rule, localSurvey, t, textFormat)}
+              elementIcons={elementIcons}
+            />
           </span>
           {(actions.first || actions.jump) && (
             <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
           )}
           {actions.first && (
             <span data-truncates className="min-w-0 truncate text-sm font-medium text-slate-900">
-              {getActionPlainText(actions.first, t)}
+              <FlowTextParts
+                parts={describeFirstStepParts(row.rule.actions, localSurvey, t, textFormat)}
+                elementIcons={elementIcons}
+              />
             </span>
           )}
           {actions.moreCount > 0 && (

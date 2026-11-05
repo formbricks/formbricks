@@ -3,6 +3,7 @@ import { RESERVED_FIELD_CATALOG, getSurveyEmbeddedFields } from "@formbricks/typ
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type {
   TConditionGroup,
   TLeftOperand,
@@ -22,7 +23,16 @@ import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { formatStoredDateValue } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
-import { formatFormula, getFormulaReferences } from "@/modules/survey/editor/lib/expression-formula";
+import {
+  formatFormula,
+  getFormulaReferences,
+  segmentFormulaText,
+} from "@/modules/survey/editor/lib/expression-formula";
+import {
+  type TFlowTextPart,
+  getFormulaSegmentChip,
+  toPlainText,
+} from "@/modules/survey/editor/lib/reference-chips";
 import { getConditionOperatorOptions } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
@@ -45,12 +55,49 @@ export interface TFlowTextFormat {
 const describeDateValue = (value: string, format: TFlowTextFormat): string =>
   formatStoredDateValue(value, format.locale ?? "en-US", format.timeZone) ?? quote(value);
 
+/**
+ * Summaries come in two forms (ENG-6969 T3, guardrail 4): the parts a row draws, references as chips,
+ * and their plain text (`toPlainText`) that a tooltip, an `aria-label` and the tests read.
+ */
+const text = (value: string): TFlowTextPart => ({ kind: "text", text: value });
+
+/** Joins groups of parts with a separator, leaving out the empty ones. */
+const joinParts = (groups: TFlowTextPart[][], separator: string): TFlowTextPart[] =>
+  groups
+    .filter((group) => toPlainText(group) !== "")
+    .flatMap((group, idx) => (idx === 0 ? group : [text(separator), ...group]));
+
 const findElement = (survey: TSurvey, elementId: string): TSurveyElement | undefined =>
   getElementsFromBlocks(survey.blocks).find((element) => element.id === elementId);
 
-const getFieldName = (survey: TSurvey, storageKey: string): string =>
-  getSurveyEmbeddedFields(survey).find(({ link }) => link.storageKey === storageKey)?.field.name ??
-  storageKey;
+const findField = (survey: TSurvey, storageKey: string) =>
+  getSurveyEmbeddedFields(survey).find(({ link }) => link.storageKey === storageKey)?.field;
+
+/** An Embedded Data field as a chip: green for a computed one, the hidden-field style for an ingested one. */
+const fieldChip = (survey: TSurvey, storageKey: string, plainPrefix = ""): TFlowTextPart => {
+  const field = findField(survey, storageKey);
+  const label = field?.name ?? storageKey;
+  return {
+    kind: "reference",
+    chip: {
+      kind: plainPrefix === "@" || field?.source === "ingested" ? "hiddenField" : "field",
+      label,
+      ...(field ? {} : { missing: true }),
+    },
+    plain: `${plainPrefix}${label}`,
+  };
+};
+
+/** A question as a chip with its type icon and code; plain, its code in quotes. */
+const questionChip = (survey: TSurvey, elementId: string): TFlowTextPart => {
+  const element = findElement(survey, elementId);
+  const label = element ? getElementBadgeText(element) : elementId;
+  return {
+    kind: "reference",
+    chip: { kind: "question", label, ...(element ? { elementType: element.type } : { missing: true }) },
+    plain: quote(label),
+  };
+};
 
 const isDateField = (survey: TSurvey, storageKey: string): boolean =>
   getSurveyEmbeddedFields(survey).find(({ link }) => link.storageKey === storageKey)?.field.dataType ===
@@ -80,30 +127,35 @@ const getOptionItems = (element: TSurveyElement | undefined, key: TOptionListKey
 const getOptionLabel = (item: TOptionItem | undefined): string | undefined =>
   item?.label ? getTextContent(getLocalizedValue(item.label, "default")) : undefined;
 
-/** An operand: a question by code, a field by name (`@` for ingested ones), a reserved field by name. */
-const describeOperand = (
+/**
+ * An operand: a question by code, a field by name (`@` for ingested ones in the plain text), a reserved
+ * field by name; each a chip.
+ */
+const describeOperandParts = (
   operand: TLeftOperand | Exclude<TRightOperand, { type: "static" }>,
   survey: TSurvey
-): string => {
+): TFlowTextPart[] => {
   switch (operand.type) {
     case "element": {
       const element = findElement(survey, operand.value);
-      const name = quote(element ? getElementBadgeText(element) : operand.value);
+      const name = questionChip(survey, operand.value);
       const meta = "meta" in operand ? operand.meta : undefined;
-      if (!isMatrixRowCondition(meta)) return name;
+      if (!isMatrixRowCondition(meta)) return [name];
       // Ids first (ADR 0027): a row reordered since the condition was written still reads as its row.
       const rows = getOptionItems(element, "rows");
       const rowIndex = resolveMatrixRowIndex({ rows, columns: [] }, meta);
       const rowLabel = rowIndex === undefined ? undefined : getOptionLabel(rows[rowIndex]);
-      return `${name} ${rowLabel ?? meta?.rowId ?? meta?.row}`;
+      return [name, text(` ${rowLabel ?? meta?.rowId ?? meta?.row}`)];
     }
     case "variable":
-      return getFieldName(survey, operand.value);
+      return [fieldChip(survey, operand.value)];
     case "hiddenField":
-      return `@${getFieldName(survey, operand.value)}`;
-    default:
+      return [fieldChip(survey, operand.value, "@")];
+    default: {
       // A reserved field reads by its name ("language"), as people type it in a URL or a formula.
-      return String((operand as { value?: unknown }).value ?? "");
+      const name = String((operand as { value?: unknown }).value ?? "");
+      return [{ kind: "reference", chip: { kind: "reserved", label: name }, plain: name }];
+    }
   }
 };
 
@@ -153,22 +205,43 @@ const describeOperator = (condition: TSingleCondition, survey: TSurvey, t: TFunc
   return label.charAt(0).toLowerCase() + label.slice(1);
 };
 
-const describeCondition = (
+const describeConditionParts = (
   condition: TSingleCondition,
   survey: TSurvey,
   t: TFunction,
   format: TFlowTextFormat
-): string => {
-  const parts = [describeOperand(condition.leftOperand, survey), describeOperator(condition, survey, t)];
+): TFlowTextPart[] => {
+  const groups = [
+    describeOperandParts(condition.leftOperand, survey),
+    [text(describeOperator(condition, survey, t))],
+  ];
   const right = condition.rightOperand;
   if (right) {
-    parts.push(
+    groups.push(
       right.type === "static"
-        ? describeStaticValue(condition, survey, format)
-        : describeOperand(right, survey)
+        ? [text(describeStaticValue(condition, survey, format))]
+        : describeOperandParts(right, survey)
     );
   }
-  return parts.filter((part) => part !== "").join(" ");
+  return joinParts(groups, " ");
+};
+
+/** A condition group as parts: references as chips, typed values in quotes, option labels plain. */
+export const describeConditionGroupParts = (
+  group: TConditionGroup,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): TFlowTextPart[] => {
+  if (group.conditions.length === 0) return [text(t("workspace.surveys.edit.flow.always"))];
+  const connector =
+    group.connector === "or" ? t("workspace.surveys.edit.flow.or") : t("workspace.surveys.edit.flow.and");
+  return group.conditions.flatMap((item, idx) => [
+    ...(idx === 0 ? [] : [text(` ${connector} `)]),
+    ...(isConditionGroup(item)
+      ? [text("("), ...describeConditionGroupParts(item, survey, t, format), text(")")]
+      : describeConditionParts(item, survey, t, format)),
+  ]);
 };
 
 export const describeConditionGroup = (
@@ -176,18 +249,7 @@ export const describeConditionGroup = (
   survey: TSurvey,
   t: TFunction,
   format: TFlowTextFormat = {}
-): string => {
-  if (group.conditions.length === 0) return t("workspace.surveys.edit.flow.always");
-  const connector =
-    group.connector === "or" ? t("workspace.surveys.edit.flow.or") : t("workspace.surveys.edit.flow.and");
-  return group.conditions
-    .map((item) =>
-      isConditionGroup(item)
-        ? `(${describeConditionGroup(item, survey, t, format)})`
-        : describeCondition(item, survey, t, format)
-    )
-    .join(` ${connector} `);
-};
+): string => toPlainText(describeConditionGroupParts(group, survey, t, format));
 
 /** A question's or ending's text as plain words, with recalled answers shown by name. */
 export const getHeadlineText = (headline: TI18nString | undefined, survey: TSurvey): string =>
@@ -218,6 +280,79 @@ const CALCULATE_SYMBOLS: Record<string, string> = {
   concat: "+",
 };
 
+/** A formula in the formula box's text form, its references as chips (ENG-6950). */
+const describeFormulaParts = (tree: TExpression, survey: TSurvey): TFlowTextPart[] => {
+  // A step just added has an empty formula until one is typed.
+  if (tree.type === "static" && tree.value === "") return [text("…")];
+  const references = getFormulaReferences(survey);
+  return segmentFormulaText(formatFormula(tree, references), references).map((segment) =>
+    segment.kind === "text"
+      ? text(segment.text)
+      : { kind: "reference", chip: getFormulaSegmentChip(segment, survey), plain: segment.text }
+  );
+};
+
+const describeCalculateParts = (
+  action: Extract<TSurveyBlockLogicAction, { objective: "calculate" }>,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat
+): TFlowTextPart[] => {
+  // No field picked yet: the row says what is missing rather than ` = “”`.
+  if (!action.variableId) return [text(t("workspace.surveys.edit.flow.no_field_to_set"))];
+  const target = fieldChip(survey, action.variableId);
+  // ENG-6935: a Set value step reads as its formula, in the formula box's own text form.
+  if (action.value.type === "expression") {
+    return [target, text(" = "), ...describeFormulaParts(action.value.value, survey)];
+  }
+  let value: TFlowTextPart[];
+  if (action.value.type !== "static") value = describeOperandParts(action.value, survey);
+  else if (typeof action.value.value === "number") value = [text(String(action.value.value))];
+  else if (isDateField(survey, action.variableId)) {
+    value = [text(describeDateValue(action.value.value, format))];
+  } else value = [text(quote(action.value.value))];
+  const symbol = CALCULATE_SYMBOLS[action.operator] ?? action.operator;
+  return [target, text(` ${symbol} `), ...value];
+};
+
+/** Splits a sentence around the one placeholder its translation holds, for a chip in its place. */
+const SLOT = "\u0000";
+const fillSentence = (sentence: string, fill: TFlowTextPart[]): TFlowTextPart[] => {
+  const [before, after = ""] = sentence.split(SLOT);
+  return [text(before), ...fill, text(after)].filter((part) => part.kind !== "text" || part.text !== "");
+};
+
+/**
+ * The first step of a collapsed rule row: the first action that isn't a jump, which trails as a pill
+ * (ENG-6969 T2); the same one `summarizeRuleActions` puts first.
+ */
+const getFirstStep = (actions: TSurveyBlockLogicAction[]): TSurveyBlockLogicAction | undefined =>
+  actions.find((action) => action.objective !== "jumpToBlock");
+
+/**
+ * The first step of a collapsed rule row as the parts the row draws (ENG-6969 T3): its questions and
+ * fields as chips. `toPlainText` of these is what `getActionPlainText` says for the same step.
+ */
+export const describeFirstStepParts = (
+  actions: TSurveyBlockLogicAction[],
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): TFlowTextPart[] => {
+  const action = getFirstStep(actions);
+  if (!action) return [];
+  switch (action.objective) {
+    case "requireAnswer":
+      return fillSentence(t("workspace.surveys.edit.flow.require_answer_to", { question: SLOT }), [
+        questionChip(survey, action.target),
+      ]);
+    case "calculate":
+      return describeCalculateParts(action, survey, t, format);
+    default:
+      return [text(getActionPlainText(describeAction(action, survey, t, format), t))];
+  }
+};
+
 export const describeAction = (
   action: TSurveyBlockLogicAction,
   survey: TSurvey,
@@ -244,33 +379,10 @@ export const describeAction = (
       }
       return { kind: "jump", target: "missing", label: "" };
     }
-    case "requireAnswer": {
-      const element = findElement(survey, action.target);
-      return { kind: "requireAnswer", label: quote(element ? getElementBadgeText(element) : action.target) };
-    }
-    case "calculate": {
-      // No field picked yet: the row says what is missing rather than ` = “”`.
-      if (!action.variableId) {
-        return { kind: "calculate", label: t("workspace.surveys.edit.flow.no_field_to_set") };
-      }
-      // ENG-6935: a Set value step reads as its formula, in the formula box's own text form.
-      if (action.value.type === "expression") {
-        const tree = action.value.value;
-        // A step just added has an empty formula until one is typed.
-        const formula =
-          tree.type === "static" && tree.value === ""
-            ? "…"
-            : formatFormula(tree, getFormulaReferences(survey));
-        return { kind: "calculate", label: `${getFieldName(survey, action.variableId)} = ${formula}` };
-      }
-      let value: string;
-      if (action.value.type !== "static") value = describeOperand(action.value, survey);
-      else if (typeof action.value.value === "number") value = String(action.value.value);
-      else if (isDateField(survey, action.variableId)) value = describeDateValue(action.value.value, format);
-      else value = quote(action.value.value);
-      const symbol = CALCULATE_SYMBOLS[action.operator] ?? action.operator;
-      return { kind: "calculate", label: `${getFieldName(survey, action.variableId)} ${symbol} ${value}` };
-    }
+    case "requireAnswer":
+      return { kind: "requireAnswer", label: toPlainText([questionChip(survey, action.target)]) };
+    case "calculate":
+      return { kind: "calculate", label: toPlainText(describeCalculateParts(action, survey, t, format)) };
     case "markLowQuality":
       return { kind: "markLowQuality", label: "" };
     default:
@@ -324,16 +436,27 @@ export const getActionPlainText = (action: TFlowActionText, t: TFunction): strin
   }
 };
 
-/** A rule's condition as its row starts: "If …", or "Always" for a rule without conditions. */
+/** A rule's condition as its row starts, as parts: "If …", or "Always" for a rule without conditions. */
+export const describeRuleConditionParts = (
+  rule: TSurveyBlockLogic,
+  survey: TSurvey,
+  t: TFunction,
+  format: TFlowTextFormat = {}
+): TFlowTextPart[] =>
+  rule.conditions.conditions.length === 0
+    ? [text(t("workspace.surveys.edit.flow.always_runs"))]
+    : [
+        text(`${t("workspace.surveys.edit.flow.if")} `),
+        ...describeConditionGroupParts(rule.conditions, survey, t, format),
+      ];
+
+/** A rule's condition as its row starts, as plain text. */
 export const describeRuleCondition = (
   rule: TSurveyBlockLogic,
   survey: TSurvey,
   t: TFunction,
   format: TFlowTextFormat = {}
-): string =>
-  rule.conditions.conditions.length === 0
-    ? t("workspace.surveys.edit.flow.always_runs")
-    : `${t("workspace.surveys.edit.flow.if")} ${describeConditionGroup(rule.conditions, survey, t, format)}`;
+): string => toPlainText(describeRuleConditionParts(rule, survey, t, format));
 
 /**
  * A rule as one plain sentence with every action ("If … → a · b → Destination"): the tooltip of a
