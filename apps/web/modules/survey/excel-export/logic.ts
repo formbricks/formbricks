@@ -17,6 +17,7 @@ import type {
 } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { cutText } from "@/lib/utils/cut-text";
 import { toReadableText } from "./cell-text";
 import { EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS } from "./limits";
 
@@ -95,18 +96,6 @@ const fieldName = (ctx: TLogicContext, storageKey: string, source: "computed" | 
   return linked?.field.name.trim() || storageKey;
 };
 
-const ELLIPSIS = "…";
-
-/** `text` cut to `max` characters, ending in an ellipsis when cut; never splitting a surrogate pair. */
-const cutLabel = (text: string, max: number): string => {
-  if (text.length <= max) return text;
-  let end = max - ELLIPSIS.length;
-  // The UTF-16 unit, not the code point: a lone high surrogate is what must not end the label.
-  const code = text.charCodeAt(end - 1); // NOSONAR(typescript:S7758) -- a unit, on purpose
-  if (code >= 0xd800 && code <= 0xdbff) end -= 1;
-  return `${text.slice(0, end).trimEnd()}${ELLIPSIS}`;
-};
-
 /**
  * Each question's headline as a rule names it: as the sheet shows it (rich text flattened, recall as
  * `@Label`), on one line, cut. A headline that is empty, or that reads the same as another question's
@@ -121,7 +110,7 @@ const buildQuestionLabels = (survey: TSurvey, elements: Iterable<TSurveyElement>
       .replaceAll(/\s+/gu, " ")
       .trim();
     if (!text) continue;
-    const label = cutLabel(text, EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS);
+    const label = cutText(text, EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS, "…");
     labels.set(element.id, label);
     uses.set(label, (uses.get(label) ?? 0) + 1);
   }
@@ -144,10 +133,11 @@ const fieldPhrase = (ctx: TLogicContext, operand: TDynamicLogicFieldValue): stri
       const rowIndex = operand.meta?.row === undefined ? Number.NaN : Number(operand.meta.row);
       const row = element?.type === TSurveyElementTypeEnum.Matrix ? element.rows[rowIndex] : undefined;
       if (row) {
-        return ctx.t("workspace.surveys.export.logic.question_row", {
-          question: questionPhrase(ctx, operand.value),
-          row: plain(row.label.default),
-        });
+        const name = ctx.questionLabels.get(operand.value);
+        const rowLabel = plain(row.label.default);
+        return name
+          ? ctx.t("workspace.surveys.export.logic.question_row_named", { name, row: rowLabel })
+          : ctx.t("workspace.surveys.export.logic.question_row", { id: operand.value, row: rowLabel });
       }
       return questionPhrase(ctx, operand.value);
     }
