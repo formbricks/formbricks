@@ -1,7 +1,7 @@
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import { base, commonIgnores, unusedVarsConvention } from "./base.mjs";
+import { base, commonIgnores, sonarNewCodeTypedRules, unusedVarsConvention } from "./base.mjs";
 
 /*
  * Flat config for TypeScript (Node) packages — the successor of the
@@ -31,6 +31,7 @@ export const library = ({ tsconfigRootDir }) => [
     rules: {
       // from strictTypeChecked (adopted individually, not the whole strict tier)
       "@typescript-eslint/no-unnecessary-condition": "error",
+      ...sonarNewCodeTypedRules,
     },
   },
   // Plain JS files (scripts, .cjs/.mjs configs) live outside the tsconfigs; without
