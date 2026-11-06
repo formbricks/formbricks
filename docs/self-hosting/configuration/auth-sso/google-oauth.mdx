@@ -48,36 +48,28 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
 
   </Step>
 
-  <Step title="Update Environment Variables in Docker">
-    - To integrate the Google OAuth, you have two options: either update the environment variables in the docker-compose file or directly add them to the running container.
+  <Step title="Save persistent configuration">
+    Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the configuration that creates your app containers.
+    With Compose, reference protected `.env` values from the app's `environment` block:
 
-    - In your Docker setup directory, open the `.env` file, and add or update the following lines with the `Client ID` and `Client Secret` obtained from Google Cloud Platform:
-
-    ```sh
-    GOOGLE_CLIENT_ID=your-client-id-here
-    GOOGLE_CLIENT_SECRET=your-client-secret-here
+    ```yaml
+    environment:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ```
 
-    - Alternatively, you can add the environment variables directly to the running container using the following commands (replace `container_id` with your actual Docker container ID):
-
-    ```sh
-    docker exec -it container_id /bin/bash
-    export GOOGLE_CLIENT_ID=your-client-id-here
-    export GOOGLE_CLIENT_SECRET=your-client-secret-here
-    exit
-    ```
+    With Kubernetes, use your deployment's Secret bindings. Keep credentials out of Git and shared logs.
+    An export in a `docker exec` shell does not configure the running application or survive recreation.
   </Step>
+  <Step title="Apply and verify">
+    Recreate the app during your planned configuration window:
 
-  <Step title="Restart Your Formbricks Instance">
-    <Note>
-      Restarting your Docker containers may cause a brief period of downtime. Plan accordingly.
-    </Note>
-    
-    - Once the environment variables have been updated, it's crucial to restart your Docker containers to apply the changes. This ensures that your Formbricks instance can utilize the new Google OAuth configuration for user authentication.
-    
-    - Navigate to your Docker setup directory where your `docker-compose.yml` file is located.
-    
-    - Run the following command to bring down your current Docker containers and then bring them back up with the updated environment configuration.
+    ```bash
+    docker compose up -d --no-deps --force-recreate formbricks
+    ```
+
+    On Kubernetes, roll out the updated deployment through Helm or GitOps. Test Google sign-in in a fresh
+    browser session and confirm the callback uses your public `WEBAPP_URL`.
   </Step>
 </Steps>
 

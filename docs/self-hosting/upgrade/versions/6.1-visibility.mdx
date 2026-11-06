@@ -1,0 +1,100 @@
+---
+title: "6.1.0: Survey visibility"
+description: "Run permission commands inside the upgraded app and enable restricted surveys."
+icon: "arrow-up-right-dots"
+---
+
+**Introduced in:** 6.1.0.
+**Action required:** only if you opt into restricted survey visibility.
+
+[Back to the 6.1 checklist](/self-hosting/upgrade/versions/6.1).
+
+## Survey visibility (opt-in)
+
+Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
+`Survey` table record each survey's owner and visibility. The migrations set every existing survey to
+workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
+
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
+
+Stored visibility is always enforced. To enable new visibility mutations and survey graph checks,
+complete the rollout below after upgrading.
+
+Once activated, a survey a person creates is restricted until they share it with the workspace.
+Regardless of readiness, API keys cannot see restricted surveys or responses; webhooks, integrations,
+feedback sources, follow-ups and workflows cannot receive them.
+
+Two new environment variables:
+
+- **SURVEY_VISIBILITY_FORCE_DISABLED**: `1` disables visibility mutations. Stored restrictions remain
+  enforced. Takes effect on restart.
+- **SURVEY_WORKSPACE_LIMIT**: most surveys one workspace may hold, archived ones included (default `10000`).
+  This applies whether or not visibility is enforced: creating a survey past it answers
+  `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
+
+## Complete the visibility rollout
+
+### Open a shell in the upgraded app
+
+The commands below ship **inside the Formbricks image**; no host installation of `formbricks-authzed` is needed.
+Confirm every app container/pod runs the target release, then open one shell:
+
+<Tabs>
+  <Tab title="Docker and one-click">
+    From your existing Compose directory:
+
+    ```bash
+    docker compose exec formbricks sh
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    Replace the namespace, deployment and app container names with your deployment's names:
+
+    ```bash
+    kubectl exec -it -n <namespace> deploy/<app-deployment> -c <app-container> -- sh
+    ```
+  </Tab>
+</Tabs>
+
+Run the following steps **inside that shell**, using the app's existing database and AuthZed settings.
+Stop on any nonzero exit; do not mark the scope ready after a failed repair. Type `exit` when finished.
+
+### Repair and verify
+
+<Steps>
+  <Step title="Repair outbox delivery">
+    Once every container or pod runs the new version, check durable delivery and replay any dead-lettered
+    survey events. The migration adds the survey trigger while the previous version may still be delivering
+    outbox events, and that version dead-letters the `survey` event type it does not know. A dead-lettered
+    survey revocation makes every enforced authorization check fail closed until it is replayed:
+
+    ```bash
+    formbricks-authzed outbox status
+    formbricks-authzed outbox replay
+    formbricks-authzed outbox drain
+    ```
+
+    `replay` resets every unresolved dead letter, so investigate any that are not survey events first. See
+    [AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for how to
+    list them.
+  </Step>
+  <Step title="Repair the survey scope">
+    After the upgrade, repair the survey scope and mark it ready. This runs the repair, then two further dry
+    runs, and sets the marker only if both come back clean:
+
+    ```bash
+    formbricks-authzed backfill --scope=survey --apply --mark-ready
+    ```
+  </Step>
+  <Step title="Confirm readiness">
+    Confirm `formbricks-authzed upgrade check` reports `scopes.survey` as ready.
+  </Step>
+</Steps>
+
+To clear survey graph readiness, run `formbricks-authzed backfill --scope=survey --clear-ready`. Stored restrictions remain enforced. See
+[AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for the audit
+and repair commands.
