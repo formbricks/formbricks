@@ -451,6 +451,16 @@ describe("language codes across calls", () => {
     expect([...(plan.entries.get("R3")?.headline.keys() ?? [])]).toEqual(["en-US", "en-GB"]);
   });
 
+  test("never reads a region code as another region's", () => {
+    const settled: [string, string] = ["pt-BR", "de-DE"];
+    const { plan } = check([
+      spelled(["R2"], settled, [inCodes("R2", settled)]),
+      spelled(["R3"], settled, [inCodes("R3", ["pt-PT", "de-DE"])]),
+    ]);
+
+    expect(plan.failures.get("R3")).toContain("unknown_language");
+  });
+
   test("refuses a bare code two settled codes share", () => {
     const settled: [string, string] = ["en-GB", "en-AU"];
     const { plan } = check([
@@ -478,6 +488,14 @@ describe("an answer that names none of its lines", () => {
     expect(isUnreadLine(["silent_answer"])).toBe(true);
     expect(plan.skipped.has("R1")).toBe(true);
     expect(plan.silentResponses).toBe(1);
+  });
+
+  test("is not one whose only entry fails the schema: that line goes to the retry with its reason", () => {
+    const { plan } = check([answer(["R2"], [{ ref: "R2", kind: "openText" }])]);
+
+    expect(plan.failures.get("R2")).toEqual(["invalid_entry"]);
+    expect(plan.silentResponses).toBe(0);
+    expect(plan.silentRefs.size).toBe(0);
   });
 
   test("on the retry is believed: no failure", () => {

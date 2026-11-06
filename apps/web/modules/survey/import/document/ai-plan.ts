@@ -64,16 +64,20 @@ export const documentQuestionRefs = (response: TImportPlanResponse): string[] =>
 };
 
 /**
- * Whether an answer that parses names none of the lines it was asked about, as a question or a skip:
- * what the checks count as silent (`silentResponses`). An answer that does not parse is no silence, it
- * fails its lines.
+ * Whether an answer that parses names none of the lines it was asked about, as a question (valid or
+ * not) or a skip: what the checks count as silent (`silentResponses`). An answer that does not parse is
+ * no silence, it fails its lines; nor is one whose only entry fails the schema, which the retry round
+ * asks again with what was wrong.
  */
 export const isSilentDocumentAnswer = (response: TImportPlanResponse): boolean => {
   const envelope = ZDocumentImportPlanEnvelope.safeParse(response.object);
   if (!envelope.success) return false;
-  const entries = collectPlanEntries(envelope.data.questions, response.refs, ZDocumentPlanEntry, () => {});
+  let namedInvalid = false;
+  const entries = collectPlanEntries(envelope.data.questions, response.refs, ZDocumentPlanEntry, () => {
+    namedInvalid = true;
+  });
   const skips = collectPlanSkips(envelope.data.skipped, response.refs, ZDocumentPlanSkip);
-  return entries.size === 0 && skips.size === 0;
+  return !namedInvalid && entries.size === 0 && skips.size === 0;
 };
 
 export interface TDocumentPlanResult {

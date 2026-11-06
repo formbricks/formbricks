@@ -196,6 +196,10 @@ describe("sniffSurveyImportFile: a JSON file that does not parse", () => {
     expect(error.details).toEqual({ line: 3, column: 26 });
   });
 
+  test("an extra closing brace after the value says where it is", () => {
+    expect(syntaxRefusal('{"formbricks": {}}\n}').details).toEqual({ line: 2, column: 1 });
+  });
+
   test("a file that ends too soon stops at its end", () => {
     expect(syntaxRefusal('{"formbricks": {\n  "version": 1').details).toEqual({ line: 2, column: 15 });
   });

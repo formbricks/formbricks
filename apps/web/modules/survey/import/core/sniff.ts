@@ -89,7 +89,8 @@ export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJs
   const message = error instanceof Error ? error.message : "";
   // Anchored to the end of V8's own words: the message can quote the file, which may itself say
   // "in JSON at position 5".
-  const offset = /in JSON at position (\d+)(?: \(line \d+ column \d+\))?$/.exec(message);
+  // "after JSON" is V8's word for content past a complete value, such as an extra closing brace.
+  const offset = /(?:in|after) JSON at position (\d+)(?: \(line \d+ column \d+\))?$/.exec(message);
   let index: number;
   if (offset) index = Math.min(Number(offset[1]), text.length);
   else if (message.includes("end of JSON input")) index = text.length;

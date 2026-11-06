@@ -180,8 +180,10 @@ export class DocumentPlanContext {
     if (known) return known;
     const normalized = normalizeImportLanguageCode(trimmed);
     if (normalized && languages.codes.includes(normalized)) return normalized;
+    // Only a bare language falls back to the settled code of that language: `pt-PT` is not `pt-BR`,
+    // nor `zh-Hant` `zh-Hans`.
     const primary = (code: string) => code.split(/[-_]/u)[0].toLowerCase();
-    const sameLanguage = languages.codes.filter((code) => primary(code) === primary(trimmed));
+    const sameLanguage = languages.codes.filter((code) => primary(code) === trimmed.toLowerCase());
     return sameLanguage.length === 1 ? sameLanguage[0] : null;
   }
 
@@ -526,11 +528,14 @@ function judgeResponse(
   round: { retry: boolean },
   addFailure: (ref: string, reason: TDocumentPlanFailure) => void
 ): void {
-  const entries = collectPlanEntries(envelope.questions, refs, ZDocumentPlanEntry, (ref) =>
-    addFailure(ref, "invalid_entry")
-  );
+  let namedInvalid = false;
+  const entries = collectPlanEntries(envelope.questions, refs, ZDocumentPlanEntry, (ref) => {
+    namedInvalid = true;
+    addFailure(ref, "invalid_entry");
+  });
   const skips = collectPlanSkips(envelope.skipped, refs, ZDocumentPlanSkip);
-  if (entries.size === 0 && skips.size === 0) {
+  // An entry the schema refused still names its line: not silence (`isSilentDocumentAnswer`).
+  if (!namedInvalid && entries.size === 0 && skips.size === 0) {
     recordSilentAnswer(plan, refs, { believed: round.retry || askedAgain === true }, addFailure);
   }
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TImportPlanGenerate } from "../core/ai-plan";
 import { SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS, SURVEY_IMPORT_DOCUMENT_MAX_PARALLEL_CALLS } from "../limits";
-import { documentQuestionRefs, planDocumentImport } from "./ai-plan";
+import { documentQuestionRefs, isSilentDocumentAnswer, planDocumentImport } from "./ai-plan";
 import { chunkDocumentLines, countDocumentChunks } from "./chunks";
 import type { TDocumentModel } from "./model";
 import { readMarkdownDocument } from "./read-markdown";
@@ -176,5 +176,15 @@ describe("countDocumentChunks", () => {
       chunkDocumentLines(model, refs, SURVEY_IMPORT_AI_CHUNK_OUTPUT_TOKENS).length
     );
     expect(countDocumentChunks(model)).toBeLessThan(chunkDocumentLines(model, refs).length);
+  });
+});
+
+describe("isSilentDocumentAnswer", () => {
+  test("is true for an answer that names none of its lines, false for one naming a line with an invalid entry", () => {
+    expect(isSilentDocumentAnswer(answer(["R1", "R2"], []))).toBe(true);
+    expect(isSilentDocumentAnswer(answer(["R1", "R2"], [{ ref: "R1", kind: "openText" }]))).toBe(false);
+    expect(isSilentDocumentAnswer(answer(["R1"], [], [{ ref: "R1", reason: "A picture choice" }]))).toBe(
+      false
+    );
   });
 });
