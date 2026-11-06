@@ -22,6 +22,7 @@ import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 import { SEED_CREDENTIALS, SEED_IDS } from "../seed/constants";
+import { seedContractFeedbackRecords } from "./contract-feedback-records";
 
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
 
@@ -419,9 +420,9 @@ async function seedWorkflow(
  * runs after seeding projects the dataset assignment into SpiceDB, which is what lets the seed API key
  * reach the dataset. Every mutating operation gets its own victim, as with surveys.
  *
- * The data and preview operations still answer 502: the job runs no Cube, so they are checked against
- * that documented response. And all of them answer `dashboards_plan_required` where the instance's
- * license does not grant Dashboards.
+ * The preview, data and field-values operations run a Cube query; the job starts Cube
+ * (scripts/start-cube-ci.sh) and `seedContractFeedbackRecords` gives it rows for this dataset. All of them
+ * answer `dashboards_plan_required` where the instance's license does not grant Dashboards.
  */
 async function seedDashboards(organizationId: string): Promise<void> {
   await prisma.feedbackDirectory.upsert({
@@ -675,6 +676,7 @@ async function main(): Promise<void> {
 
   await seedContactsAndSegment();
   await seedDashboards(workspace.organizationId);
+  await seedContractFeedbackRecords(prisma, CONTRACT_IDS.DATASET);
 
   // After the read survey's languages, which seed the workspace's en-US and de-DE. The read creative opens
   // the read survey, which `read.surveyId` also points the list's `surveyId` filter at.

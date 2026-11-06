@@ -156,56 +156,15 @@ jobs:
         run: pnpm --filter=@formbricks/database db:migrate:ci
         shell: bash
 
-      # Chart and dashboard reads query Cube, which reads Hub's database. Without them every licensed
-      # chart operation answers 502 "could not be run". Hub's API is not needed: Cube reads its tables
-      # directly, so the schema alone (empty) is enough for those operations to answer real, empty data.
-      # Images pinned to the tags docker-compose.dev.yml uses, by digest.
-      - name: Start Cube on an empty Hub database
-        if: steps.harness.outputs.present == 'true'
+      # The chart preview, data and field-values operations run a Cube query. Without Cube they can only
+      # answer their documented 502, which proves nothing about the query path. The script applies the
+      # Hub schema Cube reads (`feedback_records`) and starts the pinned Cube image on the app's
+      # CUBEJS_API_URL; the contract seed below then gives it rows for the fixture dataset. Before the
+      # seed, because the seed only writes those rows when the Hub table exists.
+      - name: Start Cube
+        if: steps.harness.outputs.present == 'true' && hashFiles('scripts/start-cube-ci.sh') != ''
+        run: bash scripts/start-cube-ci.sh
         shell: bash
-        env:
-          HUB_IMAGE: ghcr.io/formbricks/hub@sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745 # 0.14.1
-          CUBE_IMAGE: cubejs/cube@sha256:fb9933de67b83c2ff9b1b61017d4f3cbafc8d248906b3e4923f57524b8c634d6 # v1.8.8
-          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: |
-          docker exec "${POSTGRES_CONTAINER}" psql -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE hub"
-          docker run --rm --network host \
-            -e DATABASE_URL="postgresql://postgres:postgres@localhost:5432/hub?sslmode=disable" \
-            --entrypoint sh "${HUB_IMAGE}" -c \
-            '/usr/local/bin/goose -dir /app/migrations postgres "$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$DATABASE_URL"'
-
-          # The app signs Cube's tokens with the secret `pnpm dev:setup` generated into .env.
-          cube_secret=$(grep '^CUBEJS_API_SECRET=' .env | cut -d'=' -f2-)
-          if [ -z "${cube_secret}" ]; then
-            echo "::error::CUBEJS_API_SECRET is empty in .env."
-            exit 1
-          fi
-          echo "::add-mask::${cube_secret}"
-          docker run -d --name cube --network host \
-            -e CUBEJS_DB_TYPE=postgres -e CUBEJS_DB_HOST=localhost -e CUBEJS_DB_PORT=5432 \
-            -e CUBEJS_DB_NAME=hub -e CUBEJS_DB_USER=postgres -e CUBEJS_DB_PASS=postgres \
-            -e CUBEJS_API_SECRET="${cube_secret}" \
-            -e CUBEJS_JWT_ISSUER=formbricks-web -e CUBEJS_JWT_AUDIENCE=formbricks-cube \
-            -e CUBEJS_DEFAULT_API_SCOPES=meta,data -e CUBEJS_CACHE_AND_QUEUE_DRIVER=memory \
-            -e CUBEJS_DB_QUERY_TIMEOUT=60s \
-            -v "${GITHUB_WORKSPACE}/docker/cube/cube.js:/cube/conf/cube.js:ro" \
-            -v "${GITHUB_WORKSPACE}/docker/cube/schema:/cube/conf/model:ro" \
-            "${CUBE_IMAGE}"
-          for attempt in {1..24}; do
-            if curl -fsS -o /dev/null http://localhost:4000/readyz; then
-              echo "Cube is ready."
-              exit 0
-            fi
-            if [ "$(docker inspect -f '{{.State.Running}}' cube)" != "true" ]; then
-              docker logs cube
-              echo "::error::Cube exited before it was ready."
-              exit 1
-            fi
-            sleep 5
-          done
-          docker logs cube
-          echo "::error::Cube did not answer /readyz within 120s."
-          exit 1
 
       - name: Seed the workspace and a throwaway API key
         if: steps.harness.outputs.present == 'true'
@@ -317,6 +276,52 @@ jobs:
             exit 1
           fi
 
+          # The chart and dashboard operations are gated on Dashboards. With it, the seeded chart's data
+          # comes from Cube; a 502 here means Cube or its schema is broken, which the contract run would
+          # only report as three server errors. Without it, they all answer their documented 403 —
+          # say so, since the licence's feature set changes outside this repository.
+          if [ -f scripts/start-cube-ci.sh ]; then
+            chart_id=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').read.chartId")
+            chart_status=$(curl -o /tmp/preflight-chart.json -s -w "%{http_code}" \
+              -H "x-api-key: fbk_${SEED_API_KEY}" \
+              "http://localhost:3000/api/v3/charts/${chart_id}/data")
+            if [ "${chart_status}" -eq 200 ]; then
+              # Schemathesis passes a documented 4xx too, so it would not notice preview or field values
+              # failing to reach Cube. With Dashboards active, all three Cube-backed operations must 200.
+              dataset_id=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').read.datasetId")
+              preview_status=$(curl -o /tmp/preflight-preview.json -s -w "%{http_code}" \
+                -H "x-api-key: fbk_${SEED_API_KEY}" -H "Content-Type: application/json" \
+                --data "{\"workspaceId\":\"${workspace_id}\",\"datasetId\":\"${dataset_id}\",\"type\":\"bar\",\"query\":{\"measures\":[\"FeedbackRecords.npsScore\"],\"dimensions\":[\"FeedbackRecords.sourceName\"]}}" \
+                "http://localhost:3000/api/v3/charts/preview")
+              values_status=$(curl -o /tmp/preflight-values.json -s -w "%{http_code}" \
+                -H "x-api-key: fbk_${SEED_API_KEY}" \
+                "http://localhost:3000/api/v3/charts/fields/FeedbackRecords.sourceName/values?workspaceId=${workspace_id}&datasetId=${dataset_id}")
+              if [ "${preview_status}" -ne 200 ] || [ "${values_status}" -ne 200 ]; then
+                echo "::error::With Dashboards active, chart preview returned ${preview_status} and field values returned ${values_status}; both should be 200."
+                cat /tmp/preflight-preview.json /tmp/preflight-values.json
+                docker logs formbricks-cube-ci 2>&1 | tail -n 50 || true
+                exit 1
+              fi
+              echo "::notice::Dashboards entitlement active — chart and dashboard operations run against real data, with Cube answering the chart queries."
+            elif [ "${chart_status}" -eq 403 ]; then
+              # Only the entitlement 403 is a licence answer. Any other 403 (the seeded key lost access
+              # to the dataset, say) is a broken setup that would leave every chart operation shallow.
+              chart_code=$(node -p "try { require('/tmp/preflight-chart.json').code ?? '' } catch { '' }")
+              if [ "${chart_code}" != "dashboards_plan_required" ]; then
+                echo "::error::Chart data probe returned 403 with code '${chart_code}', expected dashboards_plan_required. The seeded API key cannot reach the fixture chart."
+                cat /tmp/preflight-chart.json
+                exit 1
+              fi
+              echo "::warning::Dashboards entitlement inactive (GET /api/v3/charts/{chartId}/data → ${chart_status} ${chart_code}). The chart and dashboard operations are only checked against their documented 403."
+              cat /tmp/preflight-chart.json
+            else
+              echo "::error::Chart data probe returned ${chart_status}, expected 200 or 403. Cube is unreachable or rejected the query."
+              cat /tmp/preflight-chart.json
+              docker logs formbricks-cube-ci 2>&1 | tail -n 50 || true
+              exit 1
+            fi
+          fi
+
       # Dogfoods the post-deployment check (apps/deployment-check) against this already-booted instance:
       # app, Postgres, Redis, authorization, a seeded workspace and API key are all here, so it costs no
       # extra boot. File storage is not configured on this runner, so the storage check must take its
@@ -416,7 +421,7 @@ jobs:
 
       - name: Save Cube logs
         if: failure() && steps.harness.outputs.present == 'true'
-        run: docker logs cube > cube.log 2>&1 || true
+        run: docker logs formbricks-cube-ci > cube.log 2>&1 || true
         shell: bash
 
       # Failure only. A green run's log has nothing to say that the entitlement probe above does not,
