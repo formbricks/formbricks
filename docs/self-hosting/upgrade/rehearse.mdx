@@ -1,0 +1,64 @@
+---
+title: "Rehearse an upgrade"
+description: "Test each release stop on an isolated copy of production before scheduling maintenance."
+icon: "arrow-up-right-dots"
+---
+
+Use a clone of your existing installation and its data. A fresh empty installation is useful as a
+reference, but does not test your upgrade. You do not need to replace the production server to upgrade it.
+
+<Steps>
+  <Step title="Record the baseline">
+    Record app and dependency versions, Compose project/chart, volumes, secrets and enabled integrations.
+    Choose your [upgrade stops](/self-hosting/upgrade/paths). Record a few existing surveys, response counts,
+    uploaded files and user roles to check after each stop.
+  </Step>
+  <Step title="Create an isolated copy">
+    Restore a [coordinated backup](/self-hosting/operate/backup-restore), or clone a consistently stopped VM
+    and its disks. A VM snapshot does not include external databases, buckets or shared Redis.
+
+    Before starting the clone, point it at separate datastores and storage. Block production SMTP,
+    webhooks, scheduled integrations and other outbound effects; use test recipients/endpoints when testing delivery.
+    Keep it private and restrict access to copied production data.
+  </Step>
+  <Step title="Configure the test origin">
+    Set the test `WEBAPP_URL`, any separate `PUBLIC_URL`, and the auth base URL (`NEXTAUTH_URL` on older
+    deployments, or `BETTER_AUTH_URL`). Register the test SSO callback separately and update storage CORS.
+    Use the development license issued for this environment; contact support if you need one.
+
+    Preserve encryption keys needed to read restored data. Separate test service credentials from production
+    where possible, updating both ends together. Do not replace encryption keys just to rename the host.
+  </Step>
+  <Step title="Prove the old version works">
+    Start the clone on the recorded source version. Check existing-user sign-in, stored responses and files.
+    Fix any restore, hostname, network or license problems before trying an upgrade.
+  </Step>
+  <Step title="Upgrade one stop at a time">
+    Follow the release's Before / During / After checklist and the matching deployment procedure.
+    Record configuration changes, commands, elapsed time and exit status. Wait for migrations and required
+    backfills to finish before moving to the next stop.
+
+    Stop on failed migrations, missing services, broken SSO or unexpected permission results. Do not mark a
+    failed migration applied to continue. Keep redacted logs for [troubleshooting](/self-hosting/upgrade/troubleshooting).
+  </Step>
+  <Step title="Test recovery and write the production runbook">
+    Restore the previous coordinated state and matching images on the test environment. Prove it starts
+    and the baseline still works. Then record the exact successful route and a maintenance window that
+    includes recovery time. Production must use the same tested artifacts and configuration changes.
+  </Step>
+</Steps>
+
+## Acceptance at every stop
+
+| Area | Pass condition |
+| --- | --- |
+| Data | Existing surveys, contacts and responses remain available; compare recorded counts and samples. |
+| Authentication | An existing password user and each configured SSO provider can sign in; test roles and 2FA where used. |
+| Storage | Old images/files open and a new upload can be downloaded through the public route. |
+| Surveys and APIs | Submit a response and read it back with an appropriately scoped key; check an unauthorized key is denied. |
+| Analytics and jobs | Dashboards load; configured workers consume queued work and deliver to test endpoints. |
+| v6 permissions | Allowed and denied access match expectations; revoking access takes effect. |
+
+Run the [deployment check](/self-hosting/setup/deployment-check) when a matching published image exists.
+It creates test data; use a dedicated workspace. Older releases may not have a matching check image—use
+the manual checks above instead. A green health endpoint or skipped test is not sufficient acceptance.

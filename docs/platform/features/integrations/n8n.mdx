@@ -1,101 +1,68 @@
 ---
 title: "n8n"
-description: "Integrate Formbricks with n8n for a streamlined workflow experience."
+description: "Send Formbricks survey events to an n8n workflow using a webhook."
 icon: "diagram-project"
 ---
 
-<Note>
-  The Formbricks n8n node is currently only available in the n8n self-hosted
-  version as a community node. To install it go to "Settings" -> "Community
-  Nodes" and install @formbricks/n8n-nodes-formbricks.
-</Note>
+Use n8n's built-in **Webhook** trigger with Formbricks Cloud or your self-hosted instance.
+You need permission to manage webhooks in the survey's workspace and an HTTPS endpoint reachable from Formbricks.
 
-n8n allows you to build flexible workflows focused on deep data integration. And with sharable templates and a user-friendly UI, the less technical people on your team can collaborate on them too. Unlike other tools, complexity is not a limitation. So you can build whatever you want — without stressing over budget. Hook up Formbricks with n8n and you can send your data to 350+ other apps. Here is how to do it.
+<Warning>
+  The published `@formbricks/n8n-nodes-formbricks` 1.0.2 community node omits the workspace ID when
+  registering its webhook. Registration fails against current Formbricks releases. Use the workflow
+  below until a compatible node release is available; changing the API key does not fix that request.
+</Warning>
 
-## Step 1: Check your question codes
+<span id="step-1-setup-your-survey-incl-questionid-for-every-question" />
+<span id="step-2-setup-your-n8n-workflow" />
+<span id="step-3-connect-formbricks-with-n8n" />
+<span id="step-4-select-event" />
+<span id="step-5-select-survey" />
+<span id="step-6-test-your-trigger" />
+<span id="step-7-add-discord-to-your-workflow" />
+<span id="step-1-check-your-question-codes" />
 
-<Note>
-  Nailed down your survey? Any changes in the survey cause additional work in
-  the n8n node. It makes sense to first settle on the survey you want to run and
-  then get to setting up n8n.
-</Note>
+## Connect a workflow
 
-Every question has a **question code**, such as `q1` or `nps`, and the `dataByQuestionCode` group of the trigger output shows your answers under these codes. You can read and change the code in the **Settings** tab of a question, under **Recode**, **before** you activate the survey. Once the survey is active, codes are locked, so the workflow you build on them keeps working.
+<Steps>
+  <Step title="Create the trigger">
+    Create an n8n workflow with a **Webhook** trigger. Set the method to **POST**, choose a unique path,
+    and copy its **Test URL**. Start **Listen for test event** in n8n.
+  </Step>
+  <Step title="Connect Formbricks">
+    In Formbricks, open **Configuration → Integrations → Manage Webhooks → Add Webhook**.
+    Paste the Test URL and select **Response Finished** and your test survey.
+  </Step>
+  <Step title="Test with an isolated survey">
+    Submit a response to that survey. Confirm n8n receives it, then map the response fields into your next
+    node. Keep test recipients and downstream actions isolated from production.
+  </Step>
+  <Step title="Verify signatures">
+    Before handling real data, [verify the webhook signature](/platform/features/integrations/webhooks#signature-verification)
+    using the webhook's signing secret. Reject invalid requests before running downstream actions.
+    If your n8n setup cannot verify the raw request body, put a signature-verifying receiver in front of it.
+  </Step>
+  <Step title="Switch to the production URL">
+    Publish or activate the workflow in your n8n version. Replace the Test URL in Formbricks with n8n's
+    **Production URL** and submit one controlled response. Verify exactly one execution and the expected result.
+  </Step>
+</Steps>
 
-<Note>
-  Question codes start with a lowercase letter and use lowercase letters, digits and `_`. Pick short, readable names such as `nps` or `visit_reason`. Learn more in [Question codes and answer codes](/surveys/analysis/question-codes).
-</Note>
+You do not need a Formbricks API key to create this webhook through the UI. Additional API calls from
+n8n need their own [scoped key](/api-reference/generate-key).
 
-<Note>
-  The Question ID of a question is generated and cannot be changed. If you need it, choose **Copy question ID** in the question's **⋯** menu.
-</Note>
+## Self-hosted Formbricks
 
-## Step 2: Setup your n8n workflow
+Create the webhook on your own instance. Its background worker must reach the n8n endpoint over HTTPS.
+If delivery fails, check the endpoint, selected survey and event, and [worker configuration](/self-hosting/configuration/job-runner).
 
-Go to [n8n.io](https://n8n.io) and create a new workflow. Search for “Formbricks” to get started:
+## Map answers by question code
 
-![Add Formbricks Trigger](/images/platform/features/integrations/n8n/add-formbricks-trigger.webp)
+Every question has a **question code**, such as `q1` or `nps`. The webhook payload's `dataByQuestionCode`
+group lists the answers under these codes, so map those fields in n8n. You can change a code in the question's
+**Settings** tab, under **Recode**, **before** you activate the survey. Once the survey is active, codes are
+locked, so a workflow built on them keeps working.
 
-## Step 3: Connect Formbricks with n8n
-
-Now, you have to connect n8n with Formbricks via an API Key:
-
-![Create new credential button](/images/platform/features/integrations/n8n/create-new-credential-btn.webp)
-
-Click on Create New Credential button to add your host and API Key
-
-![Add host and api key](/images/platform/features/integrations/n8n/add-api-key.webp)
-
-Now you need an API key. Please refer to the [API Key Setup](/api-reference/generate-key) page to learn how to create one.
-
-Once you copied it in the API Key field, hit Save button to test the connection and save the credentials.
-
-![Successful Connection](/images/platform/features/integrations/n8n/success-connection.webp)
-
-## Step 4: Select Event
-
-Next, you can choose the event you want to trigger the node on. You can select multiple events:
-
-![Select Event](/images/platform/features/integrations/n8n/select-event.webp)
-
-Here, we are adding `Response Finished` as an event, which will trigger when the survey has been filled out.
-
-## Step 5: Select Survey
-
-Next, you can choose from all the surveys you have created in this workspace. You can select multiple surveys:
-
-![Select Survey](/images/platform/features/integrations/n8n/select-survey.webp)
-
-Here, we are selecting two surveys.
-
-![Selected Surveys](/images/platform/features/integrations/n8n/selected-surveys.webp)
-
-## Step 6: Test your trigger
-
-In order to set up n8n you'll need a test response in the selected survey. This allows you to select the individual values of each response in your workflow.
-
-![Submit Test Response](/images/platform/features/integrations/n8n/submit-test-response.webp)
-
-Next, click on Listen for event button.
-
-![Listen for event](/images/platform/features/integrations/n8n/listen-for-event.webp)
-
-Then, go to the survey which you selected. Fill it out, and wait for the particular event to trigger (in this case it's `Response Finished`). Once the event is triggered you will see the response that you filled out in the survey.
-
-![Test Response Success](/images/platform/features/integrations/n8n/test-response-success.webp)
-
-Now you have all the data you need at hand. The next steps depend on what you want to do with it. In this tutorial, we will send submissions to a discord channel:
-
-## Step 7: Add discord to your workflow
-
-Click on the plus and search `Discord`.
-
-![Add Discord](/images/platform/features/integrations/n8n/add-discord.webp)
-
-Fill in the `Webhook URL` and the `Content` that you want to receive in the respective discord channel. Next, click on `Execute Node` button to test the node.
-
-![Fill Discord Details](/images/platform/features/integrations/n8n/fill-discord-details.webp)
-
-Once the execution is successful, you'll receive the content in the discord channel.
-
-![Discord Response](/images/platform/features/integrations/n8n/discord-response.webp)
+Question codes start with a lowercase letter and use lowercase letters, digits and `_`. Learn more in
+[Question codes and answer codes](/surveys/analysis/question-codes) and
+[reading answers by question code](/platform/features/integrations/webhooks#reading-answers-by-question-code).

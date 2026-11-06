@@ -12,20 +12,12 @@ Pick the path that fits what you're moving:
 | ----------------------------------------------------- | --------------------------------------------------------------------------- |
 | Some surveys, without their responses                 | Formbricks files (this page)                                                |
 | Some surveys, with their responses                    | The management API scripts in [Migrating Survey Responses](/self-hosting/advanced/migrating-survey-responses) |
-| A whole instance: users, organizations, everything    | A database dump (below)                                                     |
+| A whole instance: users, organizations, everything    | [Backup and restore](/self-hosting/operate/backup-restore)                  |
 
 <Note>
-  **Moving a whole instance? Do not use this page.** If you control both machines and want everything
-  — users, organizations, workspaces, contacts, responses, file uploads, webhooks — then a Postgres
-  dump plus a copy of your S3 bucket is faster, complete, and keeps every ID intact:
-
-  ```bash
-  pg_dump "$OLD_DB_URL" -Fc -f formbricks.dump
-  pg_restore -d "$NEW_DB_URL" --no-owner formbricks.dump
-  ```
-
-  Restore into an instance running the **same Formbricks version** as the source, then upgrade it
-  following the [migration guide](/self-hosting/advanced/migration).
+  Moving or recovering a whole instance? Use [backup and restore](/self-hosting/operate/backup-restore).
+  Keep databases, permission state, storage, secrets and configuration together. A PostgreSQL dump and
+  an S3 copy alone are not a complete recovery plan.
 </Note>
 
 ## What carries over

@@ -75,7 +75,7 @@ openssl rand -hex 32 # AUTHZED_DATABASE_PASSWORD for bundled Docker
 Store them in a mode-`0600` `.env`, Docker secret, Kubernetes Secret, or external secret manager. Never put
 the token in a `NEXT_PUBLIC_*` variable, command output, documentation, or source control.
 
-See [Environment Variables](/self-hosting/configuration/environment-variables#authzed--spicedb-authorization)
+See [Environment Variables](/self-hosting/configuration/environment-variables#spicedb-authorization)
 for the complete validation contract.
 
 ## Operate Docker and one-click installations
@@ -90,7 +90,7 @@ spicedb + formbricks-migrate → authzed-initialize
 
 Database bootstrap and datastore migration are idempotent. Migration and serving always use the same
 `SPICEDB_IMAGE_REF`. SpiceDB is reachable only as `spicedb:50051` inside the Compose network.
-With the [external PostgreSQL override](/self-hosting/setup/docker#external-postgresql-for-spicedb), the
+With the [external PostgreSQL override](/self-hosting/configuration/spicedb-external-postgres), the
 database and login are pre-provisioned outside Compose; `spicedb-migrate → spicedb` remains the startup gate.
 
 `authzed-initialize` is an idempotent, one-shot service that prepares fresh installations. Formbricks does not
@@ -110,7 +110,7 @@ installation must merge the released AuthZed services and environment manually, 
 v6 migration. The updater runs only the read-only `upgrade check` before stopping the existing application.
 A blocked check leaves it running. After a successful check, the updater stops the stack, waits for PostgreSQL,
 runs application migrations, and starts the new stack only if they succeed. Preparation is a separate
-[maintenance operation](/self-hosting/advanced/v6-maintenance-upgrade), including for later schema-changing releases.
+[maintenance operation](/self-hosting/upgrade/versions/6.0), including for later schema-changing releases.
 
 <Warning>
   `docker compose down` preserves PostgreSQL data. `docker compose down -v` deletes the volume containing both
@@ -211,8 +211,10 @@ authzed:
 AuthZed and `fully_consistent` authorization are enabled by default. The operator runs SpiceDB datastore
 migrations. A fresh Helm installation runs a release-matched, aggregate-only initialization Job after the
 datastore and Formbricks migrations become available. Application startup and probes do not depend on this Job.
-For existing releases, the pre-upgrade hook is read-only. Prepare schema and relationship changes explicitly
-before the upgrade; the hook only runs `upgrade check`.
+For existing Helm and Flux releases, the pre-upgrade hook is read-only: it only runs `upgrade check`. Prepare
+schema and relationship changes explicitly before the upgrade. Argo CD renders the chart as a new install, so
+its Sync hook also runs `upgrade prepare` on every sync: stop the writers first, as the
+[Kubernetes runbook](/self-hosting/upgrade/kubernetes#patch-upgrades) describes.
 
 The release notes print the exact deployment command. With the default release:
 
@@ -229,7 +231,7 @@ application pod and do not require exposing PostgreSQL or SpiceDB.
 ## Upgrade an existing installation to v6
 
 Formbricks v6 has no legacy authorization fallback. Follow the
-[maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop all writers and controllers,
+[maintenance upgrade guide](/self-hosting/upgrade/versions/6.0): stop all writers and controllers,
 take recoverable backups, and run the target release's database migrations before preparing its graph.
 A bridge release is not required for the self-hosted maintenance path.
 
@@ -247,7 +249,7 @@ non-empty and differs, first run `schema check`, review the diff and backup, the
 
 ```bash
 formbricks-authzed upgrade prepare \
-  --expected-current-digest sha256:<reviewed-remote-digest>
+  --expected-current-digest <remoteDigest>
 ```
 
 `check` is read-only. It exits `0` only when AuthZed is enabled with `fully_consistent`, authenticated health is
@@ -298,7 +300,7 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
 
     ```bash
     formbricks-authzed schema apply \
-      --expected-current-digest sha256:<remote-digest>
+      --expected-current-digest <remoteDigest>
     ```
 
     Ensure no other schema writer runs between check and apply. SpiceDB does not provide an atomic schema
@@ -338,7 +340,7 @@ examples use `kubectl exec ... --`. The command names and arguments after those 
 Keep the original v5 images, configuration, coordinated backups, and schema digest until acceptance is complete.
 After database migrations, restoring an old image or running `helm rollback` alone may be incompatible with the
 database. Keep maintenance active and either fix forward or restore the matching backups and v5 configuration.
-Do not disable AuthZed inside v6. See the [recovery steps](/self-hosting/advanced/v6-maintenance-upgrade#results-and-recovery).
+Do not disable AuthZed inside v6. See the [recovery steps](/self-hosting/upgrade/prepare#results-and-recovery).
 
 Use explicit release versions and image digests for this upgrade. Do not rely on a moving `latest` or `stable`
 tag to perform the migration or to provide a tested rollback artifact.

@@ -40,6 +40,11 @@ Click on `Create connection`:
 
 Enter the Formbricks API Host and API Key. API Host is by default set to https://app.formbricks.com but can be modified for self-hosting instances. Learn how to get an API Key from the [API Key tutorial](/api-reference/generate-key).
 
+
+Use a key scoped to **exactly one workspace** with **manage** access. Activepieces validates it through
+`/api/v1/management/me`; multi-workspace keys fail that check. Manage access lets the trigger delete its
+webhook when the flow is disabled, as well as create it.
+
 ![Configure Connection](/images/platform/features/integrations/activepieces/configure-connection.webp)
 
 ## Step 4: Select Survey
@@ -72,3 +77,14 @@ Specify the fields you want to add to the spreadsheet.
 A new row gets added to the spreadsheet for every response:
 
 ![Result](/images/platform/features/integrations/activepieces/result.webp)
+
+## Self-hosted Formbricks
+
+Use your instance's public HTTPS URL instead of `https://app.formbricks.com` when creating the
+connection. Create a [scoped API key](/api-reference/generate-key) on that same instance.
+No Formbricks server environment variable is needed for this API-key connection.
+
+Make sure the automation service can reach your instance, then submit a test survey response and
+verify the expected workflow runs. Check host, key scopes and network access if it fails.
+
+![ActivePieces connection with a custom instance URL](/images/self-hosting/configuration/integrations/activepieces/new-connection.webp)
