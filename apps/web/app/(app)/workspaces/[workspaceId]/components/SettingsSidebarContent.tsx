@@ -263,7 +263,7 @@ export const SettingsSidebarContent = ({
 }: SettingsSidebarContentProps) => {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { isMember, isBilling, isOwner, isManager } = getAccessFlags(membershipRole);
+  const { isMember, isBilling, isOwner, isManager, isDashboardViewer } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
   const iconClassName = "h-4 w-4 shrink-0";
 
@@ -426,9 +426,16 @@ export const SettingsSidebarContent = ({
       label: t("common.authorized_apps"),
       href: accountSettingsPath("authorized-apps"),
       icon: <UnplugIcon className={iconClassName} />,
+      // Kept for a Dashboard viewer (U2): it can grant an app dashboard reads over OAuth, so it must be
+      // able to see and revoke what it granted.
       disabled: isBilling,
     },
   ];
+
+  // A Dashboard viewer (ADR-0025) keeps the organization switcher, Profile and Notifications, and none of
+  // the workspace or organization settings.
+  const visibleOrganizationItems = isDashboardViewer ? [] : organizationItems;
+  const isWorkspaceSectionHidden = hideWorkspaceSection || isDashboardViewer;
 
   const disabledMessage = t("common.you_are_not_authorized_to_perform_this_action");
 
@@ -452,7 +459,7 @@ export const SettingsSidebarContent = ({
 
   return (
     <div className="flex flex-col overflow-y-auto">
-      {!hideWorkspaceSection && (
+      {!isWorkspaceSectionHidden && (
         <div>
           <SectionHeader
             label={t("common.workspace")}
@@ -472,23 +479,27 @@ export const SettingsSidebarContent = ({
         </div>
       )}
 
-      <div>
-        <SectionHeader
-          label={t("common.organization")}
-          switcherType="organization"
-          isCollapsed={isCollapsed}
-          isTextVisible={isTextVisible}
-          switcherName={organizationName}
-          switcherItems={organizations}
-          isLoadingSwitcher={isLoadingOrganizations}
-          errorSwitcher={errorOrganizations}
-          onSwitcherRetry={onOrganizationRetry}
-          currentId={organizationId}
-          onSwitcherChange={onOrganizationChange}
-          onSwitcherOpen={onOrganizationDropdownOpen}
-        />
-        {renderSection(organizationItems)}
-      </div>
+      {/* A section with nothing to open (a Dashboard viewer's organization) is left out rather than shown
+          as a bare heading; the main navigation still switches organizations. */}
+      {visibleOrganizationItems.length > 0 && (
+        <div>
+          <SectionHeader
+            label={t("common.organization")}
+            switcherType="organization"
+            isCollapsed={isCollapsed}
+            isTextVisible={isTextVisible}
+            switcherName={organizationName}
+            switcherItems={organizations}
+            isLoadingSwitcher={isLoadingOrganizations}
+            errorSwitcher={errorOrganizations}
+            onSwitcherRetry={onOrganizationRetry}
+            currentId={organizationId}
+            onSwitcherChange={onOrganizationChange}
+            onSwitcherOpen={onOrganizationDropdownOpen}
+          />
+          {renderSection(visibleOrganizationItems)}
+        </div>
+      )}
 
       <div>
         <SectionHeader label={t("common.account")} isCollapsed={isCollapsed} isTextVisible={isTextVisible} />

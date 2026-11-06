@@ -1,7 +1,7 @@
 "use client";
 
 import { SearchIcon, XIcon } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { AdvancedFilterDialog } from "./components/advanced-filter-dialog";
@@ -9,12 +9,12 @@ import { FilterChipRow } from "./components/filter-chip-row";
 import { FilterMenu } from "./components/filter-menu";
 import { type TTableSettingsProps, TableSettingsPopover } from "./components/table-settings-popover";
 import { isSameSearch } from "./lib/search-sync";
-import type { TFilterProperty, TTableFilter } from "./lib/types";
+import type { TFilterProperty, TLockedFilters, TTableFilter } from "./lib/types";
 
 export type { TTableColumnSetting, TTableToggleSetting } from "./components/table-settings-popover";
 export { ListTable } from "./components/list-table";
 export { TableNoMatch } from "./components/table-no-match";
-export type { TFilterOption, TFilterProperty, TSortOption, TTableFilter } from "./lib/types";
+export type { TFilterOption, TFilterProperty, TLockedFilters, TSortOption, TTableFilter } from "./lib/types";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -79,6 +79,13 @@ export type TTableToolbarProps = {
     onFiltersChange: (filters: TTableFilter[]) => void;
     /** Called when the Filter menu or the Advanced filter first opens, for tables that load options late. */
     onOpen?: () => void;
+    /** Filters set for everyone, shown locked before the person's own. */
+    locked?: TLockedFilters;
+    /**
+     * Simple-first filtering: the Filter menu lists and searches every property, and a rule is added
+     * and edited one at a time in a popover on its chip. Advanced filter stays for several rules at once.
+     */
+    simpleRules?: boolean;
   };
   /** Rows matching the filters, not rows loaded. Null while unknown. */
   matchCount?: { count: number | null; isCapped?: boolean };
@@ -109,10 +116,37 @@ export const TableToolbar = ({
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  // Filters a chip has just saved on its way to Advanced filter: the URL catches up a render later, so
+  // the dialog starts from these rather than from the filters it would read now.
+  const [advancedSeed, setAdvancedSeed] = useState<TTableFilter[] | null>(null);
+  const openAdvancedFilter = (seed?: TTableFilter[]) => {
+    setAdvancedSeed(seed ?? null);
+    setIsAdvancedOpen(true);
+  };
+  const handleAdvancedOpenChange = (open: boolean) => {
+    setIsAdvancedOpen(open);
+    if (!open) setAdvancedSeed(null);
+  };
+  // A rule just picked in the simple-first Filter menu, not saved until its popover finishes it.
+  const [draftPropertyId, setDraftPropertyId] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // A draft's chip goes away as it is saved or dropped, and its popover's focus with it: focus moves to
+  // the chip row's "+" — or, when no chip is left, to the Filter button — rather than to the page.
+  const closeDraft = () => {
+    setDraftPropertyId(null);
+    requestAnimationFrame(() => {
+      const root = rootRef.current;
+      const target =
+        root?.querySelector<HTMLElement>("[data-filter-add]") ??
+        root?.querySelector<HTMLElement>("[data-testid=table-filter-button]");
+      target?.focus();
+    });
+  };
   const onFilterOpen = filter?.onOpen;
   useEffect(() => {
     if (isFilterMenuOpen || isAdvancedOpen) onFilterOpen?.();
   }, [isFilterMenuOpen, isAdvancedOpen, onFilterOpen]);
+  const simpleRules = Boolean(filter?.simpleRules);
   const hasRuleProperties = Boolean(
     filter?.properties.some((property) => !property.hidden && (property.ruleOperators?.length ?? 0) > 0)
   );
@@ -128,6 +162,7 @@ export const TableToolbar = ({
   const hiddenFilters = filter?.filters.filter((f) => hiddenIds.has(f.property)) ?? [];
   const onVisibleFiltersChange = (next: TTableFilter[]) =>
     filter?.onFiltersChange([...hiddenFilters, ...next]);
+  const draftProperty = visibleProperties.find((property) => property.id === draftPropertyId);
 
   let countText: string | null = null;
   if (matchCount && matchCount.count !== null) {
@@ -138,7 +173,7 @@ export const TableToolbar = ({
   }
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div ref={rootRef} className={cn("flex flex-col gap-2", className)}>
       <div className="flex min-h-8 items-center justify-between gap-3">
         {selectionContent ? (
           <div className="flex min-w-0 items-center">{selectionContent}</div>
@@ -151,9 +186,11 @@ export const TableToolbar = ({
                 properties={visibleProperties}
                 filters={visibleFilters}
                 onFiltersChange={onVisibleFiltersChange}
-                onOpenAdvancedFilter={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
+                onOpenAdvancedFilter={hasRuleProperties ? () => openAdvancedFilter() : undefined}
+                onPickRuleProperty={simpleRules ? setDraftPropertyId : undefined}
                 open={isFilterMenuOpen}
                 onOpenChange={setIsFilterMenuOpen}
+                locked={filter.locked}
               />
             )}
           </div>
@@ -177,7 +214,11 @@ export const TableToolbar = ({
           filters={visibleFilters}
           onFiltersChange={onVisibleFiltersChange}
           onAddFilter={() => setIsFilterMenuOpen(true)}
-          onEditRules={hasRuleProperties ? () => setIsAdvancedOpen(true) : undefined}
+          onEditRules={hasRuleProperties ? openAdvancedFilter : undefined}
+          simpleRules={simpleRules}
+          draftProperty={draftProperty}
+          onDraftClose={closeDraft}
+          locked={filter.locked}
           disabled={isLoading}
         />
       )}
@@ -185,9 +226,9 @@ export const TableToolbar = ({
       {filter && isAdvancedOpen && (
         <AdvancedFilterDialog
           open={isAdvancedOpen}
-          onOpenChange={setIsAdvancedOpen}
+          onOpenChange={handleAdvancedOpenChange}
           properties={visibleProperties}
-          filters={visibleFilters}
+          filters={advancedSeed ?? visibleFilters}
           onFiltersChange={onVisibleFiltersChange}
         />
       )}

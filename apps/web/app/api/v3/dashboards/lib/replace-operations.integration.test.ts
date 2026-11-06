@@ -6,7 +6,7 @@ import {
   seedDashboardsFixture,
   sessionOf,
 } from "@/integration/dashboards-fixture";
-import { replaceV3Dashboard, updateV3DashboardLayout } from "./operations";
+import { replaceV3Dashboard, setV3DashboardFilters, updateV3DashboardLayout } from "./operations";
 import type { TV3DashboardResource } from "./resources";
 
 /**
@@ -227,6 +227,81 @@ describe("update_dashboard_layout (MCP rearrange)", () => {
       { id: widgets.b, layout: { x: 6, y: 0, w: 6, h: 4 }, order: 1 },
       { id: widgets.c, layout: { x: 0, y: 8, w: 12, h: 4 }, order: 2 },
     ]);
+  });
+});
+
+describe("set_dashboard_filters (MCP locked filters)", () => {
+  const SOURCE = {
+    id: "clfi000000000000000000001",
+    field: "FeedbackRecords.sourceName",
+    operator: "equals" as const,
+    label: "Source",
+    values: ["Web"],
+  };
+  const filtersOf = async () =>
+    (await prisma.dashboard.findUniqueOrThrow({ where: { id: dashboardId }, select: { filters: true } }))
+      .filters;
+
+  test("sets, changes and removes the locked filters, keeping the name and every widget", async () => {
+    const before = await snapshot();
+    const set = await setV3DashboardFilters({
+      dashboardId,
+      body: { expectedUpdatedAt: before.updatedAt.toISOString(), filters: [SOURCE] },
+      auditLog: {} as never,
+      ...context(),
+    });
+    expect(set.status).toBe(200);
+    expect((await bodyOf<{ data: TV3DashboardResource }>(set)).data.filters).toEqual([SOURCE]);
+    const afterSet = await snapshot();
+    expect({ ...afterSet, updatedAt: null }).toEqual({ ...before, updatedAt: null });
+    expect(afterSet.updatedAt.getTime()).toBeGreaterThan(before.updatedAt.getTime());
+
+    const changed = { ...SOURCE, values: ["Web", "Email"] };
+    expect(
+      (
+        await setV3DashboardFilters({
+          dashboardId,
+          body: { expectedUpdatedAt: await currentUpdatedAt(), filters: [changed] },
+          ...context(),
+        })
+      ).status
+    ).toBe(200);
+    expect(await filtersOf()).toEqual([changed]);
+
+    expect(
+      (
+        await setV3DashboardFilters({
+          dashboardId,
+          body: { expectedUpdatedAt: await currentUpdatedAt(), filters: [] },
+          ...context(),
+        })
+      ).status
+    ).toBe(200);
+    expect(await filtersOf()).toEqual([]);
+    expect((await snapshot()).widgets).toEqual(before.widgets);
+  });
+
+  test("refuses a stale read with 409, a read-only member with 403, and writes nothing", async () => {
+    const before = await snapshot();
+    const stale = await setV3DashboardFilters({
+      dashboardId,
+      body: {
+        expectedUpdatedAt: new Date(before.updatedAt.getTime() - 1000).toISOString(),
+        filters: [SOURCE],
+      },
+      ...context(),
+    });
+    expect(stale.status).toBe(409);
+
+    const readOnly = await setV3DashboardFilters({
+      dashboardId,
+      body: { expectedUpdatedAt: before.updatedAt.toISOString(), filters: [SOURCE] },
+      authentication: sessionOf(fixture.users.viewer),
+      requestId: "req",
+      instance: "/api/v3/dashboards",
+    });
+    expect(readOnly.status).toBe(403);
+    expect(await snapshot()).toEqual(before);
   });
 });
 

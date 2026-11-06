@@ -8,6 +8,7 @@ import type { TAuthorizationActor } from "@/lib/authorization";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { AuthzedError } from "@/lib/authzed/errors";
 import { getOrganizationScopedWorkspacesByIdsForUser, getWorkspacesByIds } from "@/lib/workspace/service";
+import { listDashboardViewerWorkspacesForUser } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 
 type TListV3WorkspacesParams = {
   authentication: TV3Authentication;
@@ -41,10 +42,15 @@ async function fetchSessionWorkspaces(
   userId: string,
   actor: Extract<TAuthorizationActor, { type: "user" }>
 ): Promise<TResolvedWorkspaceList> {
-  const workspaceIds = await lookupAuthorizedWorkspaceIds(actor);
+  const [workspaceIds, viewerWorkspaces] = await Promise.all([
+    lookupAuthorizedWorkspaceIds(actor),
+    // A Dashboard viewer holds no workspace `read` (ADR-0025); the workspaces whose dashboards it may
+    // read come from `workspace#dashboard_read`, so its client can find the ids the dashboard tools take.
+    listDashboardViewerWorkspacesForUser(userId),
+  ]);
   const workspaces = await getOrganizationScopedWorkspacesByIdsForUser(userId, [...workspaceIds]);
   return {
-    items: workspaces.map(serializeV3WorkspaceListItem),
+    items: [...workspaces, ...viewerWorkspaces].map(serializeV3WorkspaceListItem),
   };
 }
 

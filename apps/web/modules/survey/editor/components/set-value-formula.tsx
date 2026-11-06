@@ -534,7 +534,7 @@ export function SetValueFormula({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {/* A date field (expression only, P38) can take a fixed date without typing quotes (ENG-6968):
+        {/* A date field (stored as an expression, P38) can take a fixed date without typing quotes (ENG-6968):
             the picker writes the date literal, and shows it again when that is all the box holds. */}
         {targetDataType === "date" && (
           <DatePicker

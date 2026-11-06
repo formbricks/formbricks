@@ -150,7 +150,7 @@ const patchOutcome = async (
   requestId: string
 ): Promise<"accepted" | { refused: string[] } | { storedSurveyRefused: string[] }> => {
   try {
-    await patchV3Survey(survey, document, requestId);
+    await patchV3Survey(survey, document, { requestId });
     return "accepted";
   } catch (error) {
     if (error instanceof V3SurveyStoredDocumentError) {
@@ -221,7 +221,7 @@ describe("what v1 and v2 keep serving for a survey with Embedded Data", () => {
     await patchV3Survey(
       survey,
       { hiddenFields: { enabled: true, fieldIds: ["plan", "utm_source"] } },
-      "req_backcompat_patch_adds"
+      { requestId: "req_backcompat_patch_adds" }
     );
 
     const served = await readAsLegacyApi(survey.id);
@@ -235,7 +235,7 @@ describe("what v1 and v2 keep serving for a survey with Embedded Data", () => {
     await patchV3Survey(
       survey,
       { hiddenFields: { enabled: true, fieldIds: ["plan"] } },
-      "req_backcompat_patch_removes"
+      { requestId: "req_backcompat_patch_removes" }
     );
 
     const served = await readAsLegacyApi(survey.id);
@@ -747,9 +747,16 @@ describe("the compare-and-set holds against real Postgres (ENG-3069)", () => {
     });
 
     await expect(
-      patchV3Survey(stale, { name: "Late" }, "req_cas_stale", undefined, {
-        expectedUpdatedAt: stale.updatedAt,
-      })
+      patchV3Survey(
+        stale,
+        { name: "Late" },
+        {
+          requestId: "req_cas_stale",
+          precondition: {
+            expectedUpdatedAt: stale.updatedAt,
+          },
+        }
+      )
     ).rejects.toMatchObject({ name: "V3SurveyStaleError", detectedAt: "write" });
 
     const row = await prisma.survey.findUniqueOrThrow({ where: { id: stale.id }, select: { name: true } });
@@ -760,9 +767,9 @@ describe("the compare-and-set holds against real Postgres (ENG-3069)", () => {
     const stale = await seedSurvey();
     await prisma.survey.update({ where: { id: stale.id }, data: { archivedAt: new Date() } });
 
-    await expect(patchV3Survey(stale, { name: "Late" }, "req_cas_archived")).rejects.toBeInstanceOf(
-      V3SurveyArchivedError
-    );
+    await expect(
+      patchV3Survey(stale, { name: "Late" }, { requestId: "req_cas_archived" })
+    ).rejects.toBeInstanceOf(V3SurveyArchivedError);
 
     const row = await prisma.survey.findUniqueOrThrow({
       where: { id: stale.id },

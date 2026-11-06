@@ -417,6 +417,16 @@ const getUsersWithNotifications = async ({
           path: ["alert", data.surveyId],
           equals: true,
         },
+        // A Dashboard viewer never reads responses (ADR-0025), so it is never a response alert's
+        // recipient, whatever its team grants or a stale notification setting say.
+        NOT: {
+          memberships: {
+            some: {
+              role: "dashboard_viewer",
+              organization: { workspaces: { some: { id: workspaceId } } },
+            },
+          },
+        },
       },
       select: { email: true, id: true, locale: true },
     });

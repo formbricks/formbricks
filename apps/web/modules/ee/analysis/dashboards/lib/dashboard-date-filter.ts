@@ -1,8 +1,10 @@
-import type { TChartQuery } from "@formbricks/types/analysis";
-import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
+import type { TChartQuery, TMemberFilter } from "@formbricks/types/analysis";
+import { DATE_RANGE_PRESETS, isSubDayDateRangePreset, resolveDateRangePreset } from "@/lib/date-ranges";
+import { formatLocalDay } from "@/lib/utils/datetime";
+import { writeDashboardCookie } from "./dashboard-cookies";
 
-// The dashboard-level date filter only ever overrides the "Collected at" time dimension, as
-// specified by ENG-1553. Other time dimensions (e.g. createdAt) are left untouched.
+// The dashboard-level date filter sets the range of the "Collected at" time dimension, in place of the one
+// saved on the chart (ADR-0026). Other time dimensions (e.g. createdAt) are left untouched.
 export const COLLECTED_AT_DIMENSION = "FeedbackRecords.collectedAt";
 
 // URL search-param keys + reserved values for the dashboard date filter. The custom-range keys are
@@ -38,13 +40,73 @@ export type TDashboardDateFilter =
   | { type: "custom"; range: [string, string] }
   | { type: "all-time" };
 
+/** What "today" and "now" mean when a relative range is resolved: the organization's reporting zone. */
+export type TDateClock = { timeZone: string; now?: Date };
+
+/** A date range on a chart query's time dimension, as Cube takes it. */
+type TQueryDateRange = string | [string, string];
+
 /**
- * Apply the dashboard-level date filter to a single chart query by overriding its "Collected at"
- * time dimension. Returns the query unchanged when no filter is active.
+ * A date range resolved to its bounds: calendar days (presets, custom pairs) compare as `yyyy-MM-dd`
+ * strings; anything with a time of day ("last 24 hours") as instants.
+ */
+type TResolvedRange = { kind: "days"; from: string; to: string } | { kind: "instants"; from: Date; to: Date };
+
+const toCubeInstant = (instant: Date): string => `${instant.toISOString().slice(0, 19)}Z`;
+
+/**
+ * The bounds of a date range in the reporting zone, or `null` for a relative range Cube reads itself
+ * (one older charts were saved with, such as "last 3 months"), which only Cube can resolve.
+ */
+const resolveRange = (
+  range: TQueryDateRange,
+  { timeZone, now = new Date() }: TDateClock
+): TResolvedRange | null => {
+  if (Array.isArray(range)) {
+    if (isRealIsoDate(range[0]) && isRealIsoDate(range[1]))
+      return { kind: "days", from: range[0], to: range[1] };
+    const from = new Date(range[0]);
+    const to = new Date(range[1]);
+    return Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) ? null : { kind: "instants", from, to };
+  }
+  const bounds = resolveDateRangePreset(range, timeZone, now);
+  if (!bounds) return null;
+  return isSubDayDateRangePreset(range)
+    ? { kind: "instants", from: bounds[0], to: bounds[1] }
+    : { kind: "days", from: formatLocalDay(bounds[0]), to: formatLocalDay(bounds[1]) };
+};
+
+/** The range as explicit Cube bounds. */
+const toCubeBounds = (range: TResolvedRange): [string, string] =>
+  range.kind === "days" ? [range.from, range.to] : [toCubeInstant(range.from), toCubeInstant(range.to)];
+
+/**
+ * A filter rule keeping only records collected in `range`, with its bounds written out so it means the
+ * same days as a time dimension's range: Cube's own relative strings exclude today (`@/lib/date-ranges`).
+ * A relative range only Cube can resolve is passed as it is.
+ */
+export const toDateRangeRule = (
+  dimension: string,
+  range: TQueryDateRange,
+  clock: TDateClock
+): TMemberFilter => {
+  const resolved = resolveRange(range, clock);
+  let values: string[];
+  if (resolved) values = toCubeBounds(resolved);
+  else values = Array.isArray(range) ? range : [range];
+  return { member: dimension, operator: "inDateRange", values };
+};
+
+/**
+ * Set a chart query's "Collected at" range to the dashboard's date range (ADR-0026), in place of the one the
+ * chart was saved with: the person looking at the dashboard chooses the period. Other time dimensions are
+ * left untouched.
  *
- * - all-time: strip the dateRange from the collectedAt time dimension (no-op if none exists).
- * - preset/custom: override the collectedAt dateRange, or append a filter-only time dimension
- *   (no granularity) when the chart has none.
+ * - no filter: the saved range stands.
+ * - a preset or custom range: it becomes the range of the "Collected at" time dimension, which is added
+ *   (filter-only, no granularity) when the chart has none. A saved granularity is kept.
+ * - all time: the saved range is dropped. A chart grouped by time keeps it, since a bucket for every day of
+ *   all time is more than the time-bucket limit allows.
  *
  * Pure and immutable — the input query is never mutated.
  */
@@ -58,22 +120,17 @@ export const applyDashboardDateFilter = (
   const index = timeDimensions.findIndex((td) => td.dimension === COLLECTED_AT_DIMENSION);
 
   if (filter.type === "all-time") {
-    if (index === -1 || timeDimensions[index].dateRange === undefined) return query;
-    const next = [...timeDimensions];
-    const { dateRange: _dateRange, ...rest } = next[index];
-    next[index] = rest;
-    return { ...query, timeDimensions: next };
+    if (index === -1 || timeDimensions[index].granularity !== undefined) return query;
+    return { ...query, timeDimensions: timeDimensions.filter((_, position) => position !== index) };
   }
 
-  const dateRange = filter.type === "preset" ? filter.value : filter.range;
-
+  const dateRange: TQueryDateRange = filter.type === "preset" ? filter.value : filter.range;
   if (index === -1) {
     return {
       ...query,
       timeDimensions: [...timeDimensions, { dimension: COLLECTED_AT_DIMENSION, dateRange }],
     };
   }
-
   const next = [...timeDimensions];
   next[index] = { ...next[index], dateRange };
   return { ...query, timeDimensions: next };
@@ -175,20 +232,16 @@ export const readStoredDateFilterFromCookie = (
 };
 
 /**
- * Persist (or clear, when null) the dashboard date filter in a cookie. Client-only and defensive:
- * no-ops during SSR. `SameSite=Lax` keeps the cookie on top-level navigations (shared links) without
- * exposing it cross-site.
+ * Persist (or clear, when null) the dashboard date filter in a cookie scoped to the dashboard's
+ * page. Client-only and defensive: no-ops during SSR. `SameSite=Lax` keeps the cookie on top-level
+ * navigations (shared links) without exposing it cross-site.
  */
-export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDateFilter | null): void => {
-  if (typeof document === "undefined") return;
-  const name = getDateFilterCookieName(dashboardId);
-  if (filter) {
-    const value = encodeURIComponent(JSON.stringify(filter));
-    document.cookie = `${name}=${value}; path=/; max-age=${DATE_FILTER_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
-  } else {
-    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
-  }
-};
+export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDateFilter | null): void =>
+  writeDashboardCookie(
+    getDateFilterCookieName(dashboardId),
+    filter ? encodeURIComponent(JSON.stringify(filter)) : null,
+    DATE_FILTER_COOKIE_MAX_AGE_SECONDS
+  );
 
 /**
  * The dashboard filter as the chart data API takes it, or `null` when the charts keep their own ranges.

@@ -4,12 +4,12 @@ import { getUserManagementAccess } from "@/lib/membership/utils";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import {
-  canAssignOrganizationRole,
   canManageOrganizationUsers,
   canModifyOrganizationMember,
   getApiKeyCreatorRole,
   getMembershipRoleByEmail,
   getUsersQuery,
+  mayAssignOrganizationRole,
 } from "../utils";
 
 vi.mock("@/modules/api/v2/management/lib/utils", () => ({
@@ -19,6 +19,12 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 
 vi.mock("@/lib/constants", () => ({
   USER_MANAGEMENT_MINIMUM_ROLE: "manager",
+  IS_FORMBRICKS_CLOUD: false,
+}));
+vi.mock("@/lib/organization/service", () => ({ getOrganization: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getAccessControlPermission: vi.fn(async () => true),
+  getIsDashboardViewerRoleEnabled: vi.fn(async () => true),
 }));
 
 vi.mock("@/lib/membership/utils", () => ({
@@ -150,44 +156,47 @@ describe("getMembershipRoleByEmail", () => {
   });
 });
 
-describe("canAssignOrganizationRole", () => {
-  test("owner can assign any role", () => {
-    expect(canAssignOrganizationRole("owner", "owner")).toBe(true);
-    expect(canAssignOrganizationRole("owner", "manager")).toBe(true);
-    expect(canAssignOrganizationRole("owner", "member")).toBe(true);
+describe("mayAssignOrganizationRole: the app's one role rule, on the management API path (C10)", () => {
+  const may = (assigner: string | null, role: string, current?: string | null) =>
+    mayAssignOrganizationRole("org_1", assigner as never, role as never, current as never);
+
+  test("owner can assign any role this API gives", async () => {
+    await expect(may("owner", "owner")).resolves.toBe(true);
+    await expect(may("owner", "manager")).resolves.toBe(true);
+    await expect(may("owner", "member")).resolves.toBe(true);
   });
 
-  test("owner can change the role of an existing owner", () => {
-    expect(canAssignOrganizationRole("owner", "member", "owner")).toBe(true);
-    expect(canAssignOrganizationRole("owner", "manager", "owner")).toBe(true);
+  test("nobody gives the Dashboard viewer role through this API, even when it is entitled (ADR-0025)", async () => {
+    await expect(may("owner", "dashboard_viewer")).resolves.toBe(false);
+    await expect(may("manager", "dashboard_viewer")).resolves.toBe(false);
   });
 
-  test("manager can only assign the member role", () => {
-    expect(canAssignOrganizationRole("manager", "member")).toBe(true);
-    expect(canAssignOrganizationRole("manager", "manager")).toBe(false);
-    expect(canAssignOrganizationRole("manager", "owner")).toBe(false);
+  test("owner can change the role of an existing owner", async () => {
+    await expect(may("owner", "member", "owner")).resolves.toBe(true);
+    await expect(may("owner", "manager", "owner")).resolves.toBe(true);
   });
 
-  test("manager cannot change the role of an existing owner", () => {
-    expect(canAssignOrganizationRole("manager", "member", "owner")).toBe(false);
-    expect(canAssignOrganizationRole("manager", "manager", "owner")).toBe(false);
-    expect(canAssignOrganizationRole("manager", "owner", "owner")).toBe(false);
+  test("manager can only assign the member role", async () => {
+    await expect(may("manager", "member")).resolves.toBe(true);
+    await expect(may("manager", "manager")).resolves.toBe(false);
+    await expect(may("manager", "owner")).resolves.toBe(false);
   });
 
-  test("manager can assign the member role to existing non-owners", () => {
-    expect(canAssignOrganizationRole("manager", "member", "member")).toBe(true);
-    expect(canAssignOrganizationRole("manager", "member", "manager")).toBe(true);
-    expect(canAssignOrganizationRole("manager", "member", null)).toBe(true);
+  test("manager cannot change the role of an existing owner", async () => {
+    await expect(may("manager", "member", "owner")).resolves.toBe(false);
+    await expect(may("manager", "manager", "owner")).resolves.toBe(false);
   });
 
-  test("member cannot assign any role", () => {
-    expect(canAssignOrganizationRole("member", "member")).toBe(false);
-    expect(canAssignOrganizationRole("member", "owner")).toBe(false);
+  test("manager can assign the member role to existing non-owners", async () => {
+    await expect(may("manager", "member", "member")).resolves.toBe(true);
+    await expect(may("manager", "member", "manager")).resolves.toBe(true);
+    await expect(may("manager", "member", null)).resolves.toBe(true);
   });
 
-  test("an unresolved creator cannot assign any role", () => {
-    expect(canAssignOrganizationRole(null, "member")).toBe(false);
-    expect(canAssignOrganizationRole(null, "owner")).toBe(false);
+  test("member, an unresolved creator, and Billing off Cloud are refused", async () => {
+    await expect(may("member", "member")).resolves.toBe(false);
+    await expect(may(null, "owner")).resolves.toBe(false);
+    await expect(may("owner", "billing")).resolves.toBe(false);
   });
 });
 

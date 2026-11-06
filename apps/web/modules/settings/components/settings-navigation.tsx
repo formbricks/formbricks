@@ -12,6 +12,7 @@ import {
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { getOrganizationSwitchPath } from "@/modules/settings/lib/organization-switch";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 
 interface SettingsNavigationProps {
@@ -52,7 +53,7 @@ export const SettingsNavigation = ({
     workspaceName
   );
   const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction({ organizationId }),
+    () => getOrganizationsForSwitcherAction(),
     t("common.failed_to_load_organizations"),
     undefined,
     organizationName
@@ -71,11 +72,15 @@ export const SettingsNavigation = ({
     (id: string) => {
       startTransition(() => {
         router.push(
-          id === organizationId ? `/organizations/${id}/settings/general` : `/organizations/${id}/`
+          getOrganizationSwitchPath({
+            organizationId: id,
+            currentOrganizationId: organizationId,
+            membershipRole,
+          })
         );
       });
     },
-    [router, organizationId]
+    [router, organizationId, membershipRole]
   );
 
   return (

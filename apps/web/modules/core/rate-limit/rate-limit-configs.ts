@@ -82,6 +82,8 @@ export const rateLimitConfigs = {
     }, // At most 20 chart queries running at once per user or API key, so one caller cannot fill the shared
     // Cube's queue with 60-second queries. An in-flight limit (`in-flight.ts`), not a window: `interval` is
     // each slot's lease, twice the query timeout, after which a slot a crashed pod never released frees itself.
+    // So a slot covers one Cube query: an operation running several (a dashboard filter's value list) takes
+    // one per query, never one across them all.
     internalChartGeneration: {
       interval: 60,
       allowedPerInterval: 1,

@@ -153,8 +153,8 @@ describe("new rules from the Add logic menu", () => {
     ]);
   });
 
-  test("a Set value step on a field only an expression can set starts as an empty formula (P38)", () => {
-    const rule = createRule("setValue", { condition, variableId: "date_field", expressionOnly: true });
+  test("a Set value step on a date field starts as an empty expression leaf (P38)", () => {
+    const rule = createRule("setValue", { condition, variableId: "date_field", storedAsExpression: true });
 
     expect(rule.actions).toEqual([
       {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
 import {
   type TDistributionEntry,
   buildDistributionSegments,
@@ -80,12 +81,9 @@ export function BreakdownBars({
   }
 
   const result = buildDistributionSegments(entries);
+  // Every section is zero: there is no whole to take a share of.
   if (!result) {
-    return (
-      <div className="text-muted-foreground flex h-full items-center justify-center p-4">
-        {t("workspace.analysis.charts.no_valid_data_to_display")}
-      </div>
-    );
+    return <ChartEmptyState message={t("workspace.analysis.charts.no_data_available")} />;
   }
 
   // Formatted once per section and shared by the bar and the legend. The `value (share)` and

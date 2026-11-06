@@ -1,6 +1,17 @@
 import { z } from "zod";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
+import { zPostgresText } from "@/lib/utils/postgres-text";
+import { findPickIssues, splitPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
+import { FILTER_RULE_ID } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
+import {
+  MAX_DASHBOARD_FILTERS,
+  MAX_DASHBOARD_FILTER_PICK_VALUES,
+  MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+  type TLockedDashboardFilter,
+  ZLockedDashboardFilter,
+  findDashboardFilterIssues,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
   GRID_COLUMNS,
   MAX_WIDGET_HEIGHT,
@@ -127,13 +138,42 @@ export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.Re
 };
 
 /**
- * `PUT /api/v3/dashboards/{dashboardId}`: the name and every widget's place, in one write. A widget left
- * out of `widgets` is removed — this is the app's save, which sends the whole edited dashboard.
+ * The checks a list of locked filters must pass beyond each filter's own shape: each a catalog dimension
+ * or an embedded-data field with an operator it allows, ids unique, and all their values within the budget
+ * a read's picks have. Every problem is named at its position. Shared with the MCP `set_dashboard_filters`
+ * input.
+ */
+export const refuseInvalidDashboardFilters = (
+  filters: readonly TLockedDashboardFilter[],
+  ctx: z.RefinementCtx
+): void => {
+  // The cap is the array's own `max`; only the per-filter problems are added here.
+  for (const issue of findDashboardFilterIssues(filters)) {
+    if (issue.path.length > 0) ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
+  }
+  const picks = Object.fromEntries(filters.map((filter) => [filter.id, filter.values]));
+  for (const issue of findPickIssues(filters, picks)) {
+    const index = filters.findIndex((filter) => `picks[${filter.id}]` === issue.name);
+    ctx.addIssue({ code: "custom", message: issue.reason, path: index >= 0 ? [index, "values"] : [] });
+  }
+};
+
+/** A dashboard's locked filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each checked as above. */
+export const ZV3DashboardFilters = z
+  .array(ZLockedDashboardFilter)
+  .max(MAX_DASHBOARD_FILTERS)
+  .superRefine(refuseInvalidDashboardFilters);
+
+/**
+ * `PUT /api/v3/dashboards/{dashboardId}`: the name, every widget's place and, optionally, the filters, in
+ * one write. A widget left out of `widgets` is removed — this is the app's save, which sends the whole
+ * edited dashboard. Without `filters` the saved ones stay as they are.
  */
 export const ZV3DashboardReplaceBody = z
   .object({
     name: ZV3DashboardName,
     expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt,
+    filters: ZV3DashboardFilters.optional(),
     widgets: z
       .array(
         z
@@ -165,3 +205,83 @@ export const ZV3DashboardLayoutBody = z
   .strict()
   .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));
 export type TV3DashboardLayoutBody = z.infer<typeof ZV3DashboardLayoutBody>;
+
+/**
+ * What `setV3DashboardFilters` takes: the dashboard's locked filters, all of them, replacing the saved ones
+ * (an empty list removes them all), and nothing else. The MCP `set_dashboard_filters` input; over HTTP the
+ * same write is `PUT /api/v3/dashboards/{dashboardId}` with `filters`.
+ */
+export const ZV3DashboardFiltersBody = z
+  .object({ expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt, filters: ZV3DashboardFilters })
+  .strict();
+export type TV3DashboardFiltersBody = z.infer<typeof ZV3DashboardFiltersBody>;
+
+/** `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. */
+export const ZV3DashboardChartParams = z.object({ dashboardId: z.cuid2(), chartId: z.cuid2() }).strict();
+
+/** `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`: `filterId` names a `filter[<id>]` of the query. */
+export const ZV3DashboardFilterParams = z
+  .object({ dashboardId: z.cuid2(), filterId: z.string().regex(FILTER_RULE_ID) })
+  .strict();
+
+const ZV3PickValue = zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH);
+
+/**
+ * The filters of a read, sent as `filter[<id>]=<operator>:<field>`: the dashboard keeps no list of them, so
+ * every read names the ones its picks are for. The field and operator are checked by the operations
+ * (`resolveFilterRules`), which name the parameter at fault. At most `MAX_DASHBOARD_FILTERS`.
+ */
+export const ZDashboardFilterRules = z
+  .record(z.string().regex(FILTER_RULE_ID), z.string().min(3).max(300))
+  .refine((rules) => Object.keys(rules).length <= MAX_DASHBOARD_FILTERS, {
+    message: `At most ${MAX_DASHBOARD_FILTERS} filters can be applied.`,
+  });
+
+/**
+ * A person's dashboard filter picks, sent as `picks[<filterId>]=value`, repeated for several values. Picks
+ * for a filter the dashboard does not have are ignored, as the page drops them. THE picks schema: the v3
+ * routes and the MCP tools both take picks through it (C15). The total size is checked by the operations
+ * (`MAX_DASHBOARD_FILTER_PICKS_CHARS`, 422), so both answer it the same way.
+ */
+export const ZDashboardFilterPicks = z
+  .record(
+    z.string().regex(FILTER_RULE_ID),
+    z.array(ZV3PickValue).min(1).max(MAX_DASHBOARD_FILTER_PICK_VALUES)
+  )
+  .refine((picks) => Object.keys(picks).length <= MAX_DASHBOARD_FILTERS, {
+    message: `At most ${MAX_DASHBOARD_FILTERS} filters can be picked.`,
+  });
+
+/** The dashboard date range, as the chart data route takes it: `dateRange`, or `from` and `to`. */
+const dashboardDateRange = {
+  dateRange: z.string().min(1).max(64).optional(),
+  from: z.string().min(1).max(32).optional(),
+  to: z.string().min(1).max(32).optional(),
+};
+
+/** The date range and the picks a dashboard-bound chart read is narrowed by. */
+export const ZV3DashboardChartDataQuery = z.preprocess(
+  splitPickParams,
+  z
+    .object({
+      ...dashboardDateRange,
+      rules: ZDashboardFilterRules.optional(),
+      picks: ZDashboardFilterPicks.optional(),
+    })
+    .strict()
+);
+export type TV3DashboardChartDataQuery = z.infer<typeof ZV3DashboardChartDataQuery>;
+
+/** A filter's value list: narrowed like the charts, and by a case-insensitive `search`. */
+export const ZV3DashboardFilterValuesQuery = z.preprocess(
+  splitPickParams,
+  z
+    .object({
+      ...dashboardDateRange,
+      rules: ZDashboardFilterRules.optional(),
+      picks: ZDashboardFilterPicks.optional(),
+      search: zPostgresText().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),
+    })
+    .strict()
+);
+export type TV3DashboardFilterValuesQuery = z.infer<typeof ZV3DashboardFilterValuesQuery>;

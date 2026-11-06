@@ -45,6 +45,15 @@
 #     workspace:foreign belongs to organization:globex (owner user:gary). Documents why the projector
 #     must derive that edge from `Survey.workspaceId` alone: the edge alone hands another tenant read.
 #   dashboard:insights (workspace:main)
+#   ADR-0025 Dashboard viewers of acme (`dashboard_viewer` relation):
+#     user:vera  contributor on team:analysts (read on workspace:main)
+#     user:vic   contributor on team:ops (manage on workspace:main): a Manage grant does not widen
+#                the role (the app never makes a viewer a team admin)
+#     user:val   on no team: reaches no dashboard at all
+#     user:vance admin of team:ops (manage on workspace:main): an admin row the app should never
+#                write for a viewer, so the schema refuses it team management itself (S8)
+#     user:viola contributor on team:globex_team, a team of organization:globex granted
+#                workspace:foreign, while viola is acme's viewer, not globex's: reaches nothing
 #   response:r1 (survey:onboarding), response:r2 (survey:draft)
 
 schemaFile: schema.zed
@@ -104,6 +113,17 @@ relationships: |-
   dashboard:insights#workspace@workspace:main
   response:r1#survey@survey:onboarding
   response:r2#survey@survey:draft
+  organization:acme#dashboard_viewer@user:vera
+  organization:acme#dashboard_viewer@user:vic
+  organization:acme#dashboard_viewer@user:val
+  organization:acme#dashboard_viewer@user:viola
+  organization:acme#dashboard_viewer@user:vance
+  team:ops#admin@user:vance
+  team:analysts#contributor@user:vera
+  team:ops#contributor@user:vic
+  team:globex_team#organization@organization:globex
+  team:globex_team#contributor@user:viola
+  workspace:foreign#reader_team@team:globex_team#member
 
 assertions:
   assertTrue:
@@ -208,6 +228,31 @@ assertions:
     - dashboard:insights#read@user:uma
     - dashboard:insights#read@user:olivia
     - dashboard:insights#read@api_key:ci_reader
+
+    # ------------------------------------------------------------------
+    # Scenario 8 (ADR-0025) — a Dashboard viewer reads the dashboards of
+    # the workspaces its teams are granted, at any grant level, and the
+    # dataset data behind them through the dashboard-bound permission.
+    # Everyone who reads the workspace keeps reading its dashboards.
+    # ------------------------------------------------------------------
+    - workspace:main#dashboard_read@user:vera
+    - workspace:main#dashboard_read@user:vic
+    - dashboard:insights#read@user:vera
+    - dashboard:insights#read@user:vic
+    - feedback_directory_assignment:fdwa_main#dashboard_read@user:vera
+    - feedback_directory_assignment:fdwa_main#dashboard_read@user:vic
+    - team:analysts#dashboard_member@user:vera
+    # A viewer admin row still carries the team's dashboard reads, nothing more (S8).
+    - workspace:main#dashboard_read@user:vance
+    - team:ops#dashboard_member@user:vance
+    - workspace:main#dashboard_read@user:uma
+    - workspace:main#dashboard_read@user:tina
+    - workspace:main#dashboard_read@user:olivia
+    - workspace:other#dashboard_read@user:mark
+    - workspace:main#dashboard_read@api_key:ci_reader
+    - feedback_directory_assignment:fdwa_main#dashboard_read@user:uma
+    - feedback_directory_assignment:fdwa_main#dashboard_read@user:olivia
+    - feedback_directory_assignment:fdwa_main#dashboard_read@api_key:ci_reader
 
     # ------------------------------------------------------------------
     # Scenario 6 — API key as scoped principal.
@@ -406,6 +451,77 @@ assertions:
     # `api_key_reader`/`api_key_writer` relations on the organization, which ci_reader lacks.
     - organization:acme#read_access@api_key:ci_reader
 
+    # Scenario 8 (ADR-0025) — a Dashboard viewer holds nothing but dashboard
+    # reads: no organization, team, workspace, survey, response, Feedback
+    # Dataset or dashboard write permission, whatever its team's grant level.
+    - organization:acme#read@user:vera
+    - organization:acme#read_access@user:vera
+    - organization:acme#write@user:vera
+    - organization:acme#manage@user:vera
+    - organization:acme#manage_billing@user:vera
+    - organization:acme#manage_access@user:vera
+    - organization:acme#manage_api_keys@user:vera
+    - organization:acme#product_member@user:vera
+    - team:analysts#member@user:vera
+    - team:analysts#read@user:vera
+    - team:analysts#manage@user:vera
+    - team:ops#member@user:vic
+    - team:ops#read@user:vic
+    # S8: team management needs a product membership; a viewer (or billing) admin row grants none.
+    - team:ops#manage@user:vance
+    - team:ops#member@user:vance
+    - workspace:main#read@user:vance
+    - workspace:main#manage@user:vance
+    - workspace:main#read@user:vera
+    - workspace:main#write@user:vera
+    - workspace:main#manage@user:vera
+    - workspace:main#share@user:vera
+    - workspace:main#administer@user:vera
+    - workspace:main#read@user:vic
+    - workspace:main#write@user:vic
+    - workspace:main#manage@user:vic
+    - workspace:main#share@user:vic
+    - workspace:other#dashboard_read@user:vera
+    - survey:onboarding#read@user:vera
+    - survey:onboarding#read_v2@user:vera
+    - survey:onboarding#response_read@user:vera
+    - survey:onboarding#response_read_v2@user:vera
+    - survey:onboarding#response_export@user:vera
+    - survey:onboarding#response_export_v2@user:vera
+    - survey:onboarding#read_v2@user:vic
+    - survey:onboarding#response_read_v2@user:vic
+    - survey:onboarding#write_v2@user:vic
+    - survey:draft#read_v2@user:vera
+    - response:r1#read@user:vera
+    - response:r1#read_v2@user:vera
+    - response:r1#export_v2@user:vera
+    - response:r1#read_v2@user:vic
+    - dashboard:insights#write@user:vera
+    - dashboard:insights#write@user:vic
+    - feedback_directory:customer_feedback#read@user:vera
+    - feedback_directory:customer_feedback#write@user:vic
+    - feedback_directory:customer_feedback#manage@user:vic
+    - feedback_directory_assignment:fdwa_main#read@user:vera
+    - feedback_directory_assignment:fdwa_main#read@user:vic
+    - feedback_directory_assignment:fdwa_main#write@user:vic
+    - feedback_directory_assignment:fdwa_main#manage@user:vic
+    # A viewer on no team, and a viewer of another organization on a team of globex, reach nothing.
+    - workspace:main#dashboard_read@user:val
+    - dashboard:insights#read@user:val
+    - feedback_directory_assignment:fdwa_main#dashboard_read@user:val
+    - workspace:foreign#dashboard_read@user:viola
+    - workspace:foreign#read@user:viola
+    # Billing on a granted team still reaches no dashboard: dashboard_member excludes billing.
+    - workspace:main#dashboard_read@user:bella
+    - dashboard:insights#read@user:bella
+    - feedback_directory_assignment:fdwa_main#dashboard_read@user:bella
+    - team:product#dashboard_member@user:bella
+    # A team row without a membership (ghost) still reaches nothing.
+    - workspace:main#dashboard_read@user:ghost
+    # Organization-only keys and a key on another workspace see no dashboard data.
+    - workspace:main#dashboard_read@api_key:org_writer_key
+    - feedback_directory_assignment:fdwa_main#dashboard_read@api_key:org_reader_key
+
 # Expected-relations documentation: enumerates, for key permissions, every
 # subject that holds them and through which relation. Kept exact so any
 # schema change that widens or narrows these permissions shows up as a diff.
@@ -454,6 +570,24 @@ validation:
     - "[user:tina] is <organization:acme#member>"
     - "[user:tom] is <organization:acme#member>"
     - "[user:uma] is <organization:acme#member>"
+  # ADR-0025: who reads workspace:main's dashboards. Exact, so a viewer path that widens (or a
+  # billing or teamless arm that appears) shows up as a diff.
+  workspace:main#dashboard_read:
+    - "[api_key:ci_reader] is <workspace:main#reader>"
+    - "[api_key:ci_writer] is <workspace:main#writer>"
+    - "[api_key:ci_manager] is <workspace:main#manager>"
+    - "[team:analysts#member] is <workspace:main#reader_team>"
+    - "[team:ops#member] is <workspace:main#manager_team>"
+    - "[team:product#member] is <workspace:main#writer_team>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:mo] is <organization:acme#member>/<team:ops#contributor>"
+    - "[user:olivia] is <organization:acme#owner>"
+    - "[user:tina] is <organization:acme#member>/<team:product#contributor>"
+    - "[user:tom] is <organization:acme#member>/<team:product#admin>"
+    - "[user:uma] is <organization:acme#member>/<team:analysts#contributor>"
+    - "[user:vera] is <organization:acme#dashboard_viewer>/<team:analysts#contributor>"
+    - "[user:vance] is <organization:acme#dashboard_viewer>/<team:ops#admin>"
+    - "[user:vic] is <organization:acme#dashboard_viewer>/<team:ops#contributor>"
   organization:acme#manage_billing:
     - "[user:bella] is <organization:acme#billing>"
     - "[user:mark] is <organization:acme#manager>"

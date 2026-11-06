@@ -1,6 +1,7 @@
 import "server-only";
 import { performance } from "node:perf_hooks";
 import { cache as reactCache } from "react";
+import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
@@ -9,9 +10,11 @@ import type { TAuthorizationAction, TAuthorizationActor } from "./contract";
 import { recordAuthorizationDecision } from "./metrics";
 import { getSpicedbObjectType } from "./object-type";
 import { normalizeAuthorizationOperationalError } from "./operational-error";
+import { isPermissionMissingFromSchema } from "./schema-drift";
 
 type TCurrentListResource = "organization" | "workspace";
-type TCurrentListPermission = "read" | "write";
+/** `dashboard_read` lists the workspaces whose dashboards the actor reads, a Dashboard viewer's included. */
+type TCurrentListPermission = "read" | "write" | "dashboard_read";
 
 const lookupAuthorizationResourceIds = reactCache(
   async (
@@ -50,6 +53,20 @@ const lookupAuthorizationResourceIds = reactCache(
       });
       return result.resourceIds;
     } catch (error) {
+      // On the previous release's schema a permission this release adds does not exist yet: nothing is
+      // listed, as a check of it is denied (see `isPermissionMissingFromSchema`).
+      if (isPermissionMissingFromSchema(error, permission)) {
+        logger.warn(
+          { permission, resourceType },
+          "AuthZed schema lacks a permission this release adds; listing nothing until the schema is applied"
+        );
+        recordAuthorizationDecision({
+          ...metric,
+          durationMs: performance.now() - startedAt,
+          outcome: "deny",
+        });
+        return [];
+      }
       const normalized = normalizeAuthorizationOperationalError(error, "authorization_list");
       recordAuthorizationDecision({
         ...metric,

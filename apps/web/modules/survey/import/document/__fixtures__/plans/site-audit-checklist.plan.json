@@ -1,0 +1,845 @@
+{
+  "plan": {
+    "defaultLanguage": "en-US",
+    "languages": ["en-US"],
+    "questions": [
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C6",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B6",
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R6",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A6",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C7",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B7",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F7",
+                "language": "en-US",
+                "text": "North"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F7",
+                "language": "en-US",
+                "text": "South"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R7",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A7",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "y-M-d",
+        "headline": [
+          {
+            "cell": "C8",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B8",
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R8",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A8",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C9",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B9",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F9",
+                "language": "en-US",
+                "text": "Public transport (bus / tram)"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F9",
+                "language": "en-US",
+                "text": "Car"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R9",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A9",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C10",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B10",
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R10",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A10",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C13",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B13",
+        "inputType": "number",
+        "kind": "openText",
+        "logicNotes": ["Asked only if VIS04 is coded 1."],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R13",
+        "required": false,
+        "rules": [
+          {
+            "kind": "showIf",
+            "operator": "equals",
+            "question": "VIS04",
+            "target": null,
+            "values": ["1"]
+          }
+        ],
+        "scale": null,
+        "sectionCell": "A13",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C14",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B14",
+        "inputType": "number",
+        "kind": "openText",
+        "logicNotes": ["Asked only if VIS04 is coded 2."],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "R14",
+        "required": false,
+        "rules": [
+          {
+            "kind": "showIf",
+            "operator": "equals",
+            "question": "VIS04",
+            "target": null,
+            "values": ["2"]
+          }
+        ],
+        "scale": null,
+        "sectionCell": "A14",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C15",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B15",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": ["Asked only if VIS04 is coded 2."],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F15",
+                "language": "en-US",
+                "text": "Yes"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F15",
+                "language": "en-US",
+                "text": "No"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R15",
+        "required": false,
+        "rules": [
+          {
+            "kind": "showIf",
+            "operator": "equals",
+            "question": "VIS04",
+            "target": null,
+            "values": ["2"]
+          }
+        ],
+        "scale": null,
+        "sectionCell": "A15",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C16",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B16",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": ["Asked only if VIS04 is coded 2.", "Asked only if ARR03 is coded 2."],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F16",
+                "language": "en-US",
+                "text": "Signs unclear"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F16",
+                "language": "en-US",
+                "text": "Car park full"
+              }
+            ]
+          },
+          {
+            "code": "3",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F16",
+                "language": "en-US",
+                "text": "Other (please specify)"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R16",
+        "required": false,
+        "rules": [
+          {
+            "kind": "showIf",
+            "operator": "equals",
+            "question": "VIS04",
+            "target": null,
+            "values": ["2"]
+          },
+          {
+            "kind": "showIf",
+            "operator": "equals",
+            "question": "ARR03",
+            "target": null,
+            "values": ["2"]
+          }
+        ],
+        "scale": null,
+        "sectionCell": "A16",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C17",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B17",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F17",
+                "language": "en-US",
+                "text": "Yes"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F17",
+                "language": "en-US",
+                "text": "No"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R17",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A17",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C20",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B20",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F20",
+                "language": "en-US",
+                "text": "Yes"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F20",
+                "language": "en-US",
+                "text": "No"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R20",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A20",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F21",
+                "language": "en-US",
+                "text": "Yes"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F21",
+                "language": "en-US",
+                "text": "No"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C21",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B21",
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "C22",
+                "language": "en-US",
+                "text": "Soap"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "C22",
+                "language": "en-US",
+                "text": "Water"
+              }
+            ]
+          },
+          {
+            "code": "3",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "C22",
+                "language": "en-US",
+                "text": "Paper towels"
+              }
+            ]
+          },
+          {
+            "code": "4",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "C22",
+                "language": "en-US",
+                "text": "Lighting"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R21",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A21",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C23",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B23",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F23",
+                "language": "en-US",
+                "text": "Yes, at all entrances"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F23",
+                "language": "en-US",
+                "text": "At some entrances"
+              }
+            ]
+          },
+          {
+            "code": "3",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F23",
+                "language": "en-US",
+                "text": "None seen"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R23",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A23",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C24",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B24",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": ["Asked only if FAC03 is coded 1 or 2."],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F24",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F24",
+                "language": "en-US",
+                "text": "Fair"
+              }
+            ]
+          },
+          {
+            "code": "3",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F24",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R24",
+        "required": false,
+        "rules": [
+          {
+            "kind": "showIf",
+            "operator": "isAnyOf",
+            "question": "FAC03",
+            "target": null,
+            "values": ["1", "2"]
+          }
+        ],
+        "scale": null,
+        "sectionCell": "A24",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C25",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B25",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": ["Asked only if FAC01 is 1."],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F25",
+                "language": "en-US",
+                "text": "Yes"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F25",
+                "language": "en-US",
+                "text": "No"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R25",
+        "required": false,
+        "rules": [
+          {
+            "kind": "showIf",
+            "operator": "equals",
+            "question": "FAC01",
+            "target": null,
+            "values": ["1"]
+          }
+        ],
+        "scale": null,
+        "sectionCell": "A25",
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "C26",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "B26",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": "1",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F26",
+                "language": "en-US",
+                "text": "Very Poor"
+              }
+            ]
+          },
+          {
+            "code": "2",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F26",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": "3",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F26",
+                "language": "en-US",
+                "text": "Fair"
+              }
+            ]
+          },
+          {
+            "code": "4",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F26",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          },
+          {
+            "code": "5",
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "F26",
+                "language": "en-US",
+                "text": "Excellent"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "R26",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": "A26",
+        "subheader": [],
+        "upperLabel": []
+      }
+    ],
+    "skipped": [],
+    "titleCell": "A1"
+  }
+}

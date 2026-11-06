@@ -76,8 +76,16 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
    * table filter has nothing to trigger, so it leaves the slot empty. Omitted means shown.
    */
   showWhenLabel?: boolean;
+  /** Shown in the first operand and the operator while they are empty. Omitted: blank. */
+  leftOperandPlaceholder?: string;
+  operatorPlaceholder?: string;
   /** Lets the first operand's list grow past its field and wrap long names (survey questions). */
   wideLeftOperandDropdown?: boolean;
+  /**
+   * Drops the row menu (add below, remove, duplicate, group): for an editor that holds exactly one
+   * condition standing for something removed elsewhere, such as a dashboard filter's chip.
+   */
+  hideConditionMenu?: boolean;
 }
 
 /** The props of both layouts of the conditions editor; `variant` picks between them. */

@@ -1,14 +1,19 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { createId } from "@paralleldrive/cuid2";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
+import { getV3DashboardChartData } from "@/app/api/v3/dashboards/lib/chart-data-operations";
+import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
+import { listV3DashboardFilterValues } from "@/app/api/v3/dashboards/lib/filter-values-operations";
 import {
   createV3Dashboard,
   duplicateV3Dashboard,
   getV3Dashboard,
   listV3Dashboards,
   renameV3Dashboard,
+  setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
 import {
@@ -16,8 +21,9 @@ import {
   removeV3DashboardWidget,
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
+import { toRequestFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import type { TMcpToolContext } from "../auth";
+import { type TMcpToolContext, isMcpDashboardViewerOnly } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
   type TMcpAddChartToDashboardInput,
@@ -31,9 +37,11 @@ import {
   type TMcpListChartFieldValuesInput,
   type TMcpListChartFieldsInput,
   type TMcpListChartsInput,
+  type TMcpListDashboardFilterValuesInput,
   type TMcpListDashboardsInput,
   type TMcpPreviewChartInput,
   type TMcpRemoveChartFromDashboardInput,
+  type TMcpSetDashboardFiltersInput,
   type TMcpUpdateChartInput,
   type TMcpUpdateDashboardInput,
   type TMcpUpdateDashboardLayoutInput,
@@ -47,18 +55,23 @@ import {
   ZMcpChartOutput,
   ZMcpCreateChartInput,
   ZMcpCreateDashboardInput,
+  ZMcpDashboardFilterFieldsOutput,
+  ZMcpDashboardFilterValuesOutput,
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
   ZMcpDashboardOutput,
   ZMcpDuplicateChartInput,
   ZMcpDuplicateDashboardInput,
   ZMcpGetChartDataInput,
+  ZMcpGetChartDataOutput,
   ZMcpListChartFieldValuesInput,
   ZMcpListChartFieldsInput,
   ZMcpListChartsInput,
+  ZMcpListDashboardFilterValuesInput,
   ZMcpListDashboardsInput,
   ZMcpPreviewChartInput,
   ZMcpRemoveChartFromDashboardInput,
+  ZMcpSetDashboardFiltersInput,
   ZMcpUpdateChartInput,
   ZMcpUpdateDashboardInput,
   ZMcpUpdateDashboardLayoutInput,
@@ -103,8 +116,15 @@ const runMutation = (
  * chart generation is the app's, not the API's.
  *
  * Definitions and the field catalog need `dashboards:read`. Reading a chart's numbers also needs
- * `feedbackRecords:read`, so a dashboards grant never becomes a way into respondents' answers.
+ * `feedbackRecords:read`, so a dashboards grant never becomes a way into respondents' answers. The one
+ * exception is a Dashboard viewer's token reading a chart through its dashboard (ADR-0025): that token is
+ * trimmed to `dashboards:read`, and the dashboard is exactly what the role may see.
  */
+const hasDashboardId = (input: unknown): boolean =>
+  typeof input === "object" &&
+  input !== null &&
+  typeof (input as { dashboardId?: unknown }).dashboardId === "string";
+
 export function registerDashboardTools(server: McpServer): void {
   registerScopedTool(
     server,
@@ -119,7 +139,10 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartFieldCatalogOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
+    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
+    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
+    ["dashboards:read", "feedbackRecords:read"],
     async (input: TMcpListChartFieldsInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -140,7 +163,10 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartListOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
+    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
+    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
+    ["dashboards:read", "feedbackRecords:read"],
     async (input: TMcpListChartsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Charts({
@@ -168,7 +194,10 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
+    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
+    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
+    ["dashboards:read", "feedbackRecords:read"],
     async (input: TMcpChartIdInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -240,18 +269,100 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Get chart data",
       description:
-        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt, so the numbers match a dashboard filtered the same way; without one the chart's saved range applies. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
+        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt; without one the chart's saved range applies. Pass dashboardId to read the chart through a dashboard it sits on, as the dashboard shows it: filters (a field, an operator and values each, on any dimension of the chart's dataset or an embedded-data field) are then ANDed onto the chart's saved filters and never widen it, and a filter on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters, as does a filter on Sentiment, Sentiment Score or Emotions that needs a value, on a chart that reads no text answer (its saved filters pin fieldType to non-text types, or every measure is an NPS, CSAT, CES or rating one). Without dashboardId filters are not accepted. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
       inputSchema: ZMcpGetChartDataInput,
-      outputSchema: ZMcpChartDataOutput,
+      outputSchema: ZMcpGetChartDataOutput,
       annotations: READ_ANNOTATIONS,
     },
-    // The rows are respondents' answers in aggregate, so reading them also needs feedback-record access.
-    ["dashboards:read", "feedbackRecords:read"],
-    async ({ chartId, dateRange }: TMcpGetChartDataInput, ctx) => {
+    // The rows are respondents' answers in aggregate, so reading them needs feedback-record access too.
+    // The one exception is a Dashboard viewer reading through a dashboard (ADR-0025): its token is
+    // trimmed to `dashboards:read`, and the dashboard is the only data it may see (S1).
+    {
+      byInput: (input, authInfo) =>
+        hasDashboardId(input) && isMcpDashboardViewerOnly(authInfo)
+          ? ["dashboards:read"]
+          : ["dashboards:read", "feedbackRecords:read"],
+    },
+    async ({ dashboardId, chartId, dateRange, filters }: TMcpGetChartDataInput, ctx) => {
       const context = toolContext(ctx);
-      const query = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      const response = dashboardId
+        ? await getV3DashboardChartData({
+            dashboardId,
+            chartId,
+            query: { ...range, ...toRequestFilters(filters ?? []) },
+            ...context,
+          })
+        : await getV3ChartData({ chartId, query: range, ...context });
+      return await responseToMcpToolResult(response, context.requestId);
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "list_dashboard_filter_fields",
+    {
+      title: "List dashboard filter fields",
+      description:
+        "List the embedded-data fields a dashboard can be filtered on: the keys of the Feedback Datasets its charts read, each once, in key order, with the name a filter uses (FeedbackRecords.ed_…), its label and its type on this dashboard: number when every Embedded Data field it holds is a number field, which a filter may then compare with gt, gte, lt and lte; string otherwise. Use a name as the field of a filter in set_dashboard_filters, in get_chart_data with dashboardId, and in list_dashboard_filter_values. A Dashboard viewer, who cannot call list_chart_fields, finds a dashboard's embedded-data fields here, and gets only the keys some chart on the dashboard groups by.",
+      inputSchema: ZMcpDashboardIdInput,
+      outputSchema: ZMcpDashboardFilterFieldsOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    // Like list_dashboard_filter_values: anyone but a Dashboard viewer also needs feedback-record access,
+    // as list_chart_fields does for the same keys; a viewer's token holds dashboards:read alone (ADR-0025).
+    {
+      byInput: (_input, authInfo) =>
+        isMcpDashboardViewerOnly(authInfo)
+          ? ["dashboards:read"]
+          : ["dashboards:read", "feedbackRecords:read"],
+    },
+    async ({ dashboardId }: TMcpDashboardIdInput, ctx) => {
+      const context = toolContext(ctx);
       return await responseToMcpToolResult(
-        await getV3ChartData({ chartId, query, ...context }),
+        await listV3DashboardFilterFields({ dashboardId, ...context }),
+        context.requestId
+      );
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "list_dashboard_filter_values",
+    {
+      title: "List dashboard filter values",
+      description:
+        "List up to 100 values a field offers for a dashboard, alphabetically, with hasMore when more match: the values the dashboard's charts show under their saved filters, narrowed by the dateRange, the filters already applied and search. Only a categorical field (one marked valueLookup in list_chart_fields, or FeedbackRecords.valueId), a yes/no field or an embedded-data field, with equals or notEquals, has a list; others take a typed value. The list holds only values that occur, so a fixed-option field (sentiment, value band, yes/no) shows which of its options the charts have. A value stored as an id a survey names (an answer's option, a source id, an ending) carries the label it is shown by; search matches the label too. Pass the values, not the labels, as a filter to get_chart_data.",
+      inputSchema: ZMcpListDashboardFilterValuesInput,
+      outputSchema: ZMcpDashboardFilterValuesOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    // Like a chart read through its dashboard: the values are respondents' answers, so anyone but a
+    // Dashboard viewer also needs feedback-record access; a viewer's token holds dashboards:read alone.
+    {
+      byInput: (_input, authInfo) =>
+        isMcpDashboardViewerOnly(authInfo)
+          ? ["dashboards:read"]
+          : ["dashboards:read", "feedbackRecords:read"],
+    },
+    async (
+      { dashboardId, field, operator, dateRange, filters, search }: TMcpListDashboardFilterValuesInput,
+      ctx
+    ) => {
+      const context = toolContext(ctx);
+      const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      // The filter listed is `f1`; the ones already applied follow it.
+      return await responseToMcpToolResult(
+        await listV3DashboardFilterValues({
+          dashboardId,
+          filterId: "f1",
+          query: {
+            ...range,
+            ...toRequestFilters([{ field, operator: operator ?? "equals" }, ...(filters ?? [])]),
+            search,
+          },
+          ...context,
+        }),
         context.requestId
       );
     }
@@ -456,6 +567,33 @@ export function registerDashboardTools(server: McpServer): void {
     async ({ dashboardId, ...body }: TMcpUpdateDashboardLayoutInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         updateV3DashboardLayout({ dashboardId, body, ...context })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "set_dashboard_filters",
+    {
+      title: "Set dashboard filters",
+      description:
+        "Set a dashboard's locked filters: the filters every reader sees applied, Dashboard viewers included, which they cannot remove. Send the whole list — it replaces the saved one, so keep a filter by sending it back as get_dashboard read it, change it by sending it changed, and remove it by leaving it out; an empty list removes them all. Each filter is a field (a dimension from list_chart_fields, or an embedded-data field of a dataset the dashboard's charts read), an operator, a label and its values (none for set/notSet); all of them apply together. gt, gte, lt and lte on an embedded-data field take one number and need the field to be type number in list_dashboard_filter_fields. Pass the updatedAt from get_dashboard as expectedUpdatedAt; if the dashboard changed since, nothing is saved.",
+      inputSchema: ZMcpSetDashboardFiltersInput,
+      outputSchema: ZMcpDashboardOutput,
+      audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, expectedUpdatedAt, filters }: TMcpSetDashboardFiltersInput, ctx) =>
+      runMutation(ctx, "updated", "dashboard", (context) =>
+        setV3DashboardFilters({
+          dashboardId,
+          // A new filter gets its id here, as the app gives one when a filter is locked.
+          body: {
+            expectedUpdatedAt,
+            filters: filters.map((filter) => ({ ...filter, id: filter.id ?? createId() })),
+          },
+          ...context,
+        })
       )
   );
 

@@ -1,0 +1,56 @@
+type: object
+description: >-
+  A question of the Feedback Dataset an answer rule may name: a filter on `FeedbackRecords.answer`
+  keeping the records whose submission answered this question a certain way. One rule names one
+  question; put an option's `value` in the rule's `values`.
+required:
+  - id
+  - label
+  - kind
+  - operators
+  - options
+properties:
+  id:
+    type: string
+    description: The question's id, as the rule values start with it.
+  label:
+    type: string
+    description: The question as respondents read it.
+  kind:
+    type: string
+    enum:
+      - choice
+      - multi
+      - number
+    description: >-
+      How the question stores its answer: `choice` a single-select's option, `multi` one record per
+      selected option, `number` an NPS, rating, CSAT or CES value.
+  operators:
+    type: array
+    description: >-
+      The operators a rule on this question takes. A multi-select takes `equals` only ("contains any
+      of"); there is no "does not contain".
+    items:
+      type: string
+      enum:
+        - equals
+        - notEquals
+  options:
+    type: array
+    description: The answers a rule may test for.
+    items:
+      type: object
+      required:
+        - value
+        - label
+      properties:
+        value:
+          type: string
+          description: The rule value, `<questionId>:<valueKey>`.
+          example: q_delivery:opt_late
+        label:
+          type: string
+          description: The answer as respondents read it.
+          example: Late
+      additionalProperties: false
+additionalProperties: false

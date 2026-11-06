@@ -179,14 +179,20 @@ export const ZSurveyBlock = z
     backButtonLabel: ZI18nString.optional(),
   })
   .superRefine((block, ctx) => {
-    // Validate element IDs are unique within block
-    const elementIds = block.elements.map((e) => e.id);
-    const uniqueElementIds = new Set(elementIds);
-    if (uniqueElementIds.size !== elementIds.length) {
+    // One pass: the first element whose ID an earlier one already has.
+    const seenIds = new Set<string>();
+    const duplicateIndex = block.elements.findIndex(({ id }) => {
+      if (seenIds.has(id)) return true;
+      seenIds.add(id);
+      return false;
+    });
+    if (duplicateIndex !== -1) {
       ctx.addIssue({
         code: "custom",
         message: "Element IDs must be unique within a block",
-        path: [elementIds.findIndex((id, index) => elementIds.indexOf(id) !== index), "id"],
+        path: ["elements", duplicateIndex, "id"],
+        // The API's `invalid_params` code for it, as the v3 reference checks name a duplicate elsewhere.
+        params: { code: "duplicate_identifier" },
       });
     }
   });

@@ -10,6 +10,6 @@ export const ZInvite = z.object({
   acceptorId: z.string().nullable(),
   createdAt: z.date(),
   expiresAt: z.date(),
-  role: z.enum(["owner", "manager", "member", "billing"]),
+  role: z.enum(["owner", "manager", "member", "billing", "dashboard_viewer"]),
   teamIds: z.array(z.string()),
 }) satisfies z.ZodType<Omit<Invite, "deprecatedRole">>;

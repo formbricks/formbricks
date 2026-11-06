@@ -81,7 +81,7 @@ import { TARGET_LIST_CLASS, getFallbackTargetGroups } from "@/modules/survey/edi
 import {
   getActionVariableOptions,
   getDefaultOperatorForElement,
-  isExpressionOnlyField,
+  isComputedDateField,
   scrollElementCardIntoView,
 } from "@/modules/survey/editor/lib/utils";
 import { isBlockLogicItemValid } from "@/modules/survey/editor/lib/validation";
@@ -247,7 +247,7 @@ export const FlowView = ({
   // A new Set value step writes the survey's first computed field.
   const getNewRuleField = () => {
     const variableId = String(getActionVariableOptions(localSurvey)[0]?.value ?? "");
-    return { variableId, expressionOnly: isExpressionOnlyField(localSurvey, variableId) };
+    return { variableId, storedAsExpression: isComputedDateField(localSurvey, variableId) };
   };
 
   const addStartRule = (kind: TNewRuleKind) => {

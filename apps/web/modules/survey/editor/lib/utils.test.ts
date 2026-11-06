@@ -23,6 +23,7 @@ import {
   findVariableUse,
   findVariableUsedInLogic,
   getActionObjectiveOptions,
+  getActionOperatorOptions,
   getActionValueOptions,
   getActionVariableOptions,
   getConditionOperatorOptions,
@@ -30,7 +31,7 @@ import {
   getFormatLeftOperandValue,
   getFormatRightOperandValue,
   getMatchValueProps,
-  isExpressionOnlyField,
+  isComputedDateField,
 } from "./utils";
 
 /**
@@ -455,18 +456,36 @@ describe("calculate action options", () => {
     ]);
   });
 
-  test("only a computed date field is set with an expression only", () => {
-    // P38: one-step "assign" has no date input, so the Expression switch stays on for a date field.
+  test("only a computed date field gets the date Set value row", () => {
+    // P38: a date field's Set value is stored as an expression, its one-step row included.
     const withDate = survey([
       field({ storageKey: "signup", name: "Signup", dataType: "date" }),
       field({ storageKey: "checked", name: "Checked", source: "computed", dataType: "date" }),
       field({ storageKey: "score", name: "Score", source: "computed", dataType: "number" }),
     ]);
 
-    expect(isExpressionOnlyField(withDate, "checked")).toBe(true);
-    expect(isExpressionOnlyField(withDate, "score")).toBe(false);
-    expect(isExpressionOnlyField(withDate, "signup")).toBe(false);
-    expect(isExpressionOnlyField(withDate, "")).toBe(false);
+    expect(isComputedDateField(withDate, "checked")).toBe(true);
+    expect(isComputedDateField(withDate, "score")).toBe(false);
+    expect(isComputedDateField(withDate, "signup")).toBe(false);
+    expect(isComputedDateField(withDate, "")).toBe(false);
+  });
+
+  test("a date field is set to a day, a date question's answer or another date field, one step only assigning", () => {
+    const lastBlockIdx = surveyFlowFixture.blocks.length - 1;
+    const groups = getActionValueOptions(
+      SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt,
+      surveyFlowFixture,
+      lastBlockIdx,
+      t
+    );
+
+    expect(groupNamed(groups, "common.questions")?.options.map((option) => option.value)).toEqual([
+      "last_purchase",
+    ]);
+    expect(groupNamed(groups, "common.embedded_data")?.options.map((option) => option.value)).toEqual([
+      SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate,
+    ]);
+    expect(getActionOperatorOptions(t, "date").map((option) => option.value)).toEqual(["assign"]);
   });
 
   test("the value picker draws the same Embedded Data group, with no auto-captured one", () => {
