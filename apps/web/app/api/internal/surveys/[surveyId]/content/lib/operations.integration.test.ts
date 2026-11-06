@@ -668,6 +668,21 @@ describe("shared hidden fields and variables", () => {
     });
     const file = await exportFile(surveyId);
     file.survey.hiddenFields = { enabled: true, fieldIds: ["plan_tier", "channel"] };
+    // The file's typed Embedded Data (ENG-6930) is what the Update writes; the legacy keys have to agree.
+    const hiddenField = (storageKey: string, key: string | null) => ({
+      storageKey,
+      key,
+      name: storageKey,
+      source: "ingested",
+      dataType: "string",
+      defaultValue: null,
+      locked: false,
+    });
+    file.survey.embeddedFields = [
+      ...(file.survey.embeddedFields as { source: string }[]).filter((entry) => entry.source === "computed"),
+      hiddenField("plan_tier", "plan_tier"),
+      hiddenField("channel", null),
+    ];
     file.references = {
       ...(file.references as Record<string, unknown>),
       embeddedFields: [
@@ -700,6 +715,60 @@ describe("shared hidden fields and variables", () => {
     expect(
       await prisma.embeddedData.count({ where: { workspaceId: fixture.workspaceId, key: "plan_tier" } })
     ).toBe(1);
+  });
+});
+
+describe("the flow editor's start rules and typed Embedded Data (ENG-6930, ENG-6932)", () => {
+  test("an Update writes the file's start rules and the calculated date field they set", async () => {
+    const surveyId = await seedSurvey({ status: "draft" });
+    const file = await exportFile(surveyId);
+    const dateStorageKey = createId();
+    const startRule = {
+      id: createId(),
+      conditions: { id: createId(), connector: "and", conditions: [] },
+      actions: [
+        {
+          id: createId(),
+          objective: "calculate",
+          variableId: dateStorageKey,
+          operator: "assign",
+          value: { type: "expression", value: { type: "call", fn: "now", args: [] } },
+        },
+      ],
+    };
+    // Neither is in the legacy keys: a calculated date has no `variables` entry (json-shapes §6).
+    file.survey.startLogic = [startRule];
+    file.survey.embeddedFields = [
+      ...(file.survey.embeddedFields as unknown[]),
+      {
+        storageKey: dateStorageKey,
+        key: null,
+        name: "signed_up_at",
+        source: "computed",
+        dataType: "date",
+        defaultValue: null,
+        locked: false,
+      },
+    ];
+
+    const done = await preview(file);
+    const response = await update(surveyId, done, { updatedAt: done.match!.exportedUpdatedAt });
+
+    expect(response.status).toBe(200);
+    const updated = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyId },
+      select: {
+        startLogic: true,
+        embeddedDataLinks: {
+          where: { storageKey: dateStorageKey },
+          select: { embeddedData: { select: { source: true, dataType: true, surveyId: true } } },
+        },
+      },
+    });
+    expect(updated.startLogic).toEqual([startRule]);
+    expect(updated.embeddedDataLinks).toEqual([
+      { embeddedData: { source: "computed", dataType: "date", surveyId } },
+    ]);
   });
 });
 
