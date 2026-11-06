@@ -1276,6 +1276,10 @@ export type TCreateSurveyOptions = Readonly<{
   transaction?: TSurveyWriteTransaction;
 }>;
 
+/** A nullable JSON column's value as Prisma writes it: `null` is stored as SQL NULL (`Prisma.DbNull`). */
+const toNullableJsonColumn = <T>(value: T | null): T | typeof Prisma.DbNull =>
+  value === null ? Prisma.DbNull : value;
+
 export const createSurvey = async (
   workspaceId: string,
   surveyBody: TSurveyCreateInput,
@@ -1341,8 +1345,8 @@ export const createSurvey = async (
         ? { blocks: fillSurveyBlockCodes(restSurveyBody.blocks, parsedSurveyBody) }
         : {}),
       styling: styling === null ? Prisma.JsonNull : styling,
-      showConditions: restSurveyBody.showConditions === null ? Prisma.DbNull : restSurveyBody.showConditions,
-      startLogic: restSurveyBody.startLogic === null ? Prisma.DbNull : restSurveyBody.startLogic,
+      showConditions: toNullableJsonColumn(restSurveyBody.showConditions),
+      startLogic: toNullableJsonColumn(restSurveyBody.startLogic),
       ...normalizeSurveyScheduling({
         closeOn: normalizedCloseOn,
         publishOn: normalizedPublishOn,
