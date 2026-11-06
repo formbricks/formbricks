@@ -17,8 +17,13 @@ import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
+import { getEmbeddedChartFields } from "@/modules/ee/analysis/lib/embedded-data-fields.server";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
-import { generateInternalChart, listInternalMatrixQuestions } from "./operations";
+import {
+  generateInternalChart,
+  listInternalEmbeddedDataFields,
+  listInternalMatrixQuestions,
+} from "./operations";
 
 const log = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }));
 
@@ -32,6 +37,7 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
 vi.mock("@/modules/ee/analysis/charts/lib/ai-chart-query.server", () => ({ generateAIChartQuery: vi.fn() }));
 vi.mock("@/modules/ee/analysis/lib/run-chart-query", () => ({ runChartQuery: vi.fn() }));
 vi.mock("@/modules/ee/analysis/charts/lib/matrix-questions", () => ({ getMatrixQuestions: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/embedded-data-fields.server", () => ({ getEmbeddedChartFields: vi.fn() }));
 vi.mock("@/modules/ee/analysis/api/lib/cube-client", () => ({
   CubeQueryError: class CubeQueryError extends Error {
     constructor(readonly timedOut: boolean) {
@@ -365,6 +371,54 @@ describe("listInternalMatrixQuestions", () => {
 
   test("maps a thrown error through the v3 error mapper", async () => {
     vi.mocked(getMatrixQuestions).mockRejectedValue(new DatabaseError("connection lost"));
+
+    const response = await list();
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("connection lost");
+  });
+});
+
+describe("listInternalEmbeddedDataFields (ENG-2848)", () => {
+  const list = () =>
+    listInternalEmbeddedDataFields({
+      query: { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID },
+      authentication: session,
+      requestId: "req",
+      instance: "/api/internal/embedded-data-fields",
+    });
+
+  test("lists the dataset's Embedded Data fields for the resolved workspace", async () => {
+    const fields = [
+      { id: "FeedbackRecords.ed_0123456789abcdef", name: "brand", type: "string", surveyNames: ["A"] },
+    ];
+    vi.mocked(getEmbeddedChartFields).mockResolvedValue(
+      fields as Awaited<ReturnType<typeof getEmbeddedChartFields>>
+    );
+
+    const response = await list();
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual(fields);
+    expect(getEmbeddedChartFields).toHaveBeenCalledWith(WORKSPACE_ID, DATASET_ID);
+  });
+
+  test("passes a workspace refusal through", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValueOnce(problemForbidden("req"));
+
+    expect((await list()).status).toBe(403);
+    expect(getEmbeddedChartFields).not.toHaveBeenCalled();
+  });
+
+  test("passes a dataset refusal through", async () => {
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValueOnce(problemForbidden("req"));
+
+    expect((await list()).status).toBe(403);
+    expect(getEmbeddedChartFields).not.toHaveBeenCalled();
+  });
+
+  test("maps a thrown error through the v3 error mapper", async () => {
+    vi.mocked(getEmbeddedChartFields).mockRejectedValue(new DatabaseError("connection lost"));
 
     const response = await list();
 

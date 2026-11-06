@@ -36,6 +36,14 @@ properties:
       the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
     additionalProperties:
       type: string
+  memberLabels:
+    type: object
+    description: >-
+      Embedded Data fields the query used (`FeedbackRecords.ed_<hash>`) to the field names they stand
+      for. Present only when the query uses one; the member is a hash of the name, so this is how the
+      columns and filters get their labels.
+    additionalProperties:
+      type: string
   query:
     type: object
     description: >-

@@ -8,6 +8,12 @@ import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getOrganization } from "@/lib/organization/service";
 import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
+import {
+  type TCubeEmbeddedField,
+  isEmbeddedFieldMember,
+  toCubeEmbeddedFields,
+} from "@/modules/ee/analysis/lib/embedded-data-fields";
+import { getEmbeddedChartFields } from "@/modules/ee/analysis/lib/embedded-data-fields.server";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import {
   MAX_TIME_BUCKETS,
@@ -23,7 +29,12 @@ import {
 } from "@/modules/ee/audit-logs/lib/request-metadata";
 import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 import { type TCubeQueryActor, type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
-import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
+import {
+  applyValueBandNullGuard,
+  getCubeQueryAuditSummary,
+  getCubeQueryMembers,
+  validateCubeQueryMembers,
+} from "./cube-query";
 
 const CUBE_QUERY_ERROR_MESSAGE =
   "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running.";
@@ -190,6 +201,34 @@ const isInjectedMemberRejection = (error: unknown, executed: TChartQuery, plain:
   return injected.some((measure) => message.includes(measure));
 };
 
+/**
+ * Thrown when a query names an Embedded Data field the dataset no longer declares — the field was
+ * renamed, or removed from every survey behind the dataset. A caller error, like an unknown member.
+ */
+export class UnknownEmbeddedFieldError extends Error {
+  constructor() {
+    super("The chart uses an Embedded Data field this dataset no longer has.");
+    this.name = "UnknownEmbeddedFieldError";
+  }
+}
+
+/**
+ * The dataset's Embedded Data fields for Cube's token, or `undefined` when the query uses none — so
+ * every other chart keeps the fixed schema and costs no lookup (ENG-2848).
+ */
+const resolveQueryEmbeddedFields = async (
+  input: TScopedCubeQueryInput
+): Promise<TCubeEmbeddedField[] | undefined> => {
+  const used = getCubeQueryMembers(input.query).filter(isEmbeddedFieldMember);
+  if (used.length === 0) return undefined;
+
+  const fields = await getEmbeddedChartFields(input.workspaceId, input.feedbackDirectoryId);
+  const known = new Set(fields.map((field) => field.id));
+  if (used.some((member) => !known.has(member))) throw new UnknownEmbeddedFieldError();
+
+  return toCubeEmbeddedFields(fields);
+};
+
 export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   // Read before Cube/network work so every outcome retains the request that initiated the query.
   const requestMetadata = AUDIT_LOG_ENABLED
@@ -203,12 +242,22 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     throw error;
   }
 
+  let embeddedFields: TCubeEmbeddedField[] | undefined;
+  try {
+    embeddedFields = await resolveQueryEmbeddedFields(input);
+  } catch (error) {
+    queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId: randomUUID(), status: "failure" });
+    logger.warn(error, "Cube query validation failed");
+    throw error;
+  }
+
   const tenantScope = {
     feedbackDirectoryId: input.feedbackDirectoryId,
     workspaceId: input.workspaceId,
     organizationId: input.organizationId,
     actor: input.actor,
     source: input.source,
+    embeddedFields,
   };
   let apiUrl: string;
   let requestId: string;

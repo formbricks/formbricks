@@ -60,6 +60,11 @@ export interface TChartLabelMaps {
    * are behind the rows; the matrix chart uses it for row labels and row order.
    */
   fieldLabels?: Record<string, string>;
+  /**
+   * Mapping from an Embedded Data member (`FeedbackRecords.ed_<hash>`) to the field name it stands for.
+   * Present when the query uses one (ENG-2848); renderers label those columns and filters with it.
+   */
+  memberLabels?: Record<string, string>;
 }
 
 export interface AnalyticsResponse extends TChartLabelMaps {

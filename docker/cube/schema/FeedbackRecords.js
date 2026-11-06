@@ -1,5 +1,70 @@
 // This schema maps to the `feedback_records` table owned by the Formbricks Hub Postgres.
 // If the Hub changes column names or types, this schema must be updated to match.
+
+// ── Embedded Data (ENG-2848) ────────────────────────────────────────────────
+// One dimension per Embedded Data field name a feedback directory's surveys declare. The values are
+// already on every record under `metadata.embedded_data` (keyed by field name, ENG-3290); the field
+// list differs per directory, so it reaches this file through the compile context: the app signs it
+// into the query token as `embeddedFields`, cube.js validates it and compiles one schema per distinct
+// list (`contextToAppId`). A token without the claim compiles to exactly the fixed members below.
+//
+// The field name never reaches the SQL as text. It arrives hex-encoded and is decoded by Postgres, so
+// a name holding a quote, a `${...}` or a `$'` (see metadataDurationSeconds) cannot break out of the
+// literal or Cube's filter templates. The member id is a hash of the name chosen by the app, so it
+// stays a short identifier whatever the name is.
+const EMBEDDED_FIELD_ID = /^ed_[0-9a-f]{16}$/;
+const EMBEDDED_FIELD_HEX = /^(?:[0-9a-f]{2}){1,512}$/;
+const EMBEDDED_FIELD_TYPES = new Set(["string", "number", "boolean"]);
+
+// Members built here sit outside the `cube()` literal, where Cube does not rewrite `${CUBE}`; a
+// function whose parameter is named CUBE is the form it resolves to the table alias instead.
+const embeddedFieldValueSql = (cubeAlias, hex) =>
+  `(${cubeAlias}.metadata->'embedded_data'->>convert_from(decode('${hex}', 'hex'), 'UTF8'))`;
+
+const embeddedFieldDimension = ({ hex, type }) => {
+  if (type === "number") {
+    // Same guarded cast as metadataDurationSeconds, for the same reasons — the \A / \Z anchors included.
+    return {
+      sql: (CUBE) => {
+        const value = embeddedFieldValueSql(CUBE, hex);
+        return `CASE WHEN ${value} ~ '\\A-?[0-9]{1,15}(\\.[0-9]{1,6})?\\Z' THEN ${value}::double precision END`;
+      },
+      type: `number`,
+    };
+  }
+  if (type === "boolean") {
+    return {
+      sql: (CUBE) => {
+        const value = embeddedFieldValueSql(CUBE, hex);
+        return `CASE WHEN LOWER(${value}) IN ('true', 'false') THEN LOWER(${value})::boolean END`;
+      },
+      type: `boolean`,
+    };
+  }
+  return { sql: (CUBE) => embeddedFieldValueSql(CUBE, hex), type: `string` };
+};
+
+const embeddedDataDimensions = () => {
+  const fields =
+    typeof COMPILE_CONTEXT === "undefined" ? undefined : COMPILE_CONTEXT?.securityContext?.embeddedFields;
+  if (!Array.isArray(fields)) return {};
+
+  const dimensions = {};
+  for (const field of fields) {
+    // cube.js has already refused a token with a malformed list; re-checked here so this file never
+    // interpolates anything it has not validated itself.
+    if (
+      !EMBEDDED_FIELD_ID.test(field?.id) ||
+      !EMBEDDED_FIELD_HEX.test(field?.hex) ||
+      !EMBEDDED_FIELD_TYPES.has(field?.type)
+    ) {
+      continue;
+    }
+    dimensions[field.id] = embeddedFieldDimension(field);
+  }
+  return dimensions;
+};
+
 cube(`FeedbackRecords`, {
   sql: `SELECT * FROM feedback_records`,
 
@@ -589,5 +654,7 @@ cube(`FeedbackRecords`, {
       type: `string`,
       shown: false,
     },
+
+    ...embeddedDataDimensions(),
   },
 });

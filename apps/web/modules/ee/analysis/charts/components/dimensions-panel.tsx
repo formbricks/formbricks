@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
   FEEDBACK_FIELDS,
   VALUE_ID_DIMENSION_ID,
@@ -19,13 +20,18 @@ interface DimensionsPanelProps {
   hideTitle?: boolean;
   /** A matrix reads its groupings positionally — the first is the rows, the second the columns. */
   isMatrix?: boolean;
+  /** The dataset's Embedded Data fields, offered after the fixed dimensions (ENG-2848). */
+  embeddedFields?: TEmbeddedChartField[];
 }
+
+const NO_EMBEDDED_FIELDS: TEmbeddedChartField[] = [];
 
 export function DimensionsPanel({
   selectedDimensions,
   onDimensionsChange,
   hideTitle = false,
   isMatrix = false,
+  embeddedFields = NO_EMBEDDED_FIELDS,
 }: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
 
@@ -37,12 +43,26 @@ export function DimensionsPanel({
     selectedDimensions.includes(VALUE_TEXT_DIMENSION_ID) &&
     !selectedDimensions.includes(VALUE_ID_DIMENSION_ID);
 
-  const dimensionOptions = FEEDBACK_FIELDS.dimensions.map((d) => ({
-    value: d.id,
-    label: getTranslatedFieldLabel(d.id, t),
-    description: getTranslatedFieldDescription(d.id, d.description, t),
-    icon: d.isGenerated ? <AiIcon /> : undefined,
-  }));
+  const dimensionOptions = [
+    ...FEEDBACK_FIELDS.dimensions.map((d) => ({
+      value: d.id,
+      label: getTranslatedFieldLabel(d.id, t),
+      description: getTranslatedFieldDescription(d.id, d.description, t),
+      icon: d.isGenerated ? <AiIcon /> : undefined,
+    })),
+    // The dataset's own fields, in a section of their own after the fixed ones. The description names
+    // the surveys behind the field, so a name two surveys share reads as one field on purpose.
+    ...embeddedFields.map((field) => ({
+      value: field.id,
+      label: field.name,
+      description: t("workspace.analysis.charts.embedded_data_field_description", {
+        surveys: field.surveyNames.join(", "),
+      }),
+      group: t("common.embedded_data"),
+    })),
+  ];
+  const getLabel = (id: string) =>
+    embeddedFields.find((field) => field.id === id)?.name ?? getTranslatedFieldLabel(id, t);
 
   return (
     <div className="w-full space-y-2">
@@ -70,11 +90,11 @@ export function DimensionsPanel({
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-md bg-slate-50 px-3 py-2 text-xs">
             <dt className="text-slate-500">{t("workspace.analysis.charts.matrix_rows")}</dt>
             <dd className="truncate text-slate-900">
-              {selectedDimensions[0] ? getTranslatedFieldLabel(selectedDimensions[0], t) : "\u2013"}
+              {selectedDimensions[0] ? getLabel(selectedDimensions[0]) : "\u2013"}
             </dd>
             <dt className="text-slate-500">{t("workspace.analysis.charts.matrix_columns")}</dt>
             <dd className="truncate text-slate-900">
-              {selectedDimensions[1] ? getTranslatedFieldLabel(selectedDimensions[1], t) : "\u2013"}
+              {selectedDimensions[1] ? getLabel(selectedDimensions[1]) : "\u2013"}
             </dd>
           </dl>
         )}

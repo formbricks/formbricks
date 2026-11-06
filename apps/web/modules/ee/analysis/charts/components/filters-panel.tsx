@@ -12,6 +12,7 @@ import {
   toConditionGroup,
   toFilterRowUpdates,
 } from "@/modules/ee/analysis/charts/lib/filter-conditions";
+import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
   type FilterNode,
   type FilterRow,
@@ -49,7 +50,12 @@ interface FiltersPanelProps {
   // (fetched per data source) instead of free-text entry for exact-match operators.
   workspaceId?: string;
   feedbackDirectoryId?: string | null;
+  /** The dataset's Embedded Data fields, offered after the fixed ones (ENG-2848). */
+  embeddedFields?: TEmbeddedChartField[];
 }
+
+const NO_EMBEDDED_FIELDS: TEmbeddedChartField[] = [];
+const BOOLEAN_VALUES = ["true", "false"] as const;
 
 const RANGE_OPERATORS = new Set(["gt", "gte", "lt", "lte"]);
 
@@ -69,8 +75,10 @@ export function FiltersPanel({
   onFilterLogicChange,
   workspaceId,
   feedbackDirectoryId,
+  embeddedFields = NO_EMBEDDED_FIELDS,
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
+  const getEmbeddedField = (field: string) => embeddedFields.find((embedded) => embedded.id === field);
 
   const updateRow = (id: string, updates: Partial<FilterRow>) =>
     onFiltersChange(updateFilterRow(filters, id, updates));
@@ -106,7 +114,12 @@ export function FiltersPanel({
       return undefined;
     }
 
-    const fieldType = getFilterFieldType(field);
+    // Yes/no Embedded Data: the editor's combobox offers true / false (see `getValueProps`).
+    if (getEmbeddedField(field)?.type === "boolean" && (operator === "equals" || operator === "notEquals")) {
+      return undefined;
+    }
+
+    const fieldType = getFilterFieldType(field, embeddedFields);
     const currentValue = String(condition.rightOperand?.value ?? "");
     const onValueChange = (value: string | null) =>
       updateRow(condition.id, { values: value ? [value] : null });
@@ -118,8 +131,10 @@ export function FiltersPanel({
 
     // Exact-match operators on a low-cardinality string dimension get a pick-list of real stored
     // values, so the chosen value matches exactly (no casing/whitespace drift).
-    const canSelectValues =
-      isSelectableValueDimension(field) && (operator === "equals" || operator === "notEquals");
+    // Text Embedded Data counts too: its values are whatever the survey was sent, so picking a stored
+    // one is the only way to be sure an exact match hits.
+    const isLookupField = isSelectableValueDimension(field) || getEmbeddedField(field)?.type === "string";
+    const canSelectValues = isLookupField && (operator === "equals" || operator === "notEquals");
 
     if (canSelectValues && workspaceId && feedbackDirectoryId) {
       return (
@@ -153,14 +168,35 @@ export function FiltersPanel({
   };
 
   const config: TConditionsEditorConfig = {
-    getLeftOperandOptions: () => getFilterFieldOptions(t),
+    getLeftOperandOptions: () => getFilterFieldOptions(t, embeddedFields),
     getOperatorOptions: (condition) =>
-      getFilterOperatorsForType(getFilterFieldType(condition.leftOperand.value)).map((operator) => ({
-        value: operator,
-        label: getFilterOperatorLabel(operator, t),
-      })),
+      getFilterOperatorsForType(getFilterFieldType(condition.leftOperand.value, embeddedFields)).map(
+        (operator) => ({
+          value: operator,
+          label: getFilterOperatorLabel(operator, t),
+        })
+      ),
     getValueProps: (condition) => {
       const field = condition.leftOperand.value;
+      const embeddedField = getEmbeddedField(field);
+      if (
+        embeddedField?.type === "boolean" &&
+        (condition.operator === "equals" || condition.operator === "notEquals")
+      ) {
+        return {
+          show: true,
+          options: [
+            {
+              label: embeddedField.name,
+              value: embeddedField.id,
+              options: BOOLEAN_VALUES.map((value) => ({
+                value,
+                label: value === "true" ? t("common.yes") : t("common.no"),
+              })),
+            },
+          ],
+        };
+      }
       if (field === EMOTIONS_DIMENSION_ID) {
         return { show: true, options: [fixedVocabularyGroup(EMOTIONS_DIMENSION_ID, EMOTION_VALUES)] };
       }
@@ -182,7 +218,7 @@ export function FiltersPanel({
     onRemoveCondition: (id) => onFiltersChange(removeFilterNode(filters, id)),
     onDuplicateCondition: (id) => onFiltersChange(duplicateFilterNode(filters, id)),
     onCreateGroup: (id) => onFiltersChange(wrapFilterNodeInGroup(filters, id, filterLogic)),
-    onUpdateCondition: (id, updates) => updateRow(id, toFilterRowUpdates(updates)),
+    onUpdateCondition: (id, updates) => updateRow(id, toFilterRowUpdates(updates, embeddedFields)),
     onToggleGroupConnector: (groupId) => {
       if (groupId === CHART_FILTER_ROOT_ID) {
         onFilterLogicChange(filterLogic === "and" ? "or" : "and");

@@ -1,12 +1,12 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { useColumnHeader } from "@/modules/ee/analysis/charts/components/member-labels";
 import {
   CHART_BRAND_DARK,
   formatCellValue,
   formatXAxisTick,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 
 interface TooltipPayloadItem {
   dataKey?: string;
@@ -38,6 +38,7 @@ export const PolishedChartTooltip = ({
   responseBaseKey,
 }: Readonly<RechartsTooltipProps>) => {
   const { t } = useTranslation();
+  const columnHeader = useColumnHeader();
   if (!active || !payload?.length) return null;
 
   // Pies leave `label` empty and put the slice name on payload[0].name.
@@ -58,7 +59,7 @@ export const PolishedChartTooltip = ({
           const key = item.dataKey ?? String(item.name ?? "");
           // Rows pivoted from measures (see pivotMeasuresToCategories) carry their translated
           // label on the row itself; otherwise the dataKey is a Cube column we can format.
-          const rowLabel = item.payload?.tooltipLabel ?? formatCubeColumnHeader(key, t);
+          const rowLabel = item.payload?.tooltipLabel ?? columnHeader(key);
           // payload.fill (per-row data.fill / pie <Cell>) wins over the Bar's series fallback.
           const indicatorColor = item.payload?.fill ?? item.color ?? CHART_BRAND_DARK;
           return (

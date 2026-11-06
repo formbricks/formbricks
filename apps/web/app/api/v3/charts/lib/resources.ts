@@ -56,6 +56,7 @@ export const ZV3ChartData = z
     rows: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))),
     optionLabels: z.record(z.string(), z.string()),
     fieldLabels: z.record(z.string(), z.string()),
+    memberLabels: z.record(z.string(), z.string()).optional(),
     query: z.record(z.string(), z.unknown()),
   })
   .strict();

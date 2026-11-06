@@ -11,6 +11,7 @@ import {
   type CartesianChartProps,
 } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import { MatrixChart } from "@/modules/ee/analysis/charts/components/matrix-chart";
+import { MemberLabelsProvider, useColumnHeader } from "@/modules/ee/analysis/charts/components/member-labels";
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import { ResponseBaseFooter } from "@/modules/ee/analysis/charts/components/response-base-footer";
 import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-number";
@@ -34,10 +35,10 @@ import {
 import { computeResponseBase } from "@/modules/ee/analysis/charts/lib/response-base";
 import { formatTimeBucket, getTimeGranularityFromKey } from "@/modules/ee/analysis/charts/lib/time-axis";
 import { computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
+import { isEmbeddedFieldMember } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
   FEEDBACK_MEASURE_IDS,
   type TResponseBaseFamily,
-  formatCubeColumnHeader,
   getMeasureAxisLabel,
   getResponseBaseFamily,
   getResponseBaseMeasureId,
@@ -169,6 +170,7 @@ const BarChartView = ({
   responseBaseKey,
 }: Readonly<BarChartViewProps>) => {
   const { t } = useTranslation();
+  const columnHeader = useColumnHeader();
   // Value labels sit past the end of the bar, which is the top of a vertical bar and the
   // right-hand end of a horizontal one.
   const valueLabelPosition = isHorizontal ? "right" : "top";
@@ -182,12 +184,7 @@ const BarChartView = ({
     // Sentiment measures pivot into the scale order the sentiment *dimension* axis uses,
     // so this chart and a dimension-grouped one read in the same direction.
     const axisKeys = sortMeasureIdsForCategoryAxis(dataKeys);
-    const measureData = pivotMeasuresToCategories(
-      sortedData,
-      axisKeys,
-      (key) => formatCubeColumnHeader(key, t),
-      responseBaseKey
-    );
+    const measureData = pivotMeasuresToCategories(sortedData, axisKeys, columnHeader, responseBaseKey);
     // Pivoting collapses every measure onto PIVOTED_VALUE_KEY ("value"), which carries no measure
     // id, so an axis derived from the pivoted rows can't look up fixed-scale candidates and falls
     // back to data-driven "nice" bounds. Resolve the scale from the original measure columns so
@@ -296,6 +293,7 @@ const PieChartView = ({
   responseBaseKey,
 }: Readonly<PieChartViewProps>) => {
   const { t, i18n } = useTranslation();
+  const columnHeader = useColumnHeader();
   const renderPieLabel = createPieLabelRenderer(i18n.language);
 
   // With several measures and no dimension (e.g. the six Emotion counts), each row column is a
@@ -305,7 +303,7 @@ const PieChartView = ({
   const pieDataKey = useMeasureSlices ? PIE_MEASURE_VALUE_KEY : dataKey;
   const pieNameKey = useMeasureSlices ? PIE_MEASURE_NAME_KEY : xAxisKey;
   const pieSource = useMeasureSlices
-    ? prepareMeasureSliceData(sortedData, dataKeys, (key) => formatCubeColumnHeader(key, t), responseBaseKey)
+    ? prepareMeasureSliceData(sortedData, dataKeys, columnHeader, responseBaseKey)
     : sortedData;
   const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
   if (!pieResult) {
@@ -318,7 +316,7 @@ const PieChartView = ({
   const { processedData, colors } = pieResult;
   const total = processedData.reduce((sum, row) => sum + (Number(row[pieDataKey]) || 0), 0);
   // Multi-measure pies have no single measure to name the center; show just the total.
-  const centerLabel = useMeasureSlices ? "" : formatCubeColumnHeader(dataKey, t);
+  const centerLabel = useMeasureSlices ? "" : columnHeader(dataKey);
 
   return (
     <div className="h-full min-h-64 w-full min-w-0">
@@ -378,6 +376,8 @@ interface ChartRendererProps {
   optionLabels?: Record<string, string>;
   /** Matrix row field_id → statement map, present when the query groups by fieldId. */
   fieldLabels?: Record<string, string>;
+  /** Embedded Data member → field name, present when the query uses one. */
+  memberLabels?: Record<string, string>;
   /** Saved display settings. Charts saved before these existed have an empty config and keep
    * the previous behavior (vertical bars). */
   config?: TChartConfig;
@@ -436,6 +436,7 @@ function SeriesChart({
 }: Readonly<Omit<ChartRendererProps, "fieldLabels"> & { responseBase?: TResponseBase }>) {
   const responseBaseKey = responseBase?.key;
   const { t, i18n } = useTranslation();
+  const columnHeader = useColumnHeader();
   const { barOrientation, pieDisplay, areaDisplay } = resolveChartDisplay(config);
   // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
@@ -474,6 +475,11 @@ function SeriesChart({
       return optionLabels[value] ?? value;
     }
     if (timeGranularity) return formatTimeBucket(value, timeGranularity, locale);
+    // Records without the field — written before Embedded Data reached the Hub, or from a survey that
+    // does not declare it — group under NULL, which would otherwise be an unlabelled bar.
+    if (isEmbeddedFieldMember(xAxisKey) && (value === null || value === undefined || value === "")) {
+      return t("workspace.analysis.charts.embedded_data_no_value");
+    }
     return getTranslatedDimensionValueLabel(xAxisKey, value, t) ?? formatXAxisTick(value);
   };
 
@@ -502,7 +508,7 @@ function SeriesChart({
     dataKeys.map((key, i) => [
       key,
       {
-        label: formatCubeColumnHeader(key, t),
+        label: columnHeader(key),
         color: getSemanticMeasureColor(key) ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length],
       },
     ])
@@ -635,7 +641,7 @@ function SeriesChart({
               )}>
               {formatted}
             </div>
-            <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
+            <div className="text-muted-foreground mt-2 text-sm">{columnHeader(dataKey)}</div>
           </div>
         </div>
       );
@@ -649,18 +655,24 @@ function SeriesChart({
   }
 }
 
-export function ChartRenderer({ fieldLabels, ...props }: Readonly<ChartRendererProps>) {
+export function ChartRenderer({ fieldLabels, memberLabels, ...props }: Readonly<ChartRendererProps>) {
   // A matrix lays out two groupings on its own two axes, so none of the single-axis setup applies.
   if (props.chartType === "matrix" && props.data.length > 0) {
     return (
-      <MatrixChart
-        data={props.data}
-        query={props.query}
-        config={props.config}
-        optionLabels={props.optionLabels}
-        fieldLabels={fieldLabels}
-      />
+      <MemberLabelsProvider labels={memberLabels}>
+        <MatrixChart
+          data={props.data}
+          query={props.query}
+          config={props.config}
+          optionLabels={props.optionLabels}
+          fieldLabels={fieldLabels}
+        />
+      </MemberLabelsProvider>
     );
   }
-  return <SeriesChartRenderer {...props} />;
+  return (
+    <MemberLabelsProvider labels={memberLabels}>
+      <SeriesChartRenderer {...props} />
+    </MemberLabelsProvider>
+  );
 }

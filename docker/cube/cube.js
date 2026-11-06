@@ -1,5 +1,7 @@
 /* eslint-env es2022 */
 
+const { createHash } = require("node:crypto");
+
 const TENANT_MEMBERS = ["FeedbackRecords.tenantId"];
 const REQUIRED_SCOPE = "xm:cube:query";
 
@@ -251,6 +253,64 @@ function normalizeCaseInsensitiveFilters(filters) {
   return filters.map(normalizeCaseInsensitiveFilter);
 }
 
+// Embedded Data dimensions (ENG-2848). The app signs the directory's Embedded Data fields into the
+// token as `embeddedFields: [{ id, hex, type }]` and schema/FeedbackRecords.js turns each into a
+// dimension through COMPILE_CONTEXT. Cube compiles one schema per app id, so the id is a hash of the
+// list: every directory with the same fields shares one compiled schema, and a token without fields
+// keeps the default app id and compiles to exactly the fixed members.
+const EMBEDDED_FIELD_ID = /^ed_[0-9a-f]{16}$/;
+const EMBEDDED_FIELD_HEX = /^(?:[0-9a-f]{2}){1,512}$/;
+const EMBEDDED_FIELD_TYPES = new Set(["string", "number", "boolean"]);
+const MAX_EMBEDDED_FIELDS = 200;
+const DEFAULT_APP_ID = "CUBEJS_APP";
+
+function getEmbeddedFields(securityContext) {
+  const fields = securityContext?.embeddedFields;
+  if (fields === undefined || fields === null) {
+    return [];
+  }
+  if (!Array.isArray(fields) || fields.length > MAX_EMBEDDED_FIELDS) {
+    throw new Error("Cube query rejected: invalid embeddedFields security context");
+  }
+
+  const ids = new Set();
+  for (const field of fields) {
+    if (
+      typeof field?.id !== "string" ||
+      typeof field?.hex !== "string" ||
+      !EMBEDDED_FIELD_ID.test(field.id) ||
+      !EMBEDDED_FIELD_HEX.test(field.hex) ||
+      !EMBEDDED_FIELD_TYPES.has(field.type) ||
+      ids.has(field.id)
+    ) {
+      throw new Error("Cube query rejected: invalid embeddedFields security context");
+    }
+    ids.add(field.id);
+  }
+
+  return fields;
+}
+
+function contextToAppId(context) {
+  const fields = getEmbeddedFields(context?.securityContext);
+  if (fields.length === 0) {
+    return DEFAULT_APP_ID;
+  }
+
+  const canonical = fields
+    .map((field) => `${field.id}:${field.hex}:${field.type}`)
+    .sort((a, b) => a.localeCompare(b))
+    .join("|");
+  return `CUBEJS_APP_ed_${createHash("sha256").update(canonical).digest("hex").slice(0, 32)}`;
+}
+
+// Every app id shares one query orchestrator — one connection pool and one cache — instead of Cube's
+// default of one per app id. Tenancy does not depend on the orchestrator: queryRewrite adds the tenant
+// filter, so it is part of every generated SQL statement and therefore of every cache key.
+function contextToOrchestratorId() {
+  return DEFAULT_APP_ID;
+}
+
 function queryRewrite(query, rewriteContext) {
   const cubeQuery = query ?? {};
   let context;
@@ -288,5 +348,11 @@ function queryRewrite(query, rewriteContext) {
 }
 
 module.exports = {
+  contextToAppId,
+  contextToOrchestratorId,
+  // One compiled schema per distinct Embedded Data field list, measured at ~5 MB and ~0.4 s each: keep
+  // the 100 most recent, and let one nobody queried for half an hour go.
+  compilerCacheSize: 100,
+  maxCompilerCacheKeepAlive: 30 * 60 * 1000,
   queryRewrite,
 };

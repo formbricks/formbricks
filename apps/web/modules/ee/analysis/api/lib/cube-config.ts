@@ -2,6 +2,7 @@ import "server-only";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "node:crypto";
 import { env } from "@/lib/env";
+import type { TCubeEmbeddedField } from "@/modules/ee/analysis/lib/embedded-data-fields";
 
 export const CUBE_API_TOKEN_TTL_SECONDS = 5 * 60;
 export const CUBE_QUERY_SCOPE = "xm:cube:query";
@@ -28,6 +29,11 @@ export type TCubeTenantScope = {
   organizationId: string;
   actor: TCubeQueryActor;
   source: TCubeQuerySource;
+  /**
+   * The dataset's Embedded Data fields, sent only when the query uses one (ENG-2848). Cube compiles one
+   * dimension per entry; a token without the claim compiles to the fixed members only.
+   */
+  embeddedFields?: TCubeEmbeddedField[];
 };
 
 /** The one actor claim the token carries: `userId` for a user, `apiKeyId` for an API key. */
@@ -79,6 +85,7 @@ export const createCubeApiToken = (
         ...getActorClaim(tenantScope.actor),
         scope: CUBE_QUERY_SCOPE,
         source: tenantScope.source,
+        ...(tenantScope.embeddedFields?.length ? { embeddedFields: tenantScope.embeddedFields } : {}),
       },
       apiSecret,
       {

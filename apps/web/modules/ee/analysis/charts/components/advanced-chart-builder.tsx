@@ -9,6 +9,7 @@ import { MatrixQuestionPicker } from "@/modules/ee/analysis/charts/components/ma
 import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-panel";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
+import { useEmbeddedChartFields } from "@/modules/ee/analysis/charts/hooks/use-embedded-chart-fields";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { createDefaultFilterRow } from "@/modules/ee/analysis/charts/lib/filter-conditions";
@@ -116,6 +117,7 @@ export function AdvancedChartBuilder({
   );
 
   const { isLoading, error, runQuery } = useChartQuery(workspaceId, feedbackDirectoryId, initialQuery);
+  const embeddedFields = useEmbeddedChartFields(workspaceId, feedbackDirectoryId);
   const [isConfigDirty, setIsConfigDirty] = useState(false);
   const chartTypeRef = useRef(chartType);
 
@@ -261,6 +263,7 @@ export function AdvancedChartBuilder({
         <FiltersPanel
           workspaceId={workspaceId}
           feedbackDirectoryId={feedbackDirectoryId}
+          embeddedFields={embeddedFields}
           filters={state.filters}
           filterLogic={state.filterLogic}
           onFiltersChange={(filters) => dispatch({ type: ACTION.SET_FILTERS, payload: filters })}
@@ -283,6 +286,7 @@ export function AdvancedChartBuilder({
         <DimensionsPanel
           hideTitle
           isMatrix={isMatrix}
+          embeddedFields={embeddedFields}
           selectedDimensions={state.selectedDimensions}
           onDimensionsChange={(dimensions) => dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })}
         />
