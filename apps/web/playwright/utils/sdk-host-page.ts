@@ -34,7 +34,7 @@ const HTML_TEMPLATE = `<head>
           // The host page's CSP has no 'unsafe-inline' for styles, so the renderer's <style> elements
           // only apply because they carry this nonce. Called before setup(), as the docs require.
           window.formbricks.setNonce("CSP_NONCE");
-          window.formbricks.setup({workspaceId: "WORKSPACE_ID", appUrl: "APP_URL"});
+          window.formbricks.setup(SETUP_CONFIG);
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
         }
@@ -78,20 +78,30 @@ export const serveSdkHostPage = async ({
   appUrl,
   getWorkspaceId,
   port = 0,
+  setupOptions = {},
+  buildCsp = buildHostCsp,
 }: {
   appUrl: string;
   getWorkspaceId: () => string;
   port?: number;
+  setupOptions?: Record<string, unknown>;
+  buildCsp?: (nonce: string, appUrl: string) => string;
 }): Promise<SdkHostPage> => {
   const origin = new URL(appUrl).origin;
   const server = http.createServer((_, res) => {
     const nonce = randomBytes(16).toString("base64");
-    const htmlContent = HTML_TEMPLATE.replace("WORKSPACE_ID", getWorkspaceId())
+    const htmlContent = HTML_TEMPLATE.replace(
+      "SETUP_CONFIG",
+      JSON.stringify({ ...setupOptions, workspaceId: getWorkspaceId(), appUrl: origin }).replaceAll(
+        "<",
+        "\\u003c"
+      )
+    )
       .replaceAll("APP_URL", origin)
       .replaceAll("CSP_NONCE", nonce);
     res.writeHead(200, {
       "Content-Type": "text/html",
-      "Content-Security-Policy": buildHostCsp(nonce, origin),
+      "Content-Security-Policy": buildCsp(nonce, origin),
     });
     res.end(htmlContent);
   });

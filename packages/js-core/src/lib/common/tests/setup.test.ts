@@ -9,7 +9,7 @@ import { setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired } from "@/lib/common/utils";
 import type * as Utils from "@/lib/common/utils";
 import { removeCreatives, showCachedCreatives } from "@/lib/creatives/creatives";
-import { addLiveRegionContainer } from "@/lib/survey/widget";
+import { addLiveRegionContainer, prefetchSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
 import { startVisitTracking } from "@/lib/visit/visit-tracking";
@@ -253,6 +253,39 @@ describe("setup.ts", () => {
           },
         },
       ]);
+    });
+
+    test.each([
+      { label: "omitted", options: {}, calls: 1 },
+      { label: "enabled", options: { prefetch: true }, calls: 1 },
+      { label: "disabled", options: { prefetch: false }, calls: 0 },
+    ])("prefetch is $label on fresh and cached setup", async ({ options, calls }) => {
+      const cachedConfig = {
+        workspaceId: "ws_123",
+        appUrl: "https://my.url",
+        workspace: { data: { surveys: [] }, expiresAt: new Date(Date.now() + 60_000) },
+        user: DEFAULT_USER_STATE_NO_USER_ID,
+        status: { value: "success", expiresAt: null },
+      };
+      const mockConfig = { get: vi.fn(), resetConfig: vi.fn(), update: vi.fn() };
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      vi.mocked(fetchWorkspaceState).mockResolvedValue({ ok: true, data: cachedConfig.workspace } as Awaited<
+        ReturnType<typeof fetchWorkspaceState>
+      >);
+      vi.mocked(filterSurveys).mockReturnValue([]);
+      vi.mocked(isNowExpired).mockReturnValue(false);
+
+      for (const existing of [undefined, cachedConfig]) {
+        setIsSetup(false);
+        vi.mocked(prefetchSurveysScript).mockClear();
+        mockConfig.get.mockReturnValue(existing);
+
+        const result = await setup({ workspaceId: "ws_123", appUrl: "https://my.url", ...options });
+
+        expect(result.ok).toBe(true);
+        expect(prefetchSurveysScript).toHaveBeenCalledTimes(calls);
+        if (calls) expect(prefetchSurveysScript).toHaveBeenCalledWith("https://my.url");
+      }
     });
 
     test("prefers workspaceId over environmentId when both provided", async () => {
