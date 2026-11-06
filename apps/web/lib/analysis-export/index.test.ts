@@ -93,7 +93,7 @@ describe("buildAnalysisWhere", () => {
 describe("buildAnalysisSelect", () => {
   test("stays lean: no tags, contact, quotas or metadata unless selected", () => {
     expect(Object.keys(buildAnalysisSelect({}, false)).sort()).toEqual(
-      ["createdAt", "data", "finished", "id", "language", "outcome"].sort()
+      ["createdAt", "data", "finished", "id", "language", "notShown", "outcome"].sort()
     );
   });
 

@@ -50,7 +50,7 @@ void window.formbricks.setup(...args);
    - All new API endpoints must be documented in the OpenAPI specification
    - Include request/response schemas, authentication requirements, and examples
    - Document both Client API and Management API endpoints
-   - Place API documentation in the `docs/api-reference` directory
+   - Use `docs/api-reference/openapi.json` for v1, `docs/api-v2-reference/openapi.yml` for v2, and the v3 sources under `docs/api-v3-reference/src/`; regenerate the v3 bundle with `pnpm api:v3:sync`
 
 2. **Authentication**
    - Clearly specify authentication requirements
@@ -127,3 +127,51 @@ mint dev
    - Ensure proper formatting and rendering
 
 These documentation requirements ensure that our codebase remains maintainable, accessible, and well-documented for both current and future developers.
+
+## One home for each instruction
+
+| Content | Canonical home |
+| --- | --- |
+| Release notes and upgrade impact | GitHub Releases (source of truth), mirrored in `/platform/changelog` |
+| Upgrade rules and stops | `/self-hosting/upgrade/paths` |
+| Ordered upgrade commands | The runbooks: Kubernetes, Docker Compose, one-click |
+| What a version changes and needs | One version page per minor under `/self-hosting/upgrade/versions/` |
+| Compatibility and support promises | Release and maintenance policy |
+| Product and integration behavior | Product guide or integration setup page |
+
+Keep the runbooks version-neutral; version pages add only what's specific to that version.
+Use pinned versions in examples, never `latest`.
+
+### Release notes for every release
+
+GitHub Releases is the source of truth. The `release-notes` skill writes each stable release, including
+patches and backports, with an `## Upgrade impact` section: **None**, or **Action required** for named
+setups with a link to the steps. After publication, copy the summary and the upgrade-impact line into
+`docs/platform/changelog.mdx`. Don't rewrite the text, and don't publish a "review required" or other
+"not yet known" status.
+
+A release with nothing to do still gets an entry, but no extra page.
+
+### Version pages
+
+Each minor gets one page, named `<version>: Upgrade guide`, with the sections **What changes**,
+**Before you upgrade**, **Patch actions**, **Upgrade**, **Check it worked** and **If something goes wrong**.
+Each patch adds a row to its minor's **Patch actions** table. Use `Unreleased: <Topic>` for changes that
+aren't in a release yet. Use the copyable template in `docs/templates/release-guidance.md`.
+
+Upgrades go one minor version at a time, to the latest patch of each. Skipping a minor version is not
+supported. When you add a minor, add its row to the upgrade paths table.
+
+### Write for the reader
+
+- For each manual step, say where to run it, the exact command or file change, and what the operator should see.
+- Explain secret generation and bindings; don't stop at "generate tokens" or "merge services".
+- Say what runs automatically and what the operator runs.
+- Don't describe how the page was made: no "evidence", "source review" or "reviewed on" notes.
+- Use plain words and short sentences. Avoid slash compounds such as "app/Hub" in sentences.
+
+### Review a documentation change
+
+- Keep existing URLs. Add redirects for moved pages, and an invisible `<span id>` for a removed heading anchor.
+- Check navigation, links, anchors, MDX rendering and mobile layout in the preview. Include screenshots in the PR.
+- A documentation build doesn't prove that an upgrade works.

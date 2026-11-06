@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { copyOptionsFrom } from "./copied-options";
 import {
   PUBLISHED_SURVEY_LOCKED_ERROR_CODE,
   describePublishedLockViolations,
@@ -361,6 +362,68 @@ describe("getPublishedLockViolations: allowed edits", () => {
           { ...open, headline: { default: "Why?" } },
           { ...cta, headline: { default: "Now" } }
         )
+      )
+    ).toEqual([]);
+  });
+
+  test("hiding a launch option and adding a show-if to it (ENG-6937): the only way to retire one", () => {
+    const showIf = {
+      id: "g1",
+      connector: "and",
+      conditions: [{ id: "c1", leftOperand: { type: "element", value: "q0" }, operator: "isSubmitted" }],
+    };
+    const next = survey(
+      "inProgress",
+      single({
+        choices: [
+          { ...apple, hidden: true },
+          { ...banana, showIf },
+        ],
+      }),
+      matrix({ rows: [{ ...row1, showIf }, row2], columns: [col1, { ...col2, hidden: true, showIf }] })
+    );
+    expect(getPublishedLockViolations(stored, next)).toEqual([]);
+  });
+
+  test("deleting a launch option stays refused next to a hidden one (ENG-6937)", () => {
+    const next = survey("inProgress", single({ choices: [{ ...apple, hidden: true }] }), matrix());
+    expect(kinds(stored, next)).toEqual(["option_deleted"]);
+  });
+
+  test("copying options into a live question and copying again (ENG-6938) keep every launch option", () => {
+    const source: TestElement = {
+      id: "q0",
+      type: "multipleChoiceMulti",
+      headline: { default: "Fruit you know" },
+      required: false,
+      code: "q0",
+      choices: [option("c", { default: "Cherry" }, "3"), option("d", { default: "Date" }, "4")],
+    };
+    const storedWithSource = { status: "inProgress", blocks: [block("b0", source), block("b1", single())] };
+    const launchIds = new Set(["a", "b"]);
+    let sequence = 0;
+    const settings = {
+      createId: () => `id${String((sequence += 1))}`,
+      keepOptionId: (id: string) => launchIds.has(id),
+    };
+
+    const linked = {
+      ...single(),
+      optionsCopiedFrom: "q0",
+      choices: copyOptionsFrom(source, single(), settings),
+    };
+    const next = { blocks: [block("b0", source), block("b1", linked)] };
+    expect(getPublishedLockViolations(storedWithSource, next)).toEqual([]);
+
+    const grown = {
+      ...source,
+      choices: [...(source.choices as unknown[]), option("e", { default: "Elder" }, "5")],
+    };
+    const again = { ...linked, choices: copyOptionsFrom(grown, linked, settings) };
+    expect(
+      getPublishedLockViolations(
+        { status: "inProgress", blocks: next.blocks },
+        { blocks: [block("b0", grown), block("b1", again)] }
       )
     ).toEqual([]);
   });

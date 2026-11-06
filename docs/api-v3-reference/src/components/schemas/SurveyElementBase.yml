@@ -47,3 +47,14 @@ properties:
   isDraft:
     type: boolean
     description: Draft marker used by the editor and future update rules.
+  showIf:
+    allOf:
+      - $ref: ./SurveyConditionGroup.yml
+    description: >-
+      Show-if: the element is shown only when this condition group matches, re-evaluated live as
+      answers above it on the same page change. A hidden element is not validated (a hidden required
+      element never blocks submission) and its answer is not submitted. Conditions use the same
+      operands and operators as block `logic`. Reference rule: an element's show-if may use answers
+      from earlier blocks and from elements above it in the same block, never itself or anything
+      below it; a violation fails with `misordered_reference` at the exact condition path. Omit it,
+      or send an empty group, for an element that is always shown.

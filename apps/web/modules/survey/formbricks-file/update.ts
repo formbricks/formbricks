@@ -34,6 +34,7 @@ import {
   type TFormbricksFileCreatedReferences,
   type TFormbricksFileReferencePlan,
   applyFormbricksFileReferences,
+  fitFormbricksFileEmbeddedFields,
   linkFormbricksFileSharedFields,
   planFormbricksFileReferences,
 } from "./resolve";
@@ -65,8 +66,12 @@ const UPDATE_CONTENT_KEYS = [
   "welcomeCard",
   "blocks",
   "endings",
+  // ENG-6932: the rules before the first question are logic, which a file carries.
+  "startLogic",
   "hiddenFields",
   "variables",
+  // ENG-6930: the typed fields, calculated dates included, which `variables` leaves out.
+  "embeddedFields",
   "targeting",
 ] as const;
 
@@ -334,12 +339,18 @@ export const updateSurveyFromFormbricksFile = async ({
       fieldPrefix: null,
     });
     const { actionClassIds, created } = await applyFormbricksFileReferences(tx, workspaceId, plan);
-    const target = withTargetTriggers(content, actionClassIds);
-    const embeddedFields = await linkSharedFields(tx, {
+    // Typed Embedded Data links its shared fields itself, as on create; an older file through the legacy shape.
+    const target = await fitFormbricksFileEmbeddedFields(tx, {
       workspaceId,
-      draft: target,
-      sharedFields: read.content.references.embeddedFields,
+      draft: withTargetTriggers(content, actionClassIds),
     });
+    const embeddedFields = Array.isArray(target.embeddedFields)
+      ? undefined
+      : await linkSharedFields(tx, {
+          workspaceId,
+          draft: target,
+          sharedFields: read.content.references.embeddedFields,
+        });
 
     try {
       const after = await patchV3Survey(before, toUpdatePatch(target, before), {

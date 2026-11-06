@@ -4,14 +4,35 @@ import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSingleCondition } from "@formbricks/types/surveys/logic";
+import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import {
+  START_LOGIC_USE_INDEX,
+  findBlockUsedInLogic,
+  findElementUse,
+  findElementUsedInLogic,
+  findEndingCardUsedInLogic,
+  findHiddenFieldUse,
+  findHiddenFieldUsedInLogic,
+  findOptionUse,
+  findOptionUsedInLogic,
+  findReservedFieldUse,
+  findVariableUse,
+  findVariableUsedInLogic,
+  getActionObjectiveOptions,
+  getActionOperatorOptions,
   getActionValueOptions,
   getActionVariableOptions,
   getConditionOperatorOptions,
   getConditionValueOptions,
+  getFormatLeftOperandValue,
+  getFormatRightOperandValue,
   getMatchValueProps,
+  isComputedDateField,
 } from "./utils";
 
 /**
@@ -259,6 +280,18 @@ describe("getConditionOperatorOptions", () => {
     expect(operatorsFor("signed_up")).toContain("isAfter");
   });
 
+  test("a computed date field (ENG-6935) gets chronological comparison and a date input", () => {
+    const withComputedDate = survey([
+      field({ storageKey: "signed_up_at", source: "computed", dataType: "date" }),
+    ]);
+    const variableCondition = condition({ type: "variable", value: "signed_up_at" });
+
+    expect(operatorValues(getConditionOperatorOptions(variableCondition, withComputedDate, t))).toEqual(
+      expect.arrayContaining(["isBefore", "isAfter"])
+    );
+    expect(getMatchValueProps(variableCondition, withComputedDate, t).inputType).toBe("date");
+  });
+
   test("a condition pointing at a deleted field falls back to the widest safe set", () => {
     // A condition outlives the field it points at, and an operand with no operators at all would
     // strand the author in a row they can neither complete nor understand.
@@ -422,6 +455,42 @@ describe("calculate action options", () => {
       }),
       expect.objectContaining({ value: "note", label: "Note", meta: { variableType: "text" } }),
     ]);
+  });
+
+  test("only a computed date field gets the date Set value row", () => {
+    // P38: a date field's Set value is stored as an expression, its one-step row included.
+    const withDate = survey([
+      field({ storageKey: "signup", name: "Signup", dataType: "date" }),
+      field({ storageKey: "checked", name: "Checked", source: "computed", dataType: "date" }),
+      field({ storageKey: "score", name: "Score", source: "computed", dataType: "number" }),
+    ]);
+
+    expect(isComputedDateField(withDate, "checked")).toBe(true);
+    expect(isComputedDateField(withDate, "score")).toBe(false);
+    expect(isComputedDateField(withDate, "signup")).toBe(false);
+    expect(isComputedDateField(withDate, "")).toBe(false);
+  });
+
+  test("a date field is set to a day, a date question's answer or another date field, one step only assigning", () => {
+    const lastBlockIdx = surveyFlowFixture.blocks.length - 1;
+    const groups = getActionValueOptions(
+      SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt,
+      surveyFlowFixture,
+      lastBlockIdx,
+      t
+    );
+
+    expect(groupNamed(groups, "common.questions")?.options.map((option) => option.value)).toEqual([
+      "last_purchase",
+    ]);
+    expect(groupNamed(groups, "common.embedded_data")?.options.map((option) => option.value)).toEqual([
+      SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate,
+    ]);
+    expect(getActionOperatorOptions(t, "date").map((option) => option.value)).toEqual(["assign"]);
+  });
+
+  test("a Set value step with no field yet offers Assign, which every field type takes", () => {
+    expect(getActionOperatorOptions(t).map((option) => option.value)).toEqual(["assign"]);
   });
 
   test("the value picker draws the same Embedded Data group, with no auto-captured one", () => {
@@ -595,5 +664,308 @@ describe("operators that take no right-hand side", () => {
     expect(getMatchValueProps(condition({ type: "hiddenField", value: "plan" }, operator), typed, t)).toEqual(
       { show: false, options: [] }
     );
+  });
+});
+
+describe("a rule before the first question counts as a use, so deleting what it names warns", () => {
+  const ids = SURVEY_FLOW_FIXTURE_IDS;
+  /** The fixture with only its rules before the first question: no block rule or fallback is a use. */
+  const startRulesOnly = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks = survey.blocks.map(({ logicFallback: _fallback, ...block }) => ({ ...block, logic: [] }));
+    return survey;
+  };
+  const withoutStartRules = (): TSurvey => ({ ...startRulesOnly(), startLogic: null });
+
+  test("an ending a start rule screens out to", () => {
+    expect(findEndingCardUsedInLogic(startRulesOnly(), ids.endings.notForYou)).toBe(START_LOGIC_USE_INDEX);
+    expect(findEndingCardUsedInLogic(withoutStartRules(), ids.endings.notForYou)).toBe(-1);
+  });
+
+  test("a block a start rule jumps to", () => {
+    expect(findBlockUsedInLogic(startRulesOnly(), ids.blocks.heavyUsers)).toBe(START_LOGIC_USE_INDEX);
+  });
+
+  test("an Embedded Data field a start rule reads or sets", () => {
+    expect(findHiddenFieldUse(startRulesOnly(), ids.hiddenFields.panelId)).toEqual({
+      kind: "startLogic",
+      elementIndex: START_LOGIC_USE_INDEX,
+    });
+    expect(findVariableUse(startRulesOnly(), ids.variables.segment)?.kind).toBe("startLogic");
+    expect(findVariableUse(withoutStartRules(), ids.variables.segment)?.kind).not.toBe("startLogic");
+  });
+
+  // The editor preview offers the page address as a test value only when something reads `url`.
+  test("a reserved field a start rule reads, by its catalog name", () => {
+    expect(findReservedFieldUse(startRulesOnly(), "url")?.kind).toBe("startLogic");
+    expect(findReservedFieldUse(withoutStartRules(), "url")).toBeNull();
+    expect(findReservedFieldUse(startRulesOnly(), "userAgent")).toBeNull();
+  });
+});
+
+describe("a reference inside a Set value expression counts as used in logic (ENG-6935)", () => {
+  // `signup_date` and `signed_up_at` appear in the fixture only inside the tenure step's formula.
+  test("an ingested and a computed field read by a formula", () => {
+    expect(
+      findHiddenFieldUsedInLogic(surveyFlowFixture, SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate)
+    ).not.toBe(-1);
+    expect(findVariableUsedInLogic(surveyFlowFixture, SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt)).not.toBe(
+      -1
+    );
+  });
+
+  test("a question read by a formula", () => {
+    // Only the score step left, so nothing else (a jump into csat's block) can count as a use.
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks = survey.blocks.map((block) => ({
+      ...block,
+      logic: (block.logic ?? []).filter((rule) => rule.id === SURVEY_FLOW_FIXTURE_IDS.setValue.scoreRule),
+    }));
+    expect(findElementUsedInLogic(survey, "csat")).toBe(-1);
+
+    const scoreStep = survey.blocks[1].logic![0];
+    scoreStep.actions[0] = {
+      ...scoreStep.actions[0],
+      value: {
+        type: "expression",
+        value: { type: "call", fn: "abs", args: [{ type: "element", value: "csat" }] },
+      },
+    } as (typeof scoreStep.actions)[number];
+
+    expect(findElementUsedInLogic(survey, "csat")).not.toBe(-1);
+  });
+});
+
+describe("removal guards also see show-if (ENG-6931)", () => {
+  // Without block logic, the fixture's only uses of "services" and its "prime" option are the show-if
+  // of the Heavy users block (block 2, question "hours").
+  const withoutLogic = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    survey.blocks = survey.blocks.map((block) => ({ ...block, logic: [], logicFallback: undefined }));
+    return survey;
+  };
+  const flatIndexOf = (survey: TSurvey, elementId: string) =>
+    survey.blocks.flatMap((block) => block.elements).findIndex((element) => element.id === elementId);
+
+  test("a question a block's show-if depends on is reported as used", () => {
+    const survey = withoutLogic();
+    // "recommend" copies "services", which a removal guard names first (ENG-6938); unlinked here.
+    delete (survey.blocks[5].elements[12] as { optionsCopiedFrom?: string }).optionsCopiedFrom;
+
+    expect(findElementUsedInLogic(survey, "services")).toBe(flatIndexOf(survey, "hours"));
+  });
+
+  test("a question another question's show-if depends on is reported as used", () => {
+    const survey = withoutLogic();
+
+    // "apple_reason" is shown only if "fav" is Apple TV+.
+    expect(findElementUsedInLogic(survey, "fav")).toBe(flatIndexOf(survey, "apple_reason"));
+  });
+
+  test("an option a show-if compares against is reported as used", () => {
+    const survey = withoutLogic();
+
+    expect(findOptionUsedInLogic(survey, "services", "prime")).toBe(flatIndexOf(survey, "hours"));
+    // ENG-6937: "Apple TV+" in "fav" is offered only if "services" includes Apple TV+.
+    expect(findOptionUsedInLogic(survey, "services", "apple")).toBe(flatIndexOf(survey, "fav"));
+  });
+
+  test("says which kind of use stops a removal, so the guard can word it (show-if, not logic)", () => {
+    const survey = withoutLogic();
+
+    expect(findElementUse(survey, "fav")).toEqual({
+      kind: "showIf",
+      elementIndex: flatIndexOf(survey, "apple_reason"),
+    });
+    expect(findOptionUse(survey, "services", "apple")).toEqual({
+      kind: "showIf",
+      elementIndex: flatIndexOf(survey, "fav"),
+    });
+    // With the fixture's logic back, a rule is what the guard names first.
+    expect(findElementUse(surveyFlowFixture, "bundle")?.kind).toBe("logic");
+  });
+
+  test("a question an option's show-if depends on is reported as used (ENG-6937)", () => {
+    const survey = withoutLogic();
+
+    // Poster B in "ad_pick" is offered only once "brand_rank" is answered.
+    expect(findElementUsedInLogic(survey, "brand_rank")).toBe(flatIndexOf(survey, "ad_pick"));
+  });
+
+  test("a hidden field a show-if reads is reported as used", () => {
+    const survey = withoutLogic();
+    const signupDate = SURVEY_FLOW_FIXTURE_IDS.hiddenFields.signupDate;
+    expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(-1);
+
+    survey.blocks[4].elements[3].showIf = {
+      id: "showifgroup0000000000010",
+      connector: "and",
+      conditions: [
+        {
+          id: "showifcond00000000000010",
+          leftOperand: { type: "hiddenField", value: signupDate },
+          operator: "isSet",
+        },
+      ],
+    };
+
+    expect(findHiddenFieldUsedInLogic(survey, signupDate)).toBe(flatIndexOf(survey, "email"));
+  });
+
+  test("a question whose options another question copies is reported as used (ENG-6938)", () => {
+    const survey = withoutLogic();
+    // Only the link left: no show-if anywhere reads "brand_rank".
+    const adPick = survey.blocks[5].elements[4] as unknown as { choices: { showIf?: unknown }[] };
+    adPick.choices.forEach((choice) => delete choice.showIf);
+    expect(findElementUsedInLogic(survey, "brand_rank")).toBe(-1);
+
+    const recommend = survey.blocks[5].elements[12] as unknown as Record<string, unknown>;
+    recommend.optionsCopiedFrom = "brand_rank";
+
+    expect(findElementUsedInLogic(survey, "brand_rank")).toBe(flatIndexOf(survey, "recommend"));
+  });
+
+  test("a real copy reports its source as copied, not as a show-if, though its options' show-ifs read it", () => {
+    const survey = withoutLogic();
+    // Every show-if of the survey's own goes; the ones a copy writes on its options stay: "recommend"
+    // copies "services", each option shown only if it was picked there.
+    survey.blocks.forEach((block) => {
+      delete block.showIf;
+      block.elements.forEach((element) => {
+        delete element.showIf;
+        if (element.id === "recommend") return;
+        const choices = (element as { choices?: { showIf?: unknown }[] }).choices ?? [];
+        choices.forEach((choice) => delete choice.showIf);
+      });
+    });
+    const recommend = survey.blocks[5].elements[12] as unknown as { choices: { showIf?: unknown }[] };
+    expect(recommend.choices.filter((choice) => choice.showIf)).toHaveLength(4);
+
+    expect(findElementUse(survey, "services")).toEqual({
+      kind: "copiedOptions",
+      elementIndex: flatIndexOf(survey, "recommend"),
+    });
+  });
+});
+
+describe("getActionObjectiveOptions", () => {
+  test("the action that writes a field is called Set value, as in the glossary and Add logic", () => {
+    expect(getActionObjectiveOptions(t).find((option) => option.value === "calculate")?.label).toBe(
+      "workspace.surveys.edit.flow.set_value"
+    );
+  });
+
+  test("lists the rule types in Add logic's order, each with its own icon", () => {
+    const options = getActionObjectiveOptions(t);
+
+    expect(options.map((option) => [option.value, option.label])).toEqual([
+      ["jumpToBlock", "workspace.surveys.edit.flow.jump_to"],
+      ["calculate", "workspace.surveys.edit.flow.set_value"],
+      ["requireAnswer", "workspace.surveys.edit.require_answer"],
+      ["markLowQuality", "workspace.surveys.edit.mark_as_low_quality"],
+    ]);
+    expect(new Set(options.map((option) => option.icon)).size).toBe(4);
+    expect(options.every((option) => option.icon)).toBe(true);
+  });
+});
+
+describe("ranking conditions in the editor (T21, ENG-6937)", () => {
+  const rankedCondition: TSingleCondition = {
+    id: "rankedcondition000000001",
+    leftOperand: { type: "element", value: "brand_rank" },
+    operator: "includesOneOf",
+    rightOperand: { type: "static", value: [] },
+  };
+
+  test("a ranking offers 'includes one of' and its options, by id", () => {
+    const operators = getConditionOperatorOptions(rankedCondition, surveyFlowFixture, t).map(
+      (option) => option.value
+    );
+    expect(operators).toEqual(expect.arrayContaining(["includesOneOf", "includesAllOf"]));
+
+    const props = getMatchValueProps(rankedCondition, surveyFlowFixture, t);
+    const values = (props.options as TComboboxGroupedOption[]).flatMap((group) =>
+      group.options.map((option) => option.value)
+    );
+    expect(values).toEqual(["netflix", "disney", "prime"]);
+  });
+});
+
+/**
+ * ENG-6934: the editor shows a matrix condition's row and column the way the engines read them, by id,
+ * so a row or column reordered in this session does not show the condition on another cell until the
+ * save rewrites the positions.
+ */
+describe("matrix conditions by id in the editor", () => {
+  const PROFILE = 5;
+  const reordered = (): TSurvey => {
+    const survey = structuredClone(surveyFlowFixture);
+    const grid = survey.blocks
+      .flatMap((block) => block.elements)
+      .find((element) => element.id === "brand_grid") as { rows: unknown[]; columns: unknown[] };
+    grid.rows.reverse();
+    grid.columns.reverse();
+    return survey;
+  };
+  const matrixCondition = (survey: TSurvey): TSingleCondition =>
+    survey.blocks[PROFILE].logic![0].conditions.conditions[0] as TSingleCondition;
+
+  test("the row picker shows the row the id names, after a reorder", () => {
+    const survey = reordered();
+
+    // Netflix (row_netflix) was row 0 and is now row 1.
+    expect(getFormatLeftOperandValue(matrixCondition(survey), survey)).toBe("brand_grid.1");
+  });
+
+  test("the column picker shows the column the id names, after a reorder", () => {
+    const survey = reordered();
+
+    // Good (col_good) was column 1 and is now column 0.
+    expect(getFormatRightOperandValue(matrixCondition(survey), survey)).toBe("0");
+  });
+
+  test("other conditions show their stored value", () => {
+    const survey = structuredClone(surveyFlowFixture);
+    const dateCondition = survey.blocks[PROFILE].logic![0].conditions.conditions[1] as TSingleCondition;
+
+    expect(getFormatRightOperandValue(dateCondition, survey)).toBe("2026-01-01");
+  });
+
+  test("a row condition written in the id form alone gets the row operators", () => {
+    const survey = structuredClone(surveyFlowFixture);
+    const condition = matrixCondition(survey);
+    if (condition.leftOperand.type === "element") condition.leftOperand.meta = { rowId: "row_disney" };
+
+    const operators = getConditionOperatorOptions(condition, survey, t).map((option) => option.value);
+    expect(operators).toContain("isAnyOf");
+  });
+});
+
+/**
+ * jobenjada review #27: a matrix in the condition picker says it is a Matrix, so its code isn't read
+ * as its type, and its whole-question choice reads "Any row (…)" next to rows that read "Editor (…)".
+ */
+describe("a matrix in the condition picker", () => {
+  const matrixOption = () =>
+    getConditionValueOptions(surveyFlowFixture, t)
+      .flatMap((group) => group.options)
+      .find((option) => option.value === "brand_grid");
+
+  test("carries a Matrix hint", () => {
+    expect(matrixOption()?.meta?.badge).toBe("workspace.surveys.edit.matrix_badge");
+  });
+
+  test("offers its rows, then any row, each naming the question", () => {
+    const [rows, anyRow] = matrixOption()?.children ?? [];
+    const question = matrixOption()?.label;
+
+    expect(rows.children?.map((row) => [row.value, row.label])).toEqual([
+      ["brand_grid.0", `Netflix (${question})`],
+      ["brand_grid.1", `Disney+ (${question})`],
+    ]);
+    expect([anyRow.value, anyRow.label]).toEqual([
+      "brand_grid",
+      `workspace.surveys.edit.matrix_all_fields (${question})`,
+    ]);
   });
 });

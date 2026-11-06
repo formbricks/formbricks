@@ -130,7 +130,9 @@ export const ZResponse = z.object({
   // (`PRISMA_GLOBAL_OMIT`, ENG-2955) — so a payload built from a whole row matches this shape exactly.
   // Documenting it would advertise a field the API never returns; exposing it belongs to the release
   // that surfaces coercion failures in the UI.
-}) satisfies z.ZodType<Omit<Response, "ingestFlags">>;
+  // `notShown` (ENG-6936) is left out for the same reason: v1/v2 payloads stay as they were, and the
+  // global omit keeps it off every read without a `select`.
+}) satisfies z.ZodType<Omit<Response, "ingestFlags" | "notShown">>;
 
 ZResponse.meta({
   id: "response",

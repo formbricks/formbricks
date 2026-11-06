@@ -8,6 +8,7 @@ import {
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TResponseFilterCriteria,
+  TResponseFilterCriteriaShown,
   TResponseHiddenFieldsFilter,
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
@@ -834,6 +835,20 @@ const processQuotaFilters = (quotas: FilterValue[], filters: TResponseFilterCrit
   });
 };
 
+const isShownFilterOp = (value: unknown): value is TResponseFilterCriteriaShown["op"] =>
+  value === "shown" || value === "notShown";
+
+// Shown / not shown rows → the `shown` criteria group (ENG-6951). A row without a target or with any
+// other value is left out.
+const processShownFilters = (rows: FilterValue[], filters: TResponseFilterCriteria) => {
+  for (const { filterType, shownTarget } of rows) {
+    const op = filterType.filterComboBoxValue;
+    if (!shownTarget || !isShownFilterOp(op)) continue;
+    const condition: TResponseFilterCriteriaShown = { ...shownTarget, op };
+    filters.shown = [...(filters.shown ?? []), condition];
+  }
+};
+
 // get the formatted filter expression to fetch filtered responses
 export const getFormattedFilters = (
   survey: TSurvey,
@@ -850,6 +865,7 @@ export const getFormattedFilters = (
   const hiddenFields: FilterValue[] = [];
   const variables: FilterValue[] = [];
   const quotas: FilterValue[] = [];
+  const shown: FilterValue[] = [];
 
   selectedFilter.filter.forEach((filter) => {
     if (filter.elementType?.type === "Elements") {
@@ -868,6 +884,8 @@ export const getFormattedFilters = (
       variables.push(filter);
     } else if (filter.elementType?.type === "Quotas") {
       quotas.push(filter);
+    } else if (filter.elementType?.type === OptionsType.SHOWN) {
+      shown.push(filter);
     }
   });
 
@@ -927,6 +945,7 @@ export const getFormattedFilters = (
 
   processReservedFilters(meta, survey, filters);
   processQuotaFilters(quotas, filters);
+  processShownFilters(shown, filters);
 
   return filters;
 };

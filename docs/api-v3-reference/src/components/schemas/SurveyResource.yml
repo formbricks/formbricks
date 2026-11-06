@@ -19,6 +19,8 @@ allOf:
       - endings
       - hiddenFields
       - variables
+      - startLogic
+      - embeddedFields
       - customCss
     properties:
       id:
@@ -98,6 +100,15 @@ allOf:
         type: array
         items:
           $ref: ./SurveyVariable.yml
+      startLogic:
+        $ref: ./SurveyStartLogic.yml
+      embeddedFields:
+        type: array
+        description: >-
+          Typed Embedded Data (ADR 0028): the survey's complete set of fields, which `variables` and
+          `hiddenFields` are derived from. Library fields carry their `key`.
+        items:
+          $ref: ./SurveyEmbeddedField.yml
       distribution:
         allOf:
           - $ref: ./SurveyDistribution.yml

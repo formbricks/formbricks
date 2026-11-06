@@ -13,3 +13,12 @@ Hub is built for **the age of AI**: each open-text feedback record is vectorized
 The Hub is fully open-source (Apache 2.0) and can be self-hosted.
 
 To learn more, visit the Hub docs at [hub.formbricks.com](https://hub.formbricks.com) and the [Hub API Reference](https://hub.formbricks.com/api).
+
+## API and deployment boundaries
+
+Hub has its own API, image versions and deployment lifecycle. Its API reference does not describe the
+Formbricks gateway API or grant access to a Formbricks Cloud workspace. Use the interface and credentials
+provided for your deployment. The Formbricks v3 gateway is private Beta; do not assume stable public access.
+
+Self-hosted operators should include Hub API, workers and migrations in their
+[component inventory](/self-hosting/operate/components).

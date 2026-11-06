@@ -1061,3 +1061,108 @@ describe("the three validation tiers", () => {
     expect(done.payload).not.toHaveProperty("targeting");
   });
 });
+
+describe("a Formbricks file with the flow editor's typed Embedded Data and start rules (ENG-6930, ENG-6932)", () => {
+  test("imports its start rule and calculated date field, and keeps a shared field the target lacks as the survey's own", async () => {
+    // The source: a link survey whose start rule stamps a calculated date field, with a shared field
+    // only the source workspace's library has. Neither the date field nor the rule is in the legacy
+    // `variables`; the file carries them in `embeddedFields` and `startLogic`.
+    const workspaceId = fixture.workspaceId;
+    const sharedKey = `segment_code_${createId().slice(0, 8)}`;
+    const dateStorageKey = createId();
+    const startRule = {
+      id: createId(),
+      conditions: { id: createId(), connector: "and", conditions: [] },
+      actions: [
+        {
+          id: createId(),
+          objective: "calculate",
+          variableId: dateStorageKey,
+          operator: "assign",
+          value: { type: "expression", value: { type: "call", fn: "now", args: [] } },
+        },
+      ],
+    };
+    const source = await prisma.survey.create({
+      data: {
+        name: "Flow survey",
+        type: "link",
+        status: "draft",
+        workspaceId,
+        ownerId: fixture.users.owner,
+        blocks: [{ ...BLOCKS[0], logic: [] }],
+        endings: [{ id: ENDING_ID, type: "endScreen", headline: { default: "Thanks!" } }],
+        startLogic: [startRule],
+      },
+      select: { id: true },
+    });
+    const [dateField, sharedField] = await Promise.all([
+      prisma.embeddedData.create({
+        data: {
+          name: "signed_up_at",
+          source: "computed",
+          dataType: "date",
+          workspaceId,
+          surveyId: source.id,
+        },
+      }),
+      prisma.embeddedData.create({
+        data: { key: sharedKey, name: "Segment code", source: "ingested", dataType: "string", workspaceId },
+      }),
+    ]);
+    await prisma.surveyEmbeddedData.createMany({
+      data: [
+        {
+          workspaceId,
+          surveyId: source.id,
+          embeddedDataId: dateField.id,
+          storageKey: dateStorageKey,
+          order: 0,
+        },
+        { workspaceId, surveyId: source.id, embeddedDataId: sharedField.id, storageKey: sharedKey, order: 1 },
+      ],
+    });
+    await synchronizeAuthzedIntegrationFixture();
+
+    const exported = await exportSurveyOperation({
+      surveyId: source.id,
+      format: "json",
+      authentication: owner(),
+      requestId: "req_export_flow",
+      instance: `/api/internal/surveys/${source.id}/export`,
+    });
+    expect(exported.status).toBe(200);
+    const file = (await exported.json()) as Record<string, unknown>;
+
+    const target = fixture.otherWorkspaceId;
+    const done = await previewDone(target, file);
+    const response = await commit({
+      workspaceId: target,
+      payload: done.payload,
+      references: done.references,
+    });
+
+    expect(response.status).toBe(201);
+    const surveyId = surveyIdOf(response);
+    const created = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyId },
+      select: {
+        startLogic: true,
+        embeddedDataLinks: {
+          select: {
+            storageKey: true,
+            embeddedData: { select: { key: true, surveyId: true, source: true, dataType: true } },
+          },
+        },
+      },
+    });
+    expect(created.startLogic).toEqual([startRule]);
+    const links = Object.fromEntries(
+      created.embeddedDataLinks.map(({ storageKey, embeddedData }) => [storageKey, embeddedData])
+    );
+    // The rule's field arrives under the address the rule names.
+    expect(links[dateStorageKey]).toEqual({ key: null, surveyId, source: "computed", dataType: "date" });
+    // The target's library has no such key: the field is the survey's own, not a refused import.
+    expect(links[sharedKey]).toEqual({ key: null, surveyId, source: "ingested", dataType: "string" });
+  });
+});

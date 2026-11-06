@@ -1,5 +1,19 @@
+import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { getCopiedOptionsIssues } from "@formbricks/types/surveys/copied-options";
+import {
+  type TExpressionTypeContext,
+  getSetValueExpressionIssues,
+} from "@formbricks/types/surveys/expression-types";
+import type { TExpression } from "@formbricks/types/surveys/expressions";
 import type { TConditionGroup, TDynamicLogicFieldValue } from "@formbricks/types/surveys/logic";
+import {
+  type TFindMatrix,
+  findUnknownMatrixIds,
+  getMatrixLookup,
+} from "@formbricks/types/surveys/matrix-conditions";
+import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
@@ -11,6 +25,8 @@ type TReferenceValidationInput = {
   metadata?: unknown;
   variables: TSurveyVariables;
   welcomeCard?: unknown;
+  /** ENG-6930's typed fields, when the document carries them: a computed date is declared only here. */
+  embeddedFields?: { storageKey?: string; source?: string; dataType?: TEmbeddedDataType }[];
 };
 
 type TNamedReference = {
@@ -23,6 +39,7 @@ type TReferenceLookup = {
   elementIds: Set<string>;
   variableIds: Set<string>;
   hiddenFieldIds: Set<string>;
+  findMatrix: TFindMatrix;
 };
 type TInvalidParamReferenceType = Exclude<InvalidParam["referenceType"], undefined>;
 
@@ -244,17 +261,155 @@ function validateDynamicOperand(
   // An operand naming an entry that does not exist resolves as unset, exactly like a stale variable.
 }
 
+/**
+ * A Set value expression (ENG-6935): every reference leaf is checked like a condition operand, so a
+ * dangling one is named by its exact path into the tree; once they all resolve, the shared type check
+ * (`getSetValueExpressionIssues`, the one `surveyRefinement` runs) names text in arithmetic or a result
+ * the target field can't hold, so the dry-run validate catches what a save would refuse.
+ */
+function validateExpressionValue(
+  expression: TExpression,
+  targetVariableId: string,
+  path: string,
+  input: TReferenceValidationInput,
+  references: TReferenceLookup,
+  issues: InvalidParam[]
+): void {
+  const before = issues.length;
+  const walk = (node: TExpression, nodePath: string): void => {
+    if (node.type === "call") {
+      node.args.forEach((arg, idx) => walk(arg, `${nodePath}.args.${String(idx)}`));
+    } else if (node.type !== "static") {
+      validateDynamicOperand(node, nodePath, references, issues);
+    }
+  };
+  walk(expression, path);
+
+  const targetDataType = getComputedFieldDataTypes(input).get(targetVariableId);
+  if (issues.length > before || targetDataType === undefined) return;
+
+  for (const issue of getSetValueExpressionIssues(expression, targetDataType, getTypeContext(input))) {
+    issues.push({ name: [path, ...issue.path].join("."), reason: issue.message });
+  }
+}
+
+/** The typed fields of one source, by storage key; a `dataType` left out is the default `string`. */
+function getTypedFields(
+  embeddedFields: NonNullable<TReferenceValidationInput["embeddedFields"]>,
+  source: "computed" | "ingested"
+): [string, TEmbeddedDataType][] {
+  return embeddedFields.flatMap((field) =>
+    field.source === source && field.storageKey !== undefined
+      ? [[field.storageKey, field.dataType ?? "string"] as [string, TEmbeddedDataType]]
+      : []
+  );
+}
+
+/** Computed fields by storage key: the typed rows when sent (a computed date lives only there), else `variables`. */
+function getComputedFieldDataTypes(input: TReferenceValidationInput): Map<string, TEmbeddedDataType> {
+  if (input.embeddedFields !== undefined) {
+    return new Map(getTypedFields(input.embeddedFields, "computed"));
+  }
+  return new Map(
+    input.variables.map((variable) => [variable.id, variable.type === "number" ? "number" : "string"])
+  );
+}
+
+function getTypeContext(input: TReferenceValidationInput): TExpressionTypeContext {
+  const elements = new Map(
+    input.blocks.flatMap((block) => block.elements).map((element) => [element.id, element])
+  );
+  const computed = getComputedFieldDataTypes(input);
+  const ingested = new Map<string, TEmbeddedDataType>(
+    input.embeddedFields !== undefined
+      ? getTypedFields(input.embeddedFields, "ingested")
+      : (input.hiddenFields.fieldIds ?? []).map((id) => [id, "string"])
+  );
+
+  return {
+    getElement: (elementId) => {
+      const element = elements.get(elementId);
+      if (!element) return undefined;
+      return { type: element.type, inputType: "inputType" in element ? element.inputType : undefined };
+    },
+    getComputedFieldType: (storageKey) => computed.get(storageKey),
+    getIngestedFieldType: (storageKey) => ingested.get(storageKey),
+    getReservedFieldType: (name) => RESERVED_FIELD_CATALOG.find((entry) => entry.name === name)?.dataType,
+  };
+}
+
+type TSurveyBlock = TSurveyBlocks[number];
+type TSurveyBlockElement = TSurveyBlock["elements"][number];
+
+/** Whose show-if a visit is: the block's, an element's, or one of an element's options, rows or columns. */
+type TShowIfOwner =
+  | { kind: "block" }
+  | { kind: "element"; element: TSurveyBlockElement; elementIndex: number }
+  | {
+      kind: "option";
+      element: TSurveyBlockElement;
+      elementIndex: number;
+      listKey: TOptionListKey;
+      itemId: string;
+    };
+
+/**
+ * Every show-if of a block, in document order, with its path and owner: the block's own (ENG-6931), its
+ * elements' and their options', rows' and columns' (ENG-6937). The one walk the reference and the
+ * precedence checks share.
+ */
+function forEachShowIf(
+  block: TSurveyBlock,
+  blockIndex: number,
+  visit: (showIf: TConditionGroup, path: string, owner: TShowIfOwner) => void
+): void {
+  if (block.showIf) visit(block.showIf, `blocks.${blockIndex}.showIf`, { kind: "block" });
+  block.elements.forEach((element, elementIndex) => {
+    const elementPath = `blocks.${blockIndex}.elements.${elementIndex}`;
+    if (element.showIf) {
+      visit(element.showIf, `${elementPath}.showIf`, { kind: "element", element, elementIndex });
+    }
+    for (const { listKey, items } of getOptionLists(element)) {
+      items.forEach((item, itemIndex) => {
+        if (!item.showIf) return;
+        visit(item.showIf, `${elementPath}.${listKey}.${itemIndex}.showIf`, {
+          kind: "option",
+          element,
+          elementIndex,
+          listKey,
+          itemId: item.id,
+        });
+      });
+    }
+  });
+}
+
 function validateConditionGroup(
   conditionGroup: TConditionGroup,
   path: string,
   references: TReferenceLookup,
-  issues: InvalidParam[]
+  issues: InvalidParam[],
+  isRoot = true
 ): void {
+  // ENG-6934: a matrix row or column id the matrix doesn't have. That walk covers nested groups.
+  if (isRoot) {
+    for (const issue of findUnknownMatrixIds(conditionGroup, references.findMatrix, [])) {
+      issues.push({
+        name: [path, ...issue.path].join("."),
+        reason: issue.message.replace("Conditional Logic: ", ""),
+        code: "dangling_reference",
+        identifier: issue.id,
+        referenceType: "element",
+        missingId: issue.id,
+      });
+    }
+  }
+
   conditionGroup.conditions.forEach((condition, index) => {
     const conditionPath = `${path}.conditions.${index}`;
 
     if ("conditions" in condition) {
-      validateConditionGroup(condition, conditionPath, references, issues);
+      validateConditionGroup(condition, conditionPath, references, issues, false);
       return;
     }
 
@@ -291,6 +446,10 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
     path: `hiddenFields.fieldIds.${index}`,
   }));
   const variableIds = input.variables.map((variable) => variable.id);
+  // A computed date (ENG-6935) is declared only in the typed `embeddedFields`, never in `variables`.
+  const computedOnlyIds = getTypedFields(input.embeddedFields ?? [], "computed")
+    .map(([storageKey]) => storageKey)
+    .filter((storageKey) => !variableIds.includes(storageKey));
   const variableIdEntries = variableIds.map((id, index) => ({
     id,
     path: `variables.${index}.id`,
@@ -307,8 +466,9 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   ]);
   const references = {
     elementIds: new Set(elementIds),
-    variableIds: new Set(variableIds),
+    variableIds: new Set([...variableIds, ...computedOnlyIds]),
     hiddenFieldIds: new Set(hiddenFieldIds),
+    findMatrix: getMatrixLookup(input.blocks),
   };
 
   addDuplicateIdIssues(blockEntries, "Block", "block", issues);
@@ -377,6 +537,12 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
       });
     }
 
+    // ENG-6931 / ENG-6937: block, element, option, row and column show-if reference answers, fields and
+    // variables like logic conditions.
+    forEachShowIf(block, blockIndex, (showIf, path) => {
+      validateConditionGroup(showIf, path, references, issues);
+    });
+
     block.logic?.forEach((logic, logicIndex) => {
       const logicPath = `blocks.${blockIndex}.logic.${logicIndex}`;
       validateConditionGroup(logic.conditions, `${logicPath}.conditions`, references, issues);
@@ -396,7 +562,16 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
             });
           }
 
-          if (action.value.type !== "static") {
+          if (action.value.type === "expression") {
+            validateExpressionValue(
+              action.value.value,
+              action.variableId,
+              `${actionPath}.value.value`,
+              input,
+              references,
+              issues
+            );
+          } else if (action.value.type !== "static") {
             validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
           }
         }
@@ -425,6 +600,21 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
       });
     });
   });
+
+  // ENG-6938: the question `optionsCopiedFrom` names must exist and have options of the same kind. A
+  // source below the question is an ordering rule, reported with the others below.
+  for (const issue of getCopiedOptionsIssues(input.blocks)) {
+    if (issue.kind === "later_source") continue;
+    const isMissing = issue.kind === "missing_source";
+    issues.push({
+      name: issue.path.join("."),
+      reason: issue.message.replace("Copied options: ", ""),
+      code: isMissing ? "dangling_reference" : "invalid_reference",
+      identifier: issue.sourceId,
+      referenceType: "element",
+      ...(isMissing ? { missingId: issue.sourceId } : {}),
+    });
+  }
 
   addRecallReferenceIssues(input.blocks, "blocks", references, issues);
   addRecallReferenceIssues(input.endings, "endings", references, issues);
@@ -463,13 +653,17 @@ export function assertValidV3SurveyReferences(input: TReferenceValidationInput):
  * recalls an answer the respondent has not given yet becomes easy to create, and it passes every
  * other server check.
  *
- * Three rules, each mirroring what the editor or the shared refinement already enforces:
+ * The rules, each mirroring what the editor or the shared refinement already enforces:
  *
  *  - a recall of an element must point strictly backwards in flat element order
  *    (`recall-item-select.tsx` filters the picker the same way);
  *  - a logic condition's element left operand must not sit in a later block, same block allowed
  *    (mirrors `validateBlockConditions` in `packages/types/surveys/types.ts`);
- *  - a `requireAnswer` target must sit in a *later* block (mirrors `validateBlockActions`).
+ *  - a `requireAnswer` target must sit in a *later* block (mirrors `validateBlockActions`);
+ *  - a show-if may use only what comes before it (ENG-6931, mirrors `validateShowIf`): a block's
+ *    show-if earlier blocks only, an element's show-if earlier blocks plus elements above it on the
+ *    same block. Both operands of a condition are checked.
+ *  - `optionsCopiedFrom` names an element before it (ENG-6938, mirrors `getCopiedOptionsIssues`).
  *
  * `jumpToBlock` and `logicFallback` deliberately have no ordering rule — jumping backwards is a
  * legitimate survey design, and only cycles are policed.
@@ -608,7 +802,10 @@ function addRecallPrecedenceViolations(
 function forEachSingleCondition(
   group: TConditionGroup,
   path: string,
-  visit: (condition: { leftOperand: TDynamicLogicFieldValue }, conditionPath: string) => void
+  visit: (
+    condition: { leftOperand: TDynamicLogicFieldValue; rightOperand?: { type: string; value?: unknown } },
+    conditionPath: string
+  ) => void
 ): void {
   group.conditions.forEach((condition, index) => {
     const conditionPath = `${path}.conditions.${index}`;
@@ -666,6 +863,70 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
       );
     });
 
+    // Show-if: what the respondent has answered before this block (or this element) is shown.
+    const addShowIfViolations = (
+      group: TConditionGroup,
+      path: string,
+      scopeKey: string,
+      canUse: (target: TElementPosition) => boolean,
+      rule: string
+    ) =>
+      forEachSingleCondition(group, path, (condition, conditionPath) => {
+        for (const [side, operand] of [
+          ["leftOperand", condition.leftOperand],
+          ["rightOperand", condition.rightOperand],
+        ] as const) {
+          if (operand?.type !== "element" || typeof operand.value !== "string") continue;
+          const elementId = operand.value;
+          const target = positions.get(elementId);
+          if (!target || canUse(target)) continue;
+
+          addViolation(violations, `showIf|${scopeKey}|${elementId}`, () =>
+            misorderedIssue(
+              `${conditionPath}.${side}.value`,
+              `Show-if references element '${elementId}' (${target.path}), which is not before it; ${rule}`,
+              elementId,
+              "element"
+            )
+          );
+        }
+      });
+
+    forEachShowIf(block, blockIndex, (showIf, path, owner) => {
+      if (owner.kind === "block") {
+        addShowIfViolations(
+          showIf,
+          path,
+          `block:${block.id}`,
+          (target) => target.blockIndex < blockIndex,
+          "a block's show-if can only use elements from earlier blocks"
+        );
+        return;
+      }
+      const { element, elementIndex } = owner;
+      const ownFlatIndex = positions.get(element.id)?.flatIndex ?? firstElementFlatIndex + elementIndex;
+      // Earlier blocks, or above it on the same block: strictly before it in flat order. ENG-6937: an
+      // option, a row or a column follows its element's rule.
+      const isBefore = (target: TElementPosition) => target.flatIndex < ownFlatIndex;
+      if (owner.kind === "element") {
+        addShowIfViolations(
+          showIf,
+          path,
+          `element:${element.id}`,
+          isBefore,
+          "an element's show-if can only use elements from earlier blocks or above it on the same block"
+        );
+        return;
+      }
+      addShowIfViolations(
+        showIf,
+        path,
+        `${owner.listKey}:${element.id}:${owner.itemId}`,
+        isBefore,
+        "an option's show-if can only use elements from earlier blocks or above its element on the same block"
+      );
+    });
+
     block.logic?.forEach((logic, logicIndex) => {
       const logicPath = `blocks.${blockIndex}.logic.${logicIndex}`;
 
@@ -702,6 +963,21 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
       });
     });
   });
+
+  // ENG-6938: options may be copied only from a question above (earlier blocks, or above it on its page).
+  for (const issue of getCopiedOptionsIssues(input.blocks)) {
+    if (issue.kind !== "later_source") continue;
+    const [, blockIndex, , elementIndex] = issue.path;
+    const elementId = input.blocks[blockIndex as number]?.elements[elementIndex as number]?.id ?? "";
+    addViolation(violations, `optionsCopiedFrom|${elementId}|${issue.sourceId}`, () =>
+      misorderedIssue(
+        issue.path.join("."),
+        `optionsCopiedFrom references element '${issue.sourceId}' (${positions.get(issue.sourceId)?.path ?? "?"}), which is not before it; options can only be copied from elements in earlier blocks or above it on the same block`,
+        issue.sourceId,
+        "element"
+      )
+    );
+  }
 
   // One report per key, and the map has held that invariant since insert — see `addViolation`. The key
   // is also the dedupe unit the delta filter below relies on.

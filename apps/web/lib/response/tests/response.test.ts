@@ -564,5 +564,15 @@ describe("getResponsesByContactId", () => {
     );
   });
 
+  test("reads the not-shown record, so the contact page's cards don't show not-shown questions as skipped", async () => {
+    prisma.response.findMany.mockResolvedValue([]);
+
+    await getResponsesByContactId(mockContactId, mockWorkspaceId, {});
+
+    expect(prisma.response.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ select: expect.objectContaining({ notShown: true }) })
+    );
+  });
+
   testInputValidation(getResponsesByContactId, "123#", mockWorkspaceId);
 });
