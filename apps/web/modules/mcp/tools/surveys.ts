@@ -168,7 +168,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Create survey",
       description:
-        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`.",
+        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. Declare Embedded Data with typed `embeddedFields` (library fields linked by `key`) or the legacy `variables` / `hiddenFields`. Optional `startLogic` holds rules that run before the first question (screen out to an ending, jump to a block, set a value from URL parameters).",
       inputSchema: ZMcpCreateSurveyInput,
       audit: { action: "created", targetType: "survey" },
       annotations: {
@@ -233,7 +233,8 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Patch survey",
       description: [
-        "Update survey-level fields — name, status, languages, showLanguageSwitch, autoSelectLanguage, endings, welcomeCard, variables, hiddenFields, customCss — using the v3 Surveys API patch contract.",
+        "Update survey-level fields — name, status, languages, showLanguageSwitch, autoSelectLanguage, endings, welcomeCard, embeddedFields (typed Embedded Data; the legacy variables and hiddenFields are derived from it), startLogic (rules before the first question), customCss — using the v3 Surveys API patch contract.",
+        "On a survey that is not a draft and already has responses, nothing changes until you pass confirm: true: the call returns the editor's caution text instead, so show it to the user and retry only after they agree.",
         "For block changes prefer edit_survey_blocks (update, insert, remove) or set_survey_block_order (reorder): they address blocks by id, cost a fraction of the tokens, and cannot drop a block by omission.",
         "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
         "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",
@@ -261,6 +262,7 @@ export function registerSurveyTools(server: McpServer): void {
             requestId,
             instance: MCP_API_ROUTE,
             auditLog,
+            writeConfirmation: { confirmed: input.confirm === true },
           })
       )
   );
@@ -278,6 +280,7 @@ export function registerSurveyTools(server: McpServer): void {
         "An `update` replaces the whole block, so build it from a fresh read — anything you omit is dropped, and block content must carry every configured language.",
         "An inserted block gets an id automatically; supply your own only if a later op in the same request needs to anchor after it.",
         "Removing a block orphans any answers already collected for it, and the API cannot undo that — on a survey that is not a draft, confirm with the user before removing.",
+        "On a survey that is not a draft and already has responses, nothing changes until you pass confirm: true: the call returns the editor's caution text instead, so show it to the user and retry only after they agree.",
       ].join(" "),
       inputSchema: ZMcpEditSurveyBlocksInput,
       audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },
@@ -294,7 +297,7 @@ export function registerSurveyTools(server: McpServer): void {
         ctx,
         { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
         async ({ authentication, requestId, auditLog }) => {
-          const { surveyId, response_format: responseFormat, ...body } = input;
+          const { surveyId, response_format: responseFormat, confirm, ...body } = input;
           // Mint insert ids here rather than letting the operation do it alone, so `applied` can
           // report the id of a block the caller did not name — otherwise an agent inserts a block
           // and has no way to reference it without re-reading the survey. The helper is idempotent,
@@ -307,6 +310,7 @@ export function registerSurveyTools(server: McpServer): void {
             requestId,
             instance: MCP_API_ROUTE,
             auditLog,
+            writeConfirmation: { confirmed: confirm === true },
           });
 
           return responseFormat === "detailed"
@@ -329,6 +333,7 @@ export function registerSurveyTools(server: McpServer): void {
         "Cheaper and safer than resending the blocks through patch_survey: a missing or duplicated id is rejected, which catches a dropped block.",
         "Call get_survey first and pass its `updatedAt` as `expectedUpdatedAt`; on a 409 re-read and retry.",
         "To repeat a call safely, refresh `expectedUpdatedAt` from the previous response or omit it — reusing the old value is a stale precondition and returns 409, which is the precondition working, not the reorder failing.",
+        "On a survey that is not a draft and already has responses, nothing changes until you pass confirm: true: the call returns the editor's caution text instead, so show it to the user and retry only after they agree.",
       ].join(" "),
       inputSchema: ZMcpSetSurveyBlockOrderInput,
       audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },
@@ -347,7 +352,7 @@ export function registerSurveyTools(server: McpServer): void {
         ctx,
         { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
         async ({ authentication, requestId, auditLog }) => {
-          const { surveyId, response_format: responseFormat, ...body } = input;
+          const { surveyId, response_format: responseFormat, confirm, ...body } = input;
           const response = await setV3SurveyBlockOrderResponse({
             surveyId,
             body,
@@ -355,6 +360,7 @@ export function registerSurveyTools(server: McpServer): void {
             requestId,
             instance: MCP_API_ROUTE,
             auditLog,
+            writeConfirmation: { confirmed: confirm === true },
           });
 
           return responseFormat === "detailed"
@@ -370,7 +376,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Delete survey",
       description:
-        "Delete a Formbricks survey using the v3 Surveys API contract. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: delete those first (pausing or closing one keeps it linked).",
+        "Delete a Formbricks survey using the v3 Surveys API contract. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: delete those first (pausing or closing one keeps it linked). A survey that is not a draft and has responses is deleted with them only when you pass confirm: true, after the user agreed; without it the call returns the warning to show them.",
       inputSchema: ZMcpDeleteSurveyInput,
       audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
@@ -392,6 +398,7 @@ export function registerSurveyTools(server: McpServer): void {
             requestId,
             instance: MCP_API_ROUTE,
             auditLog,
+            writeConfirmation: { confirmed: input.confirm === true },
           })
       )
   );

@@ -29,6 +29,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   mockActionClass,
@@ -77,7 +78,13 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsQuotasEnabled: vi.fn(),
+}));
+
 beforeEach(() => {
+  vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
   // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
@@ -510,6 +517,49 @@ describe("Tests for updateSurvey", () => {
           ]),
         })
       );
+    });
+
+    describe("the quotas' matrix conditions (ENG-6934)", () => {
+      const matrixBlock = {
+        id: "clmatrixblock0000000000001",
+        name: "Grid",
+        elements: [
+          {
+            id: "grid",
+            type: "matrix",
+            headline: { default: "Rate" },
+            required: false,
+            shuffleOption: "none",
+            rows: [{ id: "netflix", label: { default: "Netflix" } }],
+            columns: [{ id: "good", label: { default: "Good" } }],
+          },
+        ],
+      };
+      const withMatrix = {
+        ...updateSurveyInput,
+        blocks: [...updateSurveyInput.blocks, matrixBlock],
+      } as unknown as TSurvey;
+
+      test("follows a matrix reorder where quotas are licensed", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.surveyQuota.findMany.mockResolvedValueOnce([]);
+
+        await updateSurvey(withMatrix);
+
+        expect(getIsQuotasEnabled).toHaveBeenCalledWith(mockOrganizationOutput.id);
+        expect(prisma.surveyQuota.findMany).toHaveBeenCalled();
+      });
+
+      test("leaves the quotas alone where quotas are not licensed", async () => {
+        vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+        await updateSurvey(withMatrix);
+
+        expect(prisma.surveyQuota.findMany).not.toHaveBeenCalled();
+      });
     });
 
     // Note: Language handling tests (for languages.length > 0 fix) are covered in
@@ -1234,6 +1284,41 @@ describe("Tests for updateSurvey", () => {
         })
       );
     });
+  });
+
+  // ENG-6935: a legacy write is validated against the rows it leaves the survey with, once they are
+  // read. Without that check it is not validated at all.
+  test("a legacy write whose logic sets a variable the survey doesn't have is refused, and not written", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+    const [firstBlock, ...otherBlocks] = updateSurveyInput.blocks;
+    const dangling = {
+      ...updateSurveyInput,
+      blocks: [
+        {
+          ...firstBlock,
+          logic: [
+            {
+              id: "cldanglingrule000000000001",
+              conditions: { id: "cldanglinggroup00000000001", connector: "and", conditions: [] },
+              actions: [
+                {
+                  id: "cldanglingaction0000000001",
+                  objective: "calculate",
+                  variableId: "clnosuchvariable0000000001",
+                  operator: "assign",
+                  value: { type: "static", value: 1 },
+                },
+              ],
+            },
+          ],
+        },
+        ...otherBlocks,
+      ],
+    } as TSurvey;
+    expect(dangling.embeddedFields).toBeUndefined();
+
+    await expect(updateSurvey(dangling)).rejects.toThrow(ValidationError);
+    expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 
   describe("reserved names for newly declared fields", () => {

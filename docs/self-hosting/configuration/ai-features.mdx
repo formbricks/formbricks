@@ -18,7 +18,7 @@ Wiring up an LLM takes two steps:
 <Steps>
   <Step title="Point the instance at a model">
     Set `AI_PROVIDER`, `AI_MODEL`, and the credentials for that provider as environment variables, then
-    restart your containers.
+    recreate the affected containers or roll out the pods.
   </Step>
   <Step title="Turn AI on for the organization">
     In the app, go to **Settings → Organization → General → Smart functionality (AI)** and enable the toggle.
@@ -45,36 +45,13 @@ GPU-capable hosts.
 
 ### Docker Compose
 
-The Docker stack deploys the Qwen/vLLM runtime through an opt-in Compose profile. It needs a GPU-capable Docker
-host with the NVIDIA Container Toolkit installed.
-
-```bash
-COMPOSE_PROFILES=qwen
-AI_PROVIDER=openai-compatible
-AI_MODEL=qwen3-14b-awq
-AI_OPENAI_COMPATIBLE_BASE_URL=http://vllm:8000/v1
-AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
-AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
-```
-
-If you use the optional taxonomy service and want it to share the bundled Qwen runtime, start Docker Compose with
-`COMPOSE_PROFILES=qwen,taxonomy` and point `TAXONOMY_LLM_BASE_URL` at `http://vllm:8000/v1`.
+Follow the [Docker runtime setup](/self-hosting/configuration/ai-deployment#enable-bundled-qwen%2Fvllm-for-ai)
+for the Qwen profile, environment settings and health checks.
 
 ### Kubernetes Helm
 
-The Formbricks Helm chart deploys the same runtime on GPU-capable Kubernetes nodes.
-
-```yaml
-llm:
-  enabled: true
-```
-
-When `llm.enabled` is true, the chart deploys the vLLM router and Qwen serving engine. By default it also points
-the Formbricks app at the in-cluster OpenAI-compatible endpoint by injecting the required `AI_*` environment
-variables.
-
-Set `llm.autoConfigureApp=false` if you want the chart to deploy Qwen/vLLM but prefer to configure the app
-provider manually.
+Follow the [Kubernetes runtime setup](/self-hosting/configuration/ai-deployment#optional-bundled-qwen%2Fvllm-for-ai)
+for chart values, GPU prerequisites and manual provider overrides.
 
 ### Your own endpoint
 
@@ -146,60 +123,7 @@ provider configuration, and the server log records the failure without the secre
 
 ## Longer timeouts
 
-Local models can take longer to generate a response, especially through a tunnel or gateway. Set
-`AI_TIMEOUT_MULTIPLIER` to give every web app AI operation more time. It accepts numbers from `1` to `10`,
-including decimals such as `1.5`. The default is `1`; leaving it unset or blank preserves today's limits.
-Invalid values prevent the app from starting.
-
-| Operation | Default | With `AI_TIMEOUT_MULTIPLIER=3` |
-| --- | --- | --- |
-| AI chart creation | 30 seconds | 90 seconds |
-| Survey generation, translation, example responses, and each QSF AI call | 45 seconds | 135 seconds |
-| Complete QSF import | 120 seconds | 360 seconds |
-
-The call budget includes retries. QSF attempts share their call's budget and are also limited by the remaining
-import deadline; five seconds remain reserved for assembling the draft. The setting applies to every AI
-provider configured for the web app. Hub and taxonomy have their own configuration, and OAuth token requests
-retain their separate ten-second timeout.
-
-<Steps>
-  <Step title="Set the multiplier">
-    For Docker Compose, add this to `docker/.env`:
-
-    ```bash
-    AI_TIMEOUT_MULTIPLIER=3
-    ```
-
-    For Helm, set the application environment in your values:
-
-    ```yaml
-    deployment:
-      env:
-        AI_TIMEOUT_MULTIPLIER: "3"
-    ```
-  </Step>
-  <Step title="Apply the environment change">
-    From the Docker Compose directory, recreate the app container so it reads the updated environment:
-
-    ```bash
-    docker compose up -d --force-recreate formbricks
-    ```
-
-    For Kubernetes, apply your Helm values with your usual upgrade command and let the app pods restart.
-  </Step>
-  <Step title="Verify a slow operation">
-    Generate a survey or translate one against your model and confirm it finishes. Pressing **Stop** during
-    survey generation still cancels the model request immediately. To restore the default limits, set the
-    multiplier to `1` and apply the environment change again.
-  </Step>
-</Steps>
-
-<Note>
-  Your ingress, reverse tunnel, gateway, and model server can impose shorter limits. Increase those limits
-  as needed: non-streaming operations may send no response until generation finishes. Survey generation and
-  QSF imports send a keepalive after ten seconds of silence, but that does not override a proxy's maximum
-  request duration or a provider's own timeout.
-</Note>
+For slow models, configure [AI timeouts](/self-hosting/configuration/ai-timeouts) and check your proxy limits.
 
 ## Google Cloud
 
@@ -295,3 +219,7 @@ The usual causes are `AI_MODEL` left unset, credentials that do not match the ch
 
 The full list of `AI_*` variables, including the optional ones, is in the [environment variables
 reference](/self-hosting/configuration/environment-variables).
+
+## Deployment examples
+
+See [AI deployment options](/self-hosting/configuration/ai-deployment) for optional Docker and Kubernetes runtime configuration.

@@ -537,7 +537,7 @@ paths:
                     $ref: '#/components/schemas/CustomCssWarnings'
         '400':
           description: |
-            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown or forbidden fields carry `code: unsupported_field` (e.g. `distribution` on a link survey); omissions carry `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
+            Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown or forbidden fields carry `code: unsupported_field` (e.g. `distribution` on a link survey); omissions carry `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`. Typed Embedded Data that cannot be taken as sent is refused here too, naming each path in `invalid_params`: `embeddedFields` and the legacy `variables` / `hiddenFields` sent together but describing different fields, an `embeddedFields` entry linking a `key` the workspace library does not have, or a field the legacy format could not store.
           content:
             application/problem+json:
               schema:
@@ -1087,8 +1087,19 @@ paths:
                               required: true
                       endings: []
                       hiddenFields:
-                        enabled: false
+                        enabled: true
+                        fieldIds:
+                          - plan_tier
                       variables: []
+                      embeddedFields:
+                        - storageKey: plan_tier
+                          key: plan_tier
+                          name: Plan tier
+                          source: ingested
+                          dataType: string
+                          defaultValue: free
+                          locked: true
+                      startLogic: []
                       customCss: null
                 filtered:
                   summary: Language-filtered projection with ?lang=de-DE
@@ -1137,6 +1148,8 @@ paths:
                       hiddenFields:
                         enabled: false
                       variables: []
+                      embeddedFields: []
+                      startLogic: []
                       customCss: null
         '400':
           description: Invalid survey id, unsupported query parameter, unknown language, or unsupported legacy survey shape
@@ -1194,6 +1207,14 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchSurveyRequest'
             examples:
+              linkLibraryField:
+                summary: Set the survey's Embedded Data, linking a library field by key
+                value:
+                  embeddedFields:
+                    - key: plan_tier
+                    - name: region
+                      source: ingested
+                      defaultValue: emea
               renameSurvey:
                 summary: Rename a survey
                 value:
@@ -1256,7 +1277,7 @@ paths:
                     $ref: '#/components/schemas/CustomCssWarnings'
         '400':
           description: |
-            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown or unsupported fields (`distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution`/`targeting` on a link survey; a changed server-owned field such as `type` is **422** `read_only_field`, not this); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
+            Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown or unsupported fields (`distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution`/`targeting` on a link survey; a changed server-owned field such as `type` is **422** `read_only_field`, not this); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`. Typed Embedded Data that cannot be taken as sent is refused here too, naming each path in `invalid_params`: `embeddedFields` and the legacy `variables` / `hiddenFields` sent together but describing different fields, an `embeddedFields` entry linking a `key` the workspace library does not have, or a field the legacy format could not store.
           content:
             application/problem+json:
               schema:
@@ -2194,6 +2215,7 @@ paths:
                         endingId: cmpthankyou00000000000000
                         language: de
                         outcome: null
+                        notShown: null
                         durationSeconds: 107.9
                         resolution:
                           labelPolicy: currentSurveyDefinition
@@ -2875,6 +2897,7 @@ paths:
                       endingId: cmpthankyou00000000000000
                       language: de
                       outcome: null
+                      notShown: null
                       durationSeconds: 8.2
                       resolution:
                         labelPolicy: currentSurveyDefinition
@@ -3016,6 +3039,7 @@ paths:
                       endingId: null
                       language: null
                       outcome: null
+                      notShown: null
                       resolution:
                         labelPolicy: currentSurveyDefinition
                         labelsLanguage: null
@@ -8425,6 +8449,135 @@ components:
         showResponseCount:
           type: boolean
       additionalProperties: false
+    SurveyDynamicReference:
+      type: object
+      description: Dynamic reference to another value in the survey document.
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - element
+            - variable
+            - hiddenField
+            - reserved
+        value:
+          type: string
+          description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
+        meta:
+          type: object
+          description: 'On a matrix row condition: `row`, the 0-based position of the row, and `rowId`, its id. The id is read first and wins when the two disagree, so the condition survives reordering; it must be a row of the matrix. Either may be sent alone: the other is filled in on write. Positions stay for the previous release, which reads them only.'
+          additionalProperties:
+            type: string
+      additionalProperties: false
+    SurveyLogicOperand:
+      oneOf:
+        - type: object
+          required:
+            - type
+            - value
+          properties:
+            type:
+              type: string
+              enum:
+                - static
+            value:
+              oneOf:
+                - type: string
+                - type: number
+                - type: array
+                  items:
+                    type: string
+              description: On a matrix row condition, the 0-based position of the column (a list of positions for `isAnyOf`). Kept next to `columnId` / `columnIds` for the previous release, which reads positions only; every write rewrites it from the ids.
+            columnId:
+              type: string
+              minLength: 1
+              description: 'On a matrix row condition, the id of the column. Read before `value` and wins when the two disagree, so the condition survives reordering. Must be a column of the matrix. Optional: when only `value` is sent, the id is filled in from the position on write.'
+            columnIds:
+              type: array
+              items:
+                type: string
+                minLength: 1
+              description: On a matrix row condition with `isAnyOf`, the ids of the columns `value` lists. Read before `value`, like `columnId`.
+          additionalProperties: false
+        - $ref: '#/components/schemas/SurveyDynamicReference'
+    SurveyCondition:
+      type: object
+      description: |
+        Single condition. Operators such as `isSubmitted`, `isSkipped`, `isClicked`, `isAccepted`,
+        `isBooked`, `isSet`, and `isEmpty` do not use `rightOperand`; comparison operators do.
+      required:
+        - id
+        - leftOperand
+        - operator
+      properties:
+        id:
+          type: string
+          format: cuid2
+        leftOperand:
+          $ref: '#/components/schemas/SurveyDynamicReference'
+        operator:
+          type: string
+          enum:
+            - equals
+            - doesNotEqual
+            - contains
+            - doesNotContain
+            - startsWith
+            - doesNotStartWith
+            - endsWith
+            - doesNotEndWith
+            - isSubmitted
+            - isSkipped
+            - isGreaterThan
+            - isLessThan
+            - isGreaterThanOrEqual
+            - isLessThanOrEqual
+            - equalsOneOf
+            - includesAllOf
+            - includesOneOf
+            - doesNotIncludeOneOf
+            - doesNotIncludeAllOf
+            - isClicked
+            - isNotClicked
+            - isAccepted
+            - isBefore
+            - isAfter
+            - isBooked
+            - isPartiallySubmitted
+            - isCompletelySubmitted
+            - isSet
+            - isNotSet
+            - isEmpty
+            - isNotEmpty
+            - isAnyOf
+        rightOperand:
+          $ref: '#/components/schemas/SurveyLogicOperand'
+      additionalProperties: false
+    SurveyConditionGroup:
+      type: object
+      required:
+        - id
+        - connector
+        - conditions
+      properties:
+        id:
+          type: string
+          format: cuid2
+        connector:
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/SurveyCondition'
+              - $ref: '#/components/schemas/SurveyConditionGroup'
+      additionalProperties: false
     SurveyElementBase:
       type: object
       required:
@@ -8475,6 +8628,10 @@ components:
         isDraft:
           type: boolean
           description: Draft marker used by the editor and future update rules.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the element is shown only when this condition group matches, re-evaluated live as answers above it on the same page change. A hidden element is not validated (a hidden required element never blocks submission) and its answer is not submitted. Conditions use the same operands and operators as block `logic`. Reference rule: an element''s show-if may use answers from earlier blocks and from elements above it in the same block, never itself or anything below it; a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for an element that is always shown.'
     SurveyQuestionCode:
       type: string
       maxLength: 30
@@ -8615,6 +8772,10 @@ components:
             validation:
               $ref: '#/components/schemas/SurveyValidation'
       unevaluatedProperties: false
+    SurveyOptionsCopiedFrom:
+      type: string
+      minLength: 1
+      description: 'Copied options: the id of an earlier element whose options this element copies ("only the brands you know"). Choices copy from a single select, multi select or ranking; pictures from a picture selection (matrix rows are not copied: give rows a `showIf` on the source instead). Write the copies yourself: each copied option keeps the source option''s `id` and `code`, and carries a `showIf` "picked in the source" (`includesOneOf` with its own id, or `equals` when the source is a single select), so the element offers exactly the options picked there. Copied codes follow the source''s: a code sent for a copy is replaced by the source option''s. Fixed options next to the copies (such as "None of these", id `none`) get the next code free in every linked element. The source must exist (`dangling_reference`), sit in an earlier block or above this element on its block (`misordered_reference`), and have options of the same kind (`invalid_reference`). To bring in options the source gained later, add them the same way.'
     SurveyAnswerCode:
       type: string
       maxLength: 20
@@ -8633,6 +8794,13 @@ components:
           $ref: '#/components/schemas/TranslatableText'
         code:
           $ref: '#/components/schemas/SurveyAnswerCode'
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Option show-if: the option (or matrix row or column) is offered only when this condition group matches, re-evaluated live as earlier answers change. It may use what its element''s show-if may use: answers from earlier blocks and from elements above its element in the same block, never its own element or anything below (`misordered_reference` at the exact condition path). A question left with no option to offer is skipped and recorded as not shown. Omit it, or send an empty group, for an option that is always offered. Allowed on published surveys.'
+        hidden:
+          type: boolean
+          description: 'Hidden: the option is never offered, whatever its `showIf` says, and is recorded as not shown. Use it to retire an option on a published survey instead of deleting it (deleting an option that existed at launch is refused): it keeps its id, answer code and earlier answers, and stays in results labelled Hidden.'
       additionalProperties: false
     SurveyShuffleOption:
       type: string
@@ -8661,6 +8829,8 @@ components:
               type: string
               enum:
                 - multipleChoiceSingle
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2
@@ -8686,6 +8856,8 @@ components:
               type: string
               enum:
                 - multipleChoiceMulti
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2
@@ -8801,6 +8973,13 @@ components:
           allOf:
             - $ref: '#/components/schemas/TranslatableText'
           description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty to fall back to the positional label ("Option 1", "Option 2", …); a choice image is never decorative, since the respondent selects it.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Option show-if: the option (or matrix row or column) is offered only when this condition group matches, re-evaluated live as earlier answers change. It may use what its element''s show-if may use: answers from earlier blocks and from elements above its element in the same block, never its own element or anything below (`misordered_reference` at the exact condition path). A question left with no option to offer is skipped and recorded as not shown. Omit it, or send an empty group, for an option that is always offered. Allowed on published surveys.'
+        hidden:
+          type: boolean
+          description: 'Hidden: the option is never offered, whatever its `showIf` says, and is recorded as not shown. Use it to retire an option on a published survey instead of deleting it (deleting an option that existed at launch is refused): it keeps its id, answer code and earlier answers, and stays in results labelled Hidden.'
       additionalProperties: false
     SurveyPictureSelectionElement:
       allOf:
@@ -8818,6 +8997,8 @@ components:
             allowMulti:
               type: boolean
               default: false
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2
@@ -8981,6 +9162,8 @@ components:
               type: string
               enum:
                 - ranking
+            optionsCopiedFrom:
+              $ref: '#/components/schemas/SurveyOptionsCopiedFrom'
             choices:
               type: array
               minItems: 2
@@ -9151,29 +9334,15 @@ components:
         Survey element/question inside a block. Element ids are stable public identifiers used by
         logic, recall strings, response data, quotas, integrations, and analysis. `type` selects the
         allowed shape; unsupported fields are rejected instead of ignored.
-    SurveyDynamicReference:
-      type: object
-      description: Dynamic reference to another value in the survey document.
-      required:
-        - type
-        - value
-      properties:
-        type:
-          type: string
-          enum:
-            - element
-            - variable
-            - hiddenField
-            - reserved
-        value:
-          type: string
-          description: Element id, variable id, hidden field id, or — for `reserved` — the name of an Embedded Data field-catalog entry (`country`, `deviceType`, `utmSource`, …). Reserved names are checked for non-emptiness only, deliberately not against the catalog, so a survey authored against a newer catalog still parses on an older self-hosted deployment.
-        meta:
-          type: object
-          additionalProperties:
-            type: string
-      additionalProperties: false
-    SurveyLogicOperand:
+    SurveyExpression:
+      description: |
+        One node of a Set value expression: a fixed value, a reference, or a function call.
+
+        **Leaves.** `static` is a number or text (a text `2026-03-01` counts as a date where one is expected). `element` is an answer, by element id: rating, NPS, CSAT, CES and number open text are numbers; other open text is text; a date question is a date; a single select yields its answer code as text. Other question types can't be used. `variable` is a computed field and `hiddenField` an ingested field, by storage key, typed by their `dataType`; `reserved` is a reserved field by name.
+
+        **Functions** (`call`): `add`, `multiply`, `min`, `max` take 2–50 numbers; `subtract` and `divide` exactly 2 (÷ 0 gives empty); `round` a number and optional fixed decimals (0–10, rounding half away from zero); `abs` 1 number; `ifEmpty` a value and a fallback of the same type; `concat` 2–50 values of any type (numbers and dates become text); `now` none (the device clock as a UTC ISO timestamp); `daysBetween` 2 dates (UTC calendar days from the first to the second, negative allowed).
+
+        **Empty values.** An unanswered question or unset field is empty, and so is a value that isn't a number where a number is needed; every function except `ifEmpty` then gives empty.
       oneOf:
         - type: object
           required:
@@ -9186,91 +9355,83 @@ components:
                 - static
             value:
               oneOf:
-                - type: string
                 - type: number
-                - type: array
-                  items:
-                    type: string
+                - type: string
+                  maxLength: 5000
           additionalProperties: false
         - $ref: '#/components/schemas/SurveyDynamicReference'
-    SurveyCondition:
+        - type: object
+          required:
+            - type
+            - fn
+            - args
+          properties:
+            type:
+              type: string
+              enum:
+                - call
+            fn:
+              type: string
+              enum:
+                - add
+                - subtract
+                - multiply
+                - divide
+                - round
+                - min
+                - max
+                - abs
+                - ifEmpty
+                - concat
+                - now
+                - daysBetween
+            args:
+              type: array
+              maxItems: 50
+              items:
+                $ref: '#/components/schemas/SurveyExpression'
+          additionalProperties: false
+    SurveyExpressionValue:
       type: object
       description: |
-        Single condition. Operators such as `isSubmitted`, `isSkipped`, `isClicked`, `isAccepted`,
-        `isBooked`, `isSet`, and `isEmpty` do not use `rightOperand`; comparison operators do.
+        The value of a Set value step: an expression tree, evaluated in the respondent's browser without `eval`. Validation refuses text in arithmetic, unknown functions, wrong argument counts, references that don't exist and a result type that doesn't match the target field, each at its exact path (`…value.value.args.1`). Trees are at most 12 levels deep and 200 nodes.
       required:
-        - id
-        - leftOperand
-        - operator
+        - type
+        - value
       properties:
-        id:
-          type: string
-          format: cuid2
-        leftOperand:
-          $ref: '#/components/schemas/SurveyDynamicReference'
-        operator:
+        type:
           type: string
           enum:
-            - equals
-            - doesNotEqual
-            - contains
-            - doesNotContain
-            - startsWith
-            - doesNotStartWith
-            - endsWith
-            - doesNotEndWith
-            - isSubmitted
-            - isSkipped
-            - isGreaterThan
-            - isLessThan
-            - isGreaterThanOrEqual
-            - isLessThanOrEqual
-            - equalsOneOf
-            - includesAllOf
-            - includesOneOf
-            - doesNotIncludeOneOf
-            - doesNotIncludeAllOf
-            - isClicked
-            - isNotClicked
-            - isAccepted
-            - isBefore
-            - isAfter
-            - isBooked
-            - isPartiallySubmitted
-            - isCompletelySubmitted
-            - isSet
-            - isNotSet
-            - isEmpty
-            - isNotEmpty
-            - isAnyOf
-        rightOperand:
-          $ref: '#/components/schemas/SurveyLogicOperand'
+            - expression
+        value:
+          $ref: '#/components/schemas/SurveyExpression'
       additionalProperties: false
-    SurveyConditionGroup:
-      type: object
-      required:
-        - id
-        - connector
-        - conditions
-      properties:
-        id:
-          type: string
-          format: cuid2
-        connector:
-          type: string
-          enum:
-            - and
-            - or
-        conditions:
-          type: array
-          items:
-            oneOf:
-              - $ref: '#/components/schemas/SurveyCondition'
-              - $ref: '#/components/schemas/SurveyConditionGroup'
-      additionalProperties: false
+      example:
+        type: expression
+        value:
+          type: call
+          fn: round
+          args:
+            - type: call
+              fn: add
+              args:
+                - type: element
+                  value: q1
+                - type: call
+                  fn: multiply
+                  args:
+                    - type: element
+                      value: q2
+                    - type: static
+                      value: 2
     SurveyCalculateAction:
       type: object
-      description: Updates a survey variable when the logic rule matches.
+      description: |
+        Updates a computed Embedded Data field when the logic rule matches.
+
+        **One-step calculations** apply `operator` to the field's current value and `value` (a fixed value or a reference). An empty current value counts as `0` (number) or `""` (text).
+
+        **Set value** (`operator: "assign"` with `value: { "type": "expression", "value": <tree> }`) sets the field to the result of an expression tree (see `SurveyExpression`), of any computed type including `date`. Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a default), dividing by zero gives empty, and an empty result clears the field. A step that always runs is a rule whose `conditions` is an empty `and` group.
       required:
         - id
         - objective
@@ -9288,7 +9449,7 @@ components:
         variableId:
           type: string
           format: cuid2
-          description: Variable id for `calculate`.
+          description: The computed field's `storageKey` (a legacy variable id).
         operator:
           type: string
           enum:
@@ -9298,8 +9459,11 @@ components:
             - subtract
             - multiply
             - divide
+          description: An `expression` value takes `assign` only.
         value:
-          $ref: '#/components/schemas/SurveyLogicOperand'
+          oneOf:
+            - $ref: '#/components/schemas/SurveyLogicOperand'
+            - $ref: '#/components/schemas/SurveyExpressionValue'
       additionalProperties: false
     SurveyRequireAnswerAction:
       type: object
@@ -9340,15 +9504,31 @@ components:
           format: cuid2
           description: Target block id or ending id.
       additionalProperties: false
+    SurveyMarkLowQualityAction:
+      type: object
+      description: 'Marks the response Low quality when the rule fires. The respondent sees nothing and carries on; the survey sends a one-way `markLowQuality: true` with its next response write, and the server sets the response''s `outcome` to `lowQuality`, exactly as a reviewer marking it does (it leaves the Analysis export and Dashboards, and can be restored). It never clears an outcome. Allowed in block rules and in `startLogic`, where it rides on the response''s first write: for example, to flag a respondent from a known-bad panel source (a URL parameter) while letting them finish.'
+      required:
+        - id
+        - objective
+      properties:
+        id:
+          type: string
+          format: cuid2
+        objective:
+          type: string
+          enum:
+            - markLowQuality
+      additionalProperties: false
     SurveyLogicAction:
       oneOf:
         - $ref: '#/components/schemas/SurveyCalculateAction'
         - $ref: '#/components/schemas/SurveyRequireAnswerAction'
         - $ref: '#/components/schemas/SurveyJumpToBlockAction'
+        - $ref: '#/components/schemas/SurveyMarkLowQualityAction'
       description: |
         Logic action. Keep referenced ids stable: `calculate.variableId` points to a variable id,
         `requireAnswer.target` points to an element id, and `jumpToBlock.target` points to a block id
-        or ending id.
+        or ending id. `markLowQuality` takes no target: it marks the response Low quality when the rule fires.
     SurveyBlockLogic:
       type: object
       description: Conditional logic rule evaluated at block level.
@@ -9400,6 +9580,10 @@ components:
           description: |
             Block or ending id used when no logic condition matches. Only valid when this same block
             has at least one `logic` rule; omit it for normal sequential flow.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the block is shown only when this condition group matches. A block whose show-if fails is skipped, and its `logic` still runs as if the block were submitted with no answers. A block whose elements are all hidden by their show-if is skipped the same way. Conditions use the same operands and operators as `logic`. Reference rule: a block''s show-if may use answers from earlier blocks only (plus hidden fields, variables and reserved fields); a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for a block that is always shown.'
         buttonLabel:
           $ref: '#/components/schemas/TranslatableText'
         backButtonLabel:
@@ -9571,6 +9755,84 @@ components:
       description: |
         Survey variable. Variable ids are stable references used by logic and calculation actions.
         Variable names are human-readable labels and must be unique within the survey.
+    SurveyStartLogic:
+      type: array
+      maxItems: 100
+      description: 'Rules before the first question. The survey runs them as soon as it loads, before the welcome card, and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`, `actions`), but only three actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is a screen-out: the respondent sees only that ending, and a finished response is stored that counts as Completed), `calculate`, to set a computed field, and `markLowQuality`, which marks the response Low quality with its first write (a screen-out''s finished response included). `requireAnswer` and any other action are rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the action''s `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The first jump wins, every `calculate` runs, and with no jump the respondent continues to the first block (or the start-at target). `[]` means the survey has none.'
+      items:
+        $ref: '#/components/schemas/SurveyBlockLogic'
+      example:
+        - id: clrule12345678901234567890
+          conditions:
+            id: clgrp123456789012345678901
+            connector: and
+            conditions:
+              - id: clcond12345678901234567890
+                leftOperand:
+                  type: hiddenField
+                  value: panel_id
+                operator: isNotSet
+          actions:
+            - id: clact123456789012345678901
+              objective: jumpToBlock
+              target: clend123456789012345678901
+    SurveyEmbeddedField:
+      type: object
+      description: |
+        One typed Embedded Data field the survey has. `embeddedFields` is the survey's complete set; the legacy `variables` (its computed fields) and `hiddenFields` (its ingested fields) are derived from it. Logic operands keep naming fields by storage key: a `variable` operand and a calculate action's `variableId` name a computed field's `storageKey`, a `hiddenField` operand an ingested field's.
+      required:
+        - storageKey
+        - key
+        - name
+        - source
+        - dataType
+        - defaultValue
+        - locked
+      properties:
+        storageKey:
+          type: string
+          pattern: ^[a-zA-Z0-9_-]+$
+          description: 'The survey''s address for the field: where responses store its value, and what logic names. A computed field''s is a cuid2 (its legacy variable id); an ingested field''s is the URL parameter or SDK key it arrives under (its legacy hidden field id).'
+          examples:
+            - plan_tier
+        key:
+          type:
+            - string
+            - 'null'
+          description: The workspace library key when the field is a linked library field, whose definition the workspace owns; `null` for a field local to this survey.
+          examples:
+            - plan_tier
+        name:
+          type: string
+          minLength: 1
+          description: Display name.
+          examples:
+            - Plan tier
+        source:
+          type: string
+          enum:
+            - computed
+            - ingested
+          description: '`computed`: set inside the survey by logic. `ingested`: arrives from outside, by URL parameter or SDK.'
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - boolean
+            - date
+          description: The type the value is read and coerced as. A computed field is `string`, `number` or `date`.
+        defaultValue:
+          type:
+            - string
+            - number
+            - boolean
+            - 'null'
+          description: A computed field's initial value; an ingested field's value when nothing arrives. Matches `dataType`; a `date` default is an ISO 8601 date or date-time string.
+        locked:
+          type: boolean
+          description: Ingested fields only. A locked field refuses values from outside the survey.
+      additionalProperties: false
     SurveyShowCondition:
       type: object
       description: |
@@ -10190,6 +10452,8 @@ components:
             - endings
             - hiddenFields
             - variables
+            - startLogic
+            - embeddedFields
             - customCss
           properties:
             id:
@@ -10259,6 +10523,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/SurveyVariable'
+            startLogic:
+              $ref: '#/components/schemas/SurveyStartLogic'
+            embeddedFields:
+              type: array
+              description: 'Typed Embedded Data (ADR 0028): the survey''s complete set of fields, which `variables` and `hiddenFields` are derived from. Library fields carry their `key`.'
+              items:
+                $ref: '#/components/schemas/SurveyEmbeddedField'
             distribution:
               allOf:
                 - $ref: '#/components/schemas/SurveyDistribution'
@@ -10530,6 +10801,10 @@ components:
           description: |
             Block or ending id used when no logic condition matches. Only valid when this same block
             has at least one `logic` rule; omit it for normal sequential flow.
+        showIf:
+          allOf:
+            - $ref: '#/components/schemas/SurveyConditionGroup'
+          description: 'Show-if: the block is shown only when this condition group matches. A block whose show-if fails is skipped, and its `logic` still runs as if the block were submitted with no answers. A block whose elements are all hidden by their show-if is skipped the same way. Conditions use the same operands and operators as `logic`. Reference rule: a block''s show-if may use answers from earlier blocks only (plus hidden fields, variables and reserved fields); a violation fails with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for a block that is always shown.'
         buttonLabel:
           $ref: '#/components/schemas/TranslatableText'
         backButtonLabel:
@@ -10591,11 +10866,59 @@ components:
         Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
         generated by the server. Provide an explicit cuid2 id when logic in the same request needs
         to reference this variable.
+    SurveyEmbeddedFieldInput:
+      type: object
+      description: |
+        One typed Embedded Data field to give the survey (the shape `GET` returns, with defaults).
+
+        **A local field** (`key` omitted or `null`) needs `name` and `source`. `dataType` defaults to `string`, `defaultValue` to `null`, `locked` to `false`. `storageKey` defaults to a new cuid2 for a computed field and to `name` for an ingested one.
+
+        **A library field** is linked by its `key` alone: the server fills in the definition the workspace library holds, and replaces any definition sent with it, because the workspace owns it. Its `storageKey` defaults to the address the survey already links it at, else to a new cuid2 (computed) or the key (ingested). A `key` the workspace library does not have is refused with **400** at `embeddedFields.<i>.key`; a `source` that contradicts the library's at `.source`.
+
+        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`, `number` or `date` (a computed date is stored as an ISO 8601 UTC string and is left out of the legacy `variables`); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`). No text value may contain a NULL byte (`\u0000`).
+      properties:
+        storageKey:
+          type: string
+          pattern: ^[a-zA-Z0-9_-]+$
+        key:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+          maxLength: 255
+          description: A workspace library key, to link that library field.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        source:
+          type: string
+          enum:
+            - computed
+            - ingested
+        dataType:
+          type: string
+          enum:
+            - string
+            - number
+            - boolean
+            - date
+        defaultValue:
+          type:
+            - string
+            - number
+            - boolean
+            - 'null'
+          maxLength: 1000
+          description: A text default is at most 1000 characters.
+        locked:
+          type: boolean
+      additionalProperties: false
     CreateSurveyRequest:
       type: object
       description: |
         Strict v3 survey creation document. This endpoint accepts survey structure only: name,
-        metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden fields, and variables.
+        metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden fields, variables, and rules before the first question (`startLogic`).
         App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
         It rejects legacy `questions` and out-of-scope settings such as styling, follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields, timestamps, and `createdBy`.
 
@@ -10695,6 +11018,16 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/CreateSurveyVariable'
+        startLogic:
+          allOf:
+            - $ref: '#/components/schemas/SurveyStartLogic'
+          default: []
+        embeddedFields:
+          type: array
+          maxItems: 300
+          description: 'Typed Embedded Data (ADR 0028): the survey''s complete set of computed and ingested fields, including workspace library fields linked by `key`. Optional: existing clients keep sending `variables` and `hiddenFields` alone, which work exactly as before. Sent alone, the legacy fields are derived from this list. Sent together with either legacy field, both have to describe the same fields — matched by storage key, comparing a variable''s name, type and value — or the request is refused with **400**, `invalid_params` naming each path where they differ. On create, an empty `variables` or `hiddenFields` counts as not sent.'
+          items:
+            $ref: '#/components/schemas/SurveyEmbeddedFieldInput'
         distribution:
           allOf:
             - $ref: '#/components/schemas/SurveyDistribution'
@@ -10956,7 +11289,7 @@ components:
 
         The server-owned fields `GET` returns — `id`, `workspaceId`, `type`, `createdAt`, `updatedAt`, `archivedAt`, `defaultLanguage` and `languages[].alias` — are accepted and verified, so a survey fetched with `GET` can be sent straight back. Echoing the value you were given is a no-op; changing one is a **422** `read_only_field`. `visibility`, `owner` and `access` are accepted the same way, but a changed value is a **422** `unsupported_field`: visibility changes go through `POST /api/v3/surveys/{surveyId}/visibility`. A round-tripped `updatedAt` additionally acts as an optimistic-concurrency precondition, and a stale one is rejected with **409**. `questions`, analytics, styling and scripts remain rejected outright. App surveys (stored `type: app`) additionally accept `distribution` and `targeting`; both are rejected for link surveys, and changing `targeting` filters requires the Contacts entitlement.
 
-        `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
+        `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, `variables`, `embeddedFields` and `startLogic`
         replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
         Non-default locale keys in translatable maps must be declared in `languages`; undeclared locale
         keys are rejected with `unsupported_locale`. To remove a language, remove it from both
@@ -11060,6 +11393,17 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/SurveyVariable'
+        startLogic:
+          anyOf:
+            - $ref: '#/components/schemas/SurveyStartLogic'
+            - type: 'null'
+          description: Replaces every rule before the first question. `null` or `[]` removes them; omit to keep them.
+        embeddedFields:
+          type: array
+          maxItems: 300
+          description: 'Typed Embedded Data (ADR 0028): the survey''s complete set of computed and ingested fields, including workspace library fields linked by `key`. Optional: existing clients keep sending `variables` and `hiddenFields` alone, which work exactly as before. Sent alone, the legacy fields are derived from this list. Sent together with either legacy field, both have to describe the same fields — matched by storage key, comparing a variable''s name, type and value — or the request is refused with **400**, `invalid_params` naming each path where they differ. Like the other arrays, it replaces the survey''s whole set; a field left out is removed (a library field is unlinked, never deleted).'
+          items:
+            $ref: '#/components/schemas/SurveyEmbeddedFieldInput'
         distribution:
           allOf:
             - $ref: '#/components/schemas/SurveyDistribution'
@@ -11648,6 +11992,50 @@ components:
                   items:
                     $ref: '#/components/schemas/SurveyVisibilityBlocker'
                   description: The same list `GET …/visibility` returns as `blockers[]`.
+    ResponseNotShown:
+      type: object
+      additionalProperties: false
+      description: |
+        What the respondent was **not shown**: the parts of the survey a show-if, a hidden option or a question left with no options kept from them, by stable ids. The survey records it while the respondent answers, so it says what was decided at answer time; editing a show-if later never changes it. Anything not listed was shown, or never reached.
+
+        An answer to an item that ended up hidden (after the respondent went back or changed an earlier answer) is removed from the response, so a listed element has no answer in `answers[]`. Read the base of a question as "everyone who reached it, minus those it lists".
+      properties:
+        blocks:
+          type: array
+          items:
+            type: string
+          description: 'Blocks the survey passed over: their show-if failed, or every question on them was hidden. Every question of a listed block was not shown.'
+        elements:
+          type: array
+          items:
+            type: string
+          description: Questions hidden by their show-if, or skipped because none of their options were left.
+        options:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Question id → the ids of its options that were not shown.
+        rows:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Matrix question id → the ids of its rows that were not shown.
+        columns:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Matrix question id → the ids of its columns that were not shown.
+      example:
+        blocks:
+          - k2v8m1q0y3d7h5s9t4n6p0ra
+        elements:
+          - apple_reason
     ResponseResolution:
       type: object
       description: |
@@ -12164,7 +12552,7 @@ components:
             - number
             - boolean
             - date
-          description: Declared type of `value`, so a consumer need not infer it. `computed` entries are only ever `string` or `number`, because survey variables are typed that narrowly.
+          description: 'Declared type of `value`, so a consumer need not infer it. `computed` entries are `string`, `number` or `date`: a computed date (set by a Set value formula such as `now()`) holds an ISO 8601 UTC string.'
         label:
           type: string
           description: Human-readable name for the key, in the resolved language where one exists.
@@ -12267,6 +12655,7 @@ components:
         - endingId
         - language
         - outcome
+        - notShown
         - resolution
         - answers
         - embeddedData
@@ -12323,6 +12712,12 @@ components:
             - lowQuality
             - null
           description: 'A reviewer''s verdict on the response; `null` when none. `lowQuality` hides the response from the Analysis export by default and from Feedback Records, and from nothing else: it is never deleted and every count, list, webhook and integration still includes it. Set through `PATCH /api/v3/responses/{responseId}` or `POST /api/v3/responses/batch-outcome`.'
+        notShown:
+          readOnly: true
+          anyOf:
+            - $ref: '#/components/schemas/ResponseNotShown'
+            - type: 'null'
+          description: 'What the respondent was not shown, as the survey recorded it while they answered. `null` when unknown: responses from before the record existed, or from an older cached survey. Read-only: only the survey writes it.'
         durationSeconds:
           readOnly: true
           type: number

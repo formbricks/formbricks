@@ -17,6 +17,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
   isSurveySchedulingDue,
@@ -79,9 +80,15 @@ vi.mock("@formbricks/database", () => {
       updateMany: vi.fn(),
     },
     embeddedData: {
+      findMany: vi.fn(),
       create: vi.fn(),
       deleteMany: vi.fn(),
       updateMany: vi.fn(),
+    },
+    // ENG-6934: a save that holds a matrix re-syncs its quotas' matrix conditions in the transaction.
+    surveyQuota: {
+      findMany: vi.fn(async () => []),
+      update: vi.fn(),
     },
     // Interactive transaction: run the callback with the mocked client as the tx client.
     $executeRaw: vi.fn(),
@@ -117,6 +124,10 @@ vi.mock("./targeting", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByWorkspaceId: vi.fn(),
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsQuotasEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/permission", () => ({
@@ -322,6 +333,7 @@ describe("patchV3Survey", () => {
       whitelabel: undefined,
     });
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
     vi.mocked(getActionClasses).mockResolvedValue([]);
     vi.mocked(resolveV3ContactsEntitlement).mockResolvedValue({
       resolvedOrganizationId: "org_1",
@@ -562,6 +574,7 @@ describe("patchV3Survey", () => {
         welcomeCard: currentSurvey.welcomeCard,
         blocks: currentSurvey.blocks,
         endings: currentSurvey.endings,
+        startLogic: [],
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
       },
@@ -718,6 +731,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
       },
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
       requestId: "req_1",
@@ -775,6 +789,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
       } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
       requestId: "req_1",
@@ -787,6 +802,42 @@ describe("patchV3Survey", () => {
     expect(single.code).toBe("age");
     expect(single.choices?.map((choice) => choice.code)).toEqual(["1", "2", "3"]);
     expect(added.code).toBe("q1");
+  });
+
+  test("writes the rules before the first question, and none as a database null (ENG-6932)", async () => {
+    const rule = {
+      id: "clrule12345678901234567890",
+      conditions: { id: "clgrp123456789012345678901", connector: "and" as const, conditions: [] },
+      actions: [{ id: "clact123456789012345678901", objective: "jumpToBlock" as const, target: "block-1" }],
+    };
+    const documentWith = (startLogic: (typeof rule)[]) =>
+      ({
+        name: currentSurvey.name,
+        status: currentSurvey.status,
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        showLanguageSwitch: null,
+        autoSelectLanguage: null,
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: currentSurvey.blocks,
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+        startLogic,
+      }) as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"];
+
+    for (const startLogic of [[rule], []]) {
+      await executeV3SurveyPatch({
+        currentSurvey: currentSurvey as TSurvey,
+        document: documentWith(startLogic),
+        languageRequests: [{ code: "en-US", default: true, enabled: true }],
+        requestId: "req_1",
+      });
+    }
+
+    const writes = vi.mocked(prisma.survey.update).mock.calls.map((call) => call[0].data.startLogic);
+    expect(writes).toEqual([[rule], Prisma.DbNull]);
   });
 
   test("rejects setting a non-draft status on an app survey with no triggers", async () => {
@@ -804,6 +855,7 @@ describe("patchV3Survey", () => {
           endings: currentSurvey.endings,
           hiddenFields: currentSurvey.hiddenFields,
           variables: currentSurvey.variables,
+          startLogic: [],
         } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
         languageRequests: [{ code: "en-US", default: true, enabled: true }],
         requestId: "req_1",
@@ -833,6 +885,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
       } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
       requestId: "req_1",
@@ -863,6 +916,7 @@ describe("patchV3Survey", () => {
         endings: currentSurvey.endings,
         hiddenFields: currentSurvey.hiddenFields,
         variables: currentSurvey.variables,
+        startLogic: [],
         ...overrides,
       }) as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"];
 
@@ -1085,6 +1139,97 @@ describe("patchV3Survey", () => {
     ).rejects.toThrow(V3SurveyReferenceValidationError);
 
     expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
+  describe("typed Embedded Data (ENG-6930)", () => {
+    const planTierRow = {
+      id: "clplantier00000000000000001",
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+      dataType: "string",
+      defaultValue: null,
+      locked: true,
+    };
+
+    beforeEach(() => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([planTierRow] as never);
+    });
+
+    test("writes embeddedFields as rows: a library field linked by key, a local one created", async () => {
+      await patchV3Survey(currentSurvey, {
+        embeddedFields: [
+          { key: "plan_tier" },
+          { name: "region", source: "ingested", dataType: "string", defaultValue: "emea", locked: true },
+        ],
+      });
+
+      // The library field is linked, never copied: its row is the workspace's.
+      expect(prisma.surveyEmbeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ storageKey: "plan_tier", embeddedDataId: planTierRow.id }),
+        })
+      );
+      expect(prisma.embeddedData.create).toHaveBeenCalledTimes(1);
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ key: null, name: "region", defaultValue: "emea", locked: true }),
+        })
+      );
+      // The legacy columns written beside the rows are derived from them.
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { variables: [], hiddenFields: { enabled: true, fieldIds: ["plan_tier", "region"] } },
+        })
+      );
+    });
+
+    test("refuses a library key the workspace does not have, at its path, and writes nothing", async () => {
+      await expect(
+        patchV3Survey(currentSurvey, { embeddedFields: [{ key: "churn_risk" }] })
+      ).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.key" })],
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("refuses a key the caller sent beside a library key, at its path, and writes nothing", async () => {
+      await expect(
+        patchV3Survey(currentSurvey, { embeddedFields: [{ key: "plan_tier", foo: 1 }] })
+      ).rejects.toMatchObject({
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.foo" })],
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("refuses both formats when they disagree, and writes nothing", async () => {
+      await expect(
+        patchV3Survey(currentSurvey, {
+          embeddedFields: [{ key: "plan_tier" }],
+          hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        })
+      ).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+        invalidParams: [
+          expect.objectContaining({ name: "hiddenFields.fieldIds.0" }),
+          expect.objectContaining({ name: "embeddedFields.0" }),
+        ],
+      });
+
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("keeps the legacy-only write exactly as before: no library lookup, no typed rows", async () => {
+      await patchV3Survey(currentSurvey, { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } });
+
+      expect(prisma.embeddedData.findMany).not.toHaveBeenCalled();
+      expect(prisma.embeddedData.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ name: "utm_source", locked: false }) })
+      );
+    });
   });
 
   test("rejects invalid patch documents before updating", async () => {
@@ -1689,6 +1834,154 @@ describe("patchV3Survey", () => {
           { requestId: "req", organizationId: "org_1" }
         )
       ).rejects.toBeInstanceOf(V3SurveyReferenceValidationError);
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+  });
+
+  // ENG-6934: PATCH, the block routes and the MCP tools all end in patchV3Survey, so the matrix ids
+  // written here are written for all of them.
+  describe("matrix conditions by id (ENG-6934)", () => {
+    const grid = (rows: string[], columns: string[]) => ({
+      id: "grid",
+      type: "matrix" as const,
+      headline: { "en-US": "Rate each service" },
+      required: false,
+      shuffleOption: "none" as const,
+      rows: rows.map((id) => ({ id, label: { "en-US": id } })),
+      columns: columns.map((id) => ({ id, label: { "en-US": id } })),
+    });
+    const blocksWith = (
+      matrix: ReturnType<typeof grid>,
+      meta: Record<string, string>,
+      rightOperand: Record<string, unknown>
+    ) => [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Ratings",
+        elements: [matrix],
+        logic: [
+          {
+            id: "clrule34567890123456789012",
+            conditions: {
+              id: "clgrp234567890123456789012",
+              connector: "and",
+              conditions: [
+                {
+                  id: "clcond4567890123456789012",
+                  leftOperand: { type: "element", value: "grid", meta },
+                  operator: "equals",
+                  rightOperand: { type: "static", ...rightOperand },
+                },
+              ],
+            },
+            actions: [{ id: "clact234567890123456789012", objective: "requireAnswer", target: "why" }],
+          },
+        ],
+      },
+      {
+        id: "clbk2234567890123456789012",
+        name: "Follow-up",
+        elements: [{ id: "why", type: "openText", headline: { "en-US": "Why?" }, required: false }],
+      },
+    ];
+    const writtenCondition = () => {
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data as {
+        blocks: { logic?: { conditions: { conditions: unknown[] } }[] }[];
+      };
+      return data.blocks[0].logic?.[0].conditions.conditions[0];
+    };
+
+    test("writes the ids next to positions a caller sent alone", async () => {
+      const blocks = blocksWith(grid(["netflix", "disney"], ["poor", "good"]), { row: "1" }, { value: "0" });
+
+      await patchV3Survey(currentSurvey, { blocks }, { requestId: "req_matrix_1", organizationId: "org_1" });
+
+      expect(writtenCondition()).toMatchObject({
+        leftOperand: { meta: { row: "1", rowId: "disney" } },
+        rightOperand: { value: "0", columnId: "poor" },
+      });
+    });
+
+    test("accepts the id form and rewrites stale positions from the ids", async () => {
+      const blocks = blocksWith(
+        grid(["disney", "netflix"], ["good", "poor"]),
+        { row: "0", rowId: "netflix" },
+        { value: "1", columnId: "good" }
+      );
+
+      await patchV3Survey(currentSurvey, { blocks }, { requestId: "req_matrix_2", organizationId: "org_1" });
+
+      expect(writtenCondition()).toMatchObject({
+        leftOperand: { meta: { row: "1", rowId: "netflix" } },
+        rightOperand: { value: "0", columnId: "good" },
+      });
+    });
+
+    test("re-syncs the survey's quotas after a row reorder, in the same transaction", async () => {
+      const quotaCondition = (row: string) => ({
+        id: "qc1",
+        leftOperand: { type: "element", value: "grid", meta: { row, rowId: "netflix" } },
+        operator: "equals",
+        rightOperand: { type: "static", value: "0", columnId: "good" },
+      });
+      vi.mocked(prisma.surveyQuota.findMany).mockResolvedValueOnce([
+        { id: "quota_1", logic: { connector: "and", conditions: [quotaCondition("0")] } },
+      ] as never);
+      const blocks = blocksWith(
+        grid(["disney", "netflix"], ["good", "poor"]),
+        { row: "1", rowId: "netflix" },
+        { value: "0", columnId: "good" }
+      );
+
+      await patchV3Survey(
+        currentSurvey,
+        { blocks },
+        { requestId: "req_matrix_quota", organizationId: "org_1" }
+      );
+
+      expect(prisma.surveyQuota.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "quota_1" },
+          data: { logic: { connector: "and", conditions: [quotaCondition("1")] } },
+        })
+      );
+    });
+
+    test("leaves the quotas alone where quotas are not licensed", async () => {
+      vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
+      const blocks = blocksWith(
+        grid(["disney", "netflix"], ["good", "poor"]),
+        { row: "1", rowId: "netflix" },
+        { value: "0", columnId: "good" }
+      );
+
+      await patchV3Survey(
+        currentSurvey,
+        { blocks },
+        { requestId: "req_matrix_unlicensed", organizationId: "org_1" }
+      );
+
+      expect(getIsQuotasEnabled).toHaveBeenCalledWith("org_1");
+      expect(prisma.surveyQuota.findMany).not.toHaveBeenCalled();
+      expect(prisma.surveyQuota.update).not.toHaveBeenCalled();
+    });
+
+    test("refuses a column id the matrix doesn't have, with its path, and does not write", async () => {
+      const blocks = blocksWith(
+        grid(["netflix", "disney"], ["poor", "good"]),
+        { row: "0", rowId: "netflix" },
+        { value: "1", columnId: "great" }
+      );
+
+      await expect(
+        patchV3Survey(currentSurvey, { blocks }, { requestId: "req_matrix_3", organizationId: "org_1" })
+      ).rejects.toMatchObject({
+        invalidParams: [
+          expect.objectContaining({
+            name: "blocks.0.logic.0.conditions.conditions.0.rightOperand.columnId",
+          }),
+        ],
+      });
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
   });

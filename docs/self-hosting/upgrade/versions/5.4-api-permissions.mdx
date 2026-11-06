@@ -1,0 +1,76 @@
+---
+title: "5.4.0: Feedback API permissions"
+description: "Detailed actions linked from the 5.4 upgrade checklist."
+icon: "arrow-up-right-dots"
+---
+
+**Introduced in:** 5.4.0.
+**Applies to:** API-key integrations that update or delete feedback records.
+
+[Back to the 5.4 checklist](/self-hosting/upgrade/versions/5.4).
+
+### Feedback record mutations by API key (action required for some integrations)
+
+**Applies to API-key authentication**, including MCP tools using a key. Deleting feedback records now
+requires `manage`. Updating or deleting records in a dataset assigned to multiple workspaces is denied,
+regardless of key permissions, because a record cannot be attributed to one workspace.
+
+| Operation | Before | After |
+| --- | --- | --- |
+| `GET`, search, similar, count | `read` | unchanged |
+| `POST /api/v3/feedbackRecords` (create) | `write` | unchanged |
+| `PATCH /api/v3/feedbackRecords/{id}` | `write` | `write`, **and** the dataset assigned to one workspace |
+| `DELETE /api/v3/feedbackRecords/{id}` | `write` | `manage`, **and** the dataset assigned to one workspace |
+| `DELETE /api/v3/feedbackRecords?tenant_id=…` | `write` | `manage`, **and** the dataset assigned to one workspace |
+
+The same applies to the MCP tools `update_feedback_record` and `delete_feedback_record` when the client
+authenticates with an API key. The required MCP **scope** is unchanged — both remain `feedbackRecords:write`.
+
+<Note>
+  **Only API keys are affected.** Users signing in through the UI, OAuth/MCP connections, and SAML/OIDC
+  sessions authorize through their organization role instead, which is unchanged: organization owners and
+  managers can still update and delete feedback records, including in a shared dataset. Reading, searching
+  and creating records are unaffected for every principal.
+</Note>
+
+Open a [SQL session to the Formbricks application database](/self-hosting/upgrade/troubleshooting#open-a-sql-session)
+with a read-capable account, then run this query. It lists shared datasets that would refuse API-key mutations;
+**no rows means no shared datasets matched**:
+
+```sql
+SELECT d.id, d.name, d."organizationId", COUNT(w."workspaceId") AS workspaces
+FROM "FeedbackDirectory" d
+JOIN "FeedbackDirectoryWorkspace" w ON w."feedbackDirectoryId" = d.id
+WHERE d."isArchived" = false
+GROUP BY d.id, d.name, d."organizationId"
+HAVING COUNT(w."workspaceId") > 1;
+```
+
+For each returned dataset used by a mutating integration, choose one workspace in
+**Settings → Organization → Datasets**, or use a supported organization-owner/manager authentication flow.
+Check the integration's intended access before broadening permissions.
+
+#### What to do before upgrading
+
+<Steps>
+  <Step title="Identify shared datasets">
+    Run the query above. If it returns rows, decide how each affected integration should proceed.
+  </Step>
+  <Step title="Replace affected API keys">
+    For integrations that delete records, create a replacement key with `manage` access to the required
+    workspace. Existing key permissions cannot be edited. Update the integration, verify it with the new
+    key, then revoke the old key.
+  </Step>
+  <Step title="Test the integrations">
+    After deploying, smoke test your feedback-record integrations. Two log lines identify an integration
+    caught by the new rules — grep for `Feedback record mutation denied` (the MCP path, which names the
+    reason) and for `Feedback records gateway authorization denied` (the REST path, which logs
+    `verdict: "deny"` alongside the `operation` and `feedbackDirectoryId`).
+  </Step>
+</Steps>
+
+#### Rollback
+
+Replacing an API key does not undo or require a database migration. To reduce permissions, issue another
+key with only the required access, update and test the integration, then revoke the broader key. For a full application rollback, also review the [database/authentication recovery
+notes](/self-hosting/upgrade/versions/5.4-database#recovery-across-5-4) and Hub changes; the access rule alone does not establish rollback safety.

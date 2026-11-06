@@ -88,6 +88,21 @@ describe("the envelope", () => {
     expect(serializer.toResource(row({ outcome }), survey()).outcome).toBe(outcome);
   });
 
+  /** ENG-6936: the not-shown record, read-only, as stored; `null` when unknown. */
+  test.each([null, { blocks: ["blk"], elements: ["q1"], options: { q1: ["a"] } }])(
+    "carries the not-shown record %j on both views",
+    (notShown) => {
+      const serializer = createV3ResponseSerializer();
+
+      expect(serializer.toListItem(row({ notShown }), survey()).notShown).toEqual(notShown);
+      expect(serializer.toResource(row({ notShown }), survey()).notShown).toEqual(notShown);
+    }
+  );
+
+  test("a row read without the column still says unknown, never omits the key", () => {
+    expect(listItem(row({ notShown: undefined }))).toHaveProperty("notShown", null);
+  });
+
   /** Machine-facing timestamps are ISO-8601, never a `Date` and never localized. */
   test("timestamps serialize as ISO strings", () => {
     const item = listItem();

@@ -1,3 +1,6 @@
+import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
+import { formatStoredDateValue } from "@/lib/utils/datetime";
+
 /**
  * The text an analysis surface shows for one stored Embedded Data value (ENG-3266).
  *
@@ -28,4 +31,23 @@ export const displayEmbeddedValue = (value: unknown): string | null => {
   if (typeof value === "boolean") return String(value);
 
   return null;
+};
+
+/**
+ * A stored value as its field's type reads on an analysis surface: a `date` field's value in the
+ * app's date format (P65; a timestamp such as `now()` set keeps its time, in the viewer's time zone)
+ * with the stored value as `title`, anything else as {@link displayEmbeddedValue} has it. `null` when
+ * there is nothing to show.
+ */
+export const displayEmbeddedFieldValue = (
+  value: unknown,
+  dataType: TEmbeddedDataType,
+  locale: string,
+  timeZone?: string
+): { text: string; title?: string } | null => {
+  const text = displayEmbeddedValue(value);
+  if (text === null) return null;
+  if (dataType !== "date") return { text };
+  const formatted = formatStoredDateValue(text, locale, timeZone);
+  return formatted === null ? { text } : { text: formatted, title: text };
 };

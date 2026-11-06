@@ -480,6 +480,10 @@ post:
         `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`).
         Bare type, range, enum, and malformed-locale-map violations report the field `name` with a
         human-readable `reason` and no machine `code`.
+        Typed Embedded Data that cannot be taken as sent is refused here too, naming each path in
+        `invalid_params`: `embeddedFields` and the legacy `variables` / `hiddenFields` sent together
+        but describing different fields, an `embeddedFields` entry linking a `key` the workspace
+        library does not have, or a field the legacy format could not store.
       content:
         application/problem+json:
           schema:

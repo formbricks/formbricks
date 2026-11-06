@@ -46,6 +46,7 @@ import { lockSurveyVisibility } from "@/lib/authzed/survey";
 import {
   assertLinkableEmbeddedFields,
   assertWritableEmbeddedFields,
+  getLegacyWriteEmbeddedFields,
   reconcileEmbeddedData,
 } from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
@@ -74,6 +75,8 @@ import {
   getDestinationSettingTurnedOn,
 } from "@/modules/ee/creatives/lib/linked-creatives";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasMatrixElement, syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
@@ -171,6 +174,7 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   showConditions: true,
+  startLogic: true,
   autoComplete: true,
   publishOn: true,
   closeOn: true,
@@ -501,12 +505,22 @@ export type TUpdateSurveyOptions = {
   customCssPrincipal?: string;
 };
 
+/** Whether the workspace's organization is licensed for quotas; a workspace with none is not. */
+const getIsQuotasEnabledForWorkspace = async (workspaceId: string): Promise<boolean> => {
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
+  return organization ? getIsQuotasEnabled(organization.id) : false;
+};
+
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
   skipValidation = false,
   options: TUpdateSurveyOptions = {}
 ): Promise<TSurvey> => {
-  if (!skipValidation) {
+  // A legacy write (only `variables` / `hiddenFields`, the v1 PUT) is validated once the stored rows
+  // are read, against the rows it will leave the survey with: logic may set or read a computed date
+  // the legacy keys can't say (ENG-6935).
+  const isLegacyWrite = updatedSurvey.embeddedFields === undefined;
+  if (!skipValidation && !isLegacyWrite) {
     validateInputs([updatedSurvey, ZSurvey]);
   }
 
@@ -518,6 +532,16 @@ export const updateSurveyInternal = async (
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    if (!skipValidation && isLegacyWrite) {
+      validateInputs([
+        {
+          ...updatedSurvey,
+          embeddedFields: getLegacyWriteEmbeddedFields(currentSurvey.embeddedFields ?? [], updatedSurvey),
+        },
+        ZSurvey,
+      ]);
     }
 
     // Archived surveys are read-only. This covers every write path that flows through here
@@ -967,6 +991,16 @@ export const updateSurveyInternal = async (
     if (data.showConditions === null) {
       data.showConditions = Prisma.DbNull;
     }
+    if (data.startLogic === null) {
+      data.startLogic = Prisma.DbNull;
+    }
+
+    // ENG-6934: the quotas' matrix conditions follow a row or column reorder only where quotas are
+    // licensed, as every other quota write is. The license is resolved here, outside the transaction.
+    const syncsQuotaMatrix =
+      Array.isArray(data.blocks) &&
+      hasMatrixElement(data.blocks) &&
+      (await getIsQuotasEnabledForWorkspace(currentSurvey.workspaceId));
 
     delete data.createdBy;
     const persistedSurvey = await prisma.$transaction(
@@ -987,6 +1021,9 @@ export const updateSurveyInternal = async (
           data,
           select: { id: true },
         });
+
+        // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
+        if (syncsQuotaMatrix) await syncQuotaMatrixConditions(tx, surveyId, data.blocks);
 
         // ENG-1978: write the saved fields into the EmbeddedData tables in the same transaction, so a
         // survey never commits without them. ENG-2412: from the PAYLOAD — the rows are the only place
@@ -1273,6 +1310,15 @@ export type TCreateSurveyOptions = Readonly<{
   transaction?: TSurveyWriteTransaction;
 }>;
 
+/**
+ * A nullable JSON column's value as Prisma writes it: `null` is stored as SQL NULL (`Prisma.DbNull`).
+ * Not `??`: `undefined` must stay `undefined`, which leaves the column to its default.
+ */
+const toNullableJsonColumn = <T>(value: T | null): T | typeof Prisma.DbNull => {
+  if (value === null) return Prisma.DbNull;
+  return value;
+};
+
 export const createSurvey = async (
   workspaceId: string,
   surveyBody: TSurveyCreateInput,
@@ -1338,7 +1384,8 @@ export const createSurvey = async (
         ? { blocks: fillSurveyBlockCodes(restSurveyBody.blocks, parsedSurveyBody) }
         : {}),
       styling: styling === null ? Prisma.JsonNull : styling,
-      showConditions: restSurveyBody.showConditions === null ? Prisma.DbNull : restSurveyBody.showConditions,
+      showConditions: toNullableJsonColumn(restSurveyBody.showConditions),
+      startLogic: toNullableJsonColumn(restSurveyBody.startLogic),
       ...normalizeSurveyScheduling({
         closeOn: normalizedCloseOn,
         publishOn: normalizedPublishOn,

@@ -107,6 +107,10 @@ export class SurveyState {
       meta: responseUpdate.meta ?? this.responseAcc.meta,
       hiddenFields: responseUpdate.hiddenFields ?? this.responseAcc.hiddenFields,
       endingId: responseUpdate.endingId,
+      // One way (ENG-6933): once a rule marked the response, a create built from this keeps the flag.
+      markLowQuality: responseUpdate.markLowQuality ?? this.responseAcc.markLowQuality,
+      // The whole current record rides on every update (ENG-6936), so the latest one is the record.
+      notShown: responseUpdate.notShown ?? this.responseAcc.notShown,
     };
   }
 

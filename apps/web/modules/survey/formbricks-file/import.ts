@@ -32,6 +32,7 @@ import {
   type TFormbricksFileCreatedReferences,
   type TFormbricksFileReferencePlan,
   applyFormbricksFileReferences,
+  fitFormbricksFileEmbeddedFields,
   linkFormbricksFileSharedFields,
   planFormbricksFileReferences,
 } from "./resolve";
@@ -236,16 +237,24 @@ export const createSurveyFromFormbricksFile = async ({
       plan
     );
 
-    const parsed = ZV3CreateSurveyBody.safeParse(withTargetTriggers(draft, actionClassIds));
+    // A file with typed Embedded Data (ENG-6930) links its shared fields through it, calculated dates
+    // included, which the legacy `variables` leave out; an older file links them from the legacy shape.
+    const fitted = await fitFormbricksFileEmbeddedFields(transaction.tx, {
+      workspaceId,
+      draft: withTargetTriggers(draft, actionClassIds),
+    });
+    const parsed = ZV3CreateSurveyBody.safeParse(fitted);
     if (!parsed.success)
       throw refuseDraft(nameFromSurvey(formatV3ZodInvalidParams(parsed.error, "data"), null));
 
-    const embeddedFields = await linkFormbricksFileSharedFields(transaction.tx, {
-      workspaceId,
-      variables: parsed.data.variables,
-      hiddenFields: parsed.data.hiddenFields,
-      sharedFields: read.content.references.embeddedFields,
-    });
+    const embeddedFields = parsed.data.embeddedFields
+      ? undefined
+      : await linkFormbricksFileSharedFields(transaction.tx, {
+          workspaceId,
+          variables: parsed.data.variables,
+          hiddenFields: parsed.data.hiddenFields,
+          sharedFields: read.content.references.embeddedFields,
+        });
 
     const survey = await createV3Survey(parsed.data, authentication, requestId, organizationId, {
       transaction,

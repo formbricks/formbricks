@@ -3,6 +3,7 @@ import { ZId } from "@formbricks/types/common";
 import { ZCustomCssScope } from "@formbricks/types/custom-css";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import { EXPRESSION_FUNCTIONS } from "@formbricks/types/surveys/expressions";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
@@ -15,10 +16,13 @@ import {
   ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import { ZV3SurveyEmbeddedField } from "@/app/api/v3/surveys/embedded-fields";
 import {
   V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_EMBEDDED_FIELDS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_START_LOGIC_RULES,
   V3_SURVEY_MAX_VARIABLES,
   ZV3EditSurveyBlocksBody,
   ZV3SetSurveyBlockOrderBody,
@@ -185,6 +189,23 @@ export const SURVEY_BLOCK_EXAMPLE = {
 };
 
 /**
+ * Show-if (ENG-6931), worked: a follow-up shown only when the answer above it on the same block
+ * matches. Kept as data so a test can prove it still validates.
+ */
+export const SURVEY_SHOW_IF_EXAMPLE = {
+  id: "clshowifgroup00000000001",
+  connector: "and",
+  conditions: [
+    {
+      id: "clshowifcond000000000001",
+      leftOperand: { type: "element", value: "improve" },
+      operator: "contains",
+      rightOperand: { type: "static", value: "price" },
+    },
+  ],
+};
+
+/**
  * A `rating`'s two extra fields, read off the element schema rather than restated.
  *
  * Restating them would reintroduce the drift this whole description exists to avoid, and would already
@@ -196,6 +217,54 @@ const RATING_SCALES = (ZSurveyRatingElement.shape.scale as unknown as { options:
 const RATING_RANGES = (
   ZSurveyRatingElement.shape.range as unknown as { options: { value: number }[] }
 ).options.map((option) => option.value);
+
+/**
+ * Block logic and Set value expressions (ENG-6935, ADR 0030 / 0031), described for agents. The
+ * function list is read off the schema's catalogue, so the advertised functions are the accepted ones.
+ */
+const SURVEY_LOGIC_DESCRIPTION = [
+  "Block logic: a block's `logic` is a list of rules `{ id, conditions, actions[] }`; `conditions` is a",
+  "group `{ id, connector: and|or, conditions[] }` of conditions `{ id, leftOperand, operator, rightOperand? }`",
+  "or nested groups, and an empty group always matches. Operands are `{ type: element|variable|",
+  "hiddenField|reserved|static, value }` (element id, computed or ingested storage key, reserved name).",
+  "A matrix row condition names the row and column by id next to their 0-based positions: left",
+  '`{ type: "element", value: <matrix id>, meta: { row: "1", rowId: <row id> } }`, right',
+  '`{ type: "static", value: "2", columnId: <column id> }` (isAnyOf: `value: ["0","2"], columnIds: [..]`).',
+  "Ids win over positions, survive reordering, and must exist in the matrix; positions alone are accepted.",
+  "Actions: `jumpToBlock` (target block or ending id), `requireAnswer` (target element id) and",
+  "`calculate` (`variableId` = a computed field's storageKey). Set value is a `calculate` with",
+  '`operator: "assign"` and `value: { type: "expression", value: <tree> }`; the tree is a leaf (an operand,',
+  "or `static` number/text) or `{ type: call, fn, args[] }` with fn one of",
+  `${EXPRESSION_FUNCTIONS.join(", ")}.`,
+  "add/multiply/min/max take 2–50 numbers, subtract/divide exactly 2, round a number and optional fixed",
+  "decimals 0–10, abs 1, ifEmpty a value and a same-type fallback, concat 2–50 values (to text), now none",
+  "(UTC ISO timestamp), daysBetween 2 dates (UTC calendar days). Answers: rating/nps/csat/ces and number",
+  "openText are numbers, other openText text, date a date, multipleChoiceSingle its answer code (text);",
+  "other types can't be used. Empty in, empty out (use ifEmpty for defaults); ÷ 0 gives empty; an empty",
+  "result clears the field. The result must match the field's dataType (number, string or date); text in",
+  "arithmetic is refused. At most 12 levels and 200 nodes. Example `score = round(q1 + q2 * 2)`:",
+  `${JSON.stringify({
+    type: "call",
+    fn: "round",
+    args: [
+      {
+        type: "call",
+        fn: "add",
+        args: [
+          { type: "element", value: "q1" },
+          {
+            type: "call",
+            fn: "multiply",
+            args: [
+              { type: "element", value: "q2" },
+              { type: "static", value: 2 },
+            ],
+          },
+        ],
+      },
+    ],
+  })}.`,
+].join(" ");
 
 const SURVEY_BLOCKS_DESCRIPTION = [
   "Survey blocks. A block is `{ name, elements[], id? }` and an element is `{ id, type, headline, ... }`,",
@@ -216,8 +285,89 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   `its own required fields — a \`rating\` needs \`scale\` (${RATING_SCALES.join("|")}) and \`range\``,
   `(${RATING_RANGES.join("|")}), a \`pictureSelection\` needs two or more choices. An element that is`,
   "missing one is reported by its position, not by the field name, so add the type's own fields before",
-  `retrying. Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+  "retrying.",
+  "Show-if: a block or an element may carry an optional `showIf`, a condition group in the block `logic`",
+  "format (`{ id, connector: and|or, conditions: [{ id, leftOperand: { type: element|variable|hiddenField|reserved,",
+  "value }, operator, rightOperand? } or a nested group] }`), and is shown only when it matches; an empty group",
+  "or none means always shown. A block whose show-if fails, or whose elements are all hidden, is skipped and its",
+  "`logic` still runs as if submitted with no answers. A hidden element is not validated (a hidden required",
+  "element never blocks) and its answer is not submitted. Reference rule: a block's show-if may use answers from",
+  "earlier blocks only; an element's show-if from earlier blocks and elements above it in the same block, never",
+  "itself or anything below (`misordered_reference` at the exact condition path).",
+  `Example element show-if: ${JSON.stringify(SURVEY_SHOW_IF_EXAMPLE)}.`,
+  "Option show-if and Hidden: each choice (single select, multi select, ranking, picture selection) and each",
+  "matrix row and column may carry its own `showIf` (same format; it may use what its element's show-if may,",
+  "never its own element) and `hidden: true`. A Hidden option is never offered, whatever its show-if says; on a",
+  "published survey hide an option instead of deleting it (deleting a launch option is refused), which keeps its",
+  "id, code and earlier answers. A question left with no option to offer is skipped. Both are allowed on",
+  "published surveys. Ranking conditions may use `includesOneOf` / `includesAllOf` / `doesNotIncludeOneOf` /",
+  '`doesNotIncludeAllOf` with option ids ("was ranked").',
+  'Copied options ("only the brands you know"): a single select, multi select or ranking may set',
+  "`optionsCopiedFrom` to the id of an earlier choice element (earlier block, or above it in the same block), and",
+  "a picture selection to an earlier picture selection. Write the copies yourself: each copied option keeps the",
+  'source option\'s `id` and `code` and carries the show-if "picked in the source":',
+  '`{ "connector": "and", "conditions": [{ "leftOperand": { "type": "element", "value": "<source id>" },',
+  '"operator": "includesOneOf", "rightOperand": { "type": "static", "value": ["<same option id>"] } }] }`',
+  "(`equals` with the id as a string when the source is a single select). Fixed options may sit next to the copies,",
+  'such as "None of these" with id `none`; their codes are filled with the next code free in both elements, and a',
+  "copy's code always follows its source's. Matrix rows are never copied: give them a row `showIf` instead.",
+  "Block rules (`logic`) run when the block is submitted; their actions are `jumpToBlock` (a block or ending id),",
+  "`requireAnswer` (a later element id), `calculate` (set a computed field) and `markLowQuality`,",
+  '`{ "id": "<cuid2>", "objective": "markLowQuality" }` with no target: when the rule fires the response is marked',
+  "Low quality, as a reviewer would mark it (it leaves the Analysis export and Dashboards and can be restored);",
+  "the respondent sees nothing and carries on.",
+  `Example block: ${JSON.stringify(SURVEY_BLOCK_EXAMPLE)}`,
+  SURVEY_LOGIC_DESCRIPTION,
 ].join(" ");
+
+/**
+ * Rules before the first question (ENG-6932, json-shapes.md section 4). Spelled out because the tool
+ * surface otherwise never says what a rule is, and these differ from block rules in what they may do.
+ */
+const START_LOGIC_DESCRIPTION = [
+  "Rules before the first question (`startLogic`): run as soon as the survey loads, before the welcome card,",
+  "and also when a start-at link skips ahead. Same rule shape as `blocks[].logic`:",
+  "`{ id, conditions: { id, connector: and|or, conditions[] }, actions[] }`, ids cuid2.",
+  "Allowed actions: `jumpToBlock` to a block id, or to an ending id to screen the respondent out (they see only",
+  "that ending, and a finished response is stored that counts as completed), `calculate` to set a",
+  "computed field (variable), and `markLowQuality` with no target, which marks the response Low quality with",
+  "its first write (a screen-out's finished response included), for example for a known-bad panel source.",
+  "`requireAnswer` and any other action are refused, with the exact path.",
+  "Conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only:",
+  "nothing has been answered yet, so an `element` operand is refused. The first jump wins; every calculate",
+  "runs; with no jump the respondent goes to the first block (or the start-at target).",
+  'Example: [{ "id": "<cuid2>", "conditions": { "id": "<cuid2>", "connector": "and", "conditions": [{ "id": "<cuid2>",',
+  '"leftOperand": { "type": "hiddenField", "value": "panel_id" }, "operator": "isNotSet" }] },',
+  '"actions": [{ "id": "<cuid2>", "objective": "jumpToBlock", "target": "<ending id>" }] }].',
+].join(" ");
+
+/**
+ * Typed Embedded Data (ENG-6930), described once for create, patch and validate. The legacy
+ * `variables` / `hiddenFields` stay accepted and are derived from these when both are absent.
+ */
+export const SURVEY_EMBEDDED_FIELDS_DESCRIPTION = [
+  "Typed Embedded Data fields: `{ storageKey?, key?, name, source, dataType?, defaultValue?, locked? }`.",
+  "`source` is `computed` (set by logic: `variable` operands and calculate actions name its storageKey, a cuid2",
+  "generated when omitted; dataType string, number or date — a date is set with a Set value expression and",
+  "is left out of the legacy `variables`) or `ingested` (arrives by URL parameter or SDK:",
+  "`hiddenField` operands name its storageKey, which defaults to its name; dataType string, number, boolean",
+  "or date; only these can be `locked`). Link a workspace library field by sending `{ key }` alone: the",
+  "server fills in its definition. This list is the survey's complete set and the legacy",
+  "`variables` / `hiddenFields` are derived from it; send either format, or both describing the same",
+  "fields — a mismatch is refused with 400 naming the path.",
+].join(" ");
+
+/**
+ * `confirm` on every tool that changes or deletes an existing survey (ENG-6930). A survey that is not a
+ * draft and has responses is left untouched without it, and the call answers 428 with the editor's
+ * caution text — so the agent asks the user, then retries.
+ */
+const ZMcpSurveyWriteConfirm = z
+  .boolean()
+  .optional()
+  .describe(
+    "Set true only after the user agreed. Required to change or delete a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
+  );
 
 export const ZMcpCreateSurveyInput = z
   .object({
@@ -263,6 +413,15 @@ export const ZMcpCreateSurveyInput = z
       max: V3_SURVEY_MAX_VARIABLES,
       description: "Survey variables using the v3 survey document contract.",
     }).optional(),
+    startLogic: lengthBoundedArray(ZMcpObjectInput, {
+      max: V3_SURVEY_MAX_START_LOGIC_RULES,
+      description: START_LOGIC_DESCRIPTION,
+    }).optional(),
+    // The v3 entry schema itself (strict), so the advertised shape is the accepted one.
+    embeddedFields: lengthBoundedArray(ZV3SurveyEmbeddedField, {
+      max: V3_SURVEY_MAX_EMBEDDED_FIELDS,
+      description: SURVEY_EMBEDDED_FIELDS_DESCRIPTION,
+    }).optional(),
     customCss: ZV3SurveyCustomCss.optional(),
   })
   .strict();
@@ -273,8 +432,9 @@ export const ZMcpPatchSurveyInput = z
     data: z
       .record(z.string(), z.unknown())
       .describe(
-        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. ${SURVEY_BLOCKS_DESCRIPTION}`
+        `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. \`startLogic\` replaces every rule before the first question; null or [] removes them. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
       ),
+    confirm: ZMcpSurveyWriteConfirm,
   })
   .strict();
 
@@ -297,11 +457,13 @@ const ZMcpBlockResponseFormat = z
 export const ZMcpEditSurveyBlocksInput = ZV3EditSurveyBlocksBody.extend({
   surveyId: z.cuid2().describe("Survey ID whose blocks should be edited."),
   response_format: ZMcpBlockResponseFormat.optional(),
+  confirm: ZMcpSurveyWriteConfirm,
 }).strict();
 
 export const ZMcpSetSurveyBlockOrderInput = ZV3SetSurveyBlockOrderBody.extend({
   surveyId: z.cuid2().describe("Survey ID whose block order should be set."),
   response_format: ZMcpBlockResponseFormat.optional(),
+  confirm: ZMcpSurveyWriteConfirm,
 }).strict();
 
 export const ZMcpValidateSurveyInput = z
@@ -324,7 +486,7 @@ export const ZMcpValidateSurveyInput = z
       "customCss validation only: `workspace` (shared survey CSS) or `survey` (one survey's CSS)."
     ),
     data: ZMcpObjectInput.describe(
-      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. ${SURVEY_BLOCKS_DESCRIPTION}`
+      `Create or patch payload to validate, or \`{ customCss: { light, dark } | null }\` for customCss. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
     ),
   })
   .strict();
@@ -342,6 +504,7 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
 export const ZMcpDeleteSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to delete."),
+    confirm: ZMcpSurveyWriteConfirm,
   })
   .strict();
 

@@ -1,5 +1,17 @@
 type: object
-description: Updates a survey variable when the logic rule matches.
+description: >
+  Updates a computed Embedded Data field when the logic rule matches.
+
+
+  **One-step calculations** apply `operator` to the field's current value and `value` (a fixed
+  value or a reference). An empty current value counts as `0` (number) or `""` (text).
+
+
+  **Set value** (`operator: "assign"` with `value: { "type": "expression", "value": <tree> }`) sets the
+  field to the result of an expression tree (see `SurveyExpression`), of any computed type including
+  `date`. Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a
+  default), dividing by zero gives empty, and an empty result clears the field. A step that always runs
+  is a rule whose `conditions` is an empty `and` group.
 required:
   - id
   - objective
@@ -17,7 +29,7 @@ properties:
   variableId:
     type: string
     format: cuid2
-    description: Variable id for `calculate`.
+    description: The computed field's `storageKey` (a legacy variable id).
   operator:
     type: string
     enum:
@@ -27,6 +39,9 @@ properties:
       - subtract
       - multiply
       - divide
+    description: An `expression` value takes `assign` only.
   value:
-    $ref: ./SurveyLogicOperand.yml
+    oneOf:
+      - $ref: ./SurveyLogicOperand.yml
+      - $ref: ./SurveyExpressionValue.yml
 additionalProperties: false

@@ -3,15 +3,32 @@ import {
   getComputedEmbeddedFields,
   getComputedFieldDataType,
   getLogicVariableValue,
+  getSurveyEmbeddedFields,
 } from "@formbricks/types/embedded-data-resolver";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import {
+  compareDateValues,
+  isDateAfter,
+  isDateBefore,
+  isDateFieldOperand,
+} from "@formbricks/types/surveys/date-comparison";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
+import { findByLocalizedLabel, findMatrixRowKey } from "@formbricks/types/surveys/localized-label";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
-import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
-import { getLocalizedValue } from "@/lib/i18n";
+import {
+  evaluateConditionGroup,
+  evaluateUnansweredCondition,
+} from "@formbricks/types/surveys/logic-evaluation";
+import {
+  isMatrixRowCondition,
+  namesUnknownMatrixId,
+  resolveMatrixColumnValue,
+  resolveMatrixRowIndex,
+} from "@formbricks/types/surveys/matrix-conditions";
 import { getElementsFromSurveyBlocks } from "./utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -40,26 +57,66 @@ export const evaluateLogic = (
     evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
   );
 
+/**
+ * A show-if: whether a block, a question or an option is shown (P71, show-if only). Like
+ * `evaluateLogic`, except that a condition on a question without an answer is false, "does not equal"
+ * included, so nothing shows and then disappears as the answer comes in. Only "is skipped" (and a
+ * CTA's "is not clicked") holds for it, once the respondent has passed the question. Rules, start
+ * logic and quotas keep `evaluateLogic`.
+ *
+ * @param notPassedElementIds The elements the respondent has not moved past yet: those of the page
+ *   being shown.
+ */
+export const evaluateShowIf = (
+  localSurvey: TJsWorkspaceStateSurvey,
+  data: TResponseData,
+  variablesData: TResponseVariables,
+  conditions: TConditionGroup,
+  selectedLanguage: string,
+  embeddedValues: TResponseData,
+  notPassedElementIds: ReadonlySet<string>
+): boolean =>
+  evaluateConditionGroup(
+    conditions,
+    (condition) =>
+      evaluateUnansweredCondition(condition, data, (elementId) => !notPassedElementIds.has(elementId)) ??
+      evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
+  );
+
+/**
+ * What a Set value expression reads beyond answers and variables: the respondent's language (a
+ * single-select answer yields its answer code) and the reserved-field map a `reserved` leaf reads.
+ */
+export interface TPerformActionsContext {
+  selectedLanguage?: string;
+  embeddedValues?: TResponseData;
+}
+
 export const performActions = (
   survey: TJsWorkspaceStateSurvey,
   actions: TSurveyBlockLogicAction[],
   data: TResponseData,
-  calculationResults: TResponseVariables
+  calculationResults: TResponseVariables,
+  context: TPerformActionsContext = {}
 ): {
   jumpTarget: string | undefined;
   requiredQuestionIds: string[];
   calculations: TResponseVariables;
+  /** A Mark as low quality action ran (ENG-6933): the next response write carries the flag. */
+  markLowQuality: boolean;
 } => {
   let jumpTarget: string | undefined;
   const requiredQuestionIds: string[] = [];
   const calculations: TResponseVariables = { ...calculationResults };
+  let markLowQuality = false;
 
   actions.forEach((action) => {
     switch (action.objective) {
-      case "calculate":
-        const result = performCalculation(survey, action, data, calculations);
+      case "calculate": {
+        const result = performCalculation(survey, action, data, calculations, context);
         if (result !== undefined) calculations[action.variableId] = result;
         break;
+      }
       case "requireAnswer":
         requiredQuestionIds.push(action.target);
         break;
@@ -68,10 +125,13 @@ export const performActions = (
           jumpTarget = action.target;
         }
         break;
+      case "markLowQuality":
+        markLowQuality = true;
+        break;
     }
   });
 
-  return { jumpTarget, requiredQuestionIds, calculations };
+  return { jumpTarget, requiredQuestionIds, calculations, markLowQuality };
 };
 
 const getLeftOperandValue = (
@@ -102,9 +162,7 @@ const getLeftOperandValue = (
         const isOthersEnabled = currentQuestion.choices.some((c) => c.id === "other");
 
         if (typeof responseValue === "string") {
-          const choice = currentQuestion.choices.find((choice) => {
-            return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
-          });
+          const choice = findByLocalizedLabel(currentQuestion.choices, responseValue, selectedLanguage);
 
           if (!choice) {
             if (isOthersEnabled) {
@@ -118,9 +176,7 @@ const getLeftOperandValue = (
         } else if (Array.isArray(responseValue)) {
           let choices: string[] = [];
           responseValue.forEach((value) => {
-            const foundChoice = currentQuestion.choices.find((choice) => {
-              return getLocalizedValue(choice.label, selectedLanguage) === value;
-            });
+            const foundChoice = findByLocalizedLabel(currentQuestion.choices, value, selectedLanguage);
 
             if (foundChoice) {
               choices.push(foundChoice.id);
@@ -134,30 +190,34 @@ const getLeftOperandValue = (
         }
       }
 
+      // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
+      // option ids, so "was ranked" maps each label back, as multi select does.
+      if (currentQuestion.type === "ranking" && Array.isArray(responseValue)) {
+        return responseValue.flatMap((value) => {
+          const choice = findByLocalizedLabel(currentQuestion.choices, value, selectedLanguage);
+          return choice ? [choice.id] : [];
+        });
+      }
+
       if (
         currentQuestion.type === "matrix" &&
         typeof responseValue === "object" &&
         !Array.isArray(responseValue)
       ) {
-        if (leftOperand.meta && leftOperand.meta?.row !== undefined) {
-          const rowIndex = Number(leftOperand.meta.row);
+        if (isMatrixRowCondition(leftOperand.meta)) {
+          // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
+          const rowIndex = resolveMatrixRowIndex(currentQuestion, leftOperand.meta);
+          if (rowIndex === undefined) return undefined;
 
-          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentQuestion.rows.length) {
-            return undefined;
-          }
+          const row = findMatrixRowKey(currentQuestion.rows[rowIndex].label, responseValue, selectedLanguage);
 
-          const row = getLocalizedValue(currentQuestion.rows[rowIndex].label, selectedLanguage);
-
-          const rowValue = responseValue[row];
+          const rowValue = row === undefined ? undefined : responseValue[row];
           if (rowValue === "") return "";
 
-          if (rowValue) {
-            const columnIndex = currentQuestion.columns.findIndex((column) => {
-              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
-            });
-
-            if (columnIndex === -1) return undefined;
-            return columnIndex.toString();
+          if (typeof rowValue === "string") {
+            const column = findByLocalizedLabel(currentQuestion.columns, rowValue, selectedLanguage);
+            if (!column) return undefined;
+            return currentQuestion.columns.indexOf(column).toString();
           }
           return undefined;
         }
@@ -262,8 +322,31 @@ const evaluateSingleCondition = (
       rightValue = Number(rightValue as string);
     }
 
+    // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
+    if (
+      condition.leftOperand.type === "element" &&
+      typeof leftField === "object" &&
+      leftField.type === TSurveyElementTypeEnum.Matrix &&
+      isMatrixRowCondition(condition.leftOperand.meta)
+    ) {
+      // A row or column id the matrix doesn't have never matches (P48), negated operators included.
+      if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return false;
+      if (condition.rightOperand?.type === "static") {
+        rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      }
+    }
+
+    // ENG-6935: a date field (computed or ingested) holding a timestamp equals a picked day when it
+    // falls on that day, as "is before" and "is after" read it; see `compareDateValues`.
+    const embeddedFields = getSurveyEmbeddedFields(localSurvey);
+    const onDateField =
+      isDateFieldOperand(condition.leftOperand, embeddedFields) ||
+      isDateFieldOperand(condition.rightOperand, embeddedFields);
+    const dateOrder = onDateField ? compareDateValues(leftValue, rightValue) : undefined;
+
     switch (condition.operator) {
       case "equals":
+        if (dateOrder !== undefined) return dateOrder === 0;
         if (condition.leftOperand.type === "element") {
           if (
             (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
@@ -298,6 +381,7 @@ const evaluateSingleCondition = (
           leftValue === rightValue
         );
       case "doesNotEqual":
+        if (dateOrder !== undefined) return dateOrder !== 0;
         // when left value is of picture selection question and right value is its option
         if (
           condition.leftOperand.type === "element" &&
@@ -418,9 +502,9 @@ const evaluateSingleCondition = (
       case "isNotClicked":
         return leftValue !== "clicked";
       case "isAfter":
-        return new Date(String(leftValue)) > new Date(String(rightValue));
+        return isDateAfter(leftValue, rightValue);
       case "isBefore":
-        return new Date(String(leftValue)) < new Date(String(rightValue));
+        return isDateBefore(leftValue, rightValue);
       case "isBooked":
         return leftValue === "booked" || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":
@@ -456,13 +540,26 @@ const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>
+  calculations: Record<string, number | string>,
+  context: TPerformActionsContext
 ): number | string | undefined => {
   const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
   if (!computedField) return undefined;
 
   const { dataType } = computedField.field;
+
+  // Set value (ENG-6935): the shared evaluator, "empty in, empty out". An empty result is written as
+  // "" so it clears the field; the one-step operators below keep "empty counts as 0".
+  if (action.value.type === "expression") {
+    return evaluateSetValue(action.value.value, dataType, {
+      survey,
+      data,
+      variables: calculations,
+      reservedValues: context.embeddedValues,
+      language: context.selectedLanguage ?? "default",
+    });
+  }
 
   let currentValue = calculations[action.variableId];
   if (currentValue === undefined) {

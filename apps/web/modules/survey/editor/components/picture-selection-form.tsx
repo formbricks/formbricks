@@ -15,6 +15,11 @@ import { ElementFormInput } from "@/modules/survey/components/element-form-input
 import { ImageAltTextButton } from "@/modules/survey/components/element-form-input/components/image-alt-text-button";
 import { isValueIncomplete } from "@/modules/survey/components/element-form-input/utils";
 import { useCopyId } from "@/modules/survey/editor/components/copy-id-button";
+import {
+  HiddenOptionBadge,
+  OptionHideButton,
+  type TSetOptionHidden,
+} from "@/modules/survey/editor/components/option-hide-button";
 import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
@@ -32,6 +37,8 @@ interface PictureSelectionFormProps {
   readonly isStorageConfigured: boolean;
   readonly isExternalUrlsAllowed?: boolean;
   readonly lock?: TElementLock;
+  /** The Hide quick action on each picture (ENG-6949). */
+  readonly onSetOptionHidden?: TSetOptionHidden;
 }
 
 export const PictureSelectionForm = ({
@@ -44,6 +51,7 @@ export const PictureSelectionForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   lock = NO_ELEMENT_LOCK,
+  onSetOptionHidden,
 }: PictureSelectionFormProps): JSX.Element => {
   const workspaceId = localSurvey.workspaceId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -94,8 +102,21 @@ export const PictureSelectionForm = ({
     if (choiceIdx === -1) return null;
     const choice = element.choices[choiceIdx];
     const label = t("workspace.surveys.edit.image_alt_text_choice_n", { n: choiceIdx + 1 });
+    const isHidden = choice.hidden === true;
     return (
       <>
+        {/* A Hidden picture reads as hidden (ENG-6949): washed out, with the Flow tab's Hidden badge. */}
+        {isHidden && <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-white/50" />}
+        {onSetOptionHidden && (
+          <OptionHideButton
+            item={choice}
+            listKey="choices"
+            onSetHidden={onSetOptionHidden}
+            triggerClassName="absolute top-2 left-2"
+            className="size-7"
+          />
+        )}
+        {isHidden && <HiddenOptionBadge className="absolute top-3 left-11 bg-white" />}
         <button
           type="button"
           aria-label={t("workspace.surveys.edit.copy_option_id")}

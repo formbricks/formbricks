@@ -3,10 +3,12 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { FieldErrors } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import { Button } from "@/modules/ui/components/button";
+import {
+  createConditionHandlers,
+  isMultiSelectOperator,
+} from "@/modules/ui/components/conditions-editor/lib/condition-handlers";
 import { isConditionGroup } from "@/modules/ui/components/conditions-editor/lib/utils";
 import {
   DropdownMenu,
@@ -14,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import {
   Select,
   SelectContent,
@@ -23,25 +25,28 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { cn } from "@/modules/ui/lib/utils";
+import { SentenceConditionsEditor } from "./sentence-conditions-editor";
 import {
-  TConditionsEditorCallbacks,
-  TConditionsEditorConfig,
+  ConditionsEditorProps,
+  TConditionsEditorVariant,
   TGenericCondition,
   TGenericConditionGroup,
 } from "./types";
 
-interface ConditionsEditorProps {
-  conditions: TGenericConditionGroup;
-  config: TConditionsEditorConfig;
-  callbacks: TConditionsEditorCallbacks;
-  depth?: number;
-  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
-  isSubmitted?: boolean;
-  /** Hides the all/any picker: every condition combines with the group's fixed connector. */
-  isConnectorLocked?: boolean;
+/**
+ * The conditions editor shared by survey logic, show-if, quotas, chart filters, every table's Advanced
+ * filter and show conditions. `variant="sentence"` (ENG-6969 T6) opts into the rule editor's sentence
+ * layout; without it, every caller gets the default layout below, unchanged.
+ */
+export function ConditionsEditor({
+  variant = "default",
+  ...props
+}: Readonly<ConditionsEditorProps & { variant?: TConditionsEditorVariant }>) {
+  if (variant === "sentence") return <SentenceConditionsEditor {...props} />;
+  return <DefaultConditionsEditor {...props} />;
 }
 
-export function ConditionsEditor({
+function DefaultConditionsEditor({
   conditions,
   config,
   callbacks,
@@ -53,43 +58,10 @@ export function ConditionsEditor({
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
-  const handleLeftOperandChange = (condition: TGenericCondition, value: string, option?: TComboboxOption) => {
-    const type = option?.meta?.type || "static";
-
-    callbacks.onUpdateCondition(condition.id, {
-      leftOperand: {
-        value,
-        type,
-        meta: option?.meta,
-      },
-      operator: config.getDefaultOperator(),
-      rightOperand: undefined,
-    });
-  };
-
-  const handleOperatorChange = (condition: TGenericCondition, value: string) => {
-    if (value !== condition.operator) {
-      callbacks.onUpdateCondition(condition.id, {
-        operator: value,
-        rightOperand: undefined,
-      });
-    }
-  };
-
-  const handleRightOperandChange = (
-    condition: TGenericCondition,
-    value: string | number | string[],
-    option?: TComboboxOption
-  ) => {
-    const type = option?.meta?.type || "static";
-
-    callbacks.onUpdateCondition(condition.id, {
-      rightOperand: {
-        value,
-        type,
-      },
-    });
-  };
+  const { handleLeftOperandChange, handleOperatorChange, handleRightOperandChange } = createConditionHandlers(
+    config,
+    callbacks
+  );
 
   const renderCondition = (
     condition: TGenericCondition | TGenericConditionGroup,
@@ -154,14 +126,7 @@ export function ConditionsEditor({
       quotaErrors?.logic?.conditions?.[index]?.message ||
       quotaErrors?.logic?.conditions?.[index]?.rightOperand?.message;
 
-    const allowMultiSelect = [
-      "equalsOneOf",
-      "includesAllOf",
-      "includesOneOf",
-      "doesNotIncludeOneOf",
-      "doesNotIncludeAllOf",
-      "isAnyOf",
-    ].includes(condition.operator);
+    const allowMultiSelect = isMultiSelectOperator(condition.operator);
 
     const getConnector = () => {
       if (index > 0) return <div>{connector}</div>;
@@ -190,7 +155,11 @@ export function ConditionsEditor({
           groupedOptions={options}
           allowMultiSelect={allowMultiSelect}
           showCheckIcon={allowMultiSelect}
-          value={condition.rightOperand?.value}
+          value={
+            config.formatRightOperandValue
+              ? config.formatRightOperandValue(condition)
+              : condition.rightOperand?.value
+          }
           clearable={true}
           onChangeValue={(val, option) => {
             handleRightOperandChange(condition, val, option);
