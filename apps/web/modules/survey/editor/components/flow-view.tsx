@@ -31,11 +31,14 @@ import { RuleRowActions } from "@/modules/survey/editor/components/rule-row-acti
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import {
   AddConditionCell,
-  SHOW_IF_ANCHOR_PROPS,
   SHOW_IF_CELL_CLASS,
   ShowIfPopoverBoundary,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
-import { getAlwaysSkippedJump } from "@/modules/survey/editor/lib/always-skipped-jump";
+import {
+  type TAlwaysSkippedJump,
+  getAlwaysSkippedFallback,
+  getAlwaysSkippedJump,
+} from "@/modules/survey/editor/lib/always-skipped-jump";
 import { isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
 import {
   expandBlock,
@@ -76,6 +79,7 @@ import {
   setStartRules,
 } from "@/modules/survey/editor/lib/rule-list";
 import { RuleTypeIcon, RuleTypeTile, getRuleTypeLabel } from "@/modules/survey/editor/lib/rule-types";
+import { SHOW_IF_ANCHOR_PROPS } from "@/modules/survey/editor/lib/show-if-anchor";
 import { type TShowIfTarget, canAddShowIf } from "@/modules/survey/editor/lib/show-if-editing";
 import { TARGET_LIST_CLASS, getFallbackTargetGroups } from "@/modules/survey/editor/lib/target-options";
 import {
@@ -315,7 +319,11 @@ export const FlowView = ({
     // The whole rule in words: the tooltip of a cut-off row, and the row's accessible name.
     const sentence = describeRuleSummary(row.rule, localSurvey, t, textFormat);
     const onRulesChange = (next: TSurveyBlockLogic[]) => updateRules(scopeBlockIdx, next);
-    const skippedJumpWarning = describeAlwaysSkippedJump(row.rule, scopeBlockIdx);
+    const ruleJump = row.rule.actions.find((action) => action.objective === "jumpToBlock");
+    const skippedJumpWarning =
+      ruleJump?.objective === "jumpToBlock"
+        ? describeAlwaysSkipped(getAlwaysSkippedJump(localSurvey, scopeBlockIdx, ruleJump.target))
+        : null;
 
     return (
       <Fragment key={row.id}>
@@ -396,24 +404,25 @@ export const FlowView = ({
             {actions.jump && renderJumpPill(actions.jump)}
           </TruncationTooltip>
         </FlowOutlineRow>
-        {skippedJumpWarning && (
-          <p className="-mt-1 flex items-start gap-1.5 pl-3 text-xs text-amber-700">
-            <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-            {skippedJumpWarning}
-          </p>
-        )}
+        {renderAlwaysSkippedWarning(skippedJumpWarning)}
       </Fragment>
     );
   };
 
+  /** The dead-jump warning under a rule or an "Otherwise go to" (review of ENG-6969, M1). */
+  const renderAlwaysSkippedWarning = (warning: string | null) =>
+    warning && (
+      <p className="-mt-1 flex items-start gap-1.5 pl-3 text-xs text-amber-700">
+        <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+        {warning}
+      </p>
+    );
+
   /**
-   * Why a rule's jump lands somewhere else (review of ENG-6969, M1): its block's show-if reads only
-   * questions the jump skips, so on that path the block is always skipped. `null` when it can be shown.
+   * Why a jump lands somewhere else (review of ENG-6969, M1): its block's show-if reads only questions
+   * the jump skips, so on that path the block is always skipped. `null` when it can be shown.
    */
-  const describeAlwaysSkippedJump = (rule: TSurveyBlockLogic, scopeBlockIdx: number): string | null => {
-    const jump = rule.actions.find((action) => action.objective === "jumpToBlock");
-    if (jump?.objective !== "jumpToBlock") return null;
-    const skipped = getAlwaysSkippedJump(localSurvey, scopeBlockIdx, jump.target);
+  const describeAlwaysSkipped = (skipped: TAlwaysSkippedJump | null): string | null => {
     if (!skipped) return null;
     const targetIdx = localSurvey.blocks.findIndex((block) => block.id === skipped.targetBlockId);
     const target = localSurvey.blocks[targetIdx];
@@ -803,32 +812,37 @@ export const FlowView = ({
                     <div>{renderAddLogicMenu(block, blockShowIfBlocker)}</div>
 
                     {block.fallback && (
-                      <FlowOutlineNote icon={<ArrowRightIcon aria-hidden="true" />}>
-                        <span id={`flow-fallback-label-${block.id}`} className="shrink-0">
-                          {t("workspace.surveys.edit.flow.otherwise_go_to")}
-                        </span>
-                        <InputCombobox
-                          id={`flow-fallback-${block.id}`}
-                          aria-labelledby={`flow-fallback-label-${block.id}`}
-                          showSearch={true}
-                          searchPlaceholder={t("workspace.surveys.edit.flow.search_blocks_and_endings")}
-                          // The jump target's grouped list (ENG-6969 T6.6), with the destination's icon.
-                          groupedOptions={getFallbackTargetGroups(localSurvey, block.blockIdx, t)}
-                          iconClassName="size-4 text-slate-500"
-                          dropdownClassName={TARGET_LIST_CLASS}
-                          value={surveyBlock.logicFallback ?? "defaultSelection"}
-                          onChangeValue={(value) =>
-                            setLocalSurvey((survey) =>
-                              setBlockLogicFallback(
-                                survey,
-                                block.blockIdx,
-                                value === "defaultSelection" ? undefined : String(value)
+                      <>
+                        <FlowOutlineNote icon={<ArrowRightIcon aria-hidden="true" />}>
+                          <span id={`flow-fallback-label-${block.id}`} className="shrink-0">
+                            {t("workspace.surveys.edit.flow.otherwise_go_to")}
+                          </span>
+                          <InputCombobox
+                            id={`flow-fallback-${block.id}`}
+                            aria-labelledby={`flow-fallback-label-${block.id}`}
+                            showSearch={true}
+                            searchPlaceholder={t("workspace.surveys.edit.flow.search_blocks_and_endings")}
+                            // The jump target's grouped list (ENG-6969 T6.6), with the destination's icon.
+                            groupedOptions={getFallbackTargetGroups(localSurvey, block.blockIdx, t)}
+                            iconClassName="size-4 text-slate-500"
+                            dropdownClassName={TARGET_LIST_CLASS}
+                            value={surveyBlock.logicFallback ?? "defaultSelection"}
+                            onChangeValue={(value) =>
+                              setLocalSurvey((survey) =>
+                                setBlockLogicFallback(
+                                  survey,
+                                  block.blockIdx,
+                                  value === "defaultSelection" ? undefined : String(value)
+                                )
                               )
-                            )
-                          }
-                          comboboxClasses="h-7 w-fit min-w-40 bg-white"
-                        />
-                      </FlowOutlineNote>
+                            }
+                            comboboxClasses="h-7 w-fit min-w-40 bg-white"
+                          />
+                        </FlowOutlineNote>
+                        {renderAlwaysSkippedWarning(
+                          describeAlwaysSkipped(getAlwaysSkippedFallback(localSurvey, block.blockIdx))
+                        )}
+                      </>
                     )}
                   </FlowOutlineChildren>
                 )}

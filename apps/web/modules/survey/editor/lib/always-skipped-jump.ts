@@ -78,3 +78,13 @@ export const getAlwaysSkippedJump = (
     skippedElementIds: getReadElementIds(showIf).filter((id) => skippedIds.has(id)),
   };
 };
+
+/**
+ * The same check for a block's "Otherwise go to" (`logicFallback`): everyone no rule sends elsewhere
+ * jumps from after the block to its fallback, and can land on an always-skipped block just as a rule's
+ * jump can. `null` without a fallback, or when the target can be shown.
+ */
+export const getAlwaysSkippedFallback = (survey: TSurvey, blockIdx: number): TAlwaysSkippedJump | null => {
+  const fallback = survey.blocks[blockIdx]?.logicFallback;
+  return fallback ? getAlwaysSkippedJump(survey, blockIdx, fallback) : null;
+};
