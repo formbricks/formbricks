@@ -1117,6 +1117,16 @@ export const getActionOperatorOptions = (
         value: "concat",
       },
     ];
+  } else if (variableType === undefined) {
+    // No field picked yet (a step just switched to Set value): Assign, which every field type takes,
+    // so the new step reads "Assign" rather than an empty operator.
+    return [
+      {
+        label: t("workspace.surveys.edit.assign"),
+        value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
+      },
+    ];
   }
   return [];
 };
