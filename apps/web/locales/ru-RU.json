@@ -4894,7 +4894,7 @@
         "partial_responses": "Частичные ответы"
       },
       "import": {
-        "ai_note": "Файлы Qualtrics, Word, Excel, CSV и Markdown обрабатываются с помощью Formbricks AI. Все тексты берутся из файла дословно.",
+        "ai_note": "Поддерживаются файлы Qualtrics, Word, Excel, CSV и Markdown. Весь текст берётся из файла слово в слово.",
         "card_description": "Превратите файл Formbricks, экспорт из Qualtrics или анкету из Word, Excel, CSV или Markdown в черновик опроса.",
         "card_description_json_only": "Превратите опрос, экспортированный из Formbricks, в черновик опроса.",
         "card_title": "Импорт опроса",
@@ -4905,7 +4905,7 @@
         "discard_draft_title": "Отменить этот импорт?",
         "discard_import_body": "Файл всё ещё импортируется. Если закрыть окно, импорт будет остановлен.",
         "discard_import_title": "Остановить импорт?",
-        "dropzone_help": "Файл Formbricks (.json), экспорт Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) или Markdown (.md), до 15 МБ",
+        "dropzone_help": "Файл Formbricks (.json), экспорт Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) или Markdown (.md)",
         "dropzone_help_json_only": "Файл Formbricks (.json), до 15 МБ",
         "dropzone_primary": "Перетащи файл сюда или нажми, чтобы выбрать",
         "encodings": {

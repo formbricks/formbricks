@@ -4894,7 +4894,7 @@
         "partial_responses": "部分的な回答"
       },
       "import": {
-        "ai_note": "Qualtrics、Word、Excel、CSV、MarkdownのファイルはFormbricks AIで読み取ります。すべてのテキストはファイルの内容がそのまま使われます。",
+        "ai_note": "Qualtrics、Word、Excel、CSV、Markdownファイルに対応しています。テキストはすべてファイルの内容がそのまま使用されます。",
         "card_description": "Formbricksファイル、Qualtricsのエクスポート、またはWord、Excel、CSV、Markdownのアンケートから、下書きのアンケートを作成します。",
         "card_description_json_only": "Formbricksからエクスポートしたアンケートを、下書きのアンケートに変換します。",
         "card_title": "アンケートをインポート",
@@ -4905,7 +4905,7 @@
         "discard_draft_title": "このインポートを破棄しますか?",
         "discard_import_body": "ファイルをインポート中です。閉じるとインポートが停止します。",
         "discard_import_title": "インポートを停止しますか?",
-        "dropzone_help": "Formbricksファイル(.json)、Qualtricsのエクスポート(.qsf)、Word(.docx)、Excel(.xlsx)、CSV(.csv)、Markdown(.md)、最大15MB",
+        "dropzone_help": "Formbricksファイル(.json)、Qualtricsエクスポート(.qsf)、Word(.docx)、Excel(.xlsx)、CSV(.csv)、Markdown(.md)",
         "dropzone_help_json_only": "Formbricksファイル(.json)、最大15MB",
         "dropzone_primary": "ここにファイルをドロップするか、クリックして選択してください",
         "encodings": {
