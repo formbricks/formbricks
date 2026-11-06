@@ -5,14 +5,13 @@ import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { V3_SURVEY_MAX_BLOCKS } from "@/app/api/v3/surveys/schemas";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
-import { openZipArchive } from "@/modules/survey/import/core/zip";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
 import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/element-presets";
 import { editExcelExport, rowOf } from "./__fixtures__/edit-sheet";
+import { readExportBytes } from "./__fixtures__/read-export";
 import { createIcuTranslate } from "./__fixtures__/translate";
 import { type TExcelExportApplied, applyExcelExport } from "./apply";
 import { createExcelExportLabels } from "./labels";
-import { readExcelExport } from "./read";
 import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
@@ -32,7 +31,7 @@ const importSheet = (
   { survey = SURVEY, bytes = exported(survey) }: { survey?: TSurvey; bytes?: Uint8Array } = {}
 ): Promise<TExcelExportApplied> =>
   applyExcelExport(survey, {
-    read: readExcelExport(openZipArchive(editExcelExport(bytes, edit))),
+    read: readExportBytes(editExcelExport(bytes, edit)),
     labels: createExcelExportLabels([germanT, t]),
     newElement: (type: TSurveyElementTypeEnum) =>
       ({
@@ -385,6 +384,32 @@ describe("applyExcelExport: added rows", () => {
     expect(elementsOf(applied.survey).map((element) => element.id)).not.toContain("empty_choice");
     expect(elementOf(applied.survey, "ok_text").type).toBe("openText");
     expect(applied.survey.blocks).toHaveLength(SURVEY.blocks.length + 1);
+    expect(applied.issues).toContainEqual(
+      expect.objectContaining({
+        code: "sheet_row_skipped",
+        params: expect.objectContaining({ cause: "invalid_question" }),
+      })
+    );
+  });
+
+  test("puts back only the addition that would break a question the survey had, keeping the question's edited texts", async () => {
+    // A ranking question holds at most 25 options: the 24th added is one too many.
+    const applied = await importSheet((rows) => {
+      rows[rowOf(rows, "element.ranking.headline")][DE] = "Ordne neu";
+      return insertAfter(
+        rows,
+        "ranking",
+        ...Array.from({ length: 24 }, (_, index) =>
+          added("ranking", `Choice ${index + 3}`, `Option ${index}`)
+        )
+      );
+    });
+
+    const ranking = elementOf(applied.survey, "ranking");
+    expect((ranking.headline as Record<string, string>).de).toBe("Ordne neu");
+    expect(ranking.choices).toHaveLength(25);
+    expect(applied.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 1 } });
+    expect(applied.issues.filter((issue) => issue.code === "sheet_option_added")).toHaveLength(23);
     expect(applied.issues).toContainEqual(
       expect.objectContaining({
         code: "sheet_row_skipped",

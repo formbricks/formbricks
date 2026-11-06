@@ -11,6 +11,7 @@ import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
+import { escapeHtml } from "@/lib/utils/escape-html";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { type TSurveyDateFormatMap, formatStoredDateForDisplay } from "./date-display";
 
@@ -159,7 +160,7 @@ export const recallToHeadline = <T extends TSurvey>(
   withSlash: boolean,
   languageCode: string
 ): TI18nString => {
-  let newHeadline = structuredClone(headline);
+  const newHeadline = structuredClone(headline);
   const localizedHeadline = newHeadline[languageCode];
 
   if (!localizedHeadline?.includes("#recall:")) return headline;
@@ -246,7 +247,7 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
   // Both lists are resolved once for the whole text, not once per token.
   const embeddedFields = getSurveyEmbeddedFields(survey);
   const elements = getElementsFromBlocks(survey.blocks);
-  let recallItems: TSurveyRecallItem[] = [];
+  const recallItems: TSurveyRecallItem[] = [];
   ids.forEach((recallItemId) => {
     const isHiddenField = findEmbeddedField(embeddedFields, recallItemId, "ingested");
     const isSurveyQuestion = elements.some((question) => question.id === recallItemId);
@@ -325,28 +326,6 @@ const stringifyRecallValue = (value: TResponseDataValue): string => {
   if (value) return Object.values(value).filter(Boolean).join(", ");
   return "";
 };
-
-const HTML_ENTITIES: Record<string, string> = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-/**
- * Encodes a string so it renders as literal text in HTML, in element content or a quoted attribute.
- *
- * Encoding, not sanitizing: `sanitize-html` and DOMPurify parse markup and *remove* what isn't allowed,
- * which is the wrong tool here — a respondent who answers `<b>bold</b>` should see that text in the
- * email, not have it silently dropped. Escaping is also what makes the value inert regardless of where
- * the surrounding template puts it.
- *
- * Single pass over the five characters rather than chained `replaceAll`s, so `&` cannot be
- * double-encoded if someone reorders the entries — with sequential replacements, moving the `&` rule
- * after the others turns `<` into `&amp;lt;`.
- */
-const escapeHtml = (value: string): string => value.replaceAll(/[&<>"']/g, (char) => HTML_ENTITIES[char]);
 
 /**
  * @param escapeValues HTML-escape each substituted value before splicing it in. Off by default because

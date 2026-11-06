@@ -5,6 +5,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { type TSurveyElement, ZSurveyElement, ZSurveyElementId } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { V3_SURVEY_MAX_BLOCKS } from "@/app/api/v3/surveys/schemas";
+import { escapeHtml } from "@/lib/utils/escape-html";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { addBlock, renumberAutoNamedBlocks, withFilledCodes } from "@/modules/survey/editor/lib/blocks";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
@@ -13,6 +14,7 @@ import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/re
 import { neutralize } from "@/modules/survey/import/core/sanitize-text";
 import type { TSurveyImportSheetRowSkipCause } from "@/modules/survey/import/types";
 import { type TSurveyText, walkSurveyTexts } from "@/modules/survey/lib/survey-texts";
+import { RECALL_LABELS_MAX, createLabelMatcher } from "./label-matcher";
 import type { TExcelExportAddableProperty, TExcelExportField, TExcelExportLabels } from "./labels";
 import { EXCEL_EXPORT_MAX_CELL_CHARS } from "./limits";
 import type { TExcelExportRead, TExcelExportRow } from "./read";
@@ -92,40 +94,39 @@ const CHOICE_TYPES = new Set<TSurveyElementTypeEnum>([
   TSurveyElementTypeEnum.Ranking,
 ]);
 
-const escapeHtml = (text: string): string =>
-  text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-
 /** Each recall token the stored text holds, by the `@Label` the export showed it as. */
 const getRecallLabels = (stored: string, survey: TSurvey, textKey: string): Map<string, string> => {
   const labels = new Map<string, string>();
   for (const [token] of stored.matchAll(RECALL_TOKEN)) {
     const label = recallToHeadline({ default: token, [textKey]: token }, survey, false, textKey)[textKey];
     if (label && label !== token && !labels.has(label)) labels.set(label, token);
+    if (labels.size === RECALL_LABELS_MAX) break;
   }
   return labels;
 };
 
 /**
  * A cell's text split around the `@Label`s of the recalls the stored text had: each label becomes its
- * token again. Longest labels first, so `@Name` never takes the start of `@Name of company`.
+ * token again. The leftmost label wins, and the longest one where two start together, so `@Name` never
+ * takes the start of `@Name of company`. One linear pass (`createLabelMatcher`).
  */
 const splitRecalls = (text: string, labels: ReadonlyMap<string, string>): ({ token: string } | string)[] => {
   if (labels.size === 0) return [text];
-  const ordered = [...labels.keys()].sort((a, b) => b.length - a.length);
+  const longest = createLabelMatcher([...labels.keys()])(text);
   const parts: ({ token: string } | string)[] = [];
-  let rest = text;
-  while (rest) {
-    let best: { index: number; label: string } | null = null;
-    for (const label of ordered) {
-      const index = rest.indexOf(label);
-      if (index >= 0 && (!best || index < best.index)) best = { index, label };
+  let from = 0;
+  for (let index = 0; index < text.length; ) {
+    const length = longest[index];
+    if (length === 0) {
+      index += 1;
+      continue;
     }
-    if (!best) break;
-    if (best.index > 0) parts.push(rest.slice(0, best.index));
-    parts.push({ token: labels.get(best.label) ?? "" });
-    rest = rest.slice(best.index + best.label.length);
+    if (index > from) parts.push(text.slice(from, index));
+    parts.push({ token: labels.get(text.slice(index, index + length)) ?? "" });
+    index += length;
+    from = index;
   }
-  if (rest) parts.push(rest);
+  if (from < text.length) parts.push(text.slice(from));
   return parts;
 };
 
@@ -229,6 +230,8 @@ export interface TExcelExportApplyContext {
   t: TFunction;
   /** What the export marks a cut text with, in the importer's language. */
   truncatedSuffix: string;
+  /** The request's: the merge stops between rows once it aborts. */
+  signal?: AbortSignal;
 }
 
 export interface TExcelExportApplied {
@@ -288,7 +291,7 @@ class ExcelExportApplication {
 
     // The merge runs on the server's thread, and a row can cost a markup parse per language: it yields
     // by elapsed time, as the import's sanitizer does.
-    const slice = createSlicer();
+    const slice = createSlicer(this.context.signal);
     for (const row of read.rows) {
       await slice(); // NOSONAR(typescript:S9382) -- a deliberate yield every slice
       if (row.key) this.applyKeyedRow(row);
@@ -296,7 +299,7 @@ class ExcelExportApplication {
     }
     if (this.matched === 0) throw excelExportOtherSurvey();
 
-    this.checkChangedElements();
+    this.checkCreatedElements();
     this.issues.unshift({
       code: "texts_updated",
       severity: "info",
@@ -478,8 +481,17 @@ class ExcelExportApplication {
     const text = this.toI18n(row, isRichText);
     if (!text) return this.skip(row.row, "no_text");
 
+    // A question the survey had is checked addition by addition, so one that would break it is put back
+    // alone and the texts the sheet edited in the question stay edited; a question the sheet created is
+    // checked once it is whole (`checkCreatedElements`), since it is not valid until its options are in.
+    const before = this.createdElements.has(element.id) ? null : structuredClone(element);
     const refusal = this.setField(element, field, text);
     if (refusal) return this.skip(row.row, refusal);
+    if (before && !ZSurveyElement.safeParse(element).success) {
+      const block = this.survey.blocks[found.blockIndex];
+      block.elements = block.elements.map((current) => (current.id === element.id ? before : current));
+      return this.skip(row.row, "invalid_question");
+    }
     this.markChanged(element.id, row.row);
     this.issues.push({ code: "sheet_option_added", severity: "info", params: { row: row.row } });
   }
@@ -523,26 +535,19 @@ class ExcelExportApplication {
   }
 
   /**
-   * Hold every question the sheet created or added to against the element schema: one that fails is put
-   * back as it was — a created one removed with its block — and its first row reported, its other lines
-   * dropped.
+   * Hold every question the sheet created against the element schema: one that fails is removed with its
+   * block, its first row reported and its other lines dropped.
    */
-  private checkChangedElements(): void {
-    for (const [elementId, rows] of this.changedElements) {
+  private checkCreatedElements(): void {
+    for (const elementId of this.createdElements) {
       const found = findElement(this.survey, elementId);
       if (!found || ZSurveyElement.safeParse(found.element).success) continue;
 
-      const original = findElement(this.source, elementId);
-      if (original) {
-        const block = this.survey.blocks[found.blockIndex];
-        block.elements = block.elements.map((element) =>
-          element.id === elementId ? structuredClone(original.element) : element
-        );
-      } else {
-        this.survey.blocks.splice(found.blockIndex, 1);
-        this.survey.blocks = renumberAutoNamedBlocks(this.survey.blocks);
-      }
+      this.survey.blocks.splice(found.blockIndex, 1);
+      this.survey.blocks = renumberAutoNamedBlocks(this.survey.blocks);
 
+      const rows = this.changedElements.get(elementId) ?? [];
+      this.changedElements.delete(elementId);
       const dropped = new Set(rows);
       for (let index = this.issues.length - 1; index >= 0; index -= 1) {
         const { code, params } = this.issues[index];
@@ -553,7 +558,7 @@ class ExcelExportApplication {
           this.issues.splice(index, 1);
         }
       }
-      this.skip(rows[0], "invalid_question");
+      if (rows[0] !== undefined) this.skip(rows[0], "invalid_question");
     }
   }
 }
