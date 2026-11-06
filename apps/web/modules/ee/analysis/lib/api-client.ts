@@ -1,11 +1,22 @@
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
-import type { TV3ChartData, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
+import type { TV3ChartData, TV3ChartFieldCatalog, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
 import type {
+  TV3DashboardChartData,
+  TV3DashboardFilterFields,
+  TV3DashboardFilterValues,
   TV3DashboardListItem,
   TV3DashboardResource,
   TV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
+import {
+  type TDashboardFilterState,
+  appendFilterParams,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-state";
+import type {
+  TDashboardFilter,
+  TLockedDashboardFilter,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import type {
   AnalyticsResponse,
   TChartDataRow,
@@ -110,17 +121,19 @@ export type TAppChartData = {
   /** Absent rather than empty, as the renderers expect: an empty map would still read as "present". */
   optionLabels?: Record<string, string>;
   fieldLabels?: Record<string, string>;
+  memberLabels?: Record<string, string>;
   /** The query as it ran, after option grouping: what the rows' keys follow. */
   query: TChartQuery;
 };
 
-const presentOrUndefined = (labels: Record<string, string>) =>
-  Object.keys(labels).length > 0 ? labels : undefined;
+const presentOrUndefined = (labels: Record<string, string> | undefined) =>
+  labels && Object.keys(labels).length > 0 ? labels : undefined;
 
 const toAppChartData = (data: TV3ChartData): TAppChartData => ({
   rows: data.rows,
   optionLabels: presentOrUndefined(data.optionLabels),
   fieldLabels: presentOrUndefined(data.fieldLabels),
+  memberLabels: presentOrUndefined(data.memberLabels),
   query: data.query as TChartQuery,
 });
 
@@ -204,7 +217,85 @@ const dateRangeSearchParams = (dateRange?: TChartDateRangeInput): URLSearchParam
     : new URLSearchParams({ from: dateRange.from, to: dateRange.to });
 };
 
-/** A saved chart's rows, for its own date range or a requested one that replaces it. */
+/** A chart's rows read through its dashboard, and the picked filters its dataset cannot be narrowed by. */
+export type TAppDashboardChartData = TAppChartData & {
+  unfilterableFilters: TV3DashboardChartData["unfilterableFilters"];
+};
+
+/** The dashboard date range and filters a dashboard-bound read is set to. */
+const dashboardReadParams = (
+  dateRange: TChartDateRangeInput | undefined,
+  filters: readonly TDashboardFilterState[] | undefined
+): URLSearchParams => appendFilterParams(dateRangeSearchParams(dateRange), filters ?? []);
+
+/**
+ * A widget's rows through its dashboard (ADR-0002): the dashboard date range replaces the chart's own, and
+ * each filter is ANDed onto its saved filters.
+ */
+export const getDashboardChartData = async ({
+  dashboardId,
+  chartId,
+  dateRange,
+  filters,
+  signal,
+}: {
+  dashboardId: string;
+  chartId: string;
+  dateRange?: TChartDateRangeInput;
+  filters?: readonly TDashboardFilterState[];
+  signal?: AbortSignal;
+}): Promise<TAppDashboardChartData> => {
+  const search = dashboardReadParams(dateRange, filters).toString();
+  const base = `${dashboardPath(dashboardId)}/charts/${encodeURIComponent(chartId)}/data`;
+  const data = await readData<TV3DashboardChartData>(
+    await fetch(search ? `${base}?${search}` : base, { cache: "no-store", signal })
+  );
+  return { ...toAppChartData(data), unfilterableFilters: data.unfilterableFilters };
+};
+
+/**
+ * Up to 100 values a field offers on a dashboard, narrowed by the date range, the `filters` already applied
+ * and `search`. The field is asked as the first filter of the request, `f1`, with no values of its own.
+ */
+export const listDashboardFilterValues = async ({
+  dashboardId,
+  field,
+  operator,
+  dateRange,
+  filters,
+  search,
+  signal,
+}: {
+  dashboardId: string;
+  field: string;
+  operator: TDashboardFilter["operator"];
+  dateRange?: TChartDateRangeInput;
+  filters?: readonly TDashboardFilterState[];
+  search?: string;
+  signal?: AbortSignal;
+}): Promise<TV3DashboardFilterValues> => {
+  const params = dashboardReadParams(dateRange, [{ field, operator, values: [] }, ...(filters ?? [])]);
+  if (search) params.set("search", search);
+  const query = params.toString();
+  const base = `${dashboardPath(dashboardId)}/filters/f1/values`;
+  return readData<TV3DashboardFilterValues>(
+    await fetch(query ? `${base}?${query}` : base, { cache: "no-store", signal })
+  );
+};
+
+/**
+ * The embedded-data fields a filter on the dashboard can use: the keys of the Feedback Datasets its charts
+ * read. A dashboard-bound read, so it answers a Dashboard viewer too, whom the field catalog refuses.
+ */
+export const listDashboardFilterFields = async (
+  dashboardId: string,
+  signal?: AbortSignal
+): Promise<TV3DashboardFilterFields> =>
+  readData<TV3DashboardFilterFields>(
+    await fetch(`${dashboardPath(dashboardId)}/filter-fields`, { cache: "no-store", signal })
+  );
+
+/** A saved chart's rows, for its own date range or a requested one that narrows it. */
 export const getChartData = async ({
   chartId,
   dateRange,
@@ -218,6 +309,22 @@ export const getChartData = async ({
   const base = `${CHARTS_PATH}/${encodeURIComponent(chartId)}/data`;
   const path = search ? `${base}?${search}` : base;
   return toAppChartData(await readData<TV3ChartData>(await fetch(path, { cache: "no-store", signal })));
+};
+
+/** One Feedback Dataset's field catalog: the shared fields plus its embedded-data keys (ENG-6893). */
+export const getChartFieldCatalog = async ({
+  workspaceId,
+  datasetId,
+  signal,
+}: {
+  workspaceId: string;
+  datasetId: string;
+  signal?: AbortSignal;
+}): Promise<TV3ChartFieldCatalog> => {
+  const params = new URLSearchParams({ workspaceId, datasetId });
+  return readData<TV3ChartFieldCatalog>(
+    await fetch(`${CHARTS_PATH}/fields?${params.toString()}`, { cache: "no-store", signal })
+  );
 };
 
 /** A field's stored value, with the question type when the field is the question label. */
@@ -260,6 +367,7 @@ const toAppDashboardListItem = (item: TV3DashboardListItem): TAppDashboardListIt
  * sends back for the stale-check, and a round trip through `Date` would be one more place to lose it.
  */
 export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "name" | "updatedAt"> & {
+  filters: TLockedDashboardFilter[];
   widgets: TDashboardWidget[];
 };
 
@@ -277,6 +385,7 @@ export const toAppDashboard = (resource: TV3DashboardResource): TAppDashboard =>
   workspaceId: resource.workspaceId,
   name: resource.name,
   updatedAt: resource.updatedAt,
+  filters: resource.filters,
   widgets: resource.widgets.map((widget) => toAppDashboardWidget(resource.id, widget)),
 });
 
@@ -329,7 +438,7 @@ export const createDashboard = async ({
   );
 
 /**
- * Saves the whole edited dashboard — its name and every widget's place — in one call. `expectedUpdatedAt` is the
+ * Saves the whole edited dashboard — its name, every widget's place and its filters — in one call. `expectedUpdatedAt` is the
  * version the edit started from; if the dashboard changed since, nothing is saved and the call throws
  * the 409 `isStaleDashboardError` recognises. A widget left out is removed.
  */
@@ -338,6 +447,7 @@ export const replaceDashboard = async (
   dashboard: {
     name: string;
     expectedUpdatedAt: string;
+    filters?: TLockedDashboardFilter[];
     widgets: { widgetId: string; layout: TDashboardWidget["layout"]; order: number }[];
   }
 ): Promise<TAppDashboard> =>

@@ -30,10 +30,6 @@ describe("ai-create-utils", () => {
         label: "workspace.surveys.ai_create.prompt_helper_pmf_label",
         prompt: "workspace.surveys.ai_create.prompt_helper_pmf",
       },
-      {
-        label: "workspace.surveys.ai_create.prompt_helper_website_label",
-        prompt: "workspace.surveys.ai_create.prompt_helper_website",
-      },
     ]);
     expect(result.every(({ Icon }) => Boolean(Icon))).toBe(true);
   });

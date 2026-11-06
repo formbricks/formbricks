@@ -11,8 +11,8 @@ type DraftReviewPanelProps = {
   isGenerating: boolean;
   /** The settled source above the list: a `SourceChip`. */
   source: ReactNode;
-  /** Optional facts row between the source and the list (question count, languages…). */
-  facts?: ReactNode;
+  /** Optional choice about the source, between it and the list (Import's Update or Create new). */
+  decision?: ReactNode;
   /** Optional panel below the list (the import report). */
   report?: ReactNode;
   /** The status line / progress ladder while generating. */
@@ -23,14 +23,14 @@ type DraftReviewPanelProps = {
 };
 
 /**
- * The review layout Create with AI and Import share: source chip, optional facts, the live question
+ * The review layout Create with AI and Import share: source chip, an optional decision, the live question
  * list, optional report, status. Hosts own the footer; this panel is only the body.
  */
 export const DraftReviewPanel = ({
   draft,
   isGenerating,
   source,
-  facts,
+  decision,
   report,
   status,
   scrollContainerRef,
@@ -38,7 +38,7 @@ export const DraftReviewPanel = ({
 }: Readonly<DraftReviewPanelProps>) => (
   <>
     <div className="shrink-0">{source}</div>
-    {facts ? <div className="shrink-0">{facts}</div> : null}
+    {decision ? <div className="shrink-0">{decision}</div> : null}
     <div className={cn("flex min-h-0 flex-1 flex-col", listClassName)}>
       <AiDraftPreview
         draft={draft}

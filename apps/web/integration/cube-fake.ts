@@ -25,22 +25,44 @@ export type TCubeCall = {
 
 type TFakeCubeState = {
   calls: TCubeCall[];
+  /**
+   * Embedded-data key discoveries (ENG-6893), kept apart from `calls`: the first chart query on a dataset
+   * scans its keys once (then Valkey answers), which is not the query a test asserts on. They answer
+   * `discoveredKeys[<dataset id>]`, most frequent first, none by default.
+   */
+  discoveries: TCubeCall[];
+  discoveredKeys: Record<string, string[]>;
   /** Rows to answer with, keyed by member; members the query asks for but a row omits come back null. */
   rows: Record<string, string | number | null>[];
   /** When set, the next load fails with this error, as an unreachable or rejecting Cube would. */
   failure: Error | null;
+  /** When set, answers each load from its query and token instead of `rows`. */
+  respond: ((call: TCubeCall) => Record<string, string | number | null>[]) | null;
 };
 
-export const cubeFake: TFakeCubeState = { calls: [], rows: [], failure: null };
+export const cubeFake: TFakeCubeState = {
+  calls: [],
+  discoveries: [],
+  discoveredKeys: {},
+  rows: [],
+  failure: null,
+  respond: null,
+};
+
+const EMBEDDED_KEY_DISCOVERY_SOURCE = "charts.embeddedKeyDiscovery";
+const EMBEDDED_DATA_KEY_DIMENSION = "FeedbackRecords.embeddedDataKey";
 
 export const resetCubeFake = (): void => {
   cubeFake.calls = [];
+  cubeFake.discoveries = [];
+  cubeFake.discoveredKeys = {};
   cubeFake.rows = [];
   cubeFake.failure = null;
+  cubeFake.respond = null;
 };
 
 /** A `/load` answer shaped after the query, so the real client can parse and pivot it. */
-const buildLoadResponse = (query: CubeClient.Query) => {
+const buildLoadResponse = (query: CubeClient.Query, rows: TFakeCubeState["rows"]) => {
   const measures = (query.measures ?? []) as string[];
   const dimensions = (query.dimensions ?? []) as string[];
   const granular = (query.timeDimensions ?? []).filter((timeDimension) => timeDimension.granularity);
@@ -58,7 +80,7 @@ const buildLoadResponse = (query: CubeClient.Query) => {
           segments: {},
           timeDimensions: Object.fromEntries(timeKeys.map((key) => [key, { type: "time" }])),
         },
-        data: cubeFake.rows.map((row) =>
+        data: rows.map((row) =>
           Object.fromEntries([...measures, ...dimensions, ...timeKeys].map((key) => [key, row[key] ?? null]))
         ),
       },
@@ -74,7 +96,21 @@ const fakeTransport = (token: string): CubeClient.ITransport<Response> => ({
   request: (_method, params) => ({
     subscribe: <T>(callback: (result: Response, resubscribe: () => Promise<T>) => T): Promise<T> => {
       const query = decodeQuery(params.query);
-      cubeFake.calls.push({ claims: jwt.decode(token) as jwt.JwtPayload, query });
+      const call = { claims: jwt.decode(token) as jwt.JwtPayload, query };
+      if (call.claims.source === EMBEDDED_KEY_DISCOVERY_SOURCE) {
+        cubeFake.discoveries.push(call);
+        const keys = cubeFake.discoveredKeys[String(call.claims.tenantId)] ?? [];
+        const rows = keys.slice(0, Number(query.limit ?? keys.length)).map((key) => ({
+          [EMBEDDED_DATA_KEY_DIMENSION]: key,
+          "FeedbackRecords.count": 1,
+        }));
+        return Promise.resolve(
+          callback(Response.json(buildLoadResponse(query, rows)), () =>
+            Promise.reject(new Error("unexpected resubscribe"))
+          )
+        );
+      }
+      cubeFake.calls.push(call);
 
       if (cubeFake.failure) {
         const failure = cubeFake.failure;
@@ -83,7 +119,7 @@ const fakeTransport = (token: string): CubeClient.ITransport<Response> => ({
       }
 
       return Promise.resolve(
-        callback(Response.json(buildLoadResponse(query)), () =>
+        callback(Response.json(buildLoadResponse(query, cubeFake.respond?.(call) ?? cubeFake.rows)), () =>
           Promise.reject(new Error("unexpected resubscribe"))
         )
       );

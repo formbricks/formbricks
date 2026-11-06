@@ -25,6 +25,7 @@ interface InviteMemberModalProps {
   organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
+  isDashboardViewerRoleEnabled: boolean;
   membershipRole?: TOrganizationRole;
   isOwnerOrManager: boolean;
   isTeamAdmin: boolean;
@@ -41,6 +42,7 @@ export const InviteMemberModal = ({
   organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
+  isDashboardViewerRoleEnabled,
   membershipRole,
   isOwnerOrManager,
   isTeamAdmin,
@@ -68,6 +70,7 @@ export const InviteMemberModal = ({
         organizationId={organizationId}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
+        isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
         membershipRole={membershipRole}
         showTeamAdminRestrictions={showTeamAdminRestrictions}
         enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
@@ -81,7 +84,9 @@ export const InviteMemberModal = ({
         organizationId={organizationId}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
+        isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
         isBulkInviteAllowed={isBulkInviteAllowed}
+        membershipRole={membershipRole}
         enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />
     ),

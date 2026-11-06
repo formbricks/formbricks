@@ -882,6 +882,9 @@ enum OrganizationRole {
   manager
   member
   billing
+  /// Reads only the dashboards of workspaces its teams are granted. Projects to the SpiceDB relation
+  /// `organization#dashboard_viewer` (ADR-0025), which reaches `workspace#dashboard_read` and nothing else.
+  dashboard_viewer
 }
 
 /// Links users to organizations with specific roles.
@@ -1699,6 +1702,8 @@ model Chart {
 /// @property name - Display name of the dashboard
 /// @property workspace - The workspace this dashboard belongs to
 /// @property widgets - Charts on this dashboard
+/// @property filters - The dashboard filters pinned to its top bar, in order: `{ id, field, operator, label }`,
+///                     at most 10 (ADR-0026). Each viewer's picks live in their own browser, not here.
 /// @property createdBy - User who created the dashboard
 model Dashboard {
   id          String            @id @default(cuid())
@@ -1710,6 +1715,7 @@ model Dashboard {
   creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   createdBy   String?
   widgets     DashboardWidget[]
+  filters     Json              @default("[]")
 
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])

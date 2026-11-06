@@ -5,11 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { saveBlobAsFile } from "../lib/file-download";
+import { saveBlobAsFile } from "@/lib/utils/file-download";
 import { useDownloadRetentionExport, useRetentionRuns } from "./use-retention-runs";
 
-vi.mock("../lib/file-download", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../lib/file-download")>()),
+vi.mock("@/lib/utils/file-download", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/utils/file-download")>()),
   saveBlobAsFile: vi.fn(),
 }));
 

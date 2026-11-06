@@ -1,0 +1,125 @@
+get:
+  operationId: getDashboardChartDataV3
+  summary: Get a chart's data through its dashboard
+  description: |
+    Runs a chart that is a widget on this dashboard and returns its rows — the endpoint every
+    dashboard widget loads its data from. The body is the chart data body (`GET
+    /api/v3/charts/{chartId}/data`) plus `unfilterableFilters`.
+
+    The filters narrow the chart's saved query and never widen it; the date range sets its period:
+
+    - **Date range.** `dateRange`, or `from` and `to`, replaces the chart's own range on
+      `FeedbackRecords.collectedAt`: a chart saved for the last 30 days read for the last 12 months
+      shows the last 12 months.
+    - **Filters.** Each `filter[<id>]` with values in `picks[<id>]` is ANDed onto the chart's saved
+      filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
+      on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
+      `unfilterableFilters`, as does a Sentiment, Sentiment Score or Emotions filter that needs a
+      value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
+      most 4000 characters in all, each value counted percent-encoded as the URL carries it
+      (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
+      `limit_exceeded`.
+
+    A chart that is not a widget on the dashboard answers 404, whether it exists elsewhere or not.
+    Needs read access to the dashboard's workspace and to the chart's Feedback Dataset. Counts
+    against the chart-query budget (600 per minute, 20 at once, per user or API key), not the v3
+    default.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/ChartIdPath.yml
+    - $ref: ../components/parameters/DashboardDateRangeQuery.yml
+    - $ref: ../components/parameters/DashboardDateFromQuery.yml
+    - $ref: ../components/parameters/DashboardDateToQuery.yml
+    - $ref: ../components/parameters/DashboardFilterRulesQuery.yml
+    - $ref: ../components/parameters/DashboardFilterPicksQuery.yml
+  responses:
+    "200":
+      description: The chart's rows, narrowed by the dashboard date range and the picks
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardChartData.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "404":
+      description: >-
+        Not Found — the chart is not a widget on this dashboard. Answered only to a caller who may
+        read the dashboard.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Not Found
+            status: 404
+            detail: Chart not found
+            code: not_found
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+    "422":
+      description: >-
+        The picks or date range are not valid, the saved chart no longer passes the chart query validator, or a limit is exceeded.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            picksOverBudget:
+              summary: The picks take more than MAX_DASHBOARD_FILTER_PICKS_CHARS in a URL
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: The filter picks are not valid
+                code: unprocessable_content
+                requestId: req_01JB7X0000000000000000000
+                invalid_params:
+                  - name: picks
+                    reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                    code: limit_exceeded
+    "429":
+      $ref: ../components/responses/V3ChartQueryTooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3ChartQueryFailed.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

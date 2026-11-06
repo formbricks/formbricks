@@ -8,7 +8,9 @@ import { TMembership, TMembershipUpdateInput, ZMembershipUpdateInput } from "@fo
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { validateInputs } from "@/lib/utils/validate";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 
 export const updateMembership = async (
   userId: string,
@@ -45,6 +47,23 @@ export const updateMembership = async (
           role: "admin",
         },
       });
+    }
+
+    // A Dashboard viewer can't be a team admin: a team admin manages the team's members and invites
+    // others, which the role must never do (ADR-0025). The teams themselves stay, since they are what
+    // grants the viewer its workspaces.
+    if (data.role === "dashboard_viewer") {
+      await client.teamUser.updateMany({
+        where: { userId, role: "admin", team: { organizationId } },
+        data: { role: "contributor" },
+      });
+
+      // Someone who is now only ever a Dashboard viewer keeps no OAuth grant from a wider role: their
+      // consents go and their refresh tokens are revoked, so the next authorization passes through a
+      // consent that offers only dashboards:read, and no refresh mints a wider token.
+      if (await isOnlyDashboardViewer(client, userId)) {
+        await revokeAllUserOAuthGrants(client, userId);
+      }
     }
 
     const teamMemberships = await client.teamUser.findMany({

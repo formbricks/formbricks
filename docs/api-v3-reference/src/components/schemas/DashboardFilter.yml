@@ -1,0 +1,81 @@
+type: object
+description: >-
+  A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the
+  dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the
+  caller's own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it.
+  Like a caller's filter it is ANDed onto every chart's saved query and never widens it. A chart whose
+  Feedback Dataset lacks the field shows no data, and so does a chart that reads no text answer under a
+  Sentiment, Sentiment Score or Emotions filter that needs a value.
+required:
+  - id
+  - field
+  - operator
+  - label
+  - values
+properties:
+  id:
+    type: string
+    format: cuid2
+    description: Chosen by the writer; unique within the dashboard.
+  field:
+    type: string
+    minLength: 1
+    maxLength: 255
+    description: >-
+      A dimension from the field catalog (`GET /api/v3/charts/fields`, `kind` `dimension` or
+      `timeDimension`; not a filter-only field such as `FeedbackRecords.answer`), or an
+      embedded-data field (`FeedbackRecords.ed_…`) from any chart's dataset
+      catalog. An embedded-data field's name is derived from its key alone, so the filter applies to
+      every chart whose Feedback Dataset has that key.
+    example: FeedbackRecords.sourceName
+  operator:
+    type: string
+    enum:
+      - equals
+      - notEquals
+      - contains
+      - notContains
+      - gt
+      - gte
+      - lt
+      - lte
+      - set
+      - notSet
+    description: >-
+      One of the field's `filterOperators`, chosen by the editor. `equals` and `notEquals` on a
+      categorical field — one whose catalog entry has `valueLookup`, `FeedbackRecords.valueId` (the
+      answer's option), a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET
+      /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of);
+      `contains` and `notContains` on `FeedbackRecords.emotions` take several of its labels (`joy`,
+      `anger`, `sadness`, `fear`, `surprise`, `disgust`): contains any of them, contains none of them;
+      `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields
+      such as `FeedbackRecords.valueText` included, takes one typed value. On a time field a day
+      (`YYYY-MM-DD`) is the whole day in the organization's reporting time zone: `gt` is after it,
+      `lt` before it, `gte` and `lte` include it, `equals` is on it. `gt`, `gte`, `lt` and `lte` on an
+      embedded-data field take one number and compare the field as a number; they are saved only where
+      the field is `type` `number` on the dashboard (`GET
+      /api/v3/dashboards/{dashboardId}/filter-fields`), and a record whose value is no number does not
+      pass them.
+  label:
+    type: string
+    minLength: 1
+    maxLength: 100
+    description: What the top bar shows for the filter.
+  values:
+    type: array
+    maxItems: 100
+    items:
+      type: string
+      minLength: 1
+      maxLength: 1000
+    description: >-
+      The values the filter is locked to: none for `set` and `notSet`, at least one otherwise. A list
+      filter (`equals` or `notEquals` on a categorical field) matches any of them, and an emotions
+      filter (`contains` or `notContains`) takes each, which must be one of its labels; every other
+      filter takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also
+      matches records without a value, with `notEquals` it keeps only records with one; any other filter
+      refuses it. Each must be a value its field can hold, and all of a dashboard's locked values
+      together stay within the 4000 percent-encoded characters a read's picks may take.
+    example:
+      - Website
+additionalProperties: false

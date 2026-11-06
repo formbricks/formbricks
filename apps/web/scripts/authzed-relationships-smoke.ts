@@ -4,7 +4,7 @@ import { getFeedbackDirectoryAssignmentObjectId } from "../lib/authzed/feedback-
 
 const ORGANIZATION_ID = "application-relationship-smoke";
 const USER_ID = "application-relationship-smoke";
-const ORGANIZATION_RELATIONS = ["billing", "manager", "member", "owner"] as const;
+const ORGANIZATION_RELATIONS = ["billing", "dashboard_viewer", "manager", "member", "owner"] as const;
 const GRAPH_ORGANIZATION_ID = "application-graph-smoke";
 const GRAPH_WORKSPACE_ID = "application-graph-smoke";
 const LOOKUP_SECONDARY_WORKSPACE_ID = "application-graph-lookup-secondary";

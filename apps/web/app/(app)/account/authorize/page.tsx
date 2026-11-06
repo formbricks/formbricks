@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslate } from "@/lingodotdev/server";
 import { auth } from "@/modules/auth/lib/auth";
+import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import {
   type TOAuthPublicClient,
   getHostFromUrl,
@@ -10,6 +11,7 @@ import {
   isLocalhostHost,
 } from "@/modules/auth/lib/oauth-client-metadata";
 import { getSession } from "@/modules/auth/lib/session";
+import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Logo } from "@/modules/ui/components/logo";
 import { OAuthConsentActions } from "./components/OAuthConsentActions";
@@ -83,7 +85,13 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
   const scope = getSearchParam(resolvedSearchParams, "scope");
   const redirectUri = getSearchParam(resolvedSearchParams, "redirect_uri");
   const redirectHost = getHostFromUrl(redirectUri);
-  const requestedScopes = getRequestedScopes(scope);
+  const isViewer = session?.user ? await isDashboardViewerOnly(session.user.id) : false;
+  // A Dashboard viewer can grant dashboards:read and nothing else (ENG-6889); the consent endpoint
+  // enforces the same subset, so the page only shows what will actually be granted.
+  const requestedScopes = isViewer
+    ? trimScopesForDashboardViewer(getRequestedScopes(scope))
+    : getRequestedScopes(scope);
+  const isViewerGrantEmpty = isViewer && !requestedScopes.includes("dashboards:read");
   const client = clientId ? await getPublicOAuthClient(clientId) : null;
 
   if (!clientId || !client) {
@@ -158,8 +166,22 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
           </Alert>
         )}
 
+        {isViewer && (
+          <Alert variant={isViewerGrantEmpty ? "error" : "info"} className="mt-6" role="status">
+            <AlertTitle>{t("auth.oauth.dashboard_viewer_scope_title")}</AlertTitle>
+            <AlertDescription>
+              {isViewerGrantEmpty
+                ? t("auth.oauth.dashboard_viewer_no_dashboard_scope")
+                : t("auth.oauth.dashboard_viewer_scope_description")}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="mt-6">
-          <OAuthConsentActions />
+          <OAuthConsentActions
+            grantedScope={isViewer ? requestedScopes.join(" ") : undefined}
+            isAllowDisabled={isViewerGrantEmpty}
+          />
         </div>
       </div>
     </div>

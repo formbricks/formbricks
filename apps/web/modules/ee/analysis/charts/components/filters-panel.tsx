@@ -5,13 +5,17 @@ import { FilterDateInput } from "@/modules/ee/analysis/charts/components/filter-
 import { FilterValueCombobox } from "@/modules/ee/analysis/charts/components/filter-value-combobox";
 import {
   CHART_FILTER_ROOT_ID,
+  type TDatasetFilterFields,
   createDefaultFilterRow,
+  getAnswerOperatorOptions,
   getFilterFieldOptions,
   getFilterFieldType,
   getFilterOperatorLabel,
   toConditionGroup,
   toFilterRowUpdates,
 } from "@/modules/ee/analysis/charts/lib/filter-conditions";
+import { getAnswerBuilderQuestionId } from "@/modules/ee/analysis/lib/answer-filter";
+import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
   type FilterNode,
   type FilterRow,
@@ -49,6 +53,8 @@ interface FiltersPanelProps {
   // (fetched per data source) instead of free-text entry for exact-match operators.
   workspaceId?: string;
   feedbackDirectoryId?: string | null;
+  /** The dataset's embedded-data keys and answerable questions, offered as filter fields. */
+  datasetFields?: TDatasetFilterFields;
 }
 
 const RANGE_OPERATORS = new Set(["gt", "gte", "lt", "lte"]);
@@ -69,8 +75,16 @@ export function FiltersPanel({
   onFilterLogicChange,
   workspaceId,
   feedbackDirectoryId,
+  datasetFields = { embeddedFields: [], answerQuestions: [] },
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
+
+  const answerQuestionOf = (field: string) => {
+    const questionId = getAnswerBuilderQuestionId(field);
+    return questionId
+      ? datasetFields.answerQuestions.find((question) => question.id === questionId)
+      : undefined;
+  };
 
   const updateRow = (id: string, updates: Partial<FilterRow>) =>
     onFiltersChange(updateFilterRow(filters, id, updates));
@@ -106,6 +120,11 @@ export function FiltersPanel({
       return undefined;
     }
 
+    // An answer rule picks from its question's options in the editor's combobox (`getValueProps`).
+    if (getAnswerBuilderQuestionId(field)) {
+      return undefined;
+    }
+
     const fieldType = getFilterFieldType(field);
     const currentValue = String(condition.rightOperand?.value ?? "");
     const onValueChange = (value: string | null) =>
@@ -119,7 +138,8 @@ export function FiltersPanel({
     // Exact-match operators on a low-cardinality string dimension get a pick-list of real stored
     // values, so the chosen value matches exactly (no casing/whitespace drift).
     const canSelectValues =
-      isSelectableValueDimension(field) && (operator === "equals" || operator === "notEquals");
+      (isSelectableValueDimension(field) || isEmbeddedMemberName(field)) &&
+      (operator === "equals" || operator === "notEquals");
 
     if (canSelectValues && workspaceId && feedbackDirectoryId) {
       return (
@@ -153,12 +173,14 @@ export function FiltersPanel({
   };
 
   const config: TConditionsEditorConfig = {
-    getLeftOperandOptions: () => getFilterFieldOptions(t),
+    getLeftOperandOptions: () => getFilterFieldOptions(t, datasetFields),
     getOperatorOptions: (condition) =>
-      getFilterOperatorsForType(getFilterFieldType(condition.leftOperand.value)).map((operator) => ({
-        value: operator,
-        label: getFilterOperatorLabel(operator, t),
-      })),
+      getAnswerBuilderQuestionId(condition.leftOperand.value)
+        ? getAnswerOperatorOptions(answerQuestionOf(condition.leftOperand.value), t)
+        : getFilterOperatorsForType(getFilterFieldType(condition.leftOperand.value)).map((operator) => ({
+            value: operator,
+            label: getFilterOperatorLabel(operator, t),
+          })),
     getValueProps: (condition) => {
       const field = condition.leftOperand.value;
       if (field === EMOTIONS_DIMENSION_ID) {
@@ -166,6 +188,13 @@ export function FiltersPanel({
       }
       if (isFixedValueBandCondition(field, condition.operator)) {
         return { show: true, options: [fixedVocabularyGroup(VALUE_BAND_DIMENSION_ID, VALUE_BAND_VALUES)] };
+      }
+      const question = answerQuestionOf(field);
+      if (question) {
+        return {
+          show: true,
+          options: [{ label: question.label, value: question.id, options: question.options }],
+        };
       }
       return { show: false, options: [] };
     },

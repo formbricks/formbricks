@@ -33,6 +33,23 @@ describe("getChipParts", () => {
     });
   });
 
+  test("a picked value looked up for its label shows by that label", () => {
+    const option: TFilterProperty = {
+      id: "option",
+      label: "Value (Option)",
+      valueType: "enum",
+      multiValueEquals: true,
+      valueLabels: { late: "Late" },
+    };
+    const parts = getChipParts(
+      { property: "option", operator: "equals", values: ["late", "unknown"] },
+      option,
+      t,
+      "en-US"
+    );
+    expect(parts.value).toBe("Late, unknown");
+  });
+
   test("a value with no matching option shows as it is", () => {
     const parts = getChipParts(
       { property: "status", operator: "in", values: ["archived"] },
@@ -95,6 +112,36 @@ describe("getChipParts", () => {
       "en-US"
     );
     expect(parts.value).toBe("Draft, In progress");
+  });
+
+  test("is / is not read by how many values they hold, on a property whose equality takes several", () => {
+    const list = { ...status, multiValueEquals: true };
+    const parts = (operator: "equals" | "notEquals", values: string[]) =>
+      getChipParts({ property: "status", operator, values }, list, t, "en-US");
+    expect(parts("equals", ["draft"]).label).toBe("Status common.table_toolbar.operator_equals");
+    expect(parts("equals", ["draft"]).value).toBe("Draft");
+    expect(parts("equals", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_is_any_of"
+    );
+    expect(parts("equals", ["draft", "inProgress"]).value).toBe("Draft, In progress");
+    expect(parts("notEquals", ["draft"]).label).toBe("Status common.table_toolbar.operator_not_equals");
+    expect(parts("notEquals", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_is_none_of"
+    );
+  });
+
+  test("contains / does not contain read by how many values they hold, on a property whose containment takes several", () => {
+    const labels = { ...status, multiValueContains: true };
+    const parts = (operator: "contains" | "doesNotContain", values: string[]) =>
+      getChipParts({ property: "status", operator, values }, labels, t, "en-US");
+    expect(parts("contains", ["draft"]).label).toBe("Status common.table_toolbar.operator_contains");
+    expect(parts("contains", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_contains_any_of"
+    );
+    expect(parts("contains", ["draft", "inProgress"]).value).toBe("Draft, In progress");
+    expect(parts("doesNotContain", ["draft", "inProgress"]).label).toBe(
+      "Status common.table_toolbar.operator_contains_none_of"
+    );
   });
 
   test("a date rule formats its day", () => {

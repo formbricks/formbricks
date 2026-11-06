@@ -7,6 +7,7 @@ import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { isLabelledValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 
 const VALUE_ID_DIMENSION = "FeedbackRecords.valueId";
 const VALUE_TEXT_DIMENSION = "FeedbackRecords.valueText";
@@ -405,4 +406,62 @@ export async function resolveOptionGrouping(
     ...(fieldLabels ? { fieldLabels } : {}),
     pinned: attributable,
   };
+}
+
+// ── Value labels for a dataset's stored ids ───────────────────────────────────
+
+const SOURCE_ID_DIMENSION = "FeedbackRecords.sourceId";
+
+type TLoadedSurvey = NonNullable<Awaited<ReturnType<TSurveyLoader>>>;
+
+/** An ending's default-language text: an end screen's headline, a redirect's label; none when blank. */
+const getEndingLabelDefault = (ending: TLoadedSurvey["endings"][number]): string | undefined => {
+  const text =
+    ending.type === "endScreen"
+      ? getTextContent(getLocalizedValue(ending.headline ?? {}, "default"))
+      : (ending.label ?? "");
+  return text.trim() || undefined;
+};
+
+/** Add a survey's own ids → labels for `field` to `into`: its name for a source id, its endings' texts. */
+const collectSurveyLabels = (field: string, survey: TLoadedSurvey, into: Record<string, string>): void => {
+  if (field === SOURCE_ID_DIMENSION) {
+    // A survey's records carry its id as their source id (transform.ts), and its name as source name.
+    if (survey.name.trim()) into[survey.id] ??= survey.name;
+    return;
+  }
+  for (const ending of survey.endings ?? []) {
+    const label = getEndingLabelDefault(ending);
+    if (label) into[ending.id] ??= label;
+  }
+};
+
+/**
+ * The labels a field's stored ids are shown by, from the surveys mapped into one Feedback Dataset
+ * (`feedbackDirectoryId`) and no other, as charts label them:
+ * - `FeedbackRecords.valueId`: each option's default-language label (`collectOptionLabels`), every
+ *   question of the dataset contributing, so the shared `"other"` id reads the generic "Other";
+ * - `FeedbackRecords.sourceId`: the survey's name;
+ * - `FeedbackRecords.metadataEndingId`: the ending's default-language headline, or a redirect ending's label.
+ *
+ * Empty for any other field (`isLabelledValueDimension`). An id no mapped survey names (a record from another source) has no entry,
+ * and is shown as it is stored.
+ */
+export async function resolveDatasetValueLabels(
+  field: string,
+  workspaceId: string,
+  feedbackDirectoryId: string
+): Promise<Record<string, string>> {
+  if (!isLabelledValueDimension(field)) return {};
+  const mappings = await getDirectoryMappings(workspaceId, feedbackDirectoryId);
+  const loadSurvey = createSurveyLoader();
+  if (field === VALUE_ID_DIMENSION) {
+    return (await buildLabelMaps(mappings, loadSurvey, false)).optionLabels;
+  }
+  const labels: Record<string, string> = {};
+  for (const surveyId of new Set(mappings.map((mapping) => mapping.surveyId))) {
+    const survey = await loadSurvey(surveyId);
+    if (survey) collectSurveyLabels(field, survey, labels);
+  }
+  return labels;
 }

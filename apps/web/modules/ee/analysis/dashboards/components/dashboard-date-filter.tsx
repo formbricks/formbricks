@@ -88,7 +88,7 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
     <div className="flex items-center gap-2">
       <Select value={selectValue} onValueChange={handleSelect}>
         <SelectTrigger className="w-48 bg-white">
-          <SelectValue placeholder={t("workspace.analysis.dashboards.date_filter_placeholder")} />
+          <SelectValue placeholder={t("workspace.analysis.dashboards.date_filter_choose")} />
         </SelectTrigger>
         <SelectContent className="max-h-[var(--radix-select-content-available-height)]">
           <SelectItem value={DEFAULT_VALUE}>

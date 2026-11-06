@@ -1,0 +1,9 @@
+in: path
+name: filterId
+required: true
+schema:
+  type: string
+  pattern: ^[A-Za-z0-9_-]{1,24}$
+description: >-
+  The filter to list values for: the `<id>` of one of the request's `filter[<id>]` parameters. One that
+  is not answers 422.

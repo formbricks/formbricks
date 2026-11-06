@@ -6,6 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { updateMembership } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
@@ -24,6 +25,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
 }));
+vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeAllUserOAuthGrants: vi.fn() }));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
@@ -117,6 +119,43 @@ describe("updateMembership", () => {
         { teamId: "team2", userId: "user1" },
       ],
     });
+  });
+
+  test("demotes a Dashboard viewer's team admin roles to contributor, keeping the teams", async () => {
+    vi.mocked(prisma.membership.update).mockResolvedValue({
+      userId: "user1",
+      organizationId: "org1",
+      role: "dashboard_viewer",
+      accepted: true,
+    } as never);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([{ teamId: "team1" }] as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
+
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" });
+
+    expect(prisma.teamUser.updateMany).toHaveBeenCalledTimes(1);
+    expect(prisma.teamUser.updateMany).toHaveBeenCalledWith({
+      where: { userId: "user1", role: "admin", team: { organizationId: "org1" } },
+      data: { role: "contributor" },
+    });
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId: "team1", userId: "user1" }],
+    });
+  });
+
+  test.each([
+    [["dashboard_viewer"], true],
+    [["dashboard_viewer", "member"], false],
+  ])("with memberships %j, revokes the user's OAuth grants: %s", async (roles, revoked) => {
+    vi.mocked(prisma.membership.update).mockResolvedValue({ role: "dashboard_viewer" } as never);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.membership.findMany).mockImplementation(((args: { select?: { role?: boolean } }) =>
+      Promise.resolve(args.select?.role ? roles.map((role) => ({ role })) : [])) as never);
+
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" });
+
+    if (revoked) expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, "user1");
+    else expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
   });
 
   test("includes memberships added while team roles are being updated in reconciliation", async () => {

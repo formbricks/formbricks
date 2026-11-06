@@ -87,7 +87,7 @@ export const ShareSurveyLink = ({
           disabled={!surveyUrl}
           onClick={async () => {
             const url = await getPreviewUrl();
-            window.open(url, "_blank");
+            window.open(url, "_blank", "noopener,noreferrer");
           }}>
           {t("common.preview")}
           <SquareArrowOutUpRight />

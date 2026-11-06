@@ -255,7 +255,7 @@ export const SurveyAnalysisCTA = ({
       tooltip: t("common.preview"),
       onClick: async () => {
         const previewUrl = await getPreviewUrl();
-        window.open(previewUrl, "_blank");
+        window.open(previewUrl, "_blank", "noopener,noreferrer");
       },
       isVisible: survey.type === "link" && !survey.archivedAt,
     },

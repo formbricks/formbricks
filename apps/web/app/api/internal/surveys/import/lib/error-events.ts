@@ -1,29 +1,51 @@
 import { classifyAIStreamFailure } from "@/app/api/internal/lib/ai-stream-errors";
-import { QSF_IMPORT_STREAM_ERROR_CODES, type TQsfImportStreamEvent } from "./events";
+import { SurveyImportFailedError } from "@/modules/survey/import/core/errors";
+import { SURVEY_IMPORT_STREAM_ERROR_CODES, type TSurveyImportStreamEvent } from "./events";
 
 /**
  * Fixed detail strings, one per code. Never interpolate the caught error's message: provider errors
  * can echo the prompt, and the prompt carries the file's questions.
  */
 const STREAM_ERROR_DETAILS = {
-  [QSF_IMPORT_STREAM_ERROR_CODES.QUOTA_EXCEEDED]:
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.QUOTA_EXCEEDED]:
     "The AI provider is temporarily rate-limited. Try again shortly.",
-  [QSF_IMPORT_STREAM_ERROR_CODES.AUTH_FAILED]:
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.AUTH_FAILED]:
     "The AI provider rejected this instance's credentials. Ask your administrator to check the AI provider configuration.",
-  [QSF_IMPORT_STREAM_ERROR_CODES.OUTPUT_TOO_LONG]:
-    "The survey is too long to import in one go. Split it in Qualtrics and import each part.",
-  [QSF_IMPORT_STREAM_ERROR_CODES.TIMED_OUT]: "The import took too long and was stopped. Try again.",
-  [QSF_IMPORT_STREAM_ERROR_CODES.FAILED]: "The file could not be imported. Try again.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.OUTPUT_TOO_LONG]:
+    "The survey is too long to import in one go. Split it into parts and import each one.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.TIMED_OUT]: "The import took too long and was stopped. Try again.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE]:
+    "The survey has more questions than one import takes. Import it through MCP with an AI assistant instead.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.PARTLY_UNREAD]:
+    "The AI could not read part of the file, and with it the survey may have more questions than one import takes. Try again.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE]:
+    "The file has no question the import can bring over. Check the file, or create the survey in the editor.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE_FOR_AI]:
+    "The file is too large for the AI to import in one go. Import it through MCP with an AI assistant instead.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.NO_QUESTIONS]:
+    "The AI could not read any questions from the file. Try again, or import it through MCP with an AI assistant.",
+  [SURVEY_IMPORT_STREAM_ERROR_CODES.FAILED]: "The file could not be imported. Try again.",
 } as const;
 
-type TQsfImportErrorEvent = Extract<TQsfImportStreamEvent, { type: "error" }>;
+type TSurveyImportErrorEvent = Extract<TSurveyImportStreamEvent, { type: "error" }>;
+
+/** The failures a user can act on, each with its own code; any other reason is `import_failed`. */
+const FAILED_REASON_CODES: Partial<
+  Record<SurveyImportFailedError["reason"], keyof typeof STREAM_ERROR_DETAILS>
+> = {
+  too_many_questions: SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE,
+  partly_unread: SURVEY_IMPORT_STREAM_ERROR_CODES.PARTLY_UNREAD,
+  nothing_importable: SURVEY_IMPORT_STREAM_ERROR_CODES.NOTHING_IMPORTABLE,
+  too_large_for_ai: SURVEY_IMPORT_STREAM_ERROR_CODES.TOO_LARGE_FOR_AI,
+  no_questions: SURVEY_IMPORT_STREAM_ERROR_CODES.NO_QUESTIONS,
+};
 
 /** The in-band event for an import that hit its deadline. */
-export function importTimedOutEvent(): TQsfImportErrorEvent {
+export function importTimedOutEvent(): TSurveyImportErrorEvent {
   return {
     type: "error",
-    code: QSF_IMPORT_STREAM_ERROR_CODES.TIMED_OUT,
-    detail: STREAM_ERROR_DETAILS[QSF_IMPORT_STREAM_ERROR_CODES.TIMED_OUT],
+    code: SURVEY_IMPORT_STREAM_ERROR_CODES.TIMED_OUT,
+    detail: STREAM_ERROR_DETAILS[SURVEY_IMPORT_STREAM_ERROR_CODES.TIMED_OUT],
   };
 }
 
@@ -31,7 +53,12 @@ export function importTimedOutEvent(): TQsfImportErrorEvent {
  * Map a failure after the stream opened to the event the dialog renders. Failures before it — access,
  * the AI gate, a file that is not a QSF — are problem responses, not events.
  */
-export function toQsfImportStreamErrorEvent(error: unknown): TQsfImportErrorEvent {
+export function toSurveyImportStreamErrorEvent(error: unknown): TSurveyImportErrorEvent {
+  if (error instanceof SurveyImportFailedError) {
+    const code = FAILED_REASON_CODES[error.reason];
+    if (code) return { type: "error", code, detail: STREAM_ERROR_DETAILS[code] };
+  }
+
   const aiFailure = classifyAIStreamFailure(error);
   if (aiFailure) {
     return { type: "error", ...aiFailure, detail: STREAM_ERROR_DETAILS[aiFailure.code] };
@@ -39,7 +66,7 @@ export function toQsfImportStreamErrorEvent(error: unknown): TQsfImportErrorEven
 
   return {
     type: "error",
-    code: QSF_IMPORT_STREAM_ERROR_CODES.FAILED,
-    detail: STREAM_ERROR_DETAILS[QSF_IMPORT_STREAM_ERROR_CODES.FAILED],
+    code: SURVEY_IMPORT_STREAM_ERROR_CODES.FAILED,
+    detail: STREAM_ERROR_DETAILS[SURVEY_IMPORT_STREAM_ERROR_CODES.FAILED],
   };
 }
