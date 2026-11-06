@@ -1128,6 +1128,31 @@ export const getActionOperatorOptions = (
  * assignments from `responseData` and variables alone, so a reserved value offered here would read
  * as unset every time.
  */
+/** The question types whose answer a Set value step can copy into a field of this type. */
+const getSetValueSourceTypes = (fieldType: "number" | "text" | "date"): TSurveyElementTypeEnum[] => {
+  switch (fieldType) {
+    case "date":
+      return [TSurveyElementTypeEnum.Date];
+    case "number":
+      return [
+        TSurveyElementTypeEnum.Rating,
+        TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
+      ];
+    case "text":
+      return [
+        TSurveyElementTypeEnum.OpenText,
+        TSurveyElementTypeEnum.MultipleChoiceSingle,
+        TSurveyElementTypeEnum.Rating,
+        TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
+        TSurveyElementTypeEnum.Date,
+      ];
+  }
+};
+
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
@@ -1149,24 +1174,7 @@ export const getActionValueOptions = (
   // A date field takes a date question's answer or another date field (its fixed day is the picker's).
   const isDate = isComputedDateField(localSurvey, variableId);
 
-  const allowedElementTypes = isDate
-    ? [TSurveyElementTypeEnum.Date]
-    : isNumeric
-      ? [
-          TSurveyElementTypeEnum.Rating,
-          TSurveyElementTypeEnum.NPS,
-          TSurveyElementTypeEnum.CSAT,
-          TSurveyElementTypeEnum.CES,
-        ]
-      : [
-          TSurveyElementTypeEnum.OpenText,
-          TSurveyElementTypeEnum.MultipleChoiceSingle,
-          TSurveyElementTypeEnum.Rating,
-          TSurveyElementTypeEnum.NPS,
-          TSurveyElementTypeEnum.CSAT,
-          TSurveyElementTypeEnum.CES,
-          TSurveyElementTypeEnum.Date,
-        ];
+  const allowedElementTypes = getSetValueSourceTypes(isDate ? "date" : selectedVariable.type);
 
   const allowedElements = allElements.filter(
     (element) =>
