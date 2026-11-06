@@ -5294,6 +5294,7 @@
           "nav_title": "Personal links",
           "no_contacts_in_segment": "No contacts found for the selected segment",
           "no_segments_available": "No segments available",
+          "segment_survey_filters_not_visible": "The selected segment filters on surveys you don't have access to, so it can't be used for personal links.",
           "segment_survey_workspace_mismatch": "The selected segment belongs to a different workspace than this survey.",
           "select_segment": "Select segment",
           "upgrade_prompt_description": "Generate personal links for a segment and link survey responses to each contact.",

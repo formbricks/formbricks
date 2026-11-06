@@ -5294,6 +5294,7 @@
           "nav_title": "个人 链接",
           "no_contacts_in_segment": "所选细分中未找到联系人",
           "no_segments_available": "没有可用的片段",
+          "segment_survey_filters_not_visible": "所选细分筛选了你无权访问的调查问卷，因此无法用于个人链接。",
           "segment_survey_workspace_mismatch": "所选细分属于与此调查不同的工作区。",
           "select_segment": "选择 细分",
           "upgrade_prompt_description": "为 一个 细分 生成 个人 链接 ，并 将 调查 响应 链接 到 每个 联系人。",

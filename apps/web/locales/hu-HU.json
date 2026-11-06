@@ -5294,6 +5294,7 @@
           "nav_title": "Személyes hivatkozások",
           "no_contacts_in_segment": "Nem találhatók partnerek a kiválasztott szegmenshez",
           "no_segments_available": "Nem érhetők el szegmensek",
+          "segment_survey_filters_not_visible": "A kiválasztott szegmens olyan felmérések alapján szűr, amelyekhez Önnek nincs hozzáférése, ezért nem használható személyes hivatkozásokhoz.",
           "segment_survey_workspace_mismatch": "A kiválasztott szegmens egy ettől a kérdőívtől eltérő munkaterülethez tartozik.",
           "select_segment": "Szegmens kiválasztása",
           "upgrade_prompt_description": "Személyes hivatkozások előállítása egy szegmenshez és a kérdőívre adott válaszok hozzákapcsolása az egyes partnerekhez.",

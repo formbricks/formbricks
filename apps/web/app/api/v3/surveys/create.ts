@@ -31,7 +31,7 @@ import {
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
-import { resolveV3VisibleSurveyWhere } from "./visibility-context";
+import { resolveV3SurveyTargetingActor, resolveV3VisibleSurveyWhere } from "./visibility-context";
 
 export type TV3SurveyCreateOptions = {
   skipExternalUrlPermissionCheck?: boolean;
@@ -332,12 +332,17 @@ export async function executeV3SurveyCreate(params: {
   // App targeting filters are created atomically with the survey's private segment inside
   // `createSurvey` (a single transaction), so a failed targeting write can't leave a partial survey.
   const privateSegmentFilters = input.type === "app" ? (input.targeting?.filters ?? []) : [];
+  const targetingActor = await resolveV3SurveyTargetingActor(
+    authentication,
+    params.organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id
+  );
   let survey: TSurvey;
   try {
     survey = await createSurvey(input.workspaceId, surveyCreateInput, {
       creationFacts,
       privateSegmentFilters,
       customCss,
+      targetingActor,
       ...(transaction ? { transaction } : {}),
     });
   } catch (error) {

@@ -7,6 +7,7 @@ import { TFunction } from "i18next";
 export const SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE = "segment_survey_workspace_mismatch";
 export const CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE = "contact_survey_workspace_mismatch";
 export const NO_CONTACTS_IN_SEGMENT_ERROR_CODE = "no_contacts_in_segment";
+export const SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE = "segment_survey_filters_not_visible";
 
 // Maps a personal-link error code to a localized message. Unknown values pass
 // through untouched so non-coded errors (e.g. generic server errors) keep their
@@ -19,6 +20,8 @@ export const getTranslatedPersonalLinkError = (errorCode: string, t: TFunction):
       return t("workspace.contacts.contact_survey_workspace_mismatch");
     case NO_CONTACTS_IN_SEGMENT_ERROR_CODE:
       return t("workspace.surveys.share.personal_links.no_contacts_in_segment");
+    case SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE:
+      return t("workspace.surveys.share.personal_links.segment_survey_filters_not_visible");
     default:
       return errorCode;
   }

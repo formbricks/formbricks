@@ -5294,6 +5294,7 @@
           "nav_title": "Liens personnels",
           "no_contacts_in_segment": "Aucun contact trouvé pour le segment sélectionné",
           "no_segments_available": "Aucun segment disponible",
+          "segment_survey_filters_not_visible": "Le segment sélectionné applique des filtres sur des enquêtes auxquelles tu n'as pas accès, il ne peut donc pas être utilisé pour les liens personnels.",
           "segment_survey_workspace_mismatch": "Le segment sélectionné appartient à un espace de travail différent de celui de cette enquête.",
           "select_segment": "Sélectionner le segment",
           "upgrade_prompt_description": "Générez des liens personnels pour un segment et associez les réponses du sondage à chaque contact.",

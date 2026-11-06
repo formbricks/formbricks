@@ -5294,6 +5294,7 @@
           "nav_title": "Links pessoais",
           "no_contacts_in_segment": "Nenhum contacto encontrado para o segmento selecionado",
           "no_segments_available": "Sem segmentos disponíveis",
+          "segment_survey_filters_not_visible": "O segmento selecionado filtra por inquéritos aos quais não tens acesso, por isso não pode ser utilizado para ligações pessoais.",
           "segment_survey_workspace_mismatch": "O segmento selecionado pertence a um espaço de trabalho diferente do deste inquérito.",
           "select_segment": "Selecionar segmento",
           "upgrade_prompt_description": "Gerar links pessoais para um segmento e associar as respostas do inquérito a cada contacto.",

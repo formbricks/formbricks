@@ -8,7 +8,7 @@ import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
-import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
+import { getUserVisibleSurveyWhere, resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
   getOrganizationIdFromSegmentId,
@@ -23,6 +23,8 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
 import {
+  assertAddedSegmentSurveyFiltersVisible,
+  assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
@@ -48,6 +50,21 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
  */
 const assertCanWriteSurvey = (userId: string, surveyId: string) =>
   assertCan({ type: "user", id: userId }, "survey.write", { type: "survey", id: surveyId });
+
+/**
+ * ENG-6870: attaching or copying a segment onto a survey targets that survey at whoever the segment's
+ * survey-interaction filters match, and the survey's responses then show who they are. So the caller must
+ * see every survey those filters read, as if they had written them.
+ */
+const assertCanTargetWithSegment = async (userId: string, organizationId: string, segmentId: string) => {
+  const segment = await getSegment(segmentId);
+  await assertSegmentSurveyFiltersVisible(
+    segment.filters,
+    segment.workspaceId,
+    await resolveSurveyActorContext({ type: "user", id: userId }, organizationId),
+    segment.id
+  );
+};
 
 const checkAdvancedTargetingPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
@@ -101,6 +118,12 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
       parsedFilters.data,
       workspaceId,
       await getUserVisibleSurveyWhere(userId, organizationId)
+    );
+    // ENG-6870: and the surveys nested segment filters read.
+    await assertSegmentSurveyFiltersVisible(
+      parsedFilters.data,
+      workspaceId,
+      await resolveSurveyActorContext({ type: "user", id: userId }, organizationId)
     );
 
     const segment = await createSegment(parsedInput);
@@ -160,12 +183,21 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
     }
 
     const oldObject = await getSegment(parsedInput.segmentId);
+    const actor = await resolveSurveyActorContext({ type: "user", id: ctx.user.id }, organizationId);
     let data = parsedInput.data;
     const { filters } = parsedInput.data;
     if (filters) {
       // Only the ids the caller sent must be visible to them; the stored ones they could not see are
       // put back afterwards, since the editor never held them.
       await assertSurveyInteractionSurveyIds(filters, segmentWorkspaceId, visibleSurveyWhere);
+      // ENG-6870: and the surveys nested segment filters read, where the edit adds them.
+      await assertAddedSegmentSurveyFiltersVisible(
+        filters,
+        oldObject.filters,
+        segmentWorkspaceId,
+        actor,
+        parsedInput.segmentId
+      );
       const merged =
         Object.keys(visibleSurveyWhere).length > 0
           ? await restoreHiddenSegmentSurveyIds(
@@ -187,6 +219,18 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
 
       await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
       data = { ...parsedInput.data, filters: parsedFilters.data };
+    }
+
+    // ENG-6870: connecting a survey to the segment targets it with the whole tree, as attaching one
+    // does (`assertCanTargetWithSegment`), so every survey the stored tree reads must be visible too.
+    const connectedSurveyIds = new Set(oldObject.surveys);
+    if (parsedInput.data.surveys?.some((surveyId) => !connectedSurveyIds.has(surveyId))) {
+      await assertSegmentSurveyFiltersVisible(
+        data.filters ?? oldObject.filters,
+        segmentWorkspaceId,
+        actor,
+        parsedInput.segmentId
+      );
     }
 
     const updated = await updateSegment(parsedInput.segmentId, data);
@@ -223,6 +267,7 @@ export const loadNewSegmentAction = authenticatedActionClient.inputSchema(ZLoadN
 
     await checkAdvancedTargetingPermission(organizationId);
     await assertCanWriteSurvey(ctx.user.id, parsedInput.surveyId);
+    await assertCanTargetWithSegment(ctx.user.id, organizationId, parsedInput.segmentId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
@@ -256,6 +301,7 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
 
     await checkAdvancedTargetingPermission(organizationId);
     await assertCanWriteSurvey(ctx.user.id, parsedInput.surveyId);
+    await assertCanTargetWithSegment(ctx.user.id, organizationId, parsedInput.segmentId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;

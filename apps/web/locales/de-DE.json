@@ -5294,6 +5294,7 @@
           "nav_title": "Persönliche Links",
           "no_contacts_in_segment": "Keine Kontakte für das ausgewählte Segment gefunden",
           "no_segments_available": "Keine Segmente verfügbar",
+          "segment_survey_filters_not_visible": "Der ausgewählte Segment-Filter bezieht sich auf Umfragen, auf die Du keinen Zugriff hast, und kann deshalb nicht für persönliche Links verwendet werden.",
           "segment_survey_workspace_mismatch": "Das ausgewählte Segment gehört zu einem anderen Workspace als diese Umfrage.",
           "select_segment": "Segment auswählen",
           "upgrade_prompt_description": "Erstelle persönliche Links für ein Segment und verknüpfe Umfrageantworten mit jedem Kontakt.",

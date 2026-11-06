@@ -5294,6 +5294,7 @@
           "nav_title": "Personliga länkar",
           "no_contacts_in_segment": "Inga kontakter hittades för det valda segmentet",
           "no_segments_available": "Inga segment tillgängliga",
+          "segment_survey_filters_not_visible": "Det valda segmentet filtrerar på enkäter som du inte har åtkomst till, så det kan inte användas för personliga länkar.",
           "segment_survey_workspace_mismatch": "Det valda segmentet tillhör en annan arbetsyta än den här undersökningen.",
           "select_segment": "Välj segment",
           "upgrade_prompt_description": "Generera personliga länkar för ett segment och koppla enkätsvar till varje kontakt.",
