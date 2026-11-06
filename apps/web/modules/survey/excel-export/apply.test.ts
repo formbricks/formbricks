@@ -7,7 +7,7 @@ import { V3_SURVEY_MAX_BLOCKS } from "@/app/api/v3/surveys/schemas";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import { openZipArchive } from "@/modules/survey/import/core/zip";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
-import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/elements";
+import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/element-presets";
 import { editExcelExport, rowOf } from "./__fixtures__/edit-sheet";
 import { createIcuTranslate } from "./__fixtures__/translate";
 import { type TExcelExportApplied, applyExcelExport } from "./apply";

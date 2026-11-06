@@ -14,7 +14,7 @@ import { exportFormbricksFile } from "@/modules/survey/formbricks-file/export";
 import { previewFormbricksFileImport } from "@/modules/survey/formbricks-file/import";
 import { readFormbricksFile } from "@/modules/survey/formbricks-file/read";
 import { buildFormbricksFileMatch, hasSurveyResponses } from "@/modules/survey/formbricks-file/update";
-import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/elements";
+import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/element-presets";
 import type { TSurveyImportLane, TSurveyImportTarget } from "../core/lane";
 import { type TPreparedFormbricksFileImport, toFormbricksFileImportResult } from "../formbricks/lane";
 

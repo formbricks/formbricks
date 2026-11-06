@@ -243,15 +243,11 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       }
     }
 
-    const { updatedAt } = await prisma.survey.findUniqueOrThrow({
-      where: { id: draftSurveyId },
-      select: { updatedAt: true },
-    });
-    expect(XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[metaName], { header: 1 })).toEqual([
-      ["surveyId", draftSurveyId],
-      ["updatedAt", updatedAt.toISOString()],
-      ["format", "1"],
-    ]);
+    // How to read the sheet back, and no survey id: an import is aimed at its survey (ENG-6809).
+    const meta = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[metaName], { header: 1 });
+    expect(meta.map((row) => row[0])).toEqual(["format", "languages", "headers", "columns", "locale"]);
+    expect(meta[0][1]).toBe("1");
+    expect(JSON.stringify(meta)).not.toContain(draftSurveyId);
 
     expect(auditLog).toMatchObject({
       organizationId: fixture.organizationId,

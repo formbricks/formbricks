@@ -14,7 +14,8 @@ import { LOCK_TOOLTIP_DELAY_MS } from "@/modules/survey/editor/components/publis
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getChoiceTypeSwitchUpdate } from "@/modules/survey/editor/lib/element-type-switch";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { getElementDefaults, getGroupedElementTypes } from "@/modules/survey/lib/elements";
+import { getElementDefaults } from "@/modules/survey/lib/element-presets";
+import { getGroupedElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
