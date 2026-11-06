@@ -8,7 +8,11 @@ import type {
 } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { createEmptyFormulaAction, duplicateLogicItem } from "@/lib/surveyLogic/utils";
+import {
+  createEmptyFormulaAction,
+  createEmptySetValueAction,
+  duplicateLogicItem,
+} from "@/lib/surveyLogic/utils";
 
 /**
  * Operations on a list of logic rules (ENG-6929). The rule editor used to be wired to one block's
@@ -111,13 +115,7 @@ const createFirstAction = (
     case "setValue":
       return storedAsExpression
         ? createEmptyFormulaAction(createId(), variableId)
-        : {
-            id: createId(),
-            objective: "calculate",
-            variableId: variableId ?? "",
-            operator: "assign",
-            value: { type: "static", value: "" },
-          };
+        : createEmptySetValueAction(createId(), variableId);
   }
 };
 

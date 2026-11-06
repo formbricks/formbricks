@@ -225,9 +225,22 @@ export const updateCondition = (
 };
 
 /**
- * The empty Set value action: an empty expression, with the editor's Expression switch on. A new rule
- * from the Add logic menu and an action switched to Set value both start here (ENG-6935, P39); turning
- * the switch off gives the one-step editor (`score + 1`). Refused on save until filled in.
+ * The empty Set value action: Assign, an empty value, with the editor's Expression switch off. A new rule
+ * from the Add logic menu and an action switched to Set value both start here (ENG-6969 review, supersedes
+ * P63 and the expression-on start of P73); the switch turns it into an expression. Refused on save until
+ * filled in. A date field starts from {@link createEmptyFormulaAction} instead.
+ */
+export const createEmptySetValueAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
+  id,
+  objective: "calculate",
+  variableId,
+  operator: "assign",
+  value: { type: "static", value: "" },
+});
+
+/**
+ * The empty Set value action stored as an expression. A date field needs it even in one step: the
+ * schema has no one-step date value, so the editor shows this leaf as its Assign row (P38, ENG-6968).
  */
 export const createEmptyFormulaAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
   id,
@@ -244,7 +257,7 @@ export const getUpdatedActionBody = (
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":
-      return createEmptyFormulaAction(action.id);
+      return createEmptySetValueAction(action.id);
     case "requireAnswer":
       return {
         id: action.id,
