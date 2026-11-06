@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { getTranslatedDatePresetLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import { parseCalendarDay } from "./date-filter";
-import { MULTI_VALUE_OPERATORS, getOperatorLabel, operatorTakesValue } from "./operators";
+import { getOperatorLabel, operatorTakesValue, operatorTakesValues } from "./operators";
 import type { TFilterProperty, TTableFilter } from "./types";
 import { datePresetFromSlug } from "./url-codec";
 
@@ -19,7 +19,32 @@ export type TChipParts = {
 
 const formatValue = (property: TFilterProperty, value: string, locale: string): string => {
   if (property.valueType === "date") return formatDateForDisplay(parseCalendarDay(value), locale, DAY_FORMAT);
-  return property.options?.find((option) => option.value === value)?.label ?? value;
+  return (
+    property.options?.find((option) => option.value === value)?.label ??
+    property.valueLabels?.[value] ??
+    value
+  );
+};
+
+/**
+ * A rule's operator as its chip reads it. Wording follows the values: "is" one value, "is any of"
+ * several, and "is not" one, "is none of" several; "contains" one, "contains any of" several, and "does
+ * not contain" one, "contains none of" several.
+ */
+const ruleOperatorLabel = (filter: TTableFilter, t: TFunction): string => {
+  if (filter.values.length > 1 && filter.operator === "contains") {
+    return t("common.table_toolbar.operator_contains_any_of");
+  }
+  if (filter.values.length > 1 && filter.operator === "doesNotContain") {
+    return t("common.table_toolbar.operator_contains_none_of");
+  }
+  if (filter.values.length > 1 && filter.operator === "equals") {
+    return t("common.table_toolbar.operator_is_any_of");
+  }
+  if (filter.values.length > 1 && filter.operator === "notEquals") {
+    return t("common.table_toolbar.operator_is_none_of");
+  }
+  return getOperatorLabel(filter.operator, t);
 };
 
 /** How a filter chip reads. Quick filters read `Property: values`; rules read `Property operator value`. */
@@ -48,8 +73,8 @@ export const getChipParts = (
       value = `${formatValue(property, filter.values[0], locale)} – ${formatValue(property, filter.values[1], locale)}`;
       break;
     default:
-      label = `${property.label} ${getOperatorLabel(filter.operator, t)}`;
-      if (MULTI_VALUE_OPERATORS.includes(filter.operator)) {
+      label = `${property.label} ${ruleOperatorLabel(filter, t)}`;
+      if (operatorTakesValues(filter.operator, property)) {
         value = filter.values.map((v) => formatValue(property, v, locale)).join(", ");
       } else if (operatorTakesValue(filter.operator)) {
         value = formatValue(property, filter.values[0] ?? "", locale);

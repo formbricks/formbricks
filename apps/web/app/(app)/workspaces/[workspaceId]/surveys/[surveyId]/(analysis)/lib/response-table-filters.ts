@@ -285,7 +285,7 @@ const typedFieldEntries = (
         valueType,
         // Observed values: the only values of an enum, suggestions for a free-text field.
         ...(valueType === "enum"
-          ? { options, loadOptions: () => Promise.resolve(options) }
+          ? { options, loadOptions: () => Promise.resolve({ options, hasMore: false }) }
           : { suggestions: options.map((option) => option.value).slice(0, MAX_SUGGESTIONS) }),
         ruleOperators,
       },
@@ -345,7 +345,7 @@ const trailingProperties = (
     quick: true,
     options: tagOptions,
     // Tags arrive after the page does; a tag in a shared link must survive until they have.
-    loadOptions: () => Promise.resolve(tagOptions),
+    loadOptions: () => Promise.resolve({ options: tagOptions, hasMore: false }),
     ruleOperators: ["equals", "notEquals"],
     group: t("common.other_filters"),
   };

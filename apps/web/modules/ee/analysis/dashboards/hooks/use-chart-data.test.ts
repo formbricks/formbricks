@@ -8,6 +8,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { useChartData } from "./use-chart-data";
 
 const CHART_ID = "clch000000000000000000001";
+const DASHBOARD_ID = "cldb000000000000000000001";
+const DATA_PATH = `/api/v3/dashboards/${DASHBOARD_ID}/charts/${CHART_ID}/data`;
+const NO_FILTERS: Parameters<typeof useChartData>[0]["filters"] = [];
+const read =
+  (dateRange: Parameters<typeof useChartData>[0]["dateRange"], filters = NO_FILTERS) =>
+  () =>
+    useChartData({ dashboardId: DASHBOARD_ID, chartId: CHART_ID, dateRange, filters });
 
 let wrapper: (props: Readonly<{ children: ReactNode }>) => ReturnType<typeof createElement>;
 
@@ -25,6 +32,7 @@ const dataResponse = () =>
       optionLabels: {},
       fieldLabels: {},
       query: { measures: ["FeedbackRecords.count"] },
+      unfilterableFilters: [],
     },
   });
 
@@ -51,7 +59,7 @@ describe("useChartData", () => {
   test("reads the chart for its own range when the dashboard sets none", async () => {
     fetchMock.mockResolvedValueOnce(dataResponse());
 
-    const { result } = renderHook(() => useChartData({ chartId: CHART_ID, dateRange: null }), { wrapper });
+    const { result } = renderHook(read(null), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual({
@@ -59,26 +67,31 @@ describe("useChartData", () => {
       optionLabels: undefined,
       fieldLabels: undefined,
       query: { measures: ["FeedbackRecords.count"] },
+      unfilterableFilters: [],
     });
-    expect(fetchMock.mock.calls[0][0]).toBe(`/api/v3/charts/${CHART_ID}/data`);
+    expect(fetchMock.mock.calls[0][0]).toBe(DATA_PATH);
   });
 
-  test("reads the chart for the dashboard's range, replacing its own", async () => {
+  test("reads the chart through its dashboard for the dashboard's range and the filters", async () => {
     fetchMock.mockResolvedValueOnce(dataResponse());
 
     const { result } = renderHook(
-      () => useChartData({ chartId: CHART_ID, dateRange: { from: "2026-01-01", to: "2026-01-31" } }),
+      read({ from: "2026-01-01", to: "2026-01-31" }, [
+        { field: "FeedbackRecords.sourceName", operator: "equals", values: ["Web", "App"] },
+      ]),
       { wrapper }
     );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(fetchMock.mock.calls[0][0]).toBe(`/api/v3/charts/${CHART_ID}/data?from=2026-01-01&to=2026-01-31`);
+    expect(decodeURIComponent(fetchMock.mock.calls[0][0])).toBe(
+      `${DATA_PATH}?from=2026-01-01&to=2026-01-31&filter[f1]=equals:FeedbackRecords.sourceName&picks[f1]=Web&picks[f1]=App`
+    );
   });
 
   test("shows a 4xx at once, without retrying", async () => {
     fetchMock.mockResolvedValue(problem(422));
 
-    const { result } = renderHook(() => useChartData({ chartId: CHART_ID, dateRange: null }), { wrapper });
+    const { result } = renderHook(read(null), { wrapper });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toMatchObject({ status: 422 });
@@ -88,7 +101,7 @@ describe("useChartData", () => {
   test("retries a server error once before showing it", async () => {
     fetchMock.mockResolvedValue(problem(502));
 
-    const { result } = renderHook(() => useChartData({ chartId: CHART_ID, dateRange: null }), { wrapper });
+    const { result } = renderHook(read(null), { wrapper });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toMatchObject({ status: 502 });
@@ -111,7 +124,7 @@ describe("useChartData", () => {
       )
       .mockResolvedValueOnce(dataResponse());
 
-    const { result } = renderHook(() => useChartData({ chartId: CHART_ID, dateRange: null }), { wrapper });
+    const { result } = renderHook(read(null), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fetchMock).toHaveBeenCalledTimes(3);
@@ -120,12 +133,10 @@ describe("useChartData", () => {
   test("recovers when the one retry succeeds", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce(dataResponse());
 
-    const { result } = renderHook(() => useChartData({ chartId: CHART_ID, dateRange: "last_7_days" }), {
-      wrapper,
-    });
+    const { result } = renderHook(read("last_7_days"), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[1][0]).toBe(`/api/v3/charts/${CHART_ID}/data?dateRange=last_7_days`);
+    expect(fetchMock.mock.calls[1][0]).toBe(`${DATA_PATH}?dateRange=last_7_days`);
   });
 });

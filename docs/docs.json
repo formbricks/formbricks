@@ -128,7 +128,6 @@
                   "surveys/general-features/limit-submissions",
                   "surveys/general-features/survey-scheduling",
                   "surveys/general-features/multi-language-surveys",
-                  "surveys/general-features/migrate-from-qualtrics",
                   "surveys/general-features/partial-submissions",
                   "surveys/general-features/recall",
                   "surveys/general-features/metadata",
@@ -140,6 +139,15 @@
                   "surveys/general-features/tags",
                   "surveys/general-features/validation-rules",
                   "surveys/general-features/visibility"
+                ]
+              },
+              {
+                "group": "Import & Export",
+                "icon": "file-import",
+                "pages": [
+                  "surveys/import-export/overview",
+                  "surveys/import-export/formbricks-file",
+                  "surveys/import-export/qualtrics"
                 ]
               },
               {
@@ -395,6 +403,7 @@
               "self-hosting/advanced/migration",
               "self-hosting/advanced/v6-maintenance-upgrade",
               "self-hosting/advanced/migrating-surveys",
+              "self-hosting/advanced/migrating-survey-responses",
               "self-hosting/advanced/license",
               "self-hosting/advanced/license-activation",
               {
@@ -537,6 +546,10 @@
     ]
   },
   "redirects": [
+    {
+      "destination": "/docs/surveys/import-export/qualtrics",
+      "source": "/docs/surveys/general-features/migrate-from-qualtrics"
+    },
     {
       "destination": "/docs/development/overview",
       "source": "/docs/development/local-setup/linux"

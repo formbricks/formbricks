@@ -1,12 +1,14 @@
 type: object
 description: >-
-  A dashboard: a named grid of widgets in a workspace. Its charts can come from different Feedback
-  Datasets. Each widget's data is read separately, from `GET /api/v3/charts/{chartId}/data`.
+  A dashboard: a named grid of widgets in a workspace, and the filters pinned to its top bar. Its
+  charts can come from different Feedback Datasets. Each widget's data is read separately, from
+  `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`.
 required:
   - id
   - workspaceId
   - name
   - creator
+  - filters
   - widgets
   - createdAt
   - updatedAt
@@ -22,6 +24,12 @@ properties:
     description: Unique within the workspace.
   creator:
     $ref: ./DashboardCreator.yml
+  filters:
+    type: array
+    description: The dashboard filters, in top-bar order. Empty when it has none.
+    maxItems: 10
+    items:
+      $ref: ./DashboardFilter.yml
   widgets:
     type: array
     description: In display order.

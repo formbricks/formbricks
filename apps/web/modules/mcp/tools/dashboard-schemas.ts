@@ -9,6 +9,9 @@ import {
 } from "@/app/api/v3/charts/lib/resources";
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
 import {
+  ZV3DashboardChartData,
+  ZV3DashboardFilterFields,
+  ZV3DashboardFilterValues,
   ZV3DashboardListItem,
   ZV3DashboardResource,
   ZV3DashboardWidget,
@@ -18,8 +21,19 @@ import {
   ZV3DashboardName,
   ZV3WidgetLayoutInput,
   refuseEmptyWidgetUpdate,
+  refuseInvalidDashboardFilters,
   refuseRepeatedWidgets,
 } from "@/app/api/v3/dashboards/lib/schemas";
+import { zPostgresText } from "@/lib/utils/postgres-text";
+import {
+  DASHBOARD_FILTER_OPERATORS,
+  MAX_DASHBOARD_FILTERS,
+  MAX_DASHBOARD_FILTER_PICK_VALUES,
+  MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH,
+  NO_VALUE_PICK,
+  ZLockedDashboardFilter,
+  lockedValuesProblem,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
@@ -90,12 +104,12 @@ export const ZMcpChartQuery = z
   );
 
 /**
- * A date range the read is for. It replaces the chart's own range on collectedAt, the way the dashboard
- * date filter does.
+ * A date range the read is for. It narrows the chart's own range on collectedAt, the way the dashboard
+ * date filter does (ADR-0026).
  */
 export const ZMcpChartDateRange = z
   .union([
-    z.string().describe("A date preset from list_chart_fields, or 'all-time' to remove the range."),
+    z.string().describe("A date preset from list_chart_fields, or 'all-time' to keep the chart's own range."),
     z
       .object({
         from: z.string().describe("First day, YYYY-MM-DD, inclusive."),
@@ -105,7 +119,7 @@ export const ZMcpChartDateRange = z
   ])
   .optional()
   .describe(
-    "Replaces the chart's date range on FeedbackRecords.collectedAt. Read in the organization's time zone."
+    "Narrows the chart's date range on FeedbackRecords.collectedAt to the days both cover; ranges that do not overlap give no rows. Read in the organization's time zone."
   );
 
 export const ZMcpPreviewChartInput = z
@@ -119,6 +133,14 @@ export const ZMcpPreviewChartInput = z
 export type TMcpPreviewChartInput = z.infer<typeof ZMcpPreviewChartInput>;
 
 export const ZMcpChartDataOutput = mcpToolOutput(ZV3ChartData);
+
+/**
+ * `get_chart_data`'s result: the chart's rows as before, plus `unfilterableFilters` when the read went
+ * through a dashboard. Optional, so a client written against the chart-only shape keeps parsing it (S1).
+ */
+export const ZMcpGetChartDataOutput = mcpToolOutput(
+  ZV3ChartData.extend({ unfilterableFilters: ZV3DashboardChartData.shape.unfilterableFilters.optional() })
+);
 
 const ZMcpChartConfig = ZV3ChartConfig.describe(
   "Display settings, separate from the query: e.g. showLegend, stacked, barOrientation (vertical|horizontal), pieDisplay (pie|breakdown), areaDisplay (filled|line), colors, axis labels."
@@ -146,13 +168,98 @@ export const ZMcpUpdateChartInput = z
   .strict();
 export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;
 
+/**
+ * What a dashboard filter's values are, for an agent. The no-value pick is written out as JSON escapes,
+ * since it starts with a control character.
+ */
+const FILTER_VALUES_DESCRIPTION = `What to compare with: several values for equals/notEquals on a field with a value list (any of — list_dashboard_filter_values lists them), several emotions for contains/notContains on FeedbackRecords.emotions (contains any of / none of; each one of joy, anger, sadness, fear, surprise, disgust), one value otherwise, none for set/notSet. A day (YYYY-MM-DD) on a time field is the whole day in the organization's reporting time zone: gt is after it, lt before it. With equals/notEquals on a field with a value list, "${JSON.stringify(NO_VALUE_PICK).slice(1, -1)}" stands for "no value": equals with it also matches records without a value, notEquals with it only records with one.`;
+
+/** Refuses values that do not suit the operator: some for set/notSet, none for any other operator. */
+const refuseValuesNotSuitingOperator = (
+  filter: { operator: (typeof DASHBOARD_FILTER_OPERATORS)[number]; values: readonly string[] },
+  ctx: z.RefinementCtx
+): void => {
+  const problem = lockedValuesProblem(filter);
+  if (problem) ctx.addIssue({ code: "custom", message: problem, path: ["values"] });
+};
+
+/** A filter an agent applies to a dashboard read: any dimension of the charts' datasets, or an embedded-data field. */
+const ZMcpDashboardFilter = z
+  .object({
+    field: z
+      .string()
+      .min(1)
+      .max(255)
+      .describe(
+        "A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…) from list_dashboard_filter_fields."
+      ),
+    operator: z
+      .enum(DASHBOARD_FILTER_OPERATORS)
+      .describe(
+        "How the field is compared with the values; set and notSet ask whether it has a value at all. gt, gte, lt and lte on an embedded-data field compare it as a number, only where list_dashboard_filter_fields types it number."
+      ),
+    values: z
+      .array(zPostgresText().max(MAX_DASHBOARD_FILTER_PICK_VALUE_LENGTH))
+      .max(MAX_DASHBOARD_FILTER_PICK_VALUES)
+      .default([])
+      .describe(FILTER_VALUES_DESCRIPTION),
+  })
+  .strict()
+  .superRefine(refuseValuesNotSuitingOperator);
+
+const ZMcpDashboardFilters = z.array(ZMcpDashboardFilter).max(MAX_DASHBOARD_FILTERS);
+export type TMcpDashboardFilters = z.infer<typeof ZMcpDashboardFilters>;
+
 export const ZMcpGetChartDataInput = z
   .object({
-    chartId: ZId.describe("The chart to read."),
+    dashboardId: ZId.optional().describe(
+      "Read the chart through this dashboard, as get_dashboard lists its widgets: the dashboard's date range replaces the chart's own and filters apply. Without it the saved chart is read on its own."
+    ),
+    chartId: ZId.describe("The chart to read: a widget's chartId on that dashboard."),
     dateRange: ZMcpChartDateRange,
+    filters: ZMcpDashboardFilters.optional().describe(
+      "Filters to apply, each a field, an operator and its values. Each narrows the chart; it never widens it. Needs dashboardId."
+    ),
+  })
+  .strict()
+  .refine((input) => input.filters === undefined || input.dashboardId !== undefined, {
+    message: "filters need a dashboardId: they narrow the chart as that dashboard shows it.",
+    path: ["filters"],
+  });
+export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;
+
+export const ZMcpListDashboardFilterValuesInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard whose charts the values are listed for."),
+    field: z
+      .string()
+      .min(1)
+      .max(255)
+      .describe(
+        "A categorical dimension from list_chart_fields (one marked valueLookup, or FeedbackRecords.valueId), a yes/no (boolean) dimension, or an embedded-data field from list_dashboard_filter_fields."
+      ),
+    operator: z
+      .enum(["equals", "notEquals"])
+      .default("equals")
+      .describe("The comparison the values are for; only equals and notEquals have a list."),
+    dateRange: ZMcpChartDateRange,
+    filters: ZMcpDashboardFilters.optional().describe(
+      "Filters already applied: they narrow the list, as they narrow the charts."
+    ),
+    search: z
+      .string()
+      .trim()
+      .min(1)
+      .max(V3_NAME_MAX_LENGTH)
+      .optional()
+      .describe("Only values containing this text, ignoring case. Use it when hasMore is true."),
   })
   .strict();
-export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;
+export type TMcpListDashboardFilterValuesInput = z.infer<typeof ZMcpListDashboardFilterValuesInput>;
+
+export const ZMcpDashboardFilterValuesOutput = mcpToolOutput(ZV3DashboardFilterValues);
+
+export const ZMcpDashboardFilterFieldsOutput = mcpToolOutput(ZV3DashboardFilterFields);
 
 export const ZMcpListChartFieldValuesInput = z
   .object({
@@ -277,6 +384,58 @@ export const ZMcpUpdateDashboardLayoutInput = z
   .strict()
   .superRefine((input, ctx) => refuseRepeatedWidgets(input.widgets, ctx));
 export type TMcpUpdateDashboardLayoutInput = z.infer<typeof ZMcpUpdateDashboardLayoutInput>;
+
+/** A locked filter as an agent sends it: as `get_dashboard` reads it, its id optional for a new one. */
+const ZMcpLockedDashboardFilter = z
+  .object({
+    id: ZLockedDashboardFilter.shape.id
+      .optional()
+      .describe(
+        "The filter's id from get_dashboard, to keep an existing filter. Leave it out for a new one."
+      ),
+    field: ZLockedDashboardFilter.shape.field.describe(
+      "A dimension from list_chart_fields, or an embedded-data field (FeedbackRecords.ed_…) of a dataset the dashboard's charts read, as list_dashboard_filter_fields lists them."
+    ),
+    operator: ZLockedDashboardFilter.shape.operator.describe(
+      "How the field is compared with the values; the field must allow it. gt, gte, lt and lte on an embedded-data field need it to be type number in list_dashboard_filter_fields."
+    ),
+    label: ZLockedDashboardFilter.shape.label.describe(
+      "What readers see the filter as, e.g. the field's label."
+    ),
+    values: ZLockedDashboardFilter.shape.values.describe(FILTER_VALUES_DESCRIPTION),
+  })
+  .strict()
+  .superRefine(refuseValuesNotSuitingOperator);
+
+/** A placeholder id for a new filter, outside cuid2's alphabet so it never matches a sent one. */
+export const newDashboardFilterPlaceholderId = (index: number): string => `new:${index}`;
+
+export const ZMcpSetDashboardFiltersInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard whose locked filters to set."),
+    expectedUpdatedAt: z.iso
+      .datetime({ offset: true })
+      .describe(
+        "The dashboard's updatedAt from your get_dashboard read. If it changed since, nothing is saved: read it again and retry."
+      ),
+    filters: z
+      .array(ZMcpLockedDashboardFilter)
+      .max(MAX_DASHBOARD_FILTERS)
+      .superRefine((filters, ctx) =>
+        refuseInvalidDashboardFilters(
+          filters.map((filter, index) => ({
+            ...filter,
+            id: filter.id ?? newDashboardFilterPlaceholderId(index),
+          })),
+          ctx
+        )
+      )
+      .describe(
+        `Every locked filter the dashboard should have, at most ${MAX_DASHBOARD_FILTERS}, replacing the saved ones: keep one by sending it back as get_dashboard read it, change one by sending it changed, remove one by leaving it out. An empty list removes them all. Every filter applies to every reader, ANDed together.`
+      ),
+  })
+  .strict();
+export type TMcpSetDashboardFiltersInput = z.infer<typeof ZMcpSetDashboardFiltersInput>;
 
 export const ZMcpDuplicateChartInput = z
   .object({

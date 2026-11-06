@@ -1,0 +1,12 @@
+type: array
+items:
+  type: object
+  additionalProperties:
+    type:
+      - string
+      - number
+      - boolean
+      - "null"
+example:
+  - FeedbackRecords.sourceName: Web
+    FeedbackRecords.count: 42

@@ -152,10 +152,10 @@ After a `Membership` source mutation commits, Formbricks reconciles the
 corresponding SpiceDB `organization` relationship:
 
 - `Membership.role` maps exhaustively to exactly one of `owner`, `manager`,
-  `member`, or `billing`.
+  `member`, `billing`, or `dashboard_viewer`.
 - A present membership atomically touches its current role and deletes the
-  other three roles.
-- A deleted membership deletes all four possible role relationships.
+  other four roles.
+- A deleted membership deletes all five possible role relationships.
 - Repeating the same create, update, or delete is safe and can heal a missed
   projection.
 - If the source role changes concurrently, reconciliation reads PostgreSQL
@@ -479,6 +479,7 @@ contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-roll
 | Application concept                                                  | Schema element                                                                           |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `Membership.role` (`owner`/`manager`/`member`/`billing`)             | `organization` relations `owner`/`manager`/`member`/`billing`                            |
+| `Membership.role = dashboard_viewer` (ADR-0025)                      | `organization` relation `dashboard_viewer`                                               |
 | `TeamUser.role` (`admin`/`contributor`)                              | `team` relations `admin`/`contributor`                                                   |
 | `WorkspaceTeam.permission` (`read`/`readWrite`/`manage`)             | `workspace` relations `reader_team`/`writer_team`/`manager_team` (subject `team#member`) |
 | `ApiKeyWorkspace.permission` (`read`/`write`/`manage`)               | `workspace` relations `reader`/`writer`/`manager` (subject `api_key`)                    |
@@ -489,18 +490,19 @@ contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-roll
 
 Resource permissions preserve the operation-specific gates that exist today:
 
-| Current application operation                                    | Schema permission                           | Required access                                         |
-| ---------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
-| Read organization teams and workspace-team assignments           | `organization.read_access`, `team.read`     | organization membership or `accessControl.read`/`write` |
-| Rename teams or manage team membership                           | `organization.manage_access`, `team.manage` | team admin or `accessControl.write`                     |
-| Delete a team                                                    | `team.delete`                               | owner/manager or `accessControl.write`                  |
-| Read or edit a survey                                            | `survey.read`, `survey.write`               | workspace `read` or `readWrite`                         |
-| Delete a survey through the web application or V3 API            | `survey.delete`                             | workspace `readWrite`                                   |
-| Manage survey languages or delete through legacy management APIs | `survey.manage`                             | workspace `manage`                                      |
-| Read or mutate a dashboard, including deletion                   | `dashboard.read`, `dashboard.write`         | workspace `read` or `readWrite`                         |
-| Read/export a response                                           | `response.read`, `response.export`          | workspace `read`                                        |
-| Update, tag, or delete a response through the web application    | `response.write`                            | workspace `readWrite`                                   |
-| Delete a response through legacy management APIs                 | `response.manage`                           | workspace `manage`                                      |
+| Current application operation                                    | Schema permission                              | Required access                                         |
+| ---------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------- |
+| Read organization teams and workspace-team assignments           | `organization.read_access`, `team.read`        | organization membership or `accessControl.read`/`write` |
+| Rename teams or manage team membership                           | `organization.manage_access`, `team.manage`    | team admin or `accessControl.write`                     |
+| Delete a team                                                    | `team.delete`                                  | owner/manager or `accessControl.write`                  |
+| Read or edit a survey                                            | `survey.read`, `survey.write`                  | workspace `read` or `readWrite`                         |
+| Delete a survey through the web application or V3 API            | `survey.delete`                                | workspace `readWrite`                                   |
+| Manage survey languages or delete through legacy management APIs | `survey.manage`                                | workspace `manage`                                      |
+| Read or mutate a dashboard, including deletion                   | `dashboard.read`, `dashboard.write`            | workspace `dashboard_read` or `readWrite`               |
+| Read a saved chart's data or a filter's values on a dashboard    | `feedback_directory_assignment.dashboard_read` | dataset `read`, or a Dashboard viewer of the workspace  |
+| Read/export a response                                           | `response.read`, `response.export`             | workspace `read`                                        |
+| Update, tag, or delete a response through the web application    | `response.write`                               | workspace `readWrite`                                   |
+| Delete a response through legacy management APIs                 | `response.manage`                              | workspace `manage`                                      |
 
 Behavioral sources of truth in the application (referenced from the schema's
 doc comments):
@@ -538,6 +540,13 @@ doc comments):
    their granted workspace at their granted level; organization-level
    `accessControl` rights grant access to organization access-control resources
    but no product data.
+7. **Dashboard viewer reads dashboards only** (ADR-0025) — `dashboard_viewer`
+   reaches `workspace#dashboard_read` (and `dashboard#read`, and the
+   dashboard-bound `feedback_directory_assignment#dashboard_read`) through the
+   team grants of its teams' workspaces, at any grant level, and nothing else:
+   no organization `read`, no team membership, no workspace `read`, no survey,
+   response or Feedback Dataset permission. `dashboard_read` is a superset of
+   `read`, so everyone who reads a workspace still reads its dashboards.
 
 ## Backfill and repair
 

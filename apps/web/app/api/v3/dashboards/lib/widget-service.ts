@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import type { TWidgetLayout } from "@formbricks/types/analysis";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
+import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
   MAX_WIDGET_Y,
   findOverlappingWidget,
@@ -205,7 +206,11 @@ export type TDashboardReplaceResult =
   | {
       kind: "ok";
       row: TDashboardResourceRow;
-      previous: { name: string; widgets: { id: string; layout: unknown; order: number }[] };
+      previous: {
+        name: string;
+        filters?: unknown;
+        widgets: { id: string; layout: unknown; order: number }[];
+      };
     }
   | { kind: "gone" }
   /** The dashboard changed after the caller's read. */
@@ -246,7 +251,34 @@ const writeWidgetPlaces = async (
 };
 
 /**
- * Replace a dashboard's name and its widgets' places in one transaction, provided it is still the
+ * Whether a whole-dashboard write's widgets fit the dashboard as read in its transaction: each one of its
+ * own, every one listed when `requireEveryWidget` is set, none overlapping. When they do, the ones it left out.
+ */
+const checkWidgetPlaces = (
+  currentIds: readonly string[],
+  widgets: readonly { widgetId: string; layout: TWidgetLayout }[],
+  requireEveryWidget: boolean
+):
+  | Exclude<TDashboardReplaceResult, { kind: "ok" | "gone" | "stale" }>
+  | { kind: "ok"; omitted: string[] } => {
+  const current = new Set(currentIds);
+  const sentIds = new Set(widgets.map((widget) => widget.widgetId));
+  const unknown = [...sentIds].filter((id) => !current.has(id));
+  if (unknown.length > 0) return { kind: "unknownWidgets", widgetIds: unknown };
+  const omitted = currentIds.filter((id) => !sentIds.has(id));
+  if (requireEveryWidget && omitted.length > 0) return { kind: "missingWidgets", widgetIds: omitted };
+
+  const placed: { id: string; layout: TWidgetLayout }[] = [];
+  for (const widget of widgets) {
+    const clash = findOverlappingWidget(widget.layout, placed);
+    if (clash) return { kind: "overlap", widgetIds: [widget.widgetId, clash.id] };
+    placed.push({ id: widget.widgetId, layout: widget.layout });
+  }
+  return { kind: "ok", omitted };
+};
+
+/**
+ * Replace a dashboard's name, filters and its widgets' places in one transaction, provided it is still the
  * version the caller read (`expectedUpdatedAt`). Every check runs against the transaction's own read,
  * before anything is written, so a refused write changes nothing.
  *
@@ -257,6 +289,7 @@ export const replaceDashboardRow = ({
   dashboardId,
   expectedUpdatedAt,
   name,
+  filters,
   widgets,
   requireEveryWidget = false,
 }: {
@@ -264,8 +297,10 @@ export const replaceDashboardRow = ({
   expectedUpdatedAt: Date;
   /** Kept as it is when omitted. */
   name?: string;
-  /** `order` is kept as it is when omitted. */
-  widgets: { widgetId: string; layout: TWidgetLayout; order?: number }[];
+  /** Kept as they are when omitted. */
+  filters?: TDashboardFilter[];
+  /** `order` is kept as it is when omitted. Every widget is kept as it is when `widgets` is omitted. */
+  widgets?: { widgetId: string; layout: TWidgetLayout; order?: number }[];
   requireEveryWidget?: boolean;
 }): Promise<TDashboardReplaceResult> =>
   retryOnTransactionConflict(() =>
@@ -277,6 +312,7 @@ export const replaceDashboardRow = ({
         select: {
           name: true,
           updatedAt: true,
+          filters: true,
           widgets: { select: { id: true, layout: true, order: true } },
         },
       });
@@ -285,30 +321,32 @@ export const replaceDashboardRow = ({
         return { kind: "stale", currentUpdatedAt: current.updatedAt };
       }
 
-      const currentIds = new Set(current.widgets.map((widget) => widget.id));
-      const sentIds = new Set(widgets.map((widget) => widget.widgetId));
-      const unknown = [...sentIds].filter((id) => !currentIds.has(id));
-      if (unknown.length > 0) return { kind: "unknownWidgets", widgetIds: unknown };
-      const omitted = [...currentIds].filter((id) => !sentIds.has(id));
-      if (requireEveryWidget && omitted.length > 0) return { kind: "missingWidgets", widgetIds: omitted };
-
-      const placed: { id: string; layout: TWidgetLayout }[] = [];
-      for (const widget of widgets) {
-        const clash = findOverlappingWidget(widget.layout, placed);
-        if (clash) return { kind: "overlap", widgetIds: [widget.widgetId, clash.id] };
-        placed.push({ id: widget.widgetId, layout: widget.layout });
+      if (widgets) {
+        const refused = checkWidgetPlaces(
+          current.widgets.map((widget) => widget.id),
+          widgets,
+          requireEveryWidget
+        );
+        if (refused.kind !== "ok") return refused;
+        if (refused.omitted.length > 0) {
+          await tx.dashboardWidget.deleteMany({ where: { dashboardId, id: { in: refused.omitted } } });
+        }
+        await writeWidgetPlaces(tx, dashboardId, widgets);
       }
-
-      if (omitted.length > 0) {
-        await tx.dashboardWidget.deleteMany({ where: { dashboardId, id: { in: omitted } } });
-      }
-      await writeWidgetPlaces(tx, dashboardId, widgets);
       const row = await tx.dashboard.update({
         where: { id: dashboardId },
-        data: { ...(name === undefined ? {} : { name }), updatedAt: nextDashboardUpdatedAt(locked) },
+        data: {
+          ...(name === undefined ? {} : { name }),
+          ...(filters === undefined ? {} : { filters: filters as Prisma.InputJsonValue }),
+          updatedAt: nextDashboardUpdatedAt(locked),
+        },
         select: selectDashboardResource,
       });
 
-      return { kind: "ok", row, previous: { name: current.name, widgets: current.widgets } };
+      return {
+        kind: "ok",
+        row,
+        previous: { name: current.name, filters: current.filters, widgets: current.widgets },
+      };
     }, REPLACE_TRANSACTION_OPTIONS)
   );

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getRules, removeFilterAt, toggleQuickFilterValue } from "./filter-state";
+import { getLockedQuickValues, getRules, removeFilterAt, toggleQuickFilterValue } from "./filter-state";
 import type { TTableFilter } from "./types";
 
 const quick: TTableFilter = { property: "status", operator: "in", values: ["draft"] };
@@ -42,5 +42,18 @@ describe("ticking every value of a list", () => {
     const all = toggleQuickFilterValue(filters, "status", "completed");
     expect(all).toEqual([{ property: "status", operator: "in", values: statuses }]);
     expect(toggleQuickFilterValue(all, "status", "completed")).toEqual(filters);
+  });
+});
+
+describe("getLockedQuickValues", () => {
+  test("lists the values a property's locked quick filters tick, each once", () => {
+    const locked: TTableFilter[] = [
+      { property: "status", operator: "in", values: ["draft", "live"] },
+      { property: "status", operator: "in", values: ["live", "paused"] },
+      { property: "status", operator: "notEquals", values: ["archived"] },
+      { property: "type", operator: "in", values: ["link"] },
+    ];
+    expect(getLockedQuickValues(locked, "status")).toEqual(["draft", "live", "paused"]);
+    expect(getLockedQuickValues(locked, "owner")).toEqual([]);
   });
 });

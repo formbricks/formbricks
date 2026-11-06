@@ -12,11 +12,11 @@ import { getStorageFileNameScope } from "@/modules/storage/utils";
  * the survey has to be reachable too — a restricted survey's uploads are its owner's and the organization
  * administrators'. Legacy paths name no survey and keep the workspace check alone.
  *
- * The survey is read from the decoded, joined name — the key the storage read and delete build — not
- * from the raw segments: `surveys%2F{id}%2F…` (or `%252F` once the router has decoded it) is a single
- * segment here but `surveys/{id}/…` in storage. A name that does not decode is refused
- * outright (storage fails on it too), and so, once enforced, is a `surveys/` key with an empty survey
- * segment: it names no survey the caller could be checked against.
+ * The survey is read from the joined name as given — the key the storage read and delete build — not
+ * from the individual segments: the router decodes each segment once, so `surveys%2F{id}%2F…` in the URL
+ * is already the single segment `surveys/{id}/…` here, and storage reads that same name. The name is not
+ * decoded again, because storage does not either: a literal `%` is part of the file name. A `surveys/` key
+ * with an empty survey segment is refused: it names no survey the caller could be checked against.
  */
 const canReachSurveyFile = async (
   actor: TAuthorizationActor,
@@ -24,7 +24,6 @@ const canReachSurveyFile = async (
   action: "GET" | "DELETE"
 ): Promise<boolean> => {
   const scope = getStorageFileNameScope(filePath.join("/"));
-  if (!scope.decodable) return false;
   if (!scope.isSurveyScope) return true;
   if (!scope.surveyId) return false;
   return can(actor, SURVEY_ACTION_FOR_METHOD[action], { type: "survey", id: scope.surveyId });

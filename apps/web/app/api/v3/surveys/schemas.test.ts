@@ -1,13 +1,18 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
+import { CANONICAL_LANGUAGE_CODES } from "@formbricks/i18n-utils/canonical";
 import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
+import { findArrayBudgetViolation } from "@/app/api/v3/lib/array-budget";
+import { V3_INVALID_PARAMS_MAX, V3_INVALID_PARAM_REASON_MAX_CHARS } from "@/app/api/v3/lib/invalid-params";
 import {
   V3_SURVEY_BLOCK_OPS_MAX,
   V3_SURVEY_BLOCK_ORDER_MAX,
   V3_SURVEY_MAX_BLOCKS,
+  V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_HIDDEN_FIELDS,
   V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_TRANSLATIONS,
   V3_SURVEY_MAX_TRIGGERS,
   V3_SURVEY_MAX_VARIABLES,
   ZV3CreateSurveyBody,
@@ -763,6 +768,65 @@ describe("ZV3CreateSurveyBody", () => {
     }
   });
 
+  // ENG-4100: an incomplete element is four problems, and 49k `{}` entries fit in 150 KB. The document
+  // pre-pass must stop building them at the response cap, not after the Zod parse has held them all.
+  describe("document pre-pass cap", () => {
+    const incompleteElements = (count: number) => Array.from({ length: count }, () => ({}));
+    const withElements = (elements: unknown[]) => ({
+      ...validCreateBody,
+      blocks: [{ ...validCreateBody.blocks[0], elements }],
+    });
+
+    test("holds at most the response cap of issues however many entries are incomplete", () => {
+      const result = ZV3CreateSurveyBody.safeParse(withElements(incompleteElements(1000)));
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+      }
+    });
+
+    test("still counts every problem it did not list", () => {
+      const result = ZV3CreateSurveyBody.safeParse(withElements(incompleteElements(1000)));
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const params = formatV3ZodInvalidParams(result.error, "body");
+        expect(params).toHaveLength(V3_INVALID_PARAMS_MAX);
+        expect(params[0]).toMatchObject({
+          name: "blocks.0.elements.0.id",
+          code: "missing_required_field",
+        });
+        // 1,000 elements x 4 missing fields, minus the 49 listed.
+        expect(params.at(-1)?.reason).toBe(
+          "3951 further problems with this survey document were not reported; fix the ones above and retry"
+        );
+      }
+    });
+
+    test("lists every problem, with no summary, while they fit under the cap", () => {
+      const result = ZV3CreateSurveyBody.safeParse(withElements(incompleteElements(12)));
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const params = formatV3ZodInvalidParams(result.error, "body");
+        expect(params).toHaveLength(48);
+        expect(params.every((param) => param.code === "missing_required_field")).toBe(true);
+      }
+    });
+
+    test("applies to a patch body too", () => {
+      const result = ZV3PatchSurveyBody.safeParse({
+        blocks: [{ ...validCreateBody.blocks[0], elements: incompleteElements(1000) }],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+      }
+    });
+  });
+
   test("accepts hideDefaultIcon on an end screen ending", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
@@ -780,6 +844,311 @@ describe("ZV3CreateSurveyBody", () => {
     if (result.success) {
       expect(result.data.endings?.[0]).toMatchObject({ hideDefaultIcon: true });
     }
+  });
+
+  // ENG-4100: whatever the shape, a document inside the request budgets builds no more than the reply
+  // lists. Each case is one a review measured at 50k-1.2M issues (or a stack overflow) before the guard.
+  describe("bounded parse", () => {
+    const repeat = <T>(count: number, entry: () => T): T[] => Array.from({ length: count }, entry);
+    const label = { "en-US": "Label" };
+    const element = (extra: Record<string, unknown>, type = "multipleChoiceSingle") => ({
+      id: "q1",
+      type,
+      headline: label,
+      required: true,
+      ...extra,
+    });
+    const block = (
+      extra: Record<string, unknown> = {},
+      elements: unknown[] = [element({ choices: [] })]
+    ) => ({
+      id: "clbk1234567890123456789012",
+      name: "Block",
+      elements,
+      ...extra,
+    });
+    const group = (conditions: unknown[]) => ({ id: "g1", connector: "and", conditions });
+    const withLogic = (count: number, logic: () => unknown) =>
+      ({ ...validCreateBody, blocks: repeat(count, () => block({ logic: [logic()] })) }) as const;
+
+    test.each<[string, () => unknown]>([
+      [
+        "choices with wrong values",
+        () => ({
+          ...validCreateBody,
+          blocks: [
+            block(
+              {},
+              repeat(49, () => element({ choices: repeat(1000, () => ({ id: 0, label: 0 })) }))
+            ),
+          ],
+        }),
+      ],
+      [
+        "elements with wrong values",
+        () => ({
+          ...validCreateBody,
+          blocks: repeat(39, () =>
+            block(
+              {},
+              repeat(1000, () => ({ id: 0, type: "openText", headline: 0, required: 0 }))
+            )
+          ),
+        }),
+      ],
+      [
+        "conditions with wrong values, every union branch failing",
+        () =>
+          withLogic(40, () => ({
+            id: "l1",
+            conditions: group(
+              repeat(1000, () => ({ id: 0, leftOperand: {}, operator: 0, rightOperand: {} }))
+            ),
+            actions: [],
+          })),
+      ],
+      [
+        "calculate actions with wrong values",
+        () =>
+          withLogic(30, () => ({
+            id: "l1",
+            conditions: group([]),
+            actions: repeat(1000, () => ({
+              id: 0,
+              objective: "calculate",
+              variableId: 0,
+              operator: 0,
+              value: 0,
+            })),
+          })),
+      ],
+      [
+        "validation rules with wrong params",
+        () => ({
+          ...validCreateBody,
+          blocks: [
+            block(
+              {},
+              repeat(49, () =>
+                element(
+                  {
+                    validation: {
+                      rules: repeat(1000, () => ({ id: "r", type: "minLength", params: { x: 1 } })),
+                    },
+                  },
+                  "openText"
+                )
+              )
+            ),
+          ],
+        }),
+      ],
+      [
+        "nested show-condition groups of empty conditions",
+        () => ({
+          ...validCreateBody,
+          type: "app",
+          distribution: { showConditions: group(repeat(49, () => group(repeat(1000, () => ({}))))) },
+        }),
+      ],
+    ])("%s", (_name, build) => {
+      const body = build();
+      expect(findArrayBudgetViolation(body)).toBeNull();
+
+      const result = ZV3CreateSurveyBody.safeParse(body);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+      }
+    });
+
+    // The guard looks a catchall's extra keys up by own key: `metadata.constructor` once resolved to
+    // `Object` and threw, a 500 for a valid body.
+    test("takes big metadata with keys named like prototype members", () => {
+      const metadata = {
+        ...(JSON.parse('{"constructor":1,"toString":"x","__proto__":{"a":1}}') as Record<string, unknown>),
+        pad: repeat(300, () => 1),
+      };
+
+      expect(ZV3CreateSurveyBody.safeParse({ ...validCreateBody, metadata }).success).toBe(true);
+    });
+
+    // Zod skips a record's own `__proto__` key; the guard once walked it and refused a valid body.
+    test("takes a logic operand's big meta with a `__proto__` key", () => {
+      const meta = {
+        ...(JSON.parse('{"__proto__":1}') as Record<string, unknown>),
+        ...Object.fromEntries(repeat(300, () => 0).map((_zero, index) => [`k${index}`, "x"])),
+      };
+      const condition = {
+        id: "c1",
+        leftOperand: { type: "element", value: "q1", meta },
+        operator: "isSubmitted",
+      };
+      const body = {
+        ...validCreateBody,
+        blocks: [
+          {
+            ...validCreateBody.blocks[0],
+            logic: [{ id: "l1", conditions: group([condition]), actions: [] }],
+          },
+        ],
+      };
+
+      expect(ZV3CreateSurveyBody.safeParse(body).success).toBe(true);
+    });
+
+    // One bad leaf under a deep chain of condition groups with big valid levels: a guard that checks a
+    // level's whole subtree at every level spent ~9 s here for one issue. The timeout is a complexity
+    // guard, not a benchmark: the linear walk needs well under 100 ms.
+    test("one error deep in a wide condition tree costs one pass", () => {
+      const condition = (index: number) => ({
+        id: `c${index}`,
+        leftOperand: { type: "element", value: "q1" },
+        operator: "isSubmitted",
+      });
+      let tree: unknown = group([{ ...condition(0), operator: "zzz" }]);
+      for (let depth = 0; depth < 118; depth += 1) {
+        tree = { ...group([...repeat(200, () => condition(depth)), tree]), id: `g${depth}` };
+      }
+      const body = {
+        ...validCreateBody,
+        blocks: [{ ...validCreateBody.blocks[0], logic: [{ id: "l1", conditions: tree, actions: [] }] }],
+      };
+      expect(findArrayBudgetViolation(body)).toBeNull();
+
+      const result = ZV3CreateSurveyBody.safeParse(body);
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(1);
+      }
+    }, 2_000);
+
+    // An element union is split by its `type`, so an ordinary mistake reads as one problem, not one per
+    // element type.
+    test.each<[string, Record<string, unknown>]>([
+      ["a missing field", element({})],
+      ["an unknown type", element({ choices: [] }, "nope")],
+    ])("reports %s in one big block as one problem", (_name, broken) => {
+      const fine = (index: number) =>
+        element({
+          id: `q${index + 2}`,
+          choices: [
+            { id: "a", label },
+            { id: "b", label },
+          ],
+        });
+      const result = ZV3CreateSurveyBody.safeParse({
+        ...validCreateBody,
+        blocks: [block({}, [broken, ...Array.from({ length: 300 }, (_unused, index) => fine(index))])],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(1);
+      }
+    });
+
+    test("applies to a patch body too", () => {
+      const result = ZV3PatchSurveyBody.safeParse({
+        blocks: [
+          block(
+            {},
+            repeat(49, () => element({ choices: repeat(1000, () => ({ id: 0, label: 0 })) }))
+          ),
+        ],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toHaveLength(V3_INVALID_PARAMS_MAX);
+      }
+    });
+  });
+
+  describe("translation count", () => {
+    const withHeadline = (headline: Record<string, string>) => ({
+      ...validCreateBody,
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [{ ...validCreateBody.blocks[0].elements[0], headline }],
+        },
+      ],
+    });
+    const translations = (keys: string[]) => Object.fromEntries(keys.map((key) => [key, "Label"]));
+
+    test("refuses a field with more translations than the cap, in one problem", () => {
+      const keys = Array.from({ length: V3_SURVEY_MAX_TRANSLATIONS + 1 }, (_unused, index) => `k${index}`);
+      const result = ZV3CreateSurveyBody.safeParse(withHeadline(translations(keys)));
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(formatV3ZodInvalidParams(result.error, "body")).toEqual([
+          {
+            name: "blocks.0.elements.0.headline",
+            reason: `Too big: expected at most ${V3_SURVEY_MAX_TRANSLATIONS} translations`,
+            code: "limit_exceeded",
+          },
+        ]);
+      }
+    });
+
+    // ENG-4100: a cap per field alone let 600 fields of 255 distinct keys through, ~6 s of locale lookups
+    // on a body that then parsed. Distinct keys are capped across the whole document.
+    test("refuses distinct translation keys spread over many fields, in one problem", () => {
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const locale = (index: number) => `aa-${letters[Math.floor(index / 26) % 26]}${letters[index % 26]}`;
+      const field = (offset: number) =>
+        translations(["en-US", ...Array.from({ length: 200 }, (_unused, index) => locale(offset + index))]);
+      const elements = [0, 200].map((offset, index) => ({
+        ...validCreateBody.blocks[0].elements[0],
+        id: `q${index}`,
+        headline: field(offset),
+      }));
+
+      const result = ZV3CreateSurveyBody.safeParse({
+        ...validCreateBody,
+        blocks: [{ ...validCreateBody.blocks[0], elements }],
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        // Some generated region codes canonicalize onto others and add their own `duplicate_locale`
+        // problems; what matters is the one refusal of the count.
+        expect(
+          formatV3ZodInvalidParams(result.error, "body").filter((param) => param.code === "limit_exceeded")
+        ).toEqual([
+          {
+            name: "blocks.0.elements.1.headline",
+            reason: `Too big: expected at most ${V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS} distinct translation keys in the survey`,
+            code: "limit_exceeded",
+          },
+        ]);
+      }
+    });
+
+    test("takes a field with exactly the cap's translations", () => {
+      const keys = Array.from({ length: V3_SURVEY_MAX_TRANSLATIONS }, (_unused, index) => `k${index}`);
+      const result = ZV3CreateSurveyBody.safeParse(withHeadline(translations(keys)));
+      const params = result.success ? [] : formatV3ZodInvalidParams(result.error, "body");
+
+      expect(params.filter((param) => param.code === "limit_exceeded")).toEqual([]);
+    });
+
+    // The cap must never refuse a stored survey: a field holds one key per survey language, and every
+    // language comes from the catalog.
+    test("sits above a field translated into every catalog locale", () => {
+      expect(CANONICAL_LANGUAGE_CODES.length).toBeLessThan(V3_SURVEY_MAX_TRANSLATIONS);
+
+      const result = ZV3CreateSurveyBody.safeParse(withHeadline(translations([...CANONICAL_LANGUAGE_CODES])));
+      const reasons = result.success
+        ? []
+        : formatV3ZodInvalidParams(result.error, "body").map((p) => p.reason);
+
+      expect(reasons).not.toContainEqual(expect.stringContaining("translations"));
+    });
   });
 
   describe("image alt text", () => {
@@ -1226,8 +1595,10 @@ describe("formatV3ZodInvalidParams", () => {
       const [invalidParam] = formatV3ZodInvalidParams(new z.ZodError([issue]), "body");
 
       // Whole expected string, not fragments: the caller's interior run survives untouched, only the
-      // marker and the whitespace adjoining it are collapsed, and a marker-free message is identical.
-      expect(invalidParam.reason).toBe(withMarker ? `Language 'a${run}b' is not valid: de-DE` : message);
+      // marker and the whitespace adjoining it are collapsed, and a marker-free message is identical,
+      // up to the reply's echo limit (ENG-4100).
+      const expected = withMarker ? `Language 'a${run}b' is not valid: de-DE` : message;
+      expect(invalidParam.reason).toBe(`${expected.slice(0, V3_INVALID_PARAM_REASON_MAX_CHARS)}…`);
     },
     2_000
   );

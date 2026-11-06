@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import { type TAuthzedPermissionCheck, getAuthzedClient } from "@/lib/authzed/client";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
@@ -12,6 +13,7 @@ import {
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
 import { getSpicedbObjectType } from "./object-type";
+import { isPermissionMissingFromSchema } from "./schema-drift";
 import {
   type TPendingPrivateSurveyPolicy,
   type TResolvedAuthorizationScope,
@@ -33,7 +35,10 @@ const parseAction = (
  * The workspace permission a survey, response or dashboard action is decided by whenever the decision is
  * made on the workspace node: always for dashboards, and for surveys and responses while survey
  * visibility is not enforced (readiness marker off) or a change is pending. `survey.change_visibility`
- * is deliberately absent — it has no workspace equivalent.
+ * is deliberately absent — it has no workspace equivalent. `dashboard.read` stays the workspace `read`,
+ * so no caller of it depends on the `dashboard_read` permission the Dashboard viewer schema adds: a
+ * viewer's dashboard-bound reads ask `workspace.dashboard_read` explicitly, and only in
+ * `app/api/v3/lib/dashboards-access.ts` (ADR-0025).
  */
 const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "dashboard.read": "read",
@@ -202,19 +207,28 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
   const check = getCheck(actor, action, resource.type, scope);
   if (!check) return false;
 
-  const decision = await getAuthzedClient().checkPermission({
-    permission: check.permission,
-    resource: {
-      objectId: check.resource.id,
-      objectType: getSpicedbObjectType(check.resource.type),
-    },
-    subject: {
-      objectId: actor.id,
-      objectType: getSpicedbObjectType(actor.type),
-    },
-  });
+  try {
+    const decision = await getAuthzedClient().checkPermission({
+      permission: check.permission,
+      resource: {
+        objectId: check.resource.id,
+        objectType: getSpicedbObjectType(check.resource.type),
+      },
+      subject: {
+        objectId: actor.id,
+        objectType: getSpicedbObjectType(actor.type),
+      },
+    });
 
-  return decision.allowed;
+    return decision.allowed;
+  } catch (error) {
+    if (!isPermissionMissingFromSchema(error, check.permission)) throw error;
+    logger.warn(
+      { component: "authzed", permission: check.permission, resourceType: check.resource.type },
+      "AuthZed schema lacks this permission; apply the release's schema. Denying the check"
+    );
+    return false;
+  }
 };
 
 export const spicedbEvaluator: AuthorizationEvaluator = {
