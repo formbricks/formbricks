@@ -288,7 +288,8 @@ const streamSpreadsheetImport = async ({
       ...lane,
       lane: excelExportImportLane,
       input: {
-        read: async () => readingOrThrow(reading).read,
+        // Lazy, so a refusal the reading carries rejects in the lane, after its own checks.
+        read: () => Promise.resolve().then(() => readingOrThrow(reading).read),
         fileName,
         workspaceId: lane.workspaceId,
         organizationId: lane.organizationId,
@@ -302,7 +303,7 @@ const streamSpreadsheetImport = async ({
   return runSurveyImportLane({
     ...lane,
     lane: DOCUMENT_IMPORT_LANES.xlsx,
-    input: { read: async () => readingOrThrow(document).prepared },
+    input: { read: () => Promise.resolve().then(() => readingOrThrow(document).prepared) },
   });
 };
 
