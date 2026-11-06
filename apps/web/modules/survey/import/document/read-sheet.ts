@@ -54,13 +54,13 @@ const rebuildCheckedArchive = (archive: TZipArchive): Uint8Array => {
   return zipSync(entries, { level: 0 });
 };
 
-const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
+const readWorkbook = (bytes: Uint8Array, sheets: number | (number | string)[]): XLSX.WorkBook => {
   try {
     return XLSX.read(bytes, {
       type: "array",
       dense: true,
-      // The first sheet only; the others are named from the workbook's sheet list, never parsed.
-      sheets: 0,
+      // Only the sheets asked for; the others are named from the workbook's sheet list, never parsed.
+      sheets,
       // No `sheetRows`: SheetJS would stop reading there, and a row past it that the sheet's
       // `<dimension>` leaves out would be lost without a word. Read whole, every cell reaches the row
       // check in `textExtentOf`; the XML limits bound what is read.
@@ -75,6 +75,15 @@ const readWorkbook = (bytes: Uint8Array): XLSX.WorkBook => {
     throw surveyImportFileUnreadable("The workbook could not be read");
   }
 };
+
+/**
+ * A `.xlsx` (the archive the sniffer opened) parsed by SheetJS through the upload's zip guard and the
+ * XML limits, with only `sheets` parsed: by index, or by name.
+ */
+export const readCheckedWorkbook = (
+  archive: TZipArchive,
+  sheets: number | (number | string)[]
+): XLSX.WorkBook => readWorkbook(rebuildCheckedArchive(archive), sheets);
 
 /** Where the sheet's used range starts, zero-based: the first row and column of `readRows`. */
 const originOf = (sheet: XLSX.WorkSheet): { row: number; column: number } => {
@@ -158,6 +167,23 @@ const readRows = (sheet: XLSX.WorkSheet, origin: { row: number; column: number }
   return rows;
 };
 
+/**
+ * One parsed sheet as rows of cell texts, from its used range's first cell (`origin`, zero-based) to the
+ * last cell with text, held to the sheet limits. Throws the same refusals as the document reader.
+ */
+export const readSheetText = (
+  sheet: XLSX.WorkSheet
+): { origin: { row: number; column: number }; rows: string[][] } => {
+  const origin = originOf(sheet);
+  try {
+    return { origin, rows: readRows(sheet, origin) };
+  } catch (error) {
+    if (error instanceof SurveyImportInputError || error instanceof SurveyImportFileTooLargeError)
+      throw error;
+    throw surveyImportFileUnreadable("The sheet could not be read");
+  }
+};
+
 /** The workbook's other sheets, by name, in order: the ones a user can see or unhide. */
 const skippedSheets = (book: XLSX.WorkBook): string[] =>
   book.SheetNames.slice(1).filter(
@@ -175,20 +201,12 @@ const titleOf = (book: XLSX.WorkBook): string | null => {
  * declares a DTD, or whose first sheet has no text (`file_unreadable`).
  */
 export const readSheetDocument = (archive: TZipArchive): TDocumentModel => {
-  const book = readWorkbook(rebuildCheckedArchive(archive));
+  const book = readCheckedWorkbook(archive, 0);
   const firstName = book.SheetNames[0];
   const sheet = firstName === undefined ? undefined : book.Sheets[firstName];
   if (!sheet) throw surveyImportFileUnreadable("The workbook has no sheet");
 
-  const origin = originOf(sheet);
-  let rows: string[][];
-  try {
-    rows = readRows(sheet, origin);
-  } catch (error) {
-    if (error instanceof SurveyImportInputError || error instanceof SurveyImportFileTooLargeError)
-      throw error;
-    throw surveyImportFileUnreadable("The sheet could not be read");
-  }
+  const { origin, rows } = readSheetText(sheet);
 
   const model = buildGridModel("xlsx", rows, {
     title: titleOf(book),

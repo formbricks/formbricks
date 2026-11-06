@@ -153,8 +153,41 @@ export const findFormbricksFileMatch = async ({
   if (!row) return null;
   if (!(await can(actor, "survey.write", { type: "survey", id: row.id }))) return null;
   const { responses, ...stored } = row;
-  const survey = transformPrismaSurvey<TSurvey>(stored);
+  return buildFormbricksFileMatch({
+    survey: transformPrismaSurvey<TSurvey>(stored),
+    hasResponses: responses.length > 0,
+    exportedUpdatedAt: source.updatedAt,
+    draft,
+    plan,
+  });
+};
 
+/** Whether the survey has any response: what decides whether an Update reports what it removes. */
+export const hasSurveyResponses = async (surveyId: string): Promise<boolean> =>
+  (await prisma.response.findFirst({ where: { surveyId }, select: { id: true } })) !== null;
+
+/**
+ * The Match for a survey the caller already found and may edit: the file's own source (above), or the
+ * survey an import from its menu is aimed at (ENG-6809). The Update's checks run on the draft here, so
+ * the review says what the Update would refuse.
+ *
+ * @param exportedUpdatedAt What the first Update is made against: the file's export time when it was
+ *   exported from this survey, else the survey's own `updatedAt` as read now.
+ */
+export const buildFormbricksFileMatch = async ({
+  survey,
+  hasResponses,
+  exportedUpdatedAt,
+  draft,
+  plan,
+}: {
+  survey: TSurvey;
+  hasResponses: boolean;
+  exportedUpdatedAt: string;
+  /** The fitted draft, in the file's action class ids. */
+  draft: TSurveyImportFileDraft;
+  plan: TFormbricksFileReferencePlan;
+}): Promise<TSurveyImportMatch> => {
   const triggers = await getTriggersState({
     survey,
     draft,
@@ -167,9 +200,9 @@ export const findFormbricksFileMatch = async ({
     name: survey.name,
     status: survey.status,
     updatedAt: survey.updatedAt.toISOString(),
-    exportedUpdatedAt: source.updatedAt,
+    exportedUpdatedAt,
     triggers,
-    issues: responses.length > 0 ? getFormbricksFileRemovals(survey.blocks, draft.blocks) : [],
+    issues: hasResponses ? getFormbricksFileRemovals(survey.blocks, draft.blocks) : [],
     updateRefusal: getUpdateRefusal(survey, draft),
   };
 };
