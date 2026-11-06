@@ -1,0 +1,24 @@
+name: Install Trivy
+description: >
+  Install the pinned Trivy release from GitHub and check it against a pinned SHA-256. Use it instead of
+  aquasecurity/setup-trivy, whose install script downloads from get.trivy.dev, which stopped resolving
+  from the runners on 2026-11-04. With trivy-action, pass `skip-setup-trivy: true`.
+runs:
+  using: composite
+  steps:
+    - name: Install Trivy from the GitHub release
+      shell: bash
+      env:
+        # Bump both together: the digest is the release's trivy_<version>_Linux-64bit.tar.gz asset.
+        TRIVY_VERSION: "0.71.2"
+        TRIVY_SHA256: 0510e71e2fd39bf863856d499c8dc19feb4e7336546394c502a8f5cc7ab27460
+      run: |
+        set -euo pipefail
+        tarball="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+        curl -fsSL --retry 3 -o "${RUNNER_TEMP}/${tarball}" \
+          "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${tarball}"
+        echo "${TRIVY_SHA256}  ${RUNNER_TEMP}/${tarball}" | sha256sum --check --strict
+        tar -xzf "${RUNNER_TEMP}/${tarball}" -C "${RUNNER_TEMP}" trivy
+        sudo install -m 0755 "${RUNNER_TEMP}/trivy" /usr/local/bin/trivy
+        rm -f "${RUNNER_TEMP}/${tarball}" "${RUNNER_TEMP}/trivy"
+        trivy --version
