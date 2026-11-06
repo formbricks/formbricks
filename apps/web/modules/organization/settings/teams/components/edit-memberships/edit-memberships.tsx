@@ -11,6 +11,7 @@ interface EditMembershipsProps {
   readonly currentUserId: string;
   readonly role: TOrganizationRole;
   readonly isAccessControlAllowed: boolean;
+  readonly isDashboardViewerRoleEnabled: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
   readonly canManageUsers: boolean;
 }
@@ -25,6 +26,7 @@ export const EditMemberships = async ({
   currentUserId,
   role,
   isAccessControlAllowed,
+  isDashboardViewerRoleEnabled,
   isUserManagementDisabledFromUi,
   canManageUsers,
 }: EditMembershipsProps) => {
@@ -50,6 +52,7 @@ export const EditMemberships = async ({
       currentUserRole={role}
       isAccessControlAllowed={isAccessControlAllowed}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+      isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
       isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
       canManageUsers={canManageUsers}
     />

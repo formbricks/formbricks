@@ -24,6 +24,8 @@ const getDisabledMatchers = (minDate?: Date, maxDate?: Date): Matcher[] | undefi
 };
 
 interface DatePickerProps {
+  /** The trigger's id, so a `<Label htmlFor>` names the picker. */
+  id?: string;
   value: Date | null;
   onChange: (date: Date) => void;
   /** App locale code — pass `i18n.resolvedLanguage ?? i18n.language ?? "en-US"`, never a browser default. */
@@ -51,6 +53,7 @@ interface DatePickerProps {
 }
 
 export const DatePicker = ({
+  id,
   value,
   onChange,
   locale,
@@ -78,6 +81,7 @@ export const DatePicker = ({
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
+            id={id}
             type="button"
             variant="outline"
             disabled={disabled}

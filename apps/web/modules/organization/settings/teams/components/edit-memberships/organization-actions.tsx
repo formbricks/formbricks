@@ -42,6 +42,7 @@ interface OrganizationActionsProps {
   readonly isInviteDisabled: boolean;
   readonly isAccessControlAllowed: boolean;
   readonly isFormbricksCloud: boolean;
+  readonly isDashboardViewerRoleEnabled: boolean;
   readonly isMultiOrgEnabled: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
   /** `organization.manage_access`: owners and managers above the user-management floor (ENG-6812). */
@@ -61,6 +62,7 @@ export const OrganizationActions = ({
   isInviteDisabled,
   isAccessControlAllowed,
   isFormbricksCloud,
+  isDashboardViewerRoleEnabled,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
   canManageUsers,
@@ -203,6 +205,7 @@ export const OrganizationActions = ({
         organizationId={organization.id}
         isAccessControlAllowed={isAccessControlAllowed}
         isFormbricksCloud={isFormbricksCloud}
+        isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
         teams={teams}
         isOwnerOrManager={isOwnerOrManager}
         isTeamAdmin={isTeamAdmin}

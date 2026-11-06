@@ -6,6 +6,7 @@ description: >-
 required:
   - fields
   - datePresets
+  - answerQuestions
 properties:
   fields:
     type: array
@@ -23,4 +24,11 @@ properties:
       - last 7 days
       - this month
       - all-time
+  answerQuestions:
+    type: array
+    description: >-
+      The questions of the Feedback Dataset an answer rule (`FeedbackRecords.answer`) may name, with
+      the operators and values each takes. Empty for a dataset without such questions.
+    items:
+      $ref: ./ChartAnswerQuestion.yml
 additionalProperties: false

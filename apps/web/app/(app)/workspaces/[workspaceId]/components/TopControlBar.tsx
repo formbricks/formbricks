@@ -49,6 +49,7 @@ export const TopControlBar = ({
         isMembershipPending={isMembershipPending}
         isAccessControlAllowed={isAccessControlAllowed}
         showWorkspaceBreadcrumb={showWorkspaceBreadcrumb}
+        membershipRole={membershipRole}
       />
     </div>
   );

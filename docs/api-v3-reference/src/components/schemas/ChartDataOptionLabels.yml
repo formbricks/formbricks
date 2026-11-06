@@ -1,0 +1,7 @@
+type: object
+description: >-
+  Choice option ids to their labels in the survey's default language, in survey order. Filled
+  when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server
+  rewrote to it); empty otherwise.
+additionalProperties:
+  type: string

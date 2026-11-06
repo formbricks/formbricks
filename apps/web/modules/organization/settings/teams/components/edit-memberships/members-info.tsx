@@ -97,6 +97,7 @@ const getMemberColumns = ({
   currentUserId,
   isAccessControlAllowed,
   isFormbricksCloud,
+  isDashboardViewerRoleEnabled,
   isUserManagementDisabledFromUi,
   isOwnerOrManager,
   canManageUsers,
@@ -112,6 +113,7 @@ const getMemberColumns = ({
   currentUserId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
+  isDashboardViewerRoleEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
   isOwnerOrManager: boolean;
   /**
@@ -162,6 +164,7 @@ const getMemberColumns = ({
           inviteId={isInvitee(member) ? member.id : ""}
           doesOrgHaveMoreThanOneOwner={doesOrgHaveMoreThanOneOwner}
           isFormbricksCloud={isFormbricksCloud}
+          isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
           isUserManagementDisabledFromUi={isUserManagementDisabledFromUi || !canManageUsers}
         />
       ),
@@ -243,6 +246,7 @@ interface MembersInfoProps {
   currentUserId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
+  isDashboardViewerRoleEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
   canManageUsers: boolean;
 }
@@ -255,6 +259,7 @@ export const MembersInfo = ({
   currentUserId,
   isAccessControlAllowed,
   isFormbricksCloud,
+  isDashboardViewerRoleEnabled,
   isUserManagementDisabledFromUi,
   canManageUsers,
 }: Readonly<MembersInfoProps>) => {
@@ -287,6 +292,7 @@ export const MembersInfo = ({
           currentUserId,
           isAccessControlAllowed,
           isFormbricksCloud,
+          isDashboardViewerRoleEnabled,
           isUserManagementDisabledFromUi,
           isOwnerOrManager,
           // Delete, Reactivate (ENG-3610), the invite controls and the role picker.

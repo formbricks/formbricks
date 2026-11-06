@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { MAX_ANSWER_RULES } from "./answer-filter";
 import {
   MAX_FIELDS,
   MAX_FILTER_CONDITIONS,
@@ -9,6 +10,7 @@ import {
   MAX_OFFSET,
   MAX_ORDER_ENTRIES,
   checkTimeBucketLimit,
+  countFilterConditions,
   legacyRangeBounds,
   parseQueryDateRange,
   parseRequestedDateRange,
@@ -170,6 +172,18 @@ describe("validateChartQuery", () => {
           filters: [{ and: conditions(MAX_FILTER_CONDITIONS) }, condition()],
         })
       ).toEqual(["query.filters"]);
+    });
+
+    test("countFilterConditions counts as the cap does: conditions through every group, groups none", () => {
+      const conditions = (count: number) => Array.from({ length: count }, () => condition());
+      const atCap = [{ or: [{ and: conditions(10) }, ...conditions(5)] }, ...conditions(10)];
+      const overCap = [...atCap, condition()];
+
+      expect(countFilterConditions(atCap)).toBe(MAX_FILTER_CONDITIONS);
+      expect(validateChartQuery({ measures: [COUNT], filters: atCap }).ok).toBe(true);
+      expect(countFilterConditions(overCap)).toBe(MAX_FILTER_CONDITIONS + 1);
+      expect(namesOf({ measures: [COUNT], filters: overCap })).toEqual(["query.filters"]);
+      expect(countFilterConditions(undefined)).toBe(0);
     });
 
     test("allows a group inside a group, and no deeper", () => {
@@ -436,4 +450,186 @@ describe("legacy relative date ranges", () => {
       expect(validateChartQuery(withRange(dateRange), { legacyDateRanges: true }).ok).toBe(false);
     }
   );
+});
+
+describe("validateChartQuery: a dataset's embedded data and answer filters (ENG-6893, ENG-6894)", () => {
+  const ANSWER = "FeedbackRecords.answer";
+  const PLAN = "FeedbackRecords.ed_plan_64879f7d";
+  const OTHER_DATASET_KEY = "FeedbackRecords.ed_region_0a1b2c3d";
+  const dataset = {
+    embeddedFields: [{ name: PLAN, key: "plan" }],
+    answerQuestions: [
+      { id: "q_delivery", label: "Delivery", kind: "choice" as const, options: [] },
+      { id: "q_feat", label: "Features", kind: "multi" as const, options: [] },
+      { id: "q_nps", label: "NPS", kind: "number" as const, options: [] },
+    ],
+  };
+  const issuesFor = (query: unknown, options: Parameters<typeof validateChartQuery>[1]) => {
+    const result = validateChartQuery(query, options);
+    return result.ok ? [] : result.issues;
+  };
+
+  test("accepts the dataset's embedded field as a dimension, a filter and an order", () => {
+    const query = {
+      measures: [COUNT],
+      dimensions: [PLAN],
+      filters: [condition(PLAN, "equals", ["Pro"]), condition(PLAN, "contains", ["Pr"])],
+      order: [[PLAN, "asc"]],
+    };
+
+    expect(validateChartQuery(query, { dataset })).toEqual({ ok: true, query });
+  });
+
+  test("accepts the numeric twin of the dataset's embedded field in a filter only, compared as a number", () => {
+    const TWIN = "FeedbackRecords.edn_plan_64879f7d";
+    const query = {
+      measures: [COUNT],
+      filters: [condition(TWIN, "gt", ["10"]), condition(TWIN, "lte", ["20"])],
+    };
+    expect(validateChartQuery(query, { dataset })).toEqual({ ok: true, query });
+    expect(issuesFor({ measures: [COUNT], dimensions: [TWIN] }, { dataset })).toEqual([
+      expect.objectContaining({ name: "query.dimensions[0]", code: "invalid_reference" }),
+    ]);
+    expect(
+      issuesFor({ measures: [COUNT], filters: [condition(TWIN, "contains", ["1"])] }, { dataset })
+    ).not.toEqual([]);
+    // Only a key of the dataset has a twin.
+    expect(
+      issuesFor(
+        { measures: [COUNT], filters: [condition("FeedbackRecords.edn_region_0a1b2c3d", "gt", ["1"])] },
+        { dataset }
+      )
+    ).toEqual([expect.objectContaining({ name: "query.filters[0].member", code: "invalid_reference" })]);
+  });
+
+  test("refuses an embedded field of another dataset, and any embedded field without a dataset", () => {
+    expect(issuesFor({ measures: [COUNT], dimensions: [OTHER_DATASET_KEY] }, { dataset })).toEqual([
+      expect.objectContaining({ name: "query.dimensions[0]", code: "invalid_reference" }),
+    ]);
+    expect(issuesFor({ measures: [COUNT], dimensions: [PLAN] }, {})).toEqual([
+      expect.objectContaining({ name: "query.dimensions[0]", code: "invalid_reference" }),
+    ]);
+  });
+
+  test("accepts answer rules naming the dataset's questions, nested in groups", () => {
+    const query = {
+      measures: [NPS],
+      filters: [
+        condition("FeedbackRecords.fieldType", "equals", ["nps"]),
+        {
+          or: [
+            condition(ANSWER, "equals", ["q_delivery:opt_late", "q_delivery:opt_early"]),
+            condition(ANSWER, "notEquals", ["q_nps:0"]),
+            condition(ANSWER, "equals", ["q_feat:opt_a"]),
+          ],
+        },
+      ],
+    };
+
+    expect(validateChartQuery(query, { dataset })).toEqual({ ok: true, query });
+  });
+
+  test("refuses an answer rule when the dataset's questions are not loaded, never checking its shape alone", () => {
+    const query = { measures: [COUNT], filters: [condition(ANSWER, "notEquals", ["q_unknown:x"])] };
+
+    expect(issuesFor(query, {})).toEqual([
+      expect.objectContaining({ name: "query.filters[0].values", code: "invalid_reference" }),
+    ]);
+    expect(issuesFor(query, { dataset: { embeddedFields: [] } })).toEqual([
+      expect.objectContaining({ name: "query.filters[0].values", code: "invalid_reference" }),
+    ]);
+  });
+
+  test.each([
+    ["an unknown question", condition(ANSWER, "equals", ["q_gone:x"]), "query.filters[0].values"],
+    [
+      "two questions in one rule",
+      condition(ANSWER, "equals", ["q_delivery:a", "q_nps:9"]),
+      "query.filters[0].values",
+    ],
+    [
+      "multi-select 'does not contain'",
+      condition(ANSWER, "notEquals", ["q_feat:opt_a"]),
+      "query.filters[0].values",
+    ],
+    ["a word on a number question", condition(ANSWER, "equals", ["q_nps:high"]), "query.filters[0].values"],
+    [
+      "an operator the answer filter does not take",
+      condition(ANSWER, "contains", ["q_delivery:x"]),
+      "query.filters[0].operator",
+    ],
+  ])("refuses %s", (_label, filter, name) => {
+    expect(issuesFor({ measures: [COUNT], filters: [filter] }, { dataset })).toEqual([
+      expect.objectContaining({ name }),
+    ]);
+  });
+
+  test("refuses the answer filter anywhere but a filter", () => {
+    expect(issuesFor({ measures: [COUNT], dimensions: [ANSWER] }, { dataset })).toEqual([
+      expect.objectContaining({ name: "query.dimensions[0]", reason: "Can only be used in a filter." }),
+    ]);
+    expect(issuesFor({ measures: [COUNT], order: [[ANSWER, "asc"]] }, { dataset })).toEqual([
+      expect.objectContaining({ name: "query.order[0]", reason: "Can only be used in a filter." }),
+    ]);
+  });
+
+  test(`holds a query to ${MAX_ANSWER_RULES} answer rules, nested ones included, naming the limit`, () => {
+    const rules = (count: number) =>
+      Array.from({ length: count }, () => condition(ANSWER, "equals", ["q_delivery:opt_late"]));
+
+    expect(MAX_ANSWER_RULES).toBe(5);
+    expect(
+      validateChartQuery({ measures: [COUNT], filters: [{ or: rules(MAX_ANSWER_RULES) }] }, { dataset }).ok
+    ).toBe(true);
+    expect(
+      issuesFor({ measures: [COUNT], filters: [...rules(1), { and: rules(MAX_ANSWER_RULES) }] }, { dataset })
+    ).toEqual([
+      expect.objectContaining({
+        name: "query.filters",
+        code: "limit_exceeded",
+        reason: expect.stringContaining("MAX_ANSWER_RULES"),
+      }),
+    ]);
+  });
+
+  test(`answer rules count toward the ${MAX_FILTER_CONDITIONS}-condition budget too`, () => {
+    const others = (count: number) =>
+      Array.from({ length: count }, () => condition(SOURCE, "equals", ["web"]));
+    const answers = Array.from({ length: MAX_ANSWER_RULES }, () =>
+      condition(ANSWER, "equals", ["q_delivery:opt_late"])
+    );
+
+    expect(
+      validateChartQuery(
+        { measures: [COUNT], filters: [...answers, ...others(MAX_FILTER_CONDITIONS - MAX_ANSWER_RULES)] },
+        { dataset }
+      ).ok
+    ).toBe(true);
+    expect(
+      validateChartQuery(
+        {
+          measures: [COUNT],
+          filters: [{ and: [...answers, ...others(MAX_FILTER_CONDITIONS - MAX_ANSWER_RULES + 1)] }],
+        },
+        { dataset }
+      ).ok
+    ).toBe(false);
+  });
+
+  test("accepts a saved chart from before this change exactly as before", () => {
+    const saved = {
+      measures: [NPS, COUNT],
+      dimensions: [SOURCE],
+      filters: [
+        condition(SOURCE, "equals", ["web"]),
+        { or: [condition("FeedbackRecords.valueNumber", "gte", ["9"])] },
+      ],
+      timeDimensions: [{ dimension: COLLECTED_AT, granularity: "month", dateRange: "last 3 months" }],
+    };
+
+    expect(validateChartQuery(saved, { legacyDateRanges: true, dataset })).toEqual(
+      validateChartQuery(saved, { legacyDateRanges: true })
+    );
+    expect(validateChartQuery(saved, { legacyDateRanges: true, dataset }).ok).toBe(true);
+  });
 });

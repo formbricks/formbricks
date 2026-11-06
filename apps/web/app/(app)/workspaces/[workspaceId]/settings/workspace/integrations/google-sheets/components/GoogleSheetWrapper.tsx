@@ -10,6 +10,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { validateGoogleSheetsConnectionAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/actions";
 import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/components/ManageIntegration";
 import { authorize } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/lib/google";
+import { useIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/hooks/use-integration";
 import googleSheetLogo from "@/images/googleSheetsLogo.png";
 import { GOOGLE_SHEET_INTEGRATION_INVALID_GRANT } from "@/lib/googleSheet/constants";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
@@ -30,10 +31,11 @@ export const GoogleSheetWrapper = ({
   workspaceId,
   surveys,
   surveyVisibilityEnabled,
-  googleSheetIntegration,
+  googleSheetIntegration: initialGoogleSheetIntegration,
   webAppUrl,
   locale,
 }: Readonly<GoogleSheetWrapperProps>) => {
+  const googleSheetIntegration = useIntegration(workspaceId, "googleSheets", initialGoogleSheetIntegration);
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
   );

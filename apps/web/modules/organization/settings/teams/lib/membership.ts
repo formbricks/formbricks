@@ -10,8 +10,10 @@ import { reconcileOrganizationMembership } from "@/lib/authzed/organization-memb
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { isTransactionConflictError, retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 
 /**
@@ -169,14 +171,24 @@ export const deleteMembership = async (
           },
         },
       });
-      await tx.membership.delete({
+      const removed = await tx.membership.delete({
         where: {
           userId_organizationId: {
             organizationId,
             userId,
           },
         },
+        select: { role: true },
       });
+
+      // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
+      // just lost: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
+      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025).
+      if (removed.role !== "dashboard_viewer") {
+        if (await isOnlyDashboardViewer(tx, userId)) {
+          await revokeAllUserOAuthGrants(tx, userId);
+        }
+      }
 
       // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
       // of the organization it must stop granting access. Expired rather than deleted: admins still see
