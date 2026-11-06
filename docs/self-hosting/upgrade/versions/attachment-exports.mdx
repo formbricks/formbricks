@@ -1,0 +1,35 @@
+---
+title: "Unreleased: Attachment exports and new job queues"
+description: "Storage permissions and job queues that the next release's background attachment exports need."
+icon: "file-zipper"
+---
+
+**Applies to:** the next release after 6.1. These changes are on `main` and not in any 6.1 patch.
+Check them if you manage your own storage bucket policy or run your own background-job consumer.
+
+## What changes
+
+- **Download attachments** builds the ZIP in the background, stores it in your bucket and emails the user a
+  download link. Without [email](/self-hosting/configuration/smtp), the ZIP streams to the browser as before.
+- Export ZIPs stay in the bucket for 3 months under `<workspace>/private/surveys/<survey>/exports/`, then
+  Formbricks deletes them.
+- Two new job queues: `attachment-export` for exports, and `authzed-reconciliation` for the permission audits,
+  which move off `background-jobs`.
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| External S3, MinIO or other bucket | Add `s3:AbortMultipartUpload` to the policy of the Formbricks credentials. Add a lifecycle rule that aborts incomplete multipart uploads after one day. See [file uploads](/self-hosting/configuration/file-uploads). |
+| Buckets with versioning | Add a lifecycle rule that removes noncurrent versions, or deleted export ZIPs keep using space. |
+| Bundled RustFS, Docker Compose | Update your RustFS setup script from [RustFS with Docker](/self-hosting/configuration/docker-storage). It now applies the policy on every start, so the new permission reaches your existing policy. |
+| Bundled RustFS, one-click | Nothing. The updater rewrites the setup script for you. |
+| Custom job consumer | Serve the `attachment-export` and `authzed-reconciliation` queues too. See [dedicated queues](/self-hosting/configuration/job-runner#dedicated-queues). |
+
+Users download export ZIPs straight from the bucket, so `S3_ENDPOINT_URL` must be reachable from their
+browsers. File uploads already need this.
+
+## Check it worked
+
+Run **Download attachments** on a survey with uploaded files. You should get an email with a download link,
+and the ZIP should download from your bucket.

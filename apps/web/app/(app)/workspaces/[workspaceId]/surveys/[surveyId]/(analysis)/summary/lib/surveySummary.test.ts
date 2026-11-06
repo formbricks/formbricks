@@ -7,6 +7,11 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+  surveyFlowFixtureNotShown,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
+import {
   TSurvey,
   TSurveyElementSummaryRanking,
   TSurveyElementSummarySignature,
@@ -1398,6 +1403,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -1443,6 +1449,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -1483,6 +1490,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -1634,6 +1642,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      notShown: null,
       outcome: null,
       isFinished: true,
       displayId: "display-1",
@@ -5447,5 +5456,233 @@ describe("CES question type tests", () => {
     expect(summary[0].responseCount).toBe(0);
     expect(summary[0].average).toBe(0);
     expect(summary[0].choices.every((c: any) => c.count === 0)).toBe(true);
+  });
+});
+
+describe("not shown (ENG-6936)", () => {
+  const ids = SURVEY_FLOW_FIXTURE_IDS;
+  const survey = surveyFlowFixture;
+  const elements = getElementsFromBlocks(survey.blocks);
+  const dropOffOf = (dropOff: TSurveySummary["dropOff"], elementId: string) =>
+    dropOff.find((entry) => entry.elementId === elementId)!;
+
+  let sequence = 0;
+  const response = (overrides: Record<string, unknown>) => {
+    sequence += 1;
+    return {
+      id: `resp-${sequence}`,
+      updatedAt: new Date(),
+      contact: null,
+      contactAttributes: {},
+      language: null,
+      finished: true,
+      data: {},
+      ttc: {},
+      ...overrides,
+    } as any;
+  };
+
+  // Netflix only: the "Heavy users" block and the Apple TV+ follow-up were not shown.
+  const netflixOnly = response({
+    data: { services: ["Netflix"], fav: "Netflix" },
+    ttc: { services: 1000, fav: 800 },
+    notShown: surveyFlowFixtureNotShown,
+  });
+  const bigThree = response({
+    data: { services: ["Netflix", "Disney+", "Prime Video"], hours: "12", fav: "Apple TV+" },
+    ttc: { services: 1000, hours: 700, fav: 800, apple_reason: 300 },
+    notShown: {},
+  });
+  // From before 6.2: no record, read as today.
+  const legacy = response({ data: { services: ["Netflix"] }, ttc: { services: 900 }, notShown: null });
+
+  test("each element reports how many respondents it was not shown to", () => {
+    const dropOff = getSurveySummaryDropOff(survey, elements, [netflixOnly, bigThree, legacy], 3);
+
+    expect(dropOffOf(dropOff, "hours").notShownCount).toBe(1);
+    expect(dropOffOf(dropOff, "apple_reason").notShownCount).toBe(1);
+    expect(dropOffOf(dropOff, "services").notShownCount).toBe(0);
+  });
+
+  test("an element not shown is neither an impression nor a drop-off, even with time left on it", () => {
+    // Answered "Heavy users", then went Back, changed services and left: the stale timing on `hours`
+    // must not make it the last element seen.
+    const leftAfterBack = response({
+      finished: false,
+      data: { services: ["Netflix"] },
+      ttc: { services: 1000, hours: 700 },
+      notShown: { blocks: [ids.blocks.heavyUsers] },
+    });
+
+    const dropOff = getSurveySummaryDropOff(survey, elements, [leftAfterBack], 1);
+
+    expect(dropOffOf(dropOff, "hours")).toMatchObject({ impressions: 0, dropOffCount: 0, notShownCount: 1 });
+    expect(dropOffOf(dropOff, "services").dropOffCount).toBe(1);
+  });
+
+  test("a respondent who was not shown a question is outside its base, never skipped", async () => {
+    // Time on `sat_netflix` without an answer reads as skipped, unless the record lists its block.
+    const skipped = response({ ttc: { sat_netflix: 500 }, notShown: {} });
+    const notShown = response({ ttc: { sat_netflix: 500 }, notShown: { blocks: [ids.blocks.ratings] } });
+    const rated = response({ data: { sat_netflix: 5 }, ttc: { sat_netflix: 500 }, notShown: {} });
+    const responses = [skipped, notShown, rated];
+    const dropOff = getSurveySummaryDropOff(survey, elements, responses, 3);
+
+    const summary = await getElementSummary(survey, elements, responses, dropOff);
+    const rating = summary.find((entry) => "element" in entry && entry.element.id === "sat_netflix") as any;
+
+    expect(rating.dismissed.count).toBe(1);
+    expect(rating.responseCount).toBe(1);
+  });
+
+  test("changing a show-if after responses exist leaves their not-shown results unchanged", () => {
+    // After both responses came in, the block's show-if is removed and another block gains one.
+    const edited: TSurvey = {
+      ...survey,
+      blocks: survey.blocks.map((block) => {
+        if (block.id === ids.blocks.heavyUsers) return { ...block, showIf: undefined };
+        if (block.id === ids.blocks.concept) {
+          return { ...block, showIf: { id: "showifconcept", connector: "or", conditions: [] } };
+        }
+        return block;
+      }),
+    };
+
+    const before = getSurveySummaryDropOff(survey, elements, [netflixOnly, bigThree], 2);
+    const after = getSurveySummaryDropOff(
+      edited,
+      getElementsFromBlocks(edited.blocks),
+      [netflixOnly, bigThree],
+      2
+    );
+
+    expect(after.map((entry) => entry.notShownCount)).toEqual(before.map((entry) => entry.notShownCount));
+    expect(dropOffOf(after, "hours").notShownCount).toBe(1);
+    expect(dropOffOf(after, "concept").notShownCount).toBe(0);
+  });
+});
+
+describe("option bases (ENG-6937)", () => {
+  const survey = surveyFlowFixture;
+  const elements = getElementsFromBlocks(survey.blocks);
+
+  let sequence = 0;
+  const response = (data: Record<string, unknown>, notShown: Record<string, unknown> | null) => {
+    sequence += 1;
+    return {
+      id: `option-base-${sequence}`,
+      updatedAt: new Date(),
+      contact: null,
+      contactAttributes: {},
+      language: null,
+      finished: true,
+      data,
+      ttc: {},
+      notShown,
+    } as any;
+  };
+
+  const summaryOf = async (responses: any[], elementId: string) => {
+    const dropOff = getSurveySummaryDropOff(survey, elements, responses, responses.length);
+    const summary = await getElementSummary(survey, elements, responses, dropOff);
+    return summary.find((entry) => "element" in entry && entry.element.id === elementId) as any;
+  };
+
+  // "Apple TV+" in `fav` is offered only to who uses Apple TV+; "Netflix + Apple TV+" in `bundle` is Hidden.
+  const netflixOnly = response(
+    { fav: "Netflix", bundle: "No bundle" },
+    { options: { fav: ["apple"], bundle: ["netflix_apple"] } }
+  );
+  const appleUser = response(
+    { fav: "Apple TV+", bundle: "Netflix + Disney+" },
+    { options: { bundle: ["netflix_apple"] } }
+  );
+  const disneyFan = response({ fav: "Disney+" }, {});
+  // From before 6.2: no record, so every option counts as shown, as today.
+  const legacy = response({ fav: "Netflix", bundle: "Netflix + Apple TV+" }, null);
+
+  test("an option's percentage is over the respondents shown it, with 'shown to N' next to it", async () => {
+    const fav = await summaryOf([netflixOnly, appleUser, disneyFan, legacy], "fav");
+    const choice = (label: string) => fav.choices.find((entry: any) => entry.value === label);
+
+    expect(fav.responseCount).toBe(4);
+    expect(choice("Apple TV+")).toMatchObject({ count: 1, shownCount: 3, percentage: 33.33 });
+    // Shown to everyone who answered: the base is the question's, and no "shown to N".
+    expect(choice("Netflix")).toEqual({ value: "Netflix", count: 2, percentage: 50 });
+  });
+
+  test("a Hidden option stays in results, marked Hidden, with the answers given before it was hidden", async () => {
+    const bundle = await summaryOf([netflixOnly, appleUser, legacy], "bundle");
+    const hidden = bundle.choices.find((entry: any) => entry.value === "Netflix + Apple TV+");
+
+    expect(hidden).toEqual({
+      value: "Netflix + Apple TV+",
+      count: 1,
+      shownCount: 1,
+      percentage: 100,
+      hidden: true,
+    });
+  });
+
+  test("picture choices, ranking options and matrix rows report their base too", async () => {
+    const responses = [
+      response(
+        { ad_pick: ["poster_a"], brand_rank: ["Netflix", "Disney+"], brand_grid: { Netflix: "Good" } },
+        {
+          options: { ad_pick: ["poster_b"], brand_rank: ["prime"] },
+          rows: { brand_grid: ["row_disney"] },
+        }
+      ),
+      response(
+        {
+          ad_pick: ["poster_b"],
+          brand_rank: ["Prime Video", "Netflix"],
+          brand_grid: { Netflix: "Poor", "Disney+": "Good" },
+        },
+        {}
+      ),
+    ];
+
+    const picture = await summaryOf(responses, "ad_pick");
+    expect(picture.choices.find((entry: any) => entry.id === "poster_b")).toMatchObject({
+      count: 1,
+      shownCount: 1,
+      percentage: 100,
+    });
+
+    const ranking = await summaryOf(responses, "brand_rank");
+    expect(ranking.choices.find((entry: any) => entry.value === "Prime Video")).toMatchObject({
+      count: 1,
+      shownCount: 1,
+    });
+
+    const matrix = await summaryOf(responses, "brand_grid");
+    expect(matrix.data.find((row: any) => row.rowLabel === "Disney+")).toMatchObject({
+      totalResponsesForRow: 1,
+      shownCount: 1,
+    });
+    expect(matrix.data.find((row: any) => row.rowLabel === "Netflix")).not.toHaveProperty("shownCount");
+  });
+
+  test("a stored pick of an option the respondent wasn't shown is left out, as the export blanks it (P51)", async () => {
+    // The record says Apple TV+ was not shown, yet the stored answer still names it.
+    const stalePick = response({ fav: "Apple TV+" }, { options: { fav: ["apple"] } });
+    const fav = await summaryOf([stalePick, appleUser], "fav");
+    const apple = fav.choices.find((entry: any) => entry.value === "Apple TV+");
+
+    expect(apple.count).toBe(1);
+    expect(apple.percentage).toBeLessThanOrEqual(100);
+
+    const picture = await summaryOf(
+      [response({ ad_pick: ["poster_b"] }, { options: { ad_pick: ["poster_b"] } })],
+      "ad_pick"
+    );
+    expect(picture.choices.find((entry: any) => entry.id === "poster_b").count).toBe(0);
+
+    const matrix = await summaryOf(
+      [response({ brand_grid: { "Disney+": "Good" } }, { rows: { brand_grid: ["row_disney"] } })],
+      "brand_grid"
+    );
+    expect(matrix.data.find((row: any) => row.rowLabel === "Disney+").totalResponsesForRow).toBe(0);
   });
 });

@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -44,14 +44,17 @@ import {
   updateElementInBlock,
   withFilledCodes,
 } from "@/modules/survey/editor/lib/blocks";
+import { describeDeletionWarning } from "@/modules/survey/editor/lib/deletion-warning";
 import {
+  type TUseKind,
   findBlockUsedInLogic,
-  findElementUsedInLogic,
+  findElementUse,
   isUsedInQuota,
   isUsedInRecall,
   scrollElementCardIntoView,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useStableCallback } from "@/modules/ui/hooks/use-stable-callback";
 import {
@@ -83,6 +86,9 @@ interface ElementsViewProps {
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
+  /** The one-time "Logic has moved" notice (ENG-6929), until the Flow tab has been opened once. */
+  showLogicMovedNotice?: boolean;
+  onOpenFlow?: () => void;
 }
 
 export const ElementsView = ({
@@ -102,6 +108,8 @@ export const ElementsView = ({
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
+  showLogicMovedNotice = false,
+  onOpenFlow,
 }: Readonly<ElementsViewProps>) => {
   const { t } = useTranslation();
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
@@ -109,11 +117,14 @@ export const ElementsView = ({
     elementIdx: number;
     type: "element" | "block";
     blockId?: string;
+    /** What uses the question: a rule (the default), a show-if, or another question's copied options. */
+    useKind?: TUseKind;
   }>({
     open: false,
     elementIdx: 0,
     type: "element",
   });
+  const deletionWarning = describeDeletionWarning(logicDeletionWarning.useKind, t);
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -203,34 +214,6 @@ export const ElementsView = ({
       }
 
       return updatedSurvey;
-    });
-  };
-
-  // Update block logic (block-level property)
-  const updateBlockLogic = (blockIdx: number, logic: TSurveyBlockLogic[]) => {
-    if (blockIdx < 0 || blockIdx >= localSurvey.blocks.length) return;
-
-    setLocalSurvey((prevSurvey) => {
-      const blocks = [...(prevSurvey.blocks ?? [])];
-      blocks[blockIdx] = {
-        ...blocks[blockIdx],
-        logic,
-      };
-      return { ...prevSurvey, blocks };
-    });
-  };
-
-  // Update block logic fallback (block-level property)
-  const updateBlockLogicFallback = (blockIdx: number, logicFallback: string | undefined) => {
-    if (blockIdx < 0 || blockIdx >= localSurvey.blocks.length) return;
-
-    setLocalSurvey((prevSurvey) => {
-      const blocks = [...(prevSurvey.blocks ?? [])];
-      blocks[blockIdx] = {
-        ...blocks[blockIdx],
-        logicFallback,
-      };
-      return { ...prevSurvey, blocks };
     });
   };
 
@@ -358,9 +341,9 @@ export const ElementsView = ({
       return;
     }
 
-    const usedElementIdx = findElementUsedInLogic(localSurvey, elementId);
-    if (usedElementIdx !== -1) {
-      setLogicDeletionWarning({ open: true, elementIdx, type: "element" });
+    const use = findElementUse(localSurvey, elementId);
+    if (use) {
+      setLogicDeletionWarning({ open: true, elementIdx, type: "element", useKind: use.kind });
       return;
     }
 
@@ -764,8 +747,6 @@ export const ElementsView = ({
   const [lastInteractedBlockId, setLastInteractedBlockId] = useState<string | null>(null);
   const stableMoveElement = useStableCallback(moveElement);
   const stableUpdateElement = useStableCallback(updateElement);
-  const stableUpdateBlockLogic = useStableCallback(updateBlockLogic);
-  const stableUpdateBlockLogicFallback = useStableCallback(updateBlockLogicFallback);
   const stableUpdateBlockName = useStableCallback(updateBlockName);
   const stableUpdateBlockButtonLabel = useStableCallback(updateBlockButtonLabel);
   const stableDuplicateElement = useStableCallback(duplicateElement);
@@ -779,6 +760,13 @@ export const ElementsView = ({
 
   return (
     <div className="mt-12 w-full px-5 py-4">
+      {showLogicMovedNotice && onOpenFlow && (
+        <Alert variant="info" className="mb-5" role="note">
+          <AlertTitle>{t("workspace.surveys.edit.flow.logic_moved_title")}</AlertTitle>
+          <AlertDescription>{t("workspace.surveys.edit.flow.logic_moved_description")}</AlertDescription>
+          <AlertButton onClick={onOpenFlow}>{t("workspace.surveys.edit.flow.open_flow")}</AlertButton>
+        </Alert>
+      )}
       {!isCxMode && (
         <div className="mb-5 flex w-full flex-col gap-5">
           <EditWelcomeCard
@@ -806,8 +794,6 @@ export const ElementsView = ({
           workspace={workspace}
           moveElement={stableMoveElement}
           updateElement={stableUpdateElement}
-          updateBlockLogic={stableUpdateBlockLogic}
-          updateBlockLogicFallback={stableUpdateBlockLogicFallback}
           updateBlockName={stableUpdateBlockName}
           updateBlockButtonLabel={stableUpdateBlockButtonLabel}
           duplicateElement={stableDuplicateElement}
@@ -884,8 +870,8 @@ export const ElementsView = ({
       <ConfirmationModal
         open={logicDeletionWarning.open}
         setOpen={(open) => setLogicDeletionWarning((prev) => ({ ...prev, open: open as boolean }))}
-        title={t("workspace.surveys.edit.question_used_in_logic_warning_title")}
-        body={t("workspace.surveys.edit.question_used_in_logic_warning_text")}
+        title={deletionWarning.title}
+        body={deletionWarning.body}
         buttonText={t("workspace.surveys.edit.delete_anyways")}
         onConfirm={() => {
           if (logicDeletionWarning.type === "element") {

@@ -1,19 +1,23 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
-  QSF_IMPORT_STREAM_ENDPOINT,
-  QsfImportRequestError,
+  SURVEY_IMPORT_STREAM_ENDPOINT,
+  SurveyImportRequestError,
   parseRetryAfterSeconds,
-  streamQsfImport,
+  streamSurveyImportFile,
 } from "./import-stream-client";
 
-const body = { workspaceId: "clxx1234567890123456789012", fileName: "survey.qsf", qsf: { SurveyEntry: {} } };
+const workspaceId = "clxx1234567890123456789012";
+const file = new File(['{"SurveyEntry":{}}'], "survey.qsf", { type: "application/octet-stream" });
 
 const collect = async () => {
   const events: unknown[] = [];
-  await streamQsfImport(body, {
-    signal: new AbortController().signal,
-    onEvent: (event) => events.push(event),
-  });
+  await streamSurveyImportFile(
+    { workspaceId, file },
+    {
+      signal: new AbortController().signal,
+      onEvent: (event) => events.push(event),
+    }
+  );
   return events;
 };
 
@@ -35,8 +39,8 @@ describe("parseRetryAfterSeconds", () => {
   });
 });
 
-describe("streamQsfImport", () => {
-  test("posts the parsed file as JSON and hands over each event", async () => {
+describe("streamSurveyImportFile", () => {
+  test("uploads the file as it is, in a multipart form with the workspace, and hands over each event", async () => {
     const fetchMock = vi.fn(
       async () =>
         new Response('{"type":"start","requestId":"r1"}\n{"type":"done","payload":{},"report":{}}\n', {
@@ -49,10 +53,17 @@ describe("streamQsfImport", () => {
       { type: "start", requestId: "r1" },
       { type: "done", payload: {}, report: {} },
     ]);
-    expect(fetchMock).toHaveBeenCalledWith(
-      QSF_IMPORT_STREAM_ENDPOINT,
-      expect.objectContaining({ method: "POST", body: JSON.stringify(body) })
-    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [endpoint, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(endpoint).toBe(SURVEY_IMPORT_STREAM_ENDPOINT);
+    expect(init.method).toBe("POST");
+    // No Content-Type of our own: the browser sets multipart/form-data with its boundary.
+    expect(new Headers(init.headers).has("Content-Type")).toBe(false);
+    const form = init.body as FormData;
+    expect(form).toBeInstanceOf(FormData);
+    expect([...form.keys()]).toEqual(["workspaceId", "file"]);
+    expect(form.get("workspaceId")).toBe(workspaceId);
+    expect(form.get("file")).toBe(file);
   });
 
   test("throws a refusal with its problem code and Retry-After", async () => {
@@ -69,7 +80,7 @@ describe("streamQsfImport", () => {
 
     const error = await collect().catch((thrown: unknown) => thrown);
 
-    expect(error).toBeInstanceOf(QsfImportRequestError);
+    expect(error).toBeInstanceOf(SurveyImportRequestError);
     expect(error).toMatchObject({ status: 429, code: "concurrency_limit_reached", retryAfterSeconds: 15 });
   });
 

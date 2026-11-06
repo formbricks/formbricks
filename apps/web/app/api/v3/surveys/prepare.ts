@@ -8,6 +8,7 @@ import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
+import { settleV3EmbeddedFieldFormats, toV3SurveyEmbeddedFields } from "./embedded-fields";
 import { getV3SurveyDefaultLanguage, getV3SurveyLanguages } from "./language";
 import { type TV3SurveyLanguageRequest, deriveV3SurveyLanguageRequests } from "./languages";
 import {
@@ -22,6 +23,7 @@ import {
   formatV3ZodInvalidParams,
 } from "./schemas";
 import {
+  type TV3SurveyDocumentValidationOptions,
   type TV3SurveyDocumentValidationResult,
   type TV3SurveyPrecedencePolicy,
   validateV3SurveyDocument,
@@ -47,15 +49,18 @@ type TV3SurveyPrepareFailure = {
    * satisfies the v3 document contract fails every patch, including one that never touches the
    * offending field — and reporting that as `invalid_params` on paths the caller never sent reads as
    * a client error when it is a state error.
+   *
+   * `embeddedFields` (ENG-6930): the request's Embedded Data cannot be taken as sent — its two formats
+   * disagree, or a field could never be stored. Decided from the body alone, so it answers 400.
    */
-  origin?: "request" | "storedSurvey";
+  origin?: "request" | "storedSurvey" | "embeddedFields";
 };
 
 export type TV3SurveyPrepareResult<TDocument> = TV3SurveyPrepareSuccess<TDocument> | TV3SurveyPrepareFailure;
 
 function invalidPreparation(
   invalidParams: InvalidParam[],
-  origin: "request" | "storedSurvey" = "request"
+  origin: NonNullable<TV3SurveyPrepareFailure["origin"]> = "request"
 ): TV3SurveyPrepareFailure {
   return {
     ok: false,
@@ -158,6 +163,8 @@ function parseStoredV3SurveyDocument(
     endings: survey.endings,
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    // ENG-6932: `null` (the column default) reads as no rules before the first question.
+    startLogic: survey.startLogic ?? [],
     // ENG-3641: the stored CSS as source, so an omitted `customCss` merges to "unchanged" and the write
     // path compares normalized source rather than anything compiled.
     customCss: toCustomCssSource(survey.customCss),
@@ -213,7 +220,8 @@ function getValueAtPath(document: TV3SurveyDocument, path: string): unknown {
 function getIntroducedIssues(
   invalidParams: InvalidParam[],
   storedDocument: TV3SurveyDocument,
-  patchedDocument: TV3SurveyDocument
+  patchedDocument: TV3SurveyDocument,
+  validationOptions: TV3SurveyDocumentValidationOptions
 ): InvalidParam[] {
   // The stored document is validated under the *same* policy shape the caller judges the patched one
   // with, and that matters. `introduced` filters precedence violations on `violation.key`, which is
@@ -228,10 +236,11 @@ function getIntroducedIssues(
   // `preExisting` at all. That is the correct set: an `introduced`-mode precedence finding is by
   // definition the request's doing. Language and reference issues are unaffected by the policy and
   // still appear on both sides, which is what ENG-3070 actually needed.
-  const storedValidation = validateV3SurveyDocument(storedDocument, {
-    mode: "introduced",
-    baseline: storedDocument,
-  });
+  const storedValidation = validateV3SurveyDocument(
+    storedDocument,
+    { mode: "introduced", baseline: storedDocument },
+    validationOptions
+  );
   const preExisting = new Set(storedValidation.invalidParams.map(invalidParamSignature));
 
   return invalidParams.filter(
@@ -545,9 +554,52 @@ function splitLanguageAliases(
   return { issues, rest: { ...body, languages: stripped } };
 }
 
+/**
+ * ENG-6930: a document carrying `embeddedFields` takes its legacy `variables` / `hiddenFields` from
+ * them, so everything after this reads the fields the survey will have. `sent` says which legacy keys
+ * the request itself carried; only those are held to agreeing with `embeddedFields`.
+ */
+function settleDocumentEmbeddedFields<TDocument extends Partial<TV3SurveyDocument>>(
+  document: TDocument,
+  sent: { variables: boolean; hiddenFields: boolean }
+): { ok: true; document: TDocument } | TV3SurveyPrepareFailure {
+  if (document.embeddedFields === undefined) {
+    return { ok: true, document };
+  }
+
+  const settled = settleV3EmbeddedFieldFormats(document.embeddedFields, {
+    ...(sent.variables ? { variables: document.variables } : {}),
+    ...(sent.hiddenFields ? { hiddenFields: document.hiddenFields } : {}),
+  });
+  if (!settled.ok) {
+    return invalidPreparation(settled.invalidParams, "embeddedFields");
+  }
+
+  return {
+    ok: true,
+    document: {
+      ...document,
+      embeddedFields: settled.embeddedFields,
+      variables: settled.variables,
+      hiddenFields: settled.hiddenFields,
+    },
+  };
+}
+
 export function prepareV3SurveyCreate<TDocument extends TV3CreateSurveyBody>(
-  document: TDocument
+  input: TDocument
 ): TV3SurveyPrepareResult<TDocument> {
+  // A create body has the legacy keys whether or not they were sent (they default to empty), so an
+  // empty one counts as not sent: there is nothing in it that could disagree with `embeddedFields`.
+  const settled = settleDocumentEmbeddedFields(input, {
+    variables: input.variables.length > 0,
+    hiddenFields: (input.hiddenFields.fieldIds?.length ?? 0) > 0,
+  });
+  if (!settled.ok) {
+    return settled;
+  }
+  const document = settled.document;
+
   // `skip`, not `enforce`, and deliberately so. Turning the ordering rule on here would reject create
   // payloads that succeeded yesterday — a breaking change to a public endpoint, which by the ENG-1652
   // convention needs an info.version bump, a release note and the breaking-change label. That rollout
@@ -617,7 +669,17 @@ export function prepareV3SurveyPatchInput(
     return invalidPreparation(formatV3ZodInvalidParams(parsedPatch.error, "data"));
   }
 
-  const patchedDocument = mergeV3SurveyPatch(currentDocument.document, parsedPatch.data);
+  // The patch alone decides which legacy keys were sent: the merge below fills the rest from the
+  // stored survey, which says nothing about whether this request agrees with itself.
+  const settledPatch = settleDocumentEmbeddedFields(parsedPatch.data, {
+    variables: parsedPatch.data.variables !== undefined,
+    hiddenFields: parsedPatch.data.hiddenFields !== undefined,
+  });
+  if (!settledPatch.ok) {
+    return settledPatch;
+  }
+
+  const patchedDocument = mergeV3SurveyPatch(currentDocument.document, settledPatch.document);
   const immutableElementIdIssues = getImmutableElementIdIssues(currentDocument.document, patchedDocument);
   if (immutableElementIdIssues.length > 0) {
     return invalidPreparation(immutableElementIdIssues);
@@ -634,17 +696,30 @@ export function prepareV3SurveyPatchInput(
   // recall is refused exactly as a reorder is, and the PATCH 422 contract lists `misordered_reference`.
   // (v3 is not publicly released, so this tightening ships without a version bump; create stays on
   // `skip` as `prepareV3SurveyCreate` explains.)
-  const validation = validateV3SurveyDocument(patchedDocument, {
-    mode: "introduced",
-    baseline: currentDocument.document,
-  });
+  // ENG-6935: a patch without `embeddedFields` is checked against the stored typed rows, so a computed
+  // date, which the legacy `variables` cannot carry, is still declared.
+  const validationOptions: TV3SurveyDocumentValidationOptions = {
+    storedEmbeddedFields: toV3SurveyEmbeddedFields(survey.embeddedFields ?? []),
+  };
+  const validation = validateV3SurveyDocument(
+    patchedDocument,
+    { mode: "introduced", baseline: currentDocument.document },
+    validationOptions
+  );
 
   if (!validation.valid) {
     // ENG-3975: issues the stored survey already had, at values this patch leaves untouched, are not the
     // request's to fix. Refusing them blocked every edit to such a survey — a rename from the survey
     // list included — while the merge writes those values back exactly as stored. One introduced issue
     // makes the whole response the caller's, since a partial repair still leaves them responsible.
-    if (getIntroducedIssues(validation.invalidParams, currentDocument.document, patchedDocument).length > 0) {
+    if (
+      getIntroducedIssues(
+        validation.invalidParams,
+        currentDocument.document,
+        patchedDocument,
+        validationOptions
+      ).length > 0
+    ) {
       return invalidPreparation(validation.invalidParams);
     }
 

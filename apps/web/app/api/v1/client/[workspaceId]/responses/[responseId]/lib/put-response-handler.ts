@@ -3,7 +3,7 @@ import {
   ResourceNotFoundError,
   ResponseAlreadyFinishedError,
 } from "@formbricks/types/errors";
-import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseUpdateInput, TResponse } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-error";
@@ -60,7 +60,7 @@ const responseAlreadyFinished = (): TRouteResult => ({
 const validateResponse = (
   response: TResponse,
   survey: TSurvey,
-  responseUpdateInput: TResponseUpdateInput
+  responseUpdateInput: TClientResponseUpdateInput
 ) => {
   const mergedData = {
     ...response.data,
@@ -110,7 +110,7 @@ const getSurveyForResponse = async (responseId: string, surveyId: string): Promi
 const validateUpdateRequest = (
   existingResponse: TResponse,
   survey: TSurvey,
-  responseUpdateInput: TResponseUpdateInput,
+  responseUpdateInput: TClientResponseUpdateInput,
   workspaceId: string
 ): TRouteResult | undefined => {
   // Mirror the POST endpoint: a closed survey accepts no submissions, including finalizing a partial

@@ -12,6 +12,21 @@ import { RESERVED_DECLARED_FIELD_NAMES } from "./surveys/validation";
 export const EMBEDDED_DATA_KEY_MAX_LENGTH = 255;
 
 /**
+ * Authoring caps on a field's display name and string default: what a write that *declares* a field
+ * may send (the library manager, the v3 survey document). Not applied when reading a stored row; see
+ * `ZEmbeddedDataName`.
+ */
+export const EMBEDDED_DATA_NAME_MAX_LENGTH = 255;
+export const EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH = 1000;
+
+const NULL_BYTE = "\u0000";
+
+/** Postgres text cannot hold U+0000; no stored value has one, so refusing it never hides a row. */
+export const hasNoNullByte = (value: string): boolean => !value.includes(NULL_BYTE);
+
+export const NULL_BYTE_MESSAGE = "must not contain NULL bytes";
+
+/**
  * Where an Embedded Data field's value comes from.
  *
  * - `computed` — set inside the survey by logic (what used to be a "variable")
@@ -53,7 +68,10 @@ export type TEmbeddedDataDefaultValue = z.infer<typeof ZEmbeddedDataDefaultValue
  * a failure that only surfaces once ENG-1837 points readers at these tables. The create-time
  * limit belongs on the authoring path, alongside the naming rule.
  */
-const ZEmbeddedDataName = z.string().refine((value) => value.trim().length > 0, "Name must not be blank");
+const ZEmbeddedDataName = z
+  .string()
+  .refine((value) => value.trim().length > 0, "Name must not be blank")
+  .refine(hasNoNullByte, `Name ${NULL_BYTE_MESSAGE}`);
 
 /** A `date` default is stored as a string, so pin it to ISO 8601 — either a date or a datetime. */
 const ZIsoDateOrDateTime = z.union([z.iso.date(), z.iso.datetime()]);
@@ -64,6 +82,75 @@ const DEFAULT_VALUE_TYPE_BY_DATA_TYPE = {
   number: "number",
   boolean: "boolean",
 } as const;
+
+/**
+ * The `dataType`s a computed field may have: what the logic engine can calculate.
+ *
+ * The one place this rule lives, so a new computed type is one edit here: the row schema below, the
+ * v3 survey document (`apps/web/app/api/v3/surveys/embedded-fields.ts`) and every other writer read
+ * it. ENG-6935 added `date`: Set value computes dates (`now()`), stored in `response.variables` as
+ * ISO 8601 UTC strings, and the legacy `variables` projection leaves them out (json-shapes §6).
+ */
+export const COMPUTED_EMBEDDED_DATA_TYPES: readonly TEmbeddedDataType[] = ["string", "number", "date"];
+
+/** One broken definition rule, keyed by the field it is about. */
+export interface TEmbeddedFieldDefinitionIssue {
+  path: "dataType" | "defaultValue" | "locked";
+  message: string;
+}
+
+/**
+ * The rules a field definition has to satisfy whoever writes it, as plain issues.
+ *
+ * Shared by the row schema ({@link ZEmbeddedData}) and the v3 survey document, which takes a field's
+ * definition without the row's ownership columns: both have to refuse the same definitions with the
+ * same messages, or a field the API accepted could fail to load as a row.
+ */
+export const getEmbeddedFieldDefinitionIssues = (field: {
+  source: TEmbeddedDataSource;
+  dataType: TEmbeddedDataType;
+  defaultValue: TEmbeddedDataDefaultValue;
+  locked: boolean;
+}): TEmbeddedFieldDefinitionIssue[] => {
+  const issues: TEmbeddedFieldDefinitionIssue[] = [];
+
+  // Locking blocks writes from outside, which only ingested fields receive.
+  if (field.locked && field.source !== "ingested") {
+    issues.push({ path: "locked", message: "Only ingested fields can be locked" });
+  }
+
+  // The logic engine can only calculate the types in COMPUTED_EMBEDDED_DATA_TYPES.
+  if (field.source === "computed" && !COMPUTED_EMBEDDED_DATA_TYPES.includes(field.dataType)) {
+    const leading = COMPUTED_EMBEDDED_DATA_TYPES.slice(0, -1).join(", ");
+    const [last] = COMPUTED_EMBEDDED_DATA_TYPES.slice(-1);
+    issues.push({ path: "dataType", message: `Computed fields support only ${leading} or ${last}` });
+  }
+
+  // `dataType` is what ingest coerces against, so a default that disagrees with it would surface
+  // far from here — as a wrong value in the resolver, or a coercion failure at ingest.
+  if (field.defaultValue !== null) {
+    if (field.dataType === "date") {
+      const isIsoString =
+        typeof field.defaultValue === "string" && ZIsoDateOrDateTime.safeParse(field.defaultValue).success;
+      if (!isIsoString) {
+        issues.push({
+          path: "defaultValue",
+          message: "A date field's default value must be an ISO 8601 date or datetime string",
+        });
+      }
+    } else {
+      const expectedType = DEFAULT_VALUE_TYPE_BY_DATA_TYPE[field.dataType];
+      if (typeof field.defaultValue !== expectedType) {
+        issues.push({
+          path: "defaultValue",
+          message: `A ${field.dataType} field's default value must be a ${expectedType}`,
+        });
+      }
+    }
+  }
+
+  return issues;
+};
 
 /**
  * One Embedded Data field definition, owned by a workspace.
@@ -136,47 +223,8 @@ export const ZEmbeddedData = z
       });
     }
 
-    // Locking blocks writes from outside, which only ingested fields receive.
-    if (field.locked && field.source !== "ingested") {
-      ctx.addIssue({
-        code: "custom",
-        message: "Only ingested fields can be locked",
-        path: ["locked"],
-      });
-    }
-
-    // The logic engine can only calculate strings and numbers.
-    if (field.source === "computed" && field.dataType !== "string" && field.dataType !== "number") {
-      ctx.addIssue({
-        code: "custom",
-        message: "Computed fields support only string or number",
-        path: ["dataType"],
-      });
-    }
-
-    // `dataType` is what ingest coerces against, so a default that disagrees with it would surface
-    // far from here — as a wrong value in the resolver, or a coercion failure at ingest.
-    if (field.defaultValue !== null) {
-      if (field.dataType === "date") {
-        const isIsoString =
-          typeof field.defaultValue === "string" && ZIsoDateOrDateTime.safeParse(field.defaultValue).success;
-        if (!isIsoString) {
-          ctx.addIssue({
-            code: "custom",
-            message: "A date field's default value must be an ISO 8601 date or datetime string",
-            path: ["defaultValue"],
-          });
-        }
-      } else {
-        const expectedType = DEFAULT_VALUE_TYPE_BY_DATA_TYPE[field.dataType];
-        if (typeof field.defaultValue !== expectedType) {
-          ctx.addIssue({
-            code: "custom",
-            message: `A ${field.dataType} field's default value must be a ${expectedType}`,
-            path: ["defaultValue"],
-          });
-        }
-      }
+    for (const issue of getEmbeddedFieldDefinitionIssues(field)) {
+      ctx.addIssue({ code: "custom", message: issue.message, path: [issue.path] });
     }
   });
 

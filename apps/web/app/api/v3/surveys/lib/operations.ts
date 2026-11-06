@@ -19,6 +19,7 @@ import {
   isCustomCssValidationRequest,
 } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import {
   type InvalidParam,
   createdResponse,
@@ -40,6 +41,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
 import { getCreativeCssRoot } from "@/modules/ee/creatives/lib/custom-css";
 import {
@@ -64,6 +66,8 @@ import {
   V3SurveyInputValidationError,
   createV3Survey,
 } from "../create";
+import { V3SurveyEmbeddedFieldsError } from "../embedded-fields";
+import { resolveV3EmbeddedFieldLibraryKeys } from "../embedded-fields-library";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import {
   type TV3SurveyWritePrecondition,
@@ -102,6 +106,7 @@ import {
   serializeV3SurveyVisibilityFields,
 } from "../serializers";
 import { resolveV3SurveyResourceVisibility, resolveV3SurveyVisibilityContext } from "../visibility-context";
+import { type TV3SurveyWriteConfirmation, getV3SurveyWriteConfirmationRefusal } from "../write-confirmation";
 import { V3SurveyWritePermissionError } from "../write-permissions";
 
 type TListV3SurveysParams = {
@@ -142,15 +147,15 @@ type TV3SurveyMutationParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
+  /**
+   * ENG-6930: MCP only. When set, a survey that is not a draft and has responses is left untouched
+   * unless `confirmed`, and the caller gets the editor's caution text (428). REST never sets it.
+   */
+  writeConfirmation?: TV3SurveyWriteConfirmation;
 };
 
-type TPatchV3SurveyParams = {
-  surveyId: string;
+type TPatchV3SurveyParams = TV3SurveyMutationParams & {
   body: unknown;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
-  auditLog?: TV3AuditLog;
 };
 
 type TValidateV3SurveyParams = {
@@ -402,10 +407,30 @@ export async function listV3Surveys({
 }
 
 /**
- * Map an error thrown during survey creation to its problem+json Response. Extracted from
- * createV3SurveyResponse to keep that handler's cognitive complexity within bounds.
+ * ENG-6930: Embedded Data the body alone shows cannot be taken — formats that disagree, a library key
+ * the workspace does not have, a field that could never be stored. 400, naming each path.
  */
-function mapV3SurveyCreateError(
+function problemV3SurveyEmbeddedFields(
+  err: V3SurveyEmbeddedFieldsError,
+  {
+    log,
+    requestId,
+    instance,
+  }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string }
+): Response {
+  log.warn({ statusCode: 400, invalidParams: err.invalidParams }, "Survey Embedded Data refused");
+  return problemBadRequest(requestId, "The survey's Embedded Data fields are invalid", {
+    invalid_params: err.invalidParams,
+    instance,
+  });
+}
+
+/**
+ * Map an error thrown during survey creation to its problem+json Response. Extracted from
+ * createV3SurveyResponse to keep that handler's cognitive complexity within bounds; the survey import's
+ * create (ENG-6850) maps the same errors the same way.
+ */
+export function mapV3SurveyCreateError(
   err: unknown,
   {
     log,
@@ -420,6 +445,9 @@ function mapV3SurveyCreateError(
       "Survey custom CSS refused"
     );
     return customCssProblem;
+  }
+  if (err instanceof V3SurveyEmbeddedFieldsError) {
+    return problemV3SurveyEmbeddedFields(err, { log, requestId, instance });
   }
   if (err instanceof WorkspaceSurveyLimitError) {
     log.warn({ statusCode: 422, limit: err.limit }, "Workspace survey limit reached");
@@ -459,7 +487,8 @@ function mapV3SurveyCreateError(
     // malformed → 422, in line with the reference-validation branch above. Deliberately keyed on
     // this typed error rather than on `ValidationError`: the latter is also thrown from work
     // `createSurvey` does *after* its transaction commits, where a 4xx would wrongly tell the
-    // caller nothing was written. Those fall through to the shared mapper's 500.
+    // caller nothing was written. Those arrive wrapped in `SurveyWriteAfterCommitError` and are
+    // answered as created (`createdEvenIfAfterCommitFailed`).
     log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey input validation failed");
     return problemUnprocessableContent(requestId, "Survey document failed validation", {
       invalid_params: err.invalidParams,
@@ -467,6 +496,27 @@ function mapV3SurveyCreateError(
     });
   }
   return mapV3ThrownError(err, { log, requestId, instance, operation: "surveys.create" });
+}
+
+/**
+ * The survey a create made, also when only the work after its commit failed (the creator's response
+ * alerts, scheduling, caches): the survey exists, so it is answered as created, or a client retrying
+ * the 500 would make a second one. The failure is logged; anything else the create throws propagates.
+ */
+async function createdEvenIfAfterCommitFailed(
+  create: () => Promise<TInternalSurvey>,
+  log: ReturnType<typeof logger.withContext>
+): Promise<TInternalSurvey> {
+  try {
+    return await create();
+  } catch (error) {
+    if (!(error instanceof SurveyWriteAfterCommitError)) throw error;
+    log.error(
+      { ...loggableError(error.cause), operation: "surveys.create" },
+      "Survey create's work after the commit failed"
+    );
+    return error.result as TInternalSurvey;
+  }
 }
 
 export async function createV3SurveyResponse({
@@ -499,15 +549,19 @@ export async function createV3SurveyResponse({
     }
 
     const report: TV3SurveyWriteReport = {};
-    const survey = await createV3Survey(
-      {
-        ...createBody,
-        workspaceId: authResult.workspaceId,
-      },
-      authentication,
-      requestId,
-      authResult.organizationId,
-      { ...createOptions, report }
+    const survey = await createdEvenIfAfterCommitFailed(
+      () =>
+        createV3Survey(
+          {
+            ...createBody,
+            workspaceId: authResult.workspaceId,
+          },
+          authentication,
+          requestId,
+          authResult.organizationId,
+          { ...createOptions, report }
+        ),
+      log
     );
     const resource = serializeV3SurveyResource(
       survey,
@@ -644,6 +698,7 @@ export async function deleteV3Survey({
   requestId,
   instance,
   auditLog,
+  writeConfirmation,
 }: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
@@ -659,6 +714,16 @@ export async function deleteV3Survey({
     if (response) {
       log.warn({ statusCode: 403 }, "Survey not found or not accessible");
       return response;
+    }
+
+    const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
+      action: "delete",
+      requestId,
+      instance,
+    });
+    if (refusal) {
+      log.warn({ statusCode: 428 }, "Survey delete awaits confirmation");
+      return refusal;
     }
 
     if (auditLog) {
@@ -807,7 +872,7 @@ function problemSurveyArchived(requestId: string, instance: string): Response {
  * Map an error thrown during survey patch to its problem+json Response. Extracted from
  * patchV3SurveyResponse to keep that handler's cognitive complexity within bounds.
  */
-function mapV3SurveyPatchError(
+export function mapV3SurveyPatchError(
   err: unknown,
   {
     log,
@@ -828,6 +893,10 @@ function mapV3SurveyPatchError(
       "Survey custom CSS refused"
     );
     return customCssProblem;
+  }
+
+  if (err instanceof V3SurveyEmbeddedFieldsError) {
+    return problemV3SurveyEmbeddedFields(err, { log, requestId, instance });
   }
 
   if (err instanceof V3SurveyReferenceValidationError) {
@@ -987,6 +1056,7 @@ async function runV3SurveyDocumentMutation({
   operation,
   precondition,
   buildInput,
+  writeConfirmation,
 }: TV3SurveyDocumentMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId, operation });
   let workspaceId: string | undefined;
@@ -1064,6 +1134,16 @@ async function runV3SurveyDocumentMutation({
     // pre-flight; the compare-and-set in its UPDATE remains the guarantee.
     assertV3SurveyPrecondition(survey, effectivePrecondition);
 
+    const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
+      action: "change",
+      requestId,
+      instance,
+    });
+    if (refusal) {
+      log.warn({ statusCode: 428, workspaceId }, "Survey change awaits confirmation");
+      return refusal;
+    }
+
     const built = buildInput({ survey, getResource });
 
     if (!built.ok) {
@@ -1095,17 +1175,15 @@ async function runV3SurveyDocumentMutation({
     const oldResource = getResource();
 
     const report: TV3SurveyWriteReport = {};
-    const updatedSurvey = await patchV3Survey(
-      survey,
-      built.input,
+    const updatedSurvey = await patchV3Survey(survey, built.input, {
       requestId,
-      authResult.organizationId,
-      effectivePrecondition,
-      oldResource,
-      buildVisibleSurveyWhere(visibility.actorContext),
+      organizationId: authResult.organizationId,
+      precondition: effectivePrecondition,
+      reportedVisibility: oldResource,
+      visibleSurveyWhere: buildVisibleSurveyWhere(visibility.actorContext),
       report,
-      getV3CustomCssPrincipal(authentication)
-    );
+      customCssPrincipal: getV3CustomCssPrincipal(authentication),
+    });
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.
     const resource = serializeV3SurveyResource(updatedSurvey, visibility);
@@ -1368,6 +1446,63 @@ export async function setV3SurveyBlockOrderResponse({
   });
 }
 
+type TV3SurveyCreateValidationData = Extract<
+  TValidateV3SurveyParams["body"],
+  { operation: "create" }
+>["data"];
+
+/**
+ * The create branch of {@link validateV3Survey}: read access to the workspace the body names, when it
+ * names one, then the create's own preparation. Writes nothing.
+ */
+async function validateV3SurveyCreatePayload(
+  data: TV3SurveyCreateValidationData,
+  {
+    authentication,
+    requestId,
+    instance,
+    onWorkspace,
+  }: Pick<TValidateV3SurveyParams, "authentication" | "requestId" | "instance"> & {
+    /** Called with the workspace the body names, before it is authorized, for the request's log. */
+    onWorkspace: (workspaceId: string) => void;
+  }
+): Promise<Response> {
+  const workspaceResult = createWorkspaceIdSchema.safeParse(data);
+  if (workspaceResult.success) {
+    onWorkspace(workspaceResult.data.workspaceId);
+    const authResult = await requireV3WorkspaceAccess(
+      authentication,
+      workspaceResult.data.workspaceId,
+      "read",
+      requestId,
+      instance
+    );
+    if (authResult instanceof Response) {
+      return authResult;
+    }
+  }
+
+  // ENG-6930: library fields linked by key are filled in first, as the create itself does — only in a
+  // workspace the caller was just authorized for; without one the schema refuses the body.
+  const resolved = workspaceResult.success
+    ? await resolveV3EmbeddedFieldLibraryKeys(workspaceResult.data.workspaceId, data)
+    : { ok: true as const, input: data };
+
+  return successResponse(
+    serializeValidationResult(
+      "create",
+      resolved.ok
+        ? prepareV3SurveyCreateInput(resolved.input)
+        : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } },
+      previewPayloadCustomCss(data)
+    ),
+    {
+      requestId,
+      cache: "private, no-store",
+    }
+  );
+}
+
 /**
  * Dry-run validation of a create or patch payload. Neither branch writes: the create branch is a
  * pure function of the input, and the patch branch merges the payload into the loaded survey in
@@ -1401,33 +1536,14 @@ export async function validateV3Survey({
     }
 
     if (validationBody.operation === "create") {
-      const workspaceResult = createWorkspaceIdSchema.safeParse(validationBody.data);
-      if (workspaceResult.success) {
-        log = logger.withContext({ requestId, workspaceId: workspaceResult.data.workspaceId });
-        const authResult = await requireV3WorkspaceAccess(
-          authentication,
-          workspaceResult.data.workspaceId,
-          "read",
-          requestId,
-          instance
-        );
-
-        if (authResult instanceof Response) {
-          return authResult;
-        }
-      }
-
-      return successResponse(
-        serializeValidationResult(
-          "create",
-          prepareV3SurveyCreateInput(validationBody.data),
-          previewPayloadCustomCss(validationBody.data)
-        ),
-        {
-          requestId,
-          cache: "private, no-store",
-        }
-      );
+      return await validateV3SurveyCreatePayload(validationBody.data, {
+        authentication,
+        requestId,
+        instance,
+        onWorkspace: (workspaceId) => {
+          log = logger.withContext({ requestId, workspaceId });
+        },
+      });
     }
 
     const { survey, response, visibility } = await getAuthorizedV3Survey({
@@ -1452,12 +1568,20 @@ export async function validateV3Survey({
       workspaceId: survey.workspaceId,
     });
 
+    const resolved = await resolveV3EmbeddedFieldLibraryKeys(
+      survey.workspaceId,
+      validationBody.data,
+      survey.embeddedFields
+    );
+
     return successResponse(
       serializeValidationResult(
         "patch",
-        prepareV3SurveyPatchInput(survey, validationBody.data, {
-          reportedVisibility: serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
-        }),
+        resolved.ok
+          ? prepareV3SurveyPatchInput(survey, resolved.input, {
+              reportedVisibility: serializeV3SurveyVisibilityFields(survey, visibility.ownerName, visibility),
+            })
+          : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } },
         previewPayloadCustomCss(validationBody.data)
       ),
       {

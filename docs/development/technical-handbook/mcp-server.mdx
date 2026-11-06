@@ -4,6 +4,9 @@ description: "Configure and use the Formbricks v3 Surveys, Creatives and Workflo
 icon: "robot"
 ---
 
+For customer connection instructions and API-key fallback, use [MCP setup](/platform/mcp/setup). This handbook describes implementation and contributor behavior.
+
+
 ## Overview
 
 The Formbricks MCP server exposes v3 Surveys, Creatives and Workflows tool surfaces for AI agents. It runs inside
@@ -115,8 +118,8 @@ Supported scopes:
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
-| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `preview_chart`, `get_chart_data`, `list_chart_field_values` |
-| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
+| `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
+| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
 | `email` | User email claim |
@@ -262,8 +265,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_feedback_record` | `manage` |
 | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard` | `read` |
 | `preview_chart`, `get_chart_data`, `list_chart_field_values` | `read`, and read access to the chart's feedback dataset |
+| `list_dashboard_filter_fields` | `read`; a feedback dataset the caller cannot read through the dashboard is left out of the list, and a Dashboard viewer gets only the keys a chart on the dashboard groups by |
+| `list_dashboard_filter_values` | `read`, and read access to each feedback dataset its charts read |
 | `create_chart`, `duplicate_chart` | `write` or `manage`, and write access to the feedback dataset |
-| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
+| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
 
 Synthesized MCP scopes for an API key: every `:read` scope always (`surveys`, `workflows`,
 `feedbackRecords`, `responses`, `dashboards`); the matching `:write` scopes when the key has `write` or
@@ -647,7 +652,7 @@ Array arguments are bounded. No array in a tool call may hold more than 1 000 it
 in one call together at most 50 000 elements, at any depth; and a call may nest at most 256 levels of
 objects and arrays. A call over any of these is refused with a JSON-RPC `-32602` error before its
 arguments are parsed. Fields with a tighter bound advertise it as
-`maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables` and
+`maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables`, `startLogic` and
 `languages`, `get_survey`'s `lang`, the list filters' `in` arrays, and `create_feedback_records`'
 `records`. A request body may be at most 2 MB, whether or not it declares a `Content-Length`.
 
@@ -880,6 +885,19 @@ position** rather than naming the field: the element schema is an undiscriminate
 or absent `type` makes every branch fail and the message is a generic `Invalid input`. Send the
 type's own fields with the element rather than expecting the validator to name them.
 
+An optional `startLogic` array holds the **rules before the first question**: the survey runs them as
+soon as it loads, before the welcome card and on start-at links. Each rule has the shape of a block's
+`logic` rule, but may only `jumpToBlock` (to a block, or to an ending to screen the respondent out),
+`calculate` and `markLowQuality`, and may read `hiddenField`, `variable` and `reserved` operands only, since nothing has been
+answered yet. Anything else is refused with the exact path, such as `startLogic.0.actions.1`. On
+`patch_survey`, `null` or `[]` removes them and an omitted `startLogic` is kept; `get_survey` always
+returns the array, `[]` when there are none.
+
+A block rule may also carry a `markLowQuality` action, `{ "id": "<cuid2>", "objective": "markLowQuality" }`
+with no target (ENG-6933). When the rule fires, the respondent sees nothing and the response is marked Low
+quality as a reviewer would mark it. It is allowed in `startLogic` too (ENG-6952), where the flag rides on
+the response's first write, a screen-out's finished response included; `requireAnswer` is refused there.
+
 Input:
 
 ```json
@@ -934,6 +952,24 @@ Input:
 
 Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
 `requestId`.
+
+#### Typed Embedded Data
+
+`create_survey`, `patch_survey` and `validate_survey` take the survey's Embedded Data as typed
+`embeddedFields` (ADR 0028), next to the legacy `variables` and `hiddenFields`, and `get_survey` returns
+both. An entry is `{ storageKey, key, name, source, dataType, defaultValue, locked }`:
+
+- `source: "computed"` is set by logic. Logic operands of type `variable` and calculate actions name its
+  `storageKey` (a cuid2, generated when omitted). Its `dataType` is `string`, `number` or `date`.
+- `source: "ingested"` arrives by URL parameter or SDK. Operands of type `hiddenField` name its
+  `storageKey`, which defaults to its name. It may be `boolean` too, and only ingested fields can be
+  `locked`.
+- A workspace library field is linked by sending `{ "key": "plan_tier" }` alone: the server fills in the
+  library's definition. A key the library does not have is a `400` at `embeddedFields.<i>.key`.
+
+`embeddedFields` is the complete set, and the legacy pair is derived from it. Either format alone works.
+Sent together, they have to describe the same fields, or the call fails with a `400` naming each path
+where they differ, so an edit made in one format is never silently dropped.
 
 ### validate_survey
 
@@ -1048,6 +1084,17 @@ Input:
 Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
 `requestId`.
 
+#### Confirmation on surveys with responses
+
+`patch_survey`, `edit_survey_blocks`, `set_survey_block_order` and `delete_survey` take an optional
+`confirm` argument. On a survey that is not a draft and already has at least one response, a call
+without `confirm: true` changes nothing: it returns an error (`status: 428`, "Confirmation required")
+whose `detail` is the caution the editor shows a person — mixed old and new responses for a change, the
+loss of every response for a delete — followed by "Pass confirm: true after the user agrees". The agent
+shows that to the user and retries with `confirm: true` only after they agree. Drafts and surveys
+without responses need nothing. The rule is MCP-only: the v3 HTTP API is unchanged, and an operation
+enforces it only when the tool passes `writeConfirmation`.
+
 `customCss` on `create_survey` and `patch_survey` is source only — `{ "light": "…", "dark": "…" }`, both
 keys, each a string or `null`; `null` clears it, and on a patch an omitted `customCss` is kept. Compiled
 output is computed by the server, and a payload carrying `compiled` or `processorVersion` is rejected. A
@@ -1111,8 +1158,9 @@ both: an insert without one gets a server-generated id, returned in the concise 
 list, and an update takes it from the operation's `id`.
 
 Removing a block orphans any answers already collected for its elements, and the API cannot undo
-that. The editor shows a human a caution before this; an agent has no equivalent, so confirm with the
-user before removing a block from a survey that is not a draft.
+that. The editor shows a human a caution before this, and the tool does the same: on a survey that is
+not a draft and has responses it refuses until the call passes `confirm: true` (see
+[Confirmation on surveys with responses](#confirmation-on-surveys-with-responses)).
 
 <Note>
   Fetch the survey first and pass its `updatedAt` as `expectedUpdatedAt`. If the survey changed since your
@@ -1472,7 +1520,7 @@ never this caller's, so repeating the call converges rather than compounding.
 
 ### Chart and dashboard tools
 
-Eighteen tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
+Twenty-one tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
 operation, minus deletion: there is no tool that deletes a chart or a dashboard, so a vague prompt such as
 "clean up old charts" cannot remove anything permanently. There is no AI generation tool either — an agent
 writes the chart query itself.
@@ -1480,16 +1528,39 @@ writes the chart query itself.
 - **Write against the catalog.** `list_chart_fields` returns every field a chart query may use; the query
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved
   chart so an agent can check it before `create_chart` saves it.
-- **Numbers need feedback access.** `preview_chart`, `get_chart_data` and `list_chart_field_values` return
-  respondents' answers in aggregate, so they declare `dashboards:read` **and** `feedbackRecords:read`, and the
-  operation also checks read access to the chart's feedback dataset. They spend from the same 600/min budget as
-  the REST data routes, and share their limit of 20 queries running at once, both charged inside the operation.
+- **Free-form numbers need feedback access.** `preview_chart` and `list_chart_field_values` run a caller's own
+  query over respondents' answers, so they declare `dashboards:read` **and** `feedbackRecords:read`.
+  `get_chart_data` declares the same two, with one exception through `registerScopedTool`'s `{ byInput }` form:
+  given a `dashboardId` it reads the chart as that dashboard shows it, and a Dashboard viewer's token (trimmed to
+  `dashboards:read`, flagged `dashboardViewerOnly` at authentication) may do that on `dashboards:read` alone
+  (ADR-0025). Without `dashboardId` it is the chart-only read it always was. Each operation also checks read
+  access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read` for a viewer. They spend from
+  the same 600/min budget as the REST data routes, and share their limit of 20 queries running at once, both
+  charged inside the operation.
+- **Dashboard filter values.** `list_dashboard_filter_values` is `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`:
+  the values a list filter offers, narrowed by the date range, the other filters' picks and `search`, which an
+  agent then passes as `picks` to `get_chart_data`. It is gated like a chart read through its dashboard —
+  `dashboards:read` and `feedbackRecords:read`, or `dashboards:read` alone for a Dashboard viewer — and spends
+  from the default v3 budget on every call and from the chart-query budget per Cube query on a cache miss.
+- **Dashboard filter fields.** `list_dashboard_filter_fields` is `GET /api/v3/dashboards/{dashboardId}/filter-fields`:
+  the embedded-data fields (`FeedbackRecords.ed_*`) of the feedback datasets the dashboard's charts read, which an
+  agent uses as a filter's `field` in `set_dashboard_filters`, `get_chart_data` and `list_dashboard_filter_values`.
+  A Dashboard viewer cannot call `list_chart_fields`, so this is how its agent finds them. It is gated like
+  `list_dashboard_filter_values`, and spends from the default v3 budget.
 - **Shared charts.** `update_chart`'s description says an edit shows on every dashboard holding the chart, and
   points at `duplicate_chart` + `update_widget` for a per-dashboard change. `duplicate_dashboard` says the copy
   shares its charts. `remove_chart_from_dashboard` says the chart is kept.
 - **Rearranging.** `update_dashboard_layout` takes `{ expectedUpdatedAt, widgets: [{ widgetId, layout }] }` and is
   refused unless it lists exactly the current widgets, so it can never remove a widget by omission. A stale
   `expectedUpdatedAt` answers `409` with the current one in `details`.
+- **Locked filters.** `set_dashboard_filters` takes `{ expectedUpdatedAt, filters }` and replaces the dashboard's
+  locked filters — the `filters` of `PUT /api/v3/dashboards/{dashboardId}` without the rest of the save, through
+  `setV3DashboardFilters`, which keeps the name and every widget. The list is the whole set: a filter is kept by
+  sending it back as `get_dashboard` read it, changed by sending it changed, removed by leaving it out, and an empty
+  list removes them all. A filter sent without `id` gets a new one. The input carries the PUT body's checks (at most
+  10 filters, a catalog dimension or embedded-data field with an operator it allows, values within the picks
+  budget), and the operation the save's: an embedded-data key none of the dashboard's charts reads answers `422`, a
+  stale `expectedUpdatedAt` `409`. Locked filters are ANDed; there are no OR groups.
 
 Every write runs through `runMcpMutation`, so it leaves the same audit event as the REST call.
 

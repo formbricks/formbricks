@@ -841,4 +841,355 @@ describe("ordering rules (ENG-3069)", () => {
     expect(getV3SurveyPrecedenceInvalidParams(refInput(shifted))).toHaveLength(1);
     expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(baseline), refInput(shifted))).toEqual([]);
   });
+
+  describe("show-if (ENG-6931)", () => {
+    const submitted = (elementId: string) => ({
+      id: "clshowifgroup00000000001",
+      connector: "and" as const,
+      conditions: [
+        {
+          id: "clshowifcond000000000001",
+          leftOperand: { type: "element" as const, value: elementId },
+          operator: "isSubmitted" as const,
+        },
+      ],
+    });
+
+    // Block 0: first_q, Block 1: second_q then a follow-up below it.
+    const withShowIf = (patch: (survey: ReturnType<typeof twoBlockSurvey>) => void) => {
+      const survey = twoBlockSurvey();
+      survey.blocks[1].elements.push({
+        id: "follow_up",
+        type: "openText",
+        headline: { default: "Why?" },
+        required: false,
+      } as never);
+      patch(survey);
+      return survey;
+    };
+
+    test("a block's show-if may use an earlier block, not its own", () => {
+      expect(
+        getV3SurveyPrecedenceInvalidParams(
+          refInput(withShowIf((survey) => (survey.blocks[1].showIf = submitted("first_q"))))
+        )
+      ).toEqual([]);
+
+      expect(
+        getV3SurveyPrecedenceInvalidParams(
+          refInput(withShowIf((survey) => (survey.blocks[1].showIf = submitted("second_q"))))
+        )
+      ).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.showIf.conditions.0.leftOperand.value",
+          code: "misordered_reference",
+          identifier: "second_q",
+          referenceType: "element",
+        }),
+      ]);
+    });
+
+    test("an element's show-if may use the element above it, not itself or one below or later", () => {
+      const params = (elementPatch: (survey: ReturnType<typeof twoBlockSurvey>) => void) =>
+        getV3SurveyPrecedenceInvalidParams(refInput(withShowIf(elementPatch)));
+
+      expect(params((survey) => (survey.blocks[1].elements[1].showIf = submitted("second_q")))).toEqual([]);
+      expect(params((survey) => (survey.blocks[1].elements[1].showIf = submitted("follow_up")))).toEqual([
+        expect.objectContaining({ name: "blocks.1.elements.1.showIf.conditions.0.leftOperand.value" }),
+      ]);
+      expect(params((survey) => (survey.blocks[1].elements[0].showIf = submitted("follow_up")))).toEqual([
+        expect.objectContaining({ name: "blocks.1.elements.0.showIf.conditions.0.leftOperand.value" }),
+      ]);
+      expect(params((survey) => (survey.blocks[0].elements[0].showIf = submitted("second_q")))).toEqual([
+        expect.objectContaining({ name: "blocks.0.elements.0.showIf.conditions.0.leftOperand.value" }),
+      ]);
+    });
+
+    test("an element used as the right operand is checked too", () => {
+      const survey = withShowIf((draft) => {
+        draft.blocks[1].elements[0].showIf = {
+          id: "clshowifgroup00000000001",
+          connector: "and",
+          conditions: [
+            {
+              id: "clshowifcond000000000001",
+              leftOperand: { type: "hiddenField", value: "account_id" },
+              operator: "equals",
+              rightOperand: { type: "element", value: "follow_up" },
+            },
+          ],
+        };
+      });
+
+      expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([
+        expect.objectContaining({ name: "blocks.1.elements.0.showIf.conditions.0.rightOperand.value" }),
+      ]);
+    });
+
+    describe("on options, rows and columns (ENG-6937)", () => {
+      // The follow-up becomes a multi select and a matrix is added below it, on block 1.
+      const withOptions = (patch: (survey: ReturnType<typeof twoBlockSurvey>) => void) =>
+        withShowIf((survey) => {
+          survey.blocks[1].elements[1] = {
+            id: "follow_up",
+            type: "multipleChoiceMulti",
+            headline: { default: "Which?" },
+            required: false,
+            choices: [
+              { id: "a", label: { default: "A" } },
+              { id: "b", label: { default: "B" } },
+            ],
+          } as never;
+          survey.blocks[1].elements.push({
+            id: "grid",
+            type: "matrix",
+            headline: { default: "Rate" },
+            required: false,
+            rows: [{ id: "r1", label: { default: "R1" } }],
+            columns: [{ id: "c1", label: { default: "C1" } }],
+          } as never);
+          patch(survey);
+        });
+      const optionsOf = (survey: ReturnType<typeof twoBlockSurvey>, elementIdx: number, key = "choices") =>
+        (survey.blocks[1].elements[elementIdx] as unknown as Record<string, { showIf?: unknown }[]>)[key];
+
+      test("an option's show-if may use what its question's may: not its own question or one below", () => {
+        const params = (patch: (survey: ReturnType<typeof twoBlockSurvey>) => void) =>
+          getV3SurveyPrecedenceInvalidParams(refInput(withOptions(patch)));
+
+        expect(params((survey) => (optionsOf(survey, 1)[0].showIf = submitted("second_q")))).toEqual([]);
+        expect(params((survey) => (optionsOf(survey, 1)[1].showIf = submitted("follow_up")))).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.1.choices.1.showIf.conditions.0.leftOperand.value",
+            code: "misordered_reference",
+          }),
+        ]);
+        expect(params((survey) => (optionsOf(survey, 2, "rows")[0].showIf = submitted("grid")))).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.2.rows.0.showIf.conditions.0.leftOperand.value",
+          }),
+        ]);
+        expect(params((survey) => (optionsOf(survey, 1)[0].showIf = submitted("grid")))).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.1.choices.0.showIf.conditions.0.leftOperand.value",
+          }),
+        ]);
+      });
+
+      test("a column's show-if naming an element that doesn't exist is a dangling reference", () => {
+        const survey = withOptions((draft) => {
+          optionsOf(draft, 2, "columns")[0].showIf = submitted("gone_q");
+        });
+
+        expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([
+          expect.objectContaining({
+            name: "blocks.1.elements.2.columns.0.showIf.conditions.0.leftOperand.value",
+            code: "dangling_reference",
+            missingId: "gone_q",
+          }),
+        ]);
+      });
+    });
+
+    test("a show-if naming an element that doesn't exist is a dangling reference", () => {
+      const survey = withShowIf((draft) => {
+        draft.blocks[1].showIf = submitted("gone_q");
+        draft.blocks[1].elements[1].showIf = submitted("also_gone");
+      });
+
+      const result = validateV3SurveyReferences(refInput(survey));
+
+      expect(result.invalidParams).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.showIf.conditions.0.leftOperand.value",
+          code: "dangling_reference",
+          missingId: "gone_q",
+        }),
+        expect.objectContaining({
+          name: "blocks.1.elements.1.showIf.conditions.0.leftOperand.value",
+          code: "dangling_reference",
+          missingId: "also_gone",
+        }),
+      ]);
+    });
+  });
+
+  describe("copied options (ENG-6938)", () => {
+    const choices = [
+      { id: "a", label: { default: "A" } },
+      { id: "b", label: { default: "B" } },
+    ];
+    // Block 0: first_q, then `brands` (multi select). Block 1: second_q, then `fav` (single select)
+    // and `poster` (picture selection).
+    const withCopies = (patch: (elements: Record<string, unknown>[]) => void) => {
+      const survey = twoBlockSurvey();
+      survey.blocks[0].elements.push({
+        id: "brands",
+        type: "multipleChoiceMulti",
+        headline: { default: "Brands" },
+        required: false,
+        choices,
+      } as never);
+      survey.blocks[1].elements.push(
+        {
+          id: "fav",
+          type: "multipleChoiceSingle",
+          headline: { default: "Favourite" },
+          required: false,
+          choices,
+        } as never,
+        {
+          id: "poster",
+          type: "pictureSelection",
+          headline: { default: "Poster" },
+          required: false,
+          choices: [
+            { id: "p1", imageUrl: "https://example.com/1.png" },
+            { id: "p2", imageUrl: "https://example.com/2.png" },
+          ],
+        } as never
+      );
+      patch(survey.blocks.flatMap((block) => block.elements) as unknown as Record<string, unknown>[]);
+      return survey;
+    };
+    // Flat order: first_q, brands, second_q, fav, poster.
+    const FAV = 3;
+    const POSTER = 4;
+
+    test("an earlier source of the same kind is accepted", () => {
+      const survey = withCopies((elements) => (elements[FAV].optionsCopiedFrom = "brands"));
+
+      expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([]);
+      expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual([]);
+    });
+
+    test("a source that doesn't exist is a dangling reference", () => {
+      const survey = withCopies((elements) => (elements[FAV].optionsCopiedFrom = "gone_q"));
+
+      expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.elements.1.optionsCopiedFrom",
+          code: "dangling_reference",
+          referenceType: "element",
+          missingId: "gone_q",
+        }),
+      ]);
+    });
+
+    test("a source below the question is misordered, and only a new one is reported on PATCH", () => {
+      const baseline = withCopies(() => {});
+      const survey = withCopies((elements) => (elements[1].optionsCopiedFrom = "fav"));
+
+      const expected = [
+        expect.objectContaining({
+          name: "blocks.0.elements.1.optionsCopiedFrom",
+          code: "misordered_reference",
+          identifier: "fav",
+          referenceType: "element",
+        }),
+      ];
+      expect(getV3SurveyPrecedenceInvalidParams(refInput(survey))).toEqual(expected);
+      expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(baseline), refInput(survey))).toEqual(
+        expected
+      );
+      expect(getV3SurveyIntroducedPrecedenceInvalidParams(refInput(survey), refInput(survey))).toEqual([]);
+    });
+
+    test("a source of another kind, or with no options, is an invalid reference", () => {
+      const survey = withCopies((elements) => {
+        elements[FAV].optionsCopiedFrom = "second_q";
+        elements[POSTER].optionsCopiedFrom = "brands";
+      });
+
+      expect(validateV3SurveyReferences(refInput(survey)).invalidParams).toEqual([
+        expect.objectContaining({
+          name: "blocks.1.elements.1.optionsCopiedFrom",
+          code: "invalid_reference",
+          identifier: "second_q",
+        }),
+        expect.objectContaining({
+          name: "blocks.1.elements.2.optionsCopiedFrom",
+          code: "invalid_reference",
+          identifier: "brands",
+        }),
+      ]);
+    });
+  });
+});
+
+describe("Set value expressions (ENG-6935)", () => {
+  const COMPUTED_DATE_KEY = "clsignup1234567890123456789";
+
+  /** `validSurvey` with its calculate action replaced by `<variableId> = <expression>`. */
+  const withSetValue = (expression: unknown, variableId = "clvar123456789012345678901") =>
+    ({
+      ...validSurvey,
+      embeddedFields: [
+        { storageKey: "clvar123456789012345678901", source: "computed", dataType: "number" },
+        { storageKey: COMPUTED_DATE_KEY, source: "computed", dataType: "date" },
+        { storageKey: "account_id", source: "ingested", dataType: "string" },
+      ],
+      blocks: [
+        {
+          ...validSurvey.blocks[0],
+          logic: [
+            {
+              ...validSurvey.blocks[0].logic![0],
+              actions: [
+                {
+                  id: "clact123456789012345678901",
+                  objective: "calculate",
+                  variableId,
+                  operator: "assign",
+                  value: { type: "expression", value: expression },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }) as unknown as typeof validSurvey;
+
+  const valuePath = "blocks.0.logic.0.actions.0.value.value";
+  const call = (fn: string, ...args: unknown[]) => ({ type: "call", fn, args });
+
+  test("accepts a tree whose references exist, including a computed date only the typed fields declare", () => {
+    expect(validateV3SurveyReferences(withSetValue(call("now"), COMPUTED_DATE_KEY))).toEqual({
+      ok: true,
+      invalidParams: [],
+    });
+    expect(
+      validateV3SurveyReferences(
+        withSetValue(call("daysBetween", { type: "variable", value: COMPUTED_DATE_KEY }, call("now")))
+      ).ok
+    ).toBe(true);
+  });
+
+  test("names a dangling reference inside the tree by its exact path", () => {
+    const result = validateV3SurveyReferences(
+      withSetValue(call("add", { type: "static", value: 1 }, { type: "element", value: "gone" }))
+    );
+
+    expect(result.invalidParams).toEqual([
+      expect.objectContaining({
+        name: `${valuePath}.args.1.value`,
+        code: "dangling_reference",
+        referenceType: "element",
+        missingId: "gone",
+      }),
+    ]);
+  });
+
+  test("names text in arithmetic and a result the field can't hold by their exact paths", () => {
+    // `satisfaction` is a text open question.
+    expect(
+      validateV3SurveyReferences(
+        withSetValue(call("add", { type: "static", value: 1 }, { type: "element", value: "satisfaction" }))
+      ).invalidParams
+    ).toEqual([{ name: `${valuePath}.args.1`, reason: "Expression: + needs numbers, got text" }]);
+
+    expect(validateV3SurveyReferences(withSetValue(call("now"))).invalidParams).toEqual([
+      { name: valuePath, reason: "Expression: the result is date, but the field holds number" },
+    ]);
+  });
 });

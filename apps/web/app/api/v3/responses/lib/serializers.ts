@@ -146,6 +146,7 @@ export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
       endingId: row.endingId,
       language: row.language,
       outcome: row.outcome,
+      notShown: row.notShown ?? null,
       ...(durationSeconds === undefined ? {} : { durationSeconds }),
       resolution: {
         labelPolicy: "currentSurveyDefinition",

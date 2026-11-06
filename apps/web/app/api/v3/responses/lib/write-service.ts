@@ -17,15 +17,20 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
-import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
-import { enqueueResponseOutcomeCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
 import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
+import {
+  type TOutcomeScope,
+  type TV3OutcomeChange,
+  enqueueOutcomeCleanup,
+  outcomeScopeWhere,
+  writeResponsesOutcomeInTx,
+} from "./outcome-write";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
 /**
@@ -681,22 +686,6 @@ const readStoredOutcome = async (
   )?.outcome;
 
 /**
- * Queue the Hub cleanup for responses whose outcome changed, in the transaction that wrote it (ENG-6785):
- * a write that commits always gets it, and one that rolls back queues nothing.
- */
-const enqueueOutcomeCleanup = async (
-  tx: Prisma.TransactionClient,
-  workspaceId: string,
-  changes: { id: string; surveyId: string }[]
-): Promise<{ drainNowIds: string[] }> => {
-  const { organizationId } = await tx.workspace.findUniqueOrThrow({
-    where: { id: workspaceId },
-    select: { organizationId: true },
-  });
-  return enqueueResponseOutcomeCleanups(tx, { organizationId, workspaceId, changes });
-};
-
-/**
  * How long a request waits for the first attempt at the Hub cleanup. The Hub's client waits up to a minute
  * per attempt, so a Hub that accepts the connection and never answers would hold the request that much
  * longer for an outcome that is already committed (seen against the real Hub, ENG-6785). The drain keeps
@@ -730,20 +719,6 @@ const drainOutcomeCleanups = async (drainNowIds: string[], workspaceId: string):
   }
 };
 
-type TOutcomeScope = {
-  /** ENG-3282: responses of a survey the caller cannot see are scope-filtered out, like foreign ids. */
-  visibleSurveyWhere?: Prisma.SurveyWhereInput;
-  workspaceId: string;
-};
-
-const outcomeScopeWhere = (
-  ids: string[],
-  { visibleSurveyWhere = {}, workspaceId }: TOutcomeScope
-): Prisma.ResponseWhereInput => ({
-  id: { in: ids },
-  survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
-});
-
 /**
  * Which of `ids` are in scope, and the survey each belongs to — what a batch authorizes against before it
  * writes anything. One query for up to a batch of ids; the caller checks one response per distinct survey.
@@ -757,8 +732,6 @@ export async function listScopedResponseSurveyRefs(
     select: { id: true, surveyId: true },
   });
 }
-
-export type TV3OutcomeChange = { id: string; surveyId: string; previous: TResponseOutcome | null };
 
 export type TV3BatchOutcomeResult = {
   /** Responses in scope, including those that already carried the outcome: a retry reports the same number. */
@@ -791,30 +764,7 @@ export async function setScopedResponsesOutcome(
 
   try {
     await prisma.$transaction(async (tx) => {
-      const inScope = await tx.response.findMany({
-        where: outcomeScopeWhere(ids, scope),
-        select: { id: true, surveyId: true, outcome: true },
-      });
-      matched = inScope.length;
-      changes = inScope
-        .filter((row) => row.outcome !== outcome)
-        .map((row) => ({ id: row.id, surveyId: row.surveyId, previous: row.outcome }));
-
-      if (changes.length === 0) return;
-
-      await tx.response.updateMany({
-        where: outcomeScopeWhere(
-          changes.map(({ id }) => id),
-          scope
-        ),
-        data: { outcome },
-      });
-
-      ({ drainNowIds } = await enqueueOutcomeCleanup(
-        tx,
-        scope.workspaceId,
-        changes.map(({ id, surveyId }) => ({ id, surveyId }))
-      ));
+      ({ matched, changes, drainNowIds } = await writeResponsesOutcomeInTx(tx, ids, outcome, scope));
     });
   } catch (error) {
     rethrowScopedNotFound(error);

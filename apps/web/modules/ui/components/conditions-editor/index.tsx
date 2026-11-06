@@ -3,10 +3,12 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { FieldErrors } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TSurveyQuotaInput } from "@formbricks/types/quota";
 import { Button } from "@/modules/ui/components/button";
+import {
+  createConditionHandlers,
+  isMultiSelectOperator,
+} from "@/modules/ui/components/conditions-editor/lib/condition-handlers";
 import { isConditionGroup } from "@/modules/ui/components/conditions-editor/lib/utils";
 import {
   DropdownMenu,
@@ -14,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import {
   Select,
   SelectContent,
@@ -23,25 +25,28 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { cn } from "@/modules/ui/lib/utils";
+import { SentenceConditionsEditor } from "./sentence-conditions-editor";
 import {
-  TConditionsEditorCallbacks,
-  TConditionsEditorConfig,
+  ConditionsEditorProps,
+  TConditionsEditorVariant,
   TGenericCondition,
   TGenericConditionGroup,
 } from "./types";
 
-interface ConditionsEditorProps {
-  conditions: TGenericConditionGroup;
-  config: TConditionsEditorConfig;
-  callbacks: TConditionsEditorCallbacks;
-  depth?: number;
-  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
-  isSubmitted?: boolean;
-  /** Hides the all/any picker: every condition combines with the group's fixed connector. */
-  isConnectorLocked?: boolean;
+/**
+ * The conditions editor shared by survey logic, show-if, quotas, chart filters, every table's Advanced
+ * filter and show conditions. `variant="sentence"` (ENG-6969 T6) opts into the rule editor's sentence
+ * layout; without it, every caller gets the default layout below, unchanged.
+ */
+export function ConditionsEditor({
+  variant = "default",
+  ...props
+}: Readonly<ConditionsEditorProps & { variant?: TConditionsEditorVariant }>) {
+  if (variant === "sentence") return <SentenceConditionsEditor {...props} />;
+  return <DefaultConditionsEditor {...props} />;
 }
 
-export function ConditionsEditor({
+function DefaultConditionsEditor({
   conditions,
   config,
   callbacks,
@@ -53,43 +58,10 @@ export function ConditionsEditor({
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
 
-  const handleLeftOperandChange = (condition: TGenericCondition, value: string, option?: TComboboxOption) => {
-    const type = option?.meta?.type || "static";
-
-    callbacks.onUpdateCondition(condition.id, {
-      leftOperand: {
-        value,
-        type,
-        meta: option?.meta,
-      },
-      operator: config.getDefaultOperator(),
-      rightOperand: undefined,
-    });
-  };
-
-  const handleOperatorChange = (condition: TGenericCondition, value: string) => {
-    if (value !== condition.operator) {
-      callbacks.onUpdateCondition(condition.id, {
-        operator: value,
-        rightOperand: undefined,
-      });
-    }
-  };
-
-  const handleRightOperandChange = (
-    condition: TGenericCondition,
-    value: string | number | string[],
-    option?: TComboboxOption
-  ) => {
-    const type = option?.meta?.type || "static";
-
-    callbacks.onUpdateCondition(condition.id, {
-      rightOperand: {
-        value,
-        type,
-      },
-    });
-  };
+  const { handleLeftOperandChange, handleOperatorChange, handleRightOperandChange } = createConditionHandlers(
+    config,
+    callbacks
+  );
 
   const renderCondition = (
     condition: TGenericCondition | TGenericConditionGroup,
@@ -154,14 +126,7 @@ export function ConditionsEditor({
       quotaErrors?.logic?.conditions?.[index]?.message ||
       quotaErrors?.logic?.conditions?.[index]?.rightOperand?.message;
 
-    const allowMultiSelect = [
-      "equalsOneOf",
-      "includesAllOf",
-      "includesOneOf",
-      "doesNotIncludeOneOf",
-      "doesNotIncludeAllOf",
-      "isAnyOf",
-    ].includes(condition.operator);
+    const allowMultiSelect = isMultiSelectOperator(condition.operator);
 
     const getConnector = () => {
       if (index > 0) return <div>{connector}</div>;
@@ -190,7 +155,11 @@ export function ConditionsEditor({
           groupedOptions={options}
           allowMultiSelect={allowMultiSelect}
           showCheckIcon={allowMultiSelect}
-          value={condition.rightOperand?.value}
+          value={
+            config.formatRightOperandValue
+              ? config.formatRightOperandValue(condition)
+              : condition.rightOperand?.value
+          }
           clearable={true}
           onChangeValue={(val, option) => {
             handleRightOperandChange(condition, val, option);
@@ -221,6 +190,7 @@ export function ConditionsEditor({
                 key="conditionValue"
                 showSearch
                 groupedOptions={leftOperandOptions}
+                placeholder={config.leftOperandPlaceholder}
                 wideDropdown={config.wideLeftOperandDropdown}
                 iconClassName={config.wideLeftOperandDropdown ? "size-4 text-slate-500" : undefined}
                 value={config.formatLeftOperandValue(condition)}
@@ -235,6 +205,7 @@ export function ConditionsEditor({
                 key="conditionOperator"
                 showSearch={false}
                 options={operatorOptions}
+                placeholder={config.operatorPlaceholder}
                 value={condition.operator}
                 onChangeValue={(val: string | number | string[]) => {
                   handleOperatorChange(condition, String(val));
@@ -244,44 +215,46 @@ export function ConditionsEditor({
             {valueInput !== null && <div className="@xl:col-span-4">{valueInput}</div>}
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
-              <Button
-                variant="outline"
-                className="flex size-10 items-center justify-center rounded-md bg-white">
-                <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  callbacks.onAddConditionBelow(condition.id);
-                }}
-                icon={<PlusIcon className="size-4" />}>
-                {t("workspace.surveys.edit.add_condition_below")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                // onCreateGroup determines if this component is being used in quotas or logic, if in quotas we do not allow removal of only condition
-                disabled={!onCreateGroup && conditions.conditions.length === 1}
-                onClick={() => callbacks.onRemoveCondition(condition.id)}
-                icon={<TrashIcon className="size-4" />}>
-                {t("common.remove")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => callbacks.onDuplicateCondition(condition.id)}
-                icon={<CopyIcon className="size-4" />}>
-                {t("common.duplicate")}
-              </DropdownMenuItem>
-              {onCreateGroup && (config.canCreateGroup?.(depth) ?? true) && (
+          {!config.hideConditionMenu && (
+            <DropdownMenu>
+              <DropdownMenuTrigger id={`condition-${depth}-${index}-dropdown`} asChild>
+                <Button
+                  variant="outline"
+                  className="flex size-10 items-center justify-center rounded-md bg-white">
+                  <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
                 <DropdownMenuItem
-                  onClick={() => onCreateGroup(condition.id)}
-                  icon={<WorkflowIcon className="size-4" />}
-                  disabled={conditions.conditions.length <= 1}>
-                  {t("workspace.surveys.edit.create_group")}
+                  onClick={() => {
+                    callbacks.onAddConditionBelow(condition.id);
+                  }}
+                  icon={<PlusIcon className="size-4" />}>
+                  {t("workspace.surveys.edit.add_condition_below")}
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  // onCreateGroup determines if this component is being used in quotas or logic, if in quotas we do not allow removal of only condition
+                  disabled={!onCreateGroup && conditions.conditions.length === 1}
+                  onClick={() => callbacks.onRemoveCondition(condition.id)}
+                  icon={<TrashIcon className="size-4" />}>
+                  {t("common.remove")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => callbacks.onDuplicateCondition(condition.id)}
+                  icon={<CopyIcon className="size-4" />}>
+                  {t("common.duplicate")}
+                </DropdownMenuItem>
+                {onCreateGroup && (config.canCreateGroup?.(depth) ?? true) && (
+                  <DropdownMenuItem
+                    onClick={() => onCreateGroup(condition.id)}
+                    icon={<WorkflowIcon className="size-4" />}
+                    disabled={conditions.conditions.length <= 1}>
+                    {t("workspace.surveys.edit.create_group")}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         {quotaError && isSubmitted && (
           <p className="mt-2 w-full text-right text-sm text-error">{quotaError}</p>

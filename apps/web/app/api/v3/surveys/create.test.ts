@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -13,12 +14,14 @@ import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-car
 import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "./create";
+import { prepareV3SurveyCreateInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import { resolveV3ContactsEntitlement } from "./targeting";
@@ -46,6 +49,9 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     language: {
       upsert: vi.fn(),
+    },
+    embeddedData: {
+      findMany: vi.fn(),
     },
   },
 }));
@@ -84,6 +90,7 @@ vi.mock("@/modules/survey/lib/permission", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    error: vi.fn(),
     withContext: vi.fn(() => ({
       error: vi.fn(),
       warn: vi.fn(),
@@ -556,6 +563,60 @@ describe("createV3Survey", () => {
     expect(createSurvey).toHaveBeenCalled();
   });
 
+  test("a condition equal to 0 passes validate and create alike", async () => {
+    const raw = {
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [{ ...rawCreateBody.blocks[0].elements[0], inputType: "number" }],
+          logic: [
+            {
+              id: "clrule12345678901234567890",
+              conditions: {
+                id: "clgroup1234567890123456789",
+                connector: "and",
+                conditions: [
+                  {
+                    id: "clcond12345678901234567890",
+                    leftOperand: { type: "element", value: "satisfaction" },
+                    operator: "equals",
+                    rightOperand: { type: "static", value: 0 },
+                  },
+                ],
+              },
+              actions: [
+                {
+                  id: "claction123456789012345678",
+                  objective: "jumpToBlock",
+                  target: "clbk2234567890123456789012",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "clbk2234567890123456789012",
+          name: "Follow-up",
+          elements: [
+            {
+              id: "why_zero",
+              type: "openText",
+              headline: { "en-US": "Why none?", "de-DE": "Warum keine?" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(prepareV3SurveyCreateInput(raw).ok).toBe(true);
+    await expect(
+      createV3Survey(ZV3CreateSurveyBody.parse(raw), null, "req_equals_zero")
+    ).resolves.toBeDefined();
+    expect(createSurvey).toHaveBeenCalled();
+  });
+
   test("rejects external CTA buttons for API-key creates without external URL permission", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
     const body = ZV3CreateSurveyBody.parse({
@@ -643,6 +704,94 @@ describe("createV3Survey", () => {
     expect(getOrganizationByWorkspaceId).toHaveBeenCalledWith(workspaceId);
     expect(getExternalUrlsPermission).toHaveBeenCalledWith("org_1");
     expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  describe("typed Embedded Data (ENG-6930)", () => {
+    const session = {
+      user: { id: "user_1", email: "user@example.com", name: "User" },
+      expires: "2026-05-01",
+    };
+    const npsRow = {
+      id: "clnpsscore00000000000000001",
+      key: "nps_score",
+      name: "NPS score",
+      source: "computed",
+      dataType: "number",
+      defaultValue: 0,
+      locked: false,
+    };
+
+    test("hands the survey service its fields as rows, a library field linked by its id", async () => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([npsRow] as never);
+      const body = ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [
+          { key: "nps_score", storageKey: "clnpslink000000000000000001" },
+          { name: "plan", source: "ingested", locked: true },
+        ],
+      });
+
+      await createV3Survey(body, session, "req_ed", "org_1");
+
+      expect(createSurvey).toHaveBeenCalledWith(
+        workspaceId,
+        expect.objectContaining({
+          embeddedFields: [
+            {
+              field: {
+                id: npsRow.id,
+                key: "nps_score",
+                name: "NPS score",
+                source: "computed",
+                dataType: "number",
+                defaultValue: 0,
+                locked: false,
+              },
+              link: { storageKey: "clnpslink000000000000000001" },
+            },
+            {
+              field: {
+                key: null,
+                name: "plan",
+                source: "ingested",
+                dataType: "string",
+                defaultValue: null,
+                locked: true,
+              },
+              link: { storageKey: "plan" },
+            },
+          ],
+          // The legacy format is derived from the fields; a library computed field answers to its key.
+          variables: [{ id: "clnpslink000000000000000001", name: "nps_score", type: "number", value: 0 }],
+          hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        }),
+        expect.anything()
+      );
+    });
+
+    test("refuses an unknown library key with an Embedded Data error and creates nothing", async () => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([]);
+      const body = ZV3CreateSurveyBody.parse({ ...rawCreateBody, embeddedFields: [{ key: "nps_score" }] });
+
+      await expect(createV3Survey(body, session, "req_ed")).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.key" })],
+      });
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
+
+    test("refuses disagreeing formats with an Embedded Data error", async () => {
+      const body = ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [{ name: "plan", source: "ingested" }],
+        hiddenFields: { enabled: true, fieldIds: ["region"] },
+      });
+
+      await expect(createV3Survey(body, session, "req_ed")).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+      });
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
   });
 
   test("create still rejects invalid v3 documents", async () => {
@@ -745,6 +894,37 @@ describe("createV3Survey", () => {
         ],
         ...overrides,
       });
+
+    test("re-reads an app survey whose work after the commit failed, so its 201 shows what was stored", async () => {
+      const cause = new Error("response alert subscription failed");
+      vi.mocked(createSurvey).mockRejectedValue(new SurveyWriteAfterCommitError(createdAppSurvey, cause));
+
+      const error = await createV3Survey(buildAppBody(), null, "req_app_1").catch(
+        (caught: unknown) => caught
+      );
+
+      expect(error).toBeInstanceOf(SurveyWriteAfterCommitError);
+      expect((error as SurveyWriteAfterCommitError).result).toBe(appSurveyWithSegment);
+      expect((error as SurveyWriteAfterCommitError).cause).toBe(cause);
+    });
+
+    test("keeps the committed survey when the re-read after a failed after-commit fails too", async () => {
+      vi.mocked(createSurvey).mockRejectedValue(
+        new SurveyWriteAfterCommitError(createdAppSurvey, new Error())
+      );
+      vi.mocked(getSurveyWithCustomCss).mockRejectedValue(new Error("connection reset"));
+
+      const error = await createV3Survey(buildAppBody(), null, "req_app_1").catch(
+        (caught: unknown) => caught
+      );
+
+      expect((error as SurveyWriteAfterCommitError).result).toBe(createdAppSurvey);
+      // Kept, but not silently: the failed re-read is logged.
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error", surveyId: createdAppSurvey.id }),
+        expect.any(String)
+      );
+    });
 
     test("forwards distribution scalars and resolved triggers to createSurvey", async () => {
       vi.mocked(getActionClasses).mockResolvedValue([actionClass]);

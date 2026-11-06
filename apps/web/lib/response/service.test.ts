@@ -110,17 +110,17 @@ const mockResponseId = "response-123";
  * `vi.mocked(prisma.response.findUnique)` types `mockResolvedValue` against the method's default
  * instantiation, so the `select` at the call site is invisible to it and it asks for the **whole**
  * `Response` model — every scalar, not just the fourteen `responseSelection` names. That is what the
- * `as any` casts here were hiding, and it is why this is spelled as the selection plus the two
- * scalars it deliberately leaves out: `contactId`, and `ingestFlags`, which only `updateResponse`'s
- * pre-read selects (keeping it off every response the module returns). Together those are all
- * sixteen columns, and `responseSelection` carries the `contact` and `tags` relations the code under
- * test reads.
+ * `as any` casts here were hiding, and it is why this is spelled as the selection plus the three
+ * scalars it deliberately leaves out: `contactId`, `ingestFlags`, which only `updateResponse`'s
+ * pre-read selects (keeping it off every response the module returns), and `notShown` (ENG-6936),
+ * read only by the app's results. Together those are all seventeen columns, and `responseSelection`
+ * carries the `contact` and `tags` relations the code under test reads.
  *
  * Worth the indirection because it makes the fixture track the schema: add a column to the model and
  * these tests stop compiling, instead of a cast quietly supplying `undefined` for it.
  */
 type MockCurrentResponse = Prisma.ResponseGetPayload<{
-  select: typeof responseSelection & { contactId: true; ingestFlags: true };
+  select: typeof responseSelection & { contactId: true; ingestFlags: true; notShown: true };
 }>;
 
 const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {}): MockCurrentResponse => ({
@@ -143,6 +143,7 @@ const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {})
   tags: [],
   contactId: null,
   ingestFlags: null,
+  notShown: null,
   ...overrides,
 });
 

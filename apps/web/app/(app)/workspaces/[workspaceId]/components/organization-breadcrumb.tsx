@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import {
   SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
   SwitcherDropdownBody,
 } from "@/modules/settings/components/switcher-dropdown-body";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { getOrganizationSwitchPath } from "@/modules/settings/lib/organization-switch";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
@@ -30,6 +32,8 @@ interface OrganizationBreadcrumbProps {
   // True when no workspace crumb follows this one, so the closed-state chevron points down (a menu
   // affordance) instead of right (which would read as a separator before nothing).
   isLastCrumb?: boolean;
+  /** The person's role in the current organization: it decides where picking an organization leads. */
+  membershipRole?: TOrganizationRole;
 }
 
 export const OrganizationBreadcrumb = ({
@@ -38,6 +42,7 @@ export const OrganizationBreadcrumb = ({
   isMultiOrgEnabled,
   currentWorkspaceId,
   isLastCrumb = false,
+  membershipRole,
 }: Readonly<OrganizationBreadcrumbProps>) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
@@ -50,7 +55,7 @@ export const OrganizationBreadcrumb = ({
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }),
+    () => getOrganizationsForSwitcherAction(),
     t("common.failed_to_load_organizations"),
     (message) => {
       const error = new Error(message);
@@ -71,11 +76,7 @@ export const OrganizationBreadcrumb = ({
   const handleOrganizationChange = (organizationId: string) => {
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
-      if (organizationId === currentOrganizationId) {
-        router.push(`/organizations/${currentOrganizationId}/settings/general`);
-        return;
-      }
-      router.push(`/organizations/${organizationId}/`);
+      router.push(getOrganizationSwitchPath({ organizationId, currentOrganizationId, membershipRole }));
     });
   };
 

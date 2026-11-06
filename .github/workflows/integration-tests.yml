@@ -145,7 +145,10 @@ jobs:
 
       - name: Verify online migration recovery against PostgreSQL
         if: steps.harness.outputs.present == 'true'
-        run: pnpm --filter @formbricks/database exec vitest run src/scripts/online-upgrade.integration.test.ts
+        run: >-
+          pnpm --filter @formbricks/database exec vitest run
+          src/scripts/online-upgrade.integration.test.ts
+          migration/20261104140000_backfill_matrix_condition_ids/migration.integration.test.ts
         env:
           ONLINE_UPGRADE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 

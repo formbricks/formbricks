@@ -1,3 +1,5 @@
+import { promptDataJson } from "../core/prompt-data";
+import { SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import type { TQsfPlanFailure } from "./plan-checks";
 import { QSF_PLAN_ELEMENT_TYPES } from "./plan-schema";
 import type {
@@ -44,10 +46,10 @@ interface TPromptLimits {
 }
 
 /**
- * Tighter and tighter limits, tried in order until the whole import fits `QSF_PROMPT_BUDGET_CHARS`.
- * Fewer listed options costs the model little: roles map whole lists, so it only needs to see the
- * options it might single out (an "Other", a "None of these"). Every part of the data is bounded —
- * texts, options, rules, conditions, operands, context.
+ * Tighter and tighter limits, tried in order until the whole import fits
+ * `SURVEY_IMPORT_AI_MAX_SOURCE_CHARS`. Fewer listed options costs the model little: roles map whole
+ * lists, so it only needs to see the options it might single out (an "Other", a "None of these").
+ * Every part of the data is bounded — texts, options, rules, conditions, operands, context.
  *
  * The last tier degrades rather than refuses (ENG-3411): logic is only counted, with no conditions and
  * no notes asked for, no other questions are described, and option lists show four with a count of
@@ -79,8 +81,6 @@ const PROMPT_LIMITS: readonly TPromptLimits[] = [
   COARSEST_LIMITS,
 ];
 
-/** The question data of one import, all questions together, at the limits chosen (~60k tokens). */
-export const QSF_PROMPT_BUDGET_CHARS = 240_000;
 /** One call, system prompt and instructions included. Never sent above this. */
 export const QSF_PROMPT_MAX_CALL_CHARS = 120_000;
 /**
@@ -88,7 +88,7 @@ export const QSF_PROMPT_MAX_CALL_CHARS = 120_000;
  * the data budget. A survey at the budget whose every chunk overflows sends its data three times
  * (whole, then in halves), a retry round at most once more, and a system prompt with every call.
  */
-export const QSF_PROMPT_MAX_TOTAL_CHARS = 4 * QSF_PROMPT_BUDGET_CHARS;
+export const QSF_PROMPT_MAX_TOTAL_CHARS = 4 * SURVEY_IMPORT_AI_MAX_SOURCE_CHARS;
 
 const cut = (text: string, max: number): string => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
@@ -225,15 +225,12 @@ function describeContext(
   });
 }
 
-/** JSON whose `<` cannot close the data block, whatever the file says. */
-const safeJson = (value: unknown): string => JSON.stringify(value).replaceAll("<", String.raw`\u003c`);
-
 /** The characters one question adds to a call's data block, at the given limits. */
 export const describedQuestionChars = (
   question: TQsfQuestion,
   texts: TQsfPromptTexts,
   limits: TPromptLimits
-): number => safeJson(describeQuestion(question, texts, limits)).length;
+): number => promptDataJson(describeQuestion(question, texts, limits)).length;
 
 /** The loosest limits: what the AI call cap is sized for, since it describes the most rules. */
 export const QSF_LOOSEST_PROMPT_LIMITS = LOOSEST_LIMITS;
@@ -262,13 +259,13 @@ export function describeQsfQuestions(
     }));
   const context = describeContext(survey, refs, texts, limits);
 
-  return safeJson({ pages, questions, ...(context.length > 0 ? { otherQuestions: context } : {}) });
+  return promptDataJson({ pages, questions, ...(context.length > 0 ? { otherQuestions: context } : {}) });
 }
 
 /**
  * The limits every call of this import uses: the loosest ones under which the data of all questions
- * together — page logic and context included — fits `QSF_PROMPT_BUDGET_CHARS`. `null` when not even
- * the tightest do: such an import is refused before any AI call.
+ * together — page logic and context included — fits `SURVEY_IMPORT_AI_MAX_SOURCE_CHARS`. `null` when
+ * not even the tightest do: such an import is refused before any AI call.
  */
 export function chooseQsfPromptLimits(
   survey: TQsfSurvey,
@@ -276,7 +273,8 @@ export function chooseQsfPromptLimits(
   texts: TQsfPromptTexts
 ): TPromptLimits | null {
   for (const limits of PROMPT_LIMITS) {
-    if (describeQsfQuestions(survey, refs, texts, limits).length <= QSF_PROMPT_BUDGET_CHARS) return limits;
+    if (describeQsfQuestions(survey, refs, texts, limits).length <= SURVEY_IMPORT_AI_MAX_SOURCE_CHARS)
+      return limits;
   }
   return null;
 }
@@ -328,7 +326,7 @@ export function buildQsfPlanSystemPrompt(): string {
     '- RO: ranking, choicesFrom "choices", 2 to 25 options; otherwise skip it.',
     "- TE with selector SL, ML or ESTB: openText. inputType from contentType: ValidEmail email, ValidNumber number, ValidPhone or ValidUSPhone phone, ValidURL url, otherwise text.",
     "- TE with contentType ValidDate: date. format from dateFormat: d-M-y for day-first, y-M-d for year-first, otherwise M-d-y.",
-    "- TE with selector FORM: contactInfo when its fields are a first name, last name, email, phone or company (map each in contactFields); otherwise skip it.",
+    "- TE with selector FORM: contactInfo when its fields are a first name, last name, email, phone or company; address when they are address lines, city, state, zip or country. Map each field in contactFields to its choice key; leave out a field neither fits; skip a form whose fields are neither.",
     "- Slider with one statement: rating with scale number (star for STAR). Formbricks sizes its range from the slider, so any allowed range will do. A slider with several statements: skip it.",
     "- A rating-like scale question may be csat (range 5) or ces (range 5 or 7) when its wording asks for satisfaction or effort.",
     "- DB (descriptive text): cta. FileUpload: fileUpload. Signature: signature.",
@@ -357,7 +355,6 @@ const FAILURE_HINTS: Record<TQsfPlanFailure, string> = {
   too_few_options: "too few options are left for its type",
   too_many_options: "too many options for its type (ranking takes at most 25)",
   invalid_range: "its range does not fit its type (rating 3, 4, 5, 6, 7 or 10; csat 5; ces 5 or 7)",
-  missing_scale: "rating, csat and ces need a scale",
   missing_format: "date needs a format",
 };
 

@@ -1,0 +1,581 @@
+import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
+import type { z } from "zod";
+import {
+  AIOutputTokenLimitError,
+  SCHEMA_INSTRUCTIONS_SEPARATOR,
+  buildSchemaInstructions,
+} from "@formbricks/ai";
+import {
+  SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+  SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
+  SURVEY_IMPORT_ASSEMBLY_RESERVE_MS,
+  SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS,
+} from "../limits";
+import { decideImportCallRetry, waitForRetry } from "./call-retry";
+import { SurveyImportFailedError } from "./errors";
+
+/**
+ * The AI half of every import lane that plans with AI (ENG-3479, ENG-6852): ask for the plan in chunks,
+ * check it, retry what failed once. The lane says what a unit of work is (a Qualtrics question, a line of
+ * a document), how its units are chunked, what the prompt says and how an answer is checked; this runs
+ * the calls.
+ *
+ * The units are split into chunks by the output they are expected to need — a fixed budget per chunk,
+ * as many chunks as the file needs — and at most the lane's `maxParallelCalls` run at once. The
+ * provider's tokens-per-minute is the real limit there, and nothing in the app holds it back. Per chunk:
+ *
+ * - a 429 or a 5xx is retried here, the SDK's own retries off (`call-retry.ts`): a 429 while its
+ *   `Retry-After` fits in the call's time, a 5xx with backoff while the call has time left;
+ * - a 429 that does not fit, provider auth and any other provider failure propagate unwrapped, and a
+ *   shared abort cancels the sibling calls, so the route's classification keeps working;
+ * - running out of output tokens, or out of the call's own time (the `timeout` its attempts share,
+ *   which the AI SDK's abort check does not match, and a 5xx with no time left to retry it), is ours to
+ *   fix: the chunk is split in two (once) and each half asked again, queued behind the other chunks. A
+ *   half that fails the same way is dropped with a report line, never the end of the import;
+ * - output that fails the schema fails the chunk's units, which go to the retry round;
+ * - an answer that names none of its units, for a lane that says so (`isSilent`), is asked again once,
+ *   split like an overflow; a second silent answer is believed.
+ *
+ * Only the import's own signal ends the import: Stop, a disconnect, or the route's deadline. Each call's
+ * timeout is sized to what is left before that deadline, less the assembly reserve, so the calls left
+ * when time runs out are dropped and the units planned so far are still assembled.
+ *
+ * Every call counts against a call cap and an output-token budget — chunks, splits and the retry round
+ * together, failed calls included — sized by the lane from its own chunks and never above what its
+ * costliest valid file needs, so a hostile file cannot cost more than that.
+ */
+
+/**
+ * Calls one import may make: each chunk once, each split into two halves, and two more for the retry
+ * round — `3 × chunks + 2`, which a file whose every chunk overflows or times out still fits.
+ */
+export const importCallCapFor = (chunks: number): number => 3 * chunks + 2;
+
+/**
+ * Output tokens one import may spend, reasoning and failed calls included: every chunk's whole call
+ * budget twice (an overflow, then its halves or its retry), and two more calls for the retry round —
+ * `(2 × chunks + 2) × SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL`. Checked before each call, so at most the calls already in flight run
+ * past it.
+ */
+export const importOutputBudgetFor = (chunks: number): number =>
+  (2 * chunks + 2) * SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL;
+
+/** One structured-output call, as a plan needs it. */
+export interface TImportPlanRequest<TSchema extends z.ZodType = z.ZodType> {
+  system: string;
+  prompt: string;
+  schema: TSchema;
+  schemaName: string;
+  schemaDescription: string;
+  temperature: number;
+  maxOutputTokens: number;
+  /** This attempt's time: what is left of the call's. */
+  timeout: number;
+  /**
+   * Always 0: the import retries its calls itself (`call-retry.ts`), the SDK must not.
+   *
+   * The request sets no thinking level: the model thinks as configured. With thinking turned down,
+   * Gemini 2.5 Flash answered real questionnaires (a bilingual table, a numbered Markdown list, a CSV)
+   * with an empty plan. Thinking costs output tokens and time, which the per-call cap and the deadline
+   * leave room for; an import that works is worth both.
+   */
+  maxRetries: 0;
+  abortSignal: AbortSignal;
+}
+
+export interface TImportPlanUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+/** Usage as the AI SDK reports it. `outputTokens` is the total, reasoning included. */
+export interface TImportCallUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  outputTokenDetails?: { textTokens?: number; reasoningTokens?: number };
+}
+
+/**
+ * The model call. A lane's pipeline passes the organization's (`generateOrganizationAIObject`); an eval
+ * script passes one built from the environment, and tests a recorded plan.
+ */
+export type TImportPlanGenerate<TSchema extends z.ZodType = z.ZodType> = (
+  request: TImportPlanRequest<TSchema>
+) => Promise<{ object: unknown; usage?: TImportCallUsage }>;
+
+/** Why a unit was not planned by its calls, whatever the lane. */
+export type TImportCallFailure =
+  /** Never asked: the import's AI budget (calls, prompt size or time) ran out first. */
+  | "ai_budget"
+  /** Asked, but its call ran out of its own time, split into halves too. */
+  | "ai_timeout"
+  /** The answer could not be read: past the output tokens, or not the schema. */
+  | "invalid_output";
+
+/** One answered AI call: the units it was asked about and what came back. */
+export interface TImportPlanResponse {
+  refs: ReadonlySet<string>;
+  object: unknown;
+  /**
+   * Set on an answer to units asked again after a silent answer (`isSilent`): the lane believes it,
+   * whatever it says, rather than failing its units for a third ask.
+   */
+  askedAgain?: true;
+}
+
+/** What a lane's checks make of a round of answers: at least each failed unit and why. */
+export interface TImportCheckedPlan<TFailure extends string> {
+  failures: Map<string, (TFailure | TImportCallFailure)[]>;
+}
+
+/** What a lane tells the engine about its file. */
+export interface TImportPlanLane<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>> {
+  /** The units of work, in file order, grouped into the chunks one call each is asked about. */
+  chunk: (refs: readonly string[]) => string[][];
+  system: string;
+  schema: z.ZodType;
+  schemaName: string;
+  schemaDescription: string;
+  /** The user message for one call about `refs`, with what went wrong in their previous round, if any. */
+  buildPrompt: (
+    refs: readonly string[],
+    failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
+  ) => string;
+  /**
+   * One round of answers, checked: every unit asked about is placed, skipped or failed with why.
+   * `retry` is set on the retry round, the last chance a unit gets.
+   */
+  check: (responses: TImportPlanResponse[], round: { retry: boolean }) => TPlan;
+  /** The retry round's verdicts over the first round's. */
+  merge: (first: TPlan, retry: TPlan) => TPlan;
+  /** One call's characters, system prompt included. Never sent above this. */
+  maxCallChars: number;
+  /** All calls' characters together. */
+  maxTotalChars: number;
+  /** Calls one import may make, and output tokens it may spend (`importCallCapFor` and friends). */
+  callCap: number;
+  outputBudget: number;
+  /**
+   * The most questions one import takes, for a lane that only learns how many its file holds from the
+   * plan: the units each answer starts a question on, counted as answers arrive. Past `max`, the calls
+   * still running are stopped and the import fails with `too_many_questions`, rather than planning the
+   * rest of a file it will refuse. An answer's questions are counted before the lane's checks, which
+   * may still drop some, so a lane sets `max` with a margin above its exact ceiling.
+   */
+  questionCeiling?: { max: number; questionRefs: (response: TImportPlanResponse) => readonly string[] };
+  /**
+   * Whether an answer names none of the units it was asked about, for a lane whose checks let such an
+   * answer pass (a document's: a chunk can hold only the rest of a question). A thinking model
+   * sometimes answers a chunk full of questions that way, so such an answer is asked again once, in
+   * halves, before it is believed: the halves' answers reach `check` marked `askedAgain`.
+   */
+  isSilent?: (response: TImportPlanResponse) => boolean;
+  /** Calls in flight at once; `SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS` when not set. */
+  maxParallelCalls?: number;
+}
+
+export interface TImportPlanRun<TPlan> {
+  plan: TPlan;
+  usage: TImportPlanUsage;
+  calls: number;
+  /** Whether a call was left unsent because the time before the deadline was too short for one. */
+  ranOutOfTime: boolean;
+  /**
+   * Whether any unit failed on the way, in the first round, even if the retry then placed or skipped
+   * it: a plan that came out empty after such a failure might not on another try.
+   */
+  failedOnTheWay: boolean;
+  /**
+   * Whether a call came back too long for one answer, or its prompt was too big to send, even split:
+   * a plan that came out empty after that is a file too large for the AI, not one to try again.
+   */
+  hitOutputLimit: boolean;
+}
+
+interface TPlanContext<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>> {
+  lane: TImportPlanLane<TFailure, TPlan>;
+  /** Prompt characters sent so far, system prompts included. */
+  promptChars: number;
+  /**
+   * What a provider asked only for "a JSON object" gets after the system prompt: the schema, which
+   * `generateObject` adds. Counted against every call's size cap whatever the provider, so one call
+   * never exceeds it; not against the import's total, which the lane sizes for its system prompt and
+   * its file, so counting the schema takes nothing from the file.
+   */
+  schemaChars: number;
+  generate: TImportPlanGenerate;
+  signal: AbortSignal;
+  usage: TImportPlanUsage;
+  calls: number;
+  ranOutOfTime: boolean;
+  hitOutputLimit: boolean;
+  /** Units an answer started a question on, across both rounds: a retried unit counts once. */
+  questionRefs: Set<string>;
+}
+
+type TCallOutcome =
+  | { kind: "ok"; response: TImportPlanResponse }
+  | { kind: "too_long" }
+  /** The call ran out of its own time; the import's signal had not fired. */
+  | { kind: "timed_out" }
+  | { kind: "invalid" }
+  /** Not sent: the import's call cap, prompt budget or time is spent. */
+  | { kind: "budget" };
+
+/**
+ * The output tokens a call used, reasoning included: the reported total, or its parts when a provider
+ * reports only those.
+ */
+const outputTokensOf = (usage: TImportCallUsage | undefined): number =>
+  usage?.outputTokens ??
+  (usage?.outputTokenDetails?.textTokens ?? 0) + (usage?.outputTokenDetails?.reasoningTokens ?? 0);
+
+/**
+ * What a failed call used, read from the error's token counts only — never its text, which can echo
+ * the prompt. A call that ran out of output tokens used its whole budget unless it says otherwise.
+ */
+function usageOfFailure(error: unknown): TImportCallUsage | undefined {
+  if (error instanceof AIOutputTokenLimitError) {
+    // Reasoning is part of the total, so a reported reasoning count alone says less than the limit hit.
+    const { outputTokens, maxOutputTokens } = error.details;
+    return { outputTokens: outputTokens ?? maxOutputTokens ?? SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL };
+  }
+  if (NoObjectGeneratedError.isInstance(error)) {
+    return error.usage
+      ? {
+          inputTokens: error.usage.inputTokens,
+          outputTokens: error.usage.outputTokens,
+          outputTokenDetails: error.usage.outputTokenDetails,
+        }
+      : undefined;
+  }
+  return undefined;
+}
+
+const CALL_TIMEOUT_ERROR_NAMES: ReadonlySet<string> = new Set(["TimeoutError", "AbortError"]);
+
+/**
+ * Whether an attempt failed because its own `timeout` fired. Asked only once the import's own signal
+ * is known not to have fired, so the attempt's timeout is the only abort left. The AI SDK reports it
+ * as a `TimeoutError`, or as an `AbortError` carrying it (a backoff delay's "Delay was aborted", when
+ * its own retries were on).
+ */
+const isCallTimeout = (error: unknown): boolean =>
+  error instanceof Error &&
+  (CALL_TIMEOUT_ERROR_NAMES.has(error.name) ||
+    (error.cause instanceof Error && CALL_TIMEOUT_ERROR_NAMES.has(error.cause.name)));
+
+const isInvalidOutput = (error: unknown): boolean =>
+  NoObjectGeneratedError.isInstance(error) ||
+  NoOutputGeneratedError.isInstance(error) ||
+  TypeValidationError.isInstance(error);
+
+/** A unit of work for `runPool`. It may queue more with `enqueue`: the halves of a split chunk. */
+type TPoolTask = (enqueue: (task: TPoolTask) => void) => Promise<void>;
+
+/**
+ * Run tasks `limit` at a time, including the ones they queue, until none is left. The first failure
+ * aborts the rest — the queued ones never start — and is rethrown once the running ones settle.
+ */
+async function runPool(tasks: TPoolTask[], limit: number, abort: AbortController): Promise<void> {
+  const queue = [...tasks];
+  const running = new Set<Promise<void>>();
+  const enqueue = (task: TPoolTask) => queue.push(task);
+  const state: { failure: { error: unknown } | null } = { failure: null };
+
+  while (running.size > 0 || (queue.length > 0 && state.failure === null)) {
+    while (state.failure === null && running.size < limit && queue.length > 0) {
+      const task = queue.shift();
+      if (!task) break;
+      const run: Promise<void> = task(enqueue)
+        .catch((error: unknown) => {
+          if (state.failure !== null) return;
+          state.failure = { error };
+          abort.abort();
+        })
+        .finally(() => running.delete(run));
+      running.add(run);
+    }
+    // A scheduler: it waits for one call to finish before it starts the next, by design.
+    await Promise.race(running); // NOSONAR(typescript:S9382) -- the pool's bound on calls in flight
+  }
+
+  if (state.failure !== null) throw state.failure.error;
+}
+
+function addUsage<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  usage: TImportCallUsage | undefined
+): void {
+  context.usage.inputTokens += usage?.inputTokens ?? 0;
+  context.usage.outputTokens += outputTokensOf(usage);
+}
+
+/**
+ * Whether the import can't afford another call of `chars` prompt characters: its call cap, its output
+ * tokens or its total prompt characters are spent.
+ */
+function isPastBudget<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  chars: number
+): boolean {
+  const { lane } = context;
+  return (
+    context.calls >= lane.callCap ||
+    context.usage.outputTokens >= lane.outputBudget ||
+    context.promptChars + chars > lane.maxTotalChars
+  );
+}
+
+/** What a failed attempt means for its chunk, when it is not one to retry: out of time, too long, invalid. */
+const outcomeOfFailedAttempt = (error: unknown): TCallOutcome | null => {
+  if (isCallTimeout(error)) return { kind: "timed_out" };
+  if (error instanceof AIOutputTokenLimitError) return { kind: "too_long" };
+  if (isInvalidOutput(error)) return { kind: "invalid" };
+  return null;
+};
+
+/**
+ * The prompt for `refs` and its size, or why no call is sent: the import's budget or time is spent, or
+ * the prompt is too big for one call (smaller calls then) or for what is left of the import's total.
+ */
+function preparePrompt<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  refs: string[],
+  timeout: number,
+  failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
+): { prompt: string; size: number } | TCallOutcome {
+  const { lane } = context;
+  if (isPastBudget(context, 0)) return { kind: "budget" };
+  if (timeout < SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS) {
+    context.ranOutOfTime = true;
+    return { kind: "budget" };
+  }
+  const prompt = lane.buildPrompt(refs, failures);
+  const size = lane.system.length + prompt.length;
+  if (size + context.schemaChars > lane.maxCallChars) return { kind: "too_long" };
+  if (isPastBudget(context, size)) return { kind: "budget" };
+  return { prompt, size };
+}
+
+/**
+ * One attempt at the call: its outcome, or how long to wait before the next attempt. The import's own
+ * abort, and a failure past retrying, propagate.
+ */
+async function attemptCall<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  { refs, prompt, size }: { refs: string[]; prompt: string; size: number },
+  { attempt, timeout, callEnd }: { attempt: number; timeout: number; callEnd: number }
+): Promise<TCallOutcome | { kind: "retry"; delayMs: number }> {
+  const { lane } = context;
+  context.promptChars += size;
+  context.calls += 1;
+  try {
+    const result = await context.generate({
+      system: lane.system,
+      prompt,
+      schema: lane.schema,
+      schemaName: lane.schemaName,
+      schemaDescription: lane.schemaDescription,
+      temperature: 0,
+      maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
+      timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
+      maxRetries: 0,
+      abortSignal: context.signal,
+    });
+    addUsage(context, result.usage);
+    return { kind: "ok", response: { refs: new Set(refs), object: result.object } };
+  } catch (error) {
+    // A call that failed still spent tokens — one that ran out of them spent its whole budget.
+    addUsage(context, usageOfFailure(error));
+    // The import's own abort (Stop, disconnect, the route's deadline, a sibling's failure) is the
+    // route's to classify. Any other abort is this attempt's own timeout.
+    if (context.signal.aborted) throw error;
+    const outcome = outcomeOfFailedAttempt(error);
+    if (outcome) return outcome;
+
+    const decision = decideImportCallRetry({
+      error,
+      attempt,
+      remainingMs: callEnd - performance.now(),
+      minAttemptMs: SURVEY_IMPORT_MIN_CALL_TIMEOUT_MS,
+    });
+    if (decision.kind === "timed_out") return { kind: "timed_out" };
+    // Not retryable, out of retries, or a quota wait that does not fit: the failure stands, as the
+    // SDK's own retries ending would have left it.
+    if (decision.kind === "propagate") throw error;
+    // Retryable, but past the import's call cap or budgets: like any call the import cannot afford,
+    // its units are dropped as `ai_budget`, and the calls beside it carry on.
+    if (isPastBudget(context, size)) return { kind: "budget" };
+    return { kind: "retry", delayMs: decision.delayMs };
+  }
+}
+
+async function callOnce<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  refs: string[],
+  timeout: number,
+  failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
+): Promise<TCallOutcome> {
+  const prepared = preparePrompt(context, refs, timeout, failures);
+  if ("kind" in prepared) return prepared;
+
+  // The call's time spans its retries: each attempt gets what is left of it.
+  const callEnd = performance.now() + timeout;
+  for (let attempt = 0; ; attempt += 1) {
+    const result = await attemptCall(context, { refs, ...prepared }, { attempt, timeout, callEnd }); // NOSONAR(typescript:S9382) -- attempts are sequential
+    if (result.kind !== "retry") return result;
+    // Waited by design: the retry must not be sent before the provider said to. Abortable by the
+    // import's signal, whose reason then propagates.
+    await waitForRetry(result.delayMs, context.signal); // NOSONAR(typescript:S9382) -- a backoff
+  }
+}
+
+/**
+ * Counts the questions `response` starts toward the lane's ceiling, and fails the import once they
+ * pass it. Thrown from a pool task, which stops the calls beside it.
+ */
+function countQuestions<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  response: TImportPlanResponse
+): void {
+  const ceiling = context.lane.questionCeiling;
+  if (!ceiling) return;
+  for (const ref of ceiling.questionRefs(response)) context.questionRefs.add(ref);
+  if (context.questionRefs.size > ceiling.max) throw new SurveyImportFailedError("too_many_questions");
+}
+
+const FAILURE_OF_OUTCOME: Record<Exclude<TCallOutcome["kind"], "ok">, TImportCallFailure> = {
+  budget: "ai_budget",
+  timed_out: "ai_timeout",
+  too_long: "invalid_output",
+  invalid: "invalid_output",
+};
+
+/**
+ * One round of calls: every chunk asked, at most the lane's `maxParallelCalls` at once. A
+ * chunk whose call ran out of output tokens or of time, or whose answer was silent (`isSilent`), is
+ * split into halves once, queued behind the rest; its halves are not split again.
+ */
+async function planRound<TFailure extends string, TPlan extends TImportCheckedPlan<TFailure>>(
+  context: TPlanContext<TFailure, TPlan>,
+  chunks: string[][],
+  timeout: () => number,
+  abort: AbortController,
+  failures?: ReadonlyMap<string, readonly (TFailure | TImportCallFailure)[]>
+): Promise<TPlan> {
+  const responses: TImportPlanResponse[] = [];
+  const failed = new Map<string, TImportCallFailure[]>();
+
+  const ask =
+    (refs: string[], splittable: boolean, askedAgain = false): TPoolTask =>
+    async (enqueue) => {
+      // Sized when the call starts: a split's halves run later than the chunk did.
+      const outcome = await callOnce(context, refs, timeout(), failures);
+      if (outcome.kind === "ok" && splittable && context.lane.isSilent?.(outcome.response)) {
+        // Not believed yet: asked again, in halves, which are believed whatever they say.
+        const middle = Math.ceil(refs.length / 2);
+        if (refs.length > 1) {
+          enqueue(ask(refs.slice(0, middle), false, true));
+          enqueue(ask(refs.slice(middle), false, true));
+        } else enqueue(ask(refs, false, true));
+        return;
+      }
+      if (outcome.kind === "ok") {
+        responses.push(askedAgain ? { ...outcome.response, askedAgain: true } : outcome.response);
+        countQuestions(context, outcome.response);
+        return;
+      }
+      if ((outcome.kind === "too_long" || outcome.kind === "timed_out") && splittable && refs.length > 1) {
+        const middle = Math.ceil(refs.length / 2);
+        enqueue(ask(refs.slice(0, middle), false));
+        enqueue(ask(refs.slice(middle), false));
+        return;
+      }
+      // Too long even split, or a single unit too long: the content, not one long-winded answer.
+      if (outcome.kind === "too_long") context.hitOutputLimit = true;
+      for (const ref of refs) failed.set(ref, [FAILURE_OF_OUTCOME[outcome.kind]]);
+    };
+
+  await runPool(
+    chunks.map((chunk) => ask(chunk, true)),
+    context.lane.maxParallelCalls ?? SURVEY_IMPORT_AI_MAX_PARALLEL_CALLS,
+    abort
+  );
+
+  const plan = context.lane.check(responses, { retry: failures !== undefined });
+  for (const [ref, reasons] of failed) plan.failures.set(ref, reasons);
+  return plan;
+}
+
+/**
+ * Plan `refs`: every chunk asked once, then the units whose answer failed the lane's checks asked once
+ * more, told what was wrong. A unit the budget left unplanned, or whose calls ran out of time even
+ * split, is not retried: there is no budget left to retry it with, or no reason to expect it to be
+ * faster.
+ */
+export async function runImportPlan<
+  TFailure extends string,
+  TPlan extends TImportCheckedPlan<TFailure>,
+>(params: {
+  lane: TImportPlanLane<TFailure, TPlan>;
+  refs: readonly string[];
+  generate: TImportPlanGenerate;
+  signal: AbortSignal;
+  /** When the import must be finished by, as `performance.now()` time. */
+  deadline: number;
+  /** Resolved per-call budget, before clipping it to the import deadline. */
+  callTimeoutMs: number;
+}): Promise<TImportPlanRun<TPlan>> {
+  const { lane, refs, generate, deadline, callTimeoutMs } = params;
+  const abort = new AbortController();
+  const context: TPlanContext<TFailure, TPlan> = {
+    lane,
+    promptChars: 0,
+    schemaChars: SCHEMA_INSTRUCTIONS_SEPARATOR.length + (await buildSchemaInstructions(lane.schema)).length,
+    generate,
+    signal: AbortSignal.any([params.signal, abort.signal]),
+    usage: { inputTokens: 0, outputTokens: 0 },
+    calls: 0,
+    ranOutOfTime: false,
+    hitOutputLimit: false,
+    questionRefs: new Set(),
+  };
+
+  const callTimeout = () =>
+    Math.min(callTimeoutMs, Math.floor(deadline - performance.now() - SURVEY_IMPORT_ASSEMBLY_RESERVE_MS));
+
+  let plan = await planRound(context, lane.chunk(refs), callTimeout, abort);
+  // Only units that failed are retried, so a first round without failures is the whole story.
+  const failedOnTheWay = plan.failures.size > 0;
+
+  const unplanned = new Map(
+    [...plan.failures].filter(
+      ([, reasons]) => reasons.includes("ai_budget") || reasons.includes("ai_timeout")
+    )
+  );
+  const failing = [...plan.failures.keys()].filter((ref) => !unplanned.has(ref));
+  if (failing.length > 0) {
+    const retry = await planRound(context, lane.chunk(failing), callTimeout, abort, plan.failures);
+    plan = lane.merge(plan, retry);
+    for (const [ref, reasons] of unplanned) plan.failures.set(ref, reasons);
+  }
+
+  return {
+    plan,
+    usage: context.usage,
+    calls: context.calls,
+    ranOutOfTime: context.ranOutOfTime,
+    failedOnTheWay,
+    hitOutputLimit: context.hitOutputLimit,
+  };
+}
+
+/** The report's cause for a unit the plan could not place. */
+export const importFailureCause = (
+  reasons: readonly string[]
+): "ai_budget" | "ai_timeout" | "plan_invalid" => {
+  if (reasons.includes("ai_timeout")) return "ai_timeout";
+  if (reasons.includes("ai_budget")) return "ai_budget";
+  return "plan_invalid";
+};

@@ -82,8 +82,9 @@ properties:
       - boolean
       - date
     description: >-
-      Declared type of `value`, so a consumer need not infer it. `computed` entries are only ever
-      `string` or `number`, because survey variables are typed that narrowly.
+      Declared type of `value`, so a consumer need not infer it. `computed` entries are `string`,
+      `number` or `date`: a computed date (set by a Set value formula such as `now()`) holds an ISO
+      8601 UTC string.
   label:
     type: string
     description: Human-readable name for the key, in the resolved language where one exists.

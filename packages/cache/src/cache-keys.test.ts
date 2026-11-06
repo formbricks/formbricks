@@ -159,6 +159,14 @@ describe("@formbricks/cache cacheKeys", () => {
       });
     });
 
+    describe("survey import namespace", () => {
+      test("scopes an idempotency key to the user who sent it", () => {
+        expect(createCacheKey.surveyImport.idempotency("user-1", "abc123")).toBe(
+          "fb:survey_import:user-1:idempotency:abc123"
+        );
+      });
+    });
+
     describe("custom namespace", () => {
       test("should create custom key with subResource", () => {
         const key = createCacheKey.custom("analytics", "user-456", "daily-stats");

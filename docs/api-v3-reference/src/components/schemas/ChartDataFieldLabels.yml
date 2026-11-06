@@ -1,0 +1,6 @@
+type: object
+description: >-
+  Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when
+  the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
+additionalProperties:
+  type: string

@@ -2,8 +2,8 @@ import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resol
 import { type TSurveyQuota } from "@formbricks/types/quota";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
-  findHiddenFieldUsedInLogic,
-  findVariableUsedInLogic,
+  findHiddenFieldUse,
+  findVariableUse,
   isUsedInQuota,
   isUsedInRecall,
 } from "@/modules/survey/editor/lib/utils";
@@ -26,6 +26,9 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
  */
 export type TEmbeddedFieldBlocker =
   | { reason: "logic"; elementIndex: number }
+  /** A rule before the first question (ENG-6932), which belongs to no question. */
+  | { reason: "startLogic" }
+  | { reason: "showIf"; elementIndex: number }
   | { reason: "recallWelcome" }
   | { reason: "recallEnding" }
   | { reason: "recall"; elementIndex: number }
@@ -45,10 +48,9 @@ export const findEmbeddedFieldRemovalBlocker = (
   const isComputed = field.source === "computed";
   const storageKey = link.storageKey;
 
-  const logicElementIndex = isComputed
-    ? findVariableUsedInLogic(survey, storageKey)
-    : findHiddenFieldUsedInLogic(survey, storageKey);
-  if (logicElementIndex !== -1) return { reason: "logic", elementIndex: logicElementIndex };
+  const use = isComputed ? findVariableUse(survey, storageKey) : findHiddenFieldUse(survey, storageKey);
+  if (use?.kind === "startLogic") return { reason: "startLogic" };
+  if (use) return { reason: use.kind === "showIf" ? "showIf" : "logic", elementIndex: use.elementIndex };
 
   // `isUsedInRecall` answers with three sentinels and an index: -2 is the welcome card, the element
   // count is the ending card, -1 is "nowhere", and anything else is that element's position.

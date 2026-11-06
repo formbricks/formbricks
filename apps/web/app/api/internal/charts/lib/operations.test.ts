@@ -17,6 +17,7 @@ import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
+import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { generateInternalChart, listInternalMatrixQuestions } from "./operations";
 
@@ -30,6 +31,9 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
 }));
 vi.mock("@/modules/ee/analysis/charts/lib/ai-chart-query.server", () => ({ generateAIChartQuery: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dataset-chart-fields", () => ({
+  getDatasetChartFields: vi.fn().mockResolvedValue({ embeddedFields: [], answerQuestions: [] }),
+}));
 vi.mock("@/modules/ee/analysis/lib/run-chart-query", () => ({ runChartQuery: vi.fn() }));
 vi.mock("@/modules/ee/analysis/charts/lib/matrix-questions", () => ({ getMatrixQuestions: vi.fn() }));
 vi.mock("@/modules/ee/analysis/api/lib/cube-client", () => ({
@@ -72,6 +76,11 @@ beforeEach(() => {
 
 describe("generateInternalChart", () => {
   test("returns the validated, unsaved chart with its rows, labels and suggested name", async () => {
+    const dataset = {
+      embeddedFields: [{ name: "FeedbackRecords.ed_plan_64879f7d", key: "plan" }],
+      answerQuestions: [],
+    };
+    vi.mocked(getDatasetChartFields).mockResolvedValue(dataset);
     vi.mocked(generateAIChartQuery).mockResolvedValue({
       chartType: "bar",
       query: validQuery,
@@ -101,7 +110,18 @@ describe("generateInternalChart", () => {
       feedbackDirectoryId: DATASET_ID,
       userId: USER_ID,
       prompt: "responses by source",
+      // The dataset's embedded keys and answerable questions are offered to the model (ENG-6893, ENG-6894).
+      dataset,
     });
+    expect(getDatasetChartFields).toHaveBeenCalledWith(
+      {
+        datasetId: DATASET_ID,
+        workspaceId: WORKSPACE_ID,
+        organizationId: ORGANIZATION_ID,
+        actor: { type: "user", id: USER_ID },
+      },
+      { withAnswerQuestions: true }
+    );
     expect(runChartQuery).toHaveBeenCalledWith(
       expect.objectContaining({
         datasetId: DATASET_ID,

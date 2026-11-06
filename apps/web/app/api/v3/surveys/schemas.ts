@@ -3,8 +3,10 @@ import { z } from "zod";
 import { ZCustomCssInput, ZCustomCssScope } from "@formbricks/types/custom-css";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
-import { ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { ZSurveyBlockLogic, ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { EXPRESSION_MAX_DEPTH } from "@formbricks/types/surveys/expressions";
 import {
+  MAX_START_LOGIC_RULES,
   type TSurveyType,
   ZSurveyDisplayOption,
   ZSurveyEndings,
@@ -19,6 +21,7 @@ import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
 import { boundedSchema } from "@/app/api/v3/lib/bounded-parse";
 import { BoundedInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
+import { V3_EMBEDDED_FIELD_KEYS, ZV3SurveyEmbeddedField } from "./embedded-fields";
 import { normalizeV3SurveyWriteLanguageCode } from "./language";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
@@ -406,9 +409,19 @@ const ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "startLogic",
+  "embeddedFields",
   "distribution",
   "targeting",
 ]);
+/**
+ * The create body's root keys a survey document has as a Formbricks file carries it: without the
+ * workspace, and without `metadata`, the link survey's share settings, which are the survey's own and
+ * not content to carry to another one.
+ */
+const DOCUMENT_ROOT_KEYS = new Set(
+  [...ROOT_KEYS].filter((key) => key !== "workspaceId" && key !== "metadata")
+);
 const PATCH_ROOT_KEYS = new Set([
   "customCss",
   "name",
@@ -422,6 +435,8 @@ const PATCH_ROOT_KEYS = new Set([
   "endings",
   "hiddenFields",
   "variables",
+  "startLogic",
+  "embeddedFields",
   "distribution",
   "targeting",
 ]);
@@ -459,6 +474,8 @@ const BLOCK_KEYS = new Set([
   "elements",
   "logic",
   "logicFallback",
+  // ENG-6931: the block's show-if condition group.
+  "showIf",
   "buttonLabel",
   "backButtonLabel",
 ]);
@@ -488,6 +505,8 @@ const ELEMENT_BASE_KEYS = new Set([
   "videoUrl",
   "required",
   "isDraft",
+  // ENG-6931: the element's show-if condition group.
+  "showIf",
 ]);
 // Everything but CTA can carry a question code (ENG-6778); a missing entry here would silently drop it.
 const CODED_ELEMENT_BASE_KEYS = new Set([...ELEMENT_BASE_KEYS, "code"]);
@@ -585,6 +604,7 @@ const ELEMENT_KEYS_BY_TYPE = {
   multipleChoiceMulti: new Set([
     ...CODED_ELEMENT_BASE_KEYS,
     "choices",
+    "optionsCopiedFrom",
     "shuffleOption",
     "otherOptionPlaceholder",
     "validation",
@@ -593,6 +613,7 @@ const ELEMENT_KEYS_BY_TYPE = {
   multipleChoiceSingle: new Set([
     ...CODED_ELEMENT_BASE_KEYS,
     "choices",
+    "optionsCopiedFrom",
     "shuffleOption",
     "otherOptionPlaceholder",
     "displayType",
@@ -607,10 +628,17 @@ const ELEMENT_KEYS_BY_TYPE = {
     "charLimit",
     "validation",
   ]),
-  pictureSelection: new Set([...CODED_ELEMENT_BASE_KEYS, "allowMulti", "choices", "validation"]),
+  pictureSelection: new Set([
+    ...CODED_ELEMENT_BASE_KEYS,
+    "allowMulti",
+    "choices",
+    "optionsCopiedFrom",
+    "validation",
+  ]),
   ranking: new Set([
     ...CODED_ELEMENT_BASE_KEYS,
     "choices",
+    "optionsCopiedFrom",
     "otherOptionPlaceholder",
     "shuffleOption",
     "validation",
@@ -630,8 +658,9 @@ type ElementTypeWithStrictKeys = keyof typeof ELEMENT_KEYS_BY_TYPE;
 function isElementTypeWithStrictKeys(type: string): type is ElementTypeWithStrictKeys {
   return Object.hasOwn(ELEMENT_KEYS_BY_TYPE, type);
 }
-const LABEL_CHOICE_KEYS = new Set(["id", "label", "code"]);
-const PICTURE_CHOICE_KEYS = new Set(["id", "code", "imageUrl", "imageAltText"]);
+// ENG-6937: option, row and column show-if and Hidden (json-shapes §2).
+const LABEL_CHOICE_KEYS = new Set(["id", "label", "code", "showIf", "hidden"]);
+const PICTURE_CHOICE_KEYS = new Set(["id", "code", "imageUrl", "imageAltText", "showIf", "hidden"]);
 const TOGGLE_INPUT_KEYS = new Set(["show", "required", "placeholder"]);
 const CHAR_LIMIT_KEYS = new Set(["enabled", "min", "max"]);
 const VALIDATION_KEYS = new Set(["rules", "logic"]);
@@ -640,10 +669,14 @@ const LOGIC_KEYS = new Set(["id", "conditions", "actions"]);
 const CONDITION_GROUP_KEYS = new Set(["id", "connector", "conditions"]);
 const CONDITION_KEYS = new Set(["id", "leftOperand", "operator", "rightOperand"]);
 const DYNAMIC_REFERENCE_KEYS = new Set(["type", "value", "meta"]);
-const STATIC_OPERAND_KEYS = new Set(["type", "value"]);
+// ENG-6934: a matrix row condition names its column(s) by id next to the position(s).
+const STATIC_OPERAND_KEYS = new Set(["type", "value", "columnId", "columnIds"]);
 const CALCULATE_ACTION_KEYS = new Set(["id", "objective", "variableId", "operator", "value"]);
+const EXPRESSION_VALUE_KEYS = new Set(["type", "value"]);
+const EXPRESSION_CALL_KEYS = new Set(["type", "fn", "args"]);
 const REQUIRE_ANSWER_ACTION_KEYS = new Set(["id", "objective", "target"]);
 const JUMP_TO_BLOCK_ACTION_KEYS = REQUIRE_ANSWER_ACTION_KEYS;
+const MARK_LOW_QUALITY_ACTION_KEYS = new Set(["id", "objective"]);
 
 /**
  * The pre-pass's problems, with the distinct locale keys it has looked up: both bounded per document.
@@ -827,6 +860,9 @@ function validateChoice(
   if (isPlainObject(value)) {
     validateTranslatableField(value.label, `${path}.label`, issues, defaultLanguage, options);
     validateTranslatableField(value.imageAltText, `${path}.imageAltText`, issues, defaultLanguage, options);
+    if (value.showIf !== undefined) {
+      validateConditionGroup(value.showIf, `${path}.showIf`, issues);
+    }
   }
 }
 
@@ -893,6 +929,33 @@ function validateConditionGroup(value: unknown, path: string, issues: SurveyDocu
   });
 }
 
+/**
+ * ENG-6935: unknown keys at every level of a Set value expression tree. The walk stops one level past
+ * the tree's depth limit, which the shared schema reports with its own path.
+ */
+function validateExpressionNode(
+  value: unknown,
+  path: string,
+  issues: SurveyDocumentProblems,
+  depth: number
+): void {
+  if (!isPlainObject(value) || depth > EXPRESSION_MAX_DEPTH + 1) {
+    return;
+  }
+
+  if (value.type === "call") {
+    addUnknownKeyIssues(value, EXPRESSION_CALL_KEYS, path, issues);
+    if (Array.isArray(value.args)) {
+      value.args.forEach((arg, index) =>
+        validateExpressionNode(arg, `${path}.args.${String(index)}`, issues, depth + 1)
+      );
+    }
+    return;
+  }
+
+  validateLogicOperand(value, path, issues);
+}
+
 function validateAction(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   if (!isPlainObject(value)) {
     return;
@@ -900,6 +963,11 @@ function validateAction(value: unknown, path: string, issues: SurveyDocumentProb
 
   if (value.objective === "calculate") {
     addUnknownKeyIssues(value, CALCULATE_ACTION_KEYS, path, issues);
+    if (isPlainObject(value.value) && value.value.type === "expression") {
+      addUnknownKeyIssues(value.value, EXPRESSION_VALUE_KEYS, `${path}.value`, issues);
+      validateExpressionNode(value.value.value, `${path}.value.value`, issues, 1);
+      return;
+    }
     validateLogicOperand(value.value, `${path}.value`, issues);
     return;
   }
@@ -911,6 +979,12 @@ function validateAction(value: unknown, path: string, issues: SurveyDocumentProb
 
   if (value.objective === "jumpToBlock") {
     addUnknownKeyIssues(value, JUMP_TO_BLOCK_ACTION_KEYS, path, issues);
+    return;
+  }
+
+  // ENG-6933: takes no target; the action itself is the whole instruction.
+  if (value.objective === "markLowQuality") {
+    addUnknownKeyIssues(value, MARK_LOW_QUALITY_ACTION_KEYS, path, issues);
   }
 }
 
@@ -962,6 +1036,10 @@ function validateElement(
 
   validateValidation(value.validation, `${path}.validation`, issues);
 
+  if (value.showIf !== undefined) {
+    validateConditionGroup(value.showIf, `${path}.showIf`, issues);
+  }
+
   if (Array.isArray(value.choices)) {
     const choiceKeys = value.type === "pictureSelection" ? PICTURE_CHOICE_KEYS : LABEL_CHOICE_KEYS;
     value.choices.forEach((choice, index) =>
@@ -1011,6 +1089,10 @@ function validateBlock(
 
   if (Array.isArray(value.logic)) {
     value.logic.forEach((logic, index) => validateBlockLogic(logic, `${path}.logic.${index}`, issues));
+  }
+
+  if (value.showIf !== undefined) {
+    validateConditionGroup(value.showIf, `${path}.showIf`, issues);
   }
 }
 
@@ -1097,6 +1179,10 @@ function getUnsupportedV3SurveyDocumentFields(
     value.variables.forEach((variable, index) =>
       addUnknownKeyIssues(variable, VARIABLE_KEYS, `variables.${index}`, issues)
     );
+  Array.isArray(value.embeddedFields) &&
+    value.embeddedFields.forEach((field, index) =>
+      addUnknownKeyIssues(field, V3_EMBEDDED_FIELD_KEYS, `embeddedFields.${index}`, issues, "embedded field")
+    );
   Array.isArray(value.blocks) &&
     value.blocks.forEach((block, index) =>
       validateBlock(block, `blocks.${index}`, issues, defaultLanguage, options)
@@ -1105,6 +1191,10 @@ function getUnsupportedV3SurveyDocumentFields(
     value.endings.forEach((ending, index) =>
       validateEnding(ending, `endings.${index}`, issues, defaultLanguage, options)
     );
+  // Rules before the first question (ENG-6932) use the block-rule format, so the same allowlists.
+  if (Array.isArray(value.startLogic)) {
+    value.startLogic.forEach((rule, index) => validateBlockLogic(rule, `startLogic.${index}`, issues));
+  }
 
   const metadata = value.metadata;
   if (isPlainObject(metadata)) {
@@ -1195,6 +1285,10 @@ export const V3_SURVEY_MAX_VARIABLES = 100;
 export const V3_SURVEY_MAX_LANGUAGES = 50;
 export const V3_SURVEY_MAX_HIDDEN_FIELDS = 200;
 export const V3_SURVEY_MAX_TRIGGERS = 50;
+/** Rules before the first question (ENG-6932). A screener has a handful; this is a ceiling, not a target. */
+export const V3_SURVEY_MAX_START_LOGIC_RULES = MAX_START_LOGIC_RULES;
+/** Typed Embedded Data fields on one survey (ENG-6930). */
+export const V3_SURVEY_MAX_EMBEDDED_FIELDS = 300;
 
 /**
  * Locale keys one translatable field may carry (ENG-4100). It holds one per survey language, and those
@@ -1235,6 +1329,15 @@ const createZV3SurveyEndings = (bound: boolean) =>
   documentArray(ZSurveyEndings.element, { max: V3_SURVEY_MAX_ENDINGS }, bound);
 const createZV3SurveyVariables = (bound: boolean) =>
   documentArray(ZSurveyVariables.element, { max: V3_SURVEY_MAX_VARIABLES }, bound);
+/**
+ * Rules before the first question (ENG-6932, json-shapes.md section 4): the block-rule format. Which
+ * actions and operands they may use is checked with the merged document (`validateStartLogic`), so a
+ * rule naming a block the same request removes is caught too.
+ */
+const createZV3SurveyStartLogic = (bound: boolean) =>
+  documentArray(ZSurveyBlockLogic, { max: V3_SURVEY_MAX_START_LOGIC_RULES }, bound);
+const createZV3SurveyEmbeddedFields = (bound: boolean) =>
+  documentArray(ZV3SurveyEmbeddedField, { max: V3_SURVEY_MAX_EMBEDDED_FIELDS }, bound);
 const createZV3SurveyHiddenFields = (bound: boolean): z.ZodType<z.output<typeof ZSurveyHiddenFields>> =>
   bound
     ? ZSurveyHiddenFields.extend({
@@ -1366,6 +1469,10 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, 
     endings: createZV3SurveyEndings(bound).prefault([]),
     hiddenFields: createZV3SurveyHiddenFields(bound).prefault({ enabled: false }),
     variables: createZV3SurveyVariables(bound).prefault([]),
+    startLogic: createZV3SurveyStartLogic(bound).prefault([]),
+    // ENG-6930: typed Embedded Data. Absent unless the request sent it: the legacy keys above are then
+    // derived from it (`settleV3EmbeddedFieldFormats`), and the stored survey is parsed without it.
+    embeddedFields: createZV3SurveyEmbeddedFields(bound).optional(),
     distribution: createZV3SurveyDistribution(bound).optional(),
     targeting: ZV3SurveyTargeting.optional(),
     customCss: ZV3SurveyCustomCss.optional(),
@@ -1387,6 +1494,12 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     endings: createZV3SurveyEndings(true).optional(),
     hiddenFields: createZV3SurveyHiddenFields(true).optional(),
     variables: createZV3SurveyVariables(true).optional(),
+    // Omitted: unchanged. `null` or `[]`: no rules before the first question. An array: replaces them.
+    startLogic: createZV3SurveyStartLogic(true)
+      .nullable()
+      .transform((rules) => rules ?? [])
+      .optional(),
+    embeddedFields: createZV3SurveyEmbeddedFields(true).optional(),
     distribution: ZV3SurveyDistribution.optional(),
     targeting: ZV3SurveyTargeting.optional(),
     // Omitted: unchanged. `null`: clear both fields. An object: replaces both fields.
@@ -1413,18 +1526,59 @@ export function createZV3SurveyDocumentBaseSchema(options?: TV3SurveyDocumentSch
 
 export const ZV3SurveyDocumentBase = createZV3SurveyDocumentBaseSchema();
 
+const V3_CREATE_SURVEY_DOCUMENT_SHAPE = {
+  type: ZSurveyType.prefault("link"),
+  ...V3_SURVEY_DOCUMENT_SHAPE,
+};
+
+const { metadata: _metadata, ...V3_FILE_SURVEY_DOCUMENT_SHAPE } = V3_CREATE_SURVEY_DOCUMENT_SHAPE;
+
+/** The create body as a Formbricks file's survey: see `DOCUMENT_ROOT_KEYS` for what it leaves out. */
+const ZV3CreateSurveyDocumentObject = z.object(V3_FILE_SURVEY_DOCUMENT_SHAPE).strict();
+
+const normalizeV3CreateSurveyDocument = createV3SurveyDocumentNormalizer({
+  applyDefaultLanguage: true,
+  generateMissingCreateIds: true,
+});
+
+function addCreateSurveyIssues(body: z.output<typeof ZV3CreateSurveyDocumentObject>, ctx: z.RefinementCtx) {
+  addLanguageIssues(body, ctx);
+  addAppDistributionIssues(body, body.type, ctx);
+}
+
 const ZV3CreateSurveyBodyBase = z.preprocess(
-  createV3SurveyDocumentNormalizer({ applyDefaultLanguage: true, generateMissingCreateIds: true }),
+  normalizeV3CreateSurveyDocument,
   z
-    .object({
-      workspaceId: z.cuid2(),
-      type: ZSurveyType.prefault("link"),
-      ...V3_SURVEY_DOCUMENT_SHAPE,
-    })
+    .object({ workspaceId: z.cuid2(), ...V3_CREATE_SURVEY_DOCUMENT_SHAPE })
     .strict()
-    .superRefine(addLanguageIssues)
-    .superRefine((body, ctx) => addAppDistributionIssues(body, body.type, ctx))
+    .superRefine(addCreateSurveyIssues)
 );
+
+/**
+ * The create body without the workspace it is created in or the link survey's share `metadata`: a
+ * survey as a Formbricks file carries it (ADR 0024), so the file holds no server-owned field and
+ * imports into whichever workspace the importer picks. Same rules as the create body, and strict, so its JSON Schema tells an AI assistant
+ * editing a file which keys exist.
+ */
+export const ZV3CreateSurveyDocument = z.preprocess(
+  normalizeV3CreateSurveyDocument,
+  ZV3CreateSurveyDocumentObject.superRefine(addCreateSurveyIssues)
+);
+
+/**
+ * {@link ZV3CreateSurveyDocument} as a reader of untrusted input: every key the document does not know,
+ * at any depth, is reported as an `unsupported_field` issue at that key, exactly as the create body
+ * reports it. A Formbricks file's survey is read with this (ENG-6850); the plain document schema stays
+ * what its JSON Schema is generated from, since a pipe from `unknown` has no input shape to publish.
+ */
+export const ZV3CreateSurveyDocumentInput = z
+  .unknown()
+  .superRefine((value, ctx) => {
+    for (const issue of getUnsupportedV3SurveyDocumentFields(value, DOCUMENT_ROOT_KEYS)) {
+      addInvalidParamZodIssue(ctx, issue);
+    }
+  })
+  .pipe(ZV3CreateSurveyDocument);
 
 export const ZV3CreateSurveyBody = z
   .unknown()

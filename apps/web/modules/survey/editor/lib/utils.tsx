@@ -13,7 +13,13 @@ import {
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
+import {
+  TSurveyElement,
+  TSurveyElementTypeEnum,
+  type TSurveyMatrixElement,
+} from "@formbricks/types/surveys/elements";
+import { expressionReferences } from "@formbricks/types/surveys/expressions";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -21,6 +27,12 @@ import {
   TSingleCondition,
   TSurveyLogicConditionsOperator,
 } from "@formbricks/types/surveys/logic";
+import {
+  isMatrixRowCondition,
+  resolveMatrixColumnValue,
+  resolveMatrixRowIndex,
+} from "@formbricks/types/surveys/matrix-conditions";
+import { getOptionLists } from "@formbricks/types/surveys/show-if";
 import {
   TSurvey,
   TSurveyEndings,
@@ -37,6 +49,13 @@ import {
   getReservedFieldLabel,
 } from "@/modules/embedded-data/lib/field-display";
 import { findElementLocation, getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
+import { CALCULATE_SYMBOLS } from "@/modules/survey/editor/lib/operator-symbols";
+import {
+  RULE_TYPES,
+  RULE_TYPE_COMBOBOX_ICON,
+  RULE_TYPE_OBJECTIVE,
+  getRuleTypeLabel,
+} from "@/modules/survey/editor/lib/rule-types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { formatCodedLabel } from "@/modules/survey/lib/element-code-label";
 import { type TElement, getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
@@ -151,7 +170,7 @@ const getElementHeadline = (
 };
 
 /** How a question reads in a picker: "q1 · question text" (ENG-6790), or the plain text before it has a code. */
-const getElementPickerLabel = (localSurvey: TSurvey, element: TSurveyElement, t: TFunction): string =>
+export const getElementPickerLabel = (localSurvey: TSurvey, element: TSurveyElement, t: TFunction): string =>
   formatCodedLabel(
     "code" in element ? element.code : undefined,
     getElementHeadline(localSurvey, element, "default", t)
@@ -269,6 +288,8 @@ interface TEmbeddedFieldOptionFilter {
   exclude?: string;
   /** Keeps only fields whose value can be compared against this type. */
   comparableAs?: TEmbeddedDataType;
+  /** Keeps only fields of exactly this type: what a value assigned to such a field must be. */
+  dataType?: TEmbeddedDataType;
   /** Keeps only fields of this source. The numeric-scale branches offer computed fields alone. */
   source?: TLinkedEmbeddedField["field"]["source"];
 }
@@ -285,6 +306,7 @@ const getEmbeddedFieldOptions = (
     .filter(({ field, link }) => {
       if (link.storageKey === filter.exclude) return false;
       if (filter.source !== undefined && field.source !== filter.source) return false;
+      if (filter.dataType !== undefined && field.dataType !== filter.dataType) return false;
       return filter.comparableAs === undefined || isEmbeddedFieldComparableAs(field, filter.comparableAs);
     })
     .map(toEmbeddedFieldOption);
@@ -392,6 +414,8 @@ export const getConditionValueOptions = (
         value: element.id,
         meta: {
           type: "element",
+          // jobenjada review #27: the code starts the label, so say what kind of question it is.
+          badge: t("workspace.surveys.edit.matrix_badge"),
         },
         children: [
           {
@@ -400,7 +424,8 @@ export const getConditionValueOptions = (
             children: rows,
           },
           {
-            label: t("workspace.surveys.edit.matrix_all_fields", "All fields"),
+            // Reads like a row's choice, "Editor (grid · …)", once picked.
+            label: `${t("workspace.surveys.edit.matrix_all_fields")} (${elementHeadline})`,
             value: element.id,
             meta: {
               type: "element",
@@ -439,11 +464,16 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
   return modifiedSurvey;
 };
 
-export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] => [
-  { label: t("workspace.surveys.edit.calculate"), value: "calculate" },
-  { label: t("workspace.surveys.edit.require_answer"), value: "requireAnswer" },
-  { label: t("workspace.surveys.edit.jump_to_block"), value: "jumpToBlock" },
-];
+/**
+ * The "then" dropdown: each rule type with the name, icon and colour its row and the Add logic menu
+ * use, in the same order. Set value is the glossary's: one action, formula or one-step calculation.
+ */
+export const getActionObjectiveOptions = (t: TFunction): TComboboxOption[] =>
+  RULE_TYPES.map((type) => ({
+    label: getRuleTypeLabel(type, t),
+    value: RULE_TYPE_OBJECTIVE[type],
+    icon: RULE_TYPE_COMBOBOX_ICON[type],
+  }));
 
 export const hasJumpToBlockAction = (actions: TSurveyBlockLogicAction[]): boolean => {
   return actions.some((action) => action.objective === "jumpToBlock");
@@ -461,7 +491,7 @@ export const getElementOperatorOptions = (
     options = getLogicRules(t).element[`openText.${inputType}`].options;
   } else if (element.type === TSurveyElementTypeEnum.Matrix && condition) {
     const isMatrixRow =
-      condition.leftOperand.type === "element" && condition.leftOperand?.meta?.row !== undefined;
+      condition.leftOperand.type === "element" && isMatrixRowCondition(condition.leftOperand.meta);
     options = getLogicRules(t).element[`matrix${isMatrixRow ? ".row" : ""}`].options;
   } else {
     options = getLogicRules(t).element[element.type].options;
@@ -483,17 +513,43 @@ export const getDefaultOperatorForElement = (
   return options[0].value.toString() as TSurveyLogicConditionsOperator;
 };
 
+/** The matrix element a row condition points into, or `undefined` for any other condition. */
+const getMatrixOfRowCondition = (
+  condition: TSingleCondition,
+  localSurvey: TSurvey
+): TSurveyMatrixElement | undefined => {
+  const { leftOperand } = condition;
+  if (leftOperand.type !== "element" || !isMatrixRowCondition(leftOperand.meta)) return undefined;
+  const element = getElementsFromBlocks(localSurvey.blocks).find((e) => e.id === leftOperand.value);
+  return element?.type === TSurveyElementTypeEnum.Matrix ? element : undefined;
+};
+
+/**
+ * The left operand as the picker's value: a matrix row condition shows `<matrix id>.<row position>`,
+ * the position read from the row id first (ENG-6934), so a row reordered since shows correctly.
+ */
 export const getFormatLeftOperandValue = (condition: TSingleCondition, localSurvey: TSurvey): string => {
-  if (condition.leftOperand.type === "element") {
-    const elements = getElementsFromBlocks(localSurvey.blocks);
-    const element = elements.find((e) => e.id === condition.leftOperand.value);
-    if (element && element.type === TSurveyElementTypeEnum.Matrix) {
-      if (condition.leftOperand?.meta?.row !== undefined) {
-        return `${condition.leftOperand.value}.${condition.leftOperand.meta.row}`;
-      }
-    }
+  const matrix = getMatrixOfRowCondition(condition, localSurvey);
+  if (matrix && condition.leftOperand.type === "element") {
+    const meta = condition.leftOperand.meta;
+    const rowIndex = resolveMatrixRowIndex(matrix, meta);
+    return `${condition.leftOperand.value}.${rowIndex ?? meta?.row ?? ""}`;
   }
   return condition.leftOperand.value;
+};
+
+/**
+ * The right operand as the value picker's value. A matrix row condition's column options are
+ * positions, so its column ids are read back to positions first (ENG-6934).
+ */
+export const getFormatRightOperandValue = (
+  condition: TSingleCondition,
+  localSurvey: TSurvey
+): string | number | string[] | undefined => {
+  const { rightOperand } = condition;
+  const matrix = getMatrixOfRowCondition(condition, localSurvey);
+  if (matrix && rightOperand?.type === "static") return resolveMatrixColumnValue(matrix, rightOperand);
+  return rightOperand?.value;
 };
 
 /**
@@ -543,6 +599,10 @@ export const getConditionOperatorOptions = (
   t: TFunction
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
+    // ENG-6935: a computed date compares by time, like an ingested date (`isBefore` / `isAfter`).
+    if (getOperandDataType(condition, localSurvey) === "date") {
+      return getLogicRules(t)["field.date"].options;
+    }
     const variables = getComputedFieldOptions(localSurvey);
     const variableType =
       variables.find((variable) => variable.id === condition.leftOperand.value)?.type || "text";
@@ -694,7 +754,9 @@ const getElementMatchValueProps = (
     }
 
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
-    case TSurveyElementTypeEnum.MultipleChoiceMulti: {
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    // T21 (ENG-6937): a ranking's options, by id ("was ranked").
+    case TSurveyElementTypeEnum.Ranking: {
       const operatorsToFilterNone = [
         "includesOneOf",
         "includesAllOf",
@@ -985,6 +1047,14 @@ export const getActionTargetOptions = (
  * `meta.variableType` rather than `meta.type`: this option feeds `getActionOperatorOptions`, which
  * asks what kind of value it is assigning, not what kind of reference it is.
  */
+/**
+ * Whether Set value writes a computed date field. Its one-step row only assigns, and is stored as an
+ * expression either way (P38), see `isOneStepDateExpression`.
+ */
+export const isComputedDateField = (localSurvey: TSurvey, storageKey: string): boolean =>
+  getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
+    .dataType === "date";
+
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] =>
   getComputedEmbeddedFields(localSurvey).map((embeddedField) => ({
     ...toEmbeddedFieldOption(embeddedField),
@@ -996,29 +1066,43 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
 
 export const getActionOperatorOptions = (
   t: TFunction,
-  variableType?: TSurveyVariable["type"]
+  variableType?: TSurveyVariable["type"] | "date"
 ): TComboboxOption[] => {
   if (variableType === "number") {
     return [
       {
         label: t("workspace.surveys.edit.add"),
         value: "add",
+        symbol: CALCULATE_SYMBOLS.add,
       },
       {
         label: t("workspace.surveys.edit.subtract"),
         value: "subtract",
+        symbol: CALCULATE_SYMBOLS.subtract,
       },
       {
         label: t("workspace.surveys.edit.multiply"),
         value: "multiply",
+        symbol: CALCULATE_SYMBOLS.multiply,
       },
       {
         label: t("workspace.surveys.edit.divide"),
         value: "divide",
+        symbol: CALCULATE_SYMBOLS.divide,
       },
       {
         label: t("workspace.surveys.edit.assign"),
         value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
+      },
+    ];
+  } else if (variableType === "date") {
+    // One step only assigns a date; anything computed from one is an expression.
+    return [
+      {
+        label: t("workspace.surveys.edit.assign"),
+        value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
       },
     ];
   } else if (variableType === "text") {
@@ -1026,10 +1110,21 @@ export const getActionOperatorOptions = (
       {
         label: t("workspace.surveys.edit.assign"),
         value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
       },
       {
         label: t("workspace.surveys.edit.concat"),
         value: "concat",
+      },
+    ];
+  } else if (variableType === undefined) {
+    // No field picked yet (a step just switched to Set value): Assign, which every field type takes,
+    // so the new step reads "Assign" rather than an empty operator.
+    return [
+      {
+        label: t("workspace.surveys.edit.assign"),
+        value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
       },
     ];
   }
@@ -1042,6 +1137,31 @@ export const getActionOperatorOptions = (
  * assignments from `responseData` and variables alone, so a reserved value offered here would read
  * as unset every time.
  */
+/** The question types whose answer a Set value step can copy into a field of this type. */
+const getSetValueSourceTypes = (fieldType: "number" | "text" | "date"): TSurveyElementTypeEnum[] => {
+  switch (fieldType) {
+    case "date":
+      return [TSurveyElementTypeEnum.Date];
+    case "number":
+      return [
+        TSurveyElementTypeEnum.Rating,
+        TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
+      ];
+    case "text":
+      return [
+        TSurveyElementTypeEnum.OpenText,
+        TSurveyElementTypeEnum.MultipleChoiceSingle,
+        TSurveyElementTypeEnum.Rating,
+        TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
+        TSurveyElementTypeEnum.Date,
+      ];
+  }
+};
+
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
@@ -1060,23 +1180,10 @@ export const getActionValueOptions = (
   if (!selectedVariable) return [];
 
   const isNumeric = selectedVariable.type === "number";
+  // A date field takes a date question's answer or another date field (its fixed day is the picker's).
+  const isDate = isComputedDateField(localSurvey, variableId);
 
-  const allowedElementTypes = isNumeric
-    ? [
-        TSurveyElementTypeEnum.Rating,
-        TSurveyElementTypeEnum.NPS,
-        TSurveyElementTypeEnum.CSAT,
-        TSurveyElementTypeEnum.CES,
-      ]
-    : [
-        TSurveyElementTypeEnum.OpenText,
-        TSurveyElementTypeEnum.MultipleChoiceSingle,
-        TSurveyElementTypeEnum.Rating,
-        TSurveyElementTypeEnum.NPS,
-        TSurveyElementTypeEnum.CSAT,
-        TSurveyElementTypeEnum.CES,
-        TSurveyElementTypeEnum.Date,
-      ];
+  const allowedElementTypes = getSetValueSourceTypes(isDate ? "date" : selectedVariable.type);
 
   const allowedElements = allElements.filter(
     (element) =>
@@ -1094,53 +1201,99 @@ export const getActionValueOptions = (
         type: "element",
       },
     })),
-    embeddedData: getEmbeddedFieldOptions(localSurvey, {
-      exclude: variableId,
-      comparableAs: isNumeric ? "number" : "string",
-    }),
+    // A date field's value must be a date: a text field that could compare as one doesn't type as one.
+    embeddedData: getEmbeddedFieldOptions(
+      localSurvey,
+      isDate
+        ? { exclude: variableId, dataType: "date" }
+        : { exclude: variableId, comparableAs: isNumeric ? "number" : "string" }
+    ),
   });
 };
 
 const isUsedInLeftOperand = (
   leftOperand: TLeftOperand,
-  type: "element" | "hiddenField" | "variable",
+  type: "element" | "hiddenField" | "variable" | "reserved",
   id: string
-): boolean => {
-  switch (type) {
-    case "element":
-      return leftOperand.type === "element" && leftOperand.value === id;
-    case "hiddenField":
-      return leftOperand.type === "hiddenField" && leftOperand.value === id;
-    case "variable":
-      return leftOperand.type === "variable" && leftOperand.value === id;
-    default:
-      return false;
-  }
-};
+): boolean => leftOperand.type === type && leftOperand.value === id;
 
 const isUsedInRightOperand = (
   rightOperand: TRightOperand,
-  type: "element" | "hiddenField" | "variable",
+  type: "element" | "hiddenField" | "variable" | "reserved",
   id: string
-): boolean => {
-  switch (type) {
-    case "element":
-      return rightOperand.type === "element" && rightOperand.value === id;
-    case "hiddenField":
-      return rightOperand.type === "hiddenField" && rightOperand.value === id;
-    case "variable":
-      return rightOperand.type === "variable" && rightOperand.value === id;
-    default:
-      return false;
-  }
-};
+): boolean => rightOperand.type === type && rightOperand.value === id;
 
-export const findElementUsedInLogic = (survey: TSurvey, elementId: string): number => {
+/**
+ * The first element whose show-if, or whose block's show-if, matches `isUsedInGroup`, or -1
+ * (ENG-6931). The removal guards below fall back to it, so removing a question, an option or a field a
+ * show-if depends on is stopped like removing one a rule depends on. `skipElementId` leaves out the
+ * element being removed: its own show-if goes with it.
+ */
+const findElementIndexByShowIf = (
+  survey: TSurvey,
+  isUsedInGroup: (group: TConditionGroup) => boolean,
+  skipElementId?: string
+): number =>
+  getElementsFromBlocks(survey.blocks).findIndex((element) => {
+    if (element.id === skipElementId) return false;
+    if (element.showIf && isUsedInGroup(element.showIf)) return true;
+    // ENG-6937: an option, matrix row or matrix column show-if depends on things the same way.
+    const usedByOption = getOptionLists(element).some(({ items }) =>
+      items.some((item) => item.showIf && isUsedInGroup(item.showIf))
+    );
+    if (usedByOption) return true;
+    const { block } = findElementLocation(survey, element.id);
+    return Boolean(block?.showIf && isUsedInGroup(block.showIf));
+  });
+
+/**
+ * Where something a removal would break is used: in a rule (`logic`), in a show-if (`showIf`), or as
+ * the source of another question's copied options (`copiedOptions`), with the first element that uses
+ * it. The guards name the right place in their message (show-if uses read "shown only if", not logic).
+ */
+export type TUseKind = "logic" | "startLogic" | "showIf" | "copiedOptions";
+export interface TUse {
+  kind: TUseKind;
+  /**
+   * The first element (in survey order) whose rule, show-if or copy link uses it; for a rule before
+   * the first question, which belongs to no element, {@link START_LOGIC_USE_INDEX}.
+   */
+  elementIndex: number;
+}
+
+/**
+ * The index a finder returns when only a rule before the first question (ENG-6932) uses what it
+ * looks for: not -1 ("unused"), and no element's position.
+ */
+export const START_LOGIC_USE_INDEX = -2;
+
+/** Whether a rule before the first question matches. */
+const isUsedInStartLogic = (survey: TSurvey, isUsedInRule: (rule: TSurveyBlockLogic) => boolean): boolean =>
+  (survey.startLogic ?? []).some(isUsedInRule);
+
+const startLogicUse = (survey: TSurvey, isUsedInRule: (rule: TSurveyBlockLogic) => boolean): TUse | null =>
+  isUsedInStartLogic(survey, isUsedInRule)
+    ? { kind: "startLogic", elementIndex: START_LOGIC_USE_INDEX }
+    : null;
+
+/** The logic hit first, else the next kind's hit: each stops a removal, and logic is what it always named. */
+const firstUse = (first: TUse | null, next: () => TUse | null): TUse | null => first ?? next();
+
+const usageAt = (kind: TUseKind, elementIndex: number): TUse | null =>
+  elementIndex === -1 ? null : { kind, elementIndex };
+
+/** The index-only form the older callers read: -1 when unused. */
+const indexOfUse = (use: TUse | null): number => use?.elementIndex ?? -1;
+
+export const findElementUsedInLogic = (survey: TSurvey, elementId: string): number =>
+  indexOfUse(findElementUse(survey, elementId));
+
+export const findElementUse = (survey: TSurvey, elementId: string): TUse | null => {
   const { block } = findElementLocation(survey, elementId);
 
-  // The parent block for this elementId was not found in the survey, while this shouldn't happen but we still have a safety check and return -1
+  // The parent block for this elementId was not found in the survey, while this shouldn't happen but we still have a safety check
   if (!block) {
-    return -1;
+    return null;
   }
 
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
@@ -1169,6 +1322,15 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
       return true;
     }
 
+    // ENG-6935: an answer a Set value formula reads.
+    if (
+      action.objective === "calculate" &&
+      action.value.type === "expression" &&
+      expressionReferences(action.value.value, "element", elementId)
+    ) {
+      return true;
+    }
+
     return action.objective === "jumpToBlock" && action.target === block.id;
   };
 
@@ -1178,7 +1340,7 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
 
   const elements = getElementsFromBlocks(survey.blocks);
 
-  return elements.findIndex((element) => {
+  const logicIndex = elements.findIndex((element) => {
     const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
@@ -1189,6 +1351,25 @@ export const findElementUsedInLogic = (survey: TSurvey, elementId: string): numb
       block.logicFallback === elementId || (element.id !== elementId && block.logic?.some(isUsedInLogicRule))
     );
   });
+
+  return firstUse(
+    firstUse(usageAt("logic", logicIndex), () =>
+      // ENG-6938: a question another question copies its options from. Checked before show-if: a copy
+      // writes "picked in the source" show-ifs on every option it copies, so the show-if check would
+      // otherwise always find the copy first and name it as a show-if.
+      usageAt(
+        "copiedOptions",
+        elements.findIndex(
+          (element) => element.id !== elementId && getOptionsCopiedFrom(element) === elementId
+        )
+      )
+    ),
+    () =>
+      usageAt(
+        "showIf",
+        findElementIndexByShowIf(survey, (group) => isUsedInCondition(group), elementId)
+      )
+  );
 };
 
 export const findBlockUsedInLogic = (survey: TSurvey, blockId: string): number => {
@@ -1218,6 +1399,8 @@ export const findBlockUsedInLogic = (survey: TSurvey, blockId: string): number =
   if (blockUsageIndex !== -1) {
     return blockUsageIndex;
   }
+
+  if (isUsedInStartLogic(survey, isUsedInLogicRule)) return START_LOGIC_USE_INDEX;
 
   // Check if any element in the block is used in logic
   for (const element of targetBlock.elements) {
@@ -1372,7 +1555,14 @@ export const findOptionUsedInLogic = (
   elementId: string,
   optionId: string,
   checkInLeftOperand: boolean = false
-): number => {
+): number => indexOfUse(findOptionUse(survey, elementId, optionId, checkInLeftOperand));
+
+export const findOptionUse = (
+  survey: TSurvey,
+  elementId: string,
+  optionId: string,
+  checkInLeftOperand: boolean = false
+): TUse | null => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       // It's a TConditionGroup
@@ -1408,7 +1598,12 @@ export const findOptionUsedInLogic = (
     return isUsedInCondition(logicRule.conditions);
   };
 
-  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
+  return firstUse(usageAt("logic", findElementIndexByBlockLogic(survey, isUsedInLogicRule)), () =>
+    usageAt(
+      "showIf",
+      findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+    )
+  );
 };
 
 /**
@@ -1421,7 +1616,11 @@ export const findOptionUsedInLogic = (
  * nothing. The element finder already searches both sides; this is the same search, for the two
  * operand types the Embedded Data card removes.
  */
-const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable", id: string): number => {
+const findFieldUse = (
+  survey: TSurvey,
+  type: "hiddenField" | "variable" | "reserved",
+  id: string
+): TUse | null => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       return condition.conditions.some(isUsedInCondition);
@@ -1436,10 +1635,13 @@ const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable",
   const isUsedInAction = (action: TSurveyBlockLogicAction): boolean => {
     if (action.objective !== "calculate") return false;
 
-    // Only a variable can be a calculation's target; both types can be its input.
+    // Only a variable can be a calculation's target; both types can be its input, also inside a
+    // Set value formula (ENG-6935).
     return (
       (type === "variable" && action.variableId === id) ||
-      (action.value.type === type && action.value.value === id)
+      (action.value.type === "expression"
+        ? expressionReferences(action.value.value, type, id)
+        : action.value.type === type && action.value.value === id)
     );
   };
 
@@ -1447,14 +1649,36 @@ const findFieldUsedInLogic = (survey: TSurvey, type: "hiddenField" | "variable",
     return isUsedInCondition(logicRule.conditions) || logicRule.actions.some(isUsedInAction);
   };
 
-  return findElementIndexByBlockLogic(survey, isUsedInLogicRule);
+  return firstUse(
+    firstUse(usageAt("logic", findElementIndexByBlockLogic(survey, isUsedInLogicRule)), () =>
+      startLogicUse(survey, isUsedInLogicRule)
+    ),
+    () =>
+      usageAt(
+        "showIf",
+        findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+      )
+  );
 };
 
+export const findVariableUse = (survey: TSurvey, variableId: string): TUse | null =>
+  findFieldUse(survey, "variable", variableId);
+
+export const findHiddenFieldUse = (survey: TSurvey, hiddenFieldId: string): TUse | null =>
+  findFieldUse(survey, "hiddenField", hiddenFieldId);
+
+/**
+ * Where a rule, a rule before the first question or a show-if reads a reserved field (`url`, …), by
+ * its catalog name. The editor preview offers the page address as a test value only when one does.
+ */
+export const findReservedFieldUse = (survey: TSurvey, name: string): TUse | null =>
+  findFieldUse(survey, "reserved", name);
+
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number =>
-  findFieldUsedInLogic(survey, "variable", variableId);
+  indexOfUse(findVariableUse(survey, variableId));
 
 export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: string): number =>
-  findFieldUsedInLogic(survey, "hiddenField", hiddenFieldId);
+  indexOfUse(findHiddenFieldUse(survey, hiddenFieldId));
 
 export const getSurveyFollowUpActionDefaultBody = (t: TFunction): string => {
   return t("templates.follow_ups_modal_action_body")
@@ -1474,7 +1698,7 @@ export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string)
 
   const elements = getElementsFromBlocks(survey.blocks);
 
-  return elements.findIndex((element) => {
+  const blockLogicIndex = elements.findIndex((element) => {
     const { block } = findElementLocation(survey, element.id);
 
     if (!block) {
@@ -1483,4 +1707,8 @@ export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string)
 
     return block.logicFallback === endingCardId || block.logic?.some(isUsedInLogicRule);
   });
+  if (blockLogicIndex !== -1) return blockLogicIndex;
+
+  // A screen-out before the first question jumps straight to an ending (ENG-6932).
+  return isUsedInStartLogic(survey, isUsedInLogicRule) ? START_LOGIC_USE_INDEX : -1;
 };

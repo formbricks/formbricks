@@ -1,9 +1,12 @@
-import { describe, expect, test, vi } from "vitest";
+import { prisma } from "@/lib/__mocks__/database";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SurveyImportFailedError, SurveyImportInputError } from "../core/errors";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { buildMatrixHeavyQsf } from "./__fixtures__/matrix-heavy";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import { QsfImportFailedError, QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
+import { runQsfImport } from "./pipeline";
+import { prepareQsfImport } from "./prepare";
 
 const budget = vi.hoisted(() => ({
   estimate: null as number | null,
@@ -14,6 +17,9 @@ const budget = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+// The draft's name is looked up in the workspace and suffixed in the user's language (English here).
+vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn(async () => "en-US") }));
+vi.mock("@/lingodotdev/server", () => import("../core/__fixtures__/lingodotdev-server-en-us"));
 vi.mock("@/modules/survey/lib/permission", () => ({ getExternalUrlsPermission: vi.fn(async () => true) }));
 // Every part of the prompt is bounded, so no fixture is over the budget at the tightest limits; the
 // refusals are reached by making the measurement report one that is.
@@ -37,6 +43,10 @@ vi.mock("./prompt", async (importOriginal) => {
   };
 });
 
+beforeEach(() => {
+  vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
+});
+
 describe("a survey too large for the prompt budget", () => {
   test("is refused by prepareQsfImport with a 422, before the stream opens", () => {
     budget.estimate = Number.MAX_SAFE_INTEGER;
@@ -49,9 +59,9 @@ describe("a survey too large for the prompt budget", () => {
     }
     budget.estimate = null;
 
-    expect(error).toBeInstanceOf(QsfImportInputError);
+    expect(error).toBeInstanceOf(SurveyImportInputError);
     // A Qualtrics export past a limit — the prompt's — not an unreadable file.
-    expect((error as QsfImportInputError).invalidParams).toEqual([
+    expect((error as SurveyImportInputError).invalidParams).toEqual([
       expect.objectContaining({ code: "qsf_limit_exceeded", identifier: "prompt_size" }),
     ]);
   });
@@ -73,8 +83,8 @@ describe("a survey too large for the prompt budget", () => {
     }).catch((caught: unknown) => caught);
     budget.noLimits = false;
 
-    expect(error).toBeInstanceOf(QsfImportFailedError);
-    expect((error as QsfImportFailedError).reason).toBe("prompt_budget");
+    expect(error).toBeInstanceOf(SurveyImportFailedError);
+    expect((error as SurveyImportFailedError).reason).toBe("prompt_budget");
     expect(generate).not.toHaveBeenCalled();
   });
 });
@@ -101,7 +111,8 @@ describe("the prompt guards on each call", () => {
     budget.maxCallChars = null;
 
     expect(generate).not.toHaveBeenCalled();
-    expect((error as QsfImportFailedError).reason).toBe("no_questions");
+    // Too big to send even split: too large for the AI lane.
+    expect((error as SurveyImportFailedError).reason).toBe("too_large_for_ai");
   });
 
   test("stop sending once the import's total is spent, dropping what is left as ai_budget", async () => {
