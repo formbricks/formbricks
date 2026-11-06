@@ -70,7 +70,7 @@ While old and new `hub-worker` pods overlap, an old pod can rewrite a vector wit
 a record edited and then edited back during the rollout can keep a stale vector. Stop the old workers before the
 new ones start. If they already overlapped, clear the hash for vectors written during the rollout with
 `UPDATE embeddings SET source_hash = NULL WHERE updated_at BETWEEN <rollout start> AND <rollout end>`, then run
-`backfill-embeddings -tenant-id <id> -stale` for each affected tenant. The Hub
+`/app/backfill-embeddings -tenant-id <id> -stale` inside a `hub-worker` pod, for each affected tenant. The Hub
 [Embedding repair](https://github.com/formbricks/hub/blob/0.14.2/docs/src/content/docs/reference/environment-variables.mdx)
 section has the details.
 6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
