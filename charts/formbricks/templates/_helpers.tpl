@@ -811,7 +811,10 @@ true
   value: {{ $cfg.batchMaxInFlight | quote }}
 {{- end }}
 - name: EMBEDDING_MAX_INPUT_BYTES
-  value: {{ required "hub.embeddingClient.maxInputBytes is required" $cfg.maxInputBytes | quote }}
+  {{- if or (kindIs "invalid" $cfg.maxInputBytes) (and (kindIs "string" $cfg.maxInputBytes) (eq $cfg.maxInputBytes "")) }}
+  {{- fail "hub.embeddingClient.maxInputBytes is required" }}
+  {{- end }}
+  value: {{ $cfg.maxInputBytes | quote }}
 - name: EMBEDDING_NORMALIZE
   value: {{ $cfg.normalize | quote }}
 {{- end -}}

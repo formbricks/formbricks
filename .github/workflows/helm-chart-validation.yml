@@ -361,6 +361,12 @@ jobs:
             --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=openai \
             --set hub.embeddingClient.model=model --set hub.embeddingClient.auth.existingSecret=embedding-key \
             --set hub.embeddingClient.maxInputBytes=null
+          helm template qa "$chart" --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=model --set hub.embeddingClient.auth.existingSecret=embedding-key \
+            --set hub.embeddingClient.maxInputBytes=0 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-zero-input-cap.yaml"
+          grep -A1 'name: EMBEDDING_MAX_INPUT_BYTES' "$render_dir/hub-zero-input-cap.yaml" | grep -q 'value: "0"'
           expect_embedding_render_failure duplicate-readiness-mount 'conflicts with the embedding readiness mount' \
             --set hub.worker.embeddingReadiness.enabled=true \
             --set 'hub.extraVolumeMounts[0].name=existing' \
