@@ -1295,7 +1295,8 @@ hub:
     env: {}
 
     embeddingReadiness:
-      # Enable only with a Hub image that supports --check-embedding-readiness.
+      # Enable only with a Hub release containing formbricks/hub#161. The chart's pinned
+      # 0.14.1 digest predates that command and is rejected when readiness is enabled.
       enabled: false
       path: /run/hub/embedding-ready
 
