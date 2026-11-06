@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -195,7 +195,7 @@ export function BlockConditional({
   // appears after user navigation (or on an autofocus-allowed initial render),
   // focus its first control instead of dropping focus to the body, which made
   // VoiceOver re-announce the whole survey dialog on every card change.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!shouldFocusOnMount) return;
 
     // Defer so the card's content (and any card transition) has rendered.
@@ -212,8 +212,7 @@ export function BlockConditional({
       clearTimeout(timeoutId);
       if (animationFrameId !== undefined) cancelAnimationFrame(animationFrameId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when the block mounts
-  }, []);
+  }, [shouldFocusOnMount]);
   const autoProgressElement = getAutoProgressElement(block.elements, isAutoProgressingEnabled);
   const shouldHideSubmitButton = shouldHideSubmitButtonForAutoProgress(
     block.elements,
