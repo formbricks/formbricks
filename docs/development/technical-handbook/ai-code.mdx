@@ -81,9 +81,11 @@ Limit what a hijacked model can reach. The goal is a small blast radius, whateve
   include only the fields the task needs. No secrets, API keys, other tenants' data, or internal ids in a prompt.
 - **Least capability.** Read-only by default. Each tool takes the narrowest input it can. A URL the model picks gets
   the same restrictions as a URL a user supplies. Never run model-written code.
-- **No sharing across tenants or users.** Embeddings and shared caches are keyed by tenant, which is their
-  isolation boundary. Conversation history and memory are keyed by tenant and user. One tenant's text never
-  enters another tenant's context, and one user's history never enters another user's.
+- **No sharing across tenants or users.** Embeddings and shared caches are keyed by the Hub tenant, which is a
+  dataset (a feedback directory), not an organization. It is their isolation boundary. The server derives the
+  tenant from the caller's workspace authorization and dataset membership, and never takes it from request
+  input. Conversation history and memory are keyed by tenant and user. One tenant's text never enters another
+  tenant's context, and one user's history never enters another user's.
 - **Safe output rendering.** Render model output as plain text where you can. Markdown that loads an image can leak
   the context through the image URL.
 - **No egress except the provider.** A tool does not send data anywhere else.
@@ -209,7 +211,8 @@ Use it when planning, and again against the finished diff before the PR is ready
 **Embeddings**
 
 - Input is bounded, and concurrency is bounded.
-- Vectors and shared caches are keyed by tenant, and a query never returns another tenant's records.
+- Vectors and shared caches are keyed by the Hub tenant (a dataset). The tenant comes from the caller's workspace
+  authorization, never from request input, and a query never returns another tenant's records.
 - The PR says how the feature is enabled (today: instance configuration, with no per-organization toggle in Hub).
 
 **MCP-only tool**
