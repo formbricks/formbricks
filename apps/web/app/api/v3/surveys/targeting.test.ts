@@ -388,7 +388,11 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
       ],
     });
     expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["clrestrictedsurvey0000001"], {});
-    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["clrestrictedsurvey0000001"], VISIBLE);
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
+      "ws_1",
+      ["clrestrictedsurvey0000001"],
+      VISIBLE
+    );
   });
 
   test("rejects a segment filter referencing an unknown or foreign segment", async () => {
@@ -435,7 +439,11 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
         expect.objectContaining({ code: "invalid_reference", identifier: "clrestrictedsurvey0000001" }),
       ],
     });
-    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["clrestrictedsurvey0000001"], VISIBLE);
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
+      "ws_1",
+      ["clrestrictedsurvey0000001"],
+      VISIBLE
+    );
   });
 
   test("rejects a survey interaction filter referencing an unknown or foreign survey", async () => {
