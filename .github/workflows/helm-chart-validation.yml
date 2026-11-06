@@ -275,6 +275,179 @@ jobs:
           test "$(grep -c 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker-override.yaml")" -eq 1
           grep -A1 'name: EMBEDDING_HTTP_DISABLE_KEEP_ALIVES' "$render_dir/hub-embeddings-background-worker-override.yaml" | grep -q 'value: "false"'
 
+          # Older Hub images do not implement the readiness command, so the default stays off.
+          if grep -q -- '--check-embedding-readiness' "$render_dir/hub-embeddings-background-worker.yaml"; then
+            echo 'Embedding readiness probe unexpectedly enabled by default' >&2
+            exit 1
+          fi
+          if grep -Eq 'name: EMBEDDING_PREFLIGHT_(TIMEOUT|INTERVAL|SUCCESS_TTL|SNOOZE)_SECONDS' "$render_dir/hub-embeddings-background-worker.yaml"; then
+            echo 'Preflight timing unexpectedly overrides Hub Secret defaults' >&2
+            exit 1
+          fi
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddings.enabled=true \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            --set hub.worker.embeddingPreflight.timeoutSeconds=10 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embedding-readiness.yaml"
+          grep -A5 '^          readinessProbe:$' "$render_dir/hub-embedding-readiness.yaml" | grep -q '^            exec:$'
+          grep -A5 '^          readinessProbe:$' "$render_dir/hub-embedding-readiness.yaml" | grep -q -- '--check-embedding-readiness'
+          grep -q 'name: hub-embedding-readiness' "$render_dir/hub-embedding-readiness.yaml"
+          grep -A1 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-embedding-readiness.yaml" | grep -q 'value: "10"'
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddingClient.enabled=true \
+            --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=tei-model \
+            --set hub.embeddingClient.apiBaseUrl=http://foreground.example/v1 \
+            --set hub.embeddingClient.workerBaseUrl=http://background.example/v1 \
+            --set hub.embeddingClient.auth.existingSecret=embedding-key \
+            --show-only templates/hub-deployment.yaml > "$render_dir/hub-external-embedding-api.yaml"
+          grep -q 'http://foreground.example/v1' "$render_dir/hub-external-embedding-api.yaml"
+          if grep -q 'http://background.example/v1' "$render_dir/hub-external-embedding-api.yaml"; then
+            echo 'Background endpoint leaked into Hub API' >&2
+            exit 1
+          fi
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddingClient.enabled=true \
+            --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=tei-model \
+            --set hub.embeddingClient.apiBaseUrl=http://foreground.example/v1 \
+            --set hub.embeddingClient.workerBaseUrl=http://background.example/v1 \
+            --set hub.embeddingClient.auth.existingSecret=embedding-key \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-external-embedding-worker.yaml"
+          grep -q 'http://background.example/v1' "$render_dir/hub-external-embedding-worker.yaml"
+          if grep -q 'http://foreground.example/v1' "$render_dir/hub-external-embedding-worker.yaml"; then
+            echo 'Foreground endpoint leaked into Hub worker' >&2
+            exit 1
+          fi
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddingClient.enabled=true \
+            --set hub.embeddingClient.provider=google-gemini \
+            --set hub.embeddingClient.model=gemini-embedding-001 \
+            --set hub.embeddingClient.googleCloudProject=test-project \
+            --set hub.embeddingClient.googleCloudLocation=europe-west3 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-vertex-embedding-worker.yaml"
+          grep -A1 'name: EMBEDDING_PROVIDER' "$render_dir/hub-vertex-embedding-worker.yaml" | grep -q 'value: "google-gemini"'
+          grep -q 'name: EMBEDDING_GOOGLE_CLOUD_PROJECT' "$render_dir/hub-vertex-embedding-worker.yaml"
+          if grep -q 'name: EMBEDDING_PROVIDER_API_KEY' "$render_dir/hub-vertex-embedding-worker.yaml"; then
+            echo 'API key injected into Vertex worker' >&2
+            exit 1
+          fi
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddingClient.enabled=true \
+            --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=tei-model \
+            --set hub.embeddingClient.auth.existingSecret=embedding-key \
+            --set hub.embeddingClient.maxConcurrent=16 \
+            --set hub.embeddingClient.batchSize=8 \
+            --set hub.env.EMBEDDING_MAX_CONCURRENT=9 \
+            --set hub.worker.env.EMBEDDING_BATCH_SIZE=4 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-external-embedding-tuning.yaml"
+          test "$(grep -c 'name: EMBEDDING_MAX_CONCURRENT' "$render_dir/hub-external-embedding-tuning.yaml")" -eq 1
+          test "$(grep -c 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-external-embedding-tuning.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_MAX_CONCURRENT' "$render_dir/hub-external-embedding-tuning.yaml" | grep -q 'value: "16"'
+          grep -A1 'name: EMBEDDING_BATCH_SIZE' "$render_dir/hub-external-embedding-tuning.yaml" | grep -q 'value: "8"'
+
+          # Explicit timing values render once; worker env wins over common env and chart values.
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.worker.embeddingPreflight.timeoutSeconds=10 \
+            --set hub.worker.embeddingPreflight.intervalSeconds=60 \
+            --set hub.worker.embeddingPreflight.successTTLSeconds=120 \
+            --set hub.worker.embeddingPreflight.snoozeSeconds=30 \
+            --set hub.env.EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS=11 \
+            --set hub.worker.env.EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS=12 \
+            --set hub.env.EMBEDDING_PREFLIGHT_INTERVAL_SECONDS=61 \
+            --set hub.worker.env.EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS=121 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-preflight-override.yaml"
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "12"'
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_INTERVAL_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_INTERVAL_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "61"'
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "121"'
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_SNOOZE_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_SNOOZE_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "30"'
+
+          expect_embedding_render_failure() {
+            local name="$1" pattern="$2"
+            shift 2
+            if helm template qa "$chart" --set formbricks.webappUrl=https://qa.example.com \
+              "$@" --show-only templates/hub-worker-deployment.yaml > "$render_dir/$name.yaml" 2>&1; then
+              echo "Expected invalid embedding configuration '$name' to fail" >&2
+              exit 1
+            fi
+            grep -q "$pattern" "$render_dir/$name.yaml"
+          }
+          expect_embedding_render_failure conflicting-modes 'cannot both be true' \
+            --set hub.embeddings.enabled=true --set hub.embeddingClient.enabled=true \
+            --set hub.embeddingClient.provider=openai --set hub.embeddingClient.model=model
+          expect_embedding_render_failure unsupported-provider 'provider must be' \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=unsupported \
+            --set hub.embeddingClient.model=model
+          expect_embedding_render_failure non-openai-base 'base URL is supported only for openai' \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=google-gemini \
+            --set hub.embeddingClient.model=model --set hub.embeddingClient.baseUrl=https://example.com/v1
+          expect_embedding_render_failure missing-auth 'auth.existingSecret is required' \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=model
+          expect_embedding_render_failure missing-input-cap 'maxInputBytes is required' \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=model --set hub.embeddingClient.auth.existingSecret=embedding-key \
+            --set hub.embeddingClient.maxInputBytes=null
+          helm template qa "$chart" --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=model --set hub.embeddingClient.auth.existingSecret=embedding-key \
+            --set hub.embeddingClient.maxInputBytes=0 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-zero-input-cap.yaml"
+          grep -A1 'name: EMBEDDING_MAX_INPUT_BYTES' "$render_dir/hub-zero-input-cap.yaml" | grep -q 'value: "0"'
+          expect_embedding_render_failure duplicate-readiness-mount 'conflicts with the embedding readiness mount' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            --set 'hub.extraVolumeMounts[0].name=existing' \
+            --set 'hub.extraVolumeMounts[0].mountPath=/run/hub'
+          expect_embedding_render_failure old-readiness-image 'pinned 0.14.1 image does not support it' \
+            --set hub.worker.embeddingReadiness.enabled=true
+          expect_embedding_render_failure relative-readiness-path 'path must be absolute' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            --set hub.worker.embeddingReadiness.path=ready
+          expect_embedding_render_failure root-readiness-path 'path must be absolute' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            --set hub.worker.embeddingReadiness.path=/ready
+          expect_embedding_render_failure duplicate-readiness-env 'HUB_EMBEDDING_READINESS_FILE is managed' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            --set hub.env.HUB_EMBEDDING_READINESS_FILE=/tmp/ready
+
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.embeddingClient.enabled=true \
+            --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=tei-model \
+            --set hub.embeddingClient.apiBaseUrl=http://foreground.example/v1 \
+            --set hub.embeddingClient.workerBaseUrl=http://background.example/v1 \
+            --set hub.embeddingClient.auth.existingSecret=embedding-key \
+            --set hub.embeddingBackfill.enabled=true \
+            --set hub.embeddingBackfill.runId=provider-canary \
+            --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-external-embedding-backfill.yaml"
+          grep -A1 'name: EMBEDDING_PROVIDER' "$render_dir/hub-external-embedding-backfill.yaml" | grep -q 'value: "openai"'
+          grep -A1 'name: EMBEDDING_MODEL' "$render_dir/hub-external-embedding-backfill.yaml" | grep -q 'value: "tei-model"'
+          grep -A1 'name: EMBEDDING_BASE_URL' "$render_dir/hub-external-embedding-backfill.yaml" | grep -q 'value: "http://background.example/v1"'
+          if grep -q 'http://foreground.example/v1' "$render_dir/hub-external-embedding-backfill.yaml"; then
+            echo 'Foreground endpoint leaked into embedding backfill' >&2
+            exit 1
+          fi
+
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \

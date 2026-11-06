@@ -1,6 +1,6 @@
 {{- if and .Values.hub.enabled .Values.hub.embeddingBackfill.enabled }}
-{{- if not .Values.hub.embeddings.enabled }}
-  {{- fail "hub.embeddingBackfill.enabled requires hub.embeddings.enabled" }}
+{{- if not (or .Values.hub.embeddings.enabled .Values.hub.embeddingClient.enabled) }}
+  {{- fail "hub.embeddingBackfill.enabled requires hub.embeddings.enabled or hub.embeddingClient.enabled" }}
 {{- end }}
 {{- if not .Values.hub.embeddingBackfill.runId }}
   {{- fail "hub.embeddingBackfill.runId is required when the backfill Job is enabled" }}
@@ -70,8 +70,9 @@ spec:
                 name: {{ include "formbricks.hubSecretName" . }}
           env:
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "worker" true) | nindent 12 }}
+            {{- include "formbricks.hubEmbeddingClientEnv" (dict "root" $ "worker" true) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
-            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
+            {{- if and (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.hub.embeddingClient.enabled (include "formbricks.hubEmbeddingClientEnvManaged" (dict "root" $ "worker" true "key" $key)))) }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}

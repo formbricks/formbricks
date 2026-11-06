@@ -427,6 +427,42 @@ When the background pool is disabled, Hub worker reuses the foreground `baseUrl`
 with `deployRuntime=false`, `background.baseUrl` is required. The chart continues wiring Hub and the
 worker but omits the bundled TEI Deployments, StatefulSet, Services, PVC, HPAs, and PDB.
 
+For an independently managed OpenAI-compatible runtime or managed Vertex provider, use
+`hub.embeddingClient` instead of `hub.embeddings`. Set `provider`, `model`, and the provider-specific
+endpoint or project/location values. `apiBaseUrl` and `workerBaseUrl` can route search and background
+embedding to separate endpoints. API-key providers read a Kubernetes Secret through
+`auth.existingSecret`; Vertex uses Application Default Credentials. For example:
+
+```yaml
+hub:
+  embeddingClient:
+    enabled: true
+    provider: openai
+    model: configured-model
+    apiBaseUrl: https://foreground.example.com/v1
+    workerBaseUrl: https://background.example.com/v1
+    auth:
+      existingSecret: embedding-provider-key
+    maxConcurrent: "16"
+    batchSize: "8"
+```
+
+When `embeddingClient.enabled=true`, its values manage the matching embedding environment variables
+and take precedence over `hub.env` and `hub.worker.env`. Copy existing tuning such as
+`EMBEDDING_MAX_CONCURRENT`, `EMBEDDING_BATCH_SIZE`, input limits, and job deadlines into the
+corresponding `embeddingClient` values before switching modes. `responseModel` is optional; set it
+only when the provider reports a stable model name that Hub should validate exactly.
+
+The worker performs a real provider preflight before consuming embedding queues. Its default timeout,
+refresh interval, last-success validity, and degraded-job snooze are 10, 60, 120, and 30 seconds.
+`hub.worker.embeddingPreflight` can override each value; omitted values use the Hub defaults or
+values supplied by the Hub Secret. `hub.worker.embeddingReadiness.enabled` adds a local exec probe
+and writable marker volume; it requires a Hub release containing
+[formbricks/hub#161](https://github.com/formbricks/hub/pull/161). The chart's pinned Hub 0.14.1 image
+does not support that command and is rejected when this probe is enabled. Update `hub.image.digest`
+to a compatible release before enabling it. The marker path must be an absolute path below `/`,
+configured only through `hub.worker.embeddingReadiness.path`.
+
 For sustained background throughput, enable the worker-only TEI pool. Hub API and semantic-search
 queries continue to use the foreground service; only `hub-worker` receives the background URL and
 micro-batch settings:
@@ -461,6 +497,7 @@ An existing `hub.worker.env.EMBEDDING_HTTP_DISABLE_KEEP_ALIVES` override remains
 precedence over `hub.embeddings.background.httpDisableKeepAlives` during chart upgrades.
 
 Embedding backfills are opt-in and never render a Job unless `hub.embeddingBackfill.enabled=true`.
+They can use either `hub.embeddings` or `hub.embeddingClient` for provider and model settings.
 Each deliberate run requires a new `runId`; start with `countOnly: true`, then use `tenantId` or
 `maxRecords` to limit canary waves before an unlimited run. The selected Hub image must include
 `/app/backfill-embeddings` (a release containing [formbricks/hub#121](https://github.com/formbricks/hub/pull/121));
@@ -1019,6 +1056,24 @@ Upgrading from a chart that did not render the web container context:
 | hub.embeddingBackfill.runId                                        | string | `""`                                                                        | Required unique identifier for each enabled Job run.      |
 | hub.embeddingBackfill.taxonomy                                     | bool   | `false`                                                                     | Use taxonomy-translated embedding input.                  |
 | hub.embeddingBackfill.tenantId                                     | string | `""`                                                                        | Restrict the run to one tenant.                           |
+| hub.embeddingClient.apiBaseUrl                                     | string | `""`                                                                        | Foreground provider endpoint.                             |
+| hub.embeddingClient.auth.existingSecret                            | string | `""`                                                                        | Secret for API-key providers.                             |
+| hub.embeddingClient.auth.secretKey                                 | string | `"EMBEDDING_PROVIDER_API_KEY"`                                              | Key within the provider Secret.                           |
+| hub.embeddingClient.baseUrl                                        | string | `""`                                                                        | Shared OpenAI-compatible endpoint fallback.               |
+| hub.embeddingClient.batchMaxInFlight                               | string | `"1"`                                                                       | Maximum concurrent batch requests.                        |
+| hub.embeddingClient.batchMaxWaitMs                                 | string | `"25"`                                                                      | Maximum batch collection wait in milliseconds.            |
+| hub.embeddingClient.batchSize                                      | string | `"1"`                                                                       | Document batch size; 1 disables batching.                 |
+| hub.embeddingClient.enabled                                        | bool   | `false`                                                                     | Enables an external embedding provider.                   |
+| hub.embeddingClient.googleCloudLocation                            | string | `""`                                                                        | Required for Vertex.                                      |
+| hub.embeddingClient.googleCloudProject                             | string | `""`                                                                        | Required for Vertex.                                      |
+| hub.embeddingClient.jobTimeoutSeconds                              | string | `"60"`                                                                      | Worker embedding job deadline.                            |
+| hub.embeddingClient.maxConcurrent                                  | string | `"5"`                                                                       | Worker embedding concurrency.                             |
+| hub.embeddingClient.maxInputBytes                                  | string | `"12000"`                                                                   | Provider input cap in UTF-8 bytes.                        |
+| hub.embeddingClient.model                                          | string | `""`                                                                        | Requested embedding model.                                |
+| hub.embeddingClient.normalize                                      | string | `"false"`                                                                   | Normalize returned vectors.                               |
+| hub.embeddingClient.provider                                       | string | `""`                                                                        | openai, google, or google-gemini.                         |
+| hub.embeddingClient.responseModel                                  | string | `""`                                                                        | Opt-in exact response-model validation.                   |
+| hub.embeddingClient.workerBaseUrl                                  | string | `""`                                                                        | Background provider endpoint.                             |
 | hub.existingSecret                                                 | string | `""`                                                                        |                                                           |
 | hub.extraVolumeMounts                                              | list   | `[]`                                                                        | Additional volume mounts for Hub API and worker.          |
 | hub.extraVolumes                                                   | list   | `[]`                                                                        | Additional pod volumes for Hub API and worker.            |
@@ -1041,6 +1096,12 @@ Upgrading from a chart that did not render the web container context:
 | hub.worker.autoscaling.enabled                                     | bool   | `false`                                                                     |                                                           |
 | hub.worker.autoscaling.maxReplicas                                 | int    | `5`                                                                         |                                                           |
 | hub.worker.autoscaling.minReplicas                                 | int    | `1`                                                                         |                                                           |
+| hub.worker.embeddingPreflight.intervalSeconds                      | null   | `null`                                                                      | Synthetic probe refresh interval.                         |
+| hub.worker.embeddingPreflight.snoozeSeconds                        | null   | `null`                                                                      | Delay for claimed work while degraded.                    |
+| hub.worker.embeddingPreflight.successTTLSeconds                    | null   | `null`                                                                      | Validity of the last successful probe.                    |
+| hub.worker.embeddingPreflight.timeoutSeconds                       | null   | `null`                                                                      | Synthetic request deadline.                               |
+| hub.worker.embeddingReadiness.enabled                              | bool   | `false`                                                                     | Requires Hub image containing hub#161.                    |
+| hub.worker.embeddingReadiness.path                                 | string | `"/run/hub/embedding-ready"`                                                | Writable local marker path.                               |
 | hub.worker.enabled                                                 | bool   | `true`                                                                      |                                                           |
 | hub.worker.env                                                     | object | `{}`                                                                        |                                                           |
 | hub.worker.pdb.enabled                                             | bool   | `false`                                                                     |                                                           |
