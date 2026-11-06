@@ -17,6 +17,11 @@ import { createI18nString } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { CopyIdButton } from "@/modules/survey/editor/components/copy-id-button";
 import {
+  HiddenOptionBadge,
+  OptionHideButton,
+  type TSetOptionHidden,
+} from "@/modules/survey/editor/components/option-hide-button";
+import {
   LOCK_TOOLTIP_DELAY_MS,
   PublishedLockNotice,
 } from "@/modules/survey/editor/components/published-lock-notice";
@@ -42,6 +47,8 @@ interface ChoiceProps {
   readonly isStorageConfigured: boolean;
   /** What the published lock leaves open for this question (ENG-6790). */
   readonly lock: TElementLock;
+  /** The Hide quick action (ENG-6949); without it, the option has none. */
+  readonly onSetOptionHidden?: TSetOptionHidden;
 }
 
 export const ElementOptionChoice = ({
@@ -60,6 +67,7 @@ export const ElementOptionChoice = ({
   locale,
   isStorageConfigured,
   lock,
+  onSetOptionHidden,
 }: ChoiceProps) => {
   const { t } = useTranslation();
   const isSpecialChoice = choice.id === "other" || choice.id === "none";
@@ -93,6 +101,8 @@ export const ElementOptionChoice = ({
   const isTextLocked = lock.isOptionTextLocked("choices", choice.id, "default");
   const isDeleteLocked = lock.isOptionLocked("choices", choice.id);
 
+  const isHidden = choice.hidden === true;
+
   const normalChoice = element.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
 
   return (
@@ -102,7 +112,8 @@ export const ElementOptionChoice = ({
         <GripVerticalIcon className="size-4 cursor-move text-slate-400" />
       </div>
 
-      <div className="flex w-full gap-x-2">
+      {/* A Hidden option reads as hidden (ENG-6949): muted, with the Flow tab's Hidden badge. */}
+      <div className={cn("flex w-full gap-x-2", isHidden && "opacity-60")}>
         <ElementFormInput
           key={choice.id}
           id={`choice-${choiceIdx}`}
@@ -168,10 +179,14 @@ export const ElementOptionChoice = ({
         )}
       </div>
       <div className="flex items-center gap-2">
+        {isHidden && <HiddenOptionBadge />}
         {isTextLocked && <PublishedLockNotice kind="optionText" />}
         {/* An option added since launch has no lock; keep its row in line with the locked ones. */}
         {lock.isActive && !isTextLocked && <span aria-hidden="true" className="size-6 shrink-0" />}
         <CopyIdButton id={choice.id} label={t("workspace.surveys.edit.copy_option_id")} />
+        {onSetOptionHidden && (
+          <OptionHideButton item={choice} listKey="choices" onSetHidden={onSetOptionHidden} />
+        )}
         {(normalChoice.length > 1 || isSpecialChoice) && (
           <TooltipRenderer
             tooltipContent={

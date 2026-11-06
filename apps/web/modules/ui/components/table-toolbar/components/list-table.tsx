@@ -5,6 +5,7 @@ import { type CSSProperties, Fragment, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
+import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { TableNoMatch } from "./table-no-match";
@@ -12,6 +13,21 @@ import { TableNoMatch } from "./table-no-match";
 const SKELETON_ROWS = 6;
 /** Columns that hold a control (checkbox, row menu) rather than text: tight padding, never clipped. */
 const CONTROL_COLUMNS = new Set(["select", "actions"]);
+
+/**
+ * A column header that shows its whole text in a tooltip while it is cut off (ENG-6953 point 35),
+ * e.g. "services · Which streaming s…". Only then: a header that fits opens nothing.
+ */
+const HeaderLabel = ({
+  children,
+  disabled,
+}: {
+  readonly children: ReactNode;
+  readonly disabled: boolean;
+}) => {
+  if (disabled) return <>{children}</>;
+  return <TruncationTooltip className="block min-w-0">{children}</TruncationTooltip>;
+};
 
 /**
  * The table body every toolbar table shares: one header row, hairline rows, a skeleton while the first
@@ -218,9 +234,12 @@ export const ListTable = <TData,>({
                       pinClass(header.column.id, true),
                       CONTROL_COLUMNS.has(header.column.id) ? "px-2" : "px-4"
                     )}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {!header.isPlaceholder && (
+                      // A control header (the select-all checkbox) holds no text to cut off.
+                      <HeaderLabel disabled={CONTROL_COLUMNS.has(header.column.id)}>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </HeaderLabel>
+                    )}
                     {canResize && header.column.getCanResize() && !CONTROL_COLUMNS.has(header.column.id) && (
                       // Drag to resize; double-click puts the column back to its default width. A pointer
                       // affordance only, kept out of the header's accessible name.

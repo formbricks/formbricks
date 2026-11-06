@@ -36,6 +36,17 @@ properties:
       this same block
 
       has at least one `logic` rule; omit it for normal sequential flow.
+  showIf:
+    allOf:
+      - $ref: ./SurveyConditionGroup.yml
+    description: >-
+      Show-if: the block is shown only when this condition group matches. A block whose show-if
+      fails is skipped, and its `logic` still runs as if the block were submitted with no answers.
+      A block whose elements are all hidden by their show-if is skipped the same way. Conditions use
+      the same operands and operators as `logic`. Reference rule: a block's show-if may use answers
+      from earlier blocks only (plus hidden fields, variables and reserved fields); a violation fails
+      with `misordered_reference` at the exact condition path. Omit it, or send an empty group, for
+      a block that is always shown.
   buttonLabel:
     $ref: ./TranslatableText.yml
   backButtonLabel:

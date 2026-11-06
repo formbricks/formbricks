@@ -578,6 +578,49 @@ export const applyFormbricksFileReferences = async (
 };
 
 /**
+ * The draft's typed Embedded Data (`embeddedFields`, ENG-6930) fitted to the target's library, by the
+ * rule `linkFormbricksFileSharedFields` applies to the legacy shape: an entry naming a library key the
+ * target's library has with the same source and data type keeps it, and the create links it; any other
+ * keeps its definition as a field of the survey's own. Without this, the create refuses a key the
+ * target's library lacks. The draft unchanged when it has no typed fields (a file written before them).
+ */
+export const fitFormbricksFileEmbeddedFields = async <TDraft extends Record<string, unknown>>(
+  db: TReader,
+  { workspaceId, draft }: { workspaceId: string; draft: TDraft }
+): Promise<TDraft> => {
+  if (!Array.isArray(draft.embeddedFields)) return draft;
+  const entries: unknown[] = draft.embeddedFields;
+  const keys = [
+    ...new Set(
+      entries.flatMap((entry) =>
+        isPlainObject(entry) && typeof entry.key === "string" && entry.key !== "" ? [entry.key] : []
+      )
+    ),
+  ];
+  if (keys.length === 0) return draft;
+
+  const library = await db.embeddedData.findMany({
+    where: { workspaceId, surveyId: null, key: { in: keys } },
+    select: { key: true, source: true, dataType: true },
+  });
+  const signature = (field: { key?: unknown; source?: unknown; dataType?: unknown }) =>
+    `${String(field.key)}|${String(field.source)}|${String(field.dataType)}`;
+  const librarySignatures = new Set(library.map(signature));
+
+  return {
+    ...draft,
+    embeddedFields: entries.map((entry) =>
+      isPlainObject(entry) &&
+      typeof entry.key === "string" &&
+      entry.key !== "" &&
+      !librarySignatures.has(signature(entry))
+        ? { ...entry, key: null }
+        : entry
+    ),
+  };
+};
+
+/**
  * The survey's embedded-data fields with its shared ones linked to the target's library, where the
  * library has the same key, source and data type, read in one query. `undefined` when none links, so
  * the create keeps every field the survey's own, which is what it does with the legacy shape alone.

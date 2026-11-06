@@ -52,7 +52,11 @@ const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-
 
 /** Properties the survey alone describes; every other one (attributes, tags, meta…) needs the filter data. */
 const isSurveyOnlyProperty = (id: string) =>
-  id === "status" || id === "createdAt" || id === "language" || id.startsWith("question.");
+  id === "status" ||
+  id === "createdAt" ||
+  id === "language" ||
+  id.startsWith("question.") ||
+  id.startsWith("shown.");
 
 /** Whether the URL's filter names a property only the filter data can describe. */
 const urlNeedsFilterData = (search: URLSearchParams) =>

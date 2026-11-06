@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ZId } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZSurveyElementId, ZSurveyElements } from "./elements";
+import { ZExpressionValue } from "./expressions";
 import {
   ZActionNumberVariableCalculateOperator,
   ZActionTextVariableCalculateOperator,
@@ -54,11 +55,31 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   }
 });
 
-export const ZActionCalculate = z.union([ZActionCalculateText, ZActionCalculateNumber]);
+/**
+ * Set value (ENG-6935, ADR 0031): assigns the result of an expression tree (ADR 0030) to a computed
+ * field of any computed type. A third member of the union, so the one-step operators above keep
+ * today's behaviour ("empty counts as 0") and this one has its own ("empty in, empty out").
+ */
+export const ZActionCalculateExpression = ZActionCalculateBase.extend({
+  operator: z.literal("assign"),
+  value: ZExpressionValue,
+});
+
+export type TActionCalculateExpression = z.infer<typeof ZActionCalculateExpression>;
+
+export const ZActionCalculate = z.union([
+  ZActionCalculateText,
+  ZActionCalculateNumber,
+  ZActionCalculateExpression,
+]);
 
 export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
-export type TSurveyBlockLogicActionObjective = "calculate" | "requireAnswer" | "jumpToBlock";
+export type TSurveyBlockLogicActionObjective =
+  | "calculate"
+  | "requireAnswer"
+  | "jumpToBlock"
+  | "markLowQuality";
 
 // RequireAnswer action - targets element IDs
 
@@ -104,9 +125,25 @@ export const ZActionJumpToBlock = z.object({
 
 export type TActionJumpToBlock = z.infer<typeof ZActionJumpToBlock>;
 
+// MarkLowQuality action (ENG-6933, ADR 0022/0024): when the rule fires, the survey asks the server to
+// mark the response Low quality with its next create or update (`markLowQuality: true`). The respondent
+// sees nothing. It takes no target, and is refused in the rules before the first question.
+
+export const ZActionMarkLowQuality = z.object({
+  id: ZId,
+  objective: z.literal("markLowQuality"),
+});
+
+export type TActionMarkLowQuality = z.infer<typeof ZActionMarkLowQuality>;
+
 // Block logic actions
 
-export const ZSurveyBlockLogicAction = z.union([ZActionCalculate, ZActionRequireAnswer, ZActionJumpToBlock]);
+export const ZSurveyBlockLogicAction = z.union([
+  ZActionCalculate,
+  ZActionRequireAnswer,
+  ZActionJumpToBlock,
+  ZActionMarkLowQuality,
+]);
 
 export type TSurveyBlockLogicAction = z.infer<typeof ZSurveyBlockLogicAction>;
 
@@ -132,6 +169,12 @@ export const ZSurveyBlock = z
     }),
     logic: z.array(ZSurveyBlockLogic).optional(),
     logicFallback: ZSurveyBlockId.optional(),
+    /**
+     * Show-if (ENG-6931): the block is shown only when this condition group matches. A block whose
+     * show-if fails is skipped, and its logic still runs as if it were submitted with no answers. It
+     * may use earlier blocks only. Absent, or an empty group, means always shown.
+     */
+    showIf: ZConditionGroup.optional(),
     buttonLabel: ZI18nString.optional(),
     backButtonLabel: ZI18nString.optional(),
   })

@@ -4,6 +4,7 @@ import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TResponseVariables } from "@formbricks/types/responses";
+import { displayEmbeddedFieldValue } from "@/modules/embedded-data/lib/value-display";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface ResponseVariablesProps {
@@ -13,7 +14,8 @@ interface ResponseVariablesProps {
 }
 
 export const ResponseVariables = ({ variables, variablesData }: Readonly<ResponseVariablesProps>) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   return (
     <div className="mt-6 flex flex-col gap-6">
       {variables.map(({ field, link }) => {
@@ -22,6 +24,8 @@ export const ResponseVariables = ({ variables, variablesData }: Readonly<Respons
           !["string", "number"].includes(typeof variablesData[link.storageKey])
         )
           return null;
+        // A date field set by now() keeps its time (P65); the stored value is the tooltip.
+        const shown = displayEmbeddedFieldValue(variablesData[link.storageKey], field.dataType, locale);
         return (
           <div key={link.storageKey}>
             <div className="flex gap-x-2 text-sm text-slate-500">
@@ -43,8 +47,8 @@ export const ResponseVariables = ({ variables, variablesData }: Readonly<Respons
                 </TooltipProvider>
               </div>
             </div>
-            <p className="ph-no-capture mt-2 font-semibold text-slate-700">
-              {variablesData[link.storageKey]}
+            <p className="ph-no-capture mt-2 font-semibold text-slate-700" title={shown?.title}>
+              {shown?.text}
             </p>
           </div>
         );

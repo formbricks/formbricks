@@ -1,10 +1,12 @@
 import { createId } from "@paralleldrive/cuid2";
+import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import {
   buildV3SurveyCreateInput,
   getV3SurveyCreateInputInvalidParams,
 } from "@/app/api/v3/surveys/create-input";
+import { type TV3SurveyEmbeddedField, toLinkedEmbeddedFields } from "@/app/api/v3/surveys/embedded-fields";
 import { deriveV3SurveyLanguageRequests } from "@/app/api/v3/surveys/languages";
 import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { validateV3SurveyDocument } from "@/app/api/v3/surveys/validation";
@@ -82,8 +84,30 @@ function checkCreateInput(document: TSurveyImportPayload, data: TParsedDraft): I
     enabled: request.enabled,
   }));
 
-  return getV3SurveyCreateInputInvalidParams(buildV3SurveyCreateInput(data, { languages, createdBy: null }));
+  return getV3SurveyCreateInputInvalidParams(
+    buildV3SurveyCreateInput(data, {
+      languages,
+      createdBy: null,
+      embeddedFields: toCheckedEmbeddedFields(data),
+    })
+  );
 }
+
+/**
+ * The draft's typed Embedded Data (ENG-6930) as the write input carries it, as the v3 create passes it:
+ * a calculated date the legacy `variables` leave out is declared there only. A library entry gets a
+ * stand-in id, since only the shape is checked here; the create links the real row. `undefined` when
+ * the draft has none, or an entry the create still has to complete (no storage key yet).
+ */
+const toCheckedEmbeddedFields = (data: TParsedDraft): TLinkedEmbeddedField[] | undefined => {
+  const entries = data.embeddedFields as TV3SurveyEmbeddedField[] | undefined;
+  if (!entries || entries.some((entry) => typeof entry.storageKey !== "string")) return undefined;
+  const standInIds = new Map(
+    entries.flatMap((entry) => (typeof entry.key === "string" ? [[entry.key, createId()] as const] : []))
+  );
+  const linked = toLinkedEmbeddedFields(entries, standInIds);
+  return linked.ok ? linked.fields : undefined;
+};
 
 const ELEMENT_PATH = /^blocks\.(\d+)\.elements\.(\d+)(?:\.|$)/;
 

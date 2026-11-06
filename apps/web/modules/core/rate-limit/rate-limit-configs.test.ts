@@ -125,6 +125,7 @@ describe("rateLimitConfigs", () => {
         "v3SurveyGenerate",
         "internalAiTranslate",
         "v3SurveyVisibility",
+        "v3SurveysFullList",
         "v3CustomCss",
         "v3ChartQueries",
         "v3ChartQueriesInFlight",
@@ -136,6 +137,12 @@ describe("rateLimitConfigs", () => {
         "clientEnvironment",
         "clientCreativeEvents",
       ]);
+      // One `view=full` survey page carries up to 50 whole documents (ENG-6861); looser is a DoS regression.
+      expect(rateLimitConfigs.api.v3SurveysFullList).toEqual({
+        interval: 60,
+        allowedPerInterval: 30,
+        namespace: "api:v3:surveys:full-list",
+      });
       // The API twin of `actions.stateMutation`, per principal, for writes that fan out to the pipeline.
       expect(rateLimitConfigs.api.v3StateMutation).toEqual({
         interval: 60,

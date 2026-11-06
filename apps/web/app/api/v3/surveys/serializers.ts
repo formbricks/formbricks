@@ -11,6 +11,7 @@ import type { TSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
 import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
+import { toV3SurveyEmbeddedFields } from "./embedded-fields";
 import { isInternalI18nString, isPlainObject } from "./guards";
 import {
   type TV3SurveyResolverLanguage,
@@ -303,6 +304,11 @@ export function serializeV3SurveyResource(
     endings: serializeValue(survey.endings),
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    // ENG-6932: rules before the first question, always an array (`[]` when the survey has none). They
+    // hold no translatable text, so they are emitted as stored.
+    startLogic: survey.startLogic ?? [],
+    // ENG-6930: the typed fields the legacy pair above is derived from (ADR 0028).
+    embeddedFields: toV3SurveyEmbeddedFields(survey.embeddedFields ?? []),
     // App-only runtime/distribution + targeting, via the shared survey→public mappers. Omitted
     // entirely for link surveys to keep the contract clean.
     ...(survey.type === "app"
@@ -311,5 +317,22 @@ export function serializeV3SurveyResource(
     // ENG-3641: editable source for authorized readers. Compiled output and the processor version are
     // internal and go only to respondents, through the delivery path.
     customCss: toCustomCssSource(survey.customCss),
+  };
+}
+
+/**
+ * ENG-6861: one `view=full` list item, the summary item plus the whole {@link serializeV3SurveyResource}
+ * document, so switching views only ever adds fields. The document and its owner's name are read after
+ * the page, so where both carry a field the document wins: an item never pairs newer `blocks` with an
+ * older `updatedAt`, or one owner's `access` with another's name.
+ */
+export function serializeV3SurveyFullListItem(
+  listRecord: TSurveyListRecord,
+  document: Readonly<{ survey: TInternalSurvey; ownerName: string | null }>,
+  visibilityContext: TV3SurveyVisibilityContext
+) {
+  return {
+    ...serializeV3SurveyListItem(listRecord, visibilityContext),
+    ...serializeV3SurveyResource(document.survey, { ...visibilityContext, ownerName: document.ownerName }),
   };
 }

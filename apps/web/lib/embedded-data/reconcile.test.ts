@@ -110,6 +110,29 @@ describe("resolveDesiredEmbeddedFields", () => {
     expect(result).toEqual([renamed, currentPlan]);
   });
 
+  test("a legacy variables write keeps a computed date, which the legacy shape has no word for, in place", () => {
+    // A v1 PUT resends the derived variables, and a computed date (ENG-6935) is never among them.
+    const signedUpAt: TDesiredEmbeddedField = {
+      ...desiredScore,
+      storageKey: "var_signed_up_at",
+      name: "signed_up_at",
+      dataType: "date",
+      defaultValue: null,
+    };
+    const level: TDesiredEmbeddedField = { ...desiredScore, storageKey: "var_level", name: "level" };
+    const stored = [currentScore, signedUpAt, level, currentPlan];
+    const legacy = [currentScore, level].map(({ storageKey, name }) => ({
+      id: storageKey,
+      name,
+      type: "number" as const,
+      value: 0,
+    }));
+
+    expect(resolveDesiredEmbeddedFields(stored, { variables: legacy })).toEqual(stored);
+    // Clearing the variables clears what the legacy shape can say, and nothing else.
+    expect(resolveDesiredEmbeddedFields(stored, { variables: [] })).toEqual([signedUpAt, currentPlan]);
+  });
+
   test("the ingested group is independent of the computed one", () => {
     const result = resolveDesiredEmbeddedFields(current, {
       hiddenFields: { enabled: true, fieldIds: ["plan", "tier"] },

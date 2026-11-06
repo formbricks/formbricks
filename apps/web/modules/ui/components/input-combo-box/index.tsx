@@ -7,6 +7,7 @@ import React, {
   Fragment,
   RefAttributes,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -36,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
+import { countChipsThatFit } from "./lib/fit-chips";
 import { filterComboboxOption } from "./lib/search";
 
 /**
@@ -66,7 +68,25 @@ export interface TComboboxOption {
   children?: TComboboxOption[];
   /** Listed, searchable and dimmed, but can't be picked (say why with `meta.badge` or a note nearby). */
   disabled?: boolean;
+  /** A short mark before the icon in the list, such as a block's number. Not shown once picked. */
+  leading?: string;
+  /**
+   * An operator's symbol ("+", "×", ">="), drawn as a pill before the label, in the list and once
+   * picked, so pickers match how a rule reads elsewhere.
+   */
+  symbol?: string;
+  /** Shows only the `symbol` pill; `label` still names the option for search and screen readers. */
+  symbolOnly?: boolean;
 }
+
+/** An operator's symbol as a small pill. */
+const OptionSymbol = ({ symbol }: { readonly symbol: string }) => (
+  <span
+    className="inline-flex h-5 min-w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 px-1.5 font-mono text-xs font-semibold text-slate-700"
+    aria-hidden="true">
+    {symbol}
+  </span>
+);
 
 export interface TComboboxGroupedOption {
   label: string;
@@ -105,6 +125,8 @@ export interface InputComboboxProps {
    * them, for pickers whose options are whole sentences, such as survey questions.
    */
   readonly wideDropdown?: boolean;
+  /** Classes for the open list, after its own: a fixed width for a target picker, say. */
+  readonly dropdownClassName?: string;
   readonly disabled?: boolean;
   // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
   // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
@@ -170,9 +192,19 @@ function ComboboxOptionLabel({
     : "truncate text-slate-900";
   return (
     <>
-      {showCheckIcon && selected && (
-        <CheckIcon className="size-4 shrink-0 text-slate-300 hover:text-slate-400" />
+      {/* Every row keeps the check's room, so picked and unpicked labels line up (jobenjada #28). */}
+      {showCheckIcon && (
+        <CheckIcon
+          className={cn("size-4 shrink-0 text-slate-800", !selected && "invisible")}
+          aria-hidden="true"
+        />
       )}
+      {option.leading !== undefined && (
+        <span className="w-4 shrink-0 text-right font-mono text-xs text-slate-400" aria-hidden="true">
+          {option.leading}
+        </span>
+      )}
+      {option.symbol !== undefined && <OptionSymbol symbol={option.symbol} />}
       {option.icon && <option.icon className={cn("shrink-0", iconClassName)} />}
       {option.imgSrc && (
         <Image
@@ -206,9 +238,89 @@ function ComboboxOptionLabel({
           )}
         </span>
       ) : (
-        <span className={labelClassName}>{option.label}</span>
+        <span className={option.symbolOnly && option.symbol !== undefined ? "sr-only" : labelClassName}>
+          {option.label}
+        </span>
       )}
     </>
+  );
+}
+
+/** A submenu choice: its label, with a check when it is the one picked. */
+function SubmenuItemLabel({ label, selected }: Readonly<{ label: string; selected: boolean }>) {
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <CheckIcon
+        className={cn("size-4 shrink-0 text-slate-800", !selected && "invisible")}
+        aria-hidden="true"
+      />
+      <span className="truncate" title={label}>
+        {label}
+      </span>
+    </span>
+  );
+}
+
+const CHIP_GAP_PX = 4;
+/** Room for the "+N" chip: two digits at `text-xs` with its padding. */
+const CHIP_COUNTER_PX = 32;
+const CHIP_CLASS_NAME =
+  "shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs whitespace-nowrap text-slate-700";
+
+/**
+ * A multi-select's picks as chips on one line, with "+N" for those that don't fit (jobenjada review
+ * #28: they used to stack and get cut off). An invisible copy of every chip is measured, so how many
+ * show depends only on the box's width, never on what showed last.
+ */
+function SelectedChips({ options }: Readonly<{ options: TComboboxOption[] }>) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(options.length);
+  const labelsKey = options.map((option) => option.label).join("\u0000");
+
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const measure = measureRef.current;
+    if (!box || !measure || typeof ResizeObserver === "undefined") return;
+    // A ResizeObserver reports once as soon as it observes, so this also runs on mount.
+    const observer = new ResizeObserver(() => {
+      const widths = Array.from(measure.children).map((chip) => (chip as HTMLElement).offsetWidth);
+      setVisibleCount(
+        countChipsThatFit(widths, box.clientWidth, { gap: CHIP_GAP_PX, counterWidth: CHIP_COUNTER_PX })
+      );
+    });
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [labelsKey]);
+
+  const shown = options.slice(0, Math.max(1, visibleCount));
+  const hiddenCount = options.length - shown.length;
+
+  return (
+    <div
+      ref={boxRef}
+      className="relative flex w-full min-w-0 items-center gap-1 overflow-hidden"
+      title={options.map((option) => option.label).join(", ")}>
+      {shown.map((option, index) => (
+        <span
+          key={String(option.value)}
+          // The first chip may be cut short when it alone is wider than the box.
+          className={cn(CHIP_CLASS_NAME, index === 0 && "min-w-0 shrink truncate")}>
+          {option.label}
+        </span>
+      ))}
+      {hiddenCount > 0 && <span className={CHIP_CLASS_NAME}>+{hiddenCount}</span>}
+      <div
+        ref={measureRef}
+        aria-hidden
+        className="pointer-events-none invisible absolute top-0 left-0 flex gap-1 whitespace-nowrap">
+        {options.map((option) => (
+          <span key={String(option.value)} className={CHIP_CLASS_NAME}>
+            {option.label}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -231,6 +343,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   onSearchChange,
   iconClassName = "h-5 w-5 text-slate-400",
   wideDropdown = false,
+  dropdownClassName,
   disabled = false,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
@@ -328,33 +441,15 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   // value anyway, so the manual memo only made the two disagree (ENG-2366).
   const renderDisplayValue = () => {
     if (Array.isArray(localValue)) {
-      return localValue.map((v, i) => {
-        const opt = validOptions?.find((o) => o.value === v);
-        if (!opt) return null;
-        return (
-          <Fragment key={i}>
-            {i > 0 && <span>, </span>}
-            <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-              {opt.icon && <opt.icon className={cn("shrink-0", iconClassName)} />}
-              {opt.imgSrc && (
-                <Image
-                  src={opt.imgSrc}
-                  alt={opt.label}
-                  width={24}
-                  height={24}
-                  unoptimized={isExternalImageSrc(opt.imgSrc)}
-                />
-              )}
-              <span className="truncate" title={opt.label}>
-                {opt.label}
-              </span>
-            </div>
-          </Fragment>
-        );
-      });
+      const picked = localValue.flatMap((v) => validOptions?.filter((o) => o.value === v).slice(0, 1) ?? []);
+      return <SelectedChips options={picked} />;
     }
 
-    const opt = validOptions?.find((o) => o.value === localValue);
+    // A submenu's choice can share its value with the item that opens the submenu (a matrix's "Any
+    // row" and the matrix itself): show the choice, which says what was picked.
+    const opt =
+      validOptions?.find((o) => o.value === localValue && !o.children) ??
+      validOptions?.find((o) => o.value === localValue);
     if (!opt) return null;
     return (
       <div className="flex min-w-0 items-center gap-2 overflow-hidden">
@@ -368,9 +463,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             unoptimized={isExternalImageSrc(opt.imgSrc)}
           />
         )}
-        <span className="truncate" title={opt.label}>
-          {opt.label}
-        </span>
+        {opt.symbol !== undefined && <OptionSymbol symbol={opt.symbol} />}
+        {opt.symbolOnly && opt.symbol !== undefined ? (
+          <span className="sr-only">{opt.label}</span>
+        ) : (
+          <span className="truncate" title={opt.label}>
+            {opt.label}
+          </span>
+        )}
       </div>
     );
   };
@@ -392,6 +492,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     <div
       className={cn(
         "group/icon flex h-10 max-w-[440px] min-w-0 overflow-hidden rounded-md border border-slate-300 hover:border-slate-400",
+        // A plain dropdown with nothing picked keeps room for a value. In a box that sizes to its
+        // content (the Set value field picker) it otherwise shrank to its chevron.
+        !withInput && inputType !== "dropdown" && "min-w-32",
         disabled && "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60 hover:border-slate-200",
         comboboxClasses
       )}>
@@ -401,7 +504,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           {...inputProps}
           disabled={disabled || inputProps?.disabled}
           className={cn(
-            "min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "min-w-0 flex-1 rounded-none border-0 border-r border-slate-300 bg-white focus:border-r-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0",
             inputProps?.className
           )}
           value={localValue ?? ""}
@@ -445,7 +548,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
       )}
 
       <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : handleOpenChange}>
-        <DropdownMenuTrigger asChild className="z-10 min-w-0 flex-1">
+        <DropdownMenuTrigger asChild>
           <div
             id={id}
             role="combobox"
@@ -457,10 +560,14 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             aria-controls="options"
             aria-expanded={open}
             aria-disabled={disabled || undefined}
+            // Next to the input or date picker the trigger is a fixed 40px chevron, and they take the
+            // rest. It must not also grow: a `flex-1` (basis 0) here squeezed it to nothing beside a
+            // full-width input, which hid the picker (jobenjada review #21), and split the row in half
+            // beside the date picker (#29).
             className={cn(
-              "flex h-full w-full min-w-0 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
+              "z-10 flex h-full w-full min-w-0 flex-1 cursor-pointer items-center overflow-hidden bg-white pr-2 text-sm",
               {
-                "w-10 shrink-0 justify-center pr-0": withInput && inputType !== "dropdown",
+                "w-10 flex-none justify-center pr-0": withInput && inputType !== "dropdown",
                 "pointer-events-none": isClearing || disabled,
                 "cursor-not-allowed bg-transparent": disabled,
               }
@@ -505,7 +612,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             "min-w-52 overflow-y-hidden",
             wideDropdown
               ? "w-max max-w-[min(36rem,calc(100vw-2rem))] min-w-(--radix-dropdown-menu-trigger-width)"
-              : "w-(--radix-dropdown-menu-trigger-width)"
+              : "w-(--radix-dropdown-menu-trigger-width)",
+            dropdownClassName
           )}
           data-testid="dropdown-menu-content">
           <Command
@@ -563,7 +671,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 <Fragment key={gi}>
                   {gi > 0 && <CommandSeparator className="my-1 bg-slate-200" />}
                   <CommandGroup className="p-0" tabIndex={0}>
-                    <div className="px-2 pb-2 text-xs font-medium text-slate-500">{group.label}</div>
+                    {/* A group without a label draws no heading: a lone entry above the others. */}
+                    {group.label !== "" && (
+                      <div className="px-2 pb-2 text-xs font-medium text-slate-500">{group.label}</div>
+                    )}
                     {group.options.map((opt) =>
                       opt.children ? (
                         <CommandItem
@@ -579,25 +690,18 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                                   searchRef.current?.focus();
                                 }
                               }}>
-                              <div className="flex w-full items-center gap-2 truncate">
-                                {showCheckIcon && isSelected(opt) && (
-                                  <CheckIcon className="mr-2 size-4 text-slate-300 hover:text-slate-400" />
-                                )}
-                                {opt.icon && <opt.icon className={iconClassName} />}
-                                {opt.imgSrc && (
-                                  <Image
-                                    src={opt.imgSrc}
-                                    alt={opt.label}
-                                    width={24}
-                                    height={24}
-                                    className="shrink-0"
-                                    unoptimized={isExternalImageSrc(opt.imgSrc)}
-                                  />
-                                )}
-                                <span className="flex-1 truncate text-slate-900">{opt.label}</span>
+                              {/* The option's badge too: a matrix says it is one (jobenjada review #27). */}
+                              <div className="flex w-full min-w-0 items-center gap-2">
+                                <ComboboxOptionLabel
+                                  option={opt}
+                                  iconClassName={iconClassName}
+                                  showCheckIcon={showCheckIcon}
+                                  selected={isSelected(opt)}
+                                />
                               </div>
                             </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent alignOffset={4} className="w-48 p-1">
+                            {/* Wide enough for "Editor (grid · …)" on one line; the chosen one is checked. */}
+                            <DropdownMenuSubContent alignOffset={4} className="w-max max-w-80 min-w-48 p-1">
                               {opt.children.map((child) => (
                                 <div className="flex flex-col" key={child.value}>
                                   {child.children && child.children.length > 0 ? (
@@ -606,14 +710,17 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                                     </p>
                                   ) : (
                                     <DropdownMenuItem key={child.value} onSelect={() => handleSelect(child)}>
-                                      {child.label}
+                                      <SubmenuItemLabel label={child.label} selected={isSelected(child)} />
                                     </DropdownMenuItem>
                                   )}
                                   {child.children?.map((subChild) => (
                                     <DropdownMenuItem
                                       key={subChild.value}
                                       onSelect={() => handleSelect(subChild)}>
-                                      {subChild.label}
+                                      <SubmenuItemLabel
+                                        label={subChild.label}
+                                        selected={isSelected(subChild)}
+                                      />
                                     </DropdownMenuItem>
                                   ))}
 

@@ -218,6 +218,16 @@ export const AdvancedFilterDialog = ({
     onToggleGroupConnector: () => undefined,
   };
 
+  // Help for the properties the rules use, once each (shown / not shown explains what it reads).
+  const descriptions = [
+    ...new Set(
+      group.conditions
+        .filter(isCondition)
+        .map((condition) => propertyFor(condition)?.description)
+        .filter((description): description is string => !!description)
+    ),
+  ];
+
   const handleSave = () => {
     const { rules, incomplete } = conditionGroupToRules(group, ruleProperties);
     if (incomplete.length > 0) {
@@ -249,6 +259,11 @@ export const AdvancedFilterDialog = ({
             <PlusIcon />
             {t("common.add_filter")}
           </Button>
+          {descriptions.map((description) => (
+            <p key={description} className="text-sm text-slate-500">
+              {description}
+            </p>
+          ))}
           {incompleteIds.length > 0 && (
             <p role="alert" className="text-sm text-red-600">
               {t("common.table_toolbar.finish_or_remove_rules")}

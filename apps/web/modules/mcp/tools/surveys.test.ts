@@ -6,6 +6,7 @@ import {
   createdResponse,
   noContentResponse,
   problemBadRequest,
+  problemConfirmationRequired,
   problemConflict,
   problemForbidden,
   problemSurveyHasLinkedCreatives,
@@ -487,6 +488,89 @@ describe("registerSurveyTools", () => {
     ).toBe(false);
   });
 
+  test("create_survey takes typed embeddedFields (ENG-6930)", () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("create_survey")!.config.inputSchema as z.ZodType;
+    const base = {
+      workspaceId: "clxx1234567890123456789012",
+      name: "Typed",
+      blocks: [{ name: "Block", elements: [] }],
+    };
+
+    expect(
+      schema.safeParse({
+        ...base,
+        embeddedFields: [{ key: "plan_tier" }, { name: "score", source: "computed", dataType: "number" }],
+      }).success
+    ).toBe(true);
+  });
+
+  describe("confirmation on surveys with responses (ENG-6930)", () => {
+    const surveyId = "clxx1234567890123456789012";
+    const cases: [string, Record<string, unknown>, unknown, Record<string, unknown>][] = [
+      [
+        "patch_survey",
+        { surveyId, data: { name: "Renamed" } },
+        patchV3SurveyResponse,
+        { body: { name: "Renamed" } },
+      ],
+      [
+        "edit_survey_blocks",
+        { surveyId, ops: [{ op: "remove", id: "blk_a" }] },
+        editV3SurveyBlocksResponse,
+        { body: { ops: [{ op: "remove", id: "blk_a" }] } },
+      ],
+      [
+        "set_survey_block_order",
+        { surveyId, order: ["blk_a"] },
+        setV3SurveyBlockOrderResponse,
+        { body: { order: ["blk_a"] } },
+      ],
+      ["delete_survey", { surveyId }, deleteV3Survey, {}],
+    ];
+
+    test("every tool that changes a survey takes `confirm` and hands it to the operation, not the body", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+
+      for (const [name, input, operation, expected] of cases) {
+        vi.mocked(operation as typeof patchV3SurveyResponse).mockResolvedValue(
+          successResponse({ id: surveyId }, { requestId: "req_tool" })
+        );
+        const schema = tools.get(name)!.config.inputSchema as z.ZodType;
+        expect(schema.safeParse({ ...input, confirm: true }).success, name).toBe(true);
+        expect(String(tools.get(name)!.config.description), name).toMatch(/confirm: true/);
+
+        await tools.get(name)!.handler({ ...input, confirm: true }, { http: { authInfo } });
+
+        expect(operation, name).toHaveBeenCalledWith(
+          expect.objectContaining({ ...expected, surveyId, writeConfirmation: { confirmed: true } })
+        );
+      }
+    });
+
+    test("relays the refusal as an error carrying the caution text", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+      vi.mocked(patchV3SurveyResponse).mockResolvedValue(
+        problemConfirmationRequired(
+          "req_tool",
+          "This survey has responses. Pass confirm: true after the user agrees."
+        )
+      );
+
+      const result = await tools
+        .get("patch_survey")!
+        .handler({ surveyId, data: { name: "Renamed" } }, { http: { authInfo } });
+
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent.error).toMatchObject({
+        status: 428,
+        detail: "This survey has responses. Pass confirm: true after the user agrees.",
+      });
+    });
+  });
+
   test("patch_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
     const auditLog = { status: "failure" };
@@ -513,6 +597,7 @@ describe("registerSurveyTools", () => {
       requestId: "req_tool",
       instance: "/api/mcp",
       auditLog,
+      writeConfirmation: { confirmed: false },
     });
     expect(auditLog.status).toBe("success");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
@@ -541,6 +626,7 @@ describe("registerSurveyTools", () => {
       requestId: "req_tool",
       instance: "/api/mcp",
       auditLog,
+      writeConfirmation: { confirmed: false },
     });
     expect(auditLog.status).toBe("success");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
@@ -776,6 +862,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
         requestId: "req_tool",
         instance: "/api/mcp",
         auditLog,
+        writeConfirmation: { confirmed: false },
       });
       expect(auditLog).toMatchObject({ status: "success" });
       expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));

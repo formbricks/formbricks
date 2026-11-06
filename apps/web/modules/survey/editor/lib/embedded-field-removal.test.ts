@@ -154,6 +154,56 @@ describe("findEmbeddedFieldRemovalBlocker", () => {
     ).toEqual({ reason: "logic", elementIndex: 0 });
   });
 
+  test("says when the use is a rule before the first question, which belongs to no question", () => {
+    const withStartRule = survey({
+      startLogic: [
+        {
+          id: "startrule1",
+          conditions: {
+            id: "startgroup1",
+            connector: "and",
+            conditions: [{ id: "c1", leftOperand: { type: "hiddenField", value: PLAN }, operator: "isSet" }],
+          },
+          actions: [{ id: "a1", objective: "jumpToBlock", target: "block1" }],
+        },
+      ],
+    });
+
+    expect(findEmbeddedFieldRemovalBlocker(withStartRule, [], entry("ingested"))).toEqual({
+      reason: "startLogic",
+    });
+  });
+
+  test("says when the use is a question's show-if rather than logic, so the guard can say so", () => {
+    const withShowIf = survey({
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            element("q_one", "One?"),
+            {
+              ...element("q_two", "Two?"),
+              showIf: {
+                id: "group1",
+                connector: "and",
+                conditions: [
+                  { id: "c1", leftOperand: { type: "hiddenField", value: PLAN }, operator: "isSet" },
+                ],
+              },
+            },
+          ],
+          logic: [],
+        },
+      ],
+    });
+
+    expect(findEmbeddedFieldRemovalBlocker(withShowIf, [], entry("ingested"))).toEqual({
+      reason: "showIf",
+      elementIndex: 1,
+    });
+  });
+
   test("does not answer a computed lookup with an ingested field's logic", () => {
     expect(findEmbeddedFieldRemovalBlocker(withLogicOn("hiddenField"), [], entry("computed"))).toBeNull();
   });

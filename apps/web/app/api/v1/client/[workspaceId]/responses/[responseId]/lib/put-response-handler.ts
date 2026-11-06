@@ -1,6 +1,6 @@
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { RESPONSE_ALREADY_FINISHED_ERROR_CODE, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponse, TResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseUpdateInput, TResponse } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-error";
@@ -47,7 +47,7 @@ const handleDatabaseError = (error: unknown, responseId: string): TRouteResult =
 const validateResponse = (
   response: TResponse,
   survey: TSurvey,
-  responseUpdateInput: TResponseUpdateInput
+  responseUpdateInput: TClientResponseUpdateInput
 ) => {
   const mergedData = {
     ...response.data,
@@ -97,7 +97,7 @@ const getSurveyForResponse = async (responseId: string, surveyId: string): Promi
 const validateUpdateRequest = (
   existingResponse: TResponse,
   survey: TSurvey,
-  responseUpdateInput: TResponseUpdateInput,
+  responseUpdateInput: TClientResponseUpdateInput,
   workspaceId: string
 ): TRouteResult | undefined => {
   // Mirror the POST endpoint: a closed survey accepts no submissions, including finalizing a partial
@@ -158,7 +158,7 @@ const validateUpdateRequest = (
 const getUpdatedResponse = async (
   responseId: string,
   surveyId: string,
-  responseUpdateInput: TResponseUpdateInput,
+  responseUpdateInput: TClientResponseUpdateInput,
   ingestFlags: readonly TIngestFlag[]
 ): Promise<TUpdatedResponseResult> => {
   try {

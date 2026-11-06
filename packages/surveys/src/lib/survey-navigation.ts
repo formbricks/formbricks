@@ -78,6 +78,28 @@ export const getPreviousBlockId = (
 };
 
 /**
+ * The block Back treats as the survey's first while the respondent has seen no page yet, or
+ * `undefined` to keep editor order (`getPreviousBlockId`'s fallback).
+ *
+ * A survey that opens straight onto a block (no welcome card) has no history to go back through.
+ * When that block was reached by passing over not-shown blocks (ENG-6931), or a start-logic jump
+ * opened it (ENG-6932), the blocks before it in the editor are ones the survey routed past, so Back
+ * must not lead there. A start-at link without a jump keeps editor order, as it always did.
+ */
+export const getEntryBlockId = (entry: {
+  /** The card the survey opened on. */
+  openedBlockId: string;
+  /** The block a start-logic jump opened (`startSurvey`), if any. */
+  startBlockId: string | undefined;
+  /** Where the respondent lands once not-shown blocks are passed over. */
+  nextCardId: string;
+  skippedBlockIds: readonly string[];
+}): string | undefined => {
+  if (entry.skippedBlockIds.length > 0) return entry.nextCardId;
+  return entry.openedBlockId === entry.startBlockId ? entry.openedBlockId : undefined;
+};
+
+/**
  * The saved `history` to restore with offline progress, keeping only entries Back can land on: a
  * block that still exists, or the `"start"` sentinel.
  *

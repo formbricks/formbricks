@@ -15,6 +15,8 @@ export enum OptionsType {
   HIDDEN_FIELDS = "Hidden Fields",
   VARIABLES = "Variables",
   QUOTAS = "Quotas",
+  /** Shown / not shown (ENG-6951): a block, question, option, row or column, read from the not-shown record. */
+  SHOWN = "Shown",
 }
 
 export type ElementOption = {

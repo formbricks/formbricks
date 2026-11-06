@@ -131,8 +131,19 @@ get:
                           required: true
                   endings: []
                   hiddenFields:
-                    enabled: false
+                    enabled: true
+                    fieldIds:
+                      - plan_tier
                   variables: []
+                  embeddedFields:
+                    - storageKey: plan_tier
+                      key: plan_tier
+                      name: Plan tier
+                      source: ingested
+                      dataType: string
+                      defaultValue: free
+                      locked: true
+                  startLogic: []
                   customCss: null
             filtered:
               summary: Language-filtered projection with ?lang=de-DE
@@ -181,6 +192,8 @@ get:
                   hiddenFields:
                     enabled: false
                   variables: []
+                  embeddedFields: []
+                  startLogic: []
                   customCss: null
     "400":
       description: >-
@@ -267,6 +280,14 @@ patch:
         schema:
           $ref: ../components/schemas/PatchSurveyRequest.yml
         examples:
+          linkLibraryField:
+            summary: Set the survey's Embedded Data, linking a library field by key
+            value:
+              embeddedFields:
+                - key: plan_tier
+                - name: region
+                  source: ingested
+                  defaultValue: emea
           renameSurvey:
             summary: Rename a survey
             value:
@@ -342,6 +363,10 @@ patch:
         omissions carry `code: missing_required_field`. Bare type, range, enum, and
         malformed-locale-map violations report the field `name` with a human-readable `reason` and no
         machine `code`.
+        Typed Embedded Data that cannot be taken as sent is refused here too, naming each path in
+        `invalid_params`: `embeddedFields` and the legacy `variables` / `hiddenFields` sent together
+        but describing different fields, an `embeddedFields` entry linking a `key` the workspace
+        library does not have, or a field the legacy format could not store.
       content:
         application/problem+json:
           schema:

@@ -54,6 +54,8 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string): Promis
         redirectUrl: true,
         pin: true,
         isBackButtonHidden: true,
+        // Rules before the first question (ENG-6932), run by the survey on load.
+        startLogic: true,
         isAutoProgressingEnabled: true,
         isCaptureIpEnabled: true,
         isAnonymizeResponsesEnabled: true,

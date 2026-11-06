@@ -396,6 +396,29 @@ describe("ResponseQueue", () => {
     );
   });
 
+  test("sendResponse carries the Mark as low quality flag on an update and on a create (ENG-6933)", async () => {
+    apiMock.createResponse.mockResolvedValue({ ok: true, data: { id: "newid" } });
+    await queue.sendResponse({ ...responseUpdate, markLowQuality: true });
+    expect(apiMock.createResponse).toHaveBeenCalledWith(expect.objectContaining({ markLowQuality: true }));
+
+    surveyState.responseId = "resp1";
+    apiMock.updateResponse.mockResolvedValue({ ok: true, data: { quotaFull: false } });
+    await queue.sendResponse({ ...responseUpdate, markLowQuality: true });
+    expect(apiMock.updateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ responseId: "resp1", markLowQuality: true })
+    );
+  });
+
+  test("a create from the accumulated response carries the flag an earlier submit asked for (ENG-6933)", async () => {
+    surveyState.shouldCreateResponseFromState = true;
+    surveyState.responseAcc = { finished: false, data: { q1: "a" }, ttc: {}, markLowQuality: true };
+    apiMock.createResponse.mockResolvedValue({ ok: true, data: { id: "newid" } });
+
+    await queue.sendResponse({ data: { q2: "b" }, finished: false });
+
+    expect(apiMock.createResponse).toHaveBeenCalledWith(expect.objectContaining({ markLowQuality: true }));
+  });
+
   test("sendResponse notifies when a responseId is created", async () => {
     const onResponseCreated = vi.fn();
     queue = new ResponseQueue(getConfig({ onResponseCreated }), surveyState);

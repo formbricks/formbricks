@@ -558,6 +558,14 @@ export function problemConflict(
 }
 
 /**
+ * 428: the write waits for the user's agreement. MCP-only (ENG-6930), like the refusal the response
+ * delete tools return, so it carries no `code`: no public v3 route answers it.
+ */
+export function problemConfirmationRequired(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(428, "Confirmation required", detail, requestId, { instance });
+}
+
+/**
  * ENG-6850: a request repeated with an `Idempotency-Key` whose first request is still running (IETF
  * Idempotency-Key draft §2.6). Internal routes only. `Retry-After` says when the first will have finished
  * or given the key back.

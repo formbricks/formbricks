@@ -155,6 +155,7 @@ const appSurveySelect = {
   delay: true,
   // Checked in the browser when a trigger fires (ENG-3926). Public: the payload is.
   showConditions: true,
+  startLogic: true,
   workspaceOverwrites: true,
   // Stored survey custom CSS — see the workspace field below. Replaced by compiled output.
   customCss: true,

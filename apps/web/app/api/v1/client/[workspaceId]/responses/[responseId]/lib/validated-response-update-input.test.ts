@@ -109,4 +109,27 @@ describe("getValidatedResponseUpdateInput", () => {
       q3: 1234,
     });
   });
+
+  const putRequest = (body: unknown) =>
+    new Request("http://localhost/api/v1/client/test/responses/response-id", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  test("keeps the not-shown record the survey sends (ENG-6936)", async () => {
+    const notShown = { blocks: ["blockheavy"], elements: ["apple_reason"], options: { fav: ["apple"] } };
+
+    const result = await getValidatedResponseUpdateInput(putRequest({ finished: false, notShown }));
+
+    expect(result).toEqual({ responseUpdateInput: { finished: false, notShown } });
+  });
+
+  test("refuses a not-shown record with a key the shape does not have", async () => {
+    const result = await getValidatedResponseUpdateInput(
+      putRequest({ finished: false, notShown: { elements: [], answers: ["x"] } })
+    );
+
+    expect("response" in result && result.response.status).toBe(400);
+  });
 });
