@@ -55,8 +55,11 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/retention-runs` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-runs/route.ts` |
 | `/api/internal/retention-runs/export` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-runs/export/route.ts` |
 | `/api/internal/survey-retention/{surveyId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/survey-retention/[surveyId]/route.ts` |
+| `/api/internal/surveys/{surveyId}/content` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/content/route.ts` |
+| `/api/internal/surveys/{surveyId}/export` | GET | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/export/route.ts` |
 | `/api/internal/surveys/generate/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/generate/stream/route.ts` |
 | `/api/internal/surveys/import/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/import/stream/route.ts` |
+| `/api/internal/surveys/imports` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/imports/route.ts` |
 | `/api/internal/teams` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/teams/route.ts` |
 | `/api/internal/teams/{teamId}` | GET, PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/teams/[teamId]/route.ts` |
 | `/api/internal/users/me` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/route.ts` |

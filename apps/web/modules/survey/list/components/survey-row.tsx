@@ -97,7 +97,6 @@ export type TSurveyRowState = {
   canMakeVisible: boolean;
   /** Where clicking the row goes; null when the row is not clickable. */
   href: string | null;
-  isDropdownDisabled: boolean;
 };
 
 /** Everything a survey row decides from the survey and the viewer, kept in one place for every cell. */
@@ -141,8 +140,5 @@ export const getSurveyRowState = ({
     isAuthorGone,
     canMakeVisible,
     href,
-    // The menu stays enabled for archived surveys so they can be restored or deleted; only a read-only
-    // draft (which has no available actions) disables it.
-    isDropdownDisabled: survey.status === "draft" && isReadOnly,
   };
 };

@@ -203,7 +203,7 @@ catalogs:
       version: 5.4.6
 
 overrides:
-  follow-redirects: 1.16.1
+  follow-redirects: 1.16.2
   '@grpc/grpc-js': 1.14.5
   '@opentelemetry/instrumentation-cassandra-driver': 0.66.0
   '@opentelemetry/instrumentation-knex': 0.65.0
@@ -225,7 +225,7 @@ overrides:
   postcss-selector-parser: 7.1.6
   fast-copy: 4.1.0
   lodash: 4.18.1
-  node-forge: 1.4.0
+  node-forge: 1.4.1
   minimatch@10: 10.2.5
   postcss: 8.5.23
   source-map-js: 1.2.2
@@ -255,7 +255,7 @@ overrides:
   browserslist: 4.28.7
   qs: 6.16.1
   '@faker-js/faker': 10.5.0
-  fflate: 0.4.9
+  fflate@0.4: 0.4.9
   baseline-browser-mapping: 2.11.20
   '@ai-sdk/provider-utils': 4.0.33
   engine.io@6: 6.6.10
@@ -698,8 +698,8 @@ importers:
         specifier: 3.2.1
         version: 3.2.1
       csv-parse:
-        specifier: 7.0.2
-        version: 7.0.2
+        specifier: 7.0.3
+        version: 7.0.3
       date-fns:
         specifier: 'catalog:'
         version: 4.1.0
@@ -709,6 +709,9 @@ importers:
       dompurify:
         specifier: 3.4.17
         version: 3.4.17
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       framer-motion:
         specifier: 12.35.2
         version: 12.35.2(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -1050,6 +1053,9 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.12(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(@vitest/coverage-v8@4.1.12)(happy-dom@21.0.4)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@7.3.7(@types/node@25.4.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0))
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.6
 
   packages/api-v3-schemas:
     dependencies:
@@ -7909,8 +7915,8 @@ packages:
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
-  csv-parse@7.0.2:
-    resolution: {integrity: sha512-uKZghv9UmPkMVLYy//KZ9HFAIJsl7wkhoEdIL0+rhuSY9pZQlhaeGEDPIe+/w7eh81MOql8Q/9+inAGWG6ZHYA==}
+  csv-parse@7.0.3:
+    resolution: {integrity: sha512-YFd3QM/yo17vH91L1IOZuvl09zM0zEEtdfTcOCKWcMdM++MNaQSyp09slXyFCLaPXvHstQFx/xC8myiFHSMUvw==}
 
   d3-array@3.2.1:
     resolution: {integrity: sha512-gUY/qeHq/yNqqoCKNq4vtpFLdoCdvyNpWoC/KNjhGbhDuQpAM9sIQQKkXSNpXa9h5KySs/gzm7R88WkUutgwWQ==}
@@ -8689,6 +8695,9 @@ packages:
   fflate@0.4.9:
     resolution: {integrity: sha512-zdxgIEddhfsyCaWpJ2SdXEP8ZMrKJ6+5jl4OupODcywU0IhRk6gdXuVGcPICyfx2H97hVK7xmJtRLPjkxAX8Vw==}
 
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
+
   file-entry-cache@8.0.0:
     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
     engines: {node: '>=16.0.0'}
@@ -8723,8 +8732,8 @@ packages:
   flatted@3.4.2:
     resolution: {integrity: sha512-PjDse7RzhcPkIJwy5t7KPWQSZ9cAbzQXcafsetQoD7sOJRQlGikNbx7yZp2OotDnJyrDcbyRq3Ttb18iYOqkxA==}
 
-  follow-redirects@1.16.1:
-    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
+  follow-redirects@1.16.2:
+    resolution: {integrity: sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -10146,8 +10155,8 @@ packages:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  node-forge@1.4.0:
-    resolution: {integrity: sha512-LarFH0+6VfriEhqMMcLX2F7SwSXeWwnEAJEsYm5QKWchiVYVvJyV9v7UDvUv+w5HO23ZpQTXDv/GxdDdMyOuoQ==}
+  node-forge@1.4.1:
+    resolution: {integrity: sha512-w5/MfWaeMrpR/5ba6fZyAUTLSuE6aYz7H/3cYrqwZEmf5eQS3IaaLgJt4MBv7HglGFWmV22K8h4U18RJQmw/ow==}
     engines: {node: '>= 6.13.0'}
 
   node-gyp-build-optional-packages@5.2.2:
@@ -13886,7 +13895,7 @@ snapshots:
       mongodb: 7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7)
       mssql: 12.2.1
       mysql2: 3.23.1(@types/node@25.4.0)
-      node-forge: 1.4.0
+      node-forge: 1.4.1
       openid-client: 6.8.2
       pg: 8.20.0
       redis: 4.7.1
@@ -19231,7 +19240,7 @@ snapshots:
 
   axios@1.20.0:
     dependencies:
-      follow-redirects: 1.16.1
+      follow-redirects: 1.16.2
       form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
@@ -19788,7 +19797,7 @@ snapshots:
 
   csstype@3.2.3: {}
 
-  csv-parse@7.0.2: {}
+  csv-parse@7.0.3: {}
 
   d3-array@3.2.1:
     dependencies:
@@ -20687,6 +20696,8 @@ snapshots:
 
   fflate@0.4.9: {}
 
+  fflate@0.8.3: {}
+
   file-entry-cache@8.0.0:
     dependencies:
       flat-cache: 4.0.1
@@ -20722,7 +20733,7 @@ snapshots:
 
   flatted@3.4.2: {}
 
-  follow-redirects@1.16.1: {}
+  follow-redirects@1.16.2: {}
 
   for-each@0.3.5:
     dependencies:
@@ -22181,7 +22192,7 @@ snapshots:
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
 
-  node-forge@1.4.0: {}
+  node-forge@1.4.1: {}
 
   node-gyp-build-optional-packages@5.2.2:
     dependencies:

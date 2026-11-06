@@ -1,5 +1,10 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
+import { cpuMsSince } from "../core/__fixtures__/cpu-time";
+import { SurveyImportInputError } from "../core/errors";
+import { checkImportDraft } from "../core/final-gate";
+import { measureDraftBytes } from "../core/fit-draft";
+import { SURVEY_IMPORT_MAX_DRAFT_BYTES, SURVEY_IMPORT_MAX_TEXT_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import {
   PAGE_BREAK,
@@ -14,12 +19,11 @@ import {
 } from "./__fixtures__/qsf-builders";
 import { loadRecordedPlan, recordedGenerate, refsInPrompt } from "./__fixtures__/recorded-plans";
 import type { TQsfPlanGenerate } from "./ai-plan";
-import { checkQsfDraft } from "./final-gate";
-import { QSF_DRAFT_MAX_BYTES, fitQsfSurveyToCreateLimit, measureQsfDraftBytes } from "./fit-draft";
+import { fitQsfSurveyToCreateLimit } from "./fit-draft";
 import { normalizeQualtricsLanguageCode } from "./language-codes";
-import { QSF_MAX_TEXT_CHARS } from "./limits";
 import { QSF_RECALL_FALLBACK } from "./piped-text";
-import { QsfImportInputError, prepareQsfImport, runQsfImport } from "./pipeline";
+import { runQsfImport } from "./pipeline";
+import { prepareQsfImport } from "./prepare";
 import type { TQsfSurvey } from "./qsf-model";
 
 /**
@@ -41,6 +45,9 @@ const seen = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
+// The draft's name is looked up in the workspace and suffixed in the user's language (English here).
+vi.mock("@/lib/user/locale", () => ({ getUserLocaleOrDefault: vi.fn(async () => "en-US") }));
+vi.mock("@/lingodotdev/server", () => import("../core/__fixtures__/lingodotdev-server-en-us"));
 vi.mock("@/modules/survey/lib/permission", () => ({ getExternalUrlsPermission: vi.fn(async () => true) }));
 vi.mock("node:timers/promises", async (importOriginal) => {
   const original = await importOriginal<typeof import("node:timers/promises")>();
@@ -116,6 +123,7 @@ vi.mock("./assemble", async (importOriginal) => {
 });
 
 beforeEach(() => {
+  vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
   seen.yields = 0;
   seen.languageCodeLookups = 0;
   seen.longestPipedScan = 0;
@@ -227,14 +235,14 @@ describe("event loop", () => {
 
     // Structural: no text past the sanitizer's length is ever scanned for piped text.
     expect(cpuMs(() => prepareQsfImport(qsf, "long-text.qsf"))).toBeLessThanOrEqual(50);
-    expect(seen.longestPipedScan).toBeLessThanOrEqual(QSF_MAX_TEXT_CHARS);
+    expect(seen.longestPipedScan).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_TEXT_CHARS);
   });
 
   test("prepareQsfImport scans piped text in time linear in the file, its noise spread over many texts", async () => {
     // 302 texts of `${e://` repeated up to the sanitizer's length, no closing brace, in two questions'
     // texts and choices: about 15 MB. Each text is within the cap, so each is scanned; a pipe body that
     // ran up to 200 characters on from every `${` cost about 0.8 s over the file.
-    const noise = "${e://".repeat(Math.floor(QSF_MAX_TEXT_CHARS / "${e://".length));
+    const noise = "${e://".repeat(Math.floor(SURVEY_IMPORT_MAX_TEXT_CHARS / "${e://".length));
     const questions = ["QID1", "QID2"].map((qid) => ({
       Element: "SQ",
       PrimaryAttribute: qid,
@@ -323,8 +331,8 @@ describe("event loop", () => {
     });
 
     // Structural: refused on the count of keys.
-    expect((refused as QsfImportInputError).invalidParams[0].name).toBe(
-      "qsf.SurveyElements.0.Payload.Language"
+    expect((refused as SurveyImportInputError).invalidParams[0].name).toBe(
+      "file.SurveyElements.0.Payload.Language"
     );
     // The survey's own default language is the one code looked up; no `Language` key is.
     expect(seen.languageCodeLookups).toBe(1);
@@ -344,7 +352,7 @@ describe("event loop", () => {
       }
     });
 
-    expect(refused).toBeInstanceOf(QsfImportInputError);
+    expect(refused).toBeInstanceOf(SurveyImportInputError);
     // The survey's own default language is the one code looked up; no `Language` key is.
     expect(seen.languageCodeLookups).toBe(1);
     // V8 enumerating 390,000 keys once (~80 ms here); the route's JSON.parse of that body takes longer.
@@ -532,7 +540,7 @@ describe("a draft too large for the create's request body", () => {
       // Coarse: the longest stretch left is the create's own request schema on that ~2 MB draft, ~1.3 s;
       // uncut, the 4.3 MB draft's took about 4.5 s.
       expect(result.stretchMs).toBeLessThan(3_000);
-      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
+      expect(measureDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
       expect(result.report.summary.questions).toBe(200);
       const cut = result.report.issues.filter(
         (issue) => issue.code === "language_skipped" && issue.params?.cause === "draft_too_large"
@@ -541,7 +549,7 @@ describe("a draft too large for the create's request body", () => {
       expect(result.report.summary.languages).toHaveLength(50 - cut.length);
       expect(result.report.summary.languages[0]).toBe("en-US");
       expect(cut.map((issue) => issue.params?.code)).not.toContain("en-US");
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
     }
   );
 
@@ -556,7 +564,7 @@ describe("a draft too large for the create's request body", () => {
       expect(seen.stages.every((stage) => stage.fits)).toBe(true);
       // Coarse: few, long texts are cheap to check, and sliced everywhere else. ~60 ms.
       expect(result.stretchMs).toBeLessThan(300);
-      expect(measureQsfDraftBytes(result.payload)).toBeLessThanOrEqual(QSF_DRAFT_MAX_BYTES);
+      expect(measureDraftBytes(result.payload)).toBeLessThanOrEqual(SURVEY_IMPORT_MAX_DRAFT_BYTES);
       const cut = result.report.issues.filter(
         (issue) => issue.code === "question_skipped" && issue.params?.cause === "draft_too_large"
       );
@@ -569,7 +577,7 @@ describe("a draft too large for the create's request body", () => {
       expect(result.payload.blocks.flatMap((block) => block.elements).at(-1)?.id).toBe(
         `Q${200 - cut.length}`
       );
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
     }
   );
 
@@ -640,7 +648,7 @@ describe("a draft too large for the create's request body", () => {
           { code: "piped_text_removed", severity: "warning", questionTag: "Q70", params: { count: 1 } },
         ])
       );
-      expect(checkQsfDraft(result.payload)).toEqual([]);
+      expect(checkImportDraft(result.payload)).toEqual([]);
     }
   );
 });

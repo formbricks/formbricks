@@ -4,6 +4,7 @@ import { Readable } from "node:stream";
 import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { buildAttachmentContentDisposition } from "@/lib/utils/content-disposition";
 import { type TAttachmentEntry } from "@/modules/storage/lib/collect-response-attachments";
 import { getFileStreamForDownload } from "@/modules/storage/service";
 import { MAX_ATTACHMENT_BYTES } from "./constants";
@@ -30,12 +31,9 @@ const MANIFEST_PATH = "manifest.csv";
 export const buildAttachmentArchiveFileName = (survey: TSurvey, now: Date): string =>
   `${survey.id}-attachments-${now.toISOString().slice(0, 10)}.zip`;
 
-/**
- * `Content-Disposition` for an archive (RFC 6266): the ASCII `filename` plus the RFC 8187 `filename*`.
- * The name is ASCII by construction (survey id and an ISO date), so both carry the same name.
- */
+/** `Content-Disposition` for an archive, built like every other download's. */
 export const buildAttachmentArchiveContentDisposition = (fileName: string): string =>
-  `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+  buildAttachmentContentDisposition(fileName);
 
 /**
  * Holds the storage stream currently being consumed.
