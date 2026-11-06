@@ -4,7 +4,8 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
 import { walkSurveyTexts } from "@/modules/survey/lib/survey-texts";
 import { createIcuTranslate } from "./__fixtures__/translate";
-import { EXCEL_EXPORT_META_SHEET, writeExcelExport } from "./write";
+import { EXCEL_EXPORT_META_SHEET } from "./format";
+import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
 const UPDATED_AT = new Date("2026-10-30T12:34:56.000Z");
@@ -196,18 +197,25 @@ describe("writeExcelExport", () => {
     }
   });
 
-  test("hides the key column and keeps the survey id, updatedAt and format on a very hidden sheet", () => {
+  test("hides the key column, and says how to read the sheet back on a very hidden sheet that names no survey", () => {
     const workbook = export_();
 
     expect(workbook.SheetNames).toEqual(["Survey", EXCEL_EXPORT_META_SHEET]);
     expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 2]);
     expect(workbook.Sheets.Survey["!cols"]?.[0]?.hidden).toBe(true);
     expect(workbook.Sheets.Survey["!cols"]?.slice(1).some((column) => column.hidden)).toBe(false);
+    const [, , ...languageHeaders] = rowsOf(workbook.Sheets.Survey)[0].slice(0, -1);
     expect(rowsOf(workbook.Sheets[EXCEL_EXPORT_META_SHEET])).toEqual([
-      ["surveyId", SURVEY.id],
-      ["updatedAt", UPDATED_AT.toISOString()],
-      ["format", "1"],
+      ["format", "1", ""],
+      ["languages", "en", "de"],
+      ["headers", ...languageHeaders.slice(1)],
+      ["columns", "Question ID", "Type"],
+      ["locale", "en-US", ""],
     ]);
+    // The file never says which survey it came from: the import is aimed at one (ENG-6809).
+    const metaText = JSON.stringify(rowsOf(workbook.Sheets[EXCEL_EXPORT_META_SHEET]));
+    expect(metaText).not.toContain(SURVEY.id);
+    expect(metaText).not.toContain(UPDATED_AT.toISOString());
   });
 
   test("cuts a text past 32,767 characters to fit, marked as cut, and keeps its row", () => {

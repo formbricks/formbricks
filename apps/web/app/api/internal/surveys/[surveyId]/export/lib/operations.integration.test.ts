@@ -6,7 +6,7 @@ import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { getContentDispositionFileName } from "@/lib/utils/file-download";
-import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/write";
+import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/format";
 import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
 import { ZFormbricksFileV1 } from "@/modules/survey/formbricks-file/envelope";
 import { exportSurveyOperation } from "./operations";

@@ -11,6 +11,16 @@ import {
   walkSurveyTexts,
 } from "@/modules/survey/lib/survey-texts";
 import { fitCell, toReadableText, toXmlSafeText } from "./cell-text";
+import {
+  EXCEL_EXPORT_FORMAT,
+  EXCEL_EXPORT_KEY_HEADER,
+  EXCEL_EXPORT_META_COLUMNS,
+  EXCEL_EXPORT_META_FORMAT,
+  EXCEL_EXPORT_META_HEADERS,
+  EXCEL_EXPORT_META_LANGUAGES,
+  EXCEL_EXPORT_META_LOCALE,
+  EXCEL_EXPORT_META_SHEET,
+} from "./format";
 import { createLogicRenderer } from "./logic";
 
 /**
@@ -18,23 +28,17 @@ import { createLogicRenderer } from "./logic";
  * Formbricks. One row per text the survey shows (each question, option, matrix row and column, and
  * the rest), one column per language, the question's id and type, and its block's logic in plain words.
  *
- * One-way: the sheet is for reading, and imports back only as a new survey through the document import.
- * Still, every row carries its text's id-built key in a hidden first column, and a very hidden sheet
- * holds the survey id, `updatedAt` and the export's format, so a later translations round trip
- * (ENG-4009) can match rows without the file changing shape.
+ * The sheet comes back through Import in the survey's own menu (ENG-6809), which updates the texts a
+ * reviewer edited and adds the questions and options they added: every row carries its text's id-built
+ * key in a hidden first column, and a very hidden sheet says how to read the columns back (`format.ts`).
+ * The file names no survey: the import is aimed at one, and the keys match its texts or they don't.
  *
  * Every cell is a typed text cell in text format: nothing in it is ever read as a formula or a number,
  * and nothing is prefixed with `'`, which xlsx would keep as part of the text.
  */
 
-/** The export's own version, written to the meta sheet; raised when its layout changes. */
-export const EXCEL_EXPORT_FORMAT = 1;
 export const EXCEL_EXPORT_EXTENSION = SURVEY_EXPORT_FILE_EXTENSIONS.xlsx;
 export const EXCEL_EXPORT_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-/** The very hidden sheet's name, and the header of the hidden key column. Read by code, so never translated. */
-export const EXCEL_EXPORT_META_SHEET = "formbricks";
-export const EXCEL_EXPORT_KEY_HEADER = "key";
 
 // Excel caps sheet names at 31 characters and refuses []:*?/\ in them.
 const SHEET_NAME_FORBIDDEN = /[[\]:*?/\\]/g;
@@ -46,14 +50,46 @@ const WIDTH_TYPE = 24;
 const WIDTH_LANGUAGE = 50;
 const WIDTH_LOGIC = 60;
 
-/** One column of texts: the default language's (`code` "default") or a translation's. */
-type TLanguageColumn = { code: string; header: string };
+/**
+ * One column of texts. `code` is the language's code, which the meta sheet records, or `default` for a
+ * survey without languages; `textKey` is where the survey keeps the column's text (`default` for the
+ * default language, as stored).
+ */
+type TLanguageColumn = { code: string; textKey: string; header: string };
 
 type TTypedTextCell = { t: "s"; v: string; z: "@" };
 
+/** A text as its cell holds it: without what xlsx cannot hold, and cut to fit. Idempotent. */
+const toCellText = (text: string, truncatedSuffix: string): string =>
+  fitCell(toXmlSafeText(text), truncatedSuffix);
+
+/**
+ * One stored text in one language as the export writes its cell: readable, then fitted to the cell. The
+ * import computes the survey's current cells with it too, to tell what changed in Formbricks since the
+ * export, so both read a text the same way.
+ */
+export const toExportedCellText = ({
+  text,
+  textKey,
+  survey,
+  truncatedSuffix,
+}: {
+  text: TSurveyText;
+  textKey: string;
+  survey: TSurvey;
+  truncatedSuffix: string;
+}): string => {
+  const stored = text.value?.[textKey] ?? "";
+  if (!stored) return "";
+  return toCellText(
+    toReadableText({ text: stored, isRichText: text.isRichText, survey, languageCode: textKey }),
+    truncatedSuffix
+  );
+};
+
 const textCell = (text: string, truncatedSuffix: string): TTypedTextCell => ({
   t: "s",
-  v: fitCell(toXmlSafeText(text), truncatedSuffix),
+  v: toCellText(text, truncatedSuffix),
   z: "@",
 });
 
@@ -76,7 +112,7 @@ const toTextSheet = (rows: string[][], truncatedSuffix: string): XLSX.WorkSheet 
 
 const getLanguageColumns = (survey: TSurvey, t: TFunction, locale: string): TLanguageColumn[] => {
   if (survey.languages.length === 0) {
-    return [{ code: "default", header: t("workspace.surveys.export.excel.text_column") }];
+    return [{ code: "default", textKey: "default", header: t("workspace.surveys.export.excel.text_column") }];
   }
 
   // The default language first, then the others by code. A survey stores no order for its languages
@@ -91,7 +127,8 @@ const getLanguageColumns = (survey: TSurvey, t: TFunction, locale: string): TLan
       code: language.code,
     };
     return {
-      code: isDefault ? "default" : language.code,
+      code: language.code,
+      textKey: isDefault ? "default" : language.code,
       header: isDefault
         ? t("workspace.surveys.export.excel.language_column_default", params)
         : t("workspace.surveys.export.excel.language_column", params),
@@ -168,23 +205,23 @@ export const writeExcelExport = ({
     })
   );
 
+  const questionIdHeader = t("workspace.surveys.export.excel.question_id_column");
+  const typeHeader = t("workspace.surveys.export.excel.type_column");
   const header = [
     EXCEL_EXPORT_KEY_HEADER,
-    t("workspace.surveys.export.excel.question_id_column"),
-    t("workspace.surveys.export.excel.type_column"),
+    questionIdHeader,
+    typeHeader,
     ...languageColumns.map((column) => column.header),
     t("workspace.surveys.export.excel.logic_column"),
   ];
 
+  const languageCells = texts.map((text) =>
+    languageColumns.map(({ textKey }) => toExportedCellText({ text, textKey, survey, truncatedSuffix }))
+  );
+
   const rows = texts.map((text, index) => {
     const [questionId, type] = describeRow(text, t, survey);
-    const cells = languageColumns.map(({ code }) => {
-      const stored = text.value?.[code] ?? "";
-      return stored
-        ? toReadableText({ text: stored, isRichText: text.isRichText, survey, languageCode: code })
-        : "";
-    });
-    return [text.key, questionId, type, ...cells, logicRows.get(index) ?? ""];
+    return [text.key, questionId, type, ...languageCells[index], logicRows.get(index) ?? ""];
   });
 
   const sheet = toTextSheet([header, ...rows], truncatedSuffix);
@@ -198,9 +235,11 @@ export const writeExcelExport = ({
 
   const meta = toTextSheet(
     [
-      ["surveyId", survey.id],
-      ["updatedAt", new Date(survey.updatedAt).toISOString()],
-      ["format", String(EXCEL_EXPORT_FORMAT)],
+      [EXCEL_EXPORT_META_FORMAT, String(EXCEL_EXPORT_FORMAT)],
+      [EXCEL_EXPORT_META_LANGUAGES, ...languageColumns.map((column) => column.code)],
+      [EXCEL_EXPORT_META_HEADERS, ...languageColumns.map((column) => column.header)],
+      [EXCEL_EXPORT_META_COLUMNS, questionIdHeader, typeHeader],
+      [EXCEL_EXPORT_META_LOCALE, locale],
     ],
     truncatedSuffix
   );
