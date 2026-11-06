@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import type { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -116,7 +117,10 @@ export const getEmbeddedDataUsageAction = authenticatedActionClient
       id: workspaceId,
     });
 
-    return await getEmbeddedDataUsage(parsedInput.id, workspaceId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    const visibleSurveyWhere = await getUserVisibleSurveyWhere(ctx.user.id, organizationId);
+
+    return await getEmbeddedDataUsage(parsedInput.id, workspaceId, visibleSurveyWhere);
   });
 
 const ZCreateSharedEmbeddedDataAction = ZCreateSharedEmbeddedDataInput.extend({ workspaceId: ZId });
@@ -182,8 +186,13 @@ export const updateSharedEmbeddedDataAction = authenticatedActionClient
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
       ctx.auditLoggingCtx.oldObject = await getSharedEmbeddedDataById(id, workspaceId);
 
+      const resolveVisibleSurveyWhere = () => getUserVisibleSurveyWhere(ctx.user.id, organizationId);
+
       const result = await runWrite(ctx.auditLoggingCtx, () =>
-        updateSharedEmbeddedData(id, workspaceId, patch, { acknowledgeExistingResponses })
+        updateSharedEmbeddedData(id, workspaceId, patch, {
+          resolveVisibleSurveyWhere,
+          acknowledgeExistingResponses,
+        })
       );
 
       if (result.status === "ok") ctx.auditLoggingCtx.newObject = result.field;
@@ -211,7 +220,11 @@ export const deleteSharedEmbeddedDataAction = authenticatedActionClient
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
-      const result = await runWrite(ctx.auditLoggingCtx, () => deleteSharedEmbeddedData(id, workspaceId));
+      const resolveVisibleSurveyWhere = () => getUserVisibleSurveyWhere(ctx.user.id, organizationId);
+
+      const result = await runWrite(ctx.auditLoggingCtx, () =>
+        deleteSharedEmbeddedData(id, workspaceId, resolveVisibleSurveyWhere)
+      );
 
       // A delete has no "after", so the removed row is the whole record of what happened.
       if (result.status === "ok") ctx.auditLoggingCtx.oldObject = result.field;

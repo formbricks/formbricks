@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
@@ -34,7 +34,9 @@ export const CreateOrganizationPage = async () => {
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
 
   if (hasNoOrganizations || isMultiOrgEnabled) {
-    return <CreateOrganization />;
+    // The organization does not exist yet, so the floor cannot be asked of it; its creator becomes an
+    // owner, whom every floor but `disabled` admits.
+    return <CreateOrganization skipInviteStep={USER_MANAGEMENT_MINIMUM_ROLE === "disabled"} />;
   }
 
   if (userOrganizations.length === 0) {
