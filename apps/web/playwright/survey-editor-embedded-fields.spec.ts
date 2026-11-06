@@ -13,6 +13,7 @@ import {
   fillRichTextEditor,
   openCreateEmbeddedFieldTab,
   openEmbeddedDataCard,
+  setExpressionMode,
 } from "./utils/helper";
 
 /**
@@ -236,7 +237,8 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
 
     await openCombobox(page, "action-0-objective");
     await page.getByRole("option", { name: "Set value", exact: true }).click();
-    // Set value starts on the one-step Assign (P74), whose typed value input is checked below.
+    // One step shows the typed value input checked below.
+    await setExpressionMode(page, 0, false);
     const variablesBeforeEdit = await openCombobox(page, "action-0-variableId");
     await variablesBeforeEdit.getByRole("option", { name: rowEditedName, exact: true }).click();
     // The row says number while the legacy column still says text, so this is the row's answer.

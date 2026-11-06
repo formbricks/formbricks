@@ -1,8 +1,9 @@
 # Monorepo Builds & Packages
 
 Read before adding a workspace package or shared dependency, wiring one package into another's build
-config, styling inside a workspace package, adding tests outside a workspace, or diagnosing a missing
-package change or a direct test failure after switching branches.
+config, styling inside a workspace package, adding tests outside a workspace, running integration tests,
+or diagnosing a missing package change or a direct test failure after switching branches. Read it also
+after pulling or merging main into a checkout that runs a dev server.
 
 ## Turbo Task Matrix
 
@@ -120,6 +121,58 @@ pnpm build --filter=@formbricks/web^...
 
 (Dependencies only — `^...` excludes the Next app itself. This is the same command
 `.github/workflows/integration-tests.yml` runs before its suites, for exactly this reason.)
+
+## A dev server after pulling or merging main
+
+A merge brings more than source. `apps/web`'s own `pnpm dev`, and any launch config that runs it,
+skips what the root `pnpm go` does before it starts the app, and each gap fails like an app bug:
+
+- **Migrations.** An enum or column error, e.g. `invalid input value for enum "OrganizationRole"`.
+  Run `pnpm db:migrate:dev`. `prisma migrate status` can say "up to date" while main's migrations are
+  still pending: it reads `packages/database/.prisma-migrations`, which only the repo's migrate script
+  fills from `packages/database/migration`.
+- **Package builds.** `Module not found: Can't resolve '@formbricks/…'`: see the section above.
+- **SpiceDB.** Organizations or surveys missing from the lists, or a 404 on a page that exists. The
+  rows are still in Postgres; their permissions are not. On the bundled local endpoint run
+  `pnpm authzed:upgrade prepare`, then `pnpm authzed:upgrade check`. The check counts failures but
+  names none: when it reports any, run `pnpm authzed:backfill --apply` and read the `organizationId`
+  of each entry in its `failures`, then run `pnpm authzed:backfill --organization-id=<id> --apply`
+  for each. A run over all organizations returns `authzed_internal` for some that succeed alone.
+  An entry with an empty `organizationId` (a failed organization page or orphan sweep) has no
+  organization to retry: rerun `pnpm authzed:backfill --apply` in full, not from
+  `--after-organization-id`, which can skip the failed page.
+  Neither command covers surveys: when surveys are still missing, run
+  `pnpm authzed:backfill --scope=survey --apply`. The check's `survey` scope stays `not-ready`, the
+  safe fallback, until `pnpm authzed:backfill --scope=survey --apply --mark-ready` passes two clean
+  audits; `--apply` alone never sets it.
+
+Start from the root `pnpm go` after a merge: it runs the migrations, the builds and the SpiceDB
+preparation first. Restart a dev server that was already running: it keeps the Prisma client it
+loaded.
+
+## Integration tests
+
+`*.integration.test.ts` files run against the real Postgres and Valkey, not the unit suite's mocks:
+
+```shell
+cd apps/web && pnpm test:integration <path>
+```
+
+Before the first run: the `formbricks-postgres-1` and `formbricks-valkey-1` containers (`pnpm db:up`),
+the dev database migrated (`pnpm db:migrate:dev`), the workspace packages built
+(`pnpm build --filter=@formbricks/web^...`, since this command bypasses Turbo), and
+`PASSWORD_RESET_DISABLED=0` in `.env` for the password-reset suites (`.env.example` ships `1`). The harness
+(`apps/web/integration/global-setup.ts`) copies the dev database's schema, without its data, into
+`formbricks_ba_test` and flushes Valkey database 15, so the dev data is safe; it copies whatever schema
+the dev database has.
+
+`packages/database` and `packages/jobs` have integration tests of their own, outside this harness, with
+their own opt-in database and Redis URLs: `.github/workflows/integration-tests.yml` has their commands
+and variables.
+
+After merging main, run the integration suites of every area both sides changed. A merge that
+typechecks can still break a flow: the survey import refused every file with a shared field until its
+suite ran.
 
 ## Tailwind & Workspace Package CSS
 

@@ -4,7 +4,13 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import { base, commonIgnores, reactCompilerRulesOptOut, unusedVarsConvention } from "./base.mjs";
+import {
+  base,
+  commonIgnores,
+  reactCompilerRulesOptOut,
+  sonarNewCodeTypedRules,
+  unusedVarsConvention,
+} from "./base.mjs";
 
 /*
  * Flat config for React component libraries — the successor of the
@@ -33,6 +39,7 @@ export const react = ({ tsconfigRootDir }) => [
     rules: {
       // from strictTypeChecked (adopted individually, not the whole strict tier)
       "@typescript-eslint/no-unnecessary-condition": "error",
+      ...sonarNewCodeTypedRules,
     },
   },
   // Plain JS files (scripts, .cjs/.mjs configs) live outside the tsconfigs; without

@@ -4,5 +4,10 @@ export default {
   // package from that package's own directory.
   "(apps|packages)/**/*.{js,ts,jsx,tsx,mjs}": ["prettier --write", "node scripts/lint-staged-eslint.mjs"],
   "*.json": ["prettier --write"],
+  // The translation scan CI runs: every key must be a literal t("…") call that en-US.json holds,
+  // and every locale must hold exactly those keys. It reads the whole tree, so no file list. The
+  // hook runs lint-staged with `--concurrent false`, so it reads after the prettier tasks above.
+  "{apps/web,packages/surveys,packages/email}/**/*.{ts,tsx}": () => "pnpm scan-translations",
+  "{apps/web,packages/surveys}/**/locales/*.json": () => "pnpm scan-translations",
   "packages/database/schema/**/*.prisma": ["prisma format"],
 };

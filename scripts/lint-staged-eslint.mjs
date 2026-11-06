@@ -15,6 +15,8 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { SONAR_NEW_CODE_RULE_IDS } from "../packages/config-eslint/base.mjs";
+import { parseStagedLineRanges, touchesStagedLines } from "./staged-lines.mjs";
 
 // ESLint doesn't export ./bin/eslint.js, but package.json is exported, so go
 // through it to get an absolute path to the CLI entry point.
@@ -47,15 +49,67 @@ function groupByPackage(files) {
   return groups;
 }
 
+/*
+ * SonarCloud judges a pull request's new code only. The shared config carries its rules as warnings
+ * (`SONAR_NEW_CODE_RULE_IDS`, packages/config-eslint/base.mjs), since much existing code is over
+ * them; a commit fails on one only inside the lines it stages, as Sonar would on the PR.
+ */
+const SONAR_RULES = new Set(SONAR_NEW_CODE_RULE_IDS);
+
+/** The staged lines of `file`, from the index. Throws when git can't say: the gate must not pass blind. */
+function stagedLineRanges(file) {
+  const { stdout, stderr, status, error } = spawnSync(
+    "git",
+    ["diff", "--cached", "--unified=0", "--", file],
+    {
+      encoding: "utf8",
+    }
+  );
+  if (error || status !== 0) {
+    throw new Error(`git diff --cached failed for ${file}: ${error?.message ?? stderr}`);
+  }
+  return parseStagedLineRanges(stdout);
+}
+
+const format = (file, message, label) =>
+  `${file}:${message.line}:${message.column}  ${label}  ${message.message}  ${message.ruleId ?? ""}`;
+
 let failed = false;
 for (const [pkgDir, relFiles] of groupByPackage(process.argv.slice(2))) {
   if (!hasEslintConfig(pkgDir)) continue;
-  const { status, error } = spawnSync(process.execPath, [ESLINT_CLI, ...relFiles], {
-    cwd: pkgDir,
-    stdio: "inherit",
-  });
+  const { status, error, stdout, stderr } = spawnSync(
+    process.execPath,
+    [ESLINT_CLI, "--format", "json", ...relFiles],
+    { cwd: pkgDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
+  );
   if (error) throw error;
-  if (status !== 0) failed = true;
+  if (stderr) process.stderr.write(stderr);
+  // A crash (bad config, parse failure) prints no JSON: report it as it came.
+  let results;
+  try {
+    results = JSON.parse(stdout);
+  } catch {
+    process.stdout.write(stdout);
+    failed = true;
+    continue;
+  }
+  if (status !== 0 && status !== 1) failed = true;
+
+  for (const result of results) {
+    const file = path.relative(process.cwd(), result.filePath);
+    const ranges = result.messages.some((message) => SONAR_RULES.has(message.ruleId))
+      ? stagedLineRanges(file)
+      : [];
+    for (const message of result.messages) {
+      if (message.severity === 2) {
+        console.log(format(file, message, "error"));
+        failed = true;
+      } else if (SONAR_RULES.has(message.ruleId) && touchesStagedLines(message, ranges)) {
+        console.log(format(file, message, "error (SonarCloud, new code)"));
+        failed = true;
+      }
+    }
+  }
 }
 
 process.exit(failed ? 1 : 0);
