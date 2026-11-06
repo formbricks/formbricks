@@ -3,7 +3,7 @@
 if command -v pnpm >/dev/null 2>&1; then
   pnpm lint-staged --concurrent false
 elif command -v npm >/dev/null 2>&1; then
-  npm exec --yes pnpm@11.7.0 lint-staged --concurrent false
+  npm exec --yes -- pnpm@11.7.0 lint-staged --concurrent false
 elif command -v corepack >/dev/null 2>&1; then
   corepack pnpm lint-staged --concurrent false
 else

@@ -141,8 +141,10 @@ skips what the root `pnpm go` does before it starts the app, and each gap fails 
   An entry with an empty `organizationId` (a failed organization page or orphan sweep) has no
   organization to retry: rerun `pnpm authzed:backfill --apply` in full, not from
   `--after-organization-id`, which can skip the failed page.
-  Neither command covers surveys: when surveys are still missing, or the check reports the `survey`
-  scope `not-ready`, run `pnpm authzed:backfill --scope=survey --apply`.
+  Neither command covers surveys: when surveys are still missing, run
+  `pnpm authzed:backfill --scope=survey --apply`. The check's `survey` scope stays `not-ready`, the
+  safe fallback, until `pnpm authzed:backfill --scope=survey --apply --mark-ready` passes two clean
+  audits; `--apply` alone never sets it.
 
 Start from the root `pnpm go` after a merge: it runs the migrations, the builds and the SpiceDB
 preparation first. Restart a dev server that was already running: it keeps the Prisma client it
