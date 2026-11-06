@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} завершение} few {{count} завершения} many {{count} завершений} other {{count} завершения}}",
           "count_rules": "{count, plural, one {{count} правило} few {{count} правила} many {{count} правил} other {{count} правила}}",
           "create_calculated_field": "Создать поле",
-          "date_field_expression_only": "Поле даты задаётся выражением, например now(), или фиксированной датой, выбранной в календаре рядом с полем выражения.",
-          "date_field_expression_only_label": "О настройке поля даты",
           "edit_options_shown_if": "Изменить, какие варианты показываются",
           "edit_show_if": "Изменить условие показа: {conditions}",
           "endings_count": "Завершения · {count}",

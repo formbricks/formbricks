@@ -4,7 +4,7 @@ import {
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { formatFormula, getFormulaIssues, getFormulaReferences, parseFormula } from "./expression-formula";
-import { getFixedDate, toFixedDateExpression } from "./fixed-date-expression";
+import { getFixedDate, isOneStepDateExpression, toFixedDateExpression } from "./fixed-date-expression";
 
 const references = getFormulaReferences(surveyFlowFixture);
 
@@ -32,5 +32,21 @@ describe("toFixedDateExpression: a picked day is the quoted ISO date in the expr
     expect(formatFormula(expression, references)).toBe('"2026-11-05"');
     expect(getFixedDate(expression)).toBe("2026-11-05");
     expect(getFormulaIssues(expression, ids.variables.signedUpAt, surveyFlowFixture)).toEqual([]);
+  });
+});
+
+describe("isOneStepDateExpression: what the date field's one-step row can show", () => {
+  test("nothing yet, one day, or one answer or field", () => {
+    expect(isOneStepDateExpression({ type: "static", value: "" })).toBe(true);
+    expect(isOneStepDateExpression({ type: "static", value: "2026-11-05" })).toBe(true);
+    expect(isOneStepDateExpression({ type: "element", value: "last_purchase" })).toBe(true);
+    expect(isOneStepDateExpression({ type: "variable", value: ids.variables.signedUpAt })).toBe(true);
+    expect(isOneStepDateExpression({ type: "hiddenField", value: ids.hiddenFields.signupDate })).toBe(true);
+  });
+
+  test("now(), a formula, other text and an auto-captured value need the expression box", () => {
+    expect(isOneStepDateExpression({ type: "call", fn: "now", args: [] })).toBe(false);
+    expect(isOneStepDateExpression({ type: "static", value: "next week" })).toBe(false);
+    expect(isOneStepDateExpression({ type: "reserved", value: "createdAt" })).toBe(false);
   });
 });

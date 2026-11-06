@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} einde} other {{count} eindes}}",
           "count_rules": "{count, plural, one {{count} regel} other {{count} regels}}",
           "create_calculated_field": "Maak er een aan",
-          "date_field_expression_only": "Een datumveld stel je in met een expressie, bijvoorbeeld now(), of met een vaste datum die je kiest in de kalender naast het expressievak.",
-          "date_field_expression_only_label": "Over het instellen van een datumveld",
           "edit_options_shown_if": "Bewerk welke opties worden getoond",
           "edit_show_if": "Weergavevoorwaarde bewerken: {conditions}",
           "endings_count": "Afsluitingen · {count}",

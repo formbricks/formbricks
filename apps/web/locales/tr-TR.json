@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} bitiş} other {{count} bitiş}}",
           "count_rules": "{count, plural, one {{count} kural} other {{count} kural}}",
           "create_calculated_field": "Bir tane oluştur",
-          "date_field_expression_only": "Tarih alanı bir ifadeyle (ör. now()) veya ifade kutusunun yanındaki takvimden seçilen sabit bir tarihle ayarlanır.",
-          "date_field_expression_only_label": "Tarih alanı ayarlama hakkında",
           "edit_options_shown_if": "Hangi seçeneklerin gösterileceğini düzenle",
           "edit_show_if": "Gösterme koşulunu düzenle: {conditions}",
           "endings_count": "Bitişler · {count}",

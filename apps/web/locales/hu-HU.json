@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} befejezés} other {{count} befejezés}}",
           "count_rules": "{count, plural, one {{count} szabály} other {{count} szabály}}",
           "create_calculated_field": "Hozzon létre egyet",
-          "date_field_expression_only": "A dátum típusú mező megadása kifejezéssel, például a now() függvénnyel, vagy a kifejezésmező melletti naptárból kiválasztott rögzített dátummal történhet.",
-          "date_field_expression_only_label": "A dátummező beállításáról",
           "edit_options_shown_if": "Megjelenő opciók szerkesztése",
           "edit_show_if": "Megjelenítési feltétel szerkesztése: {conditions}",
           "endings_count": "Befejezések · {count}",

@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, other {{count}個のエンディング}}",
           "count_rules": "{count, plural, other {{count}個のルール}}",
           "create_calculated_field": "作成する",
-          "date_field_expression_only": "日付フィールドには、now() などの式、または式ボックスの横にあるカレンダーから選んだ固定の日付を設定できます。",
-          "date_field_expression_only_label": "日付フィールドの設定について",
           "edit_options_shown_if": "表示する選択肢を編集",
           "edit_show_if": "表示条件を編集: {conditions}",
           "endings_count": "エンディング · {count}",

@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} final} other {{count} finais}}",
           "count_rules": "{count, plural, one {{count} regra} other {{count} regras}}",
           "create_calculated_field": "Cria um",
-          "date_field_expression_only": "Um campo de data é definido com uma expressão, por exemplo now(), ou com uma data fixa escolhida no calendário junto à caixa da expressão.",
-          "date_field_expression_only_label": "Sobre a definição de um campo de data",
           "edit_options_shown_if": "Editar as opções que são apresentadas",
           "edit_show_if": "Editar condição de visibilidade: {conditions}",
           "endings_count": "Finais · {count}",

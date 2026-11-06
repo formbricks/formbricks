@@ -288,6 +288,8 @@ interface TEmbeddedFieldOptionFilter {
   exclude?: string;
   /** Keeps only fields whose value can be compared against this type. */
   comparableAs?: TEmbeddedDataType;
+  /** Keeps only fields of exactly this type: what a value assigned to such a field must be. */
+  dataType?: TEmbeddedDataType;
   /** Keeps only fields of this source. The numeric-scale branches offer computed fields alone. */
   source?: TLinkedEmbeddedField["field"]["source"];
 }
@@ -304,6 +306,7 @@ const getEmbeddedFieldOptions = (
     .filter(({ field, link }) => {
       if (link.storageKey === filter.exclude) return false;
       if (filter.source !== undefined && field.source !== filter.source) return false;
+      if (filter.dataType !== undefined && field.dataType !== filter.dataType) return false;
       return filter.comparableAs === undefined || isEmbeddedFieldComparableAs(field, filter.comparableAs);
     })
     .map(toEmbeddedFieldOption);
@@ -1045,10 +1048,10 @@ export const getActionTargetOptions = (
  * asks what kind of value it is assigning, not what kind of reference it is.
  */
 /**
- * A computed date field is set with an expression only (P38): one-step "assign" has no date input, so the
- * Set value row keeps its Expression switch on for it.
+ * Whether Set value writes a computed date field. Its one-step row only assigns, and is stored as an
+ * expression either way (P38), see `isOneStepDateExpression`.
  */
-export const isExpressionOnlyField = (localSurvey: TSurvey, storageKey: string): boolean =>
+export const isComputedDateField = (localSurvey: TSurvey, storageKey: string): boolean =>
   getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
     .dataType === "date";
 
@@ -1063,7 +1066,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
 
 export const getActionOperatorOptions = (
   t: TFunction,
-  variableType?: TSurveyVariable["type"]
+  variableType?: TSurveyVariable["type"] | "date"
 ): TComboboxOption[] => {
   if (variableType === "number") {
     return [
@@ -1087,6 +1090,15 @@ export const getActionOperatorOptions = (
         value: "divide",
         symbol: CALCULATE_SYMBOLS.divide,
       },
+      {
+        label: t("workspace.surveys.edit.assign"),
+        value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
+      },
+    ];
+  } else if (variableType === "date") {
+    // One step only assigns a date; anything computed from one is an expression.
+    return [
       {
         label: t("workspace.surveys.edit.assign"),
         value: "assign",
@@ -1134,23 +1146,27 @@ export const getActionValueOptions = (
   if (!selectedVariable) return [];
 
   const isNumeric = selectedVariable.type === "number";
+  // A date field takes a date question's answer or another date field (its fixed day is the picker's).
+  const isDate = isComputedDateField(localSurvey, variableId);
 
-  const allowedElementTypes = isNumeric
-    ? [
-        TSurveyElementTypeEnum.Rating,
-        TSurveyElementTypeEnum.NPS,
-        TSurveyElementTypeEnum.CSAT,
-        TSurveyElementTypeEnum.CES,
-      ]
-    : [
-        TSurveyElementTypeEnum.OpenText,
-        TSurveyElementTypeEnum.MultipleChoiceSingle,
-        TSurveyElementTypeEnum.Rating,
-        TSurveyElementTypeEnum.NPS,
-        TSurveyElementTypeEnum.CSAT,
-        TSurveyElementTypeEnum.CES,
-        TSurveyElementTypeEnum.Date,
-      ];
+  const allowedElementTypes = isDate
+    ? [TSurveyElementTypeEnum.Date]
+    : isNumeric
+      ? [
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+          TSurveyElementTypeEnum.CSAT,
+          TSurveyElementTypeEnum.CES,
+        ]
+      : [
+          TSurveyElementTypeEnum.OpenText,
+          TSurveyElementTypeEnum.MultipleChoiceSingle,
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+          TSurveyElementTypeEnum.CSAT,
+          TSurveyElementTypeEnum.CES,
+          TSurveyElementTypeEnum.Date,
+        ];
 
   const allowedElements = allElements.filter(
     (element) =>
@@ -1168,10 +1184,13 @@ export const getActionValueOptions = (
         type: "element",
       },
     })),
-    embeddedData: getEmbeddedFieldOptions(localSurvey, {
-      exclude: variableId,
-      comparableAs: isNumeric ? "number" : "string",
-    }),
+    // A date field's value must be a date: a text field that could compare as one doesn't type as one.
+    embeddedData: getEmbeddedFieldOptions(
+      localSurvey,
+      isDate
+        ? { exclude: variableId, dataType: "date" }
+        : { exclude: variableId, comparableAs: isNumeric ? "number" : "string" }
+    ),
   });
 };
 

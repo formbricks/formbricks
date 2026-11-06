@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} final} other {{count} finales}}",
           "count_rules": "{count, plural, one {{count} regla} other {{count} reglas}}",
           "create_calculated_field": "Crear uno",
-          "date_field_expression_only": "Un campo de fecha se establece con una expresión, p. ej., now(), o con una fecha fija elegida en el calendario junto al cuadro de la expresión.",
-          "date_field_expression_only_label": "Acerca de cómo establecer un campo de fecha",
           "edit_options_shown_if": "Editar qué opciones se muestran",
           "edit_show_if": "Editar condición de visualización: {conditions}",
           "endings_count": "Finales · {count}",

@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, other {{count} 個結尾}}",
           "count_rules": "{count, plural, other {{count} 條規則}}",
           "create_calculated_field": "建立一個",
-          "date_field_expression_only": "日期欄位可以用運算式設定，例如 now()，或是使用運算式輸入框旁邊的日曆選擇固定日期。",
-          "date_field_expression_only_label": "關於設定日期欄位",
           "edit_options_shown_if": "編輯要顯示哪些選項",
           "edit_show_if": "編輯顯示條件:{conditions}",
           "endings_count": "結尾 · {count}",

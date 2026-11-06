@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getComputedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyBlockLogicAction, TSurveyBlockLogicActionObjective } from "@formbricks/types/surveys/blocks";
+import type { TExpression } from "@formbricks/types/surveys/expressions";
 import {
   TActionNumberVariableCalculateOperator,
   TActionTextVariableCalculateOperator,
@@ -15,6 +16,7 @@ import { createEmptyFormulaAction, getUpdatedActionBody } from "@/lib/surveyLogi
 import { CalculatedFieldPicker } from "@/modules/survey/editor/components/calculated-field-picker";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
 import { formulaToOneStep, oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
+import { isOneStepDateExpression } from "@/modules/survey/editor/lib/fixed-date-expression";
 import { getNextActionObjective, getObjectivesForAction } from "@/modules/survey/editor/lib/rule-list";
 import { TARGET_LIST_CLASS, getJumpTargetGroups } from "@/modules/survey/editor/lib/target-options";
 import {
@@ -23,7 +25,7 @@ import {
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
-  isExpressionOnlyField,
+  isComputedDateField,
 } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -40,7 +42,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -63,9 +64,9 @@ interface LogicEditorActionsProps {
   readonly onAddCalculatedField?: () => void;
 }
 
-/** A Set value action written as a formula (ENG-6935), shown with the formula box. */
-const isFormulaAction = (action: TSurveyBlockLogicAction) =>
-  action.objective === "calculate" && action.value.type === "expression";
+/** What a date field's one-step row shows: the day, or the answer or field it copies. */
+const getOneStepDateValue = (expression: TExpression): string | number =>
+  expression.type === "call" ? "" : expression.value;
 
 export function LogicEditorActions({
   localSurvey,
@@ -82,12 +83,37 @@ export function LogicEditorActions({
    * type. ENG-2628: read off the survey's rows, which the Embedded Data card edits directly, so a
    * retype still reaches this widget on the next render.
    */
-  const getCalculateFieldType = (storageKey: string): "text" | "number" | undefined => {
+  const getCalculateFieldType = (storageKey: string): "text" | "number" | "date" | undefined => {
     const dataType = getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)
       ?.field.dataType;
     if (dataType === undefined) return undefined;
+    if (dataType === "date") return "date";
     return dataType === "number" ? "number" : "text";
   };
+
+  // A date field's Set value is stored as an expression either way (P38), so the switch can't be read
+  // off the stored type: the row is one step while the expression is one (a day, an answer, a field),
+  // and these actions were switched to the expression box by hand.
+  const [dateFormulaActionIds, setDateFormulaActionIds] = useState<ReadonlySet<string>>(new Set());
+  const setDateFormulaMode = (actionId: string, on: boolean) =>
+    setDateFormulaActionIds((current) => {
+      const next = new Set(current);
+      if (on) next.add(actionId);
+      else next.delete(actionId);
+      return next;
+    });
+
+  /** A date field's one-step row: "Set [date field] to [a day, a date answer or a date field]". */
+  const isDateOneStep = (action: TSurveyBlockLogicAction) =>
+    action.objective === "calculate" &&
+    action.value.type === "expression" &&
+    isComputedDateField(localSurvey, action.variableId) &&
+    !dateFormulaActionIds.has(action.id) &&
+    isOneStepDateExpression(action.value.value);
+
+  /** A Set value action shown with the expression box (ENG-6935). */
+  const isFormulaAction = (action: TSurveyBlockLogicAction) =>
+    action.objective === "calculate" && action.value.type === "expression" && !isDateOneStep(action);
 
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
@@ -140,7 +166,13 @@ export function LogicEditorActions({
 
   const turnFormulaOn = (actionIdx: number) => {
     const action = actions[actionIdx];
-    if (action?.objective !== "calculate" || action.value.type === "expression") return;
+    if (action === undefined) return;
+    // Already an expression: the box opens on it as it is.
+    if (isDateOneStep(action)) {
+      setDateFormulaMode(action.id, true);
+      return;
+    }
+    if (action.objective !== "calculate" || action.value.type === "expression") return;
     const formula = oneStepToFormula({
       variableId: action.variableId,
       operator: action.operator,
@@ -152,6 +184,11 @@ export function LogicEditorActions({
   const turnFormulaOff = (actionIdx: number) => {
     const action = actions[actionIdx];
     if (action?.objective !== "calculate" || action.value.type !== "expression") return;
+    if (isComputedDateField(localSurvey, action.variableId)) {
+      if (isOneStepDateExpression(action.value.value)) setDateFormulaMode(action.id, false);
+      else setFormulaToClearIdx(actionIdx);
+      return;
+    }
     const oneStep = formulaToOneStep(action.value.value, action.variableId);
     const fieldType = getCalculateFieldType(action.variableId);
     // Without a field there is no operator list to fit yet.
@@ -165,18 +202,27 @@ export function LogicEditorActions({
     setFormulaToClearIdx(actionIdx);
   };
 
-  const clearFormula = (actionIdx: number) =>
+  const clearFormula = (actionIdx: number) => {
+    const action = actions[actionIdx];
+    if (action?.objective === "calculate" && isComputedDateField(localSurvey, action.variableId)) {
+      setDateFormulaMode(action.id, false);
+      handleValuesChange(actionIdx, { ...createEmptyFormulaAction(action.id, action.variableId) });
+      return;
+    }
     handleValuesChange(actionIdx, { operator: "assign", value: { type: "static", value: "" } });
+  };
 
   // Picking the field a Set value step writes. A formula stays: a field of another type shows what no
-  // longer fits. A date field is set with an expression only (P38), so a one-step action turns into one.
+  // longer fits. One step starts over, and a date field's one step is stored as an expression (P38).
   const changeCalculatedField = (actionIdx: number, variableId: string) => {
     const action = actions[actionIdx];
     if (isFormulaAction(action)) {
+      setDateFormulaMode(action.id, true);
       handleValuesChange(actionIdx, { variableId });
       return;
     }
-    if (isExpressionOnlyField(localSurvey, variableId)) {
+    setDateFormulaMode(action.id, false);
+    if (isComputedDateField(localSurvey, variableId)) {
       handleValuesChange(actionIdx, { ...createEmptyFormulaAction(action.id, variableId) });
       return;
     }
@@ -328,7 +374,7 @@ export function LogicEditorActions({
                         />
                       </div>
 
-                      {action.value.type === "expression" ? (
+                      {isFormulaAction(action) ? (
                         <span className="shrink-0 text-sm whitespace-nowrap text-slate-600">
                           {t("workspace.surveys.edit.flow.set_to_formula")}
                         </span>
@@ -358,7 +404,12 @@ export function LogicEditorActions({
                               key={`value-${action.id}`}
                               withInput={true}
                               clearable={true}
-                              value={action.value?.value ?? ""}
+                              value={
+                                // A date field's one step is the expression's leaf (P38).
+                                action.value.type === "expression"
+                                  ? getOneStepDateValue(action.value.value)
+                                  : (action.value?.value ?? "")
+                              }
                               inputProps={{
                                 placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
                                 type: getCalculateFieldType(action.variableId) ?? "text",
@@ -376,19 +427,24 @@ export function LogicEditorActions({
                                   | "hiddenField"
                                   | "element";
 
-                                if (!fromInput && fieldType !== "static") {
+                                if (!fromInput && fieldType === "static") return;
+                                if (isDateOneStep(action)) {
+                                  // Stored as the expression's leaf (P38).
+                                  const leaf: TExpression = {
+                                    type: fromInput ? "static" : fieldType,
+                                    value: val as string,
+                                  };
                                   handleValuesChange(idx, {
-                                    value: {
-                                      type: fieldType,
-                                      value: val as string,
-                                    },
+                                    operator: "assign",
+                                    value: { type: "expression", value: leaf },
                                   });
                                 } else if (fromInput) {
                                   handleValuesChange(idx, {
-                                    value: {
-                                      type: "static",
-                                      value: val as string,
-                                    },
+                                    value: { type: "static", value: val as string },
+                                  });
+                                } else if (fieldType !== "static") {
+                                  handleValuesChange(idx, {
+                                    value: { type: fieldType, value: val as string },
                                   });
                                 }
                               }}
@@ -402,12 +458,7 @@ export function LogicEditorActions({
                     <div className="flex h-10 shrink-0 items-center gap-2">
                       <Switch
                         id={`action-${idx}-formula-toggle`}
-                        checked={action.value.type === "expression"}
-                        // A date field has no one-step input: it stays an expression (P38).
-                        disabled={
-                          action.value.type === "expression" &&
-                          isExpressionOnlyField(localSurvey, action.variableId)
-                        }
+                        checked={isFormulaAction(action)}
                         onCheckedChange={(on) => (on ? turnFormulaOn(idx) : turnFormulaOff(idx))}
                       />
                       <Label
@@ -415,16 +466,10 @@ export function LogicEditorActions({
                         className="text-sm font-normal text-slate-600">
                         {t("workspace.surveys.edit.flow.formula")}
                       </Label>
-                      {isExpressionOnlyField(localSurvey, action.variableId) && (
-                        <InfoTooltip
-                          label={t("workspace.surveys.edit.flow.date_field_expression_only_label")}>
-                          {t("workspace.surveys.edit.flow.date_field_expression_only")}
-                        </InfoTooltip>
-                      )}
                     </div>
                   </div>
 
-                  {action.value.type === "expression" && (
+                  {isFormulaAction(action) && action.value.type === "expression" && (
                     <div className="min-w-0 @xl:col-span-3">
                       <SetValueFormula
                         id={`action-${idx}-formula`}

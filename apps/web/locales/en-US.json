@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} ending} other {{count} endings}}",
           "count_rules": "{count, plural, one {{count} rule} other {{count} rules}}",
           "create_calculated_field": "Create one",
-          "date_field_expression_only": "A date field is set with an expression, e.g. now(), or a fixed date picked from the calendar next to the expression box.",
-          "date_field_expression_only_label": "About setting a date field",
           "edit_options_shown_if": "Edit which options are shown",
           "edit_show_if": "Edit show-if: {conditions}",
           "endings_count": "Endings · {count}",

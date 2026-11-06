@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} final} few {{count} finaluri} other {{count} de finaluri}}",
           "count_rules": "{count, plural, one {{count} regulă} few {{count} reguli} other {{count} de reguli}}",
           "create_calculated_field": "Creează unul",
-          "date_field_expression_only": "Un câmp de tip dată se setează cu o expresie, de exemplu now(), sau cu o dată fixă aleasă din calendarul de lângă caseta expresiei.",
-          "date_field_expression_only_label": "Despre setarea unui câmp de tip dată",
           "edit_options_shown_if": "Editează ce opțiuni sunt afișate",
           "edit_show_if": "Editează condiția de afișare: {conditions}",
           "endings_count": "Finaluri · {count}",

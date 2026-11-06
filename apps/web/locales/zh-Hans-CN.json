@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, other {{count} 个结束页}}",
           "count_rules": "{count, plural, other {{count} 条规则}}",
           "create_calculated_field": "去创建",
-          "date_field_expression_only": "日期字段可通过表达式设置(例如 now()),也可以使用表达式框旁边的日历选择一个固定日期。",
-          "date_field_expression_only_label": "关于设置日期字段",
           "edit_options_shown_if": "编辑显示哪些选项",
           "edit_show_if": "编辑显示条件:{conditions}",
           "endings_count": "结束页 · {count}",

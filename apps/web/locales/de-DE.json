@@ -4215,8 +4215,6 @@
           "count_endings": "{count, plural, one {{count} Abschluss} other {{count} Abschlüsse}}",
           "count_rules": "{count, plural, one {{count} Regel} other {{count} Regeln}}",
           "create_calculated_field": "Neues Feld erstellen",
-          "date_field_expression_only": "Ein Datumsfeld wird mit einem Ausdruck wie now() oder mit einem festen Datum festgelegt, das Du im Kalender neben dem Ausdrucksfeld auswählst.",
-          "date_field_expression_only_label": "Informationen zum Festlegen eines Datumsfelds",
           "edit_options_shown_if": "Bearbeiten, welche Optionen angezeigt werden",
           "edit_show_if": "Anzeigebedingung bearbeiten: {conditions}",
           "endings_count": "Abschlüsse · {count}",
