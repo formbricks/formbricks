@@ -296,13 +296,7 @@ export function LogicEditorActions({
                 <CornerDownRightIcon className="size-4 shrink-0 text-slate-500" />
               )}
             </div>
-            {/* The step's kind needs little room ("Set value", "Jump to"), so the rest of the line keeps
-                field, operator, value and the Expression switch together (review of ENG-6969). */}
-            <div
-              className={cn(
-                SENTENCE_FIELDS_CLASS,
-                "@xl:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_minmax(0,1fr)]"
-              )}>
+            <div className={SENTENCE_FIELDS_CLASS}>
               <div
                 // ENG-6933: takes nothing else, so the objective is the whole action.
                 className={cn("min-w-0", action.objective === "markLowQuality" && "@xl:col-span-3")}>

@@ -6,6 +6,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { toSentenceFieldGroups } from "@/modules/survey/editor/lib/condition-field-groups";
 import { createSharedConditionsFactory } from "@/modules/survey/editor/lib/shared-conditions-factory";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
+import type { TSentenceLeadAlign } from "@/modules/ui/components/conditions-editor/lib/sentence";
 import type {
   TConditionsEditorCallbacks,
   TConditionsEditorConfig,
@@ -22,6 +23,8 @@ interface LogicEditorConditionsProps {
   readonly getDefaultOperator: () => TSurveyLogicConditionsOperator;
   readonly onConditionsChange: (updater: (conditions: TConditionGroup) => TConditionGroup) => void;
   readonly depth?: number;
+  /** Where "If" sits in its column: `end` lines it up with the actions' "Then" (the default). */
+  readonly leadAlign?: TSentenceLeadAlign;
 }
 
 export function LogicEditorConditions({
@@ -31,6 +34,7 @@ export function LogicEditorConditions({
   getDefaultOperator,
   onConditionsChange,
   depth = 0,
+  leadAlign,
 }: LogicEditorConditionsProps) {
   const { t } = useTranslation();
 
@@ -61,6 +65,7 @@ export function LogicEditorConditions({
       config={sentenceConfig}
       callbacks={callbacks as TConditionsEditorCallbacks}
       depth={depth}
+      leadAlign={leadAlign}
     />
   );
 }

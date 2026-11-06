@@ -12,7 +12,6 @@ import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/componen
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import {
   AddConditionButton,
-  SHOW_IF_ANCHOR_PROPS,
   SHOW_IF_CELL_CLASS,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { describeConditionGroupParts } from "@/modules/survey/editor/lib/flow-outline-text";
@@ -20,10 +19,12 @@ import {
   type TOptionsShowIfSection,
   type TShowIfSection,
   getBlockShowIfSection,
+  getCardShowIf,
   getQuestionShowIfSections,
 } from "@/modules/survey/editor/lib/questions-tab-show-if";
 import { toPlainText } from "@/modules/survey/editor/lib/reference-chips";
-import { type TShowIfTarget, getShowIf } from "@/modules/survey/editor/lib/show-if-editing";
+import { SHOW_IF_ANCHOR_PROPS } from "@/modules/survey/editor/lib/show-if-anchor";
+import type { TShowIfTarget } from "@/modules/survey/editor/lib/show-if-editing";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -278,8 +279,8 @@ interface ShowIfBadgeProps {
 export const ShowIfBadge = ({ localSurvey, target }: ShowIfBadgeProps) => {
   const { t, i18n } = useTranslation();
   const elementIcons = useElementIcons();
-  const showIf = getShowIf(localSurvey, target);
-  if (!showIf || showIf.conditions.length === 0) return null;
+  const showIf = getCardShowIf(localSurvey, target);
+  if (!showIf) return null;
   const parts = describeConditionGroupParts(showIf, localSurvey, t, {
     locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
   });

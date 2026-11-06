@@ -18,6 +18,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
+import { findShowIfAnchor } from "@/modules/survey/editor/lib/show-if-anchor";
 import { type TShowIfTarget, getShowIfScope } from "@/modules/survey/editor/lib/show-if-editing";
 import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -36,20 +37,14 @@ import { PopoverContent } from "@/modules/ui/components/popover";
 export const ShowIfPopoverBoundary = createContext<Element | null>(null);
 
 /**
- * Marks the row a show-if popover lines up with and spans: a Questions-tab show-if section, a Flow-tab
- * question row or block header. The popover opens under the whole row, left-aligned with it, on both
- * tabs; without a marked row it opens under its trigger.
- */
-export const SHOW_IF_ANCHOR_PROPS = { "data-show-if-anchor": "" } as const;
-
-/**
- * A ref callback for the trigger, and the row it sits in (its nearest `SHOW_IF_ANCHOR_PROPS` element,
- * else the trigger itself) as the popover's anchor: pass `anchorRef` to `PopoverAnchor`'s `virtualRef`.
+ * A ref callback for the trigger, and the row it sits in (`findShowIfAnchor`: its nearest
+ * `SHOW_IF_ANCHOR_PROPS` element, else the trigger itself) as the popover's anchor: pass `anchorRef` to
+ * `PopoverAnchor`'s `virtualRef`.
  */
 export const useShowIfAnchor = () => {
   const [anchor, setAnchor] = useState<Element | null>(null);
   const triggerRef = useCallback((trigger: HTMLElement | null) => {
-    setAnchor(trigger ? (trigger.closest("[data-show-if-anchor]") ?? trigger) : null);
+    setAnchor(trigger ? findShowIfAnchor(trigger) : null);
   }, []);
   const anchorRef = useMemo(() => ({ current: anchor }), [anchor]);
   return { triggerRef, anchorRef, hasAnchor: anchor !== null };
@@ -224,15 +219,15 @@ export function ShowIfConditionsEditor({
   onConditionsChange,
 }: ShowIfConditionsEditorProps) {
   return (
-    // "If" sits at the popover's left edge (review of ENG-6969): the rule editor's right-aligned label
-    // column lines "If" up with "Then", which a show-if doesn't have.
-    <div className="overflow-x-auto pb-1 text-sm [&_[data-sentence-lead]]:justify-start [&_[data-sentence-row]]:grid-cols-[3.75rem_minmax(0,1fr)_3.75rem]">
+    <div className="overflow-x-auto pb-1 text-sm">
       <LogicEditorConditions
         conditions={conditions}
         localSurvey={scope.survey}
         scopeBlockIdx={scope.blockIdx}
         getDefaultOperator={getDefaultOperator}
         onConditionsChange={onConditionsChange}
+        // "If" sits at the popover's left edge (review of ENG-6969): a show-if has no "Then" to line up with.
+        leadAlign="start"
       />
     </div>
   );

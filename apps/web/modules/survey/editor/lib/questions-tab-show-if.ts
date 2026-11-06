@@ -2,7 +2,7 @@ import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import type { TOptionListKey } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { buildFlowOutline, getElementShowIfCells } from "@/modules/survey/editor/lib/flow-outline";
-import { canAddShowIf } from "@/modules/survey/editor/lib/show-if-editing";
+import { type TShowIfTarget, canAddShowIf, getShowIf } from "@/modules/survey/editor/lib/show-if-editing";
 
 /**
  * The show-if sections of the Questions tab (ENG-6949): "Show block if…" on a block's Settings tab, and
@@ -77,4 +77,17 @@ export const getQuestionShowIfSections = (
   }
 
   return { question, options };
+};
+
+/**
+ * The show-if a block's or a question's Questions-tab card shows as a badge (review of ENG-6949): its
+ * own, so a block or question that can be hidden says so without opening its Settings tab. `null` when
+ * it has none, or an empty one, which always holds.
+ */
+export const getCardShowIf = (
+  survey: TSurvey,
+  target: Exclude<TShowIfTarget, { type: "option" }>
+): TConditionGroup | null => {
+  const showIf = getShowIf(survey, target);
+  return showIf && showIf.conditions.length > 0 ? showIf : null;
 };

@@ -3,6 +3,7 @@ import type { FieldErrors } from "react-hook-form";
 import type { TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TConnector } from "@formbricks/types/surveys/logic";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import type { TSentenceLeadAlign } from "./lib/sentence";
 
 export interface TGenericCondition {
   id: string;
@@ -98,4 +99,6 @@ export interface ConditionsEditorProps {
   isSubmitted?: boolean;
   /** Hides the all/any picker: every condition combines with the group's fixed connector. */
   isConnectorLocked?: boolean;
+  /** The sentence layout only: where "If" and the connectors sit in their column (default `end`). */
+  leadAlign?: TSentenceLeadAlign;
 }

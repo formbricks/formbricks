@@ -14,10 +14,10 @@ import {
 import {
   SENTENCE_FIELDS_CLASS,
   SENTENCE_ICON_BUTTON_CLASS,
-  SENTENCE_LEAD_CLASS,
   SENTENCE_ROW_ACTIONS_CLASS,
-  SENTENCE_ROW_CLASS,
   getSentenceLead,
+  getSentenceLeadClass,
+  getSentenceRowClass,
   pickConnector,
   withComparisonPills,
 } from "@/modules/ui/components/conditions-editor/lib/sentence";
@@ -57,8 +57,11 @@ export function SentenceConditionsEditor({
   quotaErrors,
   isSubmitted = false,
   isConnectorLocked = false,
+  leadAlign = "end",
 }: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslation();
+  const rowClass = getSentenceRowClass(leadAlign);
+  const leadClass = getSentenceLeadClass(leadAlign);
   const [parent] = useAutoAnimate();
 
   const { handleLeftOperandChange, handleOperatorChange, handleRightOperandChange } = createConditionHandlers(
@@ -100,16 +103,15 @@ export function SentenceConditionsEditor({
   };
 
   const renderGroup = (group: TGenericConditionGroup, index: number) => (
-    <div key={group.id} className={SENTENCE_ROW_CLASS} data-sentence-row="">
-      <div className={SENTENCE_LEAD_CLASS} data-sentence-lead="">
-        {renderLead(index)}
-      </div>
+    <div key={group.id} className={rowClass}>
+      <div className={leadClass}>{renderLead(index)}</div>
       <div className="min-w-0 rounded-lg border border-slate-200 p-2">
         <SentenceConditionsEditor
           conditions={group}
           config={config}
           callbacks={callbacks}
           depth={depth + 1}
+          leadAlign={leadAlign}
         />
       </div>
       {/* The group keeps its ⋮ menu (the Airtable pattern). */}
@@ -186,10 +188,8 @@ export function SentenceConditionsEditor({
 
     return (
       <div key={condition.id} className="flex flex-col">
-        <div className={SENTENCE_ROW_CLASS} data-sentence-row="">
-          <div className={SENTENCE_LEAD_CLASS} data-sentence-lead="">
-            {renderLead(index)}
-          </div>
+        <div className={rowClass}>
+          <div className={leadClass}>{renderLead(index)}</div>
 
           <div className={SENTENCE_FIELDS_CLASS}>
             <InputCombobox

@@ -3,7 +3,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { getBlockShowIfSection, getQuestionShowIfSections } from "./questions-tab-show-if";
+import { getBlockShowIfSection, getCardShowIf, getQuestionShowIfSections } from "./questions-tab-show-if";
 
 /**
  * The show-if sections of the Questions tab's Settings tabs (ENG-6949). The fixture's blocks: 0 services
@@ -170,5 +170,24 @@ describe("getQuestionShowIfSections: which sections a question's Settings tab sh
       question: { state: "unavailable" },
       options: null,
     });
+  });
+});
+
+describe("getCardShowIf: the show-if badge on a Questions-tab card", () => {
+  test("a block and a question with a show-if show it", () => {
+    expect(getCardShowIf(surveyFlowFixture, { type: "block", blockIdx: 2 })).toBe(
+      surveyFlowFixture.blocks[2].showIf
+    );
+    const appleReasonIdx = elementIdxOf(surveyFlowFixture, 4, "apple_reason");
+    expect(
+      getCardShowIf(surveyFlowFixture, { type: "element", blockIdx: 4, elementIdx: appleReasonIdx })
+    ).toBe(surveyFlowFixture.blocks[4].elements[appleReasonIdx].showIf);
+  });
+
+  test("none, or an empty one that always holds, shows no badge", () => {
+    expect(getCardShowIf(surveyFlowFixture, { type: "block", blockIdx: 0 })).toBeNull();
+    const emptied = structuredClone(surveyFlowFixture);
+    emptied.blocks[2].showIf = { id: "empty", connector: "and", conditions: [] };
+    expect(getCardShowIf(emptied, { type: "block", blockIdx: 2 })).toBeNull();
   });
 });
