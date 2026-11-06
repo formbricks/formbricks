@@ -10,7 +10,7 @@ Any survey can leave Formbricks as a file, and come back in as one. Pick the pat
 | ----------------------------------------------------------------- | ----------------------------------------------------------- | -------- |
 | Move a survey to another workspace, organization or instance      | [Formbricks file](#export-a-survey) (`.json`)               | No       |
 | Edit a survey outside Formbricks, by hand or with an AI assistant | [Formbricks file](/surveys/import-export/formbricks-file)   | No       |
-| Send a survey to reviewers or translators, and bring their edits back | [Excel export](#what-the-excel-export-holds) (`.xlsx`) and [Import into a survey](#import-into-a-survey) | No       |
+| Send a survey to reviewers or translators, and bring their edits back | [Excel export](#what-the-excel-export-holds) (`.xlsx`), [imported back](#update-a-survey-from-its-excel-export) | No       |
 | Turn a questionnaire into a survey                                | [Document import](#import-a-document) (Word, Excel, CSV, Markdown) | Yes      |
 | Move a survey from Qualtrics                                      | [Qualtrics import](/surveys/import-export/qualtrics) (`.qsf`) | Yes      |
 
@@ -54,7 +54,7 @@ To read or change the file, see [Editing a Formbricks file](/surveys/import-expo
 
 ### What the Excel export holds
 
-The Excel export is a sheet for people who don't use Formbricks: one row per text the survey shows, one column per language.
+The Excel export is a workbook for people who don't use Formbricks. Its **Questions** sheet has one row per text the survey shows, and one column per language:
 
 | Column       | What it holds                                                                                        |
 | ------------ | ---------------------------------------------------------------------------------------------------- |
@@ -67,11 +67,11 @@ The cells hold the text respondents read: formatting is removed, and recalled an
 
 The headers, question types and the Logic column are in your own Formbricks language. The texts are the survey's own.
 
+The **Survey** sheet says what the survey is, one property per row: its ID, name, type, status, languages, number of questions, and when the file was exported. It is there for reading: the import ignores edits to it. The workbook names no person.
+
 <Info>
-  To bring a reviewer's or translator's edits back, import the sheet from the survey's own menu: see
-  [Import into a survey](#import-into-a-survey). Imported through **New survey** › **Import survey**
-  instead, it is read as any spreadsheet, by the [document import](#import-a-document), and becomes a new
-  survey.
+  To bring a reviewer's or translator's edits back, import the file through **New survey** › **Import
+  survey**: see [Update a survey from its Excel export](#update-a-survey-from-its-excel-export).
 </Info>
 
 ## Import a survey
@@ -88,8 +88,8 @@ Click **Save and continue** to create the survey as a draft and open it in the e
 Formbricks tells the file type from its content, not its name. A file it can't read fails with the reason, and nothing is created.
 
 <Note>
-  Without Formbricks AI, the dialog takes Formbricks files only. The **Very large survey?** link still
-  shows; see [Very large surveys](#very-large-surveys).
+  Without Formbricks AI, the dialog takes Formbricks files and Excel exports of your surveys only. The
+  **Very large survey?** link still shows; see [Very large surveys](#very-large-surveys).
 </Note>
 
 ## Import a Formbricks file
@@ -125,7 +125,7 @@ Files from older versions of Formbricks keep importing. A file from a newer vers
 
 ## Update a survey from a file
 
-When you import a Formbricks file into the workspace its survey came from, Formbricks offers to update that survey instead of creating a new one. This is a **Match**. It happens only when the survey:
+When you import a Formbricks file or an [Excel export](#update-a-survey-from-its-excel-export) into the workspace its survey came from, Formbricks offers to update that survey instead of creating a new one. This is a **Match**. It happens only when the survey:
 
 - has the ID in the file;
 - is in the workspace you import into, and not archived;
@@ -154,7 +154,7 @@ If the survey is active (in progress), the choice is locked to **Create a new su
 
 ### Changed since you exported
 
-Update first checks that nobody changed the survey after the file was exported. If someone did, nothing is written. The Update choice says **Changed since this file was exported**, and the choice moves to **Create a new survey**.
+Update first checks that nobody changed the survey after the file was exported, or, for an Excel export, after the review read the survey. If someone did, nothing is written. The Update choice says **Changed since this file was exported**, and the choice moves to **Create a new survey**.
 
 You can save the file as a new survey, or choose **Update** again: the button now reads **Update anyway** and overwrites those changes. If the survey changes once more after this review, Update anyway fails too. Pick the file again to review it against the latest version.
 
@@ -166,16 +166,11 @@ Either way the survey keeps its display settings: how often and when it shows, i
 
 If the file's triggers would leave a live survey with nothing that shows it, the checkbox is unticked and locked, and says why. It is hidden when the triggers are the same.
 
-## Import into a survey
+## Update a survey from its Excel export
 
-To update one survey from a file, start from that survey: open the **⋮** menu on its card and choose **Import**. You need edit access to the survey, and archived surveys have no Import.
+An Excel export names the survey it was exported from. Import the edited file through **New survey** › **Import survey**, and Formbricks reads it without AI, applies the sheet's edits to that survey, and offers a [Match](#update-a-survey-from-a-file): **Update "Survey name"** or **Create a new survey**. This happens only when the survey is in the workspace you import into, not archived, and one you can edit. Any other Excel file, an export of a survey you can't edit included, is read as a spreadsheet by the [document import](#import-a-document), which needs AI.
 
-The dialog takes two kinds of file, neither read by AI:
-
-- a **Formbricks file** (`.json`), from this survey or any other;
-- the survey's **Excel export** (`.xlsx`), edited by a reviewer or translator.
-
-The review offers **Update "Survey name"** or **Create a new survey**, as on a [Match](#update-a-survey-from-a-file), and every check of an Update applies: an active survey is never updated, a file of another survey type or default language can't update it, and once the survey has left draft a file can't change a question's ID, code or type, an answer code or an option's text, or remove an option, in any language: responses are matched to them. Fix those texts in the editor, or save the file as a new survey. The survey you import into is the one that gets updated, whatever survey a Formbricks file came from.
+Every check of an Update applies: an active survey is never updated, and once the survey has left draft a sheet can't change a question's ID, code or type, an answer code or an option's text, or remove an option, in any language: responses are matched to them. The review names the row of each text it refuses. Fix those texts in the editor, or save the file as a new survey.
 
 ### Edit a survey in its Excel export
 
@@ -192,7 +187,7 @@ To add a question, add a row with a new **Question ID**, a question type in **Ty
 
 Cells hold plain text. An edited text that had formatting, such as bold or a link, is stored without it, with a warning. A recalled answer typed as its `@` label comes back as the recall.
 
-The report counts the texts the sheet changes and lists every row it added or left out, with the reason. A sheet with no row from this survey is refused, and so is a spreadsheet that isn't a Formbricks Excel export: export the survey first, and edit that file.
+The report counts the texts the sheet changes and lists every row it added or left out, with the reason. A sheet with no row from its survey is refused: export the survey again, and edit that file.
 
 **Create a new survey** saves a copy of this survey with the sheet's changes, as a new draft.
 

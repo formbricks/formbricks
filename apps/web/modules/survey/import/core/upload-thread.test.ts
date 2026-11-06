@@ -296,7 +296,7 @@ describe("serveSurveyImportUpload: the worker's side", () => {
     serveSurveyImportUpload(port2);
 
     const reply = new Promise((resolve) => port1.once("message", resolve));
-    port1.postMessage({ step: "read", fileName: "never-sniffed.qsf", as: "survey" });
+    port1.postMessage({ step: "read", fileName: "never-sniffed.qsf" });
 
     expect(await reply).toMatchObject({
       ok: false,

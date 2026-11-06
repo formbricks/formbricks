@@ -200,8 +200,11 @@ const titleOf = (book: XLSX.WorkBook): string | null => {
  * past the XML or sheet limits (`document_limit_exceeded`) or for a workbook that cannot be read,
  * declares a DTD, or whose first sheet has no text (`file_unreadable`).
  */
-export const readSheetDocument = (archive: TZipArchive): TDocumentModel => {
-  const book = readCheckedWorkbook(archive, 0);
+export const readSheetDocument = (archive: TZipArchive): TDocumentModel =>
+  sheetDocumentFromBook(readCheckedWorkbook(archive, 0));
+
+/** A workbook `readCheckedWorkbook` parsed, its first sheet at least, as the document model. */
+export const sheetDocumentFromBook = (book: XLSX.WorkBook): TDocumentModel => {
   const firstName = book.SheetNames[0];
   const sheet = firstName === undefined ? undefined : book.Sheets[firstName];
   if (!sheet) throw surveyImportFileUnreadable("The workbook has no sheet");

@@ -6,15 +6,11 @@ import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file
 import { getFormbricksFileSurveyLanguageCodes } from "@/modules/survey/formbricks-file/fit";
 import { previewFormbricksFileImport } from "@/modules/survey/formbricks-file/import";
 import type { TFormbricksFileRead } from "@/modules/survey/formbricks-file/read";
-import {
-  buildFormbricksFileMatch,
-  findFormbricksFileMatch,
-  hasSurveyResponses,
-} from "@/modules/survey/formbricks-file/update";
+import { findFormbricksFileMatch } from "@/modules/survey/formbricks-file/update";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
 import type { TSurveyImportMatch, TSurveyImportSourceKind } from "@/modules/survey/import/types";
-import type { TSurveyImportLane, TSurveyImportResult, TSurveyImportTarget } from "../core/lane";
+import type { TSurveyImportLane, TSurveyImportResult } from "../core/lane";
 import { buildSurveyImportReport } from "../core/report";
 
 /**
@@ -28,11 +24,6 @@ export interface TFormbricksFileImportInput {
   workspaceId: string;
   organizationId: string;
   authentication: TV3Authentication;
-  /**
-   * The survey the import was started from, in its menu (ENG-6809): the Match is that survey, whatever
-   * survey the file names. Absent for New survey › Import, which matches the file's own source.
-   */
-  target?: TSurveyImportTarget;
 }
 
 export interface TPreparedFormbricksFileImport {
@@ -67,36 +58,20 @@ export const formbricksFileImportLane: TSurveyImportLane<
   kind: "formbricks",
   usesAI: false,
   rateLimit: null,
-  prepare: async ({ read, fileName, workspaceId, organizationId, authentication, target }) => {
-    const [{ draft, references, issues, source, plan }, hasResponses] = await Promise.all([
-      read().then((file) =>
-        previewFormbricksFileImport({
-          read: file,
-          workspaceId,
-          organizationId,
-          userId: getSessionUserId(authentication),
-        })
-      ),
-      target ? hasSurveyResponses(target.survey.id) : Promise.resolve(false),
-    ]);
-    const match = target
-      ? await buildFormbricksFileMatch({
-          survey: target.survey,
-          hasResponses,
-          // The file's export time only when it was exported from this survey: "changed since the
-          // export" means nothing for another survey's file, which is checked against the survey as read now.
-          exportedUpdatedAt:
-            source?.surveyId === target.survey.id ? source.updatedAt : target.survey.updatedAt.toISOString(),
-          draft,
-          plan,
-        })
-      : await findFormbricksFileMatch({
-          source,
-          workspaceId,
-          actor: getV3AuthorizationActor(authentication),
-          draft,
-          plan,
-        });
+  prepare: async ({ read, fileName, workspaceId, organizationId, authentication }) => {
+    const { draft, references, issues, source, plan } = await previewFormbricksFileImport({
+      read: await read(),
+      workspaceId,
+      organizationId,
+      userId: getSessionUserId(authentication),
+    });
+    const match = await findFormbricksFileMatch({
+      source,
+      workspaceId,
+      actor: getV3AuthorizationActor(authentication),
+      draft,
+      plan,
+    });
     return { draft, references, issues, match, fileName };
   },
   run: ({ prepared, onProgress }) => {

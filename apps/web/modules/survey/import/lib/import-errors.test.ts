@@ -316,19 +316,12 @@ describe("getSurveyImportFieldProblemHeadline", () => {
   });
 });
 
-describe("an import into a survey from its menu (ENG-6809)", () => {
-  test.each([
-    ["excel_export_not_recognized", "workspace.surveys.import.errors.excel_export_not_recognized"],
-    ["excel_export_other_survey", "workspace.surveys.import.errors.excel_export_other_survey"],
-  ])("names a %s refusal and says it in its own words", (code, key) => {
-    const errorCode = getSurveyImportRequestErrorCode(fileRefusal(422, code));
-    expect(errorCode).toBe(code);
-    expect(getSurveyImportErrorMessage(errorCode, t)).toBe(key);
-  });
-
-  test("asks for a Formbricks file or the survey's Excel export when another kind was picked", () => {
-    expect(getSurveyImportErrorMessage("file_wrong_extension_into_survey", t)).toBe(
-      "workspace.surveys.import.errors.wrong_extension_into_survey"
+describe("an Excel export whose rows are another survey's (ENG-6809)", () => {
+  test("is named and said in its own words", () => {
+    const errorCode = getSurveyImportRequestErrorCode(fileRefusal(422, "excel_export_other_survey"));
+    expect(errorCode).toBe("excel_export_other_survey");
+    expect(getSurveyImportErrorMessage(errorCode, t)).toBe(
+      "workspace.surveys.import.errors.excel_export_other_survey"
     );
   });
 });

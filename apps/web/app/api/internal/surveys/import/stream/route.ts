@@ -17,11 +17,13 @@
  * that spends AI tokens is charged Create with AI's bucket on top, once the operation knows the type.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import {
   SURVEY_IMPORT_MAX_BODY_BYTES,
+  SURVEY_IMPORT_MAX_IN_FLIGHT,
+  SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER,
   SURVEY_IMPORT_RETRY_AFTER_SECONDS,
 } from "@/modules/survey/import/limits";
-import { surveyImportConcurrency } from "../lib/concurrency";
 import { streamSurveyImport } from "../lib/operations";
 import { ZSurveyImportStreamForm } from "../lib/schemas";
 
@@ -30,10 +32,18 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
+/**
+ * One per server process: the limit bounds what a pod spends on imports, and the per-user share keeps
+ * one user from taking every slot.
+ */
+const importConcurrency = new ConcurrencyLimiter(SURVEY_IMPORT_MAX_IN_FLIGHT, {
+  maxPerKey: SURVEY_IMPORT_MAX_IN_FLIGHT_PER_USER,
+});
+
 export const POST = withV3ApiWrapper({
   auth: "session",
   bodyLimitBytes: SURVEY_IMPORT_MAX_BODY_BYTES,
-  concurrency: { limiter: surveyImportConcurrency, retryAfterSeconds: SURVEY_IMPORT_RETRY_AFTER_SECONDS },
+  concurrency: { limiter: importConcurrency, retryAfterSeconds: SURVEY_IMPORT_RETRY_AFTER_SECONDS },
   schemas: {
     formData: ZSurveyImportStreamForm,
   },

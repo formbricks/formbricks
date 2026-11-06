@@ -175,8 +175,7 @@ const getUnprocessableFileCode = (error: V3ApiError): string => {
   const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
   if (limit) return `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}`;
   if (hasParam("qsf_not_recognized")) return "qsf_not_recognized";
-  // An import into a survey's own menu (ENG-6809) reads a workbook only as that survey's Excel export.
-  if (hasParam("excel_export_not_recognized")) return "excel_export_not_recognized";
+  // An Excel export whose rows are none of the survey its meta sheet names (ENG-6809).
   if (hasParam("excel_export_other_survey")) return "excel_export_other_survey";
   // Any other 422 may come from any lane, so it gets the sentence that fits every file.
   return "file_unreadable";
@@ -208,17 +207,6 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
 };
 
 /**
- * The sentences for an import into a survey from its menu (ENG-6809): a file of another kind, a workbook
- * that is not an Excel export, or another survey's. Literal `t()` calls, so the translation scanner sees
- * every key.
- */
-const INTO_SURVEY_MESSAGES: Readonly<Record<string, (t: TTranslate) => string>> = {
-  file_wrong_extension_into_survey: (t) => t("workspace.surveys.import.errors.wrong_extension_into_survey"),
-  excel_export_not_recognized: (t) => t("workspace.surveys.import.errors.excel_export_not_recognized"),
-  excel_export_other_survey: (t) => t("workspace.surveys.import.errors.excel_export_other_survey"),
-};
-
-/**
  * The sentence for an import failure: a file the browser refused, a request the route refused, or an
  * `error` event from the stream. AI codes fall through to Create with AI's wording, so both features
  * say the same thing about the same provider problem.
@@ -237,7 +225,6 @@ export const getSurveyImportErrorMessage = (
   if (code === SURVEY_IMPORT_JSON_INVALID_CODE || code.startsWith(`${SURVEY_IMPORT_JSON_INVALID_CODE}:`)) {
     return getJsonInvalidMessage(code, t);
   }
-  if (Object.hasOwn(INTO_SURVEY_MESSAGES, code)) return INTO_SURVEY_MESSAGES[code](t);
 
   switch (code) {
     case "file_wrong_extension":
@@ -264,6 +251,8 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.file_too_large");
     case "qsf_not_recognized":
       return t("workspace.surveys.import.errors.not_a_qsf");
+    case "excel_export_other_survey":
+      return t("workspace.surveys.import.errors.excel_export_other_survey");
     case "file_too_complex":
       return t("workspace.surveys.import.errors.too_complex");
     case "file_unreadable":

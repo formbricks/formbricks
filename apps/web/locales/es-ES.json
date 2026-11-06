@@ -4775,15 +4775,21 @@
         "display_text_disabled_spss": "No disponible con sintaxis de SPSS",
         "excel": {
           "block_field": "{block}: {field}",
+          "default_language": "Idioma predeterminado",
           "ending_field": "Final {n}: {field}",
+          "exported_at": "Exportado",
           "language_column": "{name} ({code})",
           "language_column_default": "{name} ({code}) — predeterminado",
+          "languages": "Idiomas",
           "logic_column": "Lógica",
+          "property_column": "Propiedad",
           "question_id_column": "ID de la pregunta",
-          "sheet_name": "Encuesta",
+          "sheet_name": "Preguntas",
+          "survey_sheet_name": "Encuesta",
           "text_column": "Texto",
           "truncated": "… [truncado]",
           "type_column": "Tipo",
+          "value_column": "Valor",
           "welcome_card_field": "Tarjeta de bienvenida: {field}"
         },
         "excel_file": "Archivo de Excel (.xlsx)",
@@ -4899,14 +4905,14 @@
         "card_description_json_only": "Convierte una encuesta exportada desde Formbricks en un borrador de encuesta.",
         "card_title": "Importar encuesta",
         "dialog_description": "Trae un archivo de Formbricks, una exportación de Qualtrics o un cuestionario de Word, Excel, CSV o Markdown.",
-        "dialog_description_json_only": "Trae una encuesta exportada desde Formbricks.",
+        "dialog_description_json_only": "Importa una encuesta exportada desde Formbricks, ya sea como archivo de Formbricks o como archivo de Excel.",
         "dialog_title": "Importar una encuesta",
         "discard_draft_body": "El borrador importado aún no se ha abierto en el editor. Si lo cierras, se descartará.",
         "discard_draft_title": "¿Descartar esta importación?",
         "discard_import_body": "El archivo todavía se está importando. Si lo cierras, se detendrá la importación.",
         "discard_import_title": "¿Detener la importación?",
         "dropzone_help": "Archivo de Formbricks (.json), exportación de Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md), hasta 15 MB",
-        "dropzone_help_json_only": "Archivo de Formbricks (.json), hasta 15 MB",
+        "dropzone_help_json_only": "Archivo de Formbricks (.json) o exportación de una encuesta en Excel (.xlsx), de hasta 15 MB",
         "dropzone_primary": "Suelta un archivo aquí o haz clic para elegir uno",
         "encodings": {
           "utf_16": "UTF-16",
@@ -4931,8 +4937,7 @@
             "xml_elements": "Este documento contiene más contenido del que la importación puede leer. Divídelo en archivos más pequeños e importa cada uno."
           },
           "empty_file": "Este archivo está vacío.",
-          "excel_export_not_recognized": "Este archivo de Excel no es una exportación de una encuesta de Formbricks. Exporta la encuesta como archivo de Excel, edita ese archivo e impórtalo aquí.",
-          "excel_export_other_survey": "Ninguna fila de esta hoja pertenece a esta encuesta. ¿Se exportó desde otra encuesta?",
+          "excel_export_other_survey": "Ninguna fila de esta hoja pertenece a la encuesta desde la que se exportó. Vuelve a exportar la encuesta, edita ese archivo e impórtalo.",
           "failed": "La importación ha fallado. Inténtalo de nuevo.",
           "field_problems": {
             "dangling_reference": "Esto apunta a algo que el archivo no incluye",
@@ -4973,7 +4978,7 @@
             "texts": "Esta encuesta tiene más textos de los que puede leer la importación."
           },
           "more_problems": "{count, plural, one {# problema más} other {# problemas más}}",
-          "needs_ai": "Los archivos de Qualtrics, Word, Excel, CSV y Markdown se leen con Formbricks AI, que tu organización no tiene. Elige un archivo de Formbricks (.json).",
+          "needs_ai": "Los archivos de Qualtrics, Word, CSV y Markdown, y los archivos de Excel que no sean la exportación de una encuesta en Excel, se leen con la IA de Formbricks, que tu organización no tiene. Elige un archivo de Formbricks (.json) o la exportación de una encuesta en Excel (.xlsx).",
           "no_questions": "Formbricks AI no ha podido leer ninguna pregunta de este archivo. Inténtalo de nuevo o impórtalo con Claude o ChatGPT a través de MCP.",
           "not_a_qsf": "Este archivo no es una exportación de una encuesta de Qualtrics. En Qualtrics, exporta la encuesta como archivo .qsf e inténtalo de nuevo.",
           "not_allowed": "No tienes permiso para importar encuestas en este espacio de trabajo.",
@@ -4990,8 +4995,7 @@
           "too_large_for_ai": "Esta encuesta es demasiado grande para que Formbricks AI la importe de una sola vez. Impórtala con Claude o ChatGPT a través de MCP.",
           "too_many_questions": "Esta encuesta tiene más de 200 preguntas, más de las que puede crear una sola importación. Impórtala con Claude o ChatGPT a través de MCP.",
           "unreadable": "No se ha podido leer este archivo. Expórtalo de nuevo e inténtalo otra vez.",
-          "wrong_extension": "Elige un archivo de Formbricks (.json), una exportación de Qualtrics (.qsf) o un cuestionario de Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md).",
-          "wrong_extension_into_survey": "Elige un archivo de Formbricks (.json) o la exportación de Excel de esta encuesta (.xlsx)."
+          "wrong_extension": "Elige un archivo de Formbricks (.json), una exportación de Qualtrics (.qsf) o un cuestionario de Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md)."
         },
         "facts": {
           "blocks": "{count, plural, one {# bloque} other {# bloques}}",
@@ -5000,12 +5004,6 @@
           "logic_not_imported": "{count, plural, one {# regla de lógica no importada} other {# reglas de lógica no importadas}}",
           "logic_to_check": "{count, plural, one {# regla de lógica por revisar} other {# reglas de lógica por revisar}}",
           "questions": "{count, plural, one {# pregunta} other {# preguntas}}"
-        },
-        "into_survey": {
-          "dialog_description": "Actualiza esta encuesta a partir de un archivo de Formbricks o de su exportación de Excel con textos y traducciones editados. Revisarás los cambios antes de guardar nada.",
-          "dialog_title": "Importar en «{name}»",
-          "dropzone_help": "Un archivo de Formbricks (.json) o la exportación de Excel de esta encuesta (.xlsx)",
-          "menu": "Importar"
         },
         "issues": {
           "action_class_created": "La acción \"{name}\" es nueva en este espacio de trabajo y se creará.",
@@ -5094,7 +5092,6 @@
           "create_description": "Se guardará como un nuevo borrador llamado «{newName}».",
           "create_new_survey": "Crear una nueva encuesta",
           "exported_from": "Este archivo se exportó desde «{name}».",
-          "into_survey_legend": "¿Qué quieres que haga este archivo?",
           "refused_description": "Este archivo no puede actualizar “{name}” por los motivos que se indican a continuación. Se guarda como un nuevo borrador llamado “{newName}”.",
           "stale_line": "Ha cambiado desde que se exportó este archivo. Elige Actualizar para sobrescribir esos cambios de todos modos.",
           "triggers_differ": "Son distintos de los de la encuesta. Desmarca la casilla para mantener sus activadores actuales.",

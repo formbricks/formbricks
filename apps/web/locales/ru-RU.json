@@ -4775,15 +4775,21 @@
         "display_text_disabled_spss": "Недоступно для синтаксиса SPSS",
         "excel": {
           "block_field": "{block}: {field}",
+          "default_language": "Язык по умолчанию",
           "ending_field": "Завершение {n}: {field}",
+          "exported_at": "Дата экспорта",
           "language_column": "{name} ({code})",
           "language_column_default": "{name} ({code}) — по умолчанию",
+          "languages": "Языки",
           "logic_column": "Логика",
+          "property_column": "Свойство",
           "question_id_column": "ID вопроса",
-          "sheet_name": "Опрос",
+          "sheet_name": "Вопросы",
+          "survey_sheet_name": "Опрос",
           "text_column": "Текст",
           "truncated": "… [обрезано]",
           "type_column": "Тип",
+          "value_column": "Значение",
           "welcome_card_field": "Приветственная карточка: {field}"
         },
         "excel_file": "Файл Excel (.xlsx)",
@@ -4899,14 +4905,14 @@
         "card_description_json_only": "Превратите опрос, экспортированный из Formbricks, в черновик опроса.",
         "card_title": "Импорт опроса",
         "dialog_description": "Загрузите файл Formbricks, экспорт из Qualtrics или анкету из Word, Excel, CSV или Markdown.",
-        "dialog_description_json_only": "Загрузите опрос, экспортированный из Formbricks.",
+        "dialog_description_json_only": "Импортируй опрос, экспортированный из Formbricks, в виде файла Formbricks или файла Excel.",
         "dialog_title": "Импорт опроса",
         "discard_draft_body": "Импортированный черновик ещё не открыт в редакторе. Если закрыть окно, он будет удалён.",
         "discard_draft_title": "Отменить этот импорт?",
         "discard_import_body": "Файл всё ещё импортируется. Если закрыть окно, импорт будет остановлен.",
         "discard_import_title": "Остановить импорт?",
         "dropzone_help": "Файл Formbricks (.json), экспорт Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) или Markdown (.md), до 15 МБ",
-        "dropzone_help_json_only": "Файл Formbricks (.json), до 15 МБ",
+        "dropzone_help_json_only": "Файл Formbricks (.json) или Excel-экспорт опроса (.xlsx), до 15 МБ",
         "dropzone_primary": "Перетащи файл сюда или нажми, чтобы выбрать",
         "encodings": {
           "utf_16": "UTF-16",
@@ -4931,8 +4937,7 @@
             "xml_elements": "В этом документе больше содержимого, чем может прочитать импорт. Раздели его на файлы поменьше и импортируй каждый по отдельности."
           },
           "empty_file": "Этот файл пуст.",
-          "excel_export_not_recognized": "Этот файл Excel — не экспорт опроса из Formbricks. Экспортируйте опрос в файл Excel, отредактируйте его и импортируйте сюда.",
-          "excel_export_other_survey": "Ни одна строка этого листа не относится к данному опросу. Возможно, файл был экспортирован из другого опроса?",
+          "excel_export_other_survey": "Ни одна строка на этом листе не относится к опросу, из которого он был экспортирован. Экспортируй опрос ещё раз, отредактируй этот файл и импортируй его.",
           "failed": "Не удалось выполнить импорт. Попробуйте ещё раз.",
           "field_problems": {
             "dangling_reference": "Здесь указана ссылка на то, чего нет в файле",
@@ -4973,7 +4978,7 @@
             "texts": "В этом опросе больше текстов, чем может прочитать импорт."
           },
           "more_problems": "{count, plural, one {Ещё # проблема} few {Ещё # проблемы} many {Ещё # проблем} other {Ещё # проблемы}}",
-          "needs_ai": "Файлы Qualtrics, Word, Excel, CSV и Markdown обрабатываются с помощью Formbricks AI, который недоступен в вашей организации. Выберите файл Formbricks (.json).",
+          "needs_ai": "Файлы Qualtrics, Word, CSV и Markdown, а также файлы Excel, не являющиеся Excel-экспортом опроса, обрабатываются с помощью Formbricks AI, который недоступен в твоей организации. Выбери файл Formbricks (.json) или Excel-экспорт опроса (.xlsx).",
           "no_questions": "Formbricks AI не удалось считать ни одного вопроса из этого файла. Попробуй ещё раз или импортируй его через MCP с помощью Claude или ChatGPT.",
           "not_a_qsf": "Это не экспорт опроса из Qualtrics. В Qualtrics экспортируйте опрос в файл .qsf и попробуйте снова.",
           "not_allowed": "У вас нет прав на импорт опросов в это рабочее пространство.",
@@ -4990,8 +4995,7 @@
           "too_large_for_ai": "Этот опрос слишком большой, чтобы Formbricks AI мог импортировать его за один раз. Вместо этого импортируй его через MCP с помощью Claude или ChatGPT.",
           "too_many_questions": "В этом опросе больше 200 вопросов — это больше, чем можно создать за один импорт. Импортируй его через Claude или ChatGPT с помощью MCP.",
           "unreadable": "Не удалось прочитать этот файл. Экспортируй его заново и попробуй ещё раз.",
-          "wrong_extension": "Выберите файл Formbricks (.json), экспорт Qualtrics (.qsf) или анкету в формате Word (.docx), Excel (.xlsx), CSV (.csv) или Markdown (.md).",
-          "wrong_extension_into_survey": "Выберите файл Formbricks (.json) или экспорт этого опроса в Excel (.xlsx)."
+          "wrong_extension": "Выберите файл Formbricks (.json), экспорт Qualtrics (.qsf) или анкету в формате Word (.docx), Excel (.xlsx), CSV (.csv) или Markdown (.md)."
         },
         "facts": {
           "blocks": "{count, plural, one {# блок} few {# блока} many {# блоков} other {# блока}}",
@@ -5000,12 +5004,6 @@
           "logic_not_imported": "{count, plural, one {# правило логики не импортировано} few {# правила логики не импортированы} many {# правил логики не импортировано} other {# правила логики не импортировано}}",
           "logic_to_check": "{count, plural, one {# правило логики для проверки} few {# правила логики для проверки} many {# правил логики для проверки} other {# правила логики для проверки}}",
           "questions": "{count, plural, one {# вопрос} few {# вопроса} many {# вопросов} other {# вопроса}}"
-        },
-        "into_survey": {
-          "dialog_description": "Обновите этот опрос из файла Formbricks или из его экспорта в Excel с отредактированными текстами и переводами. Перед сохранением вы сможете проверить все изменения.",
-          "dialog_title": "Импорт в «{name}»",
-          "dropzone_help": "Файл Formbricks (.json) или экспорт этого опроса в Excel (.xlsx)",
-          "menu": "Импорт"
         },
         "issues": {
           "action_class_created": "Действие «{name}» новое в этом рабочем пространстве и будет создано.",
@@ -5094,7 +5092,6 @@
           "create_description": "Будет сохранён как новый черновик «{newName}».",
           "create_new_survey": "Создать новый опрос",
           "exported_from": "Этот файл был экспортирован из опроса «{name}».",
-          "into_survey_legend": "Что должен сделать этот файл?",
           "refused_description": "Этот файл не может обновить «{name}» по причинам ниже. Он будет сохранён как новый черновик «{newName}».",
           "stale_line": "Изменено после экспорта этого файла. Выберите «Обновить», чтобы всё равно перезаписать эти изменения.",
           "triggers_differ": "Они отличаются от триггеров опроса. Снимите флажок, чтобы сохранить текущие триггеры.",

@@ -11,6 +11,10 @@
  * | `headers`   | each language column's header, in the same order                       |
  * | `columns`   | the Question ID column's header, then the Type column's                |
  * | `locale`    | the locale the headers and Type cells are written in                   |
+ * | `surveyId`  | the survey the file was exported from                                  |
+ *
+ * The visible Survey sheet, after Questions, holds the survey's properties for people; the import
+ * never reads it.
  */
 
 /** The export's own version, written to the meta sheet; raised when its layout changes. */
@@ -23,3 +27,4 @@ export const EXCEL_EXPORT_META_LANGUAGES = "languages";
 export const EXCEL_EXPORT_META_HEADERS = "headers";
 export const EXCEL_EXPORT_META_COLUMNS = "columns";
 export const EXCEL_EXPORT_META_LOCALE = "locale";
+export const EXCEL_EXPORT_META_SURVEY_ID = "surveyId";

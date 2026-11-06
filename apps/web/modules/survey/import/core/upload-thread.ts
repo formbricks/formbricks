@@ -3,7 +3,7 @@ import { MessageChannel, type MessagePort, Worker, receiveMessageOnPort } from "
 import { SURVEY_IMPORT_MAX_READ_THREADS, SURVEY_IMPORT_READ_TIME_MS } from "../limits";
 import type { TSurveyImportFileLimit } from "../types";
 import { SurveyImportInputError, fromSurveyImportRefusal } from "./errors";
-import type { TSurveyImportReadAs, TSurveyImportUploadRead } from "./read-upload";
+import type { TSurveyImportUploadRead } from "./read-upload";
 import type { TSurveyImportFile } from "./sniff";
 import type { TUploadWorkerFailure, TUploadWorkerReply, TUploadWorkerRequest } from "./upload-worker";
 
@@ -36,7 +36,7 @@ import type { TUploadWorkerFailure, TUploadWorkerReply, TUploadWorkerRequest } f
 export interface TSurveyImportUpload {
   readonly type: TSurveyImportFile["type"];
   /** Read the upload for its lane, once. The thread ends with the answer. */
-  read: (fileName: string, as?: TSurveyImportReadAs) => Promise<TSurveyImportUploadRead>;
+  read: (fileName: string) => Promise<TSurveyImportUploadRead>;
   /** End the thread, if it still runs. Safe to call at any time, and more than once. */
   close: () => void;
 }
@@ -215,9 +215,9 @@ export const openSurveyImportUpload = async (
   let read: Promise<TSurveyImportUploadRead> | null = null;
   return {
     type,
-    read: (fileName, as = "survey") => {
+    read: (fileName) => {
       if (closed) return Promise.reject(new Error("The survey import's reader was closed"));
-      read ??= (ask({ step: "read", fileName, as }) as Promise<TSurveyImportUploadRead>).finally(close);
+      read ??= (ask({ step: "read", fileName }) as Promise<TSurveyImportUploadRead>).finally(close);
       return read;
     },
     close,
@@ -233,7 +233,7 @@ export const readSurveyImportUploadAs = async <TType extends TSurveyImportUpload
   type: TType,
   fileName: string
 ): Promise<Extract<TSurveyImportUploadRead, { type: TType }>> => {
-  const read = await upload.read(fileName, type === "excel_export" ? "excel_export" : "survey");
+  const read = await upload.read(fileName);
   if (read.type !== type) throw new Error(`The upload was read as ${read.type}, not ${type}`);
   return read as Extract<TSurveyImportUploadRead, { type: TType }>;
 };

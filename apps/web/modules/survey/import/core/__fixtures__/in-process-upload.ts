@@ -45,12 +45,12 @@ export const openSurveyImportUploadInProcess = (
       get closed() {
         return closed;
       },
-      read: (fileName, as = "survey") => {
+      read: (fileName) => {
         if (closed) return Promise.reject(new Error("The survey import's reader was closed"));
         read ??= Promise.resolve()
           .then(() => {
             signal?.throwIfAborted();
-            return acrossTheThread(() => readSurveyImportUpload(sniffed, fileName, as));
+            return acrossTheThread(() => readSurveyImportUpload(sniffed, fileName));
           })
           .finally(() => {
             closed = true;

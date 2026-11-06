@@ -31,8 +31,9 @@ export interface TExcelExportImportInput {
 }
 
 /**
- * The Excel export lane (ENG-6809): a survey's own Excel export, edited and imported from that survey's
- * menu. Read by its layout, never by AI: the sheet's edited texts are written into the survey
+ * The Excel export lane (ENG-6809): a survey's own Excel export, edited and imported through New survey ›
+ * Import, which the route sends here when the survey it names is one the user may update. Read by its
+ * layout, never by AI: the sheet's edited texts are written into the survey
  * (`applyExcelExport`), and the result goes on as a Formbricks file of that survey would — the same
  * preview, the same Match on the survey, the same Update (`PUT /api/internal/surveys/{id}/content`) and
  * the same create — so every check a Formbricks file import runs, runs here.

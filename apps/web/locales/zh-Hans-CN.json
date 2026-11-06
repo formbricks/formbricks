@@ -4775,15 +4775,21 @@
         "display_text_disabled_spss": "SPSS 语法下不可用",
         "excel": {
           "block_field": "{block}:{field}",
+          "default_language": "默认语言",
           "ending_field": "结束页 {n}:{field}",
+          "exported_at": "导出时间",
           "language_column": "{name}({code})",
           "language_column_default": "{name}({code})— 默认",
+          "languages": "语言",
           "logic_column": "逻辑",
+          "property_column": "属性",
           "question_id_column": "问题 ID",
-          "sheet_name": "问卷",
+          "sheet_name": "问题",
+          "survey_sheet_name": "问卷",
           "text_column": "文本",
           "truncated": "…【已截断】",
           "type_column": "类型",
+          "value_column": "值",
           "welcome_card_field": "欢迎页:{field}"
         },
         "excel_file": "Excel 文件(.xlsx)",
@@ -4899,14 +4905,14 @@
         "card_description_json_only": "将从 Formbricks 导出的问卷转为问卷草稿。",
         "card_title": "导入调查",
         "dialog_description": "导入 Formbricks 文件、Qualtrics 导出文件，或 Word、Excel、CSV、Markdown 格式的问卷。",
-        "dialog_description_json_only": "导入从 Formbricks 导出的问卷。",
+        "dialog_description_json_only": "导入从 Formbricks 导出的问卷，支持 Formbricks 文件或 Excel 文件。",
         "dialog_title": "导入问卷",
         "discard_draft_body": "导入的草稿尚未在编辑器中打开。关闭后将丢弃该草稿。",
         "discard_draft_title": "要放弃此次导入吗？",
         "discard_import_body": "文件仍在导入中。关闭后将停止导入。",
         "discard_import_title": "要停止导入吗？",
         "dropzone_help": "Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)、Word (.docx)、Excel (.xlsx)、CSV (.csv) 或 Markdown (.md)，最大 15 MB",
-        "dropzone_help_json_only": "Formbricks 文件（.json），最大 15 MB",
+        "dropzone_help_json_only": "Formbricks 文件（.json）或问卷的 Excel 导出文件（.xlsx），最大 15 MB",
         "dropzone_primary": "将文件拖放到此处，或点击选择文件",
         "encodings": {
           "utf_16": "UTF-16",
@@ -4931,8 +4937,7 @@
             "xml_elements": "此文档的内容量超出了导入功能可读取的范围。请将其拆分为较小的文件，然后分别导入。"
           },
           "empty_file": "此文件为空。",
-          "excel_export_not_recognized": "此 Excel 文件不是从 Formbricks 导出的问卷。请先将问卷导出为 Excel 文件，编辑该文件后再在此处导入。",
-          "excel_export_other_survey": "此工作表中没有任何一行属于当前问卷。它是不是从其他问卷导出的？",
+          "excel_export_other_survey": "此工作表中没有任何一行属于导出它的那份问卷。请重新导出问卷，编辑该文件后再导入。",
           "failed": "导入失败。请重试。",
           "field_problems": {
             "dangling_reference": "此处指向的内容在文件中并不存在",
@@ -4973,7 +4978,7 @@
             "texts": "这份问卷的文本数量超出了导入功能可读取的上限。"
           },
           "more_problems": "{count, plural, other {还有 # 个问题}}",
-          "needs_ai": "Qualtrics、Word、Excel、CSV 和 Markdown 文件需要通过 Formbricks AI 读取，但您的组织尚未开通该功能。请选择 Formbricks 文件 (.json)。",
+          "needs_ai": "Qualtrics、Word、CSV 和 Markdown 文件，以及问卷 Excel 导出文件以外的 Excel 文件，需要通过 Formbricks AI 读取，而你的组织尚未开通该功能。请选择 Formbricks 文件（.json）或问卷的 Excel 导出文件（.xlsx）。",
           "no_questions": "Formbricks AI 无法从此文件中读取到任何问题。请重试,或通过 MCP 使用 Claude 或 ChatGPT 导入。",
           "not_a_qsf": "这不是 Qualtrics 问卷导出文件。请在 Qualtrics 中将问卷导出为 .qsf 文件，然后重试。",
           "not_allowed": "你没有权限向此工作区导入问卷。",
@@ -4990,8 +4995,7 @@
           "too_large_for_ai": "这份问卷太大,Formbricks AI 无法一次性导入。请改用 Claude 或 ChatGPT 通过 MCP 导入。",
           "too_many_questions": "此问卷包含超过 200 个问题,超出了单次导入的构建上限。请改用 Claude 或 ChatGPT 通过 MCP 导入。",
           "unreadable": "无法读取此文件。请重新导出后再试一次。",
-          "wrong_extension": "请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)，或 Word (.docx)、Excel (.xlsx)、CSV (.csv)、Markdown (.md) 格式的问卷。",
-          "wrong_extension_into_survey": "请选择 Formbricks 文件（.json）或此问卷导出的 Excel 文件（.xlsx）。"
+          "wrong_extension": "请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)，或 Word (.docx)、Excel (.xlsx)、CSV (.csv)、Markdown (.md) 格式的问卷。"
         },
         "facts": {
           "blocks": "{count, plural, other {# 个区块}}",
@@ -5000,12 +5004,6 @@
           "logic_not_imported": "{count, plural, other {# 条逻辑规则未导入}}",
           "logic_to_check": "{count, plural, other {# 条逻辑规则待检查}}",
           "questions": "{count, plural, other {# 道题目}}"
-        },
-        "into_survey": {
-          "dialog_description": "通过 Formbricks 文件，或通过已编辑文本和翻译的 Excel 导出文件来更新此问卷。在保存任何内容之前，你都可以先查看更改。",
-          "dialog_title": "导入到“{name}”",
-          "dropzone_help": "Formbricks 文件（.json）或此问卷导出的 Excel 文件（.xlsx）",
-          "menu": "导入"
         },
         "issues": {
           "action_class_created": "操作“{name}”在此工作区中是新的,将会被创建。",
@@ -5094,7 +5092,6 @@
           "create_description": "将保存为名为“{newName}”的新草稿。",
           "create_new_survey": "创建新问卷",
           "exported_from": "此文件导出自“{name}”。",
-          "into_survey_legend": "这个文件要做什么?",
           "refused_description": "由于以下原因,此文件无法更新“{name}”,将另存为名为“{newName}”的新草稿。",
           "stale_line": "自导出此文件后已有更改。选择“更新”将仍然覆盖这些更改。",
           "triggers_differ": "它们与该问卷现有的触发器不同。取消勾选可保留其当前触发器。",

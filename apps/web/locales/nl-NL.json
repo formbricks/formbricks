@@ -4775,15 +4775,21 @@
         "display_text_disabled_spss": "Niet beschikbaar met SPSS-syntax",
         "excel": {
           "block_field": "{block}: {field}",
+          "default_language": "Standaardtaal",
           "ending_field": "Einde {n}: {field}",
+          "exported_at": "Geëxporteerd",
           "language_column": "{name} ({code})",
           "language_column_default": "{name} ({code}) — standaard",
+          "languages": "Talen",
           "logic_column": "Logica",
+          "property_column": "Eigenschap",
           "question_id_column": "Vraag-ID",
-          "sheet_name": "Enquête",
+          "sheet_name": "Vragen",
+          "survey_sheet_name": "Enquête",
           "text_column": "Tekst",
           "truncated": "… [ingekort]",
           "type_column": "Type",
+          "value_column": "Waarde",
           "welcome_card_field": "Welkomstkaart: {field}"
         },
         "excel_file": "Excel-bestand (.xlsx)",
@@ -4899,14 +4905,14 @@
         "card_description_json_only": "Zet een enquête die uit Formbricks is geëxporteerd om in een conceptenquête.",
         "card_title": "Enquête importeren",
         "dialog_description": "Haal een Formbricks-bestand, een Qualtrics-export of een vragenlijst uit Word, Excel, CSV of Markdown binnen.",
-        "dialog_description_json_only": "Haal een enquête binnen die vanuit Formbricks is geëxporteerd.",
+        "dialog_description_json_only": "Importeer een enquête die uit Formbricks is geëxporteerd, als Formbricks-bestand of als Excel-bestand.",
         "dialog_title": "Een enquête importeren",
         "discard_draft_body": "Het geïmporteerde concept is nog niet geopend in de editor. Als je sluit, wordt het verwijderd.",
         "discard_draft_title": "Deze import verwijderen?",
         "discard_import_body": "Het bestand wordt nog geïmporteerd. Als je sluit, stopt de import.",
         "discard_import_title": "Importeren stoppen?",
         "dropzone_help": "Formbricks-bestand (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md), tot 15 MB",
-        "dropzone_help_json_only": "Formbricks-bestand (.json), tot 15 MB",
+        "dropzone_help_json_only": "Formbricks-bestand (.json) of de Excel-export van een enquête (.xlsx), tot 15 MB",
         "dropzone_primary": "Sleep een bestand hierheen of klik om er een te kiezen",
         "encodings": {
           "utf_16": "UTF-16",
@@ -4931,8 +4937,7 @@
             "xml_elements": "Dit document bevat meer inhoud dan de import kan lezen. Splits het op in kleinere bestanden en importeer elk bestand apart."
           },
           "empty_file": "Dit bestand is leeg.",
-          "excel_export_not_recognized": "Dit Excel-bestand is geen vragenlijstexport van Formbricks. Exporteer de vragenlijst als Excel-bestand, bewerk dat bestand en importeer het hier.",
-          "excel_export_other_survey": "Geen enkele rij in dit werkblad hoort bij deze vragenlijst. Is het geëxporteerd vanuit een andere vragenlijst?",
+          "excel_export_other_survey": "Geen enkele rij in dit werkblad hoort bij de enquête waaruit het is geëxporteerd. Exporteer de enquête opnieuw, bewerk dat bestand en importeer het.",
           "failed": "De import is mislukt. Probeer het opnieuw.",
           "field_problems": {
             "dangling_reference": "Dit verwijst naar iets wat niet in het bestand staat",
@@ -4973,7 +4978,7 @@
             "texts": "Deze enquête bevat meer teksten dan de import kan lezen."
           },
           "more_problems": "{count, plural, one {# ander probleem} other {# andere problemen}}",
-          "needs_ai": "Qualtrics-, Word-, Excel-, CSV- en Markdown-bestanden worden gelezen met Formbricks AI, en die heeft jouw organisatie niet. Kies een Formbricks-bestand (.json).",
+          "needs_ai": "Qualtrics-, Word-, CSV- en Markdown-bestanden, en Excel-bestanden die niet de Excel-export van een enquête zijn, worden gelezen met Formbricks AI, en die heeft jouw organisatie niet. Kies een Formbricks-bestand (.json) of de Excel-export van een enquête (.xlsx).",
           "no_questions": "Formbricks AI kon geen vragen uit dit bestand lezen. Probeer het opnieuw of importeer het met Claude of ChatGPT via MCP.",
           "not_a_qsf": "Dit is geen export van een Qualtrics-enquête. Exporteer de enquête in Qualtrics als .qsf-bestand en probeer het opnieuw.",
           "not_allowed": "Je hebt geen toestemming om enquêtes in deze workspace te importeren.",
@@ -4990,8 +4995,7 @@
           "too_large_for_ai": "Deze enquête is te groot om in één keer met Formbricks AI te importeren. Importeer hem in plaats daarvan met Claude of ChatGPT via MCP.",
           "too_many_questions": "Deze enquête bevat meer dan 200 vragen, meer dan één import kan aanmaken. Importeer hem in plaats daarvan met Claude of ChatGPT via MCP.",
           "unreadable": "Dit bestand kon niet worden gelezen. Exporteer het opnieuw en probeer het nog een keer.",
-          "wrong_extension": "Kies een Formbricks-bestand (.json), een Qualtrics-export (.qsf) of een vragenlijst in Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md).",
-          "wrong_extension_into_survey": "Kies een Formbricks-bestand (.json) of de Excel-export van deze vragenlijst (.xlsx)."
+          "wrong_extension": "Kies een Formbricks-bestand (.json), een Qualtrics-export (.qsf) of een vragenlijst in Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md)."
         },
         "facts": {
           "blocks": "{count, plural, one {# blok} other {# blokken}}",
@@ -5000,12 +5004,6 @@
           "logic_not_imported": "{count, plural, one {# logicaregel niet geïmporteerd} other {# logicaregels niet geïmporteerd}}",
           "logic_to_check": "{count, plural, one {# logicaregel om te controleren} other {# logicaregels om te controleren}}",
           "questions": "{count, plural, one {# vraag} other {# vragen}}"
-        },
-        "into_survey": {
-          "dialog_description": "Werk deze vragenlijst bij vanuit een Formbricks-bestand, of vanuit de Excel-export met bewerkte teksten en vertalingen. Je controleert de wijzigingen voordat er iets wordt opgeslagen.",
-          "dialog_title": "Importeren in “{name}”",
-          "dropzone_help": "Een Formbricks-bestand (.json) of de Excel-export van deze vragenlijst (.xlsx)",
-          "menu": "Importeren"
         },
         "issues": {
           "action_class_created": "De actie \"{name}\" is nieuw in deze workspace en wordt aangemaakt.",
@@ -5094,7 +5092,6 @@
           "create_description": "Opgeslagen als nieuw concept met de naam “{newName}”.",
           "create_new_survey": "Een nieuwe enquête aanmaken",
           "exported_from": "Dit bestand is geëxporteerd uit “{name}”.",
-          "into_survey_legend": "Wat moet dit bestand doen?",
           "refused_description": "Dit bestand kan “{name}” niet bijwerken, om de onderstaande redenen. Het wordt opgeslagen als een nieuw concept met de naam “{newName}”.",
           "stale_line": "Gewijzigd sinds dit bestand is geëxporteerd. Kies Bijwerken om die wijzigingen toch te overschrijven.",
           "triggers_differ": "Ze verschillen van die van de enquête. Vink uit om de huidige triggers te behouden.",

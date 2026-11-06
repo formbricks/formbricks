@@ -4775,15 +4775,21 @@
         "display_text_disabled_spss": "SPSS sözdizimiyle kullanılamaz",
         "excel": {
           "block_field": "{block}: {field}",
+          "default_language": "Varsayılan dil",
           "ending_field": "Bitiş {n}: {field}",
+          "exported_at": "Dışa aktarıldı",
           "language_column": "{name} ({code})",
           "language_column_default": "{name} ({code}) — varsayılan",
+          "languages": "Diller",
           "logic_column": "Mantık",
+          "property_column": "Özellik",
           "question_id_column": "Soru Kimliği",
-          "sheet_name": "Anket",
+          "sheet_name": "Sorular",
+          "survey_sheet_name": "Anket",
           "text_column": "Metin",
           "truncated": "… [kısaltıldı]",
           "type_column": "Tür",
+          "value_column": "Değer",
           "welcome_card_field": "Karşılama kartı: {field}"
         },
         "excel_file": "Excel dosyası (.xlsx)",
@@ -4899,14 +4905,14 @@
         "card_description_json_only": "Formbricks'ten dışa aktarılan bir anketi taslak ankete dönüştür.",
         "card_title": "Anketi içe aktar",
         "dialog_description": "Bir Formbricks dosyasını, bir Qualtrics dışa aktarımını ya da Word, Excel, CSV veya Markdown formatındaki bir anket formunu içe aktar.",
-        "dialog_description_json_only": "Formbricks'ten dışa aktarılmış bir anketi içe aktar.",
+        "dialog_description_json_only": "Formbricks'ten dışa aktarılmış bir anketi Formbricks dosyası veya Excel dosyası olarak içe aktar.",
         "dialog_title": "Anket içe aktar",
         "discard_draft_body": "İçe aktarılan taslak henüz düzenleyicide açılmadı. Kapatırsan taslak silinir.",
         "discard_draft_title": "Bu içe aktarma silinsin mi?",
         "discard_import_body": "Dosya hâlâ içe aktarılıyor. Kapatırsan içe aktarma durdurulur.",
         "discard_import_title": "İçe aktarma durdurulsun mu?",
         "dropzone_help": "Formbricks dosyası (.json), Qualtrics dışa aktarımı (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md), en fazla 15 MB",
-        "dropzone_help_json_only": "Formbricks dosyası (.json), en fazla 15 MB",
+        "dropzone_help_json_only": "Formbricks dosyası (.json) veya bir anketin Excel dışa aktarımı (.xlsx), en fazla 15 MB",
         "dropzone_primary": "Bir dosyayı buraya bırak veya seçmek için tıkla",
         "encodings": {
           "utf_16": "UTF-16",
@@ -4931,8 +4937,7 @@
             "xml_elements": "Bu belge, içe aktarmanın okuyabileceğinden daha fazla içerik barındırıyor. Belgeyi daha küçük dosyalara böl ve her birini ayrı ayrı içe aktar."
           },
           "empty_file": "Bu dosya boş.",
-          "excel_export_not_recognized": "Bu Excel dosyası Formbricks'ten dışa aktarılmış bir anket dosyası değil. Anketi Excel dosyası olarak dışa aktar, o dosyayı düzenle ve buraya içe aktar.",
-          "excel_export_other_survey": "Bu sayfadaki hiçbir satır bu ankete ait değil. Başka bir anketten mi dışa aktarılmış olabilir?",
+          "excel_export_other_survey": "Bu sayfadaki hiçbir satır, dışa aktarıldığı ankete ait değil. Anketi yeniden dışa aktar, o dosyayı düzenle ve içe aktar.",
           "failed": "İçe aktarma başarısız oldu. Tekrar dene.",
           "field_problems": {
             "dangling_reference": "Bu, dosyada bulunmayan bir öğeye işaret ediyor",
@@ -4973,7 +4978,7 @@
             "texts": "Bu ankette, içe aktarma işleminin okuyabileceğinden daha fazla metin var."
           },
           "more_problems": "{count, plural, one {# sorun daha} other {# sorun daha}}",
-          "needs_ai": "Qualtrics, Word, Excel, CSV ve Markdown dosyaları Formbricks AI ile okunur, ancak kuruluşunda Formbricks AI yok. Bir Formbricks dosyası (.json) seç.",
+          "needs_ai": "Qualtrics, Word, CSV ve Markdown dosyaları ile bir anketin Excel dışa aktarımı dışındaki Excel dosyaları Formbricks AI ile okunur, ancak kuruluşunuzda Formbricks AI bulunmuyor. Bir Formbricks dosyası (.json) veya bir anketin Excel dışa aktarımını (.xlsx) seç.",
           "no_questions": "Formbricks AI bu dosyadan hiçbir soruyu okuyamadı. Tekrar dene veya dosyayı MCP üzerinden Claude ya da ChatGPT ile içe aktar.",
           "not_a_qsf": "Bu bir Qualtrics anket dışa aktarımı değil. Qualtrics'te anketi .qsf dosyası olarak dışa aktar ve tekrar dene.",
           "not_allowed": "Bu çalışma alanına anket içe aktarma izniniz yok.",
@@ -4990,8 +4995,7 @@
           "too_large_for_ai": "Bu anket, Formbricks AI'ın tek seferde içe aktarması için çok büyük. Bunun yerine MCP üzerinden Claude ya da ChatGPT ile içe aktar.",
           "too_many_questions": "Bu ankette 200'den fazla soru var; bu, tek bir içe aktarmanın oluşturabileceğinden fazla. Bunun yerine MCP üzerinden Claude veya ChatGPT ile içe aktar.",
           "unreadable": "Bu dosya okunamadı. Tekrar dışa aktar ve bir kez daha dene.",
-          "wrong_extension": "Bir Formbricks dosyası (.json), bir Qualtrics dışa aktarımı (.qsf) ya da Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md) formatında bir anket formu seç.",
-          "wrong_extension_into_survey": "Bir Formbricks dosyası (.json) veya bu anketin Excel dışa aktarımını (.xlsx) seç."
+          "wrong_extension": "Bir Formbricks dosyası (.json), bir Qualtrics dışa aktarımı (.qsf) ya da Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md) formatında bir anket formu seç."
         },
         "facts": {
           "blocks": "{count, plural, one {# blok} other {# blok}}",
@@ -5000,12 +5004,6 @@
           "logic_not_imported": "{count, plural, one {# mantık kuralı içe aktarılmadı} other {# mantık kuralı içe aktarılmadı}}",
           "logic_to_check": "{count, plural, one {# mantık kuralı kontrol edilecek} other {# mantık kuralı kontrol edilecek}}",
           "questions": "{count, plural, one {# soru} other {# soru}}"
-        },
-        "into_survey": {
-          "dialog_description": "Bu anketi bir Formbricks dosyasından veya düzenlenmiş metinler ve çeviriler içeren Excel dışa aktarımından güncelle. Hiçbir şey kaydedilmeden önce değişiklikleri incelersin.",
-          "dialog_title": "“{name}” anketine içe aktar",
-          "dropzone_help": "Bir Formbricks dosyası (.json) veya bu anketin Excel dışa aktarımı (.xlsx)",
-          "menu": "İçe aktar"
         },
         "issues": {
           "action_class_created": "\"{name}\" aksiyonu bu çalışma alanında yeni, bu yüzden oluşturulacak.",
@@ -5094,7 +5092,6 @@
           "create_description": "“{newName}” adlı yeni bir taslak olarak kaydedilir.",
           "create_new_survey": "Yeni anket oluştur",
           "exported_from": "Bu dosya “{name}” anketinden dışa aktarıldı.",
-          "into_survey_legend": "Bu dosya ne yapsın?",
           "refused_description": "Bu dosya, aşağıdaki nedenlerle “{name}” anketini güncelleyemez. “{newName}” adlı yeni bir taslak olarak kaydedilir.",
           "stale_line": "Bu dosya dışa aktarıldığından beri değiştirildi. Bu değişikliklerin üzerine yine de yazmak için Güncelle'yi seç.",
           "triggers_differ": "Anketin tetikleyicilerinden farklılar. Mevcut tetikleyicileri korumak için işareti kaldır.",

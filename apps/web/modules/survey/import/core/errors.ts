@@ -17,7 +17,6 @@ export type TSurveyImportInvalidParam = InvalidParam &
   (
     | { code: "file_unreadable"; identifier?: "json_syntax" }
     | { code: "qsf_not_recognized" }
-    | { code: "excel_export_not_recognized" }
     | { code: "excel_export_other_survey" }
     | { code: "file_type_unsupported"; identifier?: TSurveyImportUnsupportedFile }
     | { code: "file_limit_exceeded"; identifier: TSurveyImportFileLimit }

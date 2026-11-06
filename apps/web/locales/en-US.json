@@ -4775,15 +4775,21 @@
         "display_text_disabled_spss": "Not available with SPSS syntax",
         "excel": {
           "block_field": "{block}: {field}",
+          "default_language": "Default language",
           "ending_field": "Ending {n}: {field}",
+          "exported_at": "Exported",
           "language_column": "{name} ({code})",
           "language_column_default": "{name} ({code}) — default",
+          "languages": "Languages",
           "logic_column": "Logic",
+          "property_column": "Property",
           "question_id_column": "Question ID",
-          "sheet_name": "Survey",
+          "sheet_name": "Questions",
+          "survey_sheet_name": "Survey",
           "text_column": "Text",
           "truncated": "… [truncated]",
           "type_column": "Type",
+          "value_column": "Value",
           "welcome_card_field": "Welcome card: {field}"
         },
         "excel_file": "Excel file (.xlsx)",
@@ -4899,14 +4905,14 @@
         "card_description_json_only": "Turn a survey exported from Formbricks into a draft survey.",
         "card_title": "Import survey",
         "dialog_description": "Bring in a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel, CSV or Markdown.",
-        "dialog_description_json_only": "Bring in a survey exported from Formbricks.",
+        "dialog_description_json_only": "Bring in a survey exported from Formbricks, as a Formbricks file or an Excel file.",
         "dialog_title": "Import a survey",
         "discard_draft_body": "The imported draft has not been opened in the editor yet. Closing will discard it.",
         "discard_draft_title": "Discard this import?",
         "discard_import_body": "The file is still being imported. Closing will stop the import.",
         "discard_import_title": "Stop importing?",
         "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) or Markdown (.md), up to 15 MB",
-        "dropzone_help_json_only": "Formbricks file (.json), up to 15 MB",
+        "dropzone_help_json_only": "Formbricks file (.json) or a survey's Excel export (.xlsx), up to 15 MB",
         "dropzone_primary": "Drop a file here or click to choose one",
         "encodings": {
           "utf_16": "UTF-16",
@@ -4931,8 +4937,7 @@
             "xml_elements": "This document holds more content than the import can read. Split it into smaller files and import each one."
           },
           "empty_file": "This file is empty.",
-          "excel_export_not_recognized": "This Excel file is not a survey export from Formbricks. Export the survey as an Excel file, edit that file, and import it here.",
-          "excel_export_other_survey": "No row of this sheet belongs to this survey. Was it exported from another survey?",
+          "excel_export_other_survey": "No row of this sheet belongs to the survey it was exported from. Export the survey again, edit that file, and import it.",
           "failed": "The import failed. Try again.",
           "field_problems": {
             "dangling_reference": "This points at something the file doesn’t include",
@@ -4973,7 +4978,7 @@
             "texts": "This survey has more texts than the import can read."
           },
           "more_problems": "{count, plural, one {# more problem} other {# more problems}}",
-          "needs_ai": "Qualtrics, Word, Excel, CSV and Markdown files are read with Formbricks AI, which your organization does not have. Choose a Formbricks file (.json).",
+          "needs_ai": "Qualtrics, Word, CSV and Markdown files, and Excel files other than a survey's Excel export, are read with Formbricks AI, which your organization does not have. Choose a Formbricks file (.json) or a survey's Excel export (.xlsx).",
           "no_questions": "Formbricks AI could not read any questions from this file. Try again, or import it with Claude or ChatGPT through MCP.",
           "not_a_qsf": "This is not a Qualtrics survey export. In Qualtrics, export the survey as a .qsf file and try again.",
           "not_allowed": "You do not have permission to import surveys into this workspace.",
@@ -4990,8 +4995,7 @@
           "too_large_for_ai": "This survey is too large for Formbricks AI to import in one go. Import it with Claude or ChatGPT through MCP instead.",
           "too_many_questions": "This survey has more than 200 questions, more than one import can build. Import it with Claude or ChatGPT through MCP instead.",
           "unreadable": "This file could not be read. Export it again and try once more.",
-          "wrong_extension": "Choose a Formbricks file (.json), a Qualtrics export (.qsf), or a Word (.docx), Excel (.xlsx), CSV (.csv) or Markdown (.md) questionnaire.",
-          "wrong_extension_into_survey": "Choose a Formbricks file (.json) or this survey's Excel export (.xlsx)."
+          "wrong_extension": "Choose a Formbricks file (.json), a Qualtrics export (.qsf), or a Word (.docx), Excel (.xlsx), CSV (.csv) or Markdown (.md) questionnaire."
         },
         "facts": {
           "blocks": "{count, plural, one {# block} other {# blocks}}",
@@ -5000,12 +5004,6 @@
           "logic_not_imported": "{count, plural, one {# logic rule not imported} other {# logic rules not imported}}",
           "logic_to_check": "{count, plural, one {# logic rule to check} other {# logic rules to check}}",
           "questions": "{count, plural, one {# question} other {# questions}}"
-        },
-        "into_survey": {
-          "dialog_description": "Update this survey from a Formbricks file, or from its Excel export with edited texts and translations. You review the changes before anything is saved.",
-          "dialog_title": "Import into “{name}”",
-          "dropzone_help": "A Formbricks file (.json) or this survey's Excel export (.xlsx)",
-          "menu": "Import"
         },
         "issues": {
           "action_class_created": "The action \"{name}\" is new in this workspace and will be created.",
@@ -5094,7 +5092,6 @@
           "create_description": "Saved as a new draft named “{newName}”.",
           "create_new_survey": "Create a new survey",
           "exported_from": "This file was exported from “{name}”.",
-          "into_survey_legend": "What should this file do?",
           "refused_description": "This file can’t update “{name}”, for the reasons below. It is saved as a new draft named “{newName}”.",
           "stale_line": "Changed since this file was exported. Choose Update to overwrite those changes anyway.",
           "triggers_differ": "They differ from the survey’s. Untick to keep its current triggers.",

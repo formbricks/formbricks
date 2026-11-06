@@ -167,8 +167,8 @@ export const hasSurveyResponses = async (surveyId: string): Promise<boolean> =>
   (await prisma.response.findFirst({ where: { surveyId }, select: { id: true } })) !== null;
 
 /**
- * The Match for a survey the caller already found and may edit: the file's own source (above), or the
- * survey an import from its menu is aimed at (ENG-6809). The Update's checks run on the draft here, so
+ * The Match for a survey the caller already found and may edit: a Formbricks file's source (above), or
+ * the survey an Excel export names (ENG-6809). The Update's checks run on the draft here, so
  * the review says what the Update would refuse.
  *
  * @param exportedUpdatedAt What the first Update is made against: the file's export time when it was

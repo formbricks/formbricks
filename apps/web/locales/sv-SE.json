@@ -4775,15 +4775,21 @@
         "display_text_disabled_spss": "Inte tillgängligt med SPSS-syntax",
         "excel": {
           "block_field": "{block}: {field}",
+          "default_language": "Standardspråk",
           "ending_field": "Avslutning {n}: {field}",
+          "exported_at": "Exporterad",
           "language_column": "{name} ({code})",
           "language_column_default": "{name} ({code}) – standard",
+          "languages": "Språk",
           "logic_column": "Logik",
+          "property_column": "Egenskap",
           "question_id_column": "Fråge-ID",
-          "sheet_name": "Enkät",
+          "sheet_name": "Frågor",
+          "survey_sheet_name": "Enkät",
           "text_column": "Text",
           "truncated": "… [avkortad]",
           "type_column": "Typ",
+          "value_column": "Värde",
           "welcome_card_field": "Välkomstkort: {field}"
         },
         "excel_file": "Excel-fil (.xlsx)",
@@ -4899,14 +4905,14 @@
         "card_description_json_only": "Förvandla en enkät som exporterats från Formbricks till ett enkätutkast.",
         "card_title": "Importera enkät",
         "dialog_description": "Importera en Formbricks-fil, en Qualtrics-export eller ett frågeformulär från Word, Excel, CSV eller Markdown.",
-        "dialog_description_json_only": "Hämta in en enkät som exporterats från Formbricks.",
+        "dialog_description_json_only": "Importera en enkät som exporterats från Formbricks, antingen som en Formbricks-fil eller en Excel-fil.",
         "dialog_title": "Importera en enkät",
         "discard_draft_body": "Det importerade utkastet har inte öppnats i redigeraren än. Om du stänger kasseras det.",
         "discard_draft_title": "Vill du kassera den här importen?",
         "discard_import_body": "Filen håller fortfarande på att importeras. Om du stänger avbryts importen.",
         "discard_import_title": "Vill du avbryta importen?",
         "dropzone_help": "Formbricks-fil (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md), upp till 15 MB",
-        "dropzone_help_json_only": "Formbricks-fil (.json), upp till 15 MB",
+        "dropzone_help_json_only": "Formbricks-fil (.json) eller en enkäts Excel-export (.xlsx), upp till 15 MB",
         "dropzone_primary": "Släpp en fil här eller klicka för att välja en",
         "encodings": {
           "utf_16": "UTF-16",
@@ -4931,8 +4937,7 @@
             "xml_elements": "Det här dokumentet innehåller mer innehåll än importen kan läsa. Dela upp det i mindre filer och importera dem var för sig."
           },
           "empty_file": "Den här filen är tom.",
-          "excel_export_not_recognized": "Den här Excel-filen är inte en enkätexport från Formbricks. Exportera enkäten som en Excel-fil, redigera den filen och importera den här.",
-          "excel_export_other_survey": "Ingen rad i det här bladet tillhör den här enkäten. Exporterades det från en annan enkät?",
+          "excel_export_other_survey": "Ingen rad i det här bladet tillhör enkäten som det exporterades från. Exportera enkäten igen, redigera den filen och importera den.",
           "failed": "Importen misslyckades. Försök igen.",
           "field_problems": {
             "dangling_reference": "Detta pekar på något som filen inte innehåller",
@@ -4973,7 +4978,7 @@
             "texts": "Den här enkäten innehåller fler texter än importen kan läsa."
           },
           "more_problems": "{count, plural, one {# problem till} other {# problem till}}",
-          "needs_ai": "Qualtrics-, Word-, Excel-, CSV- och Markdown-filer läses med Formbricks AI, vilket din organisation inte har tillgång till. Välj en Formbricks-fil (.json).",
+          "needs_ai": "Qualtrics-, Word-, CSV- och Markdown-filer samt Excel-filer som inte är en enkäts Excel-export läses med Formbricks AI, vilket din organisation inte har. Välj en Formbricks-fil (.json) eller en enkäts Excel-export (.xlsx).",
           "no_questions": "Formbricks AI kunde inte läsa några frågor från den här filen. Försök igen eller importera den med Claude eller ChatGPT via MCP.",
           "not_a_qsf": "Det här är inte en exporterad Qualtrics-enkät. Exportera enkäten som en .qsf-fil i Qualtrics och försök igen.",
           "not_allowed": "Du har inte behörighet att importera enkäter till den här arbetsytan.",
@@ -4990,8 +4995,7 @@
           "too_large_for_ai": "Den här enkäten är för stor för att Formbricks AI ska kunna importera den på en gång. Importera den med Claude eller ChatGPT via MCP i stället.",
           "too_many_questions": "Den här enkäten har fler än 200 frågor, vilket är fler än en import kan bygga. Importera den med Claude eller ChatGPT via MCP i stället.",
           "unreadable": "Den här filen kunde inte läsas. Exportera den igen och försök en gång till.",
-          "wrong_extension": "Välj en Formbricks-fil (.json), en Qualtrics-export (.qsf) eller ett frågeformulär i Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md).",
-          "wrong_extension_into_survey": "Välj en Formbricks-fil (.json) eller den här enkätens Excel-export (.xlsx)."
+          "wrong_extension": "Välj en Formbricks-fil (.json), en Qualtrics-export (.qsf) eller ett frågeformulär i Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md)."
         },
         "facts": {
           "blocks": "{count, plural, one {# block} other {# block}}",
@@ -5000,12 +5004,6 @@
           "logic_not_imported": "{count, plural, one {# logikregel importerades inte} other {# logikregler importerades inte}}",
           "logic_to_check": "{count, plural, one {# logikregel att kontrollera} other {# logikregler att kontrollera}}",
           "questions": "{count, plural, one {# fråga} other {# frågor}}"
-        },
-        "into_survey": {
-          "dialog_description": "Uppdatera den här enkäten från en Formbricks-fil eller från dess Excel-export med redigerade texter och översättningar. Du granskar ändringarna innan något sparas.",
-          "dialog_title": "Importera till ”{name}”",
-          "dropzone_help": "En Formbricks-fil (.json) eller den här enkätens Excel-export (.xlsx)",
-          "menu": "Importera"
         },
         "issues": {
           "action_class_created": "Åtgärden \"{name}\" är ny i den här arbetsytan och kommer att skapas.",
@@ -5094,7 +5092,6 @@
           "create_description": "Sparas som ett nytt utkast med namnet ”{newName}”.",
           "create_new_survey": "Skapa en ny enkät",
           "exported_from": "Den här filen exporterades från ”{name}”.",
-          "into_survey_legend": "Vad ska den här filen göra?",
           "refused_description": "Den här filen kan inte uppdatera ”{name}” av nedanstående skäl. Den sparas som ett nytt utkast med namnet ”{newName}”.",
           "stale_line": "Ändrad sedan filen exporterades. Välj Uppdatera för att skriva över ändringarna ändå.",
           "triggers_differ": "De skiljer sig från enkätens. Avmarkera för att behålla dess nuvarande utlösare.",

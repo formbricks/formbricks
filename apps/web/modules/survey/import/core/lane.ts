@@ -43,8 +43,8 @@ export interface TSurveyImportLane<TInput, TPrepared> {
 }
 
 /**
- * The survey an import from its own menu is aimed at (ENG-6809), as the route authorized it for writing:
- * the review offers to update it, whatever survey the file names.
+ * The survey an Excel export names (ENG-6809), as the route authorized it for writing: the survey the
+ * sheet's edits are applied to, and the one the review offers to update.
  */
 export interface TSurveyImportTarget {
   survey: TSurvey;

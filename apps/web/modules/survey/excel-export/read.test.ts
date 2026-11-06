@@ -9,7 +9,7 @@ import { editExcelExport } from "./__fixtures__/edit-sheet";
 import { createIcuTranslate } from "./__fixtures__/translate";
 import { EXCEL_EXPORT_META_SHEET } from "./format";
 import { EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS } from "./limits";
-import { readExcelExport } from "./read";
+import { ExcelExportNotRecognizedError, readExcelExport } from "./read";
 import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
@@ -40,6 +40,7 @@ const refusalOf = (run: () => unknown): string | undefined => {
   try {
     run();
   } catch (error) {
+    if (error instanceof ExcelExportNotRecognizedError) return "not_recognized";
     if (error instanceof SurveyImportInputError) return String(error.invalidParams[0]?.code);
     throw error;
   }
@@ -51,6 +52,7 @@ describe("readExcelExport", () => {
     const sheet = read(exported());
 
     expect(sheet.locale).toBe("en-US");
+    expect(sheet.surveyId).toBe(EVERY_TEXT_SURVEY.id);
     expect(sheet.languages).toEqual([
       { code: "en", column: 3 },
       { code: "de", column: 4 },
@@ -138,7 +140,7 @@ describe("readExcelExport", () => {
     }
   });
 
-  test("refuses a workbook that is not an Excel export of a survey", () => {
+  test("tells a workbook that is not an Excel export of a survey apart", () => {
     const plain = new Uint8Array(
       XLSX.write(
         (() => {
@@ -150,15 +152,17 @@ describe("readExcelExport", () => {
       ) as Buffer
     );
 
-    expect(refusalOf(() => read(plain))).toBe("excel_export_not_recognized");
-    expect(refusalOf(() => read(editMeta(exported(), () => null)))).toBe("excel_export_not_recognized");
+    expect(refusalOf(() => read(plain))).toBe("not_recognized");
+    expect(refusalOf(() => read(editMeta(exported(), () => null)))).toBe("not_recognized");
     expect(
       refusalOf(() =>
         read(editMeta(exported(), (rows) => rows.map((row, index) => (index === 0 ? ["format", "2"] : row))))
       )
-    ).toBe("excel_export_not_recognized");
+    ).toBe("not_recognized");
     expect(
       refusalOf(() => read(editExcelExport(exported(), (rows) => rows.map(([, ...rest]) => ["", ...rest]))))
-    ).toBe("excel_export_not_recognized");
+    ).toBe("not_recognized");
+    // An export written before the meta sheet named its survey.
+    expect(refusalOf(() => read(editMeta(exported(), (rows) => rows.slice(0, 5))))).toBe("not_recognized");
   });
 });

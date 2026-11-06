@@ -215,7 +215,7 @@ test.describe("Survey import and export", () => {
     });
   });
 
-  test("exports a survey as an Excel file, and imports the edited sheet back into it from its menu", async ({
+  test("exports a survey as an Excel file, and New survey › Import updates it from the edited sheet", async ({
     page,
     users,
   }) => {
@@ -313,11 +313,9 @@ test.describe("Survey import and export", () => {
         return filePath;
       });
 
-    await test.step("Import in the same menu updates the survey with the sheet", async () => {
-      await openMenu();
-      await page.getByTestId("import-into-survey").click();
-      const dialog = page.getByRole("dialog", { name: `Import into “${surveyName}”` });
-      await dialog.getByLabel(/Drop a file here or click to choose one/).setInputFiles(editedPath);
+    await test.step("New survey › Import matches the sheet with its survey and updates it", async () => {
+      // The sheet names the survey it was exported from, as a Formbricks file does: no menu to start from.
+      const dialog = await importFile(page, editedPath);
 
       const match = dialog.getByTestId("survey-import-match-choice");
       await expect(match).toBeVisible({ timeout: 30000 });

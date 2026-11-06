@@ -20,11 +20,6 @@ import {
 type ImportSurveyDialogProps = {
   workspaceId: string;
   isAIAvailable: boolean;
-  /**
-   * The survey the dialog was opened from, in its menu (ENG-6809): the import takes a Formbricks file or
-   * that survey's Excel export, and offers to update it. Absent for New survey › Import.
-   */
-  targetSurvey?: { id: string; name: string };
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -38,7 +33,6 @@ type ImportSurveyDialogProps = {
 export const ImportSurveyDialog = ({
   workspaceId,
   isAIAvailable,
-  targetSurvey,
   trigger,
   open,
   onOpenChange,
@@ -80,18 +74,6 @@ export const ImportSurveyDialog = ({
     });
   };
 
-  const title = targetSurvey
-    ? t("workspace.surveys.import.into_survey.dialog_title", { name: targetSurvey.name })
-    : t("workspace.surveys.import.dialog_title");
-  const getDescription = () => {
-    if (targetSurvey) return t("workspace.surveys.import.into_survey.dialog_description");
-    // Without AI only a Formbricks file can be read, as the drop zone says. AI turned off after the page
-    // loaded is the form's shared alert to explain.
-    return isAIAvailable
-      ? t("workspace.surveys.import.dialog_description")
-      : t("workspace.surveys.import.dialog_description_json_only");
-  };
-
   // Plain calls, not inside the ternary below: the translation scanner only sees `t("literal")`.
   const discardImportTitle = t("workspace.surveys.import.discard_import_title");
   const discardDraftTitle = t("workspace.surveys.import.discard_draft_title");
@@ -109,15 +91,19 @@ export const ImportSurveyDialog = ({
         closeOnEscape>
         <DialogHeader>
           <UploadIcon aria-hidden="true" />
-          {/* The survey's name is the user's data: rendered as text only. */}
-          <DialogTitle className="truncate">{title}</DialogTitle>
-          <DialogDescription>{getDescription()}</DialogDescription>
+          <DialogTitle>{t("workspace.surveys.import.dialog_title")}</DialogTitle>
+          <DialogDescription>
+            {/* Without AI only a Formbricks file can be read, as the drop zone says. AI turned off after
+                the page loaded is the form's shared alert to explain. */}
+            {isAIAvailable
+              ? t("workspace.surveys.import.dialog_description")
+              : t("workspace.surveys.import.dialog_description_json_only")}
+          </DialogDescription>
         </DialogHeader>
 
         <DialogBody unconstrained className="-mx-1 -mt-1 flex flex-none flex-col px-1 pt-1 pb-1">
           <ImportSurveyForm
             workspaceId={workspaceId}
-            targetSurveyId={targetSurvey?.id}
             isAIAvailable={isAIAvailable}
             onSuccess={handleSuccess}
             onCancel={() => setDialogOpen(false)}

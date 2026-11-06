@@ -23,11 +23,6 @@ type ImportMatchChoiceProps = {
   onTriggersChoiceChange: (choice: TSurveyImportTriggersChoice) => void;
   conflict: TSurveyImportMatchConflict | null;
   /**
-   * The import was started from the survey's own menu (ENG-6809): the Match is that survey, not one the
-   * file names, so the choice is not introduced as "exported from".
-   */
-  isIntoSurvey?: boolean;
-  /**
    * The file is the survey's Excel export (ENG-6809), whose Update edits texts and adds what the sheet
    * adds, rather than replacing the survey's content.
    */
@@ -110,7 +105,6 @@ export const ImportMatchChoice = ({
   triggersChoice,
   onTriggersChoiceChange,
   conflict,
-  isIntoSurvey = false,
   isSheet = false,
 }: Readonly<ImportMatchChoiceProps>) => {
   const { t } = useTranslation();
@@ -142,9 +136,7 @@ export const ImportMatchChoice = ({
   return (
     <section className="flex flex-col gap-2 text-sm" data-testid="survey-import-match">
       <p id={legendId} className="text-slate-700">
-        {isIntoSurvey
-          ? t("workspace.surveys.import.match.into_survey_legend")
-          : t("workspace.surveys.import.match.exported_from", { name: match.name })}
+        {t("workspace.surveys.import.match.exported_from", { name: match.name })}
       </p>
       {/* Read out when an Update answers that the survey changed and the choice moves to Create: the
           region is there from the start, so screen readers announce what is put in it. */}

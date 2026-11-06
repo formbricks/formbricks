@@ -163,11 +163,9 @@ export type TSurveyImportFileType = "formbricks" | "qsf" | "docx" | "xlsx" | "cs
  *   param's `identifier` (`TSurveyImportDocumentLimit`). `source_size` is the AI ceiling: such a file
  *   is imported through MCP instead.
  *
- * An import into a survey's own menu (422, ENG-6809):
+ * The Excel export lane's (422, ENG-6809):
  *
- * - `excel_export_not_recognized` — the `.xlsx` is not an Excel export of a survey: its very hidden
- *   meta sheet or its key column is missing, or it is of another format;
- * - `excel_export_other_survey` — no row of the sheet is a text of the survey it is imported into.
+ * - `excel_export_other_survey` — no row of the sheet is a text of the survey its meta sheet names.
  *
  * The Qualtrics lane's (422):
  *
@@ -178,7 +176,6 @@ export type TSurveyImportFileType = "formbricks" | "qsf" | "docx" | "xlsx" | "cs
  *   the param's `identifier` (`TSurveyImportLimit`); `name` points at where in the file.
  */
 export type TSurveyImportRefusalCode =
-  | "excel_export_not_recognized"
   | "excel_export_other_survey"
   | "file_type_unsupported"
   | "file_limit_exceeded"

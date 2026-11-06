@@ -20,18 +20,21 @@ import {
   EXCEL_EXPORT_META_LANGUAGES,
   EXCEL_EXPORT_META_LOCALE,
   EXCEL_EXPORT_META_SHEET,
+  EXCEL_EXPORT_META_SURVEY_ID,
 } from "./format";
 import { createLogicRenderer } from "./logic";
+import { getSurveySheetRows } from "./survey-sheet";
 
 /**
  * The Excel export (ADR 0027): a survey as a sheet for reviewers and translators who don't use
  * Formbricks. One row per text the survey shows (each question, option, matrix row and column, and
  * the rest), one column per language, the question's id and type, and its block's logic in plain words.
  *
- * The sheet comes back through Import in the survey's own menu (ENG-6809), which updates the texts a
- * reviewer edited and adds the questions and options they added: every row carries its text's id-built
- * key in a hidden first column, and a very hidden sheet says how to read the columns back (`format.ts`).
- * The file names no survey: the import is aimed at one, and the keys match its texts or they don't.
+ * The sheet comes back through New survey › Import (ENG-6809), which updates the texts a reviewer
+ * edited and adds the questions and options they added: every row carries its text's id-built key in a
+ * hidden first column, and a very hidden sheet says how to read the columns back and names the survey
+ * (`format.ts`), which the import offers to update when the user may. A visible Survey sheet lists the
+ * survey's properties for the reader (`survey-sheet.ts`).
  *
  * Every cell is a typed text cell in text format: nothing in it is ever read as a formula or a number,
  * and nothing is prefixed with `'`, which xlsx would keep as part of the text.
@@ -44,11 +47,26 @@ export const EXCEL_EXPORT_CONTENT_TYPE = "application/vnd.openxmlformats-officed
 const SHEET_NAME_FORBIDDEN = /[[\]:*?/\\]/g;
 const SHEET_NAME_MAX_CHARS = 31;
 
-// Column widths in characters: key (hidden), Question ID, Type, each language, Logic.
+// Column widths in characters: key (hidden), Question ID, Type, each language, Logic; the Survey
+// sheet's property and value.
 const WIDTH_ID = 20;
 const WIDTH_TYPE = 24;
 const WIDTH_LANGUAGE = 50;
 const WIDTH_LOGIC = 60;
+const WIDTH_PROPERTY = 24;
+const WIDTH_VALUE = 60;
+
+/**
+ * A sheet name Excel takes: no []:*?/\, at most 31 characters, and none another sheet has (Excel
+ * compares them ignoring case). A translation that leaves nothing usable falls back to `fallback`.
+ */
+const toSheetName = (name: string, fallback: string, taken: readonly string[]): string => {
+  const cleaned = name.replaceAll(SHEET_NAME_FORBIDDEN, "").trim().slice(0, SHEET_NAME_MAX_CHARS);
+  const isTaken = (candidate: string) =>
+    taken.some((other) => other.toLowerCase() === candidate.toLowerCase());
+  if (cleaned && !isTaken(cleaned)) return cleaned;
+  return isTaken(fallback) ? `${fallback} 2` : fallback;
+};
 
 /**
  * One column of texts. `code` is the language's code, which the meta sheet records, or `default` for a
@@ -179,18 +197,22 @@ const getLogicRows = (texts: TSurveyText[]): Map<string, number> => {
 };
 
 /**
- * The survey as an xlsx workbook: the visible texts sheet first, then the very hidden meta sheet.
- * `t` and `locale` are the exporting user's, for headers, types and the Logic column; the texts
- * themselves are the survey's own, in each of its languages.
+ * The survey as an xlsx workbook: the Questions sheet first (what an import reads), then the Survey
+ * sheet of its properties, then the very hidden meta sheet. `t` and `locale` are the exporting user's,
+ * for headers, types, the Logic column and the Survey sheet; the texts themselves are the survey's own,
+ * in each of its languages. The workbook's title is the survey's name.
  */
 export const writeExcelExport = ({
   survey,
   t,
   locale,
+  exportedAt = new Date(),
 }: {
   survey: TSurvey;
   t: TFunction;
   locale: string;
+  /** When the file is made, which the Survey sheet states. */
+  exportedAt?: Date;
 }): Uint8Array<ArrayBuffer> => {
   const truncatedSuffix = t("workspace.surveys.export.excel.truncated");
   const languageColumns = getLanguageColumns(survey, t, locale);
@@ -240,20 +262,30 @@ export const writeExcelExport = ({
       [EXCEL_EXPORT_META_HEADERS, ...languageColumns.map((column) => column.header)],
       [EXCEL_EXPORT_META_COLUMNS, questionIdHeader, typeHeader],
       [EXCEL_EXPORT_META_LOCALE, locale],
+      [EXCEL_EXPORT_META_SURVEY_ID, survey.id],
     ],
     truncatedSuffix
   );
 
-  const sheetName =
-    t("workspace.surveys.export.excel.sheet_name")
-      .replaceAll(SHEET_NAME_FORBIDDEN, "")
-      .slice(0, SHEET_NAME_MAX_CHARS) || "Survey";
+  const surveySheet = toTextSheet(getSurveySheetRows({ survey, t, locale, exportedAt }), truncatedSuffix);
+  surveySheet["!cols"] = [{ wch: WIDTH_PROPERTY }, { wch: WIDTH_VALUE }];
+
+  const questionsName = toSheetName(t("workspace.surveys.export.excel.sheet_name"), "Questions", [
+    EXCEL_EXPORT_META_SHEET,
+  ]);
+  const surveyName = toSheetName(t("workspace.surveys.export.excel.survey_sheet_name"), "Survey", [
+    EXCEL_EXPORT_META_SHEET,
+    questionsName,
+  ]);
 
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, sheet, sheetName);
+  XLSX.utils.book_append_sheet(workbook, sheet, questionsName);
+  XLSX.utils.book_append_sheet(workbook, surveySheet, surveyName);
   XLSX.utils.book_append_sheet(workbook, meta, EXCEL_EXPORT_META_SHEET);
   // 2 is "very hidden": not listed under Unhide, only reachable from the VBA editor or by code.
-  workbook.Workbook = { Sheets: [{ Hidden: 0 }, { Hidden: 2 }] };
+  workbook.Workbook = { Sheets: [{ Hidden: 0 }, { Hidden: 0 }, { Hidden: 2 }] };
+  // File › Info shows it, and New survey › Import names its draft by it.
+  workbook.Props = { Title: survey.name };
 
   // A shared string table makes each cell a plain string (`t="s"`), as Excel writes them; without it SheetJS
   // writes `t="str"`, the type of a formula's cached result.

@@ -222,9 +222,9 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
     expect(response.headers.get("Content-Length")).toBe(String(bytes.byteLength));
 
     const workbook = XLSX.read(bytes, { type: "array", cellFormula: true, cellNF: true });
-    const [sheetName, metaName] = workbook.SheetNames;
-    expect(metaName).toBe(EXCEL_EXPORT_META_SHEET);
-    expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 2]);
+    const [sheetName, surveySheetName, metaName] = workbook.SheetNames;
+    expect([sheetName, surveySheetName, metaName]).toEqual(["Questions", "Survey", EXCEL_EXPORT_META_SHEET]);
+    expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 0, 2]);
 
     const rows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[sheetName], { header: 1, defval: "" });
     expect(rows.map((row) => [row[0], row[1], row[3]])).toEqual([
@@ -243,11 +243,23 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       }
     }
 
-    // How to read the sheet back, and no survey id: an import is aimed at its survey (ENG-6809).
+    // How to read the sheet back, and the survey New survey › Import matches it with (ENG-6809).
     const meta = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[metaName], { header: 1 });
-    expect(meta.map((row) => row[0])).toEqual(["format", "languages", "headers", "columns", "locale"]);
+    expect(meta.map((row) => row[0])).toEqual([
+      "format",
+      "languages",
+      "headers",
+      "columns",
+      "locale",
+      "surveyId",
+    ]);
     expect(meta[0][1]).toBe("1");
-    expect(JSON.stringify(meta)).not.toContain(draftSurveyId);
+    expect(meta[5][1]).toBe(draftSurveyId);
+    const properties = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[surveySheetName], { header: 1 });
+    expect(properties.slice(1, 3)).toEqual([
+      ["Survey ID", draftSurveyId],
+      ["Name", "Größe NPS / Q4"],
+    ]);
 
     expect(auditLog).toMatchObject({
       organizationId: fixture.organizationId,
