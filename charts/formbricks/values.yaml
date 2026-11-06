@@ -1283,10 +1283,11 @@ hub:
       path: /run/hub/embedding-ready
 
     embeddingPreflight:
-      timeoutSeconds: 10
-      intervalSeconds: 60
-      successTTLSeconds: 120
-      snoozeSeconds: 30
+      # Null uses the Hub defaults or values supplied through the Hub Secret.
+      timeoutSeconds: null
+      intervalSeconds: null
+      successTTLSeconds: null
+      snoozeSeconds: null
 
     waitForApi:
       # Avoid starting workers before the API service is healthy during installs/upgrades.
@@ -1356,6 +1357,7 @@ hub:
     enabled: false
     provider: ""
     model: ""
+    responseModel: ""
     baseUrl: ""
     apiBaseUrl: ""
     workerBaseUrl: ""
