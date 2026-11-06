@@ -20,6 +20,10 @@ import type { TSurveyImportMatch } from "@/modules/survey/import/types";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useImportSurvey } from "./use-import-survey";
 
+const excelCheck = vi.hoisted(() => ({ isExcelExportFile: vi.fn() }));
+// The check's own reading of a workbook is tested next to it; here only what the hook does with its answer.
+vi.mock("@/modules/survey/import/lib/excel-export-file", () => excelCheck);
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
@@ -94,6 +98,7 @@ const references = {
 
 beforeEach(() => {
   vi.mocked(streamSurveyImportFile).mockReset();
+  excelCheck.isExcelExportFile.mockReset();
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
     callback(0);
@@ -135,6 +140,50 @@ describe("useImportSurvey", () => {
 
     expect(result.current.status).toBe("idle");
     expect(streamSurveyImportFile).not.toHaveBeenCalled();
+  });
+
+  test("without AI, uploads an Excel file only once it reads as an Excel export", async () => {
+    streamWith([{ type: "start", requestId: "r1" }] as TSurveyImportStreamEvent[]);
+    const { result } = renderImport({ isAIAvailable: false });
+    const sheet = new File(["sheet"], "Survey.xlsx");
+
+    excelCheck.isExcelExportFile.mockResolvedValueOnce(false);
+    await act(async () => result.current.selectFile(sheet));
+    await waitFor(() => expect(result.current.errorCode).toBe("file_needs_ai"));
+    expect(streamSurveyImportFile).not.toHaveBeenCalled();
+
+    excelCheck.isExcelExportFile.mockResolvedValueOnce(true);
+    await act(async () => result.current.selectFile(sheet));
+    await waitFor(() => expect(streamSurveyImportFile).toHaveBeenCalledTimes(1));
+    expect(excelCheck.isExcelExportFile).toHaveBeenCalledWith(sheet);
+    expect(result.current.errorCode).toBeNull();
+  });
+
+  test("without AI, drops the answer for an Excel file once another file was chosen", async () => {
+    streamWith([{ type: "start", requestId: "r1" }] as TSurveyImportStreamEvent[]);
+    const { result } = renderImport({ isAIAvailable: false });
+    let answer: (isExport: boolean) => void = () => undefined;
+    excelCheck.isExcelExportFile.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+
+    await act(async () => result.current.selectFile(new File(["sheet"], "Survey.xlsx")));
+    await act(async () => result.current.selectFile(formbricksFile()));
+    await act(async () => answer(false));
+
+    await waitFor(() => expect(streamSurveyImportFile).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(streamSurveyImportFile).mock.calls[0][0].file.name).toBe(
+      "Onboarding NPS.formbricks.json"
+    );
+    expect(result.current.errorCode).toBeNull();
+  });
+
+  test("with AI, uploads an Excel file without reading it first", async () => {
+    streamWith([{ type: "start", requestId: "r1" }] as TSurveyImportStreamEvent[]);
+    const { result } = renderImport();
+
+    await act(async () => result.current.selectFile(new File(["sheet"], "questions.xlsx")));
+
+    await waitFor(() => expect(streamSurveyImportFile).toHaveBeenCalledTimes(1));
+    expect(excelCheck.isExcelExportFile).not.toHaveBeenCalled();
   });
 
   test("leaves the content to the server: a .qsf that is not JSON is uploaded, and its 415 shown", async () => {

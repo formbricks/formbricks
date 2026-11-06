@@ -675,7 +675,9 @@ describe("a CSV's encoding", () => {
 });
 
 describe("the Excel export (ENG-6849)", () => {
-  test("imports back as a new survey, word for word in both languages, with its logic", async () => {
+  // The survey the export names is not in this workspace, so the workbook is a spreadsheet like any
+  // other (ENG-6809): read by the document import, into a new survey.
+  test("of a survey the user can't update imports as a new survey, word for word in both languages, with its logic", async () => {
     const bytes = writeExcelExport({
       survey: EXCEL_EXPORT_ROUND_TRIP_SURVEY,
       t: createIcuTranslate("en-US"),
@@ -742,8 +744,11 @@ describe("the Excel export (ENG-6849)", () => {
       ["visited", "equals", choiceIdsOf(payload, "visited", ["No"])[0]],
     ]);
     expect(visited.logic![0].actions[0].target).toBe(blockOf(payload, "improve").block.id);
-    // The export's very hidden meta sheet is the file's bookkeeping, not a sheet the user skipped.
-    expect(done.report.issues.map((issue) => issue.code)).not.toContain("sheets_skipped");
+    // The Survey sheet is one the user sees, so the report says it was not read; the very hidden meta
+    // sheet is the file's bookkeeping, not a sheet the user skipped.
+    expect(done.report.issues.find((issue) => issue.code === "sheets_skipped")).toMatchObject({
+      params: { sheets: "Survey" },
+    });
   });
 });
 

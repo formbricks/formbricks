@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
-import { checkSurveyImportFile, getSurveyImportFileExtensions } from "./import-file";
+import { checkSurveyImportFile, getSurveyImportFileExtensions, needsExcelExportCheck } from "./import-file";
 
 const withAI = { isAIAvailable: true };
 const withoutAI = { isAIAvailable: false };
@@ -31,9 +31,11 @@ describe("checkSurveyImportFile", () => {
     }
   });
 
-  test("without Formbricks AI, takes a Formbricks file and refuses a file AI reads as needing AI", () => {
+  test("without Formbricks AI, takes a Formbricks file and an Excel file, and refuses a file only AI reads as needing it", () => {
     expect(checkSurveyImportFile({ name: "survey.formbricks.json", size: 10 }, withoutAI)).toBeNull();
-    for (const name of ["survey.qsf", "list.xlsx", "list.csv", "questionnaire.docx", "questions.md"]) {
+    // It may be a survey's Excel export, which needs no AI: the server tells (ENG-6809).
+    expect(checkSurveyImportFile({ name: "Survey.XLSX", size: 10 }, withoutAI)).toBeNull();
+    for (const name of ["survey.qsf", "list.csv", "questionnaire.docx", "questions.md"]) {
       expect(checkSurveyImportFile({ name, size: 10 }, withoutAI)).toBe("file_needs_ai");
     }
     expect(checkSurveyImportFile({ name: "survey.doc", size: 10 }, withoutAI)).toBe("file_wrong_extension");
@@ -41,8 +43,16 @@ describe("checkSurveyImportFile", () => {
 });
 
 describe("getSurveyImportFileExtensions", () => {
-  test("offers .json always, and the files Formbricks AI reads only with it", () => {
+  test("offers .json and .xlsx always, and the other files Formbricks AI reads only with it", () => {
     expect(getSurveyImportFileExtensions(true)).toEqual([".json", ".qsf", ".docx", ".xlsx", ".csv", ".md"]);
-    expect(getSurveyImportFileExtensions(false)).toEqual([".json"]);
+    expect(getSurveyImportFileExtensions(false)).toEqual([".json", ".xlsx"]);
+  });
+});
+
+describe("needsExcelExportCheck", () => {
+  test("reads an Excel file first only without Formbricks AI", () => {
+    expect(needsExcelExportCheck({ name: "Survey.XLSX" }, withoutAI)).toBe(true);
+    expect(needsExcelExportCheck({ name: "Survey.xlsx" }, withAI)).toBe(false);
+    expect(needsExcelExportCheck({ name: "survey.formbricks.json" }, withoutAI)).toBe(false);
   });
 });

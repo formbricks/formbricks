@@ -95,6 +95,8 @@ const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
       return t("workspace.surveys.import.errors.document_limits.table_cells");
     case "source_size":
       return t("workspace.surveys.import.errors.document_limits.source_size");
+    case "text_size":
+      return t("workspace.surveys.import.errors.document_limits.text_size");
     default:
       return t("workspace.surveys.import.errors.document_limits.other");
   }
@@ -119,6 +121,13 @@ export const getSurveyImportFieldProblemHeadline = (code: TV3InvalidParam["code"
       return t("workspace.surveys.import.errors.field_problems.misordered_reference");
     case "immutable_identifier":
       return t("workspace.surveys.import.errors.field_problems.immutable_identifier");
+    // The published lock (ADR 0020): what responses are matched to stays as it was published.
+    case "immutable_question_code":
+    case "immutable_answer_code":
+    case "immutable_question_type":
+    case "immutable_option_text":
+    case "immutable_option_deletion":
+      return t("workspace.surveys.import.errors.field_problems.immutable_published");
     case "read_only_field":
       return t("workspace.surveys.import.errors.field_problems.read_only_field");
     case "duplicate_identifier":
@@ -166,6 +175,8 @@ const getUnprocessableFileCode = (error: V3ApiError): string => {
   const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
   if (limit) return `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}`;
   if (hasParam("qsf_not_recognized")) return "qsf_not_recognized";
+  // An Excel export whose rows are none of the survey its meta sheet names (ENG-6809).
+  if (hasParam("excel_export_other_survey")) return "excel_export_other_survey";
   // Any other 422 may come from any lane, so it gets the sentence that fits every file.
   return "file_unreadable";
 };
@@ -240,6 +251,8 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.file_too_large");
     case "qsf_not_recognized":
       return t("workspace.surveys.import.errors.not_a_qsf");
+    case "excel_export_other_survey":
+      return t("workspace.surveys.import.errors.excel_export_other_survey");
     case "file_too_complex":
       return t("workspace.surveys.import.errors.too_complex");
     case "file_unreadable":

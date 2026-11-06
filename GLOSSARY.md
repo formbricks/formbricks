@@ -129,7 +129,7 @@ that is not listed here.
 
 **Formbricks file** — A survey's content saved as a file (`.formbricks.json`) that imports into any workspace, organization or instance. It carries the questions, blocks, endings, welcome card, languages, hidden fields, variables, logic and triggers; styling, settings, follow-ups and quotas stay out. _Avoid_: JSON export, survey JSON.
 
-**Match** — A Formbricks file whose source survey is a survey in the current workspace that the importing user can edit. Only a match offers Update; anything else becomes a new survey.
+**Match** — The survey an import offers to update: the survey a Formbricks file or an Excel export was exported from, when it is in the current workspace, not archived, and one the importing user can edit. Only a match offers Update; anything else becomes a new survey.
 
 **Update** — Importing a matched Formbricks file over that survey's content. The survey keeps its ID, status, responses, settings and styling. An active survey is never updated. _Avoid_: re-import (which also covers creating a new survey), overwrite, import into existing.
 
@@ -141,4 +141,4 @@ that is not listed here.
 
 **Import report** — The warnings and notes an import shows before anything is created or updated: what was removed, changed or needs a check.
 
-**Excel export** — A survey written as a spreadsheet for reviewers and translators: one row per question and option, one column per language. It is not a Formbricks file and never matches.
+**Excel export** — A survey written as a workbook for reviewers and translators: one row per question and option, one column per language, plus a Survey sheet of its properties. It is not a Formbricks file, but it names its survey: imported back, it matches that survey, its rows match the survey's texts by id, and it only changes and adds, never removes.
