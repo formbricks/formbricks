@@ -1,4 +1,12 @@
 {{- if and .Values.hub.enabled .Values.hub.worker.enabled }}
+{{- if .Values.hub.worker.embeddingReadiness.enabled -}}
+  {{- $readinessMountPath := dir .Values.hub.worker.embeddingReadiness.path -}}
+  {{- range .Values.hub.extraVolumeMounts -}}
+    {{- if eq .mountPath $readinessMountPath -}}
+      {{- fail "hub.extraVolumeMounts conflicts with the embedding readiness mount; choose a different hub.worker.embeddingReadiness.path" -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
