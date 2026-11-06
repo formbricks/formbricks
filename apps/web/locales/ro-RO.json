@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Rând: {row}"
       },
       "import": {
-        "ai_note": "Fișierele Qualtrics, Word, Excel, CSV și Markdown sunt citite cu Formbricks AI. Fiecare text este preluat din fișier cuvânt cu cuvânt.",
+        "ai_note": "Sunt acceptate fișiere Qualtrics, Word, Excel, CSV și Markdown. Fiecare text este preluat din fișier cuvânt cu cuvânt.",
         "card_description": "Transformă un fișier Formbricks, un export Qualtrics sau un chestionar din Word, Excel, CSV sau Markdown într-un sondaj în formă de ciornă.",
         "card_description_json_only": "Transformă un sondaj exportat din Formbricks într-un sondaj ciornă.",
         "card_title": "Importă sondaj",
@@ -5079,7 +5079,7 @@
         "discard_draft_title": "Renunți la acest import?",
         "discard_import_body": "Fișierul este încă în curs de importare. Dacă închizi, importul se va opri.",
         "discard_import_title": "Oprești importul?",
-        "dropzone_help": "Fișier Formbricks (.json), export Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) sau Markdown (.md), până la 15 MB",
+        "dropzone_help": "Fișier Formbricks (.json), export Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) sau Markdown (.md)",
         "dropzone_help_json_only": "Fișier Formbricks (.json), până la 15 MB",
         "dropzone_primary": "Trage un fișier aici sau fă clic pentru a alege unul",
         "encodings": {

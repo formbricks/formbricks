@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Satır: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics, Word, Excel, CSV ve Markdown dosyaları Formbricks AI ile okunur. Tüm metinler dosyadan kelimesi kelimesine alınır.",
+        "ai_note": "Qualtrics, Word, Excel, CSV ve Markdown dosyaları desteklenir. Tüm metinler dosyadan kelimesi kelimesine alınır.",
         "card_description": "Bir Formbricks dosyasını, bir Qualtrics dışa aktarımını ya da Word, Excel, CSV veya Markdown formatındaki bir anket formunu taslak ankete dönüştür.",
         "card_description_json_only": "Formbricks'ten dışa aktarılan bir anketi taslak ankete dönüştür.",
         "card_title": "Anketi içe aktar",
@@ -5079,7 +5079,7 @@
         "discard_draft_title": "Bu içe aktarma silinsin mi?",
         "discard_import_body": "Dosya hâlâ içe aktarılıyor. Kapatırsan içe aktarma durdurulur.",
         "discard_import_title": "İçe aktarma durdurulsun mu?",
-        "dropzone_help": "Formbricks dosyası (.json), Qualtrics dışa aktarımı (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md), en fazla 15 MB",
+        "dropzone_help": "Formbricks dosyası (.json), Qualtrics dışa aktarımı (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md)",
         "dropzone_help_json_only": "Formbricks dosyası (.json), en fazla 15 MB",
         "dropzone_primary": "Bir dosyayı buraya bırak veya seçmek için tıkla",
         "encodings": {

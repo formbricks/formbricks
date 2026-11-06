@@ -141,14 +141,25 @@ export const AiDraftPreview = ({
     return () => observer?.disconnect();
   }, [isVirtualized]);
 
+  // While generating, the list follows new questions down. Once it is done, the review starts at the
+  // first question, so a finished draft (or an import that lands all at once) is read from the top.
+  // Declared before the follow effect, so a new generation re-pins before the first question lands.
+  const wasGeneratingRef = useRef(isGenerating);
+  useEffect(() => {
+    const wasGenerating = wasGeneratingRef.current;
+    wasGeneratingRef.current = isGenerating;
+    if (isGenerating && !wasGenerating) isPinnedRef.current = true;
+    if (wasGenerating && !isGenerating) scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [isGenerating]);
+
   useEffect(() => {
     const element = scrollRef.current;
-    if (!element || !isPinnedRef.current) return;
+    if (!element || !isGenerating || !isPinnedRef.current) return;
 
     // The CSS reduced-motion kill-switch cannot reach a JS scroll option, so check it here.
     const prefersReducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     element.scrollTo({ top: element.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" });
-  }, [draft.questions.length]);
+  }, [draft.questions.length, isGenerating]);
 
   const handleScroll = () => {
     const element = scrollRef.current;

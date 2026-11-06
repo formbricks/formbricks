@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Linha: {row}"
       },
       "import": {
-        "ai_note": "Os ficheiros Qualtrics, Word, Excel, CSV e Markdown são lidos com a IA do Formbricks. Todos os textos são extraídos do ficheiro palavra por palavra.",
+        "ai_note": "São suportados ficheiros Qualtrics, Word, Excel, CSV e Markdown. Todos os textos provêm do ficheiro palavra por palavra.",
         "card_description": "Transforma um ficheiro Formbricks, uma exportação do Qualtrics ou um inquérito em Word, Excel, CSV ou Markdown num rascunho de inquérito.",
         "card_description_json_only": "Transforma um inquérito exportado do Formbricks num rascunho de inquérito.",
         "card_title": "Importar inquérito",
@@ -5079,7 +5079,7 @@
         "discard_draft_title": "Descartar esta importação?",
         "discard_import_body": "O ficheiro ainda está a ser importado. Se fechares, a importação será interrompida.",
         "discard_import_title": "Parar a importação?",
-        "dropzone_help": "Ficheiro Formbricks (.json), exportação do Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) ou Markdown (.md), até 15 MB",
+        "dropzone_help": "Ficheiro Formbricks (.json), exportação do Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) ou Markdown (.md)",
         "dropzone_help_json_only": "Ficheiro do Formbricks (.json), até 15 MB",
         "dropzone_primary": "Larga um ficheiro aqui ou clica para escolher um",
         "encodings": {

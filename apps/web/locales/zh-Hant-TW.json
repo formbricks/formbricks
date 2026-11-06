@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · 列：{row}"
       },
       "import": {
-        "ai_note": "Qualtrics、Word、Excel、CSV 和 Markdown 檔案會由 Formbricks AI 讀取，所有文字都會逐字取自檔案內容。",
+        "ai_note": "支援 Qualtrics、Word、Excel、CSV 和 Markdown 檔案。所有文字都會逐字取自檔案內容。",
         "card_description": "將 Formbricks 檔案、Qualtrics 匯出檔，或 Word、Excel、CSV、Markdown 問卷轉換成問卷草稿。",
         "card_description_json_only": "將從 Formbricks 匯出的問卷轉換為問卷草稿。",
         "card_title": "匯入問卷",
@@ -5079,7 +5079,7 @@
         "discard_draft_title": "要捨棄這次匯入嗎?",
         "discard_import_body": "檔案仍在匯入中。關閉後將會停止匯入。",
         "discard_import_title": "要停止匯入嗎?",
-        "dropzone_help": "Formbricks 檔案 (.json)、Qualtrics 匯出檔 (.qsf)、Word (.docx)、Excel (.xlsx)、CSV (.csv) 或 Markdown (.md)，大小上限 15 MB",
+        "dropzone_help": "Formbricks 檔案 (.json)、Qualtrics 匯出檔 (.qsf)、Word (.docx)、Excel (.xlsx)、CSV (.csv) 或 Markdown (.md)",
         "dropzone_help_json_only": "Formbricks 檔案 (.json)，大小上限 15 MB",
         "dropzone_primary": "將檔案拖放到這裡，或點擊選擇檔案",
         "encodings": {
