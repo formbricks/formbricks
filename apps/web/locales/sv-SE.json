@@ -5061,7 +5061,7 @@
         "partial_responses": "Delvisa svar",
         "shown_field_label": "Visas eller inte: {target}",
         "shown_group": "Visades eller visades inte",
-        "shown_help": "Visad: respondenten såg den. Inte visad: ett visa-om-villkor eller Dölj hindrade den från att visas. Svar från innan detta registrerades matchar ingetdera.",
+        "shown_help": "Visad: respondenten såg den och svarade eller hoppade över den. Inte visad: en visa-om-regel eller Dold gjorde att den, eller dess fråga eller block, inte visades för respondenten. Äldre svar utan registrering matchar ingetdera.",
         "shown_target_block": "Block: {name}",
         "shown_target_column": "{question} · Kolumn: {column}",
         "shown_target_picture": "Bild {number}",

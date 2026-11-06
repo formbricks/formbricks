@@ -5061,7 +5061,7 @@
         "partial_responses": "部分的な回答",
         "shown_field_label": "表示状況:{target}",
         "shown_group": "表示された/表示されなかった",
-        "shown_help": "表示済み: 回答者に表示されました。非表示: 表示条件または「非表示」設定により回答者には表示されませんでした。この情報が記録される前の回答は、どちらにも該当しません。",
+        "shown_help": "表示済み:回答者がその項目を見たうえで、回答またはスキップした場合。未表示:表示条件(show-if)や「非表示」の設定により、その項目、またはその質問やブロックが回答者に表示されなかった場合。記録のない古い回答は、どちらにも一致しません。",
         "shown_target_block": "ブロック: {name}",
         "shown_target_column": "{question} · 列: {column}",
         "shown_target_picture": "画像{number}",

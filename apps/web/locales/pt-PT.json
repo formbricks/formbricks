@@ -5061,7 +5061,7 @@
         "partial_responses": "Respostas parciais",
         "shown_field_label": "Apresentado ou não: {target}",
         "shown_group": "Mostrado ou não mostrado",
-        "shown_help": "Apresentado: o inquirido viu. Não apresentado: uma condição de apresentação ou a opção Ocultar não o mostrou ao inquirido. As respostas anteriores ao registo desta informação não correspondem a nenhuma das opções.",
+        "shown_help": "Mostrada: o inquirido viu-a e respondeu ou saltou-a. Não mostrada: uma condição de visibilidade ou a opção Oculta impediu que a visse, ou a pergunta ou o bloco a que pertence. As respostas mais antigas sem registo não correspondem a nenhuma das opções.",
         "shown_target_block": "Bloco: {name}",
         "shown_target_column": "{question} · Coluna: {column}",
         "shown_target_picture": "Imagem {number}",

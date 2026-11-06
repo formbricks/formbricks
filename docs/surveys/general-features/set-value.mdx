@@ -12,13 +12,13 @@ You add and edit Set value steps on the [Flow tab](/surveys/general-features/flo
 
 Under a block on the Flow tab, open **Add logic** and choose **Set value**. The new step always runs after the block is submitted, and reads **Always** on the outline.
 
-Choose the calculated field to set, then type the expression. To set the value only for some respondents, use **Add a condition** on the step: it then runs only when the condition matches. Removing the condition makes it always run again.
+A new step starts with **Expression** off, on **Assign**: choose the calculated field to set and the value it gets, a typed value, an answer or another field. Switch on **Expression** to work the value out with an expression instead. To set the value only for some respondents, use **Add a condition** on the step: it then runs only when the condition matches. Removing the condition makes it always run again.
 
-A one-step calculation you already have, such as *score + 1*, keeps working exactly as before. With **Expression** off, a step reads field, operator and value; for a number field, the operator list shows each operator with its symbol: **Add**, **Subtract**, **Multiply**, **Divide** and **Assign**.
+With **Expression** off, a step reads field, operator and value, such as *score + 1*. For a number field, the operator list shows each operator with its symbol: **Add**, **Subtract**, **Multiply**, **Divide** and **Assign**. For a text field it offers **Assign** and **Append**, which adds the value to the end of the field's text; the outline reads it as *append "-vip" to segment*.
 
 ![A Set value step with Expression off: score, its operator list open with Add, Subtract, Multiply, Divide and Assign, and the value 1](/images/surveys/general-features/set-value/one-step-operators.webp)
 
-To turn a one-step calculation into an expression, switch on **Expression** in its row. Switching it off turns an expression back into one step when it is one, such as *ifEmpty(@score, 0) + 1*; any other expression is cleared after you confirm. Changing an existing action to **Set value** starts it with **Expression** on, like a new step.
+To turn a one-step calculation into an expression, switch on **Expression** in its row. Switching it off turns an expression back into one step when it is one, such as *ifEmpty(@score, 0) + 1*; any other expression is cleared after you confirm. Changing an existing action to **Set value** starts it on **Assign** with **Expression** off, like a new step.
 
 ## Writing an expression
 

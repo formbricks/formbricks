@@ -5061,7 +5061,7 @@
         "partial_responses": "Răspunsuri parțiale",
         "shown_field_label": "Afișat sau nu: {target}",
         "shown_group": "Afișat sau neafișat",
-        "shown_help": "Afișat: respondentul l-a văzut. Neafișat: o condiție de afișare sau opțiunea Ascunde l-a ascuns față de el. Răspunsurile de dinainte de începerea înregistrării acestei informații nu se potrivesc cu niciuna dintre variante.",
+        "shown_help": "Afișat: respondentul l-a văzut și a răspuns sau a trecut peste. Neafișat: o condiție „afișează dacă” sau opțiunea Ascuns l-a ascuns de el, la fel și întrebarea sau blocul în care se află. Răspunsurile mai vechi, fără înregistrare, nu corespund niciuneia dintre variante.",
         "shown_target_block": "Bloc: {name}",
         "shown_target_column": "{question} · Coloană: {column}",
         "shown_target_picture": "Imaginea {number}",

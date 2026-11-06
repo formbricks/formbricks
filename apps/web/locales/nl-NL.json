@@ -5061,7 +5061,7 @@
         "partial_responses": "Gedeeltelijke reacties",
         "shown_field_label": "Getoond of niet: {target}",
         "shown_group": "Getoond of niet getoond",
-        "shown_help": "Getoond: de respondent heeft het gezien. Niet getoond: een toon-als-voorwaarde of Verbergen heeft het voor hem of haar verborgen. Reacties van vóór de registratie hiervan vallen onder geen van beide.",
+        "shown_help": "Getoond: de respondent heeft de vraag gezien en beantwoord of overgeslagen. Niet getoond: een show-if of Verborgen heeft de vraag, of het bijbehorende blok, voor hem of haar achtergehouden. Oudere reacties zonder registratie komen met geen van beide overeen.",
         "shown_target_block": "Blok: {name}",
         "shown_target_column": "{question} · Kolom: {column}",
         "shown_target_picture": "Afbeelding {number}",

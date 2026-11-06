@@ -5061,7 +5061,7 @@
         "partial_responses": "Részleges válaszok",
         "shown_field_label": "Megjelenítve vagy sem: {target}",
         "shown_group": "Megjelent vagy nem jelent meg",
-        "shown_help": "Megjelenített: a válaszadó látta. Nem megjelenített: megjelenítési feltétel vagy az Elrejtés beállítás miatt nem jelent meg számára. A rögzítés bevezetése előtt beérkezett válaszok egyik kategóriába sem tartoznak.",
+        "shown_help": "Megjelenítve: a válaszadó látta a kérdést, és megválaszolta vagy kihagyta. Nem megjelenítve: egy „megjelenítés, ha” feltétel vagy a „Rejtett” beállítás elrejtette előle a kérdést vagy a hozzá tartozó blokkot. Azok a korábbi válaszok, amelyekhez nem tartozik megjelenítési bejegyzés, egyik lehetőségnek sem felelnek meg.",
         "shown_target_block": "Blokk: {name}",
         "shown_target_column": "{question} · Oszlop: {column}",
         "shown_target_picture": "{number}. kép",

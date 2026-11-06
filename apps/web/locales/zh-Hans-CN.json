@@ -5061,7 +5061,7 @@
         "partial_responses": "部分 反馈",
         "shown_field_label": "是否显示:{target}",
         "shown_group": "已显示或未显示",
-        "shown_help": "已显示:受访者看到了该内容。未显示:显示条件或“隐藏”设置使受访者没有看到。在记录此项之前的回复,两种情况都不匹配。",
+        "shown_help": "已显示:受访者看到了该题,并已作答或跳过。未显示:因显示条件或“隐藏”设置,该题或其所在题组未向受访者展示。没有相关记录的旧回复两者都不匹配。",
         "shown_target_block": "区块:{name}",
         "shown_target_column": "{question} · 列:{column}",
         "shown_target_picture": "图片 {number}",

@@ -5061,7 +5061,7 @@
         "partial_responses": "Respostas parciais",
         "shown_field_label": "Exibido ou não: {target}",
         "shown_group": "Exibido ou não exibido",
-        "shown_help": "Exibido: o respondente viu. Não exibido: uma condição de exibição ou Ocultar impediu que ele visse. Respostas anteriores ao registro desse dado não se enquadram em nenhuma das opções.",
+        "shown_help": "Exibida: o respondente viu a pergunta e a respondeu ou pulou. Não exibida: uma condição de exibição (show-if) ou a opção Oculta a manteve longe do respondente, ou então a pergunta ou o bloco a que ela pertence. Respostas antigas sem registro não se enquadram em nenhuma das duas opções.",
         "shown_target_block": "Bloco: {name}",
         "shown_target_column": "{question} · Coluna: {column}",
         "shown_target_picture": "Imagem {number}",

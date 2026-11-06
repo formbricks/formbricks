@@ -5061,7 +5061,7 @@
         "partial_responses": "Yarım yanıtlar",
         "shown_field_label": "Gösterildi mi: {target}",
         "shown_group": "Gösterildi veya gösterilmedi",
-        "shown_help": "Gösterildi: katılımcı gördü. Gösterilmedi: bir gösterim koşulu veya Gizle onu katılımcıdan sakladı. Bu bilgi kaydedilmeden önceki yanıtlar ikisiyle de eşleşmez.",
+        "shown_help": "Gösterilen: Katılımcı öğeyi gördü ve yanıtladı ya da atladı. Gösterilmeyen: Bir gösterme koşulu veya Gizli ayarı, öğeyi ya da öğenin sorusunu veya bloğunu katılımcıdan gizledi. Kaydı olmayan eski yanıtlar hiçbirine uymaz.",
         "shown_target_block": "Blok: {name}",
         "shown_target_column": "{question} · Sütun: {column}",
         "shown_target_picture": "Resim {number}",
