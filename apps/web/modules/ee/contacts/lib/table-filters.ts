@@ -54,7 +54,10 @@ export const getContactFilterProperties = (
           valueType: "number",
           quick: true,
           ruleOperators: NUMBER_RULE_OPERATORS,
-          loadOptions: (search) => loadAttributeValues(attributeKey.key, search),
+          loadOptions: async (search) => ({
+            options: await loadAttributeValues(attributeKey.key, search),
+            hasMore: false,
+          }),
         };
       default:
         return {
@@ -63,7 +66,10 @@ export const getContactFilterProperties = (
           valueType: "string",
           quick: true,
           ruleOperators: STRING_RULE_OPERATORS,
-          loadOptions: (search) => loadAttributeValues(attributeKey.key, search),
+          loadOptions: async (search) => ({
+            options: await loadAttributeValues(attributeKey.key, search),
+            hasMore: false,
+          }),
         };
     }
   }),

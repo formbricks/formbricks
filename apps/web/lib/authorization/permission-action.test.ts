@@ -14,6 +14,7 @@ describe("semantic authorization action mapping", () => {
     ["read", "workspace.read"],
     ["readWrite", "workspace.write"],
     ["manage", "workspace.manage"],
+    ["dashboardRead", "workspace.dashboard_read"],
   ] as const)("maps workspace permission %s", (permission, action) => {
     expect(getWorkspaceAuthorizationAction(permission)).toBe(action);
   });
@@ -48,6 +49,7 @@ describe("semantic authorization action mapping", () => {
     ["read", "feedbackDirectoryAssignment.read"],
     ["readWrite", "feedbackDirectoryAssignment.write"],
     ["manage", "feedbackDirectoryAssignment.manage"],
+    ["dashboardRead", "feedbackDirectoryAssignment.dashboard_read"],
   ] as const)("maps assignment %s to the central vocabulary", (permission, action) => {
     expect(getFeedbackDirectoryAssignmentAuthorizationAction(permission)).toBe(action);
   });

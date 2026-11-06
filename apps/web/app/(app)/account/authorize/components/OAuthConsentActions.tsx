@@ -7,7 +7,13 @@ import { authClient } from "@/modules/auth/lib/auth-client";
 import { Button } from "@/modules/ui/components/button";
 import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 
-export const OAuthConsentActions = () => {
+interface OAuthConsentActionsProps {
+  /** The scopes to grant when narrower than the request (a Dashboard viewer's); all of them otherwise. */
+  readonly grantedScope?: string;
+  readonly isAllowDisabled?: boolean;
+}
+
+export const OAuthConsentActions = ({ grantedScope, isAllowDisabled = false }: OAuthConsentActionsProps) => {
   const { t } = useTranslation();
   const [pendingAction, setPendingAction] = useState<"accept" | "deny" | null>(null);
 
@@ -16,7 +22,9 @@ export const OAuthConsentActions = () => {
     setPendingAction(action);
 
     try {
-      const response = await authClient.oauth2.consent({ accept });
+      const response = await authClient.oauth2.consent(
+        accept && grantedScope ? { accept, scope: grantedScope } : { accept }
+      );
       if (response.error) {
         toast.error(t("auth.oauth.consent_failed"));
         return;
@@ -51,7 +59,7 @@ export const OAuthConsentActions = () => {
         type="button"
         onClick={() => handleConsent(true)}
         loading={pendingAction === "accept"}
-        disabled={pendingAction !== null}>
+        disabled={pendingAction !== null || isAllowDisabled}>
         {t("auth.oauth.allow_access")}
       </Button>
     </div>

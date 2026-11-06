@@ -19,7 +19,14 @@ export type TAuthorizationHttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELET
  * This is intentionally not exported from the public authorization barrel. It translates persisted
  * source permission enums into the engine-independent authorization vocabulary at service boundaries.
  */
-export const getWorkspaceAuthorizationAction = (minPermission?: TTeamPermission): TWorkspaceAction => {
+/**
+ * A workspace access level: the WorkspaceTeam ladder, or `dashboardRead`, the dashboard-bound reads that
+ * also admit the workspace's Dashboard viewers (ADR-0025).
+ */
+export type TWorkspaceAccessLevel = TTeamPermission | "dashboardRead";
+
+export const getWorkspaceAuthorizationAction = (minPermission?: TWorkspaceAccessLevel): TWorkspaceAction => {
+  if (minPermission === "dashboardRead") return "workspace.dashboard_read";
   if (minPermission === "manage") return "workspace.manage";
   if (minPermission === "readWrite") return "workspace.write";
   return "workspace.read";
@@ -43,8 +50,9 @@ export const getFeedbackDirectoryAuthorizationAction = (
 ): TFeedbackDirectoryAction => `feedbackDirectory.${permission}`;
 
 export const getFeedbackDirectoryAssignmentAuthorizationAction = (
-  minPermission?: TTeamPermission
+  minPermission?: TWorkspaceAccessLevel
 ): TFeedbackDirectoryAssignmentAction => {
+  if (minPermission === "dashboardRead") return "feedbackDirectoryAssignment.dashboard_read";
   if (minPermission === "manage") return "feedbackDirectoryAssignment.manage";
   if (minPermission === "readWrite") return "feedbackDirectoryAssignment.write";
   return "feedbackDirectoryAssignment.read";

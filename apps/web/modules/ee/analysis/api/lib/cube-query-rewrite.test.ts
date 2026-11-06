@@ -8,12 +8,33 @@ const chartCubeConfigPath = require.resolve("../../../../../../../charts/formbri
 const cubeSchemaPath = require.resolve("../../../../../../../docker/cube/schema/FeedbackRecords.js");
 process.env.CUBEJS_API_SECRET = process.env.CUBEJS_API_SECRET || "cube-secret";
 
-const { queryRewrite } = require(cubeConfigPath) as {
+type TEmbeddedDimensionSpec = {
+  key: string;
+  name: string;
+  equalsName: string;
+  numberName: string;
+  valueSql: string;
+  keyLiteral: string;
+};
+
+const cubeConfig = require(cubeConfigPath) as {
   queryRewrite: (
     query: Record<string, unknown>,
     context: { securityContext?: Record<string, unknown> }
   ) => Record<string, unknown>;
+  contextToAppId: (context: { securityContext?: Record<string, unknown> }) => string;
+  compilerCacheSize?: number;
+  maxCompiledMembers?: number;
+  getEmbeddedDimensionSpecs: (compileContext: {
+    securityContext?: Record<string, unknown>;
+  }) => TEmbeddedDimensionSpec[];
+  getEmbeddedContainmentSql: (keyLiteral: string, values: string[]) => string;
+  getEmbeddedKeys: (securityContext?: Record<string, unknown>) => string[];
+  toSafeSqlStringLiteral: (value: string) => string;
+  toSafeNumericSql: (textSql: string) => string;
+  ANSWER_FILTER_ALIAS_COUNT: number;
 };
+const { queryRewrite } = cubeConfig;
 
 const securityContext = {
   tenantId: "frd-1",
@@ -437,7 +458,7 @@ describe("cube queryRewrite", () => {
     const mapEntries = [
       ...configSource.matchAll(/"FeedbackRecords\.(\w+)":\s*"FeedbackRecords\.(\w+)"/g),
     ].map(([, source, normalized]) => ({ source, normalized }));
-    const schemaNormalizedDimensions = [...schemaSource.matchAll(/^ {4}(\w+Normalized): \{/gm)].map(
+    const schemaNormalizedDimensions = [...schemaSource.matchAll(/^ {6}(\w+Normalized): \{/gm)].map(
       ([, name]) => name
     );
 
@@ -447,6 +468,489 @@ describe("cube queryRewrite", () => {
     }
     expect(mapEntries.map(({ normalized }) => normalized).sort()).toEqual(
       [...schemaNormalizedDimensions].sort()
+    );
+  });
+});
+
+const TENANT_FILTER = { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] };
+const ANSWER_KINDS = { q_delivery: "choice", q_feat: "multi", q_nps: "number" };
+const answerContext = { securityContext: { ...securityContext, answerKinds: ANSWER_KINDS } };
+const answer = (operator: string, values: string[]) => ({
+  member: "FeedbackRecords.answer",
+  operator,
+  values,
+});
+
+describe("cube queryRewrite: answer filters", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("expands a single-select rule onto its own alias, keyed on field_id and value_id", () => {
+    const rewritten = queryRewrite(
+      { measures: ["FeedbackRecords.npsScore"], filters: [answer("equals", ["q_delivery:opt_late"])] },
+      answerContext
+    );
+
+    expect(rewritten.filters).toEqual([
+      {
+        and: [
+          { member: "AnswerFilter1.fieldId", operator: "equals", values: ["q_delivery"] },
+          { member: "AnswerFilter1.valueId", operator: "equals", values: ["opt_late"] },
+        ],
+      },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("keeps 'is not' on the answered question, so an unanswered submission never matches", () => {
+    const rewritten = queryRewrite(
+      { measures: ["FeedbackRecords.count"], filters: [answer("notEquals", ["q_delivery:opt_late"])] },
+      answerContext
+    );
+
+    expect(rewritten.filters).toEqual([
+      {
+        and: [
+          { member: "AnswerFilter1.fieldId", operator: "equals", values: ["q_delivery"] },
+          { member: "AnswerFilter1.valueId", operator: "notEquals", values: ["opt_late"] },
+        ],
+      },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("maps multi-select 'contains' and 'is any of' to <question>__<option> on the field group", () => {
+    const rewritten = queryRewrite(
+      { measures: ["FeedbackRecords.count"], filters: [answer("equals", ["q_feat:opt_a", "q_feat:opt_c"])] },
+      answerContext
+    );
+
+    expect(rewritten.filters).toEqual([
+      {
+        and: [
+          { member: "AnswerFilter1.fieldGroupId", operator: "equals", values: ["q_feat"] },
+          { member: "AnswerFilter1.fieldId", operator: "equals", values: ["q_feat__opt_a", "q_feat__opt_c"] },
+        ],
+      },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("puts number rules on the number column", () => {
+    const rewritten = queryRewrite(
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [answer("equals", ["q_nps:9", "q_nps:10"]), answer("notEquals", ["q_nps:0"])],
+      },
+      answerContext
+    );
+
+    expect(rewritten.filters).toEqual([
+      {
+        and: [
+          { member: "AnswerFilter1.fieldId", operator: "equals", values: ["q_nps"] },
+          { member: "AnswerFilter1.valueNumber", operator: "equals", values: ["9", "10"] },
+        ],
+      },
+      {
+        and: [
+          { member: "AnswerFilter2.fieldId", operator: "equals", values: ["q_nps"] },
+          { member: "AnswerFilter2.valueNumber", operator: "notEquals", values: ["0"] },
+        ],
+      },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("knows no yes/no kind: no question type stores one, so a token naming it is refused", () => {
+    expect(() =>
+      queryRewrite(
+        { measures: ["FeedbackRecords.count"], filters: [answer("equals", ["q_yn:true"])] },
+        { securityContext: { ...securityContext, answerKinds: { q_yn: "boolean" } } }
+      )
+    ).toThrow(/no known kind/);
+  });
+
+  test("gives every rule its own alias through nested and/or groups, next to ordinary filters", () => {
+    const rewritten = queryRewrite(
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [
+          {
+            or: [
+              answer("equals", ["q_delivery:opt_late"]),
+              {
+                and: [
+                  answer("equals", ["q_feat:opt_a"]),
+                  { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      answerContext
+    );
+
+    expect(rewritten.filters).toEqual([
+      {
+        or: [
+          {
+            and: [
+              { member: "AnswerFilter1.fieldId", operator: "equals", values: ["q_delivery"] },
+              { member: "AnswerFilter1.valueId", operator: "equals", values: ["opt_late"] },
+            ],
+          },
+          {
+            and: [
+              {
+                and: [
+                  { member: "AnswerFilter2.fieldGroupId", operator: "equals", values: ["q_feat"] },
+                  { member: "AnswerFilter2.fieldId", operator: "equals", values: ["q_feat__opt_a"] },
+                ],
+              },
+              { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] },
+            ],
+          },
+        ],
+      },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("allows exactly as many rules as there are aliases", () => {
+    const rules = (count: number) =>
+      Array.from({ length: count }, (_, index) => answer("equals", [`q_delivery:opt_${index}`]));
+    const { ANSWER_FILTER_ALIAS_COUNT } = cubeConfig;
+
+    const rewritten = queryRewrite(
+      { measures: ["FeedbackRecords.count"], filters: rules(ANSWER_FILTER_ALIAS_COUNT) },
+      answerContext
+    );
+    expect(JSON.stringify(rewritten.filters)).toContain(`AnswerFilter${ANSWER_FILTER_ALIAS_COUNT}.`);
+
+    expect(() =>
+      queryRewrite(
+        { measures: ["FeedbackRecords.count"], filters: rules(ANSWER_FILTER_ALIAS_COUNT + 1) },
+        answerContext
+      )
+    ).toThrow(/at most 25 answer rules/);
+  });
+
+  test.each([
+    [
+      "a question the token gives no kind for",
+      [answer("equals", ["q_unknown:x"])],
+      answerContext,
+      /no known kind/,
+    ],
+    [
+      "a token without answer kinds",
+      [answer("equals", ["q_delivery:opt_late"])],
+      { securityContext },
+      /no known kind/,
+    ],
+    [
+      "two questions in one rule",
+      [answer("equals", ["q_delivery:a", "q_nps:9"])],
+      answerContext,
+      /exactly one question/,
+    ],
+    [
+      "a value without a question",
+      [answer("equals", ["opt_late"])],
+      answerContext,
+      /<questionId>:<valueKey>/,
+    ],
+    [
+      "a value without a value key",
+      [answer("equals", ["q_delivery:"])],
+      answerContext,
+      /<questionId>:<valueKey>/,
+    ],
+    ["no values", [answer("equals", [])], answerContext, /at least one value/],
+    [
+      "an operator other than equals/notEquals",
+      [answer("contains", ["q_delivery:x"])],
+      answerContext,
+      /equals or notEquals/,
+    ],
+    [
+      "multi-select 'does not contain'",
+      [answer("notEquals", ["q_feat:opt_a"])],
+      answerContext,
+      /takes equals only/,
+    ],
+    ["a non-number on a number question", [answer("equals", ["q_nps:high"])], answerContext, /takes numbers/],
+  ])("refuses %s", (_label, filters, context, error) => {
+    expect(() => queryRewrite({ measures: ["FeedbackRecords.count"], filters }, context)).toThrow(error);
+  });
+
+  test("takes the question id up to the first colon, so value keys may contain one", () => {
+    const rewritten = queryRewrite(
+      { measures: ["FeedbackRecords.count"], filters: [answer("equals", ["q_delivery:opt:with:colons"])] },
+      answerContext
+    );
+
+    expect(JSON.stringify(rewritten.filters)).toContain('"values":["opt:with:colons"]');
+  });
+
+  test.each([
+    [
+      "an answer-filter alias",
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "AnswerFilter3.valueId", operator: "equals", values: ["x"] }],
+      },
+    ],
+    [
+      "an embedded equals twin",
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.edc_plan_64879f7d", operator: "notEquals", values: ["x"] }],
+      },
+    ],
+    [
+      "the answer member as a dimension",
+      { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.answer"] },
+    ],
+    [
+      "the answer member in an order",
+      { measures: ["FeedbackRecords.count"], order: [["FeedbackRecords.answer", "asc"]] },
+    ],
+  ])("refuses %s, which only the rewrite may write", (_label, query) => {
+    expect(() => queryRewrite(query, answerContext)).toThrow(/reserved member|filter only/);
+  });
+
+  test("leaves a query without answer rules exactly as before", () => {
+    const query = {
+      measures: ["FeedbackRecords.npsScore"],
+      dimensions: ["FeedbackRecords.sourceName"],
+      filters: [
+        { member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] },
+        { or: [{ member: "FeedbackRecords.valueNumber", operator: "gte", values: ["9"] }] },
+      ],
+    };
+
+    expect(queryRewrite(query, answerContext)).toEqual({
+      ...query,
+      filters: [...query.filters, TENANT_FILTER],
+    });
+  });
+});
+
+describe("cube embedded-data members", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const specsFor = (edKeys: unknown) =>
+    cubeConfig.getEmbeddedDimensionSpecs({ securityContext: { ...securityContext, edKeys } });
+
+  test("compiles no member for a dataset without keys", () => {
+    expect(specsFor(undefined)).toEqual([]);
+    expect(specsFor([])).toEqual([]);
+    expect(specsFor("plan")).toEqual([]);
+  });
+
+  test("names each key ed_<slug>_<hash>, keeping keys that slug alike apart", () => {
+    const names = specsFor(["plan", "Plan", "plan ", "área manager", "Area-Manager"]).map((spec) => [
+      spec.key,
+      spec.name,
+    ]);
+
+    expect(names).toEqual([
+      ["Area-Manager", expect.stringMatching(/^ed_area_manager_[0-9a-f]{8}$/)],
+      ["Plan", expect.stringMatching(/^ed_plan_[0-9a-f]{8}$/)],
+      ["plan", "ed_plan_64879f7d"],
+      ["plan ", expect.stringMatching(/^ed_plan_[0-9a-f]{8}$/)],
+      ["área manager", expect.stringMatching(/^ed_area_manager_[0-9a-f]{8}$/)],
+    ]);
+    expect(new Set(names.map(([, name]) => name)).size).toBe(5);
+  });
+
+  test("names a key with no ASCII letters or digits by its hash alone", () => {
+    const [spec] = specsFor(["区域 🎉"]);
+    expect(spec.name).toMatch(/^ed_[0-9a-f]{8}$/);
+    expect(spec.equalsName).toBe(spec.name.replace(/^ed_/, "edc_"));
+  });
+
+  test("drops blank keys, keys over 128 characters, non-strings and duplicates, and caps at 110", () => {
+    expect(
+      specsFor(["", "   ", "x".repeat(129), 7, null, "ok", "ok", "y".repeat(128)]).map((spec) => spec.key)
+    ).toEqual(["ok", "y".repeat(128)]);
+
+    const many = Array.from({ length: 150 }, (_, index) => `key_${String(index).padStart(3, "0")}`);
+    const specs = specsFor(many);
+    // The app's 100 top keys plus one bucket of 10 rarer keys; the first 110 the token lists win.
+    expect(specs).toHaveLength(110);
+    expect(specs.map((spec) => spec.key)).toEqual(many.slice(0, 110));
+  });
+
+  test("writes keys into SQL as escaped literals only", () => {
+    const awkward = [
+      "O'Brien's",
+      "$1$",
+      "a?b",
+      "${CUBE}",
+      "back\\slash",
+      "区域",
+      "🎉",
+      "x'); DROP TABLE x; --",
+    ];
+    for (const key of awkward) {
+      const literal = cubeConfig.toSafeSqlStringLiteral(key);
+      expect(literal).toMatch(/^E'[A-Za-z0-9 _\\-]*'$/);
+      expect(literal.slice(2, -1)).not.toMatch(/['$?{}]/);
+    }
+    expect(cubeConfig.toSafeSqlStringLiteral("O'Brien $1$")).toBe("E'O\\u0027Brien \\u00241\\u0024'");
+    expect(cubeConfig.toSafeSqlStringLiteral("🎉")).toBe("E'\\U0001f389'");
+    expect(specsFor(["$1$"])[0].valueSql).toBe("metadata->'embedded_data'->>E'\\u00241\\u0024'");
+  });
+
+  test("narrows equals filters with a containment predicate that also matches numbers and booleans", () => {
+    const sql = cubeConfig.getEmbeddedContainmentSql("E'seats'", ["$0$", "$1$"]);
+
+    expect(sql).toContain("metadata->'embedded_data' @> jsonb_build_object(E'seats', $0$::text)");
+    expect(sql).toContain("($1$::text)::numeric");
+    expect(sql).toContain("($1$::text)::boolean");
+    expect(cubeConfig.getEmbeddedContainmentSql("E'seats'", [])).toBe("1 = 1");
+  });
+
+  test("compiles a numeric twin edn_<suffix> beside every key", () => {
+    const [spec] = specsFor(["plan"]);
+    expect(spec.numberName).toBe("edn_plan_64879f7d");
+    expect(spec.numberName).toBe(spec.name.replace(/^ed_/, "edn_"));
+  });
+
+  test("reads a value as a number only when it is one, with no `?` for Cube to rewrite", () => {
+    const sql = cubeConfig.toSafeNumericSql("t.v");
+    expect(sql).toMatch(/^CASE WHEN t\.v ~ '(.+)' THEN \(t\.v\)::numeric END$/);
+    expect(sql).not.toContain("?");
+    // The pattern is a POSIX regex Postgres and JavaScript read alike for these characters.
+    const pattern = new RegExp(/~ '(.+)' THEN/.exec(sql)?.[1] ?? "$^");
+    for (const numeric of ["10", " 1.5 ", "-3e2", "+.5", "7.", "1E10", "0042"]) {
+      expect(pattern.test(numeric)).toBe(true);
+    }
+    for (const text of ["n/a", "", " ", "1.2.3", "1e1000", "1e", "--1", "1,5", "Infinity", "NaN", "0x1F"]) {
+      expect(pattern.test(text)).toBe(false);
+    }
+  });
+
+  test("leaves a numeric twin's filters as written: it is no reserved member, and equals stays on it", () => {
+    const filters = [
+      { member: "FeedbackRecords.edn_plan_64879f7d", operator: "gt", values: ["10"] },
+      { member: "FeedbackRecords.edn_plan_64879f7d", operator: "equals", values: ["12"] },
+    ];
+    const rewritten = queryRewrite({ measures: ["FeedbackRecords.count"], filters }, { securityContext });
+    expect(rewritten.filters).toEqual([...filters, TENANT_FILTER]);
+  });
+
+  test("moves only equals on an embedded member onto its containment twin", () => {
+    const rewritten = queryRewrite(
+      {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.ed_plan_64879f7d"],
+        filters: [
+          { member: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] },
+          {
+            or: [
+              { member: "FeedbackRecords.ed_region_0a1b2c3d", operator: "notEquals", values: ["North"] },
+              { member: "FeedbackRecords.ed_region_0a1b2c3d", operator: "equals", values: ["South"] },
+            ],
+          },
+          { member: "FeedbackRecords.ed_plan_64879f7d", operator: "contains", values: ["Pr"] },
+        ],
+      },
+      { securityContext }
+    );
+
+    expect(rewritten.dimensions).toEqual(["FeedbackRecords.ed_plan_64879f7d"]);
+    expect(rewritten.filters).toEqual([
+      // Exact-case: an embedded value is matched as collected, never lowercased.
+      { member: "FeedbackRecords.edc_plan_64879f7d", operator: "equals", values: ["Pro"] },
+      {
+        or: [
+          { member: "FeedbackRecords.ed_region_0a1b2c3d", operator: "notEquals", values: ["North"] },
+          { member: "FeedbackRecords.edc_region_0a1b2c3d", operator: "equals", values: ["South"] },
+        ],
+      },
+      { member: "FeedbackRecords.ed_plan_64879f7d", operator: "contains", values: ["Pr"] },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("moves equals onto the twin when a filter names its member as `dimension`", () => {
+    const rewritten = queryRewrite(
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [
+          { dimension: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] },
+          {
+            or: [{ dimension: "FeedbackRecords.ed_plan_64879f7d", operator: "notEquals", values: ["Free"] }],
+          },
+        ],
+      },
+      { securityContext }
+    );
+
+    expect(rewritten.filters).toEqual([
+      { dimension: "FeedbackRecords.edc_plan_64879f7d", operator: "equals", values: ["Pro"] },
+      { or: [{ dimension: "FeedbackRecords.ed_plan_64879f7d", operator: "notEquals", values: ["Free"] }] },
+      TENANT_FILTER,
+    ]);
+  });
+
+  test("compiles one model per dataset and key set, and shares the plain one", () => {
+    const appId = (extra: Record<string, unknown>) =>
+      cubeConfig.contextToAppId({ securityContext: { ...securityContext, ...extra } });
+
+    expect(appId({})).toBe("FB_BASE");
+    expect(appId({ edKeys: ["", "   "] })).toBe("FB_BASE");
+    expect(cubeConfig.contextToAppId({})).toBe("FB_BASE");
+    expect(appId({ edKeys: ["plan", "region"] })).toMatch(/^FB_ED_[0-9a-f]{32}$/);
+    // Order does not matter, the key set does; and so does the dataset.
+    expect(appId({ edKeys: ["region", "plan"] })).toBe(appId({ edKeys: ["plan", "region"] }));
+    expect(appId({ edKeys: ["plan"] })).not.toBe(appId({ edKeys: ["plan", "region"] }));
+    expect(appId({ edKeys: ["plan"], tenantId: "frd-2", feedbackDirectoryId: "frd-2" })).not.toBe(
+      appId({ edKeys: ["plan"] })
+    );
+    // An answer-kind claim is per query and must not fork the model.
+    expect(appId({ edKeys: ["plan"], answerKinds: ANSWER_KINDS })).toBe(appId({ edKeys: ["plan"] }));
+  });
+
+  test("bounds the compiled-model cache unless the operator set it", () => {
+    // About 2-5 MB per compiled model (measured): 60 models stay within the chart's 1 GiB limit.
+    expect(cubeConfig.compilerCacheSize).toBe(60);
+    // The same 500 members per model the cache size implies, so neither limit undercuts the other.
+    expect(cubeConfig.maxCompiledMembers).toBe(30_000);
+    expect((cubeConfig.maxCompiledMembers ?? 0) / (cubeConfig.compilerCacheSize ?? 1)).toBe(500);
+    // Cube validates its options strictly: the model's helpers must not be enumerable options.
+    expect(Object.keys(cubeConfig).sort()).toEqual([
+      "compilerCacheSize",
+      "contextToAppId",
+      "maxCompiledMembers",
+      "queryRewrite",
+    ]);
+  });
+
+  test("the schema joins exactly as many AnswerFilter aliases as the rewrite numbers", () => {
+    const schemaSource = readFileSync(cubeSchemaPath, "utf8");
+    const joined = [...schemaSource.matchAll(/^ {6}AnswerFilter(\d+): \{$/gm)].map(([, index]) =>
+      Number(index)
+    );
+
+    expect(joined).toEqual(
+      Array.from({ length: cubeConfig.ANSWER_FILTER_ALIAS_COUNT }, (_, index) => index + 1)
     );
   });
 });

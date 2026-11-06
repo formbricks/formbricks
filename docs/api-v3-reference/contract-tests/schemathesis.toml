@@ -32,11 +32,3 @@ fill-missing = true
 [[operations]]
 include-tag = "V3 Feedback Records"
 enabled = false
-
-# CI has no Cube service. These three operations still exercise authorization, validation and the
-# documented Bad Gateway response. Allow only that upstream-unavailable status in addition to the
-# normal statuses; keep status, content-type and response-schema conformance checks enabled.
-# Remove this exception when the contract job runs Cube so upstream failures fail the job again.
-[[operations]]
-include-operation-id = ["listChartFieldValuesV3", "getChartDataV3", "previewChartV3"]
-checks.not_a_server_error.expected-statuses = ["2xx", "3xx", "4xx", "502"]

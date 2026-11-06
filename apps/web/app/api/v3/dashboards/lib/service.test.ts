@@ -193,9 +193,18 @@ describe("deleteDashboardRow", () => {
 });
 
 describe("duplicateDashboardRow", () => {
+  const filters = [
+    {
+      id: "clfi000000000000000000001",
+      field: "FeedbackRecords.language",
+      operator: "equals",
+      label: "Language",
+    },
+  ];
   const source = {
     name: "Board",
     workspaceId: WORKSPACE_ID,
+    filters,
     widgets: [
       { chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 },
       { chartId: "clch000000000000000000002", layout: null, order: 1 },
@@ -209,7 +218,7 @@ describe("duplicateDashboardRow", () => {
     expect(tx.dashboard.create).not.toHaveBeenCalled();
   });
 
-  test("copies into the source's workspace, pointing at the same charts in the same layout", async () => {
+  test("copies into the source's workspace, pointing at the same charts in the same layout, with its filters", async () => {
     tx.dashboard.findUnique.mockResolvedValue(source);
 
     await duplicateDashboardRow({ sourceId: DASHBOARD_ID, name: "Board for sales", createdBy: "user_1" });
@@ -220,6 +229,7 @@ describe("duplicateDashboardRow", () => {
       name: "Board for sales",
       workspaceId: WORKSPACE_ID,
       createdBy: "user_1",
+      filters,
       widgets: {
         create: [
           { chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 },

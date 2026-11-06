@@ -143,3 +143,36 @@ describe("survey list graph confirmation", () => {
     expect(getAuthzedClient).not.toHaveBeenCalled();
   });
 });
+
+describe("on the previous release's AuthZed schema", () => {
+  const failedPrecondition = (details: string) =>
+    new AuthzedError({
+      attempts: 1,
+      cause: Object.assign(new Error(`9 FAILED_PRECONDITION: ${details}`), { code: 9, details }),
+      code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+      grpcStatus: 9,
+      operation: "lookup_resources",
+      retryable: false,
+    });
+
+  test("lists no workspace for dashboard_read, which that schema does not define", async () => {
+    lookupResources.mockRejectedValueOnce(
+      failedPrecondition("relation/permission `dashboard_read` not found under definition `workspace`")
+    );
+
+    await expect(
+      lookupAuthorizedWorkspaceIds({ type: "user", id: "viewer-missing-schema" }, "dashboard_read")
+    ).resolves.toEqual([]);
+    expect(recordAuthorizationDecision).toHaveBeenCalledWith(expect.objectContaining({ outcome: "deny" }));
+  });
+
+  test("still fails on a missing permission the release did not add", async () => {
+    lookupResources.mockRejectedValueOnce(
+      failedPrecondition("relation/permission `write` not found under definition `workspace`")
+    );
+
+    await expect(
+      lookupAuthorizedWorkspaceIds({ type: "user", id: "viewer-missing-write" }, "write")
+    ).rejects.toBeDefined();
+  });
+});
