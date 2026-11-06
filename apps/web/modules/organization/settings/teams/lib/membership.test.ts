@@ -5,6 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import {
   deleteMembership,
   getMembersByOrganizationId,
@@ -40,6 +41,7 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
+vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeAllUserOAuthGrants: vi.fn() }));
 
 const organizationId = "org-1";
 const userId = "user-1";
@@ -128,6 +130,8 @@ describe("deleteMembership", () => {
 
       return transaction(prisma as never);
     });
+    vi.mocked(prisma.membership.delete).mockResolvedValue({ role: "member" } as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
   });
   test("deletes membership and returns deleted team memberships", async () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
@@ -151,12 +155,39 @@ describe("deleteMembership", () => {
           userId,
         },
       },
+      select: { role: true },
     });
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith(organizationId, userId);
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamMemberships: [{ teamId, userId }],
     });
   });
+  test.each([
+    ["the last non-viewer membership goes and only viewer ones remain", "member", ["dashboard_viewer"], true],
+    ["another non-viewer membership remains", "member", ["dashboard_viewer", "owner"], false],
+    ["no membership remains", "member", [], false],
+    ["the removed membership was itself a viewer one", "dashboard_viewer", ["dashboard_viewer"], false],
+  ] as const)(
+    "revokes the user's OAuth grants in the transaction only when %s (S13)",
+    async (_label, removedRole, remainingRoles, revokes) => {
+      vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.membership.delete).mockResolvedValue({
+        ...mockMembership,
+        role: removedRole,
+      } as never);
+      vi.mocked(prisma.membership.findMany).mockResolvedValue(
+        remainingRoles.map((role) => ({ role })) as never
+      );
+
+      await deleteMembership(userId, organizationId);
+
+      if (revokes) {
+        expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, userId);
+      } else {
+        expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
+      }
+    }
+  );
   test("expires the removed member's pending invites in that organization", async () => {
     const now = new Date("2026-10-08T12:00:00.000Z");
     vi.useFakeTimers();

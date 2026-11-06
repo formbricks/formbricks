@@ -71,4 +71,10 @@ properties:
     description: >-
       Whether `GET /api/v3/charts/fields/{field}/values` lists this field's stored values, for
       filters that need an exact value.
+  key:
+    type: string
+    description: >-
+      Embedded-data fields only: the key exactly as collected, case included. Read the key here, not
+      from `label`, which is display text.
+    example: plan
 additionalProperties: false

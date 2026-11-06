@@ -45,7 +45,10 @@ vi.mock("@/modules/email", () => ({
   sendPasswordResetNotifyEmail: vi.fn(async () => true),
   sendDeleteAccountConfirmationEmail: vi.fn(async () => true),
   sendAccountDeletedEmail: vi.fn(() => Promise.resolve(true)),
+  sendAttachmentExportFailedEmail: vi.fn(() => Promise.resolve(true)),
+  sendAttachmentExportReadyEmail: vi.fn(() => Promise.resolve(true)),
   sendInviteAcceptedEmail: vi.fn(async () => undefined), // returns void, not boolean
+  sendInviteMemberEmail: vi.fn(() => Promise.resolve(true)),
 }));
 
 /**

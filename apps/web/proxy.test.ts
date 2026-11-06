@@ -72,6 +72,24 @@ describe("proxy", () => {
     );
   });
 
+  test("rewrites ID-free marketing links to the single marketing-links route, keeping the query", async () => {
+    mockGetProxySession.mockResolvedValue({ userId: "user-1", expires: new Date(Date.now() + 60_000) });
+
+    const response = await proxy(new NextRequest("http://localhost:3000/contacts/segments?utm_source=x"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBe(
+      "http://localhost:3000/marketing-links/contacts/segments?utm_source=x"
+    );
+  });
+
+  test("does not rewrite paths that only share a prefix with a marketing link", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const response = await proxy(new NextRequest("http://localhost:3000/billing-confirmation"));
+
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+
   test("rejects invalid callback URLs", async () => {
     mockGetProxySession.mockResolvedValue(null);
 

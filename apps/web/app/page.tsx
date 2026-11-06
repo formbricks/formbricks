@@ -8,20 +8,38 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
-import { getUserWorkspaces } from "@/lib/workspace/service";
+import { getUserWorkspacesByOrganizationIds } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import {
+  getDashboardViewerUnavailablePath,
+  listDashboardViewerOrganizations,
+  listDashboardViewerWorkspacesForUser,
+} from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
+
+/**
+ * Every workspace the user can open, across their organizations: the ones their role reaches — one
+ * authorization lookup and one query for all the organizations together — and, when they are a Dashboard
+ * viewer anywhere, the ones their teams are granted.
+ */
+const collectWorkspaceIds = async (
+  userId: string,
+  organizationIds: string[],
+  isDashboardViewer: boolean
+): Promise<string[]> => {
+  const [reached, granted] = await Promise.all([
+    getUserWorkspacesByOrganizationIds(organizationIds, userId),
+    isDashboardViewer ? listDashboardViewerWorkspacesForUser(userId) : [],
+  ]);
+  return [...reached, ...granted].map((workspace) => workspace.id);
+};
 
 const Page = async () => {
   const session: Session | null = await getSession();
   const isFreshInstance = await getIsFreshInstance();
 
   if (!session) {
-    if (isFreshInstance) {
-      return redirect("/setup/intro");
-    } else {
-      return redirect("/auth/login");
-    }
+    return redirect(isFreshInstance ? "/setup/intro" : "/auth/login");
   }
 
   const user = await getUser(session.user.id);
@@ -29,19 +47,31 @@ const Page = async () => {
     return <ClientLogout />;
   }
 
-  const userOrganizations = await getOrganizationsByUserId(session.user.id);
+  // A Dashboard viewer has no `organization.read` (ADR-0025), so its organizations come from its
+  // memberships; its workspaces are the ones its teams are granted.
+  const [userOrganizations, viewerOrganizations] = await Promise.all([
+    getOrganizationsByUserId(session.user.id),
+    listDashboardViewerOrganizations(session.user.id),
+  ]);
 
-  if (userOrganizations.length === 0) {
+  if (userOrganizations.length === 0 && viewerOrganizations.length === 0) {
     return redirect("/setup/organization/create");
   }
 
-  // Collect workspace IDs across all organizations
-  const allWorkspaceIds: string[] = [];
-  for (const org of userOrganizations) {
-    const workspaces = await getUserWorkspaces(user.id, org.id);
-    for (const ws of workspaces) {
-      allWorkspaceIds.push(ws.id);
-    }
+  const allWorkspaceIds = await collectWorkspaceIds(
+    user.id,
+    userOrganizations.map((organization) => organization.id),
+    viewerOrganizations.length > 0
+  );
+
+  if (userOrganizations.length === 0) {
+    // Only a Dashboard viewer: the last-used granted workspace's dashboards (the workspace page sends a
+    // viewer there), or the page explaining why there are none.
+    return allWorkspaceIds.length === 0 ? (
+      redirect(getDashboardViewerUnavailablePath(viewerOrganizations[0].id))
+    ) : (
+      <ClientWorkspaceRedirect userWorkspaceIds={allWorkspaceIds} />
+    );
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(

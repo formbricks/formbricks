@@ -4,7 +4,12 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { validateInputs } from "@/lib/utils/validate";
@@ -395,9 +400,27 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       },
     };
 
-    await prisma.team.update({
-      where: { id: teamId },
-      data: payload,
+    const adminIds = members.filter((m) => m.role === "admin").map((m) => m.userId);
+    await prisma.$transaction(async (tx) => {
+      // A Dashboard viewer can't be a team admin (ADR-0025): admins manage the team and invite people.
+      // Checked in the write's transaction with the admins' memberships locked, so a concurrent change
+      // of one of them to Dashboard viewer either commits first and is seen here, or waits and then
+      // demotes the admin row this writes (`updateMembership`) (C10).
+      if (adminIds.length > 0) {
+        const adminMemberships = await tx.$queryRaw<Array<{ role: string }>>(
+          Prisma.sql`SELECT "role"::text AS "role" FROM "Membership"
+            WHERE "organizationId" = ${team.organizationId} AND "userId" IN (${Prisma.join(adminIds)})
+            FOR UPDATE`
+        );
+        if (adminMemberships.some(({ role }) => role === "dashboard_viewer")) {
+          throw new OperationNotAllowedError("A Dashboard viewer can't be a team admin");
+        }
+      }
+
+      await tx.team.update({
+        where: { id: teamId },
+        data: payload,
+      });
     });
 
     const membershipUserIds = new Set([

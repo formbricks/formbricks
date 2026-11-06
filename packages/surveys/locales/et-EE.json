@@ -102,5 +102,18 @@
     "value_must_equal": "Väärtus peab võrduma {value}",
     "value_must_not_contain": "Väärtus ei tohi sisaldada {value}",
     "value_must_not_equal": "Väärtus ei tohi võrduda {value}"
+  },
+  "signature": {
+    "clear": "Tühjenda",
+    "draw": "Joonista",
+    "method": "Allkirjastamise viis",
+    "not_signed": "Allkirjastamata",
+    "pad_label": "Allkirjapaneel. Joonista oma allkiri sõrme, pliiatsi või hiirega.",
+    "pad_label_with_type": "Allkirjapaneel. Joonista oma allkiri sõrme, pliiatsi või hiirega või lülitu valikule Trüki, et sisestada oma nimi klaviatuuriga.",
+    "saved": "Sinu allkiri on salvestatud. Tühjenda see, et uuesti allkirjastada.",
+    "sign_here": "Allkirjasta siia",
+    "signed": "Allkirjastatud",
+    "type": "Trüki",
+    "type_your_name": "Trüki oma nimi"
   }
 }

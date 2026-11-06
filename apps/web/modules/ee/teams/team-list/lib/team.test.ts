@@ -15,8 +15,19 @@ import {
   updateTeamDetails,
 } from "./team";
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
+const lockedMemberships = vi.hoisted(() => ({
+  rows: [] as Array<{ role: string }>,
+  queryRaw: undefined as unknown,
+}));
+
+vi.mock("@formbricks/database", () => {
+  const queryRaw = vi.fn(async () => lockedMemberships.rows);
+  lockedMemberships.queryRaw = queryRaw;
+  const prisma = {
+    // The admin check and the write share one transaction (C10): the tx locks the admins' memberships.
+    $transaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
+      callback({ $queryRaw: queryRaw, team: prisma.team })
+    ),
     team: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -30,8 +41,9 @@ vi.mock("@formbricks/database", () => ({
     },
     membership: { findUnique: vi.fn(), count: vi.fn() },
     workspace: { count: vi.fn() },
-  },
-}));
+  };
+  return { prisma };
+});
 
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
@@ -312,6 +324,30 @@ describe("updateTeamDetails", () => {
   test("throws ResourceNotFoundError if team not found", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
     await expect(updateTeamDetails("t1", data)).rejects.toThrow(ResourceNotFoundError);
+  });
+  test("refuses to make a Dashboard viewer a team admin inside the write's transaction, and writes nothing", async () => {
+    vi.mocked(prisma.team.findUnique)
+      .mockResolvedValueOnce({
+        id: "t1",
+        organizationId: "org1",
+        name: "Team 1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .mockResolvedValueOnce(mockTeamDetails);
+    vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+    lockedMemberships.rows = [{ role: "dashboard_viewer" }];
+
+    await expect(updateTeamDetails("t1", data)).rejects.toThrow("A Dashboard viewer can't be a team admin");
+    // Read with the memberships locked (FOR UPDATE), so a concurrent role change can't slip in between.
+    const [query] = vi.mocked(lockedMemberships.queryRaw as () => unknown).mock.calls[0] as unknown as [
+      { strings: string[]; values: unknown[] },
+    ];
+    expect(query.strings.join("?")).toMatch(/FOR UPDATE/);
+    expect(query.values).toEqual(expect.arrayContaining(["org1", "u1"]));
+    expect(prisma.team.update).not.toHaveBeenCalled();
+    lockedMemberships.rows = [];
   });
   test("throws error if getTeamDetails returns null", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({

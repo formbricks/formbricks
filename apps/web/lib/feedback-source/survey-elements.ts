@@ -17,7 +17,7 @@ export type TSurveyElementIndex = {
  *
  * Both sets are returned because the difference between them carries meaning. An element id present
  * in `elementIds` but absent from `supportedHubFieldTypes` was retyped to one of the
- * UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES (contactInfo, address, cal, cta, fileUpload, consent) —
+ * UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES (contactInfo, address, cal, cta, fileUpload, signature, consent) —
  * which is a very different situation from an id that is missing entirely, because the element still
  * resolves on the publish path and would keep exporting answers.
  *

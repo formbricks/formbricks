@@ -2,6 +2,7 @@
  * V3 API response helpers — RFC 9457 Problem Details (application/problem+json)
  * and list envelope for success responses.
  */
+import { clipInvalidParam } from "./invalid-params";
 
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
@@ -102,13 +103,23 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  */
 export const INTERNAL_PROBLEM_CODES = [
   "attachment_export_empty",
+  "attachment_export_expired",
+  "attachment_export_filter_conflict",
+  "attachment_export_not_ready",
   "attachment_export_too_large",
+  "attachment_export_unavailable",
   "capacity_reached",
   "concurrency_limit_reached",
+  "formbricks_file_invalid",
+  "formbricks_file_too_new",
+  "idempotency_key_in_use",
+  "idempotency_key_reused",
   "member_in_other_organizations",
   "retention_exemption_exists",
   "retention_exemption_not_active",
   "retention_export_too_large",
+  "survey_active",
+  "unsupported_media_type",
 ] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
@@ -127,8 +138,12 @@ export function isV3ProblemCode(value: unknown): value is V3ProblemCode {
 
 export const INVALID_PARAM_CODES = [
   "dangling_reference",
+  "document_limit_exceeded",
   "duplicate_identifier",
   "duplicate_locale",
+  "file_limit_exceeded",
+  "file_type_unsupported",
+  "file_unreadable",
   "forbidden_identifier",
   "immutable_answer_code",
   "immutable_identifier",
@@ -214,7 +229,9 @@ function problemResponse(
     ...(options?.instance && { instance: options.instance }),
     ...(options?.code && { code: options.code }),
     ...(options?.details && { details: options.details }),
-    ...(options?.invalid_params && { invalid_params: options.invalid_params }),
+    // Clipped here as well as where the bounded reporters build them: dozens of routes build params
+    // inline, and any of them may carry caller text.
+    ...(options?.invalid_params && { invalid_params: options.invalid_params.map(clipInvalidParam) }),
   };
 
   const headers: Record<string, string> = {
@@ -242,11 +259,31 @@ export function problemBadRequest(
 export function problemPayloadTooLarge(
   requestId: string,
   detail: string = "Payload Too Large",
-  instance?: string
+  instance?: string,
+  invalidParams?: InvalidParam[]
 ): Response {
   return problemResponse(413, "Payload Too Large", detail, requestId, {
     code: "payload_too_large",
     instance,
+    invalid_params: invalidParams,
+  });
+}
+
+/**
+ * 415: the request body, or the file it carries, is a kind this route does not take. `acceptPost`
+ * names the media type the route does take, sent as `Accept-Post` (the Linked Data Platform header
+ * RFC 9110 §15.5.16 points to for saying which formats a POST accepts).
+ */
+export function problemUnsupportedMediaType(
+  requestId: string,
+  detail: string,
+  options?: { instance?: string; invalid_params?: InvalidParam[]; acceptPost?: string }
+): Response {
+  return problemResponse(415, "Unsupported Media Type", detail, requestId, {
+    code: "unsupported_media_type",
+    instance: options?.instance,
+    invalid_params: options?.invalid_params,
+    ...(options?.acceptPost ? { headers: { "Accept-Post": options.acceptPost } } : {}),
   });
 }
 
@@ -301,12 +338,18 @@ export function problemAIUnavailable(
 export function problemUnprocessableContent(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: ProblemCode }
+  options?: {
+    invalid_params?: InvalidParam[];
+    instance?: string;
+    code?: ProblemCode;
+    details?: Record<string, unknown>;
+  }
 ): Response {
   return problemResponse(422, "Unprocessable Content", detail, requestId, {
     code: options?.code ?? "unprocessable_content",
     instance: options?.instance,
     invalid_params: options?.invalid_params,
+    ...(options?.details ? { details: options.details } : {}),
   });
 }
 
@@ -503,12 +546,61 @@ export function problemConflict(
   // ENG-3069: `details` carries the machine-readable half of an optimistic-concurrency failure
   // (`expectedUpdatedAt` / `currentUpdatedAt`). Without it a client can only re-read and guess,
   // and the human `detail` string is the wrong place for a value a retry has to compare.
-  options?: { details?: Record<string, unknown> }
+  options?: { details?: Record<string, unknown>; code?: ProblemCode }
 ): Response {
   return problemResponse(409, "Conflict", detail, requestId, {
-    code: "conflict",
+    code: options?.code ?? "conflict",
     instance,
     ...(options?.details && { details: options.details }),
+  });
+}
+
+/**
+ * ENG-6850: a request repeated with an `Idempotency-Key` whose first request is still running (IETF
+ * Idempotency-Key draft §2.6). Internal routes only. `Retry-After` says when the first will have finished
+ * or given the key back.
+ */
+export function problemIdempotencyKeyInUse(
+  requestId: string,
+  instance: string | undefined,
+  retryAfterSeconds: number
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "A request with this Idempotency-Key is still being processed",
+    requestId,
+    {
+      code: "idempotency_key_in_use",
+      instance,
+      headers: { "Retry-After": String(retryAfterSeconds) },
+    }
+  );
+}
+
+/**
+ * ENG-6850: an `Idempotency-Key` reused for a different request (IETF Idempotency-Key draft §2.6).
+ * Internal routes only.
+ */
+export function problemIdempotencyKeyReused(requestId: string, instance?: string): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    "This Idempotency-Key was used for a different request",
+    requestId,
+    { code: "idempotency_key_reused", instance }
+  );
+}
+
+/** 410 for a resource that existed and is gone for good, e.g. an export archive past its expiry. */
+export function problemGone(
+  requestId: string,
+  detail: string,
+  options?: { instance?: string; code?: ProblemCode }
+): Response {
+  return problemResponse(410, "Gone", detail, requestId, {
+    code: options?.code,
+    instance: options?.instance,
   });
 }
 

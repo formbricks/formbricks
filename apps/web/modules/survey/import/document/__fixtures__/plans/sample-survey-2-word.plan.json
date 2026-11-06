@@ -1,0 +1,660 @@
+{
+  "plan": {
+    "defaultLanguage": "en-US",
+    "languages": ["en-US"],
+    "questions": [
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R2C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R2C1",
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R2",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R3C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R3C1",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R3C4",
+                "language": "en-US",
+                "text": "Option A"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R3C4",
+                "language": "en-US",
+                "text": "Option B"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R3C4",
+                "language": "en-US",
+                "text": "Option C"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R3",
+        "required": true,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R4C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R4C1",
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R4C4",
+                "language": "en-US",
+                "text": "Red"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R4C4",
+                "language": "en-US",
+                "text": "Green"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R4C4",
+                "language": "en-US",
+                "text": "Blue"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": true,
+            "texts": [
+              {
+                "cell": "T1R4C4",
+                "language": "en-US",
+                "text": "Other"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R4",
+        "required": true,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R5C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R5C1",
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C4",
+                "language": "en-US",
+                "text": "Email"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C4",
+                "language": "en-US",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C4",
+                "language": "en-US",
+                "text": "Phone"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R5C4",
+                "language": "en-US",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R5",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R7C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R7C1",
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "T1R7C4",
+            "language": "en-US",
+            "text": "Poor"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "T1R7",
+        "required": true,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "T1R7C4",
+            "language": "en-US",
+            "text": "Excellent"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R8C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R8C1",
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "T1R8C4",
+            "language": "en-US",
+            "text": "Not at all likely"
+          }
+        ],
+        "options": [],
+        "range": null,
+        "ref": "T1R8",
+        "required": true,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "T1R8C4",
+            "language": "en-US",
+            "text": "Extremely likely"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R9C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R9C1",
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "T1R9C4",
+            "language": "en-US",
+            "text": "Very dissatisfied"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "T1R9",
+        "required": true,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "T1R9C4",
+            "language": "en-US",
+            "text": "Very satisfied"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R10C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R10C1",
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "T1R10C4",
+            "language": "en-US",
+            "text": "Very difficult"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "T1R10",
+        "required": true,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "T1R10C4",
+            "language": "en-US",
+            "text": "Very easy"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R11C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R11C1",
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C4",
+                "language": "en-US",
+                "text": "Price"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C4",
+                "language": "en-US",
+                "text": "Quality"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C4",
+                "language": "en-US",
+                "text": "Speed"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R11C4",
+                "language": "en-US",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R11",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R12C4",
+                "language": "en-US",
+                "text": "Poor"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R12C4",
+                "language": "en-US",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R12C4",
+                "language": "en-US",
+                "text": "Good"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R12C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R12C1",
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R12C4",
+                "language": "en-US",
+                "text": "Staff"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R12C4",
+                "language": "en-US",
+                "text": "Facilities"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "T1R12C4",
+                "language": "en-US",
+                "text": "Value"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "T1R12",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "T1R13C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R13C1",
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R13",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R15C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R15C1",
+        "inputType": null,
+        "kind": "fileUpload",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R15",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "T1R16C3",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "idCell": "T1R16C1",
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "T1R16",
+        "required": true,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "T1R16C4",
+            "language": "en-US",
+            "text": null
+          }
+        ],
+        "upperLabel": []
+      }
+    ],
+    "skipped": [
+      {
+        "reason": "Picture Selection questions cannot be imported.",
+        "ref": "T1R6"
+      },
+      {
+        "reason": "Schedule a Meeting questions cannot be imported.",
+        "ref": "T1R14"
+      },
+      {
+        "reason": "Address questions cannot be imported.",
+        "ref": "T1R17"
+      },
+      {
+        "reason": "Contact Info questions cannot be imported.",
+        "ref": "T1R18"
+      }
+    ],
+    "titleCell": "P1"
+  },
+  "recording": {
+    "note": "What a model following the prompt returns for every line of the file.",
+    "source": "hand-authored"
+  }
+}

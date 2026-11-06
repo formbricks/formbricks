@@ -19,6 +19,7 @@ import {
   isCustomCssValidationRequest,
 } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   type InvalidParam,
@@ -42,6 +43,7 @@ import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
 import { getCreativeCssRoot } from "@/modules/ee/creatives/lib/custom-css";
@@ -477,9 +479,10 @@ async function serializeV3SurveyFullListPage(
 
 /**
  * Map an error thrown during survey creation to its problem+json Response. Extracted from
- * createV3SurveyResponse to keep that handler's cognitive complexity within bounds.
+ * createV3SurveyResponse to keep that handler's cognitive complexity within bounds; the survey import's
+ * create (ENG-6850) maps the same errors the same way.
  */
-function mapV3SurveyCreateError(
+export function mapV3SurveyCreateError(
   err: unknown,
   {
     log,
@@ -533,7 +536,8 @@ function mapV3SurveyCreateError(
     // malformed → 422, in line with the reference-validation branch above. Deliberately keyed on
     // this typed error rather than on `ValidationError`: the latter is also thrown from work
     // `createSurvey` does *after* its transaction commits, where a 4xx would wrongly tell the
-    // caller nothing was written. Those fall through to the shared mapper's 500.
+    // caller nothing was written. Those arrive wrapped in `SurveyWriteAfterCommitError` and are
+    // answered as created (`createdEvenIfAfterCommitFailed`).
     log.warn({ statusCode: 422, invalidParams: err.invalidParams }, "Survey input validation failed");
     return problemUnprocessableContent(requestId, "Survey document failed validation", {
       invalid_params: err.invalidParams,
@@ -541,6 +545,27 @@ function mapV3SurveyCreateError(
     });
   }
   return mapV3ThrownError(err, { log, requestId, instance, operation: "surveys.create" });
+}
+
+/**
+ * The survey a create made, also when only the work after its commit failed (the creator's response
+ * alerts, scheduling, caches): the survey exists, so it is answered as created, or a client retrying
+ * the 500 would make a second one. The failure is logged; anything else the create throws propagates.
+ */
+async function createdEvenIfAfterCommitFailed(
+  create: () => Promise<TInternalSurvey>,
+  log: ReturnType<typeof logger.withContext>
+): Promise<TInternalSurvey> {
+  try {
+    return await create();
+  } catch (error) {
+    if (!(error instanceof SurveyWriteAfterCommitError)) throw error;
+    log.error(
+      { ...loggableError(error.cause), operation: "surveys.create" },
+      "Survey create's work after the commit failed"
+    );
+    return error.result as TInternalSurvey;
+  }
 }
 
 export async function createV3SurveyResponse({
@@ -573,15 +598,19 @@ export async function createV3SurveyResponse({
     }
 
     const report: TV3SurveyWriteReport = {};
-    const survey = await createV3Survey(
-      {
-        ...createBody,
-        workspaceId: authResult.workspaceId,
-      },
-      authentication,
-      requestId,
-      authResult.organizationId,
-      { ...createOptions, report }
+    const survey = await createdEvenIfAfterCommitFailed(
+      () =>
+        createV3Survey(
+          {
+            ...createBody,
+            workspaceId: authResult.workspaceId,
+          },
+          authentication,
+          requestId,
+          authResult.organizationId,
+          { ...createOptions, report }
+        ),
+      log
     );
     const resource = serializeV3SurveyResource(
       survey,
@@ -881,7 +910,7 @@ function problemSurveyArchived(requestId: string, instance: string): Response {
  * Map an error thrown during survey patch to its problem+json Response. Extracted from
  * patchV3SurveyResponse to keep that handler's cognitive complexity within bounds.
  */
-function mapV3SurveyPatchError(
+export function mapV3SurveyPatchError(
   err: unknown,
   {
     log,
@@ -1169,17 +1198,15 @@ async function runV3SurveyDocumentMutation({
     const oldResource = getResource();
 
     const report: TV3SurveyWriteReport = {};
-    const updatedSurvey = await patchV3Survey(
-      survey,
-      built.input,
+    const updatedSurvey = await patchV3Survey(survey, built.input, {
       requestId,
-      authResult.organizationId,
-      effectivePrecondition,
-      oldResource,
-      buildVisibleSurveyWhere(visibility.actorContext),
+      organizationId: authResult.organizationId,
+      precondition: effectivePrecondition,
+      reportedVisibility: oldResource,
+      visibleSurveyWhere: buildVisibleSurveyWhere(visibility.actorContext),
       report,
-      getV3CustomCssPrincipal(authentication)
-    );
+      customCssPrincipal: getV3CustomCssPrincipal(authentication),
+    });
     // Visibility is unchanged by a document write (it is never writable through one), so the
     // request's context still describes the updated survey.
     const resource = serializeV3SurveyResource(updatedSurvey, visibility);

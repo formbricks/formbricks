@@ -96,8 +96,11 @@ x-environment: &environment
     # SMTP_PASSWORD:
     # SMTP_AUTHENTICATED:
 
-    # (Additional option for TLS (port 465) only)
+    # Set to 1 for implicit TLS (typically port 465).
     # SMTP_SECURE_ENABLED:
+
+    # Set to 1 to require STARTTLS for explicit TLS (typically port 587). Default is 0 for local relays.
+    # SMTP_REQUIRE_TLS: 1
 
     # Keep certificate verification enabled in production (default is 1). If your SMTP server uses a private CA,
     # mount the CA and configure NODE_EXTRA_CA_CERTS instead of setting this to 0.
@@ -268,6 +271,9 @@ services:
   postgres:
     restart: always
     image: pgvector/pgvector:pg18
+    # Docker's 64 MB /dev/shm is too small for parallel query workers on large analytics charts
+    # ("could not resize shared memory segment").
+    shm_size: 512mb
     volumes:
       - postgres:/var/lib/postgresql
     environment:
@@ -608,7 +614,7 @@ services:
   # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: ghcr.io/formbricks/cube:1.8.8-2
+    image: ghcr.io/formbricks/cube:1.8.8-3
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -627,6 +633,8 @@ services:
       CUBEJS_DEFAULT_API_SCOPES: meta,data
       CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
+      # Cube sets it as each query's Postgres statement_timeout (Cube's default is 10 minutes).
+      CUBEJS_DB_QUERY_TIMEOUT: ${CUBEJS_DB_QUERY_TIMEOUT:-60s}
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js:ro
       - ./cube/schema:/cube/conf/model:ro

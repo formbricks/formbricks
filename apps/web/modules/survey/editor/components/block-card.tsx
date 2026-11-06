@@ -39,13 +39,13 @@ import { PictureSelectionForm } from "@/modules/survey/editor/components/picture
 import { QuestionTabs } from "@/modules/survey/editor/components/question-tabs";
 import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
 import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
+import { SignatureElementForm } from "@/modules/survey/editor/components/signature-element-form";
 import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
 import { getElementCodeIssues } from "@/modules/survey/editor/lib/element-codes";
 import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
-import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Input } from "@/modules/ui/components/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 
@@ -77,8 +77,6 @@ interface BlockCardProps {
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
-  responseCount: number;
-  onAlertTrigger: () => void;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed: boolean;
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
@@ -116,8 +114,6 @@ const BlockCardComponent = ({
   isFormbricksCloud,
   isCxMode,
   locale,
-  responseCount,
-  onAlertTrigger,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   setLocalSurvey,
@@ -201,23 +197,6 @@ const BlockCardComponent = ({
     return getTSurveyElementTypeEnumName(element.type, t);
   };
 
-  const shouldShowCautionAlert = (elementType: TSurveyElementTypeEnum): boolean => {
-    return (
-      responseCount > 0 &&
-      [
-        TSurveyElementTypeEnum.MultipleChoiceSingle,
-        TSurveyElementTypeEnum.MultipleChoiceMulti,
-        TSurveyElementTypeEnum.PictureSelection,
-        TSurveyElementTypeEnum.Rating,
-        TSurveyElementTypeEnum.NPS,
-        TSurveyElementTypeEnum.CSAT,
-        TSurveyElementTypeEnum.CES,
-        TSurveyElementTypeEnum.Ranking,
-        TSurveyElementTypeEnum.Matrix,
-      ].includes(elementType)
-    );
-  };
-
   // Common props shared by all element forms
   const getCommonFormProps = (element: TSurveyElement, elementIdx: number) => ({
     localSurvey,
@@ -246,6 +225,7 @@ const BlockCardComponent = ({
     [TSurveyElementTypeEnum.Date]: DateElementForm,
     [TSurveyElementTypeEnum.PictureSelection]: PictureSelectionForm,
     [TSurveyElementTypeEnum.FileUpload]: FileUploadElementForm,
+    [TSurveyElementTypeEnum.Signature]: SignatureElementForm,
     [TSurveyElementTypeEnum.Cal]: CalElementForm,
     [TSurveyElementTypeEnum.Matrix]: MatrixElementForm,
     [TSurveyElementTypeEnum.Address]: AddressElementForm,
@@ -511,14 +491,6 @@ const BlockCardComponent = ({
                           </Collapsible.CollapsibleTrigger>
                           <Collapsible.CollapsibleContent
                             className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
-                            {shouldShowCautionAlert(element.type) && (
-                              <Alert variant="warning" size="small" className="w-fill mt-2" role="status">
-                                <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
-                                <AlertButton onClick={() => onAlertTrigger()}>
-                                  {t("common.learn_more")}
-                                </AlertButton>
-                              </Alert>
-                            )}
                             <QuestionTabs
                               content={renderElementForm(element, elementIdx)}
                               hasSettingsIssue={codeIssues.has(element.id)}

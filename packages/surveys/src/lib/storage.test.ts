@@ -26,6 +26,14 @@ describe("getOriginalFileNameFromUrl", () => {
       expect(getOriginalFileNameFromUrl(url)).toBe("Another File.docx");
     });
 
+    // A literal `%` in the uploaded name is `%25` in the URL; the display name decodes it once.
+    test("should show a literal %20 and a bare % in the original name as uploaded", () => {
+      expect(getOriginalFileNameFromUrl("/storage/ws/private/Test%2520tiara--fid--abc.png")).toBe(
+        "Test%20tiara.png"
+      );
+      expect(getOriginalFileNameFromUrl("/storage/ws/private/100%25--fid--abc.png")).toBe("100%.png");
+    });
+
     test("should handle filenames with dots before --fid--", () => {
       const url = "/storage/archive.version1--fid--qwerty.tar.gz";
       expect(getOriginalFileNameFromUrl(url)).toBe("archive.version1.gz");

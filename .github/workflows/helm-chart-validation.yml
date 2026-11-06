@@ -150,6 +150,8 @@ jobs:
             --show-only templates/cube-deployment.yaml > "$render_dir/cube-default.yaml"
           grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-default.yaml" \
             | grep -q 'value: "false"'
+          grep -A1 'name: CUBEJS_DB_QUERY_TIMEOUT' "$render_dir/cube-default.yaml" \
+            | grep -q 'value: "60s"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

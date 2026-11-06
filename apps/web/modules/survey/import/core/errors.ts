@@ -1,0 +1,277 @@
+import {
+  type InvalidParam,
+  problemPayloadTooLarge,
+  problemUnprocessableContent,
+  problemUnsupportedMediaType,
+} from "@/app/api/v3/lib/response";
+import type {
+  TSurveyImportDocumentLimit,
+  TSurveyImportFileLimit,
+  TSurveyImportLimit,
+  TSurveyImportProblemCode,
+  TSurveyImportUnsupportedFile,
+} from "../types";
+
+/** One problem with a refused file, coded for the dialog (see `TSurveyImportRefusalCode`). */
+export type TSurveyImportInvalidParam = InvalidParam &
+  (
+    | { code: "file_unreadable"; identifier?: "json_syntax" }
+    | { code: "qsf_not_recognized" }
+    | { code: "file_type_unsupported"; identifier?: TSurveyImportUnsupportedFile }
+    | { code: "file_limit_exceeded"; identifier: TSurveyImportFileLimit }
+    | { code: "qsf_limit_exceeded"; identifier: TSurveyImportLimit }
+    | { code: "document_limit_exceeded"; identifier: TSurveyImportDocumentLimit }
+  );
+
+/**
+ * The uploaded file is past one of the upload's size limits (`file_limit_exceeded`): its bytes, or the
+ * entries or inflated bytes of the archive it is. Answered as a 413 before anything else reads it.
+ */
+export class SurveyImportFileTooLargeError extends Error {
+  readonly invalidParams: TSurveyImportInvalidParam[];
+
+  /** @param name Where the limit was passed: the file, or a part of it (`file.survey`). */
+  constructor(limit: TSurveyImportFileLimit, reason: string, name = "file") {
+    super(reason);
+    this.name = "SurveyImportFileTooLargeError";
+    this.invalidParams = [{ name, reason, code: "file_limit_exceeded", identifier: limit }];
+  }
+}
+
+/**
+ * The import does not read this kind of file (`file_type_unsupported`), answered as a 415. `kind` is
+ * what the file was recognized as, when it was.
+ */
+export class SurveyImportUnsupportedFileError extends Error {
+  readonly invalidParams: TSurveyImportInvalidParam[];
+
+  constructor(reason: string, kind?: TSurveyImportUnsupportedFile) {
+    super(reason);
+    this.name = "SurveyImportUnsupportedFileError";
+    this.invalidParams = [
+      { name: "file", reason, code: "file_type_unsupported", ...(kind ? { identifier: kind } : {}) },
+    ];
+  }
+}
+
+/**
+ * The file is not one the lane can read, or it is past one of the lane's limits. Answered as a 422
+ * before the stream opens, so no AI is spent on it.
+ *
+ * Each invalid param names where in the file (`file.SurveyElements.3`), a fixed reason — never text from
+ * the file — and a refusal `code`. The message is the problem's detail; each lane sets its own, fixed.
+ */
+export class SurveyImportInputError extends Error {
+  readonly invalidParams: (TSurveyImportInvalidParam | InvalidParam)[];
+  /**
+   * The problem's own code, when the lane says more than "unprocessable": a Formbricks file that is
+   * malformed (`formbricks_file_invalid`) or written by a newer Formbricks (`formbricks_file_too_new`),
+   * whose params are the file's fields rather than a refusal code.
+   */
+  readonly problemCode?: TSurveyImportProblemCode;
+  /** The problem's `details`: where a JSON file stops parsing (`surveyImportJsonSyntaxError`). */
+  readonly details?: TSurveyImportJsonPosition;
+
+  constructor(
+    invalidParams: (TSurveyImportInvalidParam | InvalidParam)[],
+    message: string,
+    problemCode?: TSurveyImportProblemCode,
+    details?: TSurveyImportJsonPosition
+  ) {
+    super(message);
+    this.name = "SurveyImportInputError";
+    this.invalidParams = invalidParams;
+    this.problemCode = problemCode;
+    this.details = details;
+  }
+}
+
+/** Where a JSON file stops parsing, 1-based. */
+export interface TSurveyImportJsonPosition {
+  line: number;
+  column: number;
+}
+
+/**
+ * The import could not produce a survey: no question survived, the survey's data cannot fit the
+ * prompt budget at any limits, or the assembled draft failed the create check twice. Streamed as
+ * `import_failed`. The message is fixed on purpose: the route logs an error's name and frames only,
+ * and nothing here quotes the file.
+ */
+export class SurveyImportFailedError extends Error {
+  /**
+   * `partly_unread`: the AI could not read part of a document, and with those lines it could pass that
+   * ceiling, so the import cannot tell whether it fits; another try may read them.
+   * `too_many_questions`: a document's plan holds more questions than one import takes, the AI ceiling
+   * past which the file is imported through MCP instead. `nothing_importable`: the file was read whole
+   * and holds no question the import can bring over, so trying again cannot help; `no_questions` is
+   * the same outcome with failures on the way, which a retry may not repeat. `too_large_for_ai`: no
+   * question came back and a call ran past its output tokens even split, so the file is too large for the AI
+   * lane and goes through MCP instead.
+   */
+  readonly reason:
+    | "no_questions"
+    | "too_large_for_ai"
+    | "nothing_importable"
+    | "prompt_budget"
+    | "draft_invalid"
+    | "too_many_questions"
+    | "partly_unread";
+
+  constructor(reason: SurveyImportFailedError["reason"]) {
+    super(`The survey import failed: ${reason}`);
+    this.name = "SurveyImportFailedError";
+    this.reason = reason;
+  }
+}
+
+/**
+ * A plan with no question in it: `nothing_importable` when the plan is conclusive (every unit answered
+ * as a skip or no question, nothing failing on the way), `too_large_for_ai` when a call ran past its
+ * output tokens even split (the file is too large for one AI import, so MCP is the way), and `no_questions`
+ * otherwise, since another try may plan what failed.
+ */
+export const noQuestionsPlanned = ({
+  conclusive,
+  hitOutputLimit,
+}: {
+  conclusive: boolean;
+  hitOutputLimit: boolean;
+}): SurveyImportFailedError => {
+  if (conclusive) return new SurveyImportFailedError("nothing_importable");
+  return new SurveyImportFailedError(hitOutputLimit ? "too_large_for_ai" : "no_questions");
+};
+
+/**
+ * The plan ran out of time before any question was planned: the AI calls that fit before the deadline
+ * ran past their own timeout (the AI SDK's `timeout`, which spans the SDK's retries), split chunks
+ * included, or the deadline left too little time to send one. One slow call never ends the import —
+ * its chunk is split, then its questions are dropped. Streamed as `import_timed_out`, like the route's
+ * own deadline: to the user both mean "it took too long", and neither is an incident.
+ */
+export class SurveyImportTimeoutError extends Error {
+  constructor() {
+    super("An AI call of the survey import timed out");
+    this.name = "SurveyImportTimeoutError";
+  }
+}
+
+/** The file is the kind it looks like but cannot be read (`file_unreadable`), answered as a 422. */
+export const surveyImportFileUnreadable = (reason: string): SurveyImportInputError =>
+  new SurveyImportInputError(
+    [{ name: "file", reason, code: "file_unreadable" }],
+    "The file could not be read."
+  );
+
+/**
+ * A JSON file that does not parse (`file_unreadable`, identifier `json_syntax`): most often one edited
+ * by hand or by an AI, whose edits a fixed line and column let the user keep. The position travels as
+ * the problem's `details`; the reason holds the numbers alone, never text from the file.
+ */
+export const surveyImportJsonSyntaxError = (
+  position: TSurveyImportJsonPosition | null
+): SurveyImportInputError =>
+  new SurveyImportInputError(
+    [
+      {
+        name: "file",
+        reason: position
+          ? `The file is not valid JSON (line ${position.line}, column ${position.column})`
+          : "The file is not valid JSON",
+        code: "file_unreadable",
+        identifier: "json_syntax",
+      },
+    ],
+    "The file is not valid JSON.",
+    undefined,
+    position ?? undefined
+  );
+
+/**
+ * A refusal on its way out of the upload's worker thread (`upload-thread.ts`). A structured clone keeps
+ * an error's message but not its class, so the class travels as `kind` and is built again on this side.
+ */
+export type TSurveyImportRefusal =
+  | { kind: "too_large" | "unsupported"; message: string; invalidParams: TSurveyImportInvalidParam[] }
+  | {
+      kind: "input";
+      message: string;
+      invalidParams: (TSurveyImportInvalidParam | InvalidParam)[];
+      problemCode?: TSurveyImportProblemCode;
+      details?: TSurveyImportJsonPosition;
+    };
+
+/** `error` as a refusal that can be posted to another thread, or `null` for an error that is none. */
+export const toSurveyImportRefusal = (error: unknown): TSurveyImportRefusal | null => {
+  if (error instanceof SurveyImportFileTooLargeError) {
+    return { kind: "too_large", message: error.message, invalidParams: error.invalidParams };
+  }
+  if (error instanceof SurveyImportUnsupportedFileError) {
+    return { kind: "unsupported", message: error.message, invalidParams: error.invalidParams };
+  }
+  if (error instanceof SurveyImportInputError) {
+    return {
+      kind: "input",
+      message: error.message,
+      invalidParams: error.invalidParams,
+      ...(error.problemCode ? { problemCode: error.problemCode } : {}),
+      ...(error.details ? { details: error.details } : {}),
+    };
+  }
+  return null;
+};
+
+/** The error a posted refusal was, built again so `toRefusalResponse` answers it as it would have. */
+export const fromSurveyImportRefusal = (refusal: TSurveyImportRefusal): Error => {
+  if (refusal.kind === "input") {
+    return new SurveyImportInputError(
+      refusal.invalidParams,
+      refusal.message,
+      refusal.problemCode,
+      refusal.details
+    );
+  }
+  // Each of the other two carries the one param its constructor makes from these.
+  const [param] = refusal.invalidParams;
+  if (refusal.kind === "too_large" && param?.code === "file_limit_exceeded") {
+    return new SurveyImportFileTooLargeError(param.identifier, refusal.message, param.name);
+  }
+  if (refusal.kind === "unsupported" && param?.code === "file_type_unsupported") {
+    return new SurveyImportUnsupportedFileError(refusal.message, param.identifier);
+  }
+  return new Error(`The survey import's reader posted a malformed ${refusal.kind} refusal`);
+};
+
+/** Problems the create's checks found, named from where the survey sits: `file.survey…` or `survey…`. */
+export const nameFromSurvey = (params: InvalidParam[], fieldPrefix: string | null): InvalidParam[] => {
+  const root = fieldPrefix ? `${fieldPrefix}.survey` : "survey";
+  return params.map((param) => ({
+    ...param,
+    name: ["data", "body", ""].includes(param.name) ? root : `${root}.${param.name}`,
+  }));
+};
+
+/**
+ * The problem response for a refused import — a 413, 415 or 422 naming each field — or `null` for an
+ * error that is not a refusal. Shared by every route that reads or writes an import.
+ */
+export const toRefusalResponse = (error: unknown, requestId: string, instance: string): Response | null => {
+  if (error instanceof SurveyImportFileTooLargeError) {
+    return problemPayloadTooLarge(requestId, error.message, instance, error.invalidParams);
+  }
+  if (error instanceof SurveyImportUnsupportedFileError) {
+    return problemUnsupportedMediaType(requestId, error.message, {
+      instance,
+      invalid_params: error.invalidParams,
+    });
+  }
+  if (error instanceof SurveyImportInputError) {
+    return problemUnprocessableContent(requestId, error.message, {
+      instance,
+      invalid_params: error.invalidParams,
+      ...(error.problemCode ? { code: error.problemCode } : {}),
+      ...(error.details ? { details: { ...error.details } } : {}),
+    });
+  }
+  return null;
+};

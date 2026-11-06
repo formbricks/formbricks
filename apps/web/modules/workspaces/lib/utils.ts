@@ -18,10 +18,12 @@ import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
+import { getDashboardViewerWorkspaceState } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { withPlanDetailsFor } from "@/modules/organization/lib/plan-details";
 import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
 /**
@@ -67,7 +69,17 @@ const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth
     return notFound();
   }
 
-  const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership.role);
+  const { isMember, isOwner, isManager, isBilling, isDashboardViewer } = getAccessFlags(
+    currentUserMembership.role
+  );
+
+  // A Dashboard viewer (ADR-0025) only ever sees dashboards. Every product page funnels through here, so
+  // sending the role to the dashboard list closes them all at once, the way the billing redirect below
+  // does. The dashboard pages don't come through here: they use `getDashboardsPageAuth`, which decides
+  // whether the viewer may read this workspace or must see the unavailable page.
+  if (isDashboardViewer) {
+    redirect(`/workspaces/${workspace.id}/dashboards`);
+  }
 
   // Billing-role members are scoped to billing/enterprise screens only. They must never reach
   // workspace product data (contacts PII, survey summaries/responses, dashboards). This is the
@@ -196,6 +208,11 @@ const resolveWorkspaceIdLayoutChecks = async (workspaceId: string) => {
     organizationId: workspace.organization.id,
   });
   if (!hasAccess) {
+    // The survey and creative editors are not for a Dashboard viewer; send one back to its dashboards
+    // rather than 404, as `getWorkspaceAuth` does for every other product page.
+    if ((await getDashboardViewerWorkspaceState(session.user.id, workspaceId)) !== "none") {
+      return redirect(`/workspaces/${workspaceId}/dashboards`);
+    }
     return notFound();
   }
 
@@ -360,10 +377,16 @@ const resolveWorkspaceLayoutData = async (
 
   // Navigation, not data — the layout shell a billing-role member passes through on the way
   // to billing. Product data on the pages inside stays gated on workspace.read.
-  const hasAccess = await canUserNavigateWorkspace(userId, {
-    id: workspace.id,
-    organizationId: organization.id,
-  });
+  const hasAccess =
+    (await canUserNavigateWorkspace(userId, {
+      id: workspace.id,
+      organizationId: organization.id,
+    })) ||
+    // A Dashboard viewer has no workspace `read` (ADR-0025), so the navigation gate denies it. The shell
+    // still renders for a workspace one of its teams is granted, entitled or lapsed: the dashboard pages
+    // inside decide between the dashboards and the "not available on this plan" page.
+    (membership?.role === "dashboard_viewer" &&
+      (await getDashboardViewerWorkspaceState(userId, workspace.id)) !== "none");
   if (!hasAccess || !membership) {
     return notFound();
   }
@@ -374,8 +397,12 @@ const resolveWorkspaceLayoutData = async (
     getEnterpriseLicense(),
   ]);
 
+  // A Dashboard viewer sees dashboards and nothing of the organization's plan: no Stripe ids, usage cycle
+  // or limits, and no Cloud response count, which the layout would otherwise ship to its browser.
+  const isDashboardViewer = membership.role === "dashboard_viewer";
+
   let responseCount = 0;
-  if (IS_FORMBRICKS_CLOUD) {
+  if (IS_FORMBRICKS_CLOUD && !isDashboardViewer) {
     responseCount = await getMonthlyOrganizationResponseCount(organization.id);
   }
 
@@ -383,13 +410,7 @@ const resolveWorkspaceLayoutData = async (
     session,
     user,
     workspace,
-    organization: {
-      ...organization,
-      billing: {
-        ...organization.billing,
-        stripe: organization.billing.stripe ?? undefined,
-      },
-    },
+    organization: withPlanDetailsFor(membership.role, organization),
     membership,
     isAccessControlAllowed,
     workspacePermission,
