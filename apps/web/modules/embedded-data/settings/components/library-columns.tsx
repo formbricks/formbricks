@@ -2,8 +2,8 @@
 
 import type { TFunction } from "i18next";
 import { LockIcon } from "lucide-react";
+import type { TEmbeddedDataListItemResource } from "@/app/api/internal/embedded-data/serializers";
 import { cn } from "@/lib/cn";
-import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";
 import { DataTypeBadge } from "@/modules/ui/components/data-type-badge";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
@@ -32,10 +32,10 @@ export const getLibraryColumns = ({
   t: TFunction;
   workspaceId: string;
   isReadOnly: boolean;
-  onEdit: (field: TSharedEmbeddedDataListItem) => void;
-  onDelete: (field: TSharedEmbeddedDataListItem) => void;
-}>): TSettingsTableColumn<TSharedEmbeddedDataListItem>[] => {
-  const columns: TSettingsTableColumn<TSharedEmbeddedDataListItem>[] = [
+  onEdit: (field: TEmbeddedDataListItemResource) => void;
+  onDelete: (field: TEmbeddedDataListItemResource) => void;
+}>): TSettingsTableColumn<TEmbeddedDataListItemResource>[] => {
+  const columns: TSettingsTableColumn<TEmbeddedDataListItemResource>[] = [
     {
       id: "name",
       header: t("common.name"),

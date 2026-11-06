@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
   EMOTIONS_DIMENSION_ID,
   SENTIMENT_DIMENSION_ID,
@@ -35,7 +35,7 @@ import {
 } from "@/modules/ui/components/sheet";
 import { Switch } from "@/modules/ui/components/switch";
 import { Textarea } from "@/modules/ui/components/textarea";
-import { deleteFeedbackRecordAction, retrieveFeedbackRecordAction } from "../actions";
+import { deleteFeedbackRecord, getFeedbackRecord } from "../lib/api-client";
 import { FIELD_TYPE_OPTIONS, type TFeedbackRecordFormValues } from "../lib/types";
 import {
   formatSourceType,
@@ -119,19 +119,17 @@ export const FeedbackRecordFormDrawer = ({
       setRecord(null);
       setTaxonomy(null);
       setIsLoadingRecord(true);
-      const result = await retrieveFeedbackRecordAction({ workspaceId, recordId });
-      if (!active) return;
-
-      if (!result?.data) {
-        toast.error(getFormattedErrorMessage(result) || t("workspace.unify.failed_to_load_feedback_records"));
-        setIsLoadingRecord(false);
+      try {
+        const result = await getFeedbackRecord(recordId, workspaceId);
+        if (!active) return;
+        setRecord(result.record);
+        setTaxonomy(result.taxonomy);
+        form.reset(mapRecordToValues(result.record));
+      } catch (error) {
+        if (!active) return;
+        toast.error(getV3ApiErrorMessage(error, t("workspace.unify.failed_to_load_feedback_records")));
         onOpenChange(false);
-        return;
       }
-
-      setRecord(result.data.record);
-      setTaxonomy(result.data.taxonomy);
-      form.reset(mapRecordToValues(result.data.record));
       setIsLoadingRecord(false);
     };
 
@@ -145,15 +143,13 @@ export const FeedbackRecordFormDrawer = ({
     if (!recordId || !canDelete) return;
     setIsDeleting(true);
     try {
-      const result = await deleteFeedbackRecordAction({ workspaceId, recordId });
-      if (!result?.data) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await deleteFeedbackRecord(recordId, workspaceId);
       toast.success(t("workspace.unify.feedback_record_deleted_successfully"));
       setIsDeleteDialogOpen(false);
       await onSuccess();
       onOpenChange(false);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

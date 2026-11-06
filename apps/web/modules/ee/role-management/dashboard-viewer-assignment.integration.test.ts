@@ -1,14 +1,18 @@
+import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as createApiKeyRoute } from "@/app/api/internal/api-keys/route";
+import { PATCH as updateInviteRoute } from "@/app/api/internal/invites/[inviteId]/route";
+import { PATCH as updateMemberRoute } from "@/app/api/internal/members/[userId]/route";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { updateTeamDetails } from "@/modules/ee/teams/team-list/lib/team";
-import { createApiKeyAction } from "@/modules/organization/settings/api-keys/actions";
 import { bulkInviteUsersAction, inviteUserAction } from "@/modules/organization/settings/teams/actions";
-import { updateInviteAction, updateMembershipAction } from "./actions";
 
 /**
- * Who may make someone a Dashboard viewer (ENG-6901, ADR-0025), through the real server actions against
+ * Who may make someone a Dashboard viewer (ENG-6901, ADR-0025), through the real server actions and internal
+ * routes against
  * real PostgreSQL and SpiceDB: Owners and Managers, in single invites, CSV bulk invites, invite edits and
  * role edits, only while Access Control and Dashboards are both entitled. A team admin can't, and a viewer
  * can't be a team admin.
@@ -52,8 +56,34 @@ const invite = (role: string, teamIds: string[] = []) =>
     teamIds,
   } as never);
 
+/** A session write to an internal route, as the dashboard sends it (same-origin, JSON). */
+const send = (
+  handler: (req: NextRequest, context: never) => Promise<Response>,
+  url: string,
+  method: "PATCH" | "POST",
+  body: unknown,
+  params: Record<string, string> = {}
+) =>
+  handler(
+    new NextRequest(`http://localhost${url}`, {
+      method,
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+    { params: Promise.resolve(params) } as never
+  );
+
 const setRole = (userId: string, role: string) =>
-  updateMembershipAction({ organizationId: ids.organization, userId, data: { role } } as never);
+  send(
+    updateMemberRoute,
+    `/api/internal/members/${userId}?organizationId=${ids.organization}`,
+    "PATCH",
+    { role },
+    { userId }
+  );
+
+const setInviteRole = (inviteId: string, role: string) =>
+  send(updateInviteRoute, `/api/internal/invites/${inviteId}`, "PATCH", { role }, { inviteId });
 
 beforeAll(async () => {
   await resetDb();
@@ -192,12 +222,9 @@ describe("role edits", () => {
     const pending = await invite("member");
     as(ids.manager);
 
-    const result = await updateInviteAction({
-      inviteId: pending?.data as string,
-      data: { role: "dashboard_viewer" },
-    } as never);
+    const response = await setInviteRole(pending?.data as string, "dashboard_viewer");
 
-    expect(result?.serverError).toBeUndefined();
+    expect(response.status).toBe(200);
     expect((await prisma.invite.findUniqueOrThrow({ where: { id: pending?.data as string } })).role).toBe(
       "dashboard_viewer"
     );
@@ -208,17 +235,13 @@ describe("role edits", () => {
     const pending = await invite("member");
     entitlement.viewerRole = false;
 
-    const result = await updateInviteAction({
-      inviteId: pending?.data as string,
-      data: { role: "dashboard_viewer" },
-    } as never);
-    expect(result?.serverError).toBeDefined();
+    expect((await setInviteRole(pending?.data as string, "dashboard_viewer")).status).toBe(403);
   });
 
   test("without the entitlement a Member can't be made a viewer", async () => {
     entitlement.viewerRole = false;
     as(ids.owner);
-    expect((await setRole(ids.target, "dashboard_viewer"))?.serverError).toBeDefined();
+    expect((await setRole(ids.target, "dashboard_viewer")).status).toBe(403);
     const membership = await prisma.membership.findUniqueOrThrow({
       where: { userId_organizationId: { userId: ids.target, organizationId: ids.organization } },
     });
@@ -229,7 +252,7 @@ describe("role edits", () => {
   // Manager's right to give the role is the invite-edit case above and `canManagerAssignRole`.
   test("making a team admin a Dashboard viewer demotes them to contributor", async () => {
     as(ids.owner);
-    expect((await setRole(ids.target, "dashboard_viewer"))?.serverError).toBeUndefined();
+    expect((await setRole(ids.target, "dashboard_viewer")).status).toBe(200);
 
     const teamUser = await prisma.teamUser.findUniqueOrThrow({
       where: { teamId_userId: { teamId: ids.team, userId: ids.target } },
@@ -252,21 +275,23 @@ describe("role edits", () => {
 
   test("a Dashboard viewer can't create an API key (regression, ENG-6903)", async () => {
     as(ids.target);
-    const result = await createApiKeyAction({
-      organizationId: ids.organization,
-      apiKeyData: {
+    const response = await send(
+      createApiKeyRoute,
+      `/api/internal/api-keys?organizationId=${ids.organization}`,
+      "POST",
+      {
         label: "viewer key",
-        workspaceAccess: [{ workspaceId: ids.workspace, permission: "read" }],
+        workspacePermissions: [{ workspaceId: ids.workspace, permission: "read" }],
         organizationAccess: { accessControl: { read: false, write: false } },
-      },
-    } as never);
+      }
+    );
 
-    expect(result?.serverError).toBeDefined();
+    expect(response.status).toBe(403);
     expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(0);
   });
 
   test("an Owner changes the viewer back to Member", async () => {
     as(ids.owner);
-    expect((await setRole(ids.target, "member"))?.serverError).toBeUndefined();
+    expect((await setRole(ids.target, "member")).status).toBe(200);
   });
 });

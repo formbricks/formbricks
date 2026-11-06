@@ -102,6 +102,7 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  * disjoint and that none of these reaches the spec.
  */
 export const INTERNAL_PROBLEM_CODES = [
+  "ai_translation_batch_too_large",
   "attachment_export_empty",
   "attachment_export_expired",
   "attachment_export_filter_conflict",
@@ -301,10 +302,11 @@ export function problemUnauthorized(
 export function problemForbidden(
   requestId: string,
   detail: string = "You are not authorized to access this resource",
-  instance?: string
+  instance?: string,
+  code: ProblemCode = "forbidden"
 ): Response {
   return problemResponse(403, "Forbidden", detail, requestId, {
-    code: "forbidden",
+    code,
     instance,
   });
 }

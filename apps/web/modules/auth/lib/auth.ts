@@ -105,14 +105,14 @@ export const auth = betterAuth({
   // profile surface, and every field it can reach is one Formbricks does not let a client write there:
   //
   //  - `name` is the identity provider's for an SSO user — re-read on every sign-in
-  //    (`overrideUserInfo`) and locked in `updateUserAction` — yet a raw POST landed the write anyway,
+  //    (`overrideUserInfo`) and locked in `PATCH /api/internal/users/me` — yet a raw POST landed the write anyway,
   //    unaudited, until the next sign-in silently reverted it.
   //  - `image` has no `User` column at all, so the write reached Prisma and threw an unhandled 500 —
   //    the same hazard `ssoProfileSyncUpdateBefore` and `user.create.before` strip on the SSO paths.
   //  - `email` the endpoint refuses itself, and our two `additionalFields` are `input: false`.
   //
   // So there is nothing left for it to legitimately do, and a 404 at the router is a smaller, more
-  // complete answer than a `hooks.before` gate: profile writes go through `updateUserAction`, which
+  // complete answer than a `hooks.before` gate: profile writes go through `PATCH /api/internal/users/me`, which
   // owns the SSO name lock, the verified email-change flow, rate limiting, and the audit entry. The
   // path is HTTP-only — `auth.api.updateUser` stays available to server code (`api/index.mjs` applies
   // `disabledPaths` in the router alone), which is what the SSO hooks and the service layer use.
@@ -120,7 +120,8 @@ export const auth = betterAuth({
   // `/request-password-reset` (ENG-3639) for the same reason. It answered after the user lookup, token
   // write and SMTP send, so its response time told password accounts from everything else, and it
   // skipped the forgot-password flow's per-account mail limit (ENG-3640). Nothing calls it over HTTP:
-  // forgotPasswordAction and the profile action both use `auth.api.requestPasswordReset` in-process.
+  // forgotPasswordAction and the profile's password-reset route both use `auth.api.requestPasswordReset`
+  // in-process.
   //
   // `/sign-up/email` (ENG-3988) too. Every check a credential sign-up has to pass lives in
   // `createUserAction`: Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,

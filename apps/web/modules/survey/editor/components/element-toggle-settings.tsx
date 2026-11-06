@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import type {
@@ -14,9 +14,9 @@ import type {
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
+import { useFileUploadLimit } from "@/modules/survey/editor/hooks/use-file-upload-limit";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Input } from "@/modules/ui/components/input";
-import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 /**
  * The switches that change how a question behaves rather than what the respondent reads. They sit in the
@@ -84,28 +84,9 @@ export const FileUploadSettings = ({
 }>) => {
   const { t } = useTranslation();
   const [isMaxSizeError, setIsMaxSizeError] = useState(false);
-  const {
-    billingInfo,
-    error: billingInfoError,
-    isLoading: billingInfoLoading,
-  } = useGetBillingInfo(workspace.organizationId);
-
-  const maxSizeInMBLimit = useMemo(() => {
-    if (billingInfoError || billingInfoLoading || !billingInfo) {
-      return 10;
-    }
-
-    const hasPaidCloudCapacity =
-      billingInfo.limits.workspaces === null ||
-      (typeof billingInfo.limits.workspaces === "number" && billingInfo.limits.workspaces > 1);
-
-    if (hasPaidCloudCapacity) {
-      // 1GB in MB
-      return 1024;
-    }
-
-    return 10;
-  }, [billingInfo, billingInfoError, billingInfoLoading]);
+  const fileUploadLimit = useFileUploadLimit(workspace.id);
+  // Until the plan's cap is known, or if it can't be read, offer the smallest one.
+  const maxSizeInMBLimit = fileUploadLimit.data?.maxFileSizeMB ?? 10;
 
   const handleMaxSizeInMBToggle = (checked: boolean) => {
     const defaultMaxSizeInMB = isFormbricksCloud ? maxSizeInMBLimit : 1024;

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { updateFeedbackDirectoryAction } from "@/modules/ee/feedback-directory/actions";
+import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
+import { updateFeedbackDataset } from "@/modules/ee/feedback-directory/lib/api-client";
 import { getTranslatedFeedbackDirectoryError } from "@/modules/ee/feedback-directory/types/feedback-directory";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -38,20 +38,19 @@ export const ArchiveFeedbackDirectory = ({
   const handleArchive = async () => {
     setIsArchiving(true);
 
-    const response = await updateFeedbackDirectoryAction({ directoryId, data: { isArchived: true } });
-    if (response?.serverError) {
-      const errorCode = getFormattedErrorMessage(response);
-      toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
-      setIsArchiveDialogOpen(false);
-      setIsArchiving(false);
-      return;
-    }
-    if (response?.data) {
+    try {
+      await updateFeedbackDataset(directoryId, { isArchived: true });
       toast.success(t("workspace.settings.feedback_directories.directory_archived_successfully"));
       onArchive?.();
+      // The directory list is server-rendered; re-render it.
       router.refresh();
-    } else {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      toast.error(
+        getTranslatedFeedbackDirectoryError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
     }
 
     setIsArchiveDialogOpen(false);

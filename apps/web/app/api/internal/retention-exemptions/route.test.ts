@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { GET, POST } from "./route";
 
 // vitestSetup mocks `createHash`, which would give every cursor fingerprint the same value and let a
@@ -102,7 +103,7 @@ const post = (body: unknown) =>
   POST(
     new NextRequest("http://localhost/api/internal/retention-exemptions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-request-id": "req_1" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", "x-request-id": "req_1" },
       body: JSON.stringify(body),
     }),
     {} as never

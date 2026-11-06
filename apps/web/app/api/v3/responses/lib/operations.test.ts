@@ -798,6 +798,26 @@ describe("countV3ResponsesOperation", () => {
     expect(mockCount).toHaveBeenCalledWith(expect.objectContaining({ precision: "exact" }));
   });
 
+  /** ENG-3282: the import estimate counts one survey's responses, so it must not see a restricted one. */
+  test("a survey the caller may not read is refused before anything is counted", async () => {
+    mockRefuse.mockResolvedValueOnce(new Response(null, { status: 403 }));
+
+    const res = await countV3ResponsesOperation({
+      ...read,
+      searchParams: query(`workspaceId=${WORKSPACE}&surveyId=${SURVEY.id}`),
+    });
+
+    expect(res.status).toBe(403);
+    expect(mockRefuse).toHaveBeenCalledWith(
+      read.authentication,
+      "survey.response_read",
+      { type: "survey", id: SURVEY.id },
+      read.requestId,
+      read.instance
+    );
+    expect(mockCount).not.toHaveBeenCalled();
+  });
+
   /** The unbounded `count(*)` never reaches the database: refused at the query boundary. */
   test("an unanchored exact count is refused before the service is called", async () => {
     const res = await countV3ResponsesOperation({

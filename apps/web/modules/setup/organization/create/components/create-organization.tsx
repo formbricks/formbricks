@@ -8,8 +8,8 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZOrganization } from "@formbricks/types/organizations";
-import { createOrganizationAction } from "@/app/setup/organization/create/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { createOrganization } from "@/modules/setup/organization/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -33,19 +33,12 @@ export const CreateOrganization = () => {
   const organizationName = form.watch("name");
 
   const onSubmit: SubmitHandler<TCreateOrganizationForm> = async () => {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      const createOrganizationResponse = await createOrganizationAction({ organizationName });
-      if (createOrganizationResponse?.serverError) {
-        toast.error(getFormattedErrorMessage(createOrganizationResponse));
-        setIsSubmitting(false);
-        return;
-      }
-      if (createOrganizationResponse?.data) {
-        router.push(`/setup/organization/${createOrganizationResponse.data.id}/invite`);
-      }
+      const organization = await createOrganization(organizationName);
+      router.push(`/setup/organization/${organization.id}/invite`);
     } catch (error) {
-      toast.error(t("common.something_went_wrong"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
       setIsSubmitting(false);
     }
   };

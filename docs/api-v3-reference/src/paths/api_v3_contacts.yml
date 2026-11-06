@@ -3,7 +3,7 @@ get:
   summary: List contacts
   description: |
     Returns a workspace's contacts, filtered, searched, sorted and counted on the server. Requires the
-    Contacts entitlement (**403** without it). Session cookie, `x-api-key`, or a Bearer token.
+    Contacts entitlement (**403** without it). `x-api-key` or a Bearer token.
 
     **Attribute filters** use `filter[attribute.<key>][<operator>]=<value>`, where `<key>` is a
     `ContactAttributeKeyResource.key` of the workspace (an unknown key → **400**). The operators depend

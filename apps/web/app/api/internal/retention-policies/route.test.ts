@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { RETENTION_POLICY_DEFAULTS } from "@/modules/ee/data-retention/lib/policy-rules";
 import { GET, PATCH } from "./route";
 
@@ -63,7 +64,7 @@ const patch = (body: unknown, query = `organizationId=${ORG_ID}`) =>
   PATCH(
     new NextRequest(`http://localhost/api/internal/retention-policies?${query}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
     {} as never

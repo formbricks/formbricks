@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   SURVEY_IMPORT_MAX_BODY_BYTES,
@@ -43,7 +44,15 @@ const uploadForm = (
 
 /** A multipart POST as a browser sends it: the boundary in Content-Type, the length left to transport. */
 const post = (form: FormData = uploadForm(), headers: Record<string, string> = {}, signal?: AbortSignal) =>
-  POST(new NextRequest(URL_PATH, { method: "POST", body: form, headers, signal }), {} as never);
+  POST(
+    new NextRequest(URL_PATH, {
+      method: "POST",
+      body: form,
+      headers: { ...SAME_ORIGIN_HEADERS, ...headers },
+      signal,
+    }),
+    {} as never
+  );
 
 /** The bytes and Content-Type of `form`, to send them streamed with no Content-Length. */
 const encodeForm = async (form: FormData) => {
@@ -59,7 +68,7 @@ const postStreamed = async (form: FormData) => {
   return POST(
     new NextRequest(URL_PATH, {
       method: "POST",
-      headers: { "Content-Type": contentType },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": contentType },
       body: new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(bytes);
@@ -136,7 +145,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const response = await POST(
       new NextRequest(URL_PATH, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: JSON.stringify({ workspaceId, fileName: "onboarding.qsf", qsf: JSON.parse(qsfText) }),
       }),
       {} as never
@@ -247,7 +256,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     const trickling = POST(
       new NextRequest(URL_PATH, {
         method: "POST",
-        headers: { "Content-Type": contentType },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": contentType },
         body: new ReadableStream<Uint8Array>({
           start(controller) {
             upload = controller;

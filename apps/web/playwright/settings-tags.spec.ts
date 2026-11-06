@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 
 /**
  * Covers the tags settings table end to end after its move onto `/api/v3/tags` + TanStack Query: the list
@@ -148,6 +149,7 @@ test.describe("Workspace tags settings @slow", () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     const response = await page.request.patch(`/api/v3/tags/${foreignTag.id}`, {
+      headers: SAME_ORIGIN_HEADERS,
       data: { name: `Hijacked ${run}` },
     });
     expect(response.status()).toBe(403);

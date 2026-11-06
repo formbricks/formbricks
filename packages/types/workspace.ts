@@ -26,7 +26,7 @@ export const ZWorkspaceConfig = z.object({
    * language the person clicking New survey uses the app in".
    *
    * A canonical BCP-47 tag limited to the languages the survey runtime ships strings for. The allowed
-   * set lives in `@formbricks/i18n-utils` and is enforced on write by `updateWorkspaceAction` — not
+   * set lives in `@formbricks/i18n-utils` and is enforced on write by `PATCH /api/internal/workspaces/{id}` — not
    * here, because `packages/types` deliberately depends on no other workspace package. Readers must
    * still treat an unsupported value as unset; `resolveDefaultSurveyLanguage` does.
    */

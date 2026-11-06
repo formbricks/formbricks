@@ -1,13 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Switch } from "@/modules/ui/components/switch";
-import { updateNotificationSettingsAction } from "../actions";
+import { useUpdateNotificationSetting } from "../hooks/use-notification-settings";
 
 interface NotificationSwitchProps {
   readonly surveyOrWorkspaceOrOrganizationId: string;
@@ -24,53 +23,35 @@ export const NotificationSwitch = ({
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: NotificationSwitchProps) => {
-  const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
-  const router = useRouter();
+  const updateSetting = useUpdateNotificationSetting();
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
       ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrWorkspaceOrOrganizationId)
       : notificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId] === true;
 
-  const handleSwitchChange = async () => {
-    setIsLoading(true);
+  // `successMessage` is shown only once the write has landed, so a refused change never reads as done.
+  const handleSwitchChange = async (
+    successMessage = t("workspace.settings.notifications.notification_settings_updated")
+  ) => {
+    // One switch, flipped from what is shown; the server applies it to the stored settings.
+    const toggle =
+      notificationType === "unsubscribedOrganizationIds"
+        ? {
+            type: "organizationEmails" as const,
+            organizationId: surveyOrWorkspaceOrOrganizationId,
+            subscribed: !isChecked,
+          }
+        : { type: "alert" as const, surveyId: surveyOrWorkspaceOrOrganizationId, enabled: !isChecked };
 
-    let updatedNotificationSettings = { ...notificationSettings };
-    if (notificationType === "unsubscribedOrganizationIds") {
-      const unsubscribedOrganizationIds = updatedNotificationSettings.unsubscribedOrganizationIds ?? [];
-      if (unsubscribedOrganizationIds.includes(surveyOrWorkspaceOrOrganizationId)) {
-        updatedNotificationSettings.unsubscribedOrganizationIds = unsubscribedOrganizationIds.filter(
-          (id) => id !== surveyOrWorkspaceOrOrganizationId
-        );
-      } else {
-        updatedNotificationSettings.unsubscribedOrganizationIds = [
-          ...unsubscribedOrganizationIds,
-          surveyOrWorkspaceOrOrganizationId,
-        ];
-      }
-    } else {
-      updatedNotificationSettings[notificationType] = {
-        ...updatedNotificationSettings[notificationType],
-        [surveyOrWorkspaceOrOrganizationId]:
-          !updatedNotificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId],
-      };
-    }
-
-    const updatedNotificationSettingsActionResponse = await updateNotificationSettingsAction({
-      notificationSettings: updatedNotificationSettings,
-    });
-    if (updatedNotificationSettingsActionResponse?.data) {
-      toast.success(t("workspace.settings.notifications.notification_settings_updated"), {
-        id: "notification-switch",
-      });
-      router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(updatedNotificationSettingsActionResponse);
-      toast.error(errorMessage, {
+    try {
+      await updateSetting.mutateAsync(toggle);
+      toast.success(successMessage, { id: "notification-switch" });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")), {
         id: "notification-switch",
       });
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -82,14 +63,10 @@ export const NotificationSwitch = ({
       switch (notificationType) {
         case "alert":
           if (notificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId] === true) {
-            handleSwitchChange();
-            toast.success(
+            void handleSwitchChange(
               t(
                 "workspace.settings.notifications.you_will_not_receive_any_more_emails_for_responses_on_this_survey"
-              ),
-              {
-                id: "notification-switch",
-              }
+              )
             );
           }
           break;
@@ -98,14 +75,10 @@ export const NotificationSwitch = ({
           if (
             !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrWorkspaceOrOrganizationId)
           ) {
-            handleSwitchChange();
-            toast.success(
+            void handleSwitchChange(
               t(
                 "workspace.settings.notifications.you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore"
-              ),
-              {
-                id: "notification-switch",
-              }
+              )
             );
           }
           break;
@@ -122,7 +95,7 @@ export const NotificationSwitch = ({
       id="notification-switch"
       aria-label={`toggle notification settings for ${notificationType}`}
       checked={isChecked}
-      disabled={isLoading}
+      disabled={updateSetting.isPending}
       onCheckedChange={async () => {
         await handleSwitchChange();
       }}

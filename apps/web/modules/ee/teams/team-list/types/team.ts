@@ -60,12 +60,16 @@ export const ZOrganizationMember = z.object({
 
 export type TOrganizationMember = z.infer<typeof ZOrganizationMember>;
 
+/** Bounds every request string (ENG-1652); ids are cuids, far shorter than this. */
+export const TEAM_NAME_MAX = 255;
+const ID_MAX = 255;
+
 export const ZTeamSettingsFormSchema = z.object({
-  name: z.string().trim().min(1, "Team name is required"),
+  name: z.string().trim().min(1, "Team name is required").max(TEAM_NAME_MAX),
   members: z
     .array(
       z.object({
-        userId: z.string().trim().min(1, "Please select a member"),
+        userId: z.string().trim().min(1, "Please select a member").max(ID_MAX),
         role: ZTeamRole,
       })
     )
@@ -75,7 +79,7 @@ export const ZTeamSettingsFormSchema = z.object({
   workspaces: z
     .array(
       z.object({
-        workspaceId: z.string().trim().min(1, "Please select a workspace"),
+        workspaceId: z.string().trim().min(1, "Please select a workspace").max(ID_MAX),
         permission: ZTeamPermission,
       })
     )

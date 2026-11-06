@@ -2,7 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
-import { convertHeicToJpegAction } from "./actions";
+import { convertHeicToJpeg } from "./api-client";
 
 const isFileSizeExceed = (fileSizeInMB: number, maxSizeInMB?: number) => {
   if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
@@ -39,23 +39,21 @@ export const getAllowedFiles = async (
     }
 
     if (extension === "heic") {
-      const convertedFileResponse = await convertHeicToJpegAction({ file });
-      if (!convertedFileResponse?.data) {
+      let convertedFile: File;
+      try {
+        convertedFile = await convertHeicToJpeg(file);
+      } catch {
         unsupportedExtensionFiles.push(file.name);
         continue;
-      } else {
-        const convertedFileSizeInMB = convertedFileResponse.data.size / 1000000;
-        if (isFileSizeExceed(convertedFileSizeInMB, maxSizeInMB)) {
-          sizeExceedFiles.push(file.name);
-          continue;
-        }
+      }
 
-        const convertedFile = new File([convertedFileResponse.data], file.name.replace(/\.heic$/, ".jpg"), {
-          type: "image/jpeg",
-        });
-        convertedFiles.push(convertedFile);
+      if (isFileSizeExceed(convertedFile.size / 1000000, maxSizeInMB)) {
+        sizeExceedFiles.push(file.name);
         continue;
       }
+
+      convertedFiles.push(convertedFile);
+      continue;
     }
 
     convertedFiles.push(file);

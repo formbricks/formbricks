@@ -6,7 +6,7 @@ get:
     order and bounded by `limit` — for quick-filter value pickers. Not paginated: `meta.truncated` says
     whether more values match than were returned, so a picker can ask the user to narrow the search. Number and date attributes return
     their stored text `value`. Requires the Contacts entitlement (**403** without it). An unknown
-    `key` → **400**. Session cookie, `x-api-key`, or a Bearer token.
+    `key` → **400**. `x-api-key` or a Bearer token.
   tags:
     - V3 Contacts
   parameters:

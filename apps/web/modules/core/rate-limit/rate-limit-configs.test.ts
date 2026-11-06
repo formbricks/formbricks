@@ -123,6 +123,7 @@ describe("rateLimitConfigs", () => {
         "v3StateMutation",
         "mcpAuth",
         "v3SurveyGenerate",
+        "internalAiTranslate",
         "v3SurveyVisibility",
         "v3SurveysFullList",
         "v3CustomCss",
@@ -131,6 +132,7 @@ describe("rateLimitConfigs", () => {
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
+        "internalHeicConversion",
         "client",
         "clientEnvironment",
         "clientCreativeEvents",
@@ -177,6 +179,18 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 10,
         namespace: "api:internal:retention-runs:export",
+      });
+      // Every conversion decodes a whole photo on the server, so a loosened quota is a CPU regression.
+      expect(rateLimitConfigs.api.internalHeicConversion).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:heic-conversions",
+      });
+      // One call per target language, each up to 8192 output tokens: a loosened quota is a cost regression.
+      expect(rateLimitConfigs.api.internalAiTranslate).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:ai-translations",
       });
     });
 

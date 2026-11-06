@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DELETE } from "./route";
 
 /**
@@ -42,7 +43,10 @@ describe("DELETE /api/v3/responses/{responseId}", () => {
   });
 
   test("passes the validated id through to the operation", async () => {
-    const response = await DELETE(new NextRequest(url(), { method: "DELETE" }), ctx());
+    const response = await DELETE(
+      new NextRequest(url(), { method: "DELETE", headers: SAME_ORIGIN_HEADERS }),
+      ctx()
+    );
 
     expect(response.status).toBe(204);
     expect(mockDelete).toHaveBeenCalledWith(
@@ -56,7 +60,7 @@ describe("DELETE /api/v3/responses/{responseId}", () => {
    */
   test("rejects a malformed id with 400, before any query runs", async () => {
     const response = await DELETE(
-      new NextRequest(url("not-a-cuid"), { method: "DELETE" }),
+      new NextRequest(url("not-a-cuid"), { method: "DELETE", headers: SAME_ORIGIN_HEADERS }),
       ctx("not-a-cuid")
     );
 
@@ -83,14 +87,20 @@ describe("DELETE /api/v3/responses/{responseId}", () => {
     mockGetSession.mockResolvedValue(null);
     mockAuthenticateRequest.mockResolvedValue(null);
 
-    const response = await DELETE(new NextRequest(url(), { method: "DELETE" }), ctx());
+    const response = await DELETE(
+      new NextRequest(url(), { method: "DELETE", headers: SAME_ORIGIN_HEADERS }),
+      ctx()
+    );
 
     expect(response.status).toBe(401);
     expect(mockDelete).not.toHaveBeenCalled();
   });
 
   test("rejects unrecognized query parameters rather than ignoring them", async () => {
-    const request = new NextRequest(`${url()}?workspaceId=ws_1`, { method: "DELETE" });
+    const request = new NextRequest(`${url()}?workspaceId=ws_1`, {
+      method: "DELETE",
+      headers: SAME_ORIGIN_HEADERS,
+    });
 
     const response = await DELETE(request, ctx());
 

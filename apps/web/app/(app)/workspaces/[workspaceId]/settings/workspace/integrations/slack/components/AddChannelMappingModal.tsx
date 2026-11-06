@@ -9,18 +9,14 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TIntegrationItem } from "@formbricks/types/integration";
-import {
-  TIntegrationSlack,
-  TIntegrationSlackConfigData,
-  TIntegrationSlackInput,
-} from "@formbricks/types/integration/slack";
+import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import SlackLogo from "@/images/slacklogo.png";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -80,15 +76,7 @@ export const AddChannelMappingModal = ({
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
-  const existingIntegrationData = slackIntegration?.config?.data;
-  const slackIntegrationData: TIntegrationSlackInput = {
-    type: "slack",
-    config: {
-      key: slackIntegration?.config?.key,
-      // A copy: the save and delete paths edit this array, and the original is the query cache's.
-      data: [...(existingIntegrationData ?? [])],
-    },
-  };
+  const existingMappings = slackIntegration?.config?.data ?? [];
 
   const surveyElements = useMemo(
     () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
@@ -156,21 +144,14 @@ export const AddChannelMappingModal = ({
         includeCreatedAt,
         includeContactAttributes,
       };
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the query refetches.
+      const mappings = [...existingMappings];
       if (selectedIntegration) {
-        // update action
-        slackIntegrationData.config.data[selectedIntegration.index] = integrationData;
+        mappings[selectedIntegration.index] = integrationData;
       } else {
-        // create action
-        slackIntegrationData.config.data.push(integrationData);
+        mappings.push(integrationData);
       }
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: slackIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegrationMappings(workspaceId, "slack", mappings);
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -180,7 +161,7 @@ export const AddChannelMappingModal = ({
       setOpen(false);
       void refetchIntegration();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsLinkingChannel(false);
     }
@@ -205,22 +186,15 @@ export const AddChannelMappingModal = ({
   };
 
   const deleteLink = async () => {
-    slackIntegrationData.config.data.splice(selectedIntegration!.index, 1);
+    const mappings = existingMappings.filter((_, index) => index !== selectedIntegration!.index);
     try {
       setIsDeleting(true);
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: slackIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegrationMappings(workspaceId, "slack", mappings);
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
       void refetchIntegration();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

@@ -7,14 +7,14 @@ import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { truncate } from "@/lib/utils/strings";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
-import { deleteWorkspaceAction } from "@/modules/workspaces/settings/general/actions";
 import { hasMatchingWorkspaceDeleteConfirmation } from "@/modules/workspaces/settings/general/lib/delete-workspace-confirmation";
+import { deleteWorkspaceWithConfirmation } from "@/modules/workspaces/settings/lib/api-client";
 
 interface DeleteWorkspaceRenderProps {
   isDeleteDisabled: boolean;
@@ -51,39 +51,27 @@ export const DeleteWorkspaceRender = ({
 
     try {
       setIsDeleting(true);
-      const deleteWorkspaceResponse = await deleteWorkspaceAction({
-        workspaceId: currentWorkspace.id,
-        confirmationName,
-      });
+      // Destination resolved by the server, after the deletion: a workspace of this organization (or its
+      // onboarding flow), and only "/" when the organization has none left. Never "/" otherwise — that
+      // route resolves the last-visited workspace across every organization and would drop members of
+      // multiple organizations into an unrelated one.
+      const { destination } = await deleteWorkspaceWithConfirmation(currentWorkspace.id, confirmationName);
 
-      if (deleteWorkspaceResponse?.data) {
-        // Destination resolved by the action, after the deletion: a workspace of this organization
-        // (or its onboarding flow), and only "/" when the organization has none left. Never "/"
-        // otherwise — that route resolves the last-visited workspace across every organization and
-        // would drop members of multiple organizations into an unrelated one.
-        const { workspaceId: postDeletionWorkspaceId, path: postDeletionPath } =
-          deleteWorkspaceResponse.data.destination;
-
-        if (postDeletionWorkspaceId) {
-          localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, postDeletionWorkspaceId);
-          // Keep legacy environment ID in sync for backward compatibility with old SDK clients
-          localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, postDeletionWorkspaceId);
-        } else {
-          localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
-          localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
-        }
-
-        toast.success(t("workspace.general.workspace_deleted_successfully"));
-        router.push(postDeletionPath);
+      if (destination.workspaceId) {
+        localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, destination.workspaceId);
+        // Keep legacy environment ID in sync for backward compatibility with old SDK clients
+        localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, destination.workspaceId);
       } else {
-        const errorMessage = getFormattedErrorMessage(deleteWorkspaceResponse);
-        logger.error({ errorMessage, workspaceId: currentWorkspace.id }, "Workspace deletion action failed");
-        toast.error(errorMessage);
-        handleDeleteDialogOpenChange(false);
+        localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
+        localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       }
+
+      toast.success(t("workspace.general.workspace_deleted_successfully"));
+      router.push(destination.path);
     } catch (error) {
       logger.error({ error, workspaceId: currentWorkspace.id }, "Workspace deletion failed");
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      handleDeleteDialogOpenChange(false);
     } finally {
       setIsDeleting(false);
     }

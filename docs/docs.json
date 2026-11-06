@@ -420,7 +420,8 @@
                       "self-hosting/upgrade/versions/question-codes",
                       "self-hosting/upgrade/versions/attachment-exports",
                       "self-hosting/upgrade/versions/dashboard-viewer",
-                      "self-hosting/upgrade/versions/cube-memory"
+                      "self-hosting/upgrade/versions/cube-memory",
+                      "self-hosting/upgrade/versions/session-cookie-writes"
                     ]
                   }
                 ]

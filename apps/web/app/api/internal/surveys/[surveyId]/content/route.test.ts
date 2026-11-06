@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { SURVEY_IMPORT_MAX_CREATE_BODY_BYTES } from "@/modules/survey/import/limits";
 import { PUT } from "./route";
@@ -38,7 +39,7 @@ const put = (body: unknown, { surveyId = SURVEY_ID, headers = {} as Record<strin
     new NextRequest(URL_PATH, {
       method: "PUT",
       body: typeof body === "string" ? body : JSON.stringify(body),
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", ...headers },
     }),
     { params: Promise.resolve({ surveyId }) } as never
   );

@@ -5,9 +5,9 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { promoteEmbeddedDataToSharedAction } from "@/modules/embedded-data/actions";
-import type { TSharedEmbeddedData } from "@/modules/embedded-data/types";
+import type { TEmbeddedDataResource } from "@/app/api/internal/embedded-data/serializers";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { usePromoteEmbeddedData } from "@/modules/embedded-data/hooks/use-embedded-data";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -24,9 +24,11 @@ import { Label } from "@/modules/ui/components/label";
 interface PromoteEmbeddedFieldDialogProps {
   /** The local field being lifted. Its `field.id` is the stored row promote flips. */
   entry: TLinkedEmbeddedField;
+  /** The survey's workspace, whose library the field joins. */
+  workspaceId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  onPromoted: (field: TSharedEmbeddedData) => void;
+  onPromoted: (field: TEmbeddedDataResource) => void;
 }
 
 /**
@@ -37,24 +39,24 @@ interface PromoteEmbeddedFieldDialogProps {
  * `surveyId` gives way to a library `key`. So the only thing to collect is that key and an optional
  * description; everything else about the field is already right.
  *
- * The write's refusals arrive **inside a successful payload** rather than as thrown errors: the
- * action client flattens a throw to `error.message`, which would lose the id of the row already
- * holding the key. Each branch is answered where the author can act on it — a taken key on the
- * control that carries it, anything else as a toast.
+ * The write's refusals arrive as values rather than thrown errors (`TEmbeddedDataWriteResult`), so the
+ * id of the row already holding a key survives the trip. Each branch is answered where the author can
+ * act on it — a taken key on the control that carries it, anything else as a toast.
  */
 export const PromoteEmbeddedFieldDialog = ({
   entry,
+  workspaceId,
   open,
   setOpen,
   onPromoted,
 }: Readonly<PromoteEmbeddedFieldDialogProps>) => {
   const { t } = useTranslation();
+  const promote = usePromoteEmbeddedData(workspaceId);
   // The key writes itself from the field's name, through the same `toSafeIdentifier` the library
   // dialog uses to decide what a legal key looks like.
   const [key, setKey] = useState(() => toSafeIdentifier(entry.field.name));
   const [description, setDescription] = useState("");
   const [keyError, setKeyError] = useState<string | null>(null);
-  const [isPromoting, setIsPromoting] = useState(false);
 
   const handlePromote = async () => {
     // `field.id` is what promote addresses; a field the survey has never saved has no row to lift,
@@ -62,37 +64,30 @@ export const PromoteEmbeddedFieldDialog = ({
     if (entry.field.id === undefined) return;
 
     setKeyError(null);
-    setIsPromoting(true);
 
     try {
-      const response = await promoteEmbeddedDataToSharedAction({
+      const result = await promote.mutateAsync({
         id: entry.field.id,
-        key,
-        description: description.trim() === "" ? null : description,
+        body: { key, description: description.trim() === "" ? null : description },
       });
 
-      if (!response?.data) {
-        toast.error(getFormattedErrorMessage(response) || t("common.something_went_wrong_please_try_again"));
-        return;
-      }
-
-      if (response.data.status === "keyConflict") {
+      if (result.status === "keyConflict") {
         setKeyError(t("workspace.embedded_data.key_already_exists"));
         return;
       }
 
       // Promote never refuses on usage — it changes no `dataType` and deletes nothing — but the
       // result is a union, and a branch that cannot happen must still not fail silently.
-      if (response.data.status === "inUse") {
-        toast.error(response.data.message);
+      if (result.status === "inUse") {
+        toast.error(result.message);
         return;
       }
 
-      toast.success(t("workspace.embedded_data.field_in_library", { name: response.data.field.name }));
-      onPromoted(response.data.field);
+      toast.success(t("workspace.embedded_data.field_in_library", { name: result.field.name }));
+      onPromoted(result.field);
       setOpen(false);
-    } finally {
-      setIsPromoting(false);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -125,7 +120,7 @@ export const PromoteEmbeddedFieldDialog = ({
                 aria-describedby={keyError === null ? undefined : "promote-embedded-field-key-error"}
                 onKeyDown={(event) => {
                   // Every other dialog in this card submits on Enter; this one had no <form>.
-                  if (event.key === "Enter" && !isPromoting) void handlePromote();
+                  if (event.key === "Enter" && !promote.isPending) void handlePromote();
                 }}
                 onChange={(event) => {
                   setKey(event.target.value);
@@ -157,7 +152,7 @@ export const PromoteEmbeddedFieldDialog = ({
           <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
             {t("common.cancel")}
           </Button>
-          <Button type="button" loading={isPromoting} onClick={handlePromote}>
+          <Button type="button" loading={promote.isPending} onClick={handlePromote}>
             {t("workspace.embedded_data.add_to_library")}
           </Button>
         </DialogFooter>

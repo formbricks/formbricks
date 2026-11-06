@@ -1,4 +1,5 @@
 import { expect } from "playwright/test";
+import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 import { invites } from "./utils/mock";
 
@@ -158,5 +159,86 @@ test.describe("Create, update and delete team", async () => {
     await expect(page.getByRole("heading", { name: "Teams", level: 1 })).toBeVisible();
 
     await expect(page.getByRole("cell", { name: "E2E Updated" })).not.toBeVisible();
+  });
+});
+
+/**
+ * Organization general settings: rename, display time zone, delete. Asserted on what the page shows and what
+ * the database holds, so it holds before and after the page moved off server actions (ENG-3984).
+ */
+test.describe("Organization general settings", () => {
+  test("renames the organization, sets its time zone and deletes it", async ({ page, users }) => {
+    const run = `${Date.now()}-${Math.round(Math.random() * 1e6)}`;
+    const user = await users.create({ organizationName: `Org ${run}`, workspaceName: `Workspace ${run}` });
+    const { organizationId } = user;
+    if (!organizationId) throw new Error("Organization not seeded for the test user");
+
+    // A second organization to land in once this one is gone: the last one can't be deleted.
+    const otherOrganization = await prisma.organization.create({
+      data: {
+        name: `Other Org ${run}`,
+        billing: {
+          create: {
+            limits: { workspaces: 3, monthly: { responses: 1500 } },
+            stripeCustomerId: null,
+            usageCycleAnchor: new Date(),
+          },
+        },
+        workspaces: { create: { name: `Other Workspace ${run}` } },
+        memberships: { create: { userId: user.id, role: "owner", accepted: true } },
+      },
+      select: { id: true, workspaces: { select: { id: true } } },
+    });
+    await prisma.survey.create({
+      data: {
+        workspaceId: otherOrganization.workspaces[0].id,
+        createdBy: user.id,
+        name: "Other Organization Seed Survey",
+        status: "draft",
+        type: "link",
+      },
+    });
+
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    await page.goto(`/organizations/${organizationId}/settings/general`, { waitUntil: "domcontentloaded" });
+
+    const storedOrganization = () =>
+      prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { name: true, displayTimeZone: true },
+      });
+
+    await test.step("rename the organization", async () => {
+      await page.getByPlaceholder("e.g. Acme Inc.").fill(`Renamed Org ${run}`);
+      await page.getByRole("button", { name: "Update" }).click();
+
+      await expect(page.getByText("Organization name updated successfully")).toBeVisible();
+      await expect.poll(async () => (await storedOrganization())?.name).toBe(`Renamed Org ${run}`);
+    });
+
+    await test.step("set the display time zone", async () => {
+      await page.getByRole("combobox", { name: "Display Time Zone" }).click();
+      await page.getByPlaceholder("Search", { exact: true }).fill("Lisbon");
+      await page.getByRole("option", { name: "Europe/Lisbon" }).click();
+      await page.getByRole("button", { name: "Update" }).click();
+
+      await expect(page.getByText("Display time zone updated successfully")).toBeVisible();
+      await expect.poll(async () => (await storedOrganization())?.displayTimeZone).toBe("Europe/Lisbon");
+
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.getByPlaceholder("e.g. Acme Inc.")).toHaveValue(`Renamed Org ${run}`);
+      await expect(page.getByRole("combobox", { name: "Display Time Zone" })).toContainText("Europe/Lisbon");
+    });
+
+    await test.step("delete the organization", async () => {
+      await page.getByRole("button", { name: "Delete", exact: true }).click();
+      await page.locator("#deleteOrganizationConfirmation").fill(`Renamed Org ${run}`);
+      await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+
+      await expect(page.getByText("Organization deleted successfully")).toBeVisible();
+      await page.waitForURL(new RegExp(`/workspaces/${otherOrganization.workspaces[0].id}/`));
+      await expect.poll(storedOrganization).toBeNull();
+    });
   });
 });

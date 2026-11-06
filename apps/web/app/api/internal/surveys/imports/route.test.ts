@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { SURVEY_IMPORT_MAX_CREATE_BODY_BYTES } from "@/modules/survey/import/limits";
 import { POST } from "./route";
@@ -37,7 +38,12 @@ const post = (body: unknown, headers: Record<string, string> = {}) =>
     new NextRequest(URL_PATH, {
       method: "POST",
       body: typeof body === "string" ? body : JSON.stringify(body),
-      headers: { "Content-Type": "application/json", "Idempotency-Key": '"key-1"', ...headers },
+      headers: {
+        ...SAME_ORIGIN_HEADERS,
+        "Content-Type": "application/json",
+        "Idempotency-Key": '"key-1"',
+        ...headers,
+      },
     }),
     {} as never
   );
