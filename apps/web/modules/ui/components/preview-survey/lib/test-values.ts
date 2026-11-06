@@ -118,24 +118,15 @@ export const restartsPreviewOnFinish = (survey: { type: string; endings: readonl
  */
 export const PAGE_URL_TEST_VALUE_KEY = "url";
 
-/** Whether anything in the survey reads the reserved `url` field: a rule, a show-if, start logic. */
-const readsPageUrl = (value: unknown): boolean => {
-  if (Array.isArray(value)) return value.some(readsPageUrl);
-  if (value === null || typeof value !== "object") return false;
-  const record = value as Record<string, unknown>;
-  if (record.type === "reserved" && record.value === PAGE_URL_TEST_VALUE_KEY) return true;
-  return Object.values(record).some(readsPageUrl);
-};
-
 /**
- * The Test values fields with the page address added when a rule reads `url` and no field of the
- * survey already goes by that name (a field named `url` shadows the reserved one).
+ * The Test values fields with the page address added when the survey reads `url` (a rule, a show-if,
+ * a rule before the first question: `findReservedFieldUse`) and no field of the survey already goes by
+ * that name (a field named `url` shadows the reserved one).
  */
 export const withPageUrlField = (
   fields: readonly TTestValueField[],
-  survey: { startLogic?: unknown; blocks: unknown }
+  readsPageUrl: boolean
 ): TTestValueField[] =>
-  readsPageUrl([survey.startLogic, survey.blocks]) &&
-  !fields.some((field) => field.key === PAGE_URL_TEST_VALUE_KEY)
+  readsPageUrl && !fields.some((field) => field.key === PAGE_URL_TEST_VALUE_KEY)
     ? [...fields, { key: PAGE_URL_TEST_VALUE_KEY, dataType: "string", isPageUrl: true }]
     : [...fields];

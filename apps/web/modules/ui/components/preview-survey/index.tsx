@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
+import { findReservedFieldUse } from "@/modules/survey/editor/lib/utils";
 import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { CardlessPreviewLogo } from "@/modules/ui/components/cardless-preview-logo";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
@@ -114,7 +115,14 @@ export const PreviewSurvey = ({
   // rules before the first question run when the survey loads, so the preview is keyed by the values
   // and those rules, and starts over whenever they change.
   const [testValues, setTestValues] = useState<Record<string, string>>({});
-  const testValueFields = useMemo(() => withPageUrlField(getTestValueFields(survey), survey), [survey]);
+  const testValueFields = useMemo(
+    () =>
+      withPageUrlField(
+        getTestValueFields(survey),
+        findReservedFieldUse(survey, PAGE_URL_TEST_VALUE_KEY) !== null
+      ),
+    [survey]
+  );
   // What the preview runs with: each value as its field's link would carry it (ENG-6953).
   const testValueEntries = useMemo(
     () => getTestValueEntries(testValues, testValueFields),

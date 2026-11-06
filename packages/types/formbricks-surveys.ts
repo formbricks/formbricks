@@ -76,7 +76,8 @@ export interface SurveyBaseProps {
   hiddenFieldsRecord?: TResponseHiddenFieldValue;
   /**
    * The editor preview only: a page address to run with instead of the one the survey is shown on, so
-   * a rule that reads `url` can be tried there (Test values). Ignored when unset.
+   * a rule that reads `url` can be tried there (Test values). Ignored when unset or outside
+   * `isPreviewMode`.
    */
   previewPageUrl?: string;
   shouldResetQuestionId?: boolean;

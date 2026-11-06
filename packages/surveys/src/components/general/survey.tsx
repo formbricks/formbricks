@@ -256,8 +256,9 @@ export function Survey({
   const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
   webSurveyMetaRef.current ??= (() => {
     const snapshot = createWebSurveyMetaSnapshot(isWebEnvironment, visit);
-    // The editor preview's Test values can stand in for the page address (`previewPageUrl`).
-    return previewPageUrl ? () => ({ ...snapshot(), url: previewPageUrl }) : snapshot;
+    // The editor preview's Test values can stand in for the page address (`previewPageUrl`); a live
+    // survey always reports the page it is shown on.
+    return isPreviewMode && previewPageUrl ? () => ({ ...snapshot(), url: previewPageUrl }) : snapshot;
   })();
 
   /**

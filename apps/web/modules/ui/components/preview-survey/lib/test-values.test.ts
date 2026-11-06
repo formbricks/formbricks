@@ -120,30 +120,20 @@ describe("preview test values", () => {
 
 describe("withPageUrlField", () => {
   const field = { key: "panel_id", dataType: "string" as const };
-  const readsUrl = {
-    startLogic: [
-      {
-        conditions: {
-          conditions: [{ leftOperand: { type: "reserved", value: "url" }, operator: "contains" }],
-        },
-      },
-    ],
-    blocks: [],
-  };
 
-  test("adds the page address when a rule reads url", () => {
-    expect(withPageUrlField([field], readsUrl)).toEqual([
+  test("adds the page address when the survey reads url", () => {
+    expect(withPageUrlField([field], true)).toEqual([
       field,
       { key: "url", dataType: "string", isPageUrl: true },
     ]);
   });
 
   test("leaves the fields as they are when nothing reads url", () => {
-    expect(withPageUrlField([field], { startLogic: [], blocks: [] })).toEqual([field]);
+    expect(withPageUrlField([field], false)).toEqual([field]);
   });
 
   test("doesn't add it when a field of the survey is named url, which shadows the reserved one", () => {
     const urlField = { key: "url", dataType: "string" as const };
-    expect(withPageUrlField([urlField], readsUrl)).toEqual([urlField]);
+    expect(withPageUrlField([urlField], true)).toEqual([urlField]);
   });
 });

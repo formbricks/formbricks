@@ -20,6 +20,7 @@ import {
   findHiddenFieldUsedInLogic,
   findOptionUse,
   findOptionUsedInLogic,
+  findReservedFieldUse,
   findVariableUse,
   findVariableUsedInLogic,
   getActionObjectiveOptions,
@@ -688,6 +689,13 @@ describe("a rule before the first question counts as a use, so deleting what it 
     });
     expect(findVariableUse(startRulesOnly(), ids.variables.segment)?.kind).toBe("startLogic");
     expect(findVariableUse(withoutStartRules(), ids.variables.segment)?.kind).not.toBe("startLogic");
+  });
+
+  // The editor preview offers the page address as a test value only when something reads `url`.
+  test("a reserved field a start rule reads, by its catalog name", () => {
+    expect(findReservedFieldUse(startRulesOnly(), "url")?.kind).toBe("startLogic");
+    expect(findReservedFieldUse(withoutStartRules(), "url")).toBeNull();
+    expect(findReservedFieldUse(startRulesOnly(), "userAgent")).toBeNull();
   });
 });
 
