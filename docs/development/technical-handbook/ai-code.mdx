@@ -9,7 +9,7 @@ Which rules apply depends on what the code does:
 | Kind | Examples | What applies |
 | --- | --- | --- |
 | Generation (text or structured output) | Survey generation, chart generation, enrichments | The whole page |
-| Embeddings | Semantic search over feedback (Hub) | The injection assessment, tenant-keyed vectors and caches, bounded input and concurrency, no customer text in logs. Hub enables embeddings by instance configuration, with no per-organization setting: see [Gating](#gating). |
+| Embeddings | Semantic search over feedback (Hub) | The injection assessment, vectors and caches keyed by the Hub tenant, bounded input and concurrency, no customer text in logs. Hub enables embeddings by instance configuration, with no per-organization setting: see [Gating](#gating). |
 | MCP-only tool | Tools in `apps/web/modules/mcp` ([MCP server](/development/technical-handbook/mcp-server)) | The injection assessment, scoped to the tool (see below), plus the authenticated-caller rule in [What to trust](#what-to-trust). We do not call a model there, and we do not control the agent's context, but a tool's result enters it, so keep results minimal. Access control is its scope and v3 authorization, not the AI gate; no limits table or token metrics. |
 
 The checklist at the end is split the same way. The page does not cover using AI tools to write or review our own
@@ -84,8 +84,8 @@ Limit what a hijacked model can reach. The goal is a small blast radius, whateve
 - **No sharing across tenants or users.** Embeddings and shared caches are keyed by the Hub tenant, which is a
   dataset (a feedback directory), not an organization. It is their isolation boundary. The server derives the
   tenant from the caller's workspace authorization and dataset membership, and never takes it from request
-  input. Conversation history and memory are keyed by tenant and user. One tenant's text never enters another
-  tenant's context, and one user's history never enters another user's.
+  input. Conversation history and memory are keyed by organization and user. One tenant's text never enters
+  another tenant's context, and one user's history never enters another user's.
 - **Safe output rendering.** Render model output as plain text where you can. Markdown that loads an image can leak
   the context through the image URL.
 - **No egress except the provider.** A tool does not send data anywhere else.
@@ -117,7 +117,8 @@ error level.
   applies.
 - **Off the request path.** If the user does not need to wait, run the work in a worker. Stream long generations
   that the user does watch.
-- **Cache by content hash** where output is deterministic, keyed per tenant.
+- **Cache by content hash** where output is deterministic, keyed by the scope the input was read in (the tenant,
+  or the workspace for web-app data), so a hit never crosses it.
 
 ## Metrics
 
@@ -183,7 +184,7 @@ edition is published.
 | Improper output handling | What to trust: server-side validation (a schema for objects), no unvalidated sink; safe output rendering |
 | Excessive agency | Least capability; side effects need the user's intent; tools act as the authenticated caller |
 | System prompt leakage | Partly: no secrets in a prompt, so a leaked prompt exposes little |
-| Vector and embedding weaknesses | Partly: embeddings and shared caches are keyed by tenant |
+| Vector and embedding weaknesses | Partly: embeddings and shared caches are keyed by the Hub tenant |
 | Misinformation | Gap: no rule yet for output shown to users as fact |
 | Unbounded consumption | Limits every generation call needs; Performance; Metrics |
 
