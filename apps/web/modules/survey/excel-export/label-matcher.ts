@@ -21,40 +21,55 @@ interface TTrie {
   output: number[];
 }
 
-const buildTrie = (labels: readonly string[]): TTrie => {
-  const trie: TTrie = { next: [new Map()], fail: [0], labelLength: [0], output: [-1] };
-  for (const label of labels) {
-    let node = 0;
-    for (let index = 0; index < label.length; index += 1) {
-      const code = label.charCodeAt(index);
-      let child = trie.next[node].get(code);
-      if (child === undefined) {
-        child = trie.next.length;
-        trie.next.push(new Map());
-        trie.fail.push(0);
-        trie.labelLength.push(0);
-        trie.output.push(-1);
-        trie.next[node].set(code, child);
-      }
-      node = child;
-    }
-    trie.labelLength[node] = label.length;
-  }
+/**
+ * A string's key at `index`: its code point there, so a pair of surrogates is one key. Labels and texts
+ * are keyed alike, position by position, so a label matches wherever its text does.
+ */
+const keyAt = (text: string, index: number): number => text.codePointAt(index) ?? 0;
 
-  // Breadth first, so a node's fail target is settled before its children's.
+const addNode = (trie: TTrie): number => {
+  trie.next.push(new Map());
+  trie.fail.push(0);
+  trie.labelLength.push(0);
+  trie.output.push(-1);
+  return trie.next.length - 1;
+};
+
+const insertLabel = (trie: TTrie, label: string): void => {
+  let node = 0;
+  for (let index = 0; index < label.length; index += 1) {
+    const key = keyAt(label, index);
+    let child = trie.next[node].get(key);
+    if (child === undefined) {
+      child = addNode(trie);
+      trie.next[node].set(key, child);
+    }
+    node = child;
+  }
+  trie.labelLength[node] = label.length;
+};
+
+/** Each node's fail target and nearest label on its fail chain, breadth first, parents before children. */
+const linkFallbacks = (trie: TTrie): void => {
   const queue = [...trie.next[0].values()];
-  for (let head = 0; head < queue.length; head += 1) {
-    const node = queue[head];
-    for (const [code, child] of trie.next[node]) {
+  // The queue grows as it is read: an array's iterator reads what was pushed after it started.
+  for (const node of queue) {
+    for (const [key, child] of trie.next[node]) {
       let fallback = trie.fail[node];
-      while (fallback !== 0 && !trie.next[fallback].has(code)) fallback = trie.fail[fallback];
-      const target = trie.next[fallback].get(code);
+      while (fallback !== 0 && !trie.next[fallback].has(key)) fallback = trie.fail[fallback];
+      const target = trie.next[fallback].get(key);
       trie.fail[child] = target === undefined || target === child ? 0 : target;
       const failNode = trie.fail[child];
       trie.output[child] = trie.labelLength[failNode] > 0 ? failNode : trie.output[failNode];
       queue.push(child);
     }
   }
+};
+
+const buildTrie = (labels: readonly string[]): TTrie => {
+  const trie: TTrie = { next: [new Map()], fail: [0], labelLength: [0], output: [-1] };
+  for (const label of labels) insertLabel(trie, label);
+  linkFallbacks(trie);
   return trie;
 };
 
@@ -68,9 +83,9 @@ export const createLabelMatcher = (labels: readonly string[]): ((text: string) =
     const longest = new Int32Array(text.length);
     let node = 0;
     for (let index = 0; index < text.length; index += 1) {
-      const code = text.charCodeAt(index);
-      while (node !== 0 && !trie.next[node].has(code)) node = trie.fail[node];
-      node = trie.next[node].get(code) ?? 0;
+      const key = keyAt(text, index);
+      while (node !== 0 && !trie.next[node].has(key)) node = trie.fail[node];
+      node = trie.next[node].get(key) ?? 0;
       for (let found = trie.labelLength[node] > 0 ? node : trie.output[node]; found > 0; ) {
         const length = trie.labelLength[found];
         const start = index - length + 1;

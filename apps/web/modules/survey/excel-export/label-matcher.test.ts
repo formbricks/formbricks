@@ -46,6 +46,12 @@ describe("createLabelMatcher", () => {
     }
   });
 
+  test("matches labels with characters outside the Basic Multilingual Plane", () => {
+    const labels = ["@🙂 Name", "@🙂", "@名前"];
+    const text = "Hi @🙂 Name, @🙂! @名前 @🙃";
+    expect([...createLabelMatcher(labels)(text)]).toEqual(bruteForce(labels, text));
+  });
+
   test("ignores an empty label, and matches nothing with none", () => {
     expect([...createLabelMatcher(["", "@a"])("@a")]).toEqual([2, 0]);
     expect([...createLabelMatcher([])("@a")]).toEqual([0, 0]);
