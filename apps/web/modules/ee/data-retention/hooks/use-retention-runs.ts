@@ -2,8 +2,8 @@
 
 import { keepPreviousData, useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { saveBlobAsFile } from "@/lib/utils/file-download";
 import { type TRetentionRunListInput, fetchRetentionExport, listRetentionRuns } from "../lib/api-client";
-import { saveBlobAsFile } from "../lib/file-download";
 import { flattenRetentionRunPages, retentionRunKeys } from "../lib/query";
 
 /** History, newest first, one keyset page at a time ("Load more"). */

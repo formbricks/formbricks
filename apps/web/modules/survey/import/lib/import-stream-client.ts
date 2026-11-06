@@ -1,12 +1,12 @@
-import type { TQsfImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
-import type { TQsfImportStreamBody } from "@/app/api/internal/surveys/import/lib/schemas";
+import type { TSurveyImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
+import type { TSurveyImportStreamForm } from "@/app/api/internal/surveys/import/lib/schemas";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { readSurveyDraftStream } from "@/modules/survey/components/template-list/lib/ai-generate-stream-client";
 
-export const QSF_IMPORT_STREAM_ENDPOINT = "/api/internal/surveys/import/stream";
+export const SURVEY_IMPORT_STREAM_ENDPOINT = "/api/internal/surveys/import/stream";
 
 /** A refusal answered before the stream opened, plus the `Retry-After` header the problem body lacks. */
-export class QsfImportRequestError extends V3ApiError {
+export class SurveyImportRequestError extends V3ApiError {
   readonly retryAfterSeconds: number | null;
 
   constructor(error: V3ApiError, retryAfterSeconds: number | null) {
@@ -17,7 +17,7 @@ export class QsfImportRequestError extends V3ApiError {
       requestId: error.requestId,
       invalid_params: error.invalid_params,
     });
-    this.name = "QsfImportRequestError";
+    this.name = "SurveyImportRequestError";
     this.retryAfterSeconds = retryAfterSeconds;
   }
 }
@@ -30,25 +30,31 @@ export const parseRetryAfterSeconds = (value: string | null): number | null => {
 };
 
 /**
- * Run an import, handing each NDJSON event to `onEvent`. A refusal before the stream opened throws a
- * `QsfImportRequestError`; a failure after it arrives as an `error` event, like Create with AI's stream.
+ * Upload a file to import, handing each NDJSON event to `onEvent`. The file goes as it is, in a
+ * `multipart/form-data` body with the workspace (ENG-6848): the server reads it and tells its type from
+ * its bytes. A refusal before the stream opened throws a `SurveyImportRequestError`; a failure after it
+ * arrives as an `error` event, like Create with AI's stream.
  */
-export async function streamQsfImport(
-  body: TQsfImportStreamBody,
-  { signal, onEvent }: { signal: AbortSignal; onEvent: (event: TQsfImportStreamEvent) => void }
+export async function streamSurveyImportFile(
+  { workspaceId, file }: TSurveyImportStreamForm,
+  { signal, onEvent }: { signal: AbortSignal; onEvent: (event: TSurveyImportStreamEvent) => void }
 ): Promise<void> {
-  const response = await fetch(QSF_IMPORT_STREAM_ENDPOINT, {
+  const form = new FormData();
+  form.append("workspaceId", workspaceId);
+  form.append("file", file);
+
+  // No Content-Type of our own: the browser sets multipart/form-data with the boundary it chose.
+  const response = await fetch(SURVEY_IMPORT_STREAM_ENDPOINT, {
     method: "POST",
     cache: "no-store",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: form,
     signal,
   });
 
   if (!response.ok) {
     const retryAfterSeconds = parseRetryAfterSeconds(response.headers.get("Retry-After"));
-    throw new QsfImportRequestError(await parseV3ApiError(response), retryAfterSeconds);
+    throw new SurveyImportRequestError(await parseV3ApiError(response), retryAfterSeconds);
   }
 
-  await readSurveyDraftStream<TQsfImportStreamEvent>(response, onEvent);
+  await readSurveyDraftStream<TSurveyImportStreamEvent>(response, onEvent);
 }

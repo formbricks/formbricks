@@ -18,6 +18,10 @@ import type { AIEnvironment } from "../types";
 
 const DEFAULT_PROVIDER_NAME = "openai-compatible";
 
+/** The name the adapter is created under, which is also the key its provider options are read from. */
+export const getOpenAICompatibleProviderName = (environment: AIEnvironment): string =>
+  normalizeValue(environment.AI_OPENAI_COMPATIBLE_PROVIDER_NAME) ?? DEFAULT_PROVIDER_NAME;
+
 const isStringRecordJson = (value: string): boolean => {
   try {
     parseStringRecordJson(value);
@@ -228,7 +232,7 @@ export const openaiCompatibleProviderAdapter: AIProviderAdapter = {
       provider: "openai-compatible",
       model,
       baseURL: normalizeValue(environment.AI_OPENAI_COMPATIBLE_BASE_URL),
-      providerName: normalizeValue(environment.AI_OPENAI_COMPATIBLE_PROVIDER_NAME) ?? DEFAULT_PROVIDER_NAME,
+      providerName: getOpenAICompatibleProviderName(environment),
       supportsStructuredOutputs: parseBooleanFlag(
         environment.AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS
       ),
@@ -250,8 +254,7 @@ export const openaiCompatibleProviderAdapter: AIProviderAdapter = {
   createModel: (model: string, environment: AIEnvironment) => {
     const baseURL = resolveBaseUrl(environment);
     const apiKey = normalizeValue(environment.AI_OPENAI_COMPATIBLE_API_KEY);
-    const providerName =
-      normalizeValue(environment.AI_OPENAI_COMPATIBLE_PROVIDER_NAME) ?? DEFAULT_PROVIDER_NAME;
+    const providerName = getOpenAICompatibleProviderName(environment);
     const supportsStructuredOutputs = parseBooleanFlag(
       environment.AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS
     );
