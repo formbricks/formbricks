@@ -436,12 +436,19 @@ jobs:
             --set hub.embeddingClient.enabled=true \
             --set hub.embeddingClient.provider=openai \
             --set hub.embeddingClient.model=tei-model \
+            --set hub.embeddingClient.apiBaseUrl=http://foreground.example/v1 \
+            --set hub.embeddingClient.workerBaseUrl=http://background.example/v1 \
             --set hub.embeddingClient.auth.existingSecret=embedding-key \
             --set hub.embeddingBackfill.enabled=true \
             --set hub.embeddingBackfill.runId=provider-canary \
             --show-only templates/hub-embedding-backfill-job.yaml > "$render_dir/hub-external-embedding-backfill.yaml"
           grep -A1 'name: EMBEDDING_PROVIDER' "$render_dir/hub-external-embedding-backfill.yaml" | grep -q 'value: "openai"'
           grep -A1 'name: EMBEDDING_MODEL' "$render_dir/hub-external-embedding-backfill.yaml" | grep -q 'value: "tei-model"'
+          grep -A1 'name: EMBEDDING_BASE_URL' "$render_dir/hub-external-embedding-backfill.yaml" | grep -q 'value: "http://background.example/v1"'
+          if grep -q 'http://foreground.example/v1' "$render_dir/hub-external-embedding-backfill.yaml"; then
+            echo 'Foreground endpoint leaked into embedding backfill' >&2
+            exit 1
+          fi
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

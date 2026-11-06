@@ -4,6 +4,7 @@
   {{- if or (not (hasPrefix "/" $readinessPath)) (eq (dir $readinessPath) "/") -}}
     {{- fail "hub.worker.embeddingReadiness.path must be absolute with a directory below /" -}}
   {{- end -}}
+  {{- /* Remove the pinned-image guard when values.yaml moves to a Hub release containing hub#161. */ -}}
   {{- if or (eq .Values.hub.image.digest "sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745") (and (not .Values.hub.image.digest) (eq .Values.hub.image.tag "0.14.1")) -}}
     {{- fail "hub.worker.embeddingReadiness.enabled requires a Hub image containing --check-embedding-readiness (hub#161); the pinned 0.14.1 image does not support it" -}}
   {{- end -}}
