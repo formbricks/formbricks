@@ -20,7 +20,10 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
+import {
+  assertCanAssignRole,
+  checkRoleManagementPermission,
+} from "@/modules/ee/role-management/lib/permission";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
@@ -344,8 +347,14 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       parsedInput.teamIds
     );
 
-    if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
+    // Owners and Managers give roles by the one shared rule (C10); a team admin's invite was held to
+    // Member by `validateTeamAdminInvitePermissions` above.
+    if (isOrgOwnerOrManager) {
+      await assertCanAssignRole({
+        organizationId: parsedInput.organizationId,
+        assignerRole: currentUserMembership.role,
+        roles: [parsedInput.role],
+      });
     }
 
     if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
@@ -453,14 +462,12 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new OperationNotAllowedError("Bulk invite is not available on your current plan");
     }
 
-    // Validate roles for the whole batch up front.
-    if (!IS_FORMBRICKS_CLOUD && invitees.some((invitee) => invitee.role === OrganizationRole.billing)) {
-      throw new ValidationError("Billing role is not allowed");
-    }
-
-    if (currentUserMembership.role === "manager" && invitees.some((invitee) => invitee.role !== "member")) {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
-    }
+    // Validate roles for the whole batch up front, by the one shared rule (C10).
+    await assertCanAssignRole({
+      organizationId,
+      assignerRole: currentUserMembership.role,
+      roles: invitees.map((invitee) => invitee.role),
+    });
 
     if (invitees.some((invitee) => invitee.role !== "owner" || (invitee.teamIds ?? []).length > 0)) {
       await checkRoleManagementPermission(organizationId);
@@ -537,17 +544,15 @@ const ZLeaveOrganizationAction = z.object({
 
 export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLeaveOrganizationAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
-
+    // Leaving needs nothing but the caller's own membership. Not `organization.read`: SpiceDB denies it
+    // to a Dashboard viewer (ADR-0025), who must still be able to leave the organization.
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
 
     if (!membership) {
       throw new AuthenticationError("Not a member of this organization");
     }
+
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const { isOwner } = getAccessFlags(membership.role);
 

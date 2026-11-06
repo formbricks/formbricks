@@ -23,13 +23,7 @@ interface SettingsShellProps {
 // exactly as they do inside the workspace layout.
 export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) => {
   const { lastChecked, isPendingDowngrade, active, status } = data.license;
-  const organization = {
-    ...data.organization,
-    billing: {
-      ...data.organization.billing,
-      stripe: data.organization.billing.stripe ?? undefined,
-    },
-  };
+  const { organization } = data;
 
   const shell = (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">

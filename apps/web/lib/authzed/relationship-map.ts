@@ -22,9 +22,13 @@ import {
  * not want.
  */
 
-/** `Membership.role` → `organization#<relation>@user`. Exactly one applies to a given membership. */
+/**
+ * `Membership.role` → `organization#<relation>@user`. Exactly one applies to a given membership.
+ * `dashboard_viewer` (ADR-0025) reaches only `workspace#dashboard_read` through its team grants.
+ */
 export const ORGANIZATION_RELATIONS = {
   [OrganizationRole.billing]: "billing",
+  [OrganizationRole.dashboard_viewer]: "dashboard_viewer",
   [OrganizationRole.manager]: "manager",
   [OrganizationRole.member]: "member",
   [OrganizationRole.owner]: "owner",

@@ -1,4 +1,5 @@
 import type { InfiniteData } from "@tanstack/react-query";
+import type { TDashboardFilterState } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-state";
 import type {
   TAppChart,
   TAppDashboardListItem,
@@ -20,6 +21,13 @@ export const chartKeys = {
   allData: () => [...chartKeys.all, "data"] as const,
   data: (chartId: string, dateRange: TChartDateRangeInput | null) =>
     [...chartKeys.allData(), chartId, dateRange] as const,
+  /** A widget's data read through its dashboard: also keyed by the dashboard and the filters. */
+  dashboardData: (
+    dashboardId: string,
+    chartId: string,
+    dateRange: TChartDateRangeInput | null,
+    filters: readonly TDashboardFilterState[]
+  ) => [...chartKeys.allData(), chartId, dateRange, { dashboardId, filters }] as const,
 };
 
 export const dashboardKeys = {
@@ -31,6 +39,26 @@ export const dashboardKeys = {
   options: (workspaceId: string) => [...dashboardKeys.lists(), "options", workspaceId] as const,
   details: () => [...dashboardKeys.all, "detail"] as const,
   detail: (dashboardId: string) => [...dashboardKeys.details(), dashboardId] as const,
+  /**
+   * The embedded-data fields a dashboard's filters can use; under the dashboard's detail key so a widget
+   * change refreshes it, and keyed by its charts' datasets so a chart moved to another dataset does too.
+   */
+  filterFields: (dashboardId: string, datasetIds: readonly string[]) =>
+    [...dashboardKeys.detail(dashboardId), "filterFields", datasetIds] as const,
+  /**
+   * One search of a field's value list on a dashboard; under the chart data keys so a chart edit refreshes
+   * it too.
+   */
+  filterValues: (
+    dashboardId: string,
+    context: {
+      dateRange: TChartDateRangeInput | null;
+      filters: readonly TDashboardFilterState[];
+      search: string;
+      field: string;
+      operator: string;
+    }
+  ) => [...chartKeys.allData(), "filterValues", dashboardId, context] as const,
 };
 
 export const flattenPages = <T>(data?: InfiniteData<TV3ListPage<T>>): T[] =>

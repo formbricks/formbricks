@@ -35,6 +35,24 @@ You can build a chart in two ways:
 
 Pick a Feedback Dataset, choose dimensions and measures (count of records, average NPS, ...), apply filters, and select a chart type. Live preview updates as you tweak.
 
+### Filter by embedded data
+
+Embedded data that a Feedback Source carries on its records (a plan, a region, a customer segment) shows up in
+the builder under **Embedded data**, next to the dataset's other fields. You can group by an embedded-data field and
+filter on it like any other text field. The builder lists the 100 most frequent embedded-data keys of the dataset;
+a chart already saved on a rarer key keeps working.
+
+### Filter by answers to another question
+
+Use **Answer to question** in the filters to keep only the records whose submission answered another question of the
+dataset a certain way, for example "comments from people who gave an NPS of 9 or 10" or "CSAT of customers who chose
+*Enterprise* as their plan". Pick the question, then the answer it must have; for single-choice and rating questions
+you can also pick an answer it must not have. A multiple-choice question with several selections matches when any
+of the chosen options was selected, and has no "is not". A submission that skipped
+the question never matches.
+
+A chart takes up to 5 answer filters, and you can combine them with other filters in AND and OR groups.
+
 ### Matrix chart
 
 To chart a matrix question:
@@ -81,13 +99,117 @@ If someone else saves the dashboard while you are editing it, saving tells you s
 version and drop your changes, or **Save mine anyway** to keep yours; the dialog names any charts they added that
 saving yours would remove.
 
+## Dashboard filters
+
+Dashboard filters narrow all of a dashboard's charts at once, for example to one region, one product, or one plan.
+They use the same **Filter** button, **Advanced filter** and filter chips as the responses page, and sit at the top
+of the dashboard next to the date range.
+
+### Add your own filters
+
+<Steps>
+  <Step title="Open the Filter menu">
+    Open the dashboard and click the **Filter** button. Every field you can filter by is listed there, grouped and
+    searchable. Fields with a few fixed options, such as sentiment or value band, can be ticked right there.
+  </Step>
+  <Step title="Set the filter">
+    Pick any other field and its filter opens on a chip: the operator is chosen for you; change it if you need
+    (**is**, **is not**, **contains**, **is greater than**, **is after**, **is set**, **is not set**, ...). Then set
+    the value: pick one or several from a list, type it, or choose a day, depending on the field. Click a chip to
+    change its filter, including a ticked one, whose chip offers the other operators too.
+  </Step>
+  <Step title="Done">
+    Click **Done**. The filter narrows every chart right away. To write several rules at once, use **Advanced
+    filter** at the bottom of the menu.
+  </Step>
+</Steps>
+
+A filter can use any field the charts can be grouped by, including embedded-data fields. An embedded-data field
+named like another field reads, for example, "Channel · Embedded data", so the two are told apart. Answer filters are
+not offered here: they belong in each chart, in the chart builder.
+
+### Values to pick from
+
+- **Fields whose values are looked up**, such as the source name, the field label, or an embedded-data field, list
+  the values that occur in the dashboard's charts for **is** and **is not**, narrowed by the date range and the other
+  filters. Search the list to find more; it shows up to 100 values at a time. For **contains** you type the text.
+  **Value (Option)**, **Source ID** and **Ending** store ids, so their lists show each option's label, the survey's
+  name or the ending's headline instead, and you can search by that text.
+- **Fields with a fixed set of options**, such as sentiment, value band or a yes/no field, list all of their options,
+  greying out the ones the dashboard's charts don't have. A field with none at all is shown disabled; sentiment then
+  reads "No sentiment yet: turn on AI enrichment".
+- **Free-text fields**, such as the response text or the user ID, and number fields take a value you type, and date
+  fields a day you pick. Free-text fields never list values, so the text of individual responses isn't shown to
+  everyone who opens the dashboard.
+
+**Is** and **is not** on a field with a list take one value or several: the chip reads "Product is Alpha", "Product is
+any of Alpha, Beta" or "Product is none of Alpha, Beta". Lists also offer **(No value)**: picked with values, **is**
+keeps records with any of them or with no value; **is not** keeps records that have a value and it is none of the
+others. For **Language** this option reads **Default**: a response without a language code was answered in its
+survey's default language. Every field can also be **is set** (has a value) or **is not set** (has none).
+
+**Is not** and **contains none of** also keep records that have no value for that field: "Value (Number) is not 10"
+keeps text answers, which have no number.
+
+Use the date range to pick the period every chart shows. It replaces the period each chart was saved with, so
+you can look further back or ahead than the chart's author did; on a chart grouped by time, **All time** keeps the
+chart's own period.
+
+Your filters and date range are your own: they are remembered for this dashboard in your browser, and they don't
+change what anyone else sees. They are also part of the page address, so a link you share opens the dashboard with
+the same filters.
+
+### Lock filters for everyone
+
+An owner, manager or member who can edit the dashboard can lock filters for everyone who opens it:
+
+<Steps>
+  <Step title="Set the filters">
+    Add the filters you want, as above.
+  </Step>
+  <Step title="Lock them">
+    Click **Lock for everyone**. The filters are saved on the dashboard and show with a lock, before each person's own.
+  </Step>
+</Steps>
+
+A locked filter applies to every reader, Dashboard viewers included, and they can't remove it; their own filters
+narrow further. To unlock a filter, an editor clicks the **×** on its chip; **Unlock filters** takes every locked filter
+off at once, after you confirm. A dashboard holds up to 10 locked filters.
+The date range is never locked.
+
+### Filters only narrow a chart
+
+A dashboard filter is added on top of each chart's own filters and never replaces them; the date range is the one
+exception, as above. A chart saved for
+products A and B shows nothing when you filter for product C, rather than showing product C. A looked-up value list
+only offers values that at least one chart on the dashboard can show.
+
+If a chart's Feedback Dataset doesn't have the field a filter uses, the chart can't be narrowed by it. The chart then
+says "This chart can't be filtered by" and names the filter, instead of showing data the filter would have left out.
+
+The same goes for **Sentiment**, **Sentiment Score** and **Emotions** on a chart that only shows answers without text,
+such as an NPS, CSAT or rating chart: AI enrichment only reads text answers, so these answers never carry them. Such a
+chart says "This chart can't be filtered by Sentiment" rather than showing no data. Filters that also keep records
+without a value, such as **is not**, **contains none of** or **is not set**, still apply to it.
+
+<Note>
+  A filter's value list shows the values of that field to everyone who can open the dashboard. A Dashboard viewer
+  can filter only by embedded-data fields that a chart on the dashboard groups by, so they never see the values
+  of a field like an email address unless a chart already shows it. Locked filters still apply to them on any
+  field.
+</Note>
+
 Charts and dashboards are also available through the [MCP server](/platform/mcp/overview), so an agent can build
-them for you.
+them for you and lock a dashboard's filters.
 
 ## Permissions
 
 - Owners, Managers, and members with **Manage** or **Read & Write** access can create and edit dashboards and charts.
 - Members with **Read** access can view dashboards and charts but cannot edit them.
+- Dashboard viewers can open the dashboards of the Workspaces their teams have access to and use their filters, and
+  see nothing else. See [Dashboard viewer](/platform/features/user-management/organizations-and-roles#dashboard-viewer-role).
+- Everyone who can open a dashboard can add their own filters, which only they see; only those who can edit it can
+  lock filters for everyone or unlock them.
 
 ## Requirements
 

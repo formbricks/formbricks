@@ -5,7 +5,6 @@ import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-acce
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
-  problemBadRequest,
   problemConflict,
   problemForbidden,
   problemUnauthorized,
@@ -13,10 +12,12 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { requireRoleManagementEntitlement } from "@/modules/ee/role-management/lib/api-access";
+import {
+  refuseRoleAssignment,
+  requireRoleManagementEntitlement,
+} from "@/modules/ee/role-management/lib/api-access";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
 import type { TMemberUpdateBody } from "../schemas";
@@ -65,36 +66,14 @@ const applyRoleChange = (
     });
 };
 
-/** The role rules: billing is Cloud-only, managers only assign members, and only owners change an owner. */
-const refuseRoleAssignment = (
-  callerRole: TMembership["role"],
-  targetRole: TMembership["role"] | undefined,
-  role: TMemberUpdateBody["role"],
-  requestId: string,
-  instance?: string
-): Response | null => {
-  if (!IS_FORMBRICKS_CLOUD && role === "billing") {
-    return problemBadRequest(requestId, "Billing role is not allowed", {
-      instance,
-      invalid_params: [{ name: "role", reason: "Billing role is not allowed" }],
-    });
-  }
-  if (callerRole === "manager" && role !== "member") {
-    return problemForbidden(requestId, "Managers can only assign users to the member role", instance);
-  }
-  if (callerRole !== "owner" && targetRole === "owner") {
-    return problemForbidden(requestId, "Only owners can change the role of an owner", instance);
-  }
-  return null;
-};
-
 /**
  * `PATCH /api/internal/members/{userId}?organizationId=`: change a member's organization role.
  *
  * The caller must be a member with `organization.manage_access` (user management, per
- * `USER_MANAGEMENT_MINIMUM_ROLE`) and `organization.manage`. Managers may only assign the member role and
- * may not touch an owner; the billing role exists only on Formbricks Cloud; the last active owner can't be
- * demoted; and the role management licence applies. A missing member gets the same 403 as one in an
+ * `USER_MANAGEMENT_MINIMUM_ROLE`) and `organization.manage`. The role rules are `assertCanAssignRole`'s
+ * (managers give only the roles they may and may not touch an owner; billing is Cloud-only; the Dashboard
+ * viewer role needs its plan); the last active owner can't be demoted; and the role management licence
+ * applies. A missing member gets the same 403 as one in an
  * organization the caller can't see.
  */
 export async function updateMemberRoleOperation({
@@ -151,7 +130,14 @@ export async function updateMemberRoleOperation({
   if (limited) return limited;
 
   const target = await getMembershipByUserIdOrganizationId(userId, organizationId);
-  const refused = refuseRoleAssignment(callerMembership.role, target?.role, body.role, requestId, instance);
+  const refused = await refuseRoleAssignment({
+    organizationId,
+    assignerRole: callerMembership.role,
+    role: body.role,
+    targetCurrentRole: target?.role,
+    requestId,
+    instance,
+  });
   if (refused) return refused;
 
   const notEntitled = await requireRoleManagementEntitlement({ organizationId, requestId, instance });

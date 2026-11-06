@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   getOrganizationOwnerCount: vi.fn(),
   updateMembership: vi.fn(),
   checkRoleManagementPermission: vi.fn(),
+  getIsDashboardViewerRoleEnabled: vi.fn(),
   transaction: vi.fn(),
   queueAuditEvent: vi.fn(),
   isFormbricksCloud: true,
@@ -33,8 +34,14 @@ vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
   getOrganizationOwnerCount: mocks.getOrganizationOwnerCount,
 }));
 vi.mock("@/modules/ee/role-management/lib/membership", () => ({ updateMembership: mocks.updateMembership }));
-vi.mock("@/modules/ee/role-management/lib/permission", () => ({
+// The real role rules (`assertCanAssignRole`); only the licence lookup is stubbed.
+vi.mock("@/modules/ee/role-management/lib/permission", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/role-management/lib/permission")>()),
   checkRoleManagementPermission: mocks.checkRoleManagementPermission,
+}));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getAccessControlPermission: vi.fn().mockResolvedValue(true),
+  getIsDashboardViewerRoleEnabled: mocks.getIsDashboardViewerRoleEnabled,
 }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
@@ -270,13 +277,28 @@ describe("PATCH /api/internal/members/{userId}", () => {
     const response = await setRole("manager");
 
     expect(response.status).toBe(403);
-    expect((await response.json()).detail).toBe("Managers can only assign users to the member role");
+    expect((await response.json()).detail).toBe(
+      "Managers can only give the Member and Dashboard viewer roles"
+    );
     expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 
   test("lets a manager assign the member role to a non-owner", async () => {
     roles({ caller: "manager", target: "billing" });
     expect((await setRole("member")).status).toBe(200);
+  });
+
+  test("lets a manager give the Dashboard viewer role when the plan has it, and refuses it when not", async () => {
+    roles({ caller: "manager", target: "member" });
+    mocks.getIsDashboardViewerRoleEnabled.mockResolvedValue(true);
+    expect((await setRole("dashboard_viewer")).status).toBe(200);
+
+    mocks.updateMembership.mockClear();
+    mocks.getIsDashboardViewerRoleEnabled.mockResolvedValue(false);
+    const refused = await setRole("dashboard_viewer");
+    expect(refused.status).toBe(403);
+    expect((await refused.json()).detail).toBe("The Dashboard viewer role is not available on this plan");
+    expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 
   test("refuses with the licence's reason after authorizing, when there is no role management", async () => {

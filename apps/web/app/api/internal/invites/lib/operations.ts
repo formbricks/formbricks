@@ -2,18 +2,15 @@ import "server-only";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
-import {
-  problemBadRequest,
-  problemForbidden,
-  problemUnauthorized,
-  successResponse,
-} from "@/app/api/v3/lib/response";
+import { problemForbidden, problemUnauthorized, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getInvite } from "@/lib/utils/services";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { requireRoleManagementEntitlement } from "@/modules/ee/role-management/lib/api-access";
+import {
+  refuseRoleAssignment,
+  requireRoleManagementEntitlement,
+} from "@/modules/ee/role-management/lib/api-access";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { getInvite as getInviteAuditSnapshot } from "@/modules/organization/settings/teams/lib/invite";
 import type { TInviteUpdateBody } from "../schemas";
@@ -21,8 +18,8 @@ import { serializeInviteRole } from "../serializers";
 
 /**
  * `PATCH /api/internal/invites/{inviteId}`: change the role a pending invite grants. The organization is
- * read off the invite. The caller must be a member with `organization.manage`; managers may only invite
- * members, the billing role exists only on Formbricks Cloud, and the role management licence applies.
+ * read off the invite. The caller must be a member with `organization.manage`; the role rules are
+ * `assertCanAssignRole`'s, as for a member's role; and the role management licence applies.
  * A missing invite gets the same 403 as one in an organization the caller can't see.
  */
 export async function updateInviteOperation({
@@ -68,16 +65,14 @@ export async function updateInviteOperation({
   });
   if (limited) return limited;
 
-  if (!IS_FORMBRICKS_CLOUD && body.role === "billing") {
-    return problemBadRequest(requestId, "Billing role is not allowed", {
-      instance,
-      invalid_params: [{ name: "role", reason: "Billing role is not allowed" }],
-    });
-  }
-
-  if (callerMembership.role === "manager" && body.role !== "member") {
-    return problemForbidden(requestId, "Managers can only invite members", instance);
-  }
+  const refused = await refuseRoleAssignment({
+    organizationId,
+    assignerRole: callerMembership.role,
+    role: body.role,
+    requestId,
+    instance,
+  });
+  if (refused) return refused;
 
   const notEntitled = await requireRoleManagementEntitlement({ organizationId, requestId, instance });
   if (notEntitled) return notEntitled;

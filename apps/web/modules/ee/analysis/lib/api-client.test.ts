@@ -13,6 +13,7 @@ import {
   getChart,
   getChartApiErrorMessage,
   getChartData,
+  getChartFieldCatalog,
   getDashboard,
   isStaleDashboardError,
   listChartFieldValues,
@@ -319,6 +320,16 @@ describe("analysis api client requests", () => {
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "/api/v3/charts/fields/FeedbackRecords.field%20label/values?workspaceId=w&datasetId=d&search=sp%26ed",
       "/api/v3/charts/fields/x/values?workspaceId=w&datasetId=d",
+    ]);
+  });
+
+  test("reads one dataset's field catalog", async () => {
+    const catalog = { fields: [], datePresets: ["last 7 days"] };
+    const fetchMock = stubFetch(catalog);
+
+    await expect(getChartFieldCatalog({ workspaceId: "w", datasetId: "d" })).resolves.toEqual(catalog);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/v3/charts/fields?workspaceId=w&datasetId=d",
     ]);
   });
 

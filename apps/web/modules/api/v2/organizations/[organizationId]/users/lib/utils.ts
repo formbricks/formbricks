@@ -1,10 +1,12 @@
 import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma } from "@formbricks/database/prisma";
+import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getUserManagementAccess } from "@/lib/membership/utils";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
+import { assertCanAssignRole } from "@/modules/ee/role-management/lib/permission";
 
 export const getUsersQuery = (organizationId: string, params?: TGetUsersFilter) => {
   let query: Prisma.UserFindManyArgs = {
@@ -97,22 +99,31 @@ export const getMembershipRoleByEmail = async (
 };
 
 /**
- * Mirrors the role clamp enforced on the settings/session path
- * (app/api/internal/members/[userId]/lib/operations.ts): an owner may assign any role, a manager may only assign
- * the member role and may not change the role of an existing owner (no demoting owners). Anyone
- * else — including an unresolved creator — may not assign a role at all. This prevents privilege
- * escalation (e.g. a manager promoting a user to owner) through the management API, matching the
- * guard that the UI already applies.
+ * Whether the API key's creator may give `targetRole` (to a member whose role is now `targetCurrentRole`),
+ * by the app's one role rule (`assertCanAssignRole`, C10) on the management API path: an owner gives
+ * Member, Manager or Owner, a manager gives Member and never touches an owner, anyone else gives nothing,
+ * and this API never gives the Dashboard viewer (ADR-0025) or, off Cloud, Billing. This prevents
+ * privilege escalation (e.g. a manager promoting a user to owner) through the management API.
  */
-export const canAssignOrganizationRole = (
+export const mayAssignOrganizationRole = async (
+  organizationId: string,
   assignerRole: TOrganizationRole | null,
   targetRole: TOrganizationRole,
   targetCurrentRole?: TOrganizationRole | null
-): boolean => {
-  if (assignerRole === OrganizationRole.owner) return true;
-  if (targetCurrentRole === OrganizationRole.owner) return false;
-  if (assignerRole === OrganizationRole.manager) return targetRole === OrganizationRole.member;
-  return false;
+): Promise<boolean> => {
+  try {
+    await assertCanAssignRole({
+      organizationId,
+      assignerRole,
+      roles: [targetRole],
+      targetCurrentRole,
+      channel: "managementApi",
+    });
+    return true;
+  } catch (error) {
+    if (error instanceof OperationNotAllowedError || error instanceof ValidationError) return false;
+    throw error;
+  }
 };
 
 /**

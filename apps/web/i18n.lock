@@ -76,6 +76,9 @@ checksums:
     auth/oauth/client_uri: 39d52c7cfea1185b843e6388d65df4bd
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
     auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
+    auth/oauth/dashboard_viewer_no_dashboard_scope: 79ce3b9f2fc06850bc63405425e8d782
+    auth/oauth/dashboard_viewer_scope_description: 485c4733b0af20534efd05854bd670b2
+    auth/oauth/dashboard_viewer_scope_title: 409c50e64b51dad16a9f8728d654aa5a
     auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
     auth/oauth/formbricks_website: 95c2f69c6b6428e1aa6c26f4dd427e22
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900
@@ -531,6 +534,7 @@ checksums:
     common/table_settings: 5dddbe3e421fca83b26b014635e06dc1
     common/table_toolbar/active_filters: 5e8ba09b9ea1f87584d4f4ec6206ec7f
     common/table_toolbar/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
+    common/table_toolbar/advance_filter: 1e1f79a2bd19fbafcc5b79bb24fecd32
     common/table_toolbar/advanced_filter: a69640af094411739c3a917326d38aff
     common/table_toolbar/advanced_filter_description: c6a2c8c27d4e49331f629c9fd2af75d2
     common/table_toolbar/attribute_type: f04471a7ddac844b9ad145eb9911ef75
@@ -540,10 +544,16 @@ checksums:
     common/table_toolbar/data_type: a155980d032f6441f0713d7ebaf776ce
     common/table_toolbar/display_columns: b4b7903049ee6daeff81d6fe11c66213
     common/table_toolbar/edit_filter: 992ba873f2f15f36a51606847ec00b91
+    common/table_toolbar/enter_value: 6faf7f1a38d9c160c3c9a3d84a370ead
     common/table_toolbar/filter_with_count: 210e541e2e044ebd36aedb186e26c2be
     common/table_toolbar/finish_or_remove_rules: f84dbcd60539b8d1efad414e9f490394
+    common/table_toolbar/locked_filter: cc1b2adeb79fae0e1b45aceb4da850f0
     common/table_toolbar/no_rows_match: 92a34935a19ebc5db86786160b3fc3f6
+    common/table_toolbar/no_values: 6ff5ed41e5f1553e7ff0f772e5fd582a
+    common/table_toolbar/no_values_match: e9645265e71e66984fa0b1fef2452da5
     common/table_toolbar/operator_contains: 06dd606c0a8f81f9a03b414e9ae89440
+    common/table_toolbar/operator_contains_any_of: f53f11cae293d96e4395529bb6775c1b
+    common/table_toolbar/operator_contains_none_of: 7a7ed0e5f63eb1c4a441fe8f10f47006
     common/table_toolbar/operator_does_not_contain: 854da2bdf10613ce62fb454bab16c58b
     common/table_toolbar/operator_does_not_end_with: 06ffdaa7b01a2786bcb934d838698038
     common/table_toolbar/operator_does_not_start_with: 546f7950abfae95af54796391c946a5b
@@ -556,6 +566,7 @@ checksums:
     common/table_toolbar/operator_is_after: f9d9296eb9a5a7d168cc4e65a4095a87
     common/table_toolbar/operator_is_any_of: 692ceecb91b61066de37aa869014e7b6
     common/table_toolbar/operator_is_before: 2462480cf4e8d2832b64004fbd463e55
+    common/table_toolbar/operator_is_none_of: a33200a934451b14fd5370a4170e9de6
     common/table_toolbar/operator_is_not_set: 906801489132487ef457652af4835142
     common/table_toolbar/operator_is_set: 9850468156356f95884bbaf56b6687aa
     common/table_toolbar/operator_less_equal: f2ccfd65a5fadd733c6d1111425f969b
@@ -566,12 +577,18 @@ checksums:
     common/table_toolbar/owner_me: e0cdc99c6c88fe486dbd78d9d366b788
     common/table_toolbar/owner_others: 39160224ce0e35eb4eb252c997edf4d8
     common/table_toolbar/properties: d9d4b7cdfa9324272f895ed8687f607b
+    common/table_toolbar/refine_search_for_more: 609f69a071fa940e0f0894eb19d0a405
     common/table_toolbar/remove_filter: 086d53e6da9f98509b240125588fe942
     common/table_toolbar/reorder_column: 3cf041d5a9cc252f99c48fddb87d2fad
     common/table_toolbar/result_count: eeaaef6044758a554987b92d5d30283b
     common/table_toolbar/result_count_capped: 5c9eb1f333275e866da1de778af5f455
+    common/table_toolbar/search_fields: 7de972ec4a0417e149ce4e63ab8ec668
     common/table_toolbar/search_values: 1a8eedfc49ce6ab17b2d066c8406c5c8
+    common/table_toolbar/select_operator: c8e105116d65a17dcf68f6026a5e35fc
+    common/table_toolbar/select_property: cfd632297d7809a3539e90c9cd4728d9
     common/table_toolbar/select_row: 0ddeed6e6dc5533929bdb8d93260f1d9
+    common/table_toolbar/select_value: 91b18fe5342891becfcae4157d3ba101
+    common/table_toolbar/select_values: 7ee1b4f419ea407ecdb7d7f44fa0905b
     common/table_toolbar/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
     common/table_toolbar/sort_name: 9368b5a047572b6051f334af5aa76819
     common/table_toolbar/sort_newest_first: 45b15eb6adfe5031299914312e4cebfc
@@ -580,6 +597,10 @@ checksums:
     common/table_toolbar/sort_recently_updated: acd4458ffb8e72dcaa64f1af58fe8c0b
     common/table_toolbar/type_custom: b7b89901f46267f532600a23cfc54ae2
     common/table_toolbar/type_default: d9c6dc5c412fe94143dfd1d332ec81d4
+    common/table_toolbar/unlock_filter: 7755025783261b4a0660a3ae85302f5b
+    common/table_toolbar/use_typed_value: b2892e29ebe2337b8f80e7436f055a9f
+    common/table_toolbar/value: 34b0eaa85808b15cbc4be94c64d0146b
+    common/table_toolbar/value_of: 834e12672b4f09b9dd3322620bfd07fe
     common/table_toolbar/values_failed: df7c7e700f7171b811fa61ebd1de0b97
     common/tabs: 15b9844c44a512de01a064bac53d184a
     common/tags: 97813c8ae67d69575fd04e35a88aed0c
@@ -1756,6 +1777,7 @@ checksums:
     workspace/analysis/charts/ai_status_querying: 1c3c61f73ad075cf6515f5575cd7910e
     workspace/analysis/charts/ai_status_reading: 871e53480f4b0e1db78b847885dab553
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
+    workspace/analysis/charts/answer_to_question: 190de60daf850808979f83d994e4610f
     workspace/analysis/charts/area_display: eb53ad78765ddc4050d898a70f2fac68
     workspace/analysis/charts/area_display_filled: 8a5591fe0fffc8cce37cb422c0a8cf78
     workspace/analysis/charts/area_display_line: b2083b10c8f7d21284e2892b97a5e8f1
@@ -1792,6 +1814,7 @@ checksums:
     workspace/analysis/charts/dashboard: c9380ea68c8c76ea451bd9613329a07c
     workspace/analysis/charts/dashboard_select_placeholder: 9b875f2f10050d650ae63be53fe0d4e8
     workspace/analysis/charts/data_source: c29cdd1967a3d1b1a39e91e14469b047
+    workspace/analysis/charts/dataset_fields_failed: ef0d0888fee5717f20f149c7532e0c00
     workspace/analysis/charts/date_preset_last_24_hours: 0bc5386969795001992fccbe817580d3
     workspace/analysis/charts/date_preset_last_30_days: a738894cfc5e592052f1e16787744568
     workspace/analysis/charts/date_preset_last_6_months: 1be27ca36359a3a8131f2408827f0f69
@@ -1819,6 +1842,7 @@ checksums:
     workspace/analysis/charts/distribution_value_share: 954274ec06ca0aeafb52b68ef8a406f6
     workspace/analysis/charts/edit_chart_description: 822890e4b6068096e2fe8b7b78b4474f
     workspace/analysis/charts/edit_chart_title: d4d979e31c26af718cd0d000f6a34af0
+    workspace/analysis/charts/embedded_data: 8e5bed779eec367b8b9617182079d0d1
     workspace/analysis/charts/emotion_value_anger: 4fd64fc804c247fc3fcbc7dc147b62fe
     workspace/analysis/charts/emotion_value_disgust: e5860fbfc609c8c8686db8a18cadf932
     workspace/analysis/charts/emotion_value_fear: b7621ac47c2543dff100f55f948df8cf
@@ -1924,6 +1948,7 @@ checksums:
     workspace/analysis/charts/group_by_description: bebcfe28bb315834aa3a307834acfbe0
     workspace/analysis/charts/group_data: 55c0035773d8c6b7f4d96363a61cda82
     workspace/analysis/charts/horizontal_bars: 9f7e34591bab8b54fb713078677cf9d5
+    workspace/analysis/charts/is_any_of: 692ceecb91b61066de37aa869014e7b6
     workspace/analysis/charts/is_not_set: 906801489132487ef457652af4835142
     workspace/analysis/charts/is_set: 9850468156356f95884bbaf56b6687aa
     workspace/analysis/charts/language_value_unspecified: 85dba018c7aea3e0590a113361f419c5
@@ -1973,7 +1998,6 @@ checksums:
     workspace/analysis/charts/no_data_returned: 73949b8732604b9e2d22d046cc4a6ef9
     workspace/analysis/charts/no_data_source_available: 0b247d065eaf2d0fc1c8ec558eebfba6
     workspace/analysis/charts/no_grouping: e3a6943e61407600cae057e0833a482d
-    workspace/analysis/charts/no_valid_data_to_display: d1ba2b0686520c0a2c62ee73daa1c9c9
     workspace/analysis/charts/no_values_found: c86fa6b3d7f7e255525cd2f9330a9295
     workspace/analysis/charts/not_contains: 5894f5474271b8902d7892e43500d227
     workspace/analysis/charts/not_enriched: a120747f948eea14c99c0ff98720e0b9
@@ -2033,6 +2057,7 @@ checksums:
     workspace/analysis/charts/vertical_bars: 408174fe449ea6f5457988dd218183be
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
     workspace/analysis/dashboards/already_on_this_dashboard: a4668a6a887b0bcd312cf30ebb1a89ad
+    workspace/analysis/dashboards/chart_cannot_be_filtered_by: 39518f0bb66ad3440a225d69e1a21a46
     workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4
     workspace/analysis/dashboards/chart_duplicated: 52765f173bd6fd5382731f8e06e436e0
     workspace/analysis/dashboards/chart_remove_failed: 198f5c3bdd522b40b80cb7479d3051a1
@@ -2056,8 +2081,8 @@ checksums:
     workspace/analysis/dashboards/dashboard_save_failed: 2b6c7be7947bc7ebb0389b71b5922ba6
     workspace/analysis/dashboards/dashboard_saved: 6eb27743b6b12d3d0a20b430319890b8
     workspace/analysis/dashboards/date_filter_all_time: 62258944e7c2e83f3ebf69074b2c2156
+    workspace/analysis/dashboards/date_filter_choose: 9398706509cfa9fca27d4d7c15810091
     workspace/analysis/dashboards/date_filter_default: cfacb900e350367581782f4078264a96
-    workspace/analysis/dashboards/date_filter_placeholder: be548c93a997ed6c2e9ac5c943faac10
     workspace/analysis/dashboards/delete_confirmation: 468a0fb0e24a985cc47a778b50b334ba
     workspace/analysis/dashboards/delete_failed: b108acc28b1f9abcb544a358a958b54b
     workspace/analysis/dashboards/delete_success: 9d161634daab9ea9d17fbfb413eeeffa
@@ -2065,19 +2090,48 @@ checksums:
     workspace/analysis/dashboards/duplicate_success: 37cbb14143776d4c215432673e32ebd9
     workspace/analysis/dashboards/failed_to_load_chart_data: ea980a6d12b1b1efed90d991dd0dd0fd
     workspace/analysis/dashboards/failed_to_load_dashboard: 6fb0efd73e55a235e75ece8c35aa2ebe
+    workspace/analysis/dashboards/filter_embedded_field_label: ac7c5c7477fc982ec3a23dc3b8c43ea7
+    workspace/analysis/dashboards/filter_limit_reached: 0afdd9c25b1a67910920a81201781c19
+    workspace/analysis/dashboards/filter_no_sentiment_yet: d1373b00cbaeadde6e06f0d450437af7
+    workspace/analysis/dashboards/filter_no_value: 3a730a01d0291584a86a35fb3a68d5ab
+    workspace/analysis/dashboards/filter_no_value_language: d9c6dc5c412fe94143dfd1d332ec81d4
+    workspace/analysis/dashboards/filter_no_values_in_view: e14c39b3ce9587659732368f13997b4d
+    workspace/analysis/dashboards/filter_no_values_yet: 9a316e2b4e1b186421f2ae408192cd30
+    workspace/analysis/dashboards/filter_picks_too_long: 672b3d1dbe30ca53e9823b2c1c76c3dc
+    workspace/analysis/dashboards/filter_sentiment_score_placeholder: cf8ea5f21c3ef909c8c29e3168daec1f
+    workspace/analysis/dashboards/filter_unlocked: 3510ab18e131a5d3f94928c03cc51478
+    workspace/analysis/dashboards/filters_locked: e7a8766febbc1ae387b65f4fbcf4b68c
+    workspace/analysis/dashboards/filters_unlocked: 8ec8ffde28e093907aa0c75a2677034a
+    workspace/analysis/dashboards/lock_filters: 23c03896f31682272a68c2d6140b19fd
+    workspace/analysis/dashboards/lock_filters_tooltip: b53c856195ee607a516e655976977cfd
+    workspace/analysis/dashboards/locked_filter_hint: e5c57a9ffae20d0939ef8a292d00769e
+    workspace/analysis/dashboards/locked_filter_hint_editor: 60417e28c8b2dd8ddebd46fadc13e342
+    workspace/analysis/dashboards/locked_filters_failed: 6998d2c03d1ed2147dbf2161600e5263
+    workspace/analysis/dashboards/locked_filters_stale: f4aac3804107b26cf65234e3a536aaa0
+    workspace/analysis/dashboards/locked_value_hint: ebca02f5592faeca321ff1652e6b987e
     workspace/analysis/dashboards/new_dashboard: 994b8a982af4c22385861d26e373a949
     workspace/analysis/dashboards/no_charts_match_search: 7ef6b1e501080e8a50d9997234a51fca
     workspace/analysis/dashboards/no_dashboards_found: b4d9dce52bf5f83d074306980b505477
     workspace/analysis/dashboards/no_dashboards_found_description: d5b83ba325d50cf69d8f0258981357ce
+    workspace/analysis/dashboards/no_dashboards_read_only_description: 8b92a744bb4aaedf31af2885f5db4fc5
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4
+    workspace/analysis/dashboards/no_data_message_read_only: 859e96906086ff2375bdda9c446f5f35
     workspace/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
     workspace/analysis/dashboards/stale_description: 1121ce6eb8eceb3151f3dc2596cd68c5
     workspace/analysis/dashboards/stale_overwrite_removes: eebe816783653c081af3f5f799e0cdfc
     workspace/analysis/dashboards/stale_reload: b2ade3e814cfd4cf6bcce526e70bcb34
     workspace/analysis/dashboards/stale_save_anyway: bee56f4b85457c1c692851b8a5c49c01
     workspace/analysis/dashboards/stale_title: 3225dec0fef3d3d84e61f3d7f92dcd70
+    workspace/analysis/dashboards/unlock_filters: d4f539b66bc13ca0991b4dea7370fe34
+    workspace/analysis/dashboards/unlock_filters_confirm_body: d202bf95b6ad3ab17036e1328b3d7d8b
+    workspace/analysis/dashboards/unlock_filters_confirm_title: 0d1c2ab4e3922fe3118da5e07dfd043e
+    workspace/analysis/dashboards/unlock_filters_tooltip: 526c1ee22d016f3fe46c04b9398daf5c
     workspace/analysis/dashboards/upgrade_prompt_description: 738cf2e2aa5365b1199d11b683505050
     workspace/analysis/dashboards/upgrade_prompt_title: eef434745b5ef7ecc7f49a16e67e5a7a
+    workspace/analysis/dashboards/viewer_no_access_subtitle: a202cc1c94130305464ed984b44aeac6
+    workspace/analysis/dashboards/viewer_no_access_title: 71e219018e36d3acddcc00f29a7a3268
+    workspace/analysis/dashboards/viewer_plan_unavailable_subtitle: daf3a66a5c65b32fb7f4cf01701f0b84
+    workspace/analysis/dashboards/viewer_plan_unavailable_title: dfc2318f57ecd2f3a9c58bf5236b2f56
     workspace/analysis/dashboards/widget_view: 3104ba698f31ac027f53195f44427f28
     workspace/analysis/manage_feedback_sources: 6aa6a82334ab680b5aa187b7245e8ec8
     workspace/analysis/no_feedback_records_message: 9e877c86e7cc2ba897af65a8838b4e12
@@ -3550,7 +3604,9 @@ checksums:
     workspace/settings/general/ai_smart_tools_enabled: 1dda984f5262c5f9120ee9a409236758
     workspace/settings/general/ai_smart_tools_enabled_description: 1ceca6707746d3ab4a530712a06d91da
     workspace/settings/general/bulk_invite_billing_not_supported: 88980b9eb64135e6a20b1c62dbea94bd
+    workspace/settings/general/bulk_invite_dashboard_viewer_not_available: 67e93faf7bc08bfd262f8417fd7d35ba
     workspace/settings/general/bulk_invite_download_template: f4decce8ee5f0b408ad8c5ce11c4b586
+    workspace/settings/general/bulk_invite_role_not_allowed: 49238ed49f24c90607011d513840eecb
     workspace/settings/general/bulk_invite_rows_detected: a1a9ec00c4168b647667aae39745f44f
     workspace/settings/general/bulk_invite_rows_more: 65d611aa1bad0c01b7603c6183bc56b9
     workspace/settings/general/bulk_invite_unknown_teams: afd135ad5b149c7c2db83467143d7117
@@ -3682,6 +3738,9 @@ checksums:
     workspace/settings/teams/create: 757ccd28dd533ff3a933355273c1e32a
     workspace/settings/teams/create_first_team_message: 0b76c0173691938561868c4bcaa7dee6
     workspace/settings/teams/create_new_team: 3f4d388a473f979d4bd366c3ef08e425
+    workspace/settings/teams/dashboard_viewer: b217bd372763d13d5b28ec519651269b
+    workspace/settings/teams/dashboard_viewer_role_description: 24c7322b460f7d7e01c733696c065f1d
+    workspace/settings/teams/dashboard_viewer_role_info_message: 9d27c2e3e4cdfdb42990c6594052bdd9
     workspace/settings/teams/delete_team: 23e9200d46d42c7b89d42ae25c987ab6
     workspace/settings/teams/empty_teams_state: 785c1a638eb62211224fae951217fe3c
     workspace/settings/teams/enter_team_name: c324ef4c0ca524496a25a4afffda4f37

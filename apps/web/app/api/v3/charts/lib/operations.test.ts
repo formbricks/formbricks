@@ -36,6 +36,8 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
 }));
 
+// The chart's dataset adds no fields here; dataset-aware validation is covered by the validator's tests.
+vi.mock("./dataset-fields", () => ({ loadDatasetChartFields: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("./service", () => ({
   getChartResourceRow: vi.fn(),
   listChartResourceRows: vi.fn(),

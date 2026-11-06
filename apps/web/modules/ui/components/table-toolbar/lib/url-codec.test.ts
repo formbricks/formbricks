@@ -31,7 +31,13 @@ const properties: TFilterProperty[] = [
   },
   { id: "createdAt", label: "Created", valueType: "date", quick: true, ruleOperators: ["isBefore"] },
   { id: "score", label: "Score", valueType: "number", ruleOperators: ["greaterThan", "isSet"] },
-  { id: "source", label: "Source", valueType: "enum", quick: true, loadOptions: async () => [] },
+  {
+    id: "source",
+    label: "Source",
+    valueType: "enum",
+    quick: true,
+    loadOptions: async () => ({ options: [], hasMore: false }),
+  },
   {
     id: "archived",
     label: "Archived",
@@ -199,7 +205,7 @@ describe("every operator round-trips through the URL", () => {
       label: "Text",
       valueType: "string",
       quick: true,
-      loadOptions: async () => [],
+      loadOptions: async () => ({ options: [], hasMore: false }),
       ruleOperators,
     },
     {

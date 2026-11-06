@@ -549,6 +549,29 @@ describe("replaceDashboardRow", () => {
     expect(dashboardUpdate.data).not.toHaveProperty("name");
     expect(dashboardUpdate.data).toHaveProperty("updatedAt");
   });
+
+  test("without widgets, writes only the filters and leaves every widget as it is", async () => {
+    const tx = txWith();
+    const filters = [
+      {
+        id: "clfi000000000000000000001",
+        field: "FeedbackRecords.sourceName",
+        operator: "equals" as const,
+        label: "Source",
+        values: ["Web"],
+      },
+    ];
+
+    expect(
+      await replaceDashboardRow({ dashboardId: DASHBOARD_ID, expectedUpdatedAt: LOCKED_AT, filters })
+    ).toMatchObject({ kind: "ok" });
+
+    expect(tx.dashboardWidget.deleteMany).not.toHaveBeenCalled();
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
+    const [[dashboardUpdate]] = tx.dashboard.update.mock.calls as unknown as [[{ data: object }]];
+    expect(dashboardUpdate.data).toMatchObject({ filters });
+    expect(dashboardUpdate.data).not.toHaveProperty("name");
+  });
 });
 
 describe("planNewWidget", () => {

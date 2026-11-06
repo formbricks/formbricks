@@ -157,6 +157,7 @@ export function useChartDialog({
           data: result.rows,
           ...(result.optionLabels ? { optionLabels: result.optionLabels } : {}),
           ...(result.fieldLabels ? { fieldLabels: result.fieldLabels } : {}),
+          ...(result.memberLabels ? { memberLabels: result.memberLabels } : {}),
         });
       } catch (error: unknown) {
         if (cancelled) return;

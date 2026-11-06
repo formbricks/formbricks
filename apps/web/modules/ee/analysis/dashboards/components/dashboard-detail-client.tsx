@@ -19,6 +19,7 @@ import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components
 import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
 import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
+import { LockFiltersButton } from "@/modules/ee/analysis/dashboards/components/lock-filters-button";
 import { StaleDashboardDialog } from "@/modules/ee/analysis/dashboards/components/stale-dashboard-dialog";
 import {
   ALL_TIME_VALUE,
@@ -31,6 +32,15 @@ import {
   toChartDateRange,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
+import {
+  type TDashboardFilterState,
+  exceedsFiltersBudget,
+  keepValidFilters,
+  readFiltersFromUrl,
+  writeFiltersToUrl,
+  writeStoredFilters,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-state";
+import { MAX_DASHBOARD_FILTERS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
   EDIT_HOTKEY,
   hasOpenOverlay,
@@ -59,7 +69,10 @@ import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { TableToolbar } from "@/modules/ui/components/table-toolbar";
 import { useDashboard } from "../hooks/use-dashboard";
+import { useDashboardToolbarFilters } from "../hooks/use-dashboard-toolbar-filters";
+import { useLockedDashboardFilters } from "../hooks/use-locked-dashboard-filters";
 import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
 import { findNextOpenSlot } from "../lib/widget-placement";
 
@@ -72,6 +85,8 @@ interface DashboardDetailClientProps {
   dashboardId: string;
   /** The filter persisted in this dashboard's cookie; a filter pinned in the URL wins over it. */
   storedDateFilter: TDashboardDateFilter | null;
+  /** The filters persisted in this dashboard's cookie; filters pinned in the URL win over them. */
+  storedFilters: TDashboardFilterState[];
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
   isAIAvailable: boolean;
@@ -140,16 +155,23 @@ const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): T
 const MemoizedWidgetContent = memo(function WidgetContent({
   widget,
   dateRange,
+  filters,
+  filterFieldLabel,
   view,
 }: Readonly<{
   widget: TDashboardWidget;
   dateRange: TChartDateRangeInput | null;
+  filters: readonly TDashboardFilterState[];
+  filterFieldLabel: (field: string) => string;
   view: TWidgetView;
 }>) {
   return (
     <DashboardWidgetData
+      dashboardId={widget.dashboardId}
       chartId={widget.chartId}
       dateRange={dateRange}
+      filters={filters}
+      filterFieldLabel={filterFieldLabel}
       // Through resolveChartType like every other read of a stored type, so a row still
       // carrying a retired value renders as its replacement instead of "not yet supported".
       chartType={resolveChartType(widget.chart.type)}
@@ -163,6 +185,8 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   widget,
   isEditing,
   dateRange,
+  filters,
+  filterFieldLabel,
   onEdit,
   onDuplicate,
   onResize,
@@ -171,6 +195,8 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   widget: TDashboardWidget;
   isEditing: boolean;
   dateRange: TChartDateRangeInput | null;
+  filters: readonly TDashboardFilterState[];
+  filterFieldLabel: (field: string) => string;
   onEdit?: () => void;
   onDuplicate?: () => void;
   onResize?: () => void;
@@ -203,7 +229,13 @@ const MemoizedWidgetItem = memo(function WidgetItem({
       onDuplicate={onDuplicate}
       onResize={onResize}
       onRemove={onRemove}>
-      <MemoizedWidgetContent widget={widget} dateRange={dateRange} view={view} />
+      <MemoizedWidgetContent
+        widget={widget}
+        dateRange={dateRange}
+        filters={filters}
+        filterFieldLabel={filterFieldLabel}
+        view={view}
+      />
     </DashboardWidget>
   );
 });
@@ -249,6 +281,7 @@ function DashboardDetailView({
   workspaceId,
   dashboard,
   storedDateFilter,
+  storedFilters,
   directories,
   isReadOnly,
   isAIAvailable,
@@ -283,6 +316,16 @@ function DashboardDetailView({
   // Stable across renders for the same filter, so the memoized widgets do not re-render on every one.
   const dateRangeKey = JSON.stringify(toChartDateRange(dateFilter));
   const dateRange = useMemo(() => JSON.parse(dateRangeKey) as TChartDateRangeInput | null, [dateRangeKey]);
+
+  // The filters follow the date's rule: pinned in the URL wins, otherwise the ones this person last set here.
+  // A remembered value stays applied even where it no longer occurs.
+  const [chosenFilters, setChosenFilters] = useState(storedFilters);
+  const urlFilters = useMemo(
+    () => readFiltersFromUrl(new URLSearchParams(searchParams.toString())),
+    [searchParams]
+  );
+  const filtersKey = JSON.stringify(urlFilters ?? chosenFilters);
+  const filters = useMemo(() => JSON.parse(filtersKey) as TDashboardFilterState[], [filtersKey]);
 
   /** After a write, read the dashboard again — and the lists that count its widgets. */
   const refreshDashboard = useCallback(async () => {
@@ -325,6 +368,7 @@ function DashboardDetailView({
   const [draftWidgets, setDraftWidgets] = useState<TDashboardWidget[] | null>(null);
 
   const widgets = draftWidgets ?? dashboard.widgets;
+  const datasetIds = useMemo(() => widgets.map(({ chart }) => chart.feedbackDirectoryId), [widgets]);
 
   const hasChanges = useMemo(() => {
     if (draftName !== null && draftName !== dashboard.name) return true;
@@ -621,6 +665,46 @@ function DashboardDetailView({
     [applyDateFilterToUrl, dashboard.id]
   );
 
+  // Remember the filters (cookie) for the next visit, then pin them in the URL so the view can be shared.
+  const handleFiltersChange = useCallback(
+    (next: TDashboardFilterState[]) => {
+      const kept = keepValidFilters(next);
+      if (kept.length >= MAX_DASHBOARD_FILTERS && next.length > MAX_DASHBOARD_FILTERS) {
+        toast.error(t("workspace.analysis.dashboards.filter_limit_reached", { max: MAX_DASHBOARD_FILTERS }));
+        return;
+      }
+      // The filters travel in every chart read's URL, so their values are bounded as the API bounds them.
+      if (exceedsFiltersBudget(kept)) {
+        toast.error(t("workspace.analysis.dashboards.filter_picks_too_long"));
+        return;
+      }
+      writeStoredFilters(dashboard.id, kept);
+      setChosenFilters(kept);
+      const params = writeFiltersToUrl(new URLSearchParams(searchParams.toString()), kept);
+      const queryString = params.toString();
+      window.history.pushState(null, "", queryString ? `${pathname}?${queryString}` : pathname);
+    },
+    [dashboard.id, pathname, searchParams, t]
+  );
+
+  const toolbar = useDashboardToolbarFilters({
+    dashboardId: dashboard.id,
+    datasetIds,
+    filters,
+    dateRange,
+    onFiltersChange: handleFiltersChange,
+  });
+
+  const lockedFilters = useLockedDashboardFilters({
+    dashboard,
+    personalFilters: filters,
+    fieldLabel: toolbar.fieldLabel,
+    onPersonalFiltersChange: handleFiltersChange,
+    canEdit: !isReadOnly,
+    beginWrite: beginViewWrite,
+    endWrite: endViewWrite,
+  });
+
   const isEmpty = widgets.length === 0;
 
   // The cookie is read by the server and seeds `chosenDateFilter`, so there is no client-side restore
@@ -668,18 +752,52 @@ function DashboardDetailView({
         }}
       />
 
-      {/* The date range only filters existing charts, so hide it on an empty dashboard where it
-          would have nothing to act on. */}
+      {/* The filters and the date range only act on existing charts, so the bar is hidden on an empty
+          dashboard, and while editing, where the layout is what changes. The same table toolbar the
+          responses page has: the filters an editor locked for everyone first, then this person's own, with
+          the date range — always this person's own — as its action. */}
       {!isEditing && !isEmpty && (
-        <div className="flex flex-wrap items-center gap-2">
-          <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
-        </div>
+        <TableToolbar
+          filter={{
+            properties: toolbar.properties,
+            filters: toolbar.filters,
+            onFiltersChange: toolbar.setFilters,
+            locked: lockedFilters.locked,
+            simpleRules: true,
+          }}
+          actions={
+            <>
+              {lockedFilters.canLock && (
+                <LockFiltersButton
+                  mode="lock"
+                  isSaving={lockedFilters.isSaving}
+                  onClick={() => void lockedFilters.lockPersonalFilters()}
+                />
+              )}
+              {lockedFilters.canUnlockAll && (
+                <LockFiltersButton
+                  mode="unlock"
+                  isSaving={lockedFilters.isSaving}
+                  onClick={() => void lockedFilters.unlockAllFilters()}
+                />
+              )}
+              <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
+            </>
+          }
+        />
       )}
 
       <section>
         <div ref={containerRef} className="w-full">
           {isEmpty ? (
-            <EmptyState text={t("workspace.analysis.dashboards.no_data_message")} />
+            <EmptyState
+              text={
+                // Someone who can't edit the dashboard can't add charts to it either.
+                isReadOnly
+                  ? t("workspace.analysis.dashboards.no_data_message_read_only")
+                  : t("workspace.analysis.dashboards.no_data_message")
+              }
+            />
           ) : (
             mounted && (
               <ResponsiveGridLayout
@@ -712,6 +830,8 @@ function DashboardDetailView({
                       widget={widget}
                       isEditing={isEditing}
                       dateRange={dateRange}
+                      filters={filters}
+                      filterFieldLabel={toolbar.fieldLabel}
                       onEdit={isReadOnly ? undefined : () => handleEditChart(widget.chartId)}
                       // Duplicate is hidden in edit mode: saving edit-mode drafts removes any
                       // widget not present in the draft, which would delete the fresh copy.

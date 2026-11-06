@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   getInviteAuditSnapshot: vi.fn(),
   getMembershipByUserIdOrganizationId: vi.fn(),
   checkRoleManagementPermission: vi.fn(),
+  getIsDashboardViewerRoleEnabled: vi.fn(),
   updateInvite: vi.fn(),
   queueAuditEvent: vi.fn(),
   isFormbricksCloud: true,
@@ -36,8 +37,14 @@ vi.mock("@/lib/membership/service", () => ({
 vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
   getInvite: mocks.getInviteAuditSnapshot,
 }));
-vi.mock("@/modules/ee/role-management/lib/permission", () => ({
+// The real role rules (`assertCanAssignRole`); only the licence lookup is stubbed.
+vi.mock("@/modules/ee/role-management/lib/permission", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/role-management/lib/permission")>()),
   checkRoleManagementPermission: mocks.checkRoleManagementPermission,
+}));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getAccessControlPermission: vi.fn().mockResolvedValue(true),
+  getIsDashboardViewerRoleEnabled: mocks.getIsDashboardViewerRoleEnabled,
 }));
 vi.mock("@/modules/ee/role-management/lib/invite", () => ({ updateInvite: mocks.updateInvite }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
@@ -184,7 +191,9 @@ describe("PATCH /api/internal/invites/{inviteId}", () => {
     const response = await patch({ role: "manager" });
 
     expect(response.status).toBe(403);
-    expect((await response.json()).detail).toBe("Managers can only invite members");
+    expect((await response.json()).detail).toBe(
+      "Managers can only give the Member and Dashboard viewer roles"
+    );
     expect(mocks.updateInvite).not.toHaveBeenCalled();
   });
 

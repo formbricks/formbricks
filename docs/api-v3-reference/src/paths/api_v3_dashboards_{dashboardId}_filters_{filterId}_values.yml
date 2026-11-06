@@ -1,0 +1,143 @@
+get:
+  operationId: listDashboardFilterValuesV3
+  summary: List a dashboard filter's values
+  description: |
+    The values a list filter offers — one whose operator is `equals` or `notEquals` on a categorical
+    field (`valueLookup` in the field catalog, `FeedbackRecords.valueId`, a yes/no field, or an
+    embedded-data field): only values
+    that occur, so for a fixed-option field (sentiment, value band, yes/no) it says which options the
+    charts have. A yes/no field lists `true` / `false` and ignores `search`. They are the values the dashboard's
+    charts let through under their own saved filters, narrowed by the dashboard date range and the
+    other filters' picks. `filterId` is the `<id>` of one of the request's `filter[<id>]` parameters. The filter's own pick
+    never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked
+    filter's field, offer nothing.
+
+    Up to 100 values, alphabetical; `hasMore` says more match, and `search` narrows them
+    (case-insensitive, contains). Values stored as ids a survey names carry the `label` they are
+    shown by: an answer's option (`FeedbackRecords.valueId`) its option label, a source id
+    (`FeedbackRecords.sourceId`) its survey's name, an ending (`FeedbackRecords.metadataEndingId`) its
+    headline. Labels come only from the surveys mapped into the dashboard's Feedback Datasets; an id
+    none of them names has no `label`. Such a list is in label order, and `search` also finds a value
+    whose label contains it. A filter the request does not name, or one that takes a typed
+    value (free text such as `FeedbackRecords.valueText`), answers 422.
+
+    Picks may take at most 4000 characters in all, each value counted percent-encoded as the URL
+    carries it (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks`
+    with `limit_exceeded`. A list whose charts would need more than 40 Cube queries
+    (`MAX_FILTER_VALUE_QUERIES`: one per Feedback Dataset, up to two per chart showing only its top
+    groups, more when the charts' answer filters or filter conditions do not fit one query) answers 422 naming
+    `filterId` with `limit_exceeded`: type a value instead, or split the dashboard.
+
+    Needs read access to the dashboard's workspace and to every Feedback Dataset its charts read.
+    Every request counts against the default v3 budget, cached or not. Lists are cached
+    for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
+    shared by everyone who may read the dashboard; an uncached list also counts one unit of the
+    chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/FilterIdPath.yml
+    - $ref: ../components/parameters/DashboardDateRangeQuery.yml
+    - $ref: ../components/parameters/DashboardDateFromQuery.yml
+    - $ref: ../components/parameters/DashboardDateToQuery.yml
+    - $ref: ../components/parameters/DashboardFilterRulesQuery.yml
+    - $ref: ../components/parameters/DashboardFilterPicksQuery.yml
+    - in: query
+      name: search
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Only values containing this text, or whose `label` contains it, ignoring case.
+      example: bian
+  responses:
+    "200":
+      description: The filter's values
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardFilterValues.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "422":
+      description: >-
+        The filter has no value list, the picks or date range are not valid, or a limit is exceeded.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          examples:
+            picksOverBudget:
+              summary: The picks take more than MAX_DASHBOARD_FILTER_PICKS_CHARS in a URL
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: The filter picks are not valid
+                code: unprocessable_content
+                requestId: req_01JB7X0000000000000000000
+                invalid_params:
+                  - name: picks
+                    reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                    code: limit_exceeded
+            tooManyQueries:
+              summary: The dashboard's charts need more than MAX_FILTER_VALUE_QUERIES queries for this list
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: This filter's value list needs too many queries
+                code: unprocessable_content
+                requestId: req_01JB7X0000000000000000000
+                invalid_params:
+                  - name: filterId
+                    reason: The dashboard's charts need more than 40 queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.
+                    code: limit_exceeded
+            typedFilter:
+              summary: The filter takes a typed value, not a pick from a list
+              value:
+                title: Unprocessable Content
+                status: 422
+                detail: This filter has no value list
+                code: unprocessable_content
+                requestId: req_01JB7X0000000000000000000
+                invalid_params:
+                  - name: filterId
+                    reason: Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, an answer's option, embedded data, or a yes/no field) pick from a list; this one takes a typed value.
+                    code: invalid_reference
+    "429":
+      $ref: ../components/responses/V3ChartQueryTooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3ChartQueryFailed.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
