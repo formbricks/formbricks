@@ -1,19 +1,21 @@
 ---
 title: "Code That Calls an AI Model"
-description: "The rules for any feature that sends text to an LLM: assess the injection risk, sandbox the model, set limits, track tokens, gate it, and test it"
+description: "The rules for code that sends text to an LLM or an embedding model, or hands data to an agent: assess the injection risk, sandbox the model, set limits, track tokens, gate it, and test it"
 icon: "robot"
 ---
 
-Applies to any code that sends text to a language model or acts on what comes back: survey generation, chart
-generation, enrichments, embeddings. MCP tools are included too: we do not call the model there, but a tool's
-result enters an agent's context we do not control, so the same rules apply to what a tool returns and what it can
-do. An MCP-only tool is not gated by the AI toggle or entitlement below; its access control is its MCP scope and
-v3 authorization (see [MCP server](/development/technical-handbook/mcp-server)).
+Which rules apply depends on what the code does:
 
-It does not cover using AI tools to write or review our own code; AI-assisted review is described in
-[Code reviews](/development/standards/qa/code-reviews).
+| Kind | Examples | What applies |
+| --- | --- | --- |
+| Generation (text or structured output) | Survey generation, chart generation, enrichments | The whole page |
+| Embeddings | Semantic search over feedback (Hub) | The injection assessment, tenant-keyed vectors and caches, bounded input and concurrency, the organization's AI toggle, no customer text in logs |
+| MCP-only tool | Tools in `apps/web/modules/mcp` ([MCP server](/development/technical-handbook/mcp-server)) | The injection assessment, plus the authenticated-caller rule in [What to trust](#what-to-trust). We do not call a model there, but a tool's result enters an agent's context we do not control, so keep results minimal. Access control is its scope and v3 authorization, not the AI gate; no limits table or token metrics. |
 
-In `apps/web`, calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and
+The checklist at the end is split the same way. The page does not cover using AI tools to write or review our own
+code; AI-assisted review is described in [Code reviews](/development/standards/qa/code-reviews).
+
+In `apps/web`, generation calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and
 `lib/ai/service.ts`. Do not import a provider SDK directly. The code references below are for `apps/web`; the Hub
 applies the same rules through its own LLM client.
 
@@ -22,11 +24,11 @@ covers it, and names the gaps. When in doubt, check a design against that list.
 
 ## Assess the injection risk first
 
-Assume prompt injection will succeed, and design so that it does not matter. Every AI feature gets a short written
-assessment in its PR description before it ships, answering four questions:
+Assume prompt injection will succeed, and design so that it does not matter. Every feature in the table above gets a
+short written assessment in its PR description before it ships, answering four questions:
 
-1. **What untrusted text reaches the model?** Name who can write it: another user, an end respondent, an uploaded
-   file, a third-party API.
+1. **What untrusted text reaches the model or agent?** Name who can write it: another user, an end respondent, an
+   uploaded file, a third-party API.
 2. **What can the model see?** List every field in its context. If the prompt were leaked in full, what is exposed?
 3. **What can the model do?** List every tool, write, outbound request, and sink its output feeds.
 4. **What is the worst case if an attacker controls the text?** Name the data exposed or the action taken, and
@@ -40,8 +42,8 @@ Do this twice:
 - **While planning**, before the first line of code, so it shapes the design: what goes in the context, which
   tools exist, which limits apply, and which injection fixtures will test it. The plan lists them.
 - **After implementing**, against the diff and not the plan. Code drifts: a field gets added to the context, a tool
-  gets wider, a limit becomes a setting. Walk the checklist below against the real code, run the injection fixture,
-  and put the final assessment in the PR description. Reviewers check it there.
+  gets wider, a limit becomes a setting. Walk the checklist against the real code, run the injection fixture, and
+  put the final assessment in the PR description. Reviewers check it there.
 
 ## What to trust
 
@@ -52,12 +54,13 @@ Nothing the model reads or writes is trusted.
   instructions inside that text does not make it safe: a guardrail prompt is not a security boundary.
 - **Output is untrusted input.** Ask for structured output with a Zod schema, then validate it again on the
   server before use. A schema fixes the shape, not the meaning: it does not make an id, URL, path, or filter safe.
-  Never pass model output to SQL, a file path, a URL fetch, a shell, or rendered HTML without the same
-  validation you would give a request body.
-- **The model has no authority of its own.** A tool the model can call runs as the requesting user, never as a
-  service. Re-check that user's permission and tenant scope on the exact resource inside the tool handler, as you
-  would for an API route. Do not give a model a shared service credential, and do not let one call's result widen what the next
-  call may do.
+  Never pass model output to SQL, a file path, a URL fetch, a shell, or HTML without the same validation you would
+  give a request body.
+- **The model has no authority of its own.** A tool the model can call acts as the authenticated caller (a user
+  session or an API key), never as a service. Access is checked on the exact resource through the existing
+  authorization path: for an MCP tool that is its scope and the v3 operation, which owns the tenancy check; elsewhere,
+  the check an API route would make. A tool handler does not add a parallel permission path. Do not give a model a
+  shared service credential, and do not let one call's result widen what the next call may do.
 - **Side effects need the user's intent.** If content the user did not write (a response, a document) can cause
   a write, send, or delete, require an explicit user action before it runs. Keep the model's action list small and
   read-only by default.
@@ -72,11 +75,11 @@ Limit what a hijacked model can reach. The goal is a small blast radius, whateve
   the same restrictions as a URL a user supplies. Never run model-written code.
 - **No sharing across users.** Conversation history, memory, embeddings, and caches are keyed by tenant and user.
   One tenant's text never enters another tenant's context.
-- **Safe output rendering.** Render model output as plain text. Markdown or HTML that loads an image can leak the
-  context through the image URL.
+- **Safe output rendering.** Render model output as plain text where you can. Markdown that loads an image can leak
+  the context through the image URL.
 - **No egress except the provider.** A tool does not send data anywhere else.
 
-## Limits every call needs
+## Limits every generation call needs
 
 Limits are named constants in code, not settings. Set them generously: the aim is to stop a bad or hostile request
 from crashing or draining the app, not to restrict normal use. Enforce each at the earliest boundary, test its
@@ -86,10 +89,10 @@ edge, and return an error that names the limit. A missing limit is a bug, not a 
 | Limit | Why | Where it lives today |
 | --- | --- | --- |
 | Input size ceiling | Bounds cost and context stuffing | Request schema, checked before the first call (survey generation caps the prompt at 1,200 characters) |
-| `maxOutputTokens` | Bounds cost and runaway output; hitting it raises `AIOutputTokenLimitError` | Per call (survey generation uses 8,192) |
+| `maxOutputTokens` | Bounds cost and runaway output | Per call (survey generation uses 8,192). `generateObject` and `streamObject` fail with `AIOutputTokenLimitError`, which carries output and reasoning counts but no input count. `generateText` returns the truncated text with `finishReason: "length"`: reject that result. |
 | Timeout | A stuck provider must not hold a worker | Per call, through `getAITimeoutMs`, which applies `AI_TIMEOUT_MULTIPLIER` |
 | Output shape bounds | Limits what a bad answer can create (blocks, questions, items) | The Zod schema (survey generation: at most 8 blocks, 4 questions per block) |
-| Call count and concurrency | Fan-out multiplies cost and provider load | The operation that plans the calls |
+| Call count and concurrency | Fan-out multiplies cost and provider load. Batch or chunk large inputs; never loop one call per record. | The operation that plans the calls |
 | Per-caller rate limit | One user or API key must not spend everyone's quota | `rateLimitConfigs`, keyed by the authenticated caller (survey generation: 10 per minute) |
 | Provider quota errors | A provider 429 is a server fault, not the caller's, and is logged at `error` | `lib/ai/service.ts` logs it (a call that runs its own retries logs a warning instead) and answers the client with `TooManyRequestsError` |
 
@@ -98,31 +101,30 @@ error level.
 
 ## Performance
 
-- **Smallest model that passes.** Start on a cheap model and move up only when the evals fail.
+- **Smallest model that passes the evals.**
 - **Stable prefix first.** Put fixed instructions and schema before the variable input so provider prompt caching
   applies.
-- **No call per row.** Batch or chunk large inputs. Bound parallelism, and never loop one call per record.
-- **Off the request path.** If the user does not need to wait, run the work in a worker.
-- **Stream long generations** and honour the abort signal.
+- **Off the request path.** If the user does not need to wait, run the work in a worker. Stream long generations
+  that the user does watch.
 - **Cache by content hash** where output is deterministic, keyed per tenant.
 
 ## Metrics
 
-Every call records input, output, and reasoning tokens, plus the model, the feature, the organization, and the
-outcome: ok, refused, token limit, timeout, provider 429, or schema-invalid. This gives cost per feature and per
-organization, alerts on spikes, and proof that a limit holds.
+Every generation call needs per-call token usage: it is the data behind cost per feature and per organization,
+alerts on spikes, and proof that a limit holds. To get it today, send the call through `lib/ai/service.ts` and pass
+`aiTracing` with the feature's name, added to `AI_TRACING_FEATURE`. The service wraps the model for tracing only when
+`aiTracing` is passed. `wrapAiModelWithTracing` then sends a per-call trace to PostHog, tagged with the feature,
+organization, and workspace. Privacy mode is on, so no prompt or completion text is sent.
 
-What exists today:
+Known gaps. Following the rule does not close them, so say in the PR which ones apply:
 
-- `generateObject` and `generateText` return `usage`. `streamObject` does not: its result is `partialObjectStream`
-  and `completion`. A streamed feature gets counts only from the PostHog trace until the stream wrapper exposes
-  usage, which is a gap to close.
-- A generation that hits the output limit puts the token counts on `AIOutputTokenLimitError`.
-- `wrapAiModelWithTracing` sends a per-call trace to PostHog, tagged with the feature, organization, and workspace.
-  Privacy mode is on, so no prompt or completion text is sent.
-- Tracing does nothing when PostHog is not configured, so instances without it have no token metrics.
+- `generateObject` and `generateText` results carry `usage`, but nothing records it outside the PostHog trace.
+- `streamObject` exposes only `partialObjectStream` and `completion`, so a stream has no usage to read. A stream
+  that errors after it starts may also be missing from the trace: a review reported that PostHog 8.5.0 does not
+  flush it, and we have not reproduced that.
+- Instances without PostHog have no token metric.
 
-A new AI feature adds its name to `AI_TRACING_FEATURE` and passes a tracing context on every call.
+Closing these takes code: expose usage on the stream wrapper, and record usage without depending on PostHog.
 
 ## Gating
 
@@ -137,7 +139,7 @@ training input. A new outbound flow to a model provider is called out in the PR 
 ## Logging
 
 Do not log prompts, completions, or the text a user supplied: they hold customer data. Log ids, counts, status
-codes, and timings. Tracing goes through `wrapAiModelWithTracing`; check what it records before adding fields.
+codes, and timings. Check what `wrapAiModelWithTracing` records before adding fields to a trace.
 
 ## Testing
 
@@ -164,24 +166,40 @@ edition is published.
 | Supply chain | Gap: no rule yet for choosing and pinning models, providers, and AI dependencies |
 | Data and model poisoning | Gap: no rule yet. Customer data is never used as training input |
 | Improper output handling | What to trust: server-side schema validation, no unvalidated sink; safe output rendering |
-| Excessive agency | Least capability; side effects need the user's intent; tools re-check permissions |
+| Excessive agency | Least capability; side effects need the user's intent; tools act as the authenticated caller |
 | System prompt leakage | Partly: no secrets in a prompt, so a leaked prompt exposes little |
 | Vector and embedding weaknesses | Partly: caches and embeddings are keyed by tenant and user |
 | Misinformation | Gap: no rule yet for output shown to users as fact |
-| Unbounded consumption | Limits every call needs; Performance; Metrics |
+| Unbounded consumption | Limits every generation call needs; Performance; Metrics |
 
-## Checklist for a new AI feature
+## Checklist
 
 Use it when planning, and again against the finished diff before the PR is ready.
 
+**Every kind**
+
 - The PR description has the four-question injection assessment, with the worst case named.
+- Nothing customer-authored is logged.
+
+**Generation**
+
 - The model's context holds only data the requesting user may read, and no secrets.
 - Input is bounded before the first call.
-- Output is schema-validated on the server, and no unvalidated value reaches a sink.
-- Every tool re-checks the requesting user's permission and tenant scope.
+- Output is schema-validated on the server, and no unvalidated value reaches a sink. Text callers reject
+  `finishReason: "length"`.
+- Every tool acts as the authenticated caller, with access checked on the exact resource.
 - `maxOutputTokens`, timeout, call count, and a per-caller rate limit are all hardcoded constants.
-- Token usage is recorded per call, tagged with the feature and organization.
-- When Formbricks calls the model: toggle, entitlement, and instance configuration are checked through
-  `lib/ai/service.ts`. An MCP-only tool has its MCP scope and v3 authorization instead.
-- Nothing customer-authored is logged.
+- The call goes through `lib/ai/service.ts`, which checks the toggle, entitlement, and instance configuration, and
+  passes `aiTracing`. The PR names which metric gaps apply.
 - Tests run on a cheap model and include an injection fixture.
+
+**Embeddings**
+
+- Input is bounded, and concurrency is bounded.
+- Vectors and caches are keyed by tenant, and a query never returns another tenant's records.
+- The organization's AI toggle is respected.
+
+**MCP-only tool**
+
+- The tool acts as the authenticated caller through its scope and the v3 operation.
+- Its result holds only the fields the task needs.
