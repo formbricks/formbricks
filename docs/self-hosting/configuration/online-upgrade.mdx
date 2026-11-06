@@ -63,7 +63,13 @@ fix for the October 2026 eMudhra certificate compromise and request-size limits,
 Hub 0.14.2 adds a concurrently built index on embedded data and a nullable column on `embeddings`. The column
 and constraint changes take brief exclusive locks, so a long-running transaction can delay them and queue later
 reads and writes. Hub 0.14.2 also refuses to start when `TAXONOMY_EMBEDDING_MODEL` and `EMBEDDING_MODEL` are the
-same non-empty value, so give them distinct model names in `hub.env` before rolling it out.
+same non-empty value. Check the effective values on both `hub` and `hub-worker`: with `hub.embeddings.enabled`
+the chart sets `EMBEDDING_MODEL` itself and ignores `hub.env.EMBEDDING_MODEL`, and `hub.worker.env` can set
+`TAXONOMY_EMBEDDING_MODEL` for the worker alone. Change whichever value collides before rolling it out.
+While old and new `hub-worker` pods overlap, an old pod can rewrite a vector without updating its source hash, so
+a record edited and then edited back during the rollout can keep a stale vector. Stop the old workers before the
+new ones start, or follow the
+[post-rollout reset](https://hub.formbricks.com/reference/environment-variables/) in the Hub docs.
 6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
 image: check
 [Bundled Cube image](/self-hosting/advanced/migration#bundled-cube-image-action-required-for-some-deployments)
