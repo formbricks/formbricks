@@ -752,6 +752,73 @@ true
 {{- end -}}
 {{- end }}
 
+{{/* External provider settings shared by Hub API and worker. */}}
+{{- define "formbricks.hubEmbeddingClientEnv" -}}
+{{- $root := .root -}}
+{{- $cfg := $root.Values.hub.embeddingClient -}}
+{{- if $cfg.enabled -}}
+{{- if $root.Values.hub.embeddings.enabled -}}
+{{- fail "hub.embeddingClient.enabled and hub.embeddings.enabled cannot both be true" -}}
+{{- end -}}
+{{- $provider := required "hub.embeddingClient.provider is required" $cfg.provider -}}
+{{- $model := required "hub.embeddingClient.model is required" $cfg.model -}}
+{{- if not (has $provider (list "openai" "google" "google-gemini")) -}}
+{{- fail "hub.embeddingClient.provider must be openai, google, or google-gemini" -}}
+{{- end -}}
+{{- $base := $cfg.baseUrl -}}
+{{- if .worker -}}
+{{- $base = default $base $cfg.workerBaseUrl -}}
+{{- else -}}
+{{- $base = default $base $cfg.apiBaseUrl -}}
+{{- end -}}
+{{- if and (ne $provider "openai") $base -}}
+{{- fail "hub.embeddingClient base URL is supported only for openai" -}}
+{{- end -}}
+- name: EMBEDDING_PROVIDER
+  value: {{ $provider | quote }}
+- name: EMBEDDING_MODEL
+  value: {{ $model | quote }}
+{{- if $base }}
+- name: EMBEDDING_BASE_URL
+  value: {{ $base | quote }}
+{{- end }}
+{{- if ne $provider "google-gemini" }}
+- name: EMBEDDING_PROVIDER_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ required "hub.embeddingClient.auth.existingSecret is required" $cfg.auth.existingSecret }}
+      key: {{ $cfg.auth.secretKey | quote }}
+{{- else }}
+- name: EMBEDDING_GOOGLE_CLOUD_PROJECT
+  value: {{ required "hub.embeddingClient.googleCloudProject is required" $cfg.googleCloudProject | quote }}
+- name: EMBEDDING_GOOGLE_CLOUD_LOCATION
+  value: {{ required "hub.embeddingClient.googleCloudLocation is required" $cfg.googleCloudLocation | quote }}
+{{- end }}
+{{- if .worker }}
+- name: EMBEDDING_MAX_CONCURRENT
+  value: {{ $cfg.maxConcurrent | quote }}
+- name: EMBEDDING_JOB_TIMEOUT_SECONDS
+  value: {{ $cfg.jobTimeoutSeconds | quote }}
+- name: EMBEDDING_BATCH_SIZE
+  value: {{ $cfg.batchSize | quote }}
+- name: EMBEDDING_BATCH_MAX_WAIT_MS
+  value: {{ $cfg.batchMaxWaitMs | quote }}
+- name: EMBEDDING_BATCH_MAX_IN_FLIGHT
+  value: {{ $cfg.batchMaxInFlight | quote }}
+{{- end }}
+- name: EMBEDDING_MAX_INPUT_BYTES
+  value: {{ $cfg.maxInputBytes | quote }}
+- name: EMBEDDING_NORMALIZE
+  value: {{ $cfg.normalize | quote }}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.hubEmbeddingClientEnvManaged" -}}
+{{- if has .key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_GOOGLE_CLOUD_PROJECT" "EMBEDDING_GOOGLE_CLOUD_LOCATION" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_MAX_INPUT_BYTES" "EMBEDDING_JOB_TIMEOUT_SECONDS" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT" "EMBEDDING_NORMALIZE") -}}
+true
+{{- end -}}
+{{- end }}
+
 {{/* Name of one deliberate embedding backfill run. */}}
 {{- define "formbricks.hubEmbeddingBackfillName" -}}
 {{- $runID := regexReplaceAll "[^a-z0-9-]+" (.Values.hub.embeddingBackfill.runId | lower) "-" | trunc 20 | trimAll "-" -}}
