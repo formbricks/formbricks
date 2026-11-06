@@ -94,7 +94,7 @@ export const serveSdkHostPage = async ({
       "SETUP_CONFIG",
       JSON.stringify({ ...setupOptions, workspaceId: getWorkspaceId(), appUrl: origin }).replaceAll(
         "<",
-        "\\u003c"
+        String.raw`\u003c`
       )
     )
       .replaceAll("APP_URL", origin)

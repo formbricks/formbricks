@@ -199,14 +199,18 @@ export function BlockConditional({
     if (!shouldFocusOnMount) return;
 
     // Defer so the card's content (and any card transition) has rendered.
+    let animationFrameId: number | undefined;
     const timeoutId = setTimeout(() => {
-      requestAnimationFrame(() => {
-        if (containerRef.current) focusFirstControl(containerRef.current);
+      animationFrameId = requestAnimationFrame(() => {
+        const container = containerRef.current;
+        // The respondent may already have chosen a control while this callback was pending.
+        if (container && !container.contains(document.activeElement)) focusFirstControl(container);
       });
     }, 0);
 
     return () => {
       clearTimeout(timeoutId);
+      if (animationFrameId !== undefined) cancelAnimationFrame(animationFrameId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when the block mounts
   }, []);
