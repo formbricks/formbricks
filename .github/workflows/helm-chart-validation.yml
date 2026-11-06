@@ -283,8 +283,10 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \
             --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.worker.embeddingPreflight.timeoutSeconds=10 \
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embedding-readiness.yaml"
-          grep -q -- '--check-embedding-readiness' "$render_dir/hub-embedding-readiness.yaml"
+          grep -A5 '^          readinessProbe:$' "$render_dir/hub-embedding-readiness.yaml" | grep -q '^            exec:$'
+          grep -A5 '^          readinessProbe:$' "$render_dir/hub-embedding-readiness.yaml" | grep -q -- '--check-embedding-readiness'
           grep -q 'name: hub-embedding-readiness' "$render_dir/hub-embedding-readiness.yaml"
           grep -A1 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-embedding-readiness.yaml" | grep -q 'value: "10"'
 
@@ -322,6 +324,39 @@ jobs:
           grep -A1 'name: EMBEDDING_PROVIDER' "$render_dir/hub-vertex-embedding-worker.yaml" | grep -q 'value: "google-gemini"'
           grep -q 'name: EMBEDDING_GOOGLE_CLOUD_PROJECT' "$render_dir/hub-vertex-embedding-worker.yaml"
           ! grep -q 'name: EMBEDDING_PROVIDER_API_KEY' "$render_dir/hub-vertex-embedding-worker.yaml"
+
+          # Explicit timing values render once; worker env wins over common env and chart values.
+          helm template qa "$chart" \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --set hub.worker.embeddingPreflight.timeoutSeconds=10 \
+            --set hub.env.EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS=11 \
+            --set hub.worker.env.EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS=12 \
+            --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-preflight-override.yaml"
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "12"'
+
+          expect_embedding_render_failure() {
+            local name="$1" pattern="$2"
+            shift 2
+            if helm template qa "$chart" --set formbricks.webappUrl=https://qa.example.com \
+              "$@" --show-only templates/hub-worker-deployment.yaml > "$render_dir/$name.yaml" 2>&1; then
+              echo "Expected invalid embedding configuration '$name' to fail" >&2
+              exit 1
+            fi
+            grep -q "$pattern" "$render_dir/$name.yaml"
+          }
+          expect_embedding_render_failure conflicting-modes 'cannot both be true' \
+            --set hub.embeddings.enabled=true --set hub.embeddingClient.enabled=true \
+            --set hub.embeddingClient.provider=openai --set hub.embeddingClient.model=model
+          expect_embedding_render_failure unsupported-provider 'provider must be' \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=unsupported \
+            --set hub.embeddingClient.model=model
+          expect_embedding_render_failure non-openai-base 'base URL is supported only for openai' \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=google-gemini \
+            --set hub.embeddingClient.model=model --set hub.embeddingClient.baseUrl=https://example.com/v1
+          expect_embedding_render_failure missing-auth 'auth.existingSecret is required' \
+            --set hub.embeddingClient.enabled=true --set hub.embeddingClient.provider=openai \
+            --set hub.embeddingClient.model=model
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

@@ -778,6 +778,10 @@ true
   value: {{ $provider | quote }}
 - name: EMBEDDING_MODEL
   value: {{ $model | quote }}
+{{- if $cfg.responseModel }}
+- name: EMBEDDING_RESPONSE_MODEL
+  value: {{ $cfg.responseModel | quote }}
+{{- end }}
 {{- if $base }}
 - name: EMBEDDING_BASE_URL
   value: {{ $base | quote }}
@@ -814,7 +818,23 @@ true
 {{- end }}
 
 {{- define "formbricks.hubEmbeddingClientEnvManaged" -}}
-{{- if has .key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_GOOGLE_CLOUD_PROJECT" "EMBEDDING_GOOGLE_CLOUD_LOCATION" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_MAX_INPUT_BYTES" "EMBEDDING_JOB_TIMEOUT_SECONDS" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT" "EMBEDDING_NORMALIZE") -}}
+{{- $cfg := .root.Values.hub.embeddingClient -}}
+{{- $managed := list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_MAX_INPUT_BYTES" "EMBEDDING_NORMALIZE" -}}
+{{- $base := $cfg.baseUrl -}}
+{{- if .worker -}}
+  {{- $base = default $base $cfg.workerBaseUrl -}}
+  {{- $managed = concat $managed (list "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_JOB_TIMEOUT_SECONDS" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT") -}}
+{{- else -}}
+  {{- $base = default $base $cfg.apiBaseUrl -}}
+{{- end -}}
+{{- if $base -}}{{- $managed = append $managed "EMBEDDING_BASE_URL" -}}{{- end -}}
+{{- if $cfg.responseModel -}}{{- $managed = append $managed "EMBEDDING_RESPONSE_MODEL" -}}{{- end -}}
+{{- if eq $cfg.provider "google-gemini" -}}
+  {{- $managed = concat $managed (list "EMBEDDING_GOOGLE_CLOUD_PROJECT" "EMBEDDING_GOOGLE_CLOUD_LOCATION") -}}
+{{- else -}}
+  {{- $managed = append $managed "EMBEDDING_PROVIDER_API_KEY" -}}
+{{- end -}}
+{{- if has .key $managed -}}
 true
 {{- end -}}
 {{- end }}
