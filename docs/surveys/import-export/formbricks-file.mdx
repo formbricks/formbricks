@@ -101,7 +101,7 @@ Anything under `survey`. Some rules keep the file importable:
 - **Codes.** Questions and options carry the `code` the survey gave them, which exports use. Once a survey has left draft, an Update can't change a code, a question's type or an option's text, and can't remove an option.
 - **Logic and recall** point at questions by ID. Logic can only check a question in the same or an earlier block, and recall can only use a question shown before it.
 - **Show-ifs and rules before the first question.** A block, question or option shows only when its `showIf` matches, and `startLogic` holds the rules that run before the first question. Both follow the rules of logic; a rule before the first question can't read an answer, since nothing is answered yet.
-- **Embedded Data.** `embeddedFields` lists every hidden field, variable and calculated field with its type; a calculated date field is only there, not in `variables`. `hiddenFields` and `variables` are the older form of the same list: change `embeddedFields` with them, or the import refuses the file and names each field that disagrees. A shared field carries its library `key`: it links to the target workspace's field with the same key, source and type, or else becomes a field of the survey's own.
+- **Embedded Data.** `embeddedFields` lists every hidden field, variable and calculated field with its type; a calculated date field is only there, not in `variables`. `hiddenFields` and `variables` are the older form of the same list: change `embeddedFields` with them, or the import refuses the file and names each field that disagrees. Create new skips this check for an empty `variables` list or an empty `hiddenFields.fieldIds` list, so a field you remove from that list alone stays in the survey. Update checks empty lists too. A shared field carries its library `key`: it links to the target workspace's field with the same key, source and type, or else becomes a field of the survey's own.
 - **Triggers** (app surveys) point at an action by its ID in `references.actionClasses`. Add the action there when you add a trigger.
 - **Targeting filters** that name a contact attribute need that attribute in `references.attributeKeys`. An attribute the workspace doesn't have yet is created, so its key must be lowercase letters, numbers and underscores, starting with a letter, and not one Formbricks reserves (`user_id`, `first_name`, `last_name`).
 - **`name`** is used for a new survey, with "(imported)" added. An Update keeps the survey's own name.
@@ -124,6 +124,8 @@ Update replaces the survey's:
 - hidden fields, variables and calculated fields (`embeddedFields`);
 - logic, the rules before the first question, show-ifs and targeting;
 - triggers, only when **Use the file's triggers** is ticked.
+
+A file without a `startLogic` key, such as one exported before the flow editor, keeps the survey's rules before the first question. To remove them, add `"startLogic": []` to the file.
 
 It keeps the survey's ID, name, status, responses, display and link settings, styling and other settings. It never updates an active survey. See [Update a survey from a file](/surveys/import-export/overview#update-a-survey-from-a-file) for the choices the dialog offers.
 

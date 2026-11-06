@@ -135,7 +135,7 @@ On a Match, the review says **This file was exported from "Survey name"** and of
 
 ### What Update replaces and keeps
 
-Update replaces the survey's questions, blocks, endings, welcome card, languages, hidden fields, variables and calculated fields, logic (rules before the first question included), show-ifs and targeting with the file's.
+Update replaces the survey's questions, blocks, endings, welcome card, languages, hidden fields, variables and calculated fields, logic (rules before the first question included), show-ifs and targeting with the file's. A file without a `startLogic` key, such as one exported before the flow editor, keeps the survey's rules before the first question; add `"startLogic": []` to remove them.
 
 It keeps the survey's ID, name, status, responses, settings and styling. Links, embeds and QR codes keep working.
 
