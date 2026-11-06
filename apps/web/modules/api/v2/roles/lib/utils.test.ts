@@ -8,11 +8,18 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 describe("getRoles", () => {
+  test("never lists the Dashboard viewer, which this API cannot assign (C3)", () => {
+    const result = getRoles();
+    expect(result.ok && result.data.data).not.toContain("dashboard_viewer");
+  });
+
   test("should return all roles except billing when not in Formbricks Cloud", () => {
     const result = getRoles();
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.data).toEqual(Object.values(OrganizationRole).filter((role) => role !== "billing"));
+      expect(result.data.data).toEqual(
+        Object.values(OrganizationRole).filter((role) => role !== "billing" && role !== "dashboard_viewer")
+      );
     }
   });
 
@@ -22,7 +29,9 @@ describe("getRoles", () => {
     const result = getRoles();
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.data).toEqual(Object.values(OrganizationRole));
+      expect(result.data.data).toEqual(
+        Object.values(OrganizationRole).filter((role) => role !== "dashboard_viewer")
+      );
     }
     Object.defineProperty(constants, "IS_FORMBRICKS_CLOUD", { value: originalValue });
   });

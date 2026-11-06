@@ -5,7 +5,6 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { type TIngestFlag, mergeIngestFlags } from "@formbricks/types/embedded-data-ingest";
-import { type TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -22,9 +21,10 @@ import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import {
   collectResponseFileUrls,
-  getSurveyFileUploadElementIds,
+  getSurveyUploadElementIds,
   resolveStorageUrlsInObject,
 } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
@@ -35,16 +35,12 @@ import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
+import { getSurveyFilteringValues } from "./filtering-values";
 import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "./pagination";
 import { standardColumnGroups, standardHeaders } from "./standard-columns";
 import {
   calculateTtcTotal,
   extractSurveyDetails,
-  getResponseContactAttributes,
-  getResponseHiddenFields,
-  getResponseMeta,
-  getResponseReservedFilterValues,
-  getResponseVariableFilterValues,
   getResponsesFileName,
   getResponsesJson,
   normalizeResponseLanguage,
@@ -302,24 +298,6 @@ export const getResponseSnapshotForPipeline = async (responseId: string): Promis
   }
 };
 
-// The full TEmbeddedValueResponse shape, so reserved values run through the shared projection
-// (redactQuery, type coercion) instead of raw meta reads (ENG-1848). Kept as a named selection so
-// the row type stays checked against TEmbeddedValueResponse — a field added there without being
-// selected here must fail the build, not read undefined at runtime.
-const filteringValuesSelection = {
-  id: true,
-  surveyId: true,
-  createdAt: true,
-  updatedAt: true,
-  finished: true,
-  language: true,
-  data: true,
-  variables: true,
-  ttc: true,
-  meta: true,
-  contactAttributes: true,
-} satisfies Prisma.ResponseSelect;
-
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
 
@@ -329,21 +307,9 @@ export const getResponseFilteringValues = reactCache(async (surveyId: string) =>
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const responses = await prisma.response.findMany({
-      where: {
-        surveyId,
-      },
-      select: filteringValuesSelection,
-    });
-
-    const embeddedValueResponses: TEmbeddedValueResponse[] = responses;
-    const contactAttributes = getResponseContactAttributes(responses);
-    const meta = getResponseMeta(responses);
-    const hiddenFields = getResponseHiddenFields(survey, responses);
-    const reservedValues = getResponseReservedFilterValues(survey, embeddedValueResponses);
-    const variableValues = getResponseVariableFilterValues(survey, embeddedValueResponses);
-
-    return { contactAttributes, meta, hiddenFields, reservedValues, variableValues };
+    // Distinct-value queries scoped to the survey just loaded, not a read of every response;
+    // no cache, see `getSurveyFilteringValues` for the freshness and cost trade-off (ENG-3755).
+    return await getSurveyFilteringValues(survey);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -647,6 +613,17 @@ export const updateResponse = async (
       select: responseSelection,
     });
 
+    // After the write, on the same client: in the callers' transaction a failed update queues nothing,
+    // and a failed queueing rolls the update back, as for a delete. `currentResponse` is the row this
+    // update read, so a signature it replaces is compared against what was really stored.
+    if (responseInput.data) {
+      await enqueueReplacedSignatureFileCleanup(
+        prismaClient,
+        { surveyId: currentResponse.surveyId, previousData: currentResponse.data, nextData: data },
+        { bestEffort: !tx }
+      );
+    }
+
     const response: TResponse = {
       ...responsePrisma,
       contact: getResponseContact(responsePrisma),
@@ -671,7 +648,7 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey), survey.id);
+  const fileUrls = collectResponseFileUrls(response.data, getSurveyUploadElementIds(survey), survey.id);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };

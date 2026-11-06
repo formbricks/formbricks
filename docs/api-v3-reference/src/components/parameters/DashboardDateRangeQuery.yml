@@ -1,0 +1,11 @@
+in: query
+name: dateRange
+schema:
+  type: string
+  minLength: 1
+  maxLength: 64
+description: >-
+  The dashboard date range: a date preset from the field catalog's `datePresets`, or `all-time`. It
+  replaces each chart's saved range on `FeedbackRecords.collectedAt`. Not together
+  with `from`/`to`.
+example: last 7 days

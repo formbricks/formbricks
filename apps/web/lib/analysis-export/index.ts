@@ -5,7 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getSurveyFileUploadElementIds, resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { getSurveyUploadElementIds, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TResponseCursor, whereAfterResponseCursor } from "../response/pagination";
 import { buildWhereClause } from "../response/where-clause";
 import { getSurvey } from "../survey/service";
@@ -173,7 +173,8 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     });
     const collector = createUnmappedCollector();
     const select = buildAnalysisSelect(fields, isQuotasAllowed);
-    const fileUploadIds = getSurveyFileUploadElementIds(survey);
+    // File Upload and Signature answers both hold storage URLs.
+    const uploadElementIds = Object.values(getSurveyUploadElementIds(survey)).flatMap((ids) => [...ids]);
     let rowCount = 0;
 
     async function* rows() {
@@ -188,8 +189,8 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
 
         yield batch.map((row) => {
           const response = toAnalysisResponse(row);
-          // File URLs resolve like the Standard export does, for the file upload answers only.
-          for (const id of fileUploadIds) {
+          // File URLs resolve like the Standard export does, for the upload element answers only.
+          for (const id of uploadElementIds) {
             if (response.data[id] !== undefined)
               response.data[id] = resolveStorageUrlsInObject(response.data[id]);
           }

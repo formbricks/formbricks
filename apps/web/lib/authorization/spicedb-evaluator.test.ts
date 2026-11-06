@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "@/lib/authzed/client";
+import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
 import { AUTHORIZATION_PERMISSION_MAP, type TAuthorizationAction } from "./contract";
 import { resolveAuthorizationScope } from "./source-scope";
 import { checkSpicedbPermissionAtScope, spicedbEvaluator } from "./spicedb-evaluator";
@@ -11,6 +13,7 @@ vi.mock("@/lib/constants", () => ({
     return constantsMock.minimumRole;
   },
 }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 vi.mock("@/lib/authzed/client", () => ({ getAuthzedClient: vi.fn() }));
 vi.mock("@/lib/authzed/outbox-freshness", () => ({ assertAuthzedProjectionFreshness: vi.fn() }));
 vi.mock("./source-scope", () => ({ resolveAuthorizationScope: vi.fn() }));
@@ -336,5 +339,54 @@ describe("survey visibility decisions (ENG-3282)", () => {
         pendingScope(null)
       )
     ).rejects.toThrow("Invalid authorization action/resource combination");
+  });
+});
+
+describe("a permission the deployed AuthZed schema does not define yet (ADR-0025)", () => {
+  // What the client throws when SpiceDB still holds the 6.1 schema, which has no `dashboard_read`.
+  const failedPrecondition = (details: string) =>
+    new AuthzedError({
+      attempts: 1,
+      cause: Object.assign(new Error(`9 FAILED_PRECONDITION: ${details}`), { code: 9, details }),
+      code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+      grpcStatus: 9,
+      operation: "check_permission",
+      retryable: false,
+    });
+  const missingDashboardRead = () =>
+    failedPrecondition("relation/permission `dashboard_read` not found under definition `workspace`");
+  const dashboardRead = () =>
+    spicedbEvaluator.can({ type: "user", id: "viewer-1" }, "workspace.dashboard_read", {
+      type: "workspace",
+      id: "workspace-1",
+    });
+
+  test("denies `dashboard_read` and logs, so a viewer gets a 403 rather than a 5xx", async () => {
+    checkPermission.mockRejectedValueOnce(missingDashboardRead());
+
+    await expect(dashboardRead()).resolves.toBe(false);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ permission: "dashboard_read" }),
+      expect.any(String)
+    );
+  });
+
+  test("keeps any other failed precondition on `dashboard_read` an operational error", async () => {
+    const error = failedPrecondition("some other precondition failed");
+    checkPermission.mockRejectedValueOnce(error);
+
+    await expect(dashboardRead()).rejects.toBe(error);
+  });
+
+  test("never turns a missing permission into a denial for a permission the release did not add", async () => {
+    const error = failedPrecondition("relation/permission `read` not found under definition `workspace`");
+    checkPermission.mockRejectedValueOnce(error);
+
+    await expect(
+      spicedbEvaluator.can({ type: "user", id: "user-1" }, "workspace.read", {
+        type: "workspace",
+        id: "workspace-1",
+      })
+    ).rejects.toBe(error);
   });
 });

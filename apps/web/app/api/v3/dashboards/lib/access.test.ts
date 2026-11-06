@@ -46,7 +46,8 @@ describe("authorizeLoadedDashboard", () => {
       "ws_of_row",
       "readWrite",
       "req_1",
-      "/api/v3/dashboards/dash_1"
+      "/api/v3/dashboards/dash_1",
+      undefined
     );
     expect(result).toEqual({ row, access: { workspaceId: "ws_of_row", organizationId: "org_1" } });
   });

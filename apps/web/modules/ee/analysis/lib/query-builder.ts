@@ -2,6 +2,14 @@
  * Query builder utility to construct Cube.js queries from chart builder state.
  */
 import { TChartQuery, TCubeFilter, TMemberFilter, TTimeDimension } from "@formbricks/types/analysis";
+import {
+  ANSWER_IS_ANY_OF_OPERATOR,
+  ANSWER_MEMBER,
+  formatAnswerValue,
+  getAnswerBuilderQuestionId,
+  parseAnswerValue,
+  toAnswerBuilderField,
+} from "./answer-filter";
 
 export type TFilterFieldType = "string" | "number" | "time";
 
@@ -57,7 +65,22 @@ export interface ChartBuilderState {
   groupByOptionId?: boolean;
 }
 
+/**
+ * An answer rule as the query stores it (ENG-6894): one `FeedbackRecords.answer` condition whose values
+ * name the row's question. "Is any of" is an `equals` with several values.
+ */
+function buildAnswerFilter(f: FilterRow, questionId: string): TMemberFilter {
+  return {
+    member: ANSWER_MEMBER,
+    operator: f.operator === ANSWER_IS_ANY_OF_OPERATOR ? "equals" : f.operator,
+    values: (f.values ?? []).map((value) => formatAnswerValue(questionId, String(value))),
+  };
+}
+
 function buildMemberFilter(f: FilterRow): TMemberFilter {
+  const questionId = getAnswerBuilderQuestionId(f.field);
+  if (questionId) return buildAnswerFilter(f, questionId);
+
   const filter: TMemberFilter = {
     member: f.field,
     operator: f.operator,
@@ -161,7 +184,23 @@ function isMemberFilter(f: TCubeFilter): f is TMemberFilter {
   return "member" in f;
 }
 
-function toFilterRow(f: TMemberFilter): FilterRow {
+/** An answer rule back as a builder row: its question in the field, its value keys as the values. */
+function toAnswerFilterRow(f: TMemberFilter): FilterRow | null {
+  const parsed = (f.values ?? []).map(parseAnswerValue);
+  const questionId = parsed[0]?.questionId;
+  if (!questionId || parsed.some((value) => value?.questionId !== questionId)) return null;
+
+  const valueKeys = parsed.map((value) => value?.valueKey ?? "");
+  return {
+    id: crypto.randomUUID(),
+    field: toAnswerBuilderField(questionId),
+    operator: f.operator === "equals" && valueKeys.length > 1 ? ANSWER_IS_ANY_OF_OPERATOR : f.operator,
+    values: valueKeys,
+  };
+}
+
+function toFilterRow(f: TMemberFilter): FilterRow | null {
+  if (f.member === ANSWER_MEMBER) return toAnswerFilterRow(f);
   return {
     id: crypto.randomUUID(),
     field: f.member,

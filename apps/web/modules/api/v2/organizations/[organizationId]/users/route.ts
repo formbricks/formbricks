@@ -14,11 +14,11 @@ import {
   updateUser,
 } from "@/modules/api/v2/organizations/[organizationId]/users/lib/users";
 import {
-  canAssignOrganizationRole,
   canManageOrganizationUsers,
   canModifyOrganizationMember,
   getApiKeyCreatorRole,
   getMembershipRoleByEmail,
+  mayAssignOrganizationRole,
 } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
   ZGetUsersFilter,
@@ -122,7 +122,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
           auditLog
         );
       }
-      if (!canAssignOrganizationRole(assignerRole, body!.role)) {
+      if (!(await mayAssignOrganizationRole(authentication.organizationId, assignerRole, body!.role))) {
         return handleApiError(
           request,
           {
@@ -221,7 +221,13 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
       }
       if (
         !canModifyOrganizationMember(assignerRole, targetCurrentRole) ||
-        (body.role && !canAssignOrganizationRole(assignerRole, body.role, targetCurrentRole))
+        (body.role &&
+          !(await mayAssignOrganizationRole(
+            authentication.organizationId,
+            assignerRole,
+            body.role,
+            targetCurrentRole
+          )))
       ) {
         return handleApiError(
           request,

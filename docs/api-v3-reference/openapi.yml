@@ -18,13 +18,17 @@ info:
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
-    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
+    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
       …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
     - **Date ranges.** A preset from the catalog's `datePresets`, `all-time`, or two ISO dates, both
-      inclusive, read in the organization's time zone. On the data operation a requested range
+      inclusive, read in the organization's time zone. On the data operations a requested range
       replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
+    - **Dashboard filters.** A person filters a dashboard by any dimension of its charts' datasets or
+      embedded-data field, up to 10 at once: each `filter[<id>]=<operator>:<field>`, with its values
+      in `picks[<id>]`, is ANDed onto every chart's saved query on the dashboard-bound operations,
+      never replacing a saved rule. The dashboard keeps no list of them.
     - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
       need read access to its Feedback Dataset as well as the workspace. They share one budget of
       **600 per minute** per user or key, sized for dashboards that load one query per widget, and at
@@ -2813,7 +2817,7 @@ paths:
 
         **Round-tripping.** This read returns `data` in the stored, write-shaped form, so the simplest correction is to take it, change one entry and `PATCH` it back. Embedded Data round-trips through `embeddedData[]` instead: the `key` you read is the `key` a write accepts. `answers[]` is the typed view of the same information, offered alongside. Independently of that, a client working from a *list* row — which omits the maps — can still rebuild the write-shaped payload: `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both are contractual:
 
-        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
+        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
       tags:
         - V3 Responses
       parameters:
@@ -2938,6 +2942,11 @@ paths:
                               columnLabel: Gut
                               rawValue: Gut
                               match: label
+                        - position: 7
+                          elementId: sign_off
+                          elementType: signature
+                          elementLabel: Bitte unterschreiben
+                          imageUrl: /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/sign_off/signature--fid--3f2a9c1e-7b4d-4e0a-9c53-1d2e8f6a7b90.png
                       embeddedData:
                         - key: plan
                           kind: ingested
@@ -2975,6 +2984,7 @@ paths:
                           - Preis
                         nps_matrix:
                           Support: Gut
+                        sign_off: /storage/clws1234567890123456789012/private/surveys/clsv1234567890123456789012/elements/sign_off/signature--fid--3f2a9c1e-7b4d-4e0a-9c53-1d2e8f6a7b90.png
                 anonymous:
                   summary: An anonymous, unfinished response
                   value:
@@ -4440,14 +4450,18 @@ paths:
       operationId: getChartDataV3
       summary: Get a chart's data
       description: |
-        Runs a saved chart and returns its rows — the endpoint every dashboard widget loads its data
-        from. A date range given here replaces the chart's own range on `FeedbackRecords.collectedAt`,
-        exactly as a dashboard's date filter does, so the numbers match what a person sees on a
-        dashboard filtered the same way. `dateRange=all-time` removes the range; without a date range
-        the chart's saved range applies. Every range is read in the organization's display time zone;
-        a `timezone` parameter is refused with 400. For a chart grouped by time alone, a requested
-        range that spans more than 10,000 buckets of its granularity answers 422 `limit_exceeded` on
-        `dateRange`: request a shorter range, or use a chart with a coarser granularity.
+        Runs a saved chart and returns its rows. A date range given here replaces the chart's own range
+        on `FeedbackRecords.collectedAt`, exactly as a dashboard's date filter does: a chart saved for the
+        last 30 days read for the last 12 months shows the last 12 months. `dateRange=all-time` drops the
+        chart's saved range, except for a chart grouped by time, which keeps it; no date range leaves the
+        saved range as it is. Every range is read in the organization's display time zone; a `timezone`
+        parameter is refused with 400. For a chart grouped by time alone, a requested range that spans
+        more than 10,000 buckets of its granularity answers 422 `limit_exceeded` on `dateRange`:
+        request a shorter range, or use a chart with a coarser granularity.
+
+        Dashboards read their widgets' data through
+        `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`, which also applies the
+        dashboard's filter picks.
 
         Needs read access to the chart's workspace and to its Feedback Dataset. Counts against the
         chart-query budget (600 per minute, 20 at once, per user or API key), not the v3 default.
@@ -4460,7 +4474,7 @@ paths:
           schema:
             type: string
             maxLength: 64
-          description: A date preset from the field catalog's `datePresets`, or `all-time`. Not together with `from`/`to`.
+          description: A date preset from the field catalog's `datePresets`, or `all-time`, replacing the chart's saved range. Not together with `from`/`to`.
           example: last 7 days
         - in: query
           name: from
@@ -4709,8 +4723,9 @@ paths:
       operationId: getDashboardV3
       summary: Get a dashboard
       description: |
-        Returns a dashboard with every widget and its full chart, so one call tells a caller what is on
-        it. Read each widget's numbers from `GET /api/v3/charts/{chartId}/data`. The workspace is resolved
+        Returns a dashboard with every widget and its full chart, and its filters, so one call tells a
+        caller what is on it. Read each widget's numbers from
+        `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. The workspace is resolved
         from the dashboard, so the operation takes no query parameters. Needs read access to the
         dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
       tags:
@@ -4814,6 +4829,12 @@ paths:
         it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
         Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
         is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
+
+        `filters`, when sent, replace the dashboard's filters. A filter on an embedded-data field
+        (`FeedbackRecords.ed_*`) must name a key that the Feedback Dataset of at least one widget the save
+        keeps has; otherwise the save answers 422 naming `filters[<index>].field` with
+        `invalid_reference`. A filter already saved on the dashboard is not asked again, so it keeps
+        saving after its key leaves every chart.
       tags:
         - V3 Dashboards
       parameters:
@@ -5157,6 +5178,331 @@ paths:
       responses:
         '204':
           description: Widget removed; the chart is kept
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/charts/{chartId}/data:
+    get:
+      operationId: getDashboardChartDataV3
+      summary: Get a chart's data through its dashboard
+      description: |
+        Runs a chart that is a widget on this dashboard and returns its rows — the endpoint every
+        dashboard widget loads its data from. The body is the chart data body (`GET
+        /api/v3/charts/{chartId}/data`) plus `unfilterableFilters`.
+
+        The filters narrow the chart's saved query and never widen it; the date range sets its period:
+
+        - **Date range.** `dateRange`, or `from` and `to`, replaces the chart's own range on
+          `FeedbackRecords.collectedAt`: a chart saved for the last 30 days read for the last 12 months
+          shows the last 12 months.
+        - **Filters.** Each `filter[<id>]` with values in `picks[<id>]` is ANDed onto the chart's saved
+          filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
+          on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
+          `unfilterableFilters`, as does a Sentiment, Sentiment Score or Emotions filter that needs a
+          value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
+          most 4000 characters in all, each value counted percent-encoded as the URL carries it
+          (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
+          `limit_exceeded`.
+
+        A chart that is not a widget on the dashboard answers 404, whether it exists elsewhere or not.
+        Needs read access to the dashboard's workspace and to the chart's Feedback Dataset. Counts
+        against the chart-query budget (600 per minute, 20 at once, per user or API key), not the v3
+        default.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/ChartIdPath'
+        - $ref: '#/components/parameters/DashboardDateRangeQuery'
+        - $ref: '#/components/parameters/DashboardDateFromQuery'
+        - $ref: '#/components/parameters/DashboardDateToQuery'
+        - $ref: '#/components/parameters/DashboardFilterRulesQuery'
+        - $ref: '#/components/parameters/DashboardFilterPicksQuery'
+      responses:
+        '200':
+          description: The chart's rows, narrowed by the dashboard date range and the picks
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardChartData'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '404':
+          description: Not Found — the chart is not a widget on this dashboard. Answered only to a caller who may read the dashboard.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Not Found
+                status: 404
+                detail: Chart not found
+                code: not_found
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+        '422':
+          description: The picks or date range are not valid, the saved chart no longer passes the chart query validator, or a limit is exceeded.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                picksOverBudget:
+                  summary: The picks take more than MAX_DASHBOARD_FILTER_PICKS_CHARS in a URL
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: The filter picks are not valid
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: picks
+                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                        code: limit_exceeded
+        '429':
+          $ref: '#/components/responses/V3ChartQueryTooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3ChartQueryFailed'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/filters/{filterId}/values:
+    get:
+      operationId: listDashboardFilterValuesV3
+      summary: List a dashboard filter's values
+      description: |
+        The values a list filter offers — one whose operator is `equals` or `notEquals` on a categorical
+        field (`valueLookup` in the field catalog, `FeedbackRecords.valueId`, a yes/no field, or an
+        embedded-data field): only values
+        that occur, so for a fixed-option field (sentiment, value band, yes/no) it says which options the
+        charts have. A yes/no field lists `true` / `false` and ignores `search`. They are the values the dashboard's
+        charts let through under their own saved filters, narrowed by the dashboard date range and the
+        other filters' picks. `filterId` is the `<id>` of one of the request's `filter[<id>]` parameters. The filter's own pick
+        never narrows its list. Charts whose Feedback Dataset lacks the field, or lacks another picked
+        filter's field, offer nothing.
+
+        Up to 100 values, alphabetical; `hasMore` says more match, and `search` narrows them
+        (case-insensitive, contains). Values stored as ids a survey names carry the `label` they are
+        shown by: an answer's option (`FeedbackRecords.valueId`) its option label, a source id
+        (`FeedbackRecords.sourceId`) its survey's name, an ending (`FeedbackRecords.metadataEndingId`) its
+        headline. Labels come only from the surveys mapped into the dashboard's Feedback Datasets; an id
+        none of them names has no `label`. Such a list is in label order, and `search` also finds a value
+        whose label contains it. A filter the request does not name, or one that takes a typed
+        value (free text such as `FeedbackRecords.valueText`), answers 422.
+
+        Picks may take at most 4000 characters in all, each value counted percent-encoded as the URL
+        carries it (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks`
+        with `limit_exceeded`. A list whose charts would need more than 40 Cube queries
+        (`MAX_FILTER_VALUE_QUERIES`: one per Feedback Dataset, up to two per chart showing only its top
+        groups, more when the charts' answer filters or filter conditions do not fit one query) answers 422 naming
+        `filterId` with `limit_exceeded`: type a value instead, or split the dashboard.
+
+        Needs read access to the dashboard's workspace and to every Feedback Dataset its charts read.
+        Every request counts against the default v3 budget, cached or not. Lists are cached
+        for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
+        shared by everyone who may read the dashboard; an uncached list also counts one unit of the
+        chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/FilterIdPath'
+        - $ref: '#/components/parameters/DashboardDateRangeQuery'
+        - $ref: '#/components/parameters/DashboardDateFromQuery'
+        - $ref: '#/components/parameters/DashboardDateToQuery'
+        - $ref: '#/components/parameters/DashboardFilterRulesQuery'
+        - $ref: '#/components/parameters/DashboardFilterPicksQuery'
+        - in: query
+          name: search
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only values containing this text, or whose `label` contains it, ignoring case.
+          example: bian
+      responses:
+        '200':
+          description: The filter's values
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardFilterValues'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '422':
+          description: The filter has no value list, the picks or date range are not valid, or a limit is exceeded.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                picksOverBudget:
+                  summary: The picks take more than MAX_DASHBOARD_FILTER_PICKS_CHARS in a URL
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: The filter picks are not valid
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: picks
+                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                        code: limit_exceeded
+                tooManyQueries:
+                  summary: The dashboard's charts need more than MAX_FILTER_VALUE_QUERIES queries for this list
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: This filter's value list needs too many queries
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: filterId
+                        reason: The dashboard's charts need more than 40 queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.
+                        code: limit_exceeded
+                typedFilter:
+                  summary: The filter takes a typed value, not a pick from a list
+                  value:
+                    title: Unprocessable Content
+                    status: 422
+                    detail: This filter has no value list
+                    code: unprocessable_content
+                    requestId: req_01JB7X0000000000000000000
+                    invalid_params:
+                      - name: filterId
+                        reason: Only filters with 'equals' or 'notEquals' on a categorical field (one with a value lookup, an answer's option, embedded data, or a yes/no field) pick from a list; this one takes a typed value.
+                        code: invalid_reference
+        '429':
+          $ref: '#/components/responses/V3ChartQueryTooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3ChartQueryFailed'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/filter-fields:
+    get:
+      operationId: listDashboardFilterFieldsV3
+      summary: List a dashboard's embedded-data filter fields
+      description: |
+        The embedded-data fields a filter on this dashboard can use: the keys of the Feedback Datasets its
+        charts read, and of no other dataset, each once as the `FeedbackRecords.ed_*` member a
+        `filter[<id>]` names. The other fields a dashboard filter can use are the same for every dataset
+        (see `GET /api/v3/charts/fields`). Each field carries its `type` on this dashboard: a `number`
+        key also compares with `gt`, `gte`, `lt` and `lte`.
+
+        A dashboard-bound read: it needs read access to the dashboard's workspace, which a Dashboard viewer
+        has, unlike the field catalog. A Feedback Dataset the caller cannot read through the dashboard is
+        left out rather than failing the list. A dashboard with no charts lists nothing. The workspace is
+        resolved from the dashboard, so the operation takes no query parameters; a dashboard the caller
+        cannot see, or that does not exist, answers 403.
+
+        A Dashboard viewer gets only the keys some chart on the dashboard groups by: a key can hold anything,
+        so a viewer filters by, and lists the values of, only what the charts already show them. Naming any
+        other key in a filter, or listing its values, answers them 403.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      responses:
+        '200':
+          description: The dashboard's embedded-data filter fields
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardFilterFields'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -8168,7 +8514,8 @@ components:
             $ref: '#/components/schemas/InvalidParam'
     TranslatableTextMap:
       type: object
-      description: Multilingual text map keyed by the emitted `languages[].code` values for this survey.
+      description: Multilingual text map keyed by the emitted `languages[].code` values for this survey. A request may carry at most 256 keys per map and at most 256 distinct keys, counted as sent, across the whole survey document; past either, the write is refused with `limit_exceeded`.
+      maxProperties: 256
       propertyNames:
         type: string
         description: Survey language code/tag, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
@@ -8272,6 +8619,7 @@ components:
             - address
             - ranking
             - contactInfo
+            - signature
         headline:
           $ref: '#/components/schemas/TranslatableText'
         subheader:
@@ -8903,6 +9251,23 @@ components:
               type: boolean
               default: false
       unevaluatedProperties: false
+    SurveySignatureElement:
+      allOf:
+        - $ref: '#/components/schemas/SurveyElementBase'
+        - type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
+            type:
+              type: string
+              enum:
+                - signature
+            allowTypedSignature:
+              type: boolean
+              default: true
+              description: Whether the respondent may type their name instead of drawing. The signature is stored as a single PNG image either way.
+      unevaluatedProperties: false
+      description: Signature element. The respondent draws their signature, or types their name when `allowTypedSignature` is on.
     SurveyElement:
       oneOf:
         - $ref: '#/components/schemas/SurveyOpenTextElement'
@@ -8922,6 +9287,7 @@ components:
         - $ref: '#/components/schemas/SurveyContactInfoElement'
         - $ref: '#/components/schemas/SurveyCsatElement'
         - $ref: '#/components/schemas/SurveyCesElement'
+        - $ref: '#/components/schemas/SurveySignatureElement'
       discriminator:
         propertyName: type
         mapping:
@@ -8942,6 +9308,7 @@ components:
           contactInfo: '#/components/schemas/SurveyContactInfoElement'
           csat: '#/components/schemas/SurveyCsatElement'
           ces: '#/components/schemas/SurveyCesElement'
+          signature: '#/components/schemas/SurveySignatureElement'
       description: |
         Survey element/question inside a block. Element ids are stable public identifiers used by
         logic, recall strings, response data, quotas, integrations, and analysis. `type` selects the
@@ -11307,6 +11674,7 @@ components:
             - address
             - ranking
             - contactInfo
+            - signature
           description: The element's type in the current survey definition. Matches the `type` of the corresponding `SurveyElement`.
         elementLabel:
           type: string
@@ -11518,6 +11886,27 @@ components:
               description: Convenience count of `fileUrls`, so a list consumer need not materialize the array.
       unevaluatedProperties: false
       description: File-upload answer.
+    ResponseAnswerSignature:
+      allOf:
+        - $ref: '#/components/schemas/ResponseAnswerBase'
+        - type: object
+          required:
+            - imageUrl
+          properties:
+            elementType:
+              type: string
+              enum:
+                - signature
+            imageUrl:
+              type: string
+              description: |
+                The signature image (a PNG), **as stored** — a workspace-relative private storage path (`/storage/{workspaceId}/private/surveys/{surveyId}/elements/{elementId}/…`), not an absolute URL, and neither resolved nor signed. A signature is one image, so this is a single string where `fileUpload` has an array of `fileUrls`.
+
+                A deliberate choice, the same as for `fileUpload`: `answers[]` promises verbatim values a client can write straight back, and an absolute URL is neither what is stored nor what a write accepts. The v1 and v2 management APIs, webhooks, CSV and Excel exports, and integrations resolve the stored path to an absolute URL instead; v3 does not. This field identifies the image, it does not serve it: prefix your Formbricks origin to fetch it.
+
+                Not publicly fetchable. The request must carry a signed-in session or an API key with read access to the workspace (and, for a restricted survey, to the survey), and deleting the response deletes the image.
+      unevaluatedProperties: false
+      description: 'Signature answer. A `signature` element the respondent skipped is still returned, with an empty `imageUrl`, like an unchecked consent or an unfilled Other: `answers[]` carries every stored value, so a client can write it straight back.'
     ResponseAnswerBooking:
       allOf:
         - $ref: '#/components/schemas/ResponseAnswerBase'
@@ -11650,6 +12039,7 @@ components:
         - $ref: '#/components/schemas/ResponseAnswerSelection'
         - $ref: '#/components/schemas/ResponseAnswerDate'
         - $ref: '#/components/schemas/ResponseAnswerFileUpload'
+        - $ref: '#/components/schemas/ResponseAnswerSignature'
         - $ref: '#/components/schemas/ResponseAnswerBooking'
         - $ref: '#/components/schemas/ResponseAnswerMatrix'
         - $ref: '#/components/schemas/ResponseAnswerComposite'
@@ -11669,6 +12059,7 @@ components:
           ranking: '#/components/schemas/ResponseAnswerSelection'
           date: '#/components/schemas/ResponseAnswerDate'
           fileUpload: '#/components/schemas/ResponseAnswerFileUpload'
+          signature: '#/components/schemas/ResponseAnswerSignature'
           cal: '#/components/schemas/ResponseAnswerBooking'
           matrix: '#/components/schemas/ResponseAnswerMatrix'
           address: '#/components/schemas/ResponseAnswerComposite'
@@ -11678,7 +12069,7 @@ components:
 
         Answers are a **typed array**, not a map keyed by element id, because a consumer holding only a response would otherwise see bare ids and have to fetch the survey and join to learn what was asked — a join that is easy to get wrong and that agent clients cannot make cheaply. The array also separates answers from hidden fields and variables, which the stored representation mixes into one flat map. Non-answer data lives in `embeddedData[]`.
 
-        Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All seventeen element types are covered.
+        Several element types share a value shape and therefore a schema — the four numeric scales, the four choice styles, the two composites. All eighteen element types are covered.
 
         Only elements the respondent actually reached appear here. Data whose element has since been deleted appears in `unresolved[]` instead.
     ResponseEmbeddedDatum:
@@ -11985,7 +12376,7 @@ components:
 
         The value shapes are the stored ones, and they differ by element type. `ResponseAnswer` documents each; `answers[]` on the read is the resolved view of this same map.
 
-        **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: the v1 and v2 write paths store this same map with no cardinality limit, so a response written through them can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
+        **Bounds are a write-side concern and live on `ResponseDataMapInput`, not here.** This schema is the stored shape, and a read must describe what the API can actually return: responses written through the v1 and v2 APIs are not guaranteed to fit these bounds, and can carry more keys — or a longer multi-select — than a v3 write would accept. Declaring the write bounds on this schema would make `GET /api/v3/responses/{responseId}` promise something it cannot keep for those rows.
       additionalProperties:
         $ref: '#/components/schemas/ResponseRawValue'
     ResponseDataMapInput:
@@ -11995,10 +12386,10 @@ components:
           description: |
             The same map on the way in, with the cardinality bounds a v3 write enforces.
 
-            At most 500 keys, and at most 1000 entries in a multi-select array or matrix object. Both sit far above any real survey — a response holds one entry per element, a multi-select answer one per choice — and exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either is a **400** from the request schema, not a 422.
+            At most 2,000 keys, and at most 1000 entries in a multi-select array or matrix object. These are generous caps, set well above what surveys hold: the map has one key per answered element, and a survey written through this API has at most 1,000 blocks, so 2,000 keys covers one at that limit with one element per block; a multi-select answer holds one entry per choice. The bounds exist because every later reader pays per entry: the serializer's per-answer mapping, export columns, and the positional probe the "Other" response filter emits. Exceeding either, or sending a value of a shape `ResponseDataMap` does not allow, is a **400** from the request schema, not a 422, reported once, at the first such key.
 
-            Deliberately separate from `ResponseDataMap`, which the read returns. These bounds are v3-only — the v1 and v2 write paths store the same map without them — so a stored response may exceed them, and the read schema must not claim otherwise.
-          maxProperties: 500
+            Deliberately separate from `ResponseDataMap`, which the read returns. The v1 and v2 client writes and the v1 management write apply these bounds to each request, plus a total of 10,000 entries in each request's `data` map, but a response built over several updates can still exceed them, the v2 management write does not apply them, and older responses predate them. A stored response may therefore exceed them, and the read schema must not claim otherwise.
+          maxProperties: 2000
           additionalProperties:
             if:
               type: array
@@ -12040,7 +12431,7 @@ components:
 
         Reserved names collide differently and are not ambiguous: `reserved` is not writable at all, so a name that matches both a declared field and a catalog entry resolves to the declared one.
 
-        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. Far above any real survey; a v3-only bound, as on `data`.
+        **At most 500 names.** Every name that matches no declared field becomes its own `invalid_params` entry naming it, so without a cap a large body answers with a 422 several times its own size. A generous cap: a survey written through this API declares at most 200 hidden fields and 100 variables, so 500 leaves room for both.
       maxProperties: 500
       additionalProperties:
         oneOf:
@@ -12055,12 +12446,12 @@ components:
 
         This is client-reported telemetry, not a measurement the server can vouch for, so each value is clamped into `[0, 86400000]` (24 hours per element) rather than rejected — a noisy timing value should never cost you the response. Any finite *value* is therefore accepted, and none is declared out of range.
 
-        The number of **entries** is capped at 500, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
+        The number of **entries** is capped at 2,000, matching `data`: a response holds one timing per element, so anything beyond that is not telemetry the server can use. A map with more entries is **rejected** — `maxProperties` below is enforced during request validation, so the whole write fails rather than the excess being trimmed or stored.
 
         **Do not send a `_total` key.** The server owns that bucket: it drops any `_total` you supply and writes its own when the response is finished, by summing the element entries. Sending one therefore changes nothing rather than skewing the stored total, and `durationSeconds` on the read is computed from the element entries regardless.
 
         **An omitted map is not the same as an empty one.** Omitting `ttc` stores no timings at all and the response reports no `durationSeconds`; sending `{}` on a finished response stores a `_total` of zero, which reads as "completed instantly".
-      maxProperties: 500
+      maxProperties: 2000
       additionalProperties:
         type: number
     ResponseMetaInput:
@@ -13603,6 +13994,60 @@ components:
         valueLookup:
           type: boolean
           description: Whether `GET /api/v3/charts/fields/{field}/values` lists this field's stored values, for filters that need an exact value.
+        key:
+          type: string
+          description: 'Embedded-data fields only: the key exactly as collected, case included. Read the key here, not from `label`, which is display text.'
+          example: plan
+      additionalProperties: false
+    ChartAnswerQuestion:
+      type: object
+      description: 'A question of the Feedback Dataset an answer rule may name: a filter on `FeedbackRecords.answer` keeping the records whose submission answered this question a certain way. One rule names one question; put an option''s `value` in the rule''s `values`.'
+      required:
+        - id
+        - label
+        - kind
+        - operators
+        - options
+      properties:
+        id:
+          type: string
+          description: The question's id, as the rule values start with it.
+        label:
+          type: string
+          description: The question as respondents read it.
+        kind:
+          type: string
+          enum:
+            - choice
+            - multi
+            - number
+          description: 'How the question stores its answer: `choice` a single-select''s option, `multi` one record per selected option, `number` an NPS, rating, CSAT or CES value.'
+        operators:
+          type: array
+          description: The operators a rule on this question takes. A multi-select takes `equals` only ("contains any of"); there is no "does not contain".
+          items:
+            type: string
+            enum:
+              - equals
+              - notEquals
+        options:
+          type: array
+          description: The answers a rule may test for.
+          items:
+            type: object
+            required:
+              - value
+              - label
+            properties:
+              value:
+                type: string
+                description: The rule value, `<questionId>:<valueKey>`.
+                example: q_delivery:opt_late
+              label:
+                type: string
+                description: The answer as respondents read it.
+                example: Late
+            additionalProperties: false
       additionalProperties: false
     ChartFieldCatalog:
       type: object
@@ -13610,6 +14055,7 @@ components:
       required:
         - fields
         - datePresets
+        - answerQuestions
       properties:
         fields:
           type: array
@@ -13625,6 +14071,11 @@ components:
             - last 7 days
             - this month
             - all-time
+        answerQuestions:
+          type: array
+          description: The questions of the Feedback Dataset an answer rule (`FeedbackRecords.answer`) may name, with the operators and values each takes. Empty for a dataset without such questions.
+          items:
+            $ref: '#/components/schemas/ChartAnswerQuestion'
       additionalProperties: false
     ChartPreviewRequest:
       type: object
@@ -13653,7 +14104,7 @@ components:
         query:
           $ref: '#/components/schemas/ChartQuery'
         dateRange:
-          description: 'Replaces the query''s date range on `FeedbackRecords.collectedAt`: a preset, `all-time` to remove it, or `{ from, to }` ISO calendar dates. Read in the organization''s display time zone.'
+          description: 'Replaces the query''s date range on `FeedbackRecords.collectedAt`: a preset, `all-time` (the query''s own range applies when it is grouped by time, and is dropped otherwise), or `{ from, to }` ISO calendar dates. Read in the organization''s display time zone.'
           oneOf:
             - type: string
               example: last 7 days
@@ -13670,6 +14121,39 @@ components:
                   format: date
               additionalProperties: false
       additionalProperties: false
+    ChartDataRows:
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          type:
+            - string
+            - number
+            - boolean
+            - 'null'
+      example:
+        - FeedbackRecords.sourceName: Web
+          FeedbackRecords.count: 42
+    ChartDataOptionLabels:
+      type: object
+      description: Choice option ids to their labels in the survey's default language, in survey order. Filled when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server rewrote to it); empty otherwise.
+      additionalProperties:
+        type: string
+    ChartDataFieldLabels:
+      type: object
+      description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
+      additionalProperties:
+        type: string
+    ChartDataMemberLabels:
+      type: object
+      description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
+      additionalProperties:
+        type: string
+      example:
+        FeedbackRecords.ed_plan_64879f7d: Plan
+    ChartDataQuery:
+      type: object
+      description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
     ChartData:
       type: object
       description: 'What a chart query returns: one row per group, keyed by field name, the label maps to display stored ids with, and the query as it ran.'
@@ -13677,34 +14161,19 @@ components:
         - rows
         - optionLabels
         - fieldLabels
+        - memberLabels
         - query
       properties:
         rows:
-          type: array
-          items:
-            type: object
-            additionalProperties:
-              type:
-                - string
-                - number
-                - boolean
-                - 'null'
-          example:
-            - FeedbackRecords.sourceName: Web
-              FeedbackRecords.count: 42
+          $ref: '#/components/schemas/ChartDataRows'
         optionLabels:
-          type: object
-          description: Choice option ids to their labels in the survey's default language, in survey order. Filled when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server rewrote to it); empty otherwise.
-          additionalProperties:
-            type: string
+          $ref: '#/components/schemas/ChartDataOptionLabels'
         fieldLabels:
-          type: object
-          description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
-          additionalProperties:
-            type: string
+          $ref: '#/components/schemas/ChartDataFieldLabels'
+        memberLabels:
+          $ref: '#/components/schemas/ChartDataMemberLabels'
         query:
-          type: object
-          description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
+          $ref: '#/components/schemas/ChartDataQuery'
       additionalProperties: false
     ChartUpdateRequest:
       type: object
@@ -13830,6 +14299,56 @@ components:
           maxLength: 255
           description: Unique within the workspace; leading and trailing whitespace is trimmed.
       additionalProperties: false
+    DashboardFilter:
+      type: object
+      description: 'A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the caller''s own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it. Like a caller''s filter it is ANDed onto every chart''s saved query and never widens it. A chart whose Feedback Dataset lacks the field shows no data, and so does a chart that reads no text answer under a Sentiment, Sentiment Score or Emotions filter that needs a value.'
+      required:
+        - id
+        - field
+        - operator
+        - label
+        - values
+      properties:
+        id:
+          type: string
+          format: cuid2
+          description: Chosen by the writer; unique within the dashboard.
+        field:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: A dimension from the field catalog (`GET /api/v3/charts/fields`, `kind` `dimension` or `timeDimension`; not a filter-only field such as `FeedbackRecords.answer`), or an embedded-data field (`FeedbackRecords.ed_…`) from any chart's dataset catalog. An embedded-data field's name is derived from its key alone, so the filter applies to every chart whose Feedback Dataset has that key.
+          example: FeedbackRecords.sourceName
+        operator:
+          type: string
+          enum:
+            - equals
+            - notEquals
+            - contains
+            - notContains
+            - gt
+            - gte
+            - lt
+            - lte
+            - set
+            - notSet
+          description: 'One of the field''s `filterOperators`, chosen by the editor. `equals` and `notEquals` on a categorical field — one whose catalog entry has `valueLookup`, `FeedbackRecords.valueId` (the answer''s option), a yes/no (`boolean`) field, or an embedded-data field — pick from a list of values (`GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`) and take several values (any of); `contains` and `notContains` on `FeedbackRecords.emotions` take several of its labels (`joy`, `anger`, `sadness`, `fear`, `surprise`, `disgust`): contains any of them, contains none of them; `set` and `notSet` (has a value, has none) take no value; every other filter, free-text fields such as `FeedbackRecords.valueText` included, takes one typed value. On a time field a day (`YYYY-MM-DD`) is the whole day in the organization''s reporting time zone: `gt` is after it, `lt` before it, `gte` and `lte` include it, `equals` is on it. `gt`, `gte`, `lt` and `lte` on an embedded-data field take one number and compare the field as a number; they are saved only where the field is `type` `number` on the dashboard (`GET /api/v3/dashboards/{dashboardId}/filter-fields`), and a record whose value is no number does not pass them.'
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: What the top bar shows for the filter.
+        values:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1000
+          description: 'The values the filter is locked to: none for `set` and `notSet`, at least one otherwise. A list filter (`equals` or `notEquals` on a categorical field) matches any of them, and an emotions filter (`contains` or `notContains`) takes each, which must be one of its labels; every other filter takes the first. In a list filter, `"\u001Fnone"` stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it. Each must be a value its field can hold, and all of a dashboard''s locked values together stay within the 4000 percent-encoded characters a read''s picks may take.'
+          example:
+            - Website
+      additionalProperties: false
     DashboardWidget:
       type: object
       description: One chart's placement on the dashboard. `chart` is exactly what reading the chart returns.
@@ -13856,12 +14375,13 @@ components:
       additionalProperties: false
     DashboardResource:
       type: object
-      description: 'A dashboard: a named grid of widgets in a workspace. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/charts/{chartId}/data`.'
+      description: 'A dashboard: a named grid of widgets in a workspace, and the filters pinned to its top bar. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`.'
       required:
         - id
         - workspaceId
         - name
         - creator
+        - filters
         - widgets
         - createdAt
         - updatedAt
@@ -13877,6 +14397,12 @@ components:
           description: Unique within the workspace.
         creator:
           $ref: '#/components/schemas/DashboardCreator'
+        filters:
+          type: array
+          description: The dashboard filters, in top-bar order. Empty when it has none.
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/DashboardFilter'
         widgets:
           type: array
           description: In display order.
@@ -13892,7 +14418,7 @@ components:
       additionalProperties: false
     DashboardReplaceRequest:
       type: object
-      description: 'The whole edited dashboard: its name and every widget''s place. A widget left out of `widgets` is removed (its chart is kept). `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      description: 'The whole edited dashboard: its name, every widget''s place and, optionally, its filters. A widget left out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
       required:
         - name
         - expectedUpdatedAt
@@ -13906,6 +14432,12 @@ components:
           type: string
           format: date-time
           description: The dashboard's `updatedAt` from your read.
+        filters:
+          type: array
+          maxItems: 10
+          description: Every dashboard filter, in top-bar order, replacing the saved ones. At most 10; each `field` must be a catalog dimension and `operator` one it allows (422 naming the filter otherwise), and each `id` may appear once.
+          items:
+            $ref: '#/components/schemas/DashboardFilter'
         widgets:
           type: array
           maxItems: 1000
@@ -13973,6 +14505,105 @@ components:
           type: string
           format: cuid2
           description: A chart in the dashboard's workspace that is not already on the dashboard.
+      additionalProperties: false
+    DashboardChartData:
+      type: object
+      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters the chart cannot be narrowed by: its Feedback Dataset does not have their field, or they need a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on text answers only — on a chart whose saved query reads no text answer (its saved filters pin `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
+      required:
+        - rows
+        - optionLabels
+        - fieldLabels
+        - memberLabels
+        - query
+        - unfilterableFilters
+      properties:
+        rows:
+          $ref: '#/components/schemas/ChartDataRows'
+        optionLabels:
+          $ref: '#/components/schemas/ChartDataOptionLabels'
+        fieldLabels:
+          $ref: '#/components/schemas/ChartDataFieldLabels'
+        memberLabels:
+          $ref: '#/components/schemas/ChartDataMemberLabels'
+        query:
+          $ref: '#/components/schemas/ChartDataQuery'
+        unfilterableFilters:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - label
+            properties:
+              id:
+                type: string
+                description: 'The filter''s id within the read: a request''s own `filter[<id>]`, or `locked.<n>` for the dashboard''s `n`th locked filter.'
+              label:
+                type: string
+            additionalProperties: false
+      additionalProperties: false
+    DashboardFilterValues:
+      type: object
+      description: 'Up to 100 values a list dashboard filter offers, in order: the values the dashboard''s charts let through under their saved filters and date ranges, narrowed by the dashboard date range and the other filters'' picks.'
+      required:
+        - values
+        - hasMore
+      properties:
+        values:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required:
+              - value
+            properties:
+              value:
+                type: string
+                description: The value as stored, which a pick names.
+              label:
+                type: string
+                description: 'What the value is shown by, when it is an id a survey names: an answer option''s label (`FeedbackRecords.valueId`), a survey''s name (`FeedbackRecords.sourceId`), an ending''s headline (`FeedbackRecords.metadataEndingId`). Absent for every other value.'
+            additionalProperties: false
+        hasMore:
+          type: boolean
+          description: More values match than are listed; narrow them with `search`.
+      additionalProperties: false
+    DashboardFilterFields:
+      type: object
+      description: 'The embedded-data fields a filter on the dashboard can use: each key of the Feedback Datasets its charts read, once, in key order, with the type the key has on this dashboard. Datasets the caller cannot read through the dashboard are left out.'
+      required:
+        - fields
+      properties:
+        fields:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - key
+              - label
+              - type
+            properties:
+              name:
+                type: string
+                description: The member a filter names in `filter[<id>]=<operator>:<name>`, derived from the key alone, so the same key in two datasets is one field.
+                example: FeedbackRecords.ed_plan_64879f7d
+              key:
+                type: string
+                description: The embedded-data key as collected, case included.
+                example: plan
+              label:
+                type: string
+                description: How the field is shown; the key itself.
+                example: plan
+              type:
+                type: string
+                enum:
+                  - string
+                  - number
+                description: '`number` when every Embedded Data field the key holds, in the surveys a Feedback Source of the dashboard''s workspace maps into its charts'' datasets, is a number field: a filter may then compare it with `gt`, `gte`, `lt` and `lte`, as a number. `string` otherwise — a key no Embedded Data field declares, or one that fields of different types share.'
+                example: string
+            additionalProperties: false
       additionalProperties: false
     CreativeType:
       type: string
@@ -16703,6 +17334,75 @@ components:
         type: string
         format: cuid2
       description: The widget's id, from the dashboard's `widgets`.
+    DashboardDateRangeQuery:
+      in: query
+      name: dateRange
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+      description: 'The dashboard date range: a date preset from the field catalog''s `datePresets`, or `all-time`. It replaces each chart''s saved range on `FeedbackRecords.collectedAt`. Not together with `from`/`to`.'
+      example: last 7 days
+    DashboardDateFromQuery:
+      in: query
+      name: from
+      schema:
+        type: string
+        format: date
+        minLength: 1
+        maxLength: 32
+      description: First day of a custom dashboard date range (inclusive). Requires `to`.
+    DashboardDateToQuery:
+      in: query
+      name: to
+      schema:
+        type: string
+        format: date
+        minLength: 1
+        maxLength: 32
+      description: Last day of a custom dashboard date range (inclusive). Requires `from`.
+    DashboardFilterRulesQuery:
+      in: query
+      name: filter
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        maxProperties: 10
+        additionalProperties:
+          type: string
+          minLength: 3
+          maxLength: 300
+      description: 'The filters the request applies, as `filter[<id>]=<operator>:<field>`: any dimension from the field catalog, or an embedded-data field (`FeedbackRecords.ed_…`), with `equals`, `notEquals`, `contains`, `notContains`, `gt`, `gte`, `lt`, `lte`, `set` or `notSet` as the field allows. The dashboard keeps no list of them; `<id>` only names a filter within the request, to give its values in `picks[<id>]`. A filter without a pick is ignored, except `set` and `notSet` (has a value, has none), which take no pick and apply as they are. `gt`, `gte`, `lt` and `lte` on an embedded-data field compare it as a number, and only where it is `type` `number` on the dashboard (`GET /api/v3/dashboards/{dashboardId}/filter-fields`). A definition that is not `<operator>:<field>`, a field outside the catalog, an operator the field refuses, or a number comparison on an embedded-data field that is not a number on the dashboard answers 422 naming `filter[<id>]`.'
+      example:
+        f1: equals:FeedbackRecords.sourceName
+    DashboardFilterPicksQuery:
+      in: query
+      name: picks
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        maxProperties: 10
+        additionalProperties:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 1000
+      description: 'Values for the request''s filters, as `picks[<id>]=value` for each `filter[<id>]`; repeat the parameter for several values of a list filter (any of), or several labels of `contains` / `notContains` on `FeedbackRecords.emotions` (contains any of / none of; a value that is not one of its labels answers 422). A filter takes one typed value otherwise, and `set` / `notSet` none (a pick for one answers 422). A day (`YYYY-MM-DD`) on a time field is the whole day in the organization''s reporting time zone. In a list filter, `%1Fnone` (`"\u001Fnone"`) stands for "no value": with `equals` it also matches records without a value, with `notEquals` it keeps only records with one; any other filter refuses it with 422. Each pick is ANDed onto every chart''s saved query; picks for a filter the request does not name are ignored. All values together may take at most 4000 characters percent-encoded (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); more answers 422 naming `picks`.'
+      example:
+        f1:
+          - Web
+    FilterIdPath:
+      in: path
+      name: filterId
+      required: true
+      schema:
+        type: string
+        pattern: ^[A-Za-z0-9_-]{1,24}$
+      description: 'The filter to list values for: the `<id>` of one of the request''s `filter[<id>]` parameters. One that is not answers 422.'
     CreativeIdPath:
       in: path
       name: creativeId

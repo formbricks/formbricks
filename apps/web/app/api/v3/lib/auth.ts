@@ -5,8 +5,10 @@ import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TAuthorizationActor, assertCan, can } from "@/lib/authorization";
-import { getWorkspaceAuthorizationAction } from "@/lib/authorization/permission-action";
-import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
+import {
+  type TWorkspaceAccessLevel,
+  getWorkspaceAuthorizationAction,
+} from "@/lib/authorization/permission-action";
 import { problemForbidden, problemUnauthorized } from "./response";
 import type { TV3Authentication } from "./types";
 import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-context";
@@ -36,7 +38,7 @@ export const getV3SessionUserId = (authentication: TV3Authentication): string | 
 export async function requireSessionWorkspaceAccess(
   authentication: TV3Authentication,
   workspaceId: string,
-  minPermission: TTeamPermission,
+  minPermission: TWorkspaceAccessLevel,
   requestId: string,
   instance?: string
 ): Promise<Response | V3WorkspaceContext> {
@@ -75,7 +77,7 @@ export async function requireSessionWorkspaceAccess(
 export async function requireV3WorkspaceAccess(
   authentication: TV3Authentication,
   workspaceId: string,
-  minPermission: TTeamPermission,
+  minPermission: TWorkspaceAccessLevel,
   requestId: string,
   instance?: string
 ): Promise<Response | V3WorkspaceContext> {

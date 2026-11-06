@@ -102,5 +102,18 @@
     "value_must_equal": "El valor debe ser igual a {value}",
     "value_must_not_contain": "El valor no debe contener {value}",
     "value_must_not_equal": "El valor no debe ser igual a {value}"
+  },
+  "signature": {
+    "clear": "Borrar",
+    "draw": "Dibujar",
+    "method": "Método de firma",
+    "not_signed": "Sin firmar",
+    "pad_label": "Panel de firma. Dibuja tu firma con el dedo, un lápiz óptico o un ratón.",
+    "pad_label_with_type": "Panel de firma. Dibuja tu firma con el dedo, un lápiz óptico o un ratón, o cambia a Escribir para introducir tu nombre con el teclado.",
+    "saved": "Tu firma se ha guardado. Bórrala para volver a firmar.",
+    "sign_here": "Firma aquí",
+    "signed": "Firmado",
+    "type": "Escribir",
+    "type_your_name": "Escribe tu nombre"
   }
 }

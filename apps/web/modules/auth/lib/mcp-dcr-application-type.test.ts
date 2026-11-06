@@ -179,7 +179,9 @@ describe("prepareDcrRequest", () => {
       redirect_uris: ["http://127.0.0.1:1/cb"],
       application_type: "native",
     });
-    const prepared = await prepareDcrRequest(new Request(REGISTER, { method: "POST", body }));
+    const prepared = await prepareDcrRequest(
+      new Request(REGISTER, { method: "POST", headers: { "content-type": "application/json" }, body })
+    );
 
     expect(prepared).toBeInstanceOf(Request);
     await expect((prepared as Request).text()).resolves.toBe(body);
@@ -189,5 +191,19 @@ describe("prepareDcrRequest", () => {
     const request = new Request(`${BASE}/api/auth/sign-in/email`, { method: "POST", body: "{}" });
 
     expect(await prepareDcrRequest(request)).toBe(request);
+  });
+
+  // better-call answers any other content type with 415, so a body it will never parse is not read here.
+  test("leaves a registration that is not JSON to Better Auth, unread", async () => {
+    const request = new Request(REGISTER, {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: JSON.stringify({ redirect_uris: ["https://evil.example/cb"] }),
+    });
+
+    const prepared = await prepareDcrRequest(request);
+
+    expect(prepared).toBe(request);
+    expect(request.bodyUsed).toBe(false);
   });
 });

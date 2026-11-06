@@ -4,6 +4,7 @@ import { CheckCircle2Icon, CircleIcon, Grid3x3Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
+import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   MATRIX_COLUMN_DIMENSION_ID,
@@ -137,11 +138,7 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
   });
 
   if (pivot.rows.length === 0 || pivot.columns.length === 0) {
-    return (
-      <div className="text-muted-foreground flex h-full min-h-48 items-center justify-center">
-        {t("workspace.analysis.charts.no_data_available")}
-      </div>
-    );
+    return <ChartEmptyState message={t("workspace.analysis.charts.no_data_available")} />;
   }
 
   if (isMatrixTooLarge(pivot)) {

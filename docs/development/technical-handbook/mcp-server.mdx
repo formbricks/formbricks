@@ -118,8 +118,8 @@ Supported scopes:
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
-| `dashboards:read` | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `preview_chart`, `get_chart_data`, `list_chart_field_values` |
-| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
+| `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
+| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
 | `email` | User email claim |
@@ -265,8 +265,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_feedback_record` | `manage` |
 | `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard` | `read` |
 | `preview_chart`, `get_chart_data`, `list_chart_field_values` | `read`, and read access to the chart's feedback dataset |
+| `list_dashboard_filter_fields` | `read`; a feedback dataset the caller cannot read through the dashboard is left out of the list, and a Dashboard viewer gets only the keys a chart on the dashboard groups by |
+| `list_dashboard_filter_values` | `read`, and read access to each feedback dataset its charts read |
 | `create_chart`, `duplicate_chart` | `write` or `manage`, and write access to the feedback dataset |
-| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
+| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
 
 Synthesized MCP scopes for an API key: every `:read` scope always (`surveys`, `workflows`,
 `feedbackRecords`, `responses`, `dashboards`); the matching `:write` scopes when the key has `write` or
@@ -854,7 +856,7 @@ not idempotent.
 A block is `{ name, elements[], id? }`; an element is `{ id, type, headline, ... }`. The element
 `type` is one of `fileUpload`, `openText`, `multipleChoiceSingle`, `multipleChoiceMulti`, `nps`,
 `cta`, `rating`, `consent`, `pictureSelection`, `cal`, `date`, `matrix`, `address`, `ranking`,
-`contactInfo`, `csat`, `ces`. Element ids are caller-supplied and become immutable once the survey
+`contactInfo`, `csat`, `ces`, `signature`. Element ids are caller-supplied and become immutable once the survey
 leaves draft; block ids are generated when omitted. Translatable fields are keyed by locale code and
 must carry every configured language — the internal `default` key is rejected.
 
@@ -1475,7 +1477,7 @@ never this caller's, so repeating the call converges rather than compounding.
 
 ### Chart and dashboard tools
 
-Eighteen tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
+Twenty-one tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
 operation, minus deletion: there is no tool that deletes a chart or a dashboard, so a vague prompt such as
 "clean up old charts" cannot remove anything permanently. There is no AI generation tool either — an agent
 writes the chart query itself.
@@ -1483,16 +1485,39 @@ writes the chart query itself.
 - **Write against the catalog.** `list_chart_fields` returns every field a chart query may use; the query
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved
   chart so an agent can check it before `create_chart` saves it.
-- **Numbers need feedback access.** `preview_chart`, `get_chart_data` and `list_chart_field_values` return
-  respondents' answers in aggregate, so they declare `dashboards:read` **and** `feedbackRecords:read`, and the
-  operation also checks read access to the chart's feedback dataset. They spend from the same 600/min budget as
-  the REST data routes, and share their limit of 20 queries running at once, both charged inside the operation.
+- **Free-form numbers need feedback access.** `preview_chart` and `list_chart_field_values` run a caller's own
+  query over respondents' answers, so they declare `dashboards:read` **and** `feedbackRecords:read`.
+  `get_chart_data` declares the same two, with one exception through `registerScopedTool`'s `{ byInput }` form:
+  given a `dashboardId` it reads the chart as that dashboard shows it, and a Dashboard viewer's token (trimmed to
+  `dashboards:read`, flagged `dashboardViewerOnly` at authentication) may do that on `dashboards:read` alone
+  (ADR-0025). Without `dashboardId` it is the chart-only read it always was. Each operation also checks read
+  access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read` for a viewer. They spend from
+  the same 600/min budget as the REST data routes, and share their limit of 20 queries running at once, both
+  charged inside the operation.
+- **Dashboard filter values.** `list_dashboard_filter_values` is `GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values`:
+  the values a list filter offers, narrowed by the date range, the other filters' picks and `search`, which an
+  agent then passes as `picks` to `get_chart_data`. It is gated like a chart read through its dashboard —
+  `dashboards:read` and `feedbackRecords:read`, or `dashboards:read` alone for a Dashboard viewer — and spends
+  from the default v3 budget on every call and from the chart-query budget per Cube query on a cache miss.
+- **Dashboard filter fields.** `list_dashboard_filter_fields` is `GET /api/v3/dashboards/{dashboardId}/filter-fields`:
+  the embedded-data fields (`FeedbackRecords.ed_*`) of the feedback datasets the dashboard's charts read, which an
+  agent uses as a filter's `field` in `set_dashboard_filters`, `get_chart_data` and `list_dashboard_filter_values`.
+  A Dashboard viewer cannot call `list_chart_fields`, so this is how its agent finds them. It is gated like
+  `list_dashboard_filter_values`, and spends from the default v3 budget.
 - **Shared charts.** `update_chart`'s description says an edit shows on every dashboard holding the chart, and
   points at `duplicate_chart` + `update_widget` for a per-dashboard change. `duplicate_dashboard` says the copy
   shares its charts. `remove_chart_from_dashboard` says the chart is kept.
 - **Rearranging.** `update_dashboard_layout` takes `{ expectedUpdatedAt, widgets: [{ widgetId, layout }] }` and is
   refused unless it lists exactly the current widgets, so it can never remove a widget by omission. A stale
   `expectedUpdatedAt` answers `409` with the current one in `details`.
+- **Locked filters.** `set_dashboard_filters` takes `{ expectedUpdatedAt, filters }` and replaces the dashboard's
+  locked filters — the `filters` of `PUT /api/v3/dashboards/{dashboardId}` without the rest of the save, through
+  `setV3DashboardFilters`, which keeps the name and every widget. The list is the whole set: a filter is kept by
+  sending it back as `get_dashboard` read it, changed by sending it changed, removed by leaving it out, and an empty
+  list removes them all. A filter sent without `id` gets a new one. The input carries the PUT body's checks (at most
+  10 filters, a catalog dimension or embedded-data field with an operator it allows, values within the picks
+  budget), and the operation the save's: an embedded-data key none of the dashboard's charts reads answers `422`, a
+  stale `expectedUpdatedAt` `409`. Locked filters are ANDed; there are no OR groups.
 
 Every write runs through `runMcpMutation`, so it leaves the same audit event as the REST call.
 

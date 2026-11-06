@@ -4955,7 +4955,8 @@
                             "rating",
                             "cal",
                             "ranking",
-                            "contactInfo"
+                            "contactInfo",
+                            "signature"
                           ],
                           "type": "string"
                         }

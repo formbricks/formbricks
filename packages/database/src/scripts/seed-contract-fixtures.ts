@@ -22,6 +22,7 @@ import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 import { SEED_CREDENTIALS, SEED_IDS } from "../seed/constants";
+import { seedContractFeedbackRecords } from "./contract-feedback-records";
 
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
 
@@ -71,6 +72,8 @@ const CONTRACT_IDS = {
   DASHBOARD_DUPLICATE: "clctdashboarddupl0000001",
   DASHBOARD_REPLACE: "clctdashboardreplace0001",
   DASHBOARD_WIDGETS: "clctdashboardwidgets0001",
+  DASHBOARD_FILTER: "clctdashboardfilter00001",
+  DASHBOARD_LOCKED_FILTER: "clctdashboardlocked00001",
   WIDGET_READ: "clctwidgetread0000000001",
   WIDGET_REPLACE: "clctwidgetreplace0000001",
   WIDGET_PATCH: "clctwidgetpatch000000001",
@@ -417,9 +420,9 @@ async function seedWorkflow(
  * runs after seeding projects the dataset assignment into SpiceDB, which is what lets the seed API key
  * reach the dataset. Every mutating operation gets its own victim, as with surveys.
  *
- * The data and preview operations still answer 502: the job runs no Cube, so they are checked against
- * that documented response. And all of them answer `dashboards_plan_required` where the instance's
- * license does not grant Dashboards.
+ * The preview, data and field-values operations run a Cube query; the job starts Cube
+ * (scripts/start-cube-ci.sh) and `seedContractFeedbackRecords` gives it rows for this dataset. All of them
+ * answer `dashboards_plan_required` where the instance's license does not grant Dashboards.
  */
 async function seedDashboards(organizationId: string): Promise<void> {
   await prisma.feedbackDirectory.upsert({
@@ -485,6 +488,22 @@ async function seedDashboards(organizationId: string): Promise<void> {
       workspaceId: SEED_IDS.WORKSPACE,
       createdBy: SEED_IDS.USER_ADMIN,
       updatedAt: CONTRACT_FIXTURE_UPDATED_AT,
+      // The read dashboard carries a locked filter, with values, so GET /dashboards/{id} serialises a
+      // non-empty `filters` and its chart data and value lists read through it. A locked filter is never
+      // what a value list's `filterId` names — that is one of the request's own `filter[<id>]`, set in
+      // `listDashboardFilterValuesV3` below.
+      filters:
+        id === CONTRACT_IDS.DASHBOARD_READ
+          ? [
+              {
+                id: CONTRACT_IDS.DASHBOARD_LOCKED_FILTER,
+                field: "FeedbackRecords.sourceType",
+                operator: "equals",
+                label: "Source type",
+                values: ["survey"],
+              },
+            ]
+          : [],
     };
     await prisma.dashboard.upsert({ where: { id }, update: fields, create: { id, ...fields } });
     for (const [order, [widgetId, chartId]] of widgets.entries()) {
@@ -657,6 +676,7 @@ async function main(): Promise<void> {
 
   await seedContactsAndSegment();
   await seedDashboards(workspace.organizationId);
+  await seedContractFeedbackRecords(prisma, CONTRACT_IDS.DATASET);
 
   // After the read survey's languages, which seed the workspace's en-US and de-DE. The read creative opens
   // the read survey, which `read.surveyId` also points the list's `surveyId` filter at.
@@ -769,9 +789,16 @@ async function main(): Promise<void> {
       chartId: CONTRACT_IDS.CHART_READ,
       dashboardId: CONTRACT_IDS.DASHBOARD_READ,
       widgetId: CONTRACT_IDS.WIDGET_READ,
+      filterId: CONTRACT_IDS.DASHBOARD_FILTER,
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
+      // `filterId` (the read default above) must name one of the request's own `filter[<id>]`, or every
+      // call is the documented 422. The hook replaces `filter` whenever the case carries it, as every
+      // case built from the spec's example does.
+      listDashboardFilterValuesV3: {
+        query: { filter: { [CONTRACT_IDS.DASHBOARD_FILTER]: "equals:FeedbackRecords.sourceType" } },
+      },
       // Real data, so the 200 `{ updated }` body is checked and not only the empty scope-filtered one.
       // The call is idempotent, so the generated `lowQuality` / `null` alternate without drifting.
       batchSetResponsesOutcomeV3: { body: { ids: [CONTRACT_IDS.RESPONSE_OUTCOME] } },

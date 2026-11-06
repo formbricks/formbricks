@@ -7,9 +7,17 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
-import { deleteResponse, getResponseDownloadFile, responseSelection, updateResponse } from "./service";
+import { getSurveyFilteringValues } from "./filtering-values";
+import {
+  deleteResponse,
+  getResponseDownloadFile,
+  getResponseFilteringValues,
+  responseSelection,
+  updateResponse,
+} from "./service";
 import { calculateTtcTotal, getResponsesJson } from "./utils";
 
 vi.mock("@formbricks/database", () => ({
@@ -49,6 +57,10 @@ vi.mock("./utils", async (importOriginal) => {
   };
 });
 
+vi.mock("./filtering-values", () => ({
+  getSurveyFilteringValues: vi.fn(),
+}));
+
 vi.mock("../survey/service", () => ({
   getSurvey: vi.fn(() =>
     Promise.resolve({
@@ -78,6 +90,10 @@ vi.mock("../organization/service", () => ({
 
 vi.mock("@/modules/storage/lib/delete-response-files", () => ({
   deleteResponseFileUrls: vi.fn(),
+}));
+
+vi.mock("@/modules/storage/lib/replaced-signature-files", () => ({
+  enqueueReplacedSignatureFileCleanup: vi.fn(),
 }));
 
 vi.mock("../utils/file-conversion", () => ({
@@ -146,6 +162,65 @@ describe("responseSelection", () => {
 describe("updateResponse", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe("replaced Signature images (ENG-6810)", () => {
+    const oldImage = "/storage/ws/private/surveys/survey-123/elements/sig/signature--fid--old.png";
+
+    test("queues the cleanup after the write, against the stored data and the merged data", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage, other: "kept" } });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { sig: "" } }));
+
+      expect(enqueueReplacedSignatureFileCleanup).toHaveBeenCalledExactlyOnceWith(
+        prisma,
+        { surveyId: "survey-123", previousData: currentResponse.data, nextData: { sig: "", other: "kept" } },
+        { bestEffort: true }
+      );
+      expect(vi.mocked(prisma.response.update).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(enqueueReplacedSignatureFileCleanup).mock.invocationCallOrder[0]
+      );
+    });
+
+    test("queues on the caller's transaction, where a failure must propagate", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage } });
+      const tx = {
+        response: {
+          findUnique: vi.fn().mockResolvedValue(currentResponse),
+          update: vi.fn().mockResolvedValue(currentResponse),
+        },
+      };
+
+      await updateResponse(mockResponseId, createMockResponseInput({ data: { sig: "" } }), tx as never);
+
+      expect(enqueueReplacedSignatureFileCleanup).toHaveBeenCalledWith(tx, expect.anything(), {
+        bestEffort: false,
+      });
+    });
+
+    test("queues nothing when the update fails", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage } });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockRejectedValue(new Error("write failed"));
+
+      await expect(
+        updateResponse(mockResponseId, createMockResponseInput({ data: { sig: "" } }))
+      ).rejects.toThrow("write failed");
+
+      expect(enqueueReplacedSignatureFileCleanup).not.toHaveBeenCalled();
+    });
+
+    test("queues nothing for an update that carries no data", async () => {
+      const currentResponse = createMockCurrentResponse({ data: { sig: oldImage } });
+      vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+      vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+
+      await updateResponse(mockResponseId, { finished: true });
+
+      expect(enqueueReplacedSignatureFileCleanup).not.toHaveBeenCalled();
+    });
   });
 
   describe("language canonicalization (ENG-1067)", () => {
@@ -653,5 +728,43 @@ describe("getResponseDownloadFile", () => {
     expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
     expect(exportedIds).toHaveLength(rows.length);
     expect(new Set(exportedIds).size).toBe(rows.length);
+  });
+});
+
+describe("getResponseFilteringValues", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("derives the values from the loaded survey without reading every response (ENG-3755)", async () => {
+    const values = {
+      contactAttributes: {},
+      meta: {},
+      hiddenFields: {},
+      reservedValues: {},
+      variableValues: {},
+    };
+    vi.mocked(getSurveyFilteringValues).mockResolvedValue(values);
+
+    await expect(getResponseFilteringValues("survey-123")).resolves.toBe(values);
+
+    expect(getSurvey).toHaveBeenCalledWith("survey-123");
+    expect(getSurveyFilteringValues).toHaveBeenCalledWith(expect.objectContaining({ id: "survey-123" }));
+    expect(prisma.response.findMany).not.toHaveBeenCalled();
+  });
+
+  test("throws ResourceNotFoundError and queries nothing when the survey does not exist", async () => {
+    vi.mocked(getSurvey).mockResolvedValueOnce(null);
+
+    await expect(getResponseFilteringValues("survey-missing")).rejects.toThrow(ResourceNotFoundError);
+    expect(getSurveyFilteringValues).not.toHaveBeenCalled();
+  });
+
+  test("maps Prisma errors to DatabaseError", async () => {
+    vi.mocked(getSurveyFilteringValues).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("boom", { code: "P2010", clientVersion: "test" })
+    );
+
+    await expect(getResponseFilteringValues("survey-123")).rejects.toThrow(DatabaseError);
   });
 });

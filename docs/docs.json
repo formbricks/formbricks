@@ -230,6 +230,7 @@
                   "surveys/question-type/select-multiple",
                   "surveys/question-type/select-picture",
                   "surveys/question-type/select-single",
+                  "surveys/question-type/signature",
                   "surveys/question-type/statement-cta",
                   "surveys/question-type/thank-you-card"
                 ]
@@ -406,7 +407,9 @@
                       "self-hosting/upgrade/versions/charts-dashboards",
                       "self-hosting/upgrade/versions/valkey-9",
                       "self-hosting/upgrade/versions/question-codes",
-                      "self-hosting/upgrade/versions/attachment-exports"
+                      "self-hosting/upgrade/versions/attachment-exports",
+                      "self-hosting/upgrade/versions/dashboard-viewer",
+                      "self-hosting/upgrade/versions/cube-memory"
                     ]
                   }
                 ]

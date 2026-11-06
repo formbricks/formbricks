@@ -1,0 +1,64 @@
+---
+title: "Unreleased: Dashboard viewer role"
+description: "The 6.2 permission schema change for the Dashboard viewer role, and what API and MCP clients see."
+icon: "chart-line"
+---
+
+**Applies to:** the upgrade to 6.2. This change is on `main` and not in any 6.1 patch.
+**Upgrade impact: Action required** for every self-hosted installation: the permission schema changes.
+
+## What changes
+
+- Organizations can invite a **Dashboard viewer**. The role reads the dashboards of the workspaces its teams
+  are granted, and nothing else: no surveys, responses, contacts or feedback records.
+- The permission schema (`authzed/schema.zed`) changes. It adds the `organization#dashboard_viewer` relation and
+  a `dashboard_read` permission on workspaces and Feedback Dataset assignments.
+- `team#manage` now needs a product membership (owner, manager or member). A billing member who is a team admin
+  can no longer rename the team or change its members; an owner or manager can.
+- A data migration adds `dashboard_viewer` to the organization role values. No existing member changes role.
+- The role needs both the Access Control and the Dashboards entitlements. If either lapses, viewers keep the role
+  and see a "not available on this plan" page instead of the dashboards.
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| Everyone | Plan a maintenance window. Because the schema changes, permission preparation needs the current schema digest. See [schema changes](/self-hosting/upgrade/prepare#schema-changes). |
+| Kubernetes with `upgrade.mode: online` | Online mode doesn't support 6.1 → 6.2. Set `upgrade.mode: maintenance` for this upgrade. |
+| API clients that check organization roles | Accept the new role value `dashboard_viewer` (see below). |
+
+## Upgrade
+
+Follow the runbook for your setup: [Kubernetes](/self-hosting/upgrade/kubernetes),
+[Docker Compose](/self-hosting/upgrade/docker) or [one-click](/self-hosting/upgrade/one-click). Run permission
+preparation with the schema digest. It applies the new schema and reconciles the relationships before the new
+version starts.
+
+On one-click, `./formbricks.sh update` checks the permission setup and stops with a schema drift (exit `2`) if
+preparation hasn't run. Nothing has been stopped or migrated at that point: run the preparation step, then run
+the update again.
+
+Don't invite anyone as a Dashboard viewer until the upgrade is done and its checks pass. Owners, managers and
+members don't depend on the new relation, so they work as before.
+
+## What changes for API and MCP clients
+
+- **MCP `get_chart_data`** gains an optional `dashboardId` and `picks`. Without them it reads the saved chart as
+  before and still needs `dashboards:read` and `feedbackRecords:read`. With `dashboardId` it reads the chart as
+  that dashboard shows it, with dashboard filters applied. That also needs both scopes, except for a Dashboard
+  viewer's client, which holds only `dashboards:read`. Its result adds an optional `unfilterableFilters`.
+  Existing clients keep working.
+- **`GET /api/v3/charts/{chartId}/data`:** a date range replaces the range saved on the chart's `collectedAt`
+  time dimension, as a dashboard's date range does. A range the author saved as a `collectedAt` filter rule
+  still narrows the result. This endpoint isn't in any 6.1 release.
+- **Organization roles in API responses:** `GET /api/v2/organizations/{organizationId}/users` returns
+  `dashboard_viewer` as a user's `role` once someone holds it. A client that validates roles against a fixed
+  list must accept it. `GET /api/v2/roles` doesn't list it, and the v2 user create and update refuse to give it
+  (`403`): the role is given in the app. The v1 API returns no organization roles.
+
+## If something goes wrong
+
+The 6.1 schema has no `dashboard_viewer` relation, and the 6.1 app doesn't know the role. Before you go back to
+6.1, give every Dashboard viewer another role, such as Member, in **Organization settings → Members**. Then
+restore your 6.1 backup as described in [backup and restore](/self-hosting/operate/backup-restore). If you
+restore only the 6.1 schema rather than the whole backup, run `formbricks-authzed backfill --apply` afterwards.

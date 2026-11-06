@@ -1,12 +1,15 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 import { hasOrganizationAccess } from "@/lib/auth";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import { getDashboardViewerHomePath } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { getOrganizationBillingPath } from "@/modules/settings/lib/routes";
 
 export const GET = async (_: Request, context: { params: Promise<{ organizationId: string }> }) => {
@@ -16,10 +19,17 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   // check auth
   const session = await getSession();
   if (!session) throw new AuthenticationError("Not authenticated");
-  const hasAccess = await hasOrganizationAccess(session.user.id, organizationId);
-  if (!hasAccess) throw new AuthorizationError("Unauthorized");
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
+  // A Dashboard viewer has no `organization.read` (ADR-0025); it lands on its dashboards here, or on the
+  // page explaining why there are none.
+  if (currentUserMembership?.role === "dashboard_viewer") {
+    const lastWorkspaceId = (await cookies()).get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value;
+    return redirect(await getDashboardViewerHomePath(session.user.id, organizationId, lastWorkspaceId));
+  }
+
+  const hasAccess = await hasOrganizationAccess(session.user.id, organizationId);
+  if (!hasAccess) throw new AuthorizationError("Unauthorized");
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   // redirect to first workspace

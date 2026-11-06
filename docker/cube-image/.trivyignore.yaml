@@ -1,4 +1,11 @@
 # Findings the Trivy gate in .github/workflows/cube-image.yml accepts. Each entry needs a one-line
 # reachability statement and an expired_at at most 30 days out, so the gate turns red again and forces a
 # re-check (see README.md). Delete an entry as soon as a new base digest carries the fix.
-vulnerabilities: []
+vulnerabilities:
+  # ENG-6923 / GHSA-x8rm-f576-gq67: the PhoneNumber scalar's regex backtracks exponentially. 2.0.1 is the
+  # first fix, but it needs graphql 16 or 17 and @cubejs-backend/api-gateway keeps graphql 15, so forcing it
+  # would load two graphql copies. api-gateway only uses DateTimeResolver, never PhoneNumber, so the regex
+  # is unreachable. Remove once Cube moves to a graphql-scalars release with the fix.
+  - id: CVE-2026-115887
+    statement: "Cube api-gateway imports only DateTimeResolver; the PhoneNumber scalar is never registered."
+    expired_at: 2026-12-03

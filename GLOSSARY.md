@@ -19,6 +19,10 @@ that is not listed here.
 
 **Default language** — A survey's fallback language. Its strings sit under the `default` key of every translated string, not under its own code; other languages sit under canonical BCP-47 tags (`de-DE`), and a bare or mis-cased code is normalized with `normalizeLanguageCode` (`@formbricks/i18n-utils`).
 
+**Signature element** — An element where the respondent signs, by drawing or by typing their name, and the owner gets the signature as one image with the response. UI copy says "Signature". _Avoid_ (in code and domain talk): signature question, signature field, e-signature (it carries no legal-signature claim).
+
+**Signed** — A Signature element is signed when the tab the respondent is on holds a signature: a drawn stroke of minimum length on Draw, or a name containing at least one letter, number or symbol on Type. A bare tap, an empty name, or a name of only spaces or punctuation does not count, and the other tab's input is kept but does not count. Clearing makes it not signed again. Logic conditions read "is signed" / "is not signed".
+
 **Card pointer (`blockId`)** — The renderer's position in a survey: the `"start"` sentinel (welcome card), a block id while answering, an ending id once finished, or the `"end"` sentinel for a survey with no endings. Only a block id resolves against `survey.blocks`.
 
 **Ending** — A card shown when the survey finishes. A response records the ending it finished on as `endingId`.
@@ -41,11 +45,17 @@ that is not listed here.
 
 **Date range** — The window of `collectedAt` a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data replaces the one saved on the chart.
 
+**Answer filter** — A chart filter rule on how the same submission answered another question in the chart's Feedback Dataset, such as "NPS where Delivery is Late". A submission that skipped that question never matches, not even an "is not" rule. _Avoid_: sibling filter, response-wide filter.
+
 **Dashboard** — A named grid of widgets in a workspace. Its charts can come from different Feedback Datasets.
 
 **Widget** — One chart's placement on one dashboard: its position and size on the dashboard's 12-column grid, and its order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
 
 **Layout** — The positions and sizes of a dashboard's widgets. Widgets may not overlap; gaps close upward when the dashboard is drawn.
+
+**Dashboard filter** — A filter on one field and operator that a dashboard's editors pin to the dashboard's top bar, shared by everyone who opens it. Each person picks or enters its value (their **filter pick**, kept in their own browser); the pick applies to every chart on the dashboard and only ever narrows what a chart's own saved filters let through, never widens it. A chart whose Feedback Dataset lacks the field shows no data and says it cannot be filtered by it. _Avoid_: global filter, slicer.
+
+**Dashboard viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards it can see. _Avoid_: viewer, read-only member (a Member on a read team still sees raw data).
 
 **In use** — A chart is in use while it sits on at least one dashboard. A chart in use cannot be deleted; the refusal names the dashboards holding it.
 
