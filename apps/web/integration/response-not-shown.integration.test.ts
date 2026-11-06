@@ -126,7 +126,7 @@ describe("client response create", () => {
 
 describe("client response update", () => {
   const seedAnswered = async () => {
-    const { surveyId } = await seed();
+    const { workspaceId, surveyId } = await seed();
     // A respondent who first picked all three big services, answered "Heavy users" and wrote why
     // Apple TV+ would convince them, then went Back and changed both answers.
     const response = await prisma.response.create({
@@ -146,22 +146,23 @@ describe("client response update", () => {
       },
       select: { id: true },
     });
-    return { surveyId, responseId: response.id };
+    return { workspaceId, surveyId, responseId: response.id };
   };
 
   test("stores the record and removes the answers of every element and block it lists", async () => {
-    const { surveyId, responseId } = await seedAnswered();
+    const { workspaceId, surveyId, responseId } = await seedAnswered();
 
-    await updateResponseWithQuotaEvaluation(
+    await updateResponseWithQuotaEvaluation({
       responseId,
+      workspaceId,
       surveyId,
-      ZClientResponseUpdateInput.parse({
+      responseInput: ZClientResponseUpdateInput.parse({
         finished: false,
         data: { services: ["Netflix"], fav: "Netflix" },
         ttc: { fav: 700 },
         notShown: surveyFlowFixtureNotShown,
-      })
-    );
+      }),
+    });
 
     const stored = await readStored(responseId);
     expect(stored.notShown).toEqual(surveyFlowFixtureNotShown);
@@ -178,17 +179,27 @@ describe("client response update", () => {
   });
 
   test("replaces the stored record, so an item shown again after Back drops out of it", async () => {
-    const { surveyId, responseId } = await seedAnswered();
-    await updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: false,
-      data: {},
-      notShown: { blocks: [heavyUsers], elements: ["apple_reason"] },
+    const { workspaceId, surveyId, responseId } = await seedAnswered();
+    await updateResponseWithQuotaEvaluation({
+      responseId,
+      workspaceId,
+      surveyId,
+      responseInput: {
+        finished: false,
+        data: {},
+        notShown: { blocks: [heavyUsers], elements: ["apple_reason"] },
+      },
     });
 
-    await updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: false,
-      data: { fav: "Apple TV+", apple_reason: "Bundles" },
-      notShown: { blocks: [heavyUsers] },
+    await updateResponseWithQuotaEvaluation({
+      responseId,
+      workspaceId,
+      surveyId,
+      responseInput: {
+        finished: false,
+        data: { fav: "Apple TV+", apple_reason: "Bundles" },
+        notShown: { blocks: [heavyUsers] },
+      },
     });
 
     const stored = await readStored(responseId);
@@ -197,12 +208,17 @@ describe("client response update", () => {
   });
 
   test("never removes a key that is not an element of the survey", async () => {
-    const { surveyId, responseId } = await seedAnswered();
+    const { workspaceId, surveyId, responseId } = await seedAnswered();
 
-    await updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: false,
-      data: {},
-      notShown: { elements: ["verifiedEmail", "panel_id"] },
+    await updateResponseWithQuotaEvaluation({
+      responseId,
+      workspaceId,
+      surveyId,
+      responseInput: {
+        finished: false,
+        data: {},
+        notShown: { elements: ["verifiedEmail", "panel_id"] },
+      },
     });
 
     await expect(readStored(responseId)).resolves.toMatchObject({
@@ -211,12 +227,17 @@ describe("client response update", () => {
   });
 
   test("an update without a record (an older bundle) merges as before and keeps the stored one", async () => {
-    const { surveyId, responseId } = await seedAnswered();
+    const { workspaceId, surveyId, responseId } = await seedAnswered();
     await prisma.response.update({ where: { id: responseId }, data: { notShown: { elements: ["email"] } } });
 
-    await updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: true,
-      data: { bundle: "Yes" },
+    await updateResponseWithQuotaEvaluation({
+      responseId,
+      workspaceId,
+      surveyId,
+      responseInput: {
+        finished: true,
+        data: { bundle: "Yes" },
+      },
     });
 
     const stored = await readStored(responseId);
@@ -225,12 +246,17 @@ describe("client response update", () => {
   });
 
   test("the updated response the pipeline and webhooks receive carries no record", async () => {
-    const { surveyId, responseId } = await seedAnswered();
+    const { workspaceId, surveyId, responseId } = await seedAnswered();
 
-    const updated = await updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: true,
-      data: {},
-      notShown: surveyFlowFixtureNotShown,
+    const updated = await updateResponseWithQuotaEvaluation({
+      responseId,
+      workspaceId,
+      surveyId,
+      responseInput: {
+        finished: true,
+        data: {},
+        notShown: surveyFlowFixtureNotShown,
+      },
     });
 
     expect(updated).not.toHaveProperty("notShown");
