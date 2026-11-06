@@ -4,6 +4,7 @@ import { SURVEY_IMPORT_MAX_NAME_CHARS } from "../limits";
 import { buildGridModel } from "./model";
 import {
   DocumentPlanContext,
+  type TDocumentPlannedEntry,
   checkDocumentPlanResponses,
   isUnreadLine,
   mergeDocumentPlans,
@@ -521,6 +522,24 @@ describe("an answer that names none of its lines", () => {
 });
 
 describe("mergeDocumentPlans", () => {
+  test("keeps a failure whose line only an entry that loses its cells reads", () => {
+    const planned = (ref: string, cells: string[]) =>
+      ({ ref, cells: new Set(cells) }) as unknown as TDocumentPlannedEntry;
+    const first = { ...check([]).plan, failures: new Map([["R4", ["invalid_entry" as const]]]) };
+    // R3 claims B2, which R2 already read, so the draft drops it, and with it its read of B4.
+    const retry = {
+      ...check([], true).plan,
+      entries: new Map([
+        ["R2", planned("R2", ["B2"])],
+        ["R3", planned("R3", ["B2", "B4"])],
+      ]),
+    };
+
+    const merged = mergeDocumentPlans(first, retry, new DocumentPlanContext(model));
+
+    expect(merged.failures.get("R4")).toEqual(["invalid_entry"]);
+  });
+
   test("the retry's verdicts replace the first round's failures, and its entries join the first's", () => {
     const first = check([
       answer(["R2", "R3"], [entry("R2"), entry("R3", { kind: "pictureSelection" })]),

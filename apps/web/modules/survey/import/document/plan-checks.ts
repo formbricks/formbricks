@@ -594,8 +594,9 @@ const keepUnresolvedFailures = (
   context: DocumentPlanContext
 ): TDocumentCheckedPlan["failures"] => {
   const failures = new Map(retry.failures);
+  // Only the entries the draft keeps: one that loses its cells to an earlier entry reads nothing.
   const linesRead = new Set(
-    [...entries.values()].flatMap((entry) =>
+    orderedEntries(context, { entries }).entries.flatMap((entry) =>
       [...entry.cells].flatMap((cell) => {
         const line = context.cellLineAt(cell);
         return line === undefined ? [] : [line];
@@ -640,7 +641,7 @@ export function mergeDocumentPlans(
  */
 export function orderedEntries(
   context: DocumentPlanContext,
-  plan: TDocumentCheckedPlan
+  plan: Pick<TDocumentCheckedPlan, "entries">
 ): { entries: TDocumentPlannedEntry[]; overlapping: string[] } {
   const claimed = new Set<string>();
   const entries: TDocumentPlannedEntry[] = [];
