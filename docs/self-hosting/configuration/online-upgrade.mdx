@@ -69,8 +69,12 @@ the chart sets `EMBEDDING_MODEL` itself and ignores `hub.env.EMBEDDING_MODEL`, a
 While old and new `hub-worker` pods overlap, an old pod can rewrite a vector without updating its source hash, so
 a record edited and then edited back during the rollout can keep a stale vector. Stop the old workers before the
 new ones start. If they already overlapped, clear the hash for vectors written during the rollout with
-`UPDATE embeddings SET source_hash = NULL WHERE updated_at BETWEEN <rollout start> AND <rollout end>`, then run
-`/app/backfill-embeddings -tenant-id <id> -stale` inside a `hub-worker` pod, for each affected tenant. The Hub
+`UPDATE embeddings SET source_hash = NULL WHERE updated_at BETWEEN <rollout start, minus a few minutes> AND <rollout end>`.
+The margin covers a worker that took its timestamp before it waited on a row lock, and the statement covers both
+the search and the taxonomy embeddings. Then, for each affected tenant, run
+`/app/backfill-embeddings -tenant-id <id> -stale` inside a `hub-worker` pod and, if taxonomy is enabled,
+`/app/backfill-embeddings -taxonomy -tenant-id <id> -stale`. Add `-count-only` first to preview how many records a run
+would re-embed. The Hub
 [Embedding repair](https://github.com/formbricks/hub/blob/0.14.2/docs/src/content/docs/reference/environment-variables.mdx)
 section has the details.
 6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
