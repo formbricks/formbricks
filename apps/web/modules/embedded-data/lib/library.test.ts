@@ -160,7 +160,7 @@ describe("createSharedEmbeddedData", () => {
   test("refuses a computed field typed boolean, which the logic engine cannot calculate", async () => {
     await expect(
       createSharedEmbeddedData(workspaceId, { ...createInput, source: "computed", dataType: "boolean" })
-    ).rejects.toThrow("Computed fields support only string or number");
+    ).rejects.toThrow("Computed fields support only string, number or date");
   });
 
   test("refuses a reserved source, which is a code catalog rather than a row", async () => {

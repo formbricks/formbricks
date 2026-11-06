@@ -11,6 +11,7 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { OptionBaseNote } from "./OptionBaseNote";
 import { OtherValuesList } from "./OtherValuesList";
 
 interface MultipleChoiceSummaryProps {
@@ -96,15 +97,26 @@ export const MultipleChoiceSummary = ({
                   className="group w-full cursor-pointer"
                   onClick={() => applyChoiceFilter(result)}
                   onKeyDown={(event) => handleChoiceKeyDown(event, result)}>
-                  <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
-                    <div className="mr-8 flex w-full justify-between gap-x-2 sm:justify-normal">
-                      <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
+                  <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row sm:gap-x-4">
+                    {/* The label keeps its line; the id chip and the base badges wrap below it as a
+                        group rather than squeezing it (ENG-6937). */}
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className="min-w-0 font-semibold break-words text-slate-700 underline-offset-4 group-hover:underline">
                         {result.value}
                       </p>
-                      {choiceId && <IdBadge id={choiceId} />}
+                      {choiceId && (
+                        <span className="shrink-0">
+                          <IdBadge id={choiceId} />
+                        </span>
+                      )}
+                      <OptionBaseNote
+                        shownCount={result.shownCount}
+                        base={elementSummary.responseCount}
+                        hidden={result.hidden}
+                      />
                     </div>
-                    <div className="flex w-full gap-x-2">
-                      <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
+                    <div className="flex w-full gap-x-2 sm:w-auto sm:shrink-0">
+                      <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0 sm:whitespace-nowrap">
                         {t("common.count_selections", { count: result.count })}
                       </p>
                       <p className="rounded-lg bg-slate-100 px-2 text-slate-700">

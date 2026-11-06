@@ -1,5 +1,5 @@
-# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, and the
-# dev container's features.
+# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, the
+# dev container's features, and patch and minor releases of the npm workspace.
 # Security updates for the npm workspace are configured separately in the repository settings and routed to
 # Linear by dependabot-to-linear.yml.
 version: 2
@@ -112,3 +112,48 @@ updates:
       - dependencies
     commit-message:
       prefix: "chore(docker)"
+
+  # Patch and minor releases of the workspace's npm dependencies, one grouped PR a week, so fixes land
+  # before they become advisories. Majors need a deliberate migration and get a ticket instead. `allow`
+  # narrows version updates only, so security updates for a major still arrive.
+  # The cooldown matches pnpm's minimumReleaseAge (4320 minutes), so a PR never proposes a version that
+  # `pnpm install` would refuse.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 3
+    # Four package PRs can sit here at once (see the exclusion below) and stay open until someone bumps the
+    # package and re-checks its patch by hand, so the default limit of 5 would let them crowd out the weekly
+    # group PR they are deliberately kept out of.
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
+    groups:
+      npm-minor-and-patch:
+        patterns:
+          - "*"
+        # Every package carrying a version-pinned patch in pnpm-workspace.yaml (`patchedDependencies`) is
+        # held out of the group, so Dependabot opens one PR per package instead of batching them. A bump the
+        # patch does not match makes `pnpm install` fail — this repo does not set `allowUnusedPatches` — and
+        # riding in the group with 50 unrelated updates would block all of them. Alone, the red PR is the
+        # signal to bump the package and re-check its patch by hand; each entry in `patchedDependencies`
+        # names the ticket behind it.
+        # Deliberately not an `ignore`: a bare one suppresses security updates too, for exactly the packages
+        # sitting under a hand-applied mitigation, and with no PR raised nothing would ask for the patch to
+        # be re-checked when Next moves.
+        exclude-patterns:
+          - "next"
+          - "better-auth"
+          - "@better-auth/oauth-provider"
+          - "pg-pool"
+    labels:
+      - dependencies
+      - javascript
+    commit-message:
+      prefix: "chore(deps)"

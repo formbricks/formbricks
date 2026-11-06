@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, UploadIcon } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
@@ -8,6 +8,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import { V3_SURVEY_GENERATE_ALLOWED_LANGUAGES } from "@/app/api/v3/surveys/generate/schemas";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
+import { landFocusOnDraft } from "@/modules/survey/components/template-list/components/ai-draft-preview";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
 import { SourceChip } from "@/modules/survey/components/template-list/components/source-chip";
 import { useCreateSurveyWithAI } from "@/modules/survey/components/template-list/hooks/use-create-survey-with-ai";
@@ -51,6 +52,11 @@ type CreateWithAIFormProps = {
   onUnsavedWorkChange?: (hasUnsavedWork: boolean) => void;
   /** Reports whether a generation is in flight, so the host can word its confirmation. */
   onGeneratingChange?: (isGenerating: boolean) => void;
+  /**
+   * Opens the import instead, offered on the footer's left while the prompt is written.
+   * Left out when the host has no import to offer (no AI: the import would take Formbricks files only).
+   */
+  onImportInstead?: () => void;
 };
 
 export const CreateWithAIForm = ({
@@ -66,6 +72,7 @@ export const CreateWithAIForm = ({
   isHostNavigating = false,
   onUnsavedWorkChange,
   onGeneratingChange,
+  onImportInstead,
 }: Readonly<CreateWithAIFormProps>) => {
   const { t } = useTranslation();
 
@@ -119,7 +126,7 @@ export const CreateWithAIForm = ({
   // that scrolls, and a user pressing Space to read further would otherwise navigate by accident.
   useEffect(() => {
     if (status === "review") {
-      draftRef.current?.focus();
+      landFocusOnDraft(draftRef.current);
     }
   }, [status]);
 
@@ -190,6 +197,18 @@ export const CreateWithAIForm = ({
 
     return (
       <>
+        {onImportInstead && (
+          // The other way in, on the footer's left, away from the dialog's own actions.
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-slate-600 sm:mr-auto"
+            title={t("workspace.surveys.ai_create.import_file_hint")}
+            onClick={onImportInstead}>
+            <UploadIcon aria-hidden="true" />
+            {t("workspace.surveys.ai_create.import_file")}
+          </Button>
+        )}
         {showCancel && onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel}>
             {t("common.cancel")}
@@ -279,6 +298,31 @@ export const CreateWithAIForm = ({
             </div>
           </div>
 
+          {/* Light chips straight under the prompt: examples to fill it with, not actions of the dialog. */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-0.5 text-xs text-slate-500">
+              {t("workspace.surveys.ai_create.try_prompt")}
+            </span>
+            {helperPrompts.map((helperPrompt) => (
+              <button
+                key={helperPrompt.label}
+                type="button"
+                className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700 transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none"
+                title={helperPrompt.prompt}
+                aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
+                onClick={() => {
+                  setPrompt(helperPrompt.prompt);
+                  clearError();
+                }}>
+                <helperPrompt.Icon
+                  className="size-3.5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600"
+                  aria-hidden="true"
+                />
+                <span className="min-w-0 truncate">{helperPrompt.label}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-col gap-y-2">
             <Label htmlFor="ai-survey-language">{t("workspace.surveys.ai_create.survey_language")}</Label>
             <Select
@@ -298,31 +342,6 @@ export const CreateWithAIForm = ({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-700">
-              {t("workspace.surveys.ai_create.try_prompt")}
-            </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {helperPrompts.map((helperPrompt) => (
-                <Button
-                  key={helperPrompt.label}
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="group w-full min-w-0 justify-start text-left"
-                  title={helperPrompt.prompt}
-                  aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
-                  onClick={() => {
-                    setPrompt(helperPrompt.prompt);
-                    clearError();
-                  }}>
-                  <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
-                  <span className="min-w-0 truncate">{helperPrompt.label}</span>
-                </Button>
-              ))}
-            </div>
           </div>
         </>
       )}

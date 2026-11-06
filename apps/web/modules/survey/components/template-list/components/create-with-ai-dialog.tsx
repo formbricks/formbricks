@@ -7,6 +7,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
 import { CreateWithAIForm } from "@/modules/survey/components/template-list/components/create-with-ai-form";
+import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";
 import { AiIcon } from "@/modules/ui/components/ai";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -46,6 +47,7 @@ export const CreateWithAIDialog = ({
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
   const [isConfirmingDiscard, setIsConfirmingDiscard] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const promptInputRef = useRef<HTMLTextAreaElement>(null);
 
   const isControlled = open !== undefined;
@@ -79,6 +81,13 @@ export const CreateWithAIDialog = ({
     startEditorNavigationTransition(() => {
       router.push(`/workspaces/${workspaceId}/surveys/${surveyId}/edit`);
     });
+  };
+
+  // A questionnaire the user already has is imported, not described: the hint swaps this dialog for the
+  // Import one. Only offered before anything is generated, so it never discards a draft.
+  const openImportInstead = () => {
+    commitOpenChange(false);
+    setIsImportDialogOpen(true);
   };
 
   const handleOpenAutoFocus = (event: Event) => {
@@ -144,11 +153,20 @@ export const CreateWithAIDialog = ({
               setHasUnsavedWork(unsaved);
             }}
             onGeneratingChange={setIsGenerating}
+            // Without AI the Import dialog takes Formbricks files only, none of the files the hint names.
+            onImportInstead={isAIAvailable && !hasUnsavedWork ? openImportInstead : undefined}
             onCancel={() => setDialogOpen(false)}
             renderFooter={(footer) => <DialogFooter>{footer}</DialogFooter>}
           />
         </DialogBody>
       </DialogContent>
+
+      <ImportSurveyDialog
+        workspaceId={workspaceId}
+        isAIAvailable={isAIAvailable}
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+      />
 
       <ConfirmationModal
         open={isConfirmingDiscard}

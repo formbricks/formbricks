@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
+import type { FieldErrors } from "react-hook-form";
+import type { TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TConnector } from "@formbricks/types/surveys/logic";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import type { TSentenceLeadAlign } from "./lib/sentence";
 
 export interface TGenericCondition {
   id: string;
@@ -21,6 +24,14 @@ export interface TGenericConditionGroup<T extends TGenericCondition = TGenericCo
   connector: TConnector;
   conditions: (T | TGenericConditionGroup<T>)[];
 }
+
+/**
+ * How the editor lays its conditions out. `default` is every shared caller's (quotas, chart filters,
+ * the table Advanced filter, show conditions). `sentence` is the survey rule editor's and the Flow
+ * tab's show-if popovers' (ENG-6969 T6): "If … and …", the and/or in a select before the second
+ * condition, one aligned grid, borderless row actions, and an empty first field read as a placeholder.
+ */
+export type TConditionsEditorVariant = "default" | "sentence";
 
 export interface TConditionValueProps {
   show?: boolean;
@@ -44,6 +55,12 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
   getValueProps: (condition: T) => TConditionValueProps;
   getDefaultOperator: () => string;
   formatLeftOperandValue: (condition: T) => string;
+  /**
+   * The right operand as the value picker shows it, when it isn't the stored value as it is: a matrix
+   * row condition reads its column ids back to the positions its options use (ENG-6934). Omitted means
+   * the stored value.
+   */
+  formatRightOperandValue?: (condition: T) => string | number | string[] | undefined;
   /**
    * Renders the right-operand control for a condition when the default combobox does not fit —
    * a date picker, or a pick-list fetched per data source. Return `undefined` to fall back to the
@@ -70,4 +87,18 @@ export interface TConditionsEditorConfig<T extends TGenericCondition = TGenericC
    * condition standing for something removed elsewhere, such as a dashboard filter's chip.
    */
   hideConditionMenu?: boolean;
+}
+
+/** The props of both layouts of the conditions editor; `variant` picks between them. */
+export interface ConditionsEditorProps {
+  conditions: TGenericConditionGroup;
+  config: TConditionsEditorConfig;
+  callbacks: TConditionsEditorCallbacks;
+  depth?: number;
+  quotaErrors?: FieldErrors<TSurveyQuotaInput>;
+  isSubmitted?: boolean;
+  /** Hides the all/any picker: every condition combines with the group's fixed connector. */
+  isConnectorLocked?: boolean;
+  /** The sentence layout only: where "If" and the connectors sit in their column (default `end`). */
+  leadAlign?: TSentenceLeadAlign;
 }

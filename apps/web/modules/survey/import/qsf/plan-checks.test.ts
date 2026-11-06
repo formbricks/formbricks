@@ -1,13 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
+import { SURVEY_IMPORT_MAX_NOTE_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan } from "./__fixtures__/recorded-plans";
 import {
-  QSF_MAX_NOTE_CHARS,
-  QSF_NOTE_URL_PATTERN,
   checkPlanResponses,
   checkQuestionRoles,
-  cleanNote,
   mergeCheckedPlans,
   ratingRangeFor,
   sliderPoints,
@@ -62,7 +59,7 @@ describe("checkQuestionRoles", () => {
     ]);
   });
 
-  test.each(["pictureSelection", "cal", "address", "consent2", ""])("refuses the type %j", (type) => {
+  test.each(["pictureSelection", "cal", "consent2", ""])("refuses the type %j", (type) => {
     expect(failureOf(checkQuestionRoles(question(simple, "QID1"), entry("QID1", type)))).toEqual([
       "type_not_allowed",
     ]);
@@ -121,7 +118,6 @@ describe("checkQuestionRoles", () => {
       entry("QID1", "multipleChoiceSingle", { choicesFrom: "choices", excludedKeys: ["c1", "c2"] }),
       "too_few_options",
     ],
-    ["a rating without a scale", "QID2", entry("QID2", "rating", { range: "5" }), "missing_scale"],
     [
       "a rating range Formbricks has no scale for",
       "QID2",
@@ -151,6 +147,20 @@ describe("checkQuestionRoles", () => {
         checkQuestionRoles(matrix, entry("QID1", "matrix", { rowsFrom: "choices", columnsFrom: "choices" }))
       )
     ).toEqual(["missing_role"]);
+  });
+
+  test("settles a matrix's other list from the one the AI named", () => {
+    const matrix = question(advanced, "QID1");
+    const rowsOnly = checkQuestionRoles(matrix, entry("QID1", "matrix", { rowsFrom: "choices" }));
+    const both = checkQuestionRoles(
+      matrix,
+      entry("QID1", "matrix", { rowsFrom: "choices", columnsFrom: "answers" })
+    );
+
+    expect(rowsOnly.ok && both.ok && rowsOnly.question.columns).toEqual(both.ok && both.question.columns);
+    const columnsOnly = checkQuestionRoles(matrix, entry("QID1", "matrix", { columnsFrom: "answers" }));
+    expect(columnsOnly.ok && both.ok && columnsOnly.question.rows).toEqual(both.ok && both.question.rows);
+    expect(failureOf(checkQuestionRoles(matrix, entry("QID1", "matrix")))).toEqual(["missing_role"]);
   });
 
   test("caps a ranking at 25 options", () => {
@@ -191,6 +201,32 @@ describe("checkQuestionRoles", () => {
     ).toEqual(["missing_role"]);
   });
 
+  test("takes a rating with no scale as a number scale, and a range left out from its choices", () => {
+    // QID2 has eleven choices, which only a CSAT's fixed five can stand in for.
+    const csat = checkQuestionRoles(question(simple, "QID2"), entry("QID2", "csat", { scale: "number" }));
+    const noScale = checkQuestionRoles(question(simple, "QID2"), entry("QID2", "rating", { range: "5" }));
+
+    expect(csat.ok && csat.question.range).toBe(5);
+    expect(noScale.ok).toBe(true);
+  });
+
+  test("checks an address form's fields are address fields", () => {
+    const form = question(advanced, "QID8");
+
+    expect(
+      checkQuestionRoles(form, entry("QID8", "address", { contactFields: [{ field: "city", key: "c11" }] }))
+        .ok
+    ).toBe(true);
+    expect(
+      failureOf(
+        checkQuestionRoles(
+          form,
+          entry("QID8", "address", { contactFields: [{ field: "email", key: "c11" }] })
+        )
+      )
+    ).toEqual(["missing_role"]);
+  });
+
   test("sizes a slider's rating from the slider, whatever range the model gave", () => {
     // QID4 is a five-star slider.
     const result = checkQuestionRoles(
@@ -213,7 +249,7 @@ describe("checkQuestionRoles", () => {
     expect(nps.ok && nps.question.leftOut).toEqual([]);
   });
 
-  test("defaults an open text's input type and cleans its notes", () => {
+  test("defaults an open text's input type and cleans its notes, one per rule", () => {
     const result = checkQuestionRoles(
       question(simple, "QID3"),
       entry("QID3", "openText", { logicNotes: ["  Shown if  'X' is\n'Y'. ", ""] })
@@ -221,7 +257,7 @@ describe("checkQuestionRoles", () => {
 
     expect(result.ok && result.question).toMatchObject({
       inputType: "text",
-      notes: ["Shown if 'X' is 'Y'."],
+      notes: ["Shown if 'X' is 'Y'.", ""],
     });
   });
 });
@@ -247,64 +283,6 @@ describe("ratingRangeFor", () => {
     [11, 10],
   ])("fits %s points into a %s-point rating", (points, range) => {
     expect(ratingRangeFor(points)).toBe(range);
-  });
-});
-
-describe("cleanNote", () => {
-  test("replaces anything that looks like a link", () => {
-    expect(cleanNote("Go to https://evil.example/a or www.evil.example, javascript:alert(1)")).toBe(
-      "Go to … or … …"
-    );
-  });
-
-  test.each([
-    ["a domain with a path", "Log in at evil.com/login now", "Log in at … now"],
-    ["an email address", "Write to user@evil.co today", "Write to … today"],
-    ["a domain with a port", "Open evil.example:8080 first", "Open … first"],
-    ["a bare domain with a common top-level domain", "See Mail.Evil-Example.org or evil.io.", "See … or …."],
-    ["an English-word top-level domain with a path", "Go to evil.it/x or evil.me/a", "Go to … or …"],
-    ["an English-word top-level domain after an @", "Mail user@evil.it", "Mail …"],
-  ])("replaces %s", (_case, raw, cleaned) => {
-    expect(cleanNote(raw)).toBe(cleaned);
-  });
-
-  test.each([
-    "Shown only if 'Do you use it?' is 'Yes', e.g. for daily users (v2.0).",
-    "Asked of Node.js users only.",
-    "Skips to the next answer.Then ends the survey.",
-    "If they selected.It then skips to the end.",
-    "Shown to users.In Berlin only, answered.At least once, and asked.Me too.",
-    "Skips if chosen.Is shown to.Us and skips.To the end.",
-  ])("leaves prose alone: %s", (note) => {
-    expect(cleanNote(note)).toBe(note);
-  });
-
-  test("drops control characters, bidi overrides and markup characters", () => {
-    expect(cleanNote("a\u0007b\u202ec<script>")).toBe("a b cscript");
-  });
-
-  test("still catches a host with more labels than a match holds", () => {
-    expect(cleanNote("Go to a.b.c.d.e.f.g.h.i.j.k.l.evil.com/x first")).toBe("Go to a.b.c.… first");
-  });
-
-  test.each(["a.", "ab.", "a-", `${"a".repeat(63)}.`, "a@", "1."])(
-    "scans a long run of %j for links in linear time",
-    (unit) => {
-      // 20,000 characters: a quadratic scan of a dotted run took seconds here, a linear one milliseconds.
-      const run = unit.repeat(Math.ceil(20_000 / unit.length));
-      const startedAt = process.cpuUsage();
-
-      run.replaceAll(QSF_NOTE_URL_PATTERN, "…");
-
-      expect(cpuMsSince(startedAt)).toBeLessThan(250);
-    }
-  );
-
-  test("caps the length", () => {
-    const note = cleanNote("x".repeat(5_000));
-
-    expect(note).toHaveLength(QSF_MAX_NOTE_CHARS);
-    expect(note.endsWith("…")).toBe(true);
   });
 });
 
@@ -340,7 +318,7 @@ describe("checkPlanResponses", () => {
     expect([...plan.pageNotes.keys()]).toEqual(["p1"]);
     expect(JSON.stringify([...plan.pageNotes.values()])).not.toMatch(/https?:|evil|<|javascript/);
     expect([...plan.pageNotes.values()].flat().join("")).not.toMatch(/[\u202a-\u202e\u2066-\u2069]/);
-    expect(plan.pageNotes.get("p1")?.every((note) => note.length <= QSF_MAX_NOTE_CHARS)).toBe(true);
+    expect(plan.pageNotes.get("p1")?.every((note) => note.length <= SURVEY_IMPORT_MAX_NOTE_CHARS)).toBe(true);
   });
 
   test("ignores refs another call was asked about", () => {

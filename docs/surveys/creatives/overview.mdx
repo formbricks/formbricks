@@ -192,3 +192,10 @@ The [Formbricks MCP server](/platform/mcp/overview) offers the same as tools, ex
 ---
 
 Still have questions? [Join us in GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'll be glad to help.
+
+## Self-hosted background processing
+
+Impressions and clicks reach the database through the [background job worker](/self-hosting/configuration/job-runner).
+If you disabled the built-in worker, your [external worker](/self-hosting/configuration/job-runner#use-a-custom-external-worker)
+must run `creative-stats.flush`. Counts not flushed by the end of the following UTC day are lost; already
+stored counts remain available.

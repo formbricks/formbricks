@@ -83,8 +83,8 @@ digest above.
 ## Start the upgrade
 
 Online mode is only for the supported **6.0.0, 6.0.1, or 6.0.2 → 6.1** transition. There is no online
-path from 6.1 to 6.2: upgrade to 6.2 in maintenance mode, whose pre-upgrade hook applies the 6.2 AuthZed
-schema (see [Dashboard viewer role](/self-hosting/advanced/migration#dashboard-viewer-role-action-required-apply-the-authzed-schema)). Install a new
+path from 6.1 to 6.2: upgrade to 6.2 in maintenance mode and run permission preparation with the schema
+digest first, because 6.2 changes the AuthZed schema (see [Dashboard viewer role](/self-hosting/upgrade/versions/dashboard-viewer)). Install a new
 instance in maintenance mode. For an existing installation, set `upgrade.online.existingInstallation: true`
 and select `upgrade.online.controller: helm` or `argo`. Argo always renders Helm charts as installs, so
 its explicit existing-installation setting is required; runtime preflight still verifies the source workloads.

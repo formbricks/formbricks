@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import {
   TResponseInput,
-  ZResponseInput,
+  ZClientResponseInput,
   isPlainRecord,
   pickAutoCapturedResponseMeta,
 } from "@formbricks/types/responses";
@@ -104,7 +104,9 @@ export const POST = withV1ApiWrapper({
     if (isPlainRecord(responseInput)) {
       responseInput.workspaceId = workspaceId;
     }
-    const responseInputValidation = ZResponseInput.safeParse(responseInput);
+    // The survey's create input: `ZResponseInput` plus Mark as low quality (ENG-6933) and the not-shown
+    // record (ENG-6936).
+    const responseInputValidation = ZClientResponseInput.safeParse(responseInput);
 
     if (!responseInputValidation.success) {
       return {

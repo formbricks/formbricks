@@ -627,6 +627,74 @@ describe("shared-conditions-factory", () => {
       });
     });
 
+    // ENG-6934: the editor writes the row and column ids next to the positions it picks by.
+    test("picking a row writes its id next to its position", () => {
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+
+      result.callbacks.onUpdateCondition("condition1", {
+        leftOperand: { value: "matrix-question.1", type: "element" },
+      });
+
+      const updater = mockConditionsChange.mock.calls[0][0] as (c: TConditionGroup) => TConditionGroup;
+      const updated = updater({
+        id: "root",
+        connector: "and",
+        conditions: [
+          { id: "condition1", leftOperand: { value: "question1", type: "element" }, operator: "equals" },
+        ],
+      });
+      expect(updated.conditions[0]).toMatchObject({
+        leftOperand: { value: "matrix-question", type: "element", meta: { row: "1", rowId: "row2" } },
+      });
+    });
+
+    test("picking a column writes its id next to its position, replacing the previous one", () => {
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+
+      result.callbacks.onUpdateCondition("condition1", { rightOperand: { type: "static", value: "0" } });
+
+      const updater = mockConditionsChange.mock.calls[0][0] as (c: TConditionGroup) => TConditionGroup;
+      const updated = updater({
+        id: "root",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            leftOperand: { value: "matrix-question", type: "element", meta: { row: "1", rowId: "row2" } },
+            operator: "equals",
+            rightOperand: { type: "static", value: "1", columnId: "col2" },
+          },
+        ],
+      });
+      expect(updated.conditions[0]).toMatchObject({
+        rightOperand: { type: "static", value: "0", columnId: "col1" },
+      });
+    });
+
+    test("picking several columns for isAnyOf writes their ids", () => {
+      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
+
+      result.callbacks.onUpdateCondition("condition1", {
+        rightOperand: { type: "static", value: ["1", "0"] },
+      });
+
+      const updater = mockConditionsChange.mock.calls[0][0] as (c: TConditionGroup) => TConditionGroup;
+      const updated = updater({
+        id: "root",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            leftOperand: { value: "matrix-question", type: "element", meta: { row: "0", rowId: "row1" } },
+            operator: "isAnyOf",
+          },
+        ],
+      });
+      expect(updated.conditions[0]).toMatchObject({
+        rightOperand: { type: "static", value: ["1", "0"], columnIds: ["col2", "col1"] },
+      });
+    });
+
     test("should not handle non-matrix question update", () => {
       const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
       const resourceId = "condition1";

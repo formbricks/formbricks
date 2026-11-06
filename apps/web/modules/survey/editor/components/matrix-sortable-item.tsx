@@ -9,7 +9,13 @@ import { type TI18nString } from "@formbricks/types/i18n";
 import { TSurveyMatrixElement, TSurveyMatrixElementChoice } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { cn } from "@/lib/cn";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import {
+  HiddenOptionBadge,
+  OptionHideButton,
+  type TSetOptionHidden,
+} from "@/modules/survey/editor/components/option-hide-button";
 import {
   LOCK_TOOLTIP_DELAY_MS,
   PublishedLockNotice,
@@ -33,6 +39,8 @@ interface MatrixSortableItemProps {
   readonly locale: TUserLocale;
   readonly isStorageConfigured: boolean;
   readonly lock?: TElementLock;
+  /** The Hide quick action (ENG-6949); without it, the row or column has none. */
+  readonly onSetOptionHidden?: TSetOptionHidden;
 }
 
 export const MatrixSortableItem = ({
@@ -49,6 +57,7 @@ export const MatrixSortableItem = ({
   locale,
   isStorageConfigured,
   lock = NO_ELEMENT_LOCK,
+  onSetOptionHidden,
 }: MatrixSortableItemProps): JSX.Element => {
   const { t } = useTranslation();
 
@@ -59,6 +68,7 @@ export const MatrixSortableItem = ({
   const listKey = type === "row" ? "rows" : "columns";
   const isTextLocked = lock.isOptionTextLocked(listKey, choice.id, "default");
   const isDeleteLocked = lock.isOptionLocked(listKey, choice.id);
+  const isHidden = choice.hidden === true;
 
   const style = {
     transition: transition ?? "transform 100ms ease",
@@ -72,22 +82,35 @@ export const MatrixSortableItem = ({
       </div>
 
       <div className="flex w-full items-center">
-        <ElementFormInput
-          key={choice.id}
-          id={`${type}-${index}`}
-          label=""
-          localSurvey={localSurvey}
-          elementIdx={elementIdx}
-          value={choice.label}
-          updateMatrixLabel={updateMatrixLabel}
-          isInvalid={isInvalid}
-          locale={locale}
-          onKeyDown={onKeyDown}
-          isStorageConfigured={isStorageConfigured}
-          disabled={isTextLocked}
-        />
+        {/* A Hidden row or column reads as hidden (ENG-6949): muted, with the Flow tab's Hidden badge. */}
+        <div className={cn("w-full", isHidden && "opacity-60")}>
+          <ElementFormInput
+            key={choice.id}
+            id={`${type}-${index}`}
+            label=""
+            localSurvey={localSurvey}
+            elementIdx={elementIdx}
+            value={choice.label}
+            updateMatrixLabel={updateMatrixLabel}
+            isInvalid={isInvalid}
+            locale={locale}
+            onKeyDown={onKeyDown}
+            isStorageConfigured={isStorageConfigured}
+            disabled={isTextLocked}
+          />
+        </div>
+        {isHidden && <HiddenOptionBadge className="ml-2" />}
         {isTextLocked && <PublishedLockNotice kind="optionText" className="ml-2" />}
         {lock.isActive && !isTextLocked && <span aria-hidden="true" className="ml-2 size-6 shrink-0" />}
+        {onSetOptionHidden && (
+          <OptionHideButton
+            item={choice}
+            listKey={listKey}
+            onSetHidden={onSetOptionHidden}
+            variant="ghost"
+            className="ml-2"
+          />
+        )}
         {canDelete && (
           <TooltipRenderer
             data-testid="tooltip-renderer"
