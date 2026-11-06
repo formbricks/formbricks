@@ -314,7 +314,7 @@ export const SurveyDropDownMenu = ({
             <MoreVertical className="size-4" aria-hidden="true" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="inline-block w-auto min-w-max">
+        <DropdownMenuContent className="inline-block max-h-none w-auto min-w-max overflow-y-visible">
           <DropdownMenuGroup>
             {isArchived && canManageSurvey && (
               <DropdownMenuItem
