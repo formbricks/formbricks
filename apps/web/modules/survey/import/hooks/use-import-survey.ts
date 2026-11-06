@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { ProblemCode } from "@/app/api/v3/lib/response";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
@@ -12,8 +12,13 @@ import {
 } from "@/modules/survey/components/template-list/hooks/use-draft-creation";
 import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
 import type { TSurveyImportPayload } from "@/modules/survey/import/core/draft";
+import { isExcelExportFile } from "@/modules/survey/import/lib/excel-export-file";
 import { getSurveyImportRequestErrorCode } from "@/modules/survey/import/lib/import-errors";
-import { type TSurveyImportFileError, checkSurveyImportFile } from "@/modules/survey/import/lib/import-file";
+import {
+  type TSurveyImportFileError,
+  checkSurveyImportFile,
+  needsExcelExportCheck,
+} from "@/modules/survey/import/lib/import-file";
 import {
   SurveyImportRequestError,
   streamSurveyImportFile,
@@ -128,6 +133,8 @@ type TCreateVariables = {
  */
 export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseImportSurveyProps) => {
   const [file, setFile] = useState<{ name: string; size: number } | null>(null);
+  /** Counts file choices, so an Excel file read after another was chosen is not submitted. */
+  const selectionRef = useRef(0);
   const [fileError, setFileError] = useState<TSurveyImportFileError | null>(null);
   /** What a refusal of the upload said about each field of the file, for a file the dialog can say that of. */
   const [invalidParams, setInvalidParams] = useState<TV3InvalidParam[] | null>(null);
@@ -303,8 +310,13 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     setInvalidParams(null);
   };
 
-  /** Choosing a file is the submit: it is checked by name and size here, then uploaded if it passes. */
+  /**
+   * Choosing a file is the submit: it is checked by name and size here, then uploaded if it passes.
+   * Without Formbricks AI, an Excel file is read first and goes up only if it is an Excel export.
+   */
   const selectFile = (next: File) => {
+    selectionRef.current += 1;
+    const selection = selectionRef.current;
     draft.clearError();
     clearFileProblems();
     setFile({ name: next.name, size: next.size });
@@ -314,11 +326,21 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
       setFileError(refused);
       return;
     }
+    if (!needsExcelExportCheck(next, { isAIAvailable })) {
+      draft.submit({ file: next });
+      return;
+    }
 
-    draft.submit({ file: next });
+    void isExcelExportFile(next).then((isExport) => {
+      // Another file was chosen, or this one dropped, while it was read.
+      if (selection !== selectionRef.current) return;
+      if (isExport) draft.submit({ file: next });
+      else setFileError("file_needs_ai");
+    });
   };
 
   const pickAnotherFile = () => {
+    selectionRef.current += 1;
     draft.reset();
     setFile(null);
     clearFileProblems();

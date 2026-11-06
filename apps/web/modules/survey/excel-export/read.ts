@@ -5,13 +5,8 @@ import { readCheckedWorkbook, readSheetText } from "@/modules/survey/import/docu
 import {
   EXCEL_EXPORT_FORMAT,
   EXCEL_EXPORT_KEY_HEADER,
-  EXCEL_EXPORT_META_COLUMNS,
-  EXCEL_EXPORT_META_FORMAT,
-  EXCEL_EXPORT_META_HEADERS,
-  EXCEL_EXPORT_META_LANGUAGES,
-  EXCEL_EXPORT_META_LOCALE,
+  EXCEL_EXPORT_META_ROWS,
   EXCEL_EXPORT_META_SHEET,
-  EXCEL_EXPORT_META_SURVEY_ID,
 } from "./format";
 import { EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS } from "./limits";
 
@@ -91,13 +86,8 @@ const readMeta = (book: XLSX.WorkBook): TMeta => {
   if (
     origin.row !== 0 ||
     origin.column !== 0 ||
-    cell(rows, 0, 0) !== EXCEL_EXPORT_META_FORMAT ||
-    cell(rows, 0, 1) !== String(EXCEL_EXPORT_FORMAT) ||
-    cell(rows, 1, 0) !== EXCEL_EXPORT_META_LANGUAGES ||
-    cell(rows, 2, 0) !== EXCEL_EXPORT_META_HEADERS ||
-    cell(rows, 3, 0) !== EXCEL_EXPORT_META_COLUMNS ||
-    cell(rows, 4, 0) !== EXCEL_EXPORT_META_LOCALE ||
-    cell(rows, 5, 0) !== EXCEL_EXPORT_META_SURVEY_ID
+    EXCEL_EXPORT_META_ROWS.some((label, row) => cell(rows, row, 0) !== label) ||
+    cell(rows, 0, 1) !== String(EXCEL_EXPORT_FORMAT)
   ) {
     throw excelExportNotRecognized("The Formbricks export sheet is not in a format this version reads");
   }

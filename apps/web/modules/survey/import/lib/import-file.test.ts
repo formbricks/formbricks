@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
-import { checkSurveyImportFile, getSurveyImportFileExtensions } from "./import-file";
+import { checkSurveyImportFile, getSurveyImportFileExtensions, needsExcelExportCheck } from "./import-file";
 
 const withAI = { isAIAvailable: true };
 const withoutAI = { isAIAvailable: false };
@@ -46,5 +46,13 @@ describe("getSurveyImportFileExtensions", () => {
   test("offers .json and .xlsx always, and the other files Formbricks AI reads only with it", () => {
     expect(getSurveyImportFileExtensions(true)).toEqual([".json", ".qsf", ".docx", ".xlsx", ".csv", ".md"]);
     expect(getSurveyImportFileExtensions(false)).toEqual([".json", ".xlsx"]);
+  });
+});
+
+describe("needsExcelExportCheck", () => {
+  test("reads an Excel file first only without Formbricks AI", () => {
+    expect(needsExcelExportCheck({ name: "Survey.XLSX" }, withoutAI)).toBe(true);
+    expect(needsExcelExportCheck({ name: "Survey.xlsx" }, withAI)).toBe(false);
+    expect(needsExcelExportCheck({ name: "survey.formbricks.json" }, withoutAI)).toBe(false);
   });
 });

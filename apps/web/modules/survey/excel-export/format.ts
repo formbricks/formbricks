@@ -28,3 +28,13 @@ export const EXCEL_EXPORT_META_HEADERS = "headers";
 export const EXCEL_EXPORT_META_COLUMNS = "columns";
 export const EXCEL_EXPORT_META_LOCALE = "locale";
 export const EXCEL_EXPORT_META_SURVEY_ID = "surveyId";
+
+/** The meta sheet's labels, one per row from A1 down, in this order: what tells a workbook is an export. */
+export const EXCEL_EXPORT_META_ROWS = [
+  EXCEL_EXPORT_META_FORMAT,
+  EXCEL_EXPORT_META_LANGUAGES,
+  EXCEL_EXPORT_META_HEADERS,
+  EXCEL_EXPORT_META_COLUMNS,
+  EXCEL_EXPORT_META_LOCALE,
+  EXCEL_EXPORT_META_SURVEY_ID,
+] as const;

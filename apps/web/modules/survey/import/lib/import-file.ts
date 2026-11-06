@@ -4,9 +4,8 @@ import { SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
 export const FORMBRICKS_FILE_INPUT_EXTENSION = ".json";
 
 /**
- * A survey's Excel export, or any other workbook. Taken without Formbricks AI too (ENG-6809): an Excel
- * export of a survey the user may update is read without AI, and only the server can tell it apart from
- * another workbook, which it then refuses as needing AI.
+ * A survey's Excel export, or any other workbook. Without Formbricks AI only an Excel export is taken
+ * (ENG-6809), which the dialog tells from its content before uploading (`isExcelExportFile`).
  */
 export const EXCEL_FILE_EXTENSION = ".xlsx";
 
@@ -44,8 +43,8 @@ export const getSurveyImportFileExtensions = (isAIAvailable: boolean): string[] 
 /**
  * What the dialog refuses from the file's name and size alone, before uploading it. The name is only a
  * hint for the user's sake: the server tells the type from the bytes and answers anything else itself.
- * Without Formbricks AI, a file only it reads is refused as one that needs it; an Excel file goes up,
- * since it may be a survey's Excel export.
+ * Without Formbricks AI, a file only it reads is refused as one that needs it; an Excel file passes here,
+ * and `needsExcelExportCheck` says the dialog must still tell it is an Excel export.
  */
 export const checkSurveyImportFile = (
   file: { name: string; size: number },
@@ -65,3 +64,12 @@ export const checkSurveyImportFile = (
   if (file.size > SURVEY_IMPORT_MAX_FILE_BYTES) return "file_too_large";
   return null;
 };
+
+/**
+ * Whether the dialog must read the file before uploading it: without Formbricks AI, an Excel file goes up
+ * only when it is laid out as an Excel export (`isExcelExportFile`), and is refused as needing AI otherwise.
+ */
+export const needsExcelExportCheck = (
+  file: { name: string },
+  { isAIAvailable }: { isAIAvailable: boolean }
+): boolean => !isAIAvailable && file.name.toLowerCase().endsWith(EXCEL_FILE_EXTENSION);
