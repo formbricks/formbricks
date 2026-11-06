@@ -105,9 +105,11 @@ export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJs
   // Characters, not UTF-16 units: an emoji earlier on the line is one column, as an editor counts it.
   // Counted in place: the line may be the whole 15 MiB file, too long to copy into an array.
   let column = 1;
-  for (let i = lineStart; i < index; column += 1) {
+  let i = lineStart;
+  while (i < index) {
     // A character past U+FFFF is a surrogate pair, two UTF-16 units; a lone surrogate is one.
     i += (text.codePointAt(i) ?? 0) > 0xffff ? 2 : 1;
+    column += 1;
   }
   return { line, column };
 };
