@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
-import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import { AuthenticationError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { assertCan } from "@/lib/authorization";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
