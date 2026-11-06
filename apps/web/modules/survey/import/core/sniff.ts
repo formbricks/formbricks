@@ -105,11 +105,9 @@ export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJs
   // Characters, not UTF-16 units: an emoji earlier on the line is one column, as an editor counts it.
   // Counted in place: the line may be the whole 15 MiB file, too long to copy into an array.
   let column = 1;
-  for (let i = lineStart; i < index; i += 1) {
-    const isLowSurrogate = (text.charCodeAt(i) & 0xfc00) === 0xdc00;
-    const followsHighSurrogate = i > lineStart && (text.charCodeAt(i - 1) & 0xfc00) === 0xd800;
-    // The second half of a surrogate pair is the same character as the first.
-    if (!(isLowSurrogate && followsHighSurrogate)) column += 1;
+  for (let i = lineStart; i < index; column += 1) {
+    // A character past U+FFFF is a surrogate pair, two UTF-16 units; a lone surrogate is one.
+    i += (text.codePointAt(i) ?? 0) > 0xffff ? 2 : 1;
   }
   return { line, column };
 };
