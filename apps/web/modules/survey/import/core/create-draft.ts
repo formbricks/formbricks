@@ -10,7 +10,7 @@ import { assertSurveyWithinDraftSize, findSurveyContentPastLimits } from "./surv
 
 /**
  * Create the survey a reviewed import became when its file carried nothing outside the survey — a
- * Qualtrics export, or a Word, Excel or CSV questionnaire (ENG-6846): the draft the dialog sends back
+ * Qualtrics export, or a Word, Excel, CSV or Markdown questionnaire (ENG-6846): the draft the dialog sends back
  * to `POST /api/internal/surveys/imports`. A Formbricks file, which brings references, is created by
  * `createSurveyFromFormbricksFile` instead.
  *

@@ -17,7 +17,7 @@ describe("checkSurveyImportFile", () => {
     expect(checkSurveyImportFile({ name, size }, withAI)).toBe(error);
   });
 
-  test("accepts a Formbricks file, a .qsf and a Word, Excel or CSV questionnaire in any case, up to the size cap", () => {
+  test("accepts a Formbricks file, a .qsf and a Word, Excel, CSV or Markdown questionnaire in any case, up to the size cap", () => {
     for (const name of [
       "Survey.QSF",
       "Onboarding NPS.formbricks.json",
@@ -25,6 +25,7 @@ describe("checkSurveyImportFile", () => {
       "List.XLSX",
       "list.csv",
       "Questionnaire.DOCX",
+      "Questions.MD",
     ]) {
       expect(checkSurveyImportFile({ name, size: SURVEY_IMPORT_MAX_FILE_BYTES }, withAI)).toBeNull();
     }
@@ -32,7 +33,7 @@ describe("checkSurveyImportFile", () => {
 
   test("without Formbricks AI, takes a Formbricks file and refuses a file AI reads as needing AI", () => {
     expect(checkSurveyImportFile({ name: "survey.formbricks.json", size: 10 }, withoutAI)).toBeNull();
-    for (const name of ["survey.qsf", "list.xlsx", "list.csv", "questionnaire.docx"]) {
+    for (const name of ["survey.qsf", "list.xlsx", "list.csv", "questionnaire.docx", "questions.md"]) {
       expect(checkSurveyImportFile({ name, size: 10 }, withoutAI)).toBe("file_needs_ai");
     }
     expect(checkSurveyImportFile({ name: "survey.doc", size: 10 }, withoutAI)).toBe("file_wrong_extension");
@@ -41,7 +42,7 @@ describe("checkSurveyImportFile", () => {
 
 describe("getSurveyImportFileExtensions", () => {
   test("offers .json always, and the files Formbricks AI reads only with it", () => {
-    expect(getSurveyImportFileExtensions(true)).toEqual([".json", ".qsf", ".docx", ".xlsx", ".csv"]);
+    expect(getSurveyImportFileExtensions(true)).toEqual([".json", ".qsf", ".docx", ".xlsx", ".csv", ".md"]);
     expect(getSurveyImportFileExtensions(false)).toEqual([".json"]);
   });
 });

@@ -3899,7 +3899,7 @@
         "generated_payload_invalid": "Enkätutkastet kunde inte valideras. Försök lägga till mer detaljer.",
         "generation_failed": "Utkastet kunde inte färdigställas. Försök igen eller lägg till lite mer detaljer.",
         "import_file": "Importera en fil",
-        "import_file_hint": "Importera ett frågeformulär från Word, Excel eller CSV",
+        "import_file_hint": "Importera ett frågeformulär från Word, Excel, CSV eller Markdown",
         "keep_editing": "Fortsätt redigera",
         "nothing_generated": "Inga frågor genererades. Försök beskriva enkäten lite mer detaljerat.",
         "open_in_editor": "Spara och fortsätt",
@@ -4835,18 +4835,18 @@
         "partial_responses": "Delvisa svar"
       },
       "import": {
-        "ai_note": "Qualtrics-, Word-, Excel- och CSV-filer läses med Formbricks AI. All text hämtas ord för ord från filen.",
-        "card_description": "Gör om en Formbricks-fil, en Qualtrics-export eller ett frågeformulär från Word, Excel eller CSV till ett utkast till enkät.",
+        "ai_note": "Qualtrics-, Word-, Excel-, CSV- och Markdown-filer läses med Formbricks AI. All text hämtas ord för ord från filen.",
+        "card_description": "Förvandla en Formbricks-fil, en Qualtrics-export eller ett frågeformulär från Word, Excel, CSV eller Markdown till ett utkast till enkät.",
         "card_description_json_only": "Förvandla en enkät som exporterats från Formbricks till ett enkätutkast.",
         "card_title": "Importera enkät",
-        "dialog_description": "Hämta in en Formbricks-fil, en Qualtrics-export eller ett frågeformulär från Word, Excel eller CSV.",
+        "dialog_description": "Importera en Formbricks-fil, en Qualtrics-export eller ett frågeformulär från Word, Excel, CSV eller Markdown.",
         "dialog_description_json_only": "Hämta in en enkät som exporterats från Formbricks.",
         "dialog_title": "Importera en enkät",
         "discard_draft_body": "Det importerade utkastet har inte öppnats i redigeraren än. Om du stänger kasseras det.",
         "discard_draft_title": "Vill du kassera den här importen?",
         "discard_import_body": "Filen håller fortfarande på att importeras. Om du stänger avbryts importen.",
         "discard_import_title": "Vill du avbryta importen?",
-        "dropzone_help": "Formbricks-fil (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx) eller CSV (.csv), upp till 15 MB",
+        "dropzone_help": "Formbricks-fil (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md), upp till 15 MB",
         "dropzone_help_json_only": "Formbricks-fil (.json), upp till 15 MB",
         "dropzone_primary": "Släpp en fil här eller klicka för att välja en",
         "encodings": {
@@ -4889,7 +4889,7 @@
             "unsupported_field": "Det här fältet är inte en del av en enkät"
           },
           "file_too_large": "Den här filen är större än 15 MB.",
-          "file_type_unsupported": "Den här filtypen kan inte importeras. Välj en Formbricks-fil (.json), en Qualtrics-export (.qsf) eller ett frågeformulär i Word (.docx), Excel (.xlsx) eller CSV (.csv).",
+          "file_type_unsupported": "Den här filtypen kan inte importeras. Välj en Formbricks-fil (.json), en Qualtrics-export (.qsf) eller ett frågeformulär i Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md).",
           "formbricks_file_invalid": "Den här Formbricks-filen har problem. Åtgärda dem och importera filen igen:",
           "formbricks_file_too_new": "Den här filen exporterades från en nyare version av Formbricks. Uppdatera Formbricks och importera sedan filen igen.",
           "invalid_json": "Filen är inte giltig JSON. Om du har redigerat den, kontrollera dina ändringar. Annars kan du exportera enkäten igen.",
@@ -4910,7 +4910,7 @@
             "texts": "Den här enkäten innehåller fler texter än importen kan läsa."
           },
           "more_problems": "{count, plural, one {# problem till} other {# problem till}}",
-          "needs_ai": "Qualtrics-, Word-, Excel- och CSV-filer läses med Formbricks AI, vilket din organisation inte har. Välj en Formbricks-fil (.json).",
+          "needs_ai": "Qualtrics-, Word-, Excel-, CSV- och Markdown-filer läses med Formbricks AI, vilket din organisation inte har tillgång till. Välj en Formbricks-fil (.json).",
           "no_questions": "Formbricks AI kunde inte läsa några frågor från den här filen. Försök igen eller importera den med Claude eller ChatGPT via MCP.",
           "not_a_qsf": "Det här är inte en exporterad Qualtrics-enkät. Exportera enkäten som en .qsf-fil i Qualtrics och försök igen.",
           "not_allowed": "Du har inte behörighet att importera enkäter till den här arbetsytan.",
@@ -4927,7 +4927,7 @@
           "too_large_for_ai": "Den här enkäten är för stor för att Formbricks AI ska kunna importera den på en gång. Importera den med Claude eller ChatGPT via MCP i stället.",
           "too_many_questions": "Den här enkäten har fler än 200 frågor, vilket är fler än en import kan bygga. Importera den med Claude eller ChatGPT via MCP i stället.",
           "unreadable": "Den här filen kunde inte läsas. Exportera den igen och försök en gång till.",
-          "wrong_extension": "Välj en Formbricks-fil (.json), en Qualtrics-export (.qsf) eller ett frågeformulär i Word (.docx), Excel (.xlsx) eller CSV (.csv)."
+          "wrong_extension": "Välj en Formbricks-fil (.json), en Qualtrics-export (.qsf) eller ett frågeformulär i Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md)."
         },
         "facts": {
           "blocks": "{count, plural, one {# block} other {# block}}",

@@ -6,10 +6,10 @@ export const FORMBRICKS_FILE_INPUT_EXTENSION = ".json";
 export const QSF_FILE_EXTENSION = ".qsf";
 
 /**
- * The files Formbricks AI reads: a Qualtrics export, and a questionnaire from Word (ENG-6853), Excel or
- * CSV (ENG-6852).
+ * The files Formbricks AI reads: a Qualtrics export, and a questionnaire from Word (ENG-6853), Excel,
+ * CSV (ENG-6852) or Markdown, which the server reads as text and tells apart from a CSV by its content.
  */
-export const AI_FILE_EXTENSIONS: readonly string[] = [QSF_FILE_EXTENSION, ".docx", ".xlsx", ".csv"];
+export const AI_FILE_EXTENSIONS: readonly string[] = [QSF_FILE_EXTENSION, ".docx", ".xlsx", ".csv", ".md"];
 
 /** Why the browser refused a file before uploading it. */
 export type TSurveyImportFileError =

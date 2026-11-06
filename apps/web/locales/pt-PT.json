@@ -3899,7 +3899,7 @@
         "generated_payload_invalid": "O rascunho do inquérito não pôde ser validado. Tenta adicionar mais detalhes.",
         "generation_failed": "Não foi possível concluir o rascunho. Tenta novamente ou adiciona mais alguns detalhes.",
         "import_file": "Importar um ficheiro",
-        "import_file_hint": "Importa um questionário a partir de Word, Excel ou CSV",
+        "import_file_hint": "Importa um questionário a partir de Word, Excel, CSV ou Markdown",
         "keep_editing": "Continuar a editar",
         "nothing_generated": "Não foram geradas perguntas. Tenta descrever o inquérito com um pouco mais de detalhe.",
         "open_in_editor": "Guardar e continuar",
@@ -4835,18 +4835,18 @@
         "partial_responses": "Respostas parciais"
       },
       "import": {
-        "ai_note": "Os ficheiros do Qualtrics, Word, Excel e CSV são lidos com a IA do Formbricks. Todos os textos provêm do ficheiro palavra por palavra.",
-        "card_description": "Transforme um ficheiro do Formbricks, uma exportação do Qualtrics ou um questionário do Word, Excel ou CSV num rascunho de inquérito.",
+        "ai_note": "Os ficheiros Qualtrics, Word, Excel, CSV e Markdown são lidos com a IA do Formbricks. Todos os textos são extraídos do ficheiro palavra por palavra.",
+        "card_description": "Transforma um ficheiro Formbricks, uma exportação do Qualtrics ou um questionário em Word, Excel, CSV ou Markdown num rascunho de inquérito.",
         "card_description_json_only": "Transforma um inquérito exportado do Formbricks num rascunho de inquérito.",
         "card_title": "Importar inquérito",
-        "dialog_description": "Traz um ficheiro do Formbricks, uma exportação do Qualtrics ou um questionário a partir de Word, Excel ou CSV.",
+        "dialog_description": "Importa um ficheiro Formbricks, uma exportação do Qualtrics ou um questionário em Word, Excel, CSV ou Markdown.",
         "dialog_description_json_only": "Traz um inquérito exportado do Formbricks.",
         "dialog_title": "Importar um inquérito",
         "discard_draft_body": "O rascunho importado ainda não foi aberto no editor. Se fechares, será descartado.",
         "discard_draft_title": "Descartar esta importação?",
         "discard_import_body": "O ficheiro ainda está a ser importado. Se fechares, a importação será interrompida.",
         "discard_import_title": "Parar a importação?",
-        "dropzone_help": "Ficheiro do Formbricks (.json), exportação do Qualtrics (.qsf), Word (.docx), Excel (.xlsx) ou CSV (.csv), até 15 MB",
+        "dropzone_help": "Ficheiro Formbricks (.json), exportação do Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) ou Markdown (.md), até 15 MB",
         "dropzone_help_json_only": "Ficheiro do Formbricks (.json), até 15 MB",
         "dropzone_primary": "Largue um ficheiro aqui ou clique para escolher um",
         "encodings": {
@@ -4889,7 +4889,7 @@
             "unsupported_field": "Este campo não faz parte de um inquérito"
           },
           "file_too_large": "Este ficheiro tem mais de 15 MB.",
-          "file_type_unsupported": "Não é possível importar este tipo de ficheiro. Escolhe um ficheiro Formbricks (.json), uma exportação do Qualtrics (.qsf) ou um questionário em Word (.docx), Excel (.xlsx) ou CSV (.csv).",
+          "file_type_unsupported": "Não é possível importar este tipo de ficheiro. Escolhe um ficheiro Formbricks (.json), uma exportação do Qualtrics (.qsf) ou um questionário em Word (.docx), Excel (.xlsx), CSV (.csv) ou Markdown (.md).",
           "formbricks_file_invalid": "Este ficheiro Formbricks tem problemas. Corrige-os e importa-o novamente:",
           "formbricks_file_too_new": "Este ficheiro foi exportado de uma versão mais recente do Formbricks. Atualiza o Formbricks e importa-o novamente.",
           "invalid_json": "Este ficheiro não é um JSON válido. Se o editaste, verifica a tua edição; caso contrário, exporta o inquérito novamente.",
@@ -4910,7 +4910,7 @@
             "texts": "Este inquérito tem mais textos do que a importação consegue ler."
           },
           "more_problems": "{count, plural, one {# problema adicional} many {# de problemas adicionais} other {# problemas adicionais}}",
-          "needs_ai": "Os ficheiros Qualtrics, Word, Excel e CSV são lidos com a IA do Formbricks, que a tua organização não tem. Escolhe um ficheiro Formbricks (.json).",
+          "needs_ai": "Os ficheiros Qualtrics, Word, Excel, CSV e Markdown são lidos com a IA do Formbricks, à qual a tua organização não tem acesso. Escolhe um ficheiro Formbricks (.json).",
           "no_questions": "O Formbricks AI não conseguiu ler nenhuma pergunta deste ficheiro. Tenta novamente ou importa-o com o Claude ou o ChatGPT através do MCP.",
           "not_a_qsf": "Esta não é uma exportação de inquérito do Qualtrics. No Qualtrics, exporte o inquérito como ficheiro .qsf e tente novamente.",
           "not_allowed": "Não tem permissão para importar inquéritos para este espaço de trabalho.",
@@ -4927,7 +4927,7 @@
           "too_large_for_ai": "Este questionário é demasiado grande para o Formbricks AI o importar de uma só vez. Importa-o antes com o Claude ou o ChatGPT através do MCP.",
           "too_many_questions": "Este inquérito tem mais de 200 perguntas, mais do que uma importação consegue criar. Importa-o antes com o Claude ou o ChatGPT através do MCP.",
           "unreadable": "Não foi possível ler este ficheiro. Exporta-o novamente e tenta mais uma vez.",
-          "wrong_extension": "Escolhe um ficheiro Formbricks (.json), uma exportação do Qualtrics (.qsf) ou um questionário em Word (.docx), Excel (.xlsx) ou CSV (.csv)."
+          "wrong_extension": "Escolhe um ficheiro Formbricks (.json), uma exportação do Qualtrics (.qsf) ou um questionário em Word (.docx), Excel (.xlsx), CSV (.csv) ou Markdown (.md)."
         },
         "facts": {
           "blocks": "{count, plural, one {# bloco} other {# blocos}}",

@@ -3899,7 +3899,7 @@
         "generated_payload_invalid": "Schița chestionarului nu a putut fi validată. Încearcă să adaugi mai multe detalii.",
         "generation_failed": "Schița nu a putut fi finalizată. Încearcă din nou sau adaugă mai multe detalii.",
         "import_file": "Importă un fișier",
-        "import_file_hint": "Importă un chestionar din Word, Excel sau CSV",
+        "import_file_hint": "Importă un chestionar din Word, Excel, CSV sau Markdown",
         "keep_editing": "Continuă editarea",
         "nothing_generated": "Nu s-a generat nicio întrebare. Încearcă să descrii chestionarul mai detaliat.",
         "open_in_editor": "Salvează și continuă",
@@ -4835,18 +4835,18 @@
         "partial_responses": "Răspunsuri parțiale"
       },
       "import": {
-        "ai_note": "Fișierele Qualtrics, Word, Excel și CSV sunt citite cu Formbricks AI. Fiecare text provine din fișier cuvânt cu cuvânt.",
-        "card_description": "Transformă un fișier Formbricks, un export Qualtrics sau un chestionar din Word, Excel sau CSV într-un sondaj ciornă.",
+        "ai_note": "Fișierele Qualtrics, Word, Excel, CSV și Markdown sunt citite cu Formbricks AI. Fiecare text este preluat din fișier cuvânt cu cuvânt.",
+        "card_description": "Transformă un fișier Formbricks, un export Qualtrics sau un chestionar din Word, Excel, CSV sau Markdown într-un sondaj în formă de ciornă.",
         "card_description_json_only": "Transformă un sondaj exportat din Formbricks într-un sondaj ciornă.",
         "card_title": "Importă sondaj",
-        "dialog_description": "Adu un fișier Formbricks, un export din Qualtrics sau un chestionar din Word, Excel sau CSV.",
+        "dialog_description": "Adu un fișier Formbricks, un export Qualtrics sau un chestionar din Word, Excel, CSV sau Markdown.",
         "dialog_description_json_only": "Adu un sondaj exportat din Formbricks.",
         "dialog_title": "Importă un sondaj",
         "discard_draft_body": "Ciorna importată nu a fost încă deschisă în editor. Dacă închizi, va fi eliminată.",
         "discard_draft_title": "Renunți la acest import?",
         "discard_import_body": "Fișierul este încă în curs de importare. Dacă închizi, importul se va opri.",
         "discard_import_title": "Oprești importul?",
-        "dropzone_help": "Fișier Formbricks (.json), export Qualtrics (.qsf), Word (.docx), Excel (.xlsx) sau CSV (.csv), până la 15 MB",
+        "dropzone_help": "Fișier Formbricks (.json), export Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) sau Markdown (.md), până la 15 MB",
         "dropzone_help_json_only": "Fișier Formbricks (.json), până la 15 MB",
         "dropzone_primary": "Trage un fișier aici sau fă clic pentru a alege unul",
         "encodings": {
@@ -4889,7 +4889,7 @@
             "unsupported_field": "Acest câmp nu face parte dintr-un sondaj"
           },
           "file_too_large": "Acest fișier depășește 15 MB.",
-          "file_type_unsupported": "Acest tip de fișier nu poate fi importat. Alege un fișier Formbricks (.json), un export Qualtrics (.qsf) sau un chestionar Word (.docx), Excel (.xlsx) ori CSV (.csv).",
+          "file_type_unsupported": "Acest tip de fișier nu poate fi importat. Alege un fișier Formbricks (.json), un export Qualtrics (.qsf) sau un chestionar Word (.docx), Excel (.xlsx), CSV (.csv) ori Markdown (.md).",
           "formbricks_file_invalid": "Acest fișier Formbricks are probleme. Remediază-le și importă-l din nou:",
           "formbricks_file_too_new": "Acest fișier a fost exportat dintr-o versiune mai nouă de Formbricks. Actualizează Formbricks, apoi importă fișierul din nou.",
           "invalid_json": "Acest fișier nu este JSON valid. Dacă l-ai editat, verifică modificările; altfel, exportă din nou sondajul.",
@@ -4910,7 +4910,7 @@
             "texts": "Acest sondaj conține mai multe texte decât poate citi importul."
           },
           "more_problems": "{count, plural, one {încă # problemă} few {încă # probleme} other {încă # de probleme}}",
-          "needs_ai": "Fișierele Qualtrics, Word, Excel și CSV sunt citite cu Formbricks AI, de care organizația ta nu dispune. Alege un fișier Formbricks (.json).",
+          "needs_ai": "Fișierele Qualtrics, Word, Excel, CSV și Markdown sunt citite cu Formbricks AI, de care organizația ta nu dispune. Alege un fișier Formbricks (.json).",
           "no_questions": "Formbricks AI nu a putut citi nicio întrebare din acest fișier. Încearcă din nou sau importă-l cu Claude sau ChatGPT prin MCP.",
           "not_a_qsf": "Acesta nu este un export de sondaj Qualtrics. În Qualtrics, exportă sondajul ca fișier .qsf și încearcă din nou.",
           "not_allowed": "Nu ai permisiunea de a importa sondaje în acest spațiu de lucru.",
@@ -4927,7 +4927,7 @@
           "too_large_for_ai": "Acest sondaj este prea mare pentru ca Formbricks AI să îl importe dintr-o singură dată. Importă-l în schimb cu Claude sau ChatGPT prin MCP.",
           "too_many_questions": "Acest sondaj are peste 200 de întrebări, mai multe decât poate crea un singur import. Importă-l în schimb cu Claude sau ChatGPT prin MCP.",
           "unreadable": "Acest fișier nu a putut fi citit. Exportă-l din nou și încearcă încă o dată.",
-          "wrong_extension": "Alege un fișier Formbricks (.json), un export Qualtrics (.qsf) sau un chestionar Word (.docx), Excel (.xlsx) ori CSV (.csv)."
+          "wrong_extension": "Alege un fișier Formbricks (.json), un export Qualtrics (.qsf) sau un chestionar Word (.docx), Excel (.xlsx), CSV (.csv) ori Markdown (.md)."
         },
         "facts": {
           "blocks": "{count, plural, one {# bloc} few {# blocuri} other {# de blocuri}}",

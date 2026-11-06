@@ -1,6 +1,6 @@
 ---
 title: "Import & Export"
-description: "Move a survey to another workspace, organization or instance as a Formbricks file, send it to reviewers as an Excel sheet, or turn a Word, Excel, CSV or Qualtrics questionnaire into a draft survey."
+description: "Move a survey to another workspace, organization or instance as a Formbricks file, send it to reviewers as an Excel sheet, or turn a Word, Excel, CSV, Markdown or Qualtrics questionnaire into a draft survey."
 icon: "arrow-right-arrow-left"
 ---
 
@@ -11,7 +11,7 @@ Any survey can leave Formbricks as a file, and come back in as one. Pick the pat
 | Move a survey to another workspace, organization or instance      | [Formbricks file](#export-a-survey) (`.json`)               | No       |
 | Edit a survey outside Formbricks, by hand or with an AI assistant | [Formbricks file](/surveys/import-export/formbricks-file)   | No       |
 | Send a survey to reviewers or translators                         | [Excel export](#what-the-excel-export-holds) (`.xlsx`)      | No       |
-| Turn a questionnaire into a survey                                | [Document import](#import-a-document) (Word, Excel, CSV)    | Yes      |
+| Turn a questionnaire into a survey                                | [Document import](#import-a-document) (Word, Excel, CSV, Markdown) | Yes      |
 | Move a survey from Qualtrics                                      | [Qualtrics import](/surveys/import-export/qualtrics) (`.qsf`) | Yes      |
 
 <Note>
@@ -166,7 +166,7 @@ If the file's triggers would leave a live survey with nothing that shows it, the
 
 ## Import a document
 
-A **document import** turns a questionnaire in Word (`.docx`), Excel (`.xlsx`) or CSV (`.csv`) into a draft survey. Formbricks AI reads the layout and decides how to build the survey. The texts themselves come from your file.
+A **document import** turns a questionnaire in Word (`.docx`), Excel (`.xlsx`), CSV (`.csv`) or Markdown (`.md`) into a draft survey. Formbricks AI reads the layout and decides how to build the survey. The texts themselves come from your file.
 
 - **Word for word.** Every question and option is copied from the file, in every language it holds. The AI only decides the structure: which lines are questions, their types, how they group into blocks and which column holds which language. It never writes survey text.
 - **Routing becomes logic.** A rule written in the document, like "If No, skip to Q5", becomes survey logic. The report flags each rule so you can check it.
@@ -176,6 +176,7 @@ A **document import** turns a questionnaire in Word (`.docx`), Excel (`.xlsx`) o
 - **Images** are not imported. The report counts them so you know what to add.
 - **Excel:** only the first sheet is read. The report names the sheets it skipped. A formula cell gives its last calculated value.
 - **CSV:** the separator can be a comma, semicolon, tab or pipe. Files are read as UTF-8, as UTF-16 when the file starts with a byte-order mark, and otherwise as Windows-1252, which Excel on Windows uses. When a file is read as Windows-1252, the report says so. If accented letters look wrong, save the file as **CSV UTF-8** and import it again.
+- **Markdown:** headings, numbered and nested lists and tables are read like a Word file's. Formatting, links, images and HTML are dropped, their text kept. A Markdown file can hold up to 480,000 characters, markup included.
 - **Older Office files** (`.doc`, `.xls`) are not read. Save them as `.docx` or `.xlsx` first.
 
 The survey is named after the document's title, then its first heading or title row, then the file name, with "(imported)" added.

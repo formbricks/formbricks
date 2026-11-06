@@ -3899,7 +3899,7 @@
         "generated_payload_invalid": "アンケートの下書きを検証できませんでした。詳細を追加してみてください。",
         "generation_failed": "下書きを完成できませんでした。もう一度試すか、詳細を少し追加してください。",
         "import_file": "ファイルをインポート",
-        "import_file_hint": "Word、Excel、CSVからアンケートをインポートします",
+        "import_file_hint": "Word、Excel、CSV、Markdownからアンケートをインポート",
         "keep_editing": "編集を続ける",
         "nothing_generated": "質問が生成されませんでした。アンケートについてもう少し詳しく説明してみてください。",
         "open_in_editor": "保存して続ける",
@@ -4835,18 +4835,18 @@
         "partial_responses": "部分的な回答"
       },
       "import": {
-        "ai_note": "Qualtrics、Word、Excel、CSVファイルはFormbricks AIで読み込まれます。すべてのテキストは、ファイルの内容がそのまま使用されます。",
-        "card_description": "Formbricksファイル、Qualtricsのエクスポート、またはWord・Excel・CSVのアンケートから、下書きのアンケートを作成します。",
+        "ai_note": "Qualtrics、Word、Excel、CSV、MarkdownのファイルはFormbricks AIで読み取ります。すべてのテキストはファイルの内容がそのまま使われます。",
+        "card_description": "Formbricksファイル、Qualtricsのエクスポート、またはWord、Excel、CSV、Markdownのアンケートから、下書きのアンケートを作成します。",
         "card_description_json_only": "Formbricksからエクスポートしたアンケートを、下書きのアンケートに変換します。",
         "card_title": "アンケートをインポート",
-        "dialog_description": "Formbricksのファイル、Qualtricsのエクスポート、またはWord、Excel、CSVのアンケートを取り込めます。",
+        "dialog_description": "Formbricksファイル、Qualtricsのエクスポート、またはWord、Excel、CSV、Markdownのアンケートを取り込みます。",
         "dialog_description_json_only": "Formbricksからエクスポートしたアンケートを取り込めます。",
         "dialog_title": "アンケートをインポート",
         "discard_draft_body": "インポートした下書きは、まだエディターで開かれていません。閉じると破棄されます。",
         "discard_draft_title": "このインポートを破棄しますか?",
         "discard_import_body": "ファイルをインポート中です。閉じるとインポートが停止します。",
         "discard_import_title": "インポートを停止しますか?",
-        "dropzone_help": "Formbricksファイル(.json)、Qualtricsエクスポート(.qsf)、Word(.docx)、Excel(.xlsx)、CSV(.csv)に対応、最大15MB",
+        "dropzone_help": "Formbricksファイル(.json)、Qualtricsのエクスポート(.qsf)、Word(.docx)、Excel(.xlsx)、CSV(.csv)、Markdown(.md)、最大15MB",
         "dropzone_help_json_only": "Formbricksファイル(.json)、最大15MB",
         "dropzone_primary": "ここにファイルをドロップするか、クリックして選択してください",
         "encodings": {
@@ -4889,7 +4889,7 @@
             "unsupported_field": "このフィールドはアンケートに含まれていません"
           },
           "file_too_large": "このファイルは15 MBを超えています。",
-          "file_type_unsupported": "この種類のファイルはインポートできません。Formbricksファイル(.json)、Qualtricsのエクスポート(.qsf)、またはWord(.docx)、Excel(.xlsx)、CSV(.csv)のアンケートファイルを選んでください。",
+          "file_type_unsupported": "この種類のファイルはインポートできません。Formbricksファイル(.json)、Qualtricsのエクスポート(.qsf)、またはWord(.docx)、Excel(.xlsx)、CSV(.csv)、Markdown(.md)のアンケートを選択してください。",
           "formbricks_file_invalid": "このFormbricksファイルに問題があります。修正してからもう一度インポートしてください:",
           "formbricks_file_too_new": "このファイルは、より新しいバージョンのFormbricksからエクスポートされています。Formbricksをアップデートしてから、もう一度インポートしてください。",
           "invalid_json": "このファイルは有効なJSONではありません。編集した場合は編集内容を確認してください。編集していない場合は、アンケートをもう一度エクスポートしてください。",
@@ -4910,7 +4910,7 @@
             "texts": "このアンケートはテキストの数が多すぎて、インポートで読み取れません。"
           },
           "more_problems": "{count, plural, other {他に#件の問題があります}}",
-          "needs_ai": "Qualtrics、Word、Excel、CSVファイルはFormbricks AIで読み込まれますが、お使いの組織ではご利用いただけません。Formbricksファイル(.json)を選んでください。",
+          "needs_ai": "Qualtrics、Word、Excel、CSV、MarkdownのファイルはFormbricks AIで読み取りますが、お使いの組織ではFormbricks AIをご利用いただけません。Formbricksファイル(.json)を選択してください。",
           "no_questions": "Formbricks AIはこのファイルから質問を読み取れませんでした。もう一度お試しいただくか、MCP経由でClaudeやChatGPTを使ってインポートしてください。",
           "not_a_qsf": "これはQualtricsのアンケートエクスポートファイルではありません。Qualtricsでアンケートを.qsfファイルとしてエクスポートして、もう一度お試しください。",
           "not_allowed": "このワークスペースにアンケートをインポートする権限がありません。",
@@ -4927,7 +4927,7 @@
           "too_large_for_ai": "このアンケートはサイズが大きすぎるため、Formbricks AIでは一度にインポートできません。代わりに、MCP経由でClaudeやChatGPTを使ってインポートしてください。",
           "too_many_questions": "このアンケートには200問を超える質問があり、1回のインポートで作成できる数を超えています。代わりに、MCP経由でClaudeやChatGPTを使ってインポートしてください。",
           "unreadable": "このファイルを読み込めませんでした。もう一度エクスポートしてから、再度お試しください。",
-          "wrong_extension": "Formbricksファイル(.json)、Qualtricsのエクスポート(.qsf)、またはWord(.docx)、Excel(.xlsx)、CSV(.csv)のアンケートファイルを選んでください。"
+          "wrong_extension": "Formbricksファイル(.json)、Qualtricsのエクスポート(.qsf)、またはWord(.docx)、Excel(.xlsx)、CSV(.csv)、Markdown(.md)のアンケートを選択してください。"
         },
         "facts": {
           "blocks": "{count, plural, other {#個のブロック}}",

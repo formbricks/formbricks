@@ -3899,7 +3899,7 @@
         "generated_payload_invalid": "问卷草稿无法验证。请尝试添加更多详细信息。",
         "generation_failed": "草稿未能完成。请重试，或添加更多详细信息。",
         "import_file": "导入文件",
-        "import_file_hint": "从 Word、Excel 或 CSV 导入问卷",
+        "import_file_hint": "从 Word、Excel、CSV 或 Markdown 导入问卷",
         "keep_editing": "继续编辑",
         "nothing_generated": "未生成任何问题。请尝试更详细地描述调查。",
         "open_in_editor": "保存并继续",
@@ -4835,18 +4835,18 @@
         "partial_responses": "部分 反馈"
       },
       "import": {
-        "ai_note": "Qualtrics、Word、Excel 和 CSV 文件将由 Formbricks AI 读取。所有文本均逐字取自文件。",
-        "card_description": "将 Formbricks 文件、Qualtrics 导出文件,或 Word、Excel、CSV 格式的问卷转换为调查草稿。",
+        "ai_note": "Qualtrics、Word、Excel、CSV 和 Markdown 文件将通过 Formbricks AI 读取，所有文本均逐字取自文件。",
+        "card_description": "将 Formbricks 文件、Qualtrics 导出文件，或 Word、Excel、CSV、Markdown 格式的问卷转换为调查草稿。",
         "card_description_json_only": "将从 Formbricks 导出的问卷转为问卷草稿。",
         "card_title": "导入调查",
-        "dialog_description": "导入 Formbricks 文件、Qualtrics 导出文件，或来自 Word、Excel 或 CSV 的问卷。",
+        "dialog_description": "导入 Formbricks 文件、Qualtrics 导出文件，或 Word、Excel、CSV、Markdown 格式的问卷。",
         "dialog_description_json_only": "导入从 Formbricks 导出的问卷。",
         "dialog_title": "导入问卷",
         "discard_draft_body": "导入的草稿尚未在编辑器中打开。关闭后将丢弃该草稿。",
         "discard_draft_title": "要放弃此次导入吗？",
         "discard_import_body": "文件仍在导入中。关闭后将停止导入。",
         "discard_import_title": "要停止导入吗？",
-        "dropzone_help": "Formbricks 文件（.json）、Qualtrics 导出文件（.qsf）、Word（.docx）、Excel（.xlsx）或 CSV（.csv），最大 15 MB",
+        "dropzone_help": "Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)、Word (.docx)、Excel (.xlsx)、CSV (.csv) 或 Markdown (.md)，最大 15 MB",
         "dropzone_help_json_only": "Formbricks 文件（.json），最大 15 MB",
         "dropzone_primary": "将文件拖放到此处，或点击选择文件",
         "encodings": {
@@ -4889,7 +4889,7 @@
             "unsupported_field": "此字段不属于问卷"
           },
           "file_too_large": "此文件超过 15 MB。",
-          "file_type_unsupported": "无法导入此类文件。请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf),或者 Word (.docx)、Excel (.xlsx) 或 CSV (.csv) 问卷。",
+          "file_type_unsupported": "无法导入此类文件。请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)，或 Word (.docx)、Excel (.xlsx)、CSV (.csv)、Markdown (.md) 格式的问卷。",
           "formbricks_file_invalid": "这个 Formbricks 文件存在问题。请修复后重新导入:",
           "formbricks_file_too_new": "此文件是从更新版本的 Formbricks 导出的。请先更新 Formbricks,然后重新导入。",
           "invalid_json": "此文件不是有效的 JSON。如果你编辑过它,请检查修改的内容;否则请重新导出问卷。",
@@ -4910,7 +4910,7 @@
             "texts": "这份问卷的文本数量超出了导入功能可读取的上限。"
           },
           "more_problems": "{count, plural, other {还有 # 个问题}}",
-          "needs_ai": "Qualtrics、Word、Excel 和 CSV 文件需要通过 Formbricks AI 读取,而你的组织暂未开通该功能。请选择 Formbricks 文件 (.json)。",
+          "needs_ai": "Qualtrics、Word、Excel、CSV 和 Markdown 文件需要通过 Formbricks AI 读取，但您的组织尚未开通该功能。请选择 Formbricks 文件 (.json)。",
           "no_questions": "Formbricks AI 无法从此文件中读取到任何问题。请重试,或通过 MCP 使用 Claude 或 ChatGPT 导入。",
           "not_a_qsf": "这不是 Qualtrics 问卷导出文件。请在 Qualtrics 中将问卷导出为 .qsf 文件，然后重试。",
           "not_allowed": "你没有权限向此工作区导入问卷。",
@@ -4927,7 +4927,7 @@
           "too_large_for_ai": "这份问卷太大,Formbricks AI 无法一次性导入。请改用 Claude 或 ChatGPT 通过 MCP 导入。",
           "too_many_questions": "此问卷包含超过 200 个问题,超出了单次导入的构建上限。请改用 Claude 或 ChatGPT 通过 MCP 导入。",
           "unreadable": "无法读取此文件。请重新导出后再试一次。",
-          "wrong_extension": "请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf),或者 Word (.docx)、Excel (.xlsx) 或 CSV (.csv) 问卷。"
+          "wrong_extension": "请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)，或 Word (.docx)、Excel (.xlsx)、CSV (.csv)、Markdown (.md) 格式的问卷。"
         },
         "facts": {
           "blocks": "{count, plural, other {# 个区块}}",
