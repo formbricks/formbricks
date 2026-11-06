@@ -62,7 +62,7 @@ export function LogicEditor({
 
   if (!rule) return null;
 
-  // ENG-6935: a Set value step always runs — an empty `and` group (ADR 0026). It reads as such, and
+  // ENG-6935: a Set value step always runs — an empty `and` group (ADR 0031). It reads as such, and
   // gets a condition only when asked, which makes it a calculation. Only a rule that sets values or
   // marks Low quality stays without a condition (rule-list.ts); before the first question there is no
   // answer, so its first condition reads a URL parameter.

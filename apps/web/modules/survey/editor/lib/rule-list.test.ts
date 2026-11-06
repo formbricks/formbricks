@@ -77,7 +77,7 @@ describe("rule list operations work on any list of rules", () => {
   const empty = (group: TConditionGroup): TConditionGroup => ({ ...group, conditions: [] });
   const calculate = overallRules()[0].actions[0];
 
-  test("a Set value or Mark as low quality rule whose last condition is removed stays, always running (ADR 0026)", () => {
+  test("a Set value or Mark as low quality rule whose last condition is removed stays, always running (ADR 0031)", () => {
     const rules = [
       ruleWith([calculate, { id: "lowq00000000000000000001", objective: "markLowQuality" }], "or"),
     ];

@@ -184,7 +184,7 @@ export const backfillMatrixConditionIdRows = async (
 });
 
 /**
- * Matrix conditions by id (ENG-6934, ADR 0026): stores `meta.rowId` and `columnId` / `columnIds` next to
+ * Matrix conditions by id (ENG-6934, ADR 0032): stores `meta.rowId` and `columnId` / `columnIds` next to
  * the positions of every existing matrix condition, so reordering rows or columns on a live survey no
  * longer points a condition at another cell. Positions stay: the previous release's pods read them
  * while the upgrade rolls out. Conditions saved by old pods during the rollout get their ids on the

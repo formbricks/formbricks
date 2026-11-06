@@ -19,7 +19,7 @@ const getSurveyBlocksForNotShown = async (
 };
 
 /**
- * `data` without an answer to anything the survey's not-shown record lists (ENG-6936, ADR 0024). The
+ * `data` without an answer to anything the survey's not-shown record lists (ENG-6936, ADR 0029). The
  * same on a create and an update, so a response the survey creates finished (one page, or an older
  * bundle that sent a stale answer) keeps no answer to a question its respondent was not shown.
  * Returns `data` itself when nothing was removed.

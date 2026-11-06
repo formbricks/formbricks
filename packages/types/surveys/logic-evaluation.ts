@@ -15,7 +15,7 @@ import type { TConditionGroup, TSingleCondition } from "./logic";
  * one.
  *
  * An empty group is true whatever its connector: the editor shows it as "Always", so an empty `or`
- * group runs like an empty `and` group instead of never (ADR 0026).
+ * group runs like an empty `and` group instead of never (ADR 0031).
  */
 export const evaluateConditionGroup = (
   group: TConditionGroup,

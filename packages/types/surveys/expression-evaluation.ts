@@ -12,7 +12,7 @@ import { EXPRESSION_MAX_DEPTH, type TExpression, type TExpressionFunction } from
  * (`packages/surveys/src/lib/logic.ts`), the server engine (`apps/web/lib/surveyLogic/utils.ts`) and
  * the editor's sample result all call it, so a formula computes the same everywhere.
  *
- * It only walks the tree (ADR 0025): no parser, no `eval`, no `new Function`, so it runs under a
+ * It only walks the tree (ADR 0030): no parser, no `eval`, no `new Function`, so it runs under a
  * strict Content Security Policy.
  *
  * Behaviour (grill P3):

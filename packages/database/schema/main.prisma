@@ -255,7 +255,7 @@ model Response {
   /// export by default and from Feedback Records, and nothing else: it is never deleted and every
   /// count, list, webhook and integration still includes it (ENG-6780).
   outcome           ResponseOutcome?
-  /// What the respondent was not shown (ENG-6936, ADR 0024): the blocks and elements a show-if kept
+  /// What the respondent was not shown (ENG-6936, ADR 0029): the blocks and elements a show-if kept
   /// from them, and per element its options, matrix rows and columns, by stable ids. Written by the
   /// survey while they answer; null means unknown (older responses and bundles), read as before.
   /// Omitted from reads without a `select` (PRISMA_GLOBAL_OMIT), so it never reaches a v1/v2 payload,

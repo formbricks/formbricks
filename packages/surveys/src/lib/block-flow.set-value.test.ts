@@ -7,7 +7,7 @@ import type { TExpression } from "@formbricks/types/surveys/expressions";
 import { type TAdvanceFromBlockInput, advanceFromBlock } from "./block-flow";
 
 /**
- * Set value with expressions (ENG-6935, ADR 0025 / 0026): a `calculate` action with `operator: "assign"`
+ * Set value with expressions (ENG-6935, ADR 0030 / 0031): a `calculate` action with `operator: "assign"`
  * and an `expression` value, evaluated by the one shared evaluator. Plain survey and answers in, the
  * variables the flow decided out.
  */
@@ -62,7 +62,7 @@ const embeddedFields = [
 
 const setValue = (variableId: string, expression: TExpression): TSurveyBlockLogic => ({
   id: `rule-${variableId}`,
-  // ADR 0026: an always-run step is a rule whose condition group is an empty `and` group.
+  // ADR 0031: an always-run step is a rule whose condition group is an empty `and` group.
   conditions: { id: "always", connector: "and", conditions: [] },
   actions: [
     {

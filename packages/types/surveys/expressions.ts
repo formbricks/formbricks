@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ZDynamicLogicFieldValue } from "./logic";
 
 /**
- * Set value expressions (ENG-6935, ADR 0025): a formula such as `round(q1 + q2 * 2)` stored as a tree,
+ * Set value expressions (ENG-6935, ADR 0030): a formula such as `round(q1 + q2 * 2)` stored as a tree,
  * never as text, so the survey bundle only walks nodes and needs no parser (CSP: no `eval`).
  *
  * Every operation is one node kind, `{ type: "call", fn, args }`. Leaves reuse the condition operands

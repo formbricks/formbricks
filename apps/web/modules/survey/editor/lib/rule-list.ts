@@ -38,13 +38,13 @@ export const duplicateRule = (rules: TSurveyBlockLogic[], ruleIdx: number): TSur
 /** Actions that may run for everyone: setting a value and marking the response Low quality. */
 const ALWAYS_RUNNABLE = new Set<TSurveyBlockLogicActionObjective>(["calculate", "markLowQuality"]);
 
-/** Whether a rule may stand with no condition, shown as "Always runs" (ADR 0026). */
+/** Whether a rule may stand with no condition, shown as "Always runs" (ADR 0031). */
 export const canRuleAlwaysRun = (actions: TSurveyBlockLogicAction[]): boolean =>
   actions.every((action) => ALWAYS_RUNNABLE.has(action.objective));
 
 /**
  * Changes a rule's conditions. When the last condition goes, a rule that only sets values or marks
- * the response Low quality stays and always runs (ADR 0026); its group becomes an `and` group, since
+ * the response Low quality stays and always runs (ADR 0031); its group becomes an `and` group, since
  * an empty group reads and runs as "all". Any other rule (a jump, a required answer) is removed with
  * its last condition, as before the Flow tab: a jump for everyone is never what removing a condition
  * meant.
@@ -78,7 +78,7 @@ export const updateRuleActions = (
 
 /**
  * What the Add logic menu starts a rule as: a jump rule, a Set value step (ENG-6935), which always
- * runs: its condition group is an empty `and` group (ADR 0026), or a Mark as low quality rule
+ * runs: its condition group is an empty `and` group (ADR 0031), or a Mark as low quality rule
  * (ENG-6933). A Set value that runs only sometimes is the same step with "Add a condition" used on it,
  * so the menu offers no separate calculation.
  */

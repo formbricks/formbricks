@@ -1,5 +1,5 @@
 /**
- * Planner for the matrix condition id backfill (ENG-6934, ADR 0026).
+ * Planner for the matrix condition id backfill (ENG-6934, ADR 0032).
  *
  * Pure: a stored row in, "unchanged" or the full replacement for one JSON column out. No database, no
  * app imports. A data migration must keep doing what it did on the day it shipped, so the sync rules
