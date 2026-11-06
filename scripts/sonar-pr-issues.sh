@@ -10,14 +10,21 @@ pr="${1:?usage: scripts/sonar-pr-issues.sh <pull request number>}"
 project="formbricks_formbricks"
 api="https://sonarcloud.io/api"
 
+# Exit code 3 from this step means Sonar has not analysed the PR yet: say so and stop.
+status=0
 curl -fsS "${api}/project_pull_requests/list?project=${project}" |
   PR="${pr}" node -e '
     let raw = "";
     process.stdin.on("data", (chunk) => (raw += chunk)).on("end", () => {
       const entry = JSON.parse(raw).pullRequests.find((pull) => pull.key === process.env.PR);
-      if (!entry) return console.log(`No SonarCloud analysis for PR ${process.env.PR} yet.`);
+      if (!entry) {
+        console.log(`No SonarCloud analysis for PR ${process.env.PR} yet.`);
+        process.exit(3);
+      }
       console.log(`Analysed ${entry.commit?.sha?.slice(0, 10) ?? "?"} at ${entry.analysisDate}`);
-    });'
+    });' || status=$?
+if [ "${status}" -eq 3 ]; then exit 0; fi
+if [ "${status}" -ne 0 ]; then exit "${status}"; fi
 
 PR="${pr}" PROJECT="${project}" API="${api}" node --input-type=module -e '
   const { API, PROJECT, PR } = process.env;

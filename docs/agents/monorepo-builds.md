@@ -138,6 +138,8 @@ skips what the root `pnpm go` does before it starts the app, and each gap fails 
   names none: when it reports any, run `pnpm authzed:backfill --apply` and read the `organizationId`
   of each entry in its `failures`, then run `pnpm authzed:backfill --organization-id=<id> --apply`
   for each. A run over all organizations returns `authzed_internal` for some that succeed alone.
+  Neither command covers surveys: when surveys are still missing, or the check reports the `survey`
+  scope `not-ready`, run `pnpm authzed:backfill --scope=survey --apply`.
 
 Start from the root `pnpm go` after a merge: it runs the migrations, the builds and the SpiceDB
 preparation first. Restart a dev server that was already running: it keeps the Prisma client it

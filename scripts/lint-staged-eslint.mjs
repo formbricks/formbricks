@@ -58,9 +58,13 @@ const SONAR_RULES = new Set(SONAR_NEW_CODE_RULE_IDS);
 
 /** The staged lines of `file`, from the index. Throws when git can't say: the gate must not pass blind. */
 function stagedLineRanges(file) {
-  const { stdout, stderr, status, error } = spawnSync("git", ["diff", "--cached", "--unified=0", "--", file], {
-    encoding: "utf8",
-  });
+  const { stdout, stderr, status, error } = spawnSync(
+    "git",
+    ["diff", "--cached", "--unified=0", "--", file],
+    {
+      encoding: "utf8",
+    }
+  );
   if (error || status !== 0) {
     throw new Error(`git diff --cached failed for ${file}: ${error?.message ?? stderr}`);
   }

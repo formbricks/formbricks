@@ -1,11 +1,11 @@
 #!/usr/bin/env sh
 
 if command -v pnpm >/dev/null 2>&1; then
-  pnpm lint-staged
+  pnpm lint-staged --concurrent false
 elif command -v npm >/dev/null 2>&1; then
-  npm exec --yes pnpm@11.7.0 lint-staged
+  npm exec --yes pnpm@11.7.0 lint-staged --concurrent false
 elif command -v corepack >/dev/null 2>&1; then
-  corepack pnpm lint-staged
+  corepack pnpm lint-staged --concurrent false
 else
   echo "Error: pnpm, npm, and corepack are unavailable in this Git hook PATH."
   echo "Install Node.js tooling or update your PATH, then retry the commit."
