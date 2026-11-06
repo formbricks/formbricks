@@ -20,9 +20,15 @@ import {
 } from "./flow-outline-text";
 import { type TFlowTextPart, toPlainText } from "./reference-chips";
 
-// Every key reads as its last segment, so the operator labels below are the i18n keys' names.
-const t = ((key: string, options?: { blockNumber?: number }) =>
-  key === "workspace.surveys.edit.block_n" ? `Block ${options?.blockNumber}` : key.split(".").pop()) as never;
+// Every key reads as its last segment, so the operator labels below are the i18n keys' names; the
+// sentences with placeholders read as their en-US text.
+const t = ((key: string, options?: { blockNumber?: number; value?: string; field?: string }) => {
+  if (key === "workspace.surveys.edit.block_n") return `Block ${options?.blockNumber}`;
+  if (key === "workspace.surveys.edit.flow.append_value_to_field") {
+    return `append ${options?.value} to ${options?.field}`;
+  }
+  return key.split(".").pop();
+}) as never;
 
 const rule = (blockIdx: number, ruleIdx: number) => surveyFlowFixture.blocks[blockIdx].logic![ruleIdx];
 
@@ -175,10 +181,10 @@ describe("describeAction", () => {
     });
   });
 
-  test("a calculation reads as field, operator and value", () => {
+  test("a calculation reads as field, operator and value; appending text reads as words", () => {
     expect(describeAction(action(0, 1), surveyFlowFixture, t).label).toBe("score + 1");
     expect(describeAction(action(1, 0), surveyFlowFixture, t).label).toBe("score + “sat_netflix”");
-    expect(describeAction(action(2, 0), surveyFlowFixture, t).label).toBe("segment + “-heavy”");
+    expect(describeAction(action(2, 0), surveyFlowFixture, t).label).toBe("append “-heavy” to segment");
     expect(describeAction(action(2, 0, 1), surveyFlowFixture, t).label).toBe("score − tenure_days");
     expect(describeAction(action(3, 0), surveyFlowFixture, t).label).toBe("score × 2");
     expect(describeAction(action(3, 1), surveyFlowFixture, t).label).toBe("score ÷ 2");
@@ -202,6 +208,19 @@ describe("describeAction", () => {
     expect(describeAction(action(5, 1, 1), surveyFlowFixture, t).label).toBe(
       "tenure_days = daysBetween(@signup_date, @signed_up_at)"
     );
+  });
+
+  test("a date picked for a date field reads as the date picker shows it, not as quoted ISO text", () => {
+    const picked = action(5, 1, 0);
+    if (picked.objective !== "calculate") throw new Error("expected a Set value step");
+    const withDate: TSurveyBlockLogicAction = {
+      id: picked.id,
+      objective: "calculate",
+      variableId: picked.variableId,
+      operator: "assign",
+      value: { type: "expression", value: { type: "static", value: "2026-11-18" } },
+    };
+    expect(describeAction(withDate, surveyFlowFixture, t).label).toBe("signed_up_at = Nov 18, 2026");
   });
 
   test("a Set value with no field yet says a field is missing, not = “”", () => {

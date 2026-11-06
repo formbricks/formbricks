@@ -2,7 +2,14 @@
 
 import type { TFunction } from "i18next";
 import { EyeIcon, EyeOffIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { type Dispatch, type ReactNode, type SetStateAction, useContext, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type RefObject,
+  type SetStateAction,
+  useContext,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { type TOptionLike, type TOptionListKey, getOptionList } from "@formbricks/types/surveys/show-if";
@@ -17,6 +24,7 @@ import {
   ShowIfConditionsEditor,
   ShowIfPopoverBoundary,
   ShowIfPopoverFrame,
+  useShowIfAnchor,
   useShowIfScope,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { describeIfConditionParts } from "@/modules/survey/editor/lib/flow-outline-text";
@@ -35,7 +43,7 @@ import {
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
-import { Popover, PopoverTrigger } from "@/modules/ui/components/popover";
+import { Popover, PopoverAnchor, PopoverTrigger } from "@/modules/ui/components/popover";
 import { Switch } from "@/modules/ui/components/switch";
 
 type TOptionTarget = Extract<TShowIfTarget, { type: "option" }>;
@@ -57,6 +65,10 @@ interface OptionsShowIfPopoverProps {
   readonly hiddenCount: number;
   readonly isOpen: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  /** What opens the popover while nothing is set: the Flow tab's faint cell by default. */
+  readonly newTrigger?: ReactNode;
+  /** The trigger sits right under its own heading (the Questions tab): the popover leaves it out. */
+  readonly hideHeading?: boolean;
 }
 
 /**
@@ -111,13 +123,17 @@ export function OptionsShowIfPopover({
   hiddenCount,
   isOpen,
   onOpenChange,
+  newTrigger,
+  hideHeading = false,
 }: OptionsShowIfPopoverProps) {
   const { t } = useTranslation();
+  const { triggerRef, anchorRef, hasAnchor } = useShowIfAnchor();
   const hasBadges = showIfCount > 0 || hiddenCount > 0;
 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>
+      {hasAnchor && <PopoverAnchor virtualRef={anchorRef as RefObject<Element>} />}
+      <PopoverTrigger asChild ref={triggerRef}>
         {hasBadges ? (
           <button
             type="button"
@@ -128,9 +144,11 @@ export function OptionsShowIfPopover({
             <OptionsShowIfCounts showIfCount={showIfCount} hiddenCount={hiddenCount} />
           </button>
         ) : (
-          <AddConditionCell
-            aria-label={`${t("workspace.surveys.edit.flow.show_options_if")} ${t("workspace.surveys.edit.flow.add_show_if_condition")}`}
-          />
+          (newTrigger ?? (
+            <AddConditionCell
+              aria-label={`${t("workspace.surveys.edit.flow.show_options_if")} ${t("workspace.surveys.edit.flow.add_show_if_condition")}`}
+            />
+          ))
         )}
       </PopoverTrigger>
       {/* Mounted only while open: its scope is computed for the open popover alone. */}
@@ -141,6 +159,7 @@ export function OptionsShowIfPopover({
           blockIdx={blockIdx}
           elementIdx={elementIdx}
           optionLists={optionLists}
+          hideHeading={hideHeading}
           onClose={() => onOpenChange(false)}
         />
       )}
@@ -154,6 +173,7 @@ interface OptionsShowIfEditorProps {
   readonly blockIdx: number;
   readonly elementIdx: number;
   readonly optionLists: TOptionListKey[];
+  readonly hideHeading: boolean;
   readonly onClose: () => void;
 }
 
@@ -180,6 +200,7 @@ function OptionsShowIfEditor({
   blockIdx,
   elementIdx,
   optionLists,
+  hideHeading,
   onClose,
 }: OptionsShowIfEditorProps) {
   const { t } = useTranslation();
@@ -230,6 +251,7 @@ function OptionsShowIfEditor({
       // Named like the column that opens it (ENG-6969 T9).
       title={t("workspace.surveys.edit.flow.show_options_if")}
       help={t("workspace.surveys.edit.flow.options_shown_if_help")}
+      hideHeading={hideHeading}
       info={{
         label: t("workspace.surveys.edit.flow.options_shown_if_info_label"),
         content: t("workspace.surveys.edit.flow.options_shown_if_info"),

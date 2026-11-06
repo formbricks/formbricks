@@ -14,15 +14,35 @@ import type { TConnector } from "@formbricks/types/surveys/logic";
 export const SENTENCE_ROW_CLASS = "grid grid-cols-[4rem_minmax(0,1fr)_3.75rem] items-start gap-x-2";
 
 /**
+ * Where the label column's text sits. `end` (the rule editor) lines "If" and "and" up with the actions'
+ * "Then"; `start` (a show-if, which has no "Then") puts "If" at the editor's left edge, in a slimmer
+ * column (review of ENG-6969).
+ */
+export type TSentenceLeadAlign = "start" | "end";
+
+const SENTENCE_ROW_START_CLASS = "grid grid-cols-[3.75rem_minmax(0,1fr)_3.75rem] items-start gap-x-2";
+
+export const getSentenceRowClass = (leadAlign: TSentenceLeadAlign): string =>
+  leadAlign === "start" ? SENTENCE_ROW_START_CLASS : SENTENCE_ROW_CLASS;
+
+/**
  * A row's fields: field · operator · value side by side when the editor has room (a container query
  * on the nearest `@container`), stacked in a narrow editor column. An action's target spans the
- * operator and value columns (`@xl:col-span-2`), so right edges line up.
+ * operator and value columns (`@xl:col-span-2`), so right edges line up. Conditions and actions share
+ * this one template, so the If and Then rows align (ENG-6969 T6). The first column is capped: an
+ * action's kind ("Set value", "Jump to") needs little room, and Set value's field, operator, value and
+ * Expression switch share the other two; a long question name truncates and reads whole in its list.
  */
 export const SENTENCE_FIELDS_CLASS =
-  "grid min-w-0 grid-cols-1 gap-2 @xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)]";
+  "grid min-w-0 grid-cols-1 gap-2 @xl:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_minmax(0,1fr)]";
 
 /** The label column: "If", "and", "Then", or the and/or select, right-aligned on the first line. */
 export const SENTENCE_LEAD_CLASS = "flex h-10 items-center justify-end text-sm font-medium text-slate-700";
+
+const SENTENCE_LEAD_START_CLASS = "flex h-10 items-center justify-start text-sm font-medium text-slate-700";
+
+export const getSentenceLeadClass = (leadAlign: TSentenceLeadAlign): string =>
+  leadAlign === "start" ? SENTENCE_LEAD_START_CLASS : SENTENCE_LEAD_CLASS;
 
 /** The actions column: borderless delete and ⋮, on the first line. */
 export const SENTENCE_ROW_ACTIONS_CLASS = "flex h-10 items-center justify-end gap-0.5";

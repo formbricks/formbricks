@@ -1,7 +1,22 @@
 "use client";
 
-import { ArrowRightIcon, EyeIcon, PlusIcon, Rows3Icon, SquareArrowRightExitIcon } from "lucide-react";
-import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo, useState } from "react";
+import {
+  ArrowRightIcon,
+  EyeIcon,
+  PlusIcon,
+  Rows3Icon,
+  SquareArrowRightExitIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
+import {
+  type Dispatch,
+  Fragment,
+  type RefObject,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -19,6 +34,11 @@ import {
   SHOW_IF_CELL_CLASS,
   ShowIfPopoverBoundary,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
+import {
+  type TAlwaysSkippedJump,
+  getAlwaysSkippedFallback,
+  getAlwaysSkippedJump,
+} from "@/modules/survey/editor/lib/always-skipped-jump";
 import { isAutoBlockName } from "@/modules/survey/editor/lib/blocks";
 import {
   expandBlock,
@@ -59,11 +79,13 @@ import {
   setStartRules,
 } from "@/modules/survey/editor/lib/rule-list";
 import { RuleTypeIcon, RuleTypeTile, getRuleTypeLabel } from "@/modules/survey/editor/lib/rule-types";
+import { SHOW_IF_ANCHOR_PROPS } from "@/modules/survey/editor/lib/show-if-anchor";
 import { type TShowIfTarget, canAddShowIf } from "@/modules/survey/editor/lib/show-if-editing";
 import { TARGET_LIST_CLASS, getFallbackTargetGroups } from "@/modules/survey/editor/lib/target-options";
 import {
   getActionVariableOptions,
   getDefaultOperatorForElement,
+  isComputedDateField,
   scrollElementCardIntoView,
 } from "@/modules/survey/editor/lib/utils";
 import { isBlockLogicItemValid } from "@/modules/survey/editor/lib/validation";
@@ -226,10 +248,16 @@ export const FlowView = ({
       ? setLocalSurvey((survey) => setStartRules(survey, rules))
       : updateBlockRules(scopeBlockIdx, rules);
 
+  // A new Set value step writes the survey's first computed field.
+  const getNewRuleField = () => {
+    const variableId = String(getActionVariableOptions(localSurvey)[0]?.value ?? "");
+    return { variableId, storedAsExpression: isComputedDateField(localSurvey, variableId) };
+  };
+
   const addStartRule = (kind: TNewRuleKind) => {
     const rule = createRule(kind, {
       condition: getDefaultStartCondition(localSurvey),
-      variableId: String(getActionVariableOptions(localSurvey)[0]?.value ?? ""),
+      ...getNewRuleField(),
     });
     setLocalSurvey((survey) => setStartRules(survey, [...(survey.startLogic ?? []), rule]));
     setOpenRowId(rule.id);
@@ -243,7 +271,7 @@ export const FlowView = ({
         leftOperand: { type: "element", value: firstElement.id },
         operator: getDefaultOperatorForElement(firstElement, t),
       },
-      variableId: String(getActionVariableOptions(localSurvey)[0]?.value ?? ""),
+      ...getNewRuleField(),
     });
     updateBlockRules(block.blockIdx, [...(localSurvey.blocks[block.blockIdx].logic ?? []), rule]);
     setExpandedBlockIds((current) => expandBlock(current, block.id));
@@ -291,80 +319,127 @@ export const FlowView = ({
     // The whole rule in words: the tooltip of a cut-off row, and the row's accessible name.
     const sentence = describeRuleSummary(row.rule, localSurvey, t, textFormat);
     const onRulesChange = (next: TSurveyBlockLogic[]) => updateRules(scopeBlockIdx, next);
+    const ruleJump = row.rule.actions.find((action) => action.objective === "jumpToBlock");
+    const skippedJumpWarning =
+      ruleJump?.objective === "jumpToBlock"
+        ? describeAlwaysSkipped(getAlwaysSkippedJump(localSurvey, scopeBlockIdx, ruleJump.target))
+        : null;
 
     return (
-      <FlowOutlineRow
-        key={row.id}
-        id={row.id}
-        tone={row.type}
-        icon={<RuleTypeIcon type={row.type} />}
-        isInvalid={invalidElements?.includes(row.id) ?? false}
-        readOnlyLabel={row.editable ? undefined : t("workspace.surveys.edit.flow.read_only")}
-        onToggle={row.editable ? () => toggleRow(row.id) : undefined}
-        ariaLabel={row.editable ? sentence : undefined}
-        // The block cards' chevron: a rule row opens too. A read-only row doesn't, so it gets none.
-        showChevron={row.editable}
-        isOpen={isOpen}
-        actions={
-          row.editable ? (
-            <RuleRowActions
-              isFirst={row.ruleIdx === 0}
-              isLast={row.ruleIdx === rules.length - 1}
-              onMoveUp={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx - 1))}
-              onMoveDown={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx + 1))}
-              onDuplicate={() => onRulesChange(duplicateRule(rules, row.ruleIdx))}
-              onDelete={() => {
-                onRulesChange(removeRule(rules, row.ruleIdx));
-                if (isOpen) setOpenRowId(null);
-              }}
-            />
-          ) : undefined
-        }
-        details={
-          row.editable ? (
-            <LogicEditor
-              localSurvey={localSurvey}
-              rules={rules}
-              ruleIdx={row.ruleIdx}
-              onRulesChange={onRulesChange}
-              scopeBlockIdx={scopeBlockIdx}
-              onAddCalculatedField={onAddCalculatedField}
-            />
-          ) : null
-        }>
-        {/* One line (ENG-6969 T2): the condition gives way first, then the action. The first action
+      <Fragment key={row.id}>
+        <FlowOutlineRow
+          id={row.id}
+          tone={row.type}
+          icon={<RuleTypeIcon type={row.type} />}
+          isInvalid={invalidElements?.includes(row.id) ?? false}
+          readOnlyLabel={row.editable ? undefined : t("workspace.surveys.edit.flow.read_only")}
+          onToggle={row.editable ? () => toggleRow(row.id) : undefined}
+          ariaLabel={row.editable ? sentence : undefined}
+          // The block cards' chevron: a rule row opens too. A read-only row doesn't, so it gets none.
+          showChevron={row.editable}
+          isOpen={isOpen}
+          actions={
+            row.editable ? (
+              <RuleRowActions
+                isFirst={row.ruleIdx === 0}
+                isLast={row.ruleIdx === rules.length - 1}
+                onMoveUp={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx - 1))}
+                onMoveDown={() => onRulesChange(moveRule(rules, row.ruleIdx, row.ruleIdx + 1))}
+                onDuplicate={() => onRulesChange(duplicateRule(rules, row.ruleIdx))}
+                onDelete={() => {
+                  onRulesChange(removeRule(rules, row.ruleIdx));
+                  if (isOpen) setOpenRowId(null);
+                }}
+              />
+            ) : undefined
+          }
+          details={
+            row.editable ? (
+              <LogicEditor
+                localSurvey={localSurvey}
+                rules={rules}
+                ruleIdx={row.ruleIdx}
+                onRulesChange={onRulesChange}
+                scopeBlockIdx={scopeBlockIdx}
+                onAddCalculatedField={onAddCalculatedField}
+              />
+            ) : null
+          }>
+          {/* One line (ENG-6969 T2): the condition gives way first, then the action. The first action
             reads in full and the others fold into "+N"; the destination is a trailing pill. */}
-        <TruncationTooltip
-          content={sentence}
-          collisionBoundary={popoverBoundary}
-          className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
-          {/* Questions and fields as chips (ENG-6969 T3); the sentence above stays plain text. */}
-          <span className="min-w-12 shrink-[999] truncate text-sm text-slate-700">
-            <FlowTextParts
-              parts={describeRuleConditionParts(row.rule, localSurvey, t, textFormat)}
-              elementIcons={elementIcons}
-            />
-          </span>
-          {(actions.first || actions.jump) && (
-            <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
-          )}
-          {actions.first && (
-            <span className="min-w-0 truncate text-sm font-medium text-slate-900">
+          <TruncationTooltip
+            content={sentence}
+            collisionBoundary={popoverBoundary}
+            className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
+            {/* Questions and fields as chips (ENG-6969 T3); the sentence above stays plain text. */}
+            <span className="min-w-12 shrink-[999] truncate text-sm text-slate-700">
               <FlowTextParts
-                parts={describeFirstStepParts(row.rule.actions, localSurvey, t, textFormat)}
+                parts={describeRuleConditionParts(row.rule, localSurvey, t, textFormat)}
                 elementIcons={elementIcons}
               />
             </span>
-          )}
-          {actions.moreCount > 0 && (
-            <span className="shrink-0 rounded-full border border-slate-200 bg-white px-1.5 text-[11px] font-medium text-slate-500">
-              +{actions.moreCount}
-            </span>
-          )}
-          {actions.jump && renderJumpPill(actions.jump)}
-        </TruncationTooltip>
-      </FlowOutlineRow>
+            {(actions.first || actions.jump) && (
+              <ArrowRightIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
+            )}
+            {actions.first && (
+              <span className="min-w-0 truncate text-sm font-medium text-slate-900">
+                <FlowTextParts
+                  parts={describeFirstStepParts(row.rule.actions, localSurvey, t, textFormat)}
+                  elementIcons={elementIcons}
+                />
+              </span>
+            )}
+            {actions.moreCount > 0 && (
+              <span className="shrink-0 rounded-full border border-slate-200 bg-white px-1.5 text-[11px] font-medium text-slate-500">
+                +{actions.moreCount}
+              </span>
+            )}
+            {/* After another step the destination needs its own lead-in, or "tag = “detractor” Why" reads
+              as one step (review of ENG-6969). */}
+            {actions.first && actions.jump && (
+              <span className="shrink-0 text-sm text-slate-500">
+                {t("workspace.surveys.edit.flow.then_go_to")}
+              </span>
+            )}
+            {actions.jump && renderJumpPill(actions.jump)}
+          </TruncationTooltip>
+        </FlowOutlineRow>
+        {renderAlwaysSkippedWarning(skippedJumpWarning)}
+      </Fragment>
     );
+  };
+
+  /** The dead-jump warning under a rule or an "Otherwise go to" (review of ENG-6969, M1). */
+  const renderAlwaysSkippedWarning = (warning: string | null) =>
+    warning && (
+      <p className="-mt-1 flex items-start gap-1.5 pl-3 text-xs text-amber-700">
+        <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+        {warning}
+      </p>
+    );
+
+  /**
+   * Why a jump lands somewhere else (review of ENG-6969, M1): its block's show-if reads only questions
+   * the jump skips, so on that path the block is always skipped. `null` when it can be shown.
+   */
+  const describeAlwaysSkipped = (skipped: TAlwaysSkippedJump | null): string | null => {
+    if (!skipped) return null;
+    const targetIdx = localSurvey.blocks.findIndex((block) => block.id === skipped.targetBlockId);
+    const target = localSurvey.blocks[targetIdx];
+    const elements = localSurvey.blocks.flatMap((block) => block.elements);
+    const questions = skipped.skippedElementIds.map((id) => {
+      const element = elements.find((candidate) => candidate.id === id);
+      return element ? getElementBadgeText(element) : id;
+    });
+    return t("workspace.surveys.edit.flow.jump_target_always_skipped", {
+      block:
+        target && target.name.trim() !== "" && !isAutoBlockName(target.name)
+          ? target.name
+          : t("workspace.surveys.edit.block_n", { blockNumber: targetIdx + 1 }),
+      questions: new Intl.ListFormat(i18n.resolvedLanguage ?? "en-US", { type: "conjunction" }).format(
+        questions
+      ),
+    });
   };
 
   /** A question's "Show question if…" cell: its condition, or "Add condition" (ENG-6969 T10). */
@@ -378,10 +453,11 @@ export const FlowView = ({
       return (
         <span className={SHOW_IF_CELL_CLASS.readOnly} title={t("workspace.surveys.edit.flow.read_only_hint")}>
           <EyeIcon aria-hidden="true" />
-          <span className="truncate">
+          <span className="flex min-w-0 items-center gap-1">
             <FlowTextParts
               parts={describeConditionGroupParts(cell.conditions, localSurvey, t, textFormat)}
               elementIcons={elementIcons}
+              centered
             />
           </span>
         </span>
@@ -438,27 +514,38 @@ export const FlowView = ({
   /**
    * A block's questions as a table (ENG-6969 T10): each question's type icon, text and code (the name
    * rules and expressions use), then its "Show question if…" and "Show options if…" cells, in that
-   * order. The columns start after the longest question, so set conditions line up.
+   * order. Every block's table has the same columns (review of ENG-6969), so the show-if columns sit at
+   * the same place in each block; "Show options if…" is named only in a block with a question that has
+   * options, and its column stays as empty room otherwise.
    */
   const renderQuestionTable = (block: TFlowBlockSection) => {
     const surveyBlock = localSurvey.blocks[block.blockIdx];
+    const rows = surveyBlock.elements.flatMap((element, elementIdx) => {
+      const item = block.elements[elementIdx];
+      if (!item) return [];
+      const target = { type: "element", blockIdx: block.blockIdx, elementIdx } as const;
+      const [questionCell, optionsCell] = getElementShowIfCells(item, canAddShowIf(localSurvey, target));
+      return [{ element, elementIdx, item, target, questionCell, optionsCell }];
+    });
+    const hasOptionsColumn = rows.some((row) => row.optionsCell.state !== "none");
     return (
-      <div className="grid grid-cols-[fit-content(24rem)_minmax(0,14rem)_minmax(0,10rem)] gap-x-5 pl-7">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,14rem)_minmax(0,10rem)] gap-x-5 pl-7">
         <div className={QUESTION_TABLE_HEADER_CLASS}>{t("workspace.surveys.edit.flow.question_column")}</div>
         <div className={QUESTION_TABLE_HEADER_CLASS}>{t("workspace.surveys.edit.flow.show_question_if")}</div>
-        <div className={QUESTION_TABLE_HEADER_CLASS}>{t("workspace.surveys.edit.flow.show_options_if")}</div>
+        {hasOptionsColumn ? (
+          <div className={QUESTION_TABLE_HEADER_CLASS}>
+            {t("workspace.surveys.edit.flow.show_options_if")}
+          </div>
+        ) : (
+          <div aria-hidden="true" />
+        )}
         <ul className="col-span-3 grid grid-cols-subgrid">
-          {surveyBlock.elements.map((element, elementIdx) => {
-            const item = block.elements[elementIdx];
-            if (!item) return null;
-            const target = { type: "element", blockIdx: block.blockIdx, elementIdx } as const;
-            const [questionCell, optionsCell] = getElementShowIfCells(
-              item,
-              canAddShowIf(localSurvey, target)
-            );
+          {rows.map(({ element, elementIdx, target, questionCell, optionsCell }) => {
             return (
               <li
                 key={element.id}
+                // The show-if popovers open under the whole question row (ENG-6969 review).
+                {...SHOW_IF_ANCHOR_PROPS}
                 className="col-span-3 grid min-h-8 grid-cols-subgrid items-center border-b border-slate-100 last:border-b-0">
                 <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-700">
                   <span className="shrink-0 text-slate-400 [&>svg]:size-3.5" aria-hidden="true">
@@ -497,10 +584,11 @@ export const FlowView = ({
           className="inline-flex min-w-0 cursor-default items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
           title={t("workspace.surveys.edit.flow.read_only_hint")}>
           <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
-          <span className="truncate">
+          <span className="flex min-w-0 items-center gap-1">
             <FlowTextParts
               parts={describeBlockShowIfParts(badge.conditions, localSurvey, t, textFormat)}
               elementIcons={elementIcons}
+              centered
             />
           </span>
         </span>
@@ -669,6 +757,8 @@ export const FlowView = ({
                   id={`flow-${block.id}`}
                   tone="block"
                   icon={<Rows3Icon />}
+                  // The block's show-if popover opens under its whole header.
+                  headerData={SHOW_IF_ANCHOR_PROPS}
                   showChevron
                   isOpen={isExpanded}
                   onToggle={onToggleBlock}
@@ -722,32 +812,37 @@ export const FlowView = ({
                     <div>{renderAddLogicMenu(block, blockShowIfBlocker)}</div>
 
                     {block.fallback && (
-                      <FlowOutlineNote icon={<ArrowRightIcon aria-hidden="true" />}>
-                        <span id={`flow-fallback-label-${block.id}`} className="shrink-0">
-                          {t("workspace.surveys.edit.flow.otherwise_go_to")}
-                        </span>
-                        <InputCombobox
-                          id={`flow-fallback-${block.id}`}
-                          aria-labelledby={`flow-fallback-label-${block.id}`}
-                          showSearch={true}
-                          searchPlaceholder={t("workspace.surveys.edit.flow.search_blocks_and_endings")}
-                          // The jump target's grouped list (ENG-6969 T6.6), with the destination's icon.
-                          groupedOptions={getFallbackTargetGroups(localSurvey, block.blockIdx, t)}
-                          iconClassName="size-4 text-slate-500"
-                          dropdownClassName={TARGET_LIST_CLASS}
-                          value={surveyBlock.logicFallback ?? "defaultSelection"}
-                          onChangeValue={(value) =>
-                            setLocalSurvey((survey) =>
-                              setBlockLogicFallback(
-                                survey,
-                                block.blockIdx,
-                                value === "defaultSelection" ? undefined : String(value)
+                      <>
+                        <FlowOutlineNote icon={<ArrowRightIcon aria-hidden="true" />}>
+                          <span id={`flow-fallback-label-${block.id}`} className="shrink-0">
+                            {t("workspace.surveys.edit.flow.otherwise_go_to")}
+                          </span>
+                          <InputCombobox
+                            id={`flow-fallback-${block.id}`}
+                            aria-labelledby={`flow-fallback-label-${block.id}`}
+                            showSearch={true}
+                            searchPlaceholder={t("workspace.surveys.edit.flow.search_blocks_and_endings")}
+                            // The jump target's grouped list (ENG-6969 T6.6), with the destination's icon.
+                            groupedOptions={getFallbackTargetGroups(localSurvey, block.blockIdx, t)}
+                            iconClassName="size-4 text-slate-500"
+                            dropdownClassName={TARGET_LIST_CLASS}
+                            value={surveyBlock.logicFallback ?? "defaultSelection"}
+                            onChangeValue={(value) =>
+                              setLocalSurvey((survey) =>
+                                setBlockLogicFallback(
+                                  survey,
+                                  block.blockIdx,
+                                  value === "defaultSelection" ? undefined : String(value)
+                                )
                               )
-                            )
-                          }
-                          comboboxClasses="h-7 w-fit min-w-40 bg-white"
-                        />
-                      </FlowOutlineNote>
+                            }
+                            comboboxClasses="h-7 w-fit min-w-40 bg-white"
+                          />
+                        </FlowOutlineNote>
+                        {renderAlwaysSkippedWarning(
+                          describeAlwaysSkipped(getAlwaysSkippedFallback(localSurvey, block.blockIdx))
+                        )}
+                      </>
                     )}
                   </FlowOutlineChildren>
                 )}

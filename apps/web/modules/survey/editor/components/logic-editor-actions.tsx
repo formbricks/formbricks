@@ -380,7 +380,7 @@ export function LogicEditorActions({
                         </span>
                       ) : (
                         <>
-                          <div className="w-36 shrink-0">
+                          <div className="w-32 shrink-0">
                             <InputCombobox
                               id={`action-${idx}-operator`}
                               key={`operator-${action.id}`}
@@ -398,7 +398,7 @@ export function LogicEditorActions({
                             />
                           </div>
 
-                          <div className="min-w-32 flex-1">
+                          <div className="min-w-28 flex-1">
                             <InputCombobox
                               id={`action-${idx}-value`}
                               key={`value-${action.id}`}

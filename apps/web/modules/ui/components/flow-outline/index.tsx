@@ -156,6 +156,8 @@ interface FlowOutlineRowProps {
   readonly showChevron?: boolean;
   readonly id?: string;
   readonly ariaLabel?: string;
+  /** Data attributes for the header row, e.g. to mark it as the row a popover spans. */
+  readonly headerData?: Readonly<Record<`data-${string}`, string>>;
 }
 
 export const FlowOutlineRow = ({
@@ -172,6 +174,7 @@ export const FlowOutlineRow = ({
   showChevron = false,
   id,
   ariaLabel,
+  headerData,
 }: FlowOutlineRowProps) => {
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!onToggle || event.target !== event.currentTarget) return;
@@ -201,6 +204,7 @@ export const FlowOutlineRow = ({
           tabIndex={onToggle ? 0 : undefined}
           aria-expanded={onToggle ? isOpen : undefined}
           aria-label={ariaLabel}
+          {...headerData}
           onClick={onToggle}
           onKeyDown={handleKeyDown}
           // One line (ENG-6969 T2): the summary truncates, and the controls keep their slot on the right.

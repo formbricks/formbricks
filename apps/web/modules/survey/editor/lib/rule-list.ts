@@ -8,7 +8,11 @@ import type {
 } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { createEmptyFormulaAction, duplicateLogicItem } from "@/lib/surveyLogic/utils";
+import {
+  createEmptyFormulaAction,
+  createEmptySetValueAction,
+  duplicateLogicItem,
+} from "@/lib/surveyLogic/utils";
 
 /**
  * Operations on a list of logic rules (ENG-6929). The rule editor used to be wired to one block's
@@ -89,9 +93,19 @@ export interface TNewRuleOptions {
   condition: Omit<TSingleCondition, "id">;
   /** The computed field a Set value step sets; empty when the survey has none yet. */
   variableId?: string;
+  /**
+   * The field's value is stored as an expression even in one step (a date field, P38): the step starts
+   * as an empty expression leaf, which the editor shows with the Expression switch off. Any other field
+   * starts on the operator picker (Assign), with Expression one switch away.
+   */
+  storedAsExpression?: boolean;
 }
 
-const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): TSurveyBlockLogicAction => {
+const createFirstAction = (
+  kind: TNewRuleKind,
+  variableId: string | undefined,
+  storedAsExpression: boolean
+): TSurveyBlockLogicAction => {
   switch (kind) {
     case "jump":
       return { id: createId(), objective: "jumpToBlock", target: "" };
@@ -99,15 +113,17 @@ const createFirstAction = (kind: TNewRuleKind, variableId: string | undefined): 
     case "markLowQuality":
       return { id: createId(), objective: "markLowQuality" };
     case "setValue":
-      return createEmptyFormulaAction(createId(), variableId);
+      return storedAsExpression
+        ? createEmptyFormulaAction(createId(), variableId)
+        : createEmptySetValueAction(createId(), variableId);
   }
 };
 
 export const createRule = (
   kind: TNewRuleKind,
-  { condition, variableId }: TNewRuleOptions
+  { condition, variableId, storedAsExpression = false }: TNewRuleOptions
 ): TSurveyBlockLogic => {
-  const action = createFirstAction(kind, variableId);
+  const action = createFirstAction(kind, variableId, storedAsExpression);
 
   return {
     id: createId(),

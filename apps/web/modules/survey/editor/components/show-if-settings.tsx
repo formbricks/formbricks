@@ -11,7 +11,7 @@ import {
 import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
 import { ShowIfPopover } from "@/modules/survey/editor/components/show-if-popover";
 import {
-  AddConditionCell,
+  AddConditionButton,
   SHOW_IF_CELL_CLASS,
 } from "@/modules/survey/editor/components/show-if-popover-parts";
 import { describeConditionGroupParts } from "@/modules/survey/editor/lib/flow-outline-text";
@@ -19,9 +19,13 @@ import {
   type TOptionsShowIfSection,
   type TShowIfSection,
   getBlockShowIfSection,
+  getCardShowIf,
   getQuestionShowIfSections,
 } from "@/modules/survey/editor/lib/questions-tab-show-if";
+import { toPlainText } from "@/modules/survey/editor/lib/reference-chips";
+import { SHOW_IF_ANCHOR_PROPS } from "@/modules/survey/editor/lib/show-if-anchor";
 import type { TShowIfTarget } from "@/modules/survey/editor/lib/show-if-editing";
+import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -34,21 +38,33 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 interface SectionProps {
   readonly title: string;
   readonly help: string;
+  /** The longer explanation behind an (i) next to the title, and that (i)'s accessible name. */
+  readonly info?: { readonly label: string; readonly content: ReactNode };
   readonly children: ReactNode;
 }
 
-const ShowIfSettingsSection = ({ title, help, children }: SectionProps) => (
-  <div className="flex flex-col gap-1">
-    <Label>{title}</Label>
-    <p className="text-xs text-slate-500">{help}</p>
-    <div className="mt-1 flex min-w-0">{children}</div>
+/**
+ * A section's heading reads like the other settings on the card (Recode): the popover it opens leaves
+ * its own heading out, and opens under the whole section (`SHOW_IF_ANCHOR_PROPS`).
+ */
+const ShowIfSettingsSection = ({ title, help, info, children }: SectionProps) => (
+  <div className="flex flex-col gap-1" {...SHOW_IF_ANCHOR_PROPS}>
+    <div className="flex items-center gap-1.5">
+      <Label>{title}</Label>
+      {info && <InfoTooltip label={info.label}>{info.content}</InfoTooltip>}
+    </div>
+    <p className="text-sm text-slate-500">{help}</p>
+    <div className="mt-2 flex min-w-0">{children}</div>
   </div>
 );
 
 /** "Add condition", disabled, with why nothing can be added yet. */
 const UnavailableAddCondition = ({ reason, label }: { readonly reason: string; readonly label: string }) => (
   <TooltipRenderer tooltipContent={reason} className="max-w-xs text-xs">
-    <AddConditionCell disabled aria-label={label} className="cursor-not-allowed opacity-60" />
+    {/* A disabled button gets no pointer events: the span keeps the tooltip working. */}
+    <span className="inline-flex cursor-not-allowed">
+      <AddConditionButton disabled aria-label={label} />
+    </span>
   </TooltipRenderer>
 );
 
@@ -92,9 +108,10 @@ const ShowIfField = ({
     return (
       <ReadOnlyCell>
         <EyeIcon aria-hidden="true" />
-        <span className="truncate">
+        <span className="flex min-w-0 items-center gap-1">
           {/* References as chips (ENG-6969 T3), as on the Flow tab. */}
           <FlowTextParts
+            centered
             parts={describeConditionGroupParts(section.conditions, localSurvey, t, {
               locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
             })}
@@ -112,7 +129,8 @@ const ShowIfField = ({
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       summaryOnly
-      newTrigger={<AddConditionCell aria-label={addLabel} />}
+      hideHeading
+      newTrigger={<AddConditionButton aria-label={addLabel} />}
     />
   );
 };
@@ -186,6 +204,12 @@ const OptionsShowIfField = ({
       hiddenCount={section.state === "set" ? section.hiddenCount : 0}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
+      hideHeading
+      newTrigger={
+        <AddConditionButton
+          aria-label={`${t("workspace.surveys.edit.flow.show_options_if")} ${t("workspace.surveys.edit.flow.add_show_if_condition")}`}
+        />
+      }
     />
   );
 };
@@ -224,7 +248,11 @@ export const QuestionShowIfSettings = ({
       {sections.options && (
         <ShowIfSettingsSection
           title={t("workspace.surveys.edit.flow.show_options_if")}
-          help={t("workspace.surveys.edit.flow.options_shown_if_help")}>
+          help={t("workspace.surveys.edit.flow.options_shown_if_help")}
+          info={{
+            label: t("workspace.surveys.edit.flow.options_shown_if_info_label"),
+            content: t("workspace.surveys.edit.flow.options_shown_if_info"),
+          }}>
           <OptionsShowIfField
             localSurvey={localSurvey}
             setLocalSurvey={setLocalSurvey}
@@ -235,5 +263,40 @@ export const QuestionShowIfSettings = ({
         </ShowIfSettingsSection>
       )}
     </div>
+  );
+};
+
+interface ShowIfBadgeProps {
+  readonly localSurvey: TSurvey;
+  readonly target: Exclude<TShowIfTarget, { type: "option" }>;
+}
+
+/**
+ * A block's or a question's show-if on its Questions-tab card, beside "1 question · code" or
+ * "Optional · code" (review of ENG-6949): the Flow tab's eye chip, read-only, so a block or question
+ * that can be hidden says so without opening its Settings tab. Nothing when it has none.
+ */
+export const ShowIfBadge = ({ localSurvey, target }: ShowIfBadgeProps) => {
+  const { t, i18n } = useTranslation();
+  const elementIcons = useElementIcons();
+  const showIf = getCardShowIf(localSurvey, target);
+  if (!showIf) return null;
+  const parts = describeConditionGroupParts(showIf, localSurvey, t, {
+    locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US",
+  });
+  const label =
+    target.type === "block"
+      ? t("workspace.surveys.edit.flow.show_block_if")
+      : t("workspace.surveys.edit.flow.show_question_if");
+  return (
+    <span
+      className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
+      title={`${label} ${toPlainText(parts)}`}>
+      <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+      <span className="flex min-w-0 items-center gap-1">
+        <FlowTextParts parts={parts} elementIcons={elementIcons} centered />
+      </span>
+    </span>
   );
 };

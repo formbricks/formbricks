@@ -1115,7 +1115,16 @@ export const getActionOperatorOptions = (
       {
         label: t("workspace.surveys.edit.concat"),
         value: "concat",
-        symbol: CALCULATE_SYMBOLS.concat,
+      },
+    ];
+  } else if (variableType === undefined) {
+    // No field picked yet (a step just switched to Set value): Assign, which every field type takes,
+    // so the new step reads "Assign" rather than an empty operator.
+    return [
+      {
+        label: t("workspace.surveys.edit.assign"),
+        value: "assign",
+        symbol: CALCULATE_SYMBOLS.assign,
       },
     ];
   }
@@ -1204,37 +1213,15 @@ export const getActionValueOptions = (
 
 const isUsedInLeftOperand = (
   leftOperand: TLeftOperand,
-  type: "element" | "hiddenField" | "variable",
+  type: "element" | "hiddenField" | "variable" | "reserved",
   id: string
-): boolean => {
-  switch (type) {
-    case "element":
-      return leftOperand.type === "element" && leftOperand.value === id;
-    case "hiddenField":
-      return leftOperand.type === "hiddenField" && leftOperand.value === id;
-    case "variable":
-      return leftOperand.type === "variable" && leftOperand.value === id;
-    default:
-      return false;
-  }
-};
+): boolean => leftOperand.type === type && leftOperand.value === id;
 
 const isUsedInRightOperand = (
   rightOperand: TRightOperand,
-  type: "element" | "hiddenField" | "variable",
+  type: "element" | "hiddenField" | "variable" | "reserved",
   id: string
-): boolean => {
-  switch (type) {
-    case "element":
-      return rightOperand.type === "element" && rightOperand.value === id;
-    case "hiddenField":
-      return rightOperand.type === "hiddenField" && rightOperand.value === id;
-    case "variable":
-      return rightOperand.type === "variable" && rightOperand.value === id;
-    default:
-      return false;
-  }
-};
+): boolean => rightOperand.type === type && rightOperand.value === id;
 
 /**
  * The first element whose show-if, or whose block's show-if, matches `isUsedInGroup`, or -1
@@ -1629,7 +1616,11 @@ export const findOptionUse = (
  * nothing. The element finder already searches both sides; this is the same search, for the two
  * operand types the Embedded Data card removes.
  */
-const findFieldUse = (survey: TSurvey, type: "hiddenField" | "variable", id: string): TUse | null => {
+const findFieldUse = (
+  survey: TSurvey,
+  type: "hiddenField" | "variable" | "reserved",
+  id: string
+): TUse | null => {
   const isUsedInCondition = (condition: TSingleCondition | TConditionGroup): boolean => {
     if (isConditionGroup(condition)) {
       return condition.conditions.some(isUsedInCondition);
@@ -1675,6 +1666,13 @@ export const findVariableUse = (survey: TSurvey, variableId: string): TUse | nul
 
 export const findHiddenFieldUse = (survey: TSurvey, hiddenFieldId: string): TUse | null =>
   findFieldUse(survey, "hiddenField", hiddenFieldId);
+
+/**
+ * Where a rule, a rule before the first question or a show-if reads a reserved field (`url`, …), by
+ * its catalog name. The editor preview offers the page address as a test value only when one does.
+ */
+export const findReservedFieldUse = (survey: TSurvey, name: string): TUse | null =>
+  findFieldUse(survey, "reserved", name);
 
 export const findVariableUsedInLogic = (survey: TSurvey, variableId: string): number =>
   indexOfUse(findVariableUse(survey, variableId));

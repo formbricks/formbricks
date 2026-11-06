@@ -69,6 +69,11 @@ export const useElementIcons = (): Record<TSurveyElementTypeEnum, JSX.Element> =
 interface FlowTextPartsProps {
   readonly parts: TFlowTextPart[];
   readonly elementIcons: Record<TSurveyElementTypeEnum, JSX.Element>;
+  /**
+   * Inside a flex row (a show-if chip): words and chips are centred on one line, the words cut off
+   * last. The row's `gap` stands in for the spaces around a chip, which flex drops.
+   */
+  readonly centered?: boolean;
 }
 
 /**
@@ -86,11 +91,24 @@ const getPartKeys = (parts: TFlowTextPart[]): string[] => {
 };
 
 /** A summary's parts: its words as text, its references as chips. */
-export const FlowTextParts = ({ parts, elementIcons }: FlowTextPartsProps) => {
+/** Adjacent words as one piece, so a flex row puts its gap only around chips. */
+const mergeTextParts = (parts: TFlowTextPart[]): TFlowTextPart[] =>
+  parts.reduce<TFlowTextPart[]>((merged, part) => {
+    const last = merged.at(-1);
+    if (part.kind === "text" && last?.kind === "text") {
+      return [...merged.slice(0, -1), { kind: "text", text: last.text + part.text }];
+    }
+    return [...merged, part];
+  }, []);
+
+export const FlowTextParts = ({ parts: rawParts, elementIcons, centered = false }: FlowTextPartsProps) => {
+  const parts = centered ? mergeTextParts(rawParts) : rawParts;
   const keys = getPartKeys(parts);
   return parts.map((part, idx) =>
     part.kind === "text" ? (
-      <span key={keys[idx]}>{part.text}</span>
+      <span key={keys[idx]} className={centered ? "min-w-0 truncate" : undefined}>
+        {centered ? part.text.trim() : part.text}
+      </span>
     ) : (
       <ReferenceChip key={keys[idx]} chip={part.chip} elementIcons={elementIcons} />
     )

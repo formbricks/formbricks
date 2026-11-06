@@ -23,6 +23,7 @@ Read the outline from top to bottom. That is the order a respondent moves throug
   * A rule with several kinds of action takes the colour of its first action.
   * A rule with several actions shows the first one and **+N** for the others, and where it jumps comes last, as a pill: *score + 10 +1 Block 4*. Open the row to see every action.
 * **Everyone else.** A block's last line, **Otherwise go to**, says where respondents go when none of the rules jumped. It is the next block unless you choose another block or an ending.
+* **Jumps that land elsewhere.** A jump, or an **Otherwise go to**, into a block whose show-if reads only questions the jump passes gets a warning under it, such as *Block 3 will always be skipped on this path: its show-if reads “services”, which this jump skips.* Those questions have no answer on that path, so the show-if never matches and respondents go to the block after it. Jump to an earlier block, or change the show-if.
 * **Endings.** The endings are listed last, each with a pink icon. A redirect ending shows the address it sends respondents to.
 
 The Flow tab opens with every block folded down to its row. Click a block's row to open or fold just that block, or use **Expand** to open them all; once all are open, the same button reads **Collapse**. Switching to another tab and back keeps the blocks you opened. The header also counts your blocks and endings, and its (i) explains how to read the outline.
@@ -86,6 +87,8 @@ When spam protection is on, the survey runs its reCAPTCHA check before it record
 ### Trying a screener in the preview
 
 The editor preview has a **Test values** button next to **Restart**. Enter values for the survey's URL parameters and hidden fields, then click **Restart with these values**: the preview starts over as if the link had carried them, so you see exactly where a respondent with those values goes. **Clear** removes them. The values only affect the preview.
+
+When a rule or a show-if reads the page URL, **Test values** also has a `url` field: the preview runs as if the survey were shown on that page, instead of on the editor's own address. It isn't offered when a hidden field or URL parameter of the survey is itself named `url`.
 
 ![The Test values popover, with a field for each of the survey's URL parameters and hidden fields, and Clear and Restart with these values buttons](/images/surveys/general-features/flow-tab/test-values.webp)
 

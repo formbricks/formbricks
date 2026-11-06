@@ -10,7 +10,7 @@ import { TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   buildServerEmbeddedValues,
-  createEmptyFormulaAction,
+  createEmptySetValueAction,
   createGroupFromResource,
   deleteEmptyGroups,
   duplicateCondition,
@@ -227,12 +227,10 @@ describe("surveyLogic", () => {
     const base: TSurveyBlockLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     const calc = getUpdatedActionBody(base, "calculate");
     expect(calc.objective).toBe("calculate");
-    // ENG-6935: switching an action to Set value starts the empty expression with the switch on,
-    // exactly as a new Set value rule from the Add logic menu does (rule-list `createRule`, P39).
-    expect(calc).toEqual(createEmptyFormulaAction("A"));
-    expect(calc).toMatchObject({
-      value: { type: "expression", value: { type: "static", value: "" } },
-    });
+    // Switching an action to Set value starts on Assign with an empty value, exactly as a new Set
+    // value rule from the Add logic menu does (rule-list `createRule`; ENG-6969 review, supersedes P73).
+    expect(calc).toEqual(createEmptySetValueAction("A"));
+    expect(calc).toMatchObject({ operator: "assign", value: { type: "static", value: "" } });
     const req = getUpdatedActionBody(calc, "requireAnswer");
     expect(req.objective).toBe("requireAnswer");
     const jump = getUpdatedActionBody(req, "jumpToBlock");

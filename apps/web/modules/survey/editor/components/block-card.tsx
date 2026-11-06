@@ -39,7 +39,7 @@ import { PictureSelectionForm } from "@/modules/survey/editor/components/picture
 import { QuestionTabs } from "@/modules/survey/editor/components/question-tabs";
 import { RankingElementForm } from "@/modules/survey/editor/components/ranking-element-form";
 import { RatingElementForm } from "@/modules/survey/editor/components/rating-element-form";
-import { QuestionShowIfSettings } from "@/modules/survey/editor/components/show-if-settings";
+import { QuestionShowIfSettings, ShowIfBadge } from "@/modules/survey/editor/components/show-if-settings";
 import { SignatureElementForm } from "@/modules/survey/editor/components/signature-element-form";
 import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
@@ -357,11 +357,14 @@ const BlockCardComponent = ({
                       aria-hidden="true"
                       className="pointer-events-none absolute top-1 right-2 size-3.5 text-slate-400 opacity-0 transition-opacity group-focus-within/name:opacity-0 group-hover/name:opacity-100"
                     />
-                    <p className="text-xs text-slate-500">
-                      {[t("common.count_questions", { count: block.elements.length }), blockCodes]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <p className="shrink-0 text-xs text-slate-500">
+                        {[t("common.count_questions", { count: block.elements.length }), blockCodes]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                      <ShowIfBadge localSurvey={localSurvey} target={{ type: "block", blockIdx }} />
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -448,18 +451,24 @@ const BlockCardComponent = ({
                                         </>
                                       )}
                                     </h3>
-                                    {element.type !== TSurveyElementTypeEnum.CTA && (
-                                      <p className="mt-1 truncate text-xs text-slate-500">
-                                        {[
-                                          element?.required
-                                            ? t("workspace.surveys.edit.required")
-                                            : t("workspace.surveys.edit.optional"),
-                                          "code" in element ? element.code : undefined,
-                                        ]
-                                          .filter(Boolean)
-                                          .join(" · ")}
-                                      </p>
-                                    )}
+                                    <div className="mt-1 flex min-w-0 items-center gap-2">
+                                      {element.type !== TSurveyElementTypeEnum.CTA && (
+                                        <p className="shrink-0 truncate text-xs text-slate-500">
+                                          {[
+                                            element?.required
+                                              ? t("workspace.surveys.edit.required")
+                                              : t("workspace.surveys.edit.optional"),
+                                            "code" in element ? element.code : undefined,
+                                          ]
+                                            .filter(Boolean)
+                                            .join(" · ")}
+                                        </p>
+                                      )}
+                                      <ShowIfBadge
+                                        localSurvey={localSurvey}
+                                        target={{ type: "element", blockIdx, elementIdx: elementIndex }}
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               </div>

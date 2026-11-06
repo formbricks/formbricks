@@ -20,6 +20,7 @@ import {
   findHiddenFieldUsedInLogic,
   findOptionUse,
   findOptionUsedInLogic,
+  findReservedFieldUse,
   findVariableUse,
   findVariableUsedInLogic,
   getActionObjectiveOptions,
@@ -488,6 +489,10 @@ describe("calculate action options", () => {
     expect(getActionOperatorOptions(t, "date").map((option) => option.value)).toEqual(["assign"]);
   });
 
+  test("a Set value step with no field yet offers Assign, which every field type takes", () => {
+    expect(getActionOperatorOptions(t).map((option) => option.value)).toEqual(["assign"]);
+  });
+
   test("the value picker draws the same Embedded Data group, with no auto-captured one", () => {
     // `evaluateLogic` computes these assignments from `responseData` and variables alone, so a
     // reserved value offered here would read as unset every time.
@@ -688,6 +693,13 @@ describe("a rule before the first question counts as a use, so deleting what it 
     });
     expect(findVariableUse(startRulesOnly(), ids.variables.segment)?.kind).toBe("startLogic");
     expect(findVariableUse(withoutStartRules(), ids.variables.segment)?.kind).not.toBe("startLogic");
+  });
+
+  // The editor preview offers the page address as a test value only when something reads `url`.
+  test("a reserved field a start rule reads, by its catalog name", () => {
+    expect(findReservedFieldUse(startRulesOnly(), "url")?.kind).toBe("startLogic");
+    expect(findReservedFieldUse(withoutStartRules(), "url")).toBeNull();
+    expect(findReservedFieldUse(startRulesOnly(), "userAgent")).toBeNull();
   });
 });
 
