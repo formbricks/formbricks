@@ -252,12 +252,20 @@ export const SURVEY_IMPORT_MAX_DRAFT_BYTES = DEFAULT_REQUEST_BODY_LIMIT_BYTES - 
 export const SURVEY_IMPORT_AI_MAX_SOURCE_CHARS = 240_000;
 
 /**
- * A Markdown file's characters, markup included, before it is parsed: four times what one import may
- * send to the AI, so no file that could fit is refused. The parser reads the whole text before any
- * other limit applies, and crafted markup is slow to parse (15 MB of brackets took 11 s of the read
- * thread's 15), so the text is held to this first; past it, the file could not be planned anyway.
+ * A Markdown file's characters, markup included, before it is parsed: twice what one import may send to
+ * the AI, so a questionnaire whose text could fit is not refused for its markup. The parser reads the
+ * whole text and builds its token stream before any other limit applies, and crafted markup is costly:
+ * at this cap the worst inputs measured peaked at about 165 MB (a nested quote and list per line) and
+ * 0.9 s (a run of image openers), inside the reader's documented worst cases (`upload-thread.ts`).
  */
-export const SURVEY_IMPORT_MARKDOWN_MAX_CHARS = 4 * SURVEY_IMPORT_AI_MAX_SOURCE_CHARS;
+export const SURVEY_IMPORT_MARKDOWN_MAX_CHARS = 2 * SURVEY_IMPORT_AI_MAX_SOURCE_CHARS;
+
+/**
+ * The start of a text upload `looksLikeMarkdown` reads to tell Markdown from a CSV: enough for a
+ * questionnaire's first headings, lists or table, and bounded, so classifying a 15 MiB file of short
+ * lines no longer builds arrays of every line (about 500 MB measured).
+ */
+export const SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS = 64 * 1024;
 
 /**
  * The model's output budget per call, reasoning tokens included. With thinking on (`core/ai-plan.ts`),

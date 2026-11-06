@@ -102,7 +102,15 @@ export const jsonErrorPosition = (text: string, error: unknown): TSurveyImportJs
     lineStart = i + 1;
   }
   // Characters, not UTF-16 units: an emoji earlier on the line is one column, as an editor counts it.
-  return { line, column: Array.from(text.slice(lineStart, index)).length + 1 };
+  // Counted in place: the line may be the whole 15 MiB file, too long to copy into an array.
+  let column = 1;
+  for (let i = lineStart; i < index; i += 1) {
+    const isLowSurrogate = (text.charCodeAt(i) & 0xfc00) === 0xdc00;
+    const followsHighSurrogate = i > lineStart && (text.charCodeAt(i - 1) & 0xfc00) === 0xd800;
+    // The second half of a surrogate pair is the same character as the first.
+    if (!(isLowSurrogate && followsHighSurrogate)) column += 1;
+  }
+  return { line, column };
 };
 
 /**

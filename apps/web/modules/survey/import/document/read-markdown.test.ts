@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { SurveyImportInputError } from "../core/errors";
 import {
   SURVEY_IMPORT_MARKDOWN_MAX_CHARS,
+  SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS,
   SURVEY_IMPORT_WORD_MAX_PARAGRAPHS,
   SURVEY_IMPORT_WORD_MAX_TABLE_CELLS,
 } from "../limits";
@@ -48,14 +49,27 @@ describe("looksLikeMarkdown", () => {
     expect(looksLikeMarkdown(`| A | B |\n${row}`)).toBe(isTable);
   });
 
+  test("judges only the start of the text, so a large upload is not split whole", () => {
+    const filler = "Plain line of text\n".repeat(Math.ceil(SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS / 19) + 1);
+    const lists = "# Survey\n\n1. Your name?\n2. Your age?\n";
+
+    expect(looksLikeMarkdown(lists + filler)).toBe(true);
+    // The same Markdown past the start is not seen.
+    expect(looksLikeMarkdown(filler + lists)).toBe(false);
+  });
+
+  test("never judges a line the sample cut short", () => {
+    // Cut at the limit, this line would read as a delimiter row under the header.
+    const line = `|-${" ".repeat(SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS)}x`;
+
+    expect(looksLikeMarkdown(`| A | B |\n${line}\n`)).toBe(false);
+  });
+
   test("decides on a long hostile line in linear time", () => {
     // The old delimiter-row pattern was quadratic in a run of spaces after a dash, its two adjacent
-    // whitespace runs splitting it every way: 40k spaces took 0.6 s, 200k would take about 15 s.
-    const hostile = [
-      `|-${" ".repeat(200_000)}x`,
-      `| --- |${" ".repeat(200_000)}x`,
-      `|${" -".repeat(100_000)}x`,
-    ];
+    // whitespace runs splitting it every way: 40k spaces took 0.6 s. These stay inside the sniffed start.
+    const spaces = " ".repeat(60_000);
+    const hostile = [`|-${spaces}x`, `| --- |${spaces}x`, `|${" -".repeat(30_000)}x`];
     for (const line of hostile) {
       const started = performance.now();
       expect(looksLikeMarkdown(`| A | B |\n${line}`)).toBe(false);
@@ -240,7 +254,7 @@ describe("readMarkdownDocument: the character cap", () => {
       heading + line.repeat(Math.floor((SURVEY_IMPORT_MARKDOWN_MAX_CHARS - heading.length) / line.length));
 
     expect(text.length).toBeLessThanOrEqual(SURVEY_IMPORT_MARKDOWN_MAX_CHARS);
-    expect(readMarkdownDocument(text).lines.length).toBeGreaterThan(4_000);
+    expect(readMarkdownDocument(text).lines.length).toBeGreaterThan(2_000);
   });
 });
 

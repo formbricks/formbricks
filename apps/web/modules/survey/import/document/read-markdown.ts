@@ -3,6 +3,7 @@ import { surveyImportFileUnreadable } from "../core/errors";
 import type { TSurveyImportTextEncoding } from "../core/sniff";
 import {
   SURVEY_IMPORT_MARKDOWN_MAX_CHARS,
+  SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS,
   SURVEY_IMPORT_WORD_MAX_PARAGRAPHS,
   SURVEY_IMPORT_WORD_MAX_TABLES,
   SURVEY_IMPORT_WORD_MAX_TABLE_CELLS,
@@ -74,10 +75,17 @@ const isCsvGrid = (lines: readonly string[]): boolean =>
 /**
  * Whether text the sniffer read as a CSV is a Markdown questionnaire: a Markdown table (a row of pipes
  * over a delimiter row), or headings and list items in text that is no CSV grid — a question list
- * exported from a spreadsheet, `1. Age,Single,18-24` included, stays a CSV.
+ * exported from a spreadsheet, `1. Age,Single,18-24` included, stays a CSV. Judged on the text's first
+ * `SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS`.
  */
 export const looksLikeMarkdown = (text: string): boolean => {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "");
+  // Only the start, in whole lines: enough to tell the two apart, and bounded whatever the upload's size.
+  // A line cut short could read as something it is not, so a cut sample ends at its last line break.
+  const sample =
+    text.length > SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS
+      ? text.slice(0, Math.max(0, text.lastIndexOf("\n", SURVEY_IMPORT_MARKDOWN_SNIFF_CHARS)))
+      : text;
+  const lines = sample.split(/\r?\n/).filter((line) => line.trim() !== "");
   if (lines.length === 0) return false;
 
   for (let index = 1; index < lines.length; index += 1) {
