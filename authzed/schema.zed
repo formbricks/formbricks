@@ -59,6 +59,15 @@ definition organization {
      */
     relation billing: user
 
+    /**
+     * Dashboard viewer (`Membership.role = dashboard_viewer`, ADR-0025). Reads
+     * the dashboards of the workspaces its teams are granted and nothing else:
+     * no organization `read`, no workspace `read`, and so no survey, response,
+     * contact or Feedback Record permission. Only `workspace.dashboard_read`
+     * and the dashboard-bound Feedback Dataset read reach it.
+     */
+    relation dashboard_viewer: user
+
     /** API key with `organizationAccess.accessControl.read` — may read org-level access-control resources. */
     relation api_key_reader: api_key
 
@@ -111,6 +120,13 @@ definition organization {
      * in this organization, and that membership must not be `billing`.
      */
     permission product_member: user = owner + manager + member
+
+    /**
+     * Members a team grant may carry dashboard reads to: every product member
+     * plus the Dashboard viewer. Never `billing`. Intersected into
+     * `team#dashboard_member`, which only `workspace#dashboard_read` reads.
+     */
+    permission dashboard_member: user = product_member + dashboard_viewer
 }
 
 /**
@@ -144,13 +160,25 @@ definition team {
     permission member: user = (admin + contributor) & organization->product_member
 
     /**
+     * The team's members for dashboard reads only: `member` plus the team's
+     * Dashboard viewers. It is never a subject of a workspace grant; the
+     * workspace reaches it with an arrow from `dashboard_read` alone, so a
+     * viewer on a team gains nothing the team's grant gives `member`.
+     */
+    permission dashboard_member: user = (admin + contributor) & organization->dashboard_member
+
+    /**
      * Who can view the team: its members, organization owners/managers, and API
      * keys with either read or write organization access-control permission.
      */
     permission read: user | api_key = member + organization->read_access
 
-    /** Who can manage the team (rename, membership): team admins plus organization access-control writers. */
-    permission manage: user | api_key = admin + organization->manage_access
+    /**
+     * Who can manage the team (rename, membership): team admins who are product members of the
+     * organization, plus organization access-control writers. The intersection keeps an admin row
+     * that a Dashboard viewer or billing member should never hold from granting team management (S8).
+     */
+    permission manage: user | api_key = (admin & organization->product_member) + organization->manage_access
 
     /**
      * Who can delete the team. Unlike other team mutations, deletion is limited
@@ -203,6 +231,17 @@ definition workspace {
     permission read: user | api_key = reader + reader_team + write
 
     /**
+     * Read the workspace's dashboards, a saved chart's data on one, and its
+     * dashboard filters' value lists (ADR-0025): everyone with `read`, plus the
+     * Dashboard viewers of every team granted the workspace at any level (a
+     * Manage grant does not widen the role). The arrows walk to the granted
+     * team and ask `dashboard_member` there; ignoring the `#member` subject
+     * relation of the grant is the point, so the warning is silenced.
+     */
+    // spicedb-ignore-warning: arrow-walks-subject-relation
+    permission dashboard_read: user | api_key = read + reader_team->dashboard_member + writer_team->dashboard_member + manager_team->dashboard_member
+
+    /**
      * Manage who has access to the workspace (workspace team assignments).
      * Requires manage today — mirrors the workspace access-management gate.
      */
@@ -243,6 +282,14 @@ definition feedback_directory_assignment {
     permission read: user | api_key = directory->administrator + workspace->read
     permission write: user | api_key = directory->administrator + workspace->write
     permission manage: user | api_key = directory->administrator + workspace->manage
+
+    /**
+     * Read the dataset's data through a saved chart on a dashboard of this
+     * workspace, or a dashboard filter's value list there (ADR-0025): `read`
+     * plus the workspace's Dashboard viewers. Free-form chart queries and
+     * field-value lookups keep `read`, which viewers never hold.
+     */
+    permission dashboard_read: user | api_key = directory->administrator + workspace->dashboard_read
 }
 
 /**
@@ -335,14 +382,15 @@ definition survey {
 /**
  * An analysis dashboard, identified by the Prisma `Dashboard.id`. Dashboards
  * carry no access control of their own today: access derives from the owning
- * workspace (`checkWorkspaceAccess`).
+ * workspace, and the app decides `dashboard.read` on the workspace node with
+ * `workspace#dashboard_read`.
  */
 definition dashboard {
     /** The owning workspace (`Dashboard.workspaceId`). */
     relation workspace: workspace
 
-    /** View the dashboard and its widgets. */
-    permission read: user | api_key = workspace->read
+    /** View the dashboard and its widgets, Dashboard viewers included (ADR-0025). */
+    permission read: user | api_key = workspace->dashboard_read
 
     /**
      * Create, update, duplicate, or delete the dashboard and mutate its widgets.

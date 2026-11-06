@@ -16,6 +16,7 @@ import {
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
   getIsCreativesEnabled,
+  getIsDashboardViewerRoleEnabled,
   getIsDashboardsEnabled,
   getIsDataRetentionEnabled,
   getIsFeedbackDirectoriesEnabled,
@@ -374,6 +375,24 @@ describe("License Utils", () => {
       expect(workflows).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
     });
+
+    test.each([
+      [true, true, true],
+      [true, false, false],
+      [false, true, false],
+      [false, false, false],
+    ])(
+      "offers the Dashboard viewer role only with Access Control (%s) and Dashboards (%s) both entitled",
+      async (accessControl, dashboards, expected) => {
+        vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+        vi.mocked(getEnterpriseLicense).mockResolvedValue({
+          ...defaultLicense,
+          features: { ...defaultFeatures, accessControl, dashboards },
+        });
+
+        await expect(getIsDashboardViewerRoleEnabled("org_1")).resolves.toBe(expected);
+      }
+    );
 
     test("returns false for self-hosted FRD / dashboards / workflows when not enabled", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;

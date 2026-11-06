@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -13,6 +14,7 @@ import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-car
 import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
@@ -88,6 +90,7 @@ vi.mock("@/modules/survey/lib/permission", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    error: vi.fn(),
     withContext: vi.fn(() => ({
       error: vi.fn(),
       warn: vi.fn(),
@@ -891,6 +894,37 @@ describe("createV3Survey", () => {
         ],
         ...overrides,
       });
+
+    test("re-reads an app survey whose work after the commit failed, so its 201 shows what was stored", async () => {
+      const cause = new Error("response alert subscription failed");
+      vi.mocked(createSurvey).mockRejectedValue(new SurveyWriteAfterCommitError(createdAppSurvey, cause));
+
+      const error = await createV3Survey(buildAppBody(), null, "req_app_1").catch(
+        (caught: unknown) => caught
+      );
+
+      expect(error).toBeInstanceOf(SurveyWriteAfterCommitError);
+      expect((error as SurveyWriteAfterCommitError).result).toBe(appSurveyWithSegment);
+      expect((error as SurveyWriteAfterCommitError).cause).toBe(cause);
+    });
+
+    test("keeps the committed survey when the re-read after a failed after-commit fails too", async () => {
+      vi.mocked(createSurvey).mockRejectedValue(
+        new SurveyWriteAfterCommitError(createdAppSurvey, new Error())
+      );
+      vi.mocked(getSurveyWithCustomCss).mockRejectedValue(new Error("connection reset"));
+
+      const error = await createV3Survey(buildAppBody(), null, "req_app_1").catch(
+        (caught: unknown) => caught
+      );
+
+      expect((error as SurveyWriteAfterCommitError).result).toBe(createdAppSurvey);
+      // Kept, but not silently: the failed re-read is logged.
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error", surveyId: createdAppSurvey.id }),
+        expect.any(String)
+      );
+    });
 
     test("forwards distribution scalars and resolved triggers to createSurvey", async () => {
       vi.mocked(getActionClasses).mockResolvedValue([actionClass]);

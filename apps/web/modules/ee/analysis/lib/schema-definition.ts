@@ -820,6 +820,18 @@ export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS
 export const isSelectableValueDimension = (id: string): id is TSelectableValueDimensionId =>
   (SELECTABLE_VALUE_DIMENSION_IDS as readonly string[]).includes(id);
 
+/**
+ * Dimensions whose stored values are ids that a survey gives a name to: an option id, a survey id as the
+ * source id, an ending id. Where a list shows them, it shows each id's label (`resolveDatasetValueLabels`).
+ */
+const LABELLED_VALUE_DIMENSION_IDS: ReadonlySet<string> = new Set([
+  VALUE_ID_DIMENSION_ID,
+  "FeedbackRecords.sourceId",
+  "FeedbackRecords.metadataEndingId",
+]);
+
+export const isLabelledValueDimension = (id: string): boolean => LABELLED_VALUE_DIMENSION_IDS.has(id);
+
 export type FilterOperator =
   | "equals"
   | "notEquals"
@@ -1021,7 +1033,14 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
  * Format a Cube.js column key for display (e.g. FeedbackRecords.collectedAt.day → "Day").
  * When `t` is provided, returns translated labels.
  */
-export function formatCubeColumnHeader(key: string, t?: TFunction): string {
+export function formatCubeColumnHeader(
+  key: string,
+  t?: TFunction,
+  memberLabels?: Record<string, string>
+): string {
+  // An embedded-data member reads as its key's own name (ENG-6893), which only the server knows.
+  const memberLabel = memberLabels?.[key];
+  if (memberLabel !== undefined) return memberLabel;
   const granularity = TIME_GRANULARITIES.find((g) => key.endsWith(`.${g}`));
   if (granularity) {
     return t

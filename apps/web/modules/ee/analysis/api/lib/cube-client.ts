@@ -6,7 +6,10 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getOrganization } from "@/lib/organization/service";
+import { getAnswerQuestions } from "@/modules/ee/analysis/charts/lib/answer-questions";
 import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
+import { type TAnswerKind, collectAnswerQuestionIds } from "@/modules/ee/analysis/lib/answer-filter";
+import { getEmbeddedKeysForQuery } from "@/modules/ee/analysis/lib/dataset-embedded-keys";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import {
@@ -60,6 +63,31 @@ type TScopedCubeQueryInput = {
   organizationId: string;
   actor: TCubeQueryActor;
   source: TCubeQuerySource;
+  /**
+   * The embedded-data keys for the token. Omitted, `getEmbeddedKeysForQuery` picks them: the dataset's
+   * top keys, plus the fixed bucket of any rarer key the query names (a query naming rarer keys of two
+   * buckets is refused with its `RareEmbeddedKeysConflictError`, passed through as it is). Cube compiles one model per key
+   * set, so the set is kept stable per dataset rather than built per query. Key discovery passes
+   * `[]` to run on the plain model.
+   */
+  embeddedKeys?: readonly string[];
+};
+
+/**
+ * The kind of each question the query's answer rules name, from the dataset's surveys. Cube
+ * refuses a rule whose question has no kind here; the validator has already refused unknown questions.
+ */
+const resolveAnswerKinds = async (
+  input: TScopedCubeQueryInput
+): Promise<Record<string, TAnswerKind> | undefined> => {
+  const questionIds = collectAnswerQuestionIds(input.query.filters);
+  if (questionIds.length === 0) return undefined;
+
+  const wanted = new Set(questionIds);
+  const questions = await getAnswerQuestions(input.workspaceId, input.feedbackDirectoryId);
+  return Object.fromEntries(
+    questions.filter((question) => wanted.has(question.id)).map((question) => [question.id, question.kind])
+  );
 };
 
 const queueCubeQueryAuditEvent = ({
@@ -203,19 +231,34 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     throw error;
   }
 
-  const tenantScope = {
-    feedbackDirectoryId: input.feedbackDirectoryId,
-    workspaceId: input.workspaceId,
-    organizationId: input.organizationId,
-    actor: input.actor,
-    source: input.source,
-  };
   let apiUrl: string;
   let requestId: string;
   let token: string;
 
   try {
-    ({ apiUrl, requestId, token } = getCubeApiConfig(tenantScope));
+    const [embeddedKeys, answerKinds] = await Promise.all([
+      // The dataset's top keys, plus the bucket of any rarer key the query names (a saved chart's).
+      input.embeddedKeys ??
+        getEmbeddedKeysForQuery(
+          {
+            datasetId: input.feedbackDirectoryId,
+            workspaceId: input.workspaceId,
+            organizationId: input.organizationId,
+            actor: input.actor,
+          },
+          input.query
+        ),
+      resolveAnswerKinds(input),
+    ]);
+    ({ apiUrl, requestId, token } = getCubeApiConfig({
+      feedbackDirectoryId: input.feedbackDirectoryId,
+      workspaceId: input.workspaceId,
+      organizationId: input.organizationId,
+      actor: input.actor,
+      source: input.source,
+      embeddedKeys,
+      answerKinds,
+    }));
   } catch (error) {
     queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId: randomUUID(), status: "failure" });
     logger.error(error, "Cube query configuration failed");

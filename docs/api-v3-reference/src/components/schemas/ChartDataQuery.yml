@@ -1,0 +1,5 @@
+type: object
+description: >-
+  The query as it ran: after the requested date range replaced the saved one, and after a
+  `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys
+  follow this query.

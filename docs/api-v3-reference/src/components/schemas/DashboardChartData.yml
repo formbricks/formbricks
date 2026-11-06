@@ -1,0 +1,47 @@
+type: object
+description: >-
+  A chart's rows read through its dashboard, after the dashboard date range, the dashboard's locked
+  filters and the caller's own filters narrowed its saved query. `unfilterableFilters` lists those
+  filters the chart cannot be narrowed by: its Feedback Dataset does not have their field, or they need
+  a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on
+  text answers only — on a chart whose saved query reads no text answer (its saved filters pin
+  `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or
+  every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes
+  (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not
+  empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than
+  more than was picked.
+required:
+  - rows
+  - optionLabels
+  - fieldLabels
+  - memberLabels
+  - query
+  - unfilterableFilters
+properties:
+  rows:
+    $ref: ./ChartDataRows.yml
+  optionLabels:
+    $ref: ./ChartDataOptionLabels.yml
+  fieldLabels:
+    $ref: ./ChartDataFieldLabels.yml
+  memberLabels:
+    $ref: ./ChartDataMemberLabels.yml
+  query:
+    $ref: ./ChartDataQuery.yml
+  unfilterableFilters:
+    type: array
+    items:
+      type: object
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: string
+          description: >-
+            The filter's id within the read: a request's own `filter[<id>]`, or `locked.<n>` for the
+            dashboard's `n`th locked filter.
+        label:
+          type: string
+      additionalProperties: false
+additionalProperties: false

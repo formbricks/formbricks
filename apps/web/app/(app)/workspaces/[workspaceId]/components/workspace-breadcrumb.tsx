@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getWorkspacesForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import {
   SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
   SwitcherDropdownBody,
 } from "@/modules/settings/components/switcher-dropdown-body";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { getWorkspaceHomePath } from "@/modules/settings/lib/organization-switch";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
@@ -37,6 +39,7 @@ interface WorkspaceBreadcrumbProps {
   readonly isAccessControlAllowed: boolean;
   readonly isEnvironmentBreadcrumbVisible: boolean;
   readonly isMembershipPending: boolean;
+  readonly membershipRole?: TOrganizationRole;
 }
 
 export const WorkspaceBreadcrumb = ({
@@ -51,6 +54,7 @@ export const WorkspaceBreadcrumb = ({
   isAccessControlAllowed,
   isEnvironmentBreadcrumbVisible,
   isMembershipPending,
+  membershipRole,
 }: WorkspaceBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
@@ -91,10 +95,7 @@ export const WorkspaceBreadcrumb = ({
   }
 
   const handleWorkspaceChange = (workspaceId: string) => {
-    const targetPath =
-      workspaceId === currentWorkspaceId
-        ? `/workspaces/${currentWorkspaceId}/surveys`
-        : `/workspaces/${workspaceId}/`;
+    const targetPath = getWorkspaceHomePath(membershipRole, workspaceId);
     startTransition(() => {
       setIsWorkspaceDropdownOpen(false);
       router.push(targetPath);
