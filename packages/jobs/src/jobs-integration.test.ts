@@ -1,9 +1,11 @@
 import { type Queue, QueueEvents } from "bullmq";
 import IORedis from "ioredis";
+import { type Server, type Socket, connect as connectTcp, createServer } from "node:net";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import {
   AUTHZED_PROJECTION_QUEUE_NAME,
+  AUTHZED_RECONCILIATION_QUEUE_NAME,
   JOBS_DEFAULT_JOB_OPTIONS,
   JOBS_PREFIX,
   JOBS_QUEUE_NAME,
@@ -30,6 +32,58 @@ const getPendingJobIdsForScheduler = async (queue: Queue, schedulerId: string): 
   return pendingJobs
     .map((job) => job.id)
     .filter((jobId): jobId is string => jobId !== undefined && jobId.startsWith(`repeat:${schedulerId}:`));
+};
+
+/**
+ * A TCP proxy in front of Redis that can be taken down and brought back, standing in for the Redis or
+ * DNS outage of formbricks#9697. While down it drops every open connection and refuses new ones, so
+ * the runtime sees exactly what a vanished Redis looks like and goes through its reconnect path.
+ */
+const startRedisOutageProxy = async (
+  target: URL
+): Promise<{ close: () => Promise<void>; restore: () => void; takeDown: () => void; url: string }> => {
+  const sockets = new Set<Socket>();
+  let up = true;
+  const server: Server = createServer((client) => {
+    if (!up) {
+      client.destroy();
+      return;
+    }
+    const upstream = connectTcp(Number(target.port || 6379), target.hostname);
+    for (const socket of [client, upstream]) {
+      sockets.add(socket);
+      socket.on("error", () => undefined);
+      socket.on("close", () => {
+        sockets.delete(socket);
+        client.destroy();
+        upstream.destroy();
+      });
+    }
+    client.pipe(upstream);
+    upstream.pipe(client);
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("Redis outage proxy did not bind a port");
+
+  const proxied = new URL(target.toString());
+  proxied.hostname = "127.0.0.1";
+  proxied.port = String(address.port);
+
+  return {
+    close: async () => {
+      for (const socket of sockets) socket.destroy();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    },
+    restore: () => {
+      up = true;
+    },
+    takeDown: () => {
+      up = false;
+      for (const socket of sockets) socket.destroy();
+    },
+    url: proxied.toString(),
+  };
 };
 
 let redisUrl: string | undefined;
@@ -264,6 +318,130 @@ describe("BullMQ integration tests", () => {
       await isolatedRuntime.close();
     }
   }, 15000);
+
+  /**
+   * ENG-3764: the six-hourly AuthZed audit walks every organization inside one job. On the default queue
+   * it held the only slot for the whole sweep, so response pipelines and webhook deliveries waited behind
+   * it. Held open by a promise, it must leave both the default queue and delivery free to run.
+   */
+  test("runs default-queue jobs and AuthZed delivery while an AuthZed audit holds its own queue", async () => {
+    if (!isRedisAvailable || !redisUrl) {
+      logger.info("Skipping BullMQ integration test: Redis not available");
+      return;
+    }
+
+    let markAuditStarted: () => void = () => undefined;
+    let releaseAudit: () => void = () => undefined;
+    const auditStarted = new Promise<void>((resolve) => {
+      markAuditStarted = resolve;
+    });
+    const auditReleased = new Promise<void>((resolve) => {
+      releaseAudit = resolve;
+    });
+    const processed: string[] = [];
+
+    const isolatedRuntime = await startJobsRuntime({
+      redisUrl,
+      prefix: `{formbricks:jobs-it-${Date.now().toString()}}`,
+      concurrency: 1,
+      workerCount: 1,
+      jobHandlerOverrides: {
+        [JOB_NAMES.authzedReconciliationAudit]: async () => {
+          markAuditStarted();
+          await auditReleased;
+        },
+        [JOB_NAMES.testLog]: (_data, context) => {
+          processed.push(context.queueName);
+          return Promise.resolve();
+        },
+        [JOB_NAMES.authzedProjectionDelivery]: (_data, context) => {
+          processed.push(context.queueName);
+          return Promise.resolve();
+        },
+      },
+    });
+    const { queue: defaultQueue, queues } = isolatedRuntime;
+
+    try {
+      await queues[AUTHZED_RECONCILIATION_QUEUE_NAME].add(JOB_NAMES.authzedReconciliationAudit, {
+        scope: "global",
+      });
+      await auditStarted;
+
+      await defaultQueue.add(JOB_NAMES.testLog, { message: "response pipeline stand-in" });
+      await queues[AUTHZED_PROJECTION_QUEUE_NAME].add(JOB_NAMES.authzedProjectionDelivery, {
+        scope: "global",
+      });
+
+      await vi.waitFor(
+        () => {
+          expect([...processed].sort()).toEqual([AUTHZED_PROJECTION_QUEUE_NAME, JOBS_QUEUE_NAME].sort());
+        },
+        { interval: 50, timeout: 5_000 }
+      );
+      // The audit provably still held its slot while both ran.
+      expect(await queues[AUTHZED_RECONCILIATION_QUEUE_NAME].getActiveCount()).toBe(1);
+    } finally {
+      releaseAudit();
+      await Promise.all(Object.values(queues).map((queue) => queue.obliterate({ force: true })));
+      await isolatedRuntime.close();
+    }
+  }, 15000);
+
+  /**
+   * formbricks#9697: after a brief Redis DNS outage the delivery job never ran again, and pending
+   * revocations held every authorization check fail-closed for six hours. The parked-worker race
+   * behind it (bullmq#4479, fixed in 5.81.5) is too rare to provoke on demand, so this guards the
+   * contract rather than the race: a recurring AuthZed delivery comes back by itself once Redis does.
+   * The PostgreSQL safety net in apps/web covers the case where it still does not.
+   */
+  test("resumes recurring AuthZed delivery on its own after a Redis outage", async () => {
+    if (!isRedisAvailable || !redisUrl) {
+      logger.info("Skipping BullMQ integration test: Redis not available");
+      return;
+    }
+
+    const proxy = await startRedisOutageProxy(new URL(redisUrl));
+    // The outage is the point of the test; its connection errors are expected, not output.
+    const errorLog = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    let deliveries = 0;
+    const isolatedRuntime = await startJobsRuntime({
+      redisUrl: proxy.url,
+      prefix: `{formbricks:jobs-it-outage-${Date.now().toString()}}`,
+      jobHandlerOverrides: {
+        [JOB_NAMES.authzedProjectionDelivery]: () => {
+          deliveries++;
+          return Promise.resolve();
+        },
+      },
+    });
+    const deliveryQueue = isolatedRuntime.queues[AUTHZED_PROJECTION_QUEUE_NAME];
+
+    try {
+      await deliveryQueue.upsertJobScheduler(
+        "authzed-delivery-outage",
+        { every: 500 },
+        { data: { scope: "global" }, name: JOB_NAMES.authzedProjectionDelivery }
+      );
+      await vi.waitFor(() => expect(deliveries).toBeGreaterThan(0), { interval: 50, timeout: 5_000 });
+
+      proxy.takeDown();
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+      const deliveriesBeforeRecovery = deliveries;
+      proxy.restore();
+
+      await vi.waitFor(() => expect(deliveries).toBeGreaterThanOrEqual(deliveriesBeforeRecovery + 3), {
+        interval: 100,
+        timeout: 15_000,
+      });
+    } finally {
+      proxy.restore();
+      await deliveryQueue.obliterate({ force: true });
+      await isolatedRuntime.close();
+      await proxy.close();
+      errorLog.mockRestore();
+    }
+  }, 30_000);
 
   test("keeps producing work when a scheduler's repeat options change", async () => {
     if (!isRedisAvailable || !runtime) {

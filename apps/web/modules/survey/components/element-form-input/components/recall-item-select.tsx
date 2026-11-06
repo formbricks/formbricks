@@ -21,7 +21,7 @@ import {
   listMidSurveyReservedEntries,
   listReadableFields,
 } from "@formbricks/types/embedded-data-resolver";
-import { TSurveyElement, TSurveyElementId, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElementId } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getTextContentWithRecallTruncated } from "@/lib/utils/recall";
@@ -30,6 +30,7 @@ import {
   getReservedFieldIcon,
   getReservedFieldLabel,
 } from "@/modules/embedded-data/lib/field-display";
+import { isRecallExcludedElementType } from "@/modules/survey/components/element-form-input/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   DropdownMenu,
@@ -89,17 +90,6 @@ export const RecallItemSelect = ({
 }: Readonly<RecallItemSelectProps>) => {
   const [searchValue, setSearchValue] = useState("");
   const { t } = useTranslation();
-  const isNotAllowedElementType = (element: TSurveyElement): boolean => {
-    return (
-      element.type === TSurveyElementTypeEnum.FileUpload ||
-      element.type === TSurveyElementTypeEnum.CTA ||
-      element.type === TSurveyElementTypeEnum.Consent ||
-      element.type === TSurveyElementTypeEnum.PictureSelection ||
-      element.type === TSurveyElementTypeEnum.Cal ||
-      element.type === TSurveyElementTypeEnum.Matrix
-    );
-  };
-
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
   const recallItemIds = useMemo(() => {
@@ -199,7 +189,7 @@ export const RecallItemSelect = ({
 
     return elements
       .filter((element, index) => {
-        const notAllowed = isNotAllowedElementType(element);
+        const notAllowed = isRecallExcludedElementType(element);
         return !recallItemIds.includes(element.id) && !notAllowed && element.id !== elementId && idx > index;
       })
       .map((element) => ({

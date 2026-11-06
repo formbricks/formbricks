@@ -1,0 +1,9 @@
+type: object
+description: >-
+  Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own
+  name as collected, so a column or legend can read `Plan` rather than the field name. Empty when
+  the query names no embedded-data field.
+additionalProperties:
+  type: string
+example:
+  FeedbackRecords.ed_plan_64879f7d: Plan

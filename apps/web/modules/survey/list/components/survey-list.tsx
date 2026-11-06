@@ -176,7 +176,6 @@ const NewSurveyMenu = ({
       <ImportSurveyDialog
         workspaceId={workspace.id}
         isAIAvailable={isAIAvailable}
-        aiUnavailableReason={aiUnavailableReason}
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
       />

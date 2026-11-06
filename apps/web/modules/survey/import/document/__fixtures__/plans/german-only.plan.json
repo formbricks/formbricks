@@ -1,0 +1,605 @@
+{
+  "plan": {
+    "defaultLanguage": "de-DE",
+    "languages": ["de-DE"],
+    "questions": [
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P4",
+            "language": "de-DE",
+            "text": "Was hielten Sie von der Veranstaltung insgesamt?"
+          }
+        ],
+        "idCell": null,
+        "inputType": "text",
+        "kind": "openText",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P4",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P7",
+            "language": "de-DE",
+            "text": "Welche Ticketart hatten Sie?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P9",
+                "language": "de-DE",
+                "text": "Standard"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P10",
+                "language": "de-DE",
+                "text": "VIP"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P11",
+                "language": "de-DE",
+                "text": "Presse"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P7",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": true,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P13",
+            "language": "de-DE",
+            "text": "Welche Farbe bevorzugen Sie?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceSingle",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P15",
+                "language": "de-DE",
+                "text": "Rot"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P16",
+                "language": "de-DE",
+                "text": "Grün"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P17",
+                "language": "de-DE",
+                "text": "Blau"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P18",
+                "language": "de-DE",
+                "text": "Andere"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P13",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P20",
+            "language": "de-DE",
+            "text": "Wie möchten Sie kontaktiert werden? (Mehrfachauswahl)"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "multipleChoiceMulti",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P22",
+                "language": "de-DE",
+                "text": "E-Mail"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P23",
+                "language": "de-DE",
+                "text": "SMS"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P24",
+                "language": "de-DE",
+                "text": "Telefon"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P25",
+                "language": "de-DE",
+                "text": "Post"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P20",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P27",
+            "language": "de-DE",
+            "text": "Bewerten Sie Ihr Gesamterlebnis."
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "rating",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P29",
+            "language": "de-DE",
+            "text": "Schlecht"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P27",
+        "required": false,
+        "rules": [],
+        "scale": "star",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P29",
+            "language": "de-DE",
+            "text": "Ausgezeichnet"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P31",
+            "language": "de-DE",
+            "text": "Wie wahrscheinlich empfehlen Sie uns weiter?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "nps",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P31",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P35",
+            "language": "de-DE",
+            "text": "Wie zufrieden sind Sie insgesamt?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "csat",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P37",
+            "language": "de-DE",
+            "text": "Sehr unzufrieden"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P35",
+        "required": false,
+        "rules": [],
+        "scale": "smiley",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P37",
+            "language": "de-DE",
+            "text": "Sehr zufrieden"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P39",
+            "language": "de-DE",
+            "text": "Wie einfach war es, Ihre Aufgabe zu erledigen?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ces",
+        "logicNotes": [],
+        "lowerLabel": [
+          {
+            "cell": "P41",
+            "language": "de-DE",
+            "text": "Sehr schwierig"
+          }
+        ],
+        "options": [],
+        "range": "5",
+        "ref": "P39",
+        "required": false,
+        "rules": [],
+        "scale": "number",
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": [
+          {
+            "cell": "P41",
+            "language": "de-DE",
+            "text": "Sehr einfach"
+          }
+        ]
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P43",
+            "language": "de-DE",
+            "text": "Ordnen Sie diese von wichtig zu unwichtig."
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "ranking",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P45",
+                "language": "de-DE",
+                "text": "Preis"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P46",
+                "language": "de-DE",
+                "text": "Qualität"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P47",
+                "language": "de-DE",
+                "text": "Geschwindigkeit"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P48",
+                "language": "de-DE",
+                "text": "Support"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P43",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P52",
+                "language": "de-DE",
+                "text": "Schlecht"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P53",
+                "language": "de-DE",
+                "text": "OK"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P54",
+                "language": "de-DE",
+                "text": "Gut"
+              }
+            ]
+          }
+        ],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P50",
+            "language": "de-DE",
+            "text": "Bewerten Sie jeden Aspekt (Personal, Einrichtungen, Preis-Leistung)."
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "matrix",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P50",
+                "language": "de-DE",
+                "text": "Personal"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P50",
+                "language": "de-DE",
+                "text": "Einrichtungen"
+              }
+            ]
+          },
+          {
+            "code": null,
+            "isOther": false,
+            "texts": [
+              {
+                "cell": "P50",
+                "language": "de-DE",
+                "text": "Preis-Leistung"
+              }
+            ]
+          }
+        ],
+        "range": null,
+        "ref": "P50",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": "M-d-y",
+        "headline": [
+          {
+            "cell": "P56",
+            "language": "de-DE",
+            "text": "Wann haben Sie uns besucht?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "date",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P56",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [],
+        "upperLabel": []
+      },
+      {
+        "columns": [],
+        "dropdown": false,
+        "format": null,
+        "headline": [
+          {
+            "cell": "P60",
+            "language": "de-DE",
+            "text": "Stimmen Sie den Allgemeinen Geschäftsbedingungen zu?"
+          }
+        ],
+        "idCell": null,
+        "inputType": null,
+        "kind": "consent",
+        "logicNotes": [],
+        "lowerLabel": [],
+        "options": [],
+        "range": null,
+        "ref": "P60",
+        "required": false,
+        "rules": [],
+        "scale": null,
+        "sectionCell": null,
+        "subheader": [
+          {
+            "cell": "P62",
+            "language": "de-DE",
+            "text": "Ich stimme zu"
+          }
+        ],
+        "upperLabel": []
+      }
+    ],
+    "skipped": [],
+    "titleCell": "P1"
+  },
+  "recording": {
+    "note": "What a model following the prompt returns for every line of the file.",
+    "source": "hand-authored"
+  }
+}

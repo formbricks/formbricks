@@ -5,7 +5,6 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { type TIngestFlag, mergeIngestFlags } from "@formbricks/types/embedded-data-ingest";
-import { type TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponse,
@@ -22,9 +21,10 @@ import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
+import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import {
   collectResponseFileUrls,
-  getSurveyFileUploadElementIds,
+  getSurveyUploadElementIds,
   resolveStorageUrlsInObject,
 } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
@@ -35,15 +35,12 @@ import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
+import { getSurveyFilteringValues } from "./filtering-values";
 import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "./pagination";
+import { standardColumnGroups, standardHeaders } from "./standard-columns";
 import {
   calculateTtcTotal,
   extractSurveyDetails,
-  getResponseContactAttributes,
-  getResponseHiddenFields,
-  getResponseMeta,
-  getResponseReservedFilterValues,
-  getResponseVariableFilterValues,
   getResponsesFileName,
   getResponsesJson,
   normalizeResponseLanguage,
@@ -66,6 +63,7 @@ export const responseSelection = {
   contactAttributes: true,
   singleUseId: true,
   language: true,
+  outcome: true,
   displayId: true,
   contact: {
     select: {
@@ -102,7 +100,7 @@ export const getResponseContact = (
   };
 };
 
-const mapResponsePrismaToResponse = (
+export const mapResponsePrismaToResponse = (
   responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
 ): TResponse => ({
   ...responsePrisma,
@@ -300,24 +298,6 @@ export const getResponseSnapshotForPipeline = async (responseId: string): Promis
   }
 };
 
-// The full TEmbeddedValueResponse shape, so reserved values run through the shared projection
-// (redactQuery, type coercion) instead of raw meta reads (ENG-1848). Kept as a named selection so
-// the row type stays checked against TEmbeddedValueResponse — a field added there without being
-// selected here must fail the build, not read undefined at runtime.
-const filteringValuesSelection = {
-  id: true,
-  surveyId: true,
-  createdAt: true,
-  updatedAt: true,
-  finished: true,
-  language: true,
-  data: true,
-  variables: true,
-  ttc: true,
-  meta: true,
-  contactAttributes: true,
-} satisfies Prisma.ResponseSelect;
-
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
 
@@ -327,21 +307,9 @@ export const getResponseFilteringValues = reactCache(async (surveyId: string) =>
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const responses = await prisma.response.findMany({
-      where: {
-        surveyId,
-      },
-      select: filteringValuesSelection,
-    });
-
-    const embeddedValueResponses: TEmbeddedValueResponse[] = responses;
-    const contactAttributes = getResponseContactAttributes(responses);
-    const meta = getResponseMeta(responses);
-    const hiddenFields = getResponseHiddenFields(survey, responses);
-    const reservedValues = getResponseReservedFilterValues(survey, embeddedValueResponses);
-    const variableValues = getResponseVariableFilterValues(survey, embeddedValueResponses);
-
-    return { contactAttributes, meta, hiddenFields, reservedValues, variableValues };
+    // Distinct-value queries scoped to the survey just loaded, not a read of every response;
+    // no cache, see `getSurveyFilteringValues` for the freshness and cost trade-off (ENG-3755).
+    return await getSurveyFilteringValues(survey);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -430,7 +398,9 @@ export const getResponses = reactCache(
 export const getResponseDownloadFile = async (
   surveyId: string,
   format: "csv" | "xlsx",
-  filterCriteria?: TResponseFilterCriteria
+  filterCriteria?: TResponseFilterCriteria,
+  /** Include columns groups switched off in the Export modal. None: today's file, every column. */
+  excludedColumns: readonly string[] = []
 ): Promise<{ fileContents: string; fileName: string }> => {
   validateInputs([surveyId, ZId], [format, ZString], [filterCriteria, ZResponseFilterCriteria.optional()]);
   try {
@@ -479,26 +449,15 @@ export const getResponseDownloadFile = async (
     }
     const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
-    const headers = [
-      "No.",
-      "Response ID",
-      "Timestamp",
-      "Finished",
-      ...(isQuotasAllowed ? ["Quotas"] : []),
-      "Survey ID",
-      "Formbricks ID (internal)",
-      "User ID",
-      "Tags",
-      ...metaDataFields,
-      ...elements.flat(),
-      ...variables,
-      ...hiddenFields,
-      ...userAttributes.map((attribute) => `person.${attribute}`),
-    ];
+    const headers = standardHeaders(
+      standardColumnGroups({
+        survey,
+        details: { metaDataFields, elements, hiddenFields, variables, userAttributes },
+        isQuotasAllowed,
+      }),
+      excludedColumns
+    );
 
-    if (survey.isVerifyEmailEnabled) {
-      headers.push("Verified Email");
-    }
     const resolvedResponses = responses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }));
     const jsonData = getResponsesJson(
       survey,
@@ -654,6 +613,17 @@ export const updateResponse = async (
       select: responseSelection,
     });
 
+    // After the write, on the same client: in the callers' transaction a failed update queues nothing,
+    // and a failed queueing rolls the update back, as for a delete. `currentResponse` is the row this
+    // update read, so a signature it replaces is compared against what was really stored.
+    if (responseInput.data) {
+      await enqueueReplacedSignatureFileCleanup(
+        prismaClient,
+        { surveyId: currentResponse.surveyId, previousData: currentResponse.data, nextData: data },
+        { bestEffort: !tx }
+      );
+    }
+
     const response: TResponse = {
       ...responsePrisma,
       contact: getResponseContact(responsePrisma),
@@ -678,7 +648,7 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey), survey.id);
+  const fileUrls = collectResponseFileUrls(response.data, getSurveyUploadElementIds(survey), survey.id);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };

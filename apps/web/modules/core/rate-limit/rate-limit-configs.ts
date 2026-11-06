@@ -47,6 +47,11 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    v3StateMutation: {
+      interval: 60,
+      allowedPerInterval: 120,
+      namespace: "api:v3:state-mutation",
+    }, // 120 per minute per principal — the API twin of `actions.stateMutation`, for batch writes that fan out to the response pipeline
     mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth", failClosed: true }, // 30 per minute
     v3SurveyGenerate: {
       interval: 60,
@@ -77,6 +82,8 @@ export const rateLimitConfigs = {
     }, // At most 20 chart queries running at once per user or API key, so one caller cannot fill the shared
     // Cube's queue with 60-second queries. An in-flight limit (`in-flight.ts`), not a window: `interval` is
     // each slot's lease, twice the query timeout, after which a slot a crashed pod never released frees itself.
+    // So a slot covers one Cube query: an operation running several (a dashboard filter's value list) takes
+    // one per query, never one across them all.
     internalChartGeneration: {
       interval: 60,
       allowedPerInterval: 1,
@@ -223,5 +230,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 3,
       namespace: "storage:attachments-export",
     }, // 3 downloads per 10 minutes
+    // The Export modal's download (ENG-6792): a full pass over a survey's responses, in the app's own
+    // process. Charged on the download path only; the modal's count requests are not.
+    responsesExport: {
+      interval: 600,
+      allowedPerInterval: 20,
+      namespace: "storage:responses-export",
+    }, // 20 exports per 10 minutes: enough to try settings, not enough to loop a full pass over a survey
   },
 } as const;

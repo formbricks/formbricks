@@ -16,6 +16,21 @@ export const ZV3ChartField = z
     filterOperators: z.array(z.string()),
     granularities: z.array(z.string()),
     valueLookup: z.boolean(),
+    key: z.string().optional(),
+  })
+  .strict();
+
+/**
+ * A question of the dataset an answer rule (`FeedbackRecords.answer`) may name (C14): its kind decides the
+ * operators it takes, and each option's `value` is the rule value to send, `"<questionId>:<valueKey>"`.
+ */
+export const ZV3ChartAnswerQuestion = z
+  .object({
+    id: z.string(),
+    label: z.string(),
+    kind: z.enum(["choice", "multi", "number"]),
+    operators: z.array(z.enum(["equals", "notEquals"])),
+    options: z.array(z.object({ value: z.string(), label: z.string() }).strict()),
   })
   .strict();
 
@@ -23,6 +38,7 @@ export const ZV3ChartFieldCatalog = z
   .object({
     fields: z.array(ZV3ChartField),
     datePresets: z.array(z.string()),
+    answerQuestions: z.array(ZV3ChartAnswerQuestion),
   })
   .strict();
 
@@ -56,6 +72,7 @@ export const ZV3ChartData = z
     rows: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))),
     optionLabels: z.record(z.string(), z.string()),
     fieldLabels: z.record(z.string(), z.string()),
+    memberLabels: z.record(z.string(), z.string()),
     query: z.record(z.string(), z.unknown()),
   })
   .strict();

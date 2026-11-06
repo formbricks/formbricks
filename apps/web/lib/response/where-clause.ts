@@ -471,6 +471,25 @@ const includesAllClauses = (
   ];
 };
 
+/** The outcome the filter selects, or (for the export) only responses without one. */
+const buildOutcomeCondition = (
+  filterCriteria: TResponseFilterCriteria | undefined
+): Prisma.ResponseWhereInput | null => {
+  if (filterCriteria?.outcome) return { outcome: filterCriteria.outcome };
+  return filterCriteria?.excludeLowQuality ? { outcome: null } : null;
+};
+
+/** The time range the filter selects: `max` is the latest, `min` the earliest creation time. */
+const buildCreatedAtCondition = (
+  filterCriteria: TResponseFilterCriteria | undefined
+): Prisma.ResponseWhereInput | null => {
+  if (!filterCriteria?.createdAt) return null;
+  const createdAt: { lte?: Date; gte?: Date } = {};
+  if (filterCriteria.createdAt.max) createdAt.lte = filterCriteria.createdAt.max;
+  if (filterCriteria.createdAt.min) createdAt.gte = filterCriteria.createdAt.min;
+  return { createdAt };
+};
+
 export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilterCriteria) => {
   const whereClause: Prisma.ResponseWhereInput["AND"] = [];
 
@@ -482,18 +501,14 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
-  if (filterCriteria?.createdAt) {
-    const createdAt: { lte?: Date; gte?: Date } = {};
-    if (filterCriteria?.createdAt?.max) {
-      createdAt.lte = filterCriteria?.createdAt?.max;
-    }
-    if (filterCriteria?.createdAt?.min) {
-      createdAt.gte = filterCriteria?.createdAt?.min;
-    }
+  const outcomeCondition = buildOutcomeCondition(filterCriteria);
+  if (outcomeCondition) {
+    whereClause.push(outcomeCondition);
+  }
 
-    whereClause.push({
-      createdAt,
-    });
+  const createdAtCondition = buildCreatedAtCondition(filterCriteria);
+  if (createdAtCondition) {
+    whereClause.push(createdAtCondition);
   }
 
   if (filterCriteria?.tags) {
@@ -818,8 +833,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               // with the write-in at an unprobed index — silently narrowing what the pre-ENG-3161
               // predicate matched:
               //
-              //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())` with
-              //     no cap), so `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
+              //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())`; some
+              //     write paths cap its length, none its contents), so
+              //     `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
               //   - deleting choices from a running survey shrinks `choices.length` while the already
               //     collected answers keep their original length.
               //

@@ -11,6 +11,7 @@ import { BlockCard } from "@/modules/survey/editor/components/block-card";
 
 interface BlocksDroppableProps {
   localSurvey: TSurvey;
+  persistedSurvey: TSurvey;
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   workspace: TWorkspaceWithoutCustomCss;
   moveElement: (elementIdx: number, up: boolean) => void;
@@ -32,8 +33,6 @@ interface BlocksDroppableProps {
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
-  responseCount: number;
-  onAlertTrigger: () => void;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed: boolean;
   duplicateBlock: (blockId: string) => void;
@@ -52,6 +51,7 @@ export const BlocksDroppable = ({
   duplicateElement,
   invalidElements,
   localSurvey,
+  persistedSurvey,
   setLocalSurvey,
   moveElement,
   workspace,
@@ -65,8 +65,6 @@ export const BlocksDroppable = ({
   isFormbricksCloud,
   isCxMode,
   locale,
-  responseCount,
-  onAlertTrigger,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   duplicateBlock,
@@ -97,6 +95,7 @@ export const BlocksDroppable = ({
             <BlockCard
               key={block.id}
               localSurvey={localSurvey}
+              persistedSurvey={persistedSurvey}
               setLocalSurvey={setLocalSurvey}
               workspace={workspace}
               block={block}
@@ -118,8 +117,6 @@ export const BlocksDroppable = ({
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
-              responseCount={responseCount}
-              onAlertTrigger={onAlertTrigger}
               isStorageConfigured={isStorageConfigured}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
               duplicateBlock={duplicateBlock}

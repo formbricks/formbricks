@@ -285,7 +285,7 @@ const typedFieldEntries = (
         valueType,
         // Observed values: the only values of an enum, suggestions for a free-text field.
         ...(valueType === "enum"
-          ? { options, loadOptions: () => Promise.resolve(options) }
+          ? { options, loadOptions: () => Promise.resolve({ options, hasMore: false }) }
           : { suggestions: options.map((option) => option.value).slice(0, MAX_SUGGESTIONS) }),
         ruleOperators,
       },
@@ -315,6 +315,7 @@ const leadingProperties = (t: TFunction): TFilterProperty[] => [
     options: [
       { value: "complete", label: t("workspace.surveys.filter.complete_responses") },
       { value: "partial", label: t("workspace.surveys.filter.partial_responses") },
+      { value: "lowQuality", label: t("workspace.surveys.filter.low_quality_responses") },
     ],
   },
   {
@@ -344,7 +345,7 @@ const trailingProperties = (
     quick: true,
     options: tagOptions,
     // Tags arrive after the page does; a tag in a shared link must survive until they have.
-    loadOptions: () => Promise.resolve(tagOptions),
+    loadOptions: () => Promise.resolve({ options: tagOptions, hasMore: false }),
     ruleOperators: ["equals", "notEquals"],
     group: t("common.other_filters"),
   };
@@ -498,7 +499,8 @@ const toResponseStatus = (filters: readonly TTableFilter[]): TResponseStatus => 
   const status = filters.find((filter) => filter.property === STATUS_PROPERTY && filter.operator === "in");
   const values = new Set(status?.values ?? []);
   if (values.size !== 1) return "all";
-  return values.has("complete") ? "complete" : "partial";
+  if (values.has("complete")) return "complete";
+  return values.has("lowQuality") ? "lowQuality" : "partial";
 };
 
 const toDateRange = (filters: readonly TTableFilter[], timeZone: string, now: Date): DateRange => {

@@ -380,7 +380,6 @@ export const SurveyEditor = ({
               isCxMode={isCxMode}
               locale={locale}
               responseCount={responseCount}
-              setIsCautionDialogOpen={setIsCautionDialogOpen}
               isStorageConfigured={isStorageConfigured}
               quotas={quotas}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -412,6 +411,7 @@ export const SurveyEditor = ({
           {activeView === "language" && (
             <LanguageView
               localSurvey={localSurvey}
+              persistedSurvey={survey}
               setLocalSurvey={setLocalSurveyNonNull}
               workspaceLanguages={localWorkspaceLanguages}
               locale={locale}

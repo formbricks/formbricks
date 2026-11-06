@@ -7,9 +7,13 @@ import { resetDb } from "@/integration/reset-db";
 import {
   AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES,
   AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS,
+  claimAuthzedOutboxEvents,
   hasStaleAuthzedRevocation,
+  hasUnclaimedAuthzedOutboxEvent,
+  markAuthzedOutboxEventsDelivered,
   markAuthzedOutboxEventsFailed,
 } from "@/lib/authzed/outbox-repository";
+import { AUTHZED_OUTBOX_SAFETY_NET_UNCLAIMED_MS } from "@/lib/authzed/outbox-safety-net";
 
 const readMigration = (name: string): string =>
   readFileSync(
@@ -588,6 +592,66 @@ describe("AuthZed projection freshness guard", () => {
     await prisma.$executeRaw`UPDATE "AuthzedProjectionOutbox" SET "deadLetteredAt" = NOW() WHERE "id" = 'fresh-dead-letter'`;
     // No age bound on dead letters is deliberate: an old one is more dangerous than a fresh one.
     await expect(hasStaleAuthzedRevocation()).resolves.toBe(true);
+  });
+});
+
+describe("AuthZed projection outbox safety-net probe", () => {
+  const unclaimed = () => hasUnclaimedAuthzedOutboxEvent(AUTHZED_OUTBOX_SAFETY_NET_UNCLAIMED_MS);
+  const setRow = (id: string, assignments: string): Promise<unknown> =>
+    prisma.$executeRawUnsafe(`UPDATE "AuthzedProjectionOutbox" SET ${assignments} WHERE "id" = $1`, id);
+
+  test("fires for an event left claimable past the threshold, and for one whose lease expired", async () => {
+    await insertClaimedEvent("stalled");
+    await setRow("stalled", `"availableAt" = NOW() - INTERVAL '1 minute'`);
+    await expect(unclaimed()).resolves.toBe(true);
+
+    // A worker that died mid-delivery leaves an expired lease: that event is claimable again.
+    await setRow("stalled", `"leaseExpiresAt" = NOW() - INTERVAL '1 second'`);
+    await expect(unclaimed()).resolves.toBe(true);
+  });
+
+  test("stays quiet for work the delivery job is still handling or must not retry yet", async () => {
+    // Just enqueued: the five-second job has not had its turn.
+    await insertClaimedEvent("fresh");
+    await expect(unclaimed()).resolves.toBe(false);
+
+    // Held by a live lease: another process is delivering it right now.
+    await setRow(
+      "fresh",
+      `"availableAt" = NOW() - INTERVAL '1 minute', "leaseExpiresAt" = NOW() + INTERVAL '1 minute'`
+    );
+    await expect(unclaimed()).resolves.toBe(false);
+
+    // Backing off after a failure: the safety net must not retry SpiceDB faster than the backoff.
+    await setRow("fresh", `"leaseExpiresAt" = NULL, "availableAt" = NOW() + INTERVAL '1 minute'`);
+    await expect(unclaimed()).resolves.toBe(false);
+
+    // Dead letters and delivered history are never claimable.
+    await setRow("fresh", `"availableAt" = NOW() - INTERVAL '1 hour', "deadLetteredAt" = NOW()`);
+    await expect(unclaimed()).resolves.toBe(false);
+    await setRow("fresh", `"deadLetteredAt" = NULL, "processedAt" = NOW()`);
+    await expect(unclaimed()).resolves.toBe(false);
+  });
+
+  test("clears the fail-closed guard once a backlog past the 60-second window is delivered", async () => {
+    // formbricks#9697: revocations pending for hours after the delivery job stopped. The guard must
+    // deny while they are pending and release on its own once delivery claims and settles them.
+    await insertClaimedEvent("overdue-revocation", { isRevocation: true });
+    await setRow(
+      "overdue-revocation",
+      `"leaseOwner" = NULL, "createdAt" = NOW() - INTERVAL '6 hours', "availableAt" = NOW() - INTERVAL '6 hours'`
+    );
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(true);
+    await expect(unclaimed()).resolves.toBe(true);
+
+    const claimed = await claimAuthzedOutboxEvents("safety-net");
+    expect(claimed.map(({ id }) => id)).toEqual(["overdue-revocation"]);
+    // Claimed and leased: a second replica's probe now leaves it alone.
+    await expect(unclaimed()).resolves.toBe(false);
+
+    await markAuthzedOutboxEventsDelivered("safety-net", ["overdue-revocation"]);
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(false);
+    await expect(unclaimed()).resolves.toBe(false);
   });
 });
 

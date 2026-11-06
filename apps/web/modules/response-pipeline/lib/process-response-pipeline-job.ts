@@ -16,6 +16,7 @@ import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
 import { getIntegrations } from "@/lib/integration/service";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { getQuestionCodes } from "@/lib/response/data-by-question-code";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
@@ -203,6 +204,7 @@ const enqueueWebhookDeliveryJobs = async ({
     return;
   }
 
+  const questionCodes = getQuestionCodes(survey.blocks);
   const enqueue = await isNewReleaseWorkEnabled();
   const deliver: (...args: Parameters<typeof enqueueWebhookDeliveryJob>) => Promise<unknown> = enqueue
     ? enqueueWebhookDeliveryJob
@@ -248,6 +250,7 @@ const enqueueWebhookDeliveryJobs = async ({
             status: survey.status,
             createdAt: survey.createdAt,
             updatedAt: survey.updatedAt,
+            questionCodes,
           },
         },
         { jobId: createWebhookDeliveryJobId(logContext.jobId, webhook.id) }
@@ -413,6 +416,16 @@ const getUsersWithNotifications = async ({
         notificationSettings: {
           path: ["alert", data.surveyId],
           equals: true,
+        },
+        // A Dashboard viewer never reads responses (ADR-0025), so it is never a response alert's
+        // recipient, whatever its team grants or a stale notification setting say.
+        NOT: {
+          memberships: {
+            some: {
+              role: "dashboard_viewer",
+              organization: { workspaces: { some: { id: workspaceId } } },
+            },
+          },
         },
       },
       select: { email: true, id: true, locale: true },
@@ -606,6 +619,10 @@ const handleSurveyAutoCompleteSafely = async ({
   }
 };
 
+const isLowQuality = async (responseId: string): Promise<boolean> =>
+  (await prisma.response.findUnique({ where: { id: responseId }, select: { outcome: true } }))?.outcome ===
+  "lowQuality";
+
 /**
  * The responseFinished work that sends the response out of the app: integrations, the feedback-source
  * pipeline and follow-ups. ENG-3283: none of it runs for a survey that is not workspace-visible.
@@ -649,7 +666,13 @@ const runOutboundResponseFinishedEffects = async ({
   }
 
   try {
-    await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
+    // The job carries the response as it was when the event was queued. A partial marked Low quality and
+    // then finished by the respondent still says "no outcome" there, so the outcome is read now (ENG-6785).
+    // Failing to read it publishes nothing rather than risking a Low quality response's records; a restore,
+    // or the historical import, brings them back.
+    if (!(await isLowQuality(data.response.id))) {
+      await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
+    }
   } catch (error) {
     logger.error(
       {

@@ -10,6 +10,7 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { buildDataByQuestionCode } from "@/lib/response/data-by-question-code";
 import { getSurvey } from "@/lib/survey/service";
 import {
   SURVEY_ACTION_FOR_METHOD,
@@ -19,7 +20,12 @@ import {
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { resolveStorageUrlsInObject, validateClientFileUploads } from "@/modules/storage/utils";
-import { createResponseWithQuotaEvaluation, getResponses, getResponsesByWorkspaceIds } from "./lib/response";
+import {
+  createResponseWithQuotaEvaluation,
+  getQuestionCodesBySurveyId,
+  getResponses,
+  getResponsesByWorkspaceIds,
+} from "./lib/response";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -71,9 +77,20 @@ export const GET = withV1ApiWrapper({
         );
         allResponses.push(...workspaceResponses);
       }
+      const questionCodes = await getQuestionCodesBySurveyId([
+        ...new Set(allResponses.map((r) => r.surveyId)),
+      ]);
       return {
         response: responses.successResponse(
-          allResponses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }))
+          allResponses.map((r) => {
+            const data = resolveStorageUrlsInObject(r.data);
+            return {
+              ...r,
+              data,
+              // Like the webhook body: the same values keyed by question code.
+              dataByQuestionCode: buildDataByQuestionCode(data, questionCodes.get(r.surveyId) ?? {}),
+            };
+          })
         ),
       };
     } catch (error) {

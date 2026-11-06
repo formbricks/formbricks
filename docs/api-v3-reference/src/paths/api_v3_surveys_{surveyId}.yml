@@ -390,6 +390,10 @@ patch:
         2. The patched document passed schema validation but failed a
         cross-reference check that requires stored state to detect: an undeclared locale key used in
         content, a duplicate stable id, an immutable element-id change on a published survey, a
+        change to a question code, answer code, question type or option text of a published survey, or
+        the deletion of an option that existed at launch (`immutable_question_code`,
+        `immutable_answer_code`, `immutable_question_type`, `immutable_option_text`,
+        `immutable_option_deletion`; reverting the survey to `draft` lifts the lock), a
         dangling logic/jump reference, an invalid media URL, a
         `distribution.triggers[].actionClassId` referencing an action class that does not exist in
         the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters`

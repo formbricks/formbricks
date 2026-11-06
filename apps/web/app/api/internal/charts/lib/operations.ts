@@ -20,6 +20,7 @@ import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
 import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
+import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import type { TInternalChartGenerateBody, TInternalMatrixQuestionsQuery } from "./schemas";
 
@@ -84,16 +85,28 @@ export async function generateInternalChart({
     );
     if (refused) return refused;
 
+    // The dataset's embedded-data fields and answerable questions are offered to the model (ENG-6893,
+    // ENG-6894), and the query it writes is judged against the same dataset.
+    const dataset = await getDatasetChartFields(
+      {
+        datasetId: body.datasetId,
+        workspaceId: access.workspaceId,
+        organizationId,
+        actor: { type: "user", id: userId },
+      },
+      { withAnswerQuestions: true }
+    );
     const { chartType, query, name } = await generateAIChartQuery({
       organizationId,
       workspaceId: access.workspaceId,
       feedbackDirectoryId: body.datasetId,
       userId,
       prompt: body.prompt,
+      dataset,
     });
     // The model's query goes through the same validator as one a person or agent writes, so it is
     // held to the same bounds (including the time-bucket limit) and can be saved as it is shown.
-    const validated = validateChartQuery(query);
+    const validated = validateChartQuery(query, { dataset });
     if (!validated.ok) {
       const tooFine = validated.issues.some((issue) => issue.code === "limit_exceeded");
       return promptNotChartable(requestId, instance, tooFine ? PROMPT_TOO_FINE_REASON : undefined);

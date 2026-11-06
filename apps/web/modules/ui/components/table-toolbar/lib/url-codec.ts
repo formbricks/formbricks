@@ -78,7 +78,7 @@ const normalizeFilter = (property: TFilterProperty, filter: TTableFilter): TTabl
     return from <= to ? { ...filter, values: [from, to] } : { ...filter, values: [to, from] };
   }
   // Ticking every value of a fixed list keeps every row: a shared link with it reads as no filter.
-  if (filter.operator === "in" || operatorTakesValues(filter.operator)) {
+  if (filter.operator === "in" || operatorTakesValues(filter.operator, property)) {
     return values.length > 0 ? { ...filter, values: values.slice(0, MAX_FILTER_VALUES) } : null;
   }
   return values.length > 0 ? { ...filter, values: [values[0]] } : null;
@@ -96,7 +96,8 @@ const parseKeyFilters = (property: TFilterProperty, operator: string, values: st
 
   // Rules stack: "Status is not Draft" and "Status is not Paused" share a key, so every value but a
   // list operator's is its own rule. Without that, the second rule would vanish on the next read.
-  const holdsList = operator === "in" || operatorTakesValues(operator) || !operatorTakesValue(operator);
+  const holdsList =
+    operator === "in" || operatorTakesValues(operator, property) || !operatorTakesValue(operator);
   const valueGroups = holdsList ? [values] : [...new Set(values)].map((v) => [v]);
   return valueGroups
     .map((group) => normalizeFilter(property, { property: property.id, operator, values: group }))

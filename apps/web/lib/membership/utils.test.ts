@@ -16,6 +16,7 @@ describe("getAccessFlags", () => {
       isOwner: true,
       isBilling: false,
       isMember: false,
+      isDashboardViewer: false,
     });
   });
 
@@ -27,6 +28,7 @@ describe("getAccessFlags", () => {
       isOwner: false,
       isBilling: false,
       isMember: false,
+      isDashboardViewer: false,
     });
   });
 
@@ -38,6 +40,7 @@ describe("getAccessFlags", () => {
       isOwner: false,
       isBilling: true,
       isMember: false,
+      isDashboardViewer: false,
     });
   });
 
@@ -49,6 +52,18 @@ describe("getAccessFlags", () => {
       isOwner: false,
       isBilling: false,
       isMember: true,
+      isDashboardViewer: false,
+    });
+  });
+
+  test("should return correct flags for dashboard_viewer role", () => {
+    const flags = getAccessFlags("dashboard_viewer");
+    expect(flags).toEqual({
+      isManager: false,
+      isOwner: false,
+      isBilling: false,
+      isMember: false,
+      isDashboardViewer: true,
     });
   });
 
@@ -59,6 +74,7 @@ describe("getAccessFlags", () => {
       isOwner: false,
       isBilling: false,
       isMember: false,
+      isDashboardViewer: false,
     });
   });
 });
@@ -86,6 +102,7 @@ describe("getOrganizationRoleLabels", () => {
       manager: "Manager",
       member: "Member",
       billing: "Billing",
+      dashboard_viewer: "Dashboard viewer",
     });
   });
 });

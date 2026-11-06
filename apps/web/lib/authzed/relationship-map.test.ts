@@ -26,6 +26,7 @@ describe("relation name mappings", () => {
   test("maps every organization role to its schema relation", () => {
     expect(ORGANIZATION_RELATIONS).toEqual({
       [OrganizationRole.billing]: "billing",
+      [OrganizationRole.dashboard_viewer]: "dashboard_viewer",
       [OrganizationRole.manager]: "manager",
       [OrganizationRole.member]: "member",
       [OrganizationRole.owner]: "owner",

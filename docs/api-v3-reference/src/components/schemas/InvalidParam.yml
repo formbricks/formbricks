@@ -22,10 +22,19 @@ properties:
     type: string
     enum:
       - dangling_reference
+      - document_limit_exceeded
       - duplicate_identifier
       - duplicate_locale
+      - file_limit_exceeded
+      - file_type_unsupported
+      - file_unreadable
       - forbidden_identifier
+      - immutable_answer_code
       - immutable_identifier
+      - immutable_option_deletion
+      - immutable_option_text
+      - immutable_question_code
+      - immutable_question_type
       - invalid_locale
       - invalid_reference
       - limit_exceeded
@@ -47,6 +56,16 @@ properties:
       operations that do not exist yet are added with the code that emits them, not ahead of it.
 
 
+      `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`,
+      `immutable_option_text` and `immutable_option_deletion` come from the published-survey lock: once
+      a survey has left `draft` (`inProgress`, `paused` or `completed`; a scheduled survey is `paused`),
+      question codes, answer codes, question types and option text in every language are locked, and an
+      option, matrix row or matrix column that existed when the survey was published cannot be deleted.
+      `name` points at the offending field (at the option list for a deletion) and `identifier` is the
+      option id, or the element id when the option is not the subject. Adding questions and options is
+      still allowed.
+
+
       `limit_exceeded`: the field is well formed but past a limit the operation states, which
       `reason` names together with what to change. Chart queries use it for a date range that spans
       more time buckets than its granularity allows.
@@ -55,6 +74,18 @@ properties:
       `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal,
       session-only route sharing this shape): the file is not a Qualtrics export it can read, or it
       is one past an import limit, which `identifier` names.
+
+
+      `file_type_unsupported`, `file_limit_exceeded` and `file_unreadable` come from the survey import
+      too, about the uploaded file whatever its type: the import does not read this kind of file
+      (`identifier` names what it recognized, if anything), the file is past an upload limit, which
+      `identifier` names, or it is broken. A JSON file that does not parse has `identifier`
+      `json_syntax`, and the problem's `details` give the `line` and `column` where it stops, when
+      the parser says.
+
+
+      `document_limit_exceeded` comes from the survey import of a questionnaire (Word, Excel or CSV):
+      the document is past one of the import's limits, which `identifier` names.
   identifier:
     type: string
     description: >-

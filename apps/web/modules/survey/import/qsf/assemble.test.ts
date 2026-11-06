@@ -1,14 +1,17 @@
 import { describe, expect, test } from "vitest";
 import deDE from "@/locales/de-DE.json";
-import { cpuMsSince } from "./__fixtures__/cpu-time";
+import { cpuMsSince } from "../core/__fixtures__/cpu-time";
+import { disambiguateLabels } from "../core/choice-labels";
+import type { TSurveyImportDraftElement } from "../core/draft";
+import { checkImportDraft } from "../core/final-gate";
+import { isObjectMemberName } from "../core/id-registry";
+import type { TSurveyImportPipelineIssue } from "../core/report";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
 import { planQsfImport } from "./ai-plan";
-import { type TQsfDraftElement, assembleQsfDraft, buildHiddenFields, disambiguateLabels } from "./assemble";
-import { checkQsfDraft } from "./final-gate";
-import { isObjectMemberName } from "./id-registry";
+import { assembleQsfDraft, buildHiddenFields } from "./assemble";
 import type { TQsfCheckedPlan } from "./plan-checks";
-import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
+import type { TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -39,16 +42,18 @@ const assembleFixture = async (
     texts,
     plan,
     workspaceId: WORKSPACE_ID,
+    // The pipeline names the draft in the user's language; English here.
+    name: `${survey.name} (imported)`,
     allowExternalUrls: options.allowExternalUrls ?? true,
     excludedRefs: options.excludedRefs,
   });
   return { survey, ...assembly };
 };
 
-const elements = (document: { blocks: { elements: TQsfDraftElement[] }[] }) =>
+const elements = (document: { blocks: { elements: TSurveyImportDraftElement[] }[] }) =>
   document.blocks.flatMap((block) => block.elements);
 
-const element = (document: { blocks: { elements: TQsfDraftElement[] }[] }, id: string) => {
+const element = (document: { blocks: { elements: TSurveyImportDraftElement[] }[] }, id: string) => {
   const found = elements(document).find((candidate) => candidate.id === id);
   if (!found) throw new Error(`No element ${id}`);
   return found;
@@ -74,7 +79,7 @@ describe("assembleQsfDraft", () => {
       ["Q5", "multipleChoiceMulti", true],
     ]);
     expect(element(document, "Q1").headline).toEqual({ "en-US": "How did you hear about us?" });
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 
   test("gives the other and none options their fixed ids, last, and generates every other id", async () => {
@@ -93,6 +98,20 @@ describe("assembleQsfDraft", () => {
     expect(generated.every((choice) => /^[a-z0-9]{24,}$/.test(choice.id))).toBe(true);
   });
 
+  test("codes every imported question and answer option (ENG-6782)", async () => {
+    const { document } = await assembleFixture("simple.qsf");
+    const imported = elements(document);
+    expect(imported.map((draft) => (draft as { code?: string }).code)).toEqual(
+      imported.map((_, index) => `q${index + 1}`)
+    );
+    const q1 = element(document, "Q1");
+    if (q1.type !== "multipleChoiceSingle") throw new Error("type");
+    expect(q1.choices.map((choice) => (choice as { code?: string }).code)).toEqual(
+      q1.choices.map((_, index) => String(index + 1))
+    );
+    expect(checkImportDraft(document)).toEqual([]);
+  });
+
   test("gives a file with no end message the editor's default ending, and says so", async () => {
     const { document, issues } = await assembleFixture("pages-and-blocks.qsf");
 
@@ -105,7 +124,7 @@ describe("assembleQsfDraft", () => {
       },
     ]);
     expect(issues).toContainEqual({ code: "ending_added", severity: "info", params: { subject: "ending" } });
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 
   test("writes the default ending in each language Formbricks has strings for", async () => {
@@ -127,7 +146,7 @@ describe("assembleQsfDraft", () => {
   test("shows the default language's ending where Formbricks has no strings, and never counts it missing", async () => {
     const withLanguage = (code: string) =>
       assembleFixture("pages-and-blocks.qsf", { editSurvey: (survey) => survey.languages.push(code) });
-    const missingIn = (issues: TQsfIssue[]) =>
+    const missingIn = (issues: TSurveyImportPipelineIssue[]) =>
       Number(issues.find((issue) => issue.code === "translation_missing")?.params?.count);
     const norwegian = await withLanguage("nb-NO");
     const austrian = await withLanguage("de-AT");
@@ -192,7 +211,7 @@ describe("assembleQsfDraft", () => {
       severity: "warning",
       params: { language: "zh-Hant-TW", count: 7 },
     });
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 
   test("names the options the AI left out", async () => {
@@ -330,7 +349,7 @@ describe("assembleQsfDraft", () => {
       questionRef: "QID3",
       params: { count: 2 },
     });
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 
   test("stands the export tag in for a headline left empty, and says so", async () => {
@@ -362,7 +381,7 @@ describe("assembleQsfDraft", () => {
       { id: expect.any(String), type: "endScreen", headline: { "en-US": "<p>Thanks for taking part!</p>" } },
     ]);
     expect(refused.issues).toContainEqual({ code: "external_url_removed", severity: "warning" });
-    expect(checkQsfDraft(refused.document)).toEqual([]);
+    expect(checkImportDraft(refused.document)).toEqual([]);
   });
 
   test("renames embedded data names Formbricks refuses, and recalls them under the new name", async () => {
@@ -390,7 +409,7 @@ describe("assembleQsfDraft", () => {
     const ids = [...elements(document).map((draft) => draft.id), ...document.hiddenFields.fieldIds];
     expect(ids.filter((id) => isObjectMemberName(id))).toEqual([]);
     expect(Object.getOwnPropertyNames(Object.prototype).sort()).toEqual(before);
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 
   test("reports one line per logic rule: the AI can neither hide a rule nor add one", async () => {
@@ -454,7 +473,52 @@ describe("assembleQsfDraft", () => {
       firstName: { show: true, placeholder: { "en-US": "First name" } },
       email: { show: false, placeholder: { "en-US": "" } },
     });
-    expect(checkQsfDraft(document)).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
+  });
+});
+
+describe("assembleQsfDraft: Address", () => {
+  test("builds an address form from the fields the plan maps, every other field hidden", async () => {
+    const { document } = await assembleFixture("matrix-slider-ranking.qsf", {
+      editPlan: (plan) => {
+        // QID8 is a FORM question; mapped as an address, its first field is the city.
+        const form = plan.questions.get("QID8");
+        if (!form) throw new Error("QID8 is not planned");
+        plan.questions.set("QID8", {
+          ...form,
+          type: "address",
+          contactFields: [{ field: "city", key: form.contactFields[0].key }],
+        });
+      },
+    });
+
+    expect(element(document, "Q8")).toMatchObject({
+      type: "address",
+      city: { show: true, placeholder: { "en-US": "First name" } },
+      addressLine1: { show: false, required: false, placeholder: { "en-US": "" } },
+      country: { show: false },
+    });
+    expect(element(document, "Q8")).not.toHaveProperty("firstName");
+    expect(checkImportDraft(document)).toEqual([]);
+  });
+});
+
+describe("assembleQsfDraft: Signature", () => {
+  test("builds a Signature element that allows typing, required as Qualtrics forced it", async () => {
+    const { document, issues } = await assembleFixture("signature.qsf");
+
+    expect(element(document, "Q1")).toEqual({
+      id: "Q1",
+      type: "signature",
+      code: "q1",
+      headline: { "en-US": "Sign to confirm you accept the terms" },
+      required: true,
+      isDraft: true,
+      allowTypedSignature: true,
+    });
+    expect(element(document, "Q2")).toMatchObject({ type: "signature", required: false });
+    expect(issues.filter((issue) => issue.code === "question_skipped")).toEqual([]);
+    expect(checkImportDraft(document)).toEqual([]);
   });
 });
 

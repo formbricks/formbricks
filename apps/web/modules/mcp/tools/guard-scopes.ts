@@ -122,6 +122,28 @@ async function auditRefusedMutation(
   await queueV3AuditLog(auditLog, requestId, logger.withContext({ requestId, tool: toolName }));
 }
 
+/**
+ * The scopes a tool needs. Usually a fixed all-of tuple; `{ anyOf }` for a tool several scope groups
+ * reach; `{ byInput }` for the rare tool whose input picks between two reads with different grants
+ * (`get_chart_data`: a chart alone, or a chart through its dashboard). `byInput` still gates here, before
+ * the handler, and always returns a non-empty list, so it cannot gate on nothing.
+ */
+type TMcpScopeRequirement =
+  | [string, ...string[]]
+  | { anyOf: [string, ...string[]] }
+  | { byInput: (input: unknown, authInfo: AuthInfo | undefined) => [string, ...string[]] };
+
+const guardRequirement = async (
+  requirement: TMcpScopeRequirement,
+  input: unknown,
+  authInfo: AuthInfo | undefined,
+  requestId: string
+): Promise<CallToolResult | null> => {
+  if (Array.isArray(requirement)) return await guardMcpScopes(authInfo, requirement, requestId);
+  if ("anyOf" in requirement) return await guardMcpAnyScope(authInfo, requirement.anyOf, requestId);
+  return await guardMcpScopes(authInfo, requirement.byInput(input, authInfo), requestId);
+};
+
 type ScopedToolConfig<
   InputSchema extends StandardSchemaWithJSON,
   OutputSchema extends StandardSchemaWithJSON,
@@ -175,7 +197,7 @@ export function registerScopedTool<
   name: string,
   config: ScopedToolConfig<InputSchema, OutputSchema>,
   // Non-empty tuple: a tool cannot be registered with `[]`, which would gate on nothing.
-  requiredScopes: [string, ...string[]] | { anyOf: [string, ...string[]] },
+  requiredScopes: TMcpScopeRequirement,
   handler: ToolCallback<InputSchema>
 ): void {
   // `audit` is the guard's, not the SDK's. Stripped only when present, so a plain config still reaches
@@ -185,10 +207,7 @@ export function registerScopedTool<
   const guardedHandler = (async (input: unknown, ctx: TMcpToolContext) => {
     const authInfo = getMcpToolAuthInfo(ctx);
     const requestId = getMcpRequestId(authInfo);
-    const scopeError =
-      "anyOf" in requiredScopes
-        ? await guardMcpAnyScope(authInfo, requiredScopes.anyOf, requestId)
-        : await guardMcpScopes(authInfo, requiredScopes, requestId);
+    const scopeError = await guardRequirement(requiredScopes, input, authInfo, requestId);
     if (scopeError) {
       if (audit) {
         await auditRefusedMutation(name, audit, input, authInfo, requestId);

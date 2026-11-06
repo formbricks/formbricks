@@ -8,6 +8,10 @@ import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { cn } from "@/lib/cn";
 import type { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import {
+  findRefusedBulkInviteRoles,
+  parseRoleCell,
+} from "@/modules/organization/settings/teams/lib/bulk-invite-roles";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -25,7 +29,9 @@ interface BulkInviteTabProps {
   organizationId: string;
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
+  isDashboardViewerRoleEnabled: boolean;
   isBulkInviteAllowed: boolean;
+  membershipRole?: TOrganizationRole;
   enterpriseLicenseRequestFormUrl: string;
 }
 
@@ -60,7 +66,9 @@ export const BulkInviteTab = ({
   organizationId,
   isAccessControlAllowed,
   isFormbricksCloud,
+  isDashboardViewerRoleEnabled,
   isBulkInviteAllowed,
+  membershipRole,
   enterpriseLicenseRequestFormUrl,
 }: Readonly<BulkInviteTabProps>) => {
   const { t } = useTranslation();
@@ -128,15 +136,11 @@ export const BulkInviteTab = ({
 
     const teamByName = new Map(teams.map((team) => [team.name.trim().toLowerCase(), team]));
     const unknownTeamNames = new Set<string>();
-    const billingRoleEmails = new Set<string>();
 
     const members = previewRows.map((csv) => {
       const email = readCell(csv, "Email Address", "email").trim();
       const roleCell = readCell(csv, "Organization Role", "Role", "role");
-      const orgRole = isAccessControlAllowed ? roleCell.trim().toLowerCase() : "owner";
-      if (!isFormbricksCloud && orgRole === "billing") {
-        billingRoleEmails.add(email);
-      }
+      const orgRole = parseRoleCell(roleCell, isAccessControlAllowed);
 
       const teamsCell = readCell(csv, "Teams", "teams");
       const teamIds = isAccessControlAllowed
@@ -170,10 +174,37 @@ export const BulkInviteTab = ({
       return;
     }
 
-    if (billingRoleEmails.size > 0) {
+    // Without Access Control every row is an Owner invite, decided by the server as before.
+    const refused = isAccessControlAllowed
+      ? findRefusedBulkInviteRoles(members, {
+          assignerRole: membershipRole,
+          isFormbricksCloud,
+          isDashboardViewerRoleEnabled,
+        })
+      : { billing: [], dashboardViewer: [], other: [] };
+
+    if (refused.billing.length > 0) {
       setError(
         t("workspace.settings.general.bulk_invite_billing_not_supported", {
-          emails: Array.from(billingRoleEmails).join(", "),
+          emails: refused.billing.join(", "),
+        })
+      );
+      return;
+    }
+
+    if (refused.dashboardViewer.length > 0) {
+      setError(
+        t("workspace.settings.general.bulk_invite_dashboard_viewer_not_available", {
+          emails: refused.dashboardViewer.join(", "),
+        })
+      );
+      return;
+    }
+
+    if (refused.other.length > 0) {
+      setError(
+        t("workspace.settings.general.bulk_invite_role_not_allowed", {
+          emails: refused.other.join(", "),
         })
       );
       return;

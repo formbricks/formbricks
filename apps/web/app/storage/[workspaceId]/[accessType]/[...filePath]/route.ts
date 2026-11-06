@@ -8,9 +8,18 @@ import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getSession } from "@/modules/auth/lib/session";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { isAttachmentExportFilePath } from "@/modules/storage/attachment-export/storage-key";
 import { deleteFile, getFileStreamForDownload } from "@/modules/storage/service";
 import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
 import { logFileDeletion } from "./lib/audit-logs";
+
+const safeDecode = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
 
 export const GET = async (
   request: NextRequest,
@@ -33,6 +42,13 @@ export const GET = async (
 
   const { accessType } = paramValidation.data;
   const idParam = params.workspaceId;
+
+  // Attachment export archives (ENG-6862) are fetched only through their audited, requester-scoped
+  // download route. Checked on one more decode too, so the refusal does not depend on how a proxy or
+  // backend reads an escaped `/`.
+  if (isAttachmentExportFilePath(fileName) || isAttachmentExportFilePath(safeDecode(fileName))) {
+    return responses.notFoundResponse("File", null);
+  }
 
   // Resolve: the URL param may be an environmentId (old uploads) or workspaceId (new uploads)
   const resolved = await resolveClientApiIds(idParam);
@@ -139,12 +155,9 @@ export const DELETE = async (
     }
   }
 
-  const deleteResult = await deleteFile(
-    resolved.workspaceId,
-    accessType,
-    decodeURIComponent(fileName),
-    idParam
-  );
+  // `fileName` comes from the route param, which Next.js has already decoded once. Objects are stored
+  // under that name, so it goes to storage as is.
+  const deleteResult = await deleteFile(resolved.workspaceId, accessType, fileName, idParam);
 
   if (!deleteResult.ok) {
     if (!("error" in deleteResult)) {

@@ -1,7 +1,9 @@
 import { logger } from "@formbricks/logger";
+import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import {
   addLegacyProjectOverwrites,
   addLegacyProjectOverwritesToList,
@@ -29,6 +31,7 @@ import { createSurvey } from "@/lib/survey/service";
 import { getApiKeyVisibleSurveyWhere } from "@/lib/survey/visibility/api-key";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
@@ -82,6 +85,28 @@ const parseSurveyBody = async (
 
     logger.error({ error, url: req.url }, "Error parsing JSON");
     return { response: responses.badRequestResponse("Malformed JSON input, please check your request body") };
+  }
+};
+
+/**
+ * Create the survey; a create whose work after the commit failed (response alerts, scheduling) is
+ * still answered as created, with what it committed, and the failure logged: answered as an error, a
+ * client's retry would make a second survey, which nothing here could tell apart from the first.
+ */
+const createSurveyAnsweringAfterCommit = async (
+  ...args: Parameters<typeof createSurvey>
+): Promise<Awaited<ReturnType<typeof createSurvey>>> => {
+  try {
+    return await createSurvey(...args);
+  } catch (error) {
+    if (!(error instanceof SurveyWriteAfterCommitError)) throw error;
+    const survey = error.result as Awaited<ReturnType<typeof createSurvey>>;
+    // As the v3 create logs it: the error's name and frames, never its message.
+    logger.error(
+      { ...loggableError(error.cause), surveyId: survey.id },
+      "Survey created, but the work after its commit failed"
+    );
+    return survey;
   }
 };
 
@@ -148,7 +173,11 @@ export const POST = withV1ApiWrapper({
       const { hasQuestions } = validateResult.data;
 
       if (hasQuestions) {
-        surveyData.blocks = transformQuestionsToBlocks(surveyData.questions, surveyData.endings || []);
+        surveyData.blocks = transformQuestionsToBlocks(
+          surveyData.questions,
+          surveyData.endings || [],
+          collectDeclaredFieldNames(surveyData)
+        );
         surveyData.questions = [];
       }
 
@@ -170,7 +199,9 @@ export const POST = withV1ApiWrapper({
         actor: { type: "apiKey", id: authentication.apiKeyId },
         organizationId: organization.id,
       });
-      const survey = await createSurvey(workspaceId, surveyCreateInput, { creationFacts });
+      const survey = await createSurveyAnsweringAfterCommit(workspaceId, surveyCreateInput, {
+        creationFacts,
+      });
       if (auditLog) {
         auditLog.targetId = survey.id;
         auditLog.newObject = survey;
