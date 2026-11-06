@@ -68,6 +68,10 @@ Before you start:
     Preparation applies the app's database migrations, then prepares the permissions. It must end with
     `upgrade_prepared`. If it fails, keep the app stopped and see [permission preparation](/self-hosting/upgrade/prepare#results-and-recovery).
 
+    When the permission schema changes, as from 6.0 to 6.1, preparation needs the current schema digest:
+    run `docker compose --profile authzed-ops run --rm --no-deps authzed-ops schema check`, then add
+    `--expected-current-digest <remoteDigest>` to the command above. See [schema changes](/self-hosting/upgrade/prepare#schema-changes).
+
     For a first upgrade to 6.0, then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`.
   </Step>
   <Step title="Refresh the Cube model">
@@ -108,13 +112,15 @@ A patch, such as 6.1.2 → 6.1.3, doesn't change the permission schema and norma
 Check its upgrade impact in the [release notes](/platform/changelog), then:
 
 1. Do the steps **Choose the target version** and **Update the configuration** above.
-2. Back up, then check that the permission setup is clean. This must exit `0`:
+2. Do the step **Stop the app and back up** above. Starting the new version also runs one-time setup services
+   such as `authzed-initialize`, which must not write while the old app is still running.
+3. Check that the permission setup is clean. This must exit `0`:
 
    ```bash
    docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
    ```
 
-3. Do the step **Start the new version** above. Skip permission preparation and the Cube refresh unless the
+4. Do the step **Start the new version** above. Skip permission preparation and the Cube refresh unless the
    patch's upgrade impact asks for them.
 
 ## If something goes wrong

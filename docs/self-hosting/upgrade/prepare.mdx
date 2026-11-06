@@ -15,7 +15,7 @@ An upgrade **from v5 to v6** first needs the dependencies in [6.0: Upgrade guide
 - The command checks the configuration and SpiceDB health, runs the app's database migrations, prepares
   the permission schema, processes pending permission updates, repairs relationships and verifies the result.
 - A different non-empty schema is blocked. Review `formbricks-authzed schema check` and the release's
-  schema changes before passing `--expected-current-digest sha256:<reviewed-digest>`.
+  schema changes before passing `--expected-current-digest <remoteDigest>`.
 - Exit `0` and `upgrade_prepared` permit the next deployment step. Any nonzero result keeps maintenance active.
 
 ## What runs where
@@ -177,10 +177,11 @@ the existing schema until you confirm which one you're replacing:
    image, and a different name such as `formbricks-v6-schema-check`. It exits with code `2` (`drifted`), which is expected.
 2. Copy the `remoteDigest` value from its log.
 3. Run the preparation Job with the digest added:
-   `args: ["--backup-confirmed", "--writers-stopped", "--expected-current-digest", "sha256:<remoteDigest>"]`.
+   `args: ["--backup-confirmed", "--writers-stopped", "--expected-current-digest", "<remoteDigest>"]`.
+   The `remoteDigest` value already starts with `sha256:`; copy it as it is.
 
 On Docker Compose, run `docker compose --profile authzed-ops run --rm --no-deps authzed-ops schema check`, then add
-`--expected-current-digest sha256:<remoteDigest>` to the preparation command. Patch releases never change the schema.
+`--expected-current-digest <remoteDigest>` to the preparation command. Patch releases never change the schema.
 
 ## Exit checklist
 

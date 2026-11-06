@@ -247,7 +247,7 @@ non-empty and differs, first run `schema check`, review the diff and backup, the
 
 ```bash
 formbricks-authzed upgrade prepare \
-  --expected-current-digest sha256:<reviewed-remote-digest>
+  --expected-current-digest <remoteDigest>
 ```
 
 `check` is read-only. It exits `0` only when AuthZed is enabled with `fully_consistent`, authenticated health is
@@ -298,7 +298,7 @@ Use the following sequence for a new deployment, schema change, SpiceDB version 
 
     ```bash
     formbricks-authzed schema apply \
-      --expected-current-digest sha256:<remote-digest>
+      --expected-current-digest <remoteDigest>
     ```
 
     Ensure no other schema writer runs between check and apply. SpiceDB does not provide an atomic schema

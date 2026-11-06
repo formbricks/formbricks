@@ -106,18 +106,24 @@ Before you start:
 
     See [SpiceDB authorization](/self-hosting/setup/kubernetes#spicedb-authorization) for the values that use this Secret.
 
+    **When the permission schema changes**, as from 6.0 to 6.1: before you run preparation, get the current schema
+    digest and add it to the Job's arguments. See [schema changes](/self-hosting/upgrade/prepare#schema-changes).
+    Without it, preparation stops.
+
     **Every minor and major upgrade:** run the [preparation Job](/self-hosting/upgrade/prepare#helm-and-gitops)
-    with the target image and wait for it:
+    with the target image and follow its log until it ends:
 
     ```bash
+    kubectl delete job -n "$ns" formbricks-v6-prepare --ignore-not-found
     kubectl apply -n "$ns" -f formbricks-prepare-job.yaml
-    kubectl wait -n "$ns" --for=condition=complete job/formbricks-v6-prepare --timeout=8h
-    kubectl logs -n "$ns" job/formbricks-v6-prepare | tail -20
+    kubectl logs -n "$ns" -f job/formbricks-v6-prepare --pod-running-timeout=10m
+    kubectl get job -n "$ns" formbricks-v6-prepare -o jsonpath='{.status.succeeded}{" succeeded, "}{.status.failed}{" failed"}{"\n"}'
     ```
 
-    The log must end with `upgrade_prepared`. When the permission schema changes, as from 6.0 to 6.1, first get
-    the current schema digest and pass it to the Job; see [schema changes](/self-hosting/upgrade/prepare#schema-changes).
-    If preparation fails, keep everything stopped and see [preparation results](/self-hosting/upgrade/prepare#results-and-recovery).
+    The log must end with `upgrade_prepared` and the Job must show `1 succeeded`. The Job doesn't retry, so a
+    failed run shows `1 failed`. Fix the cause, then run the same commands again: the first one deletes the old
+    Job, because `kubectl apply` can't change an existing Job. If preparation fails, keep everything stopped and
+    see [preparation results](/self-hosting/upgrade/prepare#results-and-recovery).
   </Step>
   <Step title="Deploy the new version">
     After preparation succeeds, set `authzed.migrationAcknowledged: true` in your values. Remove any leftover

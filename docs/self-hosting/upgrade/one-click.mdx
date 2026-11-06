@@ -117,6 +117,10 @@ Before you start:
     It must end with `upgrade_prepared`. If it stops with an error, keep the app stopped and see
     [permission preparation](/self-hosting/upgrade/prepare#results-and-recovery).
 
+    When the permission schema changes, as from 6.0 to 6.1, preparation needs the current schema digest:
+    run `docker compose --profile authzed-ops run --rm --no-deps authzed-ops schema check`, then add
+    `--expected-current-digest <remoteDigest>` to the command above. See [schema changes](/self-hosting/upgrade/prepare#schema-changes).
+
     For a first upgrade to 6.0, then set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`.
   </Step>
   <Step title="Run the updater for the target version">
@@ -129,9 +133,13 @@ Before you start:
     ./formbricks.sh update
     ```
 
-    The updater checks the permission setup, runs the database migrations and starts all services. It also
-    refreshes the Cube model files and applies small fixes for your release, such as the
-    [port binding](/self-hosting/upgrade/one-click-details). It ends with `Formbricks updated successfully!`.
+    The updater checks the permission setup, runs the database migrations and starts all services. It ends
+    with `Formbricks updated successfully!`. From 6.1, it also refreshes the Cube model files and applies small
+    fixes for your release, such as the [port binding](/self-hosting/upgrade/one-click-details).
+
+    **Upgrading to a 6.0 patch?** The 6.0 updater doesn't refresh the Cube model files. Before you run it, stop
+    Cube with `cd formbricks && docker compose stop cube && cd ..`, then
+    [install the Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files) for the target version.
   </Step>
   <Step title="Check that it worked">
     ```bash
