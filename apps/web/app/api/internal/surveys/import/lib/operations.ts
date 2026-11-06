@@ -1,39 +1,34 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { ZId } from "@formbricks/types/common";
 import { isClientAbort } from "@/app/api/internal/lib/ai-stream-errors";
 import { createNdjsonResponse } from "@/app/api/internal/lib/ndjson-stream";
 import { createRequestAbort } from "@/app/api/internal/lib/request-abort";
 import { loggableAIError, mapV3AIError } from "@/app/api/v3/lib/ai-errors";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemInternalError } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import { resolveV3SurveyResourceVisibility } from "@/app/api/v3/surveys/visibility-context";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
+import { findUpdatableSurvey } from "@/modules/survey/formbricks-file/update";
 import {
   SurveyImportFileTooLargeError,
   SurveyImportTimeoutError,
-  fromSurveyImportRefusal,
   toRefusalResponse,
 } from "@/modules/survey/import/core/errors";
-import type {
-  TSurveyImportLane,
-  TSurveyImportResult,
-  TSurveyImportTarget,
-} from "@/modules/survey/import/core/lane";
-import type { TSpreadsheetRead } from "@/modules/survey/import/core/read-upload";
+import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
+import { type TSpreadsheetRead, readingOrThrow } from "@/modules/survey/import/core/read-upload";
 import {
   type TSurveyImportUpload,
   openSurveyImportUpload,
   readSurveyImportUploadAs,
 } from "@/modules/survey/import/core/upload-thread";
 import { DOCUMENT_IMPORT_LANES } from "@/modules/survey/import/document/lane";
-import { excelExportImportLane } from "@/modules/survey/import/excel-export/lane";
+import { type TExcelExportTarget, excelExportImportLane } from "@/modules/survey/import/excel-export/lane";
 import { formbricksFileImportLane } from "@/modules/survey/import/formbricks/lane";
 import { SURVEY_IMPORT_DEADLINE_MS, SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
 import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
@@ -106,56 +101,20 @@ const openUpload = async (file: File, signal: AbortSignal): Promise<TSurveyImpor
  */
 const clientClosedRequest = () => new Response(null, { status: 499 });
 
-/**
- * Open the upload in its thread, or the response that refuses it: the client left, the file is refused,
- * or the server failed to read it.
- */
-const openUploadOrRefuse = async ({
-  req,
-  file,
-  requestId,
-  instance,
-  workspaceId,
-  organizationId,
-}: {
-  req: Request;
-  file: File;
-  requestId: string;
-  instance: string;
-  workspaceId: string;
-  organizationId: string;
-}): Promise<TSurveyImportUpload | Response> => {
-  try {
-    return await openUpload(file, req.signal);
-  } catch (error) {
-    if (isClientAbort(req.signal)) return clientClosedRequest();
-    const refusal = toRefusalResponse(error, requestId, instance);
-    if (refusal) return refusal;
-
-    logger
-      .withContext({ requestId, workspaceId, organizationId })
-      .error(
-        { ...loggableError(error), operation: OPERATION, statusCode: 500 },
-        "Survey import could not read the upload"
-      );
-    return problemInternalError(requestId, undefined, instance);
-  }
-};
+/** The context a request's failures are answered and logged with: any lane's run is given it whole. */
+type TSurveyImportFailureContext = Pick<
+  TSurveyImportLaneContext,
+  "req" | "requestId" | "instance" | "workspaceId" | "organizationId"
+>;
 
 /**
- * The response for a file its lane could not read: the client left, the file is refused, or the server
- * failed to read it.
+ * The response for an upload or a file that could not be read: the client left, the file is refused,
+ * or the server failed to read it. `sourceKind` is the lane's, once the file's type is known.
  */
 const toUnreadFileResponse = (
   error: unknown,
-  {
-    req,
-    requestId,
-    instance,
-    workspaceId,
-    organizationId,
-  }: Pick<TSurveyImportLaneContext, "req" | "requestId" | "instance" | "workspaceId" | "organizationId">,
-  sourceKind: string
+  { req, requestId, instance, workspaceId, organizationId }: TSurveyImportFailureContext,
+  sourceKind?: string
 ): Response => {
   if (isClientAbort(req.signal)) return clientClosedRequest();
   const refusal = toRefusalResponse(error, requestId, instance);
@@ -164,12 +123,24 @@ const toUnreadFileResponse = (
   // Not through mapV3ThrownError, which logs the error whole: a reader that fails on the file can
   // quote it in the message.
   logger
-    .withContext({ requestId, workspaceId, organizationId, sourceKind })
+    .withContext({ requestId, workspaceId, organizationId, ...(sourceKind ? { sourceKind } : {}) })
     .error(
       { ...loggableError(error), operation: OPERATION, statusCode: 500 },
       "Survey import could not read the file"
     );
   return problemInternalError(requestId, undefined, instance);
+};
+
+/** Open the upload in its thread, or the response that refuses it (`toUnreadFileResponse`). */
+const openUploadOrRefuse = async (
+  file: File,
+  context: TSurveyImportFailureContext
+): Promise<TSurveyImportUpload | Response> => {
+  try {
+    return await openUpload(file, context.req.signal);
+  } catch (error) {
+    return toUnreadFileResponse(error, context);
+  }
 };
 
 /**
@@ -207,10 +178,7 @@ export async function streamSurveyImport({
 
   const { organizationId, workspaceId } = workspaceAccess;
 
-  const upload = await openUploadOrRefuse({ req, file, requestId, instance, workspaceId, organizationId });
-  if (upload instanceof Response) return upload;
-
-  const lane = {
+  const lane: TSurveyImportLaneContext = {
     req,
     authentication,
     organizationId,
@@ -219,6 +187,9 @@ export async function streamSurveyImport({
     requestId,
     instance,
   };
+  const upload = await openUploadOrRefuse(file, lane);
+  if (upload instanceof Response) return upload;
+
   // The name the user's file had, cleaned for the report to show. Never a path, never stored.
   const fileName = getSurveyImportFileName(file);
 
@@ -261,36 +232,24 @@ export async function streamSurveyImport({
 }
 
 /**
- * The survey an Excel export names (ENG-6809), when the user may update it: in this workspace, not
- * archived, and one they may edit, checked as the Update checks it (`getAuthorizedV3Survey`). Anything
- * else is `null`, the same as a survey that never existed: the workbook then goes to the document
- * import like any other spreadsheet, so the import cannot be used to learn about surveys the user
- * cannot see.
+ * The survey an Excel export names (ENG-6809), when the user may update it: found as a Formbricks file's
+ * Match is (`findUpdatableSurvey`), so anything else is `null`, the same as a survey that never existed,
+ * and the workbook goes to the document import like any other spreadsheet.
  */
-const findExcelExportTarget = async ({
-  surveyId,
-  workspaceId,
-  authentication,
-  requestId,
-  instance,
-}: {
-  surveyId: string;
-  workspaceId: string;
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
-}): Promise<TSurveyImportTarget | null> => {
-  // The id is the file's, and untrusted: only a well-formed one is looked up.
-  if (!ZId.safeParse(surveyId).success) return null;
-  const { survey, visibility } = await getAuthorizedV3Survey({
+const findExcelExportTarget = async (
+  surveyId: string,
+  { authentication, workspaceId, organizationId }: TSurveyImportLaneContext
+): Promise<TExcelExportTarget | null> => {
+  const found = await findUpdatableSurvey({
     surveyId,
-    authentication,
-    access: "readWrite",
-    requestId,
-    instance,
+    workspaceId,
+    actor: getV3AuthorizationActor(authentication),
   });
-  if (!survey || survey.workspaceId !== workspaceId || survey.archivedAt) return null;
-  return { survey, visibility };
+  if (!found) return null;
+  return {
+    ...found,
+    visibility: await resolveV3SurveyResourceVisibility(found.survey, authentication, organizationId),
+  };
 };
 
 /**
@@ -301,8 +260,8 @@ const findExcelExportTarget = async ({
  *
  * The workbook is read for both, in one parse, before either lane's checks: which lane it takes, and so
  * which rate limit and AI gate apply, is known only once its meta sheet is read. The read is bounded by
- * the upload's limits and runs in its thread, as every read does. A document reading the document import
- * would refuse is refused there, after its rate limit and AI gate, as on main.
+ * the upload's limits and runs in its thread, as every read does, the same as a Formbricks file's, which
+ * has no lane limit either. What a lane refuses is refused in that lane, after its rate limit and AI gate.
  */
 const streamSpreadsheetImport = async ({
   lane,
@@ -313,7 +272,6 @@ const streamSpreadsheetImport = async ({
   upload: TSurveyImportUpload;
   fileName: string;
 }): Promise<Response> => {
-  const { authentication } = lane;
   let spreadsheet: TSpreadsheetRead;
   try {
     spreadsheet = await readSurveyImportUploadAs(upload, "xlsx", fileName);
@@ -322,27 +280,21 @@ const streamSpreadsheetImport = async ({
   }
 
   const { excelExport, document } = spreadsheet;
-  const target = excelExport
-    ? await findExcelExportTarget({
-        surveyId: excelExport.surveyId,
-        workspaceId: lane.workspaceId,
-        authentication,
-        requestId: lane.requestId,
-        instance: lane.instance,
-      })
-    : null;
+  const target = excelExport ? await findExcelExportTarget(excelExport.surveyId, lane) : null;
 
   if (excelExport && target) {
+    const { reading } = excelExport;
     return runSurveyImportLane({
       ...lane,
       lane: excelExportImportLane,
       input: {
-        read: async () => excelExport,
+        read: async () => readingOrThrow(reading).read,
         fileName,
         workspaceId: lane.workspaceId,
         organizationId: lane.organizationId,
-        authentication,
+        authentication: lane.authentication,
         target,
+        signal: lane.req.signal,
       },
     });
   }
@@ -350,12 +302,7 @@ const streamSpreadsheetImport = async ({
   return runSurveyImportLane({
     ...lane,
     lane: DOCUMENT_IMPORT_LANES.xlsx,
-    input: {
-      read: async () => {
-        if ("refusal" in document) throw fromSurveyImportRefusal(document.refusal);
-        return document.prepared;
-      },
-    },
+    input: { read: async () => readingOrThrow(document).prepared },
   });
 };
 

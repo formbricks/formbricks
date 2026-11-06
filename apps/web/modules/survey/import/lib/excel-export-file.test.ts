@@ -66,6 +66,15 @@ describe("isExcelExportArchive", () => {
     });
     expect(isExport(workbookOf({ Questions: [["key"]], [EXCEL_EXPORT_META_SHEET]: metaRows }))).toBe(true);
     expect(isExport(workbookOf({ [EXCEL_EXPORT_META_SHEET]: metaRows, Questions: [["key"]] }))).toBe(false);
+    expect(isExport(workbookOf({ Questions: [["Question"]], [EXCEL_EXPORT_META_SHEET]: metaRows }))).toBe(
+      false
+    );
+  });
+
+  test("tells apart an export whose texts sheet lost its key column", () => {
+    expect(isExport(editExcelExport(exported(), (rows) => rows.map(([, ...rest]) => ["", ...rest])))).toBe(
+      false
+    );
   });
 
   test("tells apart a meta sheet of another format, with a label missing or moved, or no survey id", () => {

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as XLSX from "xlsx";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { problemForbidden } from "@/app/api/v3/lib/response";
 import { editExcelExport, rowOf } from "@/modules/survey/excel-export/__fixtures__/edit-sheet";
 import { createIcuTranslate } from "@/modules/survey/excel-export/__fixtures__/translate";
 import { writeExcelExport } from "@/modules/survey/excel-export/write";
@@ -20,14 +19,14 @@ import { streamSurveyImport } from "./operations";
 
 const mocks = vi.hoisted(() => ({
   requireV3WorkspaceAccess: vi.fn(),
-  getAuthorizedV3Survey: vi.fn(),
+  findUpdatableSurvey: vi.fn(),
+  resolveV3SurveyResourceVisibility: vi.fn(),
   applyRateLimit: vi.fn(),
   assertOrganizationAIConfigured: vi.fn(),
   previewFormbricksFileImport: vi.fn(),
   exportFormbricksFile: vi.fn(),
   readFormbricksFile: vi.fn(),
   buildFormbricksFileMatch: vi.fn(),
-  hasSurveyResponses: vi.fn(),
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
@@ -36,7 +35,9 @@ vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: mocks.requireV3WorkspaceAccess,
   getV3AuthorizationActor: () => ({ type: "user", id: "user_1" }),
 }));
-vi.mock("@/app/api/v3/surveys/authorization", () => ({ getAuthorizedV3Survey: mocks.getAuthorizedV3Survey }));
+vi.mock("@/app/api/v3/surveys/visibility-context", () => ({
+  resolveV3SurveyResourceVisibility: mocks.resolveV3SurveyResourceVisibility,
+}));
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   getSessionUserId: (authentication: { user?: { id?: string } }) => authentication?.user?.id ?? null,
 }));
@@ -69,7 +70,9 @@ vi.mock("@/modules/survey/formbricks-file/read", async (importOriginal) => ({
 vi.mock("@/modules/survey/formbricks-file/update", () => ({
   buildFormbricksFileMatch: mocks.buildFormbricksFileMatch,
   findFormbricksFileMatch: vi.fn(),
-  hasSurveyResponses: mocks.hasSurveyResponses,
+  // The gate itself — workspace, archive, permission, the id's shape — runs against a real database in
+  // `document-import.integration.test.ts`; here, what the route does with its answer.
+  findUpdatableSurvey: mocks.findUpdatableSurvey,
 }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => mocks.log), error: vi.fn(), warn: vi.fn() },
@@ -79,6 +82,7 @@ const INSTANCE = "/api/internal/surveys/import/stream";
 const WORKSPACE_ID = "clworkspace00000000000001";
 const t = createIcuTranslate("en-US");
 const UPDATED_AT = new Date("2026-11-06T10:00:00.000Z");
+const EDITED_LATER = new Date("2026-11-06T11:00:00.000Z");
 const SURVEY = {
   ...EVERY_TEXT_SURVEY,
   workspaceId: WORKSPACE_ID,
@@ -110,12 +114,7 @@ const readEvents = async (response: Response) =>
 const sheetFile = (bytes: Uint8Array, name = "Every text.xlsx") => new File([new Uint8Array(bytes)], name);
 const exportOf = (survey: TSurvey) => sheetFile(writeExcelExport({ survey, t, locale: "en-US" }));
 
-const authorized = (survey: TSurvey) => ({
-  survey,
-  authResult: { organizationId: "clorg000000000000000001" },
-  response: null,
-  visibility: VISIBILITY,
-});
+const found = (survey: TSurvey, hasResponses = false) => ({ survey, hasResponses });
 
 /** The response went through the document lane: it reached the AI gate, and no survey was matched. */
 const expectDocumentLane = async (response: Response) => {
@@ -132,7 +131,8 @@ beforeEach(() => {
     organizationId: "clorg000000000000000001",
     workspaceId: WORKSPACE_ID,
   });
-  mocks.getAuthorizedV3Survey.mockResolvedValue(authorized(SURVEY));
+  mocks.findUpdatableSurvey.mockResolvedValue(found(SURVEY));
+  mocks.resolveV3SurveyResourceVisibility.mockResolvedValue(VISIBILITY);
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.assertOrganizationAIConfigured.mockRejectedValue(new OperationNotAllowedError(AI_GATE_CODE));
   mocks.exportFormbricksFile.mockResolvedValue({ formbricks: {}, survey: {}, references: {} });
@@ -149,11 +149,10 @@ beforeEach(() => {
     plan: { actionClasses: new Map(), attributeKeysToCreate: [], languagesToCreate: [], issues: [] },
   });
   mocks.buildFormbricksFileMatch.mockResolvedValue(MATCH);
-  mocks.hasSurveyResponses.mockResolvedValue(false);
 });
 
 describe("streamSurveyImport: an Excel export of a survey the user may update", () => {
-  test("is applied to that survey with no AI and offered as the Match, checked against the survey as read now", async () => {
+  test("is applied to that survey with no AI and offered as the Match, checked against the survey as exported", async () => {
     const bytes = editExcelExport(writeExcelExport({ survey: SURVEY, t, locale: "en-US" }), (rows) => {
       rows[rowOf(rows, "element.open.headline")][4] = "Was können wir besser machen?";
       return rows;
@@ -164,9 +163,11 @@ describe("streamSurveyImport: an Excel export of a survey the user may update", 
 
     expect(response.status).toBe(200);
     expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
-    expect(mocks.getAuthorizedV3Survey).toHaveBeenCalledWith(
-      expect.objectContaining({ surveyId: SURVEY.id, access: "readWrite" })
-    );
+    expect(mocks.findUpdatableSurvey).toHaveBeenCalledWith({
+      surveyId: SURVEY.id,
+      workspaceId: WORKSPACE_ID,
+      actor: { type: "user", id: "user_1" },
+    });
     // The survey the draft is written from has the sheet's text, and is written as the user sees it.
     const [{ survey: applied, visibility }] = mocks.exportFormbricksFile.mock.calls[0];
     expect(visibility).toBe(VISIBILITY);
@@ -195,45 +196,60 @@ describe("streamSurveyImport: an Excel export of a survey the user may update", 
   });
 
   test("tells the Match the survey has responses, so the review lists what an Update would remove", async () => {
-    mocks.hasSurveyResponses.mockResolvedValue(true);
+    mocks.findUpdatableSurvey.mockResolvedValue(found(SURVEY, true));
 
     await readEvents(await importFile(exportOf(SURVEY)));
 
-    expect(mocks.hasSurveyResponses).toHaveBeenCalledWith(SURVEY.id);
     expect(mocks.buildFormbricksFileMatch).toHaveBeenCalledWith(
       expect.objectContaining({ hasResponses: true })
     );
+  });
+
+  test("of a survey changed since, is checked against the export time, so an Update asks before overwriting", async () => {
+    const bytes = exportOf(SURVEY);
+    mocks.findUpdatableSurvey.mockResolvedValue(found({ ...SURVEY, updatedAt: EDITED_LATER } as TSurvey));
+
+    await readEvents(await importFile(bytes));
+
+    expect(mocks.buildFormbricksFileMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ exportedUpdatedAt: UPDATED_AT.toISOString() })
+    );
+  });
+
+  test("past the text cap is refused for its survey, without AI", async () => {
+    const big = "x".repeat(32_000);
+    const bytes = editExcelExport(writeExcelExport({ survey: SURVEY, t, locale: "en-US" }), (rows) => [
+      ...rows,
+      ...Array.from({ length: 200 }, (_, index) => ["", `q${index}`, "Free text", big]),
+    ]);
+
+    const response = await importFile(sheetFile(bytes));
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      invalid_params: [expect.objectContaining({ code: "document_limit_exceeded", identifier: "text_size" })],
+    });
+    expect(mocks.assertOrganizationAIConfigured).not.toHaveBeenCalled();
   });
 });
 
 describe("streamSurveyImport: any other workbook goes to the document import", () => {
   test("an export of a survey the user may not update, the same as one of a survey that never existed", async () => {
-    const forbidden = problemForbidden("req_1", "You are not authorized to access this resource", INSTANCE);
-    mocks.getAuthorizedV3Survey.mockResolvedValue({ survey: null, authResult: null, response: forbidden });
+    mocks.findUpdatableSurvey.mockResolvedValue(null);
 
     await expectDocumentLane(await importFile(exportOf(SURVEY)));
+    expect(mocks.resolveV3SurveyResourceVisibility).not.toHaveBeenCalled();
   });
 
-  test("an export of a survey in another workspace", async () => {
-    mocks.getAuthorizedV3Survey.mockResolvedValue(
-      authorized({ ...SURVEY, workspaceId: "clotherworkspace000000001" } as TSurvey)
-    );
+  test("an export past the text cap, of a survey the user may not update", async () => {
+    mocks.findUpdatableSurvey.mockResolvedValue(null);
+    const big = "x".repeat(32_000);
+    const bytes = editExcelExport(writeExcelExport({ survey: SURVEY, t, locale: "en-US" }), (rows) => [
+      ...rows,
+      ...Array.from({ length: 200 }, (_, index) => ["", `q${index}`, "Free text", big]),
+    ]);
 
-    await expectDocumentLane(await importFile(exportOf(SURVEY)));
-  });
-
-  test("an export of an archived survey", async () => {
-    mocks.getAuthorizedV3Survey.mockResolvedValue(
-      authorized({ ...SURVEY, archivedAt: new Date() } as TSurvey)
-    );
-
-    await expectDocumentLane(await importFile(exportOf(SURVEY)));
-  });
-
-  test("an export whose survey id is not one, without looking it up", async () => {
-    await expectDocumentLane(await importFile(exportOf({ ...SURVEY, id: "../../surveys" } as TSurvey)));
-
-    expect(mocks.getAuthorizedV3Survey).not.toHaveBeenCalled();
+    await expectDocumentLane(await importFile(sheetFile(bytes)));
   });
 
   test("an export this version can't read back, its key column cleared, without looking it up", async () => {
@@ -243,7 +259,7 @@ describe("streamSurveyImport: any other workbook goes to the document import", (
 
     await expectDocumentLane(await importFile(sheetFile(bytes)));
 
-    expect(mocks.getAuthorizedV3Survey).not.toHaveBeenCalled();
+    expect(mocks.findUpdatableSurvey).not.toHaveBeenCalled();
   });
 
   test("a workbook with no export sheet, without looking anything up", async () => {
@@ -260,7 +276,7 @@ describe("streamSurveyImport: any other workbook goes to the document import", (
 
     await expectDocumentLane(await importFile(sheetFile(bytes, "questions.xlsx")));
 
-    expect(mocks.getAuthorizedV3Survey).not.toHaveBeenCalled();
+    expect(mocks.findUpdatableSurvey).not.toHaveBeenCalled();
   });
 
   test("a workbook the document import refuses is refused after the AI gate, as on any spreadsheet", async () => {

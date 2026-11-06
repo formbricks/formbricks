@@ -15,6 +15,7 @@ export const EVERY_TEXT_SURVEY = {
   name: "Every text",
   type: "link",
   status: "draft",
+  updatedAt: new Date("2026-10-30T12:00:00.000Z"),
   welcomeCard: {
     enabled: true,
     headline: { default: "Welcome", de: "Willkommen" },

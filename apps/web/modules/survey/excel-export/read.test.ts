@@ -2,20 +2,20 @@ import { describe, expect, test } from "vitest";
 import * as XLSX from "xlsx";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
-import { openZipArchive } from "@/modules/survey/import/core/zip";
 import { SURVEY_IMPORT_SHEET_MAX_CELL_CHARS } from "@/modules/survey/import/limits";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
 import { editExcelExport } from "./__fixtures__/edit-sheet";
+import { readExportBytes } from "./__fixtures__/read-export";
 import { createIcuTranslate } from "./__fixtures__/translate";
 import { EXCEL_EXPORT_META_SHEET } from "./format";
 import { EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS } from "./limits";
-import { ExcelExportNotRecognizedError, readExcelExport } from "./read";
+import { ExcelExportNotRecognizedError } from "./read";
 import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
 const exported = () =>
   writeExcelExport({ survey: EVERY_TEXT_SURVEY as unknown as TSurvey, t, locale: "en-US" });
-const read = (bytes: Uint8Array) => readExcelExport(openZipArchive(bytes));
+const read = readExportBytes;
 
 /** The workbook with its meta sheet's rows changed by `edit`. */
 const editMeta = (bytes: Uint8Array, edit: (rows: string[][]) => string[][] | null): Uint8Array => {
@@ -47,12 +47,13 @@ const refusalOf = (run: () => unknown): string | undefined => {
   return undefined;
 };
 
-describe("readExcelExport", () => {
+describe("excelExportFromBook", () => {
   test("reads every row of an export with its key, Question ID, Type and one cell per language", () => {
     const sheet = read(exported());
 
     expect(sheet.locale).toBe("en-US");
     expect(sheet.surveyId).toBe(EVERY_TEXT_SURVEY.id);
+    expect(sheet.updatedAt).toBe("2026-10-30T12:00:00.000Z");
     expect(sheet.languages).toEqual([
       { code: "en", column: 3 },
       { code: "de", column: 4 },
@@ -164,5 +165,15 @@ describe("readExcelExport", () => {
     ).toBe("not_recognized");
     // An export written before the meta sheet named its survey.
     expect(refusalOf(() => read(editMeta(exported(), (rows) => rows.slice(0, 5))))).toBe("not_recognized");
+    // An export time that is not one.
+    expect(
+      refusalOf(() =>
+        read(
+          editMeta(exported(), (rows) =>
+            rows.map((row, index) => (index === 6 ? [row[0], "yesterday"] : row))
+          )
+        )
+      )
+    ).toBe("not_recognized");
   });
 });

@@ -21,6 +21,7 @@ import {
   EXCEL_EXPORT_META_LOCALE,
   EXCEL_EXPORT_META_SHEET,
   EXCEL_EXPORT_META_SURVEY_ID,
+  EXCEL_EXPORT_META_UPDATED_AT,
 } from "./format";
 import { createLogicRenderer } from "./logic";
 import { getSurveySheetRows } from "./survey-sheet";
@@ -263,6 +264,7 @@ export const writeExcelExport = ({
       [EXCEL_EXPORT_META_COLUMNS, questionIdHeader, typeHeader],
       [EXCEL_EXPORT_META_LOCALE, locale],
       [EXCEL_EXPORT_META_SURVEY_ID, survey.id],
+      [EXCEL_EXPORT_META_UPDATED_AT, survey.updatedAt.toISOString()],
     ],
     truncatedSuffix
   );

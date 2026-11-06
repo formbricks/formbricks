@@ -1,17 +1,18 @@
 import { ZId } from "@formbricks/types/common";
 import {
-  EXCEL_EXPORT_FORMAT,
+  EXCEL_EXPORT_KEY_HEADER,
   EXCEL_EXPORT_META_ROWS,
   EXCEL_EXPORT_META_SHEET,
   EXCEL_EXPORT_META_SURVEY_ID,
+  isExcelExportMetaLayout,
 } from "@/modules/survey/excel-export/format";
 import { type TZipArchive, openZipArchive } from "@/modules/survey/import/core/zip";
 
 /**
  * Whether an `.xlsx` is laid out as a Formbricks Excel export (ENG-6809), told in the browser from a few
- * small parts of it: the workbook names a meta sheet `formbricks` that is not its first sheet, and that
- * sheet has the export's labels down column A, in order, with this version's format and a survey id
- * beside them.
+ * parts of it: the workbook's meta sheet `formbricks` comes after its first sheet and is laid out as this
+ * version writes it (`isExcelExportMetaLayout`, the rule the server's reader holds it to), with a survey
+ * id; and the first sheet, the texts, has the key column, `key` in column A.
  *
  * Without Formbricks AI, the import dialog uploads only such a workbook: the server reads it without AI
  * when the survey it names is one the user may update, and sends any other workbook to the AI document
@@ -21,6 +22,9 @@ import { type TZipArchive, openZipArchive } from "@/modules/survey/import/core/z
  * The archive is opened with the upload's zip guard (`openZipArchive`), so a zip bomb costs its
  * directory here as it does on the server. Anything that cannot be read is not an export.
  */
+
+/** Column letters by zero-based index, as far as the meta sheet's cells reach. */
+const COLUMNS = "ABC";
 
 const RELATIONSHIPS_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 const OFFICE_DOCUMENT_TYPE = `${RELATIONSHIPS_NS}/officeDocument`;
@@ -106,19 +110,26 @@ export const isExcelExportArchive = (archive: TZipArchive): boolean => {
   if (!meta) return false;
 
   let sharedStrings: string[] | null = null;
-  const cells = readCells(meta, () => {
+  const sharedStringsOf = () => {
     if (sharedStrings) return sharedStrings;
     const part = relationships.byType(SHARED_STRINGS_TYPE);
     const document = part ? parseXml(archive, part) : null;
     sharedStrings = document ? elements(document, "si").map(itemText) : [];
     return sharedStrings;
-  });
+  };
+  const cells = readCells(meta, sharedStringsOf);
 
-  const surveyIdRow = EXCEL_EXPORT_META_ROWS.indexOf(EXCEL_EXPORT_META_SURVEY_ID) + 1;
-  return (
-    EXCEL_EXPORT_META_ROWS.every((label, index) => cells.get(`A${index + 1}`) === label) &&
-    cells.get("B1") === String(EXCEL_EXPORT_FORMAT) &&
-    ZId.safeParse(cells.get(`B${surveyIdRow}`)?.trim()).success
+  const cellAt = (row: number, column: number) => cells.get(`${COLUMNS[column]}${row + 1}`) ?? "";
+  const surveyIdRow = EXCEL_EXPORT_META_ROWS.indexOf(EXCEL_EXPORT_META_SURVEY_ID);
+  if (!isExcelExportMetaLayout(cellAt) || !ZId.safeParse(cellAt(surveyIdRow, 1).trim()).success) return false;
+
+  // The texts sheet's key column, as the server finds it: a row whose column A reads `key`.
+  const textsId = sheets[0].getAttributeNS(RELATIONSHIPS_NS, "id");
+  const textsPart = textsId ? relationships.byId(textsId) : null;
+  const texts = textsPart ? parseXml(archive, textsPart) : null;
+  if (!texts) return false;
+  return [...readCells(texts, sharedStringsOf).entries()].some(
+    ([reference, text]) => /^A\d+$/.test(reference) && text === EXCEL_EXPORT_KEY_HEADER
   );
 };
 

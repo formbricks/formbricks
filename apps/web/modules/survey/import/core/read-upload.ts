@@ -1,9 +1,9 @@
-import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/format";
 import {
+  EXCEL_EXPORT_SHEETS,
   ExcelExportNotRecognizedError,
   type TExcelExportRead,
   excelExportFromBook,
-  hasExcelExportMeta,
+  excelExportSurveyIdOf,
 } from "@/modules/survey/excel-export/read";
 import { type TFormbricksFileRead, readFormbricksFile } from "@/modules/survey/formbricks-file/read";
 import type { TDocumentKind } from "../document/model";
@@ -14,20 +14,30 @@ import {
 } from "../document/prepare";
 import { readCheckedWorkbook, sheetDocumentFromBook } from "../document/read-sheet";
 import { type TPreparedQsfImport, prepareQsfImport } from "../qsf/prepare";
-import { type TSurveyImportRefusal, toSurveyImportRefusal } from "./errors";
+import { type TSurveyImportRefusal, fromSurveyImportRefusal, toSurveyImportRefusal } from "./errors";
 import type { TSurveyImportFile } from "./sniff";
+
+/** A reading of an upload that is either what its lane reads, or the refusal its lane answers with. */
+export type TReadingOrRefusal<TRead> = TRead | { refusal: TSurveyImportRefusal };
+
+/** A reading's value, for the lane that was picked; the refusal it carries is thrown there. */
+export const readingOrThrow = <TRead extends object>(reading: TReadingOrRefusal<TRead>): TRead => {
+  if ("refusal" in reading) throw fromSurveyImportRefusal(reading.refusal);
+  return reading;
+};
 
 /**
  * A workbook read for both of its lanes (ENG-6809), from one parse of the file: as a Formbricks Excel
- * export, when it has the export's meta sheet, and as a question list for the document import. The
- * route picks the lane once it knows whether the export's survey is one the user may update, so both
- * readings come back; a document reading that is refused travels as its refusal, thrown only if the
- * document lane is the one picked.
+ * export, when its meta sheet is one, and as a question list for the document import. The route picks
+ * the lane once it knows whether the export's survey is one the user may update, so both readings come
+ * back, each with the refusal its lane would answer instead, thrown only if that lane is picked: an
+ * export past the text cap is refused for its survey, and read as any spreadsheet otherwise.
  */
 export interface TSpreadsheetRead {
   type: "xlsx";
-  excelExport: TExcelExportRead | null;
-  document: { prepared: TPreparedDocumentImport } | { refusal: TSurveyImportRefusal };
+  /** The survey the export names (untrusted), and its rows; `null` for a workbook that is no export. */
+  excelExport: { surveyId: string; reading: TReadingOrRefusal<{ read: TExcelExportRead }> } | null;
+  document: TReadingOrRefusal<{ prepared: TPreparedDocumentImport }>;
 }
 
 /**
@@ -42,14 +52,28 @@ export type TSurveyImportUploadRead =
   | TSpreadsheetRead
   | { type: Exclude<TDocumentKind, "xlsx">; prepared: TPreparedDocumentImport };
 
-/** The export reading of a workbook with the meta sheet; `null` when that sheet is not one this reads. */
-const readExcelExportOf = (book: Parameters<typeof excelExportFromBook>[0]): TExcelExportRead | null => {
-  if (!hasExcelExportMeta(book)) return null;
+/** `read()`, or the refusal it threw; anything that is no refusal is thrown on. */
+const readOrRefusal = <TRead>(read: () => TRead): TReadingOrRefusal<TRead> => {
   try {
-    return excelExportFromBook(book);
+    return read();
   } catch (error) {
-    // A meta sheet of another format, or a sheet without its key column: an ordinary spreadsheet.
-    if (error instanceof ExcelExportNotRecognizedError) return null;
+    const refusal = toSurveyImportRefusal(error);
+    if (!refusal) throw error;
+    return { refusal };
+  }
+};
+
+/** The export reading of a parsed workbook; `null` when its meta sheet is missing or not one this reads. */
+const readExcelExportOf = (
+  book: Parameters<typeof excelExportFromBook>[0]
+): TSpreadsheetRead["excelExport"] => {
+  try {
+    const surveyId = excelExportSurveyIdOf(book);
+    return { surveyId, reading: readOrRefusal(() => ({ read: excelExportFromBook(book) })) };
+  } catch (error) {
+    // A meta sheet of another format or past the sheet limits, or a texts sheet without its key column:
+    // an ordinary spreadsheet, as far as the document import can read it.
+    if (error instanceof ExcelExportNotRecognizedError || toSurveyImportRefusal(error)) return null;
     throw error;
   }
 };
@@ -60,19 +84,14 @@ const readSpreadsheet = (
 ): TSpreadsheetRead => {
   // The first sheet and the export's meta sheet, parsed once: the zip guard counts every part it
   // inflates, so a second parse would count the file twice.
-  const book = readCheckedWorkbook(upload.archive, [0, EXCEL_EXPORT_META_SHEET]);
-  const excelExport = readExcelExportOf(book);
-  try {
-    return {
-      type: "xlsx",
-      excelExport,
-      document: { prepared: prepareDocumentModel(sheetDocumentFromBook(book), fileName) },
-    };
-  } catch (error) {
-    const refusal = toSurveyImportRefusal(error);
-    if (!refusal) throw error;
-    return { type: "xlsx", excelExport, document: { refusal } };
-  }
+  const book = readCheckedWorkbook(upload.archive, EXCEL_EXPORT_SHEETS);
+  return {
+    type: "xlsx",
+    excelExport: readExcelExportOf(book),
+    document: readOrRefusal(() => ({
+      prepared: prepareDocumentModel(sheetDocumentFromBook(book), fileName),
+    })),
+  };
 };
 
 /**

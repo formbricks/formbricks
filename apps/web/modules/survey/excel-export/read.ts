@@ -1,13 +1,7 @@
 import type * as XLSX from "xlsx";
-import type { TZipArchive } from "@/modules/survey/import/core/zip";
 import { documentLimitExceeded } from "@/modules/survey/import/document/errors";
-import { readCheckedWorkbook, readSheetText } from "@/modules/survey/import/document/read-sheet";
-import {
-  EXCEL_EXPORT_FORMAT,
-  EXCEL_EXPORT_KEY_HEADER,
-  EXCEL_EXPORT_META_ROWS,
-  EXCEL_EXPORT_META_SHEET,
-} from "./format";
+import { readSheetText } from "@/modules/survey/import/document/read-sheet";
+import { EXCEL_EXPORT_KEY_HEADER, EXCEL_EXPORT_META_SHEET, isExcelExportMetaLayout } from "./format";
 import { EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS } from "./limits";
 
 /**
@@ -50,6 +44,8 @@ export interface TExcelExportRead {
    * would authorize it, and never used before that.
    */
   surveyId: string;
+  /** When that survey was last changed, as exported (ISO 8601): what an Update checks it against. */
+  updatedAt: string;
   rows: TExcelExportRow[];
   /** Rows whose key an earlier row already has: the first one is read. 1-based. */
   duplicateRows: number[];
@@ -76,7 +72,17 @@ interface TMeta {
   typeHeader: string;
   locale: string;
   surveyId: string;
+  updatedAt: string;
 }
+
+/** An ISO 8601 instant as the export wrote it, or a refusal: the file is untrusted. */
+const toIsoInstant = (text: string): string => {
+  const time = Date.parse(text);
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(text) || Number.isNaN(time)) {
+    throw excelExportNotRecognized("The Formbricks export sheet's export time is not a date");
+  }
+  return new Date(time).toISOString();
+};
 
 /** The meta sheet, read from A1, or a refusal when it is missing, moved or of another format. */
 const readMeta = (book: XLSX.WorkBook): TMeta => {
@@ -86,8 +92,7 @@ const readMeta = (book: XLSX.WorkBook): TMeta => {
   if (
     origin.row !== 0 ||
     origin.column !== 0 ||
-    EXCEL_EXPORT_META_ROWS.some((label, row) => cell(rows, row, 0) !== label) ||
-    cell(rows, 0, 1) !== String(EXCEL_EXPORT_FORMAT)
+    !isExcelExportMetaLayout((row, column) => cell(rows, row, column))
   ) {
     throw excelExportNotRecognized("The Formbricks export sheet is not in a format this version reads");
   }
@@ -98,7 +103,6 @@ const readMeta = (book: XLSX.WorkBook): TMeta => {
     if (!code) break;
     languages.push({ code, header: cell(rows, 2, column) });
   }
-  if (languages.length === 0) throw excelExportNotRecognized("The Formbricks export sheet names no language");
   if (new Set(languages.map(({ code }) => code)).size !== languages.length) {
     throw excelExportNotRecognized("The Formbricks export sheet names a language twice");
   }
@@ -108,6 +112,7 @@ const readMeta = (book: XLSX.WorkBook): TMeta => {
     typeHeader: cell(rows, 3, 2),
     locale: cell(rows, 4, 1).trim(),
     surveyId: cell(rows, 5, 1).trim(),
+    updatedAt: toIsoInstant(cell(rows, 6, 1).trim()),
   };
 };
 
@@ -118,25 +123,23 @@ const findColumn = (header: readonly string[], text: string): number | null => {
   return index < 0 ? null : index;
 };
 
+/** The sheets `excelExportFromBook` reads, for `readCheckedWorkbook` to parse: the texts and the meta. */
+export const EXCEL_EXPORT_SHEETS = [0, EXCEL_EXPORT_META_SHEET];
+
 /**
- * Read an Excel export (the archive the sniffer opened). Throws `ExcelExportNotRecognizedError` for a
- * workbook that is not one, `SurveyImportInputError` (422) for one past the sheet or XML limits,
- * and `SurveyImportFileTooLargeError` (413) past the zip limits.
+ * The survey a parsed workbook's meta sheet names, as the file says it: untrusted. Throws
+ * `ExcelExportNotRecognizedError` for a workbook whose meta sheet is missing or not this version's.
+ */
+export const excelExportSurveyIdOf = (book: XLSX.WorkBook): string => readMeta(book).surveyId;
+
+/**
+ * A workbook `readCheckedWorkbook` parsed (`EXCEL_EXPORT_SHEETS`) read as an Excel export. Throws
+ * `ExcelExportNotRecognizedError` for a workbook that is not one, and `SurveyImportInputError` (422) for
+ * one past the sheet limits or the text cap.
  *
  * The texts sheet is the first one, with the key column at A and its header row where A reads `key`.
  * The other columns are found by their headers, as exported, so they may be moved; a language column
  * whose header was changed is reported, not guessed.
- */
-export const readExcelExport = (archive: TZipArchive): TExcelExportRead =>
-  excelExportFromBook(readCheckedWorkbook(archive, [0, EXCEL_EXPORT_META_SHEET]));
-
-/** Whether a parsed workbook has the export's meta sheet: whether to read it as an Excel export. */
-export const hasExcelExportMeta = (book: XLSX.WorkBook): boolean =>
-  book.Sheets[EXCEL_EXPORT_META_SHEET] !== undefined;
-
-/**
- * A workbook `readCheckedWorkbook` parsed — its first sheet and the meta sheet — read as an Excel export.
- * Throws as `readExcelExport` does.
  */
 export const excelExportFromBook = (book: XLSX.WorkBook): TExcelExportRead => {
   const meta = readMeta(book);
@@ -160,6 +163,7 @@ export const excelExportFromBook = (book: XLSX.WorkBook): TExcelExportRead => {
     languages,
     locale: meta.locale,
     surveyId: meta.surveyId,
+    updatedAt: meta.updatedAt,
     ...readTextRows({
       rows: rows.slice(headerIndex + 1),
       firstRow: origin.row + headerIndex + 2,

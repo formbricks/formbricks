@@ -1,5 +1,3 @@
-import type { TSurvey } from "@formbricks/types/surveys/types";
-import type { TV3SurveyResourceVisibility } from "@/app/api/v3/surveys/serializers";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
 import type {
@@ -40,16 +38,6 @@ export interface TSurveyImportLane<TInput, TPrepared> {
   rateLimit: TRateLimitConfig | null;
   prepare: (input: TInput) => TPrepared | Promise<TPrepared>;
   run: (params: TSurveyImportRunParams<TPrepared>) => Promise<TSurveyImportResult>;
-}
-
-/**
- * The survey an Excel export names (ENG-6809), as the route authorized it for writing: the survey the
- * sheet's edits are applied to, and the one the review offers to update.
- */
-export interface TSurveyImportTarget {
-  survey: TSurvey;
-  /** How the importing user sees the survey, which its Formbricks file is written with. */
-  visibility: TV3SurveyResourceVisibility;
 }
 
 export interface TSurveyImportRunParams<TPrepared> {

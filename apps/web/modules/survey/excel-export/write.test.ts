@@ -211,8 +211,10 @@ describe("writeExcelExport", () => {
       ["headers", ...languageHeaders.slice(1)],
       ["columns", "Question ID", "Type"],
       ["locale", "en-US", ""],
-      // New survey › Import matches the file with this survey by it (ENG-6809).
+      // New survey › Import matches the file with this survey by it, and checks an Update against the
+      // survey as exported (ENG-6809).
       ["surveyId", SURVEY.id, ""],
+      ["updatedAt", UPDATED_AT.toISOString(), ""],
     ]);
   });
 

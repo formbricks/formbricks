@@ -252,6 +252,7 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       "columns",
       "locale",
       "surveyId",
+      "updatedAt",
     ]);
     expect(meta[0][1]).toBe("1");
     expect(meta[5][1]).toBe(draftSurveyId);

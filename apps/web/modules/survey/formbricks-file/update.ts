@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
+import { ZId } from "@formbricks/types/common";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey, TSurveyStatus } from "@formbricks/types/surveys/types";
@@ -122,12 +123,47 @@ const getTriggersState = async ({
   return blocked ? "keep_only" : "differ";
 };
 
+/** A survey an import may offer to update, as the Update reads it, and whether it has responses. */
+export interface TUpdatableSurvey {
+  survey: TSurvey;
+  hasResponses: boolean;
+}
+
 /**
- * The Match for a previewed file: the survey it was exported from, if that survey is in `workspaceId`,
- * not archived, and one `actor` may edit. Anything else is `null`, the same as a survey that never
- * existed, so the preview cannot be used to learn about surveys the user cannot see.
+ * The survey an import may offer to update (its Match): `surveyId`, as a file names it, when that survey
+ * is in `workspaceId`, not archived, and one `actor` may edit. Anything else — a malformed id, another
+ * workspace's survey, an archived one, one the user may only read — is `null`, the same as a survey
+ * that never existed, so an import cannot be used to learn about surveys the user cannot see. The one
+ * gate every import's Match goes through: a Formbricks file's and an Excel export's (ENG-6809).
  *
- * The caller has already checked that the user may write in the workspace.
+ * The workspace and the archive are matched in the query itself; the caller has already checked that the
+ * user may write in the workspace.
+ */
+export const findUpdatableSurvey = async ({
+  surveyId,
+  workspaceId,
+  actor,
+}: {
+  surveyId: string;
+  workspaceId: string;
+  actor: TAuthorizationActor | null;
+}): Promise<TUpdatableSurvey | null> => {
+  if (!actor || !ZId.safeParse(surveyId).success) return null;
+
+  // The survey as the Update reads it, so the preview runs the Update's own checks on it.
+  const row = await prisma.survey.findFirst({
+    where: { id: surveyId, workspaceId, archivedAt: null },
+    select: { ...selectSurveyWithCustomCss, responses: { select: { id: true }, take: 1 } },
+  });
+  if (!row) return null;
+  if (!(await can(actor, "survey.write", { type: "survey", id: row.id }))) return null;
+  const { responses, ...stored } = row;
+  return { survey: transformPrismaSurvey<TSurvey>(stored), hasResponses: responses.length > 0 };
+};
+
+/**
+ * The Match for a previewed Formbricks file: the survey it was exported from, if `findUpdatableSurvey`
+ * finds it.
  */
 export const findFormbricksFileMatch = async ({
   source,
@@ -143,32 +179,15 @@ export const findFormbricksFileMatch = async ({
   draft: TSurveyImportFileDraft;
   plan: TFormbricksFileReferencePlan;
 }): Promise<TSurveyImportMatch | null> => {
-  if (!source || !actor) return null;
-
-  // The survey as the Update reads it, so the preview runs the Update's own checks on it.
-  const row = await prisma.survey.findFirst({
-    where: { id: source.surveyId, workspaceId, archivedAt: null },
-    select: { ...selectSurveyWithCustomCss, responses: { select: { id: true }, take: 1 } },
-  });
-  if (!row) return null;
-  if (!(await can(actor, "survey.write", { type: "survey", id: row.id }))) return null;
-  const { responses, ...stored } = row;
-  return buildFormbricksFileMatch({
-    survey: transformPrismaSurvey<TSurvey>(stored),
-    hasResponses: responses.length > 0,
-    exportedUpdatedAt: source.updatedAt,
-    draft,
-    plan,
-  });
+  if (!source) return null;
+  const found = await findUpdatableSurvey({ surveyId: source.surveyId, workspaceId, actor });
+  if (!found) return null;
+  return buildFormbricksFileMatch({ ...found, exportedUpdatedAt: source.updatedAt, draft, plan });
 };
 
-/** Whether the survey has any response: what decides whether an Update reports what it removes. */
-export const hasSurveyResponses = async (surveyId: string): Promise<boolean> =>
-  (await prisma.response.findFirst({ where: { surveyId }, select: { id: true } })) !== null;
-
 /**
- * The Match for a survey the caller already found and may edit: a Formbricks file's source (above), or
- * the survey an Excel export names (ENG-6809). The Update's checks run on the draft here, so
+ * The Match for a survey `findUpdatableSurvey` found: a Formbricks file's source, or the survey an
+ * Excel export names (ENG-6809). The Update's checks run on the draft here, so
  * the review says what the Update would refuse.
  *
  * @param exportedUpdatedAt What the first Update is made against: the file's export time when it was
