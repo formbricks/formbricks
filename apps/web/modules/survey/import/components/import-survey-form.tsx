@@ -359,8 +359,13 @@ export const ImportSurveyForm = ({
 
   // preventScroll: in a short dialog the review body scrolls, and focusing the list would scroll the
   // file name out of view the moment the review opens.
+  //
+  // The list is Create with AI's, which follows the newest question while a draft streams in. An import
+  // lands whole, so that left the review showing the survey's end: it opens at the first question.
   useEffect(() => {
-    if (importer.status === "review") landFocusOnDraft(draftRef.current, { preventScroll: true });
+    if (importer.status !== "review") return;
+    draftRef.current?.scrollTo({ top: 0 });
+    landFocusOnDraft(draftRef.current, { preventScroll: true });
   }, [importer.status]);
 
   useEffect(() => {

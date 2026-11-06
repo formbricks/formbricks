@@ -73,7 +73,7 @@ const SURVEY = {
 } as unknown as TSurvey;
 const VISIBILITY = { access: "test-visibility" };
 const DRAFT = { name: "Every text", blocks: [], languages: [] };
-const MATCH = { surveyId: SURVEY.id, name: SURVEY.name };
+const MATCH = { surveyId: SURVEY.id, name: SURVEY.name, updateRefusal: [] };
 
 const importInto = (file: File) =>
   streamSurveyImportIntoSurvey({

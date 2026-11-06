@@ -332,3 +332,17 @@ describe("an import into a survey from its menu (ENG-6809)", () => {
     );
   });
 });
+
+describe("getSurveyImportFieldProblemHeadline for the published lock", () => {
+  test.each([
+    "immutable_question_code",
+    "immutable_answer_code",
+    "immutable_question_type",
+    "immutable_option_text",
+    "immutable_option_deletion",
+  ] as const)("says %s can’t change once the survey is published", (code) => {
+    expect(getSurveyImportFieldProblemHeadline(code, t)).toBe(
+      "workspace.surveys.import.errors.field_problems.immutable_published"
+    );
+  });
+});

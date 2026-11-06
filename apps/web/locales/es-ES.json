@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Este idioma aparece dos veces",
             "forbidden_identifier": "Este nombre está reservado",
             "immutable_identifier": "Este ID ya no se puede cambiar: la encuesta ya no es un borrador",
+            "immutable_published": "Esto ya no se puede cambiar: la encuesta se ha publicado",
             "invalid": "Este campo no es válido",
             "invalid_locale": "Este código de idioma no es válido",
             "invalid_reference": "Esto apunta a algo que no existe",

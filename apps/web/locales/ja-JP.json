@@ -4940,6 +4940,7 @@
             "duplicate_locale": "この言語が重複して記載されています",
             "forbidden_identifier": "この名前は予約されています",
             "immutable_identifier": "このIDはこれ以上変更できません:アンケートが下書きではなくなっています",
+            "immutable_published": "アンケートは公開済みのため、これ以上変更できません",
             "invalid": "このフィールドは無効です",
             "invalid_locale": "この言語コードは無効です",
             "invalid_reference": "存在しない項目を参照しています",

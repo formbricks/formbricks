@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Această limbă apare de două ori în listă",
             "forbidden_identifier": "Acest nume este rezervat",
             "immutable_identifier": "Acest ID nu mai poate fi schimbat: sondajul nu mai este o ciornă",
+            "immutable_published": "Nu se mai poate modifica: sondajul a fost publicat",
             "invalid": "Acest câmp nu este valid",
             "invalid_locale": "Acest cod de limbă nu este valid",
             "invalid_reference": "Face trimitere la ceva ce nu există",

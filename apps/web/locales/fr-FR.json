@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Cette langue apparaît deux fois",
             "forbidden_identifier": "Ce nom est réservé",
             "immutable_identifier": "Cet identifiant ne peut plus être modifié : l’enquête n’est plus un brouillon",
+            "immutable_published": "Ce champ n’est plus modifiable : le sondage a été publié",
             "invalid": "Ce champ n’est pas valide",
             "invalid_locale": "Ce code de langue n’est pas valide",
             "invalid_reference": "Cela renvoie à un élément qui n’existe pas",

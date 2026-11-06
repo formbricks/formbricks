@@ -10,7 +10,9 @@ import { getTranslate } from "@/lingodotdev/server";
 import { applyExcelExport } from "@/modules/survey/excel-export/apply";
 import { createExcelExportLabels } from "@/modules/survey/excel-export/labels";
 import type { TExcelExportRead } from "@/modules/survey/excel-export/read";
+import { nameRefusalsBySheetRow } from "@/modules/survey/excel-export/refusal-rows";
 import { exportFormbricksFile } from "@/modules/survey/formbricks-file/export";
+import { getFormbricksFileSurveyLanguageCodes } from "@/modules/survey/formbricks-file/fit";
 import { previewFormbricksFileImport } from "@/modules/survey/formbricks-file/import";
 import { readFormbricksFile } from "@/modules/survey/formbricks-file/read";
 import { buildFormbricksFileMatch, hasSurveyResponses } from "@/modules/survey/formbricks-file/update";
@@ -88,7 +90,17 @@ export const excelExportImportLane: TSurveyImportLane<
       draft,
       plan,
     });
-    return { draft, references, issues: [...applied.issues, ...issues], match, fileName };
+    // The Update names what it refuses by field path; a sheet's reader knows rows.
+    const named = {
+      ...match,
+      updateRefusal: nameRefusalsBySheetRow(
+        match.updateRefusal,
+        draft,
+        sheet,
+        getFormbricksFileSurveyLanguageCodes(draft)
+      ),
+    };
+    return { draft, references, issues: [...applied.issues, ...issues], match: named, fileName };
   },
   run: ({ prepared, onProgress }) => {
     onProgress("assembling");

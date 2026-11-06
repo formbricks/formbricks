@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Det här språket förekommer två gånger",
             "forbidden_identifier": "Det här namnet är reserverat",
             "immutable_identifier": "Det här ID:t kan inte längre ändras: enkäten är inte längre ett utkast",
+            "immutable_published": "Det här kan inte ändras längre: enkäten har publicerats",
             "invalid": "Det här fältet är inte giltigt",
             "invalid_locale": "Den här språkkoden är inte giltig",
             "invalid_reference": "Det här pekar på något som inte finns",

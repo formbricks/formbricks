@@ -121,6 +121,13 @@ export const getSurveyImportFieldProblemHeadline = (code: TV3InvalidParam["code"
       return t("workspace.surveys.import.errors.field_problems.misordered_reference");
     case "immutable_identifier":
       return t("workspace.surveys.import.errors.field_problems.immutable_identifier");
+    // The published lock (ADR 0020): what responses are matched to stays as it was published.
+    case "immutable_question_code":
+    case "immutable_answer_code":
+    case "immutable_question_type":
+    case "immutable_option_text":
+    case "immutable_option_deletion":
+      return t("workspace.surveys.import.errors.field_problems.immutable_published");
     case "read_only_field":
       return t("workspace.surveys.import.errors.field_problems.read_only_field");
     case "duplicate_identifier":

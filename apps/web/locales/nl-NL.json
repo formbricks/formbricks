@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Deze taal staat twee keer in de lijst",
             "forbidden_identifier": "Deze naam is gereserveerd",
             "immutable_identifier": "Dit ID kan niet meer worden gewijzigd: de enquête is geen concept meer",
+            "immutable_published": "Dit kan niet meer worden gewijzigd: de enquête is gepubliceerd",
             "invalid": "Dit veld is ongeldig",
             "invalid_locale": "Deze taalcode is ongeldig",
             "invalid_reference": "Dit verwijst naar iets dat niet bestaat",

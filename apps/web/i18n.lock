@@ -4773,6 +4773,7 @@ checksums:
     workspace/surveys/import/errors/field_problems/duplicate_locale: 3d69a040c39860cd556ec0dc260c7ae7
     workspace/surveys/import/errors/field_problems/forbidden_identifier: 3495be9836d80d15137c76d48455bad0
     workspace/surveys/import/errors/field_problems/immutable_identifier: d3aded572702d2fc60c677ccdf6e1f0a
+    workspace/surveys/import/errors/field_problems/immutable_published: 857f79caf443bdd1255823b574beb08a
     workspace/surveys/import/errors/field_problems/invalid: 0bbb9bde201755d446996f3203365518
     workspace/surveys/import/errors/field_problems/invalid_locale: 2a97e1a3c780332c6d17b00c0a4e9cdf
     workspace/surveys/import/errors/field_problems/invalid_reference: 9fabc16051fa7f9ce73d84dda9c0b7ce

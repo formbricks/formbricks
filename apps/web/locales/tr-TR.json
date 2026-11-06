@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Bu dil iki kez listelenmiş",
             "forbidden_identifier": "Bu ad rezerve edilmiş",
             "immutable_identifier": "Bu kimlik artık değiştirilemez: anket artık taslak değil",
+            "immutable_published": "Bu artık değiştirilemez: anket yayınlandı",
             "invalid": "Bu alan geçerli değil",
             "invalid_locale": "Bu dil kodu geçerli değil",
             "invalid_reference": "Bu, var olmayan bir öğeye işaret ediyor",

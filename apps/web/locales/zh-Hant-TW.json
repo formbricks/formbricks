@@ -4940,6 +4940,7 @@
             "duplicate_locale": "這個語言被重複列出",
             "forbidden_identifier": "這個名稱為保留字,無法使用",
             "immutable_identifier": "這個 ID 無法再變更了:問卷已不是草稿狀態",
+            "immutable_published": "此項目無法再變更:問卷已發佈",
             "invalid": "這個欄位無效",
             "invalid_locale": "這個語言代碼無效",
             "invalid_reference": "這個參照的對象不存在",

@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Ez a nyelv kétszer szerepel a listán",
             "forbidden_identifier": "Ez a név fenntartott",
             "immutable_identifier": "Ez az azonosító már nem módosítható, mivel a felmérés már nem vázlat",
+            "immutable_published": "Ez az érték már nem módosítható, mivel a felmérés közzétételre került.",
             "invalid": "Ez a mező érvénytelen",
             "invalid_locale": "Ez a nyelvkód érvénytelen",
             "invalid_reference": "Ez egy nem létező elemre hivatkozik",

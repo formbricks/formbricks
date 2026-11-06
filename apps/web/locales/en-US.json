@@ -4940,6 +4940,7 @@
             "duplicate_locale": "This language is listed twice",
             "forbidden_identifier": "This name is reserved",
             "immutable_identifier": "This ID can’t change anymore: the survey is no longer a draft",
+            "immutable_published": "This can’t change anymore: the survey has been published",
             "invalid": "This field isn’t valid",
             "invalid_locale": "This language code isn’t valid",
             "invalid_reference": "This points at something that doesn’t exist",

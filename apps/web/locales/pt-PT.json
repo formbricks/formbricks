@@ -4940,6 +4940,7 @@
             "duplicate_locale": "Este idioma está listado duas vezes",
             "forbidden_identifier": "Este nome está reservado",
             "immutable_identifier": "Este ID já não pode ser alterado: o inquérito deixou de ser um rascunho",
+            "immutable_published": "Isto já não pode ser alterado: o inquérito foi publicado",
             "invalid": "Este campo não é válido",
             "invalid_locale": "Este código de idioma não é válido",
             "invalid_reference": "Isto aponta para algo que não existe",

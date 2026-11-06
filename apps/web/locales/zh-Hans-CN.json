@@ -4940,6 +4940,7 @@
             "duplicate_locale": "此语言被重复列出",
             "forbidden_identifier": "此名称为保留名称",
             "immutable_identifier": "此 ID 无法再更改:该问卷已不再是草稿",
+            "immutable_published": "此项无法再更改：问卷已发布",
             "invalid": "此字段无效",
             "invalid_locale": "此语言代码无效",
             "invalid_reference": "此处引用的内容不存在",
