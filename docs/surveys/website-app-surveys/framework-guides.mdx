@@ -711,7 +711,7 @@ If your app serves a strict `Content-Security-Policy` header, the browser can bl
 
 ### Allowing scripts and API calls
 
-The SDK loads two scripts from your Formbricks instance: `formbricks.umd.cjs` (the SDK) and `surveys.umd.cjs` (the survey renderer, fetched the first time a survey is shown). It then talks to the client API on the same host. Both directives need to point at your `appUrl`:
+The SDK loads two scripts from your Formbricks instance: `formbricks.umd.cjs` (the SDK) and `surveys.umd.cjs` (the survey renderer). By default, setup adds a prefetch hint so the browser can fetch the renderer early; the renderer executes when a survey is first triggered. The SDK also talks to the client API on the same host. Both directives need to point at your `appUrl`:
 
 ```text
 script-src 'self' https://app.formbricks.com;
