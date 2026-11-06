@@ -310,7 +310,7 @@ const ImportReviewPane = ({
               onTriggersChoiceChange={importer.selectTriggersChoice}
               conflict={importer.conflict}
               isIntoSurvey={isIntoSurvey}
-              isSheet={importer.report?.source.kind === "xlsx"}
+              isSheet={importer.report?.source.kind === "excel_export"}
             />
           ) : undefined
         }

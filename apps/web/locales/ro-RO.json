@@ -4926,6 +4926,7 @@
             "source_size": "Acest fișier este prea mare pentru ca Formbricks AI să îl importe dintr-o singură încercare. Importă-l în schimb cu Claude sau ChatGPT prin MCP.",
             "table_cells": "Tabelele din acest document au mai mult de 50.000 de celule. Împarte documentul în fișiere mai mici și importă-le pe fiecare separat.",
             "tables": "Acest document are mai mult de 500 de tabele. Împarte-l în fișiere mai mici și importă-le pe fiecare separat.",
+            "text_size": "Foaia aceasta conține mai mult text decât poate suporta un sondaj. Șterge rândurile pe care le-ai adăugat sau împarte-le în mai multe importuri.",
             "xml_depth": "Acest document are un nivel de imbricare prea mare pentru a putea fi citit. Salvează-l din nou în Word și importă-l încă o dată.",
             "xml_elements": "Acest document conține mai mult conținut decât poate citi importul. Împarte-l în fișiere mai mici și importă-le pe fiecare separat."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "Rândul {row} repetă un rând anterior, așa că a fost omis.",
           "sheet_row_skipped_field_not_in_question": "Rândul {row} a fost omis: întrebarea lui nu are un câmp de acest tip.",
           "sheet_row_skipped_field_taken": "Rândul {row} a fost omis: întrebarea lui are deja acest câmp. Editează în schimb rândul respectiv.",
+          "sheet_row_skipped_id_invalid": "Rândul {row} a fost omis: ID-ul întrebării poate conține doar litere, cifre, cratime și caractere de subliniere și trebuie să înceapă cu o literă sau o cifră.",
           "sheet_row_skipped_id_taken": "Rândul {row} a fost omis: o altă întrebare are deja ID-ul întrebării respective.",
           "sheet_row_skipped_invalid_question": "Rândul {row} a fost omis: întrebarea pe care o creează sau o modifică nu ar fi validă, de exemplu o întrebare cu variante de răspuns, dar cu mai puțin de două opțiuni.",
           "sheet_row_skipped_no_question": "Rândul {row} a fost omis: nicio întrebare de deasupra lui sau cu ID-ul lui de întrebare nu îl poate prelua.",

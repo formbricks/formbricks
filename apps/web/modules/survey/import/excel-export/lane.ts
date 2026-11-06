@@ -47,7 +47,7 @@ export const excelExportImportLane: TSurveyImportLane<
   TExcelExportImportInput,
   TPreparedFormbricksFileImport
 > = {
-  kind: "xlsx",
+  kind: "excel_export",
   usesAI: false,
   rateLimit: null,
   prepare: async ({ read, fileName, workspaceId, organizationId, authentication, target }) => {
@@ -60,7 +60,7 @@ export const excelExportImportLane: TSurveyImportLane<
       getTranslate(toExportLocale(sheet.locale)),
       getTranslate(DEFAULT_LOCALE),
     ]);
-    const applied = applyExcelExport(target.survey, {
+    const applied = await applyExcelExport(target.survey, {
       read: sheet,
       labels: createExcelExportLabels([exportT, englishT]),
       newElement: (type) =>
@@ -74,16 +74,15 @@ export const excelExportImportLane: TSurveyImportLane<
       truncatedSuffix: exportT("workspace.surveys.export.excel.truncated"),
     });
 
-    const file = await exportFormbricksFile({ survey: applied.survey, visibility: target.visibility });
-    const { draft, references, issues, plan } = await previewFormbricksFileImport({
-      read: readFormbricksFile(file),
-      workspaceId,
-      organizationId,
-      userId,
-    });
+    const [hasResponses, { draft, references, issues, plan }] = await Promise.all([
+      hasSurveyResponses(target.survey.id),
+      exportFormbricksFile({ survey: applied.survey, visibility: target.visibility }).then((file) =>
+        previewFormbricksFileImport({ read: readFormbricksFile(file), workspaceId, organizationId, userId })
+      ),
+    ]);
     const match = await buildFormbricksFileMatch({
       survey: target.survey,
-      hasResponses: await hasSurveyResponses(target.survey.id),
+      hasResponses,
       // The sheet's edits were merged into the survey as read now, so that is what the Update checks.
       exportedUpdatedAt: target.survey.updatedAt.toISOString(),
       draft,
@@ -93,6 +92,6 @@ export const excelExportImportLane: TSurveyImportLane<
   },
   run: ({ prepared, onProgress }) => {
     onProgress("assembling");
-    return Promise.resolve(toFormbricksFileImportResult(prepared, "xlsx"));
+    return Promise.resolve(toFormbricksFileImportResult(prepared, "excel_export"));
   },
 };

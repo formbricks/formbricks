@@ -4761,6 +4761,7 @@ checksums:
     workspace/surveys/import/errors/document_limits/source_size: e32e6840946cbe71ca56366d22c1f1ec
     workspace/surveys/import/errors/document_limits/table_cells: 669bd0f204c5aab1960a3b3d5bba5919
     workspace/surveys/import/errors/document_limits/tables: d98668abace64254d714bd87e01f4338
+    workspace/surveys/import/errors/document_limits/text_size: 5148bb2e7e07619a9fb6d44b2b6c012a
     workspace/surveys/import/errors/document_limits/xml_depth: 19ebedff65594ac0e76903ca73eb8a42
     workspace/surveys/import/errors/document_limits/xml_elements: 95a3f5edc2ae161c41b932933a9beac1
     workspace/surveys/import/errors/empty_file: 791199ebd60a85a47fceb1b3dfbb2b78
@@ -4885,6 +4886,7 @@ checksums:
     workspace/surveys/import/issues/sheet_row_skipped_duplicate_key: a4cd52391ac3f5ca4d4b93293607dc45
     workspace/surveys/import/issues/sheet_row_skipped_field_not_in_question: d51a30f4736cc6d0fbbf2f78a08406b0
     workspace/surveys/import/issues/sheet_row_skipped_field_taken: 0828a057896453741e2aa5742fc0b60c
+    workspace/surveys/import/issues/sheet_row_skipped_id_invalid: 212dab4739ff8f5e579ed55fb595e8a3
     workspace/surveys/import/issues/sheet_row_skipped_id_taken: 8c7af8c5f8a19a1d0428da3be64f9049
     workspace/surveys/import/issues/sheet_row_skipped_invalid_question: 42da7c09f6bf6b0e217f8c6a3df4dbe9
     workspace/surveys/import/issues/sheet_row_skipped_no_question: 6744804f7133c4ff2a3c1ba0d01f3a3b

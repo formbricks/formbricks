@@ -4926,6 +4926,7 @@
             "source_size": "This file is too large for Formbricks AI to import in one go. Import it with Claude or ChatGPT through MCP instead.",
             "table_cells": "The tables in this document have more than 50,000 cells. Split it into smaller files and import each one.",
             "tables": "This document has more than 500 tables. Split it into smaller files and import each one.",
+            "text_size": "This sheet holds more text than a survey can. Remove the rows you added, or split them across imports.",
             "xml_depth": "This document is nested too deeply to read. Save it again in Word and import it once more.",
             "xml_elements": "This document holds more content than the import can read. Split it into smaller files and import each one."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "Row {row} repeats an earlier row, so it was left out.",
           "sheet_row_skipped_field_not_in_question": "Row {row} was left out: its question has no field of that kind.",
           "sheet_row_skipped_field_taken": "Row {row} was left out: its question already has that field. Edit that row instead.",
+          "sheet_row_skipped_id_invalid": "Row {row} was left out: its Question ID can only use letters, numbers, hyphens and underscores, and must start with a letter or number.",
           "sheet_row_skipped_id_taken": "Row {row} was left out: another question already has its Question ID.",
           "sheet_row_skipped_invalid_question": "Row {row} was left out: the question it makes or changes would not be valid, for example a choice question with fewer than two options.",
           "sheet_row_skipped_no_question": "Row {row} was left out: no question above it, or with its Question ID, can take it.",

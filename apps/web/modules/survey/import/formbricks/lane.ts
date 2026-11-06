@@ -68,16 +68,21 @@ export const formbricksFileImportLane: TSurveyImportLane<
   usesAI: false,
   rateLimit: null,
   prepare: async ({ read, fileName, workspaceId, organizationId, authentication, target }) => {
-    const { draft, references, issues, source, plan } = await previewFormbricksFileImport({
-      read: await read(),
-      workspaceId,
-      organizationId,
-      userId: getSessionUserId(authentication),
-    });
+    const [{ draft, references, issues, source, plan }, hasResponses] = await Promise.all([
+      read().then((file) =>
+        previewFormbricksFileImport({
+          read: file,
+          workspaceId,
+          organizationId,
+          userId: getSessionUserId(authentication),
+        })
+      ),
+      target ? hasSurveyResponses(target.survey.id) : Promise.resolve(false),
+    ]);
     const match = target
       ? await buildFormbricksFileMatch({
           survey: target.survey,
-          hasResponses: await hasSurveyResponses(target.survey.id),
+          hasResponses,
           // The file's export time only when it was exported from this survey: "changed since the
           // export" means nothing for another survey's file, which is checked against the survey as read now.
           exportedUpdatedAt:

@@ -4926,6 +4926,7 @@
             "source_size": "Este arquivo é grande demais para o Formbricks AI importar de uma só vez. Importe-o com o Claude ou o ChatGPT via MCP.",
             "table_cells": "As tabelas deste documento têm mais de 50.000 células. Divida-o em arquivos menores e importe cada um deles.",
             "tables": "Este documento tem mais de 500 tabelas. Divida-o em arquivos menores e importe cada um deles.",
+            "text_size": "Esta planilha tem mais texto do que uma pesquisa comporta. Remova as linhas que você adicionou ou divida o conteúdo em várias importações.",
             "xml_depth": "Este documento tem um aninhamento profundo demais para ser lido. Salve-o novamente no Word e importe mais uma vez.",
             "xml_elements": "Este documento contém mais conteúdo do que a importação consegue ler. Divida-o em arquivos menores e importe cada um deles."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "A linha {row} repete uma linha anterior, então foi deixada de fora.",
           "sheet_row_skipped_field_not_in_question": "A linha {row} foi deixada de fora: a pergunta dela não tem um campo desse tipo.",
           "sheet_row_skipped_field_taken": "A linha {row} foi deixada de fora: a pergunta dela já tem esse campo. Edite essa linha no lugar.",
+          "sheet_row_skipped_id_invalid": "A linha {row} foi ignorada: o ID da pergunta só pode conter letras, números, hifens e sublinhados, e precisa começar com uma letra ou um número.",
           "sheet_row_skipped_id_taken": "A linha {row} foi deixada de fora: outra pergunta já tem o mesmo ID de pergunta.",
           "sheet_row_skipped_invalid_question": "A linha {row} foi deixada de fora: a pergunta que ela cria ou altera não seria válida, por exemplo, uma pergunta de escolha com menos de duas opções.",
           "sheet_row_skipped_no_question": "A linha {row} foi deixada de fora: nenhuma pergunta acima dela, ou com o ID de pergunta dela, pode recebê-la.",

@@ -4926,6 +4926,7 @@
             "source_size": "Ez a fájl túl nagy ahhoz, hogy a Formbricks AI egy lépésben importálni tudja. Kérjük, importálja inkább a Claude vagy a ChatGPT segítségével, MCP-n keresztül.",
             "table_cells": "A dokumentumban található táblázatok több mint 50 000 cellát tartalmaznak. Kérjük, ossza fel kisebb fájlokra, és mindegyiket importálja külön.",
             "tables": "Ez a dokumentum több mint 500 táblázatot tartalmaz. Kérjük, ossza fel kisebb fájlokra, és mindegyiket importálja külön.",
+            "text_size": "Ez a munkalap több szöveget tartalmaz, mint amennyit egy felmérés képes kezelni. Kérjük, távolítsa el a hozzáadott sorokat, vagy ossza fel őket több importálás között.",
             "xml_depth": "Ez a dokumentum túlságosan mélyen egymásba ágyazott szerkezetű, ezért nem olvasható be. Kérjük, mentse el újra Wordben, majd importálja ismét.",
             "xml_elements": "Ez a dokumentum több tartalmat foglal magában, mint amennyit az import be tud olvasni. Kérjük, ossza fel kisebb fájlokra, és mindegyiket importálja külön."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "A(z) {row}. sor megismétli egy korábbi sort, ezért kimaradt.",
           "sheet_row_skipped_field_not_in_question": "A(z) {row}. sor kimaradt: a hozzá tartozó kérdés nem rendelkezik ilyen típusú mezővel.",
           "sheet_row_skipped_field_taken": "A(z) {row}. sor kimaradt: a hozzá tartozó kérdés már rendelkezik ezzel a mezővel. Kérjük, inkább azt a sort szerkessze.",
+          "sheet_row_skipped_id_invalid": "A(z) {row}. sor kihagyásra került: a Kérdésazonosító kizárólag betűket, számokat, kötőjeleket és alávonásjeleket tartalmazhat, és betűvel vagy számmal kell kezdődnie.",
           "sheet_row_skipped_id_taken": "A(z) {row}. sor kimaradt: egy másik kérdés már használja a megadott kérdésazonosítót.",
           "sheet_row_skipped_invalid_question": "A(z) {row}. sor kimaradt: az általa létrehozott vagy módosított kérdés érvénytelen lenne, például egy olyan választós kérdés, amely kettőnél kevesebb lehetőséget tartalmaz.",
           "sheet_row_skipped_no_question": "A(z) {row}. sor kimaradt: nincs felette olyan kérdés, illetve nincs olyan, a megadott kérdésazonosítóval rendelkező kérdés, amely fogadni tudná.",

@@ -3,10 +3,12 @@ import * as XLSX from "xlsx";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import { openZipArchive } from "@/modules/survey/import/core/zip";
+import { SURVEY_IMPORT_SHEET_MAX_CELL_CHARS } from "@/modules/survey/import/limits";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
 import { editExcelExport } from "./__fixtures__/edit-sheet";
 import { createIcuTranslate } from "./__fixtures__/translate";
 import { EXCEL_EXPORT_META_SHEET } from "./format";
+import { EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS } from "./limits";
 import { readExcelExport } from "./read";
 import { writeExcelExport } from "./write";
 
@@ -112,6 +114,28 @@ describe("readExcelExport", () => {
       questionId: "open",
       type: "Free text",
     });
+  });
+
+  test("refuses a sheet whose cells hold more text than a survey can, counting a repeated string per cell", () => {
+    // One long string in thousands of cells costs one shared string in the file, but each cell is copied
+    // on its own when the rows leave the worker.
+    const long = "x".repeat(SURVEY_IMPORT_SHEET_MAX_CELL_CHARS);
+    const rowsNeeded = Math.ceil(EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS / (2 * long.length)) + 1;
+    const bytes = editExcelExport(exported(), (rows) => [
+      ...rows,
+      ...Array.from({ length: rowsNeeded }, () => ["", "", "Choice 1", long, long, ""]),
+    ]);
+
+    expect(bytes.byteLength).toBeLessThan(2 * 1024 * 1024);
+    try {
+      read(bytes);
+      expect.unreachable();
+    } catch (error) {
+      expect((error as SurveyImportInputError).invalidParams[0]).toMatchObject({
+        code: "document_limit_exceeded",
+        identifier: "text_size",
+      });
+    }
   });
 
   test("refuses a workbook that is not an Excel export of a survey", () => {

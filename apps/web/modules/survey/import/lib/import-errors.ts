@@ -95,6 +95,8 @@ const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
       return t("workspace.surveys.import.errors.document_limits.table_cells");
     case "source_size":
       return t("workspace.surveys.import.errors.document_limits.source_size");
+    case "text_size":
+      return t("workspace.surveys.import.errors.document_limits.text_size");
     default:
       return t("workspace.surveys.import.errors.document_limits.other");
   }

@@ -1,6 +1,7 @@
 import type * as XLSX from "xlsx";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import type { TZipArchive } from "@/modules/survey/import/core/zip";
+import { documentLimitExceeded } from "@/modules/survey/import/document/errors";
 import { readCheckedWorkbook, readSheetText } from "@/modules/survey/import/document/read-sheet";
 import {
   EXCEL_EXPORT_FORMAT,
@@ -12,6 +13,7 @@ import {
   EXCEL_EXPORT_META_LOCALE,
   EXCEL_EXPORT_META_SHEET,
 } from "./format";
+import { EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS } from "./limits";
 
 /**
  * Reading an Excel export back (ENG-6809): the texts sheet and the very hidden meta sheet of a file
@@ -145,6 +147,19 @@ export const readExcelExport = (archive: TZipArchive): TExcelExportRead => {
 
   const read: TExcelExportRead = { languages, locale: meta.locale, rows: [], duplicateRows: [] };
   const seen = new Set<string>();
+  let textChars = 0;
+  /** Count a kept cell's text against the import's ceiling; past it the sheet is refused. */
+  const keep = (text: string): string => {
+    textChars += text.length;
+    if (textChars > EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS) {
+      throw documentLimitExceeded(
+        "text_size",
+        "file",
+        `The sheet's cells must not hold more than ${EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS} characters together`
+      );
+    }
+    return text;
+  };
   for (let index = headerIndex + 1; index < rows.length; index += 1) {
     const row = rows[index];
     if (!row.some((text) => text.trim() !== "")) continue;
@@ -159,13 +174,13 @@ export const readExcelExport = (archive: TZipArchive): TExcelExportRead => {
     }
     const cells = new Map<string, string>();
     for (const { code, column } of languages) {
-      if (column !== null) cells.set(code, row[column] ?? "");
+      if (column !== null) cells.set(code, keep(row[column] ?? ""));
     }
     read.rows.push({
       row: sheetRow,
       key,
-      questionId: questionIdColumn === null ? "" : (row[questionIdColumn] ?? "").trim(),
-      type: typeColumn === null ? "" : (row[typeColumn] ?? "").trim(),
+      questionId: questionIdColumn === null ? "" : keep((row[questionIdColumn] ?? "").trim()),
+      type: typeColumn === null ? "" : keep((row[typeColumn] ?? "").trim()),
       cells,
     });
   }

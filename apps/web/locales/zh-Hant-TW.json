@@ -4926,6 +4926,7 @@
             "source_size": "此檔案太大，Formbricks AI 無法一次匯入。請改用 Claude 或 ChatGPT 透過 MCP 匯入。",
             "table_cells": "此文件中的表格儲存格超過 50,000 個。請將它拆分成較小的檔案，再分別匯入。",
             "tables": "此文件的表格超過 500 個。請將它拆分成較小的檔案，再分別匯入。",
+            "text_size": "這份工作表的文字量超過問卷可容納的上限。請移除你新增的列,或分成多次匯入。",
             "xml_depth": "此文件的巢狀層級過深，無法讀取。請在 Word 中重新儲存後再匯入一次。",
             "xml_elements": "此文件的內容量超出匯入功能可讀取的範圍。請將它拆分成較小的檔案，再分別匯入。"
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "第 {row} 列與前面的列重複，因此已略過。",
           "sheet_row_skipped_field_not_in_question": "已略過第 {row} 列：其題目沒有該類型的欄位。",
           "sheet_row_skipped_field_taken": "已略過第 {row} 列：其題目已經有該欄位。請改為編輯那一列。",
+          "sheet_row_skipped_id_invalid": "第 {row} 列已略過:「題目 ID」只能使用字母、數字、連字號和底線,且必須以字母或數字開頭。",
           "sheet_row_skipped_id_taken": "已略過第 {row} 列：其他題目已經使用了它的題目 ID。",
           "sheet_row_skipped_invalid_question": "已略過第 {row} 列：它建立或變更的題目將無法通過驗證，例如選項少於兩個的選擇題。",
           "sheet_row_skipped_no_question": "已略過第 {row} 列：在它上方或具有該題目 ID 的題目中，沒有可以容納它的題目。",

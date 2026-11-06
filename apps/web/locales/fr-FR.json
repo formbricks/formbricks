@@ -4926,6 +4926,7 @@
             "source_size": "Ce fichier est trop volumineux pour que Formbricks AI l’importe en une seule fois. Importe-le plutôt avec Claude ou ChatGPT via MCP.",
             "table_cells": "Les tableaux de ce document contiennent plus de 50 000 cellules. Divise-le en plusieurs fichiers plus petits et importe-les un par un.",
             "tables": "Ce document contient plus de 500 tableaux. Divise-le en plusieurs fichiers plus petits et importe-les un par un.",
+            "text_size": "Cette feuille contient plus de texte qu'une enquête ne peut en accueillir. Supprime les lignes que tu as ajoutées ou répartis-les sur plusieurs imports.",
             "xml_depth": "La structure de ce document est trop imbriquée pour être lue. Enregistre-le à nouveau dans Word et réessaie l’import.",
             "xml_elements": "Ce document contient plus de contenu que l’import ne peut en lire. Divise-le en plusieurs fichiers plus petits et importe-les un par un."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "La ligne {row} répète une ligne précédente, elle a donc été ignorée.",
           "sheet_row_skipped_field_not_in_question": "La ligne {row} a été ignorée : sa question n'a pas de champ de ce type.",
           "sheet_row_skipped_field_taken": "La ligne {row} a été ignorée : sa question possède déjà ce champ. Modifie plutôt cette ligne.",
+          "sheet_row_skipped_id_invalid": "La ligne {row} a été ignorée : son identifiant de question ne peut contenir que des lettres, des chiffres, des tirets et des tirets bas, et doit commencer par une lettre ou un chiffre.",
           "sheet_row_skipped_id_taken": "La ligne {row} a été ignorée : une autre question utilise déjà son ID de question.",
           "sheet_row_skipped_invalid_question": "La ligne {row} a été ignorée : la question qu'elle crée ou modifie ne serait pas valide, par exemple une question à choix avec moins de deux options.",
           "sheet_row_skipped_no_question": "La ligne {row} a été ignorée : aucune question au-dessus d'elle, ni avec son ID de question, ne peut l'accueillir.",

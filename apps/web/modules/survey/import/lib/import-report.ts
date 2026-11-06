@@ -1,4 +1,8 @@
-import type { TSurveyImportIssue, TSurveyImportReport } from "@/modules/survey/import/types";
+import type {
+  TSurveyImportIssue,
+  TSurveyImportReport,
+  TSurveyImportSheetRowSkipCause,
+} from "@/modules/survey/import/types";
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -107,33 +111,34 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
   }
 };
 
-/** Why a row of an imported Excel export was left out (ENG-6809), from the server's `params.cause`. */
+const SKIPPED_ROW_MESSAGES: Record<TSurveyImportSheetRowSkipCause, (row: string, t: TTranslate) => string> = {
+  unknown_key: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_unknown_key", { row }),
+  duplicate_key: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_duplicate_key", { row }),
+  unknown_type: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_unknown_type", { row }),
+  unsupported_type: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_unsupported_type", { row }),
+  id_invalid: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_id_invalid", { row }),
+  id_taken: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_id_taken", { row }),
+  no_question: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_no_question", { row }),
+  no_text: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_no_text", { row }),
+  field_not_in_question: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_field_not_in_question", { row }),
+  field_taken: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_field_taken", { row }),
+  invalid_question: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_invalid_question", { row }),
+  survey_full: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_survey_full", { row }),
+};
+
+/**
+ * Why a row of an imported Excel export was left out (ENG-6809), from the server's `params.cause`. Typed
+ * over every cause, so a new one fails the build until it has a line; one from a newer server reads as
+ * an unknown line.
+ */
 const getSkippedRowMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
-  const row = param(issue, "row");
-  switch (param(issue, "cause")) {
-    case "duplicate_key":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_duplicate_key", { row });
-    case "unknown_type":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_unknown_type", { row });
-    case "unsupported_type":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_unsupported_type", { row });
-    case "id_taken":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_id_taken", { row });
-    case "no_question":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_no_question", { row });
-    case "no_text":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_no_text", { row });
-    case "field_not_in_question":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_field_not_in_question", { row });
-    case "field_taken":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_field_taken", { row });
-    case "invalid_question":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_invalid_question", { row });
-    case "survey_full":
-      return t("workspace.surveys.import.issues.sheet_row_skipped_survey_full", { row });
-    default:
-      return t("workspace.surveys.import.issues.sheet_row_skipped_unknown_key", { row });
-  }
+  const cause = param(issue, "cause");
+  return Object.hasOwn(SKIPPED_ROW_MESSAGES, cause)
+    ? SKIPPED_ROW_MESSAGES[cause as TSurveyImportSheetRowSkipCause](param(issue, "row"), t)
+    : t("workspace.surveys.import.issues.unknown");
 };
 
 /**

@@ -4926,6 +4926,7 @@
             "source_size": "Este ficheiro é demasiado grande para o Formbricks AI o importar de uma só vez. Importa-o antes com o Claude ou o ChatGPT através do MCP.",
             "table_cells": "As tabelas deste documento têm mais de 50 000 células. Divide-o em ficheiros mais pequenos e importa cada um deles.",
             "tables": "Este documento tem mais de 500 tabelas. Divide-o em ficheiros mais pequenos e importa cada um deles.",
+            "text_size": "Esta folha tem mais texto do que um inquérito consegue suportar. Remove as linhas que adicionaste ou divide-as por várias importações.",
             "xml_depth": "Este documento tem um aninhamento demasiado profundo para ser lido. Guarda-o novamente no Word e importa-o outra vez.",
             "xml_elements": "Este documento contém mais conteúdo do que a importação consegue ler. Divide-o em ficheiros mais pequenos e importa cada um deles."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "A linha {row} repete uma linha anterior, por isso foi ignorada.",
           "sheet_row_skipped_field_not_in_question": "A linha {row} foi ignorada: a respetiva pergunta não tem um campo desse tipo.",
           "sheet_row_skipped_field_taken": "A linha {row} foi ignorada: a respetiva pergunta já tem esse campo. Edita essa linha em vez disso.",
+          "sheet_row_skipped_id_invalid": "A linha {row} foi ignorada: o respetivo ID da pergunta só pode conter letras, números, hífenes e carateres de sublinhado, e tem de começar por uma letra ou um número.",
           "sheet_row_skipped_id_taken": "A linha {row} foi ignorada: outra pergunta já tem o respetivo ID da pergunta.",
           "sheet_row_skipped_invalid_question": "A linha {row} foi ignorada: a pergunta que cria ou altera seria inválida, por exemplo, uma pergunta de escolha com menos de duas opções.",
           "sheet_row_skipped_no_question": "A linha {row} foi ignorada: nenhuma pergunta acima dela, nem com o respetivo ID da pergunta, a pode receber.",

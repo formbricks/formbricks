@@ -30,7 +30,7 @@ const exported = (survey: TSurvey = SURVEY, exportT = t, locale = "en-US") =>
 const importSheet = (
   edit: (rows: string[][]) => string[][],
   { survey = SURVEY, bytes = exported(survey) }: { survey?: TSurvey; bytes?: Uint8Array } = {}
-): TExcelExportApplied =>
+): Promise<TExcelExportApplied> =>
   applyExcelExport(survey, {
     read: readExcelExport(openZipArchive(editExcelExport(bytes, edit))),
     labels: createExcelExportLabels([germanT, t]),
@@ -64,16 +64,16 @@ const added = (questionId: string, type: string, en: string, de = ""): string[] 
 ];
 
 describe("applyExcelExport: texts", () => {
-  test("changes nothing for a sheet as it was exported", () => {
-    const applied = importSheet((rows) => rows);
+  test("changes nothing for a sheet as it was exported", async () => {
+    const applied = await importSheet((rows) => rows);
 
     expect(applied.survey.blocks).toEqual(SURVEY.blocks);
     expect(applied.survey.welcomeCard).toEqual(SURVEY.welcomeCard);
     expect(applied.issues).toEqual([{ code: "texts_updated", severity: "info", params: { count: 0 } }]);
   });
 
-  test("writes a cell that differs from the survey into its text, in its language", () => {
-    const applied = importSheet((rows) => {
+  test("writes a cell that differs from the survey into its text, in its language", async () => {
+    const applied = await importSheet((rows) => {
       rows[rowOf(rows, "element.open.placeholder")][DE] = "Schreib hier";
       rows[rowOf(rows, "element.single.choice.no.label")][EN] = "Nope";
       return rows;
@@ -90,8 +90,8 @@ describe("applyExcelExport: texts", () => {
     expect(applied.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 2 } });
   });
 
-  test("leaves a text alone when its cell is emptied, and every text whose row was deleted", () => {
-    const applied = importSheet((rows) => {
+  test("leaves a text alone when its cell is emptied, and every text whose row was deleted", async () => {
+    const applied = await importSheet((rows) => {
       rows[rowOf(rows, "element.open.headline")][DE] = "";
       return rows.filter((row) => !row[0].startsWith("element.nps."));
     });
@@ -99,8 +99,8 @@ describe("applyExcelExport: texts", () => {
     expect(applied.survey.blocks).toEqual(SURVEY.blocks);
   });
 
-  test("fills a translation the survey did not have", () => {
-    const applied = importSheet((rows) => {
+  test("fills a translation the survey did not have", async () => {
+    const applied = await importSheet((rows) => {
       rows[rowOf(rows, "element.pictures.choice.mug-a.imageAltText")][DE] = "Blaue Tasse";
       return rows;
     });
@@ -109,8 +109,8 @@ describe("applyExcelExport: texts", () => {
     expect(choices[0].imageAltText).toEqual({ default: "Blue mug", de: "Blaue Tasse" });
   });
 
-  test("stores an edited headline as paragraphs of escaped text, flagging formatting it had", () => {
-    const applied = importSheet((rows) => {
+  test("stores an edited headline as paragraphs of escaped text, flagging formatting it had", async () => {
+    const applied = await importSheet((rows) => {
       rows[rowOf(rows, "welcomeCard.subheader")][EN] = "Glad <you> are here\nTruly";
       rows[rowOf(rows, "element.open.subheader")][EN] = "Be very honest";
       return rows;
@@ -128,8 +128,8 @@ describe("applyExcelExport: texts", () => {
     expect(applied.issues.filter((issue) => issue.code === "sheet_formatting_dropped")).toHaveLength(1);
   });
 
-  test("shows a plain text as typed when it would parse as HTML", () => {
-    const applied = importSheet((rows) => {
+  test("shows a plain text as typed when it would parse as HTML", async () => {
+    const applied = await importSheet((rows) => {
       rows[rowOf(rows, "element.single.choice.yes.label")][EN] = 'Yes <img src=x onerror="alert(1)">';
       return rows;
     });
@@ -140,14 +140,14 @@ describe("applyExcelExport: texts", () => {
     expect(codes(applied)).toContain("markup_escaped");
   });
 
-  test("turns an @Label back into the recall it shows", () => {
+  test("turns an @Label back into the recall it shows", async () => {
     const survey = structuredClone(SURVEY);
     const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {
       headline: Record<string, string>;
     };
     consent.headline = { default: "Thanks #recall:open/fallback:friend#, agree?", de: "Danke" };
 
-    const applied = importSheet(
+    const applied = await importSheet(
       (rows) => {
         rows[rowOf(rows, "element.consent.headline")][EN] = "Thank you @What should we improve?, agree?";
         return rows;
@@ -161,8 +161,8 @@ describe("applyExcelExport: texts", () => {
     });
   });
 
-  test("finds a language column by its header after it was moved, and reports one whose header changed", () => {
-    const applied = importSheet((rows) =>
+  test("finds a language column by its header after it was moved, and reports one whose header changed", async () => {
+    const applied = await importSheet((rows) =>
       rows.map((row, index) => {
         const [key, id, type, en, de, logic] = row;
         // German moved before English, and the English header renamed.
@@ -184,8 +184,8 @@ describe("applyExcelExport: texts", () => {
     });
   });
 
-  test("skips a row whose text the survey no longer has, and a repeated row", () => {
-    const applied = importSheet((rows) => {
+  test("skips a row whose text the survey no longer has, and a repeated row", async () => {
+    const applied = await importSheet((rows) => {
       const open = rows[rowOf(rows, "element.open.headline")];
       return [...rows, ["element.gone.headline", "gone", "Free text", "Gone", "", ""], [...open]];
     });
@@ -204,7 +204,36 @@ describe("applyExcelExport: texts", () => {
     );
   });
 
-  test("refuses a sheet none of whose rows is a text of the survey", () => {
+  test("refuses another survey's sheet even when both have a welcome card, whose keys hold no id", async () => {
+    const other = {
+      ...SURVEY,
+      id: "clsurvey0000000000000002",
+      blocks: [],
+      endings: [],
+    } as unknown as TSurvey;
+
+    await expect(
+      importSheet(
+        (rows) => {
+          rows[rowOf(rows, "welcomeCard.headline")][EN] = "Hijacked";
+          return rows;
+        },
+        { survey: other, bytes: exported() }
+      )
+    ).rejects.toThrow(SurveyImportInputError);
+  });
+
+  test("counts a text changed in two languages once", async () => {
+    const applied = await importSheet((rows) => {
+      rows[rowOf(rows, "element.open.placeholder")][EN] = "Write here";
+      rows[rowOf(rows, "element.open.placeholder")][DE] = "Schreib hier";
+      return rows;
+    });
+
+    expect(applied.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 1 } });
+  });
+
+  test("refuses a sheet none of whose rows is a text of the survey", async () => {
     const other = {
       ...SURVEY,
       id: "clsurvey0000000000000002",
@@ -213,14 +242,9 @@ describe("applyExcelExport: texts", () => {
       endings: [],
     } as unknown as TSurvey;
 
-    expect(() => importSheet((rows) => rows, { survey: other, bytes: exported() })).toThrow(
-      SurveyImportInputError
-    );
-    try {
-      importSheet((rows) => rows, { survey: other, bytes: exported() });
-    } catch (error) {
-      expect((error as SurveyImportInputError).invalidParams[0].code).toBe("excel_export_other_survey");
-    }
+    await expect(importSheet((rows) => rows, { survey: other, bytes: exported() })).rejects.toMatchObject({
+      invalidParams: [expect.objectContaining({ code: "excel_export_other_survey" })],
+    });
   });
 });
 
@@ -231,8 +255,8 @@ describe("applyExcelExport: added rows", () => {
     return [...rows.slice(0, last + 1), ...extra, ...rows.slice(last + 1)];
   };
 
-  test("adds a question in its own block after the question above it, with its options and translations", () => {
-    const applied = importSheet((rows) =>
+  test("adds a question in its own block after the question above it, with its options and translations", async () => {
+    const applied = await importSheet((rows) =>
       insertAfter(
         rows,
         "single",
@@ -263,8 +287,8 @@ describe("applyExcelExport: added rows", () => {
     expect(codes(applied)).toEqual(expect.arrayContaining(["sheet_question_added", "sheet_option_added"]));
   });
 
-  test("reads a question type named in the export's language, or by its id", () => {
-    const applied = importSheet(
+  test("reads a question type named in the export's language, or by its id", async () => {
+    const applied = await importSheet(
       (rows) =>
         insertAfter(
           rows,
@@ -279,8 +303,8 @@ describe("applyExcelExport: added rows", () => {
     expect(elementOf(applied.survey, "q_id").type).toBe("nps");
   });
 
-  test("adds an option to an existing question, before its Other option", () => {
-    const applied = importSheet((rows) =>
+  test("adds an option to an existing question, before its Other option", async () => {
+    const applied = await importSheet((rows) =>
       insertAfter(rows, "single", added("single", "Choice 4", "Maybe", "Vielleicht"))
     );
 
@@ -294,8 +318,8 @@ describe("applyExcelExport: added rows", () => {
     ]);
   });
 
-  test("adds matrix rows and columns, and a field the question did not have", () => {
-    const applied = importSheet((rows) =>
+  test("adds matrix rows and columns, and a field the question did not have", async () => {
+    const applied = await importSheet((rows) =>
       insertAfter(
         rows,
         "matrix",
@@ -313,13 +337,14 @@ describe("applyExcelExport: added rows", () => {
     });
   });
 
-  test("skips the rows it cannot read, saying why, and adds nothing for them", () => {
-    const applied = importSheet((rows) =>
+  test("skips the rows it cannot read, saying why, and adds nothing for them", async () => {
+    const applied = await importSheet((rows) =>
       insertAfter(
         rows,
         "single",
         added("x1", "Not a type", "Huh?"),
         added("x2", "Picture selection", "Which picture?"),
+        added("__proto__", "Free text", "Not an id"),
         added("open", "Free text", "Taken id"),
         added("x3", "Free text", ""),
         added("nowhere", "Choice 1", "Lost option"),
@@ -337,6 +362,7 @@ describe("applyExcelExport: added rows", () => {
     ).toEqual([
       "unknown_type",
       "unsupported_type",
+      "id_invalid",
       "id_taken",
       "no_text",
       "no_question",
@@ -345,9 +371,9 @@ describe("applyExcelExport: added rows", () => {
     ]);
   });
 
-  test("leaves out a question that would not be valid, with its block, and keeps the rest", () => {
+  test("leaves out a question that would not be valid, with its block, and keeps the rest", async () => {
     // A choice question with no options is not a question the survey can hold.
-    const applied = importSheet((rows) =>
+    const applied = await importSheet((rows) =>
       insertAfter(
         rows,
         "single",
@@ -367,7 +393,7 @@ describe("applyExcelExport: added rows", () => {
     );
   });
 
-  test("adds no question past the most blocks a survey holds", () => {
+  test("adds no question past the most blocks a survey holds", async () => {
     const full = structuredClone(SURVEY);
     const [first] = full.blocks;
     full.blocks = [
@@ -379,26 +405,29 @@ describe("applyExcelExport: added rows", () => {
       })),
     ];
 
-    const applied = importSheet((rows) => [...rows, added("one_more", "Free text", "One more?")], {
+    const applied = await importSheet((rows) => [...rows, added("one_more", "Free text", "One more?")], {
       survey: full,
     });
 
     expect(applied.survey.blocks).toHaveLength(V3_SURVEY_MAX_BLOCKS);
     expect(applied.issues).toContainEqual(
-      expect.objectContaining({ code: "sheet_row_skipped", params: expect.objectContaining({ cause: "survey_full" }) })
+      expect.objectContaining({
+        code: "sheet_row_skipped",
+        params: expect.objectContaining({ cause: "survey_full" }),
+      })
     );
   });
 
-  test("never removes a question, an option or a text", () => {
-    const applied = importSheet((rows) => [rows[0], rows[1]]);
+  test("never removes a question, an option or a text", async () => {
+    const applied = await importSheet((rows) => [rows[0], rows[rowOf(rows, "element.open.headline")]]);
 
     expect(elementsOf(applied.survey)).toEqual(elementsOf(SURVEY));
   });
 });
 
 describe("applyExcelExport: columns", () => {
-  test("uses the column order of a sheet whose ID and Type headers were moved", () => {
-    const applied = importSheet((rows) =>
+  test("uses the column order of a sheet whose ID and Type headers were moved", async () => {
+    const applied = await importSheet((rows) =>
       [...rows, added("moved", "Free text", "Moved?")].map(([key, id, type, en, de, logic]) => [
         key,
         type,

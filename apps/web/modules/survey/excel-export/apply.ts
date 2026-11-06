@@ -2,14 +2,16 @@ import { createId } from "@paralleldrive/cuid2";
 import type { TFunction } from "i18next";
 import type { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { type TSurveyElement, ZSurveyElement } from "@formbricks/types/surveys/elements";
+import { type TSurveyElement, ZSurveyElement, ZSurveyElementId } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { V3_SURVEY_MAX_BLOCKS } from "@/app/api/v3/surveys/schemas";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { addBlock, renumberAutoNamedBlocks, withFilledCodes } from "@/modules/survey/editor/lib/blocks";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
+import { createSlicer } from "@/modules/survey/import/core/event-loop";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
-import { containsMarkup } from "@/modules/survey/import/core/sanitize-text";
+import { neutralize } from "@/modules/survey/import/core/sanitize-text";
+import type { TSurveyImportSheetRowSkipCause } from "@/modules/survey/import/types";
 import { type TSurveyText, walkSurveyTexts } from "@/modules/survey/lib/survey-texts";
 import type { TExcelExportAddableProperty, TExcelExportField, TExcelExportLabels } from "./labels";
 import { EXCEL_EXPORT_MAX_CELL_CHARS } from "./limits";
@@ -54,8 +56,12 @@ const FORMATTING_TAG = /<(?:a|b|strong|i|em|u|s|strike|del|code|mark|sub|sup|ul|
 // A complete recall token, as the survey stores it and `recallToHeadline` renders it.
 const RECALL_TOKEN = /#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g;
 
-// The ids a row may give a new question; the survey schema checks the rest (reserved ids) on save.
-const NEW_ELEMENT_ID = /^[A-Za-z0-9_-]{1,64}$/;
+// A row's Question ID becomes a new question's id when the element schema takes it, and it is not a
+// name every JavaScript object carries (`__proto__`, `constructor`, …): answers are keyed by question id,
+// and the schema's charset lets those through.
+const OBJECT_PROPERTY_NAMES = new Set(Object.getOwnPropertyNames(Object.prototype));
+const isNewElementId = (id: string): boolean =>
+  ZSurveyElementId.safeParse(id).success && !OBJECT_PROPERTY_NAMES.has(id);
 
 // Types a row cannot make: a picture selection needs images, a booking needs a Cal.com account.
 const UNADDABLE_TYPES = new Set<TSurveyElementTypeEnum>([
@@ -123,9 +129,6 @@ const splitRecalls = (text: string, labels: ReadonlyMap<string, string>): ({ tok
   return parts;
 };
 
-/** Stands in for `<` in plain text that would otherwise parse as markup, as every import does. */
-const NEUTRAL_LESS_THAN = "\uFF1C";
-
 const toLines = (cell: string): string[] =>
   cell
     .replaceAll("\r\n", "\n")
@@ -156,19 +159,17 @@ const toParagraphs = (cell: string, labels: ReadonlyMap<string, string>): string
 const toPlainText = (
   cell: string,
   labels: ReadonlyMap<string, string>,
-  markup: Map<string, boolean>
+  markup: Map<string, { text: string; escaped: boolean }>
 ): { text: string; escaped: boolean } => {
   const text = splitRecalls(toLines(cell).join(" "), labels)
     .map((part) => (typeof part === "string" ? part : part.token))
     .join("");
-  let hasMarkup = markup.get(text);
-  if (hasMarkup === undefined) {
-    hasMarkup = containsMarkup(text);
-    markup.set(text, hasMarkup);
+  let shown = markup.get(text);
+  if (shown === undefined) {
+    shown = neutralize(text);
+    markup.set(text, shown);
   }
-  return hasMarkup
-    ? { text: text.replaceAll("<", NEUTRAL_LESS_THAN), escaped: true }
-    : { text, escaped: false };
+  return shown;
 };
 
 /**
@@ -240,7 +241,9 @@ export interface TExcelExportApplied {
 class ExcelExportApplication {
   private readonly issues: TSurveyImportPipelineIssue[] = [];
   private survey: TSurvey;
-  private updated = 0;
+  /** The keys of the texts the sheet changed, in any of their languages. */
+  private readonly updatedKeys = new Set<string>();
+  /** Rows whose key names one of the survey's ids: what says the sheet is this survey's. */
   private matched = 0;
   /** The question the last row belonged to: a field row without a Question ID adds to it. */
   private currentElementId: string | null = null;
@@ -251,8 +254,8 @@ class ExcelExportApplication {
   private readonly createdElements = new Set<string>();
   private readonly textKeys: Map<string, string | null>;
   private readonly textsByKey: Map<string, TSurveyText>;
-  /** Whether each distinct plain text parses as markup; see `toPlainText`. */
-  private readonly markup = new Map<string, boolean>();
+  /** Each distinct plain text as it is shown; see `toPlainText`. */
+  private readonly markup = new Map<string, { text: string; escaped: boolean }>();
 
   constructor(
     private readonly source: TSurvey,
@@ -264,7 +267,7 @@ class ExcelExportApplication {
     this.textsByKey = new Map(walkSurveyTexts(source).map((text) => [text.key, text]));
   }
 
-  run(): TExcelExportApplied {
+  async run(): Promise<TExcelExportApplied> {
     const { read } = this.context;
     for (const { code, column } of read.languages) {
       if (column === null) {
@@ -283,14 +286,22 @@ class ExcelExportApplication {
     }
     for (const row of read.duplicateRows) this.skip(row, "duplicate_key");
 
+    // The merge runs on the server's thread, and a row can cost a markup parse per language: it yields
+    // by elapsed time, as the import's sanitizer does.
+    const slice = createSlicer();
     for (const row of read.rows) {
+      await slice(); // NOSONAR(typescript:S9382) -- a deliberate yield every slice
       if (row.key) this.applyKeyedRow(row);
       else this.applyAddedRow(row);
     }
     if (this.matched === 0) throw excelExportOtherSurvey();
 
     this.checkChangedElements();
-    this.issues.unshift({ code: "texts_updated", severity: "info", params: { count: this.updated } });
+    this.issues.unshift({
+      code: "texts_updated",
+      severity: "info",
+      params: { count: this.updatedKeys.size },
+    });
     // Codes for what the sheet added, as the editor gives a question or option it adds; a sheet that only
     // changes texts leaves the survey's codes as they are.
     return {
@@ -299,12 +310,14 @@ class ExcelExportApplication {
     };
   }
 
-  private skip(row: number, cause: string): void {
+  private skip(row: number, cause: TSurveyImportSheetRowSkipCause): void {
     this.issues.push({ code: "sheet_row_skipped", severity: "warning", params: { row, cause } });
   }
 
   private markChanged(elementId: string, row: number): void {
-    this.changedElements.set(elementId, [...(this.changedElements.get(elementId) ?? []), row]);
+    const rows = this.changedElements.get(elementId);
+    if (rows) rows.push(row);
+    else this.changedElements.set(elementId, [row]);
   }
 
   /**
@@ -360,7 +373,9 @@ class ExcelExportApplication {
       this.skip(row.row, "unknown_key");
       return;
     }
-    this.matched += 1;
+    // The welcome card's keys hold no id, so every survey with one shares them: only a row keyed by a
+    // question, block or ending id says the sheet was exported from this survey.
+    if (!row.key.startsWith("welcomeCard.")) this.matched += 1;
     this.followKey(row.key);
     // A text the survey never stored (an "Other" placeholder nobody typed) was not exported either.
     if (!text.value) return;
@@ -378,7 +393,7 @@ class ExcelExportApplication {
       if (cell === current) continue;
       const params = { row: row.row, language: code };
       // A text cut to fit its cell cannot come back whole: the sheet holds only its start.
-      if (current.length >= EXCEL_EXPORT_MAX_CELL_CHARS || cell.length >= EXCEL_EXPORT_MAX_CELL_CHARS) {
+      if (current.length >= EXCEL_EXPORT_MAX_CELL_CHARS) {
         this.issues.push({
           code: "sheet_text_not_imported",
           severity: "warning",
@@ -400,7 +415,7 @@ class ExcelExportApplication {
         this.issues.push({ code: "sheet_formatting_dropped", severity: "warning", params });
       }
       setI18nText(this.survey, text.path, textKey, next);
-      this.updated += 1;
+      this.updatedKeys.add(row.key);
     }
   }
 
@@ -425,13 +440,14 @@ class ExcelExportApplication {
     // A survey holds at most this many blocks, and each new question takes one: past it, the rest of the
     // sheet's new questions would be refused on save anyway, after costing a block each to build here.
     if (this.survey.blocks.length >= V3_SURVEY_MAX_BLOCKS) return this.skip(row.row, "survey_full");
+    if (row.questionId && !isNewElementId(row.questionId)) return this.skip(row.row, "id_invalid");
     if (row.questionId && findElement(this.survey, row.questionId)) return this.skip(row.row, "id_taken");
     const headline = this.toI18n(row, true);
     if (!headline) return this.skip(row.row, "no_text");
 
     const element = {
       ...this.context.newElement(type),
-      ...(row.questionId && NEW_ELEMENT_ID.test(row.questionId) ? { id: row.questionId } : {}),
+      ...(row.questionId ? { id: row.questionId } : {}),
       headline,
     } as TSurveyElement;
     // Options come from the rows below, not from the editor's empty placeholders.
@@ -538,5 +554,7 @@ class ExcelExportApplication {
  * Apply an Excel export to `survey`. Throws `SurveyImportInputError` (422, `excel_export_other_survey`)
  * when no row of the sheet is one of the survey's texts.
  */
-export const applyExcelExport = (survey: TSurvey, context: TExcelExportApplyContext): TExcelExportApplied =>
-  new ExcelExportApplication(survey, context).run();
+export const applyExcelExport = (
+  survey: TSurvey,
+  context: TExcelExportApplyContext
+): Promise<TExcelExportApplied> => new ExcelExportApplication(survey, context).run();

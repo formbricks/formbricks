@@ -4926,6 +4926,7 @@
             "source_size": "此文件太大，Formbricks AI 无法一次性导入。请改用 Claude 或 ChatGPT 通过 MCP 导入。",
             "table_cells": "此文档中表格的单元格总数超过 50,000 个。请将其拆分为较小的文件，然后分别导入。",
             "tables": "此文档的表格数超过 500 个。请将其拆分为较小的文件，然后分别导入。",
+            "text_size": "这个表格的文本量超出了问卷的上限。请删除你新增的行,或者分多次导入。",
             "xml_depth": "此文档的嵌套层级过深，无法读取。请在 Word 中重新保存后再次导入。",
             "xml_elements": "此文档的内容量超出了导入功能可读取的范围。请将其拆分为较小的文件，然后分别导入。"
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "第 {row} 行与前面的某一行重复，因此已被忽略。",
           "sheet_row_skipped_field_not_in_question": "第 {row} 行已被忽略：其所属问题没有该类型的字段。",
           "sheet_row_skipped_field_taken": "第 {row} 行已被忽略：其所属问题已有该字段。请改为编辑那一行。",
+          "sheet_row_skipped_id_invalid": "第 {row} 行已被跳过:其问题 ID 只能包含字母、数字、连字符和下划线,且必须以字母或数字开头。",
           "sheet_row_skipped_id_taken": "第 {row} 行已被忽略：已有其他问题使用了该问题 ID。",
           "sheet_row_skipped_invalid_question": "第 {row} 行已被忽略：该行创建或修改的问题将无效，例如选项少于两个的选择题。",
           "sheet_row_skipped_no_question": "第 {row} 行已被忽略：其上方没有问题，也没有与其问题 ID 匹配的问题可以容纳它。",

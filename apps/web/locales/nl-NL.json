@@ -4926,6 +4926,7 @@
             "source_size": "Dit bestand is te groot om in één keer met Formbricks AI te importeren. Importeer het in plaats daarvan met Claude of ChatGPT via MCP.",
             "table_cells": "De tabellen in dit document bevatten meer dan 50.000 cellen. Splits het op in kleinere bestanden en importeer elk bestand apart.",
             "tables": "Dit document bevat meer dan 500 tabellen. Splits het op in kleinere bestanden en importeer elk bestand apart.",
+            "text_size": "Dit werkblad bevat meer tekst dan een enquête aankan. Verwijder de rijen die je hebt toegevoegd, of verdeel ze over meerdere imports.",
             "xml_depth": "Dit document is te diep genest om te lezen. Sla het opnieuw op in Word en importeer het nog een keer.",
             "xml_elements": "Dit document bevat meer inhoud dan de import kan lezen. Splits het op in kleinere bestanden en importeer elk bestand apart."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "Rij {row} herhaalt een eerdere rij en is daarom weggelaten.",
           "sheet_row_skipped_field_not_in_question": "Rij {row} is weggelaten: de bijbehorende vraag heeft geen veld van dat type.",
           "sheet_row_skipped_field_taken": "Rij {row} is weggelaten: de bijbehorende vraag heeft dat veld al. Bewerk in plaats daarvan die rij.",
+          "sheet_row_skipped_id_invalid": "Rij {row} is overgeslagen: de Vraag-ID mag alleen letters, cijfers, koppeltekens en underscores bevatten en moet met een letter of cijfer beginnen.",
           "sheet_row_skipped_id_taken": "Rij {row} is weggelaten: een andere vraag heeft al deze vraag-ID.",
           "sheet_row_skipped_invalid_question": "Rij {row} is weggelaten: de vraag die hierdoor wordt gemaakt of gewijzigd zou ongeldig zijn, bijvoorbeeld een meerkeuzevraag met minder dan twee opties.",
           "sheet_row_skipped_no_question": "Rij {row} is weggelaten: er is geen vraag erboven, of met dit vraag-ID, waar de rij bij kan.",

@@ -199,8 +199,19 @@ describe("streamSurveyImportIntoSurvey", () => {
       report: { source: { kind: string }; issues: { code: string; params?: unknown }[] };
     };
     expect(done.match).toEqual(MATCH);
-    expect(done.report.source.kind).toBe("xlsx");
+    expect(done.report.source.kind).toBe("excel_export");
     expect(done.report.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 1 } });
+  });
+
+  test("tells the Match the survey has responses, so the review lists what an Update would remove", async () => {
+    mocks.hasSurveyResponses.mockResolvedValue(true);
+
+    await readEvents(await importInto(sheetFile(writeExcelExport({ survey: SURVEY, t, locale: "en-US" }))));
+
+    expect(mocks.hasSurveyResponses).toHaveBeenCalledWith(SURVEY.id);
+    expect(mocks.buildFormbricksFileMatch).toHaveBeenCalledWith(
+      expect.objectContaining({ hasResponses: true })
+    );
   });
 
   test("matches a Formbricks file to this survey, whatever survey the file names", async () => {

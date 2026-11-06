@@ -4926,6 +4926,7 @@
             "source_size": "Este archivo es demasiado grande para que Formbricks AI lo importe de una sola vez. Impórtalo con Claude o ChatGPT a través de MCP.",
             "table_cells": "Las tablas de este documento tienen más de 50.000 celdas. Divídelo en archivos más pequeños e importa cada uno.",
             "tables": "Este documento tiene más de 500 tablas. Divídelo en archivos más pequeños e importa cada uno.",
+            "text_size": "Esta hoja contiene más texto del que admite una encuesta. Elimina las filas que has añadido o divídelas en varias importaciones.",
             "xml_depth": "Este documento tiene un anidamiento demasiado profundo para poder leerse. Guárdalo de nuevo en Word e impórtalo otra vez.",
             "xml_elements": "Este documento contiene más contenido del que la importación puede leer. Divídelo en archivos más pequeños e importa cada uno."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "La fila {row} repite una fila anterior, así que se omitió.",
           "sheet_row_skipped_field_not_in_question": "Se omitió la fila {row}: su pregunta no tiene ningún campo de ese tipo.",
           "sheet_row_skipped_field_taken": "Se omitió la fila {row}: su pregunta ya tiene ese campo. Edita esa fila en su lugar.",
+          "sheet_row_skipped_id_invalid": "Se ha omitido la fila {row}: el ID de la pregunta solo puede contener letras, números, guiones y guiones bajos, y debe empezar por una letra o un número.",
           "sheet_row_skipped_id_taken": "Se omitió la fila {row}: otra pregunta ya tiene su ID de pregunta.",
           "sheet_row_skipped_invalid_question": "Se omitió la fila {row}: la pregunta que crea o modifica no sería válida, por ejemplo, una pregunta de opción con menos de dos opciones.",
           "sheet_row_skipped_no_question": "Se omitió la fila {row}: ninguna pregunta anterior, ni con su ID de pregunta, puede asumirla.",

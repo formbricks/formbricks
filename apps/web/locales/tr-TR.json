@@ -4926,6 +4926,7 @@
             "source_size": "Bu dosya, Formbricks AI'ın tek seferde içe aktarması için çok büyük. Bunun yerine MCP üzerinden Claude veya ChatGPT ile içe aktar.",
             "table_cells": "Bu belgedeki tablolar 50.000'den fazla hücre içeriyor. Belgeyi daha küçük dosyalara böl ve her birini ayrı ayrı içe aktar.",
             "tables": "Bu belgede 500'den fazla tablo var. Belgeyi daha küçük dosyalara böl ve her birini ayrı ayrı içe aktar.",
+            "text_size": "Bu sayfada bir anketin kaldırabileceğinden daha fazla metin var. Eklediğin satırları kaldır veya bunları birkaç içe aktarmaya böl.",
             "xml_depth": "Bu belge okunamayacak kadar iç içe geçmiş. Word'de yeniden kaydet ve bir kez daha içe aktar.",
             "xml_elements": "Bu belge, içe aktarmanın okuyabileceğinden daha fazla içerik barındırıyor. Belgeyi daha küçük dosyalara böl ve her birini ayrı ayrı içe aktar."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "{row}. satır önceki bir satırı tekrar ettiği için dışarıda bırakıldı.",
           "sheet_row_skipped_field_not_in_question": "{row}. satır dışarıda bırakıldı: sorusunda bu türde bir alan yok.",
           "sheet_row_skipped_field_taken": "{row}. satır dışarıda bırakıldı: sorusunda bu alan zaten var. Bunun yerine o satırı düzenle.",
+          "sheet_row_skipped_id_invalid": "{row}. satır atlandı: Soru Kimliği yalnızca harf, rakam, tire ve alt çizgi içerebilir ve bir harf ya da rakamla başlamalıdır.",
           "sheet_row_skipped_id_taken": "{row}. satır dışarıda bırakıldı: başka bir soru zaten bu Soru Kimliğini kullanıyor.",
           "sheet_row_skipped_invalid_question": "{row}. satır dışarıda bırakıldı: oluşturduğu veya değiştirdiği soru geçerli olmayacak, örneğin ikiden az seçeneği olan bir seçim sorusu.",
           "sheet_row_skipped_no_question": "{row}. satır dışarıda bırakıldı: üstünde veya Soru Kimliğiyle eşleşen, onu kabul edebilecek bir soru yok.",

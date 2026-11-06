@@ -8,9 +8,10 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 /**
  * The kind of file an import read, one per lane: `qsf` is a Qualtrics export, `formbricks` a Formbricks
  * file, `xlsx` and `csv` a question list read as a document (ENG-6852), `docx` a Word questionnaire
- * (ENG-6853). The report's `source` names it, so the dialog can say what was read.
+ * (ENG-6853), `excel_export` a survey's own Excel export imported into it (ENG-6809). The report's
+ * `source` names it, so the dialog can say what was read.
  */
-export type TSurveyImportSourceKind = "qsf" | "formbricks" | "xlsx" | "csv" | "docx";
+export type TSurveyImportSourceKind = "qsf" | "formbricks" | "xlsx" | "csv" | "docx" | "excel_export";
 
 /**
  * What the import is doing, sent as a `progress` event. The dialog maps each to a line in its progress
@@ -107,7 +108,7 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `sheet_row_skipped` — a row left out, by `params.cause`: its key is no text of the survey
  *   (`unknown_key`, deleted since the export), or an earlier row has it (`duplicate_key`); its Type names
  *   no question type or field (`unknown_type`), or a type a row cannot make (`unsupported_type`); its
- *   Question ID is taken (`id_taken`) or names no question, with none above (`no_question`); it has no
+ *   Question ID is not one a question can have (`id_invalid`) or is taken (`id_taken`) or names no question, with none above (`no_question`); it has no
  *   text in the default language (`no_text`); the question has no such field (`field_not_in_question`)
  *   or has it already (`field_taken`); or the question it makes or adds to is not valid
  *   (`invalid_question`); or the survey has as many blocks as it can hold (`survey_full`)
@@ -224,7 +225,8 @@ export type TSurveyImportFileLimit =
 /**
  * The limit a `document_limit_exceeded` param is about, in its `identifier`: the sheet's or CSV's rows,
  * columns and characters in one cell; a Word file's XML nesting and elements per part, its paragraphs,
- * tables and table cells (ENG-6853); and the text the AI would read, all cells together.
+ * tables and table cells (ENG-6853); the text the AI would read, all cells together; and the text an
+ * Excel export imported into its survey holds, all cells together (`text_size`, ENG-6809).
  */
 export type TSurveyImportDocumentLimit =
   | "rows"
@@ -236,7 +238,8 @@ export type TSurveyImportDocumentLimit =
   | "paragraphs"
   | "tables"
   | "table_cells"
-  | "source_size";
+  | "source_size"
+  | "text_size";
 
 /** The limit a `qsf_limit_exceeded` param is about, in its `identifier`. */
 export type TSurveyImportLimit =
@@ -298,6 +301,21 @@ export type TSurveyImportIssueCode =
   | "sheet_text_not_imported"
   | "sheet_question_added"
   | "sheet_option_added";
+
+/** Why a row of an Excel export imported into its survey was left out: `sheet_row_skipped`'s `params.cause`. */
+export type TSurveyImportSheetRowSkipCause =
+  | "unknown_key"
+  | "duplicate_key"
+  | "unknown_type"
+  | "unsupported_type"
+  | "id_invalid"
+  | "id_taken"
+  | "no_question"
+  | "no_text"
+  | "field_not_in_question"
+  | "field_taken"
+  | "invalid_question"
+  | "survey_full";
 
 export interface TSurveyImportIssue {
   code: TSurveyImportIssueCode;

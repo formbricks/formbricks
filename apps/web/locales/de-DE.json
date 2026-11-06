@@ -4926,6 +4926,7 @@
             "source_size": "Diese Datei ist zu groß, als dass Formbricks AI sie in einem Durchgang importieren könnte. Importiere sie stattdessen über MCP mit Claude oder ChatGPT.",
             "table_cells": "Die Tabellen in diesem Dokument haben mehr als 50.000 Zellen. Teile es in kleinere Dateien auf und importiere jede einzeln.",
             "tables": "Dieses Dokument hat mehr als 500 Tabellen. Teile es in kleinere Dateien auf und importiere jede einzeln.",
+            "text_size": "Dieses Tabellenblatt enthält mehr Text, als eine Umfrage verarbeiten kann. Entferne die Zeilen, die Du hinzugefügt hast, oder verteile sie auf mehrere Importe.",
             "xml_depth": "Dieses Dokument ist zu tief verschachtelt, um gelesen zu werden. Speichere es erneut in Word und importiere es noch einmal.",
             "xml_elements": "Dieses Dokument enthält mehr Inhalt, als der Import lesen kann. Teile es in kleinere Dateien auf und importiere jede einzeln."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "Zeile {row} wiederholt eine frühere Zeile und wurde daher weggelassen.",
           "sheet_row_skipped_field_not_in_question": "Zeile {row} wurde weggelassen: Ihre Frage hat kein Feld dieser Art.",
           "sheet_row_skipped_field_taken": "Zeile {row} wurde weggelassen: Ihre Frage hat dieses Feld bereits. Bearbeite stattdessen jene Zeile.",
+          "sheet_row_skipped_id_invalid": "Zeile {row} wurde übersprungen: Die Fragen-ID darf nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten und muss mit einem Buchstaben oder einer Zahl beginnen.",
           "sheet_row_skipped_id_taken": "Zeile {row} wurde weggelassen: Eine andere Frage hat bereits ihre Frage-ID.",
           "sheet_row_skipped_invalid_question": "Zeile {row} wurde weggelassen: Die Frage, die sie erstellt oder ändert, wäre ungültig, zum Beispiel eine Auswahlfrage mit weniger als zwei Optionen.",
           "sheet_row_skipped_no_question": "Zeile {row} wurde weggelassen: Keine Frage darüber oder mit ihrer Frage-ID kann sie aufnehmen.",

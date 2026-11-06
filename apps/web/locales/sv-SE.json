@@ -4926,6 +4926,7 @@
             "source_size": "Den här filen är för stor för att Formbricks AI ska kunna importera den i ett svep. Importera den i stället med Claude eller ChatGPT via MCP.",
             "table_cells": "Tabellerna i det här dokumentet har fler än 50 000 celler. Dela upp det i mindre filer och importera dem var för sig.",
             "tables": "Det här dokumentet har fler än 500 tabeller. Dela upp det i mindre filer och importera dem var för sig.",
+            "text_size": "Det här kalkylbladet innehåller mer text än en enkät klarar av. Ta bort raderna du har lagt till eller dela upp dem på flera importer.",
             "xml_depth": "Det här dokumentet har en för djup nästling för att kunna läsas. Spara det på nytt i Word och importera det igen.",
             "xml_elements": "Det här dokumentet innehåller mer innehåll än importen kan läsa. Dela upp det i mindre filer och importera dem var för sig."
           },
@@ -5061,6 +5062,7 @@
           "sheet_row_skipped_duplicate_key": "Rad {row} upprepar en tidigare rad och utelämnades därför.",
           "sheet_row_skipped_field_not_in_question": "Rad {row} utelämnades: frågan har inget fält av den typen.",
           "sheet_row_skipped_field_taken": "Rad {row} utelämnades: frågan har redan det fältet. Redigera den raden i stället.",
+          "sheet_row_skipped_id_invalid": "Rad {row} hoppades över: Fråge-ID:t får bara innehålla bokstäver, siffror, bindestreck och understreck och måste börja med en bokstav eller en siffra.",
           "sheet_row_skipped_id_taken": "Rad {row} utelämnades: en annan fråga har redan det fråge-ID:t.",
           "sheet_row_skipped_invalid_question": "Rad {row} utelämnades: frågan som raden skapar eller ändrar skulle bli ogiltig, till exempel en flervalsfråga med färre än två alternativ.",
           "sheet_row_skipped_no_question": "Rad {row} utelämnades: ingen fråga ovanför raden, eller med dess fråge-ID, kan ta emot den.",

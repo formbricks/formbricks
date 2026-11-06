@@ -42,4 +42,4 @@ export type TSurveyImportStreamForm = z.infer<typeof ZSurveyImportStreamForm>;
  */
 export const ZSurveyImportIntoSurveyForm = z.strictObject({ file: ZSurveyImportFile });
 
-export const ZSurveyImportIntoSurveyParams = z.object({ surveyId: z.cuid2() });
+export const ZSurveyImportIntoSurveyParams = z.strictObject({ surveyId: z.cuid2() });

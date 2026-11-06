@@ -12,7 +12,9 @@ export const editExcelExport = (bytes: Uint8Array, edit: (rows: string[][]) => s
   const sheet = XLSX.utils.aoa_to_sheet(edit(rows.map((row) => [...row])));
   sheet["!cols"] = book.Sheets[name]["!cols"];
   book.Sheets[name] = sheet;
-  return new Uint8Array(XLSX.write(book, { type: "buffer", bookType: "xlsx" }) as Buffer);
+  return new Uint8Array(
+    XLSX.write(book, { type: "buffer", bookType: "xlsx", bookSST: true, compression: true }) as Buffer
+  );
 };
 
 /** The index of the row whose hidden key is `key`; throws when there is none, so a test can't pass on a typo. */
