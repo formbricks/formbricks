@@ -5,7 +5,7 @@ import { getOptionList } from "@formbricks/types/surveys/show-if";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
- * Shown / not shown filters (ENG-6951) on the not-shown record (`Response.notShown`, ADR 0024).
+ * Shown / not shown filters (ENG-6951) on the not-shown record (`Response.notShown`, ADR 0029).
  *
  * The record lists only what the survey kept from a respondent: blocks passed over, elements hidden,
  * and per shown element the options, rows and columns it did not offer. Not listed means shown **or

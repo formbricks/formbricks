@@ -142,7 +142,7 @@ const describeOperandParts = (
       const name = questionChip(survey, operand.value);
       const meta = "meta" in operand ? operand.meta : undefined;
       if (!isMatrixRowCondition(meta)) return [name];
-      // Ids first (ADR 0027): a row reordered since the condition was written still reads as its row.
+      // Ids first (ADR 0032): a row reordered since the condition was written still reads as its row.
       const rows = getOptionItems(element, "rows");
       const rowIndex = resolveMatrixRowIndex({ rows, columns: [] }, meta);
       const rowLabel = rowIndex === undefined ? undefined : getOptionLabel(rows[rowIndex]);
@@ -176,7 +176,7 @@ const describeStaticValue = (
     condition.rightOperand?.type === "static" &&
     condition.leftOperand.type === "element"
   ) {
-    // Ids first (ADR 0027): the column ids resolve to positions, which name the columns as they are now.
+    // Ids first (ADR 0032): the column ids resolve to positions, which name the columns as they are now.
     const resolved = resolveMatrixColumnValue(element, condition.rightOperand);
     const columns = getOptionItems(element, "columns");
     const toColumnLabel = (position: string | number) =>

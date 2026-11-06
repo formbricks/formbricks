@@ -56,7 +56,7 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
 });
 
 /**
- * Set value (ENG-6935, ADR 0026): assigns the result of an expression tree (ADR 0025) to a computed
+ * Set value (ENG-6935, ADR 0031): assigns the result of an expression tree (ADR 0030) to a computed
  * field of any computed type. A third member of the union, so the one-step operators above keep
  * today's behaviour ("empty counts as 0") and this one has its own ("empty in, empty out").
  */

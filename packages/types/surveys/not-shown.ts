@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { TOptionListKey } from "./show-if";
 
 /**
- * The not-shown record (ENG-6936, ADR 0024): what a respondent was **not shown**, decided by the
+ * The not-shown record (ENG-6936, ADR 0029): what a respondent was **not shown**, decided by the
  * survey while they answer and stored on the response as it was at answer time. Results read it
  * instead of re-running today's rules, so editing a show-if mid-field never changes past results.
  *

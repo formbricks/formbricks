@@ -25,7 +25,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 /**
- * The formula box's text form of a Set value expression (ENG-6935, ADR 0025): parses what people type
+ * The formula box's text form of a Set value expression (ENG-6935, ADR 0030): parses what people type
  * into the same tree AI writes through v3 and MCP, and renders a stored tree back as text.
  *
  * This parser lives in the web app only, never in the survey bundle, which just walks the tree.

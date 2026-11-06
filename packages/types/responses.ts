@@ -454,7 +454,7 @@ export type TResponseOutcome = z.infer<typeof ZResponseOutcome>;
 const ZResponseFilterShownId = z.string().min(1).max(MAX_NOT_SHOWN_ID_LENGTH);
 
 /**
- * Shown / not shown (ENG-6951): whether a response's not-shown record (ADR 0024) says the respondent
+ * Shown / not shown (ENG-6951): whether a response's not-shown record (ADR 0029) says the respondent
  * was shown a block, an element, or an element's option, matrix row or matrix column.
  *
  * - `notShown`: the record lists the target, or the element or block holding it.
@@ -934,7 +934,7 @@ export type TResponseTableData = z.infer<typeof ZResponseTableData>;
 export const ZResponseWithQuotas = ZResponse.extend({
   quotas: z.array(ZSurveyQuota.pick({ id: true, name: true })).optional(),
   /**
-   * What the respondent was not shown (ENG-6936, ADR 0024); `null` means unknown. Read only for the
+   * What the respondent was not shown (ENG-6936, ADR 0029); `null` means unknown. Read only for the
    * app's own results (the responses page and the response card): it is not on `ZResponse`, and the
    * shared response selection leaves it out, so webhooks, integrations and the v1/v2 payloads stay
    * exactly as before.

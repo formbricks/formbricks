@@ -51,7 +51,7 @@ describe("describeConditionGroup", () => {
     );
   });
 
-  test("names a matrix row and column by id after they were reordered (ADR 0027)", () => {
+  test("names a matrix row and column by id after they were reordered (ADR 0032)", () => {
     // The stored positions are stale: rows and columns were reversed since the rule was written.
     const reordered = structuredClone(surveyFlowFixture);
     const grid = reordered.blocks
