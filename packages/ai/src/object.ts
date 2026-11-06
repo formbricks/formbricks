@@ -2,7 +2,6 @@ import { Output, asSchema, generateText } from "ai";
 import { AIOutputTokenLimitError } from "./errors";
 import { getAiModel } from "./provider";
 import { getOpenAICompatibleProviderName } from "./providers/openai-compatible";
-import { withLowReasoning } from "./reasoning";
 import { getAIEnvironment, parseBooleanFlag, resolveActiveAIProvider } from "./shared";
 import type {
   AIEnvironment,
@@ -91,26 +90,7 @@ export const generateObject = async <T = unknown>(
   environment?: AIEnvironment,
   wrapModel?: (model: AIResolvedLanguageModel) => AIResolvedLanguageModel
 ): Promise<TGenerateObjectResult<T>> => {
-  const {
-    schema,
-    schemaName,
-    schemaDescription,
-    output: _output,
-    strictSchema,
-    lowReasoning,
-    ...callOptions
-  } = options;
-  const resolved = getAIEnvironment(environment);
-  const textOptions = lowReasoning
-    ? {
-        ...callOptions,
-        providerOptions: withLowReasoning(
-          callOptions.providerOptions,
-          resolveActiveAIProvider(resolved.AI_PROVIDER),
-          resolved.AI_MODEL
-        ),
-      }
-    : callOptions;
+  const { schema, schemaName, schemaDescription, output: _output, strictSchema, ...textOptions } = options;
   const model = getAiModel(environment);
   const request = {
     ...textOptions,

@@ -30,7 +30,7 @@ const laneWith = (maxCallChars: number, maxTotalChars = 1_000_000): TImportPlanL
 });
 
 const plan = (maxCallChars: number, maxTotalChars?: number) => {
-  const generate = vi.fn(async () => ({ object: { answer: "yes" } }));
+  const generate = vi.fn(async (_request: unknown) => ({ object: { answer: "yes" } }));
   const run = runImportPlan({
     lane: laneWith(maxCallChars, maxTotalChars),
     refs: ["Q1"],
@@ -72,7 +72,9 @@ describe("runImportPlan: the request", () => {
     const { run, generate } = plan(100_000);
     await run;
 
-    expect(generate).toHaveBeenCalledWith(expect.objectContaining({ lowReasoning: false }));
+    // No thinking level and no provider options that would set one.
+    expect(generate.mock.calls[0][0]).not.toHaveProperty("lowReasoning");
+    expect(generate.mock.calls[0][0]).not.toHaveProperty("providerOptions");
   });
 });
 

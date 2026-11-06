@@ -71,14 +71,15 @@ export interface TImportPlanRequest<TSchema extends z.ZodType = z.ZodType> {
   maxOutputTokens: number;
   /** This attempt's time: what is left of the call's. */
   timeout: number;
-  /** Always 0: the import retries its calls itself (`call-retry.ts`), the SDK must not. */
-  maxRetries: 0;
   /**
-   * Always false, so the model thinks: with thinking turned down, Gemini 2.5 Flash answered real
-   * questionnaires (a bilingual table, a numbered Markdown list, a CSV) with an empty plan. Thinking costs output tokens and time,
-   * which the per-call cap and the deadline leave room for; an import that works is worth both.
+   * Always 0: the import retries its calls itself (`call-retry.ts`), the SDK must not.
+   *
+   * The request sets no thinking level: the model thinks as configured. With thinking turned down,
+   * Gemini 2.5 Flash answered real questionnaires (a bilingual table, a numbered Markdown list, a CSV)
+   * with an empty plan. Thinking costs output tokens and time, which the per-call cap and the deadline
+   * leave room for; an import that works is worth both.
    */
-  lowReasoning: false;
+  maxRetries: 0;
   abortSignal: AbortSignal;
 }
 
@@ -380,7 +381,6 @@ async function attemptCall<TFailure extends string, TPlan extends TImportChecked
       maxOutputTokens: SURVEY_IMPORT_AI_MAX_OUTPUT_TOKENS_PER_CALL,
       timeout: attempt === 0 ? timeout : Math.floor(callEnd - performance.now()),
       maxRetries: 0,
-      lowReasoning: false,
       abortSignal: context.signal,
     });
     addUsage(context, result.usage);
