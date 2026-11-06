@@ -254,16 +254,16 @@ export const copySurveyToOtherWorkspace = async (
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
     if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
 
-    // ENG-6870: a copy into the same workspace keeps the source's targeting (it connects the public
-    // segment, or clones the private one), and the copier then reads the copy's responses — so the
-    // copier must see every survey that targeting reads. Elsewhere its survey ids name another
-    // workspace's surveys, which no contact of the target workspace has interacted with.
-    if (isSameWorkspace && existingSurvey.segment) {
+    // ENG-6870: a copy keeps the source's targeting (it connects the public segment, or writes its filters
+    // into a new one in the target), and the copier then reads the copy's responses, so the copier must
+    // see every survey that targeting reads *in the workspace it lands in*. Checked against the target:
+    // a stored filter can name an id that is foreign to the source but a hidden survey in the target.
+    if (existingSurvey.segment) {
       await assertSegmentSurveyFiltersVisible(
         existingSurvey.segment.filters,
-        workspaceId,
+        targetWorkspaceId,
         await resolveSurveyActorContext({ type: "user", id: userId }, organization.id),
-        existingSurvey.segment.isPrivate ? undefined : existingSurvey.segment.id
+        isSameWorkspace && !existingSurvey.segment.isPrivate ? existingSurvey.segment.id : undefined
       );
     }
 

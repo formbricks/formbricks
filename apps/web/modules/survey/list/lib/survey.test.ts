@@ -856,7 +856,7 @@ describe("copySurveyToOtherWorkspace", () => {
   });
 
   // ENG-6870: a same-workspace copy keeps the targeting, so the copier must see what it reads.
-  test("refuses a same-workspace copy whose targeting reads a survey hidden from the copier", async () => {
+  test("refuses a copy whose targeting reads a survey hidden from the copier where it lands", async () => {
     const memberActor = { enforced: true, isOrganizationAdmin: false, kind: "user", userId };
     const filters = [{ id: "f1", connector: null, resource: [] }];
     vi.mocked(prisma.survey.findUnique).mockResolvedValue({
@@ -878,11 +878,20 @@ describe("copySurveyToOtherWorkspace", () => {
     );
     expect(prisma.survey.create).not.toHaveBeenCalled();
 
-    // Into another workspace its survey ids name nothing there, so there is nothing to check.
+    // Into another workspace the copied filters are checked there: an id foreign to the source can be a
+    // hidden survey in the target.
     targetingMocks.assertSegmentSurveyFiltersVisible.mockClear();
-    vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
-    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId).catch(() => {});
-    expect(targetingMocks.assertSegmentSurveyFiltersVisible).not.toHaveBeenCalled();
+    targetingMocks.assertSegmentSurveyFiltersVisible.mockRejectedValueOnce(refused);
+    await expect(
+      copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId)
+    ).rejects.toBe(refused);
+    expect(targetingMocks.assertSegmentSurveyFiltersVisible).toHaveBeenCalledWith(
+      filters,
+      targetWorkspaceId,
+      memberActor,
+      undefined
+    );
+    expect(prisma.survey.create).not.toHaveBeenCalled();
   });
 
   test("should handle private segment: create new private segment in target", async () => {
