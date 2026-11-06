@@ -353,6 +353,11 @@ If you run your own OpenAI-compatible endpoint, use `COMPOSE_PROFILES=taxonomy` 
 `TAXONOMY_LLM_BASE_URL` at that `/v1` endpoint. The selected model must reliably return strict JSON because
 taxonomy generation validates an exact 5-level tree.
 
+Also add `TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS`, set to the context window of the exact model deployment you
+configure. Taxonomy checks its prompt and output budget against it, and `/ready` reports
+`context_budget_not_configured` while it is unset. For the bundled Qwen runtime, the context window is
+`QWEN_MAX_MODEL_LEN`, the vLLM `--max-model-len`.
+
 To use Amazon Bedrock instead of an OpenAI-compatible endpoint, replace the taxonomy LLM values with:
 
 ```bash
@@ -360,6 +365,7 @@ TAXONOMY_LLM_PROVIDER=bedrock
 TAXONOMY_LLM_MODEL=eu.anthropic.claude-sonnet-4-5-20250929-v1:0
 AWS_REGION=eu-north-1
 AWS_BEARER_TOKEN_BEDROCK=<bedrock-api-key>
+TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS=<model-context-window>
 ```
 
 To use Gemini on Vertex AI instead, replace the taxonomy LLM values with:
@@ -370,6 +376,7 @@ TAXONOMY_LLM_MODEL=gemini-2.5-flash
 TAXONOMY_VERTEX_PROJECT=<google-cloud-project>
 TAXONOMY_VERTEX_LOCATION=<vertex-location>
 TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON=<service-account-json>
+TAXONOMY_LLM_CONTEXT_WINDOW_TOKENS=1048576
 ```
 
 Start the stack after updating `.env`. Compose reads `COMPOSE_PROFILES` from `.env`, so the same command works
