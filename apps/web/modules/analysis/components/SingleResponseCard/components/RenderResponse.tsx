@@ -1,5 +1,6 @@
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
+import { isCalBooked } from "@formbricks/types/cal-booking";
 import { TResponseDataValue } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -9,6 +10,7 @@ import { getLanguageCode, getLocalizedValue } from "@/lib/i18n/utils";
 import { getChoiceIdByValue } from "@/lib/response/utils";
 import { processResponseData } from "@/lib/responses";
 import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
@@ -130,6 +132,23 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
 
     case TSurveyElementTypeEnum.Cal:
+      if (typeof responseData === "object" && !Array.isArray(responseData) && isCalBooked(responseData)) {
+        const start = responseData.startTime ? new Date(responseData.startTime) : null;
+        const items = [
+          ...(responseData.title ? [{ value: responseData.title }] : []),
+          ...(start && !Number.isNaN(start.getTime())
+            ? [{ value: formatDateTimeForDisplay(start, locale) }]
+            : [{ value: "booked" }]),
+        ];
+        return (
+          <ResponseBadges
+            items={items}
+            isExpanded={isExpanded}
+            icon={<PhoneIcon className="size-4 text-slate-500" />}
+            showId={showId}
+          />
+        );
+      }
       if (typeof responseData === "string" || typeof responseData === "number") {
         return (
           <ResponseBadges

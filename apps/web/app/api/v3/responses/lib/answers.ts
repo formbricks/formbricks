@@ -1,3 +1,4 @@
+import { isCalBooked } from "@formbricks/types/cal-booking";
 import { listReadableFields } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
@@ -513,8 +514,8 @@ const serializeOne = (
     }
 
     case "cal": {
-      if (typeof raw !== "string") return mismatch;
-      return { answer: { ...base, elementType: "cal", booked: raw === "booked", rawValue: raw } };
+      if (typeof raw !== "string" && !isStringRecord(raw)) return mismatch;
+      return { answer: { ...base, elementType: "cal", booked: isCalBooked(raw), rawValue: raw } };
     }
 
     case "date": {

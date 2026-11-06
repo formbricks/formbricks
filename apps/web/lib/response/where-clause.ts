@@ -932,11 +932,12 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
           });
           break;
         case "booked":
+          // Responses recorded before 6.2 hold the string "booked"; later ones a record with `status: "booked"`.
           data.push({
-            data: {
-              path: [key],
-              equals: "booked",
-            },
+            OR: [
+              { data: { path: [key], equals: "booked" } },
+              { data: { path: [key, "status"], equals: "booked" } },
+            ],
           });
           break;
         case "matrix": {
