@@ -282,6 +282,10 @@ jobs:
             echo 'Embedding readiness probe unexpectedly enabled by default' >&2
             exit 1
           fi
+          if grep -Eq 'name: EMBEDDING_PREFLIGHT_(TIMEOUT|INTERVAL|SUCCESS_TTL|SNOOZE)_SECONDS' "$render_dir/hub-embeddings-background-worker.yaml"; then
+            echo 'Preflight timing unexpectedly overrides Hub Secret defaults' >&2
+            exit 1
+          fi
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \
@@ -358,11 +362,22 @@ jobs:
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.worker.embeddingPreflight.timeoutSeconds=10 \
+            --set hub.worker.embeddingPreflight.intervalSeconds=60 \
+            --set hub.worker.embeddingPreflight.successTTLSeconds=120 \
+            --set hub.worker.embeddingPreflight.snoozeSeconds=30 \
             --set hub.env.EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS=11 \
             --set hub.worker.env.EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS=12 \
+            --set hub.env.EMBEDDING_PREFLIGHT_INTERVAL_SECONDS=61 \
+            --set hub.worker.env.EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS=121 \
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-preflight-override.yaml"
           test "$(grep -c 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
           grep -A1 'name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "12"'
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_INTERVAL_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_INTERVAL_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "61"'
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "121"'
+          test "$(grep -c 'name: EMBEDDING_PREFLIGHT_SNOOZE_SECONDS' "$render_dir/hub-preflight-override.yaml")" -eq 1
+          grep -A1 'name: EMBEDDING_PREFLIGHT_SNOOZE_SECONDS' "$render_dir/hub-preflight-override.yaml" | grep -q 'value: "30"'
 
           expect_embedding_render_failure() {
             local name="$1" pattern="$2"
