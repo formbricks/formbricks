@@ -211,8 +211,10 @@ authzed:
 AuthZed and `fully_consistent` authorization are enabled by default. The operator runs SpiceDB datastore
 migrations. A fresh Helm installation runs a release-matched, aggregate-only initialization Job after the
 datastore and Formbricks migrations become available. Application startup and probes do not depend on this Job.
-For existing releases, the pre-upgrade hook is read-only. Prepare schema and relationship changes explicitly
-before the upgrade; the hook only runs `upgrade check`.
+For existing Helm and Flux releases, the pre-upgrade hook is read-only: it only runs `upgrade check`. Prepare
+schema and relationship changes explicitly before the upgrade. Argo CD renders the chart as a new install, so
+its Sync hook also runs `upgrade prepare` on every sync: stop the writers first, as the
+[Kubernetes runbook](/self-hosting/upgrade/kubernetes#patch-upgrades) describes.
 
 The release notes print the exact deployment command. With the default release:
 

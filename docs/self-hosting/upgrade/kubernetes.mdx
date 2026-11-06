@@ -21,8 +21,14 @@ Before you start:
     rel=formbricks                # your Helm release name (helm list -n "$ns")
     target_version=6.1.3          # your next stop
     app=formbricks                # the app Deployment: your nameOverride if you set one, otherwise formbricks
-    writers="app.kubernetes.io/instance=${rel},app.kubernetes.io/component in (${app},hub,hub-worker,taxonomy)"
+    app_component=$(kubectl get deploy -n "$ns" "$app" \
+      -o jsonpath='{.spec.selector.matchLabels.app\.kubernetes\.io/component}')
+    echo "App component: ${app_component:?Deployment $app not found}"
+    writers="app.kubernetes.io/instance=${rel},app.kubernetes.io/component in (${app_component},hub,hub-worker,taxonomy)"
     ```
+
+    `app_component` is the app's component label, read from the cluster. It differs from `app` if your values set
+    `componentOverride`.
 
     Since 4.0, each release publishes a chart with the same version number as the app: chart `6.1.3` deploys app `6.1.3`.
     If your values override `deployment.image.tag`, set it to the same version.
@@ -63,6 +69,7 @@ Before you start:
     kubectl get deploy -n "$ns" -l "$writers" \
       -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.replicas}{"\n"}{end}' > replicas-before.txt
     cat replicas-before.txt
+    grep -q "^${app} " replicas-before.txt || echo "STOP: the app Deployment is missing from the list"
     kubectl scale deploy -n "$ns" -l "$writers" --replicas=0
     kubectl wait pod -n "$ns" -l "$writers" --for=delete --timeout=10m
     kubectl get jobs -n "$ns"
@@ -143,8 +150,21 @@ Before you start:
 
     Use a longer timeout if your migrations took longer in a test run.
 
-    **Argo CD or Flux:** commit the new chart version and values to Git, then sync once by hand, for example
+    **Argo CD:** commit the new chart version and values to Git, then sync once by hand, for example
     `argocd app sync <app>`. Keep automatic sync off until the checks pass.
+
+    **Flux:** a suspended HelmRelease deploys nothing, so resume it for this step only. Commit the new chart
+    version and values to Git, set the HelmRelease's `spec.timeout` to at least `30m`, and wait until
+    `flux get sources all -A` shows the new revision. Then:
+
+    ```bash
+    flux resume helmrelease <name> -n "$ns"
+    flux get helmrelease <name> -n "$ns"
+    flux suspend helmrelease <name> -n "$ns"
+    ```
+
+    `flux resume` upgrades the release and waits for the result. The HelmRelease must show `Ready True` for the
+    target chart version before you suspend it again for the checks.
   </Step>
   <Step title="Restore replicas">
     Hub, Hub worker and taxonomy start with the replica count from your values. If the app uses an autoscaler
@@ -178,15 +198,22 @@ Before you start:
 ## Patch upgrades
 
 A patch, such as 6.1.2 → 6.1.3, doesn't change the permission schema, so you don't run the preparation Job.
-Keep `authzed.migrationAcknowledged: true`. Before upgrading, check that the permission setup is clean:
+Keep `authzed.migrationAcknowledged: true`.
+
+**Helm or Flux:** check that the permission setup is clean:
 
 ```bash
 kubectl exec -n "$ns" "deploy/${app}" -- formbricks-authzed upgrade check
 ```
 
-It must exit `0`. Then run the **Deploy the new version** step. The chart runs the same check again before it
-upgrades. If the check reports pending permission work on a busy instance, stop the writers first as in the
-steps above, and run the upgrade again.
+It must exit `0`. Then upgrade: run the `helm upgrade` command from **Deploy the new version**, or commit the
+new chart version for Flux. The chart runs the same check before it upgrades, and that check changes nothing.
+If it reports pending permission work on a busy instance, stop the writers first as in the steps above, and
+run the upgrade again.
+
+**Argo CD:** Argo CD renders the chart as a new install, so its Sync hook runs `upgrade prepare` on every sync,
+and that writes permission data. Stop the writers before a patch sync. Do every step above except
+**Prepare permissions**.
 
 <span id="recovery" />
 
