@@ -3,7 +3,7 @@ import { NoObjectGeneratedError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { AI_CHART_PROMPT_ERROR_CODE } from "./ai-chart-errors";
-import { ZAIQueryResponse, generateAIChartQuery } from "./ai-chart-query.server";
+import { ZAIQueryResponse, buildAIQueryResponseSchema, generateAIChartQuery } from "./ai-chart-query.server";
 
 const mocks = vi.hoisted(() => ({
   generateOrganizationAIObject: vi.fn(),
@@ -590,5 +590,74 @@ describe("generateAIChartQuery", () => {
     });
 
     expect(mocks.generateOrganizationAIObject.mock.calls[0][0].system).toBe("schema context");
+  });
+});
+
+describe("AI chart generation for one dataset (ENG-6893, ENG-6894)", () => {
+  const dataset = {
+    embeddedFields: [{ name: "FeedbackRecords.ed_area_manager_1a2b3c4d", key: "Area Manager" }],
+    answerQuestions: [
+      {
+        id: "q_delivery",
+        label: "How was delivery?",
+        kind: "choice" as const,
+        options: [{ value: "opt_late", label: "Late" }],
+      },
+    ],
+  };
+  const output = (filters: unknown, dimensions: unknown = null) => ({
+    answerable: true,
+    name: null,
+    measures: ["FeedbackRecords.npsScore"],
+    dimensions,
+    timeDimensions: null,
+    chartType: "big_number",
+    filters,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getAIDataProfile.mockResolvedValue(null);
+  });
+
+  test("offers the dataset's embedded fields and the answer filter, and no other dataset's", () => {
+    const schema = buildAIQueryResponseSchema(dataset);
+    const answerRule = {
+      member: "FeedbackRecords.answer",
+      operator: "equals",
+      values: ["q_delivery:opt_late"],
+    };
+
+    expect(schema.safeParse(output([answerRule], ["FeedbackRecords.ed_area_manager_1a2b3c4d"])).success).toBe(
+      true
+    );
+    expect(schema.safeParse(output(null, ["FeedbackRecords.ed_other_99999999"])).success).toBe(false);
+    expect(ZAIQueryResponse.safeParse(output([answerRule])).success).toBe(false);
+    expect(buildAIQueryResponseSchema({ embeddedFields: [] }).safeParse(output([answerRule])).success).toBe(
+      false
+    );
+  });
+
+  test("turns 'NPS when delivery was late' into an answer rule the query keeps", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: output([
+        { member: "FeedbackRecords.fieldType", operator: "equals", values: ["nps"] },
+        { member: "FeedbackRecords.answer", operator: "equals", values: ["q_delivery:opt_late"] },
+      ]),
+    });
+
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      feedbackDirectoryId: "directory-1",
+      userId: "user-1",
+      prompt: "NPS when delivery was late",
+      dataset,
+    });
+
+    expect(result.query.filters).toEqual([
+      { member: "FeedbackRecords.fieldType", operator: "equals", values: ["nps"] },
+      { member: "FeedbackRecords.answer", operator: "equals", values: ["q_delivery:opt_late"] },
+    ]);
   });
 });

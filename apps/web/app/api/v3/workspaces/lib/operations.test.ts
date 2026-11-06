@@ -11,6 +11,9 @@ vi.mock("@/lib/workspace/service", () => ({
   getOrganizationScopedWorkspacesByIdsForUser: vi.fn(),
 }));
 vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedWorkspaceIds: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  listDashboardViewerWorkspacesForUser: vi.fn(async () => []),
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => loggerMocks) },
 }));

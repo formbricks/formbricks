@@ -4,6 +4,7 @@ import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/l
 import { getWorkspacesByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
 import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { getWorkspace } from "@/lib/workspace/service";
+import { listDashboardViewerOrganizations } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 
 /**
  * Resolves the organization for the routes that carry none in the URL (account settings, marketing
@@ -23,10 +24,14 @@ export const resolveActiveOrganizationId = async (
   activeWorkspaceId: string | undefined,
   activeOrganizationId: string | undefined
 ): Promise<string | undefined> => {
-  const [organizations, activeWorkspace] = await Promise.all([
+  // A Dashboard viewer has no `organization.read` (ADR-0025), so its organizations are read from its
+  // memberships; without them a viewer's Profile and Notifications would have no organization to render in.
+  const [projectedOrganizations, viewerOrganizations, activeWorkspace] = await Promise.all([
     getOrganizationsByUserId(userId),
+    listDashboardViewerOrganizations(userId),
     activeWorkspaceId ? getWorkspace(activeWorkspaceId) : null,
   ]);
+  const organizations = [...projectedOrganizations, ...viewerOrganizations];
 
   if (activeOrganizationId && organizations.some((org) => org.id === activeOrganizationId)) {
     return activeOrganizationId;

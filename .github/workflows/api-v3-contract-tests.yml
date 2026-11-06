@@ -419,6 +419,11 @@ jobs:
           if-no-files-found: ignore
           path: schemathesis-report/
 
+      - name: Save Cube logs
+        if: failure() && steps.harness.outputs.present == 'true'
+        run: docker logs formbricks-cube-ci > cube.log 2>&1 || true
+        shell: bash
+
       # Failure only. A green run's log has nothing to say that the entitlement probe above does not,
       # and an application log is the wrong thing to ship as an artifact on every green PR.
       - name: Upload app logs
@@ -427,4 +432,6 @@ jobs:
         with:
           name: api-v3-contract-app-logs
           if-no-files-found: ignore
-          path: app.log
+          path: |
+            app.log
+            cube.log

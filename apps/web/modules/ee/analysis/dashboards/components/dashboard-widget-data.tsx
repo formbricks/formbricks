@@ -3,18 +3,26 @@
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/dashboards/lib/widget-view";
 import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { useChartData } from "../hooks/use-chart-data";
+import { formatFilterLabels } from "../lib/dashboard-filter-editing";
+import type { TDashboardFilterState } from "../lib/dashboard-filter-state";
 import { DashboardWidgetSkeleton } from "./dashboard-widget-skeleton";
 
 interface DashboardWidgetDataProps {
+  dashboardId: string;
   chartId: string;
-  /** The dashboard's date range, replacing the chart's own; `null` keeps the chart's. */
+  /** The dashboard's date range, in place of the chart's own; `null` keeps the chart's. */
   dateRange: TChartDateRangeInput | null;
+  /** The person's filters on the dashboard, each ANDed onto the chart's saved filters. */
+  filters: readonly TDashboardFilterState[];
+  /** How a filter's field reads, for the message of a chart its dataset cannot be filtered by. */
+  filterFieldLabel: (field: string) => string;
   chartType: TChartType;
   /** Saved display settings of the chart behind this widget. */
   config?: TChartConfig;
@@ -22,18 +30,26 @@ interface DashboardWidgetDataProps {
 }
 
 /**
- * One widget's data, fetched by the widget itself from the chart data API: a slow or failing chart
- * shows its own spinner or error and never holds up the others.
+ * One widget's data, fetched by the widget itself through its dashboard: a slow or failing chart shows its
+ * own spinner or error and never holds up the others.
  */
 export function DashboardWidgetData({
+  dashboardId,
   chartId,
   dateRange,
+  filters,
+  filterFieldLabel,
   chartType,
   config,
   view = DEFAULT_WIDGET_VIEW,
 }: Readonly<DashboardWidgetDataProps>) {
-  const { t } = useTranslation();
-  const { data: result, isPending, isError, error } = useChartData({ chartId, dateRange });
+  const { t, i18n } = useTranslation();
+  const {
+    data: result,
+    isPending,
+    isError,
+    error,
+  } = useChartData({ dashboardId, chartId, dateRange, filters });
 
   if (isPending) return <DashboardWidgetSkeleton />;
 
@@ -48,6 +64,21 @@ export function DashboardWidgetData({
     );
   }
 
+  // A filter on a field this chart's Feedback Dataset lacks: it cannot be narrowed to the pick, so it shows
+  // nothing, and says why rather than looking like a chart with no data.
+  if (result.unfilterableFilters.length > 0) {
+    return (
+      <ChartEmptyState
+        message={t("workspace.analysis.dashboards.chart_cannot_be_filtered_by", {
+          label: formatFilterLabels(
+            result.unfilterableFilters.map((filter) => filterFieldLabel(filter.label)),
+            i18n.resolvedLanguage ?? i18n.language ?? "en-US"
+          ),
+        })}
+      />
+    );
+  }
+
   // The data view reuses the chart builder's table, so the numbers behind a widget read the same
   // way in both places — bare, because the widget's own title bar and body already provide the
   // heading and the scroll container.
@@ -57,6 +88,7 @@ export function DashboardWidgetData({
         data={result.rows}
         optionLabels={result.optionLabels}
         fieldLabels={result.fieldLabels}
+        memberLabels={result.memberLabels}
         query={result.query}
         bare
       />
@@ -72,6 +104,7 @@ export function DashboardWidgetData({
       query={result.query}
       optionLabels={result.optionLabels}
       fieldLabels={result.fieldLabels}
+      memberLabels={result.memberLabels}
       config={config}
     />
   );

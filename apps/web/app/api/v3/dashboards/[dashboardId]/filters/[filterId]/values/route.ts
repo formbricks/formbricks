@@ -1,0 +1,25 @@
+/**
+ * GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values — the values a list dashboard filter
+ * offers: what the dashboard's charts let through, narrowed by the date range and the other picks.
+ *
+ * `rateLimit: false` because the operation charges its budgets itself, so an MCP call pays the same: the
+ * default v3 budget on every request, cached or not, and the chart-query budget per Cube query on a miss.
+ */
+import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { listV3DashboardFilterValues } from "../../../../lib/filter-values-operations";
+import { ZV3DashboardFilterParams, ZV3DashboardFilterValuesQuery } from "../../../../lib/schemas";
+
+export const GET = withV3ApiWrapper({
+  auth: "both",
+  rateLimit: false,
+  schemas: { params: ZV3DashboardFilterParams, query: ZV3DashboardFilterValuesQuery },
+  handler: async ({ authentication, parsedInput, requestId, instance }) =>
+    listV3DashboardFilterValues({
+      dashboardId: parsedInput.params.dashboardId,
+      filterId: parsedInput.params.filterId,
+      query: parsedInput.query,
+      authentication,
+      requestId,
+      instance,
+    }),
+});

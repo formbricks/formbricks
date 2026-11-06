@@ -23,6 +23,10 @@ vi.mock("@/app/(app)/workspaces/[workspaceId]/lib/workspace", async () =>
 vi.mock("@/lib/workspace/service", async () =>
   (await import("./__mocks__/marketing-links.mock")).mockWorkspaceServiceModule()
 );
+// No Dashboard viewer organizations: these links resolve through the organizations above.
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  listDashboardViewerOrganizations: async () => [],
+}));
 vi.mock("@/lib/membership/service", async () =>
   (await import("./__mocks__/marketing-links.mock")).mockMembershipServiceModule()
 );

@@ -11,17 +11,24 @@ import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/orga
 import { getUser } from "@/lib/user/service";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import {
+  getDashboardViewerUnavailablePath,
+  listDashboardViewerWorkspaces,
+} from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import {
   getAccessControlPermission,
   getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
+import { withPlanDetailsFor } from "@/modules/organization/lib/plan-details";
 import {
   pickActiveWorkspaceId,
   resolveActiveOrganizationId,
 } from "@/modules/settings/lib/active-organization";
 
-type TOrganizationWithBilling = NonNullable<Awaited<ReturnType<typeof getOrganization>>>;
+type TOrganizationWithBilling = ReturnType<
+  typeof withPlanDetailsFor<NonNullable<Awaited<ReturnType<typeof getOrganization>>>>
+>;
 type TLicense = Awaited<ReturnType<typeof getEnterpriseLicense>>;
 type TUser = NonNullable<Awaited<ReturnType<typeof getUser>>>;
 
@@ -44,6 +51,16 @@ export interface TSettingsLayoutData {
   currentWorkspace: TWorkspace | null;
   backUrl: string;
 }
+
+/** Where the settings' back arrow returns to: a Dashboard viewer goes back to its dashboards. */
+const getBackUrl = (organizationId: string, workspaceId: string | undefined, isDashboardViewer: boolean) => {
+  if (isDashboardViewer) {
+    return workspaceId
+      ? `/workspaces/${workspaceId}/dashboards`
+      : getDashboardViewerUnavailablePath(organizationId);
+  }
+  return workspaceId ? `/workspaces/${workspaceId}/surveys` : `/organizations/${organizationId}/landing`;
+};
 
 /**
  * Assembles everything the shared settings shell (banners + sidebar + top bar) needs for the
@@ -81,14 +98,22 @@ export const getSettingsLayoutData = async (
   ]);
   if (!user || !organization || !membership) return null;
 
+  const isDashboardViewer = membership.role === "dashboard_viewer";
   const [isAccessControlAllowed, license, organizationWorkspacesLimit, workspaces] = await Promise.all([
     getAccessControlPermission(organization.id),
     getEnterpriseLicense(),
     getOrganizationWorkspacesLimit(organization.id),
-    getWorkspacesByUserId(userId, organization.id),
+    isDashboardViewer
+      ? listDashboardViewerWorkspaces(userId, organization.id)
+      : getWorkspacesByUserId(userId, organization.id),
   ]);
 
-  const responseCount = IS_FORMBRICKS_CLOUD ? await getMonthlyOrganizationResponseCount(organization.id) : 0;
+  // A Dashboard viewer sees nothing of the organization's plan: no Cloud response count, and the
+  // organization below goes out without its billing.
+  const responseCount =
+    IS_FORMBRICKS_CLOUD && !isDashboardViewer
+      ? await getMonthlyOrganizationResponseCount(organization.id)
+      : 0;
 
   // Resolve the workspace to display in the shell. Prefer the last active workspace when it belongs
   // to the accessible list; otherwise fall back to the first accessible workspace so the shell
@@ -101,7 +126,7 @@ export const getSettingsLayoutData = async (
   return {
     session,
     user,
-    organization,
+    organization: withPlanDetailsFor(membership.role, organization),
     membershipRole: membership.role,
     isAccessControlAllowed,
     isOwnerOrManager,
@@ -114,8 +139,6 @@ export const getSettingsLayoutData = async (
     currentWorkspace,
     // Without a workspace, "/" would root-redirect into the user's first organization; the landing
     // page keeps the user in the organization these settings were resolved for.
-    backUrl: currentWorkspace
-      ? `/workspaces/${currentWorkspace.id}/surveys`
-      : `/organizations/${organization.id}/landing`,
+    backUrl: getBackUrl(organization.id, currentWorkspace?.id, isDashboardViewer),
   };
 };

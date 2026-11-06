@@ -1,6 +1,6 @@
 "use client";
 
-import { XIcon } from "lucide-react";
+import { LockIcon, XIcon } from "lucide-react";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -9,47 +9,115 @@ type TFilterChipProps = {
   readonly label: string;
   readonly value: string;
   readonly accessibleName: string;
-  readonly onRemove: () => void;
+  /** Without it the chip has no `×`: a filter that holds nothing yet has nothing to remove. */
+  readonly onRemove?: () => void;
   readonly disabled?: boolean;
+  /**
+   * `sm` sits in a table's filter row; `md` matches the height of the inputs and selects beside it, as in
+   * a dashboard's filter bar.
+   */
+  readonly size?: "sm" | "md";
+  /**
+   * Set for everyone and not edited here: the chip shows a lock, says why on hover, and its body opens
+   * nothing. `onRemove` may still be given, to whoever may take it off.
+   */
+  readonly lockedHint?: string;
 } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "value">;
+
+/** A chip's `×`: removes the filter, or unlocks a locked one. */
+const ChipRemoveButton = ({
+  label,
+  size,
+  disabled,
+  onRemove,
+}: Readonly<{ label: string; size: "sm" | "md"; disabled?: boolean; onRemove: () => void }>) => (
+  <button
+    type="button"
+    disabled={disabled}
+    onClick={onRemove}
+    aria-label={label}
+    className={cn(
+      "focus-visible:ring-ring flex h-full items-center rounded-r-md text-slate-500 hover:text-slate-900 focus-visible:ring-1 focus-visible:outline-hidden",
+      size === "sm" ? "px-1.5" : "px-2"
+    )}>
+    <XIcon className="size-3.5" />
+  </button>
+);
 
 /**
  * One active filter (ENG-3538): `Label:` then the values as a bold inner pill, then `×`. The body
  * reopens the filter; `×` removes only this one. Both are real buttons, so Tab reaches each.
  */
 export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
-  ({ label, value, accessibleName, onRemove, disabled, className, ...bodyProps }, ref) => {
+  (
+    { label, value, accessibleName, onRemove, disabled, size = "sm", lockedHint, className, ...bodyProps },
+    ref
+  ) => {
     const { t } = useTranslation();
+    const body = (
+      <>
+        <span className="shrink-0 whitespace-nowrap">{label}</span>
+        {value && (
+          <span className="max-w-56 truncate rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-800">
+            {value}
+          </span>
+        )}
+      </>
+    );
     return (
       <span
         className={cn(
-          "inline-flex h-7 max-w-full items-center rounded-md border border-slate-200 bg-white text-xs text-slate-700 transition-colors hover:border-slate-300",
+          "inline-flex max-w-full items-center rounded-md border border-slate-200 bg-white text-slate-700 transition-colors hover:border-slate-300",
+          lockedHint && "border-slate-300 bg-slate-50",
+          size === "sm" ? "h-7 text-xs" : "h-10 text-sm",
           disabled && "opacity-60",
           className
         )}>
-        <button
-          ref={ref}
-          type="button"
-          disabled={disabled}
-          aria-label={t("common.table_toolbar.edit_filter", { filter: accessibleName })}
-          title={value ? `${label} ${value}` : label}
-          className="focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-l-md py-0.5 pr-1 pl-2 focus-visible:ring-1 focus-visible:outline-hidden"
-          {...bodyProps}>
-          <span className="shrink-0 whitespace-nowrap">{label}</span>
-          {value && (
-            <span className="max-w-56 truncate rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-800">
-              {value}
+        {lockedHint ? (
+          <span
+            title={lockedHint}
+            className={cn(
+              "flex h-full min-w-0 items-center gap-1.5 py-0.5",
+              onRemove ? "pr-1" : "pr-2",
+              size === "sm" ? "pl-2" : "pl-3"
+            )}>
+            <LockIcon className="size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+            {/* Read as "<filter>, locked": the visible text alone would not say it cannot be changed. */}
+            <span aria-hidden="true" className="flex min-w-0 items-center gap-1.5">
+              {body}
             </span>
-          )}
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={onRemove}
-          aria-label={t("common.table_toolbar.remove_filter", { filter: accessibleName })}
-          className="focus-visible:ring-ring flex h-full items-center rounded-r-md px-1.5 text-slate-500 hover:text-slate-900 focus-visible:ring-1 focus-visible:outline-hidden">
-          <XIcon className="size-3.5" />
-        </button>
+            <span className="sr-only">
+              {t("common.table_toolbar.locked_filter", { filter: accessibleName })}
+            </span>
+          </span>
+        ) : (
+          <button
+            ref={ref}
+            type="button"
+            disabled={disabled}
+            aria-label={t("common.table_toolbar.edit_filter", { filter: accessibleName })}
+            title={value ? `${label} ${value}` : label}
+            className={cn(
+              "focus-visible:ring-ring flex h-full min-w-0 items-center gap-1.5 py-0.5 focus-visible:ring-1 focus-visible:outline-hidden",
+              onRemove ? "rounded-l-md pr-1" : "rounded-md pr-2",
+              size === "sm" ? "pl-2" : "pl-3"
+            )}
+            {...bodyProps}>
+            {body}
+          </button>
+        )}
+        {onRemove && (
+          <ChipRemoveButton
+            label={
+              lockedHint
+                ? t("common.table_toolbar.unlock_filter", { filter: accessibleName })
+                : t("common.table_toolbar.remove_filter", { filter: accessibleName })
+            }
+            size={size}
+            disabled={disabled}
+            onRemove={onRemove}
+          />
+        )}
       </span>
     );
   }

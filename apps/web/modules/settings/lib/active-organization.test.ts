@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import {
   getActiveOrganizationIdForUser,
@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getOrganizationsByUserId: vi.fn(),
   getWorkspace: vi.fn(),
   getWorkspacesByUserId: vi.fn(),
+  listDashboardViewerOrganizations: vi.fn(),
   cookieGet: vi.fn(),
 }));
 
@@ -24,9 +25,23 @@ vi.mock("@/app/(app)/workspaces/[workspaceId]/lib/workspace", () => ({
   getWorkspacesByUserId: (...a: unknown[]) => mocks.getWorkspacesByUserId(...a),
 }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspace: (...a: unknown[]) => mocks.getWorkspace(...a) }));
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
+  listDashboardViewerOrganizations: (...a: unknown[]) => mocks.listDashboardViewerOrganizations(...a),
+}));
 
 describe("resolveActiveOrganizationId", () => {
+  beforeEach(() => mocks.listDashboardViewerOrganizations.mockResolvedValue([]));
   afterEach(() => vi.clearAllMocks());
+
+  // ADR-0025: a Dashboard viewer has no organization.read, so its organizations come from its memberships.
+  test("counts the organizations where the user is a Dashboard viewer", async () => {
+    mocks.getOrganizationsByUserId.mockResolvedValue([{ id: "org-1" }]);
+    mocks.listDashboardViewerOrganizations.mockResolvedValue([{ id: "org-viewer" }]);
+    expect(await resolveActiveOrganizationId("user-1", undefined, "org-viewer")).toBe("org-viewer");
+
+    mocks.getOrganizationsByUserId.mockResolvedValue([]);
+    expect(await resolveActiveOrganizationId("user-1", undefined, undefined)).toBe("org-viewer");
+  });
 
   test("prefers the organization cookie when the user is still a member", async () => {
     mocks.getOrganizationsByUserId.mockResolvedValue([{ id: "org-1" }, { id: "org-2" }]);
@@ -55,6 +70,7 @@ describe("resolveActiveOrganizationId", () => {
 });
 
 describe("getActiveOrganizationIdForUser", () => {
+  beforeEach(() => mocks.listDashboardViewerOrganizations.mockResolvedValue([]));
   afterEach(() => vi.clearAllMocks());
 
   test("resolves the organization of the workspace in the active-context cookie", async () => {
@@ -89,6 +105,7 @@ describe("resolveActiveWorkspaceId", () => {
 });
 
 describe("getActiveWorkspaceIdForUser", () => {
+  beforeEach(() => mocks.listDashboardViewerOrganizations.mockResolvedValue([]));
   afterEach(() => vi.clearAllMocks());
 
   test("prefers a workspace of the active organization over a cookie workspace of another one", async () => {

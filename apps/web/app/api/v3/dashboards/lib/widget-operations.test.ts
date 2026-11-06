@@ -138,7 +138,8 @@ describe.each([
       WORKSPACE_ID,
       "readWrite",
       context.requestId,
-      context.instance
+      context.instance,
+      undefined
     );
     expect(write).not.toHaveBeenCalled();
   });
@@ -360,7 +361,8 @@ describe("getV3DashboardWidget", () => {
       WORKSPACE_ID,
       "read",
       context.requestId,
-      context.instance
+      context.instance,
+      { allowDashboardViewer: true }
     );
     const { data } = (await response.json()) as { data: Record<string, unknown> };
     expect(data).toMatchObject({ id: WIDGET_ID, chartId: CHART_ID, layout, order: 2 });

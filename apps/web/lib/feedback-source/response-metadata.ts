@@ -284,6 +284,15 @@ export const buildResponseMetadata = (
 ): TResponseMetadata => projectMetadataFields(HUB_METADATA_FIELDS, { response, survey });
 
 /**
+ * The key an Embedded Data field's value is published under in a record's `embedded_data`: the field's
+ * `name`, without NUL bytes and trimmed. NUL bytes are unstorable in a key for the same reason
+ * sanitizeValue strips them from a value: the jsonb insert reaches Postgres and fails as a 500 rather than
+ * a rejected field. Trimmed like the values are, so `" brand "` and `"brand"` cannot become two Hub
+ * dimensions. Dashboards read a key's declared type back through it (`getNumericEmbeddedFields`).
+ */
+export const toEmbeddedDataRecordKey = (name: string): string => name.replaceAll("\u0000", "").trim();
+
+/**
  * Build the `embedded_data` object shared by every FeedbackRecord of one response (ENG-3290).
  *
  * Ingested and computed fields only, since a record already carries the reserved catalog's entries
@@ -346,10 +355,7 @@ export const buildEmbeddedDataMetadata = (
     try {
       const { field, link } = entry;
 
-      // NUL bytes are unstorable in a key for the same reason sanitizeValue strips them from a
-      // value: the jsonb insert reaches Postgres and fails as a 500 rather than a rejected field.
-      // Trimmed like the values are, so `" brand "` and `"brand"` cannot become two Hub dimensions.
-      const key = field.name.replaceAll("\u0000", "").trim();
+      const key = toEmbeddedDataRecordKey(field.name);
       // Blank, or `__proto__`. Hub stores that one fine, but React drops an own `__proto__` key when it
       // serializes props, as does any reader that spreads the object or parses it into a plain one, so
       // the record drawer would show one field fewer than the record holds.
