@@ -9,15 +9,16 @@ Which rules apply depends on what the code does:
 | Kind | Examples | What applies |
 | --- | --- | --- |
 | Generation (text or structured output) | Survey generation, chart generation, enrichments | The whole page |
-| Embeddings | Semantic search over feedback (Hub) | The injection assessment, tenant-keyed vectors and caches, bounded input and concurrency, the organization's AI toggle, no customer text in logs |
-| MCP-only tool | Tools in `apps/web/modules/mcp` ([MCP server](/development/technical-handbook/mcp-server)) | The injection assessment, plus the authenticated-caller rule in [What to trust](#what-to-trust). We do not call a model there, but a tool's result enters an agent's context we do not control, so keep results minimal. Access control is its scope and v3 authorization, not the AI gate; no limits table or token metrics. |
+| Embeddings | Semantic search over feedback (Hub) | The injection assessment, tenant-keyed vectors and caches, bounded input and concurrency, no customer text in logs. Hub enables embeddings by instance configuration, with no per-organization setting: see [Gating](#gating). |
+| MCP-only tool | Tools in `apps/web/modules/mcp` ([MCP server](/development/technical-handbook/mcp-server)) | The injection assessment, scoped to the tool (see below), plus the authenticated-caller rule in [What to trust](#what-to-trust). We do not call a model there, and we do not control the agent's context, but a tool's result enters it, so keep results minimal. Access control is its scope and v3 authorization, not the AI gate; no limits table or token metrics. |
 
 The checklist at the end is split the same way. The page does not cover using AI tools to write or review our own
 code; AI-assisted review is described in [Code reviews](/development/standards/qa/code-reviews).
 
 In `apps/web`, generation calls go through `@formbricks/ai` (`generateObject`, `streamObject`, `generateText`) and
-`lib/ai/service.ts`. Do not import a provider SDK directly. The code references below are for `apps/web`; the Hub
-applies the same rules through its own LLM client.
+`lib/ai/service.ts`. Do not import a provider SDK directly. The code references below are for `apps/web`. The Hub
+has its own LLM client and the same rules apply there, except where a section names a gap, such as
+[Gating](#gating).
 
 The rules follow the OWASP Top 10 for LLM Applications. The table near the end maps each risk to the rule that
 covers it, and names the gaps. When in doubt, check a design against that list.
@@ -33,6 +34,11 @@ short written assessment in its PR description before it ships, answering four q
 3. **What can the model do?** List every tool, write, outbound request, and sink its output feeds.
 4. **What is the worst case if an attacker controls the text?** Name the data exposed or the action taken, and
    whose it is.
+
+For an MCP-only tool there is no model call and no context of ours to list. Answer the questions for the tool
+itself: question 1 is the text in its inputs and in the records it returns, question 2 is the fields its result
+returns, and question 3 is the operations its scope and v3 operation permit. The agent's own context and tools are
+outside the assessment, but the worst case (question 4) still assumes the agent obeys hostile text in a result.
 
 If the worst case crosses a user or tenant boundary, the design is wrong. Fix the design (what the model can see
 and do), not the prompt.
@@ -52,10 +58,12 @@ Nothing the model reads or writes is trusted.
 - **Input is data, not instructions.** Survey responses, feedback text, uploaded files, imported documents, and
   tool or MCP results are written by people we do not control. A prompt that tells the model to disregard
   instructions inside that text does not make it safe: a guardrail prompt is not a security boundary.
-- **Output is untrusted input.** Ask for structured output with a Zod schema, then validate it again on the
-  server before use. A schema fixes the shape, not the meaning: it does not make an id, URL, path, or filter safe.
-  Never pass model output to SQL, a file path, a URL fetch, a shell, or HTML without the same validation you would
-  give a request body.
+- **Output is untrusted input.** When the feature needs data, generate an object with a Zod schema
+  (`generateObject`, `streamObject`), then validate it again on the server before use. A schema fixes the shape,
+  not the meaning: it does not make an id, URL, path, or filter safe. Plain text from `generateText` has no
+  schema, so bound its length, reject a cut-off result, and validate or escape it for wherever it goes. Never pass
+  model output to SQL, a file path, a URL fetch, a shell, or HTML without the same validation you would give a
+  request body.
 - **The model has no authority of its own.** A tool the model can call acts as the authenticated caller (a user
   session or an API key), never as a service. Access is checked on the exact resource through the existing
   authorization path: for an MCP tool that is its scope and the v3 operation, which owns the tenancy check; elsewhere,
@@ -73,8 +81,9 @@ Limit what a hijacked model can reach. The goal is a small blast radius, whateve
   include only the fields the task needs. No secrets, API keys, other tenants' data, or internal ids in a prompt.
 - **Least capability.** Read-only by default. Each tool takes the narrowest input it can. A URL the model picks gets
   the same restrictions as a URL a user supplies. Never run model-written code.
-- **No sharing across users.** Conversation history, memory, embeddings, and caches are keyed by tenant and user.
-  One tenant's text never enters another tenant's context.
+- **No sharing across tenants or users.** Embeddings and shared caches are keyed by tenant, which is their
+  isolation boundary. Conversation history and memory are keyed by tenant and user. One tenant's text never
+  enters another tenant's context, and one user's history never enters another user's.
 - **Safe output rendering.** Render model output as plain text where you can. Markdown that loads an image can leak
   the context through the image URL.
 - **No egress except the provider.** A tool does not send data anywhere else.
@@ -91,7 +100,7 @@ edge, and return an error that names the limit. A missing limit is a bug, not a 
 | Input size ceiling | Bounds cost and context stuffing | Request schema, checked before the first call (survey generation caps the prompt at 1,200 characters) |
 | `maxOutputTokens` | Bounds cost and runaway output | Per call (survey generation uses 8,192). `generateObject` and `streamObject` fail with `AIOutputTokenLimitError`, which carries output and reasoning counts but no input count. `generateText` returns the truncated text with `finishReason: "length"`: reject that result. |
 | Timeout | A stuck provider must not hold a worker | Per call, through `getAITimeoutMs`, which applies `AI_TIMEOUT_MULTIPLIER` |
-| Output shape bounds | Limits what a bad answer can create (blocks, questions, items) | The Zod schema (survey generation: at most 8 blocks, 4 questions per block) |
+| Output shape bounds | Limits what a bad answer can create (blocks, questions, items) | The Zod schema of an object call (survey generation: at most 8 blocks, 4 questions per block) |
 | Call count and concurrency | Fan-out multiplies cost and provider load. Batch or chunk large inputs; never loop one call per record. | The operation that plans the calls |
 | Per-caller rate limit | One user or API key must not spend everyone's quota | `rateLimitConfigs`, keyed by the authenticated caller (survey generation: 10 per minute) |
 | Provider quota errors | A provider 429 is a server fault, not the caller's, and is logged at `error` | `lib/ai/service.ts` logs it (a call that runs its own retries logs a warning instead) and answers the client with `TooManyRequestsError` |
@@ -128,10 +137,14 @@ Closing these takes code: expose usage on the stream wrapper, and record usage w
 
 ## Gating
 
-A feature that sends customer data to a model is off until the organization turns it on. Use the checks in
+A generation feature that sends customer data to a model is off until the organization turns it on. Use the checks in
 `lib/ai/service.ts` rather than writing your own: the organization's AI toggle, the license entitlement, and
 whether the instance has a provider configured. Each failure has its own error code in `AI_ERROR_CODES`.
 Return that code to the client instead of a generic failure.
+
+Gap: Hub embeddings are enabled by instance configuration (a provider and a model) and do not check the
+organization's AI toggle. Closing it needs work in both Hub and the web app, so an embeddings PR says how the
+feature is enabled today and does not claim the toggle covers it.
 
 Feedback and response data should use the self-hosted path where the instance has one. It is never used as
 training input. A new outbound flow to a model provider is called out in the PR description.
@@ -165,10 +178,10 @@ edition is published.
 | Sensitive information disclosure | Least data in context, no secrets in a prompt, Logging |
 | Supply chain | Gap: no rule yet for choosing and pinning models, providers, and AI dependencies |
 | Data and model poisoning | Gap: no rule yet. Customer data is never used as training input |
-| Improper output handling | What to trust: server-side schema validation, no unvalidated sink; safe output rendering |
+| Improper output handling | What to trust: server-side validation (a schema for objects), no unvalidated sink; safe output rendering |
 | Excessive agency | Least capability; side effects need the user's intent; tools act as the authenticated caller |
 | System prompt leakage | Partly: no secrets in a prompt, so a leaked prompt exposes little |
-| Vector and embedding weaknesses | Partly: caches and embeddings are keyed by tenant and user |
+| Vector and embedding weaknesses | Partly: embeddings and shared caches are keyed by tenant |
 | Misinformation | Gap: no rule yet for output shown to users as fact |
 | Unbounded consumption | Limits every generation call needs; Performance; Metrics |
 
@@ -185,8 +198,8 @@ Use it when planning, and again against the finished diff before the PR is ready
 
 - The model's context holds only data the requesting user may read, and no secrets.
 - Input is bounded before the first call.
-- Output is schema-validated on the server, and no unvalidated value reaches a sink. Text callers reject
-  `finishReason: "length"`.
+- Object output is schema-validated on the server. Text output is length-bounded and validated or escaped for its
+  destination, and callers reject `finishReason: "length"`. No unvalidated value reaches a sink.
 - Every tool acts as the authenticated caller, with access checked on the exact resource.
 - `maxOutputTokens`, timeout, call count, and a per-caller rate limit are all hardcoded constants.
 - The call goes through `lib/ai/service.ts`, which checks the toggle, entitlement, and instance configuration, and
@@ -196,8 +209,8 @@ Use it when planning, and again against the finished diff before the PR is ready
 **Embeddings**
 
 - Input is bounded, and concurrency is bounded.
-- Vectors and caches are keyed by tenant, and a query never returns another tenant's records.
-- The organization's AI toggle is respected.
+- Vectors and shared caches are keyed by tenant, and a query never returns another tenant's records.
+- The PR says how the feature is enabled (today: instance configuration, with no per-organization toggle in Hub).
 
 **MCP-only tool**
 
