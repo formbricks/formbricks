@@ -1277,6 +1277,17 @@ hub:
     # Optional env vars (non-secret) added only to hub-worker.
     env: {}
 
+    embeddingReadiness:
+      # Enable only with a Hub image that supports --check-embedding-readiness.
+      enabled: false
+      path: /run/hub/embedding-ready
+
+    embeddingPreflight:
+      timeoutSeconds: 10
+      intervalSeconds: 60
+      successTTLSeconds: 120
+      snoozeSeconds: 30
+
     waitForApi:
       # Avoid starting workers before the API service is healthy during installs/upgrades.
       enabled: true
@@ -1337,6 +1348,29 @@ hub:
     tolerations: []
     affinity: {}
     topologySpreadConstraints: []
+
+  embeddingClient:
+    # External provider configuration, independent of the bundled TEI runtime.
+    # For Vertex ADC outside Google Cloud, use hub.extraVolumes, hub.extraVolumeMounts,
+    # and hub.env.GOOGLE_APPLICATION_CREDENTIALS with an existing Secret.
+    enabled: false
+    provider: ""
+    model: ""
+    baseUrl: ""
+    apiBaseUrl: ""
+    workerBaseUrl: ""
+    googleCloudProject: ""
+    googleCloudLocation: ""
+    auth:
+      existingSecret: ""
+      secretKey: EMBEDDING_PROVIDER_API_KEY
+    maxConcurrent: "5"
+    maxInputBytes: "12000"
+    jobTimeoutSeconds: "60"
+    batchSize: "1"
+    batchMaxWaitMs: "25"
+    batchMaxInFlight: "1"
+    normalize: "false"
 
   embeddings:
     # Optional OpenAI-compatible embeddings integration for Hub.

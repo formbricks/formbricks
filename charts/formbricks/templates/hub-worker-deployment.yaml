@@ -77,6 +77,16 @@ spec:
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
           command:
             - /app/hub-worker
+          {{- if .Values.hub.worker.embeddingReadiness.enabled }}
+          readinessProbe:
+            exec:
+              command:
+                - /app/hub-worker
+                - --check-embedding-readiness
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 1
+          {{- end }}
           securityContext:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
@@ -84,32 +94,57 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "formbricks.hubSecretName" . }}
-          {{- if or .Values.hub.embeddings.enabled (gt (len .Values.hub.env) 0) (gt (len .Values.hub.worker.env) 0) }}
+          {{- if or .Values.hub.embeddings.enabled .Values.hub.embeddingClient.enabled .Values.hub.worker.embeddingReadiness.enabled (gt (len .Values.hub.env) 0) (gt (len .Values.hub.worker.env) 0) }}
           env:
+            {{- if .Values.hub.worker.embeddingReadiness.enabled }}
+            - name: HUB_EMBEDDING_READINESS_FILE
+              value: {{ .Values.hub.worker.embeddingReadiness.path | quote }}
+            {{- end }}
+            - name: EMBEDDING_PREFLIGHT_TIMEOUT_SECONDS
+              value: {{ .Values.hub.worker.embeddingPreflight.timeoutSeconds | quote }}
+            - name: EMBEDDING_PREFLIGHT_INTERVAL_SECONDS
+              value: {{ .Values.hub.worker.embeddingPreflight.intervalSeconds | quote }}
+            - name: EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS
+              value: {{ .Values.hub.worker.embeddingPreflight.successTTLSeconds | quote }}
+            - name: EMBEDDING_PREFLIGHT_SNOOZE_SECONDS
+              value: {{ .Values.hub.worker.embeddingPreflight.snoozeSeconds | quote }}
             {{- $keepAliveKey := "EMBEDDING_HTTP_DISABLE_KEEP_ALIVES" }}
             {{- $embeddingWorkerEnv := mergeOverwrite (dict) (pick .Values.hub.env $keepAliveKey) (pick .Values.hub.worker.env $keepAliveKey) }}
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" $embeddingWorkerEnv "worker" true) | nindent 12 }}
+            {{- include "formbricks.hubEmbeddingClientEnv" (dict "root" $ "worker" true) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
-            {{- if and (not (hasKey $.Values.hub.worker.env $key)) (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) }}
+            {{- if and (not (hasKey $.Values.hub.worker.env $key)) (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.hub.embeddingClient.enabled (include "formbricks.hubEmbeddingClientEnvManaged" (dict "key" $key)))) }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}
             {{- range $key, $value := .Values.hub.worker.env }}
-            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
+            {{- if and (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.hub.embeddingClient.enabled (include "formbricks.hubEmbeddingClientEnvManaged" (dict "key" $key)))) }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}
           {{- end }}
-          {{- with .Values.hub.extraVolumeMounts }}
+          {{- if or .Values.hub.worker.embeddingReadiness.enabled .Values.hub.extraVolumeMounts }}
           volumeMounts:
+            {{- if .Values.hub.worker.embeddingReadiness.enabled }}
+            - name: hub-embedding-readiness
+              mountPath: {{ dir .Values.hub.worker.embeddingReadiness.path }}
+            {{- end }}
+            {{- with .Values.hub.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- end }}
           {{- if .Values.hub.worker.resources }}
           resources:
             {{- toYaml .Values.hub.worker.resources | nindent 12 }}
           {{- end }}
-      {{- with .Values.hub.extraVolumes }}
+      {{- if or .Values.hub.worker.embeddingReadiness.enabled .Values.hub.extraVolumes }}
       volumes:
+        {{- if .Values.hub.worker.embeddingReadiness.enabled }}
+        - name: hub-embedding-readiness
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.hub.extraVolumes }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
 {{- end }}
