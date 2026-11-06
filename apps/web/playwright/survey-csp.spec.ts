@@ -8,7 +8,12 @@ import path from "node:path";
 import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { buildKitchenSinkQuestions } from "./utils/kitchen-sink";
-import { buildHostCsp, collectCspViolations, expectNoCspViolations } from "./utils/sdk-host-page";
+import {
+  buildHostCsp,
+  collectCspViolations,
+  expectNoCspViolations,
+  serveSdkHostPage,
+} from "./utils/sdk-host-page";
 
 /**
  * CSP gate for the shipped survey renderer.
@@ -305,4 +310,158 @@ test.describe("Survey renderer under a customer-style CSP", () => {
 
     await expectNoCspViolations(page, consoleMessages);
   });
+});
+
+// The renderer-only gate above cannot see resource hints emitted by SDK setup. Exercise that entry
+// point too, with real built bundles on a different origin and only the client API responses stubbed.
+test.describe("SDK setup under a host CSP", () => {
+  let assets: Awaited<ReturnType<typeof serveHostPage>>;
+
+  test.beforeAll(async () => {
+    for (const bundle of ["formbricks.umd.cjs", "surveys.umd.cjs"]) {
+      expect(fs.existsSync(path.join(PUBLIC_DIR, "js", bundle)), `${bundle}: build the SDK first`).toBe(true);
+    }
+    assets = await serveHostPage();
+  });
+
+  test.afterAll(async () => {
+    await assets.close();
+  });
+
+  test("reports a forbidden resource hint under default-src none", async ({ page }) => {
+    // An isolated control document: no SDK-generated reports can make this assertion pass.
+    await page.route(`${assets.origin}/csp-control`, (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        headers: { "Content-Security-Policy": "default-src 'none'" },
+        body: "<!doctype html><title>CSP control</title>",
+      })
+    );
+    await collectCspViolations(page);
+    await page.goto(`${assets.origin}/csp-control`);
+    const bundleUrl = `${assets.origin}/js/surveys.umd.cjs?csp-control`;
+    await page.evaluate((url) => {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = url;
+      document.head.appendChild(link);
+    }, bundleUrl);
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          (
+            window as unknown as { __cspViolations: { directive: string; blockedURI: string }[] }
+          ).__cspViolations.map(({ directive, blockedURI }) => ({ directive, blockedURI }))
+        )
+      )
+      .toContainEqual({ directive: "default-src", blockedURI: bundleUrl });
+  });
+
+  // Both branches carry a distinct risk: strict hosts must opt out without losing surveys, while
+  // hosts permitting prefetch must keep the default load path. Nonced styles apply in both cases.
+  for (const strict of [true, false]) {
+    test(`${strict ? "strict default-src with prefetch disabled" : "prefetch-permitting default policy"}: setup to visible survey`, async ({
+      page,
+    }) => {
+      const host = await serveSdkHostPage({
+        appUrl: assets.origin,
+        getWorkspaceId: () => WORKSPACE_ID,
+        setupOptions: strict ? { prefetch: false } : {},
+        buildCsp: (nonce, appUrl) =>
+          [
+            `default-src ${strict ? "'none'" : appUrl}`,
+            `script-src-elem 'nonce-${nonce}' ${appUrl}`,
+            `connect-src ${appUrl}`,
+            `style-src 'nonce-${nonce}'`,
+            `img-src 'self' ${appUrl}`,
+            `font-src ${appUrl}`,
+          ].join("; "),
+      });
+      try {
+        const action = {
+          id: "csp-action",
+          name: "Open CSP survey",
+          key: "csp-survey",
+          type: "code",
+          noCodeConfig: null,
+        };
+        const question = {
+          id: "csp-question",
+          type: "openText",
+          headline: i18n("How was your visit?"),
+          required: false,
+          inputType: "text",
+          charLimit: { enabled: false },
+        };
+        await page.route(`${assets.origin}/api/v1/client/${WORKSPACE_ID}/environment`, (route) =>
+          route.fulfill({
+            json: {
+              data: {
+                expiresAt: new Date(Date.now() + 60_000).toISOString(),
+                data: {
+                  surveys: [
+                    {
+                      ...baseSurvey,
+                      id: "csp-survey",
+                      type: "app",
+                      delay: 0,
+                      autoClose: null,
+                      questions: [question],
+                      blocks: transformQuestionsToBlocks(
+                        [question] as unknown as Parameters<typeof transformQuestionsToBlocks>[0],
+                        endings
+                      ),
+                      endings,
+                      triggers: [{ actionClass: action }],
+                    },
+                  ],
+                  actionClasses: [action],
+                  workspace: {
+                    recontactDays: 0,
+                    clickOutsideClose: true,
+                    overlay: "none",
+                    placement: "bottomRight",
+                    inAppSurveyBranding: false,
+                    styling: {},
+                  },
+                },
+              },
+            },
+          })
+        );
+        await page.route(`${assets.origin}/api/v2/client/${WORKSPACE_ID}/displays`, (route) =>
+          route.fulfill({
+            json: { data: { id: "csp-display" } },
+          })
+        );
+        const consoleMessages = await collectCspViolations(page);
+        await page.goto(host.url);
+        await page.waitForFunction(() =>
+          (window as unknown as { dataLayer?: { event: string }[] }).dataLayer?.some(
+            (entry) => entry.event === "formbricks_setup_successful"
+          )
+        );
+        // The SDK must not eagerly execute the renderer as a substitute for prefetching it.
+        expect(
+          await page.evaluate(() =>
+            Boolean((window as unknown as { formbricksSurveys?: unknown }).formbricksSurveys)
+          )
+        ).toBe(false);
+        await page.evaluate(() =>
+          (window as unknown as { formbricks: { track: (code: string) => Promise<void> } }).formbricks.track(
+            "csp-survey"
+          )
+        );
+        await expect(page.getByText("How was your visit?", { exact: true })).toBeVisible();
+        await expect(page.locator('script[src*="/js/surveys.umd.cjs"]')).toHaveCount(1);
+        // Assert violations after rendering too: a successfully displayed survey alone missed #9927.
+        await expectNoCspViolations(page, consoleMessages);
+        await expect(page.locator('link[rel="prefetch"][href*="/js/surveys.umd.cjs"]')).toHaveCount(
+          strict ? 0 : 1
+        );
+      } finally {
+        await host.close();
+      }
+    });
+  }
 });
