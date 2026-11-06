@@ -166,6 +166,9 @@ const getUnprocessableFileCode = (error: V3ApiError): string => {
   const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
   if (limit) return `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}`;
   if (hasParam("qsf_not_recognized")) return "qsf_not_recognized";
+  // An import into a survey's own menu (ENG-6809) reads a workbook only as that survey's Excel export.
+  if (hasParam("excel_export_not_recognized")) return "excel_export_not_recognized";
+  if (hasParam("excel_export_other_survey")) return "excel_export_other_survey";
   // Any other 422 may come from any lane, so it gets the sentence that fits every file.
   return "file_unreadable";
 };
@@ -218,6 +221,12 @@ export const getSurveyImportErrorMessage = (
   switch (code) {
     case "file_wrong_extension":
       return t("workspace.surveys.import.errors.wrong_extension");
+    case "file_wrong_extension_into_survey":
+      return t("workspace.surveys.import.errors.wrong_extension_into_survey");
+    case "excel_export_not_recognized":
+      return t("workspace.surveys.import.errors.excel_export_not_recognized");
+    case "excel_export_other_survey":
+      return t("workspace.surveys.import.errors.excel_export_other_survey");
     case "file_needs_ai":
       return t("workspace.surveys.import.errors.needs_ai");
     case "file_type_unsupported":

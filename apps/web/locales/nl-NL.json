@@ -4930,6 +4930,8 @@
             "xml_elements": "Dit document bevat meer inhoud dan de import kan lezen. Splits het op in kleinere bestanden en importeer elk bestand apart."
           },
           "empty_file": "Dit bestand is leeg.",
+          "excel_export_not_recognized": "Dit Excel-bestand is geen vragenlijstexport van Formbricks. Exporteer de vragenlijst als Excel-bestand, bewerk dat bestand en importeer het hier.",
+          "excel_export_other_survey": "Geen enkele rij in dit werkblad hoort bij deze vragenlijst. Is het geëxporteerd vanuit een andere vragenlijst?",
           "failed": "De import is mislukt. Probeer het opnieuw.",
           "field_problems": {
             "dangling_reference": "Dit verwijst naar iets wat niet in het bestand staat",
@@ -4986,7 +4988,8 @@
           "too_large_for_ai": "Deze enquête is te groot om in één keer met Formbricks AI te importeren. Importeer hem in plaats daarvan met Claude of ChatGPT via MCP.",
           "too_many_questions": "Deze enquête bevat meer dan 200 vragen, meer dan één import kan aanmaken. Importeer hem in plaats daarvan met Claude of ChatGPT via MCP.",
           "unreadable": "Dit bestand kon niet worden gelezen. Exporteer het opnieuw en probeer het nog een keer.",
-          "wrong_extension": "Kies een Formbricks-bestand (.json), een Qualtrics-export (.qsf) of een vragenlijst in Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md)."
+          "wrong_extension": "Kies een Formbricks-bestand (.json), een Qualtrics-export (.qsf) of een vragenlijst in Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md).",
+          "wrong_extension_into_survey": "Kies een Formbricks-bestand (.json) of de Excel-export van deze vragenlijst (.xlsx)."
         },
         "facts": {
           "blocks": "{count, plural, one {# blok} other {# blokken}}",
@@ -4995,6 +4998,12 @@
           "logic_not_imported": "{count, plural, one {# logicaregel niet geïmporteerd} other {# logicaregels niet geïmporteerd}}",
           "logic_to_check": "{count, plural, one {# logicaregel om te controleren} other {# logicaregels om te controleren}}",
           "questions": "{count, plural, one {# vraag} other {# vragen}}"
+        },
+        "into_survey": {
+          "dialog_description": "Werk deze vragenlijst bij vanuit een Formbricks-bestand, of vanuit de Excel-export met bewerkte teksten en vertalingen. Je controleert de wijzigingen voordat er iets wordt opgeslagen.",
+          "dialog_title": "Importeren in “{name}”",
+          "dropzone_help": "Een Formbricks-bestand (.json) of de Excel-export van deze vragenlijst (.xlsx)",
+          "menu": "Importeren"
         },
         "issues": {
           "action_class_created": "De actie \"{name}\" is nieuw in deze workspace en wordt aangemaakt.",
@@ -5044,12 +5053,30 @@
           "question_skipped_validation_failed": "Vraag overgeslagen: de omgezette vraag is niet door de enquêtecontroles gekomen.",
           "scale_changed": "De schaal is gewijzigd van {from} naar {to} punten: een Formbricks-beoordeling heeft 3, 4, 5, 6, 7 of 10 punten.",
           "script_dropped": "Er is een script uit de tekst verwijderd.",
+          "sheet_formatting_dropped": "Rij {row} ({language}) bevatte opmaak, zoals vet of links. De bewerkte tekst is platte tekst.",
+          "sheet_language_skipped_column_missing": "De kolom {code} is niet gevonden, dus de bijbehorende teksten zijn weggelaten. Is de kolomkop gewijzigd?",
+          "sheet_language_skipped_not_in_survey": "Deze vragenlijst heeft de taal {code} niet meer, dus de kolom is weggelaten.",
+          "sheet_option_added": "Rij {row} voegt een optie of een veld toe aan een vraag.",
+          "sheet_question_added": "Rij {row} voegt een vraag toe, in een nieuw blok na de vraag erboven. Controleer de instellingen en logica ervan in de editor.",
+          "sheet_row_skipped_duplicate_key": "Rij {row} herhaalt een eerdere rij en is daarom weggelaten.",
+          "sheet_row_skipped_field_not_in_question": "Rij {row} is weggelaten: de bijbehorende vraag heeft geen veld van dat type.",
+          "sheet_row_skipped_field_taken": "Rij {row} is weggelaten: de bijbehorende vraag heeft dat veld al. Bewerk in plaats daarvan die rij.",
+          "sheet_row_skipped_id_taken": "Rij {row} is weggelaten: een andere vraag heeft al deze vraag-ID.",
+          "sheet_row_skipped_invalid_question": "Rij {row} is weggelaten: de vraag die hierdoor wordt gemaakt of gewijzigd zou ongeldig zijn, bijvoorbeeld een meerkeuzevraag met minder dan twee opties.",
+          "sheet_row_skipped_no_question": "Rij {row} is weggelaten: er is geen vraag erboven, of met dit vraag-ID, waar de rij bij kan.",
+          "sheet_row_skipped_no_text": "Rij {row} is overgeslagen: er staat geen tekst in de standaardtaal.",
+          "sheet_row_skipped_survey_full": "Rij {row} is overgeslagen: de enquête heeft al het maximale aantal blokken.",
+          "sheet_row_skipped_unknown_key": "Rij {row} is een tekst die deze enquête niet meer heeft, dus is overgeslagen.",
+          "sheet_row_skipped_unknown_type": "Rij {row} is overgeslagen: het type is geen vraagtype of veld zoals \"Choice 3\".",
+          "sheet_row_skipped_unsupported_type": "Rij {row} is overgeslagen: afbeeldingskeuze- en Cal.com-vragen kunnen niet vanuit een spreadsheet worden toegevoegd. Voeg ze toe in de editor.",
+          "sheet_text_not_imported": "Rij {row} ({language}) was bij het exporteren te lang voor één cel, dus je bewerking is overgeslagen.",
           "sheets_skipped": "Alleen het eerste werkblad is gelezen. Niet gelezen: {sheets}.",
           "table_as_matrix": "Deze vraag is een tabel in het bestand en is geïmporteerd als matrix. Controleer de rijen en kolommen.",
           "targeting_filter_removed": "{count, plural, one {# targetingfilter is} other {# targetingfilters zijn}} verwijderd: segmenten en enquêtes in filters horen bij de workspace waaruit het bestand afkomstig is.",
           "targeting_removed": "Targeting is verwijderd: contacttargeting zit niet in je abonnement.",
           "text_not_split": "De vraag en de antwoordopties in cel {cell} konden niet woord voor woord van elkaar worden onderscheiden, dus de hele cel is de vraag. Pas dit aan in de editor.",
           "text_too_long": "Een tekst was te lang om te importeren en is weggelaten.",
+          "texts_updated": "{count, plural, =0 {De spreadsheet wijzigt geen tekst.} one {De spreadsheet wijzigt # tekst.} other {De spreadsheet wijzigt # teksten.}}",
           "translation_missing": "Er {count, plural, one {ontbreekt # tekst} other {ontbreken # teksten}} in het {language}, dus de taal is uitgezet. Voeg de ontbrekende teksten toe in de editor en zet de taal daarna weer aan.",
           "unknown": "Er is tijdens het importeren iets aangepast in deze vraag.",
           "unknown_key_dropped": "\"{field}\" maakt geen deel uit van een Formbricks-bestand en is weggelaten.",
@@ -5064,6 +5091,7 @@
           "create_description": "Opgeslagen als nieuw concept met de naam “{newName}”.",
           "create_new_survey": "Een nieuwe enquête aanmaken",
           "exported_from": "Dit bestand is geëxporteerd uit “{name}”.",
+          "into_survey_legend": "Wat moet dit bestand doen?",
           "refused_description": "Dit bestand kan “{name}” niet bijwerken, om de onderstaande redenen. Het wordt opgeslagen als een nieuw concept met de naam “{newName}”.",
           "stale_line": "Gewijzigd sinds dit bestand is geëxporteerd. Kies Bijwerken om die wijzigingen toch te overschrijven.",
           "triggers_differ": "Ze verschillen van die van de enquête. Vink uit om de huidige triggers te behouden.",
@@ -5072,6 +5100,7 @@
           "update_anyway": "Toch bijwerken",
           "update_description": "Vervangt de vragen, afsluitingen, talen en logica. Reacties, status, instellingen en opmaak blijven behouden.",
           "update_named": "“{name}” bijwerken",
+          "update_sheet_description": "Wijzigt de teksten die de spreadsheet bewerkt en voegt de vragen en opties toe die de spreadsheet toevoegt. Er wordt niets verwijderd. Reacties, status, instellingen en opmaak blijven behouden.",
           "update_survey": "Enquête bijwerken"
         },
         "mcp_hint": "Een heel grote enquête?",

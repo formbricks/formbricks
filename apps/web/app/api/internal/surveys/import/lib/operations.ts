@@ -10,12 +10,15 @@ import { loggableError } from "@/app/api/v3/lib/loggable-error";
 import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemInternalError } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
+import { getSessionUserId, mapV3SurveyPatchError } from "@/app/api/v3/surveys/lib/operations";
+import { V3SurveyArchivedError } from "@/app/api/v3/surveys/patch";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { getAITimeoutMs } from "@/lib/ai/timeout";
 import {
   SurveyImportFileTooLargeError,
   SurveyImportTimeoutError,
+  SurveyImportUnsupportedFileError,
   toRefusalResponse,
 } from "@/modules/survey/import/core/errors";
 import type { TSurveyImportLane, TSurveyImportResult } from "@/modules/survey/import/core/lane";
@@ -25,6 +28,7 @@ import {
   readSurveyImportUploadAs,
 } from "@/modules/survey/import/core/upload-thread";
 import { DOCUMENT_IMPORT_LANES } from "@/modules/survey/import/document/lane";
+import { excelExportImportLane } from "@/modules/survey/import/excel-export/lane";
 import { formbricksFileImportLane } from "@/modules/survey/import/formbricks/lane";
 import { SURVEY_IMPORT_DEADLINE_MS, SURVEY_IMPORT_MAX_FILE_BYTES } from "@/modules/survey/import/limits";
 import { qsfImportLane } from "@/modules/survey/import/qsf/lane";
@@ -107,6 +111,42 @@ const clientClosedRequest = () => new Response(null, { status: 499 });
  * matched survey through `PUT /api/internal/surveys/{surveyId}/content`; that write is what the audit
  * log records.
  */
+/**
+ * Open the upload in its thread, or the response that refuses it: the client left, the file is refused,
+ * or the server failed to read it.
+ */
+const openUploadOrRefuse = async ({
+  req,
+  file,
+  requestId,
+  instance,
+  workspaceId,
+  organizationId,
+}: {
+  req: Request;
+  file: File;
+  requestId: string;
+  instance: string;
+  workspaceId: string;
+  organizationId: string;
+}): Promise<TSurveyImportUpload | Response> => {
+  try {
+    return await openUpload(file, req.signal);
+  } catch (error) {
+    if (isClientAbort(req.signal)) return clientClosedRequest();
+    const refusal = toRefusalResponse(error, requestId, instance);
+    if (refusal) return refusal;
+
+    logger
+      .withContext({ requestId, workspaceId, organizationId })
+      .error(
+        { ...loggableError(error), operation: OPERATION, statusCode: 500 },
+        "Survey import could not read the upload"
+      );
+    return problemInternalError(requestId, undefined, instance);
+  }
+};
+
 export async function streamSurveyImport({
   req,
   authentication,
@@ -129,22 +169,8 @@ export async function streamSurveyImport({
 
   const { organizationId, workspaceId } = workspaceAccess;
 
-  let upload: TSurveyImportUpload;
-  try {
-    upload = await openUpload(file, req.signal);
-  } catch (error) {
-    if (isClientAbort(req.signal)) return clientClosedRequest();
-    const refusal = toRefusalResponse(error, requestId, instance);
-    if (refusal) return refusal;
-
-    logger
-      .withContext({ requestId, workspaceId, organizationId })
-      .error(
-        { ...loggableError(error), operation: OPERATION, statusCode: 500 },
-        "Survey import could not read the upload"
-      );
-    return problemInternalError(requestId, undefined, instance);
-  }
+  const upload = await openUploadOrRefuse({ req, file, requestId, instance, workspaceId, organizationId });
+  if (upload instanceof Response) return upload;
 
   const lane = {
     req,
@@ -189,6 +215,115 @@ export async function streamSurveyImport({
           input: { read: async () => (await readSurveyImportUploadAs(upload, type, fileName)).prepared },
         });
       }
+    }
+  } finally {
+    upload.close();
+  }
+}
+
+interface TStreamSurveyImportIntoSurveyParams {
+  req: Request;
+  authentication: TV3Authentication;
+  surveyId: string;
+  /** The uploaded file, as for `streamSurveyImport`: a Formbricks file or the survey's Excel export. */
+  file: File;
+  requestId: string;
+  instance: string;
+}
+
+/**
+ * Import a file into one survey, from that survey's menu (ENG-6809), streaming progress as NDJSON like
+ * `streamSurveyImport`. The survey is authorized for writing first, the same way the Update it leads to
+ * is (`getAuthorizedV3Survey`, so an unknown survey and one the user may not edit are the same 403),
+ * and an archived one is refused. Two kinds of file are read:
+ *
+ * - a Formbricks file, through its lane, with the Match on this survey whatever survey the file names;
+ * - an `.xlsx`, as this survey's Excel export: by its layout, with no AI (`excel_export_not_recognized`
+ *   for any other workbook).
+ *
+ * Any other file is a 415. Nothing is written here; the review's Update or create does that, and is
+ * audited.
+ */
+export async function streamSurveyImportIntoSurvey({
+  req,
+  authentication,
+  surveyId,
+  file,
+  requestId,
+  instance,
+}: TStreamSurveyImportIntoSurveyParams): Promise<Response> {
+  const log = logger.withContext({ requestId, surveyId, operation: OPERATION });
+  const { survey, authResult, response, visibility } = await getAuthorizedV3Survey({
+    surveyId,
+    authentication,
+    access: "readWrite",
+    requestId,
+    instance,
+  });
+  if (response) {
+    log.warn({ statusCode: response.status }, "Survey not found or not accessible");
+    return response;
+  }
+  const { workspaceId } = survey;
+  const { organizationId } = authResult;
+  if (survey.archivedAt) {
+    return mapV3SurveyPatchError(new V3SurveyArchivedError(), { log, requestId, instance, workspaceId });
+  }
+
+  const upload = await openUploadOrRefuse({ req, file, requestId, instance, workspaceId, organizationId });
+  if (upload instanceof Response) return upload;
+
+  const lane = {
+    req,
+    authentication,
+    organizationId,
+    workspaceId,
+    fileBytes: file.size,
+    requestId,
+    instance,
+  };
+  const fileName = getSurveyImportFileName(file);
+  const target = { survey, visibility };
+
+  try {
+    switch (upload.type) {
+      case "formbricks":
+        return await runSurveyImportLane({
+          ...lane,
+          lane: formbricksFileImportLane,
+          input: {
+            read: async () => (await readSurveyImportUploadAs(upload, "formbricks", fileName)).read,
+            fileName,
+            workspaceId,
+            organizationId,
+            authentication,
+            target,
+          },
+        });
+      case "xlsx":
+        return await runSurveyImportLane({
+          ...lane,
+          lane: excelExportImportLane,
+          input: {
+            read: async () => (await readSurveyImportUploadAs(upload, "excel_export", fileName)).read,
+            fileName,
+            workspaceId,
+            organizationId,
+            authentication,
+            target,
+          },
+        });
+      default:
+        return (
+          toRefusalResponse(
+            new SurveyImportUnsupportedFileError(
+              "Only a Formbricks file or the survey's Excel export can be imported into a survey",
+              upload.type
+            ),
+            requestId,
+            instance
+          ) ?? problemInternalError(requestId, undefined, instance)
+        );
     }
   } finally {
     upload.close();

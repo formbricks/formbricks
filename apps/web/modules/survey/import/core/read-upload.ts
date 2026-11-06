@@ -1,3 +1,4 @@
+import { type TExcelExportRead, readExcelExport } from "@/modules/survey/excel-export/read";
 import { type TFormbricksFileRead, readFormbricksFile } from "@/modules/survey/formbricks-file/read";
 import type { TDocumentKind } from "../document/model";
 import { type TPreparedDocumentImport, prepareDocumentImport } from "../document/prepare";
@@ -12,8 +13,16 @@ import type { TSurveyImportFile } from "./sniff";
  */
 export type TSurveyImportUploadRead =
   | { type: "formbricks"; read: TFormbricksFileRead }
+  | { type: "excel_export"; read: TExcelExportRead }
   | { type: "qsf"; prepared: TPreparedQsfImport }
   | { type: TDocumentKind; prepared: TPreparedDocumentImport };
+
+/**
+ * How an upload is read: as a file to bring in as a survey (`survey`), or as the survey's own Excel
+ * export, read back by its layout rather than by AI (`excel_export`, ENG-6809), which only an `.xlsx`
+ * can be.
+ */
+export type TSurveyImportReadAs = "survey" | "excel_export";
 
 /**
  * Read a sniffed upload for its lane. Throws the lane's refusals: `SurveyImportInputError` (422) and
@@ -21,8 +30,13 @@ export type TSurveyImportUploadRead =
  */
 export const readSurveyImportUpload = (
   upload: TSurveyImportFile,
-  fileName: string
+  fileName: string,
+  as: TSurveyImportReadAs = "survey"
 ): TSurveyImportUploadRead => {
+  if (as === "excel_export") {
+    if (upload.type !== "xlsx") throw new Error(`A ${upload.type} upload cannot be read as an Excel export`);
+    return { type: "excel_export", read: readExcelExport(upload.archive) };
+  }
   switch (upload.type) {
     case "formbricks":
       return { type: "formbricks", read: readFormbricksFile(upload.json) };

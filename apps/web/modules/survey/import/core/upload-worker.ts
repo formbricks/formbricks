@@ -1,6 +1,6 @@
 import { type MessagePort, workerData } from "node:worker_threads";
 import { type TSurveyImportRefusal, toSurveyImportRefusal } from "./errors";
-import { readSurveyImportUpload } from "./read-upload";
+import { type TSurveyImportReadAs, readSurveyImportUpload } from "./read-upload";
 import { type TSurveyImportFile, sniffSurveyImportFile } from "./sniff";
 
 /**
@@ -10,7 +10,9 @@ import { type TSurveyImportFile, sniffSurveyImportFile } from "./sniff";
  * AI SDK, `server-only`): `upload-thread.test.ts` bundles this file and runs it in a real thread.
  */
 
-export type TUploadWorkerRequest = { step: "sniff"; bytes: Uint8Array } | { step: "read"; fileName: string };
+export type TUploadWorkerRequest =
+  | { step: "sniff"; bytes: Uint8Array }
+  | { step: "read"; fileName: string; as: TSurveyImportReadAs };
 
 /** An error that is not a refusal, as far as a structured clone carries it. */
 export interface TUploadWorkerFailure {
@@ -58,7 +60,7 @@ export const serveSurveyImportUpload = (port: MessagePort): void => {
       if (!upload) throw new Error("The upload's worker was asked to read before it sniffed");
       const sniffed = upload;
       upload = null;
-      return readSurveyImportUpload(sniffed, request.fileName);
+      return readSurveyImportUpload(sniffed, request.fileName, request.as);
     });
   });
 };

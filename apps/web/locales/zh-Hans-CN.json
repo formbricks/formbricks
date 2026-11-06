@@ -4930,6 +4930,8 @@
             "xml_elements": "此文档的内容量超出了导入功能可读取的范围。请将其拆分为较小的文件，然后分别导入。"
           },
           "empty_file": "此文件为空。",
+          "excel_export_not_recognized": "此 Excel 文件不是从 Formbricks 导出的问卷。请先将问卷导出为 Excel 文件，编辑该文件后再在此处导入。",
+          "excel_export_other_survey": "此工作表中没有任何一行属于当前问卷。它是不是从其他问卷导出的？",
           "failed": "导入失败。请重试。",
           "field_problems": {
             "dangling_reference": "此处指向的内容在文件中并不存在",
@@ -4986,7 +4988,8 @@
           "too_large_for_ai": "这份问卷太大,Formbricks AI 无法一次性导入。请改用 Claude 或 ChatGPT 通过 MCP 导入。",
           "too_many_questions": "此问卷包含超过 200 个问题,超出了单次导入的构建上限。请改用 Claude 或 ChatGPT 通过 MCP 导入。",
           "unreadable": "无法读取此文件。请重新导出后再试一次。",
-          "wrong_extension": "请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)，或 Word (.docx)、Excel (.xlsx)、CSV (.csv)、Markdown (.md) 格式的问卷。"
+          "wrong_extension": "请选择 Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)，或 Word (.docx)、Excel (.xlsx)、CSV (.csv)、Markdown (.md) 格式的问卷。",
+          "wrong_extension_into_survey": "请选择 Formbricks 文件（.json）或此问卷导出的 Excel 文件（.xlsx）。"
         },
         "facts": {
           "blocks": "{count, plural, other {# 个区块}}",
@@ -4995,6 +4998,12 @@
           "logic_not_imported": "{count, plural, other {# 条逻辑规则未导入}}",
           "logic_to_check": "{count, plural, other {# 条逻辑规则待检查}}",
           "questions": "{count, plural, other {# 道题目}}"
+        },
+        "into_survey": {
+          "dialog_description": "通过 Formbricks 文件，或通过已编辑文本和翻译的 Excel 导出文件来更新此问卷。在保存任何内容之前，你都可以先查看更改。",
+          "dialog_title": "导入到“{name}”",
+          "dropzone_help": "Formbricks 文件（.json）或此问卷导出的 Excel 文件（.xlsx）",
+          "menu": "导入"
         },
         "issues": {
           "action_class_created": "操作“{name}”在此工作区中是新的,将会被创建。",
@@ -5044,12 +5053,30 @@
           "question_skipped_validation_failed": "问题已跳过：转换后的问题未通过问卷检查。",
           "scale_changed": "评分范围已从 {from} 分制变为 {to} 分制:Formbricks 的评分支持 3、4、5、6、7 或 10 分制。",
           "script_dropped": "文本中的一段脚本已被移除。",
+          "sheet_formatting_dropped": "第 {row} 行（{language}）包含加粗或链接等格式，编辑后的文本将变为纯文本。",
+          "sheet_language_skipped_column_missing": "未找到 {code} 列，因此该列的文本已被忽略。是不是修改了它的表头？",
+          "sheet_language_skipped_not_in_survey": "此问卷已不再包含语言 {code}，因此该列已被忽略。",
+          "sheet_option_added": "第 {row} 行为某个问题添加了一个选项或字段。",
+          "sheet_question_added": "第 {row} 行添加了一个问题，位于其上方问题之后的新区块中。请在编辑器中检查其设置和逻辑。",
+          "sheet_row_skipped_duplicate_key": "第 {row} 行与前面的某一行重复，因此已被忽略。",
+          "sheet_row_skipped_field_not_in_question": "第 {row} 行已被忽略：其所属问题没有该类型的字段。",
+          "sheet_row_skipped_field_taken": "第 {row} 行已被忽略：其所属问题已有该字段。请改为编辑那一行。",
+          "sheet_row_skipped_id_taken": "第 {row} 行已被忽略：已有其他问题使用了该问题 ID。",
+          "sheet_row_skipped_invalid_question": "第 {row} 行已被忽略：该行创建或修改的问题将无效，例如选项少于两个的选择题。",
+          "sheet_row_skipped_no_question": "第 {row} 行已被忽略：其上方没有问题，也没有与其问题 ID 匹配的问题可以容纳它。",
+          "sheet_row_skipped_no_text": "第 {row} 行已被跳过:该行在默认语言下没有文本。",
+          "sheet_row_skipped_survey_full": "第 {row} 行已被跳过：该问卷的区块数量已达上限。",
+          "sheet_row_skipped_unknown_key": "第 {row} 行对应的文本在此问卷中已不存在,因此已被跳过。",
+          "sheet_row_skipped_unknown_type": "第 {row} 行已被跳过:其“类型”既不是题型,也不是“选项 3”这类字段。",
+          "sheet_row_skipped_unsupported_type": "第 {row} 行已被跳过:图片选择题和 Cal.com 题目无法通过表格添加,请在编辑器中添加。",
+          "sheet_text_not_imported": "第 {row} 行({language})在导出时超出了单元格的长度限制,因此该行的修改已被跳过。",
           "sheets_skipped": "仅读取了第一个工作表。未读取:{sheets}。",
           "table_as_matrix": "此问题在文件中是表格,已作为矩阵导入。请检查其行和列。",
           "targeting_filter_removed": "{count, plural, other {# 个定向筛选条件已被移除}}:筛选条件中的细分和问卷属于文件来源的工作区。",
           "targeting_removed": "定向已被移除:您的套餐不支持联系人定向。",
           "text_not_split": "单元格 {cell} 中的问题和选项无法逐字区分,因此整个单元格都被当作问题。请在编辑器中修正。",
           "text_too_long": "有一段文本过长,无法导入,已被略过。",
+          "texts_updated": "{count, plural, =0 {表格不会更改任何文本。} other {表格将更改 # 条文本。}}",
           "translation_missing": "{language}缺少 {count, plural, other {# 条文本}}，因此该语言已关闭。请在编辑器中补充缺失的文本，然后再重新开启。",
           "unknown": "导入时,这道题中的部分内容已被修改。",
           "unknown_key_dropped": "\"{field}\" 不属于 Formbricks 文件,已被忽略。",
@@ -5064,6 +5091,7 @@
           "create_description": "将保存为名为“{newName}”的新草稿。",
           "create_new_survey": "创建新问卷",
           "exported_from": "此文件导出自“{name}”。",
+          "into_survey_legend": "这个文件要做什么?",
           "refused_description": "由于以下原因,此文件无法更新“{name}”,将另存为名为“{newName}”的新草稿。",
           "stale_line": "自导出此文件后已有更改。选择“更新”将仍然覆盖这些更改。",
           "triggers_differ": "它们与该问卷现有的触发器不同。取消勾选可保留其当前触发器。",
@@ -5072,6 +5100,7 @@
           "update_anyway": "仍然更新",
           "update_description": "将替换其问题、结束页、语言和逻辑。回复、状态、设置和样式将保持不变。",
           "update_named": "更新“{name}”",
+          "update_sheet_description": "更改表格中编辑过的文本,并添加表格中新增的问题和选项。不会删除任何内容。回复、状态、设置和样式均保持不变。",
           "update_survey": "更新问卷"
         },
         "mcp_hint": "问卷特别大?",

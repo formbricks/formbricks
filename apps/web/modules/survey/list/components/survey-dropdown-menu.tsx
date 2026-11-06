@@ -13,6 +13,7 @@ import {
   PencilIcon,
   SquarePenIcon,
   TrashIcon,
+  UploadIcon,
   UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -35,6 +36,7 @@ import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/ee/crea
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useExportSurvey } from "@/modules/survey/export/hooks/use-export-survey";
 import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
+import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
 import { RenameSurveyModal } from "@/modules/survey/list/components/rename-survey-modal";
@@ -115,6 +117,7 @@ export const SurveyDropDownMenu = ({
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isCollaborateModalOpen, setIsCollaborateModalOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -474,6 +477,19 @@ export const SurveyDropDownMenu = ({
               </DropdownMenuItem>
             )}
             {!isArchived && exportMenu}
+            {/* Import updates this survey (ENG-6809), so it takes what Edit takes. */}
+            {!isArchived && canManageSurvey && workspace?.id && (
+              <DropdownMenuItem
+                data-testid="import-into-survey"
+                icon={<UploadIcon className="size-4" />}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setIsImportDialogOpen(true);
+                }}>
+                {t("workspace.surveys.import.into_survey.menu")}
+              </DropdownMenuItem>
+            )}
             {!isArchived && canManageSurvey && (
               <DropdownMenuItem>
                 <button
@@ -560,6 +576,18 @@ export const SurveyDropDownMenu = ({
           surveyId={survey.id}
           surveyName={survey.name}
           renameSurvey={renameSurvey}
+        />
+      )}
+
+      {/* Mounted only while open: the dialog holds an import's state, which a closed menu row never needs. */}
+      {isImportDialogOpen && workspace?.id && (
+        <ImportSurveyDialog
+          workspaceId={workspace.id}
+          // Neither file it takes is read by AI.
+          isAIAvailable={false}
+          targetSurvey={{ id: survey.id, name: survey.name }}
+          open={isImportDialogOpen}
+          onOpenChange={setIsImportDialogOpen}
         />
       )}
 

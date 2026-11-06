@@ -98,6 +98,26 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `images_not_imported` — the pictures, drawings and embedded objects a Word file holds, which an
  *   import never brings in (`params.count`, ENG-6853)
  *
+ * An Excel export imported into its survey (ENG-6809), each about a row of the sheet (`questionTag`
+ * `R<row>`, `params.row`) and, where it says, one of its languages (`params.language`, a code):
+ *
+ * - `texts_updated` — how many texts, counting each language, the sheet changes (`params.count`)
+ * - `sheet_question_added` — a question a row added, in a block of its own, with no logic
+ * - `sheet_option_added` — an option, matrix row or column, or a field a row added to a question
+ * - `sheet_row_skipped` — a row left out, by `params.cause`: its key is no text of the survey
+ *   (`unknown_key`, deleted since the export), or an earlier row has it (`duplicate_key`); its Type names
+ *   no question type or field (`unknown_type`), or a type a row cannot make (`unsupported_type`); its
+ *   Question ID is taken (`id_taken`) or names no question, with none above (`no_question`); it has no
+ *   text in the default language (`no_text`); the question has no such field (`field_not_in_question`)
+ *   or has it already (`field_taken`); or the question it makes or adds to is not valid
+ *   (`invalid_question`); or the survey has as many blocks as it can hold (`survey_full`)
+ * - `sheet_language_skipped` — a language column left out (`params.code`): its header was changed
+ *   (`params.cause: "column_missing"`), or the survey no longer has the language (`not_in_survey`)
+ * - `sheet_formatting_dropped` — an edited text that was formatted, stored as plain paragraphs
+ * - `sheet_text_not_imported` — an edited text the export had cut to fit its cell, left as it is
+ *   (`params.cause: "cut_on_export"`)
+ * - `markup_escaped` — as above, for an edited cell
+ *
  * An Update's own (ENG-6851), in `TSurveyImportMatch.issues`, for a matched survey that has responses:
  *
  * - `question_removed` — a question the survey has and the file does not; its answers stop showing in
@@ -142,6 +162,12 @@ export type TSurveyImportFileType = "formbricks" | "qsf" | "docx" | "xlsx" | "cs
  *   param's `identifier` (`TSurveyImportDocumentLimit`). `source_size` is the AI ceiling: such a file
  *   is imported through MCP instead.
  *
+ * An import into a survey's own menu (422, ENG-6809):
+ *
+ * - `excel_export_not_recognized` — the `.xlsx` is not an Excel export of a survey: its very hidden
+ *   meta sheet or its key column is missing, or it is of another format;
+ * - `excel_export_other_survey` — no row of the sheet is a text of the survey it is imported into.
+ *
  * The Qualtrics lane's (422):
  *
  * - `qsf_not_recognized` — the file is not a Qualtrics export the import can read: the envelope is
@@ -151,6 +177,8 @@ export type TSurveyImportFileType = "formbricks" | "qsf" | "docx" | "xlsx" | "cs
  *   the param's `identifier` (`TSurveyImportLimit`); `name` points at where in the file.
  */
 export type TSurveyImportRefusalCode =
+  | "excel_export_not_recognized"
+  | "excel_export_other_survey"
   | "file_type_unsupported"
   | "file_limit_exceeded"
   | "file_unreadable"
@@ -262,7 +290,14 @@ export type TSurveyImportIssueCode =
   | "table_as_matrix"
   | "images_not_imported"
   | "question_removed"
-  | "option_removed";
+  | "option_removed"
+  | "texts_updated"
+  | "sheet_row_skipped"
+  | "sheet_language_skipped"
+  | "sheet_formatting_dropped"
+  | "sheet_text_not_imported"
+  | "sheet_question_added"
+  | "sheet_option_added";
 
 export interface TSurveyImportIssue {
   code: TSurveyImportIssueCode;

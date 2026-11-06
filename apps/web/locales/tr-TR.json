@@ -4930,6 +4930,8 @@
             "xml_elements": "Bu belge, içe aktarmanın okuyabileceğinden daha fazla içerik barındırıyor. Belgeyi daha küçük dosyalara böl ve her birini ayrı ayrı içe aktar."
           },
           "empty_file": "Bu dosya boş.",
+          "excel_export_not_recognized": "Bu Excel dosyası Formbricks'ten dışa aktarılmış bir anket dosyası değil. Anketi Excel dosyası olarak dışa aktar, o dosyayı düzenle ve buraya içe aktar.",
+          "excel_export_other_survey": "Bu sayfadaki hiçbir satır bu ankete ait değil. Başka bir anketten mi dışa aktarılmış olabilir?",
           "failed": "İçe aktarma başarısız oldu. Tekrar dene.",
           "field_problems": {
             "dangling_reference": "Bu, dosyada bulunmayan bir öğeye işaret ediyor",
@@ -4986,7 +4988,8 @@
           "too_large_for_ai": "Bu anket, Formbricks AI'ın tek seferde içe aktarması için çok büyük. Bunun yerine MCP üzerinden Claude ya da ChatGPT ile içe aktar.",
           "too_many_questions": "Bu ankette 200'den fazla soru var; bu, tek bir içe aktarmanın oluşturabileceğinden fazla. Bunun yerine MCP üzerinden Claude veya ChatGPT ile içe aktar.",
           "unreadable": "Bu dosya okunamadı. Tekrar dışa aktar ve bir kez daha dene.",
-          "wrong_extension": "Bir Formbricks dosyası (.json), bir Qualtrics dışa aktarımı (.qsf) ya da Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md) formatında bir anket formu seç."
+          "wrong_extension": "Bir Formbricks dosyası (.json), bir Qualtrics dışa aktarımı (.qsf) ya da Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md) formatında bir anket formu seç.",
+          "wrong_extension_into_survey": "Bir Formbricks dosyası (.json) veya bu anketin Excel dışa aktarımını (.xlsx) seç."
         },
         "facts": {
           "blocks": "{count, plural, one {# blok} other {# blok}}",
@@ -4995,6 +4998,12 @@
           "logic_not_imported": "{count, plural, one {# mantık kuralı içe aktarılmadı} other {# mantık kuralı içe aktarılmadı}}",
           "logic_to_check": "{count, plural, one {# mantık kuralı kontrol edilecek} other {# mantık kuralı kontrol edilecek}}",
           "questions": "{count, plural, one {# soru} other {# soru}}"
+        },
+        "into_survey": {
+          "dialog_description": "Bu anketi bir Formbricks dosyasından veya düzenlenmiş metinler ve çeviriler içeren Excel dışa aktarımından güncelle. Hiçbir şey kaydedilmeden önce değişiklikleri incelersin.",
+          "dialog_title": "“{name}” anketine içe aktar",
+          "dropzone_help": "Bir Formbricks dosyası (.json) veya bu anketin Excel dışa aktarımı (.xlsx)",
+          "menu": "İçe aktar"
         },
         "issues": {
           "action_class_created": "\"{name}\" aksiyonu bu çalışma alanında yeni, bu yüzden oluşturulacak.",
@@ -5044,12 +5053,30 @@
           "question_skipped_validation_failed": "Soru atlandı: dönüştürülen soru anket denetimlerinden geçemedi.",
           "scale_changed": "Ölçek {from} puandan {to} puana değişti: Formbricks derecelendirmesi 3, 4, 5, 6, 7 veya 10 puan olabilir.",
           "script_dropped": "Metindeki bir betik kaldırıldı.",
+          "sheet_formatting_dropped": "{row}. satırda ({language}) kalın yazı veya bağlantı gibi biçimlendirmeler vardı. Düzenlenen metin düz metindir.",
+          "sheet_language_skipped_column_missing": "{code} sütunu bulunamadı, bu yüzden metinleri dışarıda bırakıldı. Başlığı mı değiştirildi?",
+          "sheet_language_skipped_not_in_survey": "Bu anket artık {code} dilini içermiyor, bu yüzden sütunu dışarıda bırakıldı.",
+          "sheet_option_added": "{row}. satır bir soruya seçenek veya alan ekliyor.",
+          "sheet_question_added": "{row}. satır, üstündeki sorudan sonra yeni bir blokta soru ekliyor. Ayarlarını ve mantığını düzenleyicide kontrol et.",
+          "sheet_row_skipped_duplicate_key": "{row}. satır önceki bir satırı tekrar ettiği için dışarıda bırakıldı.",
+          "sheet_row_skipped_field_not_in_question": "{row}. satır dışarıda bırakıldı: sorusunda bu türde bir alan yok.",
+          "sheet_row_skipped_field_taken": "{row}. satır dışarıda bırakıldı: sorusunda bu alan zaten var. Bunun yerine o satırı düzenle.",
+          "sheet_row_skipped_id_taken": "{row}. satır dışarıda bırakıldı: başka bir soru zaten bu Soru Kimliğini kullanıyor.",
+          "sheet_row_skipped_invalid_question": "{row}. satır dışarıda bırakıldı: oluşturduğu veya değiştirdiği soru geçerli olmayacak, örneğin ikiden az seçeneği olan bir seçim sorusu.",
+          "sheet_row_skipped_no_question": "{row}. satır dışarıda bırakıldı: üstünde veya Soru Kimliğiyle eşleşen, onu kabul edebilecek bir soru yok.",
+          "sheet_row_skipped_no_text": "{row}. satır atlandı: varsayılan dilde metin yok.",
+          "sheet_row_skipped_survey_full": "{row}. satır atlandı: Anket zaten alabileceği maksimum blok sayısına ulaştı.",
+          "sheet_row_skipped_unknown_key": "{row}. satır, bu ankette artık bulunmayan bir metne ait olduğu için atlandı.",
+          "sheet_row_skipped_unknown_type": "{row}. satır atlandı: Tür değeri bir soru türü ya da \"Seçenek 3\" gibi bir alan değil.",
+          "sheet_row_skipped_unsupported_type": "{row}. satır atlandı: görsel seçimi ve Cal.com soruları sayfa üzerinden eklenemez. Bunları düzenleyicide ekleyebilirsin.",
+          "sheet_text_not_imported": "{row}. satır ({language}) dışa aktarılırken tek bir hücreye sığmayacak kadar uzundu, bu yüzden yaptığın düzenleme atlandı.",
           "sheets_skipped": "Yalnızca ilk sayfa okundu. Okunmayanlar: {sheets}.",
           "table_as_matrix": "Bu soru dosyada tablo olarak yer alıyor ve matris olarak içe aktarıldı. Satırlarını ve sütunlarını kontrol et.",
           "targeting_filter_removed": "{count, plural, one {# hedefleme filtresi kaldırıldı} other {# hedefleme filtresi kaldırıldı}}: filtrelerdeki segmentler ve anketler, dosyanın geldiği çalışma alanına aittir.",
           "targeting_removed": "Hedefleme kaldırıldı: kişi hedefleme planında yer almıyor.",
           "text_not_split": "{cell} hücresindeki soru ile seçenekleri birbirinden kelimesi kelimesine ayırt edilemedi, bu yüzden hücrenin tamamı soru olarak alındı. Düzenleyicide düzelt.",
           "text_too_long": "Bir metin içe aktarılamayacak kadar uzundu ve dışarıda bırakıldı.",
+          "texts_updated": "{count, plural, =0 {Sayfa hiçbir metni değiştirmiyor.} one {Sayfa # metni değiştiriyor.} other {Sayfa # metni değiştiriyor.}}",
           "translation_missing": "{language} dilinde {count, plural, one {# metin} other {# metin}} eksik olduğu için bu dil kapatıldı. Eksik metinleri düzenleyicide ekle, ardından dili aç.",
           "unknown": "Bu sorudaki bir şey içe aktarma sırasında değiştirildi.",
           "unknown_key_dropped": "\"{field}\" bir Formbricks dosyasının parçası değil ve dışarıda bırakıldı.",
@@ -5064,6 +5091,7 @@
           "create_description": "“{newName}” adlı yeni bir taslak olarak kaydedilir.",
           "create_new_survey": "Yeni anket oluştur",
           "exported_from": "Bu dosya “{name}” anketinden dışa aktarıldı.",
+          "into_survey_legend": "Bu dosya ne yapsın?",
           "refused_description": "Bu dosya, aşağıdaki nedenlerle “{name}” anketini güncelleyemez. “{newName}” adlı yeni bir taslak olarak kaydedilir.",
           "stale_line": "Bu dosya dışa aktarıldığından beri değiştirildi. Bu değişikliklerin üzerine yine de yazmak için Güncelle'yi seç.",
           "triggers_differ": "Anketin tetikleyicilerinden farklılar. Mevcut tetikleyicileri korumak için işareti kaldır.",
@@ -5072,6 +5100,7 @@
           "update_anyway": "Yine de güncelle",
           "update_description": "Anketin sorularını, bitiş ekranlarını, dillerini ve mantığını değiştirir. Yanıtlar, durum, ayarlar ve stil olduğu gibi kalır.",
           "update_named": "“{name}” öğesini güncelle",
+          "update_sheet_description": "Sayfanın düzenlediği metinleri değiştirir, sayfanın eklediği soruları ve seçenekleri ekler. Hiçbir şey silinmez. Yanıtlar, durum, ayarlar ve stil olduğu gibi kalır.",
           "update_survey": "Anketi güncelle"
         },
         "mcp_hint": "Çok büyük bir anket mi?",

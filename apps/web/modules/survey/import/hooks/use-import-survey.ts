@@ -37,6 +37,11 @@ const getFileLabel = (input: TSurveyImportInput) => input.file.name;
 type UseImportSurveyProps = {
   workspaceId: string;
   isAIAvailable: boolean;
+  /**
+   * The survey the import was started from, in its menu (ENG-6809): the file goes to that survey's
+   * import, which takes a Formbricks file or the survey's Excel export, and the review offers to update it.
+   */
+  targetSurveyId?: string;
   onSuccess: (surveyId: string) => void;
 };
 
@@ -126,7 +131,12 @@ type TCreateVariables = {
  * A Formbricks file needs no AI (ENG-6850): it imports without it. Every draft is created through
  * `POST /api/internal/surveys/imports`, a Formbricks file's with the references it carries.
  */
-export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseImportSurveyProps) => {
+export const useImportSurvey = ({
+  workspaceId,
+  isAIAvailable,
+  targetSurveyId,
+  onSuccess,
+}: UseImportSurveyProps) => {
   const [file, setFile] = useState<{ name: string; size: number } | null>(null);
   const [fileError, setFileError] = useState<TSurveyImportFileError | null>(null);
   /** What a refusal of the upload said about each field of the file, for a file the dialog can say that of. */
@@ -195,7 +205,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
 
       try {
         await streamSurveyImportFile(
-          { workspaceId, file: input.file },
+          targetSurveyId ? { surveyId: targetSurveyId, file: input.file } : { workspaceId, file: input.file },
           {
             signal: handlers.signal,
             onEvent: (event) => {
@@ -241,7 +251,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
         handlers.onEvent({ type: "error", code });
       }
     },
-    [workspaceId, forgetReview]
+    [workspaceId, targetSurveyId, forgetReview]
   );
 
   const draft = useDraftCreation<TSurveyImportInput, TSurveyImportReview, TSurveyImportPayload>({
@@ -309,7 +319,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     clearFileProblems();
     setFile({ name: next.name, size: next.size });
 
-    const refused = checkSurveyImportFile(next, { isAIAvailable });
+    const refused = checkSurveyImportFile(next, { isAIAvailable, intoSurvey: targetSurveyId !== undefined });
     if (refused) {
       setFileError(refused);
       return;

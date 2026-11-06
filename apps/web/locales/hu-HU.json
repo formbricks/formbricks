@@ -4930,6 +4930,8 @@
             "xml_elements": "Ez a dokumentum több tartalmat foglal magában, mint amennyit az import be tud olvasni. Kérjük, ossza fel kisebb fájlokra, és mindegyiket importálja külön."
           },
           "empty_file": "Ez a fájl üres.",
+          "excel_export_not_recognized": "Ez az Excel-fájl nem a Formbricks által exportált kérdőív. Exportálja a kérdőívet Excel-fájlként, szerkessze a fájlt, majd importálja ide.",
+          "excel_export_other_survey": "Ennek a munkalapnak egyetlen sora sem tartozik ehhez a kérdőívhez. Lehetséges, hogy egy másik kérdőívből exportálták?",
           "failed": "Az importálás sikertelen volt. Kérjük, próbálja újra.",
           "field_problems": {
             "dangling_reference": "Ez olyan elemre hivatkozik, amely nem szerepel a fájlban",
@@ -4986,7 +4988,8 @@
           "too_large_for_ai": "Ez a kérdőív túl nagy ahhoz, hogy a Formbricks AI egy lépésben importálni tudja. Kérjük, importálja inkább a Claude vagy a ChatGPT segítségével az MCP-n keresztül.",
           "too_many_questions": "Ez a felmérés több mint 200 kérdést tartalmaz, ami meghaladja az egyetlen importálással létrehozható mennyiséget. Kérjük, importálja inkább a Claude vagy a ChatGPT segítségével, MCP-n keresztül.",
           "unreadable": "Ezt a fájlt nem sikerült beolvasni. Kérjük, exportálja újra, majd próbálkozzon ismét.",
-          "wrong_extension": "Kérjük, válasszon egy Formbricks-fájlt (.json), egy Qualtrics-exportot (.qsf), illetve egy Word (.docx), Excel (.xlsx), CSV (.csv) vagy Markdown (.md) formátumú kérdőívet."
+          "wrong_extension": "Kérjük, válasszon egy Formbricks-fájlt (.json), egy Qualtrics-exportot (.qsf), illetve egy Word (.docx), Excel (.xlsx), CSV (.csv) vagy Markdown (.md) formátumú kérdőívet.",
+          "wrong_extension_into_survey": "Válasszon egy Formbricks-fájlt (.json) vagy e kérdőív Excel-exportját (.xlsx)."
         },
         "facts": {
           "blocks": "{count, plural, one {# blokk} other {# blokk}}",
@@ -4995,6 +4998,12 @@
           "logic_not_imported": "{count, plural, one {# nem importált logikai szabály} other {# nem importált logikai szabály}}",
           "logic_to_check": "{count, plural, one {# ellenőrizendő logikai szabály} other {# ellenőrizendő logikai szabály}}",
           "questions": "{count, plural, one {# kérdés} other {# kérdés}}"
+        },
+        "into_survey": {
+          "dialog_description": "Frissítse ezt a kérdőívet egy Formbricks-fájlból, vagy a szerkesztett szövegeket és fordításokat tartalmazó Excel-exportból. A módosításokat áttekintheti, mielőtt bármi mentésre kerülne.",
+          "dialog_title": "Importálás a következőbe: „{name}”",
+          "dropzone_help": "Formbricks-fájl (.json) vagy e kérdőív Excel-exportja (.xlsx)",
+          "menu": "Importálás"
         },
         "issues": {
           "action_class_created": "A(z) „{name}” művelet új ebben a munkaterületen, ezért létrehozásra kerül.",
@@ -5044,12 +5053,30 @@
           "question_skipped_validation_failed": "A kérdés kimaradt: az átalakított kérdés nem felelt meg a kérdőív-ellenőrzéseknek.",
           "scale_changed": "A skála módosult (korábbi pontszám: {from}, új pontszám: {to}): egy Formbricks-értékelés 3, 4, 5, 6, 7 vagy 10 pontos lehet.",
           "script_dropped": "A szövegből egy szkript eltávolításra került.",
+          "sheet_formatting_dropped": "A(z) {row}. sor ({language}) formázást, például félkövér szöveget vagy hivatkozásokat tartalmazott. A szerkesztett szöveg formázás nélküli.",
+          "sheet_language_skipped_column_missing": "A(z) {code} oszlop nem található, ezért a hozzá tartozó szövegek kimaradtak. Előfordulhat, hogy a fejlécét módosították?",
+          "sheet_language_skipped_not_in_survey": "Ez a kérdőív már nem tartalmazza a(z) {code} nyelvet, ezért a hozzá tartozó oszlop kimaradt.",
+          "sheet_option_added": "A(z) {row}. sor egy kérdéshez új lehetőséget vagy mezőt ad hozzá.",
+          "sheet_question_added": "A(z) {row}. sor új kérdést ad hozzá, egy új blokkban, a fölötte lévő kérdés után. Ellenőrizze a kérdés beállításait és logikáját a szerkesztőben.",
+          "sheet_row_skipped_duplicate_key": "A(z) {row}. sor megismétli egy korábbi sort, ezért kimaradt.",
+          "sheet_row_skipped_field_not_in_question": "A(z) {row}. sor kimaradt: a hozzá tartozó kérdés nem rendelkezik ilyen típusú mezővel.",
+          "sheet_row_skipped_field_taken": "A(z) {row}. sor kimaradt: a hozzá tartozó kérdés már rendelkezik ezzel a mezővel. Kérjük, inkább azt a sort szerkessze.",
+          "sheet_row_skipped_id_taken": "A(z) {row}. sor kimaradt: egy másik kérdés már használja a megadott kérdésazonosítót.",
+          "sheet_row_skipped_invalid_question": "A(z) {row}. sor kimaradt: az általa létrehozott vagy módosított kérdés érvénytelen lenne, például egy olyan választós kérdés, amely kettőnél kevesebb lehetőséget tartalmaz.",
+          "sheet_row_skipped_no_question": "A(z) {row}. sor kimaradt: nincs felette olyan kérdés, illetve nincs olyan, a megadott kérdésazonosítóval rendelkező kérdés, amely fogadni tudná.",
+          "sheet_row_skipped_no_text": "A(z) {row}. sor kimaradt: az alapértelmezett nyelven nem tartalmaz szöveget.",
+          "sheet_row_skipped_survey_full": "A(z) {row}. sor kimaradt: a felmérés már a lehető legtöbb blokkot tartalmazza.",
+          "sheet_row_skipped_unknown_key": "A(z) {row}. sor olyan szöveg, amely már nem szerepel ebben a felmérésben, ezért kimaradt.",
+          "sheet_row_skipped_unknown_type": "A(z) {row}. sor kimaradt: a Típus értéke nem kérdéstípus, és nem olyan mező, mint például a \"Válaszlehetőség 3\".",
+          "sheet_row_skipped_unsupported_type": "A(z) {row}. sor kimaradt: a képválasztásos és a Cal.com kérdések nem adhatók hozzá táblázatból. Kérjük, adja hozzá őket a szerkesztőben.",
+          "sheet_text_not_imported": "A(z) {row}. sor ({language}) exportáláskor túl hosszú volt egyetlen cellához, ezért a módosítása kimaradt.",
           "sheets_skipped": "Csak az első munkalap beolvasása történt meg. Nem beolvasott munkalapok: {sheets}.",
           "table_as_matrix": "Ez a kérdés a fájlban táblázatként szerepelt, és mátrixként került importálásra. Kérjük, ellenőrizze a sorait és oszlopait.",
           "targeting_filter_removed": "{count, plural, one {# célzási szűrő eltávolításra került} other {# célzási szűrő eltávolításra került}}: a szűrőkben szereplő szegmensek és kérdőívek ahhoz a munkaterülethez tartoznak, amelyből a fájl származik.",
           "targeting_removed": "A célzás eltávolításra került: a kapcsolatok célzása nem érhető el az Ön csomagjában.",
           "text_not_split": "A(z) {cell} cellában található kérdés és annak válaszlehetőségei szóról szóra nem voltak elkülöníthetők, ezért a teljes cella kérdésként lett kezelve. Kérjük, javítsa a szerkesztőben.",
           "text_too_long": "Egy szöveg túl hosszú volt az importáláshoz, ezért kimaradt.",
+          "texts_updated": "{count, plural, =0 {A táblázat egyetlen szöveget sem módosít.} one {A táblázat # szöveget módosít.} other {A táblázat # szöveget módosít.}}",
           "translation_missing": "A(z) {language} nyelvből {count, plural, one {# szöveg hiányzik} other {# szöveg hiányzik}}, ezért a nyelv kikapcsolásra került. Kérjük, pótolja a hiányzó szövegeket a szerkesztőben, majd kapcsolja be a nyelvet.",
           "unknown": "Az importálás során a kérdés egy eleme módosult.",
           "unknown_key_dropped": "A(z) \"{field}\" nem része a Formbricks-fájlnak, ezért kihagyásra került.",
@@ -5064,6 +5091,7 @@
           "create_description": "Mentés új piszkozatként „{newName}” néven.",
           "create_new_survey": "Új felmérés létrehozása",
           "exported_from": "Ezt a fájlt a(z) „{name}” felmérésből exportálták.",
+          "into_survey_legend": "Milyen műveletet kíván végrehajtani a fájllal?",
           "refused_description": "Ez a fájl az alábbi okok miatt nem frissítheti a(z) „{name}” felmérést. A fájl „{newName}” nevű új piszkozatként kerül mentésre.",
           "stale_line": "A fájl exportálása óta módosult. Amennyiben ennek ellenére felül kívánja írni ezeket a módosításokat, válassza a Frissítés lehetőséget.",
           "triggers_differ": "Eltérnek a felmérés jelenlegi eseményindítóitól. Amennyiben a jelenlegieket kívánja megtartani, törölje a jelölést.",
@@ -5072,6 +5100,7 @@
           "update_anyway": "Frissítés mindenképpen",
           "update_description": "Lecseréli a felmérés kérdéseit, befejező oldalait, nyelveit és logikáját. A válaszok, az állapot, a beállítások és a stílus változatlanok maradnak.",
           "update_named": "A(z) „{name}” frissítése",
+          "update_sheet_description": "Módosítja a táblázatban szerkesztett szövegeket, és hozzáadja a táblázatban szereplő új kérdéseket és válaszlehetőségeket. Semmi sem kerül eltávolításra. A válaszok, az állapot, a beállítások és a stílus változatlanok maradnak.",
           "update_survey": "Felmérés frissítése"
         },
         "mcp_hint": "Igen nagy méretű felmérés?",

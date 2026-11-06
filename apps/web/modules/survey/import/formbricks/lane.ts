@@ -6,11 +6,15 @@ import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file
 import { getFormbricksFileSurveyLanguageCodes } from "@/modules/survey/formbricks-file/fit";
 import { previewFormbricksFileImport } from "@/modules/survey/formbricks-file/import";
 import type { TFormbricksFileRead } from "@/modules/survey/formbricks-file/read";
-import { findFormbricksFileMatch } from "@/modules/survey/formbricks-file/update";
+import {
+  buildFormbricksFileMatch,
+  findFormbricksFileMatch,
+  hasSurveyResponses,
+} from "@/modules/survey/formbricks-file/update";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
-import type { TSurveyImportMatch } from "@/modules/survey/import/types";
-import type { TSurveyImportLane } from "../core/lane";
+import type { TSurveyImportMatch, TSurveyImportSourceKind } from "@/modules/survey/import/types";
+import type { TSurveyImportLane, TSurveyImportResult, TSurveyImportTarget } from "../core/lane";
 import { buildSurveyImportReport } from "../core/report";
 
 /**
@@ -24,9 +28,14 @@ export interface TFormbricksFileImportInput {
   workspaceId: string;
   organizationId: string;
   authentication: TV3Authentication;
+  /**
+   * The survey the import was started from, in its menu (ENG-6809): the Match is that survey, whatever
+   * survey the file names. Absent for New survey › Import, which matches the file's own source.
+   */
+  target?: TSurveyImportTarget;
 }
 
-interface TPreparedFormbricksFileImport {
+export interface TPreparedFormbricksFileImport {
   draft: TSurveyImportFileDraft;
   references: TFormbricksFileReferences;
   issues: TSurveyImportPipelineIssue[];
@@ -58,38 +67,57 @@ export const formbricksFileImportLane: TSurveyImportLane<
   kind: "formbricks",
   usesAI: false,
   rateLimit: null,
-  prepare: async ({ read, fileName, workspaceId, organizationId, authentication }) => {
+  prepare: async ({ read, fileName, workspaceId, organizationId, authentication, target }) => {
     const { draft, references, issues, source, plan } = await previewFormbricksFileImport({
       read: await read(),
       workspaceId,
       organizationId,
       userId: getSessionUserId(authentication),
     });
-    const match = await findFormbricksFileMatch({
-      source,
-      workspaceId,
-      actor: getV3AuthorizationActor(authentication),
-      draft,
-      plan,
-    });
+    const match = target
+      ? await buildFormbricksFileMatch({
+          survey: target.survey,
+          hasResponses: await hasSurveyResponses(target.survey.id),
+          // The file's export time only when it was exported from this survey: "changed since the
+          // export" means nothing for another survey's file, which is checked against the survey as read now.
+          exportedUpdatedAt:
+            source?.surveyId === target.survey.id ? source.updatedAt : target.survey.updatedAt.toISOString(),
+          draft,
+          plan,
+        })
+      : await findFormbricksFileMatch({
+          source,
+          workspaceId,
+          actor: getV3AuthorizationActor(authentication),
+          draft,
+          plan,
+        });
     return { draft, references, issues, match, fileName };
   },
   run: ({ prepared, onProgress }) => {
     onProgress("assembling");
-    const { draft, references, issues, match, fileName } = prepared;
-    return Promise.resolve({
-      payload: draft,
-      references,
-      match,
-      report: buildSurveyImportReport({
-        source: { kind: "formbricks", fileName },
-        document: {
-          blocks: draft.blocks,
-          languages: getFormbricksFileSurveyLanguageCodes(draft).map((code) => ({ code })),
-          hiddenFields: { fieldIds: getHiddenFieldIds(draft) },
-        },
-        issues,
-      }),
-    });
+    return Promise.resolve(toFormbricksFileImportResult(prepared, "formbricks"));
   },
 };
+
+/**
+ * The stream's result for a draft in a Formbricks file's shape: a Formbricks file's, or an Excel export
+ * applied to its survey (ENG-6809), whose draft is that survey as a Formbricks file.
+ */
+export const toFormbricksFileImportResult = (
+  { draft, references, issues, match, fileName }: TPreparedFormbricksFileImport,
+  kind: TSurveyImportSourceKind
+): TSurveyImportResult => ({
+  payload: draft,
+  references,
+  match,
+  report: buildSurveyImportReport({
+    source: { kind, fileName },
+    document: {
+      blocks: draft.blocks,
+      languages: getFormbricksFileSurveyLanguageCodes(draft).map((code) => ({ code })),
+      hiddenFields: { fieldIds: getHiddenFieldIds(draft) },
+    },
+    issues,
+  }),
+});

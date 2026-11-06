@@ -4930,6 +4930,8 @@
             "xml_elements": "Dieses Dokument enthält mehr Inhalt, als der Import lesen kann. Teile es in kleinere Dateien auf und importiere jede einzeln."
           },
           "empty_file": "Diese Datei ist leer.",
+          "excel_export_not_recognized": "Diese Excel-Datei ist kein Umfrage-Export von Formbricks. Exportiere die Umfrage als Excel-Datei, bearbeite diese Datei und importiere sie hier.",
+          "excel_export_other_survey": "Keine Zeile dieses Tabellenblatts gehört zu dieser Umfrage. Wurde sie aus einer anderen Umfrage exportiert?",
           "failed": "Der Import ist fehlgeschlagen. Versuche es erneut.",
           "field_problems": {
             "dangling_reference": "Das verweist auf etwas, das nicht in der Datei enthalten ist",
@@ -4986,7 +4988,8 @@
           "too_large_for_ai": "Diese Umfrage ist zu umfangreich, als dass Formbricks AI sie in einem Durchgang importieren könnte. Importiere sie stattdessen über MCP mit Claude oder ChatGPT.",
           "too_many_questions": "Diese Umfrage hat mehr als 200 Fragen – mehr, als ein Import erstellen kann. Importiere sie stattdessen mit Claude oder ChatGPT über MCP.",
           "unreadable": "Diese Datei konnte nicht gelesen werden. Exportiere sie erneut und versuche es noch einmal.",
-          "wrong_extension": "Wähle eine Formbricks-Datei (.json), einen Qualtrics-Export (.qsf) oder einen Fragebogen in Word (.docx), Excel (.xlsx), CSV (.csv) oder Markdown (.md)."
+          "wrong_extension": "Wähle eine Formbricks-Datei (.json), einen Qualtrics-Export (.qsf) oder einen Fragebogen in Word (.docx), Excel (.xlsx), CSV (.csv) oder Markdown (.md).",
+          "wrong_extension_into_survey": "Wähle eine Formbricks-Datei (.json) oder den Excel-Export dieser Umfrage (.xlsx)."
         },
         "facts": {
           "blocks": "{count, plural, one {# Block} other {# Blöcke}}",
@@ -4995,6 +4998,12 @@
           "logic_not_imported": "{count, plural, one {# Logikregel nicht importiert} other {# Logikregeln nicht importiert}}",
           "logic_to_check": "{count, plural, one {# Logikregel zu prüfen} other {# Logikregeln zu prüfen}}",
           "questions": "{count, plural, one {# Frage} other {# Fragen}}"
+        },
+        "into_survey": {
+          "dialog_description": "Aktualisiere diese Umfrage mit einer Formbricks-Datei oder mit ihrem Excel-Export samt bearbeiteten Texten und Übersetzungen. Du prüfst die Änderungen, bevor etwas gespeichert wird.",
+          "dialog_title": "In „{name}“ importieren",
+          "dropzone_help": "Eine Formbricks-Datei (.json) oder der Excel-Export dieser Umfrage (.xlsx)",
+          "menu": "Importieren"
         },
         "issues": {
           "action_class_created": "Die Aktion \"{name}\" ist neu in diesem Workspace und wird erstellt.",
@@ -5044,12 +5053,30 @@
           "question_skipped_validation_failed": "Frage übersprungen: Die konvertierte Frage hat die Umfrageprüfungen nicht bestanden.",
           "scale_changed": "Die Skala wurde von {from} auf {to} Punkte geändert: Eine Formbricks-Bewertung hat 3, 4, 5, 6, 7 oder 10 Punkte.",
           "script_dropped": "Ein Skript wurde aus dem Text entfernt.",
+          "sheet_formatting_dropped": "Zeile {row} ({language}) enthielt Formatierungen, etwa Fettschrift oder Links. Der bearbeitete Text ist reiner Text.",
+          "sheet_language_skipped_column_missing": "Die Spalte {code} wurde nicht gefunden, daher wurden ihre Texte weggelassen. Wurde ihre Kopfzeile geändert?",
+          "sheet_language_skipped_not_in_survey": "Diese Umfrage enthält die Sprache {code} nicht mehr, daher wurde ihre Spalte weggelassen.",
+          "sheet_option_added": "Zeile {row} fügt einer Frage eine Option oder ein Feld hinzu.",
+          "sheet_question_added": "Zeile {row} fügt eine Frage hinzu, und zwar in einem neuen Block nach der darüberliegenden Frage. Prüfe ihre Einstellungen und Logik im Editor.",
+          "sheet_row_skipped_duplicate_key": "Zeile {row} wiederholt eine frühere Zeile und wurde daher weggelassen.",
+          "sheet_row_skipped_field_not_in_question": "Zeile {row} wurde weggelassen: Ihre Frage hat kein Feld dieser Art.",
+          "sheet_row_skipped_field_taken": "Zeile {row} wurde weggelassen: Ihre Frage hat dieses Feld bereits. Bearbeite stattdessen jene Zeile.",
+          "sheet_row_skipped_id_taken": "Zeile {row} wurde weggelassen: Eine andere Frage hat bereits ihre Frage-ID.",
+          "sheet_row_skipped_invalid_question": "Zeile {row} wurde weggelassen: Die Frage, die sie erstellt oder ändert, wäre ungültig, zum Beispiel eine Auswahlfrage mit weniger als zwei Optionen.",
+          "sheet_row_skipped_no_question": "Zeile {row} wurde weggelassen: Keine Frage darüber oder mit ihrer Frage-ID kann sie aufnehmen.",
+          "sheet_row_skipped_no_text": "Zeile {row} wurde übersprungen: Sie enthält keinen Text in der Standardsprache.",
+          "sheet_row_skipped_survey_full": "Zeile {row} wurde ausgelassen: Die Umfrage enthält bereits die maximale Anzahl an Blöcken.",
+          "sheet_row_skipped_unknown_key": "Zeile {row} enthält einen Text, den es in dieser Umfrage nicht mehr gibt, und wurde deshalb übersprungen.",
+          "sheet_row_skipped_unknown_type": "Zeile {row} wurde übersprungen: Der Typ ist weder ein Fragetyp noch ein Feld wie \"Choice 3\".",
+          "sheet_row_skipped_unsupported_type": "Zeile {row} wurde übersprungen: Bildauswahl- und Cal.com-Fragen können nicht über eine Tabelle hinzugefügt werden. Füge sie im Editor hinzu.",
+          "sheet_text_not_imported": "Zeile {row} ({language}) war beim Export zu lang für eine Zelle, daher wurde die Änderung übersprungen.",
           "sheets_skipped": "Es wurde nur das erste Tabellenblatt gelesen. Nicht gelesen: {sheets}.",
           "table_as_matrix": "Diese Frage ist in der Datei eine Tabelle und wurde als Matrix importiert. Überprüfe die Zeilen und Spalten.",
           "targeting_filter_removed": "{count, plural, one {# Targeting-Filter wurde} other {# Targeting-Filter wurden}} entfernt: Segmente und Umfragen in Filtern gehören zu dem Workspace, aus dem die Datei stammt.",
           "targeting_removed": "Das Targeting wurde entfernt: Kontakt-Targeting ist in Deinem Tarif nicht enthalten.",
           "text_not_split": "Die Frage und ihre Optionen in Zelle {cell} konnten nicht eindeutig voneinander getrennt werden, daher ist die gesamte Zelle die Frage. Korrigiere das im Editor.",
           "text_too_long": "Ein Text war zu lang für den Import und wurde weggelassen.",
+          "texts_updated": "{count, plural, =0 {Die Tabelle ändert keinen Text.} one {Die Tabelle ändert # Text.} other {Die Tabelle ändert # Texte.}}",
           "translation_missing": "{count, plural, one {# Text fehlt} other {# Texte fehlen}} in {language}, weshalb die Sprache deaktiviert ist. Füge die fehlenden Texte im Editor hinzu und aktiviere die Sprache dann wieder.",
           "unknown": "Beim Import wurde etwas an dieser Frage geändert.",
           "unknown_key_dropped": "„{field}“ ist nicht Teil einer Formbricks-Datei und wurde weggelassen.",
@@ -5064,6 +5091,7 @@
           "create_description": "Wird als neuer Entwurf mit dem Namen „{newName}“ gespeichert.",
           "create_new_survey": "Neue Umfrage erstellen",
           "exported_from": "Diese Datei wurde aus „{name}“ exportiert.",
+          "into_survey_legend": "Was soll mit dieser Datei passieren?",
           "refused_description": "Diese Datei kann „{name}“ aus den unten genannten Gründen nicht aktualisieren. Sie wird als neuer Entwurf mit dem Namen „{newName}“ gespeichert.",
           "stale_line": "Seit dem Export dieser Datei geändert. Wähle „Aktualisieren“, um diese Änderungen trotzdem zu überschreiben.",
           "triggers_differ": "Sie unterscheiden sich von denen der Umfrage. Deaktiviere das Häkchen, um die aktuellen Trigger beizubehalten.",
@@ -5072,6 +5100,7 @@
           "update_anyway": "Trotzdem aktualisieren",
           "update_description": "Ersetzt Fragen, Abschlüsse, Sprachen und Logik. Antworten, Status, Einstellungen und Styling bleiben erhalten.",
           "update_named": "„{name}“ aktualisieren",
+          "update_sheet_description": "Ändert die Texte, die in der Tabelle bearbeitet wurden, und fügt die Fragen und Optionen hinzu, die in der Tabelle ergänzt wurden. Es wird nichts entfernt. Antworten, Status, Einstellungen und Design bleiben erhalten.",
           "update_survey": "Umfrage aktualisieren"
         },
         "mcp_hint": "Sehr große Umfrage?",

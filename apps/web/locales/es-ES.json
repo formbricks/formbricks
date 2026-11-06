@@ -4930,6 +4930,8 @@
             "xml_elements": "Este documento contiene más contenido del que la importación puede leer. Divídelo en archivos más pequeños e importa cada uno."
           },
           "empty_file": "Este archivo está vacío.",
+          "excel_export_not_recognized": "Este archivo de Excel no es una exportación de una encuesta de Formbricks. Exporta la encuesta como archivo de Excel, edita ese archivo e impórtalo aquí.",
+          "excel_export_other_survey": "Ninguna fila de esta hoja pertenece a esta encuesta. ¿Se exportó desde otra encuesta?",
           "failed": "La importación ha fallado. Inténtalo de nuevo.",
           "field_problems": {
             "dangling_reference": "Esto apunta a algo que el archivo no incluye",
@@ -4986,7 +4988,8 @@
           "too_large_for_ai": "Esta encuesta es demasiado grande para que Formbricks AI la importe de una sola vez. Impórtala con Claude o ChatGPT a través de MCP.",
           "too_many_questions": "Esta encuesta tiene más de 200 preguntas, más de las que puede crear una sola importación. Impórtala con Claude o ChatGPT a través de MCP.",
           "unreadable": "No se ha podido leer este archivo. Expórtalo de nuevo e inténtalo otra vez.",
-          "wrong_extension": "Elige un archivo de Formbricks (.json), una exportación de Qualtrics (.qsf) o un cuestionario de Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md)."
+          "wrong_extension": "Elige un archivo de Formbricks (.json), una exportación de Qualtrics (.qsf) o un cuestionario de Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md).",
+          "wrong_extension_into_survey": "Elige un archivo de Formbricks (.json) o la exportación de Excel de esta encuesta (.xlsx)."
         },
         "facts": {
           "blocks": "{count, plural, one {# bloque} other {# bloques}}",
@@ -4995,6 +4998,12 @@
           "logic_not_imported": "{count, plural, one {# regla de lógica no importada} other {# reglas de lógica no importadas}}",
           "logic_to_check": "{count, plural, one {# regla de lógica por revisar} other {# reglas de lógica por revisar}}",
           "questions": "{count, plural, one {# pregunta} other {# preguntas}}"
+        },
+        "into_survey": {
+          "dialog_description": "Actualiza esta encuesta a partir de un archivo de Formbricks o de su exportación de Excel con textos y traducciones editados. Revisarás los cambios antes de guardar nada.",
+          "dialog_title": "Importar en «{name}»",
+          "dropzone_help": "Un archivo de Formbricks (.json) o la exportación de Excel de esta encuesta (.xlsx)",
+          "menu": "Importar"
         },
         "issues": {
           "action_class_created": "La acción \"{name}\" es nueva en este espacio de trabajo y se creará.",
@@ -5044,12 +5053,30 @@
           "question_skipped_validation_failed": "Pregunta omitida: la pregunta convertida no superó las comprobaciones de la encuesta.",
           "scale_changed": "La escala ha cambiado de {from} a {to} puntos: una valoración de Formbricks puede tener 3, 4, 5, 6, 7 o 10.",
           "script_dropped": "Se ha eliminado un script del texto.",
+          "sheet_formatting_dropped": "La fila {row} ({language}) tenía formato, como negrita o enlaces. El texto editado es texto sin formato.",
+          "sheet_language_skipped_column_missing": "No se encontró la columna {code}, así que se omitieron sus textos. ¿Se cambió su encabezado?",
+          "sheet_language_skipped_not_in_survey": "Esta encuesta ya no tiene el idioma {code}, así que se omitió su columna.",
+          "sheet_option_added": "La fila {row} añade una opción o un campo a una pregunta.",
+          "sheet_question_added": "La fila {row} añade una pregunta, en un bloque nuevo después de la pregunta anterior. Revisa su configuración y lógica en el editor.",
+          "sheet_row_skipped_duplicate_key": "La fila {row} repite una fila anterior, así que se omitió.",
+          "sheet_row_skipped_field_not_in_question": "Se omitió la fila {row}: su pregunta no tiene ningún campo de ese tipo.",
+          "sheet_row_skipped_field_taken": "Se omitió la fila {row}: su pregunta ya tiene ese campo. Edita esa fila en su lugar.",
+          "sheet_row_skipped_id_taken": "Se omitió la fila {row}: otra pregunta ya tiene su ID de pregunta.",
+          "sheet_row_skipped_invalid_question": "Se omitió la fila {row}: la pregunta que crea o modifica no sería válida, por ejemplo, una pregunta de opción con menos de dos opciones.",
+          "sheet_row_skipped_no_question": "Se omitió la fila {row}: ninguna pregunta anterior, ni con su ID de pregunta, puede asumirla.",
+          "sheet_row_skipped_no_text": "Se ha omitido la fila {row}: no tiene texto en el idioma predeterminado.",
+          "sheet_row_skipped_survey_full": "Se omitió la fila {row}: la encuesta ya tiene el máximo de bloques permitido.",
+          "sheet_row_skipped_unknown_key": "La fila {row} es un texto que esta encuesta ya no tiene, así que se ha omitido.",
+          "sheet_row_skipped_unknown_type": "Se ha omitido la fila {row}: su Tipo no es un tipo de pregunta ni un campo como \"Opción 3\".",
+          "sheet_row_skipped_unsupported_type": "Se ha omitido la fila {row}: las preguntas de selección de imágenes y de Cal.com no se pueden añadir desde una hoja. Añádelas en el editor.",
+          "sheet_text_not_imported": "La fila {row} ({language}) era demasiado larga para una celda al exportarla, así que se ha omitido su edición.",
           "sheets_skipped": "Solo se ha leído la primera hoja. No se han leído: {sheets}.",
           "table_as_matrix": "Esta pregunta es una tabla en el archivo y se ha importado como una matriz. Revisa sus filas y columnas.",
           "targeting_filter_removed": "{count, plural, one {Se ha eliminado # filtro de segmentación} other {Se han eliminado # filtros de segmentación}}: los segmentos y las encuestas de los filtros pertenecen al espacio de trabajo del que procede el archivo.",
           "targeting_removed": "Se ha eliminado la segmentación: la segmentación de contactos no está incluida en tu plan.",
           "text_not_split": "No se ha podido distinguir palabra por palabra la pregunta de sus opciones en la celda {cell}, así que toda la celda se toma como la pregunta. Corrígelo en el editor.",
           "text_too_long": "Un texto era demasiado largo para importarlo y se ha omitido.",
+          "texts_updated": "{count, plural, =0 {La hoja no modifica ningún texto.} one {La hoja modifica # texto.} other {La hoja modifica # textos.}}",
           "translation_missing": "{count, plural, one {Falta # texto} other {Faltan # textos}} en {language}, así que el idioma está desactivado. Añade los textos que faltan en el editor y luego actívalo.",
           "unknown": "Algo de esta pregunta se ha modificado durante la importación.",
           "unknown_key_dropped": "\"{field}\" no forma parte de un archivo de Formbricks y se omitió.",
@@ -5064,6 +5091,7 @@
           "create_description": "Se guardará como un nuevo borrador llamado «{newName}».",
           "create_new_survey": "Crear una nueva encuesta",
           "exported_from": "Este archivo se exportó desde «{name}».",
+          "into_survey_legend": "¿Qué quieres que haga este archivo?",
           "refused_description": "Este archivo no puede actualizar “{name}” por los motivos que se indican a continuación. Se guarda como un nuevo borrador llamado “{newName}”.",
           "stale_line": "Ha cambiado desde que se exportó este archivo. Elige Actualizar para sobrescribir esos cambios de todos modos.",
           "triggers_differ": "Son distintos de los de la encuesta. Desmarca la casilla para mantener sus activadores actuales.",
@@ -5072,6 +5100,7 @@
           "update_anyway": "Actualizar de todos modos",
           "update_description": "Sustituye sus preguntas, finales, idiomas y lógica. Las respuestas, el estado, los ajustes y el estilo se mantienen.",
           "update_named": "Actualizar «{name}»",
+          "update_sheet_description": "Modifica los textos que edita la hoja y añade las preguntas y opciones que esta incluye. No se elimina nada. Las respuestas, el estado, los ajustes y el estilo se mantienen.",
           "update_survey": "Actualizar encuesta"
         },
         "mcp_hint": "¿Encuesta muy grande?",

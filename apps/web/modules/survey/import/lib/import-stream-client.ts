@@ -5,6 +5,10 @@ import { readSurveyDraftStream } from "@/modules/survey/components/template-list
 
 export const SURVEY_IMPORT_STREAM_ENDPOINT = "/api/internal/surveys/import/stream";
 
+/** Where an import into one survey, from its menu, is uploaded (ENG-6809). */
+export const getSurveyImportIntoSurveyEndpoint = (surveyId: string): string =>
+  `/api/internal/surveys/${encodeURIComponent(surveyId)}/import/stream`;
+
 /** A refusal answered before the stream opened, plus the `Retry-After` header the problem body lacks. */
 export class SurveyImportRequestError extends V3ApiError {
   readonly retryAfterSeconds: number | null;
@@ -31,20 +35,25 @@ export const parseRetryAfterSeconds = (value: string | null): number | null => {
 
 /**
  * Upload a file to import, handing each NDJSON event to `onEvent`. The file goes as it is, in a
- * `multipart/form-data` body with the workspace (ENG-6848): the server reads it and tells its type from
- * its bytes. A refusal before the stream opened throws a `SurveyImportRequestError`; a failure after it
- * arrives as an `error` event, like Create with AI's stream.
+ * `multipart/form-data` body (ENG-6848): the server reads it and tells its type from its bytes. Into a
+ * workspace, the body names it; into one survey, from its menu (ENG-6809), the path names the survey.
+ * A refusal before the stream opened throws a `SurveyImportRequestError`; a failure after it arrives as
+ * an `error` event, like Create with AI's stream.
  */
 export async function streamSurveyImportFile(
-  { workspaceId, file }: TSurveyImportStreamForm,
+  destination: TSurveyImportStreamForm | { surveyId: string; file: File },
   { signal, onEvent }: { signal: AbortSignal; onEvent: (event: TSurveyImportStreamEvent) => void }
 ): Promise<void> {
   const form = new FormData();
-  form.append("workspaceId", workspaceId);
-  form.append("file", file);
+  if ("workspaceId" in destination) form.append("workspaceId", destination.workspaceId);
+  form.append("file", destination.file);
+  const endpoint =
+    "surveyId" in destination
+      ? getSurveyImportIntoSurveyEndpoint(destination.surveyId)
+      : SURVEY_IMPORT_STREAM_ENDPOINT;
 
   // No Content-Type of our own: the browser sets multipart/form-data with the boundary it chose.
-  const response = await fetch(SURVEY_IMPORT_STREAM_ENDPOINT, {
+  const response = await fetch(endpoint, {
     method: "POST",
     cache: "no-store",
     body: form,

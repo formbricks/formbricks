@@ -4930,6 +4930,8 @@
             "xml_elements": "Este documento contém mais conteúdo do que a importação consegue ler. Divida-o em arquivos menores e importe cada um deles."
           },
           "empty_file": "Este arquivo está vazio.",
+          "excel_export_not_recognized": "Este arquivo do Excel não é uma exportação de pesquisa do Formbricks. Exporte a pesquisa como um arquivo do Excel, edite esse arquivo e importe-o aqui.",
+          "excel_export_other_survey": "Nenhuma linha desta planilha pertence a esta pesquisa. Ela foi exportada de outra pesquisa?",
           "failed": "A importação falhou. Tente novamente.",
           "field_problems": {
             "dangling_reference": "Isso aponta para algo que o arquivo não inclui",
@@ -4986,7 +4988,8 @@
           "too_large_for_ai": "Esta pesquisa é grande demais para a Formbricks AI importar de uma só vez. Importe-a com o Claude ou o ChatGPT por meio do MCP.",
           "too_many_questions": "Esta pesquisa tem mais de 200 perguntas, mais do que uma importação consegue criar. Importe-a com o Claude ou o ChatGPT por meio do MCP.",
           "unreadable": "Não foi possível ler este arquivo. Exporte-o novamente e tente mais uma vez.",
-          "wrong_extension": "Escolha um arquivo do Formbricks (.json), uma exportação do Qualtrics (.qsf) ou uma pesquisa em Word (.docx), Excel (.xlsx), CSV (.csv) ou Markdown (.md)."
+          "wrong_extension": "Escolha um arquivo do Formbricks (.json), uma exportação do Qualtrics (.qsf) ou uma pesquisa em Word (.docx), Excel (.xlsx), CSV (.csv) ou Markdown (.md).",
+          "wrong_extension_into_survey": "Escolha um arquivo do Formbricks (.json) ou a exportação desta pesquisa em Excel (.xlsx)."
         },
         "facts": {
           "blocks": "{count, plural, one {# bloco} many {# de blocos} other {# blocos}}",
@@ -4995,6 +4998,12 @@
           "logic_not_imported": "{count, plural, one {# regra de lógica não importada} many {# de regras de lógica não importadas} other {# regras de lógica não importadas}}",
           "logic_to_check": "{count, plural, one {# regra de lógica para verificar} many {# de regras de lógica para verificar} other {# regras de lógica para verificar}}",
           "questions": "{count, plural, one {# pergunta} many {# de perguntas} other {# perguntas}}"
+        },
+        "into_survey": {
+          "dialog_description": "Atualize esta pesquisa a partir de um arquivo do Formbricks ou da exportação dela em Excel com textos e traduções editados. Você revisa as alterações antes de salvar qualquer coisa.",
+          "dialog_title": "Importar para “{name}”",
+          "dropzone_help": "Um arquivo do Formbricks (.json) ou a exportação desta pesquisa em Excel (.xlsx)",
+          "menu": "Importar"
         },
         "issues": {
           "action_class_created": "A ação \"{name}\" é nova neste workspace e será criada.",
@@ -5044,12 +5053,30 @@
           "question_skipped_validation_failed": "Pergunta ignorada: a pergunta convertida não passou nas verificações da pesquisa.",
           "scale_changed": "A escala mudou de {from} para {to} pontos: uma avaliação do Formbricks tem 3, 4, 5, 6, 7 ou 10.",
           "script_dropped": "Um script foi removido do texto.",
+          "sheet_formatting_dropped": "A linha {row} ({language}) tinha formatação, como negrito ou links. O texto editado está sem formatação.",
+          "sheet_language_skipped_column_missing": "A coluna {code} não foi encontrada, então os textos dela foram deixados de fora. O cabeçalho foi alterado?",
+          "sheet_language_skipped_not_in_survey": "Esta pesquisa não tem mais o idioma {code}, então a coluna dele foi deixada de fora.",
+          "sheet_option_added": "A linha {row} adiciona uma opção ou um campo a uma pergunta.",
+          "sheet_question_added": "A linha {row} adiciona uma pergunta, em um novo bloco após a pergunta acima dela. Confira as configurações e a lógica dela no editor.",
+          "sheet_row_skipped_duplicate_key": "A linha {row} repete uma linha anterior, então foi deixada de fora.",
+          "sheet_row_skipped_field_not_in_question": "A linha {row} foi deixada de fora: a pergunta dela não tem um campo desse tipo.",
+          "sheet_row_skipped_field_taken": "A linha {row} foi deixada de fora: a pergunta dela já tem esse campo. Edite essa linha no lugar.",
+          "sheet_row_skipped_id_taken": "A linha {row} foi deixada de fora: outra pergunta já tem o mesmo ID de pergunta.",
+          "sheet_row_skipped_invalid_question": "A linha {row} foi deixada de fora: a pergunta que ela cria ou altera não seria válida, por exemplo, uma pergunta de escolha com menos de duas opções.",
+          "sheet_row_skipped_no_question": "A linha {row} foi deixada de fora: nenhuma pergunta acima dela, ou com o ID de pergunta dela, pode recebê-la.",
+          "sheet_row_skipped_no_text": "A linha {row} foi ignorada: ela não tem texto no idioma padrão.",
+          "sheet_row_skipped_survey_full": "A linha {row} foi ignorada: a pesquisa já tem o número máximo de blocos permitido.",
+          "sheet_row_skipped_unknown_key": "A linha {row} é um texto que esta pesquisa não tem mais, por isso foi ignorada.",
+          "sheet_row_skipped_unknown_type": "A linha {row} foi ignorada: o Tipo dela não é um tipo de pergunta nem um campo como \"Opção 3\".",
+          "sheet_row_skipped_unsupported_type": "A linha {row} foi ignorada: perguntas de seleção de imagem e do Cal.com não podem ser adicionadas por planilha. Adicione-as no editor.",
+          "sheet_text_not_imported": "A linha {row} ({language}) era longa demais para uma célula na exportação, então a edição dela foi ignorada.",
           "sheets_skipped": "Apenas a primeira planilha foi lida. Não lidas: {sheets}.",
           "table_as_matrix": "Esta pergunta é uma tabela no arquivo e foi importada como matriz. Confira as linhas e colunas dela.",
           "targeting_filter_removed": "{count, plural, one {# filtro de segmentação foi removido} many {# de filtros de segmentação foram removidos} other {# filtros de segmentação foram removidos}}: segmentos e pesquisas em filtros pertencem ao workspace de onde o arquivo veio.",
           "targeting_removed": "A segmentação foi removida: a segmentação de contatos não está incluída no seu plano.",
           "text_not_split": "Não foi possível distinguir, palavra por palavra, a pergunta e as opções dela na célula {cell}, então a célula inteira é tratada como a pergunta. Corrija no editor.",
           "text_too_long": "Um texto era longo demais para ser importado e foi deixado de fora.",
+          "texts_updated": "{count, plural, =0 {A planilha não altera nenhum texto.} one {A planilha altera # texto.} other {A planilha altera # textos.}}",
           "translation_missing": "{count, plural, one {# texto está faltando} many {# de textos estão faltando} other {# textos estão faltando}} em {language}, então o idioma foi desativado. Adicione os textos que faltam no editor e depois ative o idioma novamente.",
           "unknown": "Algo nesta pergunta foi alterado durante a importação.",
           "unknown_key_dropped": "\"{field}\" não faz parte de um arquivo do Formbricks e foi ignorado.",
@@ -5064,6 +5091,7 @@
           "create_description": "Salvo como um novo rascunho chamado “{newName}”.",
           "create_new_survey": "Criar uma nova pesquisa",
           "exported_from": "Este arquivo foi exportado de “{name}”.",
+          "into_survey_legend": "O que este arquivo deve fazer?",
           "refused_description": "Este arquivo não pode atualizar “{name}” pelos motivos abaixo. Ele será salvo como um novo rascunho chamado “{newName}”.",
           "stale_line": "Alterado desde a exportação deste arquivo. Escolha Atualizar para sobrescrever essas alterações mesmo assim.",
           "triggers_differ": "Eles são diferentes dos da pesquisa. Desmarque para manter os gatilhos atuais dela.",
@@ -5072,6 +5100,7 @@
           "update_anyway": "Atualizar mesmo assim",
           "update_description": "Substitui as perguntas, os encerramentos, os idiomas e a lógica. As respostas, o status, as configurações e o estilo permanecem.",
           "update_named": "Atualizar “{name}”",
+          "update_sheet_description": "Altera os textos que a planilha edita e adiciona as perguntas e opções que a planilha inclui. Nada é removido. Respostas, status, configurações e estilo permanecem.",
           "update_survey": "Atualizar pesquisa"
         },
         "mcp_hint": "Pesquisa muito grande?",

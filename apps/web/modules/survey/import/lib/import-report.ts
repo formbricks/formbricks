@@ -107,6 +107,35 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
   }
 };
 
+/** Why a row of an imported Excel export was left out (ENG-6809), from the server's `params.cause`. */
+const getSkippedRowMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
+  const row = param(issue, "row");
+  switch (param(issue, "cause")) {
+    case "duplicate_key":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_duplicate_key", { row });
+    case "unknown_type":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_unknown_type", { row });
+    case "unsupported_type":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_unsupported_type", { row });
+    case "id_taken":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_id_taken", { row });
+    case "no_question":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_no_question", { row });
+    case "no_text":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_no_text", { row });
+    case "field_not_in_question":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_field_not_in_question", { row });
+    case "field_taken":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_field_taken", { row });
+    case "invalid_question":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_invalid_question", { row });
+    case "survey_full":
+      return t("workspace.surveys.import.issues.sheet_row_skipped_survey_full", { row });
+    default:
+      return t("workspace.surveys.import.issues.sheet_row_skipped_unknown_key", { row });
+  }
+};
+
 /**
  * One report line per code, in the user's language. Literal `t()` calls per code, so the translation
  * scanner sees every key; typed over every code, so a new code fails the build until it has a line.
@@ -201,6 +230,30 @@ const ISSUE_MESSAGES: Record<
   },
   option_removed: (issue, t) =>
     t("workspace.surveys.import.issues.option_removed", { option: param(issue, "option") }),
+  texts_updated: (issue, t) => t("workspace.surveys.import.issues.texts_updated", { count: count(issue) }),
+  sheet_row_skipped: (issue, t) => getSkippedRowMessage(issue, t),
+  sheet_language_skipped: (issue, t) =>
+    param(issue, "cause") === "not_in_survey"
+      ? t("workspace.surveys.import.issues.sheet_language_skipped_not_in_survey", {
+          code: param(issue, "code"),
+        })
+      : t("workspace.surveys.import.issues.sheet_language_skipped_column_missing", {
+          code: param(issue, "code"),
+        }),
+  sheet_question_added: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_question_added", { row: param(issue, "row") }),
+  sheet_option_added: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_option_added", { row: param(issue, "row") }),
+  sheet_formatting_dropped: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_formatting_dropped", {
+      row: param(issue, "row"),
+      language: param(issue, "language"),
+    }),
+  sheet_text_not_imported: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_text_not_imported", {
+      row: param(issue, "row"),
+      language: param(issue, "language"),
+    }),
 };
 
 /**

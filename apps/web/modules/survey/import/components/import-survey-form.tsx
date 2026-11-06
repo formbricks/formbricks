@@ -13,7 +13,10 @@ import { ImportMatchChoice } from "@/modules/survey/import/components/import-mat
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { getSurveyImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
-import { getSurveyImportFileExtensions } from "@/modules/survey/import/lib/import-file";
+import {
+  INTO_SURVEY_FILE_EXTENSIONS,
+  getSurveyImportFileExtensions,
+} from "@/modules/survey/import/lib/import-file";
 import {
   getSurveyImportFacts,
   getSwitchedOffLanguages,
@@ -35,6 +38,8 @@ const MCP_DOCS_URL = "https://formbricks.com/docs/surveys/import-export/overview
 
 type ImportSurveyFormProps = {
   workspaceId: string;
+  /** The survey the import was started from, in its menu (ENG-6809); absent for New survey › Import. */
+  targetSurveyId?: string;
   /** Whether Formbricks AI can read a Qualtrics export here; a Formbricks file imports either way. */
   isAIAvailable: boolean;
   onSuccess: (surveyId: string) => void;
@@ -112,6 +117,24 @@ const getReview = ({ report, match, choice, draft }: TImportSurvey, isReviewing:
         : null,
     reviewDraft: updated ? { ...draft, name: updated.name } : draft,
   };
+};
+
+/**
+ * The drop zone of an import into one survey (ENG-6809): a Formbricks file or the survey's Excel export,
+ * neither read by AI, so no AI note and no hint about very large surveys.
+ */
+const IntoSurveyFilePicker = ({ onFileSelect }: Readonly<{ onFileSelect: TImportSurvey["selectFile"] }>) => {
+  const { t } = useTranslation();
+  return (
+    <FileDropZone
+      id="import-survey-file"
+      accept={INTO_SURVEY_FILE_EXTENSIONS.join(",")}
+      onFileSelect={onFileSelect}
+      primaryText={t("workspace.surveys.import.dropzone_primary")}
+      helpText={t("workspace.surveys.import.into_survey.dropzone_help")}
+      loadingText={t("workspace.surveys.import.reading_file")}
+    />
+  );
 };
 
 /** The drop zone, before a file is chosen: what it takes, and where a very large survey goes instead. */
@@ -232,11 +255,13 @@ const ImportReviewPane = ({
   importer,
   isImporting,
   isReviewing,
+  isIntoSurvey,
   reviewReport,
   reviewDraft,
   draftRef,
 }: Readonly<{
   importer: TImportSurvey;
+  isIntoSurvey: boolean;
   isImporting: boolean;
   isReviewing: boolean;
   reviewReport: ReturnType<typeof getReview>["reviewReport"];
@@ -284,6 +309,8 @@ const ImportReviewPane = ({
               triggersChoice={importer.triggersChoice}
               onTriggersChoiceChange={importer.selectTriggersChoice}
               conflict={importer.conflict}
+              isIntoSurvey={isIntoSurvey}
+              isSheet={importer.report?.source.kind === "xlsx"}
             />
           ) : undefined
         }
@@ -307,6 +334,7 @@ const ImportReviewPane = ({
 
 export const ImportSurveyForm = ({
   workspaceId,
+  targetSurveyId,
   isAIAvailable,
   onSuccess,
   onCancel,
@@ -316,7 +344,7 @@ export const ImportSurveyForm = ({
   onImportingChange,
 }: Readonly<ImportSurveyFormProps>) => {
   const { t } = useTranslation();
-  const importer = useImportSurvey({ workspaceId, isAIAvailable, onSuccess });
+  const importer = useImportSurvey({ workspaceId, isAIAvailable, targetSurveyId, onSuccess });
   const stopButtonRef = useRef<HTMLButtonElement>(null);
   const draftRef = useRef<HTMLElement>(null);
 
@@ -375,10 +403,13 @@ export const ImportSurveyForm = ({
           importer={importer}
           isImporting={isImporting}
           isReviewing={isReviewing}
+          isIntoSurvey={targetSurveyId !== undefined}
           reviewReport={reviewReport}
           reviewDraft={reviewDraft}
           draftRef={draftRef}
         />
+      ) : targetSurveyId ? (
+        <IntoSurveyFilePicker onFileSelect={importer.selectFile} />
       ) : (
         <ImportFilePicker canReadWithAI={canReadWithAI} onFileSelect={importer.selectFile} />
       )}
