@@ -378,8 +378,11 @@ export const describeAction = (
       return { kind: "calculate", label: toPlainText(describeCalculateParts(action, survey, t, format)) };
     case "markLowQuality":
       return { kind: "markLowQuality", label: "" };
-    default:
-      return { kind: "unknown", label: String((action as { objective?: unknown }).objective ?? "") };
+    default: {
+      // An objective this editor doesn't know yet, from a newer survey: named as it is stored.
+      const { objective } = action as { objective?: unknown };
+      return { kind: "unknown", label: typeof objective === "string" ? objective : "" };
+    }
   }
 };
 

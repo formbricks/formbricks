@@ -55,37 +55,52 @@ export const dropOptionsFromAnswer = (
   language: string
 ): TResponseDataValue => {
   const listKeys = getOptionListKeys(element.type);
-
-  // A matrix: `{ rowLabel: columnLabel }`.
-  if (listKeys.includes("rows")) {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
-    const hiddenRows = labelsOf(element.rows, notShown.rows);
-    const hiddenColumns = labelsOf(element.columns, notShown.columns);
-    const entries = Object.entries(value);
-    const kept = entries.filter(([row, column]) => !hiddenRows.has(row) && !hiddenColumns.has(column));
-    return kept.length === entries.length ? value : Object.fromEntries(kept);
-  }
+  if (listKeys.includes("rows")) return dropMatrixCells(element, notShown, value);
   if (!listKeys.includes("choices")) return value;
+  if (element.type === "pictureSelection") return dropPictureIds(notShown, value);
+  return dropChoiceLabels(element, notShown, value, language);
+};
 
-  // A picture selection stores the picked ids.
-  if (element.type === "pictureSelection") {
-    const ids = notShown.choices ?? [];
-    if (!Array.isArray(value)) return value;
-    const kept = value.filter((entry) => !ids.includes(entry));
-    return kept.length === value.length ? value : kept;
-  }
+/** The entries of `value` that `keep` keeps; `value` itself when it keeps them all. */
+const keepEntries = <T>(value: T[], keep: (entry: T) => boolean): T[] => {
+  const kept = value.filter(keep);
+  return kept.length === value.length ? value : kept;
+};
 
-  // Single and multi select and ranking store labels.
+/** A matrix: `{ rowLabel: columnLabel }`, without the hidden rows and columns. */
+const dropMatrixCells = (
+  element: TOptionElement,
+  notShown: TElementOptionsNotShown,
+  value: TResponseDataValue
+): TResponseDataValue => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
+  const hiddenRows = labelsOf(element.rows, notShown.rows);
+  const hiddenColumns = labelsOf(element.columns, notShown.columns);
+  const entries = Object.entries(value);
+  const kept = keepEntries(entries, ([row, column]) => !hiddenRows.has(row) && !hiddenColumns.has(column));
+  return kept === entries ? value : Object.fromEntries(kept);
+};
+
+/** A picture selection stores the picked ids. */
+const dropPictureIds = (notShown: TElementOptionsNotShown, value: TResponseDataValue): TResponseDataValue => {
+  const ids = notShown.choices ?? [];
+  return Array.isArray(value) ? keepEntries(value, (entry) => !ids.includes(entry)) : value;
+};
+
+/** Single and multi select and ranking store labels; "Other" is the typed text no option matches. */
+const dropChoiceLabels = (
+  element: TOptionElement,
+  notShown: TElementOptionsNotShown,
+  value: TResponseDataValue,
+  language: string
+): TResponseDataValue => {
   const hiddenLabels = labelsOf(element.choices, notShown.choices);
   const otherHidden = element.type !== "ranking" && (notShown.choices ?? []).includes("other");
   const isDropped = (entry: string) =>
     hiddenLabels.has(entry) || (otherHidden && isOtherText(element, entry, language));
 
   if (typeof value === "string") return isDropped(value) ? "" : value;
-  if (Array.isArray(value)) {
-    const kept = value.filter((entry) => !isDropped(entry));
-    return kept.length === value.length ? value : kept;
-  }
+  if (Array.isArray(value)) return keepEntries(value, (entry) => !isDropped(entry));
   return value;
 };
 

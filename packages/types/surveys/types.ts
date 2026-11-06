@@ -1566,7 +1566,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
         const logicIssues = validateLogic(survey, questionIndex, question.logic);
 
         logicIssues.forEach((issue) => {
-          ctx.addIssue(issue as z.IssueData);
+          ctx.addIssue(issue as z.core.$ZodRawIssue);
         });
       }
     });
@@ -1999,12 +1999,12 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
       // Validate block logic (conditions, actions, fallback)
       const logicIssues = validateBlockLogic(survey, blockIndex, block, allElements);
       logicIssues.forEach((issue) => {
-        ctx.addIssue(issue as z.IssueData);
+        ctx.addIssue(issue as z.core.$ZodRawIssue);
       });
 
       // Show-if on the block and its elements (ENG-6931)
       validateShowIf(survey, blockIndex, block, allElements).forEach((issue) => {
-        ctx.addIssue(issue as z.IssueData);
+        ctx.addIssue(issue as z.core.$ZodRawIssue);
       });
     });
 
@@ -2015,7 +2015,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
 
     // Rules before the first question: jumps and Set value only, reading fields, never answers.
     validateStartLogic(survey).forEach((issue) => {
-      ctx.addIssue(issue as z.IssueData);
+      ctx.addIssue(issue as z.core.$ZodRawIssue);
     });
 
     // 5. Check for cyclic logic in blocks

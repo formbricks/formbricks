@@ -1,7 +1,7 @@
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { RESERVED_FIELD_CATALOG, getSurveyEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { evaluateExpression, evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { type TExpressionValueType, checkExpressionTypes } from "@formbricks/types/surveys/expression-types";
 import type { TExpression } from "@formbricks/types/surveys/expressions";
@@ -37,6 +37,29 @@ const sampleForDataType = (dataType: TEmbeddedDataType, name: string, now: Date)
   }
 };
 
+/** A made-up answer to a question a formula can read; `undefined` for one it cannot. */
+const sampleAnswer = (element: TSurveyElement, now: Date): string | number | undefined => {
+  switch (element.type) {
+    case TSurveyElementTypeEnum.Rating:
+      return Math.max(1, (element.range ?? 5) - 1);
+    case TSurveyElementTypeEnum.NPS:
+      return 8;
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES:
+      return 4;
+    case TSurveyElementTypeEnum.OpenText:
+      return element.inputType === "number" ? 12 : "text";
+    case TSurveyElementTypeEnum.Date:
+      return toDateOnly(new Date(now.getTime() - 30 * DAY_MS));
+    case TSurveyElementTypeEnum.MultipleChoiceSingle: {
+      const first = element.choices.find((choice) => choice.id !== "other") ?? element.choices[0];
+      return first?.label.default;
+    }
+    default:
+      return undefined;
+  }
+};
+
 /** A made-up answer for each question a formula can read, and a value for each field. */
 export const buildSampleResponse = (
   survey: TSurvey,
@@ -47,33 +70,9 @@ export const buildSampleResponse = (
   reservedValues: Record<string, string | number>;
 } => {
   const data: TResponseData = {};
-
   for (const element of getElementsFromBlocks(survey.blocks)) {
-    switch (element.type) {
-      case TSurveyElementTypeEnum.Rating:
-        data[element.id] = Math.max(1, (element.range ?? 5) - 1);
-        break;
-      case TSurveyElementTypeEnum.NPS:
-        data[element.id] = 8;
-        break;
-      case TSurveyElementTypeEnum.CSAT:
-      case TSurveyElementTypeEnum.CES:
-        data[element.id] = 4;
-        break;
-      case TSurveyElementTypeEnum.OpenText:
-        data[element.id] = element.inputType === "number" ? 12 : "text";
-        break;
-      case TSurveyElementTypeEnum.Date:
-        data[element.id] = toDateOnly(new Date(now.getTime() - 30 * DAY_MS));
-        break;
-      case TSurveyElementTypeEnum.MultipleChoiceSingle: {
-        const first = element.choices.find((choice) => choice.id !== "other") ?? element.choices[0];
-        if (first) data[element.id] = first.label.default;
-        break;
-      }
-      default:
-        break;
-    }
+    const answer = sampleAnswer(element, now);
+    if (answer !== undefined) data[element.id] = answer;
   }
 
   const variables: TResponseVariables = {};

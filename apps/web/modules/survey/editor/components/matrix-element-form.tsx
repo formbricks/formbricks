@@ -17,10 +17,26 @@ import { ElementFormInput } from "@/modules/survey/components/element-form-input
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
 import { type TSetOptionHidden } from "@/modules/survey/editor/components/option-hide-button";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
-import { findOptionUse } from "@/modules/survey/editor/lib/utils";
+import { type TUseKind, findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { isLabelValidForAllLanguages } from "../lib/validation";
+
+/** Why a row or column can't be deleted, by what reads it: a show-if, or a rule (any other use). */
+const OPTION_IN_USE_ERRORS = {
+  row: {
+    showIf: "workspace.surveys.edit.row_used_in_show_if_error",
+    logic: "workspace.surveys.edit.row_used_in_logic_error",
+    startLogic: "workspace.surveys.edit.row_used_in_logic_error",
+    copiedOptions: "workspace.surveys.edit.row_used_in_logic_error",
+  },
+  column: {
+    showIf: "workspace.surveys.edit.column_used_in_show_if_error",
+    logic: "workspace.surveys.edit.column_used_in_logic_error",
+    startLogic: "workspace.surveys.edit.column_used_in_logic_error",
+    copiedOptions: "workspace.surveys.edit.column_used_in_logic_error",
+  },
+} as const satisfies Record<"row" | "column", Record<TUseKind, string>>;
 
 interface MatrixElementFormProps {
   readonly localSurvey: TSurvey;
@@ -78,29 +94,11 @@ export const MatrixElementForm = ({
     if (labels.length <= 2) return; // Prevent deleting below minimum length
     if (lock.isOptionLocked(type === "row" ? "rows" : "columns", labels[index].id)) return;
 
-    // check if the label is used in logic
-    if (type === "column") {
-      const use = findOptionUse(localSurvey, element.id, index.toString());
-      if (use) {
-        const questionIndex = use.elementIndex + 1;
-        toast.error(
-          use.kind === "showIf"
-            ? t("workspace.surveys.edit.column_used_in_show_if_error", { questionIndex })
-            : t("workspace.surveys.edit.column_used_in_logic_error", { questionIndex })
-        );
-        return;
-      }
-    } else {
-      const use = findOptionUse(localSurvey, element.id, index.toString(), true);
-      if (use) {
-        const questionIndex = use.elementIndex + 1;
-        toast.error(
-          use.kind === "showIf"
-            ? t("workspace.surveys.edit.row_used_in_show_if_error", { questionIndex })
-            : t("workspace.surveys.edit.row_used_in_logic_error", { questionIndex })
-        );
-        return;
-      }
+    // A row or column a rule or a show-if reads can't be deleted.
+    const use = findOptionUse(localSurvey, element.id, index.toString(), type === "row");
+    if (use) {
+      toast.error(t(OPTION_IN_USE_ERRORS[type][use.kind], { questionIndex: use.elementIndex + 1 }));
+      return;
     }
 
     const updatedLabels = labels.filter((_, idx) => idx !== index);

@@ -51,9 +51,24 @@ export const getDataTypeExpressionType = (dataType: TEmbeddedDataType): TExpress
 /** The field type a computed target holds, as an expression type. */
 export const EXPRESSION_TARGET_TYPES: readonly TEmbeddedDataType[] = ["number", "string", "date"];
 
-/** A date literal: `2026-03-01` or a full ISO timestamp. Text otherwise. */
-export const DATE_LITERAL_PATTERN =
-  /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})?)?$/;
+const DATE_PART = /^\d{4}-\d{2}-\d{2}/;
+const TIME_PART = /^T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?/;
+const OFFSET_PART = /^(?:Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * A date literal: `2026-03-01`, or an ISO timestamp (`2026-03-01T10:00`, seconds, milliseconds and a
+ * `Z` or `±hh:mm` offset optional). Text otherwise. Read part by part, each with a small pattern.
+ */
+export const isDateLiteral = (value: string): boolean => {
+  const date = DATE_PART.exec(value);
+  if (!date) return false;
+  const afterDate = value.slice(date[0].length);
+  if (afterDate === "") return true;
+  const time = TIME_PART.exec(afterDate);
+  if (!time) return false;
+  const afterTime = afterDate.slice(time[0].length);
+  return afterTime === "" || OFFSET_PART.test(afterTime);
+};
 
 /** What a reference resolves to while checking: its type, `"unsupported"`, or `undefined` if it doesn't exist. */
 export interface TExpressionTypeContext {
@@ -123,6 +138,29 @@ const fits = (inferred: TInferred, wanted: TExpressionValueType): boolean =>
 const describeType = (type: TExpressionValueType): string => (type === "boolean" ? "true/false" : type);
 
 /**
+ * `ifEmpty(value, fallback)`: the value's type when the fallback fits it, so a date with a fixed
+ * fallback date (`ifEmpty(@signup, "2026-01-01")`) stays a date; else the fallback's when the value
+ * fits that; else an issue on the fallback.
+ */
+const inferIfEmpty = (
+  argTypes: TInferred[],
+  path: (string | number)[],
+  issues: TExpressionTypeIssue[]
+): TInferred => {
+  const [value, fallback] = argTypes;
+  if (!value || !fallback) return undefined;
+  if (value.type === fallback.type || fits(fallback, value.type)) return { type: value.type };
+  if (fits(value, fallback.type)) return { type: fallback.type };
+  issues.push({
+    path: [...path, "args", 1],
+    message: `Expression: ifEmpty()'s fallback must be a ${describeType(value.type)}, got ${describeType(fallback.type)}`,
+    code: "fallback_mismatch",
+    params: { wanted: value.type, got: fallback.type },
+  });
+  return undefined;
+};
+
+/**
  * Infers the type of `expression` and collects every type problem with its path, relative to the
  * expression's root. A node whose type can't be known (a missing reference) reports once and is then
  * skipped by its parent, so one mistake doesn't cascade into a page of errors.
@@ -137,7 +175,7 @@ export const checkExpressionTypes = (
     switch (node.type) {
       case "static":
         if (typeof node.value === "number") return { type: "number" };
-        return { type: "text", dateLiteral: DATE_LITERAL_PATTERN.test(node.value) };
+        return { type: "text", dateLiteral: isDateLiteral(node.value) };
       case "element": {
         const element = ctx.getElement(node.value);
         if (!element) {
@@ -228,21 +266,8 @@ export const checkExpressionTypes = (
         return { type: "date" };
       case "concat":
         return argTypes.every((argType) => argType !== undefined) ? { type: "text" } : undefined;
-      case "ifEmpty": {
-        const [value, fallback] = argTypes;
-        if (!value || !fallback) return undefined;
-        if (value.type === fallback.type) return { type: value.type };
-        // A date with a fixed fallback date (`ifEmpty(@signup, "2026-01-01")`) stays a date.
-        if (fits(fallback, value.type)) return { type: value.type };
-        if (fits(value, fallback.type)) return { type: fallback.type };
-        issues.push({
-          path: [...path, "args", 1],
-          message: `Expression: ifEmpty()'s fallback must be a ${describeType(value.type)}, got ${describeType(fallback.type)}`,
-          code: "fallback_mismatch",
-          params: { wanted: value.type, got: fallback.type },
-        });
-        return undefined;
-      }
+      case "ifEmpty":
+        return inferIfEmpty(argTypes, path, issues);
       default:
         return undefined;
     }

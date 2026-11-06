@@ -1,5 +1,5 @@
 import type { TLinkedEmbeddedField } from "../embedded-data-resolver";
-import { DATE_LITERAL_PATTERN } from "./expression-types";
+import { isDateLiteral } from "./expression-types";
 import type { TLeftOperand, TRightOperand } from "./logic";
 
 /**
@@ -50,7 +50,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const isCalendarDate = (value: unknown): boolean => typeof value === "string" && CALENDAR_DATE.test(value);
 
 const toTime = (value: unknown): number | undefined => {
-  if (typeof value !== "string" || !DATE_LITERAL_PATTERN.test(value)) return undefined;
+  if (typeof value !== "string" || !isDateLiteral(value)) return undefined;
   const time = Date.parse(value);
   if (Number.isNaN(time)) return undefined;
   // `Date` rolls an impossible day over (2026-02-30 is 2 March); a stored date names a real day.

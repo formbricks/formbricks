@@ -1446,6 +1446,63 @@ export async function setV3SurveyBlockOrderResponse({
   });
 }
 
+type TV3SurveyCreateValidationData = Extract<
+  TValidateV3SurveyParams["body"],
+  { operation: "create" }
+>["data"];
+
+/**
+ * The create branch of {@link validateV3Survey}: read access to the workspace the body names, when it
+ * names one, then the create's own preparation. Writes nothing.
+ */
+async function validateV3SurveyCreatePayload(
+  data: TV3SurveyCreateValidationData,
+  {
+    authentication,
+    requestId,
+    instance,
+    onWorkspace,
+  }: Pick<TValidateV3SurveyParams, "authentication" | "requestId" | "instance"> & {
+    /** Called with the workspace the body names, before it is authorized, for the request's log. */
+    onWorkspace: (workspaceId: string) => void;
+  }
+): Promise<Response> {
+  const workspaceResult = createWorkspaceIdSchema.safeParse(data);
+  if (workspaceResult.success) {
+    onWorkspace(workspaceResult.data.workspaceId);
+    const authResult = await requireV3WorkspaceAccess(
+      authentication,
+      workspaceResult.data.workspaceId,
+      "read",
+      requestId,
+      instance
+    );
+    if (authResult instanceof Response) {
+      return authResult;
+    }
+  }
+
+  // ENG-6930: library fields linked by key are filled in first, as the create itself does — only in a
+  // workspace the caller was just authorized for; without one the schema refuses the body.
+  const resolved = workspaceResult.success
+    ? await resolveV3EmbeddedFieldLibraryKeys(workspaceResult.data.workspaceId, data)
+    : { ok: true as const, input: data };
+
+  return successResponse(
+    serializeValidationResult(
+      "create",
+      resolved.ok
+        ? prepareV3SurveyCreateInput(resolved.input)
+        : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } },
+      previewPayloadCustomCss(data)
+    ),
+    {
+      requestId,
+      cache: "private, no-store",
+    }
+  );
+}
+
 /**
  * Dry-run validation of a create or patch payload. Neither branch writes: the create branch is a
  * pure function of the input, and the patch branch merges the payload into the loaded survey in
@@ -1479,41 +1536,14 @@ export async function validateV3Survey({
     }
 
     if (validationBody.operation === "create") {
-      const workspaceResult = createWorkspaceIdSchema.safeParse(validationBody.data);
-      if (workspaceResult.success) {
-        log = logger.withContext({ requestId, workspaceId: workspaceResult.data.workspaceId });
-        const authResult = await requireV3WorkspaceAccess(
-          authentication,
-          workspaceResult.data.workspaceId,
-          "read",
-          requestId,
-          instance
-        );
-
-        if (authResult instanceof Response) {
-          return authResult;
-        }
-      }
-
-      // ENG-6930: library fields linked by key are filled in first, as the create itself does — only
-      // in a workspace the caller was just authorized for; without one the schema refuses the body.
-      const resolved = workspaceResult.success
-        ? await resolveV3EmbeddedFieldLibraryKeys(workspaceResult.data.workspaceId, validationBody.data)
-        : { ok: true as const, input: validationBody.data };
-
-      return successResponse(
-        serializeValidationResult(
-          "create",
-          resolved.ok
-            ? prepareV3SurveyCreateInput(resolved.input)
-            : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } },
-          previewPayloadCustomCss(validationBody.data)
-        ),
-        {
-          requestId,
-          cache: "private, no-store",
-        }
-      );
+      return await validateV3SurveyCreatePayload(validationBody.data, {
+        authentication,
+        requestId,
+        instance,
+        onWorkspace: (workspaceId) => {
+          log = logger.withContext({ requestId, workspaceId });
+        },
+      });
     }
 
     const { survey, response, visibility } = await getAuthorizedV3Survey({

@@ -1,4 +1,4 @@
-import { DATE_LITERAL_PATTERN } from "@formbricks/types/surveys/expression-types";
+import { isDateLiteral } from "@formbricks/types/surveys/expression-types";
 import type { TExpression } from "@formbricks/types/surveys/expressions";
 
 /**
@@ -13,9 +13,7 @@ import type { TExpression } from "@formbricks/types/surveys/expressions";
  * `null` for any other expression (`now()`, a formula, nothing yet).
  */
 export const getFixedDate = (expression: TExpression): string | null =>
-  expression.type === "static" &&
-  typeof expression.value === "string" &&
-  DATE_LITERAL_PATTERN.test(expression.value)
+  expression.type === "static" && typeof expression.value === "string" && isDateLiteral(expression.value)
     ? expression.value
     : null;
 

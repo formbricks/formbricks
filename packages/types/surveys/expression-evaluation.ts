@@ -4,7 +4,7 @@ import type { TLinkedEmbeddedField } from "../embedded-data-resolver";
 import type { TI18nString } from "../i18n";
 import type { TResponseData, TResponseVariables } from "../responses";
 import { TSurveyElementTypeEnum } from "./constants";
-import { DATE_LITERAL_PATTERN, getElementExpressionType } from "./expression-types";
+import { getElementExpressionType, isDateLiteral } from "./expression-types";
 import { EXPRESSION_MAX_DEPTH, type TExpression, type TExpressionFunction } from "./expressions";
 
 /**
@@ -77,9 +77,7 @@ const toText = (value: unknown): string | undefined => {
 };
 
 const toDateText = (value: unknown): string | undefined =>
-  typeof value === "string" && DATE_LITERAL_PATTERN.test(value) && !Number.isNaN(Date.parse(value))
-    ? value
-    : undefined;
+  typeof value === "string" && isDateLiteral(value) && !Number.isNaN(Date.parse(value)) ? value : undefined;
 
 /** A stored value read as its declared type; anything that doesn't fit is empty. */
 const coerce = (value: unknown, dataType: TEmbeddedDataType): TExpressionResult => {
