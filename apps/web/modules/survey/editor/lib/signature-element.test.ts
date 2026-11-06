@@ -1,11 +1,7 @@
 import { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import {
-  isTypedSignatureAllowed,
-  shouldShowNotSignedLogicHint,
-  shouldWarnTypedSignatureOff,
-} from "./signature-element";
+import { isTypedSignatureAllowed, shouldWarnTypedSignatureOff } from "./signature-element";
 import { getElementOperatorOptions } from "./utils";
 
 describe("isTypedSignatureAllowed", () => {
@@ -31,14 +27,6 @@ describe("shouldWarnTypedSignatureOff", () => {
 
   test("does not warn on an optional question, which can be skipped", () => {
     expect(shouldWarnTypedSignatureOff({ required: false, allowTypedSignature: false })).toBe(false);
-  });
-});
-
-describe("shouldShowNotSignedLogicHint", () => {
-  test("explains the missing is not signed condition on a required Signature only", () => {
-    expect(shouldShowNotSignedLogicHint({ required: true })).toBe(true);
-    expect(shouldShowNotSignedLogicHint({ required: false })).toBe(false);
-    expect(shouldShowNotSignedLogicHint({})).toBe(false);
   });
 });
 
