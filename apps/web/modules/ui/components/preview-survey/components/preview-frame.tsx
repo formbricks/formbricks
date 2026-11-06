@@ -24,7 +24,7 @@ interface PreviewWindowBarProps {
 }
 
 export const PreviewWindowBar = ({ title, expand, children }: Readonly<PreviewWindowBarProps>) => (
-  <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
+  <div className="@container flex h-8 w-full items-center rounded-t-lg bg-slate-100">
     <div className="ml-6 flex gap-x-2">
       <div className="size-3 rounded-full bg-red-500"></div>
       <div className="size-3 rounded-full bg-amber-500"></div>
@@ -38,9 +38,10 @@ export const PreviewWindowBar = ({ title, expand, children }: Readonly<PreviewWi
         <div className="size-3 rounded-full bg-emerald-500"></div>
       )}
     </div>
-    <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-      {title && <p className="text-slate-600">{title}</p>}
-      <div className="ml-auto flex items-center">{children}</div>
+    <div className="ml-4 flex w-full min-w-0 items-center justify-between gap-x-2 font-mono text-sm text-slate-400">
+      {/* A narrow bar drops the title rather than crowding it against the controls. */}
+      {title && <p className="hidden min-w-0 truncate text-slate-600 @min-[26rem]:block">{title}</p>}
+      <div className="ml-auto flex shrink-0 items-center">{children}</div>
     </div>
   </div>
 );

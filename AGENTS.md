@@ -17,6 +17,7 @@ is missing from the running app or a direct test command fails after switching b
 
 - Server actions are legacy — do not add new ones. New backend work belongs in an `/api/v3` route consumed from the client with TanStack Query, with server data living in the query cache rather than mirrored into `useState` or Jotai. The existing server actions wrap service calls and return `{ data }` or `{ error }` consistently; keep that contract when changing them.
 - MCP tools (`apps/web/modules/mcp`) are thin adapters over v3 operations, registered only through `registerScopedTool`. Before adding a tool or a scope, read "Adding a tool" in `docs/development/technical-handbook/mcp-server.mdx`.
+- Code that calls an LLM or embedding model, or exposes MCP tools to agents, follows `docs/development/technical-handbook/ai-code.mdx`, which sets the checks per kind (generation, embeddings, MCP-only tools). Read it before adding or changing such code. Write the prompt-injection assessment (what is exposed if the text is hostile) in the plan and the PR, and check it again against the finished diff. Generation calls also need hardcoded limits, token tracing, the org gate, and a cheap-model test with an injection fixture.
 
 ## API v3
 

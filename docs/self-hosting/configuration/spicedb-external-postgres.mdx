@@ -1,0 +1,72 @@
+---
+title: "External PostgreSQL for SpiceDB"
+description: "Connect SpiceDB to a pre-provisioned PostgreSQL database without administrator credentials in Compose."
+icon: "database"
+---
+
+Use this manual path when a database administrator has already provisioned a dedicated SpiceDB database and
+login. It changes only SpiceDB's datastore; Formbricks, Hub, and Cube keep their existing PostgreSQL settings.
+Docker Compose 2.24.4 or later is required for the override's `!reset` tags.
+
+| Who | Required PostgreSQL access |
+| --- | --- |
+| Database administrator, once outside this stack | Create the dedicated login and database, and assign ownership. Administrator credentials never enter Compose. |
+| SpiceDB connection login | Connect to and own only the SpiceDB database/schema. Migrations need DDL rights there; runtime reads and writes its tables. It needs no superuser, `CREATEDB`, or `CREATEROLE` rights. |
+
+<Steps>
+  <Step title="Provision the database">
+    Have the database administrator create an empty `spicedb` database owned by a dedicated login. Confirm that
+    the Compose host can reach it privately. Keep the login's password for the connection URI; do not configure
+    `POSTGRES_ADMIN_URL` or run the bundled bootstrap job.
+  </Step>
+  <Step title="Select the external Compose mode">
+    This override is a newer deployment asset; older release tags may not contain it. Use a target that
+    ships it, and download it from the **same tag as the base Compose file**. Do not combine an old base
+    file with today's override. For a fresh install following `stable`, use `stable` for both files.
+    Keep the base file and your existing application database settings. In `.env`, remove
+    `AUTHZED_DATABASE_PASSWORD` and add these lines, replacing the host and percent-encoded password:
+
+    ```bash
+    read -r -p "Compose release tag (stable only for a fresh stable install): " target_version
+    curl -fsSL -o docker-compose.spicedb-external.yml \
+      "https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Choose the matching release}/docker/docker-compose.spicedb-external.yml"
+    ```
+
+    ```dotenv
+    COMPOSE_FILE=docker-compose.yml:docker-compose.spicedb-external.yml
+    SPICEDB_DATASTORE_CONN_URI=postgresql://spicedb:<encoded-password>@db.example.com:5432/spicedb?sslmode=verify-full
+    ```
+
+    `COMPOSE_FILE` makes every `docker compose` command in this guide use the override. Keep it in `.env` for
+    future updates. If you pass `-f` explicitly, pass both files in the same order for every command instead.
+    Protect `.env` with mode `0600`; do not paste its rendered configuration into logs or tickets.
+  </Step>
+  <Step title="Configure a private CA if needed">
+    If PostgreSQL uses a private CA, add `&sslrootcert=/certs/ca.pem` to the URI and mount the same CA file into
+    both services in the external override:
+
+    ```yaml
+    services:
+      spicedb-migrate:
+        volumes:
+          - ./spicedb-ca.pem:/certs/ca.pem:ro
+      spicedb:
+        volumes:
+          - ./spicedb-ca.pem:/certs/ca.pem:ro
+    ```
+
+    Merge these `volumes` entries into the downloaded override; keep its `!reset` and environment entries.
+    `sslmode=verify-full` checks the server certificate against the hostname in the URI.
+  </Step>
+  <Step title="Validate and start">
+    Run `docker compose config --quiet` before starting services. Fresh installs can then use `docker compose up -d`; existing installations
+    must follow the [maintenance procedure](/self-hosting/upgrade/docker) first. Check `docker compose config --services`:
+    it must omit `authzed-db-bootstrap`. After startup, `docker compose ps -a` should show
+    `spicedb-migrate` completed and `spicedb` healthy. A failed migration prevents SpiceDB from starting.
+  </Step>
+</Steps>
+
+<Note>
+  The one-click installer continues to use bundled PostgreSQL. Changing an existing v6 SpiceDB datastore from
+  bundled to external PostgreSQL also requires a separate data migration; this override does not copy data.
+</Note>

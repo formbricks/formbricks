@@ -9,6 +9,9 @@ const Popover: React.FC<React.ComponentProps<typeof PopoverPrimitive.Root>> = Po
 const PopoverTrigger: React.FC<React.ComponentProps<typeof PopoverPrimitive.Trigger>> =
   PopoverPrimitive.Trigger;
 
+/** Positions the popover against an element other than its trigger (e.g. a whole row). */
+const PopoverAnchor: React.FC<React.ComponentProps<typeof PopoverPrimitive.Anchor>> = PopoverPrimitive.Anchor;
+
 const PopoverContent: React.ForwardRefExoticComponent<
   React.PropsWithoutRef<React.ComponentProps<typeof PopoverPrimitive.Content>> &
     React.RefAttributes<React.ElementRef<typeof PopoverPrimitive.Content>>
@@ -28,4 +31,4 @@ const PopoverContent: React.ForwardRefExoticComponent<
 ));
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
-export { Popover, PopoverTrigger, PopoverContent };
+export { Popover, PopoverTrigger, PopoverAnchor, PopoverContent };

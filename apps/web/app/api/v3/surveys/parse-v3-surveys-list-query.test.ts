@@ -35,7 +35,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "foo",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy, view.",
       });
   });
 
@@ -46,7 +46,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "after",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy, view.",
       });
     }
   });
@@ -58,7 +58,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "name",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy, view.",
       });
     }
   });
@@ -71,8 +71,49 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.cursor).toBeNull();
       expect(r.includeTotalCount).toBe(true);
       expect(r.sortBy).toBe("updatedAt");
+      expect(r.view).toBe("summary");
       expect(r.filterCriteria).toBeUndefined();
     }
+  });
+
+  describe("view (ENG-6861)", () => {
+    test("parses view=full and view=summary", () => {
+      const full = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=full`));
+      expect(full.ok && full.view).toBe("full");
+      const summary = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=summary`));
+      expect(summary.ok && summary.view).toBe("summary");
+    });
+
+    test("rejects an unknown view", () => {
+      const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=detail`));
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.invalid_params[0].name).toBe("view");
+    });
+
+    test("caps limit at the full-view maximum, and only for view=full", () => {
+      const atCap = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=full&limit=50`));
+      expect(atCap.ok && atCap.limit).toBe(50);
+
+      const overCap = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=full&limit=51`));
+      expect(overCap).toEqual({
+        ok: false,
+        invalid_params: [{ name: "limit", reason: "With view=full, limit must be at most 50." }],
+      });
+
+      const summary = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=summary&limit=51`));
+      expect(summary.ok && summary.limit).toBe(51);
+    });
+
+    test("rejects lang: the list returns every configured language", () => {
+      const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=full&lang=de-DE`));
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.invalid_params[0].name).toBe("lang");
+    });
+
+    test("keeps the default limit for view=full", () => {
+      const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&view=full`));
+      expect(r.ok && r.limit).toBe(20);
+    });
   });
 
   /**
@@ -161,7 +202,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "filter[createdBy][in]",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], filter[visibility][in], filter[owner][in], filter[singleUse][eq], filter[pinProtected][eq], sortBy, view.",
       });
     }
   });

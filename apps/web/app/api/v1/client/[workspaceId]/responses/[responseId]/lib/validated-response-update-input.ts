@@ -1,4 +1,4 @@
-import { TResponseUpdateInput, ZResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseUpdateInput, ZClientResponseUpdateInput } from "@formbricks/types/responses";
 import {
   TParseAndValidateJsonBodyResult,
   parseAndValidateJsonBody,
@@ -6,15 +6,17 @@ import {
 
 export type TValidatedResponseUpdateInputResult =
   | { response: Response }
-  | { responseUpdateInput: TResponseUpdateInput };
+  | { responseUpdateInput: TClientResponseUpdateInput };
 
 export const getValidatedResponseUpdateInput = async (
   req: Request
 ): Promise<TValidatedResponseUpdateInputResult> => {
-  const validatedInput: TParseAndValidateJsonBodyResult<TResponseUpdateInput> =
+  const validatedInput: TParseAndValidateJsonBodyResult<TClientResponseUpdateInput> =
     await parseAndValidateJsonBody({
       request: req,
-      schema: ZResponseUpdateInput,
+      // The survey's update input: `ZResponseUpdateInput` plus Mark as low quality (ENG-6933) and the
+      // not-shown record (ENG-6936).
+      schema: ZClientResponseUpdateInput,
       malformedJsonMessage: "Malformed JSON in request body",
     });
 

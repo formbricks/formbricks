@@ -1,0 +1,155 @@
+---
+title: "Prepare the target configuration"
+description: "Merge release changes while preserving your database, storage, proxy and secrets."
+icon: "arrow-up-right-dots"
+---
+
+Use this checklist at **each** [upgrade stop](/self-hosting/upgrade/paths). Work on a copy of your
+configuration before maintenance; do not start the target services yet.
+
+## Download the selected release
+
+Run these commands in the directory containing your existing `docker-compose.yml` and `.env`
+(usually `formbricks/` for one-click). Choose the exact tag from [GitHub releases](https://github.com/formbricks/formbricks/releases)
+for your [next stop](/self-hosting/upgrade/paths), not an RC or a moving `stable` tag.
+`target_version` is a shell variable for downloads; it does not change deployed images.
+
+```bash
+read -r -p "Target Formbricks release tag: " target_version
+: "${target_version:?Choose a release first}"
+release_base="https://raw.githubusercontent.com/formbricks/formbricks/${target_version}/docker"
+curl -fsSL "$release_base/docker-compose.yml" -o docker-compose.release.yml
+```
+
+Stop if the download fails. Keep this reference separate from the running configuration.
+
+### Merge the release configuration
+
+Open `docker-compose.release.yml` and your existing `docker-compose.yml` side by side:
+
+<Steps>
+  <Step title="Copy complete services">
+    Copy each new service named in the version notes under the existing `services:` key. Include its
+    environment, mounts, healthcheck and dependencies; copying only `image:` misses required changes.
+  </Step>
+  <Step title="Copy referenced YAML blocks">
+    Copy any referenced top-level `x-...` YAML blocks. For example, `*formbricks-database` needs the
+    matching `&formbricks-database` definition. Adapt connection URLs to your existing credentials.
+  </Step>
+  <Step title="Preserve existing settings">
+    Add the new app settings to its existing `environment` block. Keep local networks, proxy labels,
+    SMTP, SSO, storage, volumes and secrets. A customized network must also reach the new services.
+  </Step>
+</Steps>
+
+Do not replace your whole Compose file. The downloaded reference can contain `latest` even at an old
+Git tag. Before pulling:
+
+| Setting | What to do |
+| --- | --- |
+| App images | Replace every Formbricks `:latest` with the selected tag; include migration and permission services when present. |
+| Hub | Set `HUB_IMAGE_REF` to a released tag or digest selected by that release's Helm values/release notes. All Hub services must match. |
+| Cube | Copy the target's whole service, healthcheck and matching `cube/cube.js` and `cube/schema/FeedbackRecords.js`. Changing only the image is insufficient. |
+| Optional AI | Keep disabled unless used. Pin its images and preserve provider configuration on the services that consume it. |
+| PostgreSQL | Keep the existing major version, volume and mount path. v4 examples use PostgreSQL 17; v5 examples switch to 18. That is **not** an in-place data upgrade. |
+| Redis/Valkey | Preserve the data volume and queued work. Apply only the image/configuration changes called out for your target. |
+
+For example, 5.4.7 and 6.0.4 select Hub `0.14.1`: use `HUB_IMAGE_REF=:0.14.1`, including the colon.
+Select future versions from their own release assets instead of reusing this example indefinitely.
+
+### Download the Cube model files
+
+For a bundled Cube service, download both files from the **same target tag**. These commands only stage
+files; they do not change the running service. They also work for a first v5 installation of Cube.
+
+```bash
+release_base="https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker"
+mkdir -p upgrade-files/cube/schema &&
+  curl -fsSL "$release_base/cube/cube.js" -o upgrade-files/cube/cube.js &&
+  curl -fsSL "$release_base/cube/schema/FeedbackRecords.js" -o upgrade-files/cube/schema/FeedbackRecords.js
+```
+
+Continue only if both downloads succeed. Compare any local customizations. During maintenance, with Cube
+stopped, back up the existing `cube/` directory if present, then install both files:
+
+```bash
+mkdir -p cube/schema &&
+  cp upgrade-files/cube/cube.js cube/cube.js &&
+  cp upgrade-files/cube/schema/FeedbackRecords.js cube/schema/FeedbackRecords.js
+```
+
+Do not start Cube unless both copies succeed. The release's service mounts these two paths. Keep the
+old pair with your recovery backup; for v4 targets, skip this section because Cube is not used.
+
+## Preserve existing state
+
+- Keep the Compose project name, named volumes/PVCs, database names, credentials, encryption keys and auth secrets.
+- Preserve SMTP, enterprise license, proxy labels, TLS, custom networks, SSO and all storage settings.
+- Some v5 Compose files embed `postgres:postgres` in database URLs. Wire your **existing** credentials into
+  app, migration, Hub and Cube connections; adding `POSTGRES_PASSWORD` alone does not rewrite those URLs.
+- Do not rotate `ENCRYPTION_KEY` during an upgrade. It is needed to read existing encrypted data.
+- For Helm, merge your overrides into the target chart's defaults, render privately, and check all images,
+  Secrets, PVC bindings and hooks. Avoid blindly applying `--reuse-values` across changed chart schemas.
+
+## Prepare Helm values
+
+For Helm, start from your existing `values.yaml` (or values tracked in GitOps). Download the target
+chart's defaults as a **separate reference**:
+
+```bash
+helm show values oci://ghcr.io/formbricks/helm-charts/formbricks \
+  --version <target-chart-version> > values.release.yaml
+```
+
+Replace `<target-chart-version>` with the chart version selected in your plan; it is not necessarily the
+app version. Copy only the new settings required by your version notes into your existing overrides.
+Keep Secrets, PVCs, database credentials and existing operators. Render using your normal release name,
+namespace and values before following the [Kubernetes rollout](/self-hosting/upgrade/kubernetes).
+Store rendered manifests privately because they can contain secrets. A successful render is not a database-connectivity test.
+
+## Existing MinIO and Traefik
+
+You can keep MinIO through the S3 interface. A Formbricks upgrade does not require moving existing files
+to RustFS. Preserve:
+
+- The MinIO volume, bucket and credentials; `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_REGION`,
+  `S3_BUCKET_NAME`, `S3_ENDPOINT_URL` and `S3_FORCE_PATH_STYLE`.
+- Traefik labels, networks, TLS and the public files hostname routing to the **S3 API**, not its console.
+- Bucket CORS for the application/survey origins. Confirm both old files and a new upload work in a browser.
+
+Plan a storage migration separately if your storage service needs replacement. Keep edge rate limiting
+in place too: Traefik routing alone does not supply the [v5 rate-limit requirements](/self-hosting/configuration/rate-limiting).
+
+## Add only new secrets
+
+For each missing secret, run this command once in your terminal:
+
+```bash
+openssl rand -hex 32
+```
+
+Use a different result for each secret. Save the generated text in your existing `.env` (for example,
+`HUB_API_KEY=<generated-value>`) or secret manager; do not put the generation command itself in the file.
+For Compose, run `chmod 600 .env`. Keep existing values on later upgrades.
+
+| Secret | Where the same value must be supplied |
+| --- | --- |
+| `HUB_API_KEY` | Formbricks and Hub's `API_KEY`; any worker configuration that consumes it |
+| `CUBEJS_API_SECRET` | Formbricks and Cube |
+| `AUTHZED_TOKEN` (first v6 upgrade) | Formbricks permission tools and SpiceDB's gRPC preshared key |
+| `AUTHZED_DATABASE_PASSWORD` (bundled v6 datastore) | SpiceDB database bootstrap, datastore migration and server |
+
+An entry in `.env` is only available to a service if Compose interpolates it or loads it through
+`env_file`. Verify the actual bindings privately; do not paste expanded configuration or secrets into tickets.
+
+## Check before maintenance
+
+```bash
+docker compose config --quiet
+docker compose config --services
+docker compose config --images
+```
+
+Resolve every missing variable and unexpected image. Confirm the target image, migration executable and
+required dependency images can be pulled. Configuration validation does not test database access or migrations;
+complete the [rehearsal](/self-hosting/upgrade/rehearse) before production.

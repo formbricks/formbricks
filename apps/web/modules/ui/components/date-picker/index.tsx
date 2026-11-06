@@ -5,7 +5,7 @@ import { useState } from "react";
 import { type Matcher } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { formatDateForDisplay } from "@/lib/utils/datetime";
+import { DATE_DISPLAY_OPTIONS, formatDateForDisplay } from "@/lib/utils/datetime";
 import { Button } from "@/modules/ui/components/button";
 import { Calendar } from "@/modules/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
@@ -13,7 +13,7 @@ import { type TDateRangeBound, type TDateRangeValue, applyRangeClick, applyRange
 
 export type { TDateRangeValue } from "./lib/range";
 
-const DISPLAY_OPTIONS: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+const DISPLAY_OPTIONS = DATE_DISPLAY_OPTIONS;
 
 /** `disabled` matchers for react-day-picker, built from the optional bounds. */
 const getDisabledMatchers = (minDate?: Date, maxDate?: Date): Matcher[] | undefined => {

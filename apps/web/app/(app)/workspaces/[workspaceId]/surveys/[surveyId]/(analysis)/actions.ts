@@ -28,7 +28,10 @@ export const getResponsesAction = authenticatedActionClient
       parsedInput.surveyId,
       parsedInput.limit,
       parsedInput.offset,
-      parsedInput.filterCriteria
+      parsedInput.filterCriteria,
+      undefined,
+      // The response cards on this page mark what each respondent was not shown (ENG-6936).
+      { withNotShown: true }
     );
   });
 

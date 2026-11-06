@@ -2,7 +2,11 @@ import { describe, expect, test } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyCTAElement } from "@formbricks/types/surveys/elements";
-import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import {
+  TSurveyQuestion,
+  TSurveyQuestionTypeEnum,
+  ZSurveyLogicAction,
+} from "@formbricks/types/surveys/types";
 import {
   transformBlocksToQuestions,
   transformQuestionsToBlocks,
@@ -522,6 +526,52 @@ describe("transformBlocksToQuestions", () => {
     if (action.objective === "jumpToQuestion" || action.objective === "requireAnswer") {
       expect(action.target).toBe("q2");
     }
+  });
+
+  test("keeps a Mark as low quality action, so the v1 questions view round-trips it (ENG-6933)", () => {
+    const blocks = [
+      {
+        id: "b1",
+        name: "Block 1",
+        elements: [
+          {
+            id: "q1",
+            type: "openText",
+            headline: { default: "Hours?" },
+            required: false,
+            inputType: "number",
+          },
+        ],
+        logic: [
+          {
+            id: "l1",
+            conditions: {
+              id: "cg1",
+              connector: "and" as const,
+              conditions: [
+                {
+                  id: "c1",
+                  leftOperand: { value: "q1", type: "element" },
+                  operator: "isGreaterThan",
+                  rightOperand: { type: "static", value: 112 },
+                },
+              ],
+            },
+            actions: [{ id: "a1", objective: "markLowQuality" }],
+          },
+        ],
+      },
+    ] as unknown as TSurveyBlock[];
+
+    const questions = transformBlocksToQuestions(blocks, []);
+
+    expect(questions[0].logic?.[0].actions).toEqual([{ id: "a1", objective: "markLowQuality" }]);
+    expect(
+      ZSurveyLogicAction.safeParse({ id: "clact123456789012345678901", objective: "markLowQuality" }).success
+    ).toBe(true);
+    expect(transformQuestionsToBlocks(questions)[0].logic?.[0].actions).toEqual([
+      { id: "a1", objective: "markLowQuality" },
+    ]);
   });
 
   test("should convert element type to question type in logic conditions", () => {

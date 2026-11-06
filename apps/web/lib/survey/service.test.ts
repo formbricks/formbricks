@@ -29,6 +29,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   mockActionClass,
@@ -47,7 +48,9 @@ import {
   getSurveys,
   getSurveysByActionClassId,
   getSurveysBySegmentId,
+  getSurveysWithCustomCssAndOwnerName,
   loadNewSegmentInSurvey,
+  selectSurveyWithCustomCss,
   updateSurvey,
   updateSurveyInternal,
 } from "./service";
@@ -75,7 +78,13 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsQuotasEnabled: vi.fn(),
+}));
+
 beforeEach(() => {
+  vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
   // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
@@ -357,6 +366,62 @@ describe("Tests for getSurveys", () => {
   });
 });
 
+describe("Tests for getSurveysWithCustomCssAndOwnerName (ENG-6861)", () => {
+  const visibleWhere = { visibility: "workspace" as const };
+
+  test("reads the batch in one query scoped to the workspace and the caller's visibility", async () => {
+    const surveyIds = [createId(), createId()];
+    prisma.survey.findMany.mockResolvedValueOnce([
+      { ...mockSurveyOutput, owner: { name: "Grace" } },
+    ] as never);
+
+    const surveys = await getSurveysWithCustomCssAndOwnerName(mockId, surveyIds, visibleWhere);
+
+    expect(surveys).toEqual([{ survey: mockTransformedSurveyOutput, ownerName: "Grace" }]);
+    expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.survey.findMany).toHaveBeenCalledWith({
+      where: { id: { in: surveyIds }, workspaceId: mockId, AND: [visibleWhere] },
+      select: { ...selectSurveyWithCustomCss, owner: { select: { name: true } } },
+    });
+  });
+
+  test("adds no visibility clause when enforcement contributes none, and reads a missing owner as null", async () => {
+    const surveyIds = [createId()];
+    prisma.survey.findMany.mockResolvedValueOnce([{ ...mockSurveyOutput, owner: null }] as never);
+
+    const surveys = await getSurveysWithCustomCssAndOwnerName(mockId, surveyIds, {});
+
+    expect(surveys).toEqual([{ survey: mockTransformedSurveyOutput, ownerName: null }]);
+    expect(vi.mocked(prisma.survey.findMany).mock.calls[0]?.[0]?.where).toEqual({
+      id: { in: surveyIds },
+      workspaceId: mockId,
+    });
+  });
+
+  test("answers an empty batch without querying", async () => {
+    expect(await getSurveysWithCustomCssAndOwnerName(mockId, [], visibleWhere)).toEqual([]);
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("rejects a malformed survey id", async () => {
+    await expect(getSurveysWithCustomCssAndOwnerName(mockId, ["123#"], visibleWhere)).rejects.toThrow(
+      ValidationError
+    );
+  });
+
+  test("maps a known Prisma error to a DatabaseError", async () => {
+    prisma.survey.findMany.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      })
+    );
+    await expect(getSurveysWithCustomCssAndOwnerName(mockId, [createId()], visibleWhere)).rejects.toThrow(
+      DatabaseError
+    );
+  });
+});
+
 describe("Tests for updateSurvey", () => {
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
@@ -452,6 +517,49 @@ describe("Tests for updateSurvey", () => {
           ]),
         })
       );
+    });
+
+    describe("the quotas' matrix conditions (ENG-6934)", () => {
+      const matrixBlock = {
+        id: "clmatrixblock0000000000001",
+        name: "Grid",
+        elements: [
+          {
+            id: "grid",
+            type: "matrix",
+            headline: { default: "Rate" },
+            required: false,
+            shuffleOption: "none",
+            rows: [{ id: "netflix", label: { default: "Netflix" } }],
+            columns: [{ id: "good", label: { default: "Good" } }],
+          },
+        ],
+      };
+      const withMatrix = {
+        ...updateSurveyInput,
+        blocks: [...updateSurveyInput.blocks, matrixBlock],
+      } as unknown as TSurvey;
+
+      test("follows a matrix reorder where quotas are licensed", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.surveyQuota.findMany.mockResolvedValueOnce([]);
+
+        await updateSurvey(withMatrix);
+
+        expect(getIsQuotasEnabled).toHaveBeenCalledWith(mockOrganizationOutput.id);
+        expect(prisma.surveyQuota.findMany).toHaveBeenCalled();
+      });
+
+      test("leaves the quotas alone where quotas are not licensed", async () => {
+        vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+        await updateSurvey(withMatrix);
+
+        expect(prisma.surveyQuota.findMany).not.toHaveBeenCalled();
+      });
     });
 
     // Note: Language handling tests (for languages.length > 0 fix) are covered in
@@ -1176,6 +1284,41 @@ describe("Tests for updateSurvey", () => {
         })
       );
     });
+  });
+
+  // ENG-6935: a legacy write is validated against the rows it leaves the survey with, once they are
+  // read. Without that check it is not validated at all.
+  test("a legacy write whose logic sets a variable the survey doesn't have is refused, and not written", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+    const [firstBlock, ...otherBlocks] = updateSurveyInput.blocks;
+    const dangling = {
+      ...updateSurveyInput,
+      blocks: [
+        {
+          ...firstBlock,
+          logic: [
+            {
+              id: "cldanglingrule000000000001",
+              conditions: { id: "cldanglinggroup00000000001", connector: "and", conditions: [] },
+              actions: [
+                {
+                  id: "cldanglingaction0000000001",
+                  objective: "calculate",
+                  variableId: "clnosuchvariable0000000001",
+                  operator: "assign",
+                  value: { type: "static", value: 1 },
+                },
+              ],
+            },
+          ],
+        },
+        ...otherBlocks,
+      ],
+    } as TSurvey;
+    expect(dangling.embeddedFields).toBeUndefined();
+
+    await expect(updateSurvey(dangling)).rejects.toThrow(ValidationError);
+    expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 
   describe("reserved names for newly declared fields", () => {

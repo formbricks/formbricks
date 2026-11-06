@@ -1,5 +1,6 @@
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { type TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
+import { validateStartLogic } from "@formbricks/types/surveys/start-logic-validation";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
@@ -351,7 +352,92 @@ function toCodeInvalidParam(issue: TCodeIssue): InvalidParam {
   };
 }
 
-function toReferenceInput(document: TV3SurveyDocument) {
+/**
+ * ENG-6932: rules before the first question, judged by the same validator the editor and
+ * `surveyRefinement` use (D3), since PATCH, the block routes and MCP skip the refinement. A jump to a
+ * block or ending that does not exist is a `dangling_reference` on the action's `target`, like a
+ * block rule's; the rest (an action other than a jump or Set value, an answer read before anything is
+ * answered, an unknown field) is reported by its reason at the exact path.
+ */
+export function getV3SurveyStartLogicInvalidParams(document: TV3SurveyDocument): InvalidParam[] {
+  return validateStartLogic(document).map((issue) => {
+    const name = issue.path.join(".");
+    const target = getStartLogicJumpTarget(document, issue.path);
+    if (issue.code === "custom" && issue.params?.missingLogicDestination === "jump" && target) {
+      return {
+        name,
+        reason: `Jump target '${target}' is not defined in blocks or endings`,
+        code: "dangling_reference",
+        identifier: target,
+        referenceType: "block",
+        missingId: target,
+      };
+    }
+    return { name, reason: issue.message };
+  });
+}
+
+function getStartLogicJumpTarget(document: TV3SurveyDocument, path: PropertyKey[]): string | undefined {
+  const [, ruleIdx, , actionIdx] = path;
+  if (typeof ruleIdx !== "number" || typeof actionIdx !== "number") return undefined;
+  const action = document.startLogic[ruleIdx]?.actions[actionIdx];
+  return action?.objective === "jumpToBlock" ? action.target : undefined;
+}
+
+type TV3TypedEmbeddedField = NonNullable<TV3SurveyDocument["embeddedFields"]>[number];
+
+/**
+ * The typed fields the reference check reads for a document without `embeddedFields` — a PATCH that
+ * sent only `status`, `blocks` or the legacy keys. Its legacy `variables` cannot carry a computed date
+ * (ENG-6935), so the stored survey's typed rows fill it in: the document's `variables` with their
+ * types, the stored computed dates they leave out, and its hidden fields typed as stored.
+ */
+function getDocumentTypedFields(
+  document: TV3SurveyDocument,
+  storedEmbeddedFields: readonly TV3TypedEmbeddedField[] | undefined
+): TV3TypedEmbeddedField[] | undefined {
+  if (document.embeddedFields !== undefined || storedEmbeddedFields === undefined) {
+    return document.embeddedFields;
+  }
+  const variableIds = new Set(document.variables.map((variable) => variable.id));
+  const storedIngested = new Map(
+    storedEmbeddedFields
+      .filter((field) => field.source === "ingested")
+      .map((field) => [field.storageKey, field] as const)
+  );
+
+  return [
+    ...document.variables.map(
+      (variable): TV3TypedEmbeddedField => ({
+        storageKey: variable.id,
+        name: variable.name,
+        source: "computed",
+        dataType: variable.type === "number" ? "number" : "string",
+      })
+    ),
+    ...storedEmbeddedFields.filter(
+      (field) =>
+        field.source === "computed" &&
+        field.dataType === "date" &&
+        field.storageKey !== undefined &&
+        !variableIds.has(field.storageKey)
+    ),
+    ...(document.hiddenFields.fieldIds ?? []).map(
+      (fieldId): TV3TypedEmbeddedField =>
+        storedIngested.get(fieldId) ?? {
+          storageKey: fieldId,
+          name: fieldId,
+          source: "ingested",
+          dataType: "string",
+        }
+    ),
+  ];
+}
+
+function toReferenceInput(
+  document: TV3SurveyDocument,
+  storedEmbeddedFields?: readonly TV3TypedEmbeddedField[]
+) {
   return {
     blocks: document.blocks,
     endings: document.endings,
@@ -359,12 +445,19 @@ function toReferenceInput(document: TV3SurveyDocument) {
     metadata: document.metadata,
     variables: document.variables,
     welcomeCard: document.welcomeCard,
+    embeddedFields: getDocumentTypedFields(document, storedEmbeddedFields),
   };
+}
+
+export interface TV3SurveyDocumentValidationOptions {
+  /** The stored survey's typed Embedded Data rows, read when the document carries no `embeddedFields`. */
+  storedEmbeddedFields?: readonly TV3TypedEmbeddedField[];
 }
 
 export function validateV3SurveyDocument(
   document: TV3SurveyDocument,
-  precedence: TV3SurveyPrecedencePolicy
+  precedence: TV3SurveyPrecedencePolicy,
+  { storedEmbeddedFields }: TV3SurveyDocumentValidationOptions = {}
 ): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
   const mediaInvalidParams =
@@ -373,7 +466,7 @@ export function validateV3SurveyDocument(
       : getV3SurveyMediaInvalidParams(document.blocks);
   const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
 
-  const referenceInput = toReferenceInput(document);
+  const referenceInput = toReferenceInput(document, storedEmbeddedFields);
   const referenceValidation = validateV3SurveyReferences(referenceInput);
 
   if (!referenceValidation.ok) {
@@ -384,13 +477,17 @@ export function validateV3SurveyDocument(
     invalidParams.push(...getV3SurveyPrecedenceInvalidParams(referenceInput));
   } else if (precedence.mode === "introduced") {
     invalidParams.push(
-      ...getV3SurveyIntroducedPrecedenceInvalidParams(toReferenceInput(precedence.baseline), referenceInput)
+      ...getV3SurveyIntroducedPrecedenceInvalidParams(
+        toReferenceInput(precedence.baseline, storedEmbeddedFields),
+        referenceInput
+      )
     );
   }
 
   invalidParams.push(
     ...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence),
-    ...getV3SurveyCodeInvalidParams(document)
+    ...getV3SurveyCodeInvalidParams(document),
+    ...getV3SurveyStartLogicInvalidParams(document)
   );
 
   if (invalidParams.length > 0) {

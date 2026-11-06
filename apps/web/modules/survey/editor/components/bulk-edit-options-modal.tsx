@@ -11,7 +11,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString } from "@/lib/i18n/utils";
 import { findElementLocation } from "@/modules/survey/editor/lib/blocks";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -106,11 +106,13 @@ export const BulkEditOptionsModal = ({
 
     // Build detailed error info: option label -> block name where it's used
     const problematicOptions: { optionLabel: string; blockName: string }[] = [];
+    let usedInShowIf = false;
 
     for (const choice of choicesWithMissingLabels) {
-      const elementIndex = findOptionUsedInLogic(localSurvey, element.id, choice.id);
-      if (elementIndex !== -1) {
-        const elementWithLogic = allElements[elementIndex];
+      const use = findOptionUse(localSurvey, element.id, choice.id);
+      if (use) {
+        if (use.kind === "showIf") usedInShowIf = true;
+        const elementWithLogic = allElements[use.elementIndex];
         // Find which block contains this element
         const { block } = findElementLocation(localSurvey, elementWithLogic.id);
         if (block) {
@@ -125,9 +127,9 @@ export const BulkEditOptionsModal = ({
     // Format: "Option '3' is used in logic at 'Block Name'"
     const details = problematicOptions.map((opt) => `"${opt.optionLabel}" → ${opt.blockName}`).join(", ");
 
-    return t("workspace.surveys.edit.options_used_in_logic_bulk_error", {
-      questionIndexes: details,
-    });
+    return usedInShowIf
+      ? t("workspace.surveys.edit.options_used_in_logic_or_show_if_bulk_error", { questionIndexes: details })
+      : t("workspace.surveys.edit.options_used_in_logic_bulk_error", { questionIndexes: details });
   };
 
   const handleSave = () => {

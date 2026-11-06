@@ -120,10 +120,23 @@ export const ZDynamicLogicFieldValueDeprecated = z.union(
 
 export type TDynamicLogicFieldValueDeprecated = z.infer<typeof ZDynamicLogicFieldValueDeprecated>;
 
+/**
+ * Column ids one matrix row condition may list (ENG-6934). New in 6.2, so no stored condition exceeds
+ * it; far above any real matrix.
+ */
+export const MAX_MATRIX_CONDITION_COLUMN_IDS = 1000;
+
 // Right operand for conditions
 export const ZRightOperandStatic = z.object({
   type: z.literal("static"),
   value: z.union([z.string(), z.number(), z.array(z.string())]),
+  /**
+   * ENG-6934: on a matrix row condition, the id of the column `value` holds the position of. Read
+   * before the position, and wins when the two disagree (`matrix-conditions.ts`).
+   */
+  columnId: z.string().min(1).optional(),
+  /** ENG-6934: the column ids of a matrix row condition whose `value` is a list of positions (`isAnyOf`). */
+  columnIds: z.array(z.string().min(1)).max(MAX_MATRIX_CONDITION_COLUMN_IDS).optional(),
 });
 
 const _ZLeftOperand = ZDynamicLogicFieldValue;

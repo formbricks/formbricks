@@ -9,9 +9,11 @@ import {
   V3_SURVEY_BLOCK_ORDER_MAX,
   V3_SURVEY_MAX_BLOCKS,
   V3_SURVEY_MAX_DOCUMENT_LOCALE_KEYS,
+  V3_SURVEY_MAX_EMBEDDED_FIELDS,
   V3_SURVEY_MAX_ENDINGS,
   V3_SURVEY_MAX_HIDDEN_FIELDS,
   V3_SURVEY_MAX_LANGUAGES,
+  V3_SURVEY_MAX_START_LOGIC_RULES,
   V3_SURVEY_MAX_TRANSLATIONS,
   V3_SURVEY_MAX_TRIGGERS,
   V3_SURVEY_MAX_VARIABLES,
@@ -374,7 +376,7 @@ describe("ZV3CreateSurveyBody", () => {
     expect(
       result.error?.issues.find((issue) => issue.path.join(".") === "blocks.0.elements.0.choices.0.imageUrl")
     ).toMatchObject({
-      message: expect.stringContaining("Allowed fields: code, id, label"),
+      message: expect.stringContaining("Allowed fields: code, hidden, id, label, showIf"),
     });
   });
 
@@ -429,6 +431,115 @@ describe("ZV3CreateSurveyBody", () => {
         meta: { "en-US": "metadata" },
       },
     });
+  });
+
+  test("accepts show-if on blocks and elements, and rejects unknown keys inside it (ENG-6931)", () => {
+    const showIf = {
+      id: "clshowifgroup00000000001",
+      connector: "and",
+      conditions: [
+        {
+          id: "clshowifcond000000000001",
+          leftOperand: { type: "hiddenField", value: "plan" },
+          operator: "isSet",
+        },
+      ],
+    };
+    const withShowIf = (condition: Record<string, unknown>) => ({
+      ...validCreateBody,
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          showIf: { ...showIf, conditions: [condition] },
+          elements: [{ ...validCreateBody.blocks[0].elements[0], showIf }],
+        },
+      ],
+    });
+
+    const accepted = ZV3CreateSurveyBody.safeParse(withShowIf(showIf.conditions[0]));
+    expect(accepted.error?.issues ?? []).toEqual([]);
+    expect(accepted.data?.blocks[0].showIf).toEqual(showIf);
+    expect(accepted.data?.blocks[0].elements[0].showIf).toEqual(showIf);
+
+    const rejected = ZV3CreateSurveyBody.safeParse(withShowIf({ ...showIf.conditions[0], note: "x" }));
+    expect(rejected.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.0.showIf.conditions.0.note"
+    );
+  });
+
+  test("accepts show-if and hidden on choices, picture choices and matrix rows and columns (ENG-6937)", () => {
+    const showIf = {
+      id: "clshowifgroup00000000001",
+      connector: "and",
+      conditions: [
+        {
+          id: "clshowifcond000000000001",
+          leftOperand: { type: "hiddenField", value: "plan" },
+          operator: "isSet",
+        },
+      ],
+    };
+    const option = (id: string, extra: Record<string, unknown> = {}) => ({
+      id,
+      label: { "en-US": id },
+      ...extra,
+    });
+    const body = (extra: Record<string, unknown> = {}) => ({
+      ...validCreateBody,
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [
+            {
+              id: "pick",
+              type: "multipleChoiceMulti",
+              headline: { "en-US": "Pick" },
+              required: false,
+              choices: [option("a", { showIf, ...extra }), option("b", { hidden: true })],
+            },
+            {
+              id: "poster",
+              type: "pictureSelection",
+              headline: { "en-US": "Poster" },
+              required: false,
+              choices: [
+                { id: "pa", imageUrl: "https://example.com/a.png", hidden: true },
+                { id: "pb", imageUrl: "https://example.com/b.png", showIf },
+              ],
+            },
+            {
+              id: "grid",
+              type: "matrix",
+              headline: { "en-US": "Rate" },
+              required: false,
+              rows: [option("r1", { showIf }), option("r2")],
+              columns: [option("c1"), option("c2", { hidden: true })],
+            },
+          ],
+        },
+      ],
+    });
+
+    const accepted = ZV3CreateSurveyBody.safeParse(body());
+    expect(accepted.error?.issues ?? []).toEqual([]);
+    const elements = accepted.data?.blocks[0].elements as unknown as Record<
+      string,
+      Record<string, unknown>[]
+    >[];
+    expect(elements[0].choices[0].showIf).toEqual(showIf);
+    expect(elements[0].choices[1].hidden).toBe(true);
+    expect(elements[1].choices[0].hidden).toBe(true);
+    expect(elements[2].rows[0].showIf).toEqual(showIf);
+    expect(elements[2].columns[1].hidden).toBe(true);
+
+    const rejected = ZV3CreateSurveyBody.safeParse(
+      body({ showIf: { ...showIf, conditions: [{ ...showIf.conditions[0], note: "x" }] } })
+    );
+    expect(rejected.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "blocks.0.elements.0.choices.0.showIf.conditions.0.note"
+    );
   });
 
   test("rejects the internal default translation key in public v3 input", () => {
@@ -1726,6 +1837,13 @@ describe("top-level array bounds (ENG-3384)", () => {
   const variable = { id: "clvar123456789012345678901", name: "score", type: "number", value: 0 };
   const trigger = { actionClassId: "clact123456789012345678901" };
   const fieldIds = (count: number) => Array.from({ length: count }, (_unused, index) => `field_${index}`);
+  const embeddedFields = (count: number) =>
+    Array.from({ length: count }, (_unused, index) => ({ name: `field_${index}`, source: "ingested" }));
+  const startRule = {
+    id: "clrul123456789012345678901",
+    conditions: { id: "g", connector: "and", conditions: [] },
+    actions: [],
+  };
 
   const cases: [string, string[], Record<string, unknown>, Record<string, unknown>][] = [
     [
@@ -1757,6 +1875,18 @@ describe("top-level array bounds (ENG-3384)", () => {
       ["hiddenFields", "fieldIds"],
       { hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS + 1) } },
       { hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS + 1) } },
+    ],
+    [
+      "embeddedFields",
+      ["embeddedFields"],
+      { embeddedFields: embeddedFields(V3_SURVEY_MAX_EMBEDDED_FIELDS + 1) },
+      { embeddedFields: embeddedFields(V3_SURVEY_MAX_EMBEDDED_FIELDS + 1) },
+    ],
+    [
+      "startLogic",
+      ["startLogic"],
+      { startLogic: repeat(startRule, V3_SURVEY_MAX_START_LOGIC_RULES + 1) },
+      { startLogic: repeat(startRule, V3_SURVEY_MAX_START_LOGIC_RULES + 1) },
     ],
     [
       "distribution.triggers",
@@ -1800,6 +1930,12 @@ describe("top-level array bounds (ENG-3384)", () => {
       hiddenFields: { enabled: true, fieldIds: fieldIds(V3_SURVEY_MAX_HIDDEN_FIELDS) },
     });
     expect(atCap.success).toBe(true);
+
+    const embeddedAtCap = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      embeddedFields: embeddedFields(V3_SURVEY_MAX_EMBEDDED_FIELDS),
+    });
+    expect(embeddedAtCap.success).toBe(true);
 
     const noBlocks = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, blocks: [] });
     expect(noBlocks.success).toBe(false);

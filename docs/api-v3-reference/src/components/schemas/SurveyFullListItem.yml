@@ -1,0 +1,8 @@
+allOf:
+  - $ref: ./SurveyListItem.yml
+  - $ref: ./SurveyResource.yml
+description: >-
+  Shape of each item returned by `GET /api/v3/surveys?view=full`: every `SurveyListItem` field plus the
+  whole survey document that `GET /api/v3/surveys/{surveyId}` returns (without `lang`, so every configured
+  language), so switching views only ever adds fields. The document is read after the page itself; where
+  both carry a field, the document's value is the one returned.

@@ -6,6 +6,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyElementSummaryMatrix } from "@formbricks/types/surveys/types";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { OptionBaseNote } from "./OptionBaseNote";
 
 interface MatrixElementSummaryProps {
   readonly elementSummary: TSurveyElementSummaryMatrix;
@@ -57,12 +58,17 @@ export const MatrixElementSummary = ({ elementSummary, survey, setFilter }: Matr
             </tr>
           </thead>
           <tbody>
-            {elementSummary.data.map(({ rowLabel, columnPercentages }, rowIndex) => (
+            {elementSummary.data.map(({ rowLabel, columnPercentages, shownCount, hidden }, rowIndex) => (
               <tr key={rowLabel}>
                 <td className="max-w-60 overflow-hidden p-4 text-ellipsis whitespace-nowrap">
                   <TooltipRenderer tooltipContent={getTooltipContent(rowLabel)} shouldRender={true}>
                     <p className="max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{rowLabel}</p>
                   </TooltipRenderer>
+                  <OptionBaseNote
+                    shownCount={shownCount}
+                    base={elementSummary.responseCount}
+                    hidden={hidden}
+                  />
                 </td>
                 {columnPercentages.map(({ column, percentage }) => (
                   <td

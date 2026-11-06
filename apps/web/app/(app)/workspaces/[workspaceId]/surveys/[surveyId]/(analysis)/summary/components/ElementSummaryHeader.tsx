@@ -1,6 +1,6 @@
 "use client";
 
-import { InboxIcon } from "lucide-react";
+import { EyeOffIcon, InboxIcon } from "lucide-react";
 import type { JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyElementSummary } from "@formbricks/types/surveys/types";
@@ -10,6 +10,7 @@ import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import { getElementTypes } from "@/modules/survey/lib/elements";
 import { IdBadge } from "@/modules/ui/components/id-badge";
+import { useNotShownCount } from "../lib/not-shown-counts";
 
 interface HeadProps {
   readonly elementSummary: TSurveyElementSummary;
@@ -26,9 +27,13 @@ export const ElementSummaryHeader = ({
 }: HeadProps) => {
   const { t } = useTranslation();
   const elementType = getElementTypes(t).find((type) => type.id === elementSummary.element.type);
+  // Respondents a show-if kept the question from (ENG-6936): outside its base, so not in its counts.
+  const notShownCount = useNotShownCount(elementSummary.element.id);
 
   return (
-    <div className="space-y-2 px-4 pt-6 pb-5 md:px-6">
+    <div
+      className="space-y-2 px-4 pt-6 pb-5 md:px-6"
+      data-testid={`element-summary-header-${elementSummary.element.id}`}>
       <div className={"align-center flex justify-between gap-4"}>
         <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">
           {formatTextWithSlashes(
@@ -50,6 +55,12 @@ export const ElementSummaryHeader = ({
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
             <InboxIcon className="mr-2 size-4" />
             {t("common.count_responses", { count: elementSummary.responseCount })}
+          </div>
+        )}
+        {notShownCount > 0 && (
+          <div className="flex items-center rounded-lg bg-slate-100 p-2">
+            <EyeOffIcon className="mr-2 size-4" />
+            {t("workspace.surveys.summary.not_shown_to_count", { count: notShownCount })}
           </div>
         )}
         {additionalInfo}

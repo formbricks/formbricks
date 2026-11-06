@@ -18,6 +18,11 @@ import type {
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { cutText } from "@/lib/utils/cut-text";
+import {
+  type TFormulaReference,
+  formatFormula,
+  getFormulaReferences,
+} from "@/modules/survey/editor/lib/expression-formula";
 import { toReadableText } from "./cell-text";
 import { EXCEL_EXPORT_LOGIC_QUESTION_LABEL_CHARS } from "./limits";
 
@@ -82,6 +87,8 @@ type TLogicContext = {
   endings: TSurvey["endings"];
   embeddedFields: TLinkedEmbeddedField[];
   conjunction: Intl.ListFormat;
+  /** How a Set value expression names questions and fields, as the editor's expression box does. */
+  formulaReferences: TFormulaReference[];
 };
 
 const plain = (text: string | undefined): string => (text ? getTextContent(text) : "");
@@ -246,6 +253,13 @@ const jumpTargetPhrase = (ctx: TLogicContext, targetId: string): string => {
 const calculationPhrase = (ctx: TLogicContext, action: TActionCalculate): string => {
   const variable = fieldName(ctx, action.variableId, "computed");
   const { value: operand } = action;
+  // ENG-6935: an expression reads as the editor's expression box writes it, and only ever assigns.
+  if (operand.type === "expression") {
+    return ctx.t("workspace.surveys.export.logic.calculate_assign", {
+      variable,
+      value: formatFormula(operand.value, ctx.formulaReferences),
+    });
+  }
   let value: string;
   if (operand.type !== "static") value = fieldPhrase(ctx, operand);
   else if (typeof operand.value === "number") value = String(operand.value);
@@ -280,6 +294,8 @@ const actionPhrase = (ctx: TLogicContext, action: TSurveyBlockLogicAction): stri
       });
     case "calculate":
       return calculationPhrase(ctx, action);
+    case "markLowQuality":
+      return ctx.t("workspace.surveys.export.logic.mark_low_quality");
   }
 };
 
@@ -305,6 +321,7 @@ export const createLogicRenderer = ({
     endings: survey.endings,
     embeddedFields: getSurveyEmbeddedFields(survey),
     conjunction: new Intl.ListFormat(locale, { type: "conjunction" }),
+    formulaReferences: getFormulaReferences(survey),
   };
 
   return (block) => {
