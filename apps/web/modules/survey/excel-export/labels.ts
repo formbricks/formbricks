@@ -41,7 +41,10 @@ export interface TExcelExportLabels {
 
 const normalize = (text: string): string => text.trim().toLocaleLowerCase("en");
 
-const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
+// Spaces, the number, spaces: what stands between a numbered field's words ("Choice", "3").
+const NUMBER_PATTERN = String.raw`\s*\d+\s*`;
 
 // Stands in for the number in "Choice {n}", to split the translated name around it.
 const NUMBER_MARK = "\u0001";
@@ -49,7 +52,10 @@ const NUMBER_MARK = "\u0001";
 /** A matcher for a numbered field's name in one language: "Choice 3", "Auswahl 3", … */
 const numberedName = (name: string): RegExp => {
   const [before = "", after = ""] = name.split(NUMBER_MARK);
-  return new RegExp(`^${escapeRegExp(normalize(before))}\\s*\\d+\\s*${escapeRegExp(normalize(after))}$`, "u");
+  return new RegExp(
+    `^${escapeRegExp(normalize(before))}${NUMBER_PATTERN}${escapeRegExp(normalize(after))}$`,
+    "u"
+  );
 };
 
 /**

@@ -376,6 +376,12 @@ export const ImportSurveyForm = ({
   // loaded refuses the .qsf it was asked to read, with an error line like any other refusal.
   const canReadWithAI = isAIAvailable && !importer.aiUnavailableReason;
 
+  const filePicker = targetSurveyId ? (
+    <IntoSurveyFilePicker onFileSelect={importer.selectFile} />
+  ) : (
+    <ImportFilePicker canReadWithAI={canReadWithAI} onFileSelect={importer.selectFile} />
+  );
+
   const errorMessage = importer.errorCode
     ? getSurveyImportErrorMessage(importer.errorCode, t, importer.retryAfterSeconds)
     : null;
@@ -408,10 +414,8 @@ export const ImportSurveyForm = ({
           reviewDraft={reviewDraft}
           draftRef={draftRef}
         />
-      ) : targetSurveyId ? (
-        <IntoSurveyFilePicker onFileSelect={importer.selectFile} />
       ) : (
-        <ImportFilePicker canReadWithAI={canReadWithAI} onFileSelect={importer.selectFile} />
+        filePicker
       )}
 
       {reviewReport ? <UnreadLinesAlert report={reviewReport} /> : null}

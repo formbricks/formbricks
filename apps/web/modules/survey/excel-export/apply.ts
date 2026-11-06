@@ -478,40 +478,48 @@ class ExcelExportApplication {
     const text = this.toI18n(row, isRichText);
     if (!text) return this.skip(row.row, "no_text");
 
+    const refusal = this.setField(element, field, text);
+    if (refusal) return this.skip(row.row, refusal);
+    this.markChanged(element.id, row.row);
+    this.issues.push({ code: "sheet_option_added", severity: "info", params: { row: row.row } });
+  }
+
+  /** Add `text` to `element` as `field`; why it can't be, or `null` once it is. */
+  private setField(
+    element: TSurveyElement & Record<string, unknown>,
+    field: TExcelExportField,
+    text: TI18nString
+  ): TSurveyImportSheetRowSkipCause | null {
     switch (field.kind) {
       case "choice": {
-        if (!CHOICE_TYPES.has(element.type)) return this.skip(row.row, "field_not_in_question");
+        if (!CHOICE_TYPES.has(element.type)) return "field_not_in_question";
         const choices = element.choices as { id: string; label: TI18nString }[];
         // "Other" stays last, as the editor keeps it.
         const otherIndex = choices.findIndex((choice) => choice.id === "other");
         choices.splice(otherIndex < 0 ? choices.length : otherIndex, 0, { id: createId(), label: text });
-        break;
+        return null;
       }
       case "matrixRow":
       case "matrixColumn": {
-        if (element.type !== TSurveyElementTypeEnum.Matrix) {
-          return this.skip(row.row, "field_not_in_question");
-        }
+        if (element.type !== TSurveyElementTypeEnum.Matrix) return "field_not_in_question";
         const list = element[field.kind === "matrixRow" ? "rows" : "columns"] as {
           id: string;
           label: TI18nString;
         }[];
         list.push({ id: createId(), label: text });
-        break;
+        return null;
       }
       case "property": {
         const types = PROPERTY_TYPES[field.property];
-        if (types !== "all" && !types.has(element.type)) return this.skip(row.row, "field_not_in_question");
+        if (types !== "all" && !types.has(element.type)) return "field_not_in_question";
         // A field an existing question has is a keyed row: a second one is nothing to add.
         if (!this.createdElements.has(element.id) && element[field.property] !== undefined) {
-          return this.skip(row.row, "field_taken");
+          return "field_taken";
         }
         element[field.property] = text;
-        break;
+        return null;
       }
     }
-    this.markChanged(element.id, row.row);
-    this.issues.push({ code: "sheet_option_added", severity: "info", params: { row: row.row } });
   }
 
   /**

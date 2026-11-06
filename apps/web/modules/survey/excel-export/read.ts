@@ -142,16 +142,28 @@ export const readExcelExport = (archive: TZipArchive): TExcelExportRead => {
     code,
     column: findColumn(header, exported),
   }));
-  const questionIdColumn = findColumn(header, meta.questionIdHeader);
-  const typeColumn = findColumn(header, meta.typeHeader);
+  return {
+    languages,
+    locale: meta.locale,
+    ...readTextRows({
+      rows: rows.slice(headerIndex + 1),
+      firstRow: origin.row + headerIndex + 2,
+      languages,
+      questionIdColumn: findColumn(header, meta.questionIdHeader),
+      typeColumn: findColumn(header, meta.typeHeader),
+    }),
+  };
+};
 
-  const read: TExcelExportRead = { languages, locale: meta.locale, rows: [], duplicateRows: [] };
-  const seen = new Set<string>();
-  let textChars = 0;
-  /** Count a kept cell's text against the import's ceiling; past it the sheet is refused. */
-  const keep = (text: string): string => {
-    textChars += text.length;
-    if (textChars > EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS) {
+/**
+ * A counter of the text kept from the sheet's cells, against the import's ceiling: `keep` returns its
+ * text, or refuses the sheet past it.
+ */
+const createTextBudget = (): ((text: string) => string) => {
+  let chars = 0;
+  return (text) => {
+    chars += text.length;
+    if (chars > EXCEL_EXPORT_IMPORT_MAX_TEXT_CHARS) {
       throw documentLimitExceeded(
         "text_size",
         "file",
@@ -160,18 +172,38 @@ export const readExcelExport = (archive: TZipArchive): TExcelExportRead => {
     }
     return text;
   };
-  for (let index = headerIndex + 1; index < rows.length; index += 1) {
-    const row = rows[index];
-    if (!row.some((text) => text.trim() !== "")) continue;
-    const sheetRow = origin.row + index + 1;
+};
+
+/** The texts sheet's rows under its header, as the import reads them; empty rows are left out. */
+const readTextRows = ({
+  rows,
+  firstRow,
+  languages,
+  questionIdColumn,
+  typeColumn,
+}: {
+  rows: string[][];
+  /** The 1-based sheet row of `rows[0]`. */
+  firstRow: number;
+  languages: TExcelExportLanguageColumn[];
+  questionIdColumn: number | null;
+  typeColumn: number | null;
+}): Pick<TExcelExportRead, "rows" | "duplicateRows"> => {
+  const read: Pick<TExcelExportRead, "rows" | "duplicateRows"> = { rows: [], duplicateRows: [] };
+  const keep = createTextBudget();
+  const seen = new Set<string>();
+  const cellOf = (row: string[], column: number | null): string =>
+    column === null ? "" : keep((row[column] ?? "").trim());
+
+  rows.forEach((row, index) => {
+    if (!row.some((text) => text.trim() !== "")) return;
+    const sheetRow = firstRow + index;
     const key = row[0]?.trim() ?? "";
-    if (key) {
-      if (seen.has(key)) {
-        read.duplicateRows.push(sheetRow);
-        continue;
-      }
-      seen.add(key);
+    if (key && seen.has(key)) {
+      read.duplicateRows.push(sheetRow);
+      return;
     }
+    if (key) seen.add(key);
     const cells = new Map<string, string>();
     for (const { code, column } of languages) {
       if (column !== null) cells.set(code, keep(row[column] ?? ""));
@@ -179,10 +211,10 @@ export const readExcelExport = (archive: TZipArchive): TExcelExportRead => {
     read.rows.push({
       row: sheetRow,
       key,
-      questionId: questionIdColumn === null ? "" : keep((row[questionIdColumn] ?? "").trim()),
-      type: typeColumn === null ? "" : keep((row[typeColumn] ?? "").trim()),
+      questionId: cellOf(row, questionIdColumn),
+      type: cellOf(row, typeColumn),
       cells,
     });
-  }
+  });
   return read;
 };

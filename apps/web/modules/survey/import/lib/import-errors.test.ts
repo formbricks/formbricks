@@ -161,6 +161,7 @@ describe("getSurveyImportErrorMessage for a question list past a limit", () => {
     "tables",
     "table_cells",
     "source_size",
+    "text_size",
   ])("says which limit for %s", (limit) => {
     expect(getSurveyImportErrorMessage(`document_limit_exceeded:${limit}`, t)).toBe(
       `workspace.surveys.import.errors.document_limits.${limit}`
@@ -312,5 +313,22 @@ describe("getSurveyImportFieldProblemHeadline", () => {
   test("says a field without a code, or with one it does not know, is not valid", () => {
     expect(getSurveyImportFieldProblemHeadline(undefined, english)).toBe("This field isn’t valid");
     expect(getSurveyImportFieldProblemHeadline("something_new", english)).toBe("This field isn’t valid");
+  });
+});
+
+describe("an import into a survey from its menu (ENG-6809)", () => {
+  test.each([
+    ["excel_export_not_recognized", "workspace.surveys.import.errors.excel_export_not_recognized"],
+    ["excel_export_other_survey", "workspace.surveys.import.errors.excel_export_other_survey"],
+  ])("names a %s refusal and says it in its own words", (code, key) => {
+    const errorCode = getSurveyImportRequestErrorCode(fileRefusal(422, code));
+    expect(errorCode).toBe(code);
+    expect(getSurveyImportErrorMessage(errorCode, t)).toBe(key);
+  });
+
+  test("asks for a Formbricks file or the survey's Excel export when another kind was picked", () => {
+    expect(getSurveyImportErrorMessage("file_wrong_extension_into_survey", t)).toBe(
+      "workspace.surveys.import.errors.wrong_extension_into_survey"
+    );
   });
 });

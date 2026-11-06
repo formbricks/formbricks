@@ -201,6 +201,17 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
 };
 
 /**
+ * The sentences for an import into a survey from its menu (ENG-6809): a file of another kind, a workbook
+ * that is not an Excel export, or another survey's. Literal `t()` calls, so the translation scanner sees
+ * every key.
+ */
+const INTO_SURVEY_MESSAGES: Readonly<Record<string, (t: TTranslate) => string>> = {
+  file_wrong_extension_into_survey: (t) => t("workspace.surveys.import.errors.wrong_extension_into_survey"),
+  excel_export_not_recognized: (t) => t("workspace.surveys.import.errors.excel_export_not_recognized"),
+  excel_export_other_survey: (t) => t("workspace.surveys.import.errors.excel_export_other_survey"),
+};
+
+/**
  * The sentence for an import failure: a file the browser refused, a request the route refused, or an
  * `error` event from the stream. AI codes fall through to Create with AI's wording, so both features
  * say the same thing about the same provider problem.
@@ -219,16 +230,11 @@ export const getSurveyImportErrorMessage = (
   if (code === SURVEY_IMPORT_JSON_INVALID_CODE || code.startsWith(`${SURVEY_IMPORT_JSON_INVALID_CODE}:`)) {
     return getJsonInvalidMessage(code, t);
   }
+  if (Object.hasOwn(INTO_SURVEY_MESSAGES, code)) return INTO_SURVEY_MESSAGES[code](t);
 
   switch (code) {
     case "file_wrong_extension":
       return t("workspace.surveys.import.errors.wrong_extension");
-    case "file_wrong_extension_into_survey":
-      return t("workspace.surveys.import.errors.wrong_extension_into_survey");
-    case "excel_export_not_recognized":
-      return t("workspace.surveys.import.errors.excel_export_not_recognized");
-    case "excel_export_other_survey":
-      return t("workspace.surveys.import.errors.excel_export_other_survey");
     case "file_needs_ai":
       return t("workspace.surveys.import.errors.needs_ai");
     case "file_type_unsupported":
