@@ -4,6 +4,7 @@ import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import type { TFunction } from "i18next";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
@@ -17,26 +18,23 @@ import { ElementFormInput } from "@/modules/survey/components/element-form-input
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
 import { type TSetOptionHidden } from "@/modules/survey/editor/components/option-hide-button";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
-import { type TUseKind, findOptionUse } from "@/modules/survey/editor/lib/utils";
+import { type TUse, findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
-/** Why a row or column can't be deleted, by what reads it: a show-if, or a rule (any other use). */
-const OPTION_IN_USE_ERRORS = {
-  row: {
-    showIf: "workspace.surveys.edit.row_used_in_show_if_error",
-    logic: "workspace.surveys.edit.row_used_in_logic_error",
-    startLogic: "workspace.surveys.edit.row_used_in_logic_error",
-    copiedOptions: "workspace.surveys.edit.row_used_in_logic_error",
-  },
-  column: {
-    showIf: "workspace.surveys.edit.column_used_in_show_if_error",
-    logic: "workspace.surveys.edit.column_used_in_logic_error",
-    startLogic: "workspace.surveys.edit.column_used_in_logic_error",
-    copiedOptions: "workspace.surveys.edit.column_used_in_logic_error",
-  },
-} as const satisfies Record<"row" | "column", Record<TUseKind, string>>;
+/** Why a row or column can't be deleted: a show-if reads it, or a rule does (any other use). */
+const getOptionInUseError = (t: TFunction, type: "row" | "column", use: TUse): string => {
+  const questionIndex = use.elementIndex + 1;
+  if (type === "row") {
+    return use.kind === "showIf"
+      ? t("workspace.surveys.edit.row_used_in_show_if_error", { questionIndex })
+      : t("workspace.surveys.edit.row_used_in_logic_error", { questionIndex });
+  }
+  return use.kind === "showIf"
+    ? t("workspace.surveys.edit.column_used_in_show_if_error", { questionIndex })
+    : t("workspace.surveys.edit.column_used_in_logic_error", { questionIndex });
+};
 
 interface MatrixElementFormProps {
   readonly localSurvey: TSurvey;
@@ -97,7 +95,7 @@ export const MatrixElementForm = ({
     // A row or column a rule or a show-if reads can't be deleted.
     const use = findOptionUse(localSurvey, element.id, index.toString(), type === "row");
     if (use) {
-      toast.error(t(OPTION_IN_USE_ERRORS[type][use.kind], { questionIndex: use.elementIndex + 1 }));
+      toast.error(getOptionInUseError(t, type, use));
       return;
     }
 
