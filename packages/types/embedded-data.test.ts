@@ -146,13 +146,17 @@ describe("ZEmbeddedData", () => {
       expect(ZEmbeddedData.safeParse(ingested).success).toBe(true);
     });
 
-    test.each(["boolean", "date"] as const)("rejects a computed field typed as %s", (dataType) => {
-      // The logic engine only calculates strings and numbers.
-      expect(failedPaths({ ...localField, dataType, defaultValue: null })).toContain("dataType");
+    test("rejects a computed field typed as boolean", () => {
+      // The logic engine calculates strings, numbers and (ENG-6935) dates.
+      expect(failedPaths({ ...localField, dataType: "boolean", defaultValue: null })).toContain("dataType");
     });
 
-    test.each(["string", "number"] as const)("accepts a computed field typed as %s", (dataType) => {
-      const value = dataType === "number" ? 0 : "";
+    test.each([
+      ["string", ""],
+      ["number", 0],
+      // ENG-6935: Set value computes dates (`now()`), stored as ISO 8601 UTC strings.
+      ["date", null],
+    ] as const)("accepts a computed field typed as %s", (dataType, value) => {
       expect(ZEmbeddedData.safeParse({ ...localField, dataType, defaultValue: value }).success).toBe(true);
     });
   });

@@ -6,6 +6,7 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
+import { getArrangementResetBlockId } from "@/lib/card-arrangement-reset";
 import { isEndSlotEmpty, isSlotRendered } from "@/lib/end-slot";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
@@ -154,10 +155,13 @@ export function StackedCardsContainer({
     // hasError: the end slot of a survey without an ending card only mounts once an error shows
   }, [blockIdxTemp, cardArrangement, cardRefs, hasError]);
 
-  // Reset block progress, when card arrangement changes
+  // Reset block progress when the card arrangement changes; never on mount (see the helper).
+  const previousArrangementRef = useRef<TCardArrangementOptions | undefined>(undefined);
   useEffect(() => {
-    if (shouldResetBlockId) {
-      setBlockId(survey.welcomeCard.enabled ? "start" : survey.blocks[0].id);
+    const resetBlockId = getArrangementResetBlockId(previousArrangementRef.current, cardArrangement, survey);
+    previousArrangementRef.current = cardArrangement;
+    if (shouldResetBlockId && resetBlockId) {
+      setBlockId(resetBlockId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when cardArrangement changes
   }, [cardArrangement]);

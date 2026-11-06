@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   END_BLOCK_ID,
   START_BLOCK_ID,
+  getEntryBlockId,
   getForwardTargetFromOffBlockId,
   getPreviousBlockId,
   getRestorableHistory,
@@ -84,5 +85,40 @@ describe("getRestorableHistory", () => {
 
   test("drops ending ids and the 'end' sentinel, which are not places to go back to", () => {
     expect(getRestorableHistory(survey, ["block-1", "ending-1", END_BLOCK_ID])).toEqual(["block-1"]);
+  });
+});
+
+describe("getEntryBlockId", () => {
+  test("a block a start-logic jump opened, with nothing passed over, is the entry block", () => {
+    expect(
+      getEntryBlockId({
+        openedBlockId: "block-3",
+        startBlockId: "block-3",
+        nextCardId: "block-3",
+        skippedBlockIds: [],
+      })
+    ).toBe("block-3");
+  });
+
+  test("a block reached by passing over not-shown blocks is the entry block", () => {
+    expect(
+      getEntryBlockId({
+        openedBlockId: "block-1",
+        startBlockId: undefined,
+        nextCardId: "block-2",
+        skippedBlockIds: ["block-1"],
+      })
+    ).toBe("block-2");
+  });
+
+  test("a start-at link without a jump keeps Back in editor order", () => {
+    expect(
+      getEntryBlockId({
+        openedBlockId: "block-2",
+        startBlockId: undefined,
+        nextCardId: "block-2",
+        skippedBlockIds: [],
+      })
+    ).toBeUndefined();
   });
 });

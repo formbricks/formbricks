@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH,
+  EMBEDDED_DATA_NAME_MAX_LENGTH,
   type TEmbeddedData,
   ZEmbeddedDataDefaultValue,
   ZEmbeddedDataSource,
@@ -49,9 +51,9 @@ export type TEmbeddedDataUsageItem = z.infer<typeof ZEmbeddedDataUsageItem>;
  * into public survey payloads, so one oversized library field inflates every linked survey's
  * payload for every respondent.
  */
-const NAME_MAX = 255;
+const NAME_MAX = EMBEDDED_DATA_NAME_MAX_LENGTH;
 const DESCRIPTION_MAX = 1000;
-const DEFAULT_VALUE_MAX = 1000;
+const DEFAULT_VALUE_MAX = EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH;
 
 /** A string default, capped; the other branches are scalars and bounded by their own types. */
 const ZCappedDefaultValue = ZEmbeddedDataDefaultValue.refine(

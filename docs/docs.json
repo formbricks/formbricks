@@ -125,6 +125,9 @@
                 "icon": "wrench",
                 "pages": [
                   "surveys/general-features/add-image-or-video-question",
+                  "surveys/general-features/flow-tab",
+                  "surveys/general-features/set-value",
+                  "surveys/general-features/show-if",
                   "surveys/general-features/conditional-logic",
                   "surveys/general-features/overwrite-styling",
                   "surveys/general-features/custom-css",

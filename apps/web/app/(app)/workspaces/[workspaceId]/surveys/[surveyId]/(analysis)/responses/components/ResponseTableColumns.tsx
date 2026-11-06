@@ -23,7 +23,7 @@ import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { OutcomeBadge } from "@/modules/analysis/response-outcome/components/outcome-badge";
 import { responseStatus } from "@/modules/analysis/response-outcome/lib/outcome";
-import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
+import { displayEmbeddedFieldValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { formatCodedLabel, getChoiceBadgeText } from "@/modules/survey/lib/element-code-label";
 import { VARIABLES_ICON_MAP, getElementIconMap } from "@/modules/survey/lib/elements";
@@ -474,7 +474,13 @@ export const generateResponseTableColumns = (
         cell: ({ row }) => {
           const variableResponse = row.original.variables[link.storageKey];
           if (typeof variableResponse === "string" || typeof variableResponse === "number") {
-            return <div className="text-slate-900">{variableResponse}</div>;
+            // A date field set by now() keeps its time (P65); the stored value is the tooltip.
+            const shown = displayEmbeddedFieldValue(variableResponse, field.dataType, locale);
+            return (
+              <div className="text-slate-900" title={shown?.title}>
+                {shown?.text}
+              </div>
+            );
           }
         },
       };
@@ -485,7 +491,7 @@ export const generateResponseTableColumns = (
   // later one carries its storage key so the columns stay tellable apart.
   const hiddenFieldColumns: ColumnDef<TResponseTableData>[] = labelEmbeddedFields(
     getIngestedEmbeddedFields(survey)
-  ).map(({ link, label }) => {
+  ).map(({ field, link, label }) => {
     return {
       accessorKey: "HIDDEN_FIELD_" + link.storageKey,
       meta: { label },
@@ -498,9 +504,17 @@ export const generateResponseTableColumns = (
         </div>
       ),
       cell: ({ row }) => {
-        const hiddenFieldResponse = displayEmbeddedValue(row.original.responseData[link.storageKey]);
+        const hiddenFieldResponse = displayEmbeddedFieldValue(
+          row.original.responseData[link.storageKey],
+          field.dataType,
+          locale
+        );
         if (hiddenFieldResponse !== null) {
-          return <div className="text-slate-900">{hiddenFieldResponse}</div>;
+          return (
+            <div className="text-slate-900" title={hiddenFieldResponse.title}>
+              {hiddenFieldResponse.text}
+            </div>
+          );
         }
       },
     };

@@ -3,6 +3,7 @@ import { ZStorageUrl, isSafeLinkUrl } from "../common";
 import { ZI18nString } from "../i18n";
 import { ZAllowedFileExtension } from "../storage";
 import { TSurveyElementTypeEnum } from "./constants";
+import { ZConditionGroup } from "./logic";
 import { FORBIDDEN_IDS } from "./validation";
 import { ZValidationRules } from "./validation-rules";
 
@@ -70,6 +71,12 @@ export const ZSurveyElementBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   isDraft: z.boolean().optional(),
+  /**
+   * Show-if (ENG-6931): the element is shown only when this condition group matches, re-evaluated
+   * live as answers above it on the same page change. It may use earlier blocks plus elements above
+   * it in the same block. Absent, or an empty group, means always shown.
+   */
+  showIf: ZConditionGroup.optional(),
 });
 
 /**
@@ -145,11 +152,27 @@ export const ZSurveyConsentElement = ZSurveyQuestionElementBase.extend({
 
 export type TSurveyConsentElement = z.infer<typeof ZSurveyConsentElement>;
 
+/**
+ * Option show-if and Hidden (ENG-6937, json-shapes §2), on every item a respondent picks from: the
+ * choices of single select, multi select and ranking, picture choices, and matrix rows and columns.
+ *
+ * - `showIf`: the item is shown only when this group matches, re-evaluated live. It may use what its
+ *   element's show-if may use: earlier blocks plus elements above the element on its block.
+ * - `hidden: true` retires the item on a live survey instead of deleting it (P1, P9). It wins over
+ *   `showIf`: the item is never shown and is recorded as not shown, but keeps its id, answer code and
+ *   earlier answers. Both stay allowed on published surveys (ADR 0020).
+ */
+export const ZOptionVisibility = {
+  showIf: ZConditionGroup.optional(),
+  hidden: z.boolean().optional(),
+};
+
 // Multiple Choice Elements
 export const ZSurveyElementChoice = z.object({
   id: z.string(),
   label: ZI18nString,
   code: ZElementCode,
+  ...ZOptionVisibility,
 });
 
 export type TSurveyElementChoice = z.infer<typeof ZSurveyElementChoice>;
@@ -185,9 +208,18 @@ export const ZStoredShuffleOptionWithDefault = z
 export const ZMultipleChoiceOptionDisplayType = z.enum(["list", "row", "dropdown"]);
 export type TMultipleChoiceOptionDisplayType = z.infer<typeof ZMultipleChoiceOptionDisplayType>;
 
+/**
+ * Copied options (ENG-6938, json-shapes §3): the id of the earlier question whose options this one
+ * copies. Copied options keep the source's option ids and answer codes, and each carries an ordinary
+ * show-if "picked in the source". Choices copy from choices (single select, multi select, ranking),
+ * pictures from pictures. The validator checks the source exists, comes earlier and is compatible.
+ */
+export const ZOptionsCopiedFrom = z.string().optional();
+
 // Multiple Choice Single Element
 export const ZSurveyMultipleChoiceSingleElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.MultipleChoiceSingle),
+  optionsCopiedFrom: ZOptionsCopiedFrom,
   choices: z.array(ZSurveyElementChoice).min(2, {
     error: "Multiple Choice Element must have at least two choices",
   }),
@@ -199,6 +231,7 @@ export const ZSurveyMultipleChoiceSingleElement = ZSurveyQuestionElementBase.ext
 // Multiple Choice Multi Element
 export const ZSurveyMultipleChoiceMultiElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.MultipleChoiceMulti),
+  optionsCopiedFrom: ZOptionsCopiedFrom,
   choices: z.array(ZSurveyElementChoice).min(2, {
     error: "Multiple Choice Element must have at least two choices",
   }),
@@ -283,12 +316,14 @@ export const ZSurveyPictureChoice = z.object({
   code: ZElementCode,
   imageUrl: ZStorageUrl,
   imageAltText: ZI18nString.optional(),
+  ...ZOptionVisibility,
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
 
 export const ZSurveyPictureSelectionElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.PictureSelection),
+  optionsCopiedFrom: ZOptionsCopiedFrom,
   allowMulti: z.boolean().prefault(false),
   choices: z.array(ZSurveyPictureChoice).min(2, {
     error: "Picture Selection element must have a minimum of 2 choices",
@@ -343,6 +378,7 @@ export const ZSurveyMatrixElementChoice = z.object({
   id: z.string(),
   label: ZI18nString,
   code: ZElementCode,
+  ...ZOptionVisibility,
 });
 
 export type TSurveyMatrixElementChoice = z.infer<typeof ZSurveyMatrixElementChoice>;
@@ -382,6 +418,7 @@ export type TSurveyAddressElement = z.infer<typeof ZSurveyAddressElement>;
 // Ranking Element
 export const ZSurveyRankingElement = ZSurveyQuestionElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Ranking),
+  optionsCopiedFrom: ZOptionsCopiedFrom,
   choices: z
     .array(ZSurveyElementChoice)
     .min(2, {

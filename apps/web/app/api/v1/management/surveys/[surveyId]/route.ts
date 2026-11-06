@@ -1,7 +1,11 @@
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
+import {
+  ZStoredSurveyVariables,
+  ZSurveyHiddenFields,
+  ZSurveyUpdateInput,
+} from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
@@ -25,6 +29,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { getLegacyWriteEmbeddedFields } from "@/lib/embedded-data/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { SURVEY_ACTION_FOR_METHOD, canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
@@ -221,9 +226,17 @@ export const PUT = withV1ApiWrapper({
         surveyUpdate.questions = [];
       }
 
+      const merged = { ...result.survey, ...surveyUpdate };
       const inputValidation = ZSurveyUpdateInput.safeParse({
-        ...result.survey,
-        ...surveyUpdate,
+        ...merged,
+        // Read by the validation and never output (ENG-6935): the rows this legacy write leaves the
+        // survey with, so logic resolves a computed date the legacy `variables` can't say. A body's
+        // own `embeddedFields` is neither validated against nor written.
+        // Malformed legacy keys count as absent here; the parse reports them at their own path.
+        embeddedFields: getLegacyWriteEmbeddedFields(result.survey.embeddedFields ?? [], {
+          variables: ZStoredSurveyVariables.safeParse(merged.variables).data,
+          hiddenFields: ZSurveyHiddenFields.safeParse(merged.hiddenFields).data,
+        }),
       });
 
       if (!inputValidation.success) {

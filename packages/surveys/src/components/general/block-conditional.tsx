@@ -18,6 +18,8 @@ import {
 } from "@/lib/auto-progress";
 import { type SubmitContributor, answersForValidation, createBlockSubmitRunner } from "@/lib/block-submit";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getBlockPrefill } from "@/lib/prefill";
+import { getRevealedElementIds } from "@/lib/revealed-elements";
 import { type SignatureDraftStore } from "@/lib/signature-answer";
 import { cn } from "@/lib/utils";
 import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
@@ -92,6 +94,11 @@ interface BlockConditionalProps {
   fullSizeCards: boolean;
   isCardless?: boolean;
   surveyLanguages: TSurveyLanguage[];
+  /**
+   * The elements show-if leaves on this page (ENG-6931), re-evaluated by the survey as answers change.
+   * Hidden elements are not rendered, validated or submitted. Absent means every element is shown.
+   */
+  visibleElementIds?: string[];
   /** The survey's in-memory Signature drawings, so a drawing survives leaving this card and coming back. */
   signatureDrafts: SignatureDraftStore;
 }
@@ -120,10 +127,16 @@ export function BlockConditional({
   fullSizeCards,
   isCardless = false,
   surveyLanguages,
+  visibleElementIds,
   signatureDrafts,
 }: Readonly<BlockConditionalProps>) {
+  // What the page shows. Auto-progress and `skipPrefilled` still read `block.elements`: a block with a
+  // follow-up hidden for now must not auto-submit on the answer that would reveal it.
+  const elements = visibleElementIds
+    ? block.elements.filter((element) => visibleElementIds.includes(element.id))
+    : block.elements;
   // Track the current element being filled (for TTC tracking)
-  const [currentElementId, setCurrentElementId] = useState(block.elements[0]?.id);
+  const [currentElementId, setCurrentElementId] = useState(elements[0]?.id);
 
   // State to store validation errors from centralized validation
   const [elementErrors, setElementErrors] = useState<TValidationErrorMap>({});
@@ -136,6 +149,20 @@ export function BlockConditional({
   const autoProgressingInFlightRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // A follow-up an answer on this page just revealed is scrolled into view (ENG-6931), above the
+  // card's scroll-down button (the container's scroll padding), instead of appearing under it.
+  const shownElementIdsRef = useRef<string[] | null>(null);
+  const shownElementIdsKey = elements.map((element) => element.id).join("|");
+  useEffect(() => {
+    const shownIds = shownElementIdsKey === "" ? [] : shownElementIdsKey.split("|");
+    const revealed = getRevealedElementIds(shownElementIdsRef.current, shownIds);
+    shownElementIdsRef.current = shownIds;
+    const lastRevealed = revealed.at(-1);
+    if (lastRevealed === undefined) return;
+    requestAnimationFrame(() => {
+      elementFormRefs.current.get(lastRevealed)?.scrollIntoView({ block: "nearest" });
+    });
+  }, [shownElementIdsKey]);
   // Elements that produce their answer on Next (the Signature uploads its image then), and the guard
   // that keeps a second press from starting a second upload while the first is still running.
   const submitContributorsRef = useRef(new Map<string, SubmitContributor>());
@@ -232,7 +259,7 @@ export function BlockConditional({
       });
     }
     const mergedValue = { ...value, ...responseData };
-    const blockResponses = block.elements.reduce<TResponseData>((acc, element) => {
+    const blockResponses = elements.reduce<TResponseData>((acc, element) => {
       const elementValue = mergedValue[element.id];
       if (elementValue !== undefined) {
         acc[element.id] = elementValue;
@@ -278,42 +305,25 @@ export function BlockConditional({
 
   // Handle prefilling at block level (both skipPrefilled and regular prefilling)
   useEffect(() => {
-    if (prefilledResponseData) {
-      // Collect all prefilled values for elements in this block
-      const prefilledData: TResponseData = {};
-      let hasAnyPrefilled = false;
+    // Every element of the block, not only those shown now: a prefill that reveals a required
+    // follow-up keeps the page open for it (`getBlockPrefill`).
+    const { data: prefilledData, autoSubmit } = getBlockPrefill(block, prefilledResponseData, skipPrefilled);
+    if (Object.keys(prefilledData).length === 0) return;
 
+    // Apply all prefilled values in one atomic operation
+    onChange(prefilledData);
+
+    if (autoSubmit) {
+      const prefilledTtc: TResponseTtc = {};
       block.elements.forEach((element) => {
-        if (prefilledResponseData[element.id] !== undefined) {
-          prefilledData[element.id] = prefilledResponseData[element.id];
-          hasAnyPrefilled = true;
-        }
+        prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
       });
+      setTtc({ ...ttc, ...prefilledTtc });
 
-      if (hasAnyPrefilled) {
-        // Apply all prefilled values in one atomic operation
-        onChange(prefilledData);
-
-        // If skipPrefilled and ALL elements are prefilled, auto-submit
-        if (skipPrefilled) {
-          const allElementsPrefilled = block.elements.every(
-            (element) => prefilledResponseData[element.id] !== undefined
-          );
-
-          if (allElementsPrefilled) {
-            const prefilledTtc: TResponseTtc = {};
-            block.elements.forEach((element) => {
-              prefilledTtc[element.id] = 0; // 0 TTC for prefilled/skipped questions
-            });
-            setTtc({ ...ttc, ...prefilledTtc });
-
-            // Auto-submit the entire block (skip to next)
-            setTimeout(() => {
-              onSubmit(prefilledData, prefilledTtc);
-            }, 0);
-          }
-        }
-      }
+      // Auto-submit the entire block (skip to next)
+      setTimeout(() => {
+        onSubmit(prefilledData, prefilledTtc);
+      }, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run once when block mounts
   }, []);
@@ -401,7 +411,7 @@ export function BlockConditional({
   const findFirstInvalidForm = (answers: TResponseData): HTMLFormElement | null => {
     let firstInvalidForm: HTMLFormElement | null = null;
 
-    for (const element of block.elements) {
+    for (const element of elements) {
       const form = elementFormRefs.current.get(element.id);
       if (form && !validateElementForm(element, form, answers)) {
         firstInvalidForm ??= form;
@@ -417,7 +427,7 @@ export function BlockConditional({
     ttcCollectorRef.current = {};
 
     // Call each form's submit method to trigger TTC calculation
-    block.elements.forEach((element) => {
+    elements.forEach((element) => {
       const form = elementFormRefs.current.get(element.id);
       if (form) {
         form.requestSubmit();
@@ -426,7 +436,7 @@ export function BlockConditional({
 
     // Collect TTC from the ref (populated synchronously by form submissions)
     const blockTtc: TResponseTtc = {};
-    block.elements.forEach((element) => {
+    elements.forEach((element) => {
       if (ttcCollectorRef.current[element.id] !== undefined) {
         blockTtc[element.id] = ttcCollectorRef.current[element.id];
       } else if (ttc[element.id] !== undefined) {
@@ -440,7 +450,7 @@ export function BlockConditional({
   // Collect responses for all elements in this block
   const collectBlockResponses = (answers: TResponseData = value): TResponseData => {
     const blockResponses: TResponseData = {};
-    block.elements.forEach((element) => {
+    elements.forEach((element) => {
       if (answers[element.id] !== undefined) {
         blockResponses[element.id] = answers[element.id];
       }
@@ -457,7 +467,7 @@ export function BlockConditional({
     const answers = answersForValidation(value, submitContributorsRef.current);
 
     // Run centralized validation for elements that support it
-    const errorMap = validateBlockResponses(block.elements, answers, languageCode);
+    const errorMap = validateBlockResponses(elements, answers, languageCode);
 
     // Check if there are any validation errors from centralized validation
     const hasValidationErrors = Object.keys(errorMap).length > 0;
@@ -520,9 +530,10 @@ export function BlockConditional({
       <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
         <div className={isActionRowSticky ? undefined : "space-y-6"}>
           {/* While Next uploads, the card's other inputs are read-only: the answers sent are the ones that were
-              just validated, so an edit made now would be silently dropped. */}
-          <fieldset disabled={isSubmitting} className="m-0 min-w-0 space-y-6 border-0 p-0">
-            {block.elements.map((element, index) => {
+              just validated, so an edit made now would be silently dropped. No margin utility: it would
+              beat the space-y-6 gap above the action row. The preflight already zeroes a fieldset's margin. */}
+          <fieldset disabled={isSubmitting} className="min-w-0 space-y-6 border-0 p-0">
+            {elements.map((element, index) => {
               const isFirstElement = index === 0;
 
               return (

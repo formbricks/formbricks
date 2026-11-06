@@ -312,17 +312,28 @@ describe("toLegacyEmbeddedFields", () => {
         computed({ dataType: "boolean", defaultValue: true }),
         "",
       ],
-      [
-        "a date field, whose ISO default the text arm takes verbatim",
-        computed({ dataType: "date", defaultValue: "2026-08-06" }),
-        "2026-08-06",
-      ],
     ])("%s", (_label, field, expectedValue) => {
       const [variable] = toLegacyEmbeddedFields([field]).variables;
 
       expect(variable.value).toBe(expectedValue);
       expect(ZSurveyVariable.safeParse(variable).success).toBe(true);
     });
+  });
+
+  test("leaves a computed date field out of the legacy variables (ENG-6935)", () => {
+    // json-shapes §6: a variable is a number or text, so a computed date appears only in the typed
+    // `embeddedFields`; a legacy reader would otherwise take it for a text variable.
+    const derived = toLegacyEmbeddedFields([
+      computed(),
+      computed({
+        storageKey: "clx000000000000000000002",
+        name: "signup",
+        dataType: "date",
+        defaultValue: null,
+      }),
+    ]);
+
+    expect(derived.variables.map((variable) => variable.name)).toEqual(["score"]);
   });
 
   describe("hiddenFields.enabled", () => {

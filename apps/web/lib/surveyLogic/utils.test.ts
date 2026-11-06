@@ -10,6 +10,7 @@ import { TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import {
   addConditionBelow,
   buildServerEmbeddedValues,
+  createEmptySetValueAction,
   createGroupFromResource,
   deleteEmptyGroups,
   duplicateCondition,
@@ -226,10 +227,21 @@ describe("surveyLogic", () => {
     const base: TSurveyBlockLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     const calc = getUpdatedActionBody(base, "calculate");
     expect(calc.objective).toBe("calculate");
+    // Switching an action to Set value starts on Assign with an empty value, exactly as a new Set
+    // value rule from the Add logic menu does (rule-list `createRule`; ENG-6969 review, supersedes P73).
+    expect(calc).toEqual(createEmptySetValueAction("A"));
+    expect(calc).toMatchObject({ operator: "assign", value: { type: "static", value: "" } });
     const req = getUpdatedActionBody(calc, "requireAnswer");
     expect(req.objective).toBe("requireAnswer");
     const jump = getUpdatedActionBody(req, "jumpToBlock");
     expect(jump.objective).toBe("jumpToBlock");
+    // ENG-6933: takes no target, so none is left behind from the action it replaces.
+    expect(getUpdatedActionBody(jump, "markLowQuality")).toEqual({ id: "A", objective: "markLowQuality" });
+    expect(getUpdatedActionBody({ id: "A", objective: "markLowQuality" }, "jumpToBlock")).toEqual({
+      id: "A",
+      objective: "jumpToBlock",
+      target: "",
+    });
   });
 
   test("evaluateLogic handles AND/OR groups and single conditions", () => {
@@ -1136,6 +1148,126 @@ describe("surveyLogic", () => {
     ).toBe(false);
   });
 
+  describe("matrix conditions by id (ENG-6934)", () => {
+    // The rows and columns were reordered after the conditions were saved: the positions they stored
+    // now point at Disney+ / Poor, the ids still at Netflix / Good.
+    const reordered: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "grid",
+              type: TSurveyElementTypeEnum.Matrix,
+              headline: { default: "Rate each service" },
+              required: false,
+              rows: [
+                { id: "row_disney", label: { default: "Disney+" } },
+                { id: "row_netflix", label: { default: "Netflix" } },
+              ],
+              columns: [
+                { id: "col_good", label: { default: "Good" } },
+                { id: "col_poor", label: { default: "Poor" } },
+              ],
+              shuffleOption: "none",
+            },
+          ],
+        },
+      ],
+    };
+    const data: TResponseData = { grid: { Netflix: "Good", "Disney+": "Poor" } };
+    const netflixIsGood: TSingleCondition = {
+      id: "netflixGood",
+      leftOperand: { type: "element", value: "grid", meta: { row: "0", rowId: "row_netflix" } },
+      operator: "equals",
+      rightOperand: { type: "static", value: "1", columnId: "col_good" },
+    };
+
+    test("block logic reads the ids, which win over the stale positions", () => {
+      expect(
+        evaluateLogic(
+          reordered,
+          data,
+          {},
+          { id: "g", connector: "and", conditions: [netflixIsGood] },
+          "default"
+        )
+      ).toBe(true);
+    });
+
+    test("a quota condition, evaluated as the quota evaluator builds it, reads the ids too", () => {
+      const quotaLogic = { connector: "and" as const, conditions: [netflixIsGood] };
+
+      expect(evaluateLogic(reordered, data, {}, { id: "quota", ...quotaLogic }, "default")).toBe(true);
+    });
+
+    test("an isAnyOf reads its column ids, and an unknown column id never matches", () => {
+      const anyOf: TSingleCondition = {
+        ...netflixIsGood,
+        operator: "isAnyOf",
+        rightOperand: { type: "static", value: ["1"], columnIds: ["col_good"] },
+      };
+      const unknown: TSingleCondition = {
+        ...netflixIsGood,
+        rightOperand: { type: "static", value: "0", columnId: "col_gone" },
+      };
+
+      expect(
+        evaluateLogic(reordered, data, {}, { id: "g", connector: "and", conditions: [anyOf] }, "default")
+      ).toBe(true);
+      expect(
+        evaluateLogic(reordered, data, {}, { id: "g", connector: "and", conditions: [unknown] }, "default")
+      ).toBe(false);
+    });
+
+    test("an unknown row or column id never matches a negated operator either (P48)", () => {
+      const notEqualsGone: TSingleCondition = {
+        ...netflixIsGood,
+        operator: "doesNotEqual",
+        rightOperand: { type: "static", value: "0", columnId: "col_gone" },
+      };
+      const goneRowSkipped: TSingleCondition = {
+        ...netflixIsGood,
+        leftOperand: { type: "element", value: "grid", meta: { row: "0", rowId: "row_gone" } },
+        operator: "isSkipped",
+        rightOperand: undefined,
+      };
+
+      for (const condition of [notEqualsGone, goneRowSkipped]) {
+        expect(
+          evaluateLogic(
+            reordered,
+            data,
+            {},
+            { id: "g", connector: "and", conditions: [condition] },
+            "default"
+          )
+        ).toBe(false);
+      }
+    });
+
+    test("without ids, the positions are read as before", () => {
+      const positionsOnly: TSingleCondition = {
+        ...netflixIsGood,
+        leftOperand: { type: "element", value: "grid", meta: { row: "0" } },
+        rightOperand: { type: "static", value: "1" },
+      };
+
+      // Row 0 is now Disney+, answered Poor (column 1).
+      expect(
+        evaluateLogic(
+          reordered,
+          data,
+          {},
+          { id: "g", connector: "and", conditions: [positionsOnly] },
+          "default"
+        )
+      ).toBe(true);
+    });
+  });
+
   test("getRightOperandValue handles different data types and sources", () => {
     const surveyWithVars: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
@@ -1949,5 +2081,234 @@ describe("reserved field operands, server engine (ENG-1840)", () => {
         durationSeconds: "150",
       })
     ).toBe(true);
+  });
+});
+
+describe("ranking conditions on option ids (T21, ENG-6937)", () => {
+  const rankingSurvey = {
+    id: "survey1",
+    blocks: [
+      {
+        id: "b1",
+        name: "b1",
+        elements: [
+          {
+            id: "rank",
+            type: TSurveyElementTypeEnum.Ranking,
+            headline: { default: "Rank" },
+            required: false,
+            choices: [
+              { id: "netflix", label: { default: "Netflix" } },
+              { id: "disney", label: { default: "Disney+" } },
+              { id: "prime", label: { default: "Prime Video" } },
+            ],
+          },
+        ],
+      },
+    ],
+    variables: [],
+    embeddedFields: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const ranked = (operator: TSingleCondition["operator"], value: string[]): TConditionGroup => ({
+    id: "g",
+    connector: "and",
+    conditions: [
+      {
+        id: "c",
+        leftOperand: { type: "element", value: "rank" },
+        operator,
+        rightOperand: { type: "static", value },
+      },
+    ],
+  });
+
+  test("a ranking answer's labels are matched by option id: 'was ranked'", () => {
+    const data: TResponseData = { rank: ["Prime Video", "Netflix"] };
+
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("includesOneOf", ["netflix"]), "default")).toBe(
+      true
+    );
+    expect(
+      evaluateLogic(rankingSurvey, data, {}, ranked("includesAllOf", ["netflix", "prime"]), "default")
+    ).toBe(true);
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("includesOneOf", ["disney"]), "default")).toBe(
+      false
+    );
+    expect(evaluateLogic(rankingSurvey, data, {}, ranked("doesNotIncludeOneOf", ["disney"]), "default")).toBe(
+      true
+    );
+  });
+});
+
+/**
+ * ENG-6935: a date field set by `now()` holds a full UTC timestamp. Conditions on it read the time
+ * against another timestamp, and the day against a date picked in the editor (`compareDateValues`).
+ */
+describe("conditions on a date field holding a timestamp (ENG-6935)", () => {
+  const CHECKED_IN = "checkedin000000000000001";
+  const FOLLOW_UP = "followup0000000000000001";
+  const NOW_VALUE = "2026-11-04T10:12:30.000Z";
+
+  const dateField = (storageKey: string, name: string) => ({
+    field: {
+      key: null,
+      name,
+      source: "computed" as const,
+      dataType: "date" as const,
+      defaultValue: null,
+      locked: false,
+    },
+    link: { storageKey },
+  });
+  const survey = {
+    id: "datesurvey00000000000001",
+    name: "Survey",
+    type: "link",
+    status: "inProgress",
+    welcomeCard: { enabled: false },
+    questions: [],
+    blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+    endings: [],
+    variables: [],
+    embeddedFields: [dateField(CHECKED_IN, "checked_in_at"), dateField(FOLLOW_UP, "follow_up_at")],
+    hiddenFields: { enabled: true, fieldIds: [] },
+    languages: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const variables = { [CHECKED_IN]: NOW_VALUE, [FOLLOW_UP]: "2026-11-04T09:00:00.000Z" };
+  const check = (operator: TSingleCondition["operator"], right: TSingleCondition["rightOperand"]): boolean =>
+    evaluateLogic(
+      survey,
+      {},
+      variables,
+      {
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            leftOperand: { type: "variable", value: CHECKED_IN },
+            operator,
+            rightOperand: right,
+          },
+        ],
+      },
+      "default"
+    );
+  const day = (value: string) => ({ type: "static" as const, value });
+
+  test("against a picked date, the timestamp is that day: not after it, not before it, equal to it", () => {
+    expect(check("isAfter", day("2026-11-03"))).toBe(true);
+    expect(check("isAfter", day("2026-11-04"))).toBe(false);
+    expect(check("isBefore", day("2026-11-05"))).toBe(true);
+    expect(check("isBefore", day("2026-11-04"))).toBe(false);
+    expect(check("equals", day("2026-11-04"))).toBe(true);
+    expect(check("doesNotEqual", day("2026-11-04"))).toBe(false);
+    expect(check("equals", day("2026-11-03"))).toBe(false);
+  });
+
+  test("against another timestamp, the time counts", () => {
+    expect(check("isAfter", day("2026-11-04T10:00:00.000Z"))).toBe(true);
+    expect(check("isBefore", day("2026-11-04T11:00:00.000Z"))).toBe(true);
+    expect(check("isAfter", { type: "variable", value: FOLLOW_UP })).toBe(true);
+    expect(check("isBefore", { type: "variable", value: FOLLOW_UP })).toBe(false);
+    expect(check("equals", { type: "variable", value: FOLLOW_UP })).toBe(false);
+  });
+
+  test("an ingested date field holding a timestamp is the picked day, for equals as for before and after", () => {
+    const VISIT = "visitedat000000000000001";
+    const visitField = dateField(VISIT, "visited_at");
+    const ingestedSurvey = {
+      ...survey,
+      embeddedFields: [
+        ...(survey.embeddedFields ?? []),
+        { ...visitField, field: { ...visitField.field, source: "ingested" } },
+      ],
+    } as unknown as TJsWorkspaceStateSurvey;
+    const checkVisit = (operator: TSingleCondition["operator"], value: string): boolean =>
+      evaluateLogic(
+        ingestedSurvey,
+        { [VISIT]: "2026-08-06T10:30:00.000Z" },
+        {},
+        {
+          id: "group1",
+          connector: "and",
+          conditions: [
+            {
+              id: "condition1",
+              leftOperand: { type: "hiddenField", value: VISIT },
+              operator,
+              rightOperand: day(value),
+            },
+          ],
+        },
+        "default"
+      );
+
+    expect(checkVisit("equals", "2026-08-06")).toBe(true);
+    expect(checkVisit("doesNotEqual", "2026-08-06")).toBe(false);
+    expect(checkVisit("isBefore", "2026-08-06")).toBe(false);
+    expect(checkVisit("isAfter", "2026-08-06")).toBe(false);
+    expect(checkVisit("equals", "2026-08-07")).toBe(false);
+    // Two timestamps still compare instants.
+    expect(checkVisit("equals", "2026-08-06T09:00:00.000Z")).toBe(false);
+  });
+
+  test("now() stores the full timestamp, and daysBetween reads it as its UTC day", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-04T22:30:00.000Z"));
+    const daysSurvey = {
+      ...survey,
+      embeddedFields: [
+        ...(survey.embeddedFields ?? []),
+        {
+          field: {
+            key: null,
+            name: "days",
+            source: "computed" as const,
+            dataType: "number" as const,
+            defaultValue: null,
+            locked: false,
+          },
+          link: { storageKey: "days" },
+        },
+      ],
+    } as TJsWorkspaceStateSurvey;
+    const { calculations } = performActions(
+      daysSurvey,
+      [
+        {
+          id: "a1",
+          objective: "calculate",
+          variableId: CHECKED_IN,
+          operator: "assign",
+          value: { type: "expression", value: { type: "call", fn: "now", args: [] } },
+        },
+        {
+          id: "a2",
+          objective: "calculate",
+          variableId: "days",
+          operator: "assign",
+          value: {
+            type: "expression",
+            value: {
+              type: "call",
+              fn: "daysBetween",
+              args: [
+                { type: "static", value: "2026-11-01" },
+                { type: "variable", value: CHECKED_IN },
+              ],
+            },
+          },
+        },
+      ],
+      {},
+      {}
+    );
+    vi.useRealTimers();
+
+    expect(calculations[CHECKED_IN]).toBe("2026-11-04T22:30:00.000Z");
+    expect(calculations.days).toBe(3);
   });
 });

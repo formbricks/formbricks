@@ -143,6 +143,31 @@ describe("ApiClient", () => {
       expect(result.ok).toBe(true);
     });
 
+    test("sends the Mark as low quality flag with the update (ENG-6933)", async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true, data: {} }),
+      } as unknown as Response);
+
+      await client.updateResponse({ responseId: "resp123", finished: false, markLowQuality: true });
+
+      const [, init] = vi.mocked(global.fetch).mock.calls[0];
+      expect(JSON.parse(String(init?.body))).toMatchObject({ finished: false, markLowQuality: true });
+    });
+
+    test("sends the whole not-shown record with the update (ENG-6936)", async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true, data: {} }),
+      } as unknown as Response);
+      const notShown = { blocks: ["heavy"], elements: ["apple_reason"] };
+
+      await client.updateResponse({ responseId: "resp123", finished: false, data: {}, notShown });
+
+      const body = JSON.parse(String(vi.mocked(global.fetch).mock.calls[0][1]?.body));
+      expect(body.notShown).toEqual(notShown);
+    });
+
     test("handles update error", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: false,

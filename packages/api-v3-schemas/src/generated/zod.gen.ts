@@ -139,6 +139,22 @@ export const zCustomCssInput = z.strictObject({
 export type CustomCssInputZodType = z.infer<typeof zCustomCssInput>;
 
 /**
+ * What the respondent was **not shown**: the parts of the survey a show-if, a hidden option or a question left with no options kept from them, by stable ids. The survey records it while the respondent answers, so it says what was decided at answer time; editing a show-if later never changes it. Anything not listed was shown, or never reached.
+ *
+ * An answer to an item that ended up hidden (after the respondent went back or changed an earlier answer) is removed from the response, so a listed element has no answer in `answers[]`. Read the base of a question as "everyone who reached it, minus those it lists".
+ *
+ */
+export const zResponseNotShown = z.strictObject({
+  blocks: z.array(z.string()).optional(),
+  elements: z.array(z.string()).optional(),
+  options: z.record(z.string(), z.array(z.string())).optional(),
+  rows: z.record(z.string(), z.array(z.string())).optional(),
+  columns: z.record(z.string(), z.array(z.string())).optional(),
+});
+
+export type ResponseNotShownZodType = z.infer<typeof zResponseNotShown>;
+
+/**
  * Receipt describing how `answers[]` and `embeddedData[]` labels were produced. It exists so a consumer can tell whether the labels it is reading are the wording the respondent actually saw.
  *
  */
@@ -508,6 +524,7 @@ export const zResponseBase = z.object({
   endingId: z.string().nullable(),
   language: z.string().nullable(),
   outcome: z.enum(["lowQuality"]).nullable(),
+  notShown: zResponseNotShown.nullable(),
   durationSeconds: z.number().gte(0).optional(),
   resolution: zResponseResolution,
   answers: z.array(zResponseAnswer),
@@ -535,6 +552,7 @@ export const zResponseListItem = z.strictObject({
   endingId: z.string().nullable(),
   language: z.string().nullable(),
   outcome: z.enum(["lowQuality"]).nullable(),
+  notShown: zResponseNotShown.nullable(),
   durationSeconds: z.number().gte(0).optional(),
   resolution: zResponseResolution,
   answers: z.array(zResponseAnswer),
@@ -733,6 +751,7 @@ export const zResponseResource = z.strictObject({
   endingId: z.string().nullable(),
   language: z.string().nullable(),
   outcome: z.enum(["lowQuality"]).nullable(),
+  notShown: zResponseNotShown.nullable(),
   durationSeconds: z.number().gte(0).optional(),
   resolution: zResponseResolution,
   answers: z.array(zResponseAnswer),

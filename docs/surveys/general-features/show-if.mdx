@@ -1,0 +1,120 @@
+---
+title: "Show If"
+description: "Show a question, a whole block or a single answer option only to the respondents it applies to, and retire an option on a live survey by hiding it."
+icon: "eye"
+---
+
+**Show if** shows a question, a whole block or a single answer option only when a condition holds. Everyone else never sees it.
+
+Use it to ask a follow-up only when it applies, or to skip a page that doesn't concern the respondent. For example:
+
+* Show *What would convince you to try Apple TV+?* only to respondents who picked Apple TV+ above it.
+* Show the *Heavy users* block only to respondents who use Netflix, Disney+ and Prime Video.
+* Show one of two wordings of a question, by adding both with opposite conditions. It works in every language, with no code.
+* Offer only the brands a respondent knows: show each option of *Which one would you miss the most?* only if it was picked in *Which streaming services do you use?*.
+
+## The condition
+
+A show-if condition is written like the condition of a [logic rule](/surveys/general-features/conditional-logic). It can use:
+
+* answers to earlier questions
+* [Embedded Data](/surveys/general-features/variables) fields: hidden fields from the link, and calculated fields
+* response details, such as the respondent's language
+
+Combine several checks with **and** and **or**, and group them, as in a rule.
+
+## What a show-if may use
+
+A show-if can only depend on what the respondent has already seen, so the survey always knows whether to show it:
+
+* **A block's show-if** can use answers from earlier blocks only.
+* **A question's show-if** can use answers from earlier blocks, and from the questions above it on the same page.
+* **An option's show-if** can use what its question's show-if can. The same goes for the rows and columns of a matrix.
+* Nothing can depend on itself or on anything below it.
+
+The editor only offers what a show-if may use. A survey written through the API or MCP that breaks the rule is refused, and the error names the exact condition that breaks it.
+
+## What respondents see
+
+* **A question appears and disappears live.** When an answer above it on the same page changes, the question shows up right under it, or hides again.
+* **A hidden question is not asked.** It never stops the respondent from going on, even if it is required, and an answer typed into it before it hid is not submitted.
+* **A hidden block is skipped.** The survey moves on to the next block. The block's [logic](/surveys/general-features/conditional-logic) still runs, as if the respondent had submitted it with no answers, so its calculations and jumps keep working.
+* **A block whose questions are all hidden is skipped** the same way.
+
+In conditions further on, a question that was never shown counts as unanswered.
+
+## Before an answer exists
+
+In a show-if, a condition on a question the respondent hasn't answered is false, whatever its operator, *does not equal* included. So a follow-up waits for the answer it depends on, and never shows and then disappears as that answer comes in.
+
+Only **is skipped** (for a call to action, **is not clicked**) matches an unanswered question, and only once the respondent has moved past it, on a later page. On the page they are filling in, it doesn't match yet.
+
+This is about show-if only. [Logic rules](/surveys/general-features/conditional-logic) and quotas read an unanswered question as they always have: there, *does not equal X* matches a question the respondent skipped.
+
+## Show if on options
+
+Every question with options can show each option only under a condition: single select, multi select, ranking and picture selection, and the rows and columns of a matrix.
+
+* **Options are filtered live.** When an answer the condition reads changes, the option appears or disappears.
+* **A question left with no options is skipped**, like a hidden question. For a matrix, that is no row or no column left.
+* **An answer to an option that disappears is removed.** If a respondent picked an option, then went back and changed the answer it depends on, the option is no longer offered and their pick of it is dropped from the response.
+
+Conditions on a **ranking** question can test which options were ranked: *includes one of*, *includes all of* and their opposites. Use them to show a brand later only if the respondent ranked it.
+
+## Hidden options
+
+A published survey can't lose an option that existed at launch: deleting it would break earlier answers and their codes. **Hide it instead.**
+
+* A **Hidden** option is never shown to respondents, whatever its condition says.
+* It keeps its ID, its answer code and the answers given before it was hidden.
+* It stays in results, labelled **Hidden**.
+
+Hidden is a separate state, not a condition that never matches, so the Flow tab and results tell a retired option apart from one shown only to some respondents.
+
+To hide an option from the **Questions** tab, click the eye-off icon next to it, beside its lock and delete buttons. Matrix rows and columns have one too, and so does each picture of a picture selection question. Click it again to show the option again; a message confirms each change. A Hidden option stays in the editor, greyed out and labelled **Hidden**, and it works on a live survey too, where options can't be deleted.
+
+![The options of a live question on the Questions tab, each with its lock, duplicate, eye-off and delete buttons; the last one, Statement fee, is greyed out and labelled Hidden](/images/surveys/general-features/show-if/hide-option.webp)
+
+## Adding and editing a show-if
+
+Show-if can be edited on the [Flow tab](/surveys/general-features/flow-tab), or on the **Questions** tab, without leaving the question you're working on. Both edit the same show-if, so a change on one tab shows on the other.
+
+On the **Flow** tab:
+
+* **On a block:** open the block and click **Show block if…** in its header, or choose **Show block if…** under **Add logic**.
+* **On a question:** open its block and click **Add condition** in the question's **Show question if…** column.
+
+On the **Questions** tab:
+
+* **On a block:** open the block's **Settings** tab and click **Add condition** under **Show block if…**.
+* **On a question:** open the question's **Settings** tab and click **Add condition** under **Show question if…**.
+* **On options:** in the same **Settings** tab, a question with options also has **Show options if…**, which opens the options table described below.
+
+![A question's Settings tab on the Questions tab: Show question if… with the condition "fee_surprise" equals Yes, and Show options if… with 2 options and 1 hidden](/images/surveys/general-features/show-if/settings-show-if.webp)
+
+When nothing comes before a block or question for a show-if to read (no earlier question and no hidden field), **Add condition** is greyed out, and hovering it says why.
+
+In the popover that opens, the first field reads **Choose a question or field**: pick what to test, then an operator and a value, and add more conditions as needed. Nothing is saved until you click **Done**, which stays disabled until the condition is complete; **Cancel**, Escape or a click outside leaves the survey as it was.
+
+![The Show question if… popover on the Flow tab, showing the question only if fee_surprise equals Yes, with Remove condition and Done](/images/surveys/general-features/show-if/question-show-if.webp)
+
+A block with a show-if carries a **Show block if …** badge in its header that reads the condition, and a question shows its condition in its **Show question if…** column. The **Settings** tabs show the same condition. On the **Questions** tab, a block or question card with a show-if carries the same condition as a small eye badge next to its question count or *Required · code* line, so you see it without opening the card. Click it to change the condition, or choose **Remove condition** to show it to everyone again. Removing the last condition removes the show-if too.
+
+**On options:** open the block and click **Add condition**, or the counts, in a question's **Show options if…** column (or under **Show options if…** on the question's **Settings** tab). The popover is a table of every option (for a matrix, every row and column):
+
+* **Shown when** reads **Always**, the option's condition, or **Never shown** for a Hidden option. Hover a row and click **Add condition** to add one; click the condition to change it, or **Remove condition**.
+* The toggle in the **Hidden** column hides the option for good, or shows it again.
+
+![The Show options if… popover: three fees shown Always, Foreign transaction fee and Late payment fee shown only for some accounts, and Statement fee Hidden and never shown](/images/surveys/general-features/show-if/options-show-if.webp)
+
+A question with conditional options shows **N options** in its **Show options if…** column, and one with Hidden options **N hidden**.
+
+You can add and change show-if, and hide options, on a survey that is already live. Like any change to a live survey, it applies to respondents from then on.
+
+## In results
+
+Each response records what show-if kept from its respondent, at the moment they answered, down to the options, rows and columns. The Summary shows **Not shown to N** on a question, and the response shows a **Not shown** marker, and neither counts it as skipped. An option shown to fewer respondents than answered the question shows **Shown to N out of M**, M being everyone who answered it, and its percentage is over those N. The Analysis export leaves what was not shown blank, and the Standard export is unchanged. Because it is recorded at answer time, editing a show-if later does not change earlier results. See [Reading survey results](/surveys/analysis/reading-results#questions-a-respondent-was-not-shown).
+
+## Through the API
+
+In the survey document, a show-if is an optional `showIf` on a block, an element, a choice, or a matrix row or column. It uses the condition-group format of logic rules. A Hidden option carries `hidden: true`. A question with copied options names its source in `optionsCopiedFrom`, and its copied options carry the source's `id` and `code` and a `showIf` "picked in the source"; a code sent for a copy is replaced by the source option's. A v3 response carries what its respondent was not shown as a read-only `notShown`. See the [Management API](/api-v3-reference/introduction) and [MCP](/platform/mcp/overview).

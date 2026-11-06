@@ -18,6 +18,7 @@ required:
   - endingId
   - language
   - outcome
+  - notShown
   - resolution
   - answers
   - embeddedData
@@ -91,6 +92,15 @@ properties:
       Analysis export by default and from Feedback Records, and from nothing else: it is never deleted
       and every count, list, webhook and integration still includes it. Set through `PATCH
       /api/v3/responses/{responseId}` or `POST /api/v3/responses/batch-outcome`.
+  notShown:
+    readOnly: true
+    anyOf:
+      - $ref: ./ResponseNotShown.yml
+      - type: "null"
+    description: >-
+      What the respondent was not shown, as the survey recorded it while they answered. `null` when
+      unknown: responses from before the record existed, or from an older cached survey. Read-only:
+      only the survey writes it.
   durationSeconds:
     readOnly: true
     type: number

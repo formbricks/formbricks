@@ -652,7 +652,7 @@ Array arguments are bounded. No array in a tool call may hold more than 1 000 it
 in one call together at most 50 000 elements, at any depth; and a call may nest at most 256 levels of
 objects and arrays. A call over any of these is refused with a JSON-RPC `-32602` error before its
 arguments are parsed. Fields with a tighter bound advertise it as
-`maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables` and
+`maxItems` in the tool's input schema — `create_survey`'s `blocks`, `endings`, `variables`, `startLogic` and
 `languages`, `get_survey`'s `lang`, the list filters' `in` arrays, and `create_feedback_records`'
 `records`. A request body may be at most 2 MB, whether or not it declares a `Content-Length`.
 
@@ -885,6 +885,19 @@ position** rather than naming the field: the element schema is an undiscriminate
 or absent `type` makes every branch fail and the message is a generic `Invalid input`. Send the
 type's own fields with the element rather than expecting the validator to name them.
 
+An optional `startLogic` array holds the **rules before the first question**: the survey runs them as
+soon as it loads, before the welcome card and on start-at links. Each rule has the shape of a block's
+`logic` rule, but may only `jumpToBlock` (to a block, or to an ending to screen the respondent out),
+`calculate` and `markLowQuality`, and may read `hiddenField`, `variable` and `reserved` operands only, since nothing has been
+answered yet. Anything else is refused with the exact path, such as `startLogic.0.actions.1`. On
+`patch_survey`, `null` or `[]` removes them and an omitted `startLogic` is kept; `get_survey` always
+returns the array, `[]` when there are none.
+
+A block rule may also carry a `markLowQuality` action, `{ "id": "<cuid2>", "objective": "markLowQuality" }`
+with no target (ENG-6933). When the rule fires, the respondent sees nothing and the response is marked Low
+quality as a reviewer would mark it. It is allowed in `startLogic` too (ENG-6952), where the flag rides on
+the response's first write, a screen-out's finished response included; `requireAnswer` is refused there.
+
 Input:
 
 ```json
@@ -939,6 +952,24 @@ Input:
 
 Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
 `requestId`.
+
+#### Typed Embedded Data
+
+`create_survey`, `patch_survey` and `validate_survey` take the survey's Embedded Data as typed
+`embeddedFields` (ADR 0028), next to the legacy `variables` and `hiddenFields`, and `get_survey` returns
+both. An entry is `{ storageKey, key, name, source, dataType, defaultValue, locked }`:
+
+- `source: "computed"` is set by logic. Logic operands of type `variable` and calculate actions name its
+  `storageKey` (a cuid2, generated when omitted). Its `dataType` is `string`, `number` or `date`.
+- `source: "ingested"` arrives by URL parameter or SDK. Operands of type `hiddenField` name its
+  `storageKey`, which defaults to its name. It may be `boolean` too, and only ingested fields can be
+  `locked`.
+- A workspace library field is linked by sending `{ "key": "plan_tier" }` alone: the server fills in the
+  library's definition. A key the library does not have is a `400` at `embeddedFields.<i>.key`.
+
+`embeddedFields` is the complete set, and the legacy pair is derived from it. Either format alone works.
+Sent together, they have to describe the same fields, or the call fails with a `400` naming each path
+where they differ, so an edit made in one format is never silently dropped.
 
 ### validate_survey
 
@@ -1053,6 +1084,17 @@ Input:
 Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
 `requestId`.
 
+#### Confirmation on surveys with responses
+
+`patch_survey`, `edit_survey_blocks`, `set_survey_block_order` and `delete_survey` take an optional
+`confirm` argument. On a survey that is not a draft and already has at least one response, a call
+without `confirm: true` changes nothing: it returns an error (`status: 428`, "Confirmation required")
+whose `detail` is the caution the editor shows a person — mixed old and new responses for a change, the
+loss of every response for a delete — followed by "Pass confirm: true after the user agrees". The agent
+shows that to the user and retries with `confirm: true` only after they agree. Drafts and surveys
+without responses need nothing. The rule is MCP-only: the v3 HTTP API is unchanged, and an operation
+enforces it only when the tool passes `writeConfirmation`.
+
 `customCss` on `create_survey` and `patch_survey` is source only — `{ "light": "…", "dark": "…" }`, both
 keys, each a string or `null`; `null` clears it, and on a patch an omitted `customCss` is kept. Compiled
 output is computed by the server, and a payload carrying `compiled` or `processorVersion` is rejected. A
@@ -1116,8 +1158,9 @@ both: an insert without one gets a server-generated id, returned in the concise 
 list, and an update takes it from the operation's `id`.
 
 Removing a block orphans any answers already collected for its elements, and the API cannot undo
-that. The editor shows a human a caution before this; an agent has no equivalent, so confirm with the
-user before removing a block from a survey that is not a draft.
+that. The editor shows a human a caution before this, and the tool does the same: on a survey that is
+not a draft and has responses it refuses until the call passes `confirm: true` (see
+[Confirmation on surveys with responses](#confirmation-on-surveys-with-responses)).
 
 <Note>
   Fetch the survey first and pass its `updatedAt` as `expectedUpdatedAt`. If the survey changed since your

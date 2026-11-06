@@ -4,6 +4,7 @@ import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import type { TFunction } from "i18next";
 import { PlusIcon } from "lucide-react";
 import { type JSX, useCallback } from "react";
 import toast from "react-hot-toast";
@@ -15,11 +16,25 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
+import { type TSetOptionHidden } from "@/modules/survey/editor/components/option-hide-button";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { type TUse, findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { isLabelValidForAllLanguages } from "../lib/validation";
+
+/** Why a row or column can't be deleted: a show-if reads it, or a rule does (any other use). */
+const getOptionInUseError = (t: TFunction, type: "row" | "column", use: TUse): string => {
+  const questionIndex = use.elementIndex + 1;
+  if (type === "row") {
+    return use.kind === "showIf"
+      ? t("workspace.surveys.edit.row_used_in_show_if_error", { questionIndex })
+      : t("workspace.surveys.edit.row_used_in_logic_error", { questionIndex });
+  }
+  return use.kind === "showIf"
+    ? t("workspace.surveys.edit.column_used_in_show_if_error", { questionIndex })
+    : t("workspace.surveys.edit.column_used_in_logic_error", { questionIndex });
+};
 
 interface MatrixElementFormProps {
   readonly localSurvey: TSurvey;
@@ -31,6 +46,8 @@ interface MatrixElementFormProps {
   readonly isStorageConfigured: boolean;
   readonly isExternalUrlsAllowed?: boolean;
   readonly lock?: TElementLock;
+  /** The Hide quick action on each option (ENG-6949). */
+  readonly onSetOptionHidden?: TSetOptionHidden;
 }
 
 export const MatrixElementForm = ({
@@ -43,6 +60,7 @@ export const MatrixElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   lock = NO_ELEMENT_LOCK,
+  onSetOptionHidden,
 }: MatrixElementFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
@@ -74,27 +92,11 @@ export const MatrixElementForm = ({
     if (labels.length <= 2) return; // Prevent deleting below minimum length
     if (lock.isOptionLocked(type === "row" ? "rows" : "columns", labels[index].id)) return;
 
-    // check if the label is used in logic
-    if (type === "column") {
-      const elementIdx = findOptionUsedInLogic(localSurvey, element.id, index.toString());
-      if (elementIdx !== -1) {
-        toast.error(
-          t("workspace.surveys.edit.column_used_in_logic_error", {
-            questionIndex: elementIdx + 1,
-          })
-        );
-        return;
-      }
-    } else {
-      const elementIdx = findOptionUsedInLogic(localSurvey, element.id, index.toString(), true);
-      if (elementIdx !== -1) {
-        toast.error(
-          t("workspace.surveys.edit.row_used_in_logic_error", {
-            questionIndex: elementIdx + 1,
-          })
-        );
-        return;
-      }
+    // A row or column a rule or a show-if reads can't be deleted.
+    const use = findOptionUse(localSurvey, element.id, index.toString(), type === "row");
+    if (use) {
+      toast.error(getOptionInUseError(t, type, use));
+      return;
     }
 
     const updatedLabels = labels.filter((_, idx) => idx !== index);
@@ -251,6 +253,7 @@ export const MatrixElementForm = ({
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
                       lock={lock}
+                      onSetOptionHidden={onSetOptionHidden}
                     />
                   ))}
                 </div>
@@ -296,6 +299,7 @@ export const MatrixElementForm = ({
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
                       lock={lock}
+                      onSetOptionHidden={onSetOptionHidden}
                     />
                   ))}
                 </div>

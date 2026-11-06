@@ -17,6 +17,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
+import { type TSetOptionHidden } from "@/modules/survey/editor/components/option-hide-button";
 import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import {
   ensureSpecialChoicesOrder,
@@ -37,6 +38,8 @@ interface RankingElementFormProps {
   readonly isStorageConfigured: boolean;
   readonly isExternalUrlsAllowed?: boolean;
   readonly lock?: TElementLock;
+  /** The Hide quick action on each option (ENG-6949). */
+  readonly onSetOptionHidden?: TSetOptionHidden;
 }
 
 export const RankingElementForm = ({
@@ -50,6 +53,7 @@ export const RankingElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   lock = NO_ELEMENT_LOCK,
+  onSetOptionHidden,
 }: RankingElementFormProps): JSX.Element => {
   const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -244,6 +248,7 @@ export const RankingElementForm = ({
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
                     lock={lock}
+                    onSetOptionHidden={onSetOptionHidden}
                   />
                 ))}
               </div>

@@ -469,8 +469,8 @@ const putOutcome = async (
   survey: TSurvey,
   patch: Partial<TSurvey>
 ): Promise<"accepted" | { refused: string }> => {
-  // `embeddedFields` is dropped for the same reason the route drops it: `ZSurveyUpdateInput` omits
-  // the key, so what a v1 PUT hands `updateSurvey` is the legacy columns and nothing else. Leaving
+  // `embeddedFields` is dropped for the same reason the route drops it: `ZSurveyUpdateInput` never
+  // outputs the key, so what a v1 PUT hands `updateSurvey` is the legacy columns and nothing else. Leaving
   // it on would put every test below on the V2 carrier and stop testing this boundary at all.
   const { embeddedFields: _embeddedFields, ...legacyPut } = { ...survey, ...patch };
   try {

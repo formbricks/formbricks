@@ -1,0 +1,224 @@
+"use client";
+
+import { EyeIcon, TrashIcon } from "lucide-react";
+import { type Dispatch, type ReactNode, type RefObject, type SetStateAction, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TConditionGroup } from "@formbricks/types/surveys/logic";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
+import {
+  SHOW_IF_CELL_CLASS,
+  ShowIfConditionsEditor,
+  ShowIfPopoverFrame,
+  useShowIfAnchor,
+  useShowIfScope,
+} from "@/modules/survey/editor/components/show-if-popover-parts";
+import {
+  describeBlockShowIfParts,
+  describeConditionGroupParts,
+} from "@/modules/survey/editor/lib/flow-outline-text";
+import { toPlainText } from "@/modules/survey/editor/lib/reference-chips";
+import {
+  type TShowIfTarget,
+  canFinishShowIfDraft,
+  createDraftShowIf,
+  editShowIfDraft,
+  getShowIf,
+  updateShowIf,
+} from "@/modules/survey/editor/lib/show-if-editing";
+import { Button } from "@/modules/ui/components/button";
+import { Popover, PopoverAnchor, PopoverTrigger } from "@/modules/ui/components/popover";
+
+interface ShowIfPopoverProps {
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
+  readonly target: TShowIfTarget;
+  readonly isOpen: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  /**
+   * What opens a new show-if when the target has none yet: the faint "Show block if…" hint, or a
+   * question's "Add condition" cell. Without it, a target with no show-if renders nothing.
+   */
+  readonly newTrigger?: ReactNode;
+  /**
+   * A block's chip reads only its condition, for a place whose heading already says "Show block if…"
+   * (the block's Settings tab on the Questions tab, ENG-6949).
+   */
+  readonly summaryOnly?: boolean;
+  /** The trigger sits right under its own heading (the Questions tab): the popover leaves it out. */
+  readonly hideHeading?: boolean;
+}
+
+/**
+ * The show-if of a block or a question on the Flow tab (ENG-6931): a block's "Show block if …" chip on
+ * its header, or a question's condition in its "Show question if…" cell (ENG-6969 T10), or what opens
+ * a new one when it has none; and the popover that edits its conditions with the logic editor's
+ * conditions editor. The editor offers only what the reference rule allows (`getShowIfScope`).
+ *
+ * The popover edits a draft: only Done writes it to the survey, so opening one to look, then Escape,
+ * a click outside or Cancel, changes nothing (ENG-6969 T1). That holds for deleting the last condition
+ * too: the empty draft stays open, and Done removes the show-if (`editShowIfDraft`).
+ */
+export function ShowIfPopover({
+  localSurvey,
+  setLocalSurvey,
+  target,
+  isOpen,
+  onOpenChange,
+  newTrigger,
+  summaryOnly = false,
+  hideHeading = false,
+}: ShowIfPopoverProps) {
+  const { t, i18n } = useTranslation();
+  const elementIcons = useElementIcons();
+  const { triggerRef, anchorRef, hasAnchor } = useShowIfAnchor();
+  const showIf = getShowIf(localSurvey, target);
+  if (!showIf && !newTrigger) return null;
+
+  const isBlock = target.type === "block";
+  const format = { locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US" };
+  // References as chips (ENG-6969 T3); the aria-label reads the plain sentence (guardrail 4).
+  const conditionParts = showIf ? describeConditionGroupParts(showIf, localSurvey, t, format) : [];
+  // A question's column header already says "Show question if…", as does the block's Settings tab
+  // heading for `summaryOnly`.
+  const chipParts =
+    showIf && isBlock && !summaryOnly
+      ? describeBlockShowIfParts(showIf, localSurvey, t, format)
+      : conditionParts;
+
+  return (
+    <Popover open={isOpen} onOpenChange={onOpenChange}>
+      {hasAnchor && <PopoverAnchor virtualRef={anchorRef as RefObject<Element>} />}
+      <PopoverTrigger asChild ref={triggerRef}>
+        {showIf ? (
+          <button
+            type="button"
+            className={
+              isBlock
+                ? "inline-flex min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600 hover:border-slate-300 focus-visible:ring-1 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+                : SHOW_IF_CELL_CLASS.set
+            }
+            aria-label={t("workspace.surveys.edit.flow.edit_show_if", {
+              conditions: toPlainText(conditionParts),
+            })}
+            // The block header's chip sits inside the row's toggle: don't collapse the block.
+            onClick={(event) => event.stopPropagation()}>
+            <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
+            <span className="flex min-w-0 items-center gap-1">
+              <FlowTextParts parts={chipParts} elementIcons={elementIcons} centered />
+            </span>
+          </button>
+        ) : (
+          newTrigger
+        )}
+      </PopoverTrigger>
+      {/* Mounted only while open: its scope is computed for the open popover alone. */}
+      {isOpen && (
+        <ShowIfEditor
+          localSurvey={localSurvey}
+          setLocalSurvey={setLocalSurvey}
+          target={target}
+          showIf={showIf}
+          hideHeading={hideHeading}
+          onClose={() => onOpenChange(false)}
+        />
+      )}
+    </Popover>
+  );
+}
+
+interface ShowIfEditorProps {
+  readonly localSurvey: TSurvey;
+  readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
+  readonly target: TShowIfTarget;
+  /** The saved show-if; absent for a new one. */
+  readonly showIf: TConditionGroup | undefined;
+  readonly hideHeading: boolean;
+  readonly onClose: () => void;
+}
+
+/**
+ * The popover's content, mounted only while it is open, so each opening starts a fresh draft: a copy
+ * of the saved show-if, or a new one whose first field is still to be chosen (ENG-6969 T6).
+ */
+function ShowIfEditor({
+  localSurvey,
+  setLocalSurvey,
+  target,
+  showIf,
+  hideHeading,
+  onClose,
+}: ShowIfEditorProps) {
+  const { t } = useTranslation();
+  const isBlock = target.type === "block";
+  const isNew = showIf === undefined;
+  const { scope, getDefaultOperator } = useShowIfScope(localSurvey, target);
+  const [draft, setDraft] = useState<TConditionGroup>(() =>
+    showIf ? structuredClone(showIf) : createDraftShowIf()
+  );
+
+  const save = (next: TConditionGroup | undefined) => {
+    setLocalSurvey((survey) => updateShowIf(survey, target, () => next));
+    onClose();
+  };
+
+  const changeConditions = (updater: (conditions: TConditionGroup) => TConditionGroup) => {
+    const edit = editShowIfDraft(updater(structuredClone(draft)), isNew);
+    if (edit.type === "close") onClose();
+    else setDraft(edit.draft);
+  };
+
+  // A saved show-if whose last condition was deleted: Done removes it, so Remove would only repeat
+  // Done, and Cancel is what keeps it.
+  const isEmptied = !isNew && draft.conditions.length === 0;
+
+  return (
+    <ShowIfPopoverFrame
+      // The popover is named like the chip or hint that opens it (ENG-6969 T9).
+      title={
+        isBlock
+          ? t("workspace.surveys.edit.flow.show_block_if")
+          : t("workspace.surveys.edit.flow.show_question_if")
+      }
+      help={
+        isBlock
+          ? t("workspace.surveys.edit.flow.show_if_block_help")
+          : t("workspace.surveys.edit.flow.show_if_question_help")
+      }
+      hideHeading={hideHeading}
+      footer={
+        <div className="flex justify-between gap-2">
+          {isNew || isEmptied ? (
+            <Button type="button" size="sm" variant="secondary" onClick={onClose}>
+              {t("common.cancel")}
+            </Button>
+          ) : (
+            <Button type="button" size="sm" variant="secondary" onClick={() => save(undefined)}>
+              <TrashIcon />
+              {t("workspace.surveys.edit.flow.remove_condition")}
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            disabled={!canFinishShowIfDraft(draft, isNew)}
+            onClick={() => save(draft)}>
+            {t("common.done")}
+          </Button>
+        </div>
+      }>
+      {isEmptied ? (
+        <p className="py-2 text-sm text-slate-500">
+          {t("workspace.surveys.edit.flow.show_if_no_conditions")}
+        </p>
+      ) : (
+        <ShowIfConditionsEditor
+          conditions={draft}
+          scope={scope}
+          getDefaultOperator={getDefaultOperator}
+          onConditionsChange={changeConditions}
+        />
+      )}
+    </ShowIfPopoverFrame>
+  );
+}
