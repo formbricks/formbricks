@@ -260,18 +260,31 @@ describe("setup.ts", () => {
       { label: "enabled", options: { prefetch: true }, calls: 1 },
       { label: "disabled", options: { prefetch: false }, calls: 0 },
     ])("prefetch is $label on fresh and cached setup", async ({ options, calls }) => {
-      const cachedConfig = {
+      const cachedConfig: TConfig = {
         workspaceId: "ws_123",
         appUrl: "https://my.url",
-        workspace: { data: { surveys: [] }, expiresAt: new Date(Date.now() + 60_000) },
+        filteredSurveys: [],
+        workspace: {
+          data: {
+            surveys: [],
+            actionClasses: [],
+            settings: {
+              recontactDays: 0,
+              clickOutsideClose: true,
+              overlay: "none",
+              placement: "bottomRight",
+              inAppSurveyBranding: false,
+              styling: { allowStyleOverwrite: false },
+            },
+          },
+          expiresAt: new Date(Date.now() + 60_000),
+        },
         user: DEFAULT_USER_STATE_NO_USER_ID,
         status: { value: "success", expiresAt: null },
       };
       const mockConfig = { get: vi.fn(), resetConfig: vi.fn(), update: vi.fn() };
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
-      vi.mocked(fetchWorkspaceState).mockResolvedValue({ ok: true, data: cachedConfig.workspace } as Awaited<
-        ReturnType<typeof fetchWorkspaceState>
-      >);
+      vi.mocked(fetchWorkspaceState).mockResolvedValue({ ok: true, data: cachedConfig.workspace });
       vi.mocked(filterSurveys).mockReturnValue([]);
       vi.mocked(isNowExpired).mockReturnValue(false);
 

@@ -702,7 +702,7 @@ The iOS, Android, React Native and Flutter SDKs offer the same appearance settin
 
 ## Content Security Policy
 
-If your app serves a strict `Content-Security-Policy` header, the browser can block the Formbricks widget before anything renders. Three directives are involved.
+If your app serves a strict `Content-Security-Policy` header, the browser can block the Formbricks widget before anything renders. Allow the scripts, client connections, and survey styles as described below.
 
 <Note>
   This applies to the JavaScript SDK only. Link surveys are served by Formbricks itself, and the mobile
@@ -719,6 +719,28 @@ connect-src 'self' https://app.formbricks.com;
 ```
 
 The SDK does not put a nonce on the script tags it creates, so allowlisting the host is what makes them load. `'strict-dynamic'` works instead of a host allowlist, but only if the script that loads the SDK carries a matching nonce or hash of its own — both bundles are inserted programmatically, so they inherit trust from that root. Without a trusted root, `'strict-dynamic'` blocks the SDK before it ever reaches `surveys.umd.cjs`.
+
+### Disabling survey prefetch on strict host pages
+
+By default, SDK setup adds a `<link rel="prefetch">` to warm the survey renderer cache. Browsers can check this resource hint against `default-src`, even when `script-src-elem` and `connect-src` allow your Formbricks host. With `default-src 'none'`, this can produce a CSP violation while surveys still display through the allowed script load.
+
+For the script-tag SDK, disable the hint instead of broadening `default-src`:
+
+```javascript
+window.formbricks.setup({
+  workspaceId: "<workspace-id>",
+  appUrl: "<app-url>",
+  prefetch: false,
+});
+```
+
+The renderer then loads when a survey is triggered. Omitting `prefetch` or setting it to `true` keeps prefetch enabled. Pass the option on each page's setup; it is not saved in local storage. Scripts, API connections, and styles still need their respective CSP permissions.
+
+<Note>
+  The separately published `@formbricks/js` npm wrapper currently forwards only the app URL and
+  workspace/environment ID through setup. It does not forward `prefetch`; use the script-tag
+  integration for this option until the wrapper supports it.
+</Note>
 
 ### Passing a nonce for survey styles
 
