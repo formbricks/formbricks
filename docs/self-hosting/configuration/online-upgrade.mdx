@@ -60,8 +60,10 @@ release and the 6.1 online values must name the **same** Hub digest and the **sa
 Roll the 6.0.x release to Hub 0.14.2 and Cube 1.7.47-1 first and wait for the rollout to finish. Serving
 traffic through an upgrade from 6.0.2 was verified with Hub 0.14.0 and Cube 1.7.47-1. Hub 0.14.1 adds the TLS
 fix for the October 2026 eMudhra certificate compromise and request-size limits, and no database migrations.
-Hub 0.14.2 adds two database migrations that do not block writes: a concurrently built index on embedded data
-and a nullable column on `embeddings`.
+Hub 0.14.2 adds a concurrently built index on embedded data and a nullable column on `embeddings`. The column
+and constraint changes take brief exclusive locks, so a long-running transaction can delay them and queue later
+reads and writes. Hub 0.14.2 also refuses to start when `TAXONOMY_EMBEDDING_MODEL` and `EMBEDDING_MODEL` are the
+same non-empty value, so give them distinct model names in `hub.env` before rolling it out.
 6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
 image: check
 [Bundled Cube image](/self-hosting/advanced/migration#bundled-cube-image-action-required-for-some-deployments)
