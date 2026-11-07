@@ -1,26 +1,13 @@
 import "server-only";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { can } from "@/lib/authorization";
+import { assertUserManagementAllowed } from "@/lib/membership/user-management";
 
 /**
- * Whether `userId` clears the organization's user-management floor.
- *
- * `organization.manage_access` is `USER_MANAGEMENT_MINIMUM_ROLE` expressed in the central
- * authorization vocabulary: `lib/authorization/spicedb-evaluator.ts` maps the floor onto the schema
- * (`owner` → write, `manager` → manage_access, `disabled` → deny), and
- * `lib/authorization/manage-access.integration.test.ts` pins it to `getUserManagementAccess` against
- * real rows. Asking it through one helper keeps the settings page and the mint action on the same
- * question, so the toggle cannot be offered where the action would refuse it.
+ * Whether `userId` clears the organization's user-management floor, so may mint a key with organization
+ * write access. The floor itself is `canManageUsers`; this name is what the settings page and the mint
+ * action share, so the toggle cannot be offered where the action would refuse it.
  */
-export const canGrantOrganizationWriteAccess = async (
-  userId: string,
-  organizationId: string
-): Promise<boolean> =>
-  can({ type: "user", id: userId }, "organization.manage_access", {
-    type: "organization",
-    id: organizationId,
-  });
+export { canManageUsers as canGrantOrganizationWriteAccess } from "@/lib/membership/user-management";
 
 /**
  * ENG-3075: the floor has to be applied when the key is minted, not when it is used.
@@ -39,7 +26,5 @@ export const assertCanGrantOrganizationAccess = async (
 ): Promise<void> => {
   if (organizationAccess?.accessControl?.write !== true) return;
 
-  if (!(await canGrantOrganizationWriteAccess(userId, organizationId))) {
-    throw new OperationNotAllowedError("User management is not allowed for your role");
-  }
+  await assertUserManagementAllowed(userId, organizationId);
 };

@@ -4,6 +4,7 @@ import { Invite, Prisma } from "@formbricks/database/prisma";
 import {
   DatabaseError,
   InvalidInputError,
+  OperationNotAllowedError,
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
@@ -39,6 +40,10 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
 
+/** An owner acts on any invite; anyone else only on invites that are not an owner's (ENG-6812). */
+const asOwner = { allowOwnerInvite: true };
+const asManager = { allowOwnerInvite: false };
+
 const mockInvite: Invite = {
   id: "invite-1",
   email: "test@example.com",
@@ -66,7 +71,7 @@ describe("refreshInviteExpiration", () => {
       expiresAt: expectedExpiresAt,
     });
 
-    const result = await refreshInviteExpiration("invite-1");
+    const result = await refreshInviteExpiration("invite-1", asOwner);
 
     expect(prisma.invite.update).toHaveBeenCalledWith({
       where: { id: "invite-1" },
@@ -85,7 +90,7 @@ describe("refreshInviteExpiration", () => {
       clientVersion: "1.0.0",
     });
     vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
-    await expect(refreshInviteExpiration("invite-1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(refreshInviteExpiration("invite-1", asOwner)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("throws DatabaseError on other prisma errors", async () => {
@@ -94,13 +99,13 @@ describe("refreshInviteExpiration", () => {
       clientVersion: "1.0.0",
     });
     vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
-    await expect(refreshInviteExpiration("invite-1")).rejects.toThrow(DatabaseError);
+    await expect(refreshInviteExpiration("invite-1", asOwner)).rejects.toThrow(DatabaseError);
   });
 
   test("throws error if non-prisma error", async () => {
     const error = new Error("db");
     vi.mocked(prisma.invite.update).mockRejectedValue(error);
-    await expect(refreshInviteExpiration("invite-1")).rejects.toThrow("db");
+    await expect(refreshInviteExpiration("invite-1", asOwner)).rejects.toThrow("db");
   });
 
   test("returns full invite object with all fields", async () => {
@@ -110,7 +115,7 @@ describe("refreshInviteExpiration", () => {
     };
     vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
 
-    const result = await refreshInviteExpiration("invite-1");
+    const result = await refreshInviteExpiration("invite-1", asOwner);
 
     expect(result).toEqual(updatedInvite);
     expect(result.id).toBe("invite-1");
@@ -131,7 +136,7 @@ describe("resendInvite", () => {
     };
     vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
 
-    const result = await resendInvite("invite-1");
+    const result = await resendInvite("invite-1", asOwner);
 
     expect(result).toEqual({ email: mockInvite.email, name: mockInvite.name });
     expect(prisma.invite.update).toHaveBeenCalledWith({
@@ -149,7 +154,7 @@ describe("resendInvite", () => {
     };
     vi.mocked(prisma.invite.update).mockResolvedValue(updatedInvite);
 
-    await resendInvite("invite-1");
+    await resendInvite("invite-1", asOwner);
 
     expect(prisma.invite.update).toHaveBeenCalledTimes(1);
   });
@@ -160,7 +165,7 @@ describe("resendInvite", () => {
       clientVersion: "1.0.0",
     });
     vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
-    await expect(resendInvite("invite-1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(resendInvite("invite-1", asOwner)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("throws DatabaseError on other prisma errors", async () => {
@@ -169,13 +174,13 @@ describe("resendInvite", () => {
       clientVersion: "1.0.0",
     });
     vi.mocked(prisma.invite.update).mockRejectedValue(prismaError);
-    await expect(resendInvite("invite-1")).rejects.toThrow(DatabaseError);
+    await expect(resendInvite("invite-1", asOwner)).rejects.toThrow(DatabaseError);
   });
 
   test("throws error if non-prisma error", async () => {
     const error = new Error("db");
     vi.mocked(prisma.invite.update).mockRejectedValue(error);
-    await expect(resendInvite("invite-1")).rejects.toThrow("db");
+    await expect(resendInvite("invite-1", asOwner)).rejects.toThrow("db");
   });
 });
 
@@ -281,23 +286,23 @@ describe("deleteInvite", () => {
   });
   test("returns true if deleted", async () => {
     vi.mocked(prisma.invite.delete).mockResolvedValue({ id: "invite-1", organizationId: "org-1" } as any);
-    const result = await deleteInvite("invite-1");
+    const result = await deleteInvite("invite-1", asOwner);
     expect(result).toBe(true);
   });
   test("throws ResourceNotFoundError if not found", async () => {
     vi.mocked(prisma.invite.delete).mockResolvedValue(null as any);
-    await expect(deleteInvite("invite-1")).rejects.toThrow(ResourceNotFoundError);
+    await expect(deleteInvite("invite-1", asOwner)).rejects.toThrow(ResourceNotFoundError);
   });
   test("throws DatabaseError on prisma error", async () => {
     const error = new Prisma.PrismaClientKnownRequestError("db", { code: "P2002", clientVersion: "1.0.0" });
     vi.mocked(prisma.invite.delete).mockRejectedValue(error);
-    await expect(deleteInvite("invite-1")).rejects.toThrow(DatabaseError);
+    await expect(deleteInvite("invite-1", asOwner)).rejects.toThrow(DatabaseError);
   });
 
   test("throws error if prisma error", async () => {
     const error = new Error("db");
     vi.mocked(prisma.invite.delete).mockRejectedValue(error);
-    await expect(deleteInvite("invite-1")).rejects.toThrow("db");
+    await expect(deleteInvite("invite-1", asOwner)).rejects.toThrow("db");
   });
 });
 
@@ -328,5 +333,35 @@ describe("getInvite", () => {
     const error = new Error("db");
     vi.mocked(prisma.invite.findUnique).mockRejectedValue(error);
     await expect(getInvite("invite-1")).rejects.toThrow("db");
+  });
+});
+
+describe("writes to an owner's invite by a caller who is not an owner", () => {
+  const recordNotFound = () =>
+    new Prisma.PrismaClientKnownRequestError("Record not found", { code: "P2025", clientVersion: "1.0.0" });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test.each([
+    ["refreshInviteExpiration", () => refreshInviteExpiration("invite-1", asManager), "update"],
+    ["resendInvite", () => resendInvite("invite-1", asManager), "update"],
+    ["deleteInvite", () => deleteInvite("invite-1", asManager), "delete"],
+  ] as const)("%s only matches an invite that is not an owner's", async (_name, call, method) => {
+    vi.mocked(prisma.invite[method]).mockRejectedValue(recordNotFound());
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue({ id: "invite-1" } as never);
+
+    await expect(call()).rejects.toThrow(OperationNotAllowedError);
+    expect(prisma.invite[method]).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "invite-1", role: { not: "owner" } } })
+    );
+  });
+
+  test("reports a missing invite as not found", async () => {
+    vi.mocked(prisma.invite.delete).mockRejectedValue(recordNotFound());
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
+
+    await expect(deleteInvite("invite-1", asManager)).rejects.toThrow(ResourceNotFoundError);
   });
 });

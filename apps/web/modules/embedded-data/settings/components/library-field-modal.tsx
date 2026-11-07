@@ -21,7 +21,11 @@ import {
   updateSharedEmbeddedDataAction,
 } from "@/modules/embedded-data/actions";
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
-import type { TSharedEmbeddedData, TSharedEmbeddedDataWriteResult } from "@/modules/embedded-data/types";
+import {
+  type TSharedEmbeddedData,
+  type TSharedEmbeddedDataWriteResult,
+  getEmbeddedDataUsageTotal,
+} from "@/modules/embedded-data/types";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -308,7 +312,10 @@ export const LibraryFieldModal = ({
         toast.error(result.message || t("common.something_went_wrong_please_try_again"));
         return;
       }
-      setPendingTypeChange({ draft, surveyCount: result.usage.length });
+      setPendingTypeChange({
+        draft,
+        surveyCount: getEmbeddedDataUsageTotal(result.usage),
+      });
       return;
     }
 

@@ -13,6 +13,12 @@ import { formatDateForDisplay, formatDateWithOrdinal } from "@/lib/utils/datetim
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import {
+  type TMemberRow,
+  canActOnInvite,
+  isInvitee,
+  showDeleteButton,
+} from "@/modules/organization/settings/teams/lib/member-controls";
+import {
   type TLastSignInSort,
   sortMembersByLastSignIn,
 } from "@/modules/organization/settings/teams/lib/sort-members";
@@ -22,14 +28,6 @@ import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { ReactivateMemberButton } from "./reactivate-member-button";
-
-/** The two row shapes this table mixes: accepted memberships and pending invites. */
-type TMemberRow = TMember | TInvite;
-
-// Type guard to check if member is an invitee
-const isInvitee = (member: TMemberRow): member is TInvite => {
-  return (member as TInvite).expiresAt !== undefined;
-};
 
 const getMembershipBadge = (member: TMemberRow, t: TFunction, locale: string) => {
   if (isInvitee(member)) {
@@ -50,43 +48,6 @@ const getMembershipBadge = (member: TMemberRow, t: TFunction, locale: string) =>
   }
 
   return <Badge type="success" text={t("common.active")} size="tiny" />;
-};
-
-const showDeleteButton = (
-  member: TMemberRow,
-  {
-    isOwnerOrManager,
-    isManager,
-    currentUserId,
-    doesOrgHaveMoreThanOneOwner,
-  }: Readonly<{
-    isOwnerOrManager: boolean;
-    isManager: boolean;
-    currentUserId: string;
-    doesOrgHaveMoreThanOneOwner: boolean;
-  }>
-): boolean => {
-  if (isInvitee(member)) {
-    return isOwnerOrManager;
-  }
-
-  if (!isOwnerOrManager) {
-    return false;
-  }
-
-  if (member.userId === currentUserId) {
-    return false;
-  }
-
-  if (isManager) {
-    return member.role !== "owner";
-  }
-
-  if (member.role === "owner") {
-    return doesOrgHaveMoreThanOneOwner;
-  }
-
-  return true;
 };
 
 // The calendar day is read in the organization's reporting zone, so a sign-in near midnight lands on the
@@ -139,9 +100,9 @@ const getMemberColumns = ({
   isDashboardViewerRoleEnabled,
   isUserManagementDisabledFromUi,
   isOwnerOrManager,
+  canManageUsers,
   isManager,
   doesOrgHaveMoreThanOneOwner,
-  canReactivate,
   lastSignInSort,
   onToggleLastSignInSort,
 }: Readonly<{
@@ -155,13 +116,14 @@ const getMemberColumns = ({
   isDashboardViewerRoleEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
   isOwnerOrManager: boolean;
+  /**
+   * `organization.manage_access`, decided on the server: owners and managers above the
+   * `USER_MANAGEMENT_MINIMUM_ROLE` floor, licensed or not. Delete, Reactivate, the invite controls and the
+   * role picker are user management, so they follow it rather than the caller's role (ENG-6812).
+   */
+  canManageUsers: boolean;
   isManager: boolean;
   doesOrgHaveMoreThanOneOwner: boolean;
-  /**
-   * Owners and managers (`organization.manage_access`), licensed or not: Reactivate is user management,
-   * so a member deactivated while the organisation held data retention can come back after it lapses.
-   */
-  canReactivate: boolean;
   lastSignInSort: TLastSignInSort | null;
   onToggleLastSignInSort: () => void;
 }>): TSettingsTableColumn<TMemberRow>[] => {
@@ -203,7 +165,7 @@ const getMemberColumns = ({
           doesOrgHaveMoreThanOneOwner={doesOrgHaveMoreThanOneOwner}
           isFormbricksCloud={isFormbricksCloud}
           isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
-          isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+          isUserManagementDisabledFromUi={isUserManagementDisabledFromUi || !canManageUsers}
         />
       ),
     });
@@ -245,7 +207,7 @@ const getMemberColumns = ({
       align: "right",
       cell: (member) => (
         <div className="flex items-center justify-end gap-2">
-          {canReactivate &&
+          {canManageUsers &&
           !isInvitee(member) &&
           !member.isActive &&
           // Managers don't act on owners, as with Delete; the API refuses it too.
@@ -260,8 +222,9 @@ const getMemberColumns = ({
             organization={organization}
             member={isInvitee(member) ? undefined : member}
             invite={isInvitee(member) ? member : undefined}
+            canManageInvites={isInvitee(member) && canActOnInvite(member, { canManageUsers, isManager })}
             showDeleteButton={showDeleteButton(member, {
-              isOwnerOrManager,
+              canManageUsers,
               isManager,
               currentUserId,
               doesOrgHaveMoreThanOneOwner,
@@ -285,6 +248,7 @@ interface MembersInfoProps {
   isFormbricksCloud: boolean;
   isDashboardViewerRoleEnabled: boolean;
   isUserManagementDisabledFromUi: boolean;
+  canManageUsers: boolean;
 }
 
 export const MembersInfo = ({
@@ -297,6 +261,7 @@ export const MembersInfo = ({
   isFormbricksCloud,
   isDashboardViewerRoleEnabled,
   isUserManagementDisabledFromUi,
+  canManageUsers,
 }: Readonly<MembersInfoProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -330,10 +295,10 @@ export const MembersInfo = ({
           isDashboardViewerRoleEnabled,
           isUserManagementDisabledFromUi,
           isOwnerOrManager,
+          // Delete, Reactivate (ENG-3610), the invite controls and the role picker.
+          canManageUsers,
           isManager,
           doesOrgHaveMoreThanOneOwner,
-          // "Reactivate" on inactive members (ENG-3610).
-          canReactivate: isOwnerOrManager,
           lastSignInSort,
           onToggleLastSignInSort: toggleLastSignInSort,
         })}
