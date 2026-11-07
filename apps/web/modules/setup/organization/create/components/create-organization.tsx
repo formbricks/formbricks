@@ -17,7 +17,11 @@ import { Input } from "@/modules/ui/components/input";
 const ZCreateOrganizationFormSchema = ZOrganization.pick({ name: true });
 type TCreateOrganizationForm = z.infer<typeof ZCreateOrganizationFormSchema>;
 
-export const CreateOrganization = () => {
+/**
+ * `skipInviteStep` is true where the user-management floor is `disabled`: nobody may invite, so the
+ * onboarding invite page would only 404 (ENG-6812).
+ */
+export const CreateOrganization = ({ skipInviteStep }: Readonly<{ skipInviteStep: boolean }>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +40,7 @@ export const CreateOrganization = () => {
     setIsSubmitting(true);
     try {
       const organization = await createOrganization(organizationName);
-      router.push(`/setup/organization/${organization.id}/invite`);
+      router.push(skipInviteStep ? "/" : `/setup/organization/${organization.id}/invite`);
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
       setIsSubmitting(false);

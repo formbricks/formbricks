@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { getSurveyStatusLabel } from "../lib/field-labels";
+import { HiddenSurveysItem } from "./hidden-surveys-item";
 
 interface DeleteFieldDialogProps {
   field: TEmbeddedDataResource;
@@ -35,7 +36,8 @@ interface DeleteFieldDialogProps {
  *
  * `SurveyEmbeddedData` cascades, so removing a linked field would strip it from every survey using
  * it and leave the responses already stored under its `storageKey` addressed by a definition that no
- * longer exists. The service refuses that and answers with the surveys, which this names — **there is
+ * longer exists. The service refuses that and answers with the surveys: this names the ones the reader
+ * can see and counts the rest (ENG-6811), which an owner or manager has to unlink — **there is
  * no force-delete path**, on purpose: the remedy is to remove the field from those surveys first.
  *
  * The refusal is read from the write's result rather than pre-empted by the row's `surveyCount`,
@@ -49,7 +51,7 @@ export const DeleteFieldDialog = ({
 }: Readonly<DeleteFieldDialogProps>) => {
   const { t } = useTranslation();
   const deleteField = useDeleteEmbeddedData(workspaceId);
-  const [blockingSurveys, setBlockingSurveys] = useState<TEmbeddedDataUsageResource[] | null>(null);
+  const [blockingSurveys, setBlockingSurveys] = useState<TEmbeddedDataUsageResource | null>(null);
 
   const close = () => {
     setBlockingSurveys(null);
@@ -87,7 +89,7 @@ export const DeleteFieldDialog = ({
           <DialogBody>
             <p className="text-sm text-slate-800">{t("workspace.embedded_data.still_used_body")}</p>
             <ul className="mt-3 flex flex-col gap-2">
-              {blockingSurveys.map((survey) => (
+              {blockingSurveys.surveys.map((survey) => (
                 <li key={survey.id} className="flex items-center justify-between gap-3">
                   <Link
                     href={`/workspaces/${workspaceId}/surveys/${survey.id}/edit`}
@@ -99,7 +101,13 @@ export const DeleteFieldDialog = ({
                   </span>
                 </li>
               ))}
+              <HiddenSurveysItem count={blockingSurveys.hiddenSurveyCount} />
             </ul>
+            {blockingSurveys.hiddenSurveyCount > 0 && (
+              <p className="mt-3 text-sm text-slate-500">
+                {t("workspace.embedded_data.still_used_hidden_surveys_note")}
+              </p>
+            )}
           </DialogBody>
           <DialogFooter>
             <Button type="button" onClick={close}>

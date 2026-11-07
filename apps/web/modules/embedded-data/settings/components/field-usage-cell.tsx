@@ -8,6 +8,7 @@ import { useEmbeddedDataUsage } from "@/modules/embedded-data/hooks/use-embedded
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { getSurveyStatusLabel } from "../lib/field-labels";
 import { getUsageLabel } from "../lib/library-field";
+import { HiddenSurveysItem } from "./hidden-surveys-item";
 
 interface FieldUsageCellProps {
   fieldId: string;
@@ -16,7 +17,8 @@ interface FieldUsageCellProps {
 }
 
 /**
- * The "Used in" cell: a count, and for a field that is used, a popover naming the surveys.
+ * The "Used in" cell: a count, and for a field that is used, a popover naming the surveys the reader
+ * can see and counting the Restricted ones they cannot (ENG-6811).
  *
  * The names are fetched when the popover opens rather than with the list. The list query already
  * counts the links, which is what the cell reads; loading every survey name for every row would pay
@@ -58,12 +60,12 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
       return <p className="text-sm text-slate-500">{t("common.loading")}</p>;
     // A successful empty answer is reachable: `surveyCount` is as old as the page, so the last
     // linking survey may have been deleted since. Without this the panel renders an empty list.
-    if (usage.length === 0)
+    if (usage.surveys.length === 0 && usage.hiddenSurveyCount === 0)
       return <p className="text-sm text-slate-500">{t("workspace.embedded_data.not_used")}</p>;
 
     return (
       <ul className="flex flex-col gap-2">
-        {usage.map((survey) => (
+        {usage.surveys.map((survey) => (
           <li key={survey.id} className="flex items-center justify-between gap-3">
             <Link
               href={`/workspaces/${workspaceId}/surveys/${survey.id}/edit`}
@@ -73,6 +75,7 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
             <span className="shrink-0 text-xs text-slate-500">{getSurveyStatusLabel(survey.status, t)}</span>
           </li>
         ))}
+        <HiddenSurveysItem count={usage.hiddenSurveyCount} />
       </ul>
     );
   };

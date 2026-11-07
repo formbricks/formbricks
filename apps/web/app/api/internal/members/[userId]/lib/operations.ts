@@ -11,8 +11,8 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { can } from "@/lib/authorization";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { canManageUsers } from "@/lib/membership/user-management";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   refuseRoleAssignment,
@@ -104,12 +104,12 @@ export async function updateMemberRoleOperation({
   const callerMembership = await getMembershipByUserIdOrganizationId(actor.id, organizationId);
   if (!callerMembership) return problemForbidden(requestId, undefined, instance);
 
-  // `organization.manage_access` *is* the user-management decision in the central vocabulary; SpiceDB maps
-  // `USER_MANAGEMENT_MINIMUM_ROLE` onto it. `organization.manage` is a different capability, also
+  // `canManageUsers` is the user-management floor (`USER_MANAGEMENT_MINIMUM_ROLE`), the same question every
+  // user-management entry point asks. `organization.manage` is a different capability, also
   // required, so both stay. Neither depends on the other, so both are asked at once; a missing user
   // management still answers first, with its reason — the caller is a member, so naming it reveals nothing.
   const [canManageAccess, access] = await Promise.all([
-    can(actor, "organization.manage_access", { type: "organization", id: organizationId }),
+    canManageUsers(actor.id, organizationId),
     requireOrgActionAccess({
       authentication,
       organizationId,

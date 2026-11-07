@@ -1,12 +1,12 @@
 import "server-only";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
+import { assertBrandingChangeAllowed } from "@/modules/ee/whitelabel/remove-branding/lib/permission";
 import { updateWorkspaceBranding } from "@/modules/ee/whitelabel/remove-branding/lib/workspace";
 import { getWorkspace } from "@/modules/survey/editor/lib/workspace";
 import type { TWorkspaceBrandingPatchBody } from "../schemas";
@@ -20,12 +20,6 @@ type TRequestContext = {
   instance?: string;
   auditLog?: TV3AuditLog;
 };
-
-/** Why the licence refuses: the in-app badge is checked first, as the Look & Feel page always has. */
-const brandingRefusal = (body: TWorkspaceBrandingPatchBody) =>
-  body.inAppSurveyBranding === undefined
-    ? "You are not allowed to remove link survey branding"
-    : "You are not allowed to remove in-app branding";
 
 /**
  * `PATCH /api/internal/workspaces/{workspaceId}/branding`: show or hide the Formbricks badge on the
@@ -62,11 +56,15 @@ export async function updateWorkspaceBrandingOperation({
   });
   if (limited) return limited;
 
-  // Gone since it was authorized: the same 403 as an organization the caller can't see.
-  const organization = await getOrganization(organizationId);
-  if (!organization) return problemForbidden(requestId, undefined, instance);
-  if (!(await getRemoveBrandingPermission(organizationId))) {
-    return problemForbidden(requestId, brandingRefusal(body), instance);
+  // The licence gate every branding write shares (ENG-6840). An organization gone since it was authorized
+  // gets the same 403 as one the caller can't see.
+  try {
+    await assertBrandingChangeAllowed(organizationId, body);
+  } catch (error) {
+    if (error instanceof ResourceNotFoundError) return problemForbidden(requestId, undefined, instance);
+    if (error instanceof OperationNotAllowedError)
+      return problemForbidden(requestId, error.message, instance);
+    throw error;
   }
 
   await updateWorkspaceBranding(workspaceId, body);

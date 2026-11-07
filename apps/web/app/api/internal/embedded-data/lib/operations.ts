@@ -1,7 +1,7 @@
 import "server-only";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
-import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { getV3AuthorizationActor, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   createdResponse,
@@ -13,6 +13,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -30,6 +31,7 @@ import {
 import {
   EmbeddedDataInUseError,
   EmbeddedDataKeyConflictError,
+  type TResolveVisibleSurveyWhere,
   type TSharedEmbeddedData,
 } from "@/modules/embedded-data/types";
 import type { TEmbeddedDataCreateBody, TEmbeddedDataPromoteBody, TEmbeddedDataUpdateBody } from "../schemas";
@@ -67,6 +69,11 @@ const authorizeWorkspace = (context: TRequestContext, workspaceId: string, permi
     context.instance
   );
 
+type TFieldAccess = {
+  workspaceId: string;
+  resolveVisibleSurveyWhere: TResolveVisibleSurveyWhere;
+};
+
 /**
  * Authorize against the workspace that owns a field, read off the row: single-field routes take a globally
  * unique id and never a workspace, so the scope cannot be supplied by the caller.
@@ -79,7 +86,7 @@ async function authorizeField(
   context: TRequestContext,
   id: string,
   permission: TTeamPermission
-): Promise<Response | { workspaceId: string }> {
+): Promise<Response | TFieldAccess> {
   const workspaceId = await getEmbeddedDataWorkspaceId(id);
   if (!workspaceId) {
     return problemForbidden(
@@ -93,7 +100,14 @@ async function authorizeField(
     context.auditLog.organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   }
   const access = await authorizeWorkspace(context, workspaceId, permission);
-  return access instanceof Response ? access : { workspaceId };
+  if (access instanceof Response) return access;
+  // A session passed the check above, so the actor is that session's user.
+  const userId = getV3AuthorizationActor(context.authentication)?.id ?? "";
+  return {
+    workspaceId,
+    // The caller's survey visibility, resolved only on the paths that name surveys (ENG-6811).
+    resolveVisibleSurveyWhere: () => getUserVisibleSurveyWhere(userId, access.organizationId),
+  };
 }
 
 /**
@@ -181,14 +195,18 @@ export async function createEmbeddedDataOperation({
   });
 }
 
-/** `GET /api/internal/embedded-data/{id}/usage`: the surveys linking a field, for the "used in" popover. */
+/**
+ * `GET /api/internal/embedded-data/{id}/usage`: the surveys linking a field, for the "used in" popover. The
+ * ones the caller may not see are counted, never named (ENG-6811).
+ */
 export async function getEmbeddedDataUsageOperation({
   embeddedDataId,
   ...context
 }: TRequestContext & { embeddedDataId: string }): Promise<Response> {
   const access = await authorizeField(context, embeddedDataId, "read");
   if (access instanceof Response) return access;
-  return successResponse(await getEmbeddedDataUsage(embeddedDataId, access.workspaceId), {
+  const visibleSurveyWhere = await access.resolveVisibleSurveyWhere();
+  return successResponse(await getEmbeddedDataUsage(embeddedDataId, access.workspaceId, visibleSurveyWhere), {
     requestId: context.requestId,
   });
 }
@@ -211,7 +229,10 @@ export async function updateEmbeddedDataOperation({
   const { acknowledgeExistingResponses, ...patch } = body;
   const before = await getSharedEmbeddedDataById(embeddedDataId, access.workspaceId);
   const result = await runWrite(context, () =>
-    updateSharedEmbeddedData(embeddedDataId, access.workspaceId, patch, { acknowledgeExistingResponses })
+    updateSharedEmbeddedData(embeddedDataId, access.workspaceId, patch, {
+      resolveVisibleSurveyWhere: access.resolveVisibleSurveyWhere,
+      acknowledgeExistingResponses,
+    })
   );
   if (result instanceof Response) return result;
 
@@ -236,7 +257,9 @@ export async function deleteEmbeddedDataOperation({
   );
   if (limited) return limited;
 
-  const result = await runWrite(context, () => deleteSharedEmbeddedData(embeddedDataId, access.workspaceId));
+  const result = await runWrite(context, () =>
+    deleteSharedEmbeddedData(embeddedDataId, access.workspaceId, access.resolveVisibleSurveyWhere)
+  );
   if (result instanceof Response) return result;
 
   // A delete has no "after", so the removed row is the whole record of what happened.

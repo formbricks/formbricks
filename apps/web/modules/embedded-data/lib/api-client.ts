@@ -25,7 +25,7 @@ export type TEmbeddedDataWriteResult<TOk extends object = { field: TEmbeddedData
   | ({ status: "ok" } & TOk)
   /** `existingId` is only ever set by promote; a plain create has no replacement to offer. */
   | { status: "keyConflict"; existingId: string | null }
-  | { status: "inUse"; message: string; usage: TEmbeddedDataUsageResource[] };
+  | { status: "inUse"; message: string; usage: TEmbeddedDataUsageResource };
 
 const isConflictDetails = (details: unknown): details is TEmbeddedDataConflictDetails =>
   typeof details === "object" &&
@@ -55,7 +55,7 @@ export const listEmbeddedData = (workspaceId: string, { signal }: { signal?: Abo
   });
 
 export const getEmbeddedDataUsage = (id: string, { signal }: { signal?: AbortSignal } = {}) =>
-  getApiData<TEmbeddedDataUsageResource[]>(`${fieldPath(id)}/usage`, { signal });
+  getApiData<TEmbeddedDataUsageResource>(`${fieldPath(id)}/usage`, { signal });
 
 export const createEmbeddedData = (workspaceId: string, body: TEmbeddedDataCreateBody) =>
   toWriteResult(() =>

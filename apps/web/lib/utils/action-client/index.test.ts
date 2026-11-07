@@ -80,6 +80,7 @@ describe("isExpectedError (shared helper)", () => {
       "ValidationError",
       "AuthenticationError",
       "OperationNotAllowedError",
+      "ResponseAlreadyFinishedError",
       "QueryExecutionError",
       "TooManyRequestsError",
       "InvalidPasswordResetTokenError",

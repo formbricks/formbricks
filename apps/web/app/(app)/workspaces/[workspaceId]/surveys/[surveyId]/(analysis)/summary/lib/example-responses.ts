@@ -216,16 +216,21 @@ const removeHtmlTags = (value: string): string => {
   return out;
 };
 
+const HTML_ENTITIES: Readonly<Record<string, string>> = {
+  "&nbsp;": " ",
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+};
+
+// One pass, so the `&` that `&amp;` decodes to is never read again: `&amp;lt;` stays `&lt;`.
+const decodeHtmlEntities = (value: string): string =>
+  value.replaceAll(/&(?:nbsp|amp|lt|gt|quot|#39);/g, (entity) => HTML_ENTITIES[entity]);
+
 const stripHtml = (value: string): string =>
-  removeHtmlTags(value)
-    .replaceAll("&nbsp;", " ")
-    .replaceAll("&amp;", "&")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll(/\s+/g, " ")
-    .trim();
+  decodeHtmlEntities(removeHtmlTags(value)).replaceAll(/\s+/g, " ").trim();
 
 const plainHeadline = (element: TSurveyElement | undefined): string =>
   element ? stripHtml(getLocalizedValue(element.headline, DEFAULT_LANGUAGE)) : "";

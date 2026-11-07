@@ -98,13 +98,15 @@ beforeEach(() => {
   mocks.isFormbricksCloud = true;
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.applyRateLimit.mockResolvedValue(undefined);
-  allow("organization.manage");
+  allow("organization.manage", "organization.manage_access");
   mocks.getInvite.mockResolvedValue({ organizationId: ORG_ID });
   callerIs("owner");
   mocks.checkRoleManagementPermission.mockResolvedValue(undefined);
-  mocks.getInviteAuditSnapshot
-    .mockResolvedValueOnce({ email: "invitee@example.com", creator: { name: "Owner" } })
-    .mockResolvedValueOnce({ email: "invitee@example.com", creator: { name: "Owner" } });
+  mocks.getInviteAuditSnapshot.mockResolvedValue({
+    email: "invitee@example.com",
+    role: "member",
+    creator: { name: "Owner" },
+  });
   mocks.updateInvite.mockResolvedValue(true);
 });
 
@@ -118,8 +120,12 @@ describe("PATCH /api/internal/invites/{inviteId}", () => {
       type: "organization",
       id: ORG_ID,
     });
-    expect(checkedActions()).toEqual(["organization.manage"]);
-    expect(mocks.updateInvite).toHaveBeenCalledWith(INVITE_ID, { role: "manager" });
+    expect(checkedActions()).toEqual(["organization.manage_access", "organization.manage"]);
+    expect(mocks.updateInvite).toHaveBeenCalledWith(
+      INVITE_ID,
+      { role: "manager" },
+      { allowOwnerInvite: true }
+    );
     expect(lastAudit()).toEqual(
       expect.objectContaining({
         action: "updated",
@@ -127,8 +133,9 @@ describe("PATCH /api/internal/invites/{inviteId}", () => {
         status: "success",
         organizationId: ORG_ID,
         targetId: INVITE_ID,
-        oldObject: { email: "invitee@example.com", creator: { name: "Owner" } },
-        newObject: { email: "invitee@example.com", creator: { name: "Owner" } },
+        oldObject: { email: "invitee@example.com", role: "member", creator: { name: "Owner" } },
+        // From the write, not re-read: the snapshot read is request-cached.
+        newObject: { email: "invitee@example.com", role: "manager", creator: { name: "Owner" } },
       })
     );
   });
@@ -152,7 +159,7 @@ describe("PATCH /api/internal/invites/{inviteId}", () => {
   });
 
   test("refuses a caller without organization.manage with 403, and audits the refusal", async () => {
-    allow();
+    allow("organization.manage_access");
     expect((await patch({ role: "member" })).status).toBe(403);
     expect(mocks.applyRateLimit).not.toHaveBeenCalledWith(
       rateLimitConfigs.actions.stateMutation,
@@ -223,8 +230,37 @@ describe("PATCH /api/internal/invites/{inviteId}", () => {
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("Role management is not allowed for this organization");
-    expect(checkedActions()).toEqual(["organization.manage"]);
+    expect(checkedActions()).toEqual(["organization.manage_access", "organization.manage"]);
     expect(mocks.updateInvite).not.toHaveBeenCalled();
+  });
+
+  test("refuses a caller below the user-management floor with its reason (ENG-6812)", async () => {
+    allow("organization.manage");
+    const response = await patch({ role: "member" });
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("User management is not allowed for your role");
+    expect(mocks.applyRateLimit).not.toHaveBeenCalledWith(
+      rateLimitConfigs.actions.stateMutation,
+      expect.anything()
+    );
+    expect(mocks.updateInvite).not.toHaveBeenCalled();
+  });
+
+  test("scopes a manager's write away from owner invites, and answers 403 when it hits one (ENG-6812)", async () => {
+    callerIs("manager");
+    mocks.updateInvite.mockRejectedValue(
+      new OperationNotAllowedError("Only owners can change an owner invite")
+    );
+    const response = await patch({ role: "member" });
+
+    expect(mocks.updateInvite).toHaveBeenCalledWith(
+      INVITE_ID,
+      { role: "member" },
+      { allowOwnerInvite: false }
+    );
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Only owners can change an owner invite");
   });
 
   test.each([

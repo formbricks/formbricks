@@ -1,5 +1,5 @@
 import type {
-  TEmbeddedDataUsageItem,
+  TEmbeddedDataUsage,
   TSharedEmbeddedData,
   TSharedEmbeddedDataListItem,
 } from "@/modules/embedded-data/types";
@@ -19,7 +19,8 @@ export type TEmbeddedDataResource = Omit<
 /** A library row as the settings page lists it: the definition plus how many surveys link it. */
 export type TEmbeddedDataListItemResource = TEmbeddedDataResource & { surveyCount: number };
 
-export type TEmbeddedDataUsageResource = TEmbeddedDataUsageItem;
+/** The surveys linking a field: the caller's visible ones named, the Restricted rest only counted. */
+export type TEmbeddedDataUsageResource = TEmbeddedDataUsage;
 
 /**
  * Why a write was refused with a 409, in the problem's `details`: a key another field already holds
@@ -27,7 +28,7 @@ export type TEmbeddedDataUsageResource = TEmbeddedDataUsageItem;
  */
 export type TEmbeddedDataConflictDetails =
   | { reason: "key_conflict"; existingId: string | null }
-  | { reason: "in_use"; usage: TEmbeddedDataUsageItem[] };
+  | { reason: "in_use"; usage: TEmbeddedDataUsage };
 
 export const serializeEmbeddedData = (field: TSharedEmbeddedData): TEmbeddedDataResource => ({
   id: field.id,

@@ -12,7 +12,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   EmbeddedDataInUseError,
   EmbeddedDataKeyConflictError,
-  type TEmbeddedDataUsageItem,
+  type TEmbeddedDataUsage,
 } from "@/modules/embedded-data/types";
 import { POST as PROMOTE } from "./[embeddedDataId]/promotion/route";
 import { DELETE, PATCH } from "./[embeddedDataId]/route";
@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   getOrganizationId: vi.fn(),
   applyRateLimit: vi.fn(),
   queueAuditEvent: vi.fn(),
+  getUserVisibleSurveyWhere: vi.fn(),
   library: {
     getSharedEmbeddedData: vi.fn(),
     getEmbeddedDataUsage: vi.fn(),
@@ -43,6 +44,9 @@ vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan, can: vi.fn()
 vi.mock("@/app/api/v3/lib/workspace-context", () => ({ resolveV3WorkspaceContext: mocks.resolveWorkspace }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: mocks.getOrganizationId }));
 vi.mock("@/modules/embedded-data/lib/library", () => mocks.library);
+vi.mock("@/lib/survey/visibility/actor-context", () => ({
+  getUserVisibleSurveyWhere: mocks.getUserVisibleSurveyWhere,
+}));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
@@ -97,9 +101,11 @@ const resource = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const USAGE_ITEMS: TEmbeddedDataUsageItem[] = [
-  { id: "clsurv1111111111111111111", name: "Onboarding", status: "inProgress" },
-];
+const USAGE_ITEMS: TEmbeddedDataUsage = {
+  surveys: [{ id: "clsurv1111111111111111111", name: "Onboarding", status: "inProgress" }],
+  hiddenSurveyCount: 1,
+};
+const VISIBLE_SURVEY_WHERE = { OR: [{ visibility: "workspace" }] };
 
 type TRequestOptions = { headers?: Record<string, string> };
 
@@ -146,6 +152,7 @@ beforeEach(() => {
   mocks.library.getEmbeddedDataWorkspaceId.mockResolvedValue(WORKSPACE_ID);
   mocks.library.getSharedEmbeddedData.mockResolvedValue([{ ...row(), surveyCount: 2 }]);
   mocks.library.getEmbeddedDataUsage.mockResolvedValue(USAGE_ITEMS);
+  mocks.getUserVisibleSurveyWhere.mockResolvedValue(VISIBLE_SURVEY_WHERE);
   mocks.library.getSharedEmbeddedDataById.mockResolvedValue(row());
   mocks.library.getLocalEmbeddedDataById.mockResolvedValue(
     row({ key: null, surveyId: "clsurv1111111111111111111" })
@@ -201,7 +208,16 @@ describe("reads", () => {
       type: "workspace",
       id: OTHER_WORKSPACE_ID,
     });
-    expect(mocks.library.getEmbeddedDataUsage).toHaveBeenCalledWith(FIELD_ID, OTHER_WORKSPACE_ID);
+    expect(mocks.library.getEmbeddedDataUsage).toHaveBeenCalledWith(
+      FIELD_ID,
+      OTHER_WORKSPACE_ID,
+      VISIBLE_SURVEY_WHERE
+    );
+  });
+
+  test("names only the surveys the caller can see, by the caller's own visibility (ENG-6811)", async () => {
+    await usage();
+    expect(mocks.getUserVisibleSurveyWhere).toHaveBeenCalledWith(USER_ID, ORG_ID);
   });
 });
 
@@ -302,8 +318,13 @@ describe("writes", () => {
       FIELD_ID,
       WORKSPACE_ID,
       { dataType: "number" },
-      { acknowledgeExistingResponses: true }
+      { acknowledgeExistingResponses: true, resolveVisibleSurveyWhere: expect.any(Function) }
     );
+    // Resolved lazily, only on the refusal path that names surveys, and as the caller.
+    expect(mocks.getUserVisibleSurveyWhere).not.toHaveBeenCalled();
+    const { resolveVisibleSurveyWhere } = mocks.library.updateSharedEmbeddedData.mock.calls[0][3];
+    await expect(resolveVisibleSurveyWhere()).resolves.toBe(VISIBLE_SURVEY_WHERE);
+    expect(mocks.getUserVisibleSurveyWhere).toHaveBeenCalledWith(USER_ID, ORG_ID);
     expect(lastAudit()).toMatchObject({
       status: "success",
       oldObject: row(),
@@ -315,7 +336,11 @@ describe("writes", () => {
     const response = await remove();
 
     expect(response.status).toBe(204);
-    expect(mocks.library.deleteSharedEmbeddedData).toHaveBeenCalledWith(FIELD_ID, WORKSPACE_ID);
+    expect(mocks.library.deleteSharedEmbeddedData).toHaveBeenCalledWith(
+      FIELD_ID,
+      WORKSPACE_ID,
+      expect.any(Function)
+    );
     expect(lastAudit()).toMatchObject({
       action: "deleted",
       targetType: "embeddedData",

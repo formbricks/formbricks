@@ -525,6 +525,29 @@ describe("generateExampleResponseDataset", () => {
     expect(call.prompt).not.toContain("<strong>");
   });
 
+  test("decodes each HTML entity in a headline once, so an escaped entity stays literal text", async () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_text",
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: i18n("<p>Is &amp;lt;b&amp;gt; Tom &amp; Jerry&#39;s&nbsp;pick?</p>"),
+      },
+    ] as unknown as TSurvey["questions"]);
+    mockOpenTextAnswers(survey);
+
+    await generateExampleResponseDataset({
+      survey,
+      organizationId: "org_1",
+      workspaceId: "workspace_1",
+      userId: "user_1",
+    });
+
+    const call = vi.mocked(mocks.generateOrganizationAIObject).mock.calls[0][0];
+    expect(call.prompt).toContain("Is &lt;b&gt; Tom & Jerry's pick?");
+    expect(call.prompt).not.toContain("<b>");
+  });
+
   test("uses survey-agnostic fallback answers when no keyword branch matches", async () => {
     const survey = makeSurvey([
       {

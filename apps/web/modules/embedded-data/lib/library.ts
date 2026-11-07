@@ -15,11 +15,13 @@ import {
   EmbeddedDataInUseError,
   EmbeddedDataKeyConflictError,
   type TCreateSharedEmbeddedDataInput,
-  type TEmbeddedDataUsageItem,
+  type TEmbeddedDataUsage,
   type TPromoteEmbeddedDataInput,
+  type TResolveVisibleSurveyWhere,
   type TSharedEmbeddedData,
   type TSharedEmbeddedDataListItem,
   type TUpdateSharedEmbeddedDataInput,
+  getEmbeddedDataUsageTotal,
 } from "../types";
 
 /**
@@ -149,19 +151,32 @@ export const getSharedEmbeddedData = reactCache(
  * them. Ordered by name so the popover does not reshuffle between reads.
  *
  * Scoped by `workspaceId` like every other query here, so a caller authorized for one workspace
- * cannot read another's usage by guessing an id.
+ * cannot read another's usage by guessing an id. `visibleSurveyWhere` is the reader's survey
+ * visibility (`getUserVisibleSurveyWhere`): only those surveys are named, and the rest are counted, so
+ * a Restricted survey's name never reaches someone who cannot see it while the total stays exact.
+ *
+ * Counting the hidden ones is a deliberate exception to the visibility contract's "not countable"
+ * (`predicate.ts`, ENG-6811): the library list already shows the total, and a delete has to stay
+ * refused, and say why, while any survey links the field, seen or not.
  */
 export const getEmbeddedDataUsage = async (
   id: string,
-  workspaceId: string
-): Promise<TEmbeddedDataUsageItem[]> => {
-  const links = await prisma.surveyEmbeddedData.findMany({
-    where: { embeddedDataId: id, workspaceId },
-    select: { survey: { select: { id: true, name: true, status: true } } },
-    orderBy: { survey: { name: "asc" } },
-  });
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput
+): Promise<TEmbeddedDataUsage> => {
+  const [links, total] = await Promise.all([
+    prisma.surveyEmbeddedData.findMany({
+      where: { embeddedDataId: id, workspaceId, survey: visibleSurveyWhere },
+      select: { survey: { select: { id: true, name: true, status: true } } },
+      orderBy: { survey: { name: "asc" } },
+    }),
+    prisma.surveyEmbeddedData.count({ where: { embeddedDataId: id, workspaceId } }),
+  ]);
 
-  return links.map((link) => link.survey);
+  return {
+    surveys: links.map((link) => link.survey),
+    hiddenSurveyCount: Math.max(0, total - links.length),
+  };
 };
 
 /**
@@ -294,7 +309,10 @@ export const updateSharedEmbeddedData = async (
   id: string,
   workspaceId: string,
   patch: TUpdateSharedEmbeddedDataInput,
-  options?: { acknowledgeExistingResponses?: boolean }
+  options: Readonly<{
+    resolveVisibleSurveyWhere: TResolveVisibleSurveyWhere;
+    acknowledgeExistingResponses?: boolean;
+  }>
 ): Promise<TSharedEmbeddedData> => {
   await assertNewReleaseWorkEnabled();
   const existing = await requireSharedField(id, workspaceId);
@@ -309,8 +327,8 @@ export const updateSharedEmbeddedData = async (
   });
   assertValidRow(merged);
 
-  if (merged.dataType !== existing.dataType && !options?.acknowledgeExistingResponses) {
-    await assertNoResponsesUnderField(id, workspaceId);
+  if (merged.dataType !== existing.dataType && !options.acknowledgeExistingResponses) {
+    await assertNoResponsesUnderField(id, workspaceId, options.resolveVisibleSurveyWhere);
   }
 
   const updated = await prisma.embeddedData.update({
@@ -335,7 +353,11 @@ export const updateSharedEmbeddedData = async (
  * the product. The usage list is loaded only once the refusal is certain, so the common case pays a
  * single indexed lookup.
  */
-const assertNoResponsesUnderField = async (id: string, workspaceId: string): Promise<void> => {
+const assertNoResponsesUnderField = async (
+  id: string,
+  workspaceId: string,
+  resolveVisibleSurveyWhere: TResolveVisibleSurveyWhere
+): Promise<void> => {
   const links = await prisma.surveyEmbeddedData.findMany({
     where: { embeddedDataId: id, workspaceId },
     select: { surveyId: true },
@@ -350,7 +372,7 @@ const assertNoResponsesUnderField = async (id: string, workspaceId: string): Pro
 
   throw new EmbeddedDataInUseError(
     "Cannot change the data type of a field that already has responses",
-    await getEmbeddedDataUsage(id, workspaceId)
+    await getEmbeddedDataUsage(id, workspaceId, await resolveVisibleSurveyWhere())
   );
 };
 
@@ -364,14 +386,21 @@ const assertNoResponsesUnderField = async (id: string, workspaceId: string): Pro
  */
 export const deleteSharedEmbeddedData = async (
   id: string,
-  workspaceId: string
+  workspaceId: string,
+  resolveVisibleSurveyWhere: TResolveVisibleSurveyWhere
 ): Promise<TSharedEmbeddedData> => {
   await assertNewReleaseWorkEnabled();
   const existing = await requireSharedField(id, workspaceId);
 
-  const usage = await getEmbeddedDataUsage(id, workspaceId);
-  if (usage.length > 0) {
-    throw new EmbeddedDataInUseError("Cannot delete a field that is used by a survey", usage);
+  // Refused on every link, seen or not: a survey hidden from the caller still loses the field. The
+  // surveys are named only once the refusal is certain, so an unused field costs one count.
+  const linkCount = await prisma.surveyEmbeddedData.count({ where: { embeddedDataId: id, workspaceId } });
+  if (linkCount > 0) {
+    // Re-read rather than trusting the count: a link removed in between must not refuse with an empty list.
+    const usage = await getEmbeddedDataUsage(id, workspaceId, await resolveVisibleSurveyWhere());
+    if (getEmbeddedDataUsageTotal(usage) > 0) {
+      throw new EmbeddedDataInUseError("Cannot delete a field that is used by a survey", usage);
+    }
   }
 
   await prisma.embeddedData.delete({ where: { id, workspaceId } });
