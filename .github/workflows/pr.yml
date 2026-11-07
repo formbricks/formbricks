@@ -97,6 +97,9 @@ jobs:
         validate-authzed-schema,
         api-v3-contract-tests,
       ]
+    # `always()`, not `!cancelled()`: this is the required merge gate, and a skipped required job
+    # counts as passing. A run cancelled by hand must stay red; the red summary a newer push leaves on
+    # the superseded commit is only cosmetic, since the new commit carries its own.
     if: always()
     runs-on: ubuntu-latest
     permissions:
