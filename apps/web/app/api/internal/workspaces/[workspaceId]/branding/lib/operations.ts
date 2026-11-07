@@ -1,5 +1,5 @@
 import "server-only";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { forbidOnRefusal } from "@/app/api/internal/lib/refusal";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemForbidden, successResponse } from "@/app/api/v3/lib/response";
@@ -58,14 +58,12 @@ export async function updateWorkspaceBrandingOperation({
 
   // The licence gate every branding write shares (ENG-6840). An organization gone since it was authorized
   // gets the same 403 as one the caller can't see.
-  try {
-    await assertBrandingChangeAllowed(organizationId, body);
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) return problemForbidden(requestId, undefined, instance);
-    if (error instanceof OperationNotAllowedError)
-      return problemForbidden(requestId, error.message, instance);
-    throw error;
-  }
+  const notLicensed = await forbidOnRefusal(
+    () => assertBrandingChangeAllowed(organizationId, body),
+    requestId,
+    instance
+  );
+  if (notLicensed) return notLicensed;
 
   await updateWorkspaceBranding(workspaceId, body);
   const newWorkspace = await getWorkspace(workspaceId);

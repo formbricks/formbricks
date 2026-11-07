@@ -1,6 +1,6 @@
 import "server-only";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
+import { forbidOnRefusal } from "@/app/api/internal/lib/refusal";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemForbidden, problemUnauthorized, successResponse } from "@/app/api/v3/lib/response";
@@ -90,17 +90,14 @@ export async function updateInviteOperation({
   if (notEntitled) return notEntitled;
 
   const before = await getInviteAuditSnapshot(inviteId);
-  try {
-    // Scoped in the write's own `WHERE`, so an invite promoted to owner after the checks above is not
-    // touched either.
-    await updateInvite(inviteId, body, { allowOwnerInvite: callerMembership.role === "owner" });
-  } catch (error) {
-    if (error instanceof OperationNotAllowedError)
-      return problemForbidden(requestId, error.message, instance);
-    // Deleted since it was read: the same 403 as a missing invite.
-    if (error instanceof ResourceNotFoundError) return problemForbidden(requestId, undefined, instance);
-    throw error;
-  }
+  // Scoped in the write's own `WHERE`, so an invite promoted to owner after the checks above is not touched
+  // either. One deleted since it was read gets the same 403 as a missing invite.
+  const writeRefused = await forbidOnRefusal(
+    () => updateInvite(inviteId, body, { allowOwnerInvite: callerMembership.role === "owner" }),
+    requestId,
+    instance
+  );
+  if (writeRefused) return writeRefused;
 
   if (auditLog) {
     auditLog.oldObject = { ...before };
