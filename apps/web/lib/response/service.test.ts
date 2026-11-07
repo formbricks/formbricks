@@ -15,6 +15,7 @@ import {
   deleteResponse,
   getResponseDownloadFile,
   getResponseFilteringValues,
+  lockResponseForUpdate,
   responseSelection,
   updateResponse,
 } from "./service";
@@ -157,6 +158,29 @@ describe("responseSelection", () => {
   // out of it is a key missing from the payload rather than a `null` (ENG-6780).
   test("selects the outcome", () => {
     expect(responseSelection.outcome).toBe(true);
+  });
+});
+
+describe("lockResponseForUpdate", () => {
+  // The lock mode, the workspace scope and the blocking behavior are proven against Postgres in
+  // response-concurrency.integration.test.ts; this covers the binding and the result mapping.
+  const lockingTx = (rows: { finished: boolean }[]) => ({ $queryRaw: vi.fn().mockResolvedValue(rows) });
+
+  test("binds the response and its workspace, and returns the finished flag", async () => {
+    const tx = lockingTx([{ finished: true }]);
+
+    await expect(
+      lockResponseForUpdate(tx as never, { responseId: "response-1", workspaceId: "workspace-1" })
+    ).resolves.toEqual({ finished: true });
+
+    const [, ...values] = tx.$queryRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
+    expect(values).toEqual(["response-1", "workspace-1"]);
+  });
+
+  test("returns null when the workspace has no such response", async () => {
+    await expect(
+      lockResponseForUpdate(lockingTx([]) as never, { responseId: "missing", workspaceId: "workspace-1" })
+    ).resolves.toBeNull();
   });
 });
 

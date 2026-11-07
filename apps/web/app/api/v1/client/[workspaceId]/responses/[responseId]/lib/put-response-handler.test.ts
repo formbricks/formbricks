@@ -5,6 +5,7 @@ import {
   InvalidInputError,
   RESPONSE_ALREADY_FINISHED_ERROR_CODE,
   ResourceNotFoundError,
+  ResponseAlreadyFinishedError,
 } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { putResponseHandler } from "./put-response-handler";
@@ -153,10 +154,7 @@ describe("putResponseHandler", () => {
     expect(result.response.status).toBe(200);
     expect(mocks.getSurvey).toHaveBeenCalledWith(surveyId);
     expect(mocks.updateResponseWithQuotaEvaluation).toHaveBeenCalledWith(
-      responseId,
-      surveyId,
-      expect.anything(),
-      expect.anything()
+      expect.objectContaining({ responseId, workspaceId, surveyId })
     );
   });
 
@@ -329,6 +327,21 @@ describe("putResponseHandler", () => {
       details: { code: RESPONSE_ALREADY_FINISHED_ERROR_CODE },
     });
     expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("answers a response finished after the pre-check like one finished before it (ENG-6869)", async () => {
+    mocks.updateResponseWithQuotaEvaluation.mockRejectedValue(new ResponseAlreadyFinishedError(responseId));
+
+    const result = await putResponseHandler(createHandlerParams());
+
+    expect(result.response.status).toBe(400);
+    await expect(result.response.json()).resolves.toEqual({
+      code: "bad_request",
+      message: "Response is already finished",
+      details: { code: RESPONSE_ALREADY_FINISHED_ERROR_CODE },
+    });
+    expect(result.error).toBeUndefined();
+    expect(mocks.sendToPipeline).not.toHaveBeenCalled();
   });
 
   test("rejects updates when the survey is closed (not accepting submissions)", async () => {
@@ -623,8 +636,8 @@ describe("putResponseHandler", () => {
 
     /** What the handler actually persisted, and the flags it computed for it. */
     const persisted = () => {
-      const [, , updateInput, ingestFlags] = mocks.updateResponseWithQuotaEvaluation.mock.calls[0];
-      return { data: updateInput.data, ingestFlags };
+      const [{ responseInput, ingestFlags }] = mocks.updateResponseWithQuotaEvaluation.mock.calls[0];
+      return { data: responseInput.data, ingestFlags };
     };
 
     test("drops a key no ingested field declares", async () => {
