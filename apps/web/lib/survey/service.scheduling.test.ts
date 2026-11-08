@@ -12,6 +12,12 @@ import {
 import { createSurvey, updateSurveyInternal } from "./service";
 
 const WORKSPACE_CREATION_FACTS = { ownerId: null, visibility: "workspace" } as const;
+const OWNER_TARGETING_ACTOR = {
+  enforced: true,
+  isOrganizationAdmin: true,
+  kind: "user",
+  userId: "owner",
+} as const;
 
 const { mockQueueAuditEventWithoutRequest } = vi.hoisted(() => ({
   mockQueueAuditEventWithoutRequest: vi.fn(),
@@ -350,7 +356,7 @@ describe("survey service scheduling", () => {
         status: "paused",
         type: "link",
       },
-      { creationFacts: WORKSPACE_CREATION_FACTS }
+      { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
     );
 
     expect(createdSurvey.status).toBe("inProgress");
@@ -404,7 +410,7 @@ describe("survey service scheduling", () => {
           status: "paused",
           type: "link",
         },
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       )
     ).rejects.toThrow(ValidationError);
 

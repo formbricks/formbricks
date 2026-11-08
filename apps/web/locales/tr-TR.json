@@ -5471,6 +5471,7 @@
           "nav_title": "Kişisel bağlantılar",
           "no_contacts_in_segment": "Seçilen segment için kişi bulunamadı",
           "no_segments_available": "Kullanılabilir segment yok",
+          "segment_survey_filters_not_visible": "Seçtiğin segment, erişimin olmayan anketlerdeki filtreleri içeriyor. Bu yüzden kişisel bağlantılar için kullanılamaz.",
           "segment_survey_workspace_mismatch": "Seçilen segment bu anketten farklı bir çalışma alanına ait.",
           "select_segment": "Segment seç",
           "upgrade_prompt_description": "Bir segment için kişisel bağlantılar oluştur ve anket yanıtlarını her bir kişiyle ilişkilendir.",

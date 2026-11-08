@@ -5471,6 +5471,7 @@
           "nav_title": "個人リンク",
           "no_contacts_in_segment": "選択されたセグメントに連絡先が見つかりませんでした",
           "no_segments_available": "利用可能なセグメントがありません",
+          "segment_survey_filters_not_visible": "選択したセグメントは、アクセス権のないアンケートでフィルタリングしているため、個人用リンクには使用できません。",
           "segment_survey_workspace_mismatch": "選択されたセグメントは、このアンケートとは異なるワークスペースに属しています。",
           "select_segment": "セグメントを選択",
           "upgrade_prompt_description": "セグメントの個人リンクを生成し、アンケートの回答を各連絡先とリンクします。",

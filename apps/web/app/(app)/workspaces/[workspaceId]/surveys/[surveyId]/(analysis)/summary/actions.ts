@@ -11,6 +11,7 @@ import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
@@ -235,6 +236,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
     const contactsResult = await generatePersonalLinks(
       parsedInput.surveyId,
       parsedInput.segmentId,
+      await resolveSurveyActorContext({ type: "user", id: ctx.user.id }, organizationId),
       parsedInput.expirationDays
     );
 

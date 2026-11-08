@@ -8,6 +8,7 @@ import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-k
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { getSurvey } from "@/lib/survey/service";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   getReservedFutureDefaultAttributeKeyIssue,
@@ -16,8 +17,12 @@ import {
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
-import { SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
+import {
+  SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE,
+  SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE,
+} from "@/modules/ee/contacts/lib/personal-link-errors";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   TContact,
@@ -710,7 +715,16 @@ export const createContactsFromCSV = async (
   }
 };
 
-export const generatePersonalLinks = async (surveyId: string, segmentId: string, expirationDays?: number) => {
+/**
+ * Personal links to `surveyId` for every contact in `segmentId`, as `actor` asks for them. The list
+ * says who is in the segment, so `actor` must be allowed to evaluate its filters (ENG-6870).
+ */
+export const generatePersonalLinks = async (
+  surveyId: string,
+  segmentId: string,
+  actor: TSurveyActorContext,
+  expirationDays?: number
+) => {
   const survey = await getSurvey(surveyId);
 
   if (!survey) {
@@ -731,6 +745,12 @@ export const generatePersonalLinks = async (surveyId: string, segmentId: string,
   // stable error code the client maps to a localized string.
   if (survey.workspaceId !== segment.workspaceId) {
     throw new ValidationError(SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
+  }
+
+  // Survey-visibility guard (ENG-6870): the contacts a survey-interaction filter matches are the people
+  // who saw, started or completed the surveys it reads, so the caller must see every one of them.
+  if (await segmentFiltersReadHiddenSurvey(segment.filters, segment.workspaceId, actor, segment.id)) {
+    throw new ValidationError(SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE);
   }
 
   const contactsResult = await getContactsInSegment(segmentId);
