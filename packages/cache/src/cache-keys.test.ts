@@ -154,6 +154,35 @@ describe("@formbricks/cache cacheKeys", () => {
         expect(keys.map((key) => /\{([^}]+)\}/.exec(key)?.[1])).toEqual(Array(keys.length).fill(day));
       });
 
+      test("keeps the old untagged keys readable during a rolling upgrade", () => {
+        const day = "2026-10-16";
+        expect(createCacheKey.creativeStats.legacyDevices(day, "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:devices"
+        );
+        expect(createCacheKey.creativeStats.legacyPages(day, "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:pages"
+        );
+        expect(createCacheKey.creativeStats.legacyPending(day)).toBe("fb:creative-stats:2026-10-16:pending");
+        expect(createCacheKey.creativeStats.legacyFlushing(day)).toBe(
+          "fb:creative-stats:2026-10-16:flushing"
+        );
+      });
+
+      test("rejects an empty tagged day", () => {
+        expect(() => createCacheKey.creativeStats.devices("", "clcr1")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+        expect(() => createCacheKey.creativeStats.pages("", "clcr1")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+        expect(() => createCacheKey.creativeStats.pending("")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+        expect(() => createCacheKey.creativeStats.flushing("")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+      });
+
       test("keys the countable creative ids by workspace, next to its state, and by the ids' hash", () => {
         expect(createCacheKey.workspace.creativeIds("clws1", "ab12")).toBe("fb:env:clws1:creative-ids:ab12");
       });
