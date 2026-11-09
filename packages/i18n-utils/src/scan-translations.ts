@@ -673,6 +673,26 @@ function displayPlaceholderMismatches(
   }
 }
 
+/** Whether the lockfile could not be validated, or disagrees with the default locale. */
+export function hasLockfileIssues(results: ScanResults): boolean {
+  const lockfile = results.lockfileValidation;
+  return (
+    !lockfile || lockfile.missing.length > 0 || lockfile.outOfSync.length > 0 || lockfile.extra.length > 0
+  );
+}
+
+/** Whether a package's scan found anything that fails validation. */
+export function hasValidationIssues(results: ScanResults): boolean {
+  return (
+    results.missingKeys.size > 0 ||
+    results.unusedKeys.size > 0 ||
+    results.incompleteTranslations.size > 0 ||
+    results.placeholderMismatches.size > 0 ||
+    results.keysWithSpaces.size > 0 ||
+    hasLockfileIssues(results)
+  );
+}
+
 /**
  * Display validation results
  */
@@ -681,22 +701,7 @@ export function displayResults(results: ScanResults, packageName: string, defaul
   console.log(`              ${packageName} VALIDATION RESULTS              `);
   console.log("═══════════════════════════════════════════════════════════\n");
 
-  const hasLockfileIssues =
-    results.lockfileValidation &&
-    (results.lockfileValidation.missing.length > 0 ||
-      results.lockfileValidation.outOfSync.length > 0 ||
-      results.lockfileValidation.extra.length > 0);
-
-  const hasIssues =
-    results.missingKeys.size > 0 ||
-    results.unusedKeys.size > 0 ||
-    results.incompleteTranslations.size > 0 ||
-    results.placeholderMismatches.size > 0 ||
-    results.keysWithSpaces.size > 0 ||
-    !results.lockfileValidation ||
-    hasLockfileIssues;
-
-  if (!hasIssues) {
+  if (!hasValidationIssues(results)) {
     console.log("✅ All translation keys are valid!\n");
     console.log(`   • ${results.usedKeys.size.toString()} keys used in code`);
     console.log(`   • ${results.translationKeys.size.toString()} keys in translations`);
@@ -765,7 +770,7 @@ export function displayResults(results: ScanResults, packageName: string, defaul
   if (results.lockfileValidation) {
     const { missing, outOfSync, extra } = results.lockfileValidation;
 
-    if (hasLockfileIssues) {
+    if (hasLockfileIssues(results)) {
       console.log(`❌ LOCKFILE OUT OF SYNC:\n`);
       console.log(`   Please run "pnpm i" and then "pnpm i18n" to regenerate i18n.lock.\n`);
 
@@ -957,36 +962,8 @@ async function main(): Promise<void> {
     );
 
     // Check if any package has issues
-    const hasWebAppLockfileIssues =
-      !webAppResults.lockfileValidation ||
-      webAppResults.lockfileValidation.missing.length > 0 ||
-      webAppResults.lockfileValidation.outOfSync.length > 0 ||
-      webAppResults.lockfileValidation.extra.length > 0;
-
-    const hasSurveysLockfileIssues =
-      !surveysResults.lockfileValidation ||
-      surveysResults.lockfileValidation.missing.length > 0 ||
-      surveysResults.lockfileValidation.outOfSync.length > 0 ||
-      surveysResults.lockfileValidation.extra.length > 0;
-
-    const hasWebAppIssues =
-      webAppResults.missingKeys.size > 0 ||
-      webAppResults.unusedKeys.size > 0 ||
-      webAppResults.incompleteTranslations.size > 0 ||
-      webAppResults.placeholderMismatches.size > 0 ||
-      webAppResults.keysWithSpaces.size > 0 ||
-      hasWebAppLockfileIssues;
-
-    const hasSurveysIssues =
-      surveysResults.missingKeys.size > 0 ||
-      surveysResults.unusedKeys.size > 0 ||
-      surveysResults.incompleteTranslations.size > 0 ||
-      surveysResults.placeholderMismatches.size > 0 ||
-      surveysResults.keysWithSpaces.size > 0 ||
-      hasSurveysLockfileIssues;
-
     // Exit with error if validation failed for any package
-    if (hasWebAppIssues || hasSurveysIssues) {
+    if (hasValidationIssues(webAppResults) || hasValidationIssues(surveysResults)) {
       console.error("═══════════════════════════════════════════════════════════");
       console.error("❌ Translation validation failed!\n");
       console.error("   Please fix the issues above before committing.\n");
@@ -1008,7 +985,7 @@ async function main(): Promise<void> {
           "   • Keep every {placeholder} the default locale uses in the translated message, in the same syntax"
         );
       }
-      if (hasWebAppLockfileIssues || hasSurveysLockfileIssues) {
+      if (hasLockfileIssues(webAppResults) || hasLockfileIssues(surveysResults)) {
         console.error("   • Rebuild and update your lockfiles (run 'pnpm i18n')");
       }
       console.error();

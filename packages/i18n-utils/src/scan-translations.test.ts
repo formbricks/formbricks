@@ -16,6 +16,8 @@ import {
   flattenKeys,
   flattenValues,
   forEachConcurrently,
+  hasLockfileIssues,
+  hasValidationIssues,
   loadAllLocaleTranslations,
   parseLockfile,
   stripComments,
@@ -889,6 +891,27 @@ describe("Translation Scanner", () => {
         log.mockRestore();
       }
     };
+
+    test("hasValidationIssues fails a package on placeholder drift alone", () => {
+      expect(hasValidationIssues(resultsWith({}))).toBe(false);
+      expect(
+        hasValidationIssues(
+          resultsWith({
+            placeholderMismatches: new Map([
+              ["de-DE", [{ key: "a.b", expected: { icu: ["x"], i18next: [] }, actual: null }]],
+            ]),
+          })
+        )
+      ).toBe(true);
+    });
+
+    test("hasLockfileIssues treats a lockfile that could not be validated as an issue", () => {
+      expect(hasLockfileIssues(resultsWith({}))).toBe(false);
+      expect(hasLockfileIssues(resultsWith({ lockfileValidation: null }))).toBe(true);
+      expect(
+        hasLockfileIssues(resultsWith({ lockfileValidation: { missing: [], outOfSync: ["a.b"], extra: [] } }))
+      ).toBe(true);
+    });
 
     test("announces matching placeholders when nothing is wrong", () => {
       expect(loggedOutput(resultsWith({}))).toContain("All locale placeholders match");
