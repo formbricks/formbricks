@@ -387,48 +387,64 @@ class ExcelExportApplication {
     this.followKey(row.key);
     // A text the survey never stored (an "Other" placeholder nobody typed) was not exported either.
     const target = this.writeTargets.get(row.key);
-    if (!text.value || !target) return;
+    const { value } = text;
+    if (!value || !target) return;
 
     for (const [code, cell] of row.cells) {
       const textKey = this.textKeys.get(code);
-      // An empty cell leaves the text alone, as does one that reads as the survey's text now.
+      // An empty cell leaves the text alone.
       if (!textKey || cell.trim() === "") continue;
-      const current = toExportedCellText({
-        text,
-        textKey,
-        survey: this.source,
-        truncatedSuffix: this.context.truncatedSuffix,
-      });
-      if (cell === current) continue;
-      const params = { row: row.row, language: code };
-      // A text cut to fit its cell cannot come back whole: the sheet holds only its start.
-      if (current.length >= EXCEL_EXPORT_MAX_CELL_CHARS) {
-        this.issues.push({
-          code: "sheet_text_not_imported",
-          severity: "warning",
-          params: { ...params, cause: "cut_on_export" },
-        });
-        continue;
-      }
-
-      const stored = text.value[textKey] ?? "";
-      const recallLabels = getRecallLabels(stored, this.source, textKey);
-      if (!recallLabels) {
-        this.issues.push({
-          code: "sheet_text_not_imported",
-          severity: "warning",
-          params: { ...params, cause: "too_many_recalls" },
-        });
-        continue;
-      }
-      const next = this.toStoredText(row.row, cell, text.isRichText, recallLabels, stored);
-      if (next === "" || next === stored) continue;
-      if (text.isRichText && FORMATTING_TAG.test(stored)) {
-        this.issues.push({ code: "sheet_formatting_dropped", severity: "warning", params });
-      }
+      const next = this.readKeyedCell(row.row, code, cell, { text, value, textKey });
+      if (next === null) continue;
       target[textKey] = next;
       this.updatedKeys.add(row.key);
     }
+  }
+
+  /**
+   * What one language's cell of a keyed row stores in its text, or `null` to leave the text as it is: the
+   * cell reads as the survey's text now, or can't be read back (reported).
+   */
+  private readKeyedCell(
+    row: number,
+    code: string,
+    cell: string,
+    { text, value, textKey }: { text: TSurveyText; value: TI18nString; textKey: string }
+  ): string | null {
+    const current = toExportedCellText({
+      text,
+      textKey,
+      survey: this.source,
+      truncatedSuffix: this.context.truncatedSuffix,
+    });
+    if (cell === current) return null;
+    const params = { row, language: code };
+    // A text cut to fit its cell cannot come back whole: the sheet holds only its start.
+    if (current.length >= EXCEL_EXPORT_MAX_CELL_CHARS) {
+      this.issues.push({
+        code: "sheet_text_not_imported",
+        severity: "warning",
+        params: { ...params, cause: "cut_on_export" },
+      });
+      return null;
+    }
+
+    const stored = value[textKey] ?? "";
+    const recallLabels = getRecallLabels(stored, this.source, textKey);
+    if (!recallLabels) {
+      this.issues.push({
+        code: "sheet_text_not_imported",
+        severity: "warning",
+        params: { ...params, cause: "too_many_recalls" },
+      });
+      return null;
+    }
+    const next = this.toStoredText(row, cell, text.isRichText, recallLabels, stored);
+    if (next === "" || next === stored) return null;
+    if (text.isRichText && FORMATTING_TAG.test(stored)) {
+      this.issues.push({ code: "sheet_formatting_dropped", severity: "warning", params });
+    }
+    return next;
   }
 
   private applyAddedRow(row: TExcelExportRow): void {
