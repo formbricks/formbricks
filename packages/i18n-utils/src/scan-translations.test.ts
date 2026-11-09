@@ -1,13 +1,22 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import objectHash from "object-hash";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
+  type LocaleTranslations,
+  type ScanResults,
   type TranslationKeys,
+  checkIncompleteTranslations,
+  checkPlaceholderParity,
+  compareKeys,
   detectKeysWithSpaces,
+  displayResults,
   extractKeysFromContent,
+  extractPlaceholders,
   flattenKeys,
+  flattenValues,
   forEachConcurrently,
+  loadAllLocaleTranslations,
   parseLockfile,
   stripComments,
   validateLockfile,
@@ -463,6 +472,30 @@ describe("Translation Scanner", () => {
     });
   });
 
+  describe("flattenValues", () => {
+    test("maps dotted keys to their messages", () => {
+      expect(flattenValues({ auth: { login: "Login", form: { email: "Email" } }, home: "Home" })).toEqual({
+        "auth.login": "Login",
+        "auth.form.email": "Email",
+        home: "Home",
+      });
+    });
+
+    test("skips leaves that are not messages", () => {
+      const input = { count: 3, label: "Label" } as unknown as TranslationKeys;
+      expect(flattenValues(input)).toEqual({ label: "Label" });
+    });
+
+    test("keeps a key named __proto__ as a plain entry", () => {
+      const input = JSON.parse('{"__proto__": "Literal", "other": "Other"}') as TranslationKeys;
+      const values = flattenValues(input);
+
+      expect(Object.hasOwn(values, "__proto__")).toBe(true);
+      expect(values.__proto__).toBe("Literal");
+      expect(values.other).toBe("Other");
+    });
+  });
+
   describe("detectKeysWithSpaces", () => {
     test("detects keys with spaces in used keys", () => {
       const usedKeys = new Set(["valid.key", "key with space", "another.valid"]);
@@ -555,6 +588,394 @@ describe("Translation Scanner", () => {
       const result = detectKeysWithSpaces(usedKeys, translationKeys);
       expect(result).toContain("key with\ttab and\nnewline");
       expect(result.size).toBe(1);
+    });
+  });
+
+  describe("extractPlaceholders", () => {
+    test("collects a simple ICU argument", () => {
+      expect(extractPlaceholders("Max file size limit is {maxSize} MB.")).toEqual({
+        icu: ["maxSize"],
+        i18next: [],
+      });
+    });
+
+    test("collects the plural argument once, however often the branches repeat it", () => {
+      expect(
+        extractPlaceholders("{count, plural, one {{count} attribute} other {{count} attributes}}")
+      ).toEqual({
+        icu: ["count"],
+        i18next: [],
+      });
+    });
+
+    test("collects the select argument and the placeholders inside its branches", () => {
+      expect(extractPlaceholders("{gender, select, other {{name} joined}}")).toEqual({
+        icu: ["gender", "name"],
+        i18next: [],
+      });
+    });
+
+    test("keeps i18next-style placeholders separate from ICU ones", () => {
+      expect(extractPlaceholders("Connected with {{workspace}} workspace")).toEqual({
+        icu: [],
+        i18next: ["workspace"],
+      });
+    });
+
+    test("reports both syntaxes when a message mixes them", () => {
+      expect(extractPlaceholders("{{current}} / {{limit}} {unit}")).toEqual({
+        icu: ["unit"],
+        i18next: ["current", "limit"],
+      });
+    });
+
+    test("ignores HTML, which the runtime hands to IntlMessageFormat as literal text", () => {
+      expect(extractPlaceholders("Write <b>bold</b> {name}")).toEqual({ icu: ["name"], i18next: [] });
+    });
+
+    test("returns empty sets for a message without placeholders", () => {
+      expect(extractPlaceholders("Just text, and a lone brace is fine: 100%")).toEqual({
+        icu: [],
+        i18next: [],
+      });
+    });
+
+    test("collects number, date and time arguments", () => {
+      expect(extractPlaceholders("{a, number} {b, date} {c, time}")).toEqual({
+        icu: ["a", "b", "c"],
+        i18next: [],
+      });
+    });
+
+    test("treats ICU-escaped braces as literal text", () => {
+      expect(extractPlaceholders("The '{'key'}' is written out")).toEqual({ icu: [], i18next: [] });
+    });
+
+    test("throws for a message the runtime cannot format", () => {
+      expect(() => extractPlaceholders("{count, plural, one {# item} other {# items}")).toThrow();
+    });
+  });
+
+  describe("checkPlaceholderParity", () => {
+    const asLocaleMap = (locales: Record<string, Record<string, string>>) => new Map(Object.entries(locales));
+
+    test("reports nothing when the placeholders match", () => {
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { greeting: "Hey {name}", warning: "Including: {{surveys}}" },
+          "de-DE": { greeting: "Hallo {name}", warning: "Einschließlich: {{surveys}}" },
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.size).toBe(0);
+    });
+
+    test("reports a translation that dropped a placeholder", () => {
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { reset: "The link is valid for {minutes} minutes." },
+          "pt-BR": { reset: "O link é válido por 24 horas." },
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.get("pt-BR")).toEqual([
+        { key: "reset", expected: { icu: ["minutes"], i18next: [] }, actual: { icu: [], i18next: [] } },
+      ]);
+    });
+
+    test("reports a placeholder that changed syntax", () => {
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { warning: "Including: {surveys}" },
+          "de-DE": { warning: "Einschließlich: {{surveys}}" },
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.get("de-DE")).toEqual([
+        {
+          key: "warning",
+          expected: { icu: ["surveys"], i18next: [] },
+          actual: { icu: [], i18next: ["surveys"] },
+        },
+      ]);
+    });
+
+    test("accepts a translation that drops plural branches but keeps the argument", () => {
+      // Languages without a plural form legitimately collapse `one`/`other` into one message.
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { options: "{count, plural, one {# option} other {# options}}" },
+          "zh-Hans-CN": { options: "{count} 个选项" },
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.size).toBe(0);
+    });
+
+    test("reports a placeholder nothing passes", () => {
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { title: "Hello" },
+          "de-DE": { title: "Hallo {name}" },
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.get("de-DE")).toEqual([
+        { key: "title", expected: { icu: [], i18next: [] }, actual: { icu: ["name"], i18next: [] } },
+      ]);
+    });
+
+    test("reports an unparseable translation instead of throwing", () => {
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { options: "{count, plural, one {# option} other {# options}}" },
+          "sv-SE": { options: "{count, plural, one {# alternativ} other {# alternativ}" },
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.get("sv-SE")).toEqual([
+        { key: "options", expected: { icu: ["count"], i18next: [] }, actual: null },
+      ]);
+    });
+
+    test("does not treat inherited Object keys as translated keys", () => {
+      // `toString` exists on every object; without an own-property check this would be read as the
+      // locale's translated message and reported as unparseable.
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { toString: "Hello {name}" },
+          "de-DE": {},
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.size).toBe(0);
+    });
+
+    test("ignores keys the locale does not have", () => {
+      // A missing key is checkIncompleteTranslations' finding, not a placeholder mismatch.
+      const mismatches = checkPlaceholderParity(
+        asLocaleMap({
+          "en-US": { present: "{x}", absent: "{y}" },
+          "de-DE": { present: "{x}" },
+        }),
+        "en-US"
+      );
+
+      expect(mismatches.size).toBe(0);
+    });
+
+    test("throws when the default locale is absent", () => {
+      expect(() => checkPlaceholderParity(asLocaleMap({ "de-DE": { a: "{x}" } }), "en-US")).toThrow(
+        "Default locale en-US not found"
+      );
+    });
+
+    test("fails when a default-locale message is not valid ICU", () => {
+      // The runtime cannot format it either, so the scan must not silently skip it.
+      expect(() =>
+        checkPlaceholderParity(
+          asLocaleMap({
+            "en-US": { broken: "{count, plural" },
+            "de-DE": { broken: "kaputt" },
+          }),
+          "en-US"
+        )
+      ).toThrow(/Default locale message "broken" is not valid ICU/);
+    });
+  });
+
+  describe("checkIncompleteTranslations", () => {
+    const localeOf = (values: Record<string, string>): LocaleTranslations => ({
+      keys: new Set(Object.keys(values)),
+      values,
+    });
+
+    test("lists the keys each locale is missing", () => {
+      const incomplete = checkIncompleteTranslations(
+        new Map([
+          ["en-US", localeOf({ a: "", b: "" })],
+          ["de-DE", localeOf({ a: "" })],
+          ["fr-FR", localeOf({ a: "", b: "" })],
+        ]),
+        "en-US"
+      );
+
+      expect([...incomplete.entries()]).toEqual([["de-DE", ["b"]]]);
+    });
+
+    test("throws when the default locale is absent", () => {
+      expect(() => checkIncompleteTranslations(new Map(), "en-US")).toThrow("Default locale en-US not found");
+    });
+  });
+
+  describe("compareKeys", () => {
+    const localeOf = (values: Record<string, string>): LocaleTranslations => ({
+      keys: new Set(Object.keys(values)),
+      values,
+    });
+
+    test("reports missing, unused, spaced and placeholder-drifting keys together", () => {
+      const results = compareKeys(
+        new Set(["used.key", "missing.key", "key with space"]),
+        new Set(["used.key", "unused.key", "drifted.key", "key with space"]),
+        new Map([
+          [
+            "en-US",
+            localeOf({
+              "used.key": "Used",
+              "unused.key": "Unused",
+              "drifted.key": "Hello {name}",
+              "key with space": "Spaced",
+            }),
+          ],
+          ["de-DE", localeOf({ "used.key": "Benutzt", "drifted.key": "Hallo" })],
+        ]),
+        "en-US",
+        "Test"
+      );
+
+      expect([...results.missingKeys]).toEqual(["missing.key"]);
+      expect([...results.unusedKeys].sort()).toEqual(["drifted.key", "unused.key"]);
+      expect([...results.keysWithSpaces]).toEqual(["key with space"]);
+      expect([...results.incompleteTranslations.keys()]).toEqual(["de-DE"]);
+      expect(results.placeholderMismatches.get("de-DE")).toEqual([
+        {
+          key: "drifted.key",
+          expected: { icu: ["name"], i18next: [] },
+          actual: { icu: [], i18next: [] },
+        },
+      ]);
+    });
+  });
+
+  describe("displayResults", () => {
+    const resultsWith = (overrides: Partial<ScanResults>): ScanResults => ({
+      usedKeys: new Set(["a.b"]),
+      translationKeys: new Set(["a.b"]),
+      missingKeys: new Set(),
+      unusedKeys: new Set(),
+      incompleteTranslations: new Map(),
+      placeholderMismatches: new Map(),
+      keysWithSpaces: new Set(),
+      lockfileValidation: { missing: [], outOfSync: [], extra: [] },
+      ...overrides,
+    });
+
+    const loggedOutput = (results: ScanResults): string => {
+      const log = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        displayResults(results, "Test", "en-US");
+        return log.mock.calls.flat().join("\n");
+      } finally {
+        log.mockRestore();
+      }
+    };
+
+    test("announces matching placeholders when nothing is wrong", () => {
+      expect(loggedOutput(resultsWith({}))).toContain("All locale placeholders match");
+    });
+
+    test("prints each mismatch with the expected and found placeholders", () => {
+      const output = loggedOutput(
+        resultsWith({
+          placeholderMismatches: new Map([
+            [
+              "de-DE",
+              [
+                {
+                  key: "a.b",
+                  expected: { icu: ["minutes"], i18next: [] },
+                  actual: { icu: [], i18next: ["minutes"] },
+                },
+                { key: "a.c", expected: { icu: ["x"], i18next: [] }, actual: null },
+              ],
+            ],
+          ]),
+        })
+      );
+
+      expect(output).toContain("PLACEHOLDER MISMATCHES");
+      expect(output).toContain("en-US: {minutes}");
+      expect(output).toContain("de-DE: {{minutes}}");
+      expect(output).toContain("de-DE: (not valid ICU)");
+    });
+
+    test("truncates long per-locale lists", () => {
+      const mismatches = Array.from({ length: 11 }, (_, index) => ({
+        key: `key.${index.toString().padStart(2, "0")}`,
+        expected: { icu: ["x"], i18next: [] },
+        actual: null,
+      }));
+
+      expect(
+        loggedOutput(resultsWith({ placeholderMismatches: new Map([["de-DE", mismatches]]) }))
+      ).toContain("... and 1 more");
+    });
+  });
+
+  describe("loadAllLocaleTranslations", () => {
+    const withTempLocales = async (
+      files: Record<string, string>,
+      run: (localesDir: string) => Promise<void>
+    ): Promise<void> => {
+      const tempBaseDir = fs.mkdtempSync(path.join(__dirname, "temp-test-i18n-load-"));
+      const localesDir = path.join(tempBaseDir, "locales");
+      fs.mkdirSync(localesDir);
+
+      for (const [name, content] of Object.entries(files)) {
+        fs.writeFileSync(path.join(localesDir, name), content);
+      }
+
+      const log = vi.spyOn(console, "log").mockImplementation(() => {});
+      try {
+        await run(localesDir);
+      } finally {
+        log.mockRestore();
+        fs.rmSync(tempBaseDir, { recursive: true, force: true });
+      }
+    };
+
+    test("loads every locale's keys and messages", async () => {
+      await withTempLocales(
+        {
+          "en-US.json": JSON.stringify({ auth: { login: "Login" } }),
+          "de-DE.json": JSON.stringify({ auth: { login: "Anmeldung" } }),
+        },
+        async (localesDir) => {
+          const translations = await loadAllLocaleTranslations(localesDir, "en-US", "Test");
+
+          expect(translations.get("de-DE")).toEqual({
+            keys: new Set(["auth.login"]),
+            values: { "auth.login": "Anmeldung" },
+          });
+        }
+      );
+    });
+
+    test("throws for a locale file that is not valid JSON", async () => {
+      await withTempLocales(
+        { "en-US.json": JSON.stringify({ a: "A" }), "de-DE.json": "{ not json" },
+        async (localesDir) => {
+          await expect(loadAllLocaleTranslations(localesDir, "en-US", "Test")).rejects.toThrow(
+            "Failed to parse"
+          );
+        }
+      );
+    });
+
+    test("throws when the default locale is missing", async () => {
+      await withTempLocales({ "de-DE.json": JSON.stringify({ a: "A" }) }, async (localesDir) => {
+        await expect(loadAllLocaleTranslations(localesDir, "en-US", "Test")).rejects.toThrow(
+          "Default locale en-US not found"
+        );
+      });
     });
   });
 

@@ -2,16 +2,18 @@
  * Translation Key Scanner
  *
  * This script scans the web app for translation keys and validates them against
- * the translation files. It detects missing keys and unused keys.
+ * the translation files. It detects missing keys, unused keys, and translated
+ * messages whose interpolation placeholders no longer match the default locale's.
  *
  * Usage:
  *   pnpm scan-translations
  *
  * Exit codes:
  *   0: Success, no issues found
- *   1: Validation errors found (missing or unused keys)
+ *   1: Validation errors found (missing/unused keys, placeholder mismatches, stale lockfile)
  *   2: Invalid or missing API key
  */
+import { type MessageFormatElement, TYPE, parse } from "@formatjs/icu-messageformat-parser";
 import { glob } from "glob";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -74,34 +76,134 @@ export interface LockfileValidationResults {
   extra: string[];
 }
 
+/**
+ * The interpolation placeholders a message expects, split by syntax.
+ *
+ * Both syntaxes are live in the locale files: `i18next-icu` formats with `IntlMessageFormat`, which
+ * only understands `{name}`, while a handful of hand-written `en-US` strings still carry `{{name}}`.
+ * The two are compared separately on purpose — a locale that "translates" `{surveys}` into
+ * `{{surveys}}` is exactly the breakage this check exists to catch, and treating them as equivalent
+ * would hide it.
+ */
+export interface PlaceholderSet {
+  icu: string[]; // `{name}`, `{count, plural, ...}`, `{count, select, ...}`
+  i18next: string[]; // `{{name}}`
+}
+
+/** A key whose placeholders disagree between the default locale and a target locale. */
+export interface PlaceholderMismatch {
+  key: string;
+  expected: PlaceholderSet;
+  /** `null` when the target message cannot be parsed as ICU at all (it renders literally). */
+  actual: PlaceholderSet | null;
+}
+
 export interface ScanResults {
   usedKeys: Set<string>;
   translationKeys: Set<string>;
   missingKeys: Set<string>;
   unusedKeys: Set<string>;
   incompleteTranslations: Map<string, string[]>; // locale -> missing keys
+  placeholderMismatches: Map<string, PlaceholderMismatch[]>; // locale -> keys whose placeholders drifted
   keysWithSpaces: Set<string>; // keys that contain spaces
   lockfileValidation?: LockfileValidationResults | null;
+}
+
+/**
+ * Walk every leaf of a nested translation object, calling `visit` with its dotted key and value.
+ */
+function walkValues(
+  obj: TranslationKeys,
+  prefix: string,
+  visit: (key: string, value: unknown) => void
+): void {
+  for (const key in obj) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    const value = obj[key];
+
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      walkValues(value, fullKey, visit);
+    } else {
+      visit(fullKey, value);
+    }
+  }
 }
 
 /**
  * Recursively flatten nested translation keys
  */
 export function flattenKeys(obj: TranslationKeys, prefix = ""): string[] {
-  let keys: string[] = [];
+  const keys: string[] = [];
+  walkValues(obj, prefix, (key) => keys.push(key));
+  return keys;
+}
 
-  for (const key in obj) {
-    const fullKey = prefix ? `${prefix}.${key}` : key;
-    const value = obj[key];
+/**
+ * Flatten a translation file to dotted key -> message. Non-string leaves are skipped: a number has no
+ * placeholders to compare.
+ */
+export function flattenValues(obj: TranslationKeys, prefix = ""): Record<string, string> {
+  // Null prototype: a translation key literally named `__proto__` becomes a plain entry instead of
+  // being swallowed by the prototype setter.
+  const values: Record<string, string> = Object.create(null) as Record<string, string>;
+  walkValues(obj, prefix, (key, value) => {
+    if (typeof value === "string") {
+      values[key] = value;
+    }
+  });
+  return values;
+}
 
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      keys = keys.concat(flattenKeys(value, fullKey));
-    } else {
-      keys.push(fullKey);
+// Only plain `{{name}}` interpolation is recognised. i18next format specs (`{{date, datetime}}`)
+// do not appear in the locale files; one would fail ICU parsing and be reported, not misread.
+const I18NEXT_PLACEHOLDER_PATTERN = /\{\{\s*([\w.$-]+)\s*\}\}/g;
+
+/**
+ * Extract the interpolation placeholders a message expects.
+ *
+ * ICU messages are parsed with `ignoreTag: true` — the same option `i18next-icu` hands
+ * `IntlMessageFormat` at runtime — so HTML is treated as literal text and only real arguments are
+ * collected. `{{name}}` is pulled out first because `IntlMessageFormat` rejects it outright; a
+ * message can (and today does) mix the two syntaxes.
+ *
+ * Throws when the message is not valid ICU, which the runtime also cannot format.
+ */
+export function extractPlaceholders(message: string): PlaceholderSet {
+  const i18next = new Set<string>();
+  const icuMessage = message.replaceAll(I18NEXT_PLACEHOLDER_PATTERN, (_match, name: string) => {
+    i18next.add(name);
+    return "";
+  });
+
+  const icu = new Set<string>();
+  collectIcuArguments(parse(icuMessage, { ignoreTag: true }), icu);
+
+  return {
+    icu: [...icu].sort((a, b) => a.localeCompare(b)),
+    i18next: [...i18next].sort((a, b) => a.localeCompare(b)),
+  };
+}
+
+function collectIcuArguments(elements: readonly MessageFormatElement[], into: Set<string>): void {
+  for (const element of elements) {
+    switch (element.type) {
+      case TYPE.argument:
+      case TYPE.number:
+      case TYPE.date:
+      case TYPE.time:
+        into.add(element.value);
+        break;
+      case TYPE.plural:
+      case TYPE.select:
+        into.add(element.value);
+        for (const option of Object.values(element.options)) {
+          collectIcuArguments(option.value, into);
+        }
+        break;
+      default:
+        break; // literal and pound carry no variable; tags never appear because tags are ignored
     }
   }
-
-  return keys;
 }
 
 /**
@@ -252,21 +354,27 @@ async function getLocaleFiles(localesDir: string): Promise<string[]> {
   }
 }
 
+/** A locale file's keys and its flattened messages; both come from the one read. */
+export interface LocaleTranslations {
+  keys: Set<string>;
+  values: Record<string, string>;
+}
+
 /**
- * Load translation keys from a specific locale file
+ * Load a locale file: its flattened keys, plus the same keys mapped to their messages so placeholder
+ * parity can be checked without reading every file twice.
  */
-async function loadKeysFromLocale(locale: string, localesDir: string): Promise<Set<string>> {
+async function loadLocaleTranslations(locale: string, localesDir: string): Promise<LocaleTranslations> {
   const localePath = path.join(localesDir, `${locale}.json`);
-  const translationKeys = new Set<string>();
 
   try {
     const content = await fs.promises.readFile(localePath, "utf-8");
     const translations = JSON.parse(content) as TranslationKeys;
-    const keys = flattenKeys(translations);
 
-    keys.forEach((key) => translationKeys.add(key));
-
-    return translationKeys;
+    return {
+      keys: new Set(flattenKeys(translations)),
+      values: flattenValues(translations),
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     throw new Error(`❌ Failed to parse ${localePath}: ${errorMessage}`);
@@ -276,28 +384,28 @@ async function loadKeysFromLocale(locale: string, localesDir: string): Promise<S
 /**
  * Load translation keys from all locale files
  */
-async function loadAllTranslationKeys(
+export async function loadAllLocaleTranslations(
   localesDir: string,
   defaultLocale: string,
   packageName: string
-): Promise<Map<string, Set<string>>> {
+): Promise<Map<string, LocaleTranslations>> {
   console.log(`📚 Loading ${packageName} translation keys from locale files...`);
 
   const allLocales = await getLocaleFiles(localesDir);
-  const translationsByLocale = new Map<string, Set<string>>();
+  const translationsByLocale = new Map<string, LocaleTranslations>();
 
   // Load all locale files in parallel for better performance
   const localeResults = await Promise.all(
     allLocales.map(async (locale) => {
-      const keys = await loadKeysFromLocale(locale, localesDir);
-      return { locale, keys };
+      const translations = await loadLocaleTranslations(locale, localesDir);
+      return { locale, translations };
     })
   );
 
   // Populate the map and log results
-  for (const { locale, keys } of localeResults) {
-    translationsByLocale.set(locale, keys);
-    console.log(`   • ${locale}.json: ${keys.size.toString()} keys`);
+  for (const { locale, translations } of localeResults) {
+    translationsByLocale.set(locale, translations);
+    console.log(`   • ${locale}.json: ${translations.keys.size.toString()} keys`);
   }
   console.log();
 
@@ -312,25 +420,25 @@ async function loadAllTranslationKeys(
 /**
  * Check for incomplete translations across locales
  */
-function checkIncompleteTranslations(
-  translationsByLocale: Map<string, Set<string>>,
+export function checkIncompleteTranslations(
+  translationsByLocale: Map<string, LocaleTranslations>,
   defaultLocale: string
 ): Map<string, string[]> {
-  const defaultKeys = translationsByLocale.get(defaultLocale);
+  const defaultKeys = translationsByLocale.get(defaultLocale)?.keys;
   if (!defaultKeys) {
     throw new Error(`Default locale ${defaultLocale} not found`);
   }
 
   const incompleteTranslations = new Map<string, string[]>();
 
-  for (const [locale, keys] of translationsByLocale.entries()) {
+  for (const [locale, translations] of translationsByLocale.entries()) {
     // Skip the default locale
     if (locale === defaultLocale) continue;
 
     const missingKeys: string[] = [];
 
     for (const key of defaultKeys) {
-      if (!keys.has(key)) {
+      if (!translations.keys.has(key)) {
         missingKeys.push(key);
       }
     }
@@ -341,6 +449,107 @@ function checkIncompleteTranslations(
   }
 
   return incompleteTranslations;
+}
+
+/**
+ * Parse the default locale once into the reference every other locale is compared against.
+ *
+ * A default message ICU cannot parse aborts the scan: the runtime cannot format it either, so it
+ * renders as its raw source in English, and every translation of it is unchecked. Silently skipping
+ * it would leave exactly the blind spot this check exists to close.
+ */
+function buildPlaceholderReference(defaultValues: Record<string, string>): Map<string, PlaceholderSet> {
+  const reference = new Map<string, PlaceholderSet>();
+
+  for (const [key, message] of Object.entries(defaultValues)) {
+    try {
+      reference.set(key, extractPlaceholders(message));
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `❌ Default locale message "${key}" is not valid ICU (${reason}). Escape literal braces as '{' and '}'.`
+      );
+    }
+  }
+
+  return reference;
+}
+
+function hasSamePlaceholders(expected: PlaceholderSet, actual: PlaceholderSet | null): boolean {
+  if (actual === null) return false;
+
+  // Both lists are sorted, so comparing position by position is set equality.
+  return (
+    actual.icu.length === expected.icu.length &&
+    actual.icu.every((name, index) => name === expected.icu[index]) &&
+    actual.i18next.length === expected.i18next.length &&
+    actual.i18next.every((name, index) => name === expected.i18next[index])
+  );
+}
+
+/**
+ * Mismatches for one locale: a different placeholder set, or a message ICU cannot parse at all — it
+ * then renders literally instead of failing loudly.
+ */
+function collectPlaceholderMismatches(
+  values: Record<string, string>,
+  reference: Map<string, PlaceholderSet>
+): PlaceholderMismatch[] {
+  const mismatches: PlaceholderMismatch[] = [];
+
+  for (const [key, expected] of reference) {
+    if (!Object.hasOwn(values, key)) continue;
+
+    let actual: PlaceholderSet | null;
+    try {
+      actual = extractPlaceholders(values[key]);
+    } catch {
+      actual = null;
+    }
+
+    if (!hasSamePlaceholders(expected, actual)) {
+      mismatches.push({ key, expected, actual });
+    }
+  }
+
+  return mismatches;
+}
+
+/**
+ * Compare the interpolation placeholders of every key a locale shares with the default locale.
+ *
+ * This is the check the key-scanner could not do: it validated that keys exist, never that a
+ * translation still interpolates what the message is called with. A message that drops `{minutes}`
+ * silently renders without the value, and one that keeps `{{surveys}}` renders the braces literally.
+ *
+ * Placeholders that only the target locale has are reported too: nothing supplies them, so they
+ * render as literal braces. A key the locale does not have is skipped — `checkIncompleteTranslations`
+ * owns that case. A message that cannot be parsed is reported rather than thrown, since the runtime
+ * cannot format it either.
+ */
+export function checkPlaceholderParity(
+  valuesByLocale: Map<string, Record<string, string>>,
+  defaultLocale: string
+): Map<string, PlaceholderMismatch[]> {
+  const defaultValues = valuesByLocale.get(defaultLocale);
+  if (!defaultValues) {
+    throw new Error(`Default locale ${defaultLocale} not found`);
+  }
+
+  const reference = buildPlaceholderReference(defaultValues);
+  const mismatches = new Map<string, PlaceholderMismatch[]>();
+
+  for (const [locale, values] of valuesByLocale.entries()) {
+    if (locale === defaultLocale) continue;
+
+    const localeMismatches = collectPlaceholderMismatches(values, reference);
+    if (localeMismatches.length === 0) continue;
+
+    localeMismatches.sort((a, b) => a.key.localeCompare(b.key));
+    mismatches.set(locale, localeMismatches);
+  }
+
+  return mismatches;
 }
 
 /**
@@ -369,10 +578,10 @@ export function detectKeysWithSpaces(usedKeys: Set<string>, translationKeys: Set
 /**
  * Compare used keys with translation keys to find missing and unused keys
  */
-function compareKeys(
+export function compareKeys(
   usedKeys: Set<string>,
   translationKeys: Set<string>,
-  translationsByLocale: Map<string, Set<string>>,
+  translationsByLocale: Map<string, LocaleTranslations>,
   defaultLocale: string,
   packageName: string
 ): ScanResults {
@@ -398,6 +607,14 @@ function compareKeys(
   // Check for incomplete translations across locales
   const incompleteTranslations = checkIncompleteTranslations(translationsByLocale, defaultLocale);
 
+  // Check that every translated message interpolates what the default locale's does
+  const placeholderMismatches = checkPlaceholderParity(
+    new Map(
+      Array.from(translationsByLocale, ([locale, translations]) => [locale, translations.values] as const)
+    ),
+    defaultLocale
+  );
+
   // Detect keys with spaces
   const keysWithSpaces = detectKeysWithSpaces(usedKeys, translationKeys);
 
@@ -409,14 +626,46 @@ function compareKeys(
     missingKeys,
     unusedKeys,
     incompleteTranslations,
+    placeholderMismatches,
     keysWithSpaces,
   };
+}
+
+function describePlaceholders(set: PlaceholderSet | null): string {
+  if (set === null) return "(not valid ICU)";
+
+  const parts = [...set.icu.map((name) => `{${name}}`), ...set.i18next.map((name) => `{{${name}}}`)];
+  return parts.length > 0 ? parts.join(" ") : "(none)";
+}
+
+function displayPlaceholderMismatches(
+  mismatchesByLocale: Map<string, PlaceholderMismatch[]>,
+  defaultLocale: string
+): void {
+  console.log(`\n❌ PLACEHOLDER MISMATCHES:\n`);
+  console.log(`   These messages do not interpolate what ${defaultLocale} does. A dropped or`);
+  console.log('   rewritten placeholder renders literally, e.g. "{name}" or "{{name}}".\n');
+
+  for (const [locale, mismatches] of mismatchesByLocale.entries()) {
+    console.log(`   ❌ ${locale} (${mismatches.length.toString()} keys):`);
+
+    // Show the first 10 per locale, same as the other sections, to keep the output readable
+    for (const { key, expected, actual } of mismatches.slice(0, 10)) {
+      console.log(`      • ${key}`);
+      console.log(`        ${defaultLocale}: ${describePlaceholders(expected)}`);
+      console.log(`        ${locale}: ${describePlaceholders(actual)}`);
+    }
+
+    if (mismatches.length > 10) {
+      console.log(`      ... and ${(mismatches.length - 10).toString()} more`);
+    }
+  }
 }
 
 /**
  * Display validation results
  */
-function displayResults(results: ScanResults, packageName: string, defaultLocale: string): void {
+export function displayResults(results: ScanResults, packageName: string, defaultLocale: string): void {
   console.log("═══════════════════════════════════════════════════════════");
   console.log(`              ${packageName} VALIDATION RESULTS              `);
   console.log("═══════════════════════════════════════════════════════════\n");
@@ -431,6 +680,7 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
     results.missingKeys.size > 0 ||
     results.unusedKeys.size > 0 ||
     results.incompleteTranslations.size > 0 ||
+    results.placeholderMismatches.size > 0 ||
     results.keysWithSpaces.size > 0 ||
     !results.lockfileValidation ||
     hasLockfileIssues;
@@ -442,7 +692,8 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
     console.log(`   • 0 missing keys`);
     console.log(`   • 0 unused keys`);
     console.log(`   • 0 keys with spaces`);
-    console.log(`   • All locales complete\n`);
+    console.log(`   • All locales complete`);
+    console.log(`   • All locale placeholders match\n`);
     return;
   }
 
@@ -482,6 +733,10 @@ function displayResults(results: ScanResults, packageName: string, defaultLocale
         console.log(`      ... and ${moreKeys.toString()} more`);
       }
     }
+  }
+
+  if (results.placeholderMismatches.size > 0) {
+    displayPlaceholderMismatches(results.placeholderMismatches, defaultLocale);
   }
 
   if (results.keysWithSpaces.size > 0) {
@@ -634,15 +889,21 @@ async function validatePackage(
   const usedKeys = await scanSourceFiles(sourceDirs, packageName);
 
   // Load translation keys from all locale files
-  const translationsByLocale = await loadAllTranslationKeys(localesDir, defaultLocale, packageName);
-  const defaultKeys = translationsByLocale.get(defaultLocale);
+  const translationsByLocale = await loadAllLocaleTranslations(localesDir, defaultLocale, packageName);
+  const defaultTranslations = translationsByLocale.get(defaultLocale);
 
-  if (!defaultKeys) {
+  if (!defaultTranslations) {
     throw new Error(`Default locale ${defaultLocale} not found in ${packageName}`);
   }
 
   // Compare and find issues
-  const results = compareKeys(usedKeys, defaultKeys, translationsByLocale, defaultLocale, packageName);
+  const results = compareKeys(
+    usedKeys,
+    defaultTranslations.keys,
+    translationsByLocale,
+    defaultLocale,
+    packageName
+  );
 
   // Run lockfile validation
   const lockfileValidation = await validateLockfile(localesDir, defaultLocale);
@@ -701,6 +962,7 @@ async function main(): Promise<void> {
       webAppResults.missingKeys.size > 0 ||
       webAppResults.unusedKeys.size > 0 ||
       webAppResults.incompleteTranslations.size > 0 ||
+      webAppResults.placeholderMismatches.size > 0 ||
       webAppResults.keysWithSpaces.size > 0 ||
       hasWebAppLockfileIssues;
 
@@ -708,6 +970,7 @@ async function main(): Promise<void> {
       surveysResults.missingKeys.size > 0 ||
       surveysResults.unusedKeys.size > 0 ||
       surveysResults.incompleteTranslations.size > 0 ||
+      surveysResults.placeholderMismatches.size > 0 ||
       surveysResults.keysWithSpaces.size > 0 ||
       hasSurveysLockfileIssues;
 
@@ -728,6 +991,11 @@ async function main(): Promise<void> {
       }
       if (webAppResults.incompleteTranslations.size > 0 || surveysResults.incompleteTranslations.size > 0) {
         console.error("   • Complete missing translations in target language files");
+      }
+      if (webAppResults.placeholderMismatches.size > 0 || surveysResults.placeholderMismatches.size > 0) {
+        console.error(
+          "   • Keep every {placeholder} the default locale uses in the translated message, in the same syntax"
+        );
       }
       if (hasWebAppLockfileIssues || hasSurveysLockfileIssues) {
         console.error("   • Rebuild and update your lockfiles (run 'pnpm i18n')");
