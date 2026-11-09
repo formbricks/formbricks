@@ -128,17 +128,30 @@ describe("@formbricks/cache cacheKeys", () => {
     describe("creative stats namespace", () => {
       test("keys one UTC day's counters of a creative, and the day's flush sets", () => {
         expect(createCacheKey.creativeStats.devices("2026-10-16", "clcr1")).toBe(
-          "fb:creative-stats:2026-10-16:clcr1:devices"
+          "fb:creative-stats:{2026-10-16}:clcr1:devices"
         );
         expect(createCacheKey.creativeStats.pages("2026-10-16", "clcr1")).toBe(
-          "fb:creative-stats:2026-10-16:clcr1:pages"
+          "fb:creative-stats:{2026-10-16}:clcr1:pages"
         );
         expect(createCacheKey.creativeStats.pending("2026-10-16")).toBe(
-          "fb:creative-stats:2026-10-16:pending"
+          "fb:creative-stats:{2026-10-16}:pending"
         );
         expect(createCacheKey.creativeStats.flushing("2026-10-16")).toBe(
-          "fb:creative-stats:2026-10-16:flushing"
+          "fb:creative-stats:{2026-10-16}:flushing"
         );
+      });
+
+      test("puts every key used by a day's Redis scripts in the same cluster slot", () => {
+        const day = "2026-10-16";
+        const keys = [
+          createCacheKey.creativeStats.pending(day),
+          createCacheKey.creativeStats.flushing(day),
+          createCacheKey.creativeStats.devices(day, "clcr1"),
+          createCacheKey.creativeStats.pages(day, "clcr1"),
+          createCacheKey.creativeStats.devices(day, "clcr2"),
+          createCacheKey.creativeStats.pages(day, "clcr2"),
+        ];
+        expect(keys.map((key) => /\{([^}]+)\}/.exec(key)?.[1])).toEqual(Array(keys.length).fill(day));
       });
 
       test("keys the countable creative ids by workspace, next to its state, and by the ids' hash", () => {

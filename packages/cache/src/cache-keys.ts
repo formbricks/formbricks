@@ -33,12 +33,14 @@ export const createCacheKey = {
   // Postgres, and the sets of creatives with totals not yet copied. Counters, not a cache: they carry a
   // TTL of about two days and are never invalidated.
   creativeStats: {
+    // Redis Cluster requires every key in a Lua call to share one hash slot. Each script handles
+    // one UTC day, so keep that day's pending/flushing sets and creative hashes in the same slot.
     devices: (day: string, creativeId: string): CacheKey =>
-      makeCacheKey("creative-stats", day, creativeId, "devices"),
+      makeCacheKey("creative-stats", `{${day}}`, creativeId, "devices"),
     pages: (day: string, creativeId: string): CacheKey =>
-      makeCacheKey("creative-stats", day, creativeId, "pages"),
-    pending: (day: string): CacheKey => makeCacheKey("creative-stats", day, "pending"),
-    flushing: (day: string): CacheKey => makeCacheKey("creative-stats", day, "flushing"),
+      makeCacheKey("creative-stats", `{${day}}`, creativeId, "pages"),
+    pending: (day: string): CacheKey => makeCacheKey("creative-stats", `{${day}}`, "pending"),
+    flushing: (day: string): CacheKey => makeCacheKey("creative-stats", `{${day}}`, "flushing"),
   },
 
   // Organization-related keys
