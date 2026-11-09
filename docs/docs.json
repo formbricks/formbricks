@@ -519,6 +519,7 @@
             "pages": [
               "development/technical-handbook/overview",
               "development/technical-handbook/api-gateway",
+              "development/technical-handbook/ai-code",
               "development/technical-handbook/api-v3-schema-generation",
               "development/technical-handbook/creatives",
               "development/technical-handbook/mcp-server",

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Prisma } from "@formbricks/database/prisma";
 import {
   EMBEDDED_DATA_DEFAULT_VALUE_MAX_LENGTH,
   EMBEDDED_DATA_NAME_MAX_LENGTH,
@@ -31,6 +32,23 @@ export const ZEmbeddedDataUsageItem = z.object({
 });
 
 export type TEmbeddedDataUsageItem = z.infer<typeof ZEmbeddedDataUsageItem>;
+
+/**
+ * The surveys linking a field, as one reader may see them. A Restricted survey the reader cannot see is
+ * counted but never named (ENG-6811), so `surveys.length + hiddenSurveyCount` is the same total the
+ * library list's `surveyCount` reports.
+ */
+export type TEmbeddedDataUsage = {
+  surveys: TEmbeddedDataUsageItem[];
+  hiddenSurveyCount: number;
+};
+
+/** Every survey linking the field, seen or not. */
+export const getEmbeddedDataUsageTotal = (usage: TEmbeddedDataUsage): number =>
+  usage.surveys.length + usage.hiddenSurveyCount;
+
+/** The reader's survey visibility, resolved only on the paths that name surveys. */
+export type TResolveVisibleSurveyWhere = () => Promise<Prisma.SurveyWhereInput>;
 
 /**
  * What a caller may supply when adding a field to the library.
@@ -120,7 +138,7 @@ export type TSharedEmbeddedDataWriteResult =
   | { status: "ok"; field: TSharedEmbeddedData }
   /** `existingId` is only ever set by promote; a plain create has no replacement to offer. */
   | { status: "keyConflict"; existingId: string | null }
-  | { status: "inUse"; message: string; usage: TEmbeddedDataUsageItem[] };
+  | { status: "inUse"; message: string; usage: TEmbeddedDataUsage };
 
 /**
  * A library key that is already taken in this workspace.
@@ -151,9 +169,9 @@ export class EmbeddedDataKeyConflictError extends InvalidInputError {
  * instead of sending the user to find them.
  */
 export class EmbeddedDataInUseError extends OperationNotAllowedError {
-  readonly usage: TEmbeddedDataUsageItem[];
+  readonly usage: TEmbeddedDataUsage;
 
-  constructor(message: string, usage: TEmbeddedDataUsageItem[]) {
+  constructor(message: string, usage: TEmbeddedDataUsage) {
     super(message);
     this.usage = usage;
   }

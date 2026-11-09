@@ -416,8 +416,11 @@ export const setup = async (
   // first survey announces its opening into it.
   addLiveRegionContainer();
 
-  // Prefetch surveys script so it's warm in the cache when a survey triggers
-  prefetchSurveysScript(configInput.appUrl);
+  // Resource hints can fall back to default-src even when script-src-elem allows the renderer.
+  // Strict hosts can skip this hint; a triggered survey still loads through the script path.
+  if (configInput.prefetch !== false) {
+    prefetchSurveysScript(configInput.appUrl);
+  }
 
   setIsSetup(true);
   logger.debug("Set up complete");

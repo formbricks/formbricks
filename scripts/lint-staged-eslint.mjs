@@ -15,7 +15,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { SONAR_NEW_CODE_RULE_IDS } from "../packages/config-eslint/base.mjs";
+import { SONAR_PARITY_RULE_IDS } from "../packages/config-eslint/sonar-parity.mjs";
 import { parseStagedLineRanges, touchesStagedLines } from "./staged-lines.mjs";
 
 // ESLint doesn't export ./bin/eslint.js, but package.json is exported, so go
@@ -50,14 +50,21 @@ function groupByPackage(files) {
 }
 
 /*
- * SonarCloud judges a pull request's new code only. The shared config carries its rules as warnings
- * (`SONAR_NEW_CODE_RULE_IDS`, packages/config-eslint/base.mjs), since much existing code is over
- * them; a commit fails on one only inside the lines it stages, as Sonar would on the PR.
+ * SonarCloud judges a pull request's new code only, and much existing code is over its limits. A
+ * commit fails on a Sonar-parity rule (`SONAR_PARITY_RULE_IDS`, packages/config-eslint/sonar-parity.mjs)
+ * only inside the lines it stages, as Sonar would on the PR.
  */
-const SONAR_RULES = new Set(SONAR_NEW_CODE_RULE_IDS);
+const SONAR_RULES = new Set(SONAR_PARITY_RULE_IDS);
 
-/** The staged lines of `file`, from the index. Throws when git can't say: the gate must not pass blind. */
+const isTracked = (file) =>
+  spawnSync("git", ["ls-files", "--error-unmatch", "--", file], { stdio: "ignore" }).status === 0;
+
+/**
+ * The staged lines of `file`, from the index. A file git does not track is new code throughout.
+ * Throws when git can't say: the gate must not pass blind.
+ */
 function stagedLineRanges(file) {
+  if (!isTracked(file)) return [[1, Number.POSITIVE_INFINITY]];
   const { stdout, stderr, status, error } = spawnSync(
     "git",
     ["diff", "--cached", "--unified=0", "--", file],
@@ -80,7 +87,15 @@ for (const [pkgDir, relFiles] of groupByPackage(process.argv.slice(2))) {
   const { status, error, stdout, stderr } = spawnSync(
     process.execPath,
     [ESLINT_CLI, "--format", "json", ...relFiles],
-    { cwd: pkgDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
+    {
+      cwd: pkgDir,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      // The Sonar-parity rules (packages/config-eslint/sonar-parity.mjs) are off for the whole-repo
+      // lint until the backlog is fixed. Here they report as warnings, and the loop below fails the
+      // commit on one only inside the lines it stages.
+      env: { ...process.env, ESLINT_SONAR_PARITY: "warn" },
+    }
   );
   if (error) throw error;
   if (stderr) process.stderr.write(stderr);

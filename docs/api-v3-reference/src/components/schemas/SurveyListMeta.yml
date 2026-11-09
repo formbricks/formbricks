@@ -24,6 +24,15 @@ allOf:
           current filters. `null` when `includeTotalCount=false`
           (the same gate as `totalCount`). Replaces the boolean
           `hasArchived` field of earlier releases.
+      unsupportedSurveyIds:
+        type: array
+        items:
+          type: string
+        description: >-
+          Present with `view=full` only, and always then. Ids of surveys on this page that were left
+          out of `data` because they use the legacy question-based shape, which
+          `GET /api/v3/surveys/{surveyId}` also refuses. Empty when nothing was left out; the cursor
+          moves past them either way.
 unevaluatedProperties: false
 description: >-
   The list `meta` for surveys — pagination, the filtered total, and the workspace total. Both

@@ -13,7 +13,7 @@ readonly CUBE_CONTAINER="formbricks-cube-ci"
 # The app's CUBEJS_API_URL must point here; 4000 is what .env.example ships.
 readonly CUBE_PORT="${CUBE_PORT:-4000}"
 # Same Hub release and digest the Helm chart deploys (charts/formbricks/values.yaml, hub.image).
-readonly HUB_IMAGE="${HUB_IMAGE_REF:-ghcr.io/formbricks/hub:0.14.1@sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745}"
+readonly HUB_IMAGE="${HUB_IMAGE_REF:-ghcr.io/formbricks/hub:0.14.2@sha256:0049b20fea8023b12dced414c731ba8dbf3d39aa7b3de738d5837222c9c7b2e0}"
 # Same Cube release the bundled install and the Helm chart run (cube.image.tag), pinned to its index.
 readonly CUBE_IMAGE="${CUBE_IMAGE_REF:-ghcr.io/formbricks/cube:1.8.8-2@sha256:4f5e46d3af9ae3e48e51419b9e2da4597ef7966b30823b05af71f77c0aa65540}"
 

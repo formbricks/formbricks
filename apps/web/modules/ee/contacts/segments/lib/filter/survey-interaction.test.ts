@@ -40,11 +40,35 @@ describe("getSurveyInteractionWindowStart", () => {
   });
 });
 
+describe("evaluateSurveyInteractionFilterInMemory: `any` means any workspace-visible survey (ENG-6870)", () => {
+  const restricted: TContactInteractionData = {
+    displays: [{ surveyId: "s-restricted", createdAt: daysAgo(2), countsForAnySurvey: false }],
+    responses: [
+      { surveyId: "s-restricted", createdAt: daysAgo(2), finished: true, countsForAnySurvey: false },
+    ],
+  };
+
+  test.each([
+    ["haveSeen", false],
+    ["haveNotSeen", true],
+    ["haveStartedRespondingTo", false],
+    ["haveCompleted", false],
+    ["haveNotCompleted", true],
+  ] as const)("%s treats restricted-only interactions as none", (operator, expected) => {
+    expect(evaluateSurveyInteractionFilterInMemory(buildFilter(operator), restricted, NOW)).toBe(expected);
+  });
+
+  test("a specific filter still reads the restricted survey it names", () => {
+    const filter = buildFilter("haveCompleted", { surveyScope: "specific", surveyIds: ["s-restricted"] });
+    expect(evaluateSurveyInteractionFilterInMemory(filter, restricted, NOW)).toBe(true);
+  });
+});
+
 describe("evaluateSurveyInteractionFilterInMemory", () => {
   describe("haveSeen / haveNotSeen (displays)", () => {
     test("haveSeen matches a display inside the window", () => {
       const data: TContactInteractionData = {
-        displays: [{ surveyId: "s1", createdAt: daysAgo(5) }],
+        displays: [{ surveyId: "s1", createdAt: daysAgo(5), countsForAnySurvey: true }],
         responses: [],
       };
       expect(evaluateSurveyInteractionFilterInMemory(buildFilter("haveSeen"), data, NOW)).toBe(true);
@@ -52,7 +76,7 @@ describe("evaluateSurveyInteractionFilterInMemory", () => {
 
     test("haveSeen ignores a display older than the window", () => {
       const data: TContactInteractionData = {
-        displays: [{ surveyId: "s1", createdAt: daysAgo(31) }],
+        displays: [{ surveyId: "s1", createdAt: daysAgo(31), countsForAnySurvey: true }],
         responses: [],
       };
       expect(evaluateSurveyInteractionFilterInMemory(buildFilter("haveSeen"), data, NOW)).toBe(false);
@@ -61,7 +85,7 @@ describe("evaluateSurveyInteractionFilterInMemory", () => {
     test("haveNotSeen is the negation of haveSeen", () => {
       expect(evaluateSurveyInteractionFilterInMemory(buildFilter("haveNotSeen"), emptyData, NOW)).toBe(true);
       const data: TContactInteractionData = {
-        displays: [{ surveyId: "s1", createdAt: daysAgo(5) }],
+        displays: [{ surveyId: "s1", createdAt: daysAgo(5), countsForAnySurvey: true }],
         responses: [],
       };
       expect(evaluateSurveyInteractionFilterInMemory(buildFilter("haveNotSeen"), data, NOW)).toBe(false);
@@ -70,7 +94,7 @@ describe("evaluateSurveyInteractionFilterInMemory", () => {
     test("does not count responses as 'seen'", () => {
       const data: TContactInteractionData = {
         displays: [],
-        responses: [{ surveyId: "s1", createdAt: daysAgo(1), finished: true }],
+        responses: [{ surveyId: "s1", createdAt: daysAgo(1), finished: true, countsForAnySurvey: true }],
       };
       expect(evaluateSurveyInteractionFilterInMemory(buildFilter("haveSeen"), data, NOW)).toBe(false);
     });
@@ -79,7 +103,7 @@ describe("evaluateSurveyInteractionFilterInMemory", () => {
   describe("started / completed (responses)", () => {
     const startedData: TContactInteractionData = {
       displays: [],
-      responses: [{ surveyId: "s1", createdAt: daysAgo(2), finished: false }],
+      responses: [{ surveyId: "s1", createdAt: daysAgo(2), finished: false, countsForAnySurvey: true }],
     };
 
     test("haveStartedRespondingTo matches an unfinished response", () => {
@@ -94,7 +118,7 @@ describe("evaluateSurveyInteractionFilterInMemory", () => {
       );
       const completedData: TContactInteractionData = {
         displays: [],
-        responses: [{ surveyId: "s1", createdAt: daysAgo(2), finished: true }],
+        responses: [{ surveyId: "s1", createdAt: daysAgo(2), finished: true, countsForAnySurvey: true }],
       };
       expect(evaluateSurveyInteractionFilterInMemory(buildFilter("haveCompleted"), completedData, NOW)).toBe(
         true
@@ -110,7 +134,7 @@ describe("evaluateSurveyInteractionFilterInMemory", () => {
 
   describe("survey scope", () => {
     const data: TContactInteractionData = {
-      displays: [{ surveyId: "s1", createdAt: daysAgo(1) }],
+      displays: [{ surveyId: "s1", createdAt: daysAgo(1), countsForAnySurvey: true }],
       responses: [],
     };
 
@@ -134,7 +158,7 @@ describe("evaluateSurveyInteractionFilterInMemory", () => {
 
   test("window boundary is inclusive (createdAt exactly at windowStart matches)", () => {
     const data: TContactInteractionData = {
-      displays: [{ surveyId: "s1", createdAt: daysAgo(30) }],
+      displays: [{ surveyId: "s1", createdAt: daysAgo(30), countsForAnySurvey: true }],
       responses: [],
     };
     expect(evaluateSurveyInteractionFilterInMemory(buildFilter("haveSeen"), data, NOW)).toBe(true);
@@ -203,7 +227,7 @@ describe("tryEvaluateSurveyInteractionSegmentInMemory", () => {
 
   test("evaluates a pure interaction segment to a boolean", () => {
     const data: TContactInteractionData = {
-      displays: [{ surveyId: "s1", createdAt: daysAgo(1) }],
+      displays: [{ surveyId: "s1", createdAt: daysAgo(1), countsForAnySurvey: true }],
       responses: [],
     };
     expect(tryEvaluateSurveyInteractionSegmentInMemory(asFilters([buildFilter("haveSeen")]), data, NOW)).toBe(
@@ -232,7 +256,7 @@ describe("tryEvaluateSurveyInteractionSegmentInMemory", () => {
 
   test("recurses into nested interaction-only groups", () => {
     const data: TContactInteractionData = {
-      displays: [{ surveyId: "s1", createdAt: daysAgo(1) }],
+      displays: [{ surveyId: "s1", createdAt: daysAgo(1), countsForAnySurvey: true }],
       responses: [],
     };
     const nested = asFilters([buildFilter("haveSeen")]);

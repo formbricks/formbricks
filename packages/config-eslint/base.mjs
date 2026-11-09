@@ -1,8 +1,8 @@
 import vitest from "@vitest/eslint-plugin";
 import prettier from "eslint-config-prettier";
 import turbo from "eslint-config-turbo/flat";
-import sonarjs from "eslint-plugin-sonarjs";
 import tseslint from "typescript-eslint";
+import { sonarParity } from "./sonar-parity.mjs";
 
 /*
  * Shared plumbing for every Formbricks flat config:
@@ -10,6 +10,7 @@ import tseslint from "typescript-eslint";
  * - Turborepo env-var checks
  * - Prettier compatibility (must stay last so it can disable conflicting stylistic rules)
  * - the repo-wide `test` over `it` convention
+ * - the Sonar-parity rules (off unless staged-file linting turns them on, see sonar-parity.mjs)
  * - common ignores
  *
  * This file intentionally carries no opinionated rule set — the exported tiers
@@ -90,38 +91,5 @@ export const reactCompilerRulesOptOut = {
   },
 };
 
-/*
- * The limits SonarCloud holds a pull request's new code to, as warnings here: many existing
- * functions are already over them, and Sonar judges only what a change touches.
- * `scripts/lint-staged-eslint.mjs` fails a commit on these rules inside its staged lines, so a PR
- * meets them before Sonar reports them. The typed tiers add the type-aware ones
- * (`sonarNewCodeTypedRules`).
- */
-export const sonarNewCodeConvention = {
-  plugins: { sonarjs },
-  rules: {
-    "sonarjs/cognitive-complexity": ["warn", 15],
-    "sonarjs/regex-complexity": ["warn", { threshold: 20 }],
-  },
-};
-
-/** The type-aware Sonar rules, for the tiers that lint with type information (library, react). */
-export const sonarNewCodeTypedRules = {
-  "@typescript-eslint/no-deprecated": "warn",
-  "@typescript-eslint/prefer-nullish-coalescing": "warn",
-};
-
-/** Every rule above, by id: what the pre-commit runner holds the staged lines to. */
-export const SONAR_NEW_CODE_RULE_IDS = [
-  ...Object.keys(sonarNewCodeConvention.rules),
-  ...Object.keys(sonarNewCodeTypedRules),
-];
-
 // Turbo checks + test conventions + prettier-compat. Keep prettier last.
-export const base = [
-  ...turbo,
-  sonarNewCodeConvention,
-  vitestConventions,
-  unusedDirectivesConvention,
-  prettier,
-];
+export const base = [...turbo, vitestConventions, ...sonarParity(), unusedDirectivesConvention, prettier];
