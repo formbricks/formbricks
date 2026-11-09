@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
+import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predicate";
 import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
 
@@ -1838,6 +1839,24 @@ describe("survey interaction filters", () => {
 
     expect(clause.displays.some.createdAt.gte).toEqual(new Date("2026-06-20T00:00:00.000Z"));
     expect(clause.displays.some.surveyId).toBeUndefined();
+    // ENG-6870: "any" means any workspace-visible survey — a restricted one's interactions never count.
+    expect(clause.displays.some.survey).toEqual({
+      visibility: "workspace",
+      OR: [{ visibilityPending: false }, { visibilityVersion: 0, visibilityProjectedVersion: { lt: 0 } }],
+    });
+  });
+
+  test("any scope is limited to workspace-visible surveys on responses too, negated or not", async () => {
+    const filters = buildFilter("haveNotCompleted", {
+      surveyScope: "any",
+      surveyIds: [],
+      within: { amount: 7, unit: "days" },
+    });
+
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const clause = extractClause(result);
+
+    expect(clause.NOT.responses.some.survey).toBe(effectivelyWorkspaceVisibleWhere);
   });
 
   test("haveSeen with specific scope constrains surveyId", async () => {
@@ -1851,6 +1870,7 @@ describe("survey interaction filters", () => {
     const clause = extractClause(result);
 
     expect(clause.displays.some.surveyId).toEqual({ in: ["survey_a", "survey_b"] });
+    expect(clause.displays.some.survey).toBeUndefined();
     // 2 weeks = 14 days before the fixed clock
     expect(clause.displays.some.createdAt.gte).toEqual(new Date("2026-07-06T00:00:00.000Z"));
   });

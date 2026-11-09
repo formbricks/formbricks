@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
+import {
+  refuseUnlessFeedbackDatasetAccess,
+  requireDashboardsAccess,
+} from "@/app/api/v3/lib/dashboards-access";
 import { problemDashboardsPlanRequired, problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import {
   createV3Dashboard,
   deleteV3Dashboard,
@@ -13,6 +17,7 @@ import {
   listV3Dashboards,
   renameV3Dashboard,
   replaceV3Dashboard,
+  setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "./operations";
 import {
@@ -35,7 +40,11 @@ vi.mock("@formbricks/database", () => ({ prisma: {} }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })) },
 }));
-vi.mock("@/app/api/v3/lib/dashboards-access", () => ({ requireDashboardsAccess: vi.fn() }));
+vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
+  requireDashboardsAccess: vi.fn(),
+  refuseUnlessFeedbackDatasetAccess: vi.fn(),
+}));
+vi.mock("./embedded-filter-fields", () => ({ findUnknownEmbeddedFilterFields: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("./service", () => ({
   createDashboardRow: vi.fn(),
@@ -119,6 +128,7 @@ const auditLog = () => ({}) as TV3AuditLog;
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(requireDashboardsAccess).mockResolvedValue(granted);
+  vi.mocked(findUnknownEmbeddedFilterFields).mockResolvedValue([]);
 });
 
 describe("listV3Dashboards", () => {
@@ -132,7 +142,16 @@ describe("listV3Dashboards", () => {
 
     expect(response.status).toBe(403);
     expect((await response.json()).code).toBe("forbidden");
-    expect(requireDashboardsAccess).toHaveBeenCalledWith(session, WORKSPACE_ID, "read", REQUEST_ID, INSTANCE);
+    expect(requireDashboardsAccess).toHaveBeenCalledWith(
+      session,
+      WORKSPACE_ID,
+      "read",
+      REQUEST_ID,
+      INSTANCE,
+      {
+        allowDashboardViewer: true,
+      }
+    );
     expect(listDashboardRows).not.toHaveBeenCalled();
   });
 
@@ -248,7 +267,9 @@ describe("getV3Dashboard", () => {
 
     expect(response.status).toBe(200);
     expect(getDashboardResourceRow).toHaveBeenCalledWith(DASHBOARD_ID);
-    expect(requireDashboardsAccess).toHaveBeenCalledWith(session, "clws_row", "read", REQUEST_ID, INSTANCE);
+    expect(requireDashboardsAccess).toHaveBeenCalledWith(session, "clws_row", "read", REQUEST_ID, INSTANCE, {
+      allowDashboardViewer: true,
+    });
     const { data } = await response.json();
     expect(data).toMatchObject({
       id: DASHBOARD_ID,
@@ -389,7 +410,8 @@ describe("renameV3Dashboard", () => {
       WORKSPACE_ID,
       "readWrite",
       REQUEST_ID,
-      INSTANCE
+      INSTANCE,
+      undefined
     );
 
     expect(renameDashboardRow).not.toHaveBeenCalled();
@@ -635,7 +657,11 @@ describe("replaceV3Dashboard (PUT)", () => {
       targetId: DASHBOARD_ID,
       organizationId: ORGANIZATION_ID,
       oldObject: previous,
-      newObject: { name: "Saved", widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }] },
+      newObject: {
+        name: "Saved",
+        filters: [],
+        widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
+      },
     });
   });
 
@@ -774,5 +800,107 @@ describe("updateV3DashboardLayout (MCP update_dashboard_layout)", () => {
     vi.mocked(getDashboardWorkspaceRow).mockRejectedValue(new Error("boom"));
 
     expect((await rearrange()).status).toBe(500);
+  });
+});
+
+describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
+  const EXPECTED_UPDATED_AT = "2026-02-02T00:00:00.000Z";
+  const filters = [
+    {
+      id: "clfi000000000000000000001",
+      field: "FeedbackRecords.sourceName",
+      operator: "equals" as const,
+      label: "Source",
+      values: ["Web"],
+    },
+  ];
+  const setFilters = (log?: TV3AuditLog, sent = filters) =>
+    setV3DashboardFilters({
+      dashboardId: DASHBOARD_ID,
+      body: { expectedUpdatedAt: EXPECTED_UPDATED_AT, filters: sent },
+      auditLog: log,
+      ...contextOf(),
+    });
+
+  beforeEach(() => {
+    vi.mocked(getDashboardWorkspaceRow).mockResolvedValue({ id: DASHBOARD_ID, workspaceId: WORKSPACE_ID });
+  });
+
+  test("replaces only the filters, keeping the name and every widget", async () => {
+    vi.mocked(replaceDashboardRow).mockResolvedValue({
+      kind: "ok",
+      row: dashboardRow(),
+      previous: { name: "Board", filters: [], widgets: [] },
+    });
+    const log = auditLog();
+
+    const response = await setFilters(log);
+
+    expect(response.status).toBe(200);
+    expect(replaceDashboardRow).toHaveBeenCalledWith({
+      dashboardId: DASHBOARD_ID,
+      expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
+      filters,
+    });
+    expect(log).toMatchObject({ targetId: DASHBOARD_ID, organizationId: ORGANIZATION_ID });
+  });
+
+  test("removes every locked filter with an empty list", async () => {
+    vi.mocked(replaceDashboardRow).mockResolvedValue({
+      kind: "ok",
+      row: dashboardRow(),
+      previous: { name: "Board", filters, widgets: [] },
+    });
+
+    expect((await setFilters(undefined, [])).status).toBe(200);
+    expect(vi.mocked(replaceDashboardRow).mock.calls[0][0]).toMatchObject({ filters: [] });
+  });
+
+  test("answers 409 with the current version when the dashboard changed since the read", async () => {
+    const current = new Date("2026-02-03T00:00:00.000Z");
+    vi.mocked(replaceDashboardRow).mockResolvedValue({ kind: "stale", currentUpdatedAt: current });
+
+    const response = await setFilters();
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).details).toEqual({
+      expectedUpdatedAt: EXPECTED_UPDATED_AT,
+      currentUpdatedAt: current.toISOString(),
+    });
+  });
+
+  test("asks for embedded keys only of datasets the caller may read, by the dataset read check", async () => {
+    vi.mocked(replaceDashboardRow).mockResolvedValue({
+      kind: "ok",
+      row: dashboardRow(),
+      previous: { name: "Board", filters: [], widgets: [] },
+    });
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockImplementation(async (_auth, _access, datasetId) =>
+      datasetId === "clds000000000000000000002" ? refused() : null
+    );
+
+    expect((await setFilters()).status).toBe(200);
+
+    const { canReadDataset, access } = vi.mocked(findUnknownEmbeddedFilterFields).mock.calls[0][0];
+    expect(access).toMatchObject({ workspaceId: WORKSPACE_ID });
+    expect(await canReadDataset("clds000000000000000000001")).toBe(true);
+    expect(await canReadDataset("clds000000000000000000002")).toBe(false);
+    expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ workspaceId: WORKSPACE_ID }),
+      "clds000000000000000000002",
+      "read",
+      REQUEST_ID,
+      INSTANCE
+    );
+  });
+
+  test("returns the access refusal without writing, and maps an unexpected failure to 500", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValueOnce(refused());
+    expect((await setFilters()).status).toBe(403);
+    expect(replaceDashboardRow).not.toHaveBeenCalled();
+
+    vi.mocked(getDashboardWorkspaceRow).mockRejectedValue(new Error("boom"));
+    expect((await setFilters()).status).toBe(500);
   });
 });

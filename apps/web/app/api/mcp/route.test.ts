@@ -583,6 +583,8 @@ describe("POST /api/mcp", () => {
       "create_chart",
       "update_chart",
       "get_chart_data",
+      "list_dashboard_filter_fields",
+      "list_dashboard_filter_values",
       "list_chart_field_values",
       "list_dashboards",
       "get_dashboard",
@@ -593,6 +595,7 @@ describe("POST /api/mcp", () => {
       "update_widget",
       "remove_chart_from_dashboard",
       "update_dashboard_layout",
+      "set_dashboard_filters",
       "duplicate_chart",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));

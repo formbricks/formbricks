@@ -55,11 +55,28 @@ release and the 6.1 online values must name the **same** Hub digest and the **sa
 6.0.x install is blocked with the non-retryable `dependency_image_changed` code for two reasons:
 
 - 6.0.x renders Cube as `repository:tag`, not as a digest reference.
-- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.1.
+- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.2.
 
-Roll the 6.0.x release to Hub 0.14.1 and Cube 1.7.47-1 first and wait for the rollout to finish. Serving
+Roll the 6.0.x release to Hub 0.14.2 and Cube 1.7.47-1 first and wait for the rollout to finish. Serving
 traffic through an upgrade from 6.0.2 was verified with Hub 0.14.0 and Cube 1.7.47-1. Hub 0.14.1 adds the TLS
 fix for the October 2026 eMudhra certificate compromise and request-size limits, and no database migrations.
+Hub 0.14.2 adds a concurrently built index on embedded data and a nullable column on `embeddings`. The column
+and constraint changes take brief exclusive locks, so a long-running transaction can delay them and queue later
+reads and writes. Hub 0.14.2 also refuses to start when `TAXONOMY_EMBEDDING_MODEL` and `EMBEDDING_MODEL` are the
+same non-empty value. Check the effective values on both `hub` and `hub-worker`: with `hub.embeddings.enabled`
+the chart sets `EMBEDDING_MODEL` itself and ignores `hub.env.EMBEDDING_MODEL`, and `hub.worker.env` can set
+`TAXONOMY_EMBEDDING_MODEL` for the worker alone. Change whichever value collides before rolling it out.
+While old and new `hub-worker` pods overlap, an old pod can rewrite a vector without updating its source hash, so
+a record edited and then edited back during the rollout can keep a stale vector. Stop the old workers before the
+new ones start. If they already overlapped, clear the hash for vectors written during the rollout with
+`UPDATE embeddings SET source_hash = NULL WHERE updated_at BETWEEN <rollout start, minus a few minutes> AND <rollout end>`.
+The margin covers a worker that took its timestamp before it waited on a row lock, and the statement covers both
+the search and the taxonomy embeddings. Then, for each affected tenant, run
+`/app/backfill-embeddings -tenant-id <id> -stale` inside a `hub-worker` pod and, if taxonomy is enabled,
+`/app/backfill-embeddings -taxonomy -tenant-id <id> -stale`. Add `-count-only` first to preview how many records a run
+would re-embed. The Hub
+[Embedding repair](https://github.com/formbricks/hub/blob/0.14.2/docs/src/content/docs/reference/environment-variables.mdx)
+section has the details.
 6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
 image: check
 [Bundled Cube image](/self-hosting/advanced/migration#bundled-cube-image-action-required-for-some-deployments)
@@ -68,7 +85,7 @@ before rolling it out.
 ```yaml
 hub:
   image:
-    digest: "sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745" # hub:0.14.1
+    digest: "sha256:0049b20fea8023b12dced414c731ba8dbf3d39aa7b3de738d5837222c9c7b2e0" # hub:0.14.2
 cube:
   image:
     repository: ghcr.io/formbricks/cube@sha256
@@ -82,7 +99,9 @@ digest above.
 
 ## Start the upgrade
 
-Online mode is only for the supported **6.0.0, 6.0.1, or 6.0.2 → 6.1** transition. Install a new
+Online mode is only for the supported **6.0.0, 6.0.1, or 6.0.2 → 6.1** transition. There is no online
+path from 6.1 to 6.2: upgrade to 6.2 in maintenance mode and run permission preparation with the schema
+digest first, because 6.2 changes the AuthZed schema (see [Dashboard viewer role](/self-hosting/upgrade/versions/dashboard-viewer)). Install a new
 instance in maintenance mode. For an existing installation, set `upgrade.online.existingInstallation: true`
 and select `upgrade.online.controller: helm` or `argo`. Argo always renders Helm charts as installs, so
 its explicit existing-installation setting is required; runtime preflight still verifies the source workloads.

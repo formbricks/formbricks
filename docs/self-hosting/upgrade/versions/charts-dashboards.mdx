@@ -1,0 +1,44 @@
+---
+title: "Unreleased: Charts and dashboards API"
+description: "Review key access, OAuth consent, saved charts and Cube configuration for the upcoming release."
+icon: "chart-column"
+---
+
+**Applies to:** the upcoming release containing the charts and dashboards API. These changes are on
+`main`, not in 6.1.2, 6.0.5 or 5.4.8. Follow this page when your selected release includes them.
+
+## Before
+
+- **Review API keys.** Workspace `write` and `manage` keys gain chart/dashboard creation and editing through
+  API v3 and MCP, plus deletion through API v3. MCP has no delete tools. Reading chart data also needs
+  dataset access. While a dataset remains assigned and unarchived, chart changes need dataset write access.
+  After removal or archival, renaming, styling and deletion remain possible; query and type changes do not.
+- **Tell MCP users to sign in again.** Migrations add `dashboards:read` for clients with an MCP read scope
+  and `dashboards:write` for those with an MCP write scope. Clients that skip consent are unchanged.
+  Other clients keep their old access until users approve the new scopes at the next sign-in.
+- **Review long time ranges.** Time-only charts now allow at most 10,000 buckets, including empty ones.
+  Shorten the range or choose a coarser interval if a saved chart returns `limit_exceeded`.
+
+## During
+
+Use the [standard upgrade procedure](/self-hosting/advanced/upgrade). No new environment variables are required.
+
+- Refresh the release's [Cube model files](/self-hosting/upgrade/configuration#download-the-cube-model-files).
+  `cube/cube.js` now accepts API-key queries. One-click refreshes the files; Helm ships them in the chart.
+  A stale file causes `502` for API-key/MCP chart reads even while charts in the app still work.
+- The layout migration shortens widgets to at most eight rows and moves overlaps down within their column.
+  New dashboards allow at most 250 widgets. Older oversized dashboards still open and save; review the
+  migration log for their IDs. Wait for all schema and data migrations to finish.
+
+## After
+
+Check a chart through the app and through an authorized API/MCP client, OAuth re-consent, and existing
+widget layouts. To delete a chart used on dashboards, remove it from those dashboards first.
+Deleting a dashboard keeps its charts.
+
+## Recovery
+
+Keep maintenance active after a failed migration. Follow [migration troubleshooting](/self-hosting/upgrade/troubleshooting).
+Use a coordinated backup if repair cannot complete; reverting the app image does not reverse layout changes.
+
+Source: [charts and dashboards API](https://github.com/formbricks/formbricks/pull/9786).

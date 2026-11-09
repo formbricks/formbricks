@@ -3,8 +3,12 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { getSurvey } from "@/lib/survey/service";
+import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
+import {
+  SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE,
+  SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE,
+} from "@/modules/ee/contacts/lib/personal-link-errors";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
@@ -34,6 +38,9 @@ vi.mock("@formbricks/database", () => ({
     contactAttributeKey: {
       findMany: vi.fn(),
       createMany: vi.fn(),
+    },
+    survey: {
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -70,6 +77,20 @@ const mockWorkspaceId = "workspace-123";
 const mockContactId = "contact-123";
 const mockSegmentId = "segment-123";
 const mockSurveyId = "survey-123";
+const mockMemberUserId = "member-user-1";
+/** An organization `member`: sees workspace-visible surveys and the ones they own, never another's restricted one. */
+const memberActor: TSurveyActorContext = {
+  enforced: true,
+  isOrganizationAdmin: false,
+  kind: "user",
+  userId: mockMemberUserId,
+};
+const adminActor: TSurveyActorContext = {
+  enforced: true,
+  isOrganizationAdmin: true,
+  kind: "user",
+  userId: "owner-user-1",
+};
 const mockPrismaContact = {
   id: mockContactId,
   createdAt: new Date("2024-01-01"),
@@ -723,7 +744,7 @@ describe("Contacts Lib", () => {
         .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token1" } as any)
         .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token2" } as any);
 
-      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
       expect(result).toHaveLength(2);
       expect(result![0]!.contactId).toBe("contact-1");
@@ -755,7 +776,7 @@ describe("Contacts Lib", () => {
         data: "https://survey.com/c/token1",
       } as any);
 
-      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, 7);
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor, 7);
 
       const links = result!;
       expect(links).toHaveLength(1);
@@ -791,7 +812,7 @@ describe("Contacts Lib", () => {
         .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token1" } as any)
         .mockResolvedValueOnce({ ok: false, error: "Failed to generate link" } as any);
 
-      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
       const links = result!;
       expect(links).toHaveLength(1);
@@ -801,7 +822,7 @@ describe("Contacts Lib", () => {
     test("returns null when getContactsInSegment fails", async () => {
       vi.mocked(getSegment).mockResolvedValue(null as any);
 
-      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
       expect(result).toBeNull();
     });
@@ -820,7 +841,7 @@ describe("Contacts Lib", () => {
       } as any);
       vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
 
-      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
       expect(result).toEqual([]);
     });
@@ -850,7 +871,7 @@ describe("Contacts Lib", () => {
         error: "Generation failed",
       } as any);
 
-      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
       expect(result).toHaveLength(0);
     });
@@ -867,9 +888,11 @@ describe("Contacts Lib", () => {
         workspaceId: "workspace-B",
       } as any);
 
-      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId)).rejects.toThrow(ValidationError);
+      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).rejects.toThrow(
+        ValidationError
+      );
       // Message is a stable error code the client maps to a localized string.
-      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId)).rejects.toThrow(
+      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).rejects.toThrow(
         SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE
       );
 
@@ -878,10 +901,150 @@ describe("Contacts Lib", () => {
       expect(getContactSurveyLink).not.toHaveBeenCalled();
     });
 
+    describe("survey visibility of the segment's filters (ENG-6870)", () => {
+      const restrictedSurveyId = "clrestricted00000000000001";
+      const visibleSurveyId = "clvisible000000000000000001";
+      const destinationSurveyId = "cldestination000000000001";
+      const within = { amount: 30, unit: "days" } as const;
+
+      const completed = (id: string, surveyScope: "any" | "specific", surveyIds: string[] = []) => ({
+        id,
+        root: { type: "surveyInteraction" },
+        qualifier: { operator: "haveCompleted" },
+        value: { surveyScope, surveyIds, within },
+      });
+
+      /** Completed any survey, but not two the member can see. */
+      const anyScopeFilters = [
+        { id: "f1", connector: null, resource: completed("i1", "any") },
+        {
+          id: "f2",
+          connector: "and",
+          resource: {
+            ...completed("i2", "specific", [visibleSurveyId, destinationSurveyId]),
+            qualifier: { operator: "haveNotCompleted" },
+          },
+        },
+      ];
+      const specificFilters = [
+        { id: "f1", connector: null, resource: completed("i1", "specific", [restrictedSurveyId]) },
+      ];
+
+      const segmentWith = (filters: unknown, id = mockSegmentId) =>
+        ({ id, filters, workspaceId: mockWorkspaceId }) as any;
+
+      /** Whatever reached the contact query would end up in the CSV. */
+      const mockSegmentContacts = () => {
+        vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+          ok: true,
+          data: { whereClause: { workspaceId: mockWorkspaceId } },
+        } as any);
+        vi.mocked(prisma.contact.findMany).mockResolvedValue([
+          { id: "contact-restricted-respondent", attributes: [] },
+        ] as any);
+        vi.mocked(getContactSurveyLink).mockResolvedValue({
+          ok: true,
+          data: "https://survey.com/c/t",
+        } as any);
+      };
+
+      /** The clause a member's hidden surveys are found by: restricted and owned by someone else. */
+      const memberHiddenSurveyWhere = {
+        AND: [
+          expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) }),
+          { OR: [{ ownerId: null }, { ownerId: { not: mockMemberUserId } }] },
+        ],
+      };
+
+      beforeEach(() => {
+        mockSegmentContacts();
+      });
+
+      test("refuses a member a segment that names a restricted survey they can't see", async () => {
+        vi.mocked(getSegment).mockResolvedValue(segmentWith(specificFilters));
+        vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: restrictedSurveyId } as any);
+
+        await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).rejects.toThrow(
+          new ValidationError(SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE)
+        );
+
+        expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+          where: {
+            id: { in: [restrictedSurveyId] },
+            workspaceId: mockWorkspaceId,
+            AND: [memberHiddenSurveyWhere],
+          },
+          select: { id: true },
+        });
+        expect(prisma.contact.findMany).not.toHaveBeenCalled();
+        expect(getContactSurveyLink).not.toHaveBeenCalled();
+      });
+
+      // `any` scope only reads workspace-visible surveys (see `isWorkspaceVisibleForAnyScope`), so the
+      // fatigue-style rule stays usable by a member and names no survey to check.
+      test("lets a member use an `any`-scope segment without a visibility lookup", async () => {
+        vi.mocked(getSegment).mockResolvedValue(segmentWith(anyScopeFilters));
+
+        const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
+
+        expect(result).toHaveLength(1);
+        // The specific ids next to `any` are the only ones checked.
+        expect(prisma.survey.findFirst).toHaveBeenCalledOnce();
+        expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+          where: {
+            id: { in: [visibleSurveyId, destinationSurveyId] },
+            workspaceId: mockWorkspaceId,
+            AND: [memberHiddenSurveyWhere],
+          },
+          select: { id: true },
+        });
+      });
+
+      test("follows nested segment filters to the restricted survey they read", async () => {
+        const nestedSegmentId = "clnestedsegment00000000001";
+        vi.mocked(getSegment).mockImplementation(async (id: string) =>
+          id === nestedSegmentId
+            ? segmentWith(specificFilters, nestedSegmentId)
+            : segmentWith([
+                {
+                  id: "f1",
+                  connector: null,
+                  resource: {
+                    id: "s1",
+                    root: { type: "segment", segmentId: nestedSegmentId },
+                    qualifier: { operator: "userIsIn" },
+                    value: nestedSegmentId,
+                  },
+                },
+              ])
+        );
+        vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: restrictedSurveyId } as any);
+
+        await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).rejects.toThrow(
+          SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE
+        );
+        expect(prisma.survey.findFirst).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({ id: { in: [restrictedSurveyId] } }),
+          })
+        );
+        expect(prisma.contact.findMany).not.toHaveBeenCalled();
+      });
+
+      test("generates links for an organization owner without a visibility query", async () => {
+        vi.mocked(getSegment).mockResolvedValue(segmentWith(specificFilters));
+
+        const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, adminActor);
+
+        expect(result).toHaveLength(1);
+        expect(prisma.survey.findFirst).not.toHaveBeenCalled();
+      });
+    });
+
     test("returns null when the survey does not exist", async () => {
       vi.mocked(getSurvey).mockResolvedValue(null as any);
 
-      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId);
+      const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
       expect(result).toBeNull();
       expect(getSegment).not.toHaveBeenCalled();

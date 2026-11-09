@@ -8,6 +8,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { BlockShowIfSettings } from "@/modules/survey/editor/components/show-if-settings";
 import { fillEmptyBlockButtonLabels } from "@/modules/survey/editor/lib/blocks";
 
 interface BlockSettingsProps {
@@ -135,6 +136,7 @@ export const BlockSettings = ({
           />
         )}
       </div>
+      <BlockShowIfSettings localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} blockIdx={blockIndex} />
     </div>
   );
 };

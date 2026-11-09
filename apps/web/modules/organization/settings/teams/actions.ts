@@ -12,6 +12,7 @@ import { assertCan, can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { assertUserManagementAllowed } from "@/lib/membership/user-management";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -20,16 +21,25 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
+import {
+  assertCanAssignRole,
+  checkRoleManagementPermission,
+} from "@/modules/ee/role-management/lib/permission";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
   deleteMembership,
   getMembershipsByUserId,
-  getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
 import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
-import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInvite } from "./lib/invite";
+import {
+  type TInviteWriteScope,
+  deleteInvite,
+  getInvite,
+  inviteUser,
+  refreshInviteExpiration,
+  resendInvite,
+} from "./lib/invite";
 import { type TBulkInviteResult, getInviteFailureReason } from "./lib/invite-failure";
 import { reserveInviteRateLimit, settleInviteRateLimit } from "./lib/invite-rate-limit";
 
@@ -39,6 +49,19 @@ const BULK_INVITE_MAX_INVITEES = 500;
 // Cap on the teams one invite may name. See ZInviteUserAction.
 const INVITE_MAX_TEAMS = 100;
 
+/**
+ * What the caller may do to pending invites in this organization: an owner's invite is an owner's to
+ * change (ENG-6812), as `deleteMembershipAction` keeps an owner's membership from managers. Read after
+ * the authorization checks, so a non-member never reaches it.
+ */
+const getCallerInviteScope = async (userId: string, organizationId: string): Promise<TInviteWriteScope> => {
+  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+  if (!membership) {
+    throw new AuthenticationError("User not a member of this organization");
+  }
+  return { allowOwnerInvite: membership.role === "owner" };
+};
+
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
 });
@@ -47,6 +70,7 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
   withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -55,7 +79,7 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
-    return await deleteInvite(parsedInput.inviteId);
+    return await deleteInvite(parsedInput.inviteId, await getCallerInviteScope(ctx.user.id, organizationId));
   })
 );
 
@@ -67,6 +91,7 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
   withAuditLogging("updated", "invite", async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -84,7 +109,10 @@ export const createInviteTokenAction = authenticatedActionClient.inputSchema(ZCr
     }
 
     // Refresh the invitation expiration
-    const updatedInvite = await refreshInviteExpiration(parsedInput.inviteId);
+    const updatedInvite = await refreshInviteExpiration(
+      parsedInput.inviteId,
+      await getCallerInviteScope(ctx.user.id, organizationId)
+    );
 
     // Set audit context
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -107,6 +135,7 @@ const ZDeleteMembershipAction = z.object({
 
 export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDeleteMembershipAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
+    await assertUserManagementAllowed(ctx.user.id, parsedInput.organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
@@ -141,13 +170,7 @@ export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDel
       throw new OperationNotAllowedError("You cannot delete the owner of the organization");
     }
 
-    if (isOwner) {
-      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
-
-      if (ownerCount <= 1) {
-        throw new ValidationError("You cannot delete the last owner of the organization");
-      }
-    }
+    // The last-owner guard runs inside `deleteMembership`'s transaction, where it cannot race.
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
@@ -173,18 +196,20 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       throw new ValidationError("Invite does not belong to the organization");
     }
 
+    await assertUserManagementAllowed(ctx.user.id, parsedInput.organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
+    const inviteScope = await getCallerInviteScope(ctx.user.id, parsedInput.organizationId);
     const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
 
     let invite: Awaited<ReturnType<typeof getInvite>>;
     let updatedInvite: Awaited<ReturnType<typeof resendInvite>>;
     try {
       invite = await getInvite(parsedInput.inviteId);
-      updatedInvite = await resendInvite(parsedInput.inviteId);
+      updatedInvite = await resendInvite(parsedInput.inviteId, inviteScope);
     } catch (error) {
       await settleInviteRateLimit(rateLimitReservation, 0);
       throw error;
@@ -268,6 +293,7 @@ const assertInviterMayInvite = async ({
   userId: string;
 }>): Promise<void> => {
   if (isOrgOwnerOrManager) {
+    await assertUserManagementAllowed(userId, organizationId);
     await assertCan({ type: "user", id: userId }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -344,8 +370,14 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       parsedInput.teamIds
     );
 
-    if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
+    // Owners and Managers give roles by the one shared rule (C10); a team admin's invite was held to
+    // Member by `validateTeamAdminInvitePermissions` above.
+    if (isOrgOwnerOrManager) {
+      await assertCanAssignRole({
+        organizationId: parsedInput.organizationId,
+        assignerRole: currentUserMembership.role,
+        roles: [parsedInput.role],
+      });
     }
 
     if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
@@ -440,6 +472,7 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new AuthenticationError("User not a member of this organization");
     }
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,
@@ -453,14 +486,12 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       throw new OperationNotAllowedError("Bulk invite is not available on your current plan");
     }
 
-    // Validate roles for the whole batch up front.
-    if (!IS_FORMBRICKS_CLOUD && invitees.some((invitee) => invitee.role === OrganizationRole.billing)) {
-      throw new ValidationError("Billing role is not allowed");
-    }
-
-    if (currentUserMembership.role === "manager" && invitees.some((invitee) => invitee.role !== "member")) {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
-    }
+    // Validate roles for the whole batch up front, by the one shared rule (C10).
+    await assertCanAssignRole({
+      organizationId,
+      assignerRole: currentUserMembership.role,
+      roles: invitees.map((invitee) => invitee.role),
+    });
 
     if (invitees.some((invitee) => invitee.role !== "owner" || (invitee.teamIds ?? []).length > 0)) {
       await checkRoleManagementPermission(organizationId);
@@ -537,17 +568,15 @@ const ZLeaveOrganizationAction = z.object({
 
 export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLeaveOrganizationAction).action(
   withAuditLogging("deleted", "membership", async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
-
+    // Leaving needs nothing but the caller's own membership. Not `organization.read`: SpiceDB denies it
+    // to a Dashboard viewer (ADR-0025), who must still be able to leave the organization.
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
 
     if (!membership) {
       throw new AuthenticationError("Not a member of this organization");
     }
+
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const { isOwner } = getAccessFlags(membership.role);
 

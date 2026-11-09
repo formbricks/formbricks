@@ -143,3 +143,7 @@ If users still see outdated surveys or broken embeds after an upgrade, check the
 
 If problems remain, temporarily bypass the CDN for the public domain. If the issue disappears immediately, the CDN
 cache policy is the first place to investigate.
+
+## Upgrade verification
+
+Include renderer invalidation and a fresh browser fetch in your [upgrade acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade). A completed rollout does not prove clients received new assets.

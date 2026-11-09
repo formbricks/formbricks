@@ -83,6 +83,19 @@ class ForeignKeyConstraintError extends Error {
   }
 }
 
+/**
+ * A client update reached a response that is already finished. Raised inside the write transaction, under
+ * the row lock, so it also catches a finish that committed after the caller's own pre-check (ENG-6869).
+ * Callers answer it with {@link RESPONSE_ALREADY_FINISHED_ERROR_CODE}.
+ */
+class ResponseAlreadyFinishedError extends Error {
+  statusCode = 400;
+  constructor(responseId: string) {
+    super(`Response with ID ${responseId} is already finished`);
+    this.name = "ResponseAlreadyFinishedError";
+  }
+}
+
 class OperationNotAllowedError extends Error {
   statusCode = 403;
   constructor(message: string) {
@@ -161,6 +174,7 @@ export {
   UnknownError,
   ForeignKeyConstraintError,
   OperationNotAllowedError,
+  ResponseAlreadyFinishedError,
   AuthenticationError,
   AuthorizationError,
   TooManyRequestsError,
@@ -187,6 +201,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "QueryExecutionError",
   "AuthenticationError",
   "OperationNotAllowedError",
+  "ResponseAlreadyFinishedError",
   "TooManyRequestsError",
   "InvalidPasswordResetTokenError",
   "UniqueConstraintError",

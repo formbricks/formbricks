@@ -4,7 +4,11 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getBulkInvitePermission,
+  getIsDashboardViewerRoleEnabled,
+  getIsMultiOrgEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
@@ -18,6 +22,8 @@ interface MembersViewProps {
   readonly currentUserId: string;
   readonly isAccessControlAllowed: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
+  /** `organization.manage_access`: the role floor the member and invite actions enforce (ENG-6812). */
+  readonly canManageUsers: boolean;
 }
 
 // Carries its own gutter for the same reason the controls above do: the card body is flush.
@@ -37,6 +43,7 @@ export const MembersView = async ({
   currentUserId,
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
+  canManageUsers,
 }: MembersViewProps) => {
   const t = await getTranslate();
 
@@ -45,6 +52,7 @@ export const MembersView = async ({
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const isBulkInviteAllowed = await getBulkInvitePermission(organization.id);
+  const isDashboardViewerRoleEnabled = await getIsDashboardViewerRoleEnabled(organization.id);
 
   // Fetch admin teams if they're a team admin
   const userAdminTeamIds = await getTeamsWhereUserIsAdmin(currentUserId, organization.id);
@@ -72,10 +80,12 @@ export const MembersView = async ({
             isInviteDisabled={INVITE_DISABLED}
             isAccessControlAllowed={isAccessControlAllowed}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+            isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
             enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
             isMultiOrgEnabled={isMultiOrgEnabled}
             teams={teams}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+            canManageUsers={canManageUsers}
             isTeamAdmin={isTeamAdminUser}
             userAdminTeamIds={userAdminTeamIds}
             isBulkInviteAllowed={isBulkInviteAllowed}
@@ -87,10 +97,12 @@ export const MembersView = async ({
         <Suspense fallback={<MembersLoading />}>
           <EditMemberships
             isAccessControlAllowed={isAccessControlAllowed}
+            isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
             organization={organization}
             currentUserId={currentUserId}
             role={membershipRole}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+            canManageUsers={canManageUsers}
           />
         </Suspense>
       )}

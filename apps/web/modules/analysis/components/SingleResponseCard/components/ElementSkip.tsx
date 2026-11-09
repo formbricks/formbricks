@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2Icon, ChevronsDownIcon, XCircleIcon } from "lucide-react";
+import { CheckCircle2Icon, ChevronsDownIcon, EyeOffIcon, XCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -13,7 +13,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 
 interface ElementSkipProps {
   skippedElements: string[] | undefined;
-  status: string;
+  /** `notShown`: the response's not-shown record lists these questions (ENG-6936). */
+  status: "welcomeCard" | "skipped" | "aborted" | "notShown";
   elements: TSurveyElement[];
   isFirstElementAnswered?: boolean;
   /**
@@ -39,6 +40,27 @@ export const ElementSkip = ({
 }: Readonly<ElementSkipProps>) => {
   const { t } = useTranslation();
   const dateFormats = getSurveyDateFormatMap(elements);
+  /** One line per listed question, its headline with recall resolved. Shared by every status that lists questions. */
+  const renderHeadlines = (questionIds: string[]) =>
+    questionIds.map((questionId) => (
+      <p className="my-2" key={questionId}>
+        {getTextContent(
+          parseRecallInfo(
+            getLocalizedValue(
+              elements.find((question) => question.id === questionId)?.headline ?? {
+                default: "",
+              },
+              "default"
+            ),
+            recallValues,
+            variables,
+            false,
+            locale,
+            dateFormats
+          )
+        )}
+      </p>
+    ));
   return (
     <div>
       {skippedElements && (
@@ -83,28 +105,35 @@ export const ElementSkip = ({
                   </TooltipProvider>
                 )}
               </div>
-              <div className="ml-6 flex flex-col">
-                {skippedElements?.map((questionId) => {
-                  return (
-                    <p className="my-2" key={questionId}>
-                      {getTextContent(
-                        parseRecallInfo(
-                          getLocalizedValue(
-                            elements.find((question) => question.id === questionId)?.headline ?? {
-                              default: "",
-                            },
-                            "default"
-                          ),
-                          recallValues,
-                          variables,
-                          false,
-                          locale,
-                          dateFormats
-                        )
-                      )}
-                    </p>
-                  );
-                })}
+              <div className="ml-6 flex flex-col">{renderHeadlines(skippedElements)}</div>
+            </div>
+          )}
+          {status === "notShown" && (
+            <div className="flex">
+              <div
+                className="flex w-0.5 items-start justify-center"
+                style={{
+                  background:
+                    "repeating-linear-gradient(to bottom,   rgb(203 213 225),  rgb(203 213 225) 8px, transparent 5px, transparent 15px)",
+                }}>
+                <EyeOffIcon className="min-h-6 min-w-6 rounded-full bg-white p-0.5 text-slate-400" />
+              </div>
+              <div className="mb-2 ml-4 flex flex-col" data-testid="response-card-not-shown-group">
+                <TooltipProvider delayDuration={50}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p
+                        data-testid="response-card-not-shown"
+                        className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
+                        {t("workspace.surveys.responses.not_shown")}
+                      </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("workspace.surveys.responses.respondent_not_shown_questions")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {renderHeadlines(skippedElements)}
               </div>
             </div>
           )}
@@ -126,28 +155,7 @@ export const ElementSkip = ({
                   className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
                   {t("workspace.surveys.responses.survey_closed")}
                 </p>
-                {skippedElements &&
-                  skippedElements.map((questionId) => {
-                    return (
-                      <p className="my-2" key={questionId}>
-                        {getTextContent(
-                          parseRecallInfo(
-                            getLocalizedValue(
-                              elements.find((question) => question.id === questionId)?.headline ?? {
-                                default: "",
-                              },
-                              "default"
-                            ),
-                            recallValues,
-                            variables,
-                            false,
-                            locale,
-                            dateFormats
-                          )
-                        )}
-                      </p>
-                    );
-                  })}
+                {renderHeadlines(skippedElements)}
               </div>
             </div>
           )}

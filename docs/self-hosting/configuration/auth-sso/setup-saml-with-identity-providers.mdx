@@ -10,7 +10,7 @@ This guide explains the settings you need to use to configure SAML with your Ide
 
 > **Note:** Please do not add a trailing slash at the end of the URLs. Create them exactly as shown below.
 
-**Assertion consumer service URL / Single Sign-On URL / Destination URL:** [https://app.formbricks.com/api/auth/saml/callback](https://app.formbricks.com/api/auth/saml/callback)
+**Assertion consumer service URL / Single Sign-On URL / Destination URL:** `https://<your-formbricks-domain>/api/auth/saml/callback`. Use your instance’s public HTTPS origin. Only Formbricks Cloud uses `https://app.formbricks.com/api/auth/saml/callback`.
 
 **Entity ID / Identifier / Audience URI / Audience Restriction:** [https://saml.formbricks.com](https://saml.formbricks.com)
 

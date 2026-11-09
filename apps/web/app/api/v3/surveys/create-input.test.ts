@@ -73,3 +73,23 @@ describe("getV3SurveyCreateInputInvalidParams", () => {
     ).toEqual([expect.objectContaining({ name: "blocks.0.elements.0.choices" })]);
   });
 });
+
+describe("buildV3SurveyCreateInput start logic (ENG-6932)", () => {
+  test("carries rules before the first question through, and stores none as null", () => {
+    const blocks = [{ id: "clbk1234567890123456789012", name: "Block", elements: [element(["A", "B"])] }];
+    const rule = {
+      id: "clrule12345678901234567890",
+      conditions: { id: "clgrp123456789012345678901", connector: "and", conditions: [] },
+      actions: [{ id: "clact123456789012345678901", objective: "jumpToBlock", target: blocks[0].id }],
+    };
+    const withRules = ZV3CreateSurveyBody.parse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Survey",
+      blocks,
+      startLogic: [rule],
+    });
+
+    expect(buildV3SurveyCreateInput(withRules, { languages, createdBy: null }).startLogic).toEqual([rule]);
+    expect(buildV3SurveyCreateInput(parse(blocks), { languages, createdBy: null }).startLogic).toBeNull();
+  });
+});

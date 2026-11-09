@@ -7,6 +7,7 @@ import { TJsPersonState } from "@formbricks/types/js";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -118,6 +119,22 @@ export const POST = withV1ApiWrapper({
         typeof jsonInput.attributes === "object" && jsonInput.attributes !== null
           ? jsonInput.attributes
           : undefined;
+
+      if (Array.isArray(attributes)) {
+        return {
+          response: responses.badRequestResponse("attributes must be an object", undefined, true),
+        };
+      }
+
+      if (attributes && Object.keys(attributes).length > MAX_CONTACT_ATTRIBUTES_PER_REQUEST) {
+        return {
+          response: responses.badRequestResponse(
+            `A request may set at most ${MAX_CONTACT_ATTRIBUTES_PER_REQUEST} attributes`,
+            undefined,
+            true
+          ),
+        };
+      }
 
       if (attributes && Object.hasOwn(attributes, "email")) {
         const email = attributes.email;

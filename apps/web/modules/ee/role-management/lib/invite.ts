@@ -3,11 +3,21 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
+import {
+  type TInviteWriteScope,
+  getInviteWriteWhere,
+  getMissingInviteWriteError,
+} from "@/modules/organization/settings/teams/lib/invite";
 
-export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): Promise<boolean> => {
+/** Only an owner may change an owner's invite: see `getInviteWriteWhere`. */
+export const updateInvite = async (
+  inviteId: string,
+  data: TInviteUpdateInput,
+  scope: TInviteWriteScope
+): Promise<boolean> => {
   try {
     const invite = await prisma.invite.update({
-      where: { id: inviteId },
+      where: getInviteWriteWhere(inviteId, scope),
       data,
     });
 
@@ -21,7 +31,7 @@ export const updateInvite = async (inviteId: string, data: TInviteUpdateInput): 
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === PrismaErrorType.RecordNotFound
     ) {
-      throw new ResourceNotFoundError("Invite", inviteId);
+      throw await getMissingInviteWriteError(inviteId, scope);
     } else {
       throw error; // Re-throw any other errors
     }

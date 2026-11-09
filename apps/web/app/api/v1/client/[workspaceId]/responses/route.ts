@@ -2,7 +2,12 @@ import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
-import { TResponseInput, ZResponseInput, pickAutoCapturedResponseMeta } from "@formbricks/types/responses";
+import {
+  TResponseInput,
+  ZClientResponseInput,
+  isPlainRecord,
+  pickAutoCapturedResponseMeta,
+} from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   canFoldSubmission,
@@ -94,10 +99,14 @@ export const POST = withV1ApiWrapper({
     }
     const { workspaceId } = resolved;
 
-    const responseInputValidation = ZResponseInput.safeParse({
-      ...responseInput,
-      workspaceId,
-    });
+    // Set on the parsed body rather than spread into a copy: a copy is a pass over every key the caller
+    // sent, before the schema has bounded any of them.
+    if (isPlainRecord(responseInput)) {
+      responseInput.workspaceId = workspaceId;
+    }
+    // The survey's create input: `ZResponseInput` plus Mark as low quality (ENG-6933) and the not-shown
+    // record (ENG-6936).
+    const responseInputValidation = ZClientResponseInput.safeParse(responseInput);
 
     if (!responseInputValidation.success) {
       return {

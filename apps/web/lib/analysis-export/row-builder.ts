@@ -18,6 +18,7 @@ import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { EXPORT_COLUMN_NAMES } from "@formbricks/types/surveys/codes";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
+import { type TResponseNotShown, getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode } from "@/lib/i18n/utils";
@@ -60,6 +61,11 @@ export type TAnalysisResponse = {
   contact?: { id: string; userId?: string } | null;
   /** The contact's attributes as they were when the response was given. */
   contactAttributes?: Record<string, unknown> | null;
+  /**
+   * What the respondent was not shown (ENG-6936). A question it lists exports blank, whatever `data`
+   * holds; `null` or absent (unknown) keeps the current rule.
+   */
+  notShown?: TResponseNotShown | null;
 };
 
 export type TUnmappedReport = {
@@ -79,6 +85,34 @@ type TRowContext = {
   /** The response language as written to the `language` column and the unmapped list. */
   languageOut: string;
   report: (input: Omit<TUnmappedReport, "language" | "responseId">) => void;
+  /**
+   * The option, matrix row and matrix column ids of the question being filled that the respondent was
+   * not shown (ENG-6937), from the response's record. Empty for a response without one, which keeps
+   * today's rule.
+   */
+  notShownOptions: TQuestionOptionsNotShown;
+};
+
+type TQuestionOptionsNotShown = { options: string[]; rows: string[]; columns: string[] };
+
+const NOTHING_NOT_SHOWN: TQuestionOptionsNotShown = { options: [], rows: [], columns: [] };
+
+const getQuestionOptionsNotShown = (
+  record: TResponseNotShown | null | undefined,
+  questionId: string
+): TQuestionOptionsNotShown =>
+  record
+    ? {
+        options: record.options?.[questionId] ?? [],
+        rows: record.rows?.[questionId] ?? [],
+        columns: record.columns?.[questionId] ?? [],
+      }
+    : NOTHING_NOT_SHOWN;
+
+/** The chosen options without those the respondent was not shown: a stale pick does not count. */
+const withoutNotShown = (chosen: TChosen, notShown: readonly string[]): TChosen => {
+  if (notShown.length === 0) return chosen;
+  return new Map([...chosen].filter(([id]) => !notShown.includes(id)));
 };
 
 /** Fills the cells of one question. `at(i)` is the i-th column the question owns. */
@@ -268,8 +302,16 @@ const collectChosen = ({
 
 type TChoiceOffsets = Map<string, { flag: number; text: number | null }>;
 
-const writeChosen = (offsetOf: TChoiceOffsets, chosen: TChosen, isRanking: boolean, put: TPut): void => {
+const writeChosen = (
+  offsetOf: TChoiceOffsets,
+  chosen: TChosen,
+  isRanking: boolean,
+  put: TPut,
+  notShown: readonly string[]
+): void => {
   for (const [id, offsets] of offsetOf) {
+    // ENG-6937: an option the respondent was not shown is blank, not a 0 for "shown but not picked".
+    if (notShown.includes(id)) continue;
     const slot = chosen.get(id);
     if (isRanking) {
       if (slot) put(offsets.flag, slot.rank);
@@ -337,7 +379,12 @@ const planMultiChoiceCell = (
       if (entries.length === 0) return;
       const report = unmappedReporter(ctx, question, code, choices);
       const chosen = collectChosen({ entries, choices, other, language: ctx.language, report });
-      writeChosenCell(element.choices, chosen, other ? 1 : null, put);
+      writeChosenCell(
+        element.choices,
+        withoutNotShown(chosen, ctx.notShownOptions.options),
+        other ? 1 : null,
+        put
+      );
     },
   };
 };
@@ -372,7 +419,7 @@ const planMultiChoice = (
       if (entries.length === 0) return;
       const report = unmappedReporter(ctx, question, code, choices);
       const chosen = collectChosen({ entries, choices, other, language: ctx.language, report });
-      writeChosen(offsetOf, chosen, isRanking, put);
+      writeChosen(offsetOf, chosen, isRanking, put, ctx.notShownOptions.options);
     },
   };
 };
@@ -448,7 +495,11 @@ const planPictureColumns = (
   fill: (ctx, answer, put) => {
     const ids = toTextList(answer);
     if (ids.length === 0) return;
-    choices.forEach((choice, index) => put(index, ids.includes(choice.id) ? 1 : 0));
+    const notShown = ctx.notShownOptions.options;
+    choices.forEach((choice, index) => {
+      // ENG-6937: a picture the respondent was not shown is blank.
+      if (!notShown.includes(choice.id)) put(index, ids.includes(choice.id) ? 1 : 0);
+    });
     reportUnknownPictures(ids, choices, unmappedReporter(ctx, question, code, []));
   },
 });
@@ -488,11 +539,16 @@ const planMatrix = (
     fill: (ctx, answer, put) => {
       if (!answer || typeof answer !== "object" || Array.isArray(answer)) return;
       const record = answer as Record<string, string>;
+      const { rows: rowsNotShown, columns: columnsNotShown } = ctx.notShownOptions;
       element.rows.forEach((row, index) => {
+        // ENG-6937: a row the respondent was not shown is blank.
+        if (rowsNotShown.includes(row.id)) return;
         const text = matrixRowAnswer(record, row, ctx.language);
         if (text === null) return;
         const resolution = resolveAnswerOption({ text, choices: columnOptions, language: ctx.language });
         if (resolution.status === "matched") {
+          // A cell naming a column the respondent was not shown is blank too.
+          if (columnsNotShown.includes(resolution.choice.id)) return;
           put(index, codeOf(resolution.choice), text);
           return;
         }
@@ -819,6 +875,7 @@ export const createAnalysisRowBuilder = ({
       language,
       languageOut,
       report: (input) => onUnmapped({ ...input, language: languageOut, responseId: response.id }),
+      notShownOptions: NOTHING_NOT_SHOWN,
     };
     const setCell = (index: number, code: TAnalysisCell, label: TAnalysisCell = code): void => {
       if (codes) codes[index] = code;
@@ -827,10 +884,15 @@ export const createAnalysisRowBuilder = ({
 
     responseColumns.forEach((entry, index) => setCell(index, entry.read(ctx)));
 
+    const notShown = getNotShownElementIds(response.notShown, blocks);
     plans.forEach((plan, planIndex) => {
+      const questionId = questionIdOfPlan[planIndex];
+      // Never shown, so blank: not a 0 for "shown but not picked", and not an answer.
+      if (notShown.has(questionId)) return;
       const start = planOffsets[planIndex];
       const put: TPut = (offset, code, label = code) => setCell(start + offset, code, label);
-      plan.fill(ctx, response.data[questionIdOfPlan[planIndex]], put);
+      const notShownOptions = getQuestionOptionsNotShown(response.notShown, questionId);
+      plan.fill({ ...ctx, notShownOptions }, response.data[questionId], put);
     });
 
     if (embeddedColumns.length > 0) {

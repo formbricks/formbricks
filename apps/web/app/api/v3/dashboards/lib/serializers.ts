@@ -1,6 +1,7 @@
 import "server-only";
 import { ZWidgetLayout } from "@formbricks/types/analysis";
 import { serializeV3Chart } from "@/app/api/v3/charts/lib/serializers";
+import { parseStoredDashboardFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import type {
   TV3DashboardListItem,
   TV3DashboardResource,
@@ -50,5 +51,6 @@ export const serializeV3Dashboard = (row: TDashboardResourceRow): TV3DashboardRe
   creator: row.creator ? { name: row.creator.name } : null,
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
+  filters: parseStoredDashboardFilters(row.filters),
   widgets: row.widgets.map(serializeV3DashboardWidget),
 });

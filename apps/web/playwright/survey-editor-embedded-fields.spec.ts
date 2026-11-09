@@ -4,6 +4,7 @@ import { test } from "./lib/fixtures";
 import {
   type EmbeddedFieldSource,
   addEmbeddedField,
+  addFlowRule,
   createSurveyFromScratch,
   editEmbeddedField,
   editorPanel,
@@ -80,8 +81,15 @@ const addFieldFromOpenDialog = async (page: Page, name: string): Promise<void> =
   await expect(embeddedFieldRow(page, name)).toBeVisible();
 };
 
+/** Shows the editor's Questions tab, where the question cards and the Embedded Data card live. */
+const showQuestionsTab = async (page: Page): Promise<void> => {
+  await page.getByRole("button", { name: "Questions", exact: true }).click();
+  await expect(editorPanel(page).getByTestId("embedded-data-card-trigger")).toBeVisible();
+};
+
 /** Opens the element card if it is collapsed — same click-until-open shape as `openEmbeddedDataCard`. */
 const openQuestionCard = async (page: Page, heading = QUESTION_HEADLINE): Promise<void> => {
+  await showQuestionsTab(page);
   const questionLabel = editorPanel(page).locator('label:has-text("Question*")');
 
   await expect(async () => {
@@ -121,18 +129,25 @@ const closeRecallPicker = async (page: Page): Promise<void> => {
 const recallItem = (picker: Locator, name: string): Locator =>
   picker.getByRole("menuitem", { name, exact: true });
 
-/** Opens the block's conditional logic, adding the first rule when the block has none yet. */
+/**
+ * Opens the block's rule on the Flow tab, where logic lives since ENG-6929, adding it when the block
+ * has none yet. The Flow tab opens one rule at a time, so its editor's ids are `condition-0-0-…`.
+ */
 const openBlockLogic = async (page: Page): Promise<void> => {
-  await openQuestionCard(page);
+  await page.getByRole("button", { name: "Flow", exact: true }).click();
 
   const firstConditionOperand = page.locator("#condition-0-0-conditionValue");
   if (await firstConditionOperand.isVisible().catch(() => false)) return;
+  // The Flow tab opens with every block collapsed, which hides their rules.
+  const expand = page.getByRole("button", { name: "Expand", exact: true });
+  if (await expand.isVisible()) await expand.click();
 
-  const logicSection = editorPanel(page).getByRole("button", { name: "Conditional Logic" });
-  if (await logicSection.isVisible().catch(() => false)) {
-    await logicSection.click();
+  // A rule's row reads "If …"; it opens its editor.
+  const ruleRow = editorPanel(page).getByRole("button", { expanded: false }).filter({ hasText: /^If / });
+  if ((await ruleRow.count()) > 0) {
+    await ruleRow.first().click();
   } else {
-    await editorPanel(page).locator("#logicJumps").click();
+    await addFlowRule(page, 1);
   }
   await expect(firstConditionOperand).toBeVisible();
 };
@@ -220,7 +235,8 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await operandsBeforeEdit.getByRole("option", { name: firstHiddenField, exact: true }).click();
 
     await openCombobox(page, "action-0-objective");
-    await page.getByRole("option", { name: "Calculate", exact: true }).click();
+    await page.getByRole("option", { name: "Set value", exact: true }).click();
+    // Set value starts on the one-step Assign (P74), whose typed value input is checked below.
     const variablesBeforeEdit = await openCombobox(page, "action-0-variableId");
     await variablesBeforeEdit.getByRole("option", { name: rowEditedName, exact: true }).click();
     // The row says number while the legacy column still says text, so this is the row's answer.
@@ -229,6 +245,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     // Now edit through the card: rename the calculated field, retype it back to text, and declare a
     // second passed-in field. The card writes `embeddedFields`, which is what every reader below is
     // reading — so this must land with no save and no reload.
+    await showQuestionsTab(page);
     await editEmbeddedField(page, rowEditedName, { name: renamedVariableName, type: "Text" });
     await addEmbeddedField(page, { name: secondHiddenField, source: "Passed in" });
 
@@ -272,6 +289,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     });
     await page.reload({ waitUntil: "domcontentloaded" });
 
+    await showQuestionsTab(page);
     await openEmbeddedDataCard(page);
     await expect(embeddedFieldRow(page, renamedVariableName)).toBeVisible();
     await expect(embeddedFieldRow(page, firstHiddenField)).toBeVisible();

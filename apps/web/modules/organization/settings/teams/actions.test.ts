@@ -1,8 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { ZodType } from "zod";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { AuthenticationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { getAccessFlags } from "@/lib/membership/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { bulkInviteUsersAction, inviteUserAction, resendInviteAction } from "./actions";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  deleteMembership,
+  getMembershipsByUserId,
+} from "@/modules/organization/settings/teams/lib/membership";
+import {
+  bulkInviteUsersAction,
+  createInviteTokenAction,
+  deleteInviteAction,
+  deleteMembershipAction,
+  inviteUserAction,
+  leaveOrganizationAction,
+  resendInviteAction,
+} from "./actions";
 
 // The action client is mocked, so the schemas each action registers are read off the mock. Captured at
 // load, before any `clearAllMocks`.
@@ -13,8 +27,13 @@ const actionSchemas = vi
 const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
   assertCan: vi.fn(),
+  can: vi.fn(),
   capturePostHogEvent: vi.fn(),
   checkRoleManagementPermission: vi.fn(),
+  deleteInvite: vi.fn(),
+  deleteMembership: vi.fn(),
+  findUniqueInvite: vi.fn(),
+  refreshInviteExpiration: vi.fn(),
   getBulkInvitePermission: vi.fn(),
   getInvite: vi.fn(),
   getMembershipByUserIdOrganizationId: vi.fn(),
@@ -28,7 +47,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@formbricks/database", () => ({
-  prisma: { invite: { findUnique: vi.fn() } },
+  prisma: { invite: { findUnique: mocks.findUniqueInvite } },
 }));
 
 vi.mock("@formbricks/database/prisma", () => ({
@@ -46,7 +65,7 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/lib/authorization", () => ({
   assertCan: mocks.assertCan,
-  can: vi.fn(),
+  can: mocks.can,
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -100,6 +119,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 vi.mock("@/modules/ee/role-management/lib/permission", () => ({
+  assertCanAssignRole: vi.fn(async () => undefined),
   checkRoleManagementPermission: mocks.checkRoleManagementPermission,
 }));
 
@@ -112,16 +132,16 @@ vi.mock("@/modules/email", () => ({
 }));
 
 vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
-  deleteMembership: vi.fn(),
+  deleteMembership: mocks.deleteMembership,
   getMembershipsByUserId: vi.fn(),
   getOrganizationOwnerCount: vi.fn(),
 }));
 
 vi.mock("./lib/invite", () => ({
-  deleteInvite: vi.fn(),
+  deleteInvite: mocks.deleteInvite,
   getInvite: mocks.getInvite,
   inviteUser: mocks.inviteUser,
-  refreshInviteExpiration: vi.fn(),
+  refreshInviteExpiration: mocks.refreshInviteExpiration,
   resendInvite: mocks.resendInvite,
 }));
 
@@ -170,6 +190,7 @@ describe("invite rate-limit settlement", () => {
     vi.clearAllMocks();
     reservation.requested = 1;
     reservation.settled = false;
+    mocks.can.mockResolvedValue(true);
     mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "owner" });
     mocks.getOrganizationIdFromInviteId.mockResolvedValue(organizationId);
     mocks.getTeamsWhereUserIsAdmin.mockResolvedValue([]);
@@ -359,5 +380,191 @@ describe("invite rate-limit settlement", () => {
     ).rejects.toBe(error);
 
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
+  });
+});
+
+// `USER_MANAGEMENT_MINIMUM_ROLE` reaches the server as `organization.manage_access`. Every action an
+// owner or manager uses to change who is invited or a member asks it, so a floor of `owner` or
+// `disabled` holds whatever the UI hides (ENG-6812).
+describe("user-management role floor", () => {
+  const organizationId = "org-1";
+  const inviteId = "invite-1";
+  const ctx = { user: { id: "user-1", name: "Manager" }, auditLoggingCtx: {} };
+
+  const denyManageAccess = () =>
+    mocks.can.mockImplementation(async (_actor, action: string) => action !== "organization.manage_access");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    denyManageAccess();
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "manager" });
+    mocks.getOrganizationIdFromInviteId.mockResolvedValue(organizationId);
+    mocks.getTeamsWhereUserIsAdmin.mockResolvedValue([]);
+    mocks.getBulkInvitePermission.mockResolvedValue(true);
+    mocks.getInvite.mockResolvedValue({ creator: { name: "Inviter" } });
+    mocks.inviteUser.mockResolvedValue(inviteId);
+    mocks.reserveInviteRateLimit.mockResolvedValue({});
+    mocks.findUniqueInvite.mockResolvedValue({ email: "invitee@example.com", expiresAt: new Date() });
+    mocks.refreshInviteExpiration.mockResolvedValue({ email: "invitee@example.com", expiresAt: new Date() });
+    mocks.resendInvite.mockResolvedValue({ email: "invitee@example.com", name: "Invitee" });
+  });
+
+  const writes = () => [
+    mocks.inviteUser,
+    mocks.deleteInvite,
+    mocks.deleteMembership,
+    mocks.refreshInviteExpiration,
+    mocks.resendInvite,
+  ];
+
+  test.each([
+    [
+      "inviteUserAction",
+      () =>
+        inviteUserAction({
+          ctx,
+          parsedInput: { organizationId, email: "a@example.com", name: "A", role: "member", teamIds: [] },
+        } as never),
+    ],
+    [
+      "bulkInviteUsersAction",
+      () =>
+        bulkInviteUsersAction({
+          ctx,
+          parsedInput: {
+            organizationId,
+            invitees: [{ email: "a@example.com", name: "A", role: "member", teamIds: [] }],
+          },
+        } as never),
+    ],
+    [
+      "resendInviteAction",
+      () => resendInviteAction({ ctx, parsedInput: { inviteId, organizationId } } as never),
+    ],
+    ["deleteInviteAction", () => deleteInviteAction({ ctx, parsedInput: { inviteId } } as never)],
+    ["createInviteTokenAction", () => createInviteTokenAction({ ctx, parsedInput: { inviteId } } as never)],
+    [
+      "deleteMembershipAction",
+      () => deleteMembershipAction({ ctx, parsedInput: { userId: "user-2", organizationId } } as never),
+    ],
+  ])("%s refuses an owner or manager below the floor", async (_name, call) => {
+    await expect(call()).rejects.toThrow(OperationNotAllowedError);
+
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: ctx.user.id }, "organization.manage_access", {
+      type: "organization",
+      id: organizationId,
+    });
+    for (const write of writes()) expect(write).not.toHaveBeenCalled();
+  });
+
+  test("still lets a team admin invite into their own team", async () => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "member" });
+    mocks.getTeamsWhereUserIsAdmin.mockResolvedValue(["team-1"]);
+
+    await expect(
+      inviteUserAction({
+        ctx,
+        parsedInput: {
+          organizationId,
+          email: "a@example.com",
+          name: "A",
+          role: "member",
+          teamIds: ["team-1"],
+        },
+      } as never)
+    ).resolves.toBe(inviteId);
+
+    expect(mocks.can).not.toHaveBeenCalledWith(
+      expect.anything(),
+      "organization.manage_access",
+      expect.anything()
+    );
+  });
+});
+
+// ENG-6812: an owner's pending invite is an owner's to delete, resend or re-link, as with an owner's
+// membership. The scope reaches the write, whose own WHERE applies it.
+describe("owner invites", () => {
+  const organizationId = "org-1";
+  const inviteId = "invite-1";
+  const ctx = { user: { id: "user-1", name: "Caller" }, auditLoggingCtx: {} };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.can.mockResolvedValue(true);
+    mocks.getOrganizationIdFromInviteId.mockResolvedValue(organizationId);
+    mocks.getInvite.mockResolvedValue({ creator: { name: "Inviter" } });
+    mocks.reserveInviteRateLimit.mockResolvedValue({});
+    mocks.findUniqueInvite.mockResolvedValue({ email: "invitee@example.com", expiresAt: new Date() });
+    mocks.refreshInviteExpiration.mockResolvedValue({ email: "invitee@example.com", expiresAt: new Date() });
+    mocks.resendInvite.mockResolvedValue({ email: "invitee@example.com", name: "Invitee" });
+  });
+
+  test.each([
+    [
+      "deleteInviteAction",
+      () => deleteInviteAction({ ctx, parsedInput: { inviteId } } as never),
+      mocks.deleteInvite,
+    ],
+    [
+      "createInviteTokenAction",
+      () => createInviteTokenAction({ ctx, parsedInput: { inviteId } } as never),
+      mocks.refreshInviteExpiration,
+    ],
+    [
+      "resendInviteAction",
+      () => resendInviteAction({ ctx, parsedInput: { inviteId, organizationId } } as never),
+      mocks.resendInvite,
+    ],
+  ])("%s keeps owner invites out of a manager's reach and in an owner's", async (_name, call, write) => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "manager" });
+    await call();
+    expect(write).toHaveBeenLastCalledWith(inviteId, { allowOwnerInvite: false });
+
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "owner" });
+    await call();
+    expect(write).toHaveBeenLastCalledWith(inviteId, { allowOwnerInvite: true });
+  });
+});
+
+describe("leaveOrganizationAction", () => {
+  const organizationId = "org-1";
+  const ctx = { user: { id: "user-1" }, auditLoggingCtx: {} };
+  const leave = () => leaveOrganizationAction({ ctx, parsedInput: { organizationId } } as never);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // SpiceDB refuses a Dashboard viewer `organization.read` (ADR-0025); leaving must not ask for it.
+    mocks.assertCan.mockRejectedValue(new Error("denied"));
+    vi.mocked(getAccessFlags).mockImplementation(
+      (role) => ({ isOwner: role === "owner" }) as ReturnType<typeof getAccessFlags>
+    );
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(getMembershipsByUserId).mockResolvedValue([{}, {}] as never);
+    vi.mocked(deleteMembership).mockResolvedValue(undefined as never);
+  });
+
+  test("lets a Dashboard viewer leave on its own membership alone", async () => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "dashboard_viewer" });
+
+    await leave();
+
+    expect(mocks.assertCan).not.toHaveBeenCalled();
+    expect(deleteMembership).toHaveBeenCalledWith("user-1", organizationId);
+  });
+
+  test("refuses someone with no membership before spending the organization's rate limit", async () => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue(null);
+
+    await expect(leave()).rejects.toBeInstanceOf(AuthenticationError);
+    expect(mocks.applyRateLimit).not.toHaveBeenCalled();
+    expect(deleteMembership).not.toHaveBeenCalled();
+  });
+
+  test("still refuses an owner", async () => {
+    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "owner" });
+
+    await expect(leave()).rejects.toBeInstanceOf(OperationNotAllowedError);
+    expect(deleteMembership).not.toHaveBeenCalled();
   });
 });

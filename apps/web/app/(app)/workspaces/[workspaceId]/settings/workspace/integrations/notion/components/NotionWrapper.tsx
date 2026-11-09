@@ -9,6 +9,7 @@ import {
 } from "@formbricks/types/integration/notion";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { useIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/hooks/use-integration";
 import { AddIntegrationModal } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/AddIntegrationModal";
 import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/ManageIntegration";
 import notionLogo from "@/images/notion.png";
@@ -28,7 +29,7 @@ interface NotionWrapperProps {
 }
 
 export const NotionWrapper = ({
-  notionIntegration,
+  notionIntegration: initialNotionIntegration,
   enabled,
   workspaceId,
   webAppUrl,
@@ -38,6 +39,7 @@ export const NotionWrapper = ({
   locale,
   contactAttributeKeys,
 }: Readonly<NotionWrapperProps>) => {
+  const notionIntegration = useIntegration(workspaceId, "notion", initialNotionIntegration);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(
     notionIntegration ? !!notionIntegration.config.key?.bot_id : false

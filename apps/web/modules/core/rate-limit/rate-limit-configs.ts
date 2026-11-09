@@ -63,6 +63,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:visibility",
     }, // 10 per minute per actor — a loop of workspace → restricted must not be able to arm the freshness guard (ENG-3282)
+    v3SurveysFullList: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:surveys:full-list",
+    }, // 30 per minute per principal, on top of v3 — one `view=full` page carries up to 50 whole survey
+    // documents, so 30 pages is 1,500 surveys a minute: ample for an export, far below 100 full pages
     v3CustomCss: {
       interval: 60,
       allowedPerInterval: 60,
@@ -82,6 +88,8 @@ export const rateLimitConfigs = {
     }, // At most 20 chart queries running at once per user or API key, so one caller cannot fill the shared
     // Cube's queue with 60-second queries. An in-flight limit (`in-flight.ts`), not a window: `interval` is
     // each slot's lease, twice the query timeout, after which a slot a crashed pod never released frees itself.
+    // So a slot covers one Cube query: an operation running several (a dashboard filter's value list) takes
+    // one per query, never one across them all.
     internalChartGeneration: {
       interval: 60,
       allowedPerInterval: 1,

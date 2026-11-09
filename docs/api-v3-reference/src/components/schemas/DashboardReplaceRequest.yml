@@ -1,8 +1,9 @@
 type: object
 description: >-
-  The whole edited dashboard: its name and every widget's place. A widget left out of `widgets` is
-  removed (its chart is kept). `expectedUpdatedAt` is the dashboard's `updatedAt` from your read; if it
-  changed since, nothing is saved.
+  The whole edited dashboard: its name, every widget's place and, optionally, its filters. A widget left
+  out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept.
+  `expectedUpdatedAt` is the dashboard's `updatedAt` from your read; if it changed since, nothing is
+  saved.
 required:
   - name
   - expectedUpdatedAt
@@ -16,6 +17,15 @@ properties:
     type: string
     format: date-time
     description: The dashboard's `updatedAt` from your read.
+  filters:
+    type: array
+    maxItems: 10
+    description: >-
+      Every dashboard filter, in top-bar order, replacing the saved ones. At most 10; each `field` must
+      be a catalog dimension and `operator` one it allows (422 naming the filter otherwise), and each
+      `id` may appear once.
+    items:
+      $ref: ./DashboardFilter.yml
   widgets:
     type: array
     maxItems: 1000

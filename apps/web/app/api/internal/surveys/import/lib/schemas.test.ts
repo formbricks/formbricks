@@ -1,52 +1,57 @@
 import { describe, expect, test } from "vitest";
-import { ZQsfImportStreamBody } from "./schemas";
+import { ZSurveyImportStreamForm, getSurveyImportFileName } from "./schemas";
 
 const workspaceId = "clxx1234567890123456789012";
-const qsf = { SurveyEntry: { SurveyName: "Onboarding" }, SurveyElements: [] };
+const file = (name = "onboarding.qsf") => new File(['{"SurveyEntry":{}}'], name);
 
-describe("ZQsfImportStreamBody", () => {
-  test("accepts a workspace, a file name and the parsed file", () => {
-    expect(ZQsfImportStreamBody.safeParse({ workspaceId, fileName: "onboarding.qsf", qsf }).success).toBe(
-      true
-    );
+describe("ZSurveyImportStreamForm", () => {
+  test("takes a workspace and exactly one file, and hands the file through as it came", () => {
+    const upload = file();
+
+    const result = ZSurveyImportStreamForm.parse({ workspaceId, file: upload });
+
+    expect(result).toEqual({ workspaceId, file: upload });
+    expect(result.file).toBe(upload);
   });
 
-  test("rejects unknown top-level keys", () => {
-    const result = ZQsfImportStreamBody.safeParse({ workspaceId, fileName: "a.qsf", qsf, extra: true });
-
-    expect(result.success).toBe(false);
-  });
-
-  test.each([
-    ["a string", JSON.stringify(qsf)],
-    ["an array", [qsf]],
-    ["null", null],
-  ])("rejects qsf sent as %s", (_case, value) => {
-    expect(ZQsfImportStreamBody.safeParse({ workspaceId, fileName: "a.qsf", qsf: value }).success).toBe(
+  test("refuses fields it does not take, a file name among them: the name comes from the file part", () => {
+    expect(ZSurveyImportStreamForm.safeParse({ workspaceId, file: file(), fileName: "a.qsf" }).success).toBe(
       false
     );
   });
 
-  test.each(["", "   ", "x".repeat(256)])("rejects the file name %j", (fileName) => {
-    expect(ZQsfImportStreamBody.safeParse({ workspaceId, fileName, qsf }).success).toBe(false);
+  test.each([
+    ["no file", { workspaceId }],
+    ["text where the file belongs", { workspaceId, file: '{"SurveyEntry":{}}' }],
+    ["two files", { workspaceId, file: [file(), file()] }],
+    ["a file where the workspace belongs", { workspaceId: file(), file: file() }],
+  ])("refuses %s", (_case, fields) => {
+    expect(ZSurveyImportStreamForm.safeParse(fields).success).toBe(false);
   });
 
-  test("hands the parsed file through without copying it", () => {
-    const body = { workspaceId, fileName: "a.qsf", qsf };
-
-    const result = ZQsfImportStreamBody.parse(body);
-
-    expect(result.qsf).toBe(qsf);
+  test.each(["", "   ", "\u202e\u200f\u0000", "x".repeat(256)])("refuses the file name %j", (name) => {
+    expect(ZSurveyImportStreamForm.safeParse({ workspaceId, file: file(name) }).success).toBe(false);
   });
 
-  test("a __proto__ key in the file pollutes nothing", () => {
-    // What the wrapper hands the schema: JSON.parse output, where __proto__ is an own data key.
-    const body = JSON.parse(
-      `{"workspaceId":"${workspaceId}","fileName":"a.qsf","qsf":{"__proto__":{"polluted":true},"SurveyElements":[]}}`
-    );
+  test("measures the name the report shows, so marks the cleaning drops do not count", () => {
+    expect(
+      ZSurveyImportStreamForm.safeParse({ workspaceId, file: file(`${"x".repeat(255)}\u202e`) }).success
+    ).toBe(true);
+  });
 
-    ZQsfImportStreamBody.parse(body);
+  test("refuses a name too long to be worth cleaning, however little of it would show", () => {
+    const rlo = String.fromCodePoint(0x202e);
+    const named = (name: string) =>
+      ZSurveyImportStreamForm.safeParse({ workspaceId, file: file(name) }).success;
 
-    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(named(`a${rlo.repeat(1020)}`)).toBe(false);
+    expect(named(`a${rlo.repeat(1019)}`)).toBe(true);
+  });
+});
+
+describe("getSurveyImportFileName", () => {
+  test("drops what makes a name read as another, and keeps the rest as typed", () => {
+    expect(getSurveyImportFileName(file("invoice\u202Egpj.exe"))).toBe("invoicegpj.exe");
+    expect(getSurveyImportFileName(file(' Q3: "Pulse" survey?.qsf '))).toBe('Q3: "Pulse" survey?.qsf');
   });
 });

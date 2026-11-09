@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useMemo, useRef } from "react";
 import { type ElementOption } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
+import { type TShownFilterTarget } from "@/app/lib/surveys/shown-filter-targets";
 import { type TDateRangePreset } from "@/lib/date-ranges";
 
 // The filter itself lives in the page URL (`useResponseTableFilters`), shared by Responses and Summary.
@@ -13,6 +14,8 @@ export interface FilterValue {
     filterValue: string | undefined;
     filterComboBoxValue: string | string[] | undefined;
   };
+  /** Shown / not shown rows only (ENG-6951): what the row names. Its value is `shown` or `notShown`. */
+  shownTarget?: TShownFilterTarget;
 }
 
 export type TResponseStatus = "all" | "complete" | "partial" | "lowQuality";

@@ -3,6 +3,8 @@
 import { DatabaseIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
+import { isChartResultEmpty } from "@/modules/ee/analysis/charts/lib/chart-emptiness";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { isInjectedResponseBaseColumn } from "@/modules/ee/analysis/charts/lib/response-base";
 import {
@@ -18,6 +20,8 @@ interface DataViewerProps {
   optionLabels?: Record<string, string>;
   /** Matrix row field_id → statement map, present when the query groups by fieldId. */
   fieldLabels?: Record<string, string>;
+  /** Embedded-data member → key name map, so those columns are headed by the key. */
+  memberLabels?: Record<string, string>;
   /**
    * Drop the card, the heading and the fixed scroll height, and fill the parent instead. For a
    * dashboard widget, whose title bar already names the chart and whose body already scrolls —
@@ -32,16 +36,20 @@ export function DataViewer({
   data,
   optionLabels,
   fieldLabels,
+  memberLabels,
   bare = false,
   query,
 }: Readonly<DataViewerProps>) {
   const { t } = useTranslation();
-  if (!data || data.length === 0 || Object.keys(data[0]).length === 0) {
-    return (
-      <div className={bare ? "p-4" : "rounded-lg border border-gray-200 bg-gray-50 p-4"}>
-        <p className="text-sm text-gray-500">{t("workspace.analysis.charts.no_data_available")}</p>
-      </div>
-    );
+  // The same empty state as the chart, so flipping a widget to its data says the same thing rather
+  // than a lone "0" row (see isChartResultEmpty).
+  if (
+    !data ||
+    data.length === 0 ||
+    Object.keys(data[0]).length === 0 ||
+    (query && isChartResultEmpty(data, query))
+  ) {
+    return <ChartEmptyState message={t("workspace.analysis.charts.no_data_available")} />;
   }
 
   const columns = Object.keys(data[0]).filter((key) => !query || !isInjectedResponseBaseColumn(key, query));
@@ -78,7 +86,7 @@ export function DataViewer({
                   key={key}
                   scope="col"
                   className="border-b border-gray-200 px-3 py-2 text-left font-semibold">
-                  {formatCubeColumnHeader(key, t)}
+                  {formatCubeColumnHeader(key, t, memberLabels)}
                 </th>
               ))}
             </tr>

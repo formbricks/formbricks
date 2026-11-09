@@ -38,6 +38,7 @@ import {
 } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { getOrganizationSwitchPath, getWorkspaceHomePath } from "@/modules/settings/lib/organization-switch";
 import { Badge } from "@/modules/ui/components/badge";
 import {
   DropdownMenu,
@@ -152,7 +153,7 @@ export const MainNavigation = ({
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const [isPending, startTransition] = useTransition();
-  const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
+  const { isManager, isOwner, isBilling, isDashboardViewer } = getAccessFlags(membershipRole);
   const isMembershipPending = membershipRole === undefined;
   const disabledNavigationMessage = isMembershipPending
     ? t("common.loading")
@@ -180,6 +181,11 @@ export const MainNavigation = ({
     return () => clearTimeout(timeoutId);
   }, [isCollapsed]);
 
+  // Billing and Dashboard viewer both lose most of the navigation, differently on purpose (U17). Billing
+  // keeps the items disabled with a tooltip: it is a full organization member whose access is paused
+  // while it only manages billing, and the greyed items say what the organization has. A Dashboard viewer
+  // never had any of it — no route behind those items is reachable for it (ADR-0025) — so they are hidden,
+  // and a section left with nothing loses its header too.
   const mainNavigationSections = useMemo(
     () => [
       {
@@ -192,7 +198,7 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/surveys`,
             icon: MessageCircle,
             isActive: pathname?.includes("/surveys"),
-            isHidden: false,
+            isHidden: isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
           {
@@ -200,7 +206,7 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/creatives`,
             icon: LayoutTemplateIcon,
             isActive: pathname?.includes("/creatives"),
-            isHidden: !isCreativesVisible,
+            isHidden: !isCreativesVisible || isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
           {
@@ -211,6 +217,7 @@ export const MainNavigation = ({
               pathname?.includes("/contacts") ||
               pathname?.includes("/segments") ||
               pathname?.includes("/attributes"),
+            isHidden: isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
         ],
@@ -226,11 +233,12 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/unify/sources`,
             icon: MessageSquareTextIcon,
             isActive: pathname?.includes("/unify/"),
-            isHidden: false,
+            isHidden: isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
           {
-            name: t("common.analysis"),
+            // A Dashboard viewer has Dashboards and nothing else of Analysis (ADR-0025).
+            name: isDashboardViewer ? t("common.dashboards") : t("common.analysis"),
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,
             isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
@@ -252,13 +260,18 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/workflows`,
             icon: WorkflowIcon,
             isActive: pathname?.startsWith(`/workspaces/${workspace.id}/workflows`),
-            isHidden: false,
+            isHidden: isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
         ],
       },
     ],
-    [t, workspace.id, pathname, isMembershipPending, isBilling, isCreativesVisible]
+    [t, workspace.id, pathname, isMembershipPending, isBilling, isCreativesVisible, isDashboardViewer]
+  );
+
+  // A section whose items are all hidden (Ask and Act for a Dashboard viewer) loses its header too.
+  const visibleNavigationSections = mainNavigationSections.filter((section) =>
+    section.items.some((item) => !item.isHidden)
   );
 
   const settingsNavigationItem = useMemo(
@@ -281,7 +294,7 @@ export const MainNavigation = ({
     workspace.name
   );
   const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
+    () => getOrganizationsForSwitcherAction(),
     t("common.failed_to_load_organizations"),
     undefined,
     organization.name
@@ -304,13 +317,14 @@ export const MainNavigation = ({
     }
   }, [isOrganizationDropdownOpen, loadOrganizations]);
 
-  const mainNavigationLink = isBilling
-    ? getBillingFallbackPath(organization.id, isFormbricksCloud)
-    : `/workspaces/${workspace.id}/surveys/`;
+  const getMainNavigationLink = () => {
+    if (isBilling) return getBillingFallbackPath(organization.id, isFormbricksCloud);
+    return getWorkspaceHomePath(membershipRole, workspace.id);
+  };
+  const mainNavigationLink = getMainNavigationLink();
 
   const handleWorkspaceChange = (workspaceId: string) => {
-    const targetPath =
-      workspaceId === workspace.id ? `/workspaces/${workspace.id}/surveys` : `/workspaces/${workspaceId}/`;
+    const targetPath = getWorkspaceHomePath(membershipRole, workspaceId);
     startTransition(() => {
       setIsWorkspaceDropdownOpen(false);
       router.push(targetPath);
@@ -318,10 +332,11 @@ export const MainNavigation = ({
   };
 
   const handleOrganizationChange = (organizationId: string) => {
-    const targetPath =
-      organizationId === organization.id
-        ? `/organizations/${organization.id}/settings/general`
-        : `/organizations/${organizationId}/`;
+    const targetPath = getOrganizationSwitchPath({
+      organizationId,
+      currentOrganizationId: organization.id,
+      membershipRole,
+    });
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
       router.push(targetPath);
@@ -381,14 +396,16 @@ export const MainNavigation = ({
   const handleSettingsOrganizationChange = useCallback(
     (id: string) => {
       startTransition(() => {
-        if (id === organization.id) {
-          router.push(`/organizations/${organization.id}/settings/general`);
-        } else {
-          router.push(`/organizations/${id}/`);
-        }
+        router.push(
+          getOrganizationSwitchPath({
+            organizationId: id,
+            currentOrganizationId: organization.id,
+            membershipRole,
+          })
+        );
       });
     },
-    [router, organization.id]
+    [router, organization.id, membershipRole]
   );
 
   const switcherTriggerClasses = cn(
@@ -457,7 +474,7 @@ export const MainNavigation = ({
 
               {/* Main Nav */}
               <ul className="space-y-2">
-                {mainNavigationSections.map((section) => (
+                {visibleNavigationSections.map((section) => (
                   <li key={section.id}>
                     {!isCollapsed && !isTextVisible && (
                       <p className="px-4 pt-2 pb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">
@@ -486,22 +503,25 @@ export const MainNavigation = ({
                   </li>
                 ))}
 
-                <li className={cn("mt-2 border-t border-slate-100 pt-2", isCollapsed && "border-t-0 pt-0")}>
-                  <ul>
-                    <NavigationLink
-                      href={settingsNavigationItem.href}
-                      isActive={settingsNavigationItem.isActive}
-                      isCollapsed={isCollapsed}
-                      isTextVisible={isTextVisible}
-                      disabled={settingsNavigationItem.disabled}
-                      disabledMessage={
-                        settingsNavigationItem.disabled ? disabledNavigationMessage : undefined
-                      }
-                      linkText={settingsNavigationItem.name}>
-                      <settingsNavigationItem.icon className={mainNavIconClassName} strokeWidth={1.5} />
-                    </NavigationLink>
-                  </ul>
-                </li>
+                {/* No settings for a Dashboard viewer; Profile and Notifications stay in the user menu. */}
+                {!isDashboardViewer && (
+                  <li className={cn("mt-2 border-t border-slate-100 pt-2", isCollapsed && "border-t-0 pt-0")}>
+                    <ul>
+                      <NavigationLink
+                        href={settingsNavigationItem.href}
+                        isActive={settingsNavigationItem.isActive}
+                        isCollapsed={isCollapsed}
+                        isTextVisible={isTextVisible}
+                        disabled={settingsNavigationItem.disabled}
+                        disabledMessage={
+                          settingsNavigationItem.disabled ? disabledNavigationMessage : undefined
+                        }
+                        linkText={settingsNavigationItem.name}>
+                        <settingsNavigationItem.icon className={mainNavIconClassName} strokeWidth={1.5} />
+                      </NavigationLink>
+                    </ul>
+                  </li>
+                )}
               </ul>
             </div>
           )}

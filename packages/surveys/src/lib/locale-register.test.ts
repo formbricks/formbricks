@@ -53,6 +53,15 @@ describe("shipped bundles address the respondent formally", () => {
       readFileSync(new URL(`../../locales/${code}.json`, import.meta.url), "utf8")
     );
 
-    expect(findInformalAddress(bundle, pattern)).toEqual([]);
+    const hits = findInformalAddress(bundle, pattern);
+
+    // `i18n.json` has no per-locale formality setting, so Lingo.dev can write informal wording again
+    // on any regeneration. The failure names the keys and the sanctioned way out.
+    expect(
+      hits,
+      `Informal address in packages/surveys/locales/${code}.json under: ${hits.map(({ key }) => key).join(", ")}. ` +
+        "Lingo.dev regenerates this file and cannot be told to stay formal from this repo. " +
+        "Fix these keys by a manual edit a maintainer has approved, and say in the PR that you hand-edited them."
+    ).toEqual([]);
   });
 });

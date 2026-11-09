@@ -36,6 +36,18 @@ Notes:
   `base.mjs` holds the ones with a remaining backlog, each at the strongest severity its count
   allows, with the ratchet tickets named inline. `apps/web/eslint.config.mjs` makes the same call
   separately for the `next` tier, where the counts are much larger.
+- `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
+  (`sonarjs/cognitive-complexity` at 15, `no-nested-functions`, `no-nested-conditional`,
+  `no-nested-template-literals`, `unicorn/prefer-string-raw`, `@typescript-eslint/prefer-optional-chain`,
+  and `@vitest/prefer-to-have-length` for tests). They are off for `pnpm lint` and the CI lint job because
+  existing code violates them; `scripts/lint-staged-eslint.mjs` sets `ESLINT_SONAR_PARITY=error` for the
+  pre-commit hook, so a new violation in a staged file fails the commit. To widen, set `DEFAULT_SEVERITY`
+  in `sonar-parity.mjs` to `"warn"` (visible, non-blocking) and later `"error"` once the backlog is fixed.
+  Every rule except the vitest one skips test files, as Sonar does. `prefer-optional-chain` needs type
+  information, so it runs in the library, react and react-hooks tiers but not in apps/web: one staged
+  file there loads the whole program and exhausts Node's default heap. `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an
+  error in the react tiers, which are clean; apps/web has one existing hit
+  (`input-combo-box`), so the next tier follows the staged severity.
 - Stale `eslint-disable` directives are reported as warnings workspace-wide (`reportUnusedDisableDirectives` in `base.mjs`).
 - `jsx-a11y` runs at its recommended (error) severity in both the `react` and `react-hooks` tiers, so
   `packages/surveys` — the renderer respondents actually see — has the same static a11y floor as the

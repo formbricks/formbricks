@@ -12,7 +12,8 @@ import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { REQUESTED_DATE_RANGE_REASON } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { loadAuthorizedChart } from "./access";
-import { getV3ChartData, previewV3Chart } from "./data-operations";
+import { getV3ChartData, previewV3Chart, runV3ChartQuery } from "./data-operations";
+import { loadDatasetChartFields } from "./dataset-fields";
 import { listV3ChartFieldValues } from "./field-operations";
 import { ZV3ChartData } from "./resources";
 import type { TChartResourceRow } from "./service";
@@ -31,8 +32,12 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   requireDashboardsAccess: vi.fn(),
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
 }));
+vi.mock("./dataset-fields", () => ({ loadDatasetChartFields: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("./access", () => ({ loadAuthorizedChart: vi.fn() }));
 vi.mock("@/modules/ee/analysis/lib/run-chart-query", () => ({ runChartQuery: vi.fn() }));
+vi.mock("@/lib/organization/service", () => ({
+  getOrganization: vi.fn(async () => ({ displayTimeZone: "UTC" })),
+}));
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })),
@@ -179,6 +184,25 @@ describe("chart queries within budget", () => {
       expect(acquireInFlightSlot).not.toHaveBeenCalled();
     });
 
+    test("names each embedded-data member the query groups by with its key's own name", async () => {
+      const plan = "FeedbackRecords.ed_plan_64879f7d";
+      vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
+        embeddedFields: [
+          { name: plan, key: "Plan" },
+          { name: "FeedbackRecords.ed_tier_0a1b2c3d", key: "Tier" },
+        ],
+      });
+
+      const response = await preview({
+        query: { measures: ["FeedbackRecords.count"], dimensions: [plan] },
+      });
+
+      expect(response.status).toBe(200);
+      const { data } = (await response.json()) as { data: { memberLabels: unknown } };
+      // Only the members the query names: the dataset's other keys stay out.
+      expect(data.memberLabels).toEqual({ [plan]: "Plan" });
+    });
+
     test("runs the query in the authorized workspace's tenant and returns rows, labels and the query run", async () => {
       const response = await preview();
 
@@ -188,6 +212,7 @@ describe("chart queries within budget", () => {
         rows: [{ "FeedbackRecords.sourceName": "Web", "FeedbackRecords.count": 3 }],
         optionLabels: {},
         fieldLabels: { "FeedbackRecords.count": "Responses" },
+        memberLabels: {},
         query: BY_SOURCE,
       });
       expect(requireDashboardsAccess).toHaveBeenCalledWith(
@@ -215,17 +240,33 @@ describe("chart queries within budget", () => {
       });
     });
 
-    test("applies a requested range to collectedAt", async () => {
+    test("replaces the range on collectedAt with the requested one, keeping the granularity", async () => {
       await preview({
         query: {
           measures: ["FeedbackRecords.count"],
-          timeDimensions: [{ dimension: COLLECTED_AT, granularity: "day", dateRange: "last 90 days" }],
+          timeDimensions: [
+            { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2026-01-01", "2026-03-31"] },
+          ],
         },
-        dateRange: "last 7 days",
+        dateRange: { from: "2026-03-01", to: "2026-04-30" },
       });
 
       expect(sentQuery().timeDimensions).toEqual([
-        { dimension: COLLECTED_AT, granularity: "day", dateRange: "last 7 days" },
+        { dimension: COLLECTED_AT, granularity: "day", dateRange: ["2026-03-01", "2026-04-30"] },
+      ]);
+    });
+
+    test("asks Cube for a requested range that does not overlap the saved one", async () => {
+      await preview({
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: COLLECTED_AT, dateRange: ["2026-01-01", "2026-01-31"] }],
+        },
+        dateRange: { from: "2026-02-01", to: "2026-02-28" },
+      });
+
+      expect(sentQuery().timeDimensions).toEqual([
+        { dimension: COLLECTED_AT, dateRange: ["2026-02-01", "2026-02-28"] },
       ]);
     });
 
@@ -271,7 +312,7 @@ describe("chart queries within budget", () => {
 
     test("names a requested range too wide for the query's granularity as dateRange", async () => {
       const response = await preview({
-        query: hourlyOver("last 7 days"),
+        query: hourlyOver(undefined),
         dateRange: { from: "2025-01-01", to: "2026-12-31" },
       });
 
@@ -335,6 +376,93 @@ describe("chart queries within budget", () => {
     });
   });
 
+  describe("runV3ChartQuery with dashboard picks (C6)", () => {
+    const run = (extraFilters: unknown[]) =>
+      runV3ChartQuery({
+        access: access as never,
+        datasetId,
+        type: "bar",
+        query: BY_SOURCE,
+        dateRange: undefined,
+        source: "v3.dashboards.chartData",
+        extraFilters: extraFilters as never,
+        context,
+      });
+
+    test("runs the picks through the validator: a field the dataset lacks answers 422 naming picks, not 502", async () => {
+      const response = await run([
+        { member: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] },
+      ]);
+
+      expect(response.status).toBe(422);
+      const body = (await response.json()) as { invalid_params: { name: string }[] };
+      expect(body.invalid_params[0].name).toMatch(/^picks/);
+      expect(runChartQuery).not.toHaveBeenCalled();
+    });
+
+    test("loads the dataset's fields for the picks too, so a pick on a rarer embedded key is known", async () => {
+      const pick = { member: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] };
+      await run([pick]);
+
+      expect(loadDatasetChartFields).toHaveBeenCalledWith(
+        context.authentication,
+        access,
+        datasetId,
+        expect.objectContaining({ filters: [pick] })
+      );
+    });
+
+    test("runs valid picks ANDed onto the saved filters", async () => {
+      const pick = { member: "FeedbackRecords.sourceName", operator: "equals", values: ["Web"] };
+      const response = await run([pick]);
+
+      expect(response.status).toBe(200);
+      expect(runChartQuery).toHaveBeenCalledWith(
+        expect.objectContaining({ query: expect.objectContaining({ filters: [pick] }) })
+      );
+    });
+
+    test("counts the saved filters and the picks together against MAX_FILTER_CONDITIONS: 422 naming picks", async () => {
+      const conditions = (count: number) =>
+        Array.from({ length: count }, (_, index) => ({
+          member: "FeedbackRecords.sourceName",
+          operator: "notEquals",
+          values: [`s${index}`],
+        }));
+      const runOver = (saved: number, picks: number) =>
+        runV3ChartQuery({
+          access: access as never,
+          datasetId,
+          type: "bar",
+          query: { ...BY_SOURCE, filters: conditions(saved) },
+          dateRange: undefined,
+          source: "v3.dashboards.chartData",
+          extraFilters: conditions(picks) as never,
+          context,
+        });
+
+      // 20 + 5 is the cap: it runs.
+      expect((await runOver(20, 5)).status).toBe(200);
+      vi.mocked(runChartQuery).mockClear();
+
+      // 20 saved and 10 picks each pass alone, but run as one query of 30.
+      const response = await runOver(20, 10);
+      expect(response.status).toBe(422);
+      const body = (await response.json()) as {
+        detail: string;
+        invalid_params: { name: string; reason: string }[];
+      };
+      expect(body.detail).toBe("The filter picks are not valid");
+      expect(body.invalid_params).toEqual([
+        expect.objectContaining({
+          name: "picks.filters",
+          reason: expect.stringContaining("25 filter conditions"),
+        }),
+      ]);
+      expect(runChartQuery).not.toHaveBeenCalled();
+    });
+  });
+
   describe("getV3ChartData", () => {
     const chartOf = (query: unknown, type = "bar") =>
       ({
@@ -375,15 +503,23 @@ describe("chart queries within budget", () => {
       );
     });
 
-    test("replaces the saved range with a requested preset or pair, and removes it for all-time", async () => {
-      await read({ dateRange: "last 7 days" });
-      await read({ from: "2026-01-01", to: "2026-01-31" });
+    test("replaces the saved range with a requested pair, and keeps it for all-time on a chart grouped by time", async () => {
+      vi.mocked(loadAuthorizedChart).mockResolvedValue({
+        row: chartOf({
+          ...RANGED,
+          timeDimensions: [
+            { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-06-30"] },
+          ],
+        }),
+        access,
+      });
+
+      await read({ from: "2025-12-01", to: "2026-01-31" });
       await read({ dateRange: "all-time" });
 
       expect(vi.mocked(runChartQuery).mock.calls.map(([run]) => run.query.timeDimensions)).toEqual([
-        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: "last 7 days" }],
-        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-01-31"] }],
-        [{ dimension: COLLECTED_AT, granularity: "week" }],
+        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-12-01", "2026-01-31"] }],
+        [{ dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-01-01", "2026-06-30"] }],
       ]);
     });
 
@@ -419,7 +555,7 @@ describe("chart queries within budget", () => {
     });
 
     test("names a requested range too wide for the chart's granularity as dateRange", async () => {
-      vi.mocked(loadAuthorizedChart).mockResolvedValue({ row: chartOf(hourlyOver("last 7 days")), access });
+      vi.mocked(loadAuthorizedChart).mockResolvedValue({ row: chartOf(hourlyOver(undefined)), access });
 
       const response = await read({ from: "2025-01-01", to: "2026-12-31" });
 
@@ -430,13 +566,13 @@ describe("chart queries within budget", () => {
       expect(runChartQuery).not.toHaveBeenCalled();
     });
 
-    test("lets a requested range replace a saved one too wide for the limit, and names the saved one otherwise", async () => {
+    test("lets a requested range narrow a saved one too wide for the limit, and names the saved one otherwise", async () => {
       vi.mocked(loadAuthorizedChart).mockResolvedValue({
         row: chartOf(hourlyOver(["2024-01-01", "2025-12-31"])),
         access,
       });
 
-      expect((await read({ dateRange: "last 7 days" })).status).toBe(200);
+      expect((await read({ from: "2025-12-01", to: "2025-12-07" })).status).toBe(200);
 
       const unreplaced = await read();
       expect(unreplaced.status).toBe(422);

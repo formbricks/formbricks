@@ -5,6 +5,10 @@ description: "
 Formbricks provides two APIs: the Public Client API for frontend survey interactions and the Management API for backend management tasks."
 ---
 
+v1 is the stable API. API versions are independent of the Formbricks application version.
+See the [compatibility policy](/self-hosting/advanced/release-maintenance-policy#integration-compatibility).
+
+
 Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has *different* authentication requirements, and provides access to different data and settings.
 
 
@@ -20,7 +24,7 @@ We currently have the following Client API methods exposed and below is their do
 
 ## Management API
 
-The **Management API** gives full access to all data and settings available in your Formbricks account. It requires a personal API Key for authentication, which you can generate and manage in the Settings section of the Formbricks app.
+The **Management API** uses an API key scoped to specific permissions and workspaces. It does not grant unrestricted account access. [Create a key](/api-reference/generate-key) with the scopes each endpoint requires.
 
 We currently have the following Management API methods exposed and below is their documentation attached in Postman:
 

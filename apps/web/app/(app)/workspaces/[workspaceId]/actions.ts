@@ -5,6 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { assertCan } from "@/lib/authorization";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
@@ -12,11 +13,16 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import {
+  listDashboardViewerOrganizations,
+  listDashboardViewerWorkspaces,
+} from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   getAccessControlPermission,
   getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
+import { assertBrandingChangeAllowed } from "@/modules/ee/whitelabel/remove-branding/lib/permission";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { getOrganizationsByUserId } from "./lib/organization";
 import { getWorkspacesByUserId, getWritableWorkspacesByUserId } from "./lib/workspace";
@@ -57,6 +63,8 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
     if (workspaceCount >= workspaceLimit) {
       throw new OperationNotAllowedError("Organization workspace limit reached");
     }
+
+    await assertBrandingChangeAllowed(organization.id, parsedInput.data);
 
     if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
       const isAccessControlAllowed = await getAccessControlPermission(organization.id);
@@ -100,24 +108,21 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
   })
 );
 
-const ZGetOrganizationsForSwitcherAction = z.object({
-  organizationId: ZId, // Changed from workspaceId to avoid extra query
-});
-
 /**
  * Fetches organizations list for switcher dropdown.
  * Called on-demand when user opens the organization switcher.
  */
-export const getOrganizationsForSwitcherAction = authenticatedActionClient
-  .inputSchema(ZGetOrganizationsForSwitcherAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-
-    return await getOrganizationsByUserId(ctx.user.id);
-  });
+export const getOrganizationsForSwitcherAction = authenticatedActionClient.action(async ({ ctx }) => {
+  // The list is the caller's own organizations: those SpiceDB grants them `organization.read` on, plus
+  // those where they are a Dashboard viewer (ADR-0025), whose relation reaches dashboard reads only.
+  // Scoped by the user alone, so it needs no gate, and none that skips by role.
+  const [organizations, viewerOrganizations] = await Promise.all([
+    getOrganizationsByUserId(ctx.user.id),
+    listDashboardViewerOrganizations(ctx.user.id),
+  ]);
+  const known = new Set(organizations.map(({ id }) => id));
+  return [...organizations, ...viewerOrganizations.filter(({ id }) => !known.has(id))];
+});
 
 const ZGetWorkspacesForSwitcherAction = z.object({
   organizationId: ZId, // Changed from workspaceId to avoid extra query
@@ -130,6 +135,12 @@ const ZGetWorkspacesForSwitcherAction = z.object({
 export const getWorkspacesForSwitcherAction = authenticatedActionClient
   .inputSchema(ZGetWorkspacesForSwitcherAction)
   .action(async ({ ctx, parsedInput }) => {
+    // A Dashboard viewer switches between the workspaces its teams are granted, and no others.
+    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+    if (membership?.role === "dashboard_viewer") {
+      return await listDashboardViewerWorkspaces(ctx.user.id, parsedInput.organizationId);
+    }
+
     await assertCan({ type: "user", id: ctx.user.id }, "organization.read", {
       type: "organization",
       id: parsedInput.organizationId,

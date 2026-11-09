@@ -302,7 +302,7 @@ function Signature({
   // Clear disables itself (nothing left to clear), which would drop focus to <body>. Once the cleared state
   // has rendered, focus moves to where the respondent carries on: the name input in Type mode, otherwise
   // the active tab, or the pad itself when there are no tabs.
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (clearCount === 0) return;
     const target =
       mode === "type" && nameRef.current ? nameRef.current : (tabRefs.current[mode] ?? padBoxRef.current);

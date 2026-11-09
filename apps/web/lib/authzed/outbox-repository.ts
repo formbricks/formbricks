@@ -214,6 +214,30 @@ export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
 };
 
 /**
+ * Has any event been claimable for longer than `unclaimedForMs` without being claimed?
+ *
+ * The question the delivery safety net asks: the delivery job claims everything claimable every five
+ * seconds, so an event that has sat claimable well past that means the job is not running. Measured
+ * from `availableAt` rather than `createdAt` on purpose — an event backing off after a failure is
+ * not claimable, so a SpiceDB outage does not make the safety net retry faster than the backoff. A
+ * held lease excludes the row for the same reason; an expired one makes it claimable again.
+ */
+export const hasUnclaimedAuthzedOutboxEvent = async (unclaimedForMs: number): Promise<boolean> => {
+  const [row] = await prisma.$queryRaw<Array<{ unclaimed: boolean }>>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM "AuthzedProjectionOutbox"
+      WHERE "processedAt" IS NULL
+        AND "deadLetteredAt" IS NULL
+        AND "availableAt" <= NOW() - (${unclaimedForMs} * INTERVAL '1 millisecond')
+        AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
+    ) AS unclaimed
+  `;
+
+  return row?.unclaimed ?? false;
+};
+
+/**
  * Aggregate outbox health.
  *
  * Scoped to undelivered rows by the outer `WHERE`, which is what keeps this off the seven days of

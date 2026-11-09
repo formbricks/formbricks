@@ -138,7 +138,7 @@ describe("authenticateMcpRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     verifyBearerTokenMock.mockReset();
-    userFindUniqueMock.mockResolvedValue({ isActive: true });
+    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }] });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   });
@@ -331,6 +331,75 @@ describe("authenticateMcpRequest", () => {
     }
   });
 
+  test("bounds a Dashboard viewer's OAuth token to dashboards:read, whatever it carries (ADR-0025)", async () => {
+    userFindUniqueMock.mockResolvedValueOnce({
+      isActive: true,
+      memberships: [{ role: "dashboard_viewer" }, { role: "dashboard_viewer" }],
+    });
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "viewer_1",
+      exp: 2_000_000_000,
+      azp: "client_1",
+      scope:
+        "openid offline_access surveys:read responses:read feedbackRecords:read dashboards:read dashboards:write",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.authInfo.scopes).toEqual(["openid", "offline_access", "dashboards:read"]);
+      // get_chart_data reads this to let the trimmed token read a chart through its dashboard.
+      expect(result.authInfo.extra.dashboardViewerOnly).toBe(true);
+    }
+    expect(userFindUniqueMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps the scopes of a viewer who holds another role in some organization", async () => {
+    userFindUniqueMock.mockResolvedValueOnce({
+      isActive: true,
+      memberships: [{ role: "dashboard_viewer" }, { role: "member" }],
+    });
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "mixed_1",
+      exp: 2_000_000_000,
+      azp: "client_1",
+      scope: "openid surveys:read dashboards:read",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.authInfo.scopes).toEqual(["openid", "surveys:read", "dashboards:read"]);
+      expect(result.authInfo.extra.dashboardViewerOnly).toBeUndefined();
+    }
+  });
+
+  test("refuses a Dashboard viewer's token that carries no dashboards:read", async () => {
+    userFindUniqueMock.mockResolvedValueOnce({ isActive: true, memberships: [{ role: "dashboard_viewer" }] });
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "viewer_1",
+      exp: 2_000_000_000,
+      azp: "client_1",
+      scope: "openid surveys:read responses:read",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.response.status).toBe(403);
+  });
+
   test("authenticates OAuth bearer tokens and rate limits by user and client", async () => {
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
@@ -373,9 +442,11 @@ describe("authenticateMcpRequest", () => {
       },
       jwksUrl: "http://formbricks:3000/api/auth/jwks",
     });
+    // One read answers both whether the user is active and whether they are only a Dashboard viewer.
+    expect(userFindUniqueMock).toHaveBeenCalledTimes(1);
     expect(userFindUniqueMock).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      select: { isActive: true },
+      select: { isActive: true, memberships: { select: { role: true } } },
     });
     expect(applyRateLimit).toHaveBeenCalledWith(
       expect.objectContaining({ namespace: "api:v3" }),
@@ -414,9 +485,11 @@ describe("authenticateMcpRequest", () => {
         detail: "Invalid OAuth access token",
       });
     }
+    // One read answers both whether the user is active and whether they are only a Dashboard viewer.
+    expect(userFindUniqueMock).toHaveBeenCalledTimes(1);
     expect(userFindUniqueMock).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      select: { isActive: true },
+      select: { isActive: true, memberships: { select: { role: true } } },
     });
     expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
     expect(applyRateLimit).not.toHaveBeenCalled();
@@ -675,7 +748,7 @@ describe("MCP OAuth access token audience binding", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    userFindUniqueMock.mockResolvedValue({ isActive: true });
+    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }] });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
@@ -841,7 +914,7 @@ describe("MCP OAuth JWKS loading against the real Better Auth verifier", () => {
     // Set per test: the global setup resets every mock before each one.
     getJwksMock.mockImplementation(realOAuth2.getJwks);
     verifyBearerTokenMock.mockImplementation(realOAuth2.verifyBearerToken);
-    userFindUniqueMock.mockResolvedValue({ isActive: true });
+    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }] });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   });

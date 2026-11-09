@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { GripIcon, Handshake, Undo2 } from "lucide-react";
+import { GripIcon, SquareArrowRightExitIcon, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -20,6 +20,7 @@ import { EndScreenForm } from "@/modules/survey/editor/components/end-screen-for
 import { RedirectUrlForm } from "@/modules/survey/editor/components/redirect-url-form";
 import { getEndingCardTypeChangePatch } from "@/modules/survey/editor/lib/ending-card";
 import {
+  START_LOGIC_USE_INDEX,
   findEndingCardUsedInLogic,
   formatTextWithSlashes,
   isUsedInQuota,
@@ -146,6 +147,10 @@ export const EditEndingCard = ({
     // checking if this ending card is used in logic
     const quesIdx = findEndingCardUsedInLogic(localSurvey, endingCard.id);
 
+    if (quesIdx === START_LOGIC_USE_INDEX) {
+      toast.error(t("workspace.surveys.edit.ending_card_used_in_start_logic"));
+      return;
+    }
     if (quesIdx !== -1) {
       toast.error(t("workspace.surveys.edit.ending_card_used_in_logic", { questionIndex: quesIdx + 1 }));
       return;
@@ -208,8 +213,9 @@ export const EditEndingCard = ({
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
         <div className="mt-3 flex w-full justify-center">
+          {/* The Flow tab's ending icon, so an ending card reads the same on both tabs. */}
           {endingCard.type === "endScreen" ? (
-            <Handshake className="size-4" />
+            <SquareArrowRightExitIcon className="size-4" />
           ) : (
             <Undo2 className="size-4 rotate-180" />
           )}

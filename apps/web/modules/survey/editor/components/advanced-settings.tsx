@@ -1,4 +1,4 @@
-import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
+import type { ReactNode } from "react";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
@@ -12,15 +12,15 @@ interface AdvancedSettingsProps {
   readonly localSurvey: TSurvey;
   readonly lock: TElementLock;
   readonly updateElement: (elementIdx: number, updatedAttributes: any) => void;
-  readonly updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
-  readonly updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
   readonly workspace?: TWorkspaceWithoutCustomCss;
   readonly isFormbricksCloud?: boolean;
+  /** "Show question if…" and "Show options if…" (ENG-6949), first on the tab. */
+  readonly showIfSettings?: ReactNode;
 }
 
 /**
- * The body of a question's Settings tab: the question's own settings (order, display options,
- * validation rules), then the Recode section. The question ID is read-only and lives in the ⋯ menu (Copy question ID);
+ * The body of a question's Settings tab: its show-if, the question's own settings (order, display
+ * options, validation rules), then the Recode section. The question ID is read-only and lives in the ⋯ menu (Copy question ID);
  * each option's ID is copied from the button beside its input.
  */
 export const AdvancedSettings = ({
@@ -31,9 +31,11 @@ export const AdvancedSettings = ({
   updateElement,
   workspace,
   isFormbricksCloud,
+  showIfSettings,
 }: AdvancedSettingsProps) => {
   return (
     <div className="flex flex-col gap-6">
+      {showIfSettings}
       <ElementSettings
         element={element}
         elementIdx={elementIdx}

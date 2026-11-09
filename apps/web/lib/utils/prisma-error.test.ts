@@ -85,6 +85,27 @@ describe("isTransactionConflictError", () => {
     expect(isTransactionConflictError(new Error("SQLSTATE 40P01"))).toBe(true);
   });
 
+  // The shape the pg driver adapter throws for a Serializable conflict, as measured against real Postgres
+  // by `integration/last-owner-race.integration.test.ts`: no P2034, only its own `cause`.
+  test("is true for a serialization failure the driver adapter reports in its cause", () => {
+    const adapterError = (cause: Record<string, unknown>) =>
+      Object.assign(new Error("TransactionWriteConflict"), { name: "DriverAdapterError", cause });
+
+    expect(
+      isTransactionConflictError(
+        adapterError({
+          originalCode: "40001",
+          originalMessage: "could not serialize access due to read/write dependencies among transactions",
+          kind: "TransactionWriteConflict",
+        })
+      )
+    ).toBe(true);
+    expect(isTransactionConflictError(adapterError({ originalCode: "40001" }))).toBe(true);
+    expect(
+      isTransactionConflictError(adapterError({ originalCode: "23505", kind: "UniqueConstraintViolation" }))
+    ).toBe(false);
+  });
+
   test("is false for other errors", () => {
     expect(isTransactionConflictError(uniqueViolation)).toBe(false);
     expect(isTransactionConflictError(new Error("plain"))).toBe(false);

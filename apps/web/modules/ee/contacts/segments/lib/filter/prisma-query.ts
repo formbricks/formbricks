@@ -17,6 +17,7 @@ import {
   TSegmentSurveyInteractionFilter,
   ZRelativeDateValue,
 } from "@formbricks/types/segment";
+import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predicate";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
 import { getSegment } from "../segments";
@@ -359,7 +360,8 @@ const buildDeviceFilterWhereClause = (
  * "seen" maps to Display rows, "started responding to" maps to Response rows (any),
  * "completed" maps to Response rows with finished=true. Negative operators wrap the
  * positive clause in NOT, meaning "no matching interaction within the window".
- * "any" scope omits the surveyId condition; "specific" scope constrains to the chosen ids.
+ * "any" scope matches interactions with any workspace-visible survey (ENG-6870, see
+ * `isWorkspaceVisibleForAnyScope`); "specific" scope constrains to the chosen ids.
  *
  * Operator semantics and the window boundary come from the shared spec in `survey-interaction.ts`,
  * which the in-memory evaluator (contact-sync hot path) also uses — keeping the two paths identical.
@@ -372,7 +374,9 @@ const buildSurveyInteractionFilterWhereClause = (
   const windowStart = getSurveyInteractionWindowStart(value, new Date());
 
   const some = {
-    ...(value.surveyScope === "specific" ? { surveyId: { in: value.surveyIds } } : {}),
+    ...(value.surveyScope === "specific"
+      ? { surveyId: { in: value.surveyIds } }
+      : { survey: effectivelyWorkspaceVisibleWhere }),
     ...(semantics.requireFinished ? { finished: true } : {}),
     createdAt: { gte: windowStart },
   };

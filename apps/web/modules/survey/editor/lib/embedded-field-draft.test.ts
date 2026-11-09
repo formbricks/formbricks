@@ -35,7 +35,7 @@ describe("ZEmbeddedFieldDraft", () => {
    */
   test("forwards the row rules `ZEmbeddedData` owns, onto the control that carries them", () => {
     expect(issueColumns(draft({ name: "   " }))).toEqual(["name"]);
-    expect(issueColumns(draft({ source: "computed", dataType: "date" }))).toEqual(["dataType"]);
+    expect(issueColumns(draft({ source: "computed", dataType: "boolean" }))).toEqual(["dataType"]);
     expect(issueColumns(draft({ source: "computed", locked: true }))).toEqual(["locked"]);
     expect(issueColumns(draft({ dataType: "number", defaultValue: "not a number" }))).toEqual([
       "defaultValue",

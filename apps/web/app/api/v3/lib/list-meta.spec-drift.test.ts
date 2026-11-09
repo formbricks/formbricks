@@ -95,8 +95,9 @@ describe("v3 list meta contract", () => {
       properties: ["limit", "nextCursor", "totalCount", "totalCountRelation"],
       required: ["limit", "nextCursor", "totalCount", "totalCountRelation"],
     });
+    // `unsupportedSurveyIds` is present with `view=full` only (ENG-6861), so it is not required.
     expect(await resolveMeta("SurveyListMeta.yml")).toEqual({
-      properties: ["limit", "nextCursor", "totalCount", "workspaceSurveyCount"],
+      properties: ["limit", "nextCursor", "totalCount", "unsupportedSurveyIds", "workspaceSurveyCount"],
       required: ["limit", "nextCursor", "totalCount", "workspaceSurveyCount"],
     });
     // `action-classes` and the workflow-run list point here.

@@ -2,45 +2,31 @@ import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/errors";
 import { TMember, TMembership } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
+import { isTransactionConflictError, retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 
-const MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS = 3;
-
-const runSerializableTransactionWithRetry = async <T>(
+/**
+ * One serializable transaction, run again when Postgres aborts it over a concurrent one. Both the
+ * shared conflict check and the retry live in `prisma-error`, so a driver adapter's own conflict error
+ * is retried as well as Prisma's P2034.
+ */
+const runSerializableTransactionWithRetry = <T>(
   transaction: (tx: Prisma.TransactionClient) => Promise<T>
-): Promise<T> => {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS; attempt++) {
-    try {
-      return await prisma.$transaction(transaction, {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
-    } catch (error) {
-      lastError = error;
-      const shouldRetry =
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PrismaErrorType.TransactionConflict &&
-        attempt < MAX_SERIALIZABLE_TRANSACTION_ATTEMPTS;
-
-      if (!shouldRetry) {
-        throw error;
-      }
-    }
-  }
-
-  throw lastError;
-};
+): Promise<T> =>
+  retryOnTransactionConflict(() =>
+    prisma.$transaction(transaction, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
+  );
 
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
@@ -110,7 +96,9 @@ const getOrganizationOwnerCountUncached = async (
 
     return ownersCount;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    // Inside a transaction the error belongs to the transaction's owner: wrapping a serialization
+    // conflict (P2034) here would hide it from the retry that re-runs the whole transaction.
+    if (!tx && error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
 
@@ -152,6 +140,20 @@ export const deleteMembership = async (
 
   try {
     const deletedTeamMemberships = await runSerializableTransactionWithRetry(async (tx) => {
+      // The last-owner guard is read in the same serializable transaction as the delete, so two owners
+      // removed at once cannot both see "another owner is left" and leave the organization with none.
+      const target = await tx.membership.findUnique({
+        where: { userId_organizationId: { organizationId, userId } },
+        select: { role: true, user: { select: { isActive: true } } },
+      });
+      if (target?.role === "owner") {
+        const activeOwners = await getOrganizationOwnerCount(organizationId, tx);
+        const activeOwnersLeft = activeOwners - (target.user.isActive ? 1 : 0);
+        if (activeOwnersLeft < 1) {
+          throw new ValidationError("You cannot delete the last owner of the organization");
+        }
+      }
+
       const teamMemberships = await tx.teamUser.findMany({
         where: {
           userId,
@@ -169,14 +171,24 @@ export const deleteMembership = async (
           },
         },
       });
-      await tx.membership.delete({
+      const removed = await tx.membership.delete({
         where: {
           userId_organizationId: {
             organizationId,
             userId,
           },
         },
+        select: { role: true },
       });
+
+      // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
+      // just lost: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
+      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025).
+      if (removed.role !== "dashboard_viewer") {
+        if (await isOnlyDashboardViewer(tx, userId)) {
+          await revokeAllUserOAuthGrants(tx, userId);
+        }
+      }
 
       // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
       // of the organization it must stop granting access. Expired rather than deleted: admins still see
@@ -199,8 +211,9 @@ export const deleteMembership = async (
 
     return deletedTeamMemberships;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+    // A conflict that outlasted every retry may be the driver adapter's own error rather than P2034.
+    if (error instanceof Prisma.PrismaClientKnownRequestError || isTransactionConflictError(error)) {
+      throw new DatabaseError(error instanceof Error ? error.message : "Transaction conflict");
     }
 
     throw error;

@@ -53,6 +53,9 @@ for (const [pkgDir, relFiles] of groupByPackage(process.argv.slice(2))) {
   const { status, error } = spawnSync(process.execPath, [ESLINT_CLI, ...relFiles], {
     cwd: pkgDir,
     stdio: "inherit",
+    // Staged files only: the Sonar-parity rules (packages/config-eslint/sonar-parity.mjs) are off
+    // for the whole-repo lint until the backlog is fixed, so a new violation fails here instead.
+    env: { ...process.env, ESLINT_SONAR_PARITY: "error" },
   });
   if (error) throw error;
   if (status !== 0) failed = true;

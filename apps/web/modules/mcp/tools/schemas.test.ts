@@ -175,6 +175,7 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
     "ZMcpCreateSurveyInput.endings[]",
     "ZMcpCreateSurveyInput.hiddenFields",
     "ZMcpCreateSurveyInput.variables[]",
+    "ZMcpCreateSurveyInput.startLogic[]",
   ],
   ZMcpPatchSurveyInput: ["ZMcpPatchSurveyInput.data"],
   // Both op branches that carry a block: the payload is the v3 document's block shape, validated
@@ -293,6 +294,16 @@ describe("survey block discoverability (ENG-2180)", () => {
     expect(description).toContain("`range` (5|3|4|6|7|10)");
   });
 
+  test("the description documents Set value expressions with the functions the schema accepts (ENG-6935)", async () => {
+    const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
+    const description = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain('`value: { type: "expression", value: <tree> }`');
+    expect(description).toContain(
+      "fn one of add, subtract, multiply, divide, round, min, max, abs, ifEmpty, concat, now, daysBetween."
+    );
+  });
+
   /**
    * The handbook restates the element list in prose, and says of it that the two "cannot drift". That is
    * only true of the tool description, which is generated; the `.mdx` copy is hand-written and would go
@@ -327,6 +338,99 @@ describe("survey block discoverability (ENG-2180)", () => {
     // confident wrong answer, which is exactly what probing already gives an agent.
     expect(parsed.error?.issues ?? []).toEqual([]);
     expect(parsed.success).toBe(true);
+  });
+});
+
+describe("rules before the first question (ENG-6932)", () => {
+  const { ZMcpCreateSurveyInput, ZMcpPatchSurveyInput, ZMcpValidateSurveyInput } = surveyAndFeedbackSchemas;
+
+  test("create_survey accepts startLogic and describes what its rules may do", () => {
+    const parsed = ZMcpCreateSurveyInput.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Screener",
+      blocks: [surveyAndFeedbackSchemas.SURVEY_BLOCK_EXAMPLE],
+      startLogic: [{ id: "r1", conditions: {}, actions: [] }],
+    });
+    const advertised = z.toJSONSchema(ZMcpCreateSurveyInput, { io: "input" }) as {
+      properties: Record<string, { description?: string }>;
+    };
+    const description = advertised.properties.startLogic.description ?? "";
+
+    expect(parsed.error?.issues ?? []).toEqual([]);
+    for (const term of ["jumpToBlock", "calculate", "ending", "hiddenField", "welcome card", "start-at"]) {
+      expect(description).toContain(term);
+    }
+  });
+
+  test("patch_survey and validate_survey name startLogic in their payload description", () => {
+    expect(ZMcpPatchSurveyInput.shape.data.description).toContain("startLogic");
+    expect(ZMcpValidateSurveyInput.shape.data.description).toContain("startLogic");
+  });
+});
+
+describe("Mark as low quality discoverability (ENG-6933)", () => {
+  test("the blocks description documents the action, and startLogic allows it too (ENG-6952)", () => {
+    const { ZMcpCreateSurveyInput } = surveyAndFeedbackSchemas;
+    const blocks = ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+    const advertised = z.toJSONSchema(ZMcpCreateSurveyInput, { io: "input" }) as {
+      properties: Record<string, { description?: string }>;
+    };
+
+    expect(blocks).toContain('{ "id": "<cuid2>", "objective": "markLowQuality" }');
+    expect(blocks).toContain("Low quality");
+    expect(advertised.properties.startLogic.description).toContain(
+      "`markLowQuality` with no target, which marks the response Low quality"
+    );
+  });
+});
+
+describe("show-if discoverability (ENG-6931)", () => {
+  test("the blocks description documents show-if, and its example validates on a follow-up element", async () => {
+    const { ZV3CreateSurveyBody } = await import("@/app/api/v3/surveys/schemas");
+    const description = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+    const { SURVEY_BLOCK_EXAMPLE, SURVEY_SHOW_IF_EXAMPLE } = surveyAndFeedbackSchemas;
+
+    expect(description).toContain("`showIf`");
+    expect(description).toContain("Reference rule");
+    expect(description).toContain(JSON.stringify(SURVEY_SHOW_IF_EXAMPLE));
+
+    const parsed = ZV3CreateSurveyBody.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "Example",
+      blocks: [
+        {
+          ...SURVEY_BLOCK_EXAMPLE,
+          elements: [
+            ...SURVEY_BLOCK_EXAMPLE.elements,
+            {
+              id: "price_detail",
+              type: "openText",
+              headline: { "en-US": "Which price felt too high?" },
+              required: true,
+              showIf: SURVEY_SHOW_IF_EXAMPLE,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(parsed.error?.issues ?? []).toEqual([]);
+  });
+
+  test("the blocks description documents option show-if and Hidden options (ENG-6937)", () => {
+    const description = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain("Option show-if and Hidden");
+    expect(description).toContain("`hidden: true`");
+    expect(description).toContain("matrix row and column");
+  });
+
+  test("the blocks description documents copied options (ENG-6938)", () => {
+    const description = surveyAndFeedbackSchemas.ZMcpCreateSurveyInput.shape.blocks.description ?? "";
+
+    expect(description).toContain("`optionsCopiedFrom`");
+    expect(description).toContain("picked in the source");
+    expect(description).toContain("None of these");
   });
 });
 
@@ -419,5 +523,21 @@ describe("array arguments are length-bounded (ENG-3384)", () => {
     expect(json.properties.variables).toMatchObject({ type: "array", maxItems: V3_SURVEY_MAX_VARIABLES });
     expect(json.properties.languages).toMatchObject({ type: "array", maxItems: V3_SURVEY_MAX_LANGUAGES });
     expect(json.properties.languages.items).toMatchObject({ type: "object" });
+  });
+});
+
+describe("embeddedFields entries (ENG-6930)", () => {
+  test("every key of an entry carries a description, as every MCP tool field must", () => {
+    const advertised = z.toJSONSchema(surveyAndFeedbackSchemas.ZMcpCreateSurveyInput, { io: "input" }) as {
+      properties: Record<string, { items?: { properties?: Record<string, { description?: string }> } }>;
+    };
+    const entry = advertised.properties.embeddedFields.items?.properties ?? {};
+
+    expect(Object.keys(entry).sort()).toEqual(
+      ["dataType", "defaultValue", "key", "locked", "name", "source", "storageKey"].sort()
+    );
+    for (const [key, schema] of Object.entries(entry)) {
+      expect(schema.description, key).toEqual(expect.any(String));
+    }
   });
 });

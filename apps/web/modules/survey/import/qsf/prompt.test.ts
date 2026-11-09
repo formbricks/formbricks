@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
+import { SURVEY_IMPORT_AI_MAX_SOURCE_CHARS } from "../limits";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { refsInPrompt } from "./__fixtures__/recorded-plans";
 import {
-  QSF_PROMPT_BUDGET_CHARS,
   buildQsfPlanPrompt,
   buildQsfPlanSystemPrompt,
   chooseQsfPromptLimits,
@@ -151,7 +151,7 @@ describe("chooseQsfPromptLimits", () => {
     const size = describeQsfQuestions(survey, refs, { plainDefault }, limits).length;
 
     expect(limits.options).toBeLessThan(40);
-    expect(size).toBeLessThanOrEqual(QSF_PROMPT_BUDGET_CHARS + 10_000);
+    expect(size).toBeLessThanOrEqual(SURVEY_IMPORT_AI_MAX_SOURCE_CHARS + 10_000);
     expect(describeQsfQuestions(survey, ["QID1"], { plainDefault }, limits)).toContain('"moreChoices"');
   });
 });

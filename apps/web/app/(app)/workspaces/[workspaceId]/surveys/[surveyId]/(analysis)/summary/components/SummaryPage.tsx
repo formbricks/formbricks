@@ -258,6 +258,7 @@ export const SummaryPage = ({
       <ScrollToTop containerId="mainContent" />
       <SummaryList
         summary={surveySummary.summary}
+        dropOff={surveySummary.dropOff}
         responseCount={surveySummary.meta.totalResponses}
         survey={surveyMemoized}
         locale={locale}

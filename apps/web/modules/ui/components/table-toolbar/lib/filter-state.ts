@@ -11,6 +11,15 @@ export const getQuickFilter = (
 ): TTableFilter | undefined =>
   filters.find((filter) => filter.property === property && isQuickFilter(filter));
 
+/** The values a property's locked quick filters already tick: one list, each value once. */
+export const getLockedQuickValues = (locked: readonly TTableFilter[], property: string): string[] => [
+  ...new Set(
+    locked
+      .filter((filter) => filter.property === property && filter.operator === "in")
+      .flatMap((f) => f.values)
+  ),
+];
+
 /**
  * Ticks or unticks one value of an enum quick filter. Unticking the last value removes the filter.
  * Ticking every value keeps it: one tick too many is undone with one untick, not by rebuilding it.
@@ -48,6 +57,13 @@ export const setDateQuickFilter = (
 
 export const removeFilterAt = (filters: readonly TTableFilter[], index: number): TTableFilter[] =>
   filters.filter((_, i) => i !== index);
+
+/** Puts `filter` in place of the one at `index`, keeping the rest and their order. */
+export const replaceFilterAt = (
+  filters: readonly TTableFilter[],
+  index: number,
+  filter: TTableFilter
+): TTableFilter[] => filters.map((existing, i) => (i === index ? filter : existing));
 
 /** Rules are the filters Advanced filter owns: every filter that is not a quick filter. */
 export const getRules = (filters: readonly TTableFilter[]): TTableFilter[] =>
