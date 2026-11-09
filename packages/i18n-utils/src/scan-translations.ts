@@ -649,6 +649,17 @@ function describePlaceholders(set: PlaceholderSet | null): string {
   return parts.length > 0 ? parts.join(" ") : "(none)";
 }
 
+// Long lists drown the report, so each one shows its first entries and counts the rest.
+const MAX_LISTED_ENTRIES = 10;
+
+function logFirstEntries<T>(entries: readonly T[], logEntry: (entry: T) => void): void {
+  entries.slice(0, MAX_LISTED_ENTRIES).forEach(logEntry);
+
+  if (entries.length > MAX_LISTED_ENTRIES) {
+    console.log(`      ... and ${(entries.length - MAX_LISTED_ENTRIES).toString()} more`);
+  }
+}
+
 function displayPlaceholderMismatches(
   mismatchesByLocale: Map<string, PlaceholderMismatch[]>,
   defaultLocale: string
@@ -660,17 +671,41 @@ function displayPlaceholderMismatches(
   for (const [locale, mismatches] of mismatchesByLocale.entries()) {
     console.log(`   ❌ ${locale} (${mismatches.length.toString()} keys):`);
 
-    // Show the first 10 per locale, same as the other sections, to keep the output readable
-    for (const { key, expected, actual } of mismatches.slice(0, 10)) {
+    logFirstEntries(mismatches, ({ key, expected, actual }) => {
       console.log(`      • ${key}`);
       console.log(`        ${defaultLocale}: ${describePlaceholders(expected)}`);
       console.log(`        ${locale}: ${describePlaceholders(actual)}`);
-    }
-
-    if (mismatches.length > 10) {
-      console.log(`      ... and ${(mismatches.length - 10).toString()} more`);
-    }
+    });
   }
+}
+
+function displayLockfileIssues(results: ScanResults): void {
+  if (!results.lockfileValidation) {
+    console.log(`❌ LOCKFILE MISSING:\n`);
+    console.log(`   Could not find i18n.lock file. Please run "pnpm i18n" to generate it.\n`);
+    return;
+  }
+
+  if (!hasLockfileIssues(results)) return;
+
+  const { missing, outOfSync, extra } = results.lockfileValidation;
+  console.log(`❌ LOCKFILE OUT OF SYNC:\n`);
+  console.log(`   Please run "pnpm i" and then "pnpm i18n" to regenerate i18n.lock.\n`);
+
+  const sections: [label: string, keys: string[]][] = [
+    ["Keys missing from lockfile", missing],
+    ["Keys out of sync/stale in lockfile", outOfSync],
+    ["Unused/extra keys in lockfile", extra],
+  ];
+  for (const [label, keys] of sections) {
+    if (keys.length === 0) continue;
+
+    console.log(`   • ${label} (${keys.length.toString()}):`);
+    logFirstEntries(keys, (key) => {
+      console.log(`      - ${key}`);
+    });
+  }
+  console.log();
 }
 
 /** Whether the lockfile could not be validated, or disagrees with the default locale. */
@@ -737,17 +772,9 @@ export function displayResults(results: ScanResults, packageName: string, defaul
 
     for (const [locale, missingKeys] of results.incompleteTranslations.entries()) {
       console.log(`   📝 ${locale} (${missingKeys.length.toString()} missing keys):`);
-
-      // Show first 10 missing keys for each locale to avoid overwhelming output
-      const keysToShow = missingKeys.slice(0, 10);
-      keysToShow.forEach((key) => {
+      logFirstEntries(missingKeys, (key) => {
         console.log(`      • ${key}`);
       });
-
-      if (missingKeys.length > 10) {
-        const moreKeys = missingKeys.length - 10;
-        console.log(`      ... and ${moreKeys.toString()} more`);
-      }
     }
   }
 
@@ -767,48 +794,7 @@ export function displayResults(results: ScanResults, packageName: string, defaul
     console.log("\n   Please remove spaces from these keys or use valid key names.\n");
   }
 
-  if (results.lockfileValidation) {
-    const { missing, outOfSync, extra } = results.lockfileValidation;
-
-    if (hasLockfileIssues(results)) {
-      console.log(`❌ LOCKFILE OUT OF SYNC:\n`);
-      console.log(`   Please run "pnpm i" and then "pnpm i18n" to regenerate i18n.lock.\n`);
-
-      if (missing.length > 0) {
-        console.log(`   • Keys missing from lockfile (${missing.length.toString()}):`);
-        missing.slice(0, 10).forEach((key) => {
-          console.log(`      - ${key}`);
-        });
-        if (missing.length > 10) {
-          console.log(`      ... and ${(missing.length - 10).toString()} more`);
-        }
-      }
-
-      if (outOfSync.length > 0) {
-        console.log(`   • Keys out of sync/stale in lockfile (${outOfSync.length.toString()}):`);
-        outOfSync.slice(0, 10).forEach((key) => {
-          console.log(`      - ${key}`);
-        });
-        if (outOfSync.length > 10) {
-          console.log(`      ... and ${(outOfSync.length - 10).toString()} more`);
-        }
-      }
-
-      if (extra.length > 0) {
-        console.log(`   • Unused/extra keys in lockfile (${extra.length.toString()}):`);
-        extra.slice(0, 10).forEach((key) => {
-          console.log(`      - ${key}`);
-        });
-        if (extra.length > 10) {
-          console.log(`      ... and ${(extra.length - 10).toString()} more`);
-        }
-      }
-      console.log();
-    }
-  } else {
-    console.log(`❌ LOCKFILE MISSING:\n`);
-    console.log(`   Could not find i18n.lock file. Please run "pnpm i18n" to generate it.\n`);
-  }
+  displayLockfileIssues(results);
 
   console.log("═══════════════════════════════════════════════════════════\n");
 }
