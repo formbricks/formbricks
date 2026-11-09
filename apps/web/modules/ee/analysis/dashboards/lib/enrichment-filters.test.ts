@@ -102,3 +102,19 @@ describe("pickNeedsTextAnswer", () => {
     );
   });
 });
+
+describe("topic filters on a chart without text answers (ENG-6989)", () => {
+  test("the record's own topic needs a text answer, like sentiment does", () => {
+    for (const field of ["FeedbackRecords.topic", "FeedbackRecords.subtopic"]) {
+      expect(pickNeedsTextAnswer({ field, operator: "equals" }, ["Billing"])).toBe(true);
+      expect(pickNeedsTextAnswer({ field, operator: "notEquals" }, ["Billing"])).toBe(false);
+      expect(pickNeedsTextAnswer({ field, operator: "equals" }, [NO_VALUE_PICK])).toBe(false);
+    }
+  });
+
+  test("the topics of the response do not: they are what a score chart is filtered by", () => {
+    for (const field of ["FeedbackRecords.responseTopic", "FeedbackRecords.responseSubtopic"]) {
+      expect(pickNeedsTextAnswer({ field, operator: "equals" }, ["Billing"])).toBe(false);
+    }
+  });
+});

@@ -16,6 +16,7 @@ import {
   parseRequestedDateRange,
   validateChartQuery,
 } from "./chart-query-validator";
+import type { TDatasetChartFields } from "./field-catalog";
 
 const COUNT = "FeedbackRecords.count";
 const NPS = "FeedbackRecords.npsScore";
@@ -631,5 +632,107 @@ describe("validateChartQuery: a dataset's embedded data and answer filters (ENG-
       validateChartQuery(saved, { legacyDateRanges: true })
     );
     expect(validateChartQuery(saved, { legacyDateRanges: true, dataset }).ok).toBe(true);
+  });
+});
+
+describe("topic fields (ENG-6989)", () => {
+  const TOPIC = "FeedbackRecords.topic";
+  const SUBTOPIC = "FeedbackRecords.subtopic";
+  const RESPONSE_TOPIC = "FeedbackRecords.responseTopic";
+  const RESPONSE_SUBTOPIC = "FeedbackRecords.responseSubtopic";
+  const active = {
+    embeddedFields: [],
+    topics: {
+      status: "active" as const,
+      labels: { topics: ["Billing", "Login"], subtopics: ["Billing › Invoices", "Login › Password reset"] },
+    },
+  };
+  const issuesOf = (query: unknown, dataset?: TDatasetChartFields) => {
+    const result = validateChartQuery(query, { dataset });
+    return result.ok ? [] : result.issues;
+  };
+
+  test("accepts a topic chart on a dataset with current topics", () => {
+    expect(
+      issuesOf(
+        {
+          measures: [NPS],
+          dimensions: [RESPONSE_TOPIC],
+          filters: [
+            condition(RESPONSE_SUBTOPIC, "equals", ["Billing › Invoices"]),
+            condition(TOPIC, "notEquals", ["Login"]),
+            condition(SUBTOPIC, "contains", ["Pass"]),
+          ],
+        },
+        active
+      )
+    ).toEqual([]);
+  });
+
+  test("refuses a filter value that is not a current label, and names the current ones", () => {
+    const [issue, ...rest] = issuesOf(
+      { measures: [COUNT], filters: [condition(TOPIC, "equals", ["Billing", "Payments"])] },
+      active
+    );
+
+    expect(rest).toEqual([]);
+    expect(issue).toMatchObject({ name: "query.filters[0].values[1]", code: "invalid_reference" });
+    expect(issue.reason).toContain("Current topics: Billing, Login.");
+    expect(issue.reason).not.toContain("Payments");
+  });
+
+  test("checks a subtopic against the subtopics, written 'Topic › Subtopic'", () => {
+    expect(
+      issuesOf({ measures: [NPS], filters: [condition(RESPONSE_SUBTOPIC, "equals", ["Invoices"])] }, active)
+    ).toEqual([
+      expect.objectContaining({
+        name: "query.filters[0].values[0]",
+        reason: expect.stringContaining("Current subtopics: Billing › Invoices"),
+      }),
+    ]);
+  });
+
+  test("leaves a 'contains' fragment unchecked: it is part of a label, not one", () => {
+    expect(
+      issuesOf({ measures: [COUNT], filters: [condition(TOPIC, "contains", ["Bill"])] }, active)
+    ).toEqual([]);
+  });
+
+  test("refuses 'is not' on topics in the response, which would keep a response that mentions it", () => {
+    expect(
+      issuesOf({ measures: [NPS], filters: [condition(RESPONSE_TOPIC, "notEquals", ["Billing"])] }, active)
+    ).toEqual([
+      expect.objectContaining({
+        name: "query.filters[0].operator",
+        reason: expect.stringContaining("equals, set, notSet"),
+      }),
+    ]);
+  });
+
+  test.each([
+    ["inactive", "no active taxonomy"],
+    ["forbidden", "Feedback Directories"],
+    ["unavailable", "could not be loaded"],
+  ] as const)("refuses every topic field when the dataset's topics are %s", (status, reason) => {
+    const issues = issuesOf(
+      { measures: [COUNT], dimensions: [TOPIC], filters: [condition(RESPONSE_TOPIC, "set", undefined)] },
+      { embeddedFields: [], topics: { status } }
+    );
+
+    expect(issues.map((issue) => issue.name)).toEqual(
+      expect.arrayContaining(["query.dimensions[0]", "query.filters[0].member"])
+    );
+    expect(issues[0].reason).toContain(reason);
+  });
+
+  test("checks nothing about topics where they were not loaded: a saved chart keeps running", () => {
+    const saved = {
+      measures: [COUNT],
+      dimensions: [TOPIC],
+      filters: [condition(TOPIC, "equals", ["Renamed since"])],
+    };
+
+    expect(issuesOf(saved)).toEqual([]);
+    expect(issuesOf(saved, { embeddedFields: [] })).toEqual([]);
   });
 });

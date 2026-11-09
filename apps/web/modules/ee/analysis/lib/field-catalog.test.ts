@@ -8,10 +8,12 @@ import {
   CHART_DATE_PRESETS,
   CHART_FIELD_CATALOG,
   FILTER_ONLY_FIELDS,
+  TOPIC_CHART_FIELDS,
   createChartFieldLookup,
   getChartField,
   getChartFieldCatalog,
   isFilterOnlyField,
+  queryNamesTopicField,
 } from "./field-catalog";
 
 /** Every member the Cube model defines, read off the schema file the Cube image serves. */
@@ -136,5 +138,103 @@ describe("a dataset's field catalog (ENG-6893)", () => {
     expect(
       createChartFieldLookup({ embeddedFields: [] })("FeedbackRecords.ed_plan_64879f7d")
     ).toBeUndefined();
+  });
+});
+
+describe("topic fields (ENG-6989)", () => {
+  const TOPIC_NAMES = [
+    "FeedbackRecords.topic",
+    "FeedbackRecords.subtopic",
+    "FeedbackRecords.responseTopic",
+    "FeedbackRecords.responseSubtopic",
+  ];
+  const active = {
+    embeddedFields: [],
+    topics: { status: "active" as const, labels: { topics: ["Billing"], subtopics: ["Billing › Refunds"] } },
+  };
+
+  test("are members the Cube model defines, and not in the catalog every dataset gets", () => {
+    expect(TOPIC_CHART_FIELDS.map((field) => field.name)).toEqual(TOPIC_NAMES);
+    expect(TOPIC_NAMES.filter((name) => !cubeMembers.includes(name))).toEqual([]);
+    expect(CHART_FIELD_CATALOG.map((field) => field.name)).not.toEqual(
+      expect.arrayContaining([TOPIC_NAMES[0]])
+    );
+  });
+
+  test("are listed only for a dataset with an active taxonomy", () => {
+    const listed = (dataset?: Parameters<typeof getChartFieldCatalog>[0]) =>
+      getChartFieldCatalog(dataset)
+        .map((field) => field.name)
+        .filter((name) => TOPIC_NAMES.includes(name));
+
+    expect(listed(active)).toEqual(TOPIC_NAMES);
+    expect(listed()).toEqual([]);
+    expect(listed({ embeddedFields: [] })).toEqual([]);
+    for (const status of ["inactive", "forbidden", "unavailable"] as const) {
+      expect(listed({ embeddedFields: [], topics: { status } })).toEqual([]);
+    }
+  });
+
+  test("resolve on any dataset, so a saved chart keeps validating once its taxonomy is gone", () => {
+    for (const name of TOPIC_NAMES) {
+      expect(getChartField(name)).toMatchObject({ kind: "dimension", type: "string", valueLookup: true });
+      expect(createChartFieldLookup()(name)?.name).toBe(name);
+      expect(
+        createChartFieldLookup({
+          embeddedFields: [{ name: "FeedbackRecords.ed_plan_64879f7d", key: "plan" }],
+        })(name)?.name
+      ).toBe(name);
+    }
+  });
+
+  test("take every string operator on the record's own topic, but only exact ones on the response's", () => {
+    expect(getChartField("FeedbackRecords.topic")?.filterOperators).toContain("notEquals");
+    expect(getChartField("FeedbackRecords.subtopic")?.filterOperators).toContain("contains");
+    expect(getChartField("FeedbackRecords.responseTopic")?.filterOperators).toEqual([
+      "equals",
+      "set",
+      "notSet",
+    ]);
+    expect(getChartField("FeedbackRecords.responseSubtopic")?.filterOperators).toEqual([
+      "equals",
+      "set",
+      "notSet",
+    ]);
+  });
+
+  test("fit the public catalog schema", () => {
+    for (const field of TOPIC_CHART_FIELDS) {
+      expect(() =>
+        ZV3ChartField.parse({ ...field, filterOperators: [...field.filterOperators], granularities: [] })
+      ).not.toThrow();
+    }
+  });
+
+  test("are found wherever a query names one, and only there", () => {
+    expect(
+      queryNamesTopicField({ measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.topic"] })
+    ).toBe(true);
+    expect(
+      queryNamesTopicField({
+        measures: ["FeedbackRecords.npsScore"],
+        filters: [{ or: [{ member: "FeedbackRecords.responseSubtopic", operator: "set" }] }],
+      })
+    ).toBe(true);
+    expect(
+      queryNamesTopicField({
+        measures: ["FeedbackRecords.count"],
+        order: { "FeedbackRecords.subtopic": "asc" },
+      })
+    ).toBe(true);
+    // A filter value that looks like a member is a value, not a member.
+    expect(
+      queryNamesTopicField({
+        measures: ["FeedbackRecords.count"],
+        filters: [
+          { member: "FeedbackRecords.sourceName", operator: "equals", values: ["FeedbackRecords.topic"] },
+        ],
+      })
+    ).toBe(false);
+    expect(queryNamesTopicField(null)).toBe(false);
   });
 });

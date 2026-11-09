@@ -3,23 +3,30 @@ import {
   EMOTIONS_DIMENSION_ID,
   FEEDBACK_FIELDS,
   SENTIMENT_DIMENSION_ID,
+  SUBTOPIC_DIMENSION_ID,
+  TOPIC_DIMENSION_ID,
   getResponseBaseFamily,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { NO_VALUE_PICK, type TDashboardFilter, type TDashboardFilterOperator } from "./dashboard-filters";
 
 /**
  * Sentiment, Sentiment Score and Emotions are set by AI enrichment, and enrichment reads only text answers
- * (docs/unify-feedback/enrichment.mdx): an NPS score, a rating or a yes/no never carries them. A dashboard
+ * (docs/unify-feedback/enrichment.mdx): an NPS score, a rating or a yes/no never carries them. The record's
+ * own Topic and Subtopic (ENG-6989) are the same: only a classified open-text answer has one. A dashboard
  * filter on one of them applied to a chart that shows only such answers leaves it empty — not because nothing
  * matched, but because nothing there could. Such a chart says it cannot be filtered by it instead
- * (`resolvePicksForDataset`), as a chart whose dataset lacks a filter's field does.
+ * (`resolvePicksForDataset`), as a chart whose dataset lacks a filter's field does. Response Topic and
+ * Response Subtopic are not among them: they read the topics of the whole response, which is what a score
+ * chart is filtered by.
  */
 
-/** The fields only AI enrichment sets, and only on text answers. */
+/** The fields only text answers carry: AI enrichment's, and the record's own topic. */
 export const ENRICHMENT_FIELDS: ReadonlySet<string> = new Set([
   SENTIMENT_DIMENSION_ID,
   "FeedbackRecords.sentimentScore",
   EMOTIONS_DIMENSION_ID,
+  TOPIC_DIMENSION_ID,
+  SUBTOPIC_DIMENSION_ID,
 ]);
 
 /**

@@ -12,6 +12,12 @@ import {
   FILTER_OPERATORS,
   type FieldDefinition,
   type MeasureDefinition,
+  RESPONSE_SUBTOPIC_DIMENSION_ID,
+  RESPONSE_TOPIC_DIMENSION_ID,
+  RESPONSE_TOPIC_FILTER_OPERATORS,
+  SUBTOPIC_DIMENSION_ID,
+  TOPIC_DIMENSION_ID,
+  TOPIC_PATH_SEPARATOR,
 } from "./schema-definition";
 
 const CUBE_NAME = "FeedbackRecords";
@@ -66,6 +72,38 @@ function formatEmbeddedFields(dataset: TDatasetChartFields | undefined): string 
   return `### Embedded data (this dataset's own fields)
 Values passed in with each response, such as a product, region or account manager. Each is a dimension: group by it, or filter it with the string operators. Values match exactly as collected, case included.
 ${lines.join("\n")}`;
+}
+
+/** Most topic and subtopic labels listed; a taxonomy with more lists the first ones, alphabetically. */
+export const MAX_PROMPT_TOPICS = 30;
+export const MAX_PROMPT_SUBTOPICS = 100;
+
+/**
+ * Labels as the model may use them in an `equals` filter: whole, never cut, since a cut label matches
+ * nothing. A label too long for the prompt is left out rather than shortened.
+ */
+const listLabels = (labels: readonly string[], max: number): string => {
+  const fitting = labels.filter((label) => label.length <= MAX_PROMPT_LABEL_LENGTH);
+  const listed = fitting.slice(0, max).map((label) => JSON.stringify(label));
+  const unlisted = labels.length - listed.length;
+  const more = unlisted > 0 ? ` (${String(unlisted)} more are not listed; do not invent labels)` : "";
+  return listed.join(", ") + more;
+};
+
+/**
+ * The dataset's current topics (ENG-6989) and which pair of topic fields answers which question. Only for
+ * a dataset with an active taxonomy. Labels are generated or renamed text, so they are quoted as data.
+ */
+function formatTopicFields(dataset: TDatasetChartFields | undefined): string {
+  if (dataset?.topics?.status !== "active") return "";
+  const { topics, subtopics } = dataset.topics.labels;
+  return `### Topics (this dataset's current taxonomy)
+Four dimensions read the dataset's current topics. Subtopic values are written "Topic${TOPIC_PATH_SEPARATOR}Subtopic". A record with no current topic has an empty value.
+- \`${TOPIC_DIMENSION_ID}\` / \`${SUBTOPIC_DIMENSION_ID}\`: the record's own topic. Only classified open-text answers have one, so use them with \`${CUBE_NAME}.count\` and the sentiment and emotion measures ("what do people write about", "negative feedback by topic").
+- \`${RESPONSE_TOPIC_DIMENSION_ID}\` / \`${RESPONSE_SUBTOPIC_DIMENSION_ID}\`: the topics of the open-text answers in the same response. Use them with NPS, CSAT, CES and rating measures, and with \`${CUBE_NAME}.uniqueResponses\` for how many responses mention a topic ("NPS by topic", "CSAT of responses about Billing"). A response that mentions two topics counts under each. Filter them only with ${RESPONSE_TOPIC_FILTER_OPERATORS.map((operator) => `\`${operator}\``).join(", ")}.
+- Filter a topic with \`equals\` and the exact labels below.
+Topics: ${listLabels(topics, MAX_PROMPT_TOPICS)}
+Subtopics: ${listLabels(subtopics, MAX_PROMPT_SUBTOPICS)}`;
 }
 
 function formatAnswerQuestion(question: TAnswerQuestion): string {
@@ -140,7 +178,7 @@ like \`start/end\` in any of these fields.
 
 ### Filter operators by field type
 ${operatorsText}
-${[formatEmbeddedFields(dataset), formatAnswerFilters(dataset)]
+${[formatEmbeddedFields(dataset), formatTopicFields(dataset), formatAnswerFilters(dataset)]
   .filter((section) => section.length > 0)
   .map((section) => `\n${section}\n`)
   .join("")}

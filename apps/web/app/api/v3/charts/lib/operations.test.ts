@@ -8,6 +8,7 @@ import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
+import { loadDatasetChartFields } from "./dataset-fields";
 import { createV3Chart, deleteV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "./operations";
 import { ZV3ChartResource } from "./resources";
 import {
@@ -281,6 +282,22 @@ describe("createV3Chart", () => {
     vi.mocked(createChartRow).mockResolvedValue(rowOf({ name: "Weekly NPS", widgets: [] }));
   });
 
+  test("checks a new chart's topic fields against the dataset's taxonomy (ENG-6989)", async () => {
+    const query = { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.topic"] };
+    vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
+      embeddedFields: [],
+      topics: { status: "forbidden" },
+    });
+
+    const response = await create({ query });
+
+    expect(loadDatasetChartFields).toHaveBeenCalledWith(session, access, datasetId, query, {
+      checkTopics: true,
+    });
+    expect(response.status).toBe(422);
+    expect(createChartRow).not.toHaveBeenCalled();
+  });
+
   test("creates the chart in the authorized workspace, audited, with a Location", async () => {
     const auditLog = {} as TV3AuditLog;
 
@@ -438,6 +455,29 @@ describe("updateV3Chart", () => {
       requestId,
       instance
     );
+    expect(updateChartRow).not.toHaveBeenCalled();
+  });
+
+  test("checks a changed query's topic fields against the dataset's taxonomy (ENG-6989)", async () => {
+    const query = {
+      measures: ["FeedbackRecords.npsScore"],
+      filters: [{ member: "FeedbackRecords.responseTopic", operator: "equals", values: ["Gone"] }],
+    };
+    vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
+      embeddedFields: [],
+      topics: { status: "active", labels: { topics: ["Billing"], subtopics: [] } },
+    });
+
+    const response = await update({ query });
+
+    expect(loadDatasetChartFields).toHaveBeenCalledWith(
+      session,
+      expect.objectContaining({ workspaceId: internalWorkspaceId }),
+      datasetId,
+      query,
+      { checkTopics: true }
+    );
+    expect(response.status).toBe(422);
     expect(updateChartRow).not.toHaveBeenCalled();
   });
 

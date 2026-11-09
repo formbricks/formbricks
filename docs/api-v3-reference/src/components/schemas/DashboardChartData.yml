@@ -2,9 +2,11 @@ type: object
 description: >-
   A chart's rows read through its dashboard, after the dashboard date range, the dashboard's locked
   filters and the caller's own filters narrowed its saved query. `unfilterableFilters` lists those
-  filters the chart cannot be narrowed by: its Feedback Dataset does not have their field, or they need
-  a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on
-  text answers only — on a chart whose saved query reads no text answer (its saved filters pin
+  filters the chart cannot be narrowed by: its Feedback Dataset does not have their field (a topic field
+  where the dataset has no active taxonomy), or they need a value of `FeedbackRecords.sentiment`,
+  `sentimentScore` or `emotions` — which AI enrichment sets on text answers only — or of
+  `FeedbackRecords.topic` or `subtopic`, which only classified text answers have, on a chart whose
+  saved query reads no text answer (its saved filters pin
   `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or
   every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes
   (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not
