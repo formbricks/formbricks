@@ -5244,6 +5244,7 @@
           "sheet_row_skipped_unknown_type": "第 {row} 行已被跳过:其“类型”既不是题型,也不是“选项 3”这类字段。",
           "sheet_row_skipped_unsupported_type": "第 {row} 行已被跳过:图片选择题和 Cal.com 题目无法通过表格添加,请在编辑器中添加。",
           "sheet_text_not_imported": "第 {row} 行({language})在导出时超出了单元格的长度限制,因此该行的修改已被跳过。",
+          "sheet_text_not_imported_recalls": "第 {row} 行（{language}）引用了超过 64 个不同的答案，因此未导入该行的修改。请在问卷编辑器中进行编辑。",
           "sheets_skipped": "仅读取了第一个工作表。未读取:{sheets}。",
           "table_as_matrix": "此问题在文件中是表格,已作为矩阵导入。请检查其行和列。",
           "targeting_filter_removed": "{count, plural, other {# 个定向筛选条件已被移除}}:筛选条件中的细分和问卷属于文件来源的工作区。",

@@ -5244,6 +5244,7 @@
           "sheet_row_skipped_unknown_type": "A(z) {row}. sor kimaradt: a Típus értéke nem kérdéstípus, és nem olyan mező, mint például a \"Válaszlehetőség 3\".",
           "sheet_row_skipped_unsupported_type": "A(z) {row}. sor kimaradt: a képválasztásos és a Cal.com kérdések nem adhatók hozzá táblázatból. Kérjük, adja hozzá őket a szerkesztőben.",
           "sheet_text_not_imported": "A(z) {row}. sor ({language}) exportáláskor túl hosszú volt egyetlen cellához, ezért a módosítása kimaradt.",
+          "sheet_text_not_imported_recalls": "A(z) {row}. sor ({language}) több mint 64 különböző válaszra hivatkozik vissza, ezért a módosítása kimaradt. Tisztelettel kérjük, szerkessze azt a felmérésszerkesztőben.",
           "sheets_skipped": "Csak az első munkalap beolvasása történt meg. Nem beolvasott munkalapok: {sheets}.",
           "table_as_matrix": "Ez a kérdés a fájlban táblázatként szerepelt, és mátrixként került importálásra. Kérjük, ellenőrizze a sorait és oszlopait.",
           "targeting_filter_removed": "{count, plural, one {# célzási szűrő eltávolításra került} other {# célzási szűrő eltávolításra került}}: a szűrőkben szereplő szegmensek és kérdőívek ahhoz a munkaterülethez tartoznak, amelyből a fájl származik.",

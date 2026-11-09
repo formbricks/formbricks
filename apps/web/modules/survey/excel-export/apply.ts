@@ -94,13 +94,17 @@ const CHOICE_TYPES = new Set<TSurveyElementTypeEnum>([
   TSurveyElementTypeEnum.Ranking,
 ]);
 
-/** Each recall token the stored text holds, by the `@Label` the export showed it as. */
-const getRecallLabels = (stored: string, survey: TSurvey, textKey: string): Map<string, string> => {
+/**
+ * Each recall token the stored text holds, by the `@Label` the export showed it as; `null` past
+ * `RECALL_LABELS_MAX` distinct labels, whose edit can't be read back without turning a recall into text.
+ */
+const getRecallLabels = (stored: string, survey: TSurvey, textKey: string): Map<string, string> | null => {
   const labels = new Map<string, string>();
   for (const [token] of stored.matchAll(RECALL_TOKEN)) {
     const label = recallToHeadline({ default: token, [textKey]: token }, survey, false, textKey)[textKey];
-    if (label && label !== token && !labels.has(label)) labels.set(label, token);
-    if (labels.size === RECALL_LABELS_MAX) break;
+    if (!label || label === token || labels.has(label)) continue;
+    if (labels.size === RECALL_LABELS_MAX) return null;
+    labels.set(label, token);
   }
   return labels;
 };
@@ -408,13 +412,16 @@ class ExcelExportApplication {
       }
 
       const stored = text.value[textKey] ?? "";
-      const next = this.toStoredText(
-        row.row,
-        cell,
-        text.isRichText,
-        getRecallLabels(stored, this.source, textKey),
-        stored
-      );
+      const recallLabels = getRecallLabels(stored, this.source, textKey);
+      if (!recallLabels) {
+        this.issues.push({
+          code: "sheet_text_not_imported",
+          severity: "warning",
+          params: { ...params, cause: "too_many_recalls" },
+        });
+        continue;
+      }
+      const next = this.toStoredText(row.row, cell, text.isRichText, recallLabels, stored);
       if (next === "" || next === stored) continue;
       if (text.isRichText && FORMATTING_TAG.test(stored)) {
         this.issues.push({ code: "sheet_formatting_dropped", severity: "warning", params });

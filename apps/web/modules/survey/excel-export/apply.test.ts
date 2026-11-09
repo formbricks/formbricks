@@ -139,30 +139,44 @@ describe("applyExcelExport: texts", () => {
     expect(codes(applied)).toContain("markup_escaped");
   });
 
-  test("turns back the first 64 distinct @Labels of a text into recalls, and leaves any past them as typed", async () => {
+  /** A survey whose consent headline recalls `count` hidden fields, and its sheet with that cell edited. */
+  const importManyRecalls = async (count: number) => {
     const survey = structuredClone(SURVEY);
-    // Padded, so no label is the start of another: past the cap, a label that starts with one within it
-    // would take that one's recall (see RECALL_LABELS_MAX).
-    const ids = Array.from({ length: 65 }, (_, index) => `field${String(index).padStart(2, "0")}`);
+    const ids = Array.from({ length: count }, (_, index) => `field${index}`);
     survey.hiddenFields = { enabled: true, fieldIds: ids };
     const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {
       headline: Record<string, string>;
     };
     consent.headline = { default: ids.map((id) => `#recall:${id}/fallback:x#`).join(" "), de: "Danke" };
-
     const applied = await importSheet(
       (rows) => {
         rows[rowOf(rows, "element.consent.headline")][EN] += " edited";
+        rows[rowOf(rows, "element.consent.headline")][DE] = "Danke schön";
         return rows;
       },
       { survey }
     );
+    return { ids, before: consent.headline, after: elementOf(applied.survey, "consent").headline, applied };
+  };
 
-    const stored = (elementOf(applied.survey, "consent").headline as Record<string, string>).default;
-    const restored = [...stored.matchAll(/#recall:(field\d+)\//g)].map(([, id]) => id);
-    expect(restored).toEqual(ids.slice(0, 64));
-    expect(stored).toContain(" @field64 edited");
+  test("turns back every @Label of a text recalling 64 different answers", async () => {
+    const { ids, after } = await importManyRecalls(64);
+
+    const stored = (after as Record<string, string>).default;
+    expect([...stored.matchAll(/#recall:(field\d+)\//g)].map(([, id]) => id)).toEqual(ids);
     expect(stored.endsWith(" edited")).toBe(true);
+  });
+
+  test("leaves the edit of a text recalling more than 64 answers out, rather than turn any into text", async () => {
+    const { before, after, applied } = await importManyRecalls(65);
+
+    // The English edit is left out whole; the German one, which recalls nothing, still applies.
+    expect(after).toEqual({ ...before, de: "Danke schön" });
+    expect(applied.issues).toContainEqual({
+      code: "sheet_text_not_imported",
+      severity: "warning",
+      params: expect.objectContaining({ language: "en", cause: "too_many_recalls" }),
+    });
   });
 
   test("turns an @Label back into the recall it shows", async () => {

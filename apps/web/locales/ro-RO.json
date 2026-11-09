@@ -5244,6 +5244,7 @@
           "sheet_row_skipped_unknown_type": "Rândul {row} a fost omis: Tipul lui nu este un tip de întrebare sau un câmp precum \"Choice 3\".",
           "sheet_row_skipped_unsupported_type": "Rândul {row} a fost omis: întrebările cu selectare de imagini și cele Cal.com nu pot fi adăugate dintr-o foaie de calcul. Adaugă-le în editor.",
           "sheet_text_not_imported": "Rândul {row} ({language}) era prea lung pentru o singură celulă la export, așa că modificarea lui a fost omisă.",
+          "sheet_text_not_imported_recalls": "Rândul {row} ({language}) face referire la mai mult de 64 de răspunsuri diferite, așa că modificarea lui a fost omisă. Editează-l în editorul de sondaje.",
           "sheets_skipped": "Doar prima foaie a fost citită. Foi necitite: {sheets}.",
           "table_as_matrix": "Această întrebare este un tabel în fișier și a fost importată ca matrice. Verifică rândurile și coloanele acesteia.",
           "targeting_filter_removed": "{count, plural, one {# filtru de targetare a fost eliminat} few {# filtre de targetare au fost eliminate} other {# de filtre de targetare au fost eliminate}}: segmentele și chestionarele din filtre aparțin spațiului de lucru din care provine fișierul.",

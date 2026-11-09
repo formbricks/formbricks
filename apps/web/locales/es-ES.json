@@ -5244,6 +5244,7 @@
           "sheet_row_skipped_unknown_type": "Se ha omitido la fila {row}: su Tipo no es un tipo de pregunta ni un campo como \"Opción 3\".",
           "sheet_row_skipped_unsupported_type": "Se ha omitido la fila {row}: las preguntas de selección de imágenes y de Cal.com no se pueden añadir desde una hoja. Añádelas en el editor.",
           "sheet_text_not_imported": "La fila {row} ({language}) era demasiado larga para una celda al exportarla, así que se ha omitido su edición.",
+          "sheet_text_not_imported_recalls": "La fila {row} ({language}) recupera más de 64 respuestas distintas, por lo que se ha omitido su edición. Edítala en el editor de encuestas.",
           "sheets_skipped": "Solo se ha leído la primera hoja. No se han leído: {sheets}.",
           "table_as_matrix": "Esta pregunta es una tabla en el archivo y se ha importado como una matriz. Revisa sus filas y columnas.",
           "targeting_filter_removed": "{count, plural, one {Se ha eliminado # filtro de segmentación} other {Se han eliminado # filtros de segmentación}}: los segmentos y las encuestas de los filtros pertenecen al espacio de trabajo del que procede el archivo.",

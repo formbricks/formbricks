@@ -9,8 +9,8 @@
  */
 
 /**
- * The most distinct labels one text's recalls are matched by. A label past it is not matched: it stays as
- * typed, unless a label within the cap is its start, which then matches as anywhere else.
+ * The most distinct labels one text's recalls are matched by. An edit of a text that recalls more is left
+ * out (`too_many_recalls`): read back with only some of its labels, the rest would turn into plain text.
  */
 export const RECALL_LABELS_MAX = 64;
 
