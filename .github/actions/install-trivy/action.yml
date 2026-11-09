@@ -10,8 +10,8 @@ runs:
       shell: bash
       env:
         # Bump both together: the digest is the release's trivy_<version>_Linux-64bit.tar.gz asset.
-        TRIVY_VERSION: "0.71.2"
-        TRIVY_SHA256: 0510e71e2fd39bf863856d499c8dc19feb4e7336546394c502a8f5cc7ab27460
+        TRIVY_VERSION: "0.76.2"
+        TRIVY_SHA256: bc0fc726e017b8927a62b2d3531d7a84ee01769daf5c99ed866dced54089fdbf
       run: |
         set -euo pipefail
         tarball="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
