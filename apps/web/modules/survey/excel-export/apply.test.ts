@@ -232,6 +232,31 @@ describe("applyExcelExport: texts", () => {
     expect(applied.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 1 } });
   });
 
+  test("leaves a text the export cut to fit its cell as it is, saying it can't come back from the sheet", async () => {
+    const long = structuredClone(SURVEY);
+    const open = long.blocks[0].elements.find((element) => element.id === "open") as TSurveyElement & {
+      placeholder: Record<string, string>;
+    };
+    const whole = "x".repeat(40_000);
+    open.placeholder = { default: whole, de: "Schreib" };
+
+    const applied = await importSheet(
+      (rows) => {
+        rows[rowOf(rows, "element.open.placeholder")][EN] = "Short again";
+        rows[rowOf(rows, "element.open.placeholder")][DE] = "Kurz";
+        return rows;
+      },
+      { survey: long }
+    );
+
+    expect(elementOf(applied.survey, "open").placeholder).toEqual({ default: whole, de: "Kurz" });
+    expect(applied.issues).toContainEqual({
+      code: "sheet_text_not_imported",
+      severity: "warning",
+      params: expect.objectContaining({ language: "en", cause: "cut_on_export" }),
+    });
+  });
+
   test("refuses a sheet none of whose rows is a text of the survey", async () => {
     const other = {
       ...SURVEY,
