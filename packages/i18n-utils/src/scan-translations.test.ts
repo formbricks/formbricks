@@ -942,6 +942,49 @@ describe("Translation Scanner", () => {
       expect(output).toContain("de-DE: (not valid ICU)");
     });
 
+    test("lists each locale's missing keys, truncated after ten", () => {
+      const output = loggedOutput(
+        resultsWith({
+          incompleteTranslations: new Map([
+            ["de-DE", Array.from({ length: 12 }, (_, i) => `k.${i.toString()}`)],
+          ]),
+        })
+      );
+
+      expect(output).toContain("INCOMPLETE TRANSLATIONS");
+      expect(output).toContain("📝 de-DE (12 missing keys):");
+      expect(output).toContain("      • k.9");
+      expect(output).not.toContain("      • k.10");
+      expect(output).toContain("      ... and 2 more");
+    });
+
+    test("reports a missing lockfile", () => {
+      const output = loggedOutput(resultsWith({ lockfileValidation: null }));
+
+      expect(output).toContain("LOCKFILE MISSING");
+      expect(output).not.toContain("LOCKFILE OUT OF SYNC");
+    });
+
+    test("reports each non-empty lockfile section and skips the empty ones", () => {
+      const output = loggedOutput(
+        resultsWith({
+          lockfileValidation: {
+            missing: Array.from({ length: 11 }, (_, i) => `m.${i.toString()}`),
+            outOfSync: [],
+            extra: ["e.0"],
+          },
+        })
+      );
+
+      expect(output).toContain("LOCKFILE OUT OF SYNC");
+      expect(output).toContain("   • Keys missing from lockfile (11):");
+      expect(output).toContain("      - m.9");
+      expect(output).toContain("      ... and 1 more");
+      expect(output).not.toContain("Keys out of sync/stale in lockfile");
+      expect(output).toContain("   • Unused/extra keys in lockfile (1):");
+      expect(output).toContain("      - e.0");
+    });
+
     test("truncates long per-locale lists", () => {
       const mismatches = Array.from({ length: 11 }, (_, index) => ({
         key: `key.${index.toString().padStart(2, "0")}`,
