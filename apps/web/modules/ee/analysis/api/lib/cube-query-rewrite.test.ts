@@ -723,7 +723,20 @@ describe("cube queryRewrite: answer filters", () => {
       "the answer member in an order",
       { measures: ["FeedbackRecords.count"], order: [["FeedbackRecords.answer", "asc"]] },
     ],
-  ])("refuses %s, which only the rewrite may write", (_label, query) => {
+    // The topic cubes carry no tenant member, so naming one directly would skip the tenant filter.
+    ["a record-topic member on its own", { dimensions: ["RecordTopic.topic"] }],
+    [
+      "a record-topic member next to a FeedbackRecords measure",
+      { measures: ["FeedbackRecords.count"], dimensions: ["RecordTopic.subtopic"] },
+    ],
+    [
+      "a response-topic member in a filter",
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "ResponseTopic.topic", operator: "equals", values: ["Billing"] }],
+      },
+    ],
+  ])("refuses %s, which a caller may not name", (_label, query) => {
     expect(() => queryRewrite(query, answerContext)).toThrow(/reserved member|filter only/);
   });
 
