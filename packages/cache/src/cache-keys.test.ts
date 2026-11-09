@@ -157,6 +157,13 @@ describe("@formbricks/cache cacheKeys", () => {
           "Invalid Cache key: Parts cannot be empty"
         );
       });
+
+      test("should create directory topic labels key", () => {
+        expect(createCacheKey.hub.directoryTopicLabels("clfd1")).toBe("fb:hub:clfd1:directory_topic_labels");
+        expect(() => createCacheKey.hub.directoryTopicLabels("")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+      });
     });
 
     describe("survey import namespace", () => {

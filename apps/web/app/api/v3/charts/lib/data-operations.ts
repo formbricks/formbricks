@@ -158,6 +158,7 @@ export async function runV3ChartQuery({
   context,
   dateRangeNames,
   extraFilters = [],
+  checkTopics = false,
   respond = (data) => data,
 }: {
   access: V3WorkspaceContext;
@@ -170,6 +171,11 @@ export async function runV3ChartQuery({
   /** What the caller calls the date range: the data routes take query parameters, the preview a body field. */
   dateRangeNames?: TRequestedDateRangeNames;
   extraFilters?: TCubeFilter[];
+  /**
+   * A preview's query is caller input like a write's: a topic field needs the dataset's active taxonomy,
+   * and its filter values must be current labels (ENG-6989). A saved chart is read without the check.
+   */
+  checkTopics?: boolean;
   respond?: (data: TV3ChartData) => object;
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
@@ -179,7 +185,8 @@ export async function runV3ChartQuery({
     context.authentication,
     access,
     datasetId,
-    extraFilters.length === 0 ? query : withExtraFilters(query, extraFilters)
+    extraFilters.length === 0 ? query : withExtraFilters(query, extraFilters),
+    { checkTopics }
   );
   const validated = validateChartQuery(query, { timeBuckets: false, legacyDateRanges: true, dataset });
   // The data route takes the range as query parameters; the preview takes it as one body field.
@@ -279,6 +286,7 @@ export async function previewV3Chart({
       dateRange: body.dateRange,
       source: "v3.charts.preview",
       context,
+      checkTopics: true,
     });
   } catch (error) {
     return mapV3ThrownError(error, {

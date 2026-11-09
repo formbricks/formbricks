@@ -5,7 +5,7 @@ description: >-
   caller's own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it.
   Like a caller's filter it is ANDed onto every chart's saved query and never widens it. A chart whose
   Feedback Dataset lacks the field shows no data, and so does a chart that reads no text answer under a
-  Sentiment, Sentiment Score or Emotions filter that needs a value.
+  Sentiment, Sentiment Score, Emotions, Topic or Subtopic filter that needs a value.
 required:
   - id
   - field

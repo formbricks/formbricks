@@ -5,6 +5,7 @@ import type { TCubeQueryActor, TCubeQuerySource } from "@/modules/ee/analysis/ap
 import {
   dropEmptyMeasureRows,
   withOptionIdFilter,
+  withResponseTopicFieldTypeFilter,
 } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
@@ -20,7 +21,8 @@ export type TChartQueryRun = TChartLabelMaps & {
  * chart data API — so they cannot disagree on a number:
  *
  * 1. resolve option grouping, which attaches survey labels for option and matrix-row ids;
- * 2. run it in the dataset's tenant, attributed to `actor`;
+ * 2. run it in the dataset's tenant, attributed to `actor`, with the execution-only filters that keep a
+ *    query fast or its groups meaningful (`withOptionIdFilter`, `withResponseTopicFieldTypeFilter`);
  * 3. drop the groups no selected measure can answer for (ENG-3150);
  * 4. prune the label maps to what the rows use.
  *
@@ -46,7 +48,7 @@ export const runChartQuery = async ({
   const { rewrittenQuery } = grouping;
 
   const data = await executeTenantScopedQuery({
-    query: withOptionIdFilter(rewrittenQuery),
+    query: withResponseTopicFieldTypeFilter(withOptionIdFilter(rewrittenQuery)),
     feedbackDirectoryId: datasetId,
     workspaceId,
     organizationId,

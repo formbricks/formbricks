@@ -14,8 +14,8 @@ get:
     - **Filters.** Each `filter[<id>]` with values in `picks[<id>]` is ANDed onto the chart's saved
       filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
       on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
-      `unfilterableFilters`, as does a Sentiment, Sentiment Score or Emotions filter that needs a
-      value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
+      `unfilterableFilters`, as does a Sentiment, Sentiment Score, Emotions, Topic or Subtopic filter
+      that needs a value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
       most 4000 characters in all, each value counted percent-encoded as the URL carries it
       (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
       `limit_exceeded`.

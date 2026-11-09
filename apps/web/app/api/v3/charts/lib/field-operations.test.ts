@@ -12,6 +12,7 @@ import { acquireInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
+import { getDatasetTopics } from "@/modules/ee/analysis/lib/dataset-topics";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "./field-operations";
 import { ZV3ChartFieldCatalog } from "./resources";
 
@@ -39,6 +40,7 @@ vi.mock("@/modules/ee/analysis/api/lib/cube-client", async (importOriginal) => (
 }));
 
 vi.mock("@/modules/ee/analysis/lib/dataset-chart-fields", () => ({ getDatasetChartFields: vi.fn() }));
+vi.mock("@/modules/ee/analysis/lib/dataset-topics", () => ({ getDatasetTopics: vi.fn() }));
 
 const EMBEDDED_FIELD = { name: "FeedbackRecords.ed_area_manager_1a2b3c4d", key: "Area Manager" };
 
@@ -115,7 +117,7 @@ describe("getV3ChartFieldCatalog", () => {
     );
     expect(getDatasetChartFields).toHaveBeenCalledWith(
       { datasetId, workspaceId: internalWorkspaceId, organizationId, actor },
-      { withAnswerQuestions: true }
+      { withAnswerQuestions: true, withTopics: true }
     );
   });
 
@@ -333,5 +335,60 @@ describe("listV3ChartFieldValues", () => {
     vi.mocked(executeTenantScopedQuery).mockRejectedValue(new Error("boom"));
 
     expect((await lookup()).status).toBe(500);
+  });
+});
+
+describe("listV3ChartFieldValues for topic fields (ENG-6989)", () => {
+  const lookup = (field: string, query: Record<string, unknown> = {}) =>
+    listV3ChartFieldValues({
+      field,
+      query: { workspaceId, datasetId, ...query } as never,
+      authentication: session,
+      requestId,
+      instance,
+    });
+
+  beforeEach(() => {
+    vi.mocked(getDatasetTopics).mockResolvedValue({
+      status: "active",
+      labels: { topics: ["Billing", "Login"], subtopics: ["Billing › Invoices", "Login › Password reset"] },
+    });
+  });
+
+  test("lists the dataset's current labels from its taxonomy, without querying Cube", async () => {
+    const topics = await lookup("FeedbackRecords.responseTopic");
+    const subtopics = await lookup("FeedbackRecords.subtopic", { search: "PASS" });
+
+    expect(((await topics.json()) as { data: unknown }).data).toEqual([
+      { value: "Billing" },
+      { value: "Login" },
+    ]);
+    expect(((await subtopics.json()) as { data: unknown }).data).toEqual([
+      { value: "Login › Password reset" },
+    ]);
+    expect(getDatasetTopics).toHaveBeenCalledWith({ datasetId, organizationId });
+    expect(executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  test("still needs read access to the dataset", async () => {
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(
+      problemForbidden(requestId, undefined, instance)
+    );
+
+    expect((await lookup("FeedbackRecords.topic")).status).toBe(403);
+    expect(getDatasetTopics).not.toHaveBeenCalled();
+  });
+
+  test("answers 422 for a dataset with no topics, and 502 when Hub cannot say", async () => {
+    vi.mocked(getDatasetTopics).mockResolvedValueOnce({ status: "inactive" });
+    const inactive = await lookup("FeedbackRecords.topic");
+    expect(inactive.status).toBe(422);
+    expect((await problemOf(inactive)).invalid_params?.[0]).toMatchObject({
+      name: "field",
+      code: "invalid_reference",
+    });
+
+    vi.mocked(getDatasetTopics).mockResolvedValueOnce({ status: "unavailable" });
+    expect((await lookup("FeedbackRecords.topic")).status).toBe(502);
   });
 });

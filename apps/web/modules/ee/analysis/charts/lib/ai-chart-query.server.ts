@@ -16,6 +16,7 @@ import {
   FEEDBACK_DIMENSION_IDS,
   FEEDBACK_MEASURE_IDS,
   FEEDBACK_TIME_DIMENSION_IDS,
+  TOPIC_DIMENSION_IDS,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import { type TChartType, ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { resolveAIDateRange } from "./ai-chart-date-range";
@@ -100,10 +101,13 @@ const buildZFilter = (memberIds: readonly string[]) =>
 export const buildAIQueryResponseSchema = (dataset?: TDatasetChartFields) => {
   const embeddedIds = (dataset?.embeddedFields ?? []).map((field) => field.name);
   const answerIds = dataset?.answerQuestions?.length ? [ANSWER_MEMBER] : [];
-  const ZDimensionId = z.enum(toEnumTuple([...FEEDBACK_DIMENSION_IDS, ...embeddedIds]));
+  // The topic fields only where the dataset has topics to offer (ENG-6989).
+  const topicIds = dataset?.topics?.status === "active" ? TOPIC_DIMENSION_IDS : [];
+  const ZDimensionId = z.enum(toEnumTuple([...FEEDBACK_DIMENSION_IDS, ...topicIds, ...embeddedIds]));
   const ZFilter = buildZFilter([
     ...FEEDBACK_MEASURE_IDS,
     ...FEEDBACK_DIMENSION_IDS,
+    ...topicIds,
     ...embeddedIds,
     ...answerIds,
   ]);

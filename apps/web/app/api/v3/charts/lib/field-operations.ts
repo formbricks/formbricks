@@ -20,6 +20,7 @@ import {
   formatAnswerValue,
 } from "@/modules/ee/analysis/lib/answer-filter";
 import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
+import { getDatasetTopics } from "@/modules/ee/analysis/lib/dataset-topics";
 import {
   buildDimensionValueQuery,
   collectDimensionValues,
@@ -28,9 +29,11 @@ import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fi
 import {
   CHART_DATE_PRESETS,
   type TChartField,
+  TOPICS_UNAVAILABLE_REASONS,
   createChartFieldLookup,
   getChartFieldCatalog,
 } from "@/modules/ee/analysis/lib/field-catalog";
+import { isSubtopicDimensionId, isTopicDimensionId } from "@/modules/ee/analysis/lib/schema-definition";
 import { applyChartQueryRateLimit, withChartQuerySlot } from "./data-operations";
 import type { TV3ChartFieldCatalog } from "./resources";
 import type { TV3ChartFieldValuesQuery } from "./schemas";
@@ -66,7 +69,8 @@ const serializeCatalog = (
  *
  * Answered per dataset: the caller has to be able to read the dataset it is about to write a query for,
  * and each dataset adds its embedded-data keys as `FeedbackRecords.ed_*` fields, labelled by the key
- * (ENG-6893), and the questions an answer rule may name (`answerQuestions`, C14). Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
+ * (ENG-6893), the questions an answer rule may name (`answerQuestions`, C14), and, when it has an active
+ * taxonomy the organization may read, the topic fields (ENG-6989). Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
  */
 export async function getV3ChartFieldCatalog({
   workspaceId,
@@ -96,7 +100,7 @@ export async function getV3ChartFieldCatalog({
 
     const dataset = await getDatasetChartFields(
       { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
-      { withAnswerQuestions: true }
+      { withAnswerQuestions: true, withTopics: true }
     );
     return successResponse(serializeCatalog(getChartFieldCatalog(dataset), dataset.answerQuestions ?? []), {
       requestId,
@@ -111,6 +115,45 @@ export async function getV3ChartFieldCatalog({
  * narrowed server-side with `search`.
  */
 export const FIELD_VALUE_LOOKUP_LIMIT = 100;
+
+/**
+ * A topic field's values (ENG-6989): the dataset's current topic labels, from its active taxonomy rather
+ * than from the records, so every label a filter may use is offered, one with no record yet included.
+ * `search` matches anywhere in a label, case aside, as the Cube lookup's `contains` does.
+ */
+const listTopicFieldValues = async ({
+  field,
+  query,
+  organizationId,
+  requestId,
+  instance,
+}: {
+  field: string;
+  query: TV3ChartFieldValuesQuery;
+  organizationId: string;
+  requestId: string;
+  instance: string;
+}): Promise<Response> => {
+  const topics = await getDatasetTopics({ datasetId: query.datasetId, organizationId });
+  if (topics.status === "unavailable") {
+    return problemBadGateway(requestId, "The topics could not be loaded. Try again shortly.", instance);
+  }
+  if (topics.status !== "active") {
+    return problemUnprocessableContent(requestId, "This dataset has no topics to look up", {
+      instance,
+      invalid_params: [
+        { name: "field", reason: TOPICS_UNAVAILABLE_REASONS[topics.status], code: "invalid_reference" },
+      ],
+    });
+  }
+  const labels = isSubtopicDimensionId(field) ? topics.labels.subtopics : topics.labels.topics;
+  const search = query.search?.toLocaleLowerCase();
+  const matching = search ? labels.filter((label) => label.toLocaleLowerCase().includes(search)) : labels;
+  return successResponse(
+    matching.slice(0, FIELD_VALUE_LOOKUP_LIMIT).map((value) => ({ value })),
+    { requestId }
+  );
+};
 
 /**
  * `GET /api/v3/charts/fields/{field}/values` → 200 `{ data: [{ value, fieldType? }] }`.
@@ -155,6 +198,16 @@ export async function listV3ChartFieldValues({
 
     const actor = getV3AuthorizationActor(authentication);
     if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
+
+    if (isTopicDimensionId(field)) {
+      return await listTopicFieldValues({
+        field,
+        query,
+        organizationId: access.organizationId,
+        requestId,
+        instance,
+      });
+    }
 
     // A dataset's embedded-data fields are looked up like any low-cardinality dimension.
     const lookupField = isEmbeddedMemberName(field)

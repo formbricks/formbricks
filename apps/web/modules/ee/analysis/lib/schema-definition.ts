@@ -607,6 +607,77 @@ export const LANGUAGE_DIMENSION_ID = "FeedbackRecords.language";
 export const VALUE_TEXT_DIMENSION_ID = "FeedbackRecords.valueText";
 export const VALUE_ID_DIMENSION_ID = "FeedbackRecords.valueId";
 
+// ── Current taxonomy topics (ENG-6989) ──────────────────────────────────────────────────────────────
+export const TOPIC_DIMENSION_ID = "FeedbackRecords.topic";
+export const SUBTOPIC_DIMENSION_ID = "FeedbackRecords.subtopic";
+export const RESPONSE_TOPIC_DIMENSION_ID = "FeedbackRecords.responseTopic";
+export const RESPONSE_SUBTOPIC_DIMENSION_ID = "FeedbackRecords.responseSubtopic";
+
+/** Joins a topic and its subtopic in a subtopic value, as Cube writes it: "Billing › Refunds". */
+export const TOPIC_PATH_SEPARATOR = " › ";
+
+/**
+ * The dataset's current taxonomy topics, level 1 (topic) and level 2 (subtopic), as chart dimensions.
+ * Cube reads them from Hub's taxonomy_current_record_topics view when a chart is queried.
+ *
+ * Not in FEEDBACK_FIELDS: the builder and the AI generator offer every entry there to every dataset,
+ * and these only mean something for a dataset with an active taxonomy. A dataset's catalog adds them
+ * (`getChartFieldCatalog`) the way it adds its embedded-data keys.
+ *
+ * Two pairs, because a chart asks one of two questions. The record's own topic only exists on a
+ * classified open-text answer, so it goes with count, sentiment and emotions. Scores live on other
+ * records of the same response, so NPS by topic needs the topics of the response.
+ */
+export const TOPIC_FIELDS: readonly FieldDefinition[] = [
+  {
+    id: TOPIC_DIMENSION_ID,
+    label: "Topic",
+    type: "string",
+    description:
+      "The record's own current topic (level 1) in the dataset's taxonomy. Only classified open-text answers have one; empty for every other record, outliers included. Use it with count, sentiment and emotions.",
+  },
+  {
+    id: SUBTOPIC_DIMENSION_ID,
+    label: "Subtopic",
+    type: "string",
+    description: `The record's own current subtopic (level 2), written "Topic${TOPIC_PATH_SEPARATOR}Subtopic". Empty when the record has no current topic. Use it with count, sentiment and emotions.`,
+  },
+  {
+    id: RESPONSE_TOPIC_DIMENSION_ID,
+    label: "Response topic",
+    type: "string",
+    description:
+      "The current topics of the open-text answers in the same response. Use it with NPS, CSAT, CES, rating and unique responses. A response with answers in two topics counts once under each, so rows can add up to more than the total; count counts every record of the matching responses, so use unique responses for topic volume. Filter with equals, set or notSet.",
+  },
+  {
+    id: RESPONSE_SUBTOPIC_DIMENSION_ID,
+    label: "Response subtopic",
+    type: "string",
+    description: `The current subtopics of the open-text answers in the same response, written "Topic${TOPIC_PATH_SEPARATOR}Subtopic". Counts like Response topic. Filter with equals, set or notSet.`,
+  },
+];
+
+export const TOPIC_DIMENSION_IDS: readonly string[] = TOPIC_FIELDS.map((field) => field.id);
+
+const TOPIC_DIMENSION_ID_SET: ReadonlySet<string> = new Set(TOPIC_DIMENSION_IDS);
+
+export const isTopicDimensionId = (id: string): boolean => TOPIC_DIMENSION_ID_SET.has(id);
+
+/** The pair that reads the topics of every answer in the response, not the record's own. */
+export const isResponseTopicDimensionId = (id: string): boolean =>
+  id === RESPONSE_TOPIC_DIMENSION_ID || id === RESPONSE_SUBTOPIC_DIMENSION_ID;
+
+/** The pair whose values are subtopics, "Topic › Subtopic", rather than topics. */
+export const isSubtopicDimensionId = (id: string): boolean =>
+  id === SUBTOPIC_DIMENSION_ID || id === RESPONSE_SUBTOPIC_DIMENSION_ID;
+
+/**
+ * Filter operators of a response-topic field. It joins every answer of the response, so `notEquals
+ * Billing` would keep a response that mentions Billing and anything else — "has another topic", not
+ * "does not mention Billing". Only the operators that mean what they say are offered.
+ */
+export const RESPONSE_TOPIC_FILTER_OPERATORS: readonly FilterOperator[] = ["equals", "set", "notSet"];
+
 export const isSentimentValue = (value: string): value is TSentimentValue =>
   (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
 
@@ -813,6 +884,11 @@ export const SELECTABLE_VALUE_DIMENSION_IDS = [
   "FeedbackRecords.metadataCountry",
   "FeedbackRecords.metadataAction",
   "FeedbackRecords.metadataEndingId",
+  // The dataset's current topic labels (ENG-6989), a short list a taxonomy names.
+  TOPIC_DIMENSION_ID,
+  SUBTOPIC_DIMENSION_ID,
+  RESPONSE_TOPIC_DIMENSION_ID,
+  RESPONSE_SUBTOPIC_DIMENSION_ID,
 ] as const;
 
 export type TSelectableValueDimensionId = (typeof SELECTABLE_VALUE_DIMENSION_IDS)[number];
@@ -872,12 +948,13 @@ export function getFilterOperatorsForType(type: "string" | "number" | "time" | "
 }
 
 /**
- * Get field definition by ID.
+ * Get field definition by ID: a FEEDBACK_FIELDS dimension or measure, or a topic field (which is not
+ * offered to every dataset, but is named by its label wherever a query uses it).
  */
 export function getFieldById(id: string): FieldDefinition | MeasureDefinition | undefined {
   const dimension = FEEDBACK_FIELDS.dimensions.find((d) => d.id === id);
   if (dimension) return dimension;
-  return FEEDBACK_FIELDS.measures.find((m) => m.id === id);
+  return FEEDBACK_FIELDS.measures.find((m) => m.id === id) ?? TOPIC_FIELDS.find((field) => field.id === id);
 }
 
 /**

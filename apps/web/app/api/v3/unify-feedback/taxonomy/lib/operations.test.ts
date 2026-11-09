@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
+import { invalidateDatasetTopics } from "@/modules/ee/analysis/lib/dataset-topics";
 import {
   createTaxonomyRun,
   getActiveTaxonomyTree,
@@ -32,6 +33,8 @@ vi.mock("./access", () => ({
   requireUnifyDirectoryMutationAccess: vi.fn(),
   getSessionUserId: vi.fn(),
 }));
+
+vi.mock("@/modules/ee/analysis/lib/dataset-topics", () => ({ invalidateDatasetTopics: vi.fn() }));
 
 vi.mock("@/modules/hub/service", () => ({
   listTaxonomyFields: vi.fn(),
@@ -511,6 +514,8 @@ describe("renameV3TaxonomyNode", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ data: renamed });
+    // Charts offer the new label at once (ENG-6989).
+    expect(invalidateDatasetTopics).toHaveBeenCalledWith(directoryId);
   });
 
   test("returns 404, not 502, when the node was already removed", async () => {
@@ -530,6 +535,7 @@ describe("renameV3TaxonomyNode", () => {
     const response = await renameV3TaxonomyNode({ ...base, nodeId: node.id, label: "Copilot" });
     const body = await response.json();
 
+    expect(invalidateDatasetTopics).not.toHaveBeenCalled();
     expect(response.status).toBe(502);
     expect(body.detail).toBe("Failed to rename taxonomy node");
     expect(JSON.stringify(body)).not.toContain(HUB_INTERNAL_MARKER);
@@ -554,6 +560,7 @@ describe("removeV3TaxonomyNode", () => {
     const response = await removeV3TaxonomyNode({ ...base, nodeId: node.id });
 
     expect(response.status).toBe(204);
+    expect(invalidateDatasetTopics).toHaveBeenCalledWith(directoryId);
   });
 
   test("returns 404, not 502, when the node was already removed", async () => {

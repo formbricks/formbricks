@@ -4136,6 +4136,14 @@ paths:
         Write chart queries against this list — the chart query validator refuses any field that is not
         in it, so the catalog cannot drift from what the API accepts.
 
+        A dataset with an active taxonomy also lists its topic fields: `FeedbackRecords.topic` and
+        `subtopic` (the record's own topic, for counts, sentiment and emotions) and
+        `FeedbackRecords.responseTopic` and `responseSubtopic` (the topics of the response, for NPS, CSAT,
+        CES, rating and unique responses). Subtopics are written "Topic › Subtopic". A chart query that
+        names one is written and previewed only while the dataset has an active taxonomy and the
+        organization's plan includes Feedback Directories, and its `equals` and `notEquals` filter values
+        must be current labels. A saved chart keeps running if the taxonomy later goes away.
+
         Needs read access to the workspace and to the Feedback Dataset. Session cookie, `x-api-key`, or
         a Bearer token.
       tags:
@@ -4187,6 +4195,9 @@ paths:
         occurs — an `equals` filter on a picked value cannot miss on casing or spacing. Only fields the
         catalog marks `valueLookup: true` qualify; any other field, or one outside the catalog, answers
         422. Narrow a field with more values using `search`. The list is not paged.
+
+        A topic field lists the dataset's current topic labels from its active taxonomy, including labels
+        no record has yet; a dataset without one answers 422.
 
         Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
         budget (600 per minute, 20 at once, per user or API key), not the v3 default.
@@ -5250,8 +5261,8 @@ paths:
         - **Filters.** Each `filter[<id>]` with values in `picks[<id>]` is ANDed onto the chart's saved
           filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
           on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
-          `unfilterableFilters`, as does a Sentiment, Sentiment Score or Emotions filter that needs a
-          value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
+          `unfilterableFilters`, as does a Sentiment, Sentiment Score, Emotions, Topic or Subtopic filter
+          that needs a value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
           most 4000 characters in all, each value counted percent-encoded as the URL carries it
           (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
           `limit_exceeded`.
@@ -14731,7 +14742,7 @@ components:
       additionalProperties: false
     DashboardFilter:
       type: object
-      description: 'A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the caller''s own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it. Like a caller''s filter it is ANDed onto every chart''s saved query and never widens it. A chart whose Feedback Dataset lacks the field shows no data, and so does a chart that reads no text answer under a Sentiment, Sentiment Score or Emotions filter that needs a value.'
+      description: 'A locked dashboard filter: a field, an operator and the values an editor locked it to, saved on the dashboard. Every dashboard-bound chart data and value list read applies it, whoever reads, before the caller''s own filters (`filter[<id>]` with `picks[<id>]`); a request cannot name, replace or drop it. Like a caller''s filter it is ANDed onto every chart''s saved query and never widens it. A chart whose Feedback Dataset lacks the field shows no data, and so does a chart that reads no text answer under a Sentiment, Sentiment Score, Emotions, Topic or Subtopic filter that needs a value.'
       required:
         - id
         - field
@@ -14938,7 +14949,7 @@ components:
       additionalProperties: false
     DashboardChartData:
       type: object
-      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters the chart cannot be narrowed by: its Feedback Dataset does not have their field, or they need a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on text answers only — on a chart whose saved query reads no text answer (its saved filters pin `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
+      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters the chart cannot be narrowed by: its Feedback Dataset does not have their field (a topic field where the dataset has no active taxonomy), or they need a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on text answers only — or of `FeedbackRecords.topic` or `subtopic`, which only classified text answers have, on a chart whose saved query reads no text answer (its saved filters pin `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
       required:
         - rows
         - optionLabels
