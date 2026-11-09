@@ -192,15 +192,6 @@ const getTextKeys = (read: TExcelExportRead, survey: TSurvey): Map<string, strin
   );
 };
 
-/** Set `value` at a dotted `path` of index and property segments, as `walkSurveyTexts` writes them. */
-const setI18nText = (survey: TSurvey, path: string, textKey: string, value: string): void => {
-  let holder: unknown = survey;
-  for (const segment of path.split(".")) {
-    holder = (holder as Record<string, unknown>)[segment];
-  }
-  (holder as Record<string, string>)[textKey] = value;
-};
-
 /** The element id a text key names, for texts that belong to an element: `element.<id>.…`. */
 const elementIdOfKey = (key: string): string | null => {
   const [kind, id] = key.split(".");
@@ -257,6 +248,13 @@ class ExcelExportApplication {
   private readonly createdElements = new Set<string>();
   private readonly textKeys: Map<string, string | null>;
   private readonly textsByKey: Map<string, TSurveyText>;
+  /**
+   * Where each stored text of the copy is written: the text object itself, not its index path. A question
+   * or option the sheet adds moves the ones after it, so a path taken before would land on the addition;
+   * the object moves with its question. Holds while every change to the copy keeps its text objects:
+   * additions copy shallowly (`addBlock`) and a refused addition is undone in place (`addField`).
+   */
+  private readonly writeTargets: Map<string, TI18nString>;
   /** Each distinct plain text as it is shown; see `toPlainText`. */
   private readonly markup = new Map<string, { text: string; escaped: boolean }>();
 
@@ -268,6 +266,9 @@ class ExcelExportApplication {
     this.textKeys = getTextKeys(context.read, source);
     // Every text the survey has, empty or not: a translation may fill a text the export showed empty.
     this.textsByKey = new Map(walkSurveyTexts(source).map((text) => [text.key, text]));
+    this.writeTargets = new Map(
+      walkSurveyTexts(this.survey).flatMap((text) => (text.value ? [[text.key, text.value]] : []))
+    );
   }
 
   async run(): Promise<TExcelExportApplied> {
@@ -381,7 +382,8 @@ class ExcelExportApplication {
     if (!row.key.startsWith("welcomeCard.")) this.matched += 1;
     this.followKey(row.key);
     // A text the survey never stored (an "Other" placeholder nobody typed) was not exported either.
-    if (!text.value) return;
+    const target = this.writeTargets.get(row.key);
+    if (!text.value || !target) return;
 
     for (const [code, cell] of row.cells) {
       const textKey = this.textKeys.get(code);
@@ -417,7 +419,7 @@ class ExcelExportApplication {
       if (text.isRichText && FORMATTING_TAG.test(stored)) {
         this.issues.push({ code: "sheet_formatting_dropped", severity: "warning", params });
       }
-      setI18nText(this.survey, text.path, textKey, next);
+      target[textKey] = next;
       this.updatedKeys.add(row.key);
     }
   }
@@ -481,55 +483,55 @@ class ExcelExportApplication {
     const text = this.toI18n(row, isRichText);
     if (!text) return this.skip(row.row, "no_text");
 
-    // A question the survey had is checked addition by addition, so one that would break it is put back
-    // alone and the texts the sheet edited in the question stay edited; a question the sheet created is
-    // checked once it is whole (`checkCreatedElements`), since it is not valid until its options are in.
-    const before = this.createdElements.has(element.id) ? null : structuredClone(element);
-    const refusal = this.setField(element, field, text);
-    if (refusal) return this.skip(row.row, refusal);
-    if (before && !ZSurveyElement.safeParse(element).success) {
-      const block = this.survey.blocks[found.blockIndex];
-      block.elements = block.elements.map((current) => (current.id === element.id ? before : current));
+    // A question the survey had is checked addition by addition, so one that would break it is undone
+    // alone, in place, and the texts the sheet edited in the question stay edited; a question the sheet
+    // created is checked once it is whole (`checkCreatedElements`), since it is not valid until its
+    // options are in.
+    const change = this.setField(element, field, text);
+    if ("refusal" in change) return this.skip(row.row, change.refusal);
+    if (!this.createdElements.has(element.id) && !ZSurveyElement.safeParse(element).success) {
+      change.undo();
       return this.skip(row.row, "invalid_question");
     }
     this.markChanged(element.id, row.row);
     this.issues.push({ code: "sheet_option_added", severity: "info", params: { row: row.row } });
   }
 
-  /** Add `text` to `element` as `field`; why it can't be, or `null` once it is. */
+  /** Add `text` to `element` as `field`: why it can't be, or how to take it back out. */
   private setField(
     element: TSurveyElement & Record<string, unknown>,
     field: TExcelExportField,
     text: TI18nString
-  ): TSurveyImportSheetRowSkipCause | null {
+  ): { refusal: TSurveyImportSheetRowSkipCause } | { undo: () => void } {
     switch (field.kind) {
       case "choice": {
-        if (!CHOICE_TYPES.has(element.type)) return "field_not_in_question";
+        if (!CHOICE_TYPES.has(element.type)) return { refusal: "field_not_in_question" };
         const choices = element.choices as { id: string; label: TI18nString }[];
         // "Other" stays last, as the editor keeps it.
         const otherIndex = choices.findIndex((choice) => choice.id === "other");
-        choices.splice(otherIndex < 0 ? choices.length : otherIndex, 0, { id: createId(), label: text });
-        return null;
+        const at = otherIndex < 0 ? choices.length : otherIndex;
+        choices.splice(at, 0, { id: createId(), label: text });
+        return { undo: () => choices.splice(at, 1) };
       }
       case "matrixRow":
       case "matrixColumn": {
-        if (element.type !== TSurveyElementTypeEnum.Matrix) return "field_not_in_question";
+        if (element.type !== TSurveyElementTypeEnum.Matrix) return { refusal: "field_not_in_question" };
         const list = element[field.kind === "matrixRow" ? "rows" : "columns"] as {
           id: string;
           label: TI18nString;
         }[];
         list.push({ id: createId(), label: text });
-        return null;
+        return { undo: () => list.pop() };
       }
       case "property": {
         const types = PROPERTY_TYPES[field.property];
-        if (types !== "all" && !types.has(element.type)) return "field_not_in_question";
+        if (types !== "all" && !types.has(element.type)) return { refusal: "field_not_in_question" };
         // A field an existing question has is a keyed row: a second one is nothing to add.
         if (!this.createdElements.has(element.id) && element[field.property] !== undefined) {
-          return "field_taken";
+          return { refusal: "field_taken" };
         }
         element[field.property] = text;
-        return null;
+        return { undo: () => delete element[field.property] };
       }
     }
   }

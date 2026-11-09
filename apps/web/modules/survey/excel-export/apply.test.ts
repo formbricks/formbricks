@@ -418,6 +418,74 @@ describe("applyExcelExport: added rows", () => {
     );
   });
 
+  test("writes the edits below an added question into their own texts, not into the question that moved there", async () => {
+    // The new question's block goes in front of block-2, so every block-2 text moves one block down.
+    const applied = await importSheet((rows) => {
+      const edited = insertAfter(rows, "single", added("inserted", "Free text", "Inserted?", "Eingefügt?"));
+      edited[rowOf(edited, "element.multi.headline")][EN] = "Which ones?";
+      edited[rowOf(edited, "element.multi.headline")][DE] = "Welche?";
+      edited[rowOf(edited, "element.nps.lowerLabel")][DE] = "Gar nicht";
+      edited[rowOf(edited, "element.rating.lowerLabel")][DE] = "Mies";
+      return edited;
+    });
+
+    expect(elementOf(applied.survey, "inserted").headline).toEqual({
+      default: "Inserted?",
+      de: "Eingefügt?",
+    });
+    expect(elementOf(applied.survey, "multi").headline).toEqual({ default: "Which ones?", de: "Welche?" });
+    expect((elementOf(applied.survey, "nps").lowerLabel as Record<string, string>).de).toBe("Gar nicht");
+    expect((elementOf(applied.survey, "rating").lowerLabel as Record<string, string>).de).toBe("Mies");
+    expect(applied.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 3 } });
+  });
+
+  test("writes an Other edit below an added option into Other, not into the option that took its place", async () => {
+    const applied = await importSheet((rows) => {
+      const no = rowOf(rows, "element.single.choice.no.label");
+      const edited = [
+        ...rows.slice(0, no + 1),
+        added("single", "Choice 3", "Maybe", "Vielleicht"),
+        ...rows.slice(no + 1),
+      ];
+      edited[rowOf(edited, "element.single.choice.other.label")][EN] = "Something else";
+      edited[rowOf(edited, "element.single.choice.other.label")][DE] = "Etwas anderes";
+      return edited;
+    });
+
+    expect(
+      (elementOf(applied.survey, "single").choices as { id: string; label: unknown }[]).map(
+        ({ id, label }) => (id === "other" ? { id, label } : label)
+      )
+    ).toEqual([
+      { default: "Yes", de: "Ja" },
+      { default: "No", de: "Nein" },
+      { default: "Maybe", de: "Vielleicht" },
+      { id: "other", label: { default: "Something else", de: "Etwas anderes" } },
+    ]);
+  });
+
+  test("keeps writing a question's texts after one of its additions was undone", async () => {
+    // The 24th added option is one too many for a ranking question; the option rows below it still apply.
+    const applied = await importSheet((rows) => {
+      const headline = rowOf(rows, "element.ranking.headline");
+      const edited = [
+        ...rows.slice(0, headline + 1),
+        ...Array.from({ length: 24 }, (_, index) =>
+          added("ranking", `Choice ${index + 3}`, `Option ${index}`)
+        ),
+        ...rows.slice(headline + 1),
+      ];
+      const firstChoice = edited.findIndex((row) => row[0].startsWith("element.ranking.choice."));
+      edited[firstChoice][DE] = "Erste";
+      return edited;
+    });
+
+    const ranking = elementOf(applied.survey, "ranking");
+    expect(ranking.choices).toHaveLength(25);
+    expect((ranking.choices as { label: Record<string, string> }[])[0].label.de).toBe("Erste");
+    expect(applied.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 1 } });
+  });
+
   test("adds no question past the most blocks a survey holds", async () => {
     const full = structuredClone(SURVEY);
     const [first] = full.blocks;
