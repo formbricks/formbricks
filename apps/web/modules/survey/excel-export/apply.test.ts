@@ -139,6 +139,32 @@ describe("applyExcelExport: texts", () => {
     expect(codes(applied)).toContain("markup_escaped");
   });
 
+  test("turns back the first 64 distinct @Labels of a text into recalls, and leaves any past them as typed", async () => {
+    const survey = structuredClone(SURVEY);
+    // Padded, so no label is the start of another: past the cap, a label that starts with one within it
+    // would take that one's recall (see RECALL_LABELS_MAX).
+    const ids = Array.from({ length: 65 }, (_, index) => `field${String(index).padStart(2, "0")}`);
+    survey.hiddenFields = { enabled: true, fieldIds: ids };
+    const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {
+      headline: Record<string, string>;
+    };
+    consent.headline = { default: ids.map((id) => `#recall:${id}/fallback:x#`).join(" "), de: "Danke" };
+
+    const applied = await importSheet(
+      (rows) => {
+        rows[rowOf(rows, "element.consent.headline")][EN] += " edited";
+        return rows;
+      },
+      { survey }
+    );
+
+    const stored = (elementOf(applied.survey, "consent").headline as Record<string, string>).default;
+    const restored = [...stored.matchAll(/#recall:(field\d+)\//g)].map(([, id]) => id);
+    expect(restored).toEqual(ids.slice(0, 64));
+    expect(stored).toContain(" @field64 edited");
+    expect(stored.endsWith(" edited")).toBe(true);
+  });
+
   test("turns an @Label back into the recall it shows", async () => {
     const survey = structuredClone(SURVEY);
     const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {

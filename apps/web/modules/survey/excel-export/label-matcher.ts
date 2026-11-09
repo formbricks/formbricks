@@ -8,7 +8,10 @@
  * number of labels at most, and `RECALL_LABELS_MAX` bounds that number.
  */
 
-/** The most distinct labels one text's recalls are matched by; any past it stay as typed. */
+/**
+ * The most distinct labels one text's recalls are matched by. A label past it is not matched: it stays as
+ * typed, unless a label within the cap is its start, which then matches as anywhere else.
+ */
 export const RECALL_LABELS_MAX = 64;
 
 interface TTrie {
