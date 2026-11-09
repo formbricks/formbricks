@@ -79,9 +79,9 @@ export interface LockfileValidationResults {
 /**
  * The interpolation placeholders a message expects, split by syntax.
  *
- * Both syntaxes are live in the locale files: `i18next-icu` formats with `IntlMessageFormat`, which
- * only understands `{name}`, while a handful of hand-written `en-US` strings still carry `{{name}}`.
- * The two are compared separately on purpose — a locale that "translates" `{surveys}` into
+ * `i18next-icu` formats with `IntlMessageFormat`, which only understands `{name}`: a message carrying
+ * `{{name}}` fails to parse and renders as its raw source. `en-US` has none, but translations have
+ * picked the syntax up, so it is still recognised. The two are compared separately on purpose — a locale that "translates" `{surveys}` into
  * `{{surveys}}` is exactly the breakage this check exists to catch, and treating them as equivalent
  * would hide it.
  */
@@ -163,20 +163,31 @@ const I18NEXT_PLACEHOLDER_PATTERN = /\{\{\s*([\w.$-]+)\s*\}\}/g;
  *
  * ICU messages are parsed with `ignoreTag: true` — the same option `i18next-icu` hands
  * `IntlMessageFormat` at runtime — so HTML is treated as literal text and only real arguments are
- * collected. `{{name}}` is pulled out first because `IntlMessageFormat` rejects it outright; a
- * message can (and today does) mix the two syntaxes.
+ * collected.
+ *
+ * The message is parsed as ICU first. `{{name}}` is only pulled out when that fails, because the same
+ * characters are valid ICU inside a branch — `{count, plural, other {{count}}}` is the `other` branch
+ * wrapping `{count}` — and stripping them there would misread a message the runtime formats fine.
  *
  * Throws when the message is not valid ICU, which the runtime also cannot format.
  */
 export function extractPlaceholders(message: string): PlaceholderSet {
-  const i18next = new Set<string>();
-  const icuMessage = message.replaceAll(I18NEXT_PLACEHOLDER_PATTERN, (_match, name: string) => {
-    i18next.add(name);
-    return "";
-  });
-
   const icu = new Set<string>();
-  collectIcuArguments(parse(icuMessage, { ignoreTag: true }), icu);
+  const i18next = new Set<string>();
+
+  let elements: MessageFormatElement[];
+  try {
+    elements = parse(message, { ignoreTag: true });
+  } catch (icuError) {
+    const icuMessage = message.replaceAll(I18NEXT_PLACEHOLDER_PATTERN, (_match, name: string) => {
+      i18next.add(name);
+      return "";
+    });
+    if (i18next.size === 0) throw icuError;
+    elements = parse(icuMessage, { ignoreTag: true });
+  }
+
+  collectIcuArguments(elements, icu);
 
   return {
     icu: [...icu].sort((a, b) => a.localeCompare(b)),

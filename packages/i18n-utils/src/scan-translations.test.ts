@@ -629,6 +629,18 @@ describe("Translation Scanner", () => {
       });
     });
 
+    test("reads a branch that holds only an argument as ICU, not as {{name}}", () => {
+      // `other {{count}}` is the `other` branch wrapping `{count}`: valid ICU the runtime formats.
+      expect(extractPlaceholders("{count, plural, other {{count}}} 件")).toEqual({
+        icu: ["count"],
+        i18next: [],
+      });
+      expect(extractPlaceholders("{kind, select, a {{name}} other {x}}")).toEqual({
+        icu: ["kind", "name"],
+        i18next: [],
+      });
+    });
+
     test("ignores HTML, which the runtime hands to IntlMessageFormat as literal text", () => {
       expect(extractPlaceholders("Write <b>bold</b> {name}")).toEqual({ icu: ["name"], i18next: [] });
     });
