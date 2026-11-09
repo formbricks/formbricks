@@ -304,6 +304,27 @@ describe("updateTeamDetails", () => {
       workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
     });
   });
+  test("gives a team with no members workspace access", async () => {
+    vi.mocked(prisma.team.findUnique)
+      .mockResolvedValueOnce({
+        id: "t1",
+        organizationId: "org1",
+        name: "Team 1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .mockResolvedValueOnce({ ...mockTeamDetails, teamUsers: [] } as never);
+    vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
+
+    await expect(updateTeamDetails("t1", { ...data, members: [] })).resolves.toBe(true);
+    expect(prisma.membership.count).not.toHaveBeenCalled();
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamIds: ["t1"],
+      teamMemberships: [],
+      workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
+    });
+  });
   test("does not change a successful update result when projection unexpectedly rejects", async () => {
     vi.mocked(prisma.team.findUnique)
       .mockResolvedValueOnce({
