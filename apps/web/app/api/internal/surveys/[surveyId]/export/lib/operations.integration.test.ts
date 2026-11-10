@@ -254,7 +254,7 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       "surveyId",
       "updatedAt",
     ]);
-    expect(meta[0][1]).toBe("1");
+    expect(meta[0][1]).toBe("2");
     expect(meta[5][1]).toBe(draftSurveyId);
     const properties = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[surveySheetName], { header: 1 });
     expect(properties.slice(1, 3)).toEqual([
