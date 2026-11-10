@@ -69,8 +69,14 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/survey-retention/{surveyId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/survey-retention/[surveyId]/route.ts` |
 | `/api/internal/surveys/{surveyId}/content` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/content/route.ts` |
 | `/api/internal/surveys/{surveyId}/copies` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/copies/route.ts` |
+| `/api/internal/surveys/{surveyId}/email-embed` | GET | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/email-embed/route.ts` |
+| `/api/internal/surveys/{surveyId}/example-responses` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/example-responses/route.ts` |
 | `/api/internal/surveys/{surveyId}/export` | GET | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/export/route.ts` |
+| `/api/internal/surveys/{surveyId}/personal-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/personal-links/route.ts` |
+| `/api/internal/surveys/{surveyId}/preview-emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/preview-emails/route.ts` |
+| `/api/internal/surveys/{surveyId}/resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/resets/route.ts` |
 | `/api/internal/surveys/{surveyId}/single-use-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/single-use-links/route.ts` |
+| `/api/internal/surveys/{surveyId}/single-use-settings` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/single-use-settings/route.ts` |
 | `/api/internal/surveys/{surveyId}/slug` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/slug/route.ts` |
 | `/api/internal/surveys/generate/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/generate/stream/route.ts` |
 | `/api/internal/surveys/import/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/import/stream/route.ts` |
