@@ -54,6 +54,8 @@ interface SignupFormProps {
   emailVerificationDisabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
+  /** Whether the instance's one SAML connection exists, looked up where the page renders. */
+  samlConnectionExists: boolean;
   isTurnstileConfigured: boolean;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
@@ -74,6 +76,7 @@ export const SignupForm = ({
   emailVerificationDisabled,
   isSsoEnabled,
   samlSsoEnabled,
+  samlConnectionExists,
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
@@ -380,6 +383,7 @@ export const SignupForm = ({
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
           samlSsoEnabled={samlSsoEnabled}
+          samlConnectionExists={samlConnectionExists}
           returnToUrl={returnToUrl}
           source="signup"
         />

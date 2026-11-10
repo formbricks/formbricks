@@ -50,6 +50,8 @@ interface LoginFormProps {
   isMultiOrgEnabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
+  /** Whether the instance's one SAML connection exists, looked up where the page renders. */
+  samlConnectionExists: boolean;
   oauthError?: string;
   emailJustVerified?: boolean;
   prefilledEmail?: string;
@@ -70,6 +72,7 @@ export const LoginForm = ({
   isMultiOrgEnabled,
   isSsoEnabled,
   samlSsoEnabled,
+  samlConnectionExists,
   oauthError,
   emailJustVerified,
   prefilledEmail,
@@ -342,6 +345,7 @@ export const LoginForm = ({
               oidcOAuthEnabled={oidcOAuthEnabled}
               oidcDisplayName={oidcDisplayName}
               samlSsoEnabled={samlSsoEnabled}
+              samlConnectionExists={samlConnectionExists}
               returnToUrl={resolvedCallbackUrl}
               source="signin"
             />

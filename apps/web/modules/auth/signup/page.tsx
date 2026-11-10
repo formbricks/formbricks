@@ -16,6 +16,7 @@ import { findMatchingLocale } from "@/lib/utils/locale";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getSamlConnectionExists } from "@/modules/ee/sso/lib/saml-connection";
 import { getSsoAvailability, toSsoFormProps } from "@/modules/ee/sso/lib/sso-availability";
 import { SignupForm } from "./components/signup-form";
 
@@ -30,7 +31,10 @@ export const SignupPage = async ({
     getIsMultiOrgEnabled(),
     getSsoAvailability(),
   ]);
-  const locale = await findMatchingLocale();
+  const [locale, samlConnectionExists] = await Promise.all([
+    findMatchingLocale(),
+    getSamlConnectionExists(ssoAvailability),
+  ]);
   if (!SIGNUP_ENABLED || !isMultOrgEnabled) {
     if (!inviteToken) notFound();
 
@@ -55,6 +59,7 @@ export const SignupPage = async ({
         emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         {...toSsoFormProps(ssoAvailability)}
+        samlConnectionExists={samlConnectionExists}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         userLocale={locale}
         emailFromSearchParams={emailFromSearchParams}
