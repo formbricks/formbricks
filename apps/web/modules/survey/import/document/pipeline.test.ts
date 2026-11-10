@@ -19,6 +19,7 @@ import {
   recordedDocumentGenerate,
 } from "./__fixtures__/recorded-plans";
 import { chunkDocumentLines } from "./chunks";
+import { readDocumentPlace } from "./issue-subject";
 import { buildGridModel } from "./model";
 import { type TRunDocumentImportParams, runDocumentImport } from "./pipeline";
 import { type TPreparedDocumentImport, prepareDocumentImport } from "./prepare";
@@ -229,7 +230,10 @@ describe("runDocumentImport, on files shaped like the ones it was built for", ()
       ["15", "consent"],
     ]);
     const skipped = report.issues.filter((issue) => issue.code === "question_skipped");
-    expect(skipped.map((issue) => issue.questionTag)).toEqual(["R6", "R14", "R17", "R18"]);
+    // Named by where they are and what they say, never by the import's own key (ENG-7070).
+    expect(skipped.map((issue) => issue.questionTag)).toEqual([undefined, undefined, undefined, undefined]);
+    expect(skipped.map((issue) => issue.place)).toEqual([6, 14, 17, 18].map((row) => ({ kind: "row", row })));
+    expect(skipped.every((issue) => (issue.questionText ?? "").length > 0)).toBe(true);
     expect(skipped[0].severity).toBe("warning");
     // The AI's reason is not passed on: it said Formbricks has no picture selection, which it has.
     expect(skipped[0].params).toEqual({ cause: "ai_skipped" });
@@ -272,12 +276,15 @@ describe("runDocumentImport: the AI's plan", () => {
     expect(linesInPrompt(prompts[1])).toEqual(["R2"]);
     expect(prompts[1]).toContain("R2: its kind is not allowed");
     expect(elementsOf(payload as TSurveyImportDraft)).toHaveLength(1);
-    expect(report.issues).toContainEqual({
-      code: "question_skipped",
-      severity: "warning",
-      questionTag: "R2",
-      params: { cause: "plan_invalid" },
-    });
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "question_skipped",
+        severity: "warning",
+        place: { kind: "row", row: 2 },
+        params: { cause: "plan_invalid" },
+      })
+    );
+    expect(report.issues.every((issue) => issue.questionTag === undefined)).toBe(true);
   });
 
   test("an entry whose cells an earlier entry read is dropped with a report line, not silently", async () => {
@@ -317,12 +324,14 @@ describe("runDocumentImport: the AI's plan", () => {
       )
     );
 
-    expect(report.issues).toContainEqual({
-      code: "question_skipped",
-      severity: "warning",
-      questionTag: "R2",
-      params: { cause: "ai_skipped" },
-    });
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "question_skipped",
+        severity: "warning",
+        place: { kind: "row", row: 2 },
+        params: { cause: "ai_skipped" },
+      })
+    );
   });
 
   test("without a model of its own, the import asks the organization's, traced to the user", async () => {
@@ -630,12 +639,14 @@ describe("runDocumentImport: the final gate", () => {
     const { payload, report } = await run(prepared(), generate());
 
     expect(elementsOf(payload as TSurveyImportDraft).map((element) => element.id)).toEqual(["Q1", "Q2"]);
-    expect(report.issues).toContainEqual({
-      code: "question_skipped",
-      severity: "warning",
-      questionTag: "Q3",
-      params: { cause: "validation_failed" },
-    });
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "question_skipped",
+        severity: "warning",
+        questionTag: "Q3",
+        params: { cause: "validation_failed" },
+      })
+    );
     expect(mocks.checkImportDraft).toHaveBeenCalledTimes(2);
   });
 
@@ -778,7 +789,13 @@ describe("runDocumentImport: what the file holds that the draft cannot", () => {
     const { payload, report } = await run(prepareFixture("club.docx", bytes), recordedDocumentGenerate(plan));
 
     expect(payload.name).toBe("Club survey (imported)");
-    expect(report.issues).toContainEqual({ code: "table_as_matrix", severity: "warning", questionTag: "P2" });
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "table_as_matrix",
+        severity: "warning",
+        place: { kind: "paragraph", paragraph: 2 },
+      })
+    );
     expect(report.issues).toContainEqual({
       code: "images_not_imported",
       severity: "warning",
@@ -879,8 +896,12 @@ describe("runDocumentImport: Prompt_Injection", () => {
     ]);
     expect(report.issues).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ code: "text_not_split", questionTag: "P4" }),
-        expect.objectContaining({ code: "text_not_split", questionTag: second.ref }),
+        expect.objectContaining({
+          code: "text_not_split",
+          place: { kind: "paragraph", paragraph: 4 },
+          questionText: "1. What did you think of the event overall?",
+        }),
+        expect.objectContaining({ code: "text_not_split", place: readDocumentPlace(String(second.ref)) }),
       ])
     );
 
