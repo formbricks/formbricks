@@ -1,12 +1,21 @@
 import "server-only";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { problemForbidden } from "@/app/api/v3/lib/response";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 
 /**
- * Run a guarded step whose refusals answer 403: an `OperationNotAllowedError` with its own reason (the
- * caller was authorized, so the reason reveals nothing), and a `ResourceNotFoundError` with the generic
- * 403, the same as a resource the caller can't see. Resolves to the 403 `Response`, or `null` when the
- * step went through; any other error propagates.
+ * The 403 for a refusal: an `OperationNotAllowedError` with its own reason (the caller was authorized, so
+ * the reason reveals nothing), and a `ResourceNotFoundError` with the generic 403, the same as a resource
+ * the caller can't see. `null` for any other error.
+ */
+const forbiddenRefusal = (error: unknown, requestId: string, instance?: string): Response | null => {
+  if (error instanceof OperationNotAllowedError) return problemForbidden(requestId, error.message, instance);
+  if (error instanceof ResourceNotFoundError) return problemForbidden(requestId, undefined, instance);
+  return null;
+};
+
+/**
+ * Run a guarded step whose refusals answer 403 (see `forbiddenRefusal`). Resolves to the 403 `Response`,
+ * or `null` when the step went through; any other error propagates.
  */
 export async function forbidOnRefusal(
   step: () => Promise<unknown>,
@@ -17,9 +26,21 @@ export async function forbidOnRefusal(
     await step();
     return null;
   } catch (error) {
-    if (error instanceof OperationNotAllowedError)
-      return problemForbidden(requestId, error.message, instance);
-    if (error instanceof ResourceNotFoundError) return problemForbidden(requestId, undefined, instance);
+    const refused = forbiddenRefusal(error, requestId, instance);
+    if (refused) return refused;
     throw error;
   }
 }
+
+/**
+ * The answer to a service's refusal, or `null` for an error that isn't one: the 403s of `forbidOnRefusal`,
+ * and a 422 with its reason for an `InvalidInputError`, raised by a service for a write it can't take — the
+ * message the server action this route replaces showed the user as is.
+ */
+export const refusalResponse = (error: unknown, requestId: string, instance?: string): Response | null => {
+  const refused = forbiddenRefusal(error, requestId, instance);
+  if (refused) return refused;
+  if (error instanceof InvalidInputError)
+    return problemUnprocessableContent(requestId, error.message, { instance });
+  return null;
+};

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { forbidOnRefusal } from "./refusal";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { forbidOnRefusal, refusalResponse } from "./refusal";
 
 vi.mock("server-only", () => ({}));
 
@@ -36,5 +36,46 @@ describe("forbidOnRefusal", () => {
         throw boom;
       }, REQUEST_ID)
     ).rejects.toBe(boom);
+  });
+});
+
+describe("refusalResponse", () => {
+  test("answers 403 with an OperationNotAllowedError's own reason", async () => {
+    const response = refusalResponse(
+      new OperationNotAllowedError("Cannot reset an archived survey."),
+      REQUEST_ID
+    );
+
+    expect(response?.status).toBe(403);
+    expect((await response?.json()).detail).toBe("Cannot reset an archived survey.");
+  });
+
+  test("answers the generic 403 for a missing resource", async () => {
+    const response = refusalResponse(new ResourceNotFoundError("Survey", "survey-1"), REQUEST_ID);
+
+    expect(response?.status).toBe(403);
+    expect((await response?.json()).detail).toBe("You are not authorized to access this resource");
+  });
+
+  test("answers 422 with an InvalidInputError's own reason", async () => {
+    const response = refusalResponse(new InvalidInputError("Invalid user segment filters"), REQUEST_ID);
+
+    expect(response?.status).toBe(422);
+    expect((await response?.json()).detail).toBe("Invalid user segment filters");
+  });
+
+  test("answers null for any other error", () => {
+    expect(refusalResponse(new Error("boom"), REQUEST_ID)).toBeNull();
+  });
+});
+
+describe("forbidOnRefusal and invalid input", () => {
+  test("lets an InvalidInputError through", async () => {
+    const invalid = new InvalidInputError("bad");
+    await expect(
+      forbidOnRefusal(async () => {
+        throw invalid;
+      }, REQUEST_ID)
+    ).rejects.toBe(invalid);
   });
 });

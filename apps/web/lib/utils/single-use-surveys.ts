@@ -8,7 +8,7 @@ const SINGLE_USE_SIGNATURE_PAYLOAD_PREFIX = "formbricks.single-use.v1";
 /**
  * The longest `suId` / `suToken` a link we minted can carry, for the public actions that take them from the
  * client before any of the validation below runs. An id is at most the 255 characters a custom id is
- * accepted at (ZGenerateSingleUseIdAction), where a cuid is 24 and an encrypted id about 115. A token is a
+ * accepted at (ZSurveySingleUseLinksBody), where a cuid is 24 and an encrypted id about 115. A token is a
  * hex HMAC-SHA256, always 64.
  */
 export const SINGLE_USE_ID_MAX_LENGTH = 255;
@@ -22,7 +22,7 @@ export type TSurveySingleUseLinkParams = {
    * that dropping the survey binding again is a compile error rather than a silent vulnerability.
    *
    * Consumers that build a link URL still guard with `if (suToken)`. That is not dead code: these
-   * params travel back from a server action, so during a rolling deploy a new client bundle can hit
+   * params travel back from an API route, so during a rolling deploy a new client bundle can hit
    * an old pod that returns `{ suId }` alone. Without the guard the URL would carry the literal
    * string `suToken=undefined`, which validates as `signature_mismatch` and would send an operator
    * hunting a key-rotation problem that does not exist.
@@ -117,7 +117,7 @@ const generateSurveySingleUseId = (isEncrypted: boolean): string => {
 
 export const generateSurveySingleUseSignature = (surveyId: string, singleUseId: string): string => {
   // The fields are joined, not length-prefixed, so this relies on `surveyId` never containing a
-  // colon: it is a cuid2 at the mint action (ZGenerateSingleUseIdAction) and a database id at every
+  // colon: it is a cuid2 at the mint route (ZSurveySingleUseLinksParams) and a database id at every
   // validation site. A *custom* `singleUseId` may contain one, so without that assumption
   // ("survey-1", "b:CUSTOM") and ("survey-1:b", "CUSTOM") would sign identically. Fixing it means
   // bumping the payload prefix, which would invalidate every plaintext suToken in the wild — see the
@@ -145,7 +145,7 @@ export const generateSurveySingleUseLinkParams = (
   singleUseId?: string
 ): TSurveySingleUseLinkParams => {
   // A custom id stays plaintext-only — it is not recoverable from a ciphertext, and
-  // ZGenerateSingleUseIdAction already refuses the combination.
+  // ZSurveySingleUseLinksBody already refuses the combination.
   const suId = isEncrypted
     ? generateSurveySingleUseId(true)
     : singleUseId?.trim() || generateSurveySingleUseId(false);

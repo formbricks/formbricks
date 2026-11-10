@@ -5,7 +5,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 
 /** What an internal survey route asks of the caller, in the app's authorization vocabulary. */
-export type TSurveyAction = "survey.write" | "survey.response_read";
+export type TSurveyAction = "survey.read" | "survey.write" | "survey.manage" | "survey.response_read";
 
 /**
  * Authorize a request against one survey: a session user who may take `action` on it, as the server
