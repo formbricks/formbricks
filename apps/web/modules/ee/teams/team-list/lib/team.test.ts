@@ -313,12 +313,21 @@ describe("updateTeamDetails", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       })
-      .mockResolvedValueOnce({ ...mockTeamDetails, teamUsers: [] } as never);
+      .mockResolvedValueOnce({ ...mockTeamDetails, teamUsers: [], workspaceTeams: [] } as never);
     vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
     vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
 
     await expect(updateTeamDetails("t1", { ...data, members: [] })).resolves.toBe(true);
     expect(prisma.membership.count).not.toHaveBeenCalled();
+    // The team had no grant before, so the update itself has to write it.
+    expect(prisma.team.update).toHaveBeenCalledWith({
+      where: { id: "t1" },
+      data: expect.objectContaining({
+        workspaceTeams: expect.objectContaining({
+          upsert: [expect.objectContaining({ create: { workspaceId: "p1", permission: "manage" } })],
+        }),
+      }),
+    });
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamIds: ["t1"],
       teamMemberships: [],
