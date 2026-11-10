@@ -2370,6 +2370,124 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
   });
 });
 
+describe("docker/formbricks.sh RustFS bootstrap rewrite on update (ENG-7042)", () => {
+  const rustfsInitTemplatePath = fileURLToPath(new URL("../rustfs-init.sh", import.meta.url));
+  const previousBootstrap = "#!/bin/sh\n# previous release's bootstrap\n";
+
+  // An update that passes every gate, from a one-click installation that runs the bundled RustFS: the operator
+  // downloaded only formbricks.sh, next to the formbricks/ directory it installed.
+  const runUpdate = ({
+    invocation,
+    template,
+  }: {
+    // How the operator starts the updater from the parent directory.
+    invocation: "./formbricks.sh update" | "bash formbricks.sh update" | "<absolute path> update";
+    // A rustfs-init.sh kept next to formbricks.sh, as in a checkout of the repository's docker/ directory.
+    template?: string;
+  }) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    const scriptPath = join(tempDir, "formbricks.sh");
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(
+      join(installationDir, "docker-compose.yml"),
+      "services:\n  authzed-ops:\n  hub-worker:\n  rustfs:\n  spicedb:\n"
+    );
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(join(installationDir, "rustfs-init.sh"), previousBootstrap, { mode: 0o755 });
+    if (template !== undefined) {
+      writeFileSync(join(tempDir, "rustfs-init.sh"), template, { mode: 0o755 });
+    }
+    writeFileSync(scriptPath, readFileSync(formbricksScriptPath, "utf8"), { mode: 0o700 });
+    // Reports no Docker version, so the IPv6 step stays off whatever the test host supports.
+    writeFileSync(
+      join(binDir, "sudo"),
+      [
+        "#!/bin/sh",
+        'printf "%s\\n" "$*" >> "$COMMAND_LOG"',
+        'case "$*" in',
+        '  *"config --services") printf "authzed-ops\\nhub-worker\\nrustfs\\nspicedb\\n" ;;',
+        '  *"config --images") printf "ghcr.io/formbricks/formbricks:latest\\n" ;;',
+        "esac",
+        "",
+      ].join("\n"),
+      { mode: 0o700 }
+    );
+    writeFileSync(join(binDir, "curl"), '#!/bin/sh\nprintf "curl %s\\n" "$*" >> "$COMMAND_LOG"\nexit 22\n', {
+      mode: 0o700,
+    });
+
+    const [command, ...args] = {
+      "./formbricks.sh update": ["./formbricks.sh", "update"],
+      "bash formbricks.sh update": ["bash", "formbricks.sh", "update"],
+      "<absolute path> update": [scriptPath, "update"],
+    }[invocation];
+    const result = spawnSync(command, args, {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+    });
+
+    return {
+      result,
+      tempDir,
+      commands: readFileSync(commandLog, "utf8").trim().split("\n"),
+      bootstrapPath: join(installationDir, "rustfs-init.sh"),
+    };
+  };
+
+  // update_formbricks changes into formbricks/ before rewriting the bootstrap. Resolving the script's directory
+  // from a relative BASH_SOURCE after that pointed the template at formbricks/rustfs-init.sh itself: cp refused
+  // to copy it onto itself, and set -e ended the update after `docker compose down`, with the stack stopped.
+  test.each(["./formbricks.sh update", "bash formbricks.sh update", "<absolute path> update"] as const)(
+    "rewrites the bootstrap and restarts the stack when started as `%s`",
+    (invocation) => {
+      const { result, commands, bootstrapPath } = runUpdate({ invocation });
+
+      expect(result.stderr).not.toMatch(/^cp: /m);
+      expect(result.status).toBe(0);
+      // No template next to formbricks.sh, so the bootstrap embedded in the script, which matches the release's.
+      expect(readFileSync(bootstrapPath, "utf8")).toBe(readFileSync(rustfsInitTemplatePath, "utf8"));
+      expect(statSync(bootstrapPath).mode & 0o777).toBe(0o755);
+      expect(commands.indexOf("docker compose up -d")).toBeGreaterThan(
+        commands.indexOf("docker compose down")
+      );
+    }
+  );
+
+  test("copies a rustfs-init.sh kept next to formbricks.sh when started through a relative path", () => {
+    const template = "#!/bin/sh\n# template next to formbricks.sh\n";
+    const { result, bootstrapPath } = runUpdate({ invocation: "./formbricks.sh update", template });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(bootstrapPath, "utf8")).toBe(template);
+  });
+
+  // formbricks.sh kept inside formbricks/: the only rustfs-init.sh next to it is the installed bootstrap of the
+  // previous release, which must not stand in for the release's own.
+  test("writes the embedded bootstrap when the template is the file being written", () => {
+    const tempDir = createTempDir();
+    writeFileSync(join(tempDir, "formbricks.sh"), readFileSync(formbricksScriptPath, "utf8"));
+    writeFileSync(join(tempDir, "rustfs-init.sh"), previousBootstrap, { mode: 0o644 });
+
+    const result = spawnSync(
+      "bash",
+      ["-c", 'source ./formbricks.sh; write_rustfs_init_script "$1"', "bash", "./rustfs-init.sh"],
+      { cwd: tempDir, encoding: "utf8" }
+    );
+
+    expect(result.stderr).toBe("");
+    expect(result.status).toBe(0);
+    expect(readFileSync(join(tempDir, "rustfs-init.sh"), "utf8")).toBe(
+      readFileSync(rustfsInitTemplatePath, "utf8")
+    );
+    expect(statSync(join(tempDir, "rustfs-init.sh")).mode & 0o777).toBe(0o755);
+  });
+});
+
 describe("docker/formbricks.sh Traefik label injection", () => {
   test("pins a Traefik whose buffering middleware keeps empty auth redirects", () => {
     // Before v3.6.15 the auth routers' buffering middleware turned an empty chunked 302, the answer to every
