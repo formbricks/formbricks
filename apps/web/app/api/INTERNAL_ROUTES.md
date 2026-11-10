@@ -45,6 +45,9 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/onboarding-invites` | POST | session | dashboard | `/api/internal` | `app/api/internal/onboarding-invites/route.ts` |
 | `/api/internal/organizations` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
+| `/api/internal/organizations/{organizationId}/email-logo` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/email-logo/route.ts` |
+| `/api/internal/organizations/{organizationId}/favicon` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/favicon/route.ts` |
+| `/api/internal/organizations/{organizationId}/test-emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/test-emails/route.ts` |
 | `/api/internal/password-resets` | POST | none | dashboard | `/api/internal` | `app/api/internal/password-resets/route.ts` |
 | `/api/internal/releases/latest` | GET | session | dashboard | `/api/internal` | `app/api/internal/releases/latest/route.ts` |
 | `/api/internal/response-filter-options` | GET | session | dashboard | `/api/internal` | `app/api/internal/response-filter-options/route.ts` |

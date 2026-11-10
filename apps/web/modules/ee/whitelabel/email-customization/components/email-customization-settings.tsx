@@ -12,12 +12,12 @@ import { TUser } from "@formbricks/types/user";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
-  removeOrganizationEmailLogoUrlAction,
-  sendTestEmailAction,
-  updateOrganizationEmailLogoUrlAction,
-} from "@/modules/ee/whitelabel/email-customization/actions";
+  removeOrganizationEmailLogo,
+  sendOrganizationTestEmail,
+  updateOrganizationEmailLogo,
+} from "@/modules/ee/whitelabel/email-customization/lib/api-client";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -121,16 +121,12 @@ export const EmailCustomizationSettings = ({
 
     if (isDefaultLogo || !organization.whitelabel?.logoUrl) return;
 
-    const removeLogoResponse = await removeOrganizationEmailLogoUrlAction({
-      organizationId: organization.id,
-    });
-
-    if (removeLogoResponse?.data) {
+    try {
+      await removeOrganizationEmailLogo(organization.id);
       toast.success(t("workspace.settings.general.logo_removed_successfully"));
       router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(removeLogoResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -145,18 +141,13 @@ export const EmailCustomizationSettings = ({
       return;
     }
 
-    const updateLogoResponse = await updateOrganizationEmailLogoUrlAction({
-      organizationId: organization.id,
-      logoUrl: url,
-    });
-
-    if (updateLogoResponse?.data) {
+    try {
+      await updateOrganizationEmailLogo(organization.id, url);
       toast.success(t("workspace.settings.general.logo_saved_successfully"));
       setLogoUrl(url);
       router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(updateLogoResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setIsSaving(false);
@@ -171,15 +162,11 @@ export const EmailCustomizationSettings = ({
       toast.error(t("workspace.settings.general.please_save_logo_before_sending_test_email"));
       return;
     }
-    const sendTestEmailResponse = await sendTestEmailAction({
-      organizationId: organization.id,
-    });
-
-    if (sendTestEmailResponse?.data) {
+    try {
+      await sendOrganizationTestEmail(organization.id);
       toast.success(t("workspace.settings.general.test_email_sent_successfully"));
-    } else {
-      const errorMessage = getFormattedErrorMessage(sendTestEmailResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
