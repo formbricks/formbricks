@@ -71,6 +71,17 @@ const acceptInviteInTransaction = (invite: TInvite, userId: string): Promise<TMe
     return membership;
   });
 
+const alreadyMember = (requestId: string, instance?: string) =>
+  problemConflict(requestId, "You are already a member of this organization.", instance, {
+    details: { reason: INVITE_ACCEPTANCE_REFUSAL.alreadyMember },
+  });
+
+const isMemberOf = async (userId: string, organizationId: string): Promise<boolean> =>
+  (await prisma.membership.findUnique({
+    where: { userId_organizationId: { userId, organizationId } },
+    select: { userId: true },
+  })) !== null;
+
 type TInviteUser = NonNullable<Awaited<ReturnType<typeof getUser>>>;
 
 /** What follows a committed acceptance. Each step is best-effort: the membership already exists. */
@@ -171,13 +182,12 @@ export async function acceptInviteOperation({
   try {
     membership = await acceptInviteInTransaction(invite, user.id);
   } catch (error) {
-    if (error instanceof AlreadyMemberError) {
-      return problemConflict(requestId, "You are already a member of this organization.", instance, {
-        details: { reason: INVITE_ACCEPTANCE_REFUSAL.alreadyMember },
-      });
-    }
+    if (error instanceof AlreadyMemberError) return alreadyMember(requestId, instance);
     // Spent or expired between the read above and the transaction: the same answers as if read that way.
     if (error instanceof InviteNoLongerValidError) return problemForbidden(requestId, undefined, instance);
+    // A concurrent acceptance of another invite to the same organization committed the membership first:
+    // the insert then fails on the unique key, which reaches here as a generic database error.
+    if (await isMemberOf(user.id, invite.organizationId)) return alreadyMember(requestId, instance);
     throw error;
   }
 

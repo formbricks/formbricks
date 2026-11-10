@@ -5,6 +5,7 @@ import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
+  findCommittedMembership: vi.fn(),
   getSession: vi.fn(),
   applyRateLimit: vi.fn(),
   queueAuditEvent: vi.fn(),
@@ -23,7 +24,9 @@ const mocks = vi.hoisted(() => ({
   log: [] as string[],
 }));
 
-vi.mock("@formbricks/database", () => ({ prisma: { $transaction: mocks.transaction } }));
+vi.mock("@formbricks/database", () => ({
+  prisma: { $transaction: mocks.transaction, membership: { findUnique: mocks.findCommittedMembership } },
+}));
 vi.mock("@/lib/jwt", () => ({ verifyInviteToken: mocks.verifyInviteToken }));
 vi.mock("@/modules/auth/invite/lib/invite", () => ({ getInvite: mocks.getInvite }));
 vi.mock("@/lib/user/service", () => ({ getUser: mocks.getUser, updateUser: mocks.updateUser }));
@@ -101,6 +104,7 @@ const expectNothingChanged = () => {
 };
 
 beforeEach(() => {
+  mocks.findCommittedMembership.mockResolvedValue(null);
   vi.clearAllMocks();
   mocks.log.length = 0;
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
@@ -254,6 +258,19 @@ describe("POST /api/internal/invites/acceptances — refusals", () => {
     expect(mocks.log).toContain("rollback");
     expectNothingChanged();
     expect(lastAudit()).toEqual(expect.objectContaining({ status: "failure", organizationId: ORG_ID }));
+  });
+
+  test("answers 409 when a concurrent acceptance of another invite created the membership first", async () => {
+    // The insert loses the race on the membership's unique key; the service reports it as a database error.
+    mocks.createMembership.mockRejectedValue(new Error("Unique constraint failed"));
+    mocks.findCommittedMembership.mockResolvedValue({ userId: USER_ID });
+
+    const response = await accept();
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).details).toEqual({ reason: "already_member" });
+    expect(mocks.log).toContain("rollback");
+    expectNothingChanged();
   });
 
   test("refuses with the uniform 403 when the token does not verify", async () => {
