@@ -62,16 +62,12 @@ export type TOrganizationMember = z.infer<typeof ZOrganizationMember>;
 
 export const ZTeamSettingsFormSchema = z.object({
   name: z.string().trim().min(1, "Team name is required"),
-  members: z
-    .array(
-      z.object({
-        userId: z.string().trim().min(1, "Please select a member"),
-        role: ZTeamRole,
-      })
-    )
-    .min(1, {
-      error: "Please add at least one member",
-    }),
+  members: z.array(
+    z.object({
+      userId: z.string().trim().min(1, "Please select a member"),
+      role: ZTeamRole,
+    })
+  ),
   workspaces: z
     .array(
       z.object({

@@ -85,14 +85,11 @@ export const TeamSettingsModal = ({
     return new Set(team.workspaces.map((workspace) => workspace.workspaceId));
   }, [team.workspaces]);
 
-  const initialMembers = useMemo(() => {
-    const members = team.members.map((member) => ({
-      userId: member.userId,
-      role: member.role,
-    }));
-
-    return members.length ? members : [{ userId: "", role: ZTeamRole.enum.contributor }];
-  }, [team.members]);
+  // A team may have no members yet (e.g. its members are still invited), so start with no member rows.
+  const initialMembers = useMemo(
+    () => team.members.map((member) => ({ userId: member.userId, role: member.role })),
+    [team.members]
+  );
 
   const initialWorkspaces = useMemo(() => {
     const workspaces = team.workspaces.map((workspace) => ({
@@ -275,7 +272,6 @@ export const TeamSettingsModal = ({
                             currentUserId={currentUserId}
                             onMemberSelectionChange={handleMemberSelectionChange}
                             onRemoveMember={handleRemoveMember}
-                            memberCount={watchMembers.length}
                           />
                         ))}
                       </div>
