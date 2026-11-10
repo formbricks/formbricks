@@ -49,6 +49,9 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/organizations/{organizationId}/favicon` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/favicon/route.ts` |
 | `/api/internal/organizations/{organizationId}/test-emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/test-emails/route.ts` |
 | `/api/internal/password-resets` | POST | none | dashboard | `/api/internal` | `app/api/internal/password-resets/route.ts` |
+| `/api/internal/quotas` | POST | session | dashboard | `/api/internal` | `app/api/internal/quotas/route.ts` |
+| `/api/internal/quotas/{quotaId}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/quotas/[quotaId]/route.ts` |
+| `/api/internal/quotas/{quotaId}/response-count` | GET | session | dashboard | `/api/internal` | `app/api/internal/quotas/[quotaId]/response-count/route.ts` |
 | `/api/internal/releases/latest` | GET | session | dashboard | `/api/internal` | `app/api/internal/releases/latest/route.ts` |
 | `/api/internal/response-filter-options` | GET | session | dashboard | `/api/internal` | `app/api/internal/response-filter-options/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |
