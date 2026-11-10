@@ -3,16 +3,16 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { POST as createApiKeyRoute } from "@/app/api/internal/api-keys/route";
 import { PATCH as updateInviteRoute } from "@/app/api/internal/invites/[inviteId]/route";
+import { POST as createInviteBatchRoute } from "@/app/api/internal/invites/batches/route";
+import { POST as createInviteRoute } from "@/app/api/internal/invites/route";
 import { PATCH as updateMemberRoute } from "@/app/api/internal/members/[userId]/route";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { updateTeamDetails } from "@/modules/ee/teams/team-list/lib/team";
-import { bulkInviteUsersAction, inviteUserAction } from "@/modules/organization/settings/teams/actions";
 
 /**
- * Who may make someone a Dashboard viewer (ENG-6901, ADR-0025), through the real server actions and internal
- * routes against
+ * Who may make someone a Dashboard viewer (ENG-6901, ADR-0025), through the real internal routes against
  * real PostgreSQL and SpiceDB: Owners and Managers, in single invites, CSV bulk invites, invite edits and
  * role edits, only while Access Control and Dashboards are both entitled. A team admin can't, and a viewer
  * can't be a team admin.
@@ -47,15 +47,6 @@ const as = (userId: string) => {
   session.userId = userId;
 };
 
-const invite = (role: string, teamIds: string[] = []) =>
-  inviteUserAction({
-    organizationId: ids.organization,
-    email: nextEmail(),
-    name: "Invitee",
-    role,
-    teamIds,
-  } as never);
-
 /** A session write to an internal route, as the dashboard sends it (same-origin, JSON). */
 const send = (
   handler: (req: NextRequest, context: never) => Promise<Response>,
@@ -72,6 +63,23 @@ const send = (
     }),
     { params: Promise.resolve(params) } as never
   );
+
+/** A single invite, as the invite form sends it: the created invite's id, or the refusal's status and reason. */
+const invite = async (role: string, teamIds: string[] = []) => {
+  const response = await send(
+    createInviteRoute,
+    `/api/internal/invites?organizationId=${ids.organization}`,
+    "POST",
+    { email: nextEmail(), name: "Invitee", role, teamIds }
+  );
+  const body = await response.json();
+  return { status: response.status, id: body.data?.id as string | undefined, detail: body.detail as string };
+};
+
+const bulkInvite = (invitees: unknown[]) =>
+  send(createInviteBatchRoute, `/api/internal/invites/batches?organizationId=${ids.organization}`, "POST", {
+    invitees,
+  });
 
 const setRole = (userId: string, role: string) =>
   send(
@@ -132,21 +140,21 @@ describe("single invites", () => {
     as(inviter());
     const result = await invite("dashboard_viewer", [ids.team]);
 
-    expect(result?.serverError).toBeUndefined();
-    const created = await prisma.invite.findUniqueOrThrow({ where: { id: result?.data as string } });
+    expect(result.status).toBe(201);
+    const created = await prisma.invite.findUniqueOrThrow({ where: { id: result.id } });
     expect(created.role).toBe("dashboard_viewer");
   });
 
   test("a Manager still can't invite a Manager", async () => {
     as(ids.manager);
-    expect((await invite("manager"))?.serverError).toBe(
+    expect((await invite("manager")).detail).toBe(
       "Managers can only give the Member and Dashboard viewer roles"
     );
   });
 
   test("a team admin can't invite a Dashboard viewer", async () => {
     as(ids.teamAdmin);
-    expect((await invite("dashboard_viewer", [ids.team]))?.serverError).toBe(
+    expect((await invite("dashboard_viewer", [ids.team])).detail).toBe(
       "Team admins can only invite users as members"
     );
   });
@@ -158,7 +166,7 @@ describe("single invites", () => {
     Object.assign(entitlement, state);
     as(ids.owner);
 
-    expect((await invite("dashboard_viewer"))?.serverError).toBeDefined();
+    expect((await invite("dashboard_viewer")).status).toBe(403);
     expect(
       await prisma.invite.count({
         where: { role: "dashboard_viewer", email: `invitee-${emailCounter}@assign.test` },
@@ -169,7 +177,7 @@ describe("single invites", () => {
   test("without the entitlement a Member invite still works", async () => {
     entitlement.viewerRole = false;
     as(ids.owner);
-    expect((await invite("member"))?.serverError).toBeUndefined();
+    expect((await invite("member")).status).toBe(201);
   });
 });
 
@@ -183,10 +191,11 @@ describe("CSV bulk invites", () => {
       teamIds: [ids.team],
     }));
 
-    const result = await bulkInviteUsersAction({ organizationId: ids.organization, invitees } as never);
+    const response = await bulkInvite(invitees);
 
-    expect(result?.serverError).toBeUndefined();
-    expect(result?.data?.every(({ success }) => success)).toBe(true);
+    expect(response.status).toBe(200);
+    const { data } = (await response.json()) as { data: { success: boolean }[] };
+    expect(data.every(({ success }) => success)).toBe(true);
     expect(
       await prisma.invite.count({ where: { role: "dashboard_viewer", email: { startsWith: "bulk-" } } })
     ).toBe(200);
@@ -196,18 +205,18 @@ describe("CSV bulk invites", () => {
     as(ids.manager);
     const row = (email: string, role: string) => ({ name: "R", email, role, teamIds: [] });
 
-    const allowed = await bulkInviteUsersAction({
-      organizationId: ids.organization,
-      invitees: [row("mgr-bulk-1@assign.test", "dashboard_viewer"), row("mgr-bulk-2@assign.test", "member")],
-    } as never);
-    expect(allowed?.serverError).toBeUndefined();
+    const allowed = await bulkInvite([
+      row("mgr-bulk-1@assign.test", "dashboard_viewer"),
+      row("mgr-bulk-2@assign.test", "member"),
+    ]);
+    expect(allowed.status).toBe(200);
 
     entitlement.viewerRole = false;
-    const refused = await bulkInviteUsersAction({
-      organizationId: ids.organization,
-      invitees: [row("mgr-bulk-3@assign.test", "member"), row("mgr-bulk-4@assign.test", "dashboard_viewer")],
-    } as never);
-    expect(refused?.serverError).toBeDefined();
+    const refused = await bulkInvite([
+      row("mgr-bulk-3@assign.test", "member"),
+      row("mgr-bulk-4@assign.test", "dashboard_viewer"),
+    ]);
+    expect(refused.status).toBe(403);
     expect(
       await prisma.invite.count({
         where: { email: { in: ["mgr-bulk-3@assign.test", "mgr-bulk-4@assign.test"] } },
@@ -222,10 +231,10 @@ describe("role edits", () => {
     const pending = await invite("member");
     as(ids.manager);
 
-    const response = await setInviteRole(pending?.data as string, "dashboard_viewer");
+    const response = await setInviteRole(pending.id as string, "dashboard_viewer");
 
     expect(response.status).toBe(200);
-    expect((await prisma.invite.findUniqueOrThrow({ where: { id: pending?.data as string } })).role).toBe(
+    expect((await prisma.invite.findUniqueOrThrow({ where: { id: pending.id as string } })).role).toBe(
       "dashboard_viewer"
     );
   });
@@ -235,7 +244,7 @@ describe("role edits", () => {
     const pending = await invite("member");
     entitlement.viewerRole = false;
 
-    expect((await setInviteRole(pending?.data as string, "dashboard_viewer")).status).toBe(403);
+    expect((await setInviteRole(pending.id as string, "dashboard_viewer")).status).toBe(403);
   });
 
   test("without the entitlement a Member can't be made a viewer", async () => {
