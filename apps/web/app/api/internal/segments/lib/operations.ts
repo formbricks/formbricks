@@ -73,7 +73,6 @@ type TRequestContext = {
 };
 
 const SAME_WORKSPACE_MESSAGE = "Survey and segment are not in the same workspace";
-const SEGMENT_AND_SURVEY_SAME_WORKSPACE_MESSAGE = "Segment and survey are not in the same workspace";
 
 /** The message the server actions refused an invalid filter tree with: its first custom issue. */
 const invalidFiltersMessage = (issues: { code: string; message: string }[]) =>
@@ -146,13 +145,6 @@ export async function createSegmentOperation({
   ...context
 }: TRequestContext & { body: TSegmentCreateBody }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
-  if (body.surveyId) {
-    const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(body.surveyId);
-    if (surveyWorkspaceId !== body.workspaceId) {
-      return problemUnprocessableContent(requestId, SAME_WORKSPACE_MESSAGE, { instance });
-    }
-  }
-
   const { workspaceId } = body;
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
   if (auditLog) auditLog.organizationId = organizationId;
@@ -165,9 +157,14 @@ export async function createSegmentOperation({
   if (access instanceof Response) return access;
   const { userId } = access;
 
+  // Compared only once the caller may write to both: before, a caller with no access learned whether the
+  // two ids share a workspace from the 422.
   if (body.surveyId) {
     const refused = await requireSurveyWrite(userId, body.surveyId, context);
     if (refused) return refused;
+    if ((await getWorkspaceIdFromSurveyId(body.surveyId)) !== workspaceId) {
+      return problemUnprocessableContent(requestId, SAME_WORKSPACE_MESSAGE, { instance });
+    }
   }
 
   let segment: TSegment;
@@ -295,9 +292,11 @@ export async function updateSegmentOperation({
 }
 
 /**
- * The survey and the segment a survey-segment write names must share a workspace; then the caller needs
- * write access to it, its budget and the licence, `survey.write` on the survey, and sight of every survey
- * the segment's filters read (ENG-6870). Answers with the caller and the survey's organization.
+ * A survey-segment write: the caller needs write access to the survey's workspace, its budget and the
+ * licence, and `survey.write` on the survey; only then must the segment share the survey's workspace (a
+ * segment from another one gets the uniform 403, the same as one the caller can't see: the targeting card
+ * only offers its own workspace's segments); and sight of every survey the segment's filters read
+ * (ENG-6870). Answers with the caller and the survey's organization.
  */
 async function requireSurveySegmentWrite(
   context: TRequestContext,
@@ -305,11 +304,6 @@ async function requireSurveySegmentWrite(
 ): Promise<Response | { userId: string; organizationId: string }> {
   const { requestId, instance, auditLog } = context;
   const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(surveyId);
-  const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(segmentId);
-  if (surveyWorkspaceId !== segmentWorkspaceId) {
-    return problemUnprocessableContent(requestId, SEGMENT_AND_SURVEY_SAME_WORKSPACE_MESSAGE, { instance });
-  }
-
   const organizationId = await getOrganizationIdFromSurveyId(surveyId);
   const access = await requireSegmentAccess(context, {
     workspaceId: surveyWorkspaceId,
@@ -321,6 +315,10 @@ async function requireSurveySegmentWrite(
 
   const surveyRefused = await requireSurveyWrite(userId, surveyId, context);
   if (surveyRefused) return surveyRefused;
+
+  if ((await getWorkspaceIdFromSegmentId(segmentId)) !== surveyWorkspaceId) {
+    return problemForbidden(requestId, undefined, instance);
+  }
 
   try {
     await assertCanTargetWithSegment(userId, organizationId, segmentId);

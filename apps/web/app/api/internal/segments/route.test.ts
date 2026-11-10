@@ -372,14 +372,25 @@ describe("POST /api/internal/segments", () => {
     expect(mocks.createSegment).toHaveBeenCalledWith({ ...body, isPrivate: true, surveyId: "" });
   });
 
-  test("refuses a survey from another workspace with 422, before anything else is asked", async () => {
+  test("refuses a survey from another workspace with 422, once the caller may write to both", async () => {
     mocks.getWorkspaceIdFromSurveyId.mockResolvedValue(OTHER_WORKSPACE_ID);
 
     const response = await create(createBody({ surveyId: SURVEY_ID }));
 
     expect(response.status).toBe(422);
     expect((await response.json()).detail).toBe("Survey and segment are not in the same workspace");
-    expect(mocks.can).not.toHaveBeenCalled();
+    expect(mocks.can).toHaveBeenCalled();
+    expect(mocks.createSegment).not.toHaveBeenCalled();
+  });
+
+  test("answers the uniform 403, not the workspace comparison, to a caller who can't write to the survey", async () => {
+    mocks.getWorkspaceIdFromSurveyId.mockResolvedValue(OTHER_WORKSPACE_ID);
+    mocks.can.mockImplementation(async (_actor: unknown, action: string) => action !== "survey.write");
+
+    const response = await create(createBody({ surveyId: SURVEY_ID }));
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You are not authorized to access this resource");
     expect(mocks.createSegment).not.toHaveBeenCalled();
   });
 
@@ -686,15 +697,18 @@ describe("attaching or copying a segment onto a survey", () => {
   test.each([
     ["PUT /surveys/{id}/segment", () => attach()],
     ["POST /segments/{id}/copies", () => copy()],
-  ])("%s refuses a segment from another workspace with 422", async (_label, call) => {
-    mocks.getWorkspaceIdFromSegmentId.mockResolvedValue(OTHER_WORKSPACE_ID);
+  ])(
+    "%s answers a segment from another workspace with the uniform 403, after authorizing the survey",
+    async (_label, call) => {
+      mocks.getWorkspaceIdFromSegmentId.mockResolvedValue(OTHER_WORKSPACE_ID);
 
-    const response = await call();
+      const response = await call();
 
-    expect(response.status).toBe(422);
-    expect((await response.json()).detail).toBe("Segment and survey are not in the same workspace");
-    expect(mocks.can).not.toHaveBeenCalled();
-  });
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+      expect(mocks.can).toHaveBeenCalled();
+    }
+  );
 
   // ENG-6870: the survey's responses would show who the segment's filters match.
   test.each([
