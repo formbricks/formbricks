@@ -11,4 +11,4 @@
 
 - Targeted edits are operations, not CRUD: `PATCH /surveys/{id}/blocks` applies an atomic list of `insert`/`update`/`remove` ops and `PUT /surveys/{id}/blocks/order` sets the order (ENG-3069), through the same write path as PATCH.
 - There is no rename operation, and the server can't tell a rename from a delete plus a create; a caller applies a rename to every reference in the same write.
-- Stale overwrites are the cost of whole-subtree writes; ADR 0036 covers them.
+- Stale overwrites are the cost of whole-subtree writes; ADR 0035 covers them.
