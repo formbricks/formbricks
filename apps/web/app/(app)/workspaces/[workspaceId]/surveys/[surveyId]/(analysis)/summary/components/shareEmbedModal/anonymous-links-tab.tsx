@@ -7,9 +7,9 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { updateSingleUseLinksAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { DisableLinkModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
+import { saveSingleUseSettings } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/api-client";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { useSurveyLinkedCreatives } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
 import { isDestinationSettingLocked, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
@@ -69,20 +69,12 @@ export const AnonymousLinksTab = ({
     isSingleUseEncryption: boolean
   ): Promise<void> => {
     try {
-      const updatedSurveyResponse = await updateSingleUseLinksAction({
+      await saveSingleUseSettings({
         surveyId: survey.id,
-        workspaceId: survey.workspaceId,
-        isSingleUse,
-        isSingleUseEncryption,
+        enabled: isSingleUse,
+        isEncrypted: isSingleUseEncryption,
       });
-
-      if (updatedSurveyResponse?.data) {
-        router.refresh();
-        return;
-      }
-
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      resetState();
+      router.refresh();
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
       resetState();

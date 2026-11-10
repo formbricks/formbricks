@@ -5,14 +5,14 @@ import { CopyIcon, SendIcon } from "lucide-react";
 import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { AuthenticationError } from "@formbricks/types/errors";
 import { copyToClipboard } from "@/lib/utils/clipboard";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
-import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
+import { useSurveyEmailEmbed } from "../../hooks/use-survey-email-embed";
+import { sendSurveyPreviewEmail } from "../../lib/api-client";
 
 interface EmailTabProps {
   readonly surveyId: string;
@@ -21,7 +21,8 @@ interface EmailTabProps {
 
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [activeTab, setActiveTab] = useState("preview");
-  const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
+  // Empty until the survey is rendered, which shows the spinner.
+  const emailHtmlPreview = useSurveyEmailEmbed(surveyId).data?.html ?? "";
   const [previewFrameHeight, setPreviewFrameHeight] = useState(560);
   const { t } = useTranslation();
 
@@ -79,15 +80,6 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   ];
 
   useEffect(() => {
-    const getData = async () => {
-      const emailHtml = await getEmailHtmlAction({ surveyId });
-      setEmailHtmlPreview(emailHtml?.data || "");
-    };
-
-    getData();
-  }, [surveyId]);
-
-  useEffect(() => {
     setPreviewFrameHeight(560);
   }, [emailPreviewDocument]);
 
@@ -108,19 +100,18 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   const sendPreviewEmail = async () => {
     try {
-      const val = await sendEmbedSurveyPreviewEmailAction({ surveyId });
-      if (val?.data) {
+      const { emailSent } = await sendSurveyPreviewEmail(surveyId);
+      if (emailSent) {
         toast.success(t("workspace.surveys.share.send_email.email_sent"));
       } else {
-        const errorMessage = getFormattedErrorMessage(val);
-        toast.error(errorMessage);
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
-    } catch (err) {
-      if (err instanceof AuthenticationError) {
+    } catch (error) {
+      if (error instanceof V3ApiError && error.status === 401) {
         toast.error(t("common.not_authenticated"));
         return;
       }
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
