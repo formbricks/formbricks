@@ -5,7 +5,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 
 /** What an internal route asks of the caller on a workspace, in the app's authorization vocabulary. */
-export type TWorkspaceAction = "workspace.write";
+export type TWorkspaceAction = "workspace.read" | "workspace.write";
 
 /**
  * Authorize a request against one workspace the route has already resolved: a session user who may take

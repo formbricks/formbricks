@@ -18,6 +18,9 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/charts/generate` | POST | session | dashboard | `/api/internal` | `app/api/internal/charts/generate/route.ts` |
 | `/api/internal/contact-attribute-keys` | POST | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/route.ts` |
 | `/api/internal/contact-attribute-keys/{contactAttributeKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/[contactAttributeKeyId]/route.ts` |
+| `/api/internal/contacts/{contactId}` | DELETE | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/route.ts` |
+| `/api/internal/contacts/{contactId}/attributes` | PUT | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/attributes/route.ts` |
+| `/api/internal/contacts/{contactId}/personal-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/personal-links/route.ts` |
 | `/api/internal/email-change-verifications` | POST | none | dashboard | `/api/internal` | `app/api/internal/email-change-verifications/route.ts` |
 | `/api/internal/embedded-data` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/route.ts` |
 | `/api/internal/embedded-data/{embeddedDataId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/route.ts` |

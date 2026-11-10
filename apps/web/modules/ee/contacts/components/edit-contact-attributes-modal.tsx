@@ -8,7 +8,8 @@ import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { updateContactAttributes } from "@/modules/ee/contacts/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -20,7 +21,6 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { FormError, FormProvider } from "@/modules/ui/components/form";
-import { updateContactAttributesAction } from "../actions";
 import { TEditContactAttributesForm, createEditContactAttributesSchema } from "../types/contact";
 import { AttributeFieldRow } from "./attribute-field-row";
 
@@ -169,47 +169,45 @@ export const EditContactAttributesModal = ({
         {} as Record<string, string | number>
       );
 
-      const result = await updateContactAttributesAction({
-        contactId,
-        attributes,
-      });
-
-      if (result?.data) {
-        toast.success(t("workspace.contacts.edit_attributes_success"));
-
-        if (result.data.messages && result.data.messages.length > 0) {
-          const translateMessage = (code: string, params: Record<string, string>): string => {
-            switch (code) {
-              case "email_or_userid_required":
-                return t("workspace.contacts.attributes_msg_email_or_userid_required");
-              case "attribute_type_validation_error":
-                return t("workspace.contacts.attributes_msg_attribute_type_validation_error", params);
-              case "email_already_exists":
-                return t("workspace.contacts.attributes_msg_email_already_exists");
-              case "userid_already_exists":
-                return t("workspace.contacts.attributes_msg_userid_already_exists");
-              case "attribute_limit_exceeded":
-                return t("workspace.contacts.attributes_msg_attribute_limit_exceeded", params);
-              case "new_attribute_created":
-                return t("workspace.contacts.attributes_msg_new_attribute_created", params);
-              default:
-                return code;
-            }
-          };
-
-          result.data.messages.forEach((msg) => {
-            const errorMessage = translateMessage(msg.code, msg.params);
-            toast.error(errorMessage);
-          });
-        }
-
-        router.refresh();
-
-        setOpen(false);
-      } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage);
+      let result: Awaited<ReturnType<typeof updateContactAttributes>>;
+      try {
+        result = await updateContactAttributes(contactId, attributes);
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+        return;
       }
+
+      toast.success(t("workspace.contacts.edit_attributes_success"));
+
+      if (result.messages.length > 0) {
+        const translateMessage = (code: string, params: Record<string, string>): string => {
+          switch (code) {
+            case "email_or_userid_required":
+              return t("workspace.contacts.attributes_msg_email_or_userid_required");
+            case "attribute_type_validation_error":
+              return t("workspace.contacts.attributes_msg_attribute_type_validation_error", params);
+            case "email_already_exists":
+              return t("workspace.contacts.attributes_msg_email_already_exists");
+            case "userid_already_exists":
+              return t("workspace.contacts.attributes_msg_userid_already_exists");
+            case "attribute_limit_exceeded":
+              return t("workspace.contacts.attributes_msg_attribute_limit_exceeded", params);
+            case "new_attribute_created":
+              return t("workspace.contacts.attributes_msg_new_attribute_created", params);
+            default:
+              return code;
+          }
+        };
+
+        result.messages.forEach((msg) => {
+          const errorMessage = translateMessage(msg.code, msg.params);
+          toast.error(errorMessage);
+        });
+      }
+
+      router.refresh();
+
+      setOpen(false);
     } catch (error) {
       toast.error("common.something_went_wrong");
       console.error(error);

@@ -11,15 +11,14 @@ import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-k
 import type { TUserLocale } from "@formbricks/types/user";
 import { useOrganization } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getReportingTimeZone } from "@/lib/date-ranges";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
 import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
 import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
 import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
+import { deleteContact as deleteContactRequest } from "../lib/api-client";
 import { contactQueryKeys } from "../lib/query-keys";
 import {
   CONTACT_SORT_VALUES,
@@ -28,11 +27,32 @@ import {
   getContactSortOptions,
   toContactListParams,
 } from "../lib/table-filters";
-import { listContactAttributeValues, listContacts } from "../lib/v3-contacts-client";
+import { type TV3ContactListItem, listContactAttributeValues, listContacts } from "../lib/v3-contacts-client";
 import type { TContactTableData } from "../types/contact";
 import { generateContactTableColumns } from "./contact-table-column";
 
 const BUILT_IN_ATTRIBUTE_KEYS = new Set(["userId", "email", "firstName", "lastName"]);
+
+/** A listed contact as a table row: its built-in fields, then one cell per custom attribute key. */
+const toContactRow = (
+  contact: TV3ContactListItem,
+  customAttributeKeys: TContactAttributeKey[]
+): TContactTableData => {
+  const values = new Map(contact.attributes.map((attribute) => [attribute.key, attribute.value]));
+  return {
+    id: contact.id,
+    userId: contact.userId ?? "",
+    email: contact.email ?? "",
+    firstName: contact.firstName ?? "",
+    lastName: contact.lastName ?? "",
+    attributes: customAttributeKeys.map((attributeKey) => ({
+      key: attributeKey.key,
+      name: attributeKey.name,
+      value: values.get(attributeKey.key) ?? "",
+      dataType: attributeKey.dataType,
+    })),
+  };
+};
 
 interface ContactDataViewProps {
   workspaceId: string;
@@ -94,22 +114,7 @@ export const ContactDataView = ({
   const data: TContactTableData[] = useMemo(() => {
     if (listParams === null) return [];
     return (query.data?.pages ?? []).flatMap((page) =>
-      page.data.map((contact) => {
-        const values = new Map(contact.attributes.map((attribute) => [attribute.key, attribute.value]));
-        return {
-          id: contact.id,
-          userId: contact.userId ?? "",
-          email: contact.email ?? "",
-          firstName: contact.firstName ?? "",
-          lastName: contact.lastName ?? "",
-          attributes: customAttributeKeys.map((attributeKey) => ({
-            key: attributeKey.key,
-            name: attributeKey.name,
-            value: values.get(attributeKey.key) ?? "",
-            dataType: attributeKey.dataType,
-          })),
-        };
-      })
+      page.data.map((contact) => toContactRow(contact, customAttributeKeys))
     );
   }, [query.data, listParams, customAttributeKeys]);
   const matchCount = listParams === null ? 0 : (query.data?.pages[0]?.meta.totalCount ?? null);
@@ -161,9 +166,11 @@ export const ContactDataView = ({
   };
 
   const deleteContact = async (contactId: string) => {
-    const result = await deleteContactAction({ contactId });
-    if (result?.serverError) {
-      throw new Error(getFormattedErrorMessage(result));
+    try {
+      await deleteContactRequest(contactId);
+    } catch (error) {
+      // The bulk delete shows the message of what it caught.
+      throw new Error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
