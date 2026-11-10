@@ -265,7 +265,7 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
     expect(auditLog).toMatchObject({
       organizationId: fixture.organizationId,
       targetId: draftSurveyId,
-      newObject: { format: "xlsx", fileFormat: 1, workspaceId: fixture.workspaceId },
+      newObject: { format: "xlsx", fileFormat: 2, workspaceId: fixture.workspaceId },
     });
   });
 

@@ -78,7 +78,17 @@ describe("isExcelExportArchive", () => {
   });
 
   test("tells apart a meta sheet of another format, with a label missing or moved, or no survey id", () => {
-    expect(isExport(editMeta(exported(), (rows) => setCell(rows, 0, 1, "2")))).toBe(false);
+    expect(isExport(editMeta(exported(), (rows) => setCell(rows, 0, 1, "3")))).toBe(false);
+    // 6.2's export, format 1: the survey id and export time, no column map.
+    expect(
+      isExport(
+        editMeta(exported(), () => [
+          ["surveyId", "clsurvey0000000000000001"],
+          ["updatedAt", "2026-11-01T00:00:00.000Z"],
+          ["format", "1"],
+        ])
+      )
+    ).toBe(false);
     expect(isExport(editMeta(exported(), (rows) => setCell(rows, 2, 0, "header")))).toBe(false);
     expect(isExport(editMeta(exported(), (rows) => rows.slice(0, 5)))).toBe(false);
     expect(isExport(editMeta(exported(), (rows) => [rows[1], rows[0], ...rows.slice(2)]))).toBe(false);

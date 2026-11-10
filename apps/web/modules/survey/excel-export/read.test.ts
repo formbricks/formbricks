@@ -157,11 +157,23 @@ describe("excelExportFromBook", () => {
     expect(refusalOf(() => read(editMeta(exported(), () => null)))).toBe("not_recognized");
     expect(
       refusalOf(() =>
-        read(editMeta(exported(), (rows) => rows.map((row, index) => (index === 0 ? ["format", "2"] : row))))
+        read(editMeta(exported(), (rows) => rows.map((row, index) => (index === 0 ? ["format", "3"] : row))))
       )
     ).toBe("not_recognized");
     expect(
       refusalOf(() => read(editExcelExport(exported(), (rows) => rows.map(([, ...rest]) => ["", ...rest]))))
+    ).toBe("not_recognized");
+    // 6.2's export, format 1: its meta sheet names the survey but maps no column.
+    expect(
+      refusalOf(() =>
+        read(
+          editMeta(exported(), () => [
+            ["surveyId", "clsurvey0000000000000001"],
+            ["updatedAt", "2026-11-01T00:00:00.000Z"],
+            ["format", "1"],
+          ])
+        )
+      )
     ).toBe("not_recognized");
     // An export written before the meta sheet named its survey.
     expect(refusalOf(() => read(editMeta(exported(), (rows) => rows.slice(0, 5))))).toBe("not_recognized");

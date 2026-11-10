@@ -206,7 +206,7 @@ describe("writeExcelExport", () => {
     expect(workbook.Sheets.Questions["!cols"]?.slice(1).some((column) => column.hidden)).toBe(false);
     const [, , ...languageHeaders] = rowsOf(workbook.Sheets.Questions)[0].slice(0, -1);
     expect(rowsOf(workbook.Sheets[EXCEL_EXPORT_META_SHEET])).toEqual([
-      ["format", "1", ""],
+      ["format", "2", ""],
       ["languages", "en", "de"],
       ["headers", ...languageHeaders.slice(1)],
       ["columns", "Question ID", "Type"],

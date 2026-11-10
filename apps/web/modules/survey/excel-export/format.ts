@@ -18,8 +18,12 @@
  * never reads it.
  */
 
-/** The export's own version, written to the meta sheet; raised when its layout changes. */
-export const EXCEL_EXPORT_FORMAT = 1;
+/**
+ * The export's own version, written to the meta sheet; raised when its layout changes. 1 was 6.2's, whose
+ * meta sheet held only `surveyId`, `updatedAt` and `format`: too little to map the columns back, so this
+ * version reads it as any spreadsheet.
+ */
+export const EXCEL_EXPORT_FORMAT = 2;
 
 export const EXCEL_EXPORT_META_SHEET = "formbricks";
 export const EXCEL_EXPORT_KEY_HEADER = "key";
