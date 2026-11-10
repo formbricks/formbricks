@@ -6,6 +6,7 @@ import { can } from "@/lib/authorization";
 
 /**
  * What an internal organization route asks of the caller, in the app's authorization vocabulary:
+ * - `read`: every member, billing included
  * - `read_access`: owners, managers and members (not billing)
  * - `write`: the organization itself — its name, or deleting it (owners)
  * - `manage`: owners and managers
@@ -14,6 +15,7 @@ import { can } from "@/lib/authorization";
  * - `manage_billing`: the organization's plan and its limits (owners, managers and billing)
  */
 export type TOrgAction =
+  | "organization.read"
   | "organization.read_access"
   | "organization.write"
   | "organization.manage"

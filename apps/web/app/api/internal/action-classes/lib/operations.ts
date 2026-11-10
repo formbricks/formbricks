@@ -1,13 +1,24 @@
 import "server-only";
 import type { TActionClass } from "@formbricks/types/action-classes";
-import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { noContentResponse, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
+import { UniqueConstraintError } from "@formbricks/types/errors";
+import { getV3SessionUserId, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
+import {
+  createdResponse,
+  noContentResponse,
+  problemConflict,
+  problemForbidden,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getSurveysByActionClassId } from "@/lib/survey/service";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
-import type { TActionClassPatchBody, TActionClassSurveysResource } from "../schemas";
+import { createActionClass } from "@/modules/survey/editor/lib/action-class";
+import type { TActionClassCreateBody, TActionClassPatchBody, TActionClassSurveysResource } from "../schemas";
 
 /**
  * A workspace's actions (action classes), as its app connection settings edit them. Each is authorized
@@ -67,6 +78,74 @@ const serializeActionClass = ({
   createdAt,
   updatedAt,
 });
+
+/**
+ * `POST /api/internal/action-classes?workspaceId=`: create an action, from the survey editor's trigger
+ * picker. `readWrite` on the workspace, and a write spends the workspace's shared settings-write budget,
+ * as the server action it replaces did. The workspace is the authorized query's; the body's is ignored.
+ */
+export async function createActionClassOperation({
+  authentication,
+  workspaceId,
+  body,
+  requestId,
+  instance,
+  auditLog,
+}: Omit<TRequestContext, "actionClassId"> & {
+  workspaceId: string;
+  body: TActionClassCreateBody;
+}): Promise<Response> {
+  const access = await requireSessionWorkspaceAccess(
+    authentication,
+    workspaceId,
+    "readWrite",
+    requestId,
+    instance
+  );
+  if (access instanceof Response) return access;
+  const { organizationId } = access;
+  if (auditLog) auditLog.organizationId = organizationId;
+
+  const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.stateMutation, access.workspaceId, {
+    requestId,
+    instance,
+  });
+  if (limited) return limited;
+
+  let created: TActionClass;
+  try {
+    created = await createActionClass(access.workspaceId, { ...body, workspaceId: access.workspaceId });
+  } catch (error) {
+    // A name or key the workspace already uses. Its message names which, and the form shows it.
+    if (error instanceof UniqueConstraintError) return problemConflict(requestId, error.message, instance);
+    throw error;
+  }
+
+  if (auditLog) {
+    auditLog.targetId = created.id;
+    auditLog.newObject = created;
+  }
+
+  const userId = getV3SessionUserId(authentication);
+  if (userId) {
+    capturePostHogEvent(
+      userId,
+      "action_class_created",
+      {
+        organization_id: organizationId,
+        workspace_id: access.workspaceId,
+        type: body.type,
+        trigger_type: body.type === "code" ? "codeAction" : (body.noCodeConfig?.type ?? "noCode"),
+      },
+      { organizationId, workspaceId: access.workspaceId }
+    );
+  }
+
+  return createdResponse(serializeActionClass(created), {
+    location: `/api/internal/action-classes/${created.id}`,
+    requestId,
+  });
+}
 
 /** `PATCH /api/internal/action-classes/{actionClassId}`: change an action. */
 export async function updateActionClassOperation({

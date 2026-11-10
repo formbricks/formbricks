@@ -1,9 +1,20 @@
 import "server-only";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import type { TWorkspace } from "@formbricks/types/workspace";
+import {
+  getWorkspacesByUserId,
+  getWritableWorkspacesByUserId,
+} from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
+import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
+  createdResponse,
   problemConflict,
   problemForbidden,
   problemUnauthorized,
@@ -13,16 +24,40 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { type TAuthorizationAction, can } from "@/lib/authorization";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
-import { getWorkspace } from "@/lib/workspace/service";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
+import { getUser, updateUser } from "@/lib/user/service";
+import { getOrganizationWorkspacesCount, getWorkspace } from "@/lib/workspace/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { listDashboardViewerWorkspaces } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
+import {
+  getAccessControlPermission,
+  getOrganizationWorkspacesLimit,
+} from "@/modules/ee/license-check/lib/utils";
 import { resolvePostWorkspaceDeletionDestination } from "@/modules/workspaces/settings/general/lib/delete-workspace";
 import {
   WORKSPACE_DELETE_CONFIRMATION_ERROR,
   hasMatchingWorkspaceDeleteConfirmation,
 } from "@/modules/workspaces/settings/general/lib/delete-workspace-confirmation";
-import { deleteWorkspaceIfNotLast, updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
-import type { TWorkspaceDeletionBody, TWorkspacePatchBody } from "../schemas";
-import { type TWorkspaceDeletionResource, serializeWorkspaceSettings } from "../serializers";
+import {
+  createWorkspace,
+  deleteWorkspaceIfNotLast,
+  updateWorkspace,
+} from "@/modules/workspaces/settings/lib/workspace";
+import type {
+  TWorkspaceCreateBody,
+  TWorkspaceDeletionBody,
+  TWorkspacePatchBody,
+  TWorkspacesListQuery,
+} from "../schemas";
+import {
+  type TWorkspaceDeletionResource,
+  serializeWorkspaceOption,
+  serializeWorkspaceSettings,
+} from "../serializers";
+
+export const WORKSPACES_BASE_PATH = "/api/internal/workspaces";
 
 type TRequestContext = {
   authentication: TV3Authentication;
@@ -159,4 +194,170 @@ export async function deleteWorkspaceOperation({
     destination: await resolvePostWorkspaceDeletionDestination(workspace),
   };
   return successResponse(resource, { requestId });
+}
+
+/**
+ * `GET /api/internal/workspaces?organizationId=&access=`: the caller's workspaces in the organization, as id
+ * and name. `read` lists every workspace the caller can open, for the switchers, and asks only that the
+ * caller belongs to the organization (any role, billing included). `write` lists the workspaces the caller
+ * can write to, for picking a target to copy a survey into, and leaves billing members out.
+ *
+ * The organization gate is what scopes the list to one organization; the list itself is the caller's own
+ * authorization lookup, so it never names a workspace the caller can't open. A Dashboard viewer has no
+ * `organization.read` (ADR-0025): its switcher lists the workspaces its teams are granted, and no others.
+ */
+export async function listWorkspacesOperation({
+  authentication,
+  organizationId,
+  access,
+  requestId,
+  instance,
+}: Omit<TRequestContext, "workspaceId" | "auditLog"> & {
+  organizationId: string;
+  access: TWorkspacesListQuery["access"];
+}): Promise<Response> {
+  const actor = getV3AuthorizationActor(authentication);
+  if (access === "read" && actor?.type === "user") {
+    const membership = await getMembershipByUserIdOrganizationId(actor.id, organizationId);
+    if (membership?.role === "dashboard_viewer") {
+      const workspaces = await listDashboardViewerWorkspaces(actor.id, organizationId);
+      return successResponse(workspaces.map(serializeWorkspaceOption), { requestId });
+    }
+  }
+
+  const allowed = await requireOrgActionAccess({
+    authentication,
+    organizationId,
+    action: access === "write" ? "organization.read_access" : "organization.read",
+    requestId,
+    instance,
+  });
+  if (allowed instanceof Response) return allowed;
+
+  const workspaces =
+    access === "write"
+      ? await getWritableWorkspacesByUserId(allowed.userId, organizationId)
+      : await getWorkspacesByUserId(allowed.userId, organizationId);
+  return successResponse(workspaces.map(serializeWorkspaceOption), { requestId });
+}
+
+const WORKSPACE_LIMIT_REACHED = "Organization workspace limit reached";
+const TEAM_ASSIGNMENT_NOT_ALLOWED = "You do not have permission to manage roles";
+
+/** The service's refusals, past the checks this operation makes first, as problems. */
+const createWorkspaceRefusal = (
+  error: unknown,
+  { requestId, instance }: Pick<TRequestContext, "requestId" | "instance">
+) => {
+  // The cap, checked again under the organization's lock: a concurrent create got there first (ENG-3921).
+  if (error instanceof OperationNotAllowedError) return problemForbidden(requestId, error.message, instance);
+  // The organization was deleted between the authorization and the lock.
+  if (error instanceof ResourceNotFoundError) return problemForbidden(requestId, undefined, instance);
+  if (error instanceof InvalidInputError) return problemConflict(requestId, error.message, instance);
+  // Duplicate team ids, or a team from another organization (ENG-1922). Both read the same, so the
+  // answer can't be used to learn which teams exist elsewhere.
+  if (error instanceof ValidationError) {
+    return problemUnprocessableContent(requestId, error.message, {
+      instance,
+      invalid_params: [{ name: "teamIds", reason: error.message }],
+    });
+  }
+  return null;
+};
+
+/**
+ * `POST /api/internal/workspaces?organizationId=`: create a workspace in the organization, optionally
+ * granted to some of its teams. Owners and managers, within the plan's workspace limit; granting teams
+ * needs the access-control licence.
+ */
+export async function createWorkspaceOperation({
+  authentication,
+  organizationId,
+  body,
+  requestId,
+  instance,
+  auditLog,
+}: Omit<TRequestContext, "workspaceId"> & {
+  organizationId: string;
+  body: TWorkspaceCreateBody;
+}): Promise<Response> {
+  // Named before anything can refuse, so a refused attempt's audit entry says which organization it aimed at.
+  if (auditLog) auditLog.organizationId = organizationId;
+
+  const access = await requireOrgActionAccess({
+    authentication,
+    organizationId,
+    action: "organization.manage",
+    requestId,
+    instance,
+  });
+  if (access instanceof Response) return access;
+
+  // Defence in depth for ENG-3921: bounds how wide a burst can be. The lock in `createWorkspace` is what
+  // enforces the cap.
+  const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.stateMutation, organizationId, {
+    requestId,
+    instance,
+  });
+  if (limited) return limited;
+
+  // Authorized for an organization that is gone by now: the same 403 as one the caller can't see.
+  if (!(await getOrganization(organizationId))) return problemForbidden(requestId, undefined, instance);
+
+  const [workspaceLimit, workspaceCount] = await Promise.all([
+    getOrganizationWorkspacesLimit(organizationId),
+    getOrganizationWorkspacesCount(organizationId),
+  ]);
+
+  // A fast path for the common case, before the access-control lookup and the transaction. It cannot
+  // enforce the cap on its own (concurrent requests all read the same count), so createWorkspace checks
+  // again under a lock on the organization (ENG-3921).
+  if (workspaceCount >= workspaceLimit) return problemForbidden(requestId, WORKSPACE_LIMIT_REACHED, instance);
+
+  if (body.teamIds.length > 0 && !(await getAccessControlPermission(organizationId))) {
+    return problemForbidden(requestId, TEAM_ASSIGNMENT_NOT_ALLOWED, instance);
+  }
+
+  let workspace: TWorkspace;
+  try {
+    workspace = await createWorkspace(
+      organizationId,
+      { name: body.name, teamIds: body.teamIds },
+      { workspaceLimit }
+    );
+  } catch (error) {
+    const refusal = createWorkspaceRefusal(error, { requestId, instance });
+    if (refusal) return refusal;
+    throw error;
+  }
+
+  if (auditLog) {
+    auditLog.targetId = workspace.id;
+    auditLog.newObject = workspace;
+  }
+
+  // Carried over from the server action this replaces: it re-saves the creator's notification settings,
+  // a remnant of when creating a workspace subscribed its creator to the workspace's weekly summary.
+  const user = await getUser(access.userId);
+  if (user) {
+    await updateUser(user.id, {
+      notificationSettings: {
+        ...user.notificationSettings,
+        alert: { ...user.notificationSettings?.alert },
+      },
+    });
+  }
+
+  groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
+  capturePostHogEvent(
+    access.userId,
+    "workspace_created",
+    { organization_id: organizationId, workspace_id: workspace.id, name: workspace.name },
+    { organizationId, workspaceId: workspace.id }
+  );
+
+  return createdResponse(serializeWorkspaceOption(workspace), {
+    requestId,
+    location: `${WORKSPACES_BASE_PATH}/${workspace.id}`,
+  });
 }

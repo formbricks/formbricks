@@ -9,6 +9,9 @@ export const ORGANIZATION_NAME_MAX = 255;
 
 const ZOrganizationName = ZOrganization.shape.name.max(ORGANIZATION_NAME_MAX);
 
+/** `GET /api/internal/organizations` takes no parameters: it lists the caller's own organizations. */
+export const ZOrganizationsListQuery = z.object({}).strict();
+
 /** `POST /api/internal/organizations`: the organization set up during onboarding. */
 export const ZOrganizationCreateBody = z.object({ name: ZOrganizationName }).strict();
 

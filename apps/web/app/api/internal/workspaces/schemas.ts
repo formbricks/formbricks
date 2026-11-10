@@ -6,6 +6,36 @@ import { strictDeep } from "@/app/api/internal/lib/strict-schema";
 
 export const ZWorkspaceIdParams = z.object({ workspaceId: ZId }).strict();
 
+/** Bounds the workspace name a request may carry (ENG-1652). The column itself is unbounded. */
+export const WORKSPACE_NAME_MAX = 255;
+
+/**
+ * `GET /api/internal/workspaces?organizationId=&access=`: the caller's workspaces in one organization.
+ * `read` (the default) is every workspace the caller can open, for the switchers; `write` only those the
+ * caller can write to, for flows that target a workspace with a write (copying a survey).
+ */
+export const ZWorkspacesListQuery = z
+  .object({ organizationId: ZId, access: z.enum(["read", "write"]).default("read") })
+  .strict();
+export type TWorkspacesListQuery = z.infer<typeof ZWorkspacesListQuery>;
+
+/** `POST /api/internal/workspaces?organizationId=`: the organization the workspace is created in. */
+export const ZWorkspacesCreateQuery = z.object({ organizationId: ZId }).strict();
+
+/**
+ * `POST /api/internal/workspaces` body: what the create-workspace dialog asks for, a name and the teams to
+ * grant it to. Every other setting starts at its default and is changed from workspace settings, where its
+ * own checks (the remove-branding licence, the default survey language) apply.
+ */
+export const ZWorkspaceCreateBody = z
+  .object({
+    name: z.string().trim().min(1, { error: "Workspace name cannot be empty" }).max(WORKSPACE_NAME_MAX),
+    // An organization has far fewer teams than this; the service refuses duplicates and other tenants' ids.
+    teamIds: z.array(ZId).max(500).default([]),
+  })
+  .strict();
+export type TWorkspaceCreateBody = z.infer<typeof ZWorkspaceCreateBody>;
+
 /**
  * The workspace settings the dashboard edits: name, cooldown, look and placement, branding, custom scripts
  * and the default survey language. Custom CSS has its own resource (`/api/v3/workspaces/{id}/custom-css`).
@@ -29,7 +59,7 @@ export const ZWorkspacePatchBody = strictDeep(
     teamIds: true,
     inAppSurveyBranding: true,
     linkSurveyBranding: true,
-  })
+  }).extend({ name: ZWorkspaceUpdateInput.shape.name.unwrap().max(WORKSPACE_NAME_MAX).optional() })
 )
   .refine(
     (body) =>

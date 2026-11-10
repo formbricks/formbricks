@@ -5,13 +5,12 @@ import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TUser } from "@formbricks/types/user";
-import {
-  getOrganizationsForSwitcherAction,
-  getWorkspacesForSwitcherAction,
-} from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
-import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import {
+  useOrganizationSwitcherData,
+  useWorkspaceSwitcherData,
+} from "@/modules/settings/hooks/use-switcher-data";
 import { getOrganizationSwitchPath } from "@/modules/settings/lib/organization-switch";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 
@@ -46,18 +45,14 @@ export const SettingsNavigation = ({
   const { t } = useTranslation();
   const [, startTransition] = useTransition();
 
-  const workspaceSwitcher = useSwitcherData(
-    () => getWorkspacesForSwitcherAction({ organizationId }),
-    t("common.failed_to_load_workspaces"),
-    undefined,
-    workspaceName
-  );
-  const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction(),
-    t("common.failed_to_load_organizations"),
-    undefined,
-    organizationName
-  );
+  const workspaceSwitcher = useWorkspaceSwitcherData(organizationId, {
+    fallbackError: t("common.failed_to_load_workspaces"),
+    reloadKey: workspaceName,
+  });
+  const organizationSwitcher = useOrganizationSwitcherData({
+    fallbackError: t("common.failed_to_load_organizations"),
+    reloadKey: organizationName,
+  });
 
   const handleWorkspaceChange = useCallback(
     (id: string) => {

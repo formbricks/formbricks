@@ -7,8 +7,8 @@ import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { getSurveyFilterDataAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
+import { getResponseFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/lib/api-client";
 import { useResponseTableFilters } from "./use-response-table-filters";
 
 const navigation = vi.hoisted(() => ({ query: "" }));
@@ -21,18 +21,16 @@ vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => k
 vi.mock("@/app/(app)/workspaces/[workspaceId]/context/workspace-context", () => ({
   useOrganization: () => ({ organization: { displayTimeZone: "UTC" } }),
 }));
-vi.mock("@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions", () => ({
-  getSurveyFilterDataAction: vi.fn(async () =>
+vi.mock("@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/lib/api-client", () => ({
+  getResponseFilterOptions: vi.fn(async () =>
     filterData.resolve
       ? {
-          data: {
-            environmentTags: [{ id: "tag1", name: "vip" }],
-            attributes: { plan: ["Pro"] },
-            reservedValues: {},
-            hiddenFields: {},
-            variableValues: {},
-            quotas: [],
-          },
+          tags: [{ id: "tag1", name: "vip" }],
+          attributes: { plan: ["Pro"] },
+          reservedValues: {},
+          hiddenFields: {},
+          variableValues: {},
+          quotas: [],
         }
       : new Promise(() => undefined)
   ),
@@ -170,10 +168,23 @@ describe("useResponseTableFilters", () => {
     const { result } = render();
 
     expect(result.current.isReady).toBe(true);
-    expect(getSurveyFilterDataAction).not.toHaveBeenCalled();
+    expect(getResponseFilterOptions).not.toHaveBeenCalled();
 
     act(() => result.current.requestFilterData());
-    await waitFor(() => expect(getSurveyFilterDataAction).toHaveBeenCalledOnce());
+    await waitFor(() => expect(getResponseFilterOptions).toHaveBeenCalledOnce());
+    expect(getResponseFilterOptions).toHaveBeenCalledWith("survey1", { signal: expect.any(AbortSignal) });
+  });
+
+  test("offers the workspace's tags from the filter options as the tag filter's values", async () => {
+    const { result } = render();
+
+    act(() => result.current.requestFilterData());
+
+    await waitFor(() =>
+      expect(result.current.properties.find((property) => property.id === "tag")?.options).toEqual([
+        { value: "vip", label: "vip" },
+      ])
+    );
   });
 
   test("an attribute rule in the URL holds the list until the filter data resolves it", async () => {

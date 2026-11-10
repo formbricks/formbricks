@@ -8,9 +8,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZWorkspace } from "@formbricks/types/workspace";
-import { createWorkspaceAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { ApiQueryClientProvider } from "@/modules/api/components/api-query-client-provider";
+import { WORKSPACE_NAME_MAX } from "@/app/api/internal/workspaces/schemas";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -32,10 +30,11 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
+import { useCreateWorkspace } from "./hooks/use-create-workspace";
 import { useOrganizationTeams } from "./hooks/use-organization-teams";
 
 const ZCreateWorkspaceForm = z.object({
-  name: ZWorkspace.shape.name,
+  name: ZWorkspace.shape.name.max(WORKSPACE_NAME_MAX),
   teamIds: z.array(z.string()).optional(),
 });
 
@@ -48,14 +47,12 @@ interface CreateWorkspaceModalProps {
   readonly isAccessControlAllowed: boolean;
 }
 
-/** The dialog reads the organization's teams through the dashboard API, so it brings its own query client. */
-export const CreateWorkspaceModal = (props: Readonly<CreateWorkspaceModalProps>) => (
-  <ApiQueryClientProvider>
-    <CreateWorkspaceDialog {...props} />
-  </ApiQueryClientProvider>
-);
-
-const CreateWorkspaceDialog = ({
+/**
+ * Reads the organization's teams and creates the workspace through the dashboard API. It uses the query
+ * client of the shell it opens from (the workspace layout or the landing page), so a
+ * new workspace invalidates the switcher lists that shell shows.
+ */
+export const CreateWorkspaceModal = ({
   open,
   setOpen,
   organizationId,
@@ -66,6 +63,7 @@ const CreateWorkspaceDialog = ({
 
   // Teams are an enterprise feature: the list route refuses without the licence, so don't ask for it then.
   const teamsQuery = useOrganizationTeams(organizationId, { enabled: open && isAccessControlAllowed });
+  const createWorkspaceMutation = useCreateWorkspace(organizationId);
   const organizationTeams = teamsQuery.data ?? [];
 
   const form = useForm<TCreateWorkspaceForm>({
@@ -90,25 +88,19 @@ const CreateWorkspaceDialog = ({
   }));
 
   const onSubmit = async (data: TCreateWorkspaceForm) => {
-    const createWorkspaceResponse = await createWorkspaceAction({
-      organizationId,
-      data: {
-        name: data.name,
-        teamIds: data.teamIds || [],
-      },
-    });
-
-    if (createWorkspaceResponse?.data) {
-      const workspace = createWorkspaceResponse.data;
-      toast.success(t("common.workspace_created_successfully"));
-      setOpen(false);
-      form.reset();
-      // Redirect to the new workspace's surveys page
-      router.push(`/workspaces/${workspace.id}/surveys`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(createWorkspaceResponse);
-      toast.error(errorMessage);
+    let workspace: { id: string };
+    try {
+      workspace = await createWorkspaceMutation.mutateAsync({ name: data.name, teamIds: data.teamIds ?? [] });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return;
     }
+
+    toast.success(t("common.workspace_created_successfully"));
+    setOpen(false);
+    form.reset();
+    // Redirect to the new workspace's surveys page
+    router.push(`/workspaces/${workspace.id}/surveys`);
   };
 
   const handleClose = () => {

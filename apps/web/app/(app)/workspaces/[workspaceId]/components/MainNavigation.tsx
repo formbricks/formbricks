@@ -20,10 +20,6 @@ import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-import {
-  getOrganizationsForSwitcherAction,
-  getWorkspacesForSwitcherAction,
-} from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { MainNavigationHeader } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationHeader";
 import { MainNavigationNotices } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationNotices";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
@@ -37,7 +33,10 @@ import {
   SwitcherDropdownBody,
 } from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
-import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import {
+  useOrganizationSwitcherData,
+  useWorkspaceSwitcherData,
+} from "@/modules/settings/hooks/use-switcher-data";
 import { getOrganizationSwitchPath, getWorkspaceHomePath } from "@/modules/settings/lib/organization-switch";
 import { Badge } from "@/modules/ui/components/badge";
 import {
@@ -287,33 +286,29 @@ export const MainNavigation = ({
 
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
-  const workspaceSwitcher = useSwitcherData(
-    () => getWorkspacesForSwitcherAction({ organizationId: organization.id }),
-    t("common.failed_to_load_workspaces"),
-    undefined,
-    workspace.name
-  );
-  const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction(),
-    t("common.failed_to_load_organizations"),
-    undefined,
-    organization.name
-  );
+  const workspaceSwitcher = useWorkspaceSwitcherData(organization.id, {
+    fallbackError: t("common.failed_to_load_workspaces"),
+    reloadKey: workspace.name,
+  });
+  const organizationSwitcher = useOrganizationSwitcherData({
+    fallbackError: t("common.failed_to_load_organizations"),
+    reloadKey: organization.name,
+  });
   const { load: loadWorkspaces } = workspaceSwitcher;
   const { load: loadOrganizations } = organizationSwitcher;
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = useState(false);
   const [openWorkspaceLimitModal, setOpenWorkspaceLimitModal] = useState(false);
 
   useEffect(() => {
-    // The hook guards against duplicate/looping loads internally.
+    // Loading is idempotent: the first open enables the query, later ones read the cache.
     if (isWorkspaceDropdownOpen) {
-      void loadWorkspaces();
+      loadWorkspaces();
     }
   }, [isWorkspaceDropdownOpen, loadWorkspaces]);
 
   useEffect(() => {
     if (isOrganizationDropdownOpen) {
-      void loadOrganizations();
+      loadOrganizations();
     }
   }, [isOrganizationDropdownOpen, loadOrganizations]);
 

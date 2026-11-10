@@ -1,15 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon, Loader2, MousePointerClickIcon } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { getWritableWorkspacesAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { QUERY_RETRY } from "@/modules/api/lib/query-client";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { Button } from "@/modules/ui/components/button";
@@ -23,6 +25,7 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
+import { workspaceListQueryOptions } from "@/modules/workspaces/lib/workspaces-query";
 
 interface CopySurveyModalProps {
   open: boolean;
@@ -46,8 +49,17 @@ export const CopySurveyModal = ({
   organizationId,
 }: Readonly<CopySurveyModalProps>) => {
   const { t } = useTranslation();
-  const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
-  const [workspacesLoading, setWorkspacesLoading] = useState(true);
+  // The workspaces the caller can copy into: writable ones, other than the survey's own. The surveys
+  // layout's client has no house defaults, so the query carries the retry rule itself.
+  const workspacesQuery = useQuery({
+    ...workspaceListQueryOptions(organizationId, "write"),
+    ...QUERY_RETRY,
+    enabled: open,
+    select: (items) =>
+      items.filter((w) => w.id !== currentWorkspaceId).sort((a, b) => a.name.localeCompare(b.name)),
+  });
+  const workspaces = workspacesQuery.data ?? [];
+  const workspacesLoading = workspacesQuery.isLoading;
 
   const form = useForm<TCopySurveyFormData>({
     resolver: zodResolver(ZCopySurveyFormValidation),
@@ -55,28 +67,16 @@ export const CopySurveyModal = ({
   });
 
   useEffect(() => {
-    if (!open) return;
-    setWorkspacesLoading(true);
-    form.reset({ workspaceIds: [] });
-    getWritableWorkspacesAction({ organizationId })
-      .then((result) => {
-        if (result?.data) {
-          const eligible = result.data
-            .filter((w) => w.id !== currentWorkspaceId)
-            .sort((a, b) => a.name.localeCompare(b.name));
-          setWorkspaces(eligible);
-        } else {
-          toast.error(getFormattedErrorMessage(result) || t("common.something_went_wrong_please_try_again"));
-        }
-      })
-      .catch((error) => {
-        logger.error(error);
-        toast.error(t("common.something_went_wrong_please_try_again"));
-      })
-      .finally(() => {
-        setWorkspacesLoading(false);
-      });
-  }, [open, organizationId, currentWorkspaceId, t, form]);
+    if (open) form.reset({ workspaceIds: [] });
+  }, [open, form]);
+
+  useEffect(() => {
+    if (!workspacesQuery.error) return;
+    logger.error(workspacesQuery.error);
+    toast.error(
+      getV3ApiErrorMessage(workspacesQuery.error, t("common.something_went_wrong_please_try_again"))
+    );
+  }, [workspacesQuery.error, t]);
 
   const onSubmit = async (data: TCopySurveyFormData) => {
     const settled = await Promise.allSettled(
