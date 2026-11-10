@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postPasswordResetRequest } from "@/app/api/internal/password-reset-requests/route";
 import { flushAfter } from "@/integration/after";
+import { postToPreLoginRoute } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
-import { forgotPasswordAction } from "./actions";
 
 /**
- * ENG-3257 at the ACTION boundary: real `forgotPasswordAction` → real `getUserByEmail` → real Postgres
+ * ENG-3257 at the ROUTE boundary: real `POST /api/internal/password-reset-requests` → real `getUserByEmail` → real Postgres
  * → real Better Auth, with only the mailer captured.
  *
  * This has to be an integration test. The defect is two lookups disagreeing across a framework
@@ -51,6 +52,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
 
+/** The forgot-password form's request, through the real `POST /api/internal/password-reset-requests`. */
+const forgotPassword = (body: { email: string }) =>
+  postToPreLoginRoute(postPasswordResetRequest, "/api/internal/password-reset-requests", body);
+
 const STORED_EMAIL = "alice@corporate-example.com";
 const PASSWORD = "Passw0rd!";
 
@@ -72,12 +77,12 @@ beforeEach(async () => {
   await auth.api.signUpEmail({ body: { email: STORED_EMAIL, password: PASSWORD, name: "Alice" } });
 });
 
-describe("forgotPasswordAction with a differently-capitalised email (real Postgres + Better Auth)", () => {
+describe("POST /api/internal/password-reset-requests with a differently-capitalised email (real Postgres + Better Auth)", () => {
   test("sends the reset mail for an address typed with capitals", async () => {
-    const result = await forgotPasswordAction({ email: TYPED_WITH_CAPITALS });
+    const result = await forgotPassword({ email: TYPED_WITH_CAPITALS });
     await flushAfter();
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.status).toBe(204);
     // Addressed to the STORED form: the lookup normalizes to find the row, then hands Better Auth the
     // address it has on file, which is the one Better Auth's own lowercasing lookup will match.
     expect(resetMailRecipients()).toEqual([STORED_EMAIL]);
@@ -86,20 +91,20 @@ describe("forgotPasswordAction with a differently-capitalised email (real Postgr
   test("still sends for the address typed exactly as stored", async () => {
     // The control. Without it, a fix that broke the ordinary path would leave the test above passing
     // for the wrong reason.
-    const result = await forgotPasswordAction({ email: STORED_EMAIL });
+    const result = await forgotPassword({ email: STORED_EMAIL });
     await flushAfter();
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.status).toBe(204);
     expect(resetMailRecipients()).toEqual([STORED_EMAIL]);
   });
 
   test("sends nothing for an address that belongs to no account", async () => {
     // The silent-skip branch is correct behaviour and must survive the fix — normalizing the lookup
     // must not turn "no such user" into a send, and the response must stay indistinguishable.
-    const result = await forgotPasswordAction({ email: "Nobody@corporate-example.com" });
+    const result = await forgotPassword({ email: "Nobody@corporate-example.com" });
     await flushAfter();
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.status).toBe(204);
     expect(resetMailRecipients()).toEqual([]);
   });
 });
@@ -107,7 +112,7 @@ describe("forgotPasswordAction with a differently-capitalised email (real Postgr
 describe("getUserByEmail canonicalizes at the query (real Postgres)", () => {
   /**
    * The guard for the next caller, asserted on the lookup rather than on any one action. ENG-1548 was
-   * this same defect fixed at the call sites it knew about, and `forgotPasswordAction` — added later —
+   * this same defect fixed at the call sites it knew about, and `POST /api/internal/password-reset-requests` — added later —
    * simply never got the `.toLowerCase()`. A test that only drives forgot-password would have watched
    * that happen again. This one fails the moment the normalization leaves the query, whoever calls it.
    */

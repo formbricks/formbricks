@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postPasswordResetRequest } from "@/app/api/internal/password-reset-requests/route";
 import { completePasswordResetOperation } from "@/app/api/internal/password-resets/lib/operations";
 import { flushAfter } from "@/integration/after";
+import { postToPreLoginRoute } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
-import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
 import { auth } from "@/modules/auth/lib/auth";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
 
@@ -38,6 +39,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
 
+/** The forgot-password form's request, through the real `POST /api/internal/password-reset-requests`. */
+const forgotPassword = (body: { email: string }) =>
+  postToPreLoginRoute(postPasswordResetRequest, "/api/internal/password-reset-requests", body);
+
 const EMAIL = "null-issuer@example.com";
 const PASSWORD = "Passw0rd!";
 const NEW_PASSWORD = "N3wPassw0rd!";
@@ -45,10 +50,10 @@ const NEW_PASSWORD = "N3wPassw0rd!";
 const dropCredentialIssuer = () =>
   prisma.account.updateMany({ where: { provider: "credential" }, data: { issuer: null } });
 
-/** Requests a reset link through the real action and returns the token from the captured mail. */
+/** Requests a reset link through the real route and returns the token from the captured mail. */
 const requestResetToken = async (): Promise<string> => {
-  await forgotPasswordAction({ email: EMAIL });
-  await flushAfter(); // the action mails after its response (ENG-3639)
+  await forgotPassword({ email: EMAIL });
+  await flushAfter(); // the route mails after its response (ENG-3639)
   const link = vi.mocked(sendPasswordResetLinkEmail).mock.calls.at(-1)?.[0].verifyLink ?? "";
   const token = /\/reset-password\/([^?]+)/.exec(link)?.[1];
   if (!token) throw new Error(`No reset token in the captured mail link: "${link}"`);

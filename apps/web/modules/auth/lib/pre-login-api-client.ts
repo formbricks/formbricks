@@ -31,6 +31,13 @@ export const createSignup = (body: TSignupRequest) =>
     timeoutMs: null,
   });
 
+/**
+ * Ask for a password reset link. Answers the same for every address; the link (or an SSO sign-in hint) is
+ * sent after the answer, so there is nothing slow to wait for.
+ */
+export const requestPasswordReset = (email: string) =>
+  sendApiRequest<void>("/api/internal/password-reset-requests", { method: "POST", body: { email } });
+
 /** Set a new password with the token from a reset email. */
 export const completePasswordReset = (body: { token: string; password: string }) =>
   sendApiRequest<void>("/api/internal/password-resets", { method: "POST", body });

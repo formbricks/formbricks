@@ -59,6 +59,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/organizations/{organizationId}/email-logo` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/email-logo/route.ts` |
 | `/api/internal/organizations/{organizationId}/favicon` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/favicon/route.ts` |
 | `/api/internal/organizations/{organizationId}/test-emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/test-emails/route.ts` |
+| `/api/internal/password-reset-requests` | POST | none | dashboard | `/api/internal` | `app/api/internal/password-reset-requests/route.ts` |
 | `/api/internal/password-resets` | POST | none | dashboard | `/api/internal` | `app/api/internal/password-resets/route.ts` |
 | `/api/internal/quotas` | POST | session | dashboard | `/api/internal` | `app/api/internal/quotas/route.ts` |
 | `/api/internal/quotas/{quotaId}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/quotas/[quotaId]/route.ts` |

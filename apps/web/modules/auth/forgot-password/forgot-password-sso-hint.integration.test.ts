@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postPasswordResetRequest } from "@/app/api/internal/password-reset-requests/route";
 import { flushAfter } from "@/integration/after";
+import { postToPreLoginRoute } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { sendPasswordResetLinkEmail, sendSsoSignInHintEmail } from "@/modules/email";
-import { forgotPasswordAction } from "./actions";
 
 /**
- * ENG-3262 at the action boundary: real `forgotPasswordAction` → real Postgres → real Better Auth, with
+ * ENG-3262 at the route boundary: real `POST /api/internal/password-reset-requests` → real Postgres → real Better Auth, with
  * only the mailer captured.
  *
  * The provider names come from `Account` rows, so this is what proves the query, the legacy-id
@@ -45,9 +46,14 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   getIsSamlSsoEnabled: vi.fn(async () => true),
 }));
 
-/** Call the action and let its after-response work finish, as a real request would. */
+/** Send the request and let its after-response work finish, as a real request would. */
+
+/** The forgot-password form's request, through the real `POST /api/internal/password-reset-requests`. */
+const forgotPassword = (body: { email: string }) =>
+  postToPreLoginRoute(postPasswordResetRequest, "/api/internal/password-reset-requests", body);
+
 const requestReset = async (email: string) => {
-  const result = await forgotPasswordAction({ email });
+  const result = await forgotPassword({ email });
   await flushAfter();
   return result;
 };
@@ -84,13 +90,13 @@ beforeEach(async () => {
   vi.clearAllMocks();
 });
 
-describe("forgotPasswordAction for an account without a password (real Postgres + Better Auth)", () => {
+describe("POST /api/internal/password-reset-requests for an account without a password (real Postgres + Better Auth)", () => {
   test("mails an SSO-only user which provider to sign in with, and no reset link", async () => {
     await seedSsoUser();
 
     const result = await requestReset(SSO_EMAIL);
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.status).toBe(204);
     expect(sendSsoSignInHintEmail).toHaveBeenCalledExactlyOnceWith({
       email: SSO_EMAIL,
       locale: "nl-NL",
@@ -125,7 +131,7 @@ describe("forgotPasswordAction for an account without a password (real Postgres 
   test("sends nothing for an address that belongs to no account", async () => {
     const result = await requestReset("nobody@corporate-example.com");
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.status).toBe(204);
     expect(sendSsoSignInHintEmail).not.toHaveBeenCalled();
     expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
   });

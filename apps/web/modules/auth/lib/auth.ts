@@ -120,7 +120,7 @@ export const auth = betterAuth({
   // `/request-password-reset` (ENG-3639) for the same reason. It answered after the user lookup, token
   // write and SMTP send, so its response time told password accounts from everything else, and it
   // skipped the forgot-password flow's per-account mail limit (ENG-3640). Nothing calls it over HTTP:
-  // forgotPasswordAction and the profile's password-reset route both use `auth.api.requestPasswordReset`
+  // the forgot-password route and the profile's password-reset route both use `auth.api.requestPasswordReset`
   // in-process.
   //
   // `/sign-up/email` (ENG-3988) too. Every check a credential sign-up has to pass lives in
@@ -132,7 +132,7 @@ export const auth = betterAuth({
   //
   // `/send-verification-email` (ENG-3823). Anyone could call it for any address, limited only per IP, and
   // spend that address's verification-email cap so the user's own resend went nowhere. Nothing calls it
-  // over HTTP: `resendVerificationEmailAction` uses `auth.api.sendVerificationEmail` in-process and limits
+  // over HTTP: `POST /api/internal/verification-emails` uses `auth.api.sendVerificationEmail` in-process and limits
   // each account, and the resend on sign-in runs inside `/sign-in/email`.
   disabledPaths: [
     "/token",
@@ -416,7 +416,7 @@ export const auth = betterAuth({
       "/sign-in/email": { window: 60, max: 5 },
       "/reset-password": { window: 60, max: 5 },
       // ENG-2562: verifying must stay generous. (Sending, the amplification vector, is closed over HTTP by
-      // `disabledPaths`; its only way in is `resendVerificationEmailAction`, limited per IP and account.)
+      // `disabledPaths`; its only way in is `POST /api/internal/verification-emails`, limited per IP and account.)
       // It is a top-level GET clicked out of a mail client — frequently behind a corporate NAT shared by
       // many users, and often prefetched by a mail-security scanner before the human clicks. It also
       // already requires a signed, expiring token, so a tight per-IP cap buys very little and risks
