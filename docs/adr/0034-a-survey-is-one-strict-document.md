@@ -1,6 +1,6 @@
 # A v3 survey is one strict document, and PATCH replaces whole top-level fields
 
-`/api/v3/surveys` reads and writes a survey as a single block-based document, not as survey, block and question sub-resources: a survey is valid or invalid as a whole (element ids are unique across blocks, logic jumps between them), and one complete object is what agents generate best. PATCH is a strict top-level partial: an omitted field is kept, and a provided object or array replaces that whole subtree, so an id missing from a replaced array is a deletion. Unknown keys are refused at every nesting level. The API never repairs references for the caller: a write that leaves one pointing at nothing is a 422 naming the path, because a silent repair hides the mistake and may guess the wrong target.
+`/api/v3/surveys` reads and writes a survey as a single block-based document, not as survey, block and question sub-resources: a survey is valid or invalid as a whole (element ids are unique across blocks, logic jumps between them), and one complete object is what agents generate best. PATCH is a strict top-level partial: an omitted field is kept, and a provided object or array replaces that whole subtree, so an id missing from a replaced array is a deletion (within the publish-time locks of ADR 0020). Unknown keys are refused at every nesting level. The API never repairs references for the caller: a write that leaves one pointing at nothing is a 422 naming the path, because a silent repair hides the mistake and may guess the wrong target.
 
 ## Considered Options
 

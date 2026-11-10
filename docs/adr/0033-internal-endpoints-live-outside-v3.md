@@ -1,6 +1,6 @@
 # Dashboard-only endpoints live at unversioned `/api/internal`, and `/api/v3` is only the public contract
 
-An endpoint that only our own UI calls lives at `/api/internal/<resource>`: session auth, no OpenAPI entry, no version segment and no stability promise. It is built like a v3 route in every other way (ENG-1668). `/api/v3` then means one thing: the published contract we deprecate with notice instead of changing. New endpoints start internal and move to `/api/v3`, rather than gaining a public twin, once an external caller needs them; a feature built for external callers from day one starts public (ADR 0002). The URL carries the signal because it is the only thing an outside caller sees, and there is no version segment because the only client ships in the same commit as the route.
+An endpoint that only our own UI calls lives at `/api/internal/<resource>`: session auth, no OpenAPI entry, no version segment and no stability promise. It is built like a v3 route in every other way (ENG-1668). `/api/v3` is reserved for the published contract we deprecate with notice instead of changing. New endpoints start internal and move to `/api/v3`, rather than gaining a public twin, once an external caller needs them; a feature built for external callers from day one starts public (ADR 0002). The URL carries the signal because it is the only thing an outside caller sees, and there is no version segment because the only client ships in the same commit as the route.
 
 ## Considered Options
 
@@ -11,6 +11,7 @@ An endpoint that only our own UI calls lives at `/api/internal/<resource>`: sess
 ## Consequences
 
 - Internal does not mean lax: the review bar is the same as v3. Moving a server action onto a route keeps the action's authorization checks, audit events and rate limits, and while both exist a gate change lands on both through the one gate function (`CODING_STANDARDS.md`, "API Design").
-- MCP is a public surface even where the HTTP route is internal: the tools call the same `lib/operations.ts`, so reshaping an operation an MCP tool uses is a public change.
+- MCP is a public surface: an operation an MCP tool calls is a public contract, whichever HTTP routes call it too.
 - The internal API needs versioning the day it gains a consumer we don't ship in the same commit (a mobile app, the CLI, another service).
-- The `feedbackRecords/[[...path]]` Hub proxy stays under `/api/v3`, because it forwards API keys.
+- Session-only routes that predate this decision still sit under `/api/v3` and are exceptions waiting to move (ENG-2533, ENG-3984).
+- The `feedbackRecords/[[...path]]` Hub proxy stays under `/api/v3`: it is a documented public pass-through to the Hub API.
