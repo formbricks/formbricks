@@ -893,7 +893,13 @@ describe("Word questionnaires (ENG-6853)", () => {
     expect(
       (matrix.columns as { label: Record<string, string> }[]).map((column) => column.label["en-US"])
     ).toEqual(["Poor", "OK", "Good"]);
-    expect(report.issues).toContainEqual({ code: "table_as_matrix", severity: "warning", questionTag: "P2" });
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "table_as_matrix",
+        severity: "warning",
+        place: { kind: "paragraph", paragraph: 2 },
+      })
+    );
 
     const sample = await previewFixture("sample-survey-2-word.docx");
     expect(sample.payload.blocks.flatMap((block) => block.elements).map((element) => element.type)).toContain(
