@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Sor: {row}"
       },
       "import": {
-        "ai_note": "A Qualtrics-, Word-, Excel-, CSV- és Markdown-fájlokat a Formbricks AI olvassa be. Valamennyi szöveg szó szerint a fájlból származik.",
+        "ai_note": "A Qualtrics-, Word-, Excel-, CSV- és Markdown-fájlokat a Formbricks AI szóról szóra olvassa be.",
         "card_description": "Alakítson át egy Formbricks-fájlt, egy Qualtrics-exportot vagy egy Word, Excel, CSV vagy Markdown formátumú kérdőívet felmérésvázlattá.",
         "card_description_json_only": "A Formbricksből exportált felmérés átalakítása piszkozatként elmentett felméréssé.",
         "card_title": "Felmérés importálása",
@@ -5079,8 +5079,8 @@
         "discard_draft_title": "Elveti ezt az importálást?",
         "discard_import_body": "A fájl importálása még folyamatban van. A bezárás leállítja az importálást.",
         "discard_import_title": "Leállítja az importálást?",
-        "dropzone_help": "Formbricks-fájl (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) vagy Markdown (.md), legfeljebb 15 MB",
-        "dropzone_help_json_only": "Formbricks-fájl (.json), legfeljebb 15 MB",
+        "dropzone_help": "Formbricks-fájl (.json), Qualtrics-exportfájl (.qsf), Word- (.docx), Excel- (.xlsx), CSV- (.csv) vagy Markdown-fájl (.md)",
+        "dropzone_help_json_only": "Formbricks-fájl (.json)",
         "dropzone_primary": "Húzza ide a fájlt, vagy kattintson a kiválasztásához",
         "encodings": {
           "utf_16": "UTF-16",

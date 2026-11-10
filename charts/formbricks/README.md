@@ -170,7 +170,8 @@ The generated Formbricks `DATABASE_URL` and installation notes follow the bundle
 effective service name, service port, username, and database. This includes username, database, and
 service-port overrides supplied through the dependency's `global.postgresql` values. The SpiceDB datastore URI
 and database bootstrap follow the same service name and port while continuing to provision and use the dedicated
-`spicedb` role and database.
+`spicedb` role and database. The bundled Cube follows them too, with its password read from the same Secret and
+key as the PostgreSQL server's.
 
 > [!WARNING]
 > PostgreSQL initializes users and databases only when the data directory is empty. Before applying connection
@@ -215,11 +216,23 @@ The administrator URL must explicitly set `sslmode=require`, `sslmode=verify-ca`
 The bootstrap Job validates the TLS mode without logging the URL and passes the URL through unchanged, so other
 connection parameters and certificate settings are preserved.
 
-### Bootstrapping against an existing PostgreSQL without a `postgres` role
+### Which role the bundled bootstrap connects as
 
-The bundled bootstrap connects as the `postgres` superuser the subchart normally creates. An existing
-installation deployed with `postgresql.auth.enablePostgresUser=false` has no such role, so point the Job at a
-role that does hold `CREATEROLE` and `CREATEDB` instead:
+With every `authzed.bundledPostgresqlBootstrap.admin*` value empty (the default), the Job connects as
+`postgresql.auth.username` on `postgresql.auth.database`, with the password the PostgreSQL server reads
+(`postgresql.auth.existingSecret` / `secretKeys.userPasswordKey`). The bundled `pgvector/pgvector` image is the
+official PostgreSQL image, not Bitnami's: it makes that user a superuser and creates no `postgres` role, and it
+ignores the Bitnami-only admin password that `postgresql.auth.enablePostgresUser` passes. If a Bitnami image
+initialised the data directory instead, the application user is not a superuser; the Job then detects that and
+connects as the `postgres` superuser with the admin password. A role without a fallback that cannot log in or
+lacks `CREATEROLE` and `CREATEDB` stops the Job before any SQL runs, and its log names the values to set.
+
+Setting any `admin*` value selects an explicit administrator. The values you leave empty keep the previous
+defaults: `postgres` on the `postgres` database with the bundled admin password. A values file that still sets
+`adminUsername: postgres` with the bundled admin password keeps connecting as `postgres` first and falls back to
+the application user when that role does not exist.
+
+To use another role that holds `CREATEROLE` and `CREATEDB`, for example on an existing server:
 
 ```yaml
 authzed:
@@ -342,7 +355,16 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
   app secrets cannot override the listener port.
 - The generated app secret supplies `CUBEJS_API_SECRET` by default. If you disable generated secrets,
   provide it through your existing secret management flow.
-- Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
+- With the bundled PostgreSQL, the chart connects Cube to it: `CUBEJS_DB_HOST`, `CUBEJS_DB_PORT`,
+  `CUBEJS_DB_NAME` and `CUBEJS_DB_USER` follow the `postgresql` values, and `CUBEJS_DB_PASS` references the
+  Secret and key the server reads its password from. A variable set in `cube.env` replaces that default. Setting
+  `CUBEJS_DB_HOST`, `CUBEJS_DB_USER` or `CUBEJS_DB_PASS` there drops both bundled credentials, so the bundled
+  password is never paired with a user or host you chose. Kubernetes gives `env` precedence over `envFrom`, so
+  override these in `cube.env` (a `valueFrom` map is accepted), not through `cube.envFrom`.
+- With an external database (`postgresql.enabled: false`), the chart renders no Cube connection. Set
+  `CUBEJS_DB_HOST`, `CUBEJS_DB_PORT`, `CUBEJS_DB_NAME`, `CUBEJS_DB_USER` and `CUBEJS_DB_PASS` (and
+  `CUBEJS_DB_SSL: "true"` for TLS) in `cube.env` or `cube.envFrom`. Cube's Postgres driver has no URL variable,
+  so `DATABASE_URL` cannot be reused.
 - The bundled single-replica Cube has no external pre-aggregations and defaults
   `cube.env.CUBEJS_EXTERNAL_DEFAULT` to `false`, so it does not require Cube Store. If you add external
   pre-aggregations, configure Cube Store before overriding this value to `true`.
@@ -1094,7 +1116,7 @@ Upgrading from a chart that did not render the web container context:
 | pdb.enabled                                                        | bool   | `true`                                                                      |                                                           |
 | pdb.minAvailable                                                   | int    | `1`                                                                         |                                                           |
 | postgresql.auth.database                                           | string | `"formbricks"`                                                              |                                                           |
-| postgresql.auth.enablePostgresUser                                 | bool   | `true`                                                                       | Required by the bundled AuthZed database bootstrap.       |
+| postgresql.auth.enablePostgresUser                                 | bool   | `true`                                                                       | Ignored by the bundled pgvector image; lets the AuthZed bootstrap fall back to `postgres` on a Bitnami-initialised server. |
 | postgresql.auth.existingSecret                                     | string | `"formbricks-app-secrets"`                                                  |                                                           |
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`                                                 |                                                           |
 | postgresql.auth.secretKeys.userPasswordKey                         | string | `"POSTGRES_USER_PASSWORD"`                                                  |                                                           |

@@ -230,3 +230,33 @@ To go back to the old version:
 4. Restore the replicas, check the old version works, then reopen traffic.
 
 See [troubleshooting](/self-hosting/upgrade/troubleshooting) and [backup and restore](/self-hosting/operate/backup-restore).
+
+<span id="valkey-statefulset-forbidden" />
+
+### Upgrade fails on the Valkey StatefulSet
+
+Charts from 5.1 on put their own version on the volume claim template of the bundled Valkey StatefulSet (the
+default, with persistence on). Kubernetes doesn't allow changes to a claim template, so every upgrade to a new
+chart version failed, and the release ended `failed` and half applied:
+
+```text
+StatefulSet.apps "formbricks-redis-master" is invalid: spec: Forbidden: updates to statefulset spec for fields other than 'replicas', ...
+```
+
+The chart no longer puts a version there. With Helm or Flux, an upgrade keeps the labels the running StatefulSet
+already has, so it works without extra steps, also from a release stuck in `failed` because of this error.
+
+Argo CD renders the chart without reading the cluster, so its first sync to a fixed chart still hits the error
+once. A chart without the fix hits it on every upgrade, so upgrade to a chart that has the fix instead.
+
+For the one Argo CD sync, or if you must upgrade to a chart without the fix, delete the StatefulSet object but
+keep its pod and volume, then run the sync or upgrade again. `ns` and `rel` are set in the first step above.
+
+```bash
+kubectl delete statefulset -n "$ns" \
+  -l "app.kubernetes.io/instance=${rel},app.kubernetes.io/component=redis" --cascade=orphan
+```
+
+`--cascade=orphan` leaves the Valkey pod running and its PersistentVolumeClaim in place. The sync or upgrade
+creates the StatefulSet again, which takes over the same pod and volume. If the new chart changes the pod
+template, the pod restarts once under the same name; its data stays on the volume.

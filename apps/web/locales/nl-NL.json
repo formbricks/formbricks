@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Rij: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics-, Word-, Excel-, CSV- en Markdown-bestanden worden gelezen met Formbricks AI. Elke tekst komt woord voor woord uit het bestand.",
+        "ai_note": "Qualtrics-, Word-, Excel-, CSV- en Markdown-bestanden worden woord voor woord ingelezen met Formbricks AI.",
         "card_description": "Maak van een Formbricks-bestand, een Qualtrics-export of een vragenlijst uit Word, Excel, CSV of Markdown een conceptenquête.",
         "card_description_json_only": "Zet een enquête die uit Formbricks is geëxporteerd om in een conceptenquête.",
         "card_title": "Enquête importeren",
@@ -5079,8 +5079,8 @@
         "discard_draft_title": "Deze import verwijderen?",
         "discard_import_body": "Het bestand wordt nog geïmporteerd. Als je sluit, stopt de import.",
         "discard_import_title": "Importeren stoppen?",
-        "dropzone_help": "Formbricks-bestand (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md), tot 15 MB",
-        "dropzone_help_json_only": "Formbricks-bestand (.json), tot 15 MB",
+        "dropzone_help": "Formbricks-bestand (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md)",
+        "dropzone_help_json_only": "Formbricks-bestand (.json)",
         "dropzone_primary": "Sleep een bestand hierheen of klik om er een te kiezen",
         "encodings": {
           "utf_16": "UTF-16",

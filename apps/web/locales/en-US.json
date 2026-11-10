@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Row: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics, Word, Excel, CSV and Markdown files are read with Formbricks AI. Every text comes from the file word for word.",
+        "ai_note": "Qualtrics, Word, Excel, CSV and Markdown files are read with Formbricks AI, word for word.",
         "card_description": "Turn a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel, CSV or Markdown into a draft survey.",
         "card_description_json_only": "Turn a survey exported from Formbricks into a draft survey.",
         "card_title": "Import survey",
@@ -5079,8 +5079,8 @@
         "discard_draft_title": "Discard this import?",
         "discard_import_body": "The file is still being imported. Closing will stop the import.",
         "discard_import_title": "Stop importing?",
-        "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) or Markdown (.md), up to 15 MB",
-        "dropzone_help_json_only": "Formbricks file (.json), up to 15 MB",
+        "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) or Markdown (.md)",
+        "dropzone_help_json_only": "Formbricks file (.json)",
         "dropzone_primary": "Drop a file here or click to choose one",
         "encodings": {
           "utf_16": "UTF-16",
