@@ -156,7 +156,12 @@ const serialized = (overrides: Record<string, unknown> = {}) => {
   return { ...segment, createdAt: DATE.toISOString(), updatedAt: DATE.toISOString() };
 };
 
-const json = (method: string, url: string, body?: unknown, headers = SAME_ORIGIN_HEADERS) =>
+const json = (
+  method: string,
+  url: string,
+  body?: unknown,
+  headers: Record<string, string> = SAME_ORIGIN_HEADERS
+) =>
   new NextRequest(url, {
     method,
     headers: { "Content-Type": "application/json", ...headers },
