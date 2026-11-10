@@ -4,12 +4,14 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { MULTI_ORG_DISABLED_DETAIL } from "./lib/operations";
 import { POST } from "./route";
 import { ORGANIZATION_NAME_MAX } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getUser: vi.fn(),
+  updateUser: vi.fn(),
   applyRateLimit: vi.fn(),
   getHasNoOrganizations: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
@@ -22,7 +24,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
-vi.mock("@/lib/user/service", () => ({ getUser: mocks.getUser }));
+vi.mock("@/lib/user/service", () => ({ getUser: mocks.getUser, updateUser: mocks.updateUser }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: mocks.applyRateLimit,
   applyIPRateLimit: vi.fn(),
@@ -140,7 +142,89 @@ describe("POST /api/internal/organizations", () => {
     expect((await create()).status).toBe(201);
   });
 
+  test("leaves the creator's notification settings alone during setup, and reports a first organization", async () => {
+    await create();
+
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      USER_ID,
+      "organization_created",
+      { organization_id: ORG_ID, is_first_org: true },
+      expect.anything()
+    );
+  });
+
+  describe("from the organization settings (flow: additional)", () => {
+    const additional = (name = "Acme") => create({ name, flow: "additional" });
+
+    beforeEach(() => {
+      mocks.getHasNoOrganizations.mockResolvedValue(false);
+      mocks.getIsMultiOrgEnabled.mockResolvedValue(true);
+      mocks.getUser.mockResolvedValue({
+        id: USER_ID,
+        email: "ada@example.com",
+        notificationSettings: {
+          alert: { clsurvey1111111111111111: true },
+          unsubscribedOrganizationIds: ["clorgold1111111111111111"],
+        },
+      });
+    });
+
+    test("creates the organization and unsubscribes its creator from the new organization's alerts", async () => {
+      const response = await additional();
+
+      expect(response.status).toBe(201);
+      expect((await response.json()).data).toEqual({ id: ORG_ID, name: "Acme" });
+      expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.createOrganization, USER_ID);
+      expect(mocks.createMembership).toHaveBeenCalledWith(ORG_ID, USER_ID, { role: "owner", accepted: true });
+      expect(mocks.updateUser).toHaveBeenCalledWith(USER_ID, {
+        notificationSettings: {
+          alert: { clsurvey1111111111111111: true },
+          unsubscribedOrganizationIds: ["clorgold1111111111111111", ORG_ID],
+        },
+      });
+      expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+        USER_ID,
+        "organization_created",
+        { organization_id: ORG_ID, is_first_org: false },
+        expect.anything()
+      );
+      expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "created",
+          status: "success",
+          organizationId: ORG_ID,
+          targetId: ORG_ID,
+        })
+      );
+    });
+
+    test("needs the multi-organization licence even on an instance with no organization", async () => {
+      mocks.getIsMultiOrgEnabled.mockResolvedValue(false);
+      mocks.getHasNoOrganizations.mockResolvedValue(true);
+
+      const response = await additional();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe(MULTI_ORG_DISABLED_DETAIL);
+      expect(mocks.createOrganization).not.toHaveBeenCalled();
+      expect(mocks.updateUser).not.toHaveBeenCalled();
+    });
+
+    test("is rate limited before the licence is asked", async () => {
+      mocks.applyRateLimit.mockImplementation(async (config: { namespace: string }) => {
+        if (config.namespace === rateLimitConfigs.actions.createOrganization.namespace)
+          throw new TooManyRequestsError("Maximum number of requests reached.", 3600);
+      });
+
+      expect((await additional()).status).toBe(429);
+      expect(mocks.getIsMultiOrgEnabled).not.toHaveBeenCalled();
+      expect(mocks.createOrganization).not.toHaveBeenCalled();
+    });
+  });
+
   test.each([
+    ["an unknown flow", { name: "Acme", flow: "import" }],
     ["a blank name", { name: "   " }],
     ["an unknown field", { name: "Acme", billing: {} }],
     [`a name over ${ORGANIZATION_NAME_MAX} characters`, { name: "x".repeat(ORGANIZATION_NAME_MAX + 1) }],

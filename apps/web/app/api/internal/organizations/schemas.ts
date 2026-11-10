@@ -12,8 +12,15 @@ const ZOrganizationName = ZOrganization.shape.name.max(ORGANIZATION_NAME_MAX);
 /** `GET /api/internal/organizations` takes no parameters: it lists the caller's own organizations. */
 export const ZOrganizationsListQuery = z.object({}).strict();
 
-/** `POST /api/internal/organizations`: the organization set up during onboarding. */
-export const ZOrganizationCreateBody = z.object({ name: ZOrganizationName }).strict();
+/**
+ * `POST /api/internal/organizations`: a new organization. `flow` says which screen creates it, as the two
+ * server actions this route replaces did: `setup` (the default) is onboarding, allowed on a fresh instance
+ * or under a multi-organization licence; `additional` is "Create new organization" in the settings, which
+ * needs that licence, and unsubscribes the creator from the new organization's alerts as that action did.
+ */
+export const ZOrganizationCreateBody = z
+  .object({ name: ZOrganizationName, flow: z.enum(["setup", "additional"]).optional() })
+  .strict();
 
 export type TOrganizationCreateBody = z.infer<typeof ZOrganizationCreateBody>;
 

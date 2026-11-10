@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
 import { type TOrgAction, requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
@@ -24,7 +25,7 @@ import {
   updateOrganization,
 } from "@/lib/organization/service";
 import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib/posthog";
-import { getUser } from "@/lib/user/service";
+import { getUser, updateUser } from "@/lib/user/service";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { listDashboardViewerOrganizations } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
@@ -131,10 +132,42 @@ export async function deleteOrganizationOperation(context: TRequestContext): Pro
   return noContentResponse({ requestId });
 }
 
+export const MULTI_ORG_DISABLED_DETAIL =
+  "Creating Multiple organization is restricted on your instance of Formbricks";
+
 /**
- * `POST /api/internal/organizations`: the organization a new account creates during setup, with its owner
- * membership and a first workspace. Allowed on a fresh instance, or anywhere the licence allows more than
- * one organization.
+ * Whether this caller may create an organization, by the flow's own rule: `setup` on a fresh instance or
+ * under a multi-organization licence, `additional` only under that licence. Answers the 403 with the reason
+ * each flow's screen showed, or whether the instance had no organization yet.
+ */
+async function refuseOrganizationCreation(
+  flow: NonNullable<TOrganizationCreateBody["flow"]>,
+  { requestId, instance }: Pick<TRequestContext, "requestId" | "instance">
+): Promise<{ refused: Response } | { hasNoOrganizations: boolean }> {
+  if (flow === "additional") {
+    if (!(await getIsMultiOrgEnabled())) {
+      return { refused: problemForbidden(requestId, MULTI_ORG_DISABLED_DETAIL, instance) };
+    }
+    return { hasNoOrganizations: false };
+  }
+
+  const hasNoOrganizations = await getHasNoOrganizations();
+  if (!hasNoOrganizations && !(await getIsMultiOrgEnabled())) {
+    return {
+      refused: problemForbidden(
+        requestId,
+        "This action can only be performed on a fresh instance.",
+        instance
+      ),
+    };
+  }
+  return { hasNoOrganizations };
+}
+
+/**
+ * `POST /api/internal/organizations`: a new organization with the caller as its owner and a first
+ * workspace, from onboarding (`flow: "setup"`) or from the organization settings (`flow: "additional"`);
+ * see `ZOrganizationCreateBody` for how the two differ.
  */
 export async function createOrganizationOperation({
   authentication,
@@ -154,10 +187,11 @@ export async function createOrganizationOperation({
   });
   if (limited) return limited;
 
-  const hasNoOrganizations = await getHasNoOrganizations();
-  if (!hasNoOrganizations && !(await getIsMultiOrgEnabled())) {
-    return problemForbidden(requestId, "This action can only be performed on a fresh instance.", instance);
-  }
+  const flow = body.flow ?? "setup";
+  const allowed = await refuseOrganizationCreation(flow, { requestId, instance });
+  if ("refused" in allowed) return allowed.refused;
+  // An additional organization is never the instance's first: the caller already belongs to one.
+  const isFirstOrganization = flow === "setup" && allowed.hasNoOrganizations;
 
   const organization = await createOrganization({ name: body.name });
   await createMembership(organization.id, user.id, { role: "owner", accepted: true });
@@ -193,7 +227,7 @@ export async function createOrganizationOperation({
   capturePostHogEvent(
     user.id,
     "organization_created",
-    { organization_id: organization.id, is_first_org: hasNoOrganizations },
+    { organization_id: organization.id, is_first_org: isFirstOrganization },
     { organizationId: organization.id, workspaceId: workspace.id }
   );
   capturePostHogEvent(
@@ -202,6 +236,18 @@ export async function createOrganizationOperation({
     { organization_id: organization.id, workspace_id: workspace.id, name: workspace.name },
     { organizationId: organization.id, workspaceId: workspace.id }
   );
+
+  if (flow === "additional") {
+    // The creator starts unsubscribed from the new organization's alerts, as the settings action did.
+    const updatedNotificationSettings: TUserNotificationSettings = {
+      ...user.notificationSettings,
+      alert: { ...user.notificationSettings?.alert },
+      unsubscribedOrganizationIds: Array.from(
+        new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organization.id]) // NOSONAR // We want to check for empty strings too
+      ),
+    };
+    await updateUser(user.id, { notificationSettings: updatedNotificationSettings });
+  }
 
   return createdResponse(serializeCreatedOrganization(organization), {
     location: `/api/internal/organizations/${organization.id}`,
