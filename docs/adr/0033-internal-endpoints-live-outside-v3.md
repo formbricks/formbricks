@@ -1,4 +1,4 @@
-# Dashboard-only endpoints live at unversioned `/api/internal`, and `/api/v3` is only the public contract
+# Dashboard-only endpoints live at unversioned `/api/internal`, and `/api/v3` is reserved for the public contract
 
 An endpoint that only our own UI calls lives at `/api/internal/<resource>`: session auth, no OpenAPI entry, no version segment and no stability promise. It is built like a v3 route in every other way (ENG-1668). `/api/v3` is reserved for the published contract we deprecate with notice instead of changing. New endpoints start internal and move to `/api/v3`, rather than gaining a public twin, once an external caller needs them; a feature built for external callers from day one starts public (ADR 0002). The URL carries the signal because it is the only thing an outside caller sees, and there is no version segment because the only client ships in the same commit as the route.
 

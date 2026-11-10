@@ -1,6 +1,6 @@
 # List cursors are unsigned positions bound to a filter fingerprint
 
-The shared v3 cursor helpers (`apps/web/app/api/v3/lib/keyset-cursor.ts` and `sort-cursor.ts`, used by `/api/internal` lists too) mint opaque base64url cursors that are not signed. A cursor grants nothing: every request authorizes its scope from the query, and the cursor only says where the last page ended. It carries the sort it was issued for and an unkeyed hash of the scope and filters, so replaying it under a different sort or filter set is a 400 naming `cursor`. The helper's page predicate compares the sort key and `id` as a PostgreSQL row constructor (`(created_at, id) < ($1, $2)`) so the index serves it.
+The shared v3 cursor helpers (`apps/web/app/api/v3/lib/keyset-cursor.ts` and `sort-cursor.ts`, used by `/api/internal` lists too) mint opaque base64url cursors that are not signed. A cursor grants nothing: every request authorizes its scope from the query, and the cursor only says where the last page ended. It carries the sort it was issued for and an unkeyed hash of the scope and filters, so replaying it under a different sort or filter set is a 400 naming `cursor`. The page predicate in `keyset-cursor.ts` compares the sort key and `id` as a PostgreSQL row constructor (`(created_at, id) < ($1, $2)`) so the index serves it.
 
 ## Considered Options
 
