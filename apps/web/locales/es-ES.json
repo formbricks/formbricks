@@ -5069,7 +5069,7 @@
         "shown_target_row": "{question} · Fila: {row}"
       },
       "import": {
-        "ai_note": "Los archivos de Qualtrics, Word, Excel, CSV y Markdown se leen con Formbricks AI. Todos los textos se toman del archivo palabra por palabra.",
+        "ai_note": "Los archivos de Qualtrics, Word, Excel, CSV y Markdown se leen con Formbricks AI, palabra por palabra.",
         "card_description": "Convierte un archivo de Formbricks, una exportación de Qualtrics o un cuestionario de Word, Excel, CSV o Markdown en un borrador de encuesta.",
         "card_description_json_only": "Convierte una encuesta exportada desde Formbricks en un borrador de encuesta.",
         "card_title": "Importar encuesta",
@@ -5080,8 +5080,8 @@
         "discard_draft_title": "¿Descartar esta importación?",
         "discard_import_body": "El archivo todavía se está importando. Si lo cierras, se detendrá la importación.",
         "discard_import_title": "¿Detener la importación?",
-        "dropzone_help": "Archivo de Formbricks (.json), exportación de Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md), hasta 15 MB",
-        "dropzone_help_json_only": "Archivo de Formbricks (.json), hasta 15 MB",
+        "dropzone_help": "Archivo de Formbricks (.json), exportación de Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md)",
+        "dropzone_help_json_only": "Archivo de Formbricks (.json)",
         "dropzone_primary": "Suelta un archivo aquí o haz clic para elegir uno",
         "encodings": {
           "utf_16": "UTF-16",
