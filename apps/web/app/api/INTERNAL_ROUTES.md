@@ -54,6 +54,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/quotas/{quotaId}/response-count` | GET | session | dashboard | `/api/internal` | `app/api/internal/quotas/[quotaId]/response-count/route.ts` |
 | `/api/internal/releases/latest` | GET | session | dashboard | `/api/internal` | `app/api/internal/releases/latest/route.ts` |
 | `/api/internal/response-filter-options` | GET | session | dashboard | `/api/internal` | `app/api/internal/response-filter-options/route.ts` |
+| `/api/internal/responses/{responseId}` | GET, DELETE | session | dashboard | `/api/internal` | `app/api/internal/responses/[responseId]/route.ts` |
+| `/api/internal/responses/{responseId}/tags/{tagId}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/responses/[responseId]/tags/[tagId]/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |
 | `/api/internal/retention-exemptions/{exemptionId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/[exemptionId]/route.ts` |
 | `/api/internal/retention-exemptions/{exemptionId}/revoke` | POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/[exemptionId]/revoke/route.ts` |
@@ -69,6 +71,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/surveys/generate/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/generate/stream/route.ts` |
 | `/api/internal/surveys/import/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/import/stream/route.ts` |
 | `/api/internal/surveys/imports` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/imports/route.ts` |
+| `/api/internal/tags` | POST | session | dashboard | `/api/internal` | `app/api/internal/tags/route.ts` |
 | `/api/internal/teams` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/teams/route.ts` |
 | `/api/internal/teams/{teamId}` | GET, PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/teams/[teamId]/route.ts` |
 | `/api/internal/unsplash-photos` | GET | session | dashboard | `/api/internal` | `app/api/internal/unsplash-photos/route.ts` |
