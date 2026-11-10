@@ -1,6 +1,6 @@
 # Translatable survey fields are always locale-code maps, read and written as one document
 
-Every translatable field in a v3 survey is a map keyed by real locale codes (`en-US`, `de-DE`), on reads and on writes, and every translation travels in the same document. A write never takes a plain string as "the default language", must carry every configured language in every field it changes, and has no per-language form (`PATCH ?lang`) or translation sub-resource. `GET ?lang=de-DE` narrows the maps but never turns them into strings, so the response has one shape whatever the query. One explicit document is what agents edit most reliably, and it keeps validation in one place.
+Every translatable field in a v3 survey is a map keyed by real locale codes (`en-US`, `de-DE`), on reads and on writes, and every translation travels in the same document. A write never takes a plain string as "the default language", must leave every configured language present in every translatable field (a gap already stored is tolerated until the write touches it, so adding a language means translating the whole survey), and has no per-language form (`PATCH ?lang`) or translation sub-resource. `GET ?lang=de-DE` narrows the maps but never turns them into strings, so the response has one shape whatever the query. One explicit document is what agents edit most reliably, and it keeps validation in one place.
 
 ## Considered Options
 
@@ -10,5 +10,5 @@ Every translatable field in a v3 survey is a map keyed by real locale codes (`en
 
 ## Consequences
 
-- A language a write references is created on the workspace if it is missing, rather than refused.
+- A locale must be declared in the survey's `languages` before content can use it. A declared language missing from the workspace is created there, rather than refused.
 - Under `?lang`, missing text falls back to the default language field by field, and the response doesn't say so.
