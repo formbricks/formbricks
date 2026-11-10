@@ -10,5 +10,5 @@ Every translatable field in a v3 survey is a map keyed by real locale codes (`en
 
 ## Consequences
 
-- A locale must be declared in the survey's `languages` before content can use it. A declared language missing from the workspace is created there, rather than refused.
+- A locale must be the survey's `defaultLanguage` or declared in its `languages` before content can use it. A declared language missing from the workspace is created there, rather than refused.
 - Under `?lang`, missing text falls back to the default language field by field, and the response doesn't say so.
