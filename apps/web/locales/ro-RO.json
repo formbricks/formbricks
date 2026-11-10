@@ -43,6 +43,9 @@
       "reset_password_description": "Veți fi delogat pentru a vă reseta parola."
     },
     "invite": {
+      "accept_invitation": "Acceptă invitația",
+      "already_a_member": "Ești deja membru",
+      "already_a_member_description": "Faci deja parte din această organizație, așa că invitația nu a schimbat nimic.",
       "create_account": "Creează un cont",
       "email_does_not_match": "Ooops! Email greșit 🤦",
       "email_does_not_match_description": "Emailul din invitație nu se potrivește cu al dumneavoastră.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Codul de invitație nu poate fi găsit sau a fost deja utilizat.",
       "login": "Conectează-te",
       "welcome_to_organization": "Ai fost acceptat 🎉",
-      "welcome_to_organization_description": "Bun venit în organizație."
+      "welcome_to_organization_description": "Bun venit în organizație.",
+      "you_are_invited": "Ești invitat 💌",
+      "you_are_invited_description": "Acceptă invitația pentru a te alătura organizației."
     },
     "last_used": "Ultima utilizare",
     "login": {

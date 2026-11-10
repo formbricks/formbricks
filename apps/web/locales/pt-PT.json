@@ -43,6 +43,9 @@
       "reset_password_description": "Serás desconectado para redefinir a tua palavra-passe."
     },
     "invite": {
+      "accept_invitation": "Aceitar convite",
+      "already_a_member": "Já és membro",
+      "already_a_member_description": "Já pertences a esta organização, por isso o convite não alterou nada.",
       "create_account": "Criar uma conta",
       "email_does_not_match": "Ooops! Email errada 🤦",
       "email_does_not_match_description": "O email no convite não corresponde ao teu.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "O código de convite não pode ser encontrado ou já foi utilizado.",
       "login": "Iniciar sessão",
       "welcome_to_organization": "Estás dentro 🎉",
-      "welcome_to_organization_description": "Bem-vindo à organização."
+      "welcome_to_organization_description": "Bem-vindo à organização.",
+      "you_are_invited": "Foste convidado 💌",
+      "you_are_invited_description": "Aceita o convite para te juntares à organização."
     },
     "last_used": "Última Utilização",
     "login": {

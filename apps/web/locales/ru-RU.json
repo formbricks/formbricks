@@ -43,6 +43,9 @@
       "reset_password_description": "Для сброса пароля вы будете выведены из системы."
     },
     "invite": {
+      "accept_invitation": "Принять приглашение",
+      "already_a_member": "Ты уже участник",
+      "already_a_member_description": "Ты уже состоишь в этой организации, так что приглашение ничего не изменило.",
       "create_account": "Создать аккаунт",
       "email_does_not_match": "Упс! Неверный email 🤦",
       "email_does_not_match_description": "Email в приглашении не совпадает с вашим.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Код приглашения не найден или уже был использован.",
       "login": "Войти",
       "welcome_to_organization": "Вы в команде 🎉",
-      "welcome_to_organization_description": "Добро пожаловать в организацию."
+      "welcome_to_organization_description": "Добро пожаловать в организацию.",
+      "you_are_invited": "Тебя пригласили 💌",
+      "you_are_invited_description": "Прими приглашение, чтобы присоединиться к организации."
     },
     "last_used": "Последнее использование",
     "login": {

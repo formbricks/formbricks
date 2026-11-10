@@ -43,6 +43,9 @@
       "reset_password_description": "Se cerrará tu sesión para restablecer tu contraseña."
     },
     "invite": {
+      "accept_invitation": "Aceptar invitación",
+      "already_a_member": "Ya eres miembro",
+      "already_a_member_description": "Ya formas parte de esta organización, así que la invitación no ha cambiado nada.",
       "create_account": "Crear una cuenta",
       "email_does_not_match": "¡Ups! Correo electrónico incorrecto 🤦",
       "email_does_not_match_description": "El correo electrónico de la invitación no coincide con el tuyo.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "El código de invitación no se puede encontrar o ya ha sido utilizado.",
       "login": "Iniciar sesión",
       "welcome_to_organization": "Ya estás dentro 🎉",
-      "welcome_to_organization_description": "Bienvenido a la organización."
+      "welcome_to_organization_description": "Bienvenido a la organización.",
+      "you_are_invited": "Estás invitado 💌",
+      "you_are_invited_description": "Acepta la invitación para unirte a la organización."
     },
     "last_used": "Último uso",
     "login": {

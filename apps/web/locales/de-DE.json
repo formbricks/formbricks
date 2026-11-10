@@ -43,6 +43,9 @@
       "reset_password_description": "Du wirst abgemeldet, um dein Passwort zurückzusetzen."
     },
     "invite": {
+      "accept_invitation": "Einladung annehmen",
+      "already_a_member": "Du bist bereits Mitglied",
+      "already_a_member_description": "Du gehörst bereits zu dieser Organisation, daher hat die Einladung nichts geändert.",
       "create_account": "Konto erstellen",
       "email_does_not_match": "Hoppla! Falsche E-Mail 🤦",
       "email_does_not_match_description": "Die E-Mail-Adresse in der Einladung stimmt nicht mit deiner überein.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Der Einladungscode kann nicht gefunden werden oder wurde bereits verwendet.",
       "login": "Anmelden",
       "welcome_to_organization": "Du bist drin 🎉",
-      "welcome_to_organization_description": "Willkommen in der Organisation."
+      "welcome_to_organization_description": "Willkommen in der Organisation.",
+      "you_are_invited": "Du bist eingeladen 💌",
+      "you_are_invited_description": "Nimm die Einladung an, um der Organisation beizutreten."
     },
     "last_used": "Zuletzt verwendet",
     "login": {

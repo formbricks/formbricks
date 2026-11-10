@@ -43,6 +43,9 @@
       "reset_password_description": "パスワードをリセットするためにログアウトされます。"
     },
     "invite": {
+      "accept_invitation": "招待を承諾",
+      "already_a_member": "すでにメンバーです",
+      "already_a_member_description": "すでにこの組織に所属しているため、招待による変更はありませんでした。",
       "create_account": "アカウントを作成",
       "email_does_not_match": "おっと！間違ったメールアドレスです 🤦",
       "email_does_not_match_description": "招待状のメールアドレスが、あなたのメールアドレスと一致しません。",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "招待コードが見つからないか、すでに使用されています。",
       "login": "ログイン",
       "welcome_to_organization": "参加しました 🎉",
-      "welcome_to_organization_description": "ようこそ、組織へ。"
+      "welcome_to_organization_description": "ようこそ、組織へ。",
+      "you_are_invited": "招待が届いています 💌",
+      "you_are_invited_description": "招待を承諾して、組織に参加しましょう。"
     },
     "last_used": "最終使用",
     "login": {

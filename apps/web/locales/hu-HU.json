@@ -43,6 +43,9 @@
       "reset_password_description": "Ki lesz jelentkeztetve a jelszó visszaállításához."
     },
     "invite": {
+      "accept_invitation": "Meghívás elfogadása",
+      "already_a_member": "Ön már tag",
+      "already_a_member_description": "Ön már tagja ennek a szervezetnek, ezért a meghívás nem eredményezett változást.",
       "create_account": "Fiók létrehozása",
       "email_does_not_match": "Hoppá! Hibás e-mail-cím 🤦",
       "email_does_not_match_description": "A meghívóban lévő e-mail-cím nem egyezik az Önével.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "A meghívó kód nem található, vagy már felhasználásra került.",
       "login": "Bejelentkezés",
       "welcome_to_organization": "Ön bent van 🎉",
-      "welcome_to_organization_description": "Üdvözöljük a szervezetben!"
+      "welcome_to_organization_description": "Üdvözöljük a szervezetben!",
+      "you_are_invited": "Meghívást kapott 💌",
+      "you_are_invited_description": "Fogadja el a meghívást a szervezethez való csatlakozáshoz."
     },
     "last_used": "Legutóbb használt",
     "login": {

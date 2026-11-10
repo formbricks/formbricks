@@ -43,6 +43,9 @@
       "reset_password_description": "Du kommer att loggas ut för att återställa ditt lösenord."
     },
     "invite": {
+      "accept_invitation": "Acceptera inbjudan",
+      "already_a_member": "Du är redan medlem",
+      "already_a_member_description": "Du tillhör redan den här organisationen, så inbjudan ändrade ingenting.",
       "create_account": "Skapa ett konto",
       "email_does_not_match": "Hoppsan! Fel e-post 🤦",
       "email_does_not_match_description": "E-postadressen i inbjudan matchar inte din.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Inbjudningskoden kan inte hittas eller har redan använts.",
       "login": "Logga in",
       "welcome_to_organization": "Du är med 🎉",
-      "welcome_to_organization_description": "Välkommen till organisationen."
+      "welcome_to_organization_description": "Välkommen till organisationen.",
+      "you_are_invited": "Du är inbjuden 💌",
+      "you_are_invited_description": "Acceptera inbjudan för att gå med i organisationen."
     },
     "last_used": "Senast använd",
     "login": {
