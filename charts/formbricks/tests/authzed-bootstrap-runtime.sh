@@ -95,6 +95,7 @@ start_postgres() {
 # Runs the rendered script exactly as the Job does: same shell, same env contract.
 run_bootstrap() {
   local container="$1" admin_user="$2" admin_pass="$3"
+  shift 3
   docker exec --interactive \
     --env PGHOST=127.0.0.1 \
     --env PGUSER="${admin_user}" \
@@ -103,7 +104,30 @@ run_bootstrap() {
     --env SPICEDB_DATABASE_NAME=spicedb \
     --env SPICEDB_DATABASE_USERNAME=spicedb \
     --env SPICEDB_DATABASE_PASSWORD="${spicedb_password}" \
+    "$@" \
     "${container}" /bin/sh -ec "${bootstrap_script}" 2>&1
+}
+
+# The bundled defaults render a second role the script switches to when the first cannot create the
+# SpiceDB role and database (ENG-7044).
+run_bootstrap_with_fallback() {
+  local container="$1" admin_user="$2" admin_pass="$3" fallback_user="$4" fallback_pass="$5"
+  run_bootstrap "${container}" "${admin_user}" "${admin_pass}" \
+    --env FALLBACK_PGUSER="${fallback_user}" \
+    --env FALLBACK_PGPASSWORD="${fallback_pass}" \
+    --env FALLBACK_ADMIN_DATABASE_NAME=postgres
+}
+
+reset_spicedb() {
+  as_superuser "$1" "DROP DATABASE IF EXISTS spicedb" >/dev/null
+  as_superuser "$1" "DROP ROLE IF EXISTS spicedb" >/dev/null
+}
+
+assert_spicedb_owned() {
+  [ "$(as_superuser "$1" "SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = 'spicedb'")" = "spicedb" ] || {
+    printf '%s\n' "$2: the spicedb database must exist and be owned by the spicedb role." >&2
+    exit 1
+  }
 }
 
 as_superuser() {
@@ -175,6 +199,70 @@ for version in "${postgres_versions[@]}"; do
       printf '%s\n%s\n' "Expected a privilege error for a pre-existing foreign-owned spicedb role on ${version}, got:" "${output}" >&2
       exit 1
     }
+  fi
+
+  # 5. The bundled pgvector image has no `postgres` role: the first role cannot log in at all, so the
+  #    script must switch to the fallback rather than fail.
+  reset_spicedb "${container}"
+  if ! output="$(run_bootstrap_with_fallback "${container}" absent_role whatever fbadmin "${admin_password}")"; then
+    printf '%s\n%s\n' "Bootstrap must fall back when the first role cannot log in on ${version}:" "${output}" >&2
+    exit 1
+  fi
+  assert_spicedb_owned "${container}" "fallback after failed login on ${version}"
+  grep --quiet 'connecting as fbadmin instead' <<<"${output}" || {
+    printf '%s\n%s\n' "The fallback must be announced on ${version}, got:" "${output}" >&2
+    exit 1
+  }
+
+  # 6. A Bitnami-initialised server: the application role logs in but lacks CREATEROLE, so the script
+  #    must switch to the `postgres` superuser.
+  reset_spicedb "${container}"
+  as_superuser "${container}" "CREATE ROLE fbapp LOGIN PASSWORD 'app-pw'" >/dev/null
+  if ! output="$(run_bootstrap_with_fallback "${container}" fbapp app-pw postgres superuser-pw)"; then
+    printf '%s\n%s\n' "Bootstrap must fall back when the first role lacks privileges on ${version}:" "${output}" >&2
+    exit 1
+  fi
+  assert_spicedb_owned "${container}" "fallback after missing privileges on ${version}"
+
+  # 7. A superuser first role is kept: the fallback is never used when it is not needed.
+  reset_spicedb "${container}"
+  if ! output="$(run_bootstrap_with_fallback "${container}" postgres superuser-pw fbapp app-pw)"; then
+    printf '%s\n%s\n' "Bootstrap must succeed with a superuser first role on ${version}:" "${output}" >&2
+    exit 1
+  fi
+  if grep --quiet 'instead' <<<"${output}"; then
+    printf '%s\n%s\n' "A superuser first role must not switch to the fallback on ${version}:" "${output}" >&2
+    exit 1
+  fi
+  assert_spicedb_owned "${container}" "superuser first role on ${version}"
+
+  # 8. With a fallback, CREATEROLE and CREATEDB are not enough to keep the first role: on PostgreSQL 16+
+  #    it cannot adopt a `spicedb` role the superuser created, and the fallback is a superuser.
+  reset_spicedb "${container}"
+  if ! output="$(run_bootstrap_with_fallback "${container}" fbadmin "${admin_password}" postgres superuser-pw)"; then
+    printf '%s\n%s\n' "Bootstrap must fall back from a non-superuser first role on ${version}:" "${output}" >&2
+    exit 1
+  fi
+  grep --quiet 'connecting as postgres instead' <<<"${output}" || {
+    printf '%s\n%s\n' "A non-superuser first role must switch to the superuser fallback on ${version}, got:" "${output}" >&2
+    exit 1
+  }
+  assert_spicedb_owned "${container}" "fallback from a non-superuser on ${version}"
+
+  # 9. Without a fallback, a role that cannot create roles and databases stops before any SQL, naming
+  #    the values that fix it rather than surfacing a bare permission error.
+  reset_spicedb "${container}"
+  if output="$(run_bootstrap "${container}" fbapp app-pw)"; then
+    printf '%s\n' "Bootstrap must refuse a role without CREATEROLE and CREATEDB on ${version}." >&2
+    exit 1
+  fi
+  grep --quiet 'authzed.bundledPostgresqlBootstrap.adminUsername' <<<"${output}" || {
+    printf '%s\n%s\n' "The refusal must name the admin values on ${version}, got:" "${output}" >&2
+    exit 1
+  }
+  if [ -n "$(as_superuser "${container}" "SELECT 1 FROM pg_roles WHERE rolname = 'spicedb'")" ]; then
+    printf '%s\n' "The refusal must happen before any SQL runs on ${version}." >&2
+    exit 1
   fi
 
   docker rm --force "${container}" >/dev/null 2>&1 || true

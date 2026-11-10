@@ -265,6 +265,10 @@ Cube JWT from `CUBEJS_API_SECRET`, so `CUBEJS_API_TOKEN` is not part of the supp
 | CUBEJS_DB_USER            | Database user for the Cube service. Only needed when you run Cube yourself and override defaults.      | optional | Depends on your Cube deployment      |
 | CUBEJS_DB_PASS            | Database password for the Cube service. Only needed when you run Cube yourself and override defaults.  | optional | Depends on your Cube deployment      |
 
+On Helm, the chart sets `CUBEJS_DB_HOST`, `CUBEJS_DB_PORT`, `CUBEJS_DB_NAME`, `CUBEJS_DB_USER` and
+`CUBEJS_DB_PASS` for Cube from the `postgresql.*` values when the bundled database is enabled; set them in
+`cube.env` to override. With an external database, set them yourself.
+
 The bundled Docker Compose Cube service sets `CUBEJS_DEFAULT_API_SCOPES=meta,data` directly on the Cube
 container. If you run Cube outside the bundled Compose stack, configure the equivalent Cube service environment
 there rather than adding it to the Formbricks app environment.

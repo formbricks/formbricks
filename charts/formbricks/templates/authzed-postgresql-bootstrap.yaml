@@ -8,12 +8,49 @@
 {{- if and $externalBootstrap (not .Values.authzed.externalPostgresqlBootstrap.adminSecretName) -}}
 {{- fail "authzed.externalPostgresqlBootstrap.adminSecretName is required when external bootstrap is enabled" -}}
 {{- end -}}
-{{- $bundledAdminUsername := .Values.authzed.bundledPostgresqlBootstrap.adminUsername | default "postgres" -}}
-{{- $bundledAdminDatabase := .Values.authzed.bundledPostgresqlBootstrap.adminDatabase | default "postgres" -}}
-{{- $bundledAdminSecret := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName | default $postgresSecretName -}}
-{{- $bundledAdminKey := .Values.authzed.bundledPostgresqlBootstrap.adminPasswordKey | default .Values.postgresql.auth.secretKeys.adminPasswordKey -}}
+{{- $admin := .Values.authzed.bundledPostgresqlBootstrap -}}
+{{- /*
+  With every admin* value empty, the Job connects as the role the bundled server was initialised
+  with: postgresql.auth.username, its database and its password. The bundled image is the official
+  pgvector/pgvector image, not Bitnami's, and it creates only POSTGRES_USER, as a superuser; it ignores
+  POSTGRES_POSTGRES_PASSWORD, so there is no `postgres` role to log in as (ENG-7044). A server whose
+  data directory a Bitnami image initialised does have `postgres`, and there the application role is
+  not a superuser, so the `postgres` superuser is rendered as a fallback the script switches to only
+  when the first role cannot log in or is not a superuser.
+
+  Setting any admin* value keeps the explicit configuration exactly as before: `postgres` on the
+  `postgres` database with the bundled admin password, unless overridden.
+*/ -}}
+{{- $explicitAdmin := or $admin.adminUsername $admin.adminDatabase $admin.adminPasswordSecretName $admin.adminPasswordKey -}}
+{{- $bundledAdminUsername := "" -}}
+{{- $bundledAdminDatabase := "" -}}
+{{- $bundledAdminSecret := "" -}}
+{{- $bundledAdminKey := "" -}}
+{{- $fallbackAdmin := dict -}}
+{{- if and $bundledBootstrap (not $explicitAdmin) -}}
+{{- $bundledAdminUsername = include "formbricks.postgresqlUsername" . -}}
+{{- $bundledAdminDatabase = include "formbricks.postgresqlDatabase" . | default "postgres" -}}
+{{- $bundledAdminSecret = include "formbricks.postgresqlSecretName" . -}}
+{{- $bundledAdminKey = include "formbricks.postgresqlUserPasswordKey" . -}}
+{{- if and .Values.postgresql.auth.enablePostgresUser (ne $bundledAdminUsername "postgres") -}}
+{{- $fallbackAdmin = dict "username" "postgres" "database" "postgres" "secret" $bundledAdminSecret "key" (include "formbricks.postgresqlAdminPasswordKey" .) -}}
+{{- end -}}
+{{- else -}}
+{{- $bundledAdminUsername = $admin.adminUsername | default "postgres" -}}
+{{- $bundledAdminDatabase = $admin.adminDatabase | default "postgres" -}}
+{{- $bundledAdminSecret = $admin.adminPasswordSecretName | default $postgresSecretName -}}
+{{- $bundledAdminKey = $admin.adminPasswordKey | default .Values.postgresql.auth.secretKeys.adminPasswordKey -}}
+{{- end -}}
 {{- $isBundledSuperuserName := eq $bundledAdminUsername "postgres" -}}
-{{- $reliesOnBundledAdminSecret := and $isBundledSuperuserName (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
+{{- $reliesOnBundledAdminSecret := and $explicitAdmin $isBundledSuperuserName (not $admin.adminPasswordSecretName) -}}
+{{- /*
+  An explicit `adminUsername: postgres` that still relies on the bundled admin Secret is the old
+  default, typically carried in a values file copied from an earlier chart. On the bundled pgvector
+  image that role does not exist, so the application role is rendered as its fallback.
+*/ -}}
+{{- if and $bundledBootstrap $reliesOnBundledAdminSecret (ne (include "formbricks.postgresqlUsername" .) "postgres") -}}
+{{- $fallbackAdmin = dict "username" (include "formbricks.postgresqlUsername" .) "database" (include "formbricks.postgresqlDatabase" . | default "postgres") "secret" (include "formbricks.postgresqlSecretName" .) "key" (include "formbricks.postgresqlUserPasswordKey" .) -}}
+{{- end -}}
 {{- /*
   enablePostgresUser only matters when this Job is relying on the subchart to *create* the superuser
   and hand over its password — that is, the default name AND the default Secret. Keying off the name
@@ -25,9 +62,9 @@
 {{- fail "Set authzed.bundledPostgresqlBootstrap.adminUsername (with adminPasswordSecretName and adminPasswordKey) to an existing role with CREATEROLE and CREATEDB, or enable postgresql.auth.enablePostgresUser, or disable authzed.bundledPostgresqlBootstrap.enabled" -}}
 {{- end -}}
 {{- if and $bundledBootstrap (not $bundledAdminKey) -}}
-{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey (or postgresql.auth.secretKeys.adminPasswordKey) is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
+{{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey (or postgresql.auth.secretKeys.userPasswordKey and adminPasswordKey) is required when bundled AuthZed PostgreSQL bootstrap is enabled" -}}
 {{- end -}}
-{{- if and $bundledBootstrap (not $isBundledSuperuserName) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordSecretName) -}}
+{{- if and $bundledBootstrap $explicitAdmin (not $isBundledSuperuserName) (not $admin.adminPasswordSecretName) -}}
 {{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordSecretName is required when adminUsername is not the bundled postgres superuser" -}}
 {{- end -}}
 {{- /*
@@ -43,7 +80,7 @@
   subchart's key name than any other. Keying off the name left exactly that configuration rendering
   a dangling secretKeyRef.
 */ -}}
-{{- if and $bundledBootstrap (not $reliesOnBundledAdminSecret) (not .Values.authzed.bundledPostgresqlBootstrap.adminPasswordKey) -}}
+{{- if and $bundledBootstrap $explicitAdmin (not $reliesOnBundledAdminSecret) (not $admin.adminPasswordKey) -}}
 {{- fail "authzed.bundledPostgresqlBootstrap.adminPasswordKey is required when the administrator password comes from an explicitly configured Secret" -}}
 {{- end -}}
 {{- $bootstrap := ternary .Values.authzed.bundledPostgresqlBootstrap .Values.authzed.externalPostgresqlBootstrap $bundledBootstrap -}}
@@ -101,6 +138,20 @@ spec:
                   key: {{ $bundledAdminKey }}
             - name: ADMIN_DATABASE_NAME
               value: {{ $bundledAdminDatabase | quote }}
+            {{- if $fallbackAdmin }}
+            - name: FALLBACK_PGUSER
+              value: {{ $fallbackAdmin.username | quote }}
+            # Optional so a Secret without this key never blocks the Job; the script then keeps the
+            # first role.
+            - name: FALLBACK_PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $fallbackAdmin.secret }}
+                  key: {{ $fallbackAdmin.key }}
+                  optional: true
+            - name: FALLBACK_ADMIN_DATABASE_NAME
+              value: {{ $fallbackAdmin.database | quote }}
+            {{- end }}
             - name: SPICEDB_DATABASE_NAME
               value: spicedb
             - name: SPICEDB_DATABASE_USERNAME
@@ -183,6 +234,34 @@ spec:
                 readiness_attempt=$((readiness_attempt + 1))
                 sleep 2
               done
+              # Bundled mode checks the role before any SQL runs. When the chart rendered a fallback
+              # (bundled credentials only, never a custom administrator's), the first role is kept only
+              # if it is a superuser: a CREATEROLE/CREATEDB role cannot adopt a `spicedb` role another
+              # role created on PostgreSQL 16+, and both fallback targets are superusers. Without a
+              # fallback, CREATEROLE and CREATEDB are enough, and a role without them stops here with
+              # the values that fix it instead of a SQL error.
+              if [ -z "${ADMIN_DATABASE_URL:-}" ]; then
+                if [ -n "${FALLBACK_PGUSER:-}" ] && [ -n "${FALLBACK_PGPASSWORD:-}" ]; then
+                  admin_probe="SELECT rolsuper FROM pg_roles WHERE rolname = current_user"
+                else
+                  admin_probe="SELECT rolsuper OR (rolcreaterole AND rolcreatedb) FROM pg_roles WHERE rolname = current_user"
+                fi
+                admin_capable="$(psql --dbname "$admin_database_url" --no-psqlrc --tuples-only --no-align \
+                  --command "$admin_probe" || true)"
+                if [ "$admin_capable" != "t" ]; then
+                  if [ -n "${FALLBACK_PGUSER:-}" ] && [ -n "${FALLBACK_PGPASSWORD:-}" ]; then
+                    echo "PostgreSQL role $PGUSER cannot log in or is not a superuser; connecting as $FALLBACK_PGUSER instead" >&2
+                    PGUSER="$FALLBACK_PGUSER"
+                    PGPASSWORD="$FALLBACK_PGPASSWORD"
+                    export PGUSER PGPASSWORD
+                    admin_database_url="$FALLBACK_ADMIN_DATABASE_NAME"
+                  else
+                    echo "PostgreSQL role $PGUSER cannot log in or lacks CREATEROLE and CREATEDB, so it cannot create the SpiceDB role and database." >&2
+                    echo "Set authzed.bundledPostgresqlBootstrap.adminUsername, adminPasswordSecretName and adminPasswordKey to a role that has them, enable postgresql.auth.enablePostgresUser on a server with a postgres superuser, or set authzed.bundledPostgresqlBootstrap.enabled=false and provision the SpiceDB role and database yourself." >&2
+                    exit 1
+                  fi
+                fi
+              fi
               psql --dbname "$admin_database_url" --set ON_ERROR_STOP=1 \
                 --set database_name="$SPICEDB_DATABASE_NAME" \
                 --set database_username="$SPICEDB_DATABASE_USERNAME" \

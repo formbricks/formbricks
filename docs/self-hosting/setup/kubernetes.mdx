@@ -103,6 +103,21 @@ postgresql:
 redis:
   enabled: false
   externalRedisUrl: "redis://your-redis-host:6379"
+
+# Cube cannot read DATABASE_URL. With the bundled PostgreSQL the chart connects it for you;
+# with an external database, set its connection here.
+cube:
+  env:
+    CUBEJS_DB_HOST: your-postgres-host
+    CUBEJS_DB_PORT: "5432"
+    CUBEJS_DB_NAME: formbricks
+    CUBEJS_DB_USER: user
+    CUBEJS_DB_SSL: "true" # when your server requires TLS
+    CUBEJS_DB_PASS:
+      valueFrom:
+        secretKeyRef:
+          name: formbricks-cube-db # a Secret you create
+          key: password
 ```
 
 ### Using External Secrets
