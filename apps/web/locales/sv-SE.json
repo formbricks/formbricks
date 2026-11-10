@@ -5069,7 +5069,7 @@
         "shown_target_row": "{question} · Rad: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics-, Word-, Excel-, CSV- och Markdown-filer läses med Formbricks AI. All text hämtas ord för ord från filen.",
+        "ai_note": "Filer från Qualtrics, Word, Excel, CSV och Markdown läses med Formbricks AI, ord för ord.",
         "card_description": "Förvandla en Formbricks-fil, en Qualtrics-export eller ett frågeformulär från Word, Excel, CSV eller Markdown till ett utkast till enkät.",
         "card_description_json_only": "Förvandla en enkät som exporterats från Formbricks till ett enkätutkast.",
         "card_title": "Importera enkät",
@@ -5080,8 +5080,8 @@
         "discard_draft_title": "Vill du kassera den här importen?",
         "discard_import_body": "Filen håller fortfarande på att importeras. Om du stänger avbryts importen.",
         "discard_import_title": "Vill du avbryta importen?",
-        "dropzone_help": "Formbricks-fil (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md), upp till 15 MB",
-        "dropzone_help_json_only": "Formbricks-fil (.json), upp till 15 MB",
+        "dropzone_help": "Formbricks-fil (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md)",
+        "dropzone_help_json_only": "Formbricks-fil (.json)",
         "dropzone_primary": "Släpp en fil här eller klicka för att välja en",
         "encodings": {
           "utf_16": "UTF-16",

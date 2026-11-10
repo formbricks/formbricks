@@ -5069,7 +5069,7 @@
         "shown_target_row": "{question} · 行:{row}"
       },
       "import": {
-        "ai_note": "Qualtrics、Word、Excel、CSV 和 Markdown 文件将通过 Formbricks AI 读取，所有文本均逐字取自文件。",
+        "ai_note": "Qualtrics、Word、Excel、CSV 和 Markdown 文件将由 Formbricks AI 逐字读取。",
         "card_description": "将 Formbricks 文件、Qualtrics 导出文件，或 Word、Excel、CSV、Markdown 格式的问卷转换为调查草稿。",
         "card_description_json_only": "将从 Formbricks 导出的问卷转为问卷草稿。",
         "card_title": "导入调查",
@@ -5080,8 +5080,8 @@
         "discard_draft_title": "要放弃此次导入吗？",
         "discard_import_body": "文件仍在导入中。关闭后将停止导入。",
         "discard_import_title": "要停止导入吗？",
-        "dropzone_help": "Formbricks 文件 (.json)、Qualtrics 导出文件 (.qsf)、Word (.docx)、Excel (.xlsx)、CSV (.csv) 或 Markdown (.md)，最大 15 MB",
-        "dropzone_help_json_only": "Formbricks 文件（.json），最大 15 MB",
+        "dropzone_help": "Formbricks 文件(.json)、Qualtrics 导出文件(.qsf)、Word(.docx)、Excel(.xlsx)、CSV(.csv)或 Markdown(.md)",
+        "dropzone_help_json_only": "Formbricks 文件(.json)",
         "dropzone_primary": "将文件拖放到此处，或点击选择文件",
         "encodings": {
           "utf_16": "UTF-16",
