@@ -42,31 +42,34 @@ export async function requireRoleManagementEntitlement({
 /**
  * The role rules (`assertCanAssignRole`: billing is Cloud-only, the Dashboard viewer role needs its plan,
  * managers give only the roles they may, and only owners change an owner) as an HTTP answer: `null` to go
- * ahead, a 400 naming `role` for a role this instance doesn't have, or a 403 with the rule's reason.
+ * ahead, a 400 naming `paramName` (the body field the roles came from, `role` by default) for a role this
+ * instance doesn't have, or a 403 with the rule's reason. A bulk invite passes every row's role at once.
  */
 export async function refuseRoleAssignment({
   organizationId,
   assignerRole,
-  role,
+  roles,
+  paramName = "role",
   targetCurrentRole,
   requestId,
   instance,
 }: {
   organizationId: string;
   assignerRole: TOrganizationRole;
-  role: TOrganizationRole;
+  roles: ReadonlyArray<TOrganizationRole>;
+  paramName?: string;
   targetCurrentRole?: TOrganizationRole | null;
   requestId: string;
   instance?: string;
 }): Promise<Response | null> {
   try {
-    await assertCanAssignRole({ organizationId, assignerRole, roles: [role], targetCurrentRole });
+    await assertCanAssignRole({ organizationId, assignerRole, roles, targetCurrentRole });
     return null;
   } catch (error) {
     if (error instanceof ValidationError) {
       return problemBadRequest(requestId, error.message, {
         instance,
-        invalid_params: [{ name: "role", reason: error.message }],
+        invalid_params: [{ name: paramName, reason: error.message }],
       });
     }
     if (error instanceof OperationNotAllowedError)

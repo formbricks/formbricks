@@ -7,3 +7,9 @@ export const serializeInviteRole = (inviteId: string, role: TOrganizationRole): 
   id: inviteId,
   role,
 });
+
+/** A pending invite just created: its id, which the invite list shows once the page refreshes. */
+export type TCreatedInviteResource = { id: string };
+
+/** A fresh link to a pending invite, ready to share: the token is URL-encoded for the invite page. */
+export type TInviteShareLinkResource = { inviteToken: string };

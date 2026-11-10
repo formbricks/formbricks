@@ -36,14 +36,19 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/integrations/{type}/channels` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/channels/route.ts` |
 | `/api/internal/integrations/{type}/connection` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/connection/route.ts` |
 | `/api/internal/integrations/{type}/spreadsheets/{spreadsheetId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/spreadsheets/[spreadsheetId]/route.ts` |
-| `/api/internal/invites/{inviteId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/route.ts` |
+| `/api/internal/invites` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/route.ts` |
+| `/api/internal/invites/{inviteId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/route.ts` |
+| `/api/internal/invites/{inviteId}/emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/emails/route.ts` |
+| `/api/internal/invites/{inviteId}/share-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/share-links/route.ts` |
+| `/api/internal/invites/batches` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/batches/route.ts` |
 | `/api/internal/languages` | POST | session | dashboard | `/api/internal` | `app/api/internal/languages/route.ts` |
 | `/api/internal/languages/{languageId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/route.ts` |
 | `/api/internal/languages/{languageId}/surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/surveys/route.ts` |
 | `/api/internal/license-checks` | POST | session | dashboard | `/api/internal` | `app/api/internal/license-checks/route.ts` |
 | `/api/internal/matrix-questions` | GET | session | dashboard | `/api/internal` | `app/api/internal/matrix-questions/route.ts` |
-| `/api/internal/members/{userId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/route.ts` |
+| `/api/internal/members/{userId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
+| `/api/internal/members/me` | DELETE | session | dashboard | `/api/internal` | `app/api/internal/members/me/route.ts` |
 | `/api/internal/onboarding-invites` | POST | session | dashboard | `/api/internal` | `app/api/internal/onboarding-invites/route.ts` |
 | `/api/internal/organizations` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |

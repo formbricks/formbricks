@@ -1,10 +1,15 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { ValidationError } from "@formbricks/types/errors";
 import type { TMembership } from "@formbricks/types/memberships";
-import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
+import {
+  requireOrgActionAccess,
+  requireUserManagementAccess,
+} from "@/app/api/internal/lib/organization-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
+  noContentResponse,
   problemConflict,
   problemForbidden,
   problemUnauthorized,
@@ -19,7 +24,10 @@ import {
   requireRoleManagementEntitlement,
 } from "@/modules/ee/role-management/lib/api-access";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
-import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
+import {
+  deleteMembership,
+  getOrganizationOwnerCount,
+} from "@/modules/organization/settings/teams/lib/membership";
 import type { TMemberUpdateBody } from "../schemas";
 import { serializeMemberRole } from "../serializers";
 
@@ -133,7 +141,7 @@ export async function updateMemberRoleOperation({
   const refused = await refuseRoleAssignment({
     organizationId,
     assignerRole: callerMembership.role,
-    role: body.role,
+    roles: [body.role],
     targetCurrentRole: target?.role,
     requestId,
     instance,
@@ -153,4 +161,77 @@ export async function updateMemberRoleOperation({
 
   if (auditLog) auditLog.newObject = result;
   return successResponse(serializeMemberRole(result), { requestId });
+}
+
+/**
+ * Remove a membership, mapping the last-owner guard `deleteMembership` runs inside its serializable
+ * transaction (where two concurrent removals can't both pass it) to a 409 with its reason.
+ */
+export async function deleteMembershipOrConflict(
+  userId: string,
+  organizationId: string,
+  { requestId, instance }: { requestId: string; instance?: string }
+): Promise<Response | null> {
+  try {
+    await deleteMembership(userId, organizationId);
+    return null;
+  } catch (error) {
+    if (error instanceof ValidationError) return problemConflict(requestId, error.message, instance);
+    throw error;
+  }
+}
+
+/**
+ * `DELETE /api/internal/members/{userId}?organizationId=`: remove a member from the organization. The caller
+ * must be above the user-management floor with `organization.manage`, can't remove themselves (leaving is
+ * `DELETE /api/internal/members/me`), and a manager can't remove an owner. The last active owner stays. A
+ * missing member gets the same 403 as one in an organization the caller can't see.
+ */
+export async function deleteMemberOperation({
+  authentication,
+  userId,
+  organizationId,
+  requestId,
+  instance,
+  auditLog,
+}: {
+  authentication: TV3Authentication;
+  userId: string;
+  organizationId: string;
+  requestId: string;
+  instance?: string;
+  auditLog?: TV3AuditLog;
+}): Promise<Response> {
+  if (auditLog) {
+    auditLog.organizationId = organizationId;
+    auditLog.targetId = `${userId}-${organizationId}`;
+  }
+
+  const access = await requireUserManagementAccess({ authentication, organizationId, requestId, instance });
+  if (access instanceof Response) return access;
+
+  const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.stateMutation, organizationId, {
+    requestId,
+    instance,
+  });
+  if (limited) return limited;
+
+  if (userId === access.userId) {
+    return problemForbidden(requestId, "You cannot delete yourself from the organization", instance);
+  }
+
+  const callerMembership = await getMembershipByUserIdOrganizationId(access.userId, organizationId);
+  if (!callerMembership) return problemForbidden(requestId, undefined, instance);
+
+  const membership = await getMembershipByUserIdOrganizationId(userId, organizationId);
+  if (!membership) return problemForbidden(requestId, undefined, instance);
+
+  if (callerMembership.role === "manager" && membership.role === "owner") {
+    return problemForbidden(requestId, "You cannot delete the owner of the organization", instance);
+  }
+
+  if (auditLog) auditLog.oldObject = membership;
+  const conflict = await deleteMembershipOrConflict(userId, organizationId, { requestId, instance });
+  if (conflict) return conflict;
+  return noContentResponse({ requestId });
 }

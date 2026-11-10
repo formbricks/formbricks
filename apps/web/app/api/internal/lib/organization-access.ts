@@ -3,6 +3,7 @@ import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
+import { canManageUsers } from "@/lib/membership/user-management";
 
 /**
  * What an internal organization route asks of the caller, in the app's authorization vocabulary:
@@ -56,4 +57,42 @@ export async function requireOrgActionAccess({
   }
 
   return { organizationId, userId: actor.id };
+}
+
+export const USER_MANAGEMENT_NOT_ALLOWED_DETAIL = "User management is not allowed for your role";
+
+/**
+ * Authorize an owner's or manager's change to who is invited or a member, as the server actions it replaces
+ * asked it: the user-management floor (`assertUserManagementAllowed`, `organization.manage_access`) first,
+ * then `organization.manage`, each only once the one before allowed. The floor refuses with its reason, as
+ * those actions did. That reason is the same for an organization that doesn't exist or that the caller
+ * isn't in, so it reveals nothing about which organizations exist.
+ */
+export async function requireUserManagementAccess({
+  authentication,
+  organizationId,
+  requestId,
+  instance,
+}: {
+  authentication: TV3Authentication;
+  organizationId: string;
+  requestId: string;
+  instance?: string;
+}): Promise<Response | { organizationId: string; userId: string }> {
+  const actor = getV3AuthorizationActor(authentication);
+  if (actor?.type !== "user") {
+    return problemUnauthorized(requestId, "Session required", instance);
+  }
+
+  if (!(await canManageUsers(actor.id, organizationId))) {
+    return problemForbidden(requestId, USER_MANAGEMENT_NOT_ALLOWED_DETAIL, instance);
+  }
+
+  return requireOrgActionAccess({
+    authentication,
+    organizationId,
+    action: "organization.manage",
+    requestId,
+    instance,
+  });
 }
