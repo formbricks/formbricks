@@ -27,7 +27,7 @@ file and Helm chart change three settings:
 | Who | What to do |
 | --- | --- |
 | Docker Compose and one-click | Add `CUBEJS_DB_QUERY_TIMEOUT: 60s` to the `cube` service's `environment`, and `shm_size: 512mb` to the `postgres` service. Updates keep your local `docker-compose.yml`, so these aren't added for you. |
-| Docker Compose and one-click | Set the `cube` service's image to the tag in the release's Compose file (on `main`: `ghcr.io/formbricks/cube:1.8.8-4`), and install the release's Cube model files. The new models and the new image belong together. |
+| Docker Compose and one-click | Set the `cube` service's image to the tag in the release's Compose file (on `main`: `ghcr.io/formbricks/cube:1.8.17-1`), and install the release's Cube model files. The new models and the new image belong together. |
 | External PostgreSQL | Give it enough shared memory for parallel queries. Managed databases already have it. |
 | Kubernetes | Nothing. The chart sets the Cube values. |
 
