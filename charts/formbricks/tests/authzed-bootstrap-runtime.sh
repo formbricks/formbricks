@@ -265,15 +265,15 @@ for version in "${postgres_versions[@]}"; do
     exit 1
   fi
 
-  # 10. A wrong password for the first role with a fallback that cannot log in either (the bundled
-  #     pgvector image has no `postgres`): the error must point at the first role, not end on the
-  #     fallback's login failure.
+  # 10. Neither the first role nor the fallback can log in (the bundled pgvector image has no
+  #     `postgres`): the error must point at the first role, not end on the fallback's login failure.
+  #     The official image trusts connections from 127.0.0.1, so only a missing role fails to log in.
   reset_spicedb "${container}"
-  if output="$(run_bootstrap_with_fallback "${container}" fbadmin wrong-password absent_role whatever)"; then
+  if output="$(run_bootstrap_with_fallback "${container}" absent_first whatever absent_role whatever)"; then
     printf '%s\n' "Bootstrap must fail when neither role can log in on ${version}." >&2
     exit 1
   fi
-  grep --quiet 'Neither fbadmin nor absent_role could log in' <<<"${output}" || {
+  grep --quiet 'Neither absent_first nor absent_role could log in' <<<"${output}" || {
     printf '%s\n%s\n' "The failure must name the first role's credentials on ${version}, got:" "${output}" >&2
     exit 1
   }
@@ -281,6 +281,31 @@ for version in "${postgres_versions[@]}"; do
     printf '%s\n' "A failed login must stop before any SQL runs on ${version}." >&2
     exit 1
   fi
+
+  # 11. The first role logs in but lacks CREATEROLE and CREATEDB, and the fallback cannot log in: the
+  #     error must point at the fallback's credentials, not claim the first role could not log in.
+  reset_spicedb "${container}"
+  if output="$(run_bootstrap_with_fallback "${container}" fbapp app-pw absent_role whatever)"; then
+    printf '%s\n' "Bootstrap must fail when the fallback cannot log in for an incapable role on ${version}." >&2
+    exit 1
+  fi
+  grep --quiet 'fbapp lacks CREATEROLE and CREATEDB, and absent_role could not log in' <<<"${output}" || {
+    printf '%s\n%s\n' "The failure must name the fallback's credentials on ${version}, got:" "${output}" >&2
+    exit 1
+  }
+
+  # 12. A CREATEROLE/CREATEDB first role is kept when the fallback cannot log in (an upgraded pgvector
+  #     volume has no `postgres`), rather than failing the upgrade.
+  reset_spicedb "${container}"
+  if ! output="$(run_bootstrap_with_fallback "${container}" fbadmin "${admin_password}" absent_role whatever)"; then
+    printf '%s\n%s\n' "A capable first role must be kept when the fallback cannot log in on ${version}:" "${output}" >&2
+    exit 1
+  fi
+  grep --quiet 'continuing as fbadmin' <<<"${output}" || {
+    printf '%s\n%s\n' "Keeping the first role must be announced on ${version}, got:" "${output}" >&2
+    exit 1
+  }
+  assert_spicedb_owned "${container}" "capable first role without a usable fallback on ${version}"
 
   docker rm --force "${container}" >/dev/null 2>&1 || true
 done

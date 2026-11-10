@@ -234,36 +234,45 @@ spec:
                 readiness_attempt=$((readiness_attempt + 1))
                 sleep 2
               done
-              # Bundled mode checks the role before any SQL runs. When the chart rendered a fallback
-              # (bundled credentials only, never a custom administrator's), the first role is kept only
-              # if it is a superuser: a CREATEROLE/CREATEDB role cannot adopt a `spicedb` role another
-              # role created on PostgreSQL 16+, and both fallback targets are superusers. Without a
-              # fallback, CREATEROLE and CREATEDB are enough, and a role without them stops here with
-              # the values that fix it instead of a SQL error.
+              # Bundled mode checks the role before any SQL runs. A superuser first role is always kept.
+              # When the chart rendered a fallback (bundled credentials only, never a custom
+              # administrator's), a non-superuser first role gives way to it if the fallback can log in:
+              # a CREATEROLE/CREATEDB role cannot adopt a `spicedb` role another role created on
+              # PostgreSQL 16+, and both fallback targets are superusers. Otherwise CREATEROLE and
+              # CREATEDB are enough, and a first role without them stops here naming the credentials or
+              # values that fix it instead of a SQL error.
               if [ -z "${ADMIN_DATABASE_URL:-}" ]; then
-                if [ -n "${FALLBACK_PGUSER:-}" ] && [ -n "${FALLBACK_PGPASSWORD:-}" ]; then
-                  admin_probe="SELECT rolsuper FROM pg_roles WHERE rolname = current_user"
-                else
-                  admin_probe="SELECT rolsuper OR (rolcreaterole AND rolcreatedb) FROM pg_roles WHERE rolname = current_user"
-                fi
-                admin_capable="$(psql --dbname "$admin_database_url" --no-psqlrc --tuples-only --no-align \
-                  --command "$admin_probe" || true)"
-                if [ "$admin_capable" != "t" ]; then
-                  if [ -n "${FALLBACK_PGUSER:-}" ] && [ -n "${FALLBACK_PGPASSWORD:-}" ]; then
+                first_login=t
+                first_role="$(psql --dbname "$admin_database_url" --no-psqlrc --tuples-only --no-align \
+                  --command "SELECT rolsuper, rolsuper OR (rolcreaterole AND rolcreatedb) FROM pg_roles WHERE rolname = current_user")" ||
+                  first_login=f
+                if [ "$first_role" != "t|t" ]; then
+                  fallback_login=f
+                  if [ -n "${FALLBACK_PGUSER:-}" ] && [ -n "${FALLBACK_PGPASSWORD:-}" ] &&
+                    PGUSER="$FALLBACK_PGUSER" PGPASSWORD="$FALLBACK_PGPASSWORD" \
+                      psql --dbname "$FALLBACK_ADMIN_DATABASE_NAME" --no-psqlrc --tuples-only --no-align \
+                      --command "SELECT 1" >/dev/null; then
+                    fallback_login=t
+                  fi
+                  if [ "$fallback_login" = "t" ]; then
                     echo "PostgreSQL role $PGUSER cannot log in or is not a superuser; connecting as $FALLBACK_PGUSER instead" >&2
-                    first_pguser="$PGUSER"
                     PGUSER="$FALLBACK_PGUSER"
                     PGPASSWORD="$FALLBACK_PGPASSWORD"
                     export PGUSER PGPASSWORD
                     admin_database_url="$FALLBACK_ADMIN_DATABASE_NAME"
-                    # Without this, a wrong password for the first role ends on the fallback's own login
-                    # error, which on the bundled pgvector image (no fallback role) reads like the
-                    # missing-`postgres` failure this fallback exists to avoid.
-                    if ! psql --dbname "$admin_database_url" --no-psqlrc --tuples-only --no-align \
-                      --command "SELECT 1" >/dev/null; then
-                      echo "Neither $first_pguser nor $FALLBACK_PGUSER could log in. $FALLBACK_PGUSER exists only on data a Bitnami image initialised; on the bundled pgvector image, check the password Secret and key for $first_pguser." >&2
-                      exit 1
+                  elif [ "$first_role" = "f|t" ]; then
+                    if [ -n "${FALLBACK_PGUSER:-}" ]; then
+                      echo "PostgreSQL role $FALLBACK_PGUSER could not log in; continuing as $PGUSER, which has CREATEROLE and CREATEDB" >&2
                     fi
+                  elif [ "$first_login" = "f" ] && [ -n "${FALLBACK_PGUSER:-}" ]; then
+                    # A wrong password for the first role would otherwise end on the fallback's login
+                    # error, which on the bundled pgvector image (no `postgres` role) reads like the
+                    # missing-`postgres` failure the fallback exists to avoid.
+                    echo "Neither $PGUSER nor $FALLBACK_PGUSER could log in. $FALLBACK_PGUSER exists only on data a Bitnami image initialised; on the bundled pgvector image, check the password Secret and key for $PGUSER." >&2
+                    exit 1
+                  elif [ -n "${FALLBACK_PGUSER:-}" ]; then
+                    echo "PostgreSQL role $PGUSER lacks CREATEROLE and CREATEDB, and $FALLBACK_PGUSER could not log in; check the password Secret and key for $FALLBACK_PGUSER." >&2
+                    exit 1
                   else
                     echo "PostgreSQL role $PGUSER cannot log in or lacks CREATEROLE and CREATEDB, so it cannot create the SpiceDB role and database." >&2
                     echo "Set authzed.bundledPostgresqlBootstrap.adminUsername, adminPasswordSecretName and adminPasswordKey to a role that has them, enable postgresql.auth.enablePostgresUser on a server with a postgres superuser, or set authzed.bundledPostgresqlBootstrap.enabled=false and provision the SpiceDB role and database yourself." >&2
