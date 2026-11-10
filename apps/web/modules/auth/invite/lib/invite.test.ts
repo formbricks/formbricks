@@ -1,14 +1,13 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { type InviteWithCreator } from "@/modules/auth/invite/types/invites";
-import { deleteInvite, getInvite } from "./invite";
+import { getInvite } from "./invite";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     invite: {
-      delete: vi.fn(),
       findUnique: vi.fn(),
     },
   },
@@ -17,45 +16,6 @@ vi.mock("@formbricks/database", () => ({
 describe("invite", () => {
   afterEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe("deleteInvite", () => {
-    test("should delete an invite and return true", async () => {
-      const mockInvite = {
-        id: "test-id",
-        organizationId: "org-id",
-      };
-
-      vi.mocked(prisma.invite.delete).mockResolvedValue(mockInvite as any);
-
-      const result = await deleteInvite("test-id");
-
-      expect(result).toBe(true);
-      expect(prisma.invite.delete).toHaveBeenCalledWith({
-        where: { id: "test-id" },
-        select: {
-          id: true,
-          organizationId: true,
-        },
-      });
-    });
-
-    test("should throw ResourceNotFoundError when invite is not found", async () => {
-      vi.mocked(prisma.invite.delete).mockResolvedValue(null as any);
-
-      await expect(deleteInvite("test-id")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("should throw DatabaseError when Prisma throws an error", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Test error", {
-        code: "P2002",
-        clientVersion: "1.0.0",
-      });
-
-      vi.mocked(prisma.invite.delete).mockRejectedValue(prismaError);
-
-      await expect(deleteInvite("test-id")).rejects.toThrow(DatabaseError);
-    });
   });
 
   describe("getInvite", () => {

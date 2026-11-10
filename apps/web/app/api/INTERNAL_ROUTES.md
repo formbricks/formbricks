@@ -44,6 +44,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/invites/{inviteId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/route.ts` |
 | `/api/internal/invites/{inviteId}/emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/emails/route.ts` |
 | `/api/internal/invites/{inviteId}/share-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/share-links/route.ts` |
+| `/api/internal/invites/acceptances` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/acceptances/route.ts` |
 | `/api/internal/invites/batches` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/batches/route.ts` |
 | `/api/internal/languages` | POST | session | dashboard | `/api/internal` | `app/api/internal/languages/route.ts` |
 | `/api/internal/languages/{languageId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/route.ts` |

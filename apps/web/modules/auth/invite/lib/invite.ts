@@ -1,34 +1,8 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { type InviteWithCreator } from "@/modules/auth/invite/types/invites";
-
-export const deleteInvite = async (inviteId: string): Promise<boolean> => {
-  try {
-    const invite = await prisma.invite.delete({
-      where: {
-        id: inviteId,
-      },
-      select: {
-        id: true,
-        organizationId: true,
-      },
-    });
-
-    if (!invite) {
-      throw new ResourceNotFoundError("Invite", inviteId);
-    }
-
-    return true;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
 
 export const getInvite = reactCache(async (inviteId: string): Promise<InviteWithCreator | null> => {
   try {

@@ -22,7 +22,7 @@ import {
  */
 
 /** Server actions left to migrate, inline ones included. Only ever lower this. */
-const SERVER_ACTION_BASELINE = 23;
+const SERVER_ACTION_BASELINE = 22;
 
 /** Client modules that still call a server action directly. Only ever lower this. */
 const CLIENT_ACTION_IMPORTER_BASELINE = 13;
