@@ -268,14 +268,14 @@ export const getSurveyImportIssueLine = (issue: TSurveyImportIssue, t: TTranslat
 
 /**
  * The kinds the report's header counts by name (ENG-7070), in the order the lines are listed: the same
- * things the review's facts row counts, so "3 logic rules to check" reads the same in both. A warning
- * of any other code counts as `other`; every note as `note`.
+ * things the review's facts row counts, so "3 logic rules to check" reads the same in both: logic and
+ * skipped questions are counted by their code, whatever their severity. Any other warning counts as
+ * `other`; any other note as `note`.
  */
 const ISSUE_GROUPS = ["logic_to_check", "logic_not_imported", "question_skipped", "other", "note"] as const;
 type TIssueGroup = (typeof ISSUE_GROUPS)[number];
 
 const getIssueGroup = (issue: TSurveyImportIssue): TIssueGroup => {
-  if (issue.severity !== "warning") return "note";
   switch (issue.code) {
     case "logic_imported":
       return "logic_to_check";
@@ -283,11 +283,11 @@ const getIssueGroup = (issue: TSurveyImportIssue): TIssueGroup => {
     case "question_skipped":
       return issue.code;
     default:
-      return "other";
+      return issue.severity === "warning" ? "other" : "note";
   }
 };
 
-/** Warnings first, by kind, then notes, keeping the server's order inside each. */
+/** Logic, skipped questions and other warnings, then notes, keeping the server's order inside each. */
 export const sortSurveyImportIssues = (issues: readonly TSurveyImportIssue[]): TSurveyImportIssue[] =>
   ISSUE_GROUPS.flatMap((group) => issues.filter((issue) => getIssueGroup(issue) === group));
 

@@ -115,9 +115,9 @@ describe("getSurveyImportIssueSummary", () => {
     ]);
   });
 
-  test("counts an imported rule sent as a note with the notes, and is empty for no line", () => {
+  test("counts an imported rule sent as a note as a rule to check, like the facts row, and is empty for no line", () => {
     expect(getSurveyImportIssueSummary([issue("logic_imported", "info")], t)).toEqual([
-      'summary_notes {"count":1}',
+      'logic_to_check {"count":1}',
     ]);
     expect(getSurveyImportIssueSummary([], t)).toEqual([]);
   });

@@ -116,7 +116,6 @@ const getUnitLabel = (unit: TRetentionPeriodUnit, t: TFunction): string => {
   }
 };
 
-/** A number input's value as a number, or null while it is empty. */
 /** `conditions` with `condition` ticked or unticked. */
 const setCondition = (
   conditions: readonly TRetentionSurveyCondition[],
@@ -125,6 +124,7 @@ const setCondition = (
 ): TRetentionSurveyCondition[] =>
   isTicked ? [...conditions, condition] : conditions.filter((value) => value !== condition);
 
+/** A number input's value as a number, or null while it is empty. */
 const toNumberOrNull = (value: string): number | null => (value.trim() === "" ? null : Number(value));
 
 interface PolicyEditDialogProps {

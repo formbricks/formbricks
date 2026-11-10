@@ -124,8 +124,21 @@ describe("getPolicyFormSchema", () => {
   });
 
   test("checks the range on the rounded days", () => {
-    const outside = { periodPreset: CUSTOM, customPeriodAmount: 10.01, customPeriodUnit: "years" } as const;
-    expect(getPolicyFormSchema(t, "surveys").safeParse({ ...valid, ...outside }).success).toBe(false);
+    const period = (customPeriodAmount: number, customPeriodUnit: "years" | "days") =>
+      getPolicyFormSchema(t, "surveys").safeParse({
+        ...valid,
+        periodPreset: CUSTOM,
+        customPeriodAmount,
+        customPeriodUnit,
+        warnPreset: "14",
+      }).success;
+    // 10.001 years is 3650.4 days: over the limit before rounding, at it after.
+    expect(period(10.001, "years")).toBe(true);
+    expect(period(10.01, "years")).toBe(false);
+    // 29.5 days rounds up to the minimum; 29.4 and 0.4 (0 days) do not reach it.
+    expect(period(29.5, "days")).toBe(true);
+    expect(period(29.4, "days")).toBe(false);
+    expect(period(0.4, "days")).toBe(false);
   });
 
   test("doesn't ask other policies for conditions", () => {
