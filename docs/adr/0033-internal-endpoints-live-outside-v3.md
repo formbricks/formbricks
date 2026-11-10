@@ -13,5 +13,5 @@ An endpoint that only our own UI calls lives at `/api/internal/<resource>`: sess
 - Internal does not mean lax: the review bar is the same as v3. Moving a server action onto a route keeps the action's authorization checks, audit events and rate limits, and while both exist a gate change lands on both through the one gate function (`CODING_STANDARDS.md`, "API Design").
 - MCP is a public surface: an operation an MCP tool calls is a public contract, whichever HTTP routes call it too.
 - The internal API needs versioning the day it gains a consumer we don't ship in the same commit (a mobile app, the CLI, another service).
-- Session-only UI routes outside `/api/internal` are exceptions: older ones under `/api/v3` waiting to move (ENG-2533, ENG-3984), and the `(internal)` route group served under `/api/` (survey export and attachment exports, for example).
+- Session-only UI routes outside `/api/internal` are exceptions waiting to move there: older ones under `/api/v3` (ENG-2533, ENG-3984), and the UI routes in the `(internal)` route group served under `/api/` (survey export and attachment exports, for example). The group's proxy auth hooks (`envoy-auth`, `traefik-auth`) are not UI routes and stay.
 - The `feedbackRecords/[[...path]]` Hub proxy stays under `/api/v3`: it is a documented public pass-through to the Hub API.
