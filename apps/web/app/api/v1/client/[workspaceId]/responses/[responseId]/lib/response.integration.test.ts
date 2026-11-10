@@ -50,17 +50,19 @@ const seedSurveyWithQuota = async () => {
   const response = await prisma.response.create({
     data: { surveyId: survey.id, data: {}, finished: false },
   });
-  return { surveyId: survey.id, quotaId: quota.id, responseId: response.id };
+  return { workspaceId: workspace.id, surveyId: survey.id, quotaId: quota.id, responseId: response.id };
 };
 
 describe("updateResponseWithQuotaEvaluation on a saturated pool (ENG-3285)", () => {
   test("evaluates quotas without a second connection, so the quota link is written", async () => {
-    const { surveyId, quotaId, responseId } = await seedSurveyWithQuota();
+    const { workspaceId, surveyId, quotaId, responseId } = await seedSurveyWithQuota();
     const loggedError = vi.spyOn(logger, "error");
 
-    const updated = await updateResponseWithQuotaEvaluation(responseId, surveyId, {
-      finished: true,
-      data: {},
+    const updated = await updateResponseWithQuotaEvaluation({
+      responseId,
+      workspaceId,
+      surveyId,
+      responseInput: { finished: true, data: {} },
     });
 
     expect(updated.finished).toBe(true);

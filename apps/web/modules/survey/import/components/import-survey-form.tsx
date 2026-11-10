@@ -360,11 +360,13 @@ export const ImportSurveyForm = ({
 
   return (
     // A fixed height once the review shows: the question list scrolls inside it, so the dialog does
-    // not jump as the report opens or a long import lands.
+    // not jump as the report opens or a long import lands. The Update or Create new choice takes room
+    // of its own, so the dialog grows for it instead of squeezing the list; the viewport caps both.
     <div
       className={cn(
         "flex min-h-0 flex-col gap-3",
-        (isImporting || isReviewing) && "h-[32rem] max-h-[calc(100dvh-12rem)]"
+        (isImporting || isReviewing) && "max-h-[calc(100dvh-12rem)]",
+        (isImporting || isReviewing) && (importer.match ? "h-[48rem]" : "h-[40rem]")
       )}>
       {errorMessage ? (
         <Alert variant="error">

@@ -5,6 +5,7 @@ import {
   TSurveyInteractionOperator,
   TSurveyInteractionTimeUnit,
 } from "@formbricks/types/segment";
+import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predicate";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
 import {
   type TContactInteractionData,
@@ -33,22 +34,29 @@ const daysAgo = (n: number): Date => new Date(NOW.getTime() - n * 24 * 60 * 60 *
 
 // ---- Minimal interpreter for the ContactWhereInput subset our builders emit -------------------------
 
+// `countsForAnySurvey` stands in for the survey's effective visibility: the in-memory path reads it off
+// the row, the Prisma path filters on `effectivelyWorkspaceVisibleWhere` (ENG-6870).
 interface FixtureContact {
-  displays: { surveyId: string; createdAt: Date }[];
-  responses: { surveyId: string; createdAt: Date; finished: boolean }[];
+  displays: { surveyId: string; createdAt: Date; countsForAnySurvey: boolean }[];
+  responses: { surveyId: string; createdAt: Date; finished: boolean; countsForAnySurvey: boolean }[];
 }
 
 type SomeClause = {
   surveyId?: { in: string[] };
+  survey?: unknown;
   finished?: boolean;
   createdAt: { gte: Date };
 };
 
 const rowMatchesSome = (
-  row: { surveyId: string; createdAt: Date; finished?: boolean },
+  row: { surveyId: string; createdAt: Date; finished?: boolean; countsForAnySurvey: boolean },
   some: SomeClause
 ): boolean => {
   if (row.createdAt < some.createdAt.gte) return false;
+  if (some.survey !== undefined) {
+    expect(some.survey).toBe(effectivelyWorkspaceVisibleWhere);
+    if (!row.countsForAnySurvey) return false;
+  }
   if (some.surveyId && !some.surveyId.in.includes(row.surveyId)) return false;
   if (some.finished !== undefined && row.finished !== some.finished) return false;
   return true;
@@ -116,21 +124,47 @@ const interactionFilter = (
 const A = "srv0000000000000000000a";
 const B = "srv0000000000000000000b";
 const C = "srv0000000000000000000c";
+/** A restricted survey: its interactions never count for `any` scope. */
+const R = "srv0000000000000000000r";
 
 const contacts: Record<string, FixtureContact> = {
   none: { displays: [], responses: [] },
-  seenARecent: { displays: [{ surveyId: A, createdAt: daysAgo(5) }], responses: [] },
-  seenAOld: { displays: [{ surveyId: A, createdAt: daysAgo(400) }], responses: [] },
-  startedBRecent: { displays: [], responses: [{ surveyId: B, createdAt: daysAgo(5), finished: false }] },
-  completedCRecent: { displays: [], responses: [{ surveyId: C, createdAt: daysAgo(5), finished: true }] },
+  seenRestrictedRecent: {
+    displays: [{ surveyId: R, createdAt: daysAgo(5), countsForAnySurvey: false }],
+    responses: [],
+  },
+  completedRestrictedRecent: {
+    displays: [],
+    responses: [{ surveyId: R, createdAt: daysAgo(5), finished: true, countsForAnySurvey: false }],
+  },
+  restrictedAndARecent: {
+    displays: [
+      { surveyId: R, createdAt: daysAgo(3), countsForAnySurvey: false },
+      { surveyId: A, createdAt: daysAgo(4), countsForAnySurvey: true },
+    ],
+    responses: [{ surveyId: R, createdAt: daysAgo(3), finished: true, countsForAnySurvey: false }],
+  },
+  seenARecent: {
+    displays: [{ surveyId: A, createdAt: daysAgo(5), countsForAnySurvey: true }],
+    responses: [],
+  },
+  seenAOld: { displays: [{ surveyId: A, createdAt: daysAgo(400), countsForAnySurvey: true }], responses: [] },
+  startedBRecent: {
+    displays: [],
+    responses: [{ surveyId: B, createdAt: daysAgo(5), finished: false, countsForAnySurvey: true }],
+  },
+  completedCRecent: {
+    displays: [],
+    responses: [{ surveyId: C, createdAt: daysAgo(5), finished: true, countsForAnySurvey: true }],
+  },
   mixed: {
     displays: [
-      { surveyId: A, createdAt: daysAgo(5) },
-      { surveyId: B, createdAt: daysAgo(400) },
+      { surveyId: A, createdAt: daysAgo(5), countsForAnySurvey: true },
+      { surveyId: B, createdAt: daysAgo(400), countsForAnySurvey: true },
     ],
     responses: [
-      { surveyId: B, createdAt: daysAgo(2), finished: false },
-      { surveyId: C, createdAt: daysAgo(2), finished: true },
+      { surveyId: B, createdAt: daysAgo(2), finished: false, countsForAnySurvey: true },
+      { surveyId: C, createdAt: daysAgo(2), finished: true, countsForAnySurvey: true },
     ],
   },
 };
@@ -195,5 +229,28 @@ describe("survey-interaction eval-path parity (in-memory vs Prisma)", () => {
     expect(inMem).toBe(true);
     expect(db).toBe(true);
     expect(inMem).toBe(db);
+  });
+
+  // ENG-6870: `any` means any workspace-visible survey, in both paths.
+  test.each(OPERATORS)("any scope ignores a restricted survey's interactions — %s", async (operator) => {
+    const filters = [interactionFilter(operator)] as unknown as TBaseFilters;
+    const positive = !operator.startsWith("haveNot");
+
+    for (const name of ["seenRestrictedRecent", "completedRestrictedRecent"] as const) {
+      const inMem = inMemoryMembership(contacts[name], filters);
+      const db = await prismaMembership(contacts[name], filters);
+      // Only restricted interactions: as if the contact had none.
+      expect(`${name}:${inMem}`).toBe(`${name}:${!positive}`);
+      expect(`${name}:${db}`).toBe(`${name}:${!positive}`);
+    }
+  });
+
+  test("specific scope still reads a named restricted survey in both paths", async () => {
+    const filters = [
+      interactionFilter("haveCompleted", { scope: "specific", surveyIds: [R] }),
+    ] as unknown as TBaseFilters;
+
+    expect(inMemoryMembership(contacts.completedRestrictedRecent, filters)).toBe(true);
+    expect(await prismaMembership(contacts.completedRestrictedRecent, filters)).toBe(true);
   });
 });

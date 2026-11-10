@@ -543,6 +543,30 @@ export const getResponsesByWorkspaceId = reactCache(
 );
 
 /**
+ * Locks a response row for the rest of `tx` and returns its `finished` flag, or `null` when the workspace has
+ * no such response. Scoped through the response's survey, so a caller holding another workspace's response
+ * id can neither lock nor read it. A check that guards a response write belongs on this result: under the lock, no other write can
+ * commit between the check and the write, and the read in `updateResponse` that follows sees the latest
+ * committed row, so its merge of `data`/`variables`/`ttc` cannot drop a concurrent update's keys.
+ *
+ * FOR NO KEY UPDATE rather than FOR UPDATE: the update never changes the key, and the weaker lock does not
+ * conflict with the FOR KEY SHARE that inserts referencing this row take (quota links, tags, notes).
+ */
+export const lockResponseForUpdate = async (
+  tx: Prisma.TransactionClient,
+  { responseId, workspaceId }: { responseId: string; workspaceId: string }
+): Promise<{ finished: boolean } | null> => {
+  const [locked] = await tx.$queryRaw<{ finished: boolean }[]>`
+    SELECT r."finished"
+    FROM "Response" r
+    JOIN "Survey" s ON s."id" = r."surveyId"
+    WHERE r."id" = ${responseId} AND s."workspaceId" = ${workspaceId}
+    FOR NO KEY UPDATE OF r
+  `;
+  return locked ?? null;
+};
+
+/**
  * `ingestFlags` is the Embedded Data ingest contract's verdict on `responseInput.data` (ENG-1845),
  * computed server-side by the caller and passed separately so it can never arrive from the client.
  *

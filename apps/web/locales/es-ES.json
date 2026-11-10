@@ -2794,6 +2794,7 @@
       "source_passed_in": "Pasado",
       "still_used_body": "Elimínalo primero de estas encuestas:",
       "still_used_description": "Un campo de biblioteca puede eliminarse una vez que ninguna encuesta lo use.",
+      "still_used_hidden_surveys_note": "El propietario o un gestor de la organización puede eliminarlo de las encuestas que no puedes ver.",
       "still_used_title": "{name} aún se está usando",
       "survey_field_address_fixed": "La fuente y la dirección no se pueden cambiar: las respuestas ya recopiladas se almacenan bajo ellas.",
       "survey_field_address_taken": "Esta encuesta ya utiliza esta clave para una pregunta, un final u otro campo. Elige una diferente.",
@@ -2811,6 +2812,7 @@
       "unlink_field_title": "¿Eliminar {name} de esta encuesta?",
       "used_in": "Usado en",
       "used_in_surveys": "{count, plural, one {# encuesta} other {# encuestas}}",
+      "used_in_surveys_you_cannot_see": "{count, plural, one {# encuesta que no puedes ver} other {# encuestas que no puedes ver}}",
       "value_false": "Falso",
       "value_source": "¿De dónde viene el valor?",
       "value_source_column": "Origen",
@@ -5073,7 +5075,7 @@
         "shown_target_row": "{question} · Fila: {row}"
       },
       "import": {
-        "ai_note": "Los archivos de Qualtrics, Word, Excel, CSV y Markdown se leen con Formbricks AI. Todos los textos se toman del archivo palabra por palabra.",
+        "ai_note": "Los archivos de Qualtrics, Word, Excel, CSV y Markdown se leen con Formbricks AI, palabra por palabra.",
         "card_description": "Convierte un archivo de Formbricks, una exportación de Qualtrics o un cuestionario de Word, Excel, CSV o Markdown en un borrador de encuesta.",
         "card_description_json_only": "Convierte una encuesta exportada desde Formbricks en un borrador de encuesta.",
         "card_title": "Importar encuesta",
@@ -5084,8 +5086,8 @@
         "discard_draft_title": "¿Descartar esta importación?",
         "discard_import_body": "El archivo todavía se está importando. Si lo cierras, se detendrá la importación.",
         "discard_import_title": "¿Detener la importación?",
-        "dropzone_help": "Archivo de Formbricks (.json), exportación de Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md), hasta 15 MB",
-        "dropzone_help_json_only": "Archivo de Formbricks (.json) o exportación de una encuesta en Excel (.xlsx), de hasta 15 MB",
+        "dropzone_help": "Archivo de Formbricks (.json), exportación de Qualtrics (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) o Markdown (.md)",
+        "dropzone_help_json_only": "Archivo de Formbricks (.json) o exportación de una encuesta en Excel (.xlsx)",
         "dropzone_primary": "Suelta un archivo aquí o haz clic para elegir uno",
         "encodings": {
           "utf_16": "UTF-16",
@@ -5151,7 +5153,7 @@
             "texts": "Esta encuesta tiene más textos de los que puede leer la importación."
           },
           "more_problems": "{count, plural, one {# problema más} other {# problemas más}}",
-          "needs_ai": "Los archivos de Qualtrics, Word, CSV y Markdown, y los archivos de Excel que no sean la exportación de una encuesta en Excel, se leen con la IA de Formbricks, que tu organización no tiene. Elige un archivo de Formbricks (.json) o la exportación de una encuesta en Excel (.xlsx).",
+          "needs_ai": "Los archivos de Qualtrics, Word, CSV y Markdown, así como los archivos de Excel que no sean una exportación de una encuesta en Excel, se leen con la IA de Formbricks, que tu organización no tiene. Elige un archivo de Formbricks (.json) o una exportación de una encuesta en Excel (.xlsx).",
           "no_questions": "Formbricks AI no ha podido leer ninguna pregunta de este archivo. Inténtalo de nuevo o impórtalo con Claude o ChatGPT a través de MCP.",
           "not_a_qsf": "Este archivo no es una exportación de una encuesta de Qualtrics. En Qualtrics, exporta la encuesta como archivo .qsf e inténtalo de nuevo.",
           "not_allowed": "No tienes permiso para importar encuestas en este espacio de trabajo.",
@@ -5499,6 +5501,7 @@
           "nav_title": "Enlaces personales",
           "no_contacts_in_segment": "No se han encontrado contactos para el segmento seleccionado",
           "no_segments_available": "No hay segmentos disponibles",
+          "segment_survey_filters_not_visible": "El segmento seleccionado filtra por encuestas a las que no tienes acceso, por lo que no se puede usar para enlaces personales.",
           "segment_survey_workspace_mismatch": "El segmento seleccionado pertenece a un espacio de trabajo diferente al de esta encuesta.",
           "select_segment": "Seleccionar segmento",
           "upgrade_prompt_description": "Genera enlaces personales para un segmento y vincula las respuestas de la encuesta a cada contacto.",

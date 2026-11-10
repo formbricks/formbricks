@@ -101,7 +101,9 @@ export const ImportSurveyDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <DialogBody unconstrained className="-mx-1 -mt-1 flex flex-none flex-col px-1 pt-1 pb-1">
+        {/* flex-initial, not flex-none: the body may shrink, so on a narrow screen a wrapped header
+            plus the review's fixed height still fit the dialog, and the review pane scrolls instead. */}
+        <DialogBody unconstrained className="-mx-1 -mt-1 flex min-h-0 flex-initial flex-col px-1 pt-1 pb-1">
           <ImportSurveyForm
             workspaceId={workspaceId}
             isAIAvailable={isAIAvailable}

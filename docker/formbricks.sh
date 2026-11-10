@@ -10,16 +10,22 @@ traefik_image="traefik:v3.6.25"
 stable_docker_files_url="https://raw.githubusercontent.com/formbricks/formbricks/stable/docker"
 # Cube reads its model from these files, bind-mounted out of the installation directory.
 bundled_cube_files=("cube/cube.js" "cube/schema/FeedbackRecords.js")
+# Resolved here, before install and update change into formbricks/: started as ./formbricks.sh, BASH_SOURCE holds a
+# path relative to the directory the operator started it from (ENG-7042). Empty when the script was not read from a
+# file, so no template is looked for.
+formbricks_script_dir=""
+if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
+  formbricks_script_dir="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
 write_rustfs_init_script() {
   local target_path="${1:-rustfs-init.sh}"
-  local script_dir
-  local template_path
+  local template_path="${formbricks_script_dir:+${formbricks_script_dir}/rustfs-init.sh}"
 
-  script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  template_path="${script_dir}/rustfs-init.sh"
-
-  if [ -f "$template_path" ]; then
+  # A template that is the target itself (formbricks.sh kept inside formbricks/) is the bootstrap installed by the
+  # previous release, not a template: write the embedded one instead. Copying it onto itself would also fail, and
+  # under set -e that would end an update after the stack is stopped.
+  if [ -n "$template_path" ] && [ -f "$template_path" ] && [ ! "$template_path" -ef "$target_path" ]; then
     cp "$template_path" "$target_path"
     chmod 755 "$target_path"
     return

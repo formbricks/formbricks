@@ -2794,6 +2794,7 @@
       "source_passed_in": "傳入",
       "still_used_body": "請先從這些問卷中移除:",
       "still_used_description": "資料庫欄位只能在沒有問卷使用時刪除。",
+      "still_used_hidden_surveys_note": "組織擁有者或管理員可以將它從你看不到的問卷中移除。",
       "still_used_title": "{name} 仍在使用中",
       "survey_field_address_fixed": "來源和位址無法變更：已收集的回應會儲存在其中。",
       "survey_field_address_taken": "此問卷已經使用這個鍵值作為問題、結束頁面或其他欄位。請選擇其他鍵值。",
@@ -2811,6 +2812,7 @@
       "unlink_field_title": "從此問卷中移除 {name}？",
       "used_in": "使用於",
       "used_in_surveys": "{count, plural, other {# 份問卷}}",
+      "used_in_surveys_you_cannot_see": "{count, plural, other {# 份你看不到的問卷}}",
       "value_false": "假",
       "value_source": "值從何處來?",
       "value_source_column": "來源",
@@ -5073,7 +5075,7 @@
         "shown_target_row": "{question} · 列：{row}"
       },
       "import": {
-        "ai_note": "Qualtrics、Word、Excel、CSV 和 Markdown 檔案會由 Formbricks AI 讀取，所有文字都會逐字取自檔案內容。",
+        "ai_note": "Qualtrics、Word、Excel、CSV 和 Markdown 檔案會由 Formbricks AI 逐字讀取。",
         "card_description": "將 Formbricks 檔案、Qualtrics 匯出檔，或 Word、Excel、CSV、Markdown 問卷轉換成問卷草稿。",
         "card_description_json_only": "將從 Formbricks 匯出的問卷轉換為問卷草稿。",
         "card_title": "匯入問卷",
@@ -5084,8 +5086,8 @@
         "discard_draft_title": "要捨棄這次匯入嗎?",
         "discard_import_body": "檔案仍在匯入中。關閉後將會停止匯入。",
         "discard_import_title": "要停止匯入嗎?",
-        "dropzone_help": "Formbricks 檔案 (.json)、Qualtrics 匯出檔 (.qsf)、Word (.docx)、Excel (.xlsx)、CSV (.csv) 或 Markdown (.md)，大小上限 15 MB",
-        "dropzone_help_json_only": "Formbricks 檔案 (.json) 或問卷的 Excel 匯出檔 (.xlsx)，大小上限 15 MB",
+        "dropzone_help": "Formbricks 檔案 (.json)、Qualtrics 匯出檔 (.qsf)、Word (.docx)、Excel (.xlsx)、CSV (.csv) 或 Markdown (.md)",
+        "dropzone_help_json_only": "Formbricks 檔案 (.json) 或問卷的 Excel 匯出檔 (.xlsx)",
         "dropzone_primary": "將檔案拖放到這裡，或點擊選擇檔案",
         "encodings": {
           "utf_16": "UTF-16",
@@ -5151,7 +5153,7 @@
             "texts": "這份問卷的文字內容超過匯入功能可讀取的數量。"
           },
           "more_problems": "{count, plural, other {還有 # 個問題}}",
-          "needs_ai": "Qualtrics、Word、CSV 和 Markdown 檔案，以及問卷 Excel 匯出檔以外的 Excel 檔案，都需要透過 Formbricks AI 讀取，但你的組織目前沒有此功能。請選擇 Formbricks 檔案 (.json) 或問卷的 Excel 匯出檔 (.xlsx)。",
+          "needs_ai": "Qualtrics、Word、CSV 和 Markdown 檔案，以及問卷 Excel 匯出檔以外的 Excel 檔案，需透過 Formbricks AI 讀取，但你的組織目前未啟用此功能。請選擇 Formbricks 檔案 (.json) 或問卷的 Excel 匯出檔 (.xlsx)。",
           "no_questions": "Formbricks AI 無法從這個檔案中讀取任何問題。請再試一次，或透過 MCP 使用 Claude 或 ChatGPT 來匯入。",
           "not_a_qsf": "這不是 Qualtrics 問卷匯出檔。請在 Qualtrics 中將問卷匯出為 .qsf 檔案,然後再試一次。",
           "not_allowed": "你沒有權限將問卷匯入此工作區。",
@@ -5499,6 +5501,7 @@
           "nav_title": "個人連結",
           "no_contacts_in_segment": "所選區段中找不到聯絡人",
           "no_segments_available": "沒有可用的區隔",
+          "segment_survey_filters_not_visible": "所選的區隔篩選條件包含你無權存取的問卷，因此無法用於個人連結。",
           "segment_survey_workspace_mismatch": "所選的區段屬於不同的工作區,與此問卷不同。",
           "select_segment": "選擇區隔",
           "upgrade_prompt_description": "為某個區隔產生個人連結，並將問卷回應對應到每位聯絡人。",

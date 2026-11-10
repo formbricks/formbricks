@@ -47,6 +47,7 @@ interface CubeMember {
   sql?: string;
   description?: string;
   filters?: { sql: string }[];
+  public?: boolean;
 }
 interface CubeDefinition {
   dimensions: Record<string, CubeMember>;
@@ -244,6 +245,12 @@ describe("schema-definition", () => {
   });
 
   describe("FEEDBACK_FIELDS", () => {
+    test("keeps the embedded-key discovery member queryable in both Cube deployments", () => {
+      for (const path of [chartCubeSchemaPath, dockerCubeSchemaPath]) {
+        expect(evaluateCubeSchema(path).dimensions.embeddedDataKey.public).toBe(true);
+      }
+    });
+
     test("has dimensions and measures", () => {
       expect(FEEDBACK_FIELDS.dimensions.length).toBeGreaterThan(0);
       expect(FEEDBACK_FIELDS.measures.length).toBeGreaterThan(0);

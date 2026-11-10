@@ -652,7 +652,7 @@ asyncModule(async () => {
       embeddedDataKey: {
         sql: `jsonb_object_keys(CASE WHEN jsonb_typeof(${CUBE}.metadata->'embedded_data') = 'object' THEN ${CUBE}.metadata->'embedded_data' END)`,
         type: `string`,
-        shown: false,
+        public: true,
       },
 
       tenantId: {

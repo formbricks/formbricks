@@ -2794,6 +2794,7 @@
       "source_passed_in": "Passed in",
       "still_used_body": "Remove it from these surveys first:",
       "still_used_description": "A library field can be deleted once no survey uses it.",
+      "still_used_hidden_surveys_note": "An organization owner or manager can remove it from the surveys you can't see.",
       "still_used_title": "{name} is still used",
       "survey_field_address_fixed": "The source and the address cannot be changed: responses already collected are stored under them.",
       "survey_field_address_taken": "This survey already uses this key for a question, an ending or another field. Pick a different one.",
@@ -2811,6 +2812,7 @@
       "unlink_field_title": "Remove {name} from this survey?",
       "used_in": "Used in",
       "used_in_surveys": "{count, plural, one {# survey} other {# surveys}}",
+      "used_in_surveys_you_cannot_see": "{count, plural, one {# survey you can't see} other {# surveys you can't see}}",
       "value_false": "False",
       "value_source": "Where does the value come from?",
       "value_source_column": "Source",
@@ -5073,7 +5075,7 @@
         "shown_target_row": "{question} · Row: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics, Word, Excel, CSV and Markdown files are read with Formbricks AI. Every text comes from the file word for word.",
+        "ai_note": "Qualtrics, Word, Excel, CSV and Markdown files are read with Formbricks AI, word for word.",
         "card_description": "Turn a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel, CSV or Markdown into a draft survey.",
         "card_description_json_only": "Turn a survey exported from Formbricks into a draft survey.",
         "card_title": "Import survey",
@@ -5084,8 +5086,8 @@
         "discard_draft_title": "Discard this import?",
         "discard_import_body": "The file is still being imported. Closing will stop the import.",
         "discard_import_title": "Stop importing?",
-        "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) or Markdown (.md), up to 15 MB",
-        "dropzone_help_json_only": "Formbricks file (.json) or a survey's Excel export (.xlsx), up to 15 MB",
+        "dropzone_help": "Formbricks file (.json), Qualtrics export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) or Markdown (.md)",
+        "dropzone_help_json_only": "Formbricks file (.json) or a survey's Excel export (.xlsx)",
         "dropzone_primary": "Drop a file here or click to choose one",
         "encodings": {
           "utf_16": "UTF-16",
@@ -5499,6 +5501,7 @@
           "nav_title": "Personal links",
           "no_contacts_in_segment": "No contacts found for the selected segment",
           "no_segments_available": "No segments available",
+          "segment_survey_filters_not_visible": "The selected segment filters on surveys you don't have access to, so it can't be used for personal links.",
           "segment_survey_workspace_mismatch": "The selected segment belongs to a different workspace than this survey.",
           "select_segment": "Select segment",
           "upgrade_prompt_description": "Generate personal links for a segment and link survey responses to each contact.",

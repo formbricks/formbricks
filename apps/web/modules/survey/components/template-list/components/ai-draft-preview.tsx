@@ -10,12 +10,15 @@ import {
   type TAiDraftState,
   groupAiDraftByBlock,
 } from "@/modules/survey/components/template-list/lib/ai-draft-reducer";
+import {
+  getGenerationScrollAction,
+  isPinnedToBottom,
+  shouldFollowNewQuestions,
+} from "@/modules/survey/components/template-list/lib/ai-draft-scroll";
 import { getElementIconMap, getElementNameMap } from "@/modules/survey/lib/elements";
 import { AiActivityBar } from "@/modules/ui/components/ai";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
-/** How close to the bottom still counts as "following along", in px. */
-const PIN_THRESHOLD_PX = 32;
 const PENDING_ROW_COUNT = 3;
 /** Above this many rows the list is windowed: only the rows near the viewport are mounted (ENG-3478). */
 export const DRAFT_PREVIEW_VIRTUALIZE_THRESHOLD = 50;
@@ -141,20 +144,32 @@ export const AiDraftPreview = ({
     return () => observer?.disconnect();
   }, [isVirtualized]);
 
+  // While generating, the list follows new questions down. Once it is done, the review starts at the
+  // first question, so a finished draft (or an import that lands all at once) is read from the top.
+  // Declared before the follow effect, so a new generation re-pins before the first question lands.
+  const wasGeneratingRef = useRef(isGenerating);
+  useEffect(() => {
+    const wasGenerating = wasGeneratingRef.current;
+    wasGeneratingRef.current = isGenerating;
+    const action = getGenerationScrollAction(wasGenerating, isGenerating);
+    if (action === "repin") isPinnedRef.current = true;
+    if (action === "scroll_to_top") scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [isGenerating]);
+
   useEffect(() => {
     const element = scrollRef.current;
-    if (!element || !isPinnedRef.current) return;
+    if (!element || !shouldFollowNewQuestions(isGenerating, isPinnedRef.current)) return;
 
     // The CSS reduced-motion kill-switch cannot reach a JS scroll option, so check it here.
     const prefersReducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     element.scrollTo({ top: element.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" });
-  }, [draft.questions.length]);
+  }, [draft.questions.length, isGenerating]);
 
   const handleScroll = () => {
     const element = scrollRef.current;
     if (!element) return;
 
-    isPinnedRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < PIN_THRESHOLD_PX;
+    isPinnedRef.current = isPinnedToBottom(element);
     if (isVirtualized) setScrollTop(element.scrollTop);
   };
 

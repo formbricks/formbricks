@@ -10,6 +10,8 @@ and sanitized error code. Retry only after checking for partial changes and conc
 - **Preparation blocked:** use [preparation results](/self-hosting/upgrade/prepare#results-and-recovery).
 - **Database migration failed:** follow the diagnostic steps below.
 - **Restore required:** use [backup and restore](/self-hosting/operate/backup-restore).
+- **`StatefulSet.apps "formbricks-redis-master" is invalid: spec: Forbidden`:** see
+  [Upgrade fails on the Valkey StatefulSet](/self-hosting/upgrade/kubernetes#valkey-statefulset-forbidden).
 
 A completed migration is not the final acceptance check. Return to your deployment recipe before
 restarting writers or reopening traffic.

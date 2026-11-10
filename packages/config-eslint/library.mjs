@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import { base, commonIgnores, unusedVarsConvention } from "./base.mjs";
+import { sonarParityTyped } from "./sonar-parity.mjs";
 
 /*
  * Flat config for TypeScript (Node) packages — the successor of the
@@ -44,6 +45,7 @@ export const library = ({ tsconfigRootDir }) => [
       },
     },
   },
+  sonarParityTyped(),
   ...base,
 ];
 

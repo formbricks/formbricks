@@ -2,10 +2,9 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
-import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -13,8 +12,8 @@ import { getWorkspace } from "@/lib/workspace/service";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
+import { assertBrandingChangeAllowed } from "@/modules/ee/whitelabel/remove-branding/lib/permission";
 import { updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { ZWorkspaceUpdateActionInput } from "@/modules/workspaces/settings/lib/workspace-update-input";
 
@@ -33,30 +32,7 @@ export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpda
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
 
-    if (
-      parsedInput.data.inAppSurveyBranding !== undefined ||
-      parsedInput.data.linkSurveyBranding !== undefined
-    ) {
-      const organization = await getOrganization(organizationId);
-
-      if (!organization) {
-        throw new ResourceNotFoundError("Organization", organizationId);
-      }
-
-      const canRemoveBranding = await getRemoveBrandingPermission(organizationId);
-
-      if (parsedInput.data.inAppSurveyBranding !== undefined) {
-        if (!canRemoveBranding) {
-          throw new OperationNotAllowedError("You are not allowed to remove in-app branding");
-        }
-      }
-
-      if (parsedInput.data.linkSurveyBranding !== undefined) {
-        if (!canRemoveBranding) {
-          throw new OperationNotAllowedError("You are not allowed to remove link survey branding");
-        }
-      }
-    }
+    await assertBrandingChangeAllowed(organizationId, parsedInput.data);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;

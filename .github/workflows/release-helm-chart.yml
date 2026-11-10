@@ -77,6 +77,11 @@ jobs:
       - name: Install YQ
         uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
 
+      # The chart pins a Cube image that cube-image.yml publishes separately. Publishing the chart before
+      # that image is public leaves Cube unable to start on nodes that have not cached it.
+      - name: Check the pinned Cube image is publicly pullable
+        run: bash .github/scripts/check-cube-image.sh
+
       - name: Update Chart.yaml with new version
         env:
           APP_VERSION: ${{ env.APP_VERSION }}
