@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Ligne : {row}"
       },
       "import": {
-        "ai_note": "Les fichiers Qualtrics, Word, Excel, CSV et Markdown sont pris en charge. Chaque texte est repris tel quel du fichier, mot pour mot.",
+        "ai_note": "Les fichiers Qualtrics, Word, Excel, CSV et Markdown sont lus mot pour mot avec l'IA de Formbricks.",
         "card_description": "Transforme un fichier Formbricks, un export Qualtrics ou un questionnaire Word, Excel, CSV ou Markdown en brouillon d'enquête.",
         "card_description_json_only": "Transformez une enquête exportée depuis Formbricks en brouillon d'enquête.",
         "card_title": "Importer une enquête",

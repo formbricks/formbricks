@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Linha: {row}"
       },
       "import": {
-        "ai_note": "Há suporte para arquivos do Qualtrics, Word, Excel, CSV e Markdown. Todos os textos vêm do arquivo palavra por palavra.",
+        "ai_note": "Arquivos do Qualtrics, Word, Excel, CSV e Markdown são lidos pela IA do Formbricks, palavra por palavra.",
         "card_description": "Transforme um arquivo do Formbricks, uma exportação do Qualtrics ou uma pesquisa do Word, Excel, CSV ou Markdown em um rascunho de pesquisa.",
         "card_description_json_only": "Transforme uma pesquisa exportada do Formbricks em um rascunho de pesquisa.",
         "card_title": "Importar pesquisa",

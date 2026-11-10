@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Rij: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics-, Word-, Excel-, CSV- en Markdown-bestanden worden ondersteund. Alle teksten worden woordelijk uit het bestand overgenomen.",
+        "ai_note": "Qualtrics-, Word-, Excel-, CSV- en Markdown-bestanden worden woord voor woord ingelezen met Formbricks AI.",
         "card_description": "Maak van een Formbricks-bestand, een Qualtrics-export of een vragenlijst uit Word, Excel, CSV of Markdown een conceptenquête.",
         "card_description_json_only": "Zet een enquête die uit Formbricks is geëxporteerd om in een conceptenquête.",
         "card_title": "Enquête importeren",

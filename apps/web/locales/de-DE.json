@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Zeile: {row}"
       },
       "import": {
-        "ai_note": "Unterstützt werden Qualtrics-, Word-, Excel-, CSV- und Markdown-Dateien. Jeder Text wird wortwörtlich aus der Datei übernommen.",
+        "ai_note": "Qualtrics-, Word-, Excel-, CSV- und Markdown-Dateien werden mit Formbricks AI Wort für Wort eingelesen.",
         "card_description": "Verwandle eine Formbricks-Datei, einen Qualtrics-Export oder einen Fragebogen aus Word, Excel, CSV oder Markdown in eine Umfrage als Entwurf.",
         "card_description_json_only": "Wandle eine aus Formbricks exportierte Umfrage in einen Umfrageentwurf um.",
         "card_title": "Umfrage importieren",

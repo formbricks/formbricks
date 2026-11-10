@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Rând: {row}"
       },
       "import": {
-        "ai_note": "Sunt acceptate fișiere Qualtrics, Word, Excel, CSV și Markdown. Fiecare text este preluat din fișier cuvânt cu cuvânt.",
+        "ai_note": "Fișierele Qualtrics, Word, Excel, CSV și Markdown sunt citite cu Formbricks AI, cuvânt cu cuvânt.",
         "card_description": "Transformă un fișier Formbricks, un export Qualtrics sau un chestionar din Word, Excel, CSV sau Markdown într-un sondaj în formă de ciornă.",
         "card_description_json_only": "Transformă un sondaj exportat din Formbricks într-un sondaj ciornă.",
         "card_title": "Importă sondaj",

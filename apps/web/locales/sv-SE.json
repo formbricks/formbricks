@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Rad: {row}"
       },
       "import": {
-        "ai_note": "Filer från Qualtrics samt Word-, Excel-, CSV- och Markdown-filer stöds. All text hämtas ord för ord från filen.",
+        "ai_note": "Filer från Qualtrics, Word, Excel, CSV och Markdown läses med Formbricks AI, ord för ord.",
         "card_description": "Förvandla en Formbricks-fil, en Qualtrics-export eller ett frågeformulär från Word, Excel, CSV eller Markdown till ett utkast till enkät.",
         "card_description_json_only": "Förvandla en enkät som exporterats från Formbricks till ett enkätutkast.",
         "card_title": "Importera enkät",

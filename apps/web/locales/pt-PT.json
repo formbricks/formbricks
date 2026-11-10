@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Linha: {row}"
       },
       "import": {
-        "ai_note": "São suportados ficheiros Qualtrics, Word, Excel, CSV e Markdown. Todos os textos provêm do ficheiro palavra por palavra.",
+        "ai_note": "Os ficheiros Qualtrics, Word, Excel, CSV e Markdown são lidos com a Formbricks AI, palavra por palavra.",
         "card_description": "Transforma um ficheiro Formbricks, uma exportação do Qualtrics ou um inquérito em Word, Excel, CSV ou Markdown num rascunho de inquérito.",
         "card_description_json_only": "Transforma um inquérito exportado do Formbricks num rascunho de inquérito.",
         "card_title": "Importar inquérito",

@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Строка: {row}"
       },
       "import": {
-        "ai_note": "Поддерживаются файлы Qualtrics, Word, Excel, CSV и Markdown. Все тексты берутся из файла слово в слово.",
+        "ai_note": "Файлы Qualtrics, Word, Excel, CSV и Markdown считываются с помощью Formbricks AI дословно.",
         "card_description": "Превратите файл Formbricks, экспорт из Qualtrics или анкету из Word, Excel, CSV или Markdown в черновик опроса.",
         "card_description_json_only": "Превратите опрос, экспортированный из Formbricks, в черновик опроса.",
         "card_title": "Импорт опроса",

@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · 行: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics、Word、Excel、CSV、Markdownのファイルに対応しています。テキストはすべてファイルの内容がそのまま使われます。",
+        "ai_note": "Qualtrics、Word、Excel、CSV、MarkdownのファイルはFormbricks AIで一字一句そのまま読み取られます。",
         "card_description": "Formbricksファイル、Qualtricsのエクスポート、またはWord、Excel、CSV、Markdownのアンケートから、下書きのアンケートを作成します。",
         "card_description_json_only": "Formbricksからエクスポートしたアンケートを、下書きのアンケートに変換します。",
         "card_title": "アンケートをインポート",

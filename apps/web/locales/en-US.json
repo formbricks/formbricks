@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Row: {row}"
       },
       "import": {
-        "ai_note": "Qualtrics, Word, Excel, CSV and Markdown files are supported. Every text comes from the file word for word.",
+        "ai_note": "Qualtrics, Word, Excel, CSV and Markdown files are read with Formbricks AI, word for word.",
         "card_description": "Turn a Formbricks file, a Qualtrics export or a questionnaire from Word, Excel, CSV or Markdown into a draft survey.",
         "card_description_json_only": "Turn a survey exported from Formbricks into a draft survey.",
         "card_title": "Import survey",

@@ -5068,7 +5068,7 @@
         "shown_target_row": "{question} · Sor: {row}"
       },
       "import": {
-        "ai_note": "A Qualtrics-, Word-, Excel-, CSV- és Markdown-fájlok támogatottak. Valamennyi szöveg szó szerint a fájlból származik.",
+        "ai_note": "A Qualtrics-, Word-, Excel-, CSV- és Markdown-fájlokat a Formbricks AI szóról szóra olvassa be.",
         "card_description": "Alakítson át egy Formbricks-fájlt, egy Qualtrics-exportot vagy egy Word, Excel, CSV vagy Markdown formátumú kérdőívet felmérésvázlattá.",
         "card_description_json_only": "A Formbricksből exportált felmérés átalakítása piszkozatként elmentett felméréssé.",
         "card_title": "Felmérés importálása",

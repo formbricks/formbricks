@@ -4905,7 +4905,7 @@ checksums:
     workspace/surveys/filter/shown_target_column: afa50546e28a75311b008f1e0bfa6c34
     workspace/surveys/filter/shown_target_picture: 96bae0b555a021797b3e1c185679f0a4
     workspace/surveys/filter/shown_target_row: 64e510d6d4add71b12df8c024044ccb8
-    workspace/surveys/import/ai_note: a7d95bd4448980164195b70ca401d8dd
+    workspace/surveys/import/ai_note: 089234d4f86dcbd263b53ac2d156c2ce
     workspace/surveys/import/card_description: 7b34be32fc0d23b11cb3c3d583e7f9dd
     workspace/surveys/import/card_description_json_only: 94898e1540229b75b1467f2d0dc46ef5
     workspace/surveys/import/card_title: 5418ac88c503972c1b745f7681a6bacc
