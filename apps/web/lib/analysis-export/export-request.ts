@@ -6,6 +6,7 @@
 import type { TFunction } from "i18next";
 import { z } from "zod";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { reviveFilterDates } from "@/lib/response/filter-criteria-json";
 import type { TAnswerDisplay, TMultiSelectLayout } from "./types";
 
 export type TExportFormat = "csv" | "xlsx";
@@ -50,25 +51,6 @@ const ADVANCED_IDS = EXPORT_ADVANCED_OPTIONS.map((option) => option.id) as [
   TExportAdvancedOptionId,
   ...TExportAdvancedOptionId[],
 ];
-
-/**
- * The filter crosses the wire as JSON, where `createdAt`'s Dates are ISO text. Turn them back into Dates
- * before the shared filter schema, which (like the server actions this replaces) expects `Date`.
- */
-const reviveFilterDates = (filter: unknown): unknown => {
-  if (typeof filter !== "object" || filter === null || !("createdAt" in filter)) return filter;
-  const { createdAt } = filter as { createdAt: unknown };
-  if (typeof createdAt !== "object" || createdAt === null) return filter;
-  const revive = (value: unknown) => (typeof value === "string" ? new Date(value) : value);
-  const { min, max } = createdAt as { min?: unknown; max?: unknown };
-  return {
-    ...filter,
-    createdAt: {
-      ...(min === undefined ? {} : { min: revive(min) }),
-      ...(max === undefined ? {} : { max: revive(max) }),
-    },
-  };
-};
 
 export const ZExportRequest = z
   .object({

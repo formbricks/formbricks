@@ -25,7 +25,7 @@ import {
 const SERVER_ACTION_BASELINE = 35;
 
 /** Client modules that still call a server action directly. Only ever lower this. */
-const CLIENT_ACTION_IMPORTER_BASELINE = 21;
+const CLIENT_ACTION_IMPORTER_BASELINE = 20;
 
 const INTERNAL_AUTH_MODES = new Set(["session", "none"]);
 

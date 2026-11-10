@@ -9,15 +9,14 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import {
-  getResponseCountAction,
-  getResponsesAction,
-} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
 import { useResponseFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
 import { ResponseDataView } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
+import {
+  countSurveyResponses,
+  querySurveyResponses,
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/lib/api-client";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { OutcomeQueryClientProvider } from "@/modules/analysis/response-outcome/components/outcome-query-client-provider";
 import {
   type TOutcomeActions,
@@ -25,6 +24,7 @@ import {
   patchOutcomes,
   shouldDropAfterOutcome,
 } from "@/modules/analysis/response-outcome/lib/outcome";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 
 interface ResponsePageProps {
@@ -95,7 +95,7 @@ export const ResponsePage = ({
   const matchCountKey = ["surveys", surveyId, "response-count", filtersKey];
   const matchCountQuery = useQuery({
     queryKey: matchCountKey,
-    queryFn: async () => (await getResponseCountAction({ surveyId, filterCriteria: filters }))?.data ?? null,
+    queryFn: ({ signal }) => countSurveyResponses({ surveyId, filterCriteria: filters, signal }),
     enabled: isReady,
   });
   const { refetch: refetchMatchCount } = matchCountQuery;
@@ -104,15 +104,13 @@ export const ResponsePage = ({
     if (page === null || !isReady) return;
     const newPage = page + 1;
 
-    let newResponses: TResponseWithQuotas[] = [];
-
-    const getResponsesActionResponse = await getResponsesAction({
+    // A page that fails to load ends the list, as it did when the server action answered an error.
+    const newResponses = await querySurveyResponses({
       surveyId,
       limit: responsesPerPage,
       offset: (newPage - 1) * responsesPerPage,
       filterCriteria: listCriteriaRef.current,
-    });
-    newResponses = getResponsesActionResponse?.data || [];
+    }).catch((): TResponseWithQuotas[] => []);
 
     if (newResponses.length === 0 || newResponses.length < responsesPerPage) {
       setHasMore(false);
@@ -121,8 +119,13 @@ export const ResponsePage = ({
     setPage(newPage);
   }, [isReady, page, responses, responsesPerPage, surveyId]);
 
-  const updateResponseList = (responseIds: string[]) => {
+  // Takes rows off the page's own list. Stable, so the outcome actions below keep their identity.
+  const removeResponses = useCallback((responseIds: string[]) => {
     setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
+  }, []);
+
+  const updateResponseList = (responseIds: string[]) => {
+    removeResponses(responseIds);
     void refetchMatchCount();
   };
 
@@ -141,12 +144,10 @@ export const ResponsePage = ({
       applyOutcomes,
       // A restored response no longer matches a Low quality filter, so it leaves the list.
       onSaved: (ids, outcome) => {
-        if (shouldDropAfterOutcome(responseStatus, outcome)) {
-          setResponses((prev) => prev.filter((r) => !ids.includes(r.id)));
-        }
+        if (shouldDropAfterOutcome(responseStatus, outcome)) removeResponses(ids);
       },
     }),
-    [applyOutcomes, responseStatus]
+    [applyOutcomes, removeResponses, responseStatus]
   );
 
   const refetchResponses = useCallback(async () => {
@@ -157,24 +158,29 @@ export const ResponsePage = ({
     try {
       // A refresh asks about now: a relative date window may have moved on since the filter was set.
       const criteria = filterState.resolveFreshCriteria();
-      const getResponsesActionResponse = await getResponsesAction({
-        surveyId,
-        limit: responsesPerPage,
-        offset: 0,
-        filterCriteria: criteria,
-      });
+      let freshResponses: TResponseWithQuotas[] = [];
+      let loadError: unknown = null;
+      try {
+        freshResponses = await querySurveyResponses({
+          surveyId,
+          limit: responsesPerPage,
+          offset: 0,
+          filterCriteria: criteria,
+        });
+      } catch (error) {
+        loadError = error;
+      }
       if (requestId !== firstPageRequestRef.current) return;
       listCriteriaRef.current = criteria;
       // The count answers for the same window as the refreshed page.
-      void getResponseCountAction({ surveyId, filterCriteria: criteria }).then((count) =>
-        queryClient.setQueryData(matchCountKey, count?.data ?? null)
-      );
+      void countSurveyResponses({ surveyId, filterCriteria: criteria })
+        .catch(() => null)
+        .then((count) => queryClient.setQueryData(matchCountKey, count));
 
-      if (getResponsesActionResponse?.serverError) {
-        toast.error(getFormattedErrorMessage(getResponsesActionResponse) ?? t("common.something_went_wrong"));
+      if (loadError) {
+        toast.error(getV3ApiErrorMessage(loadError, t("common.something_went_wrong")));
       }
 
-      const freshResponses = getResponsesActionResponse?.data ?? [];
       setResponses(freshResponses);
       setPage(1);
       setHasMore(freshResponses.length >= responsesPerPage);
@@ -214,16 +220,17 @@ export const ResponsePage = ({
       const requestId = ++firstPageRequestRef.current;
 
       try {
-        const getResponsesActionResponse = await getResponsesAction({
+        // A first page that fails to load shows an empty list, as it did when the server action answered
+        // an error.
+        const responses = await querySurveyResponses({
           surveyId,
           limit: responsesPerPage,
           offset: 0,
           filterCriteria: filters,
-        });
+        }).catch((): TResponseWithQuotas[] => []);
         if (requestId !== firstPageRequestRef.current) return;
         listCriteriaRef.current = filters;
 
-        const responses = getResponsesActionResponse?.data || [];
         setHasMore(responses.length >= responsesPerPage);
         setResponses(responses);
       } finally {

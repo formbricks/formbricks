@@ -14,7 +14,8 @@ const responsePath = (responseId: string) => `/api/internal/responses/${encodeUR
 const responseTagPath = (responseId: string, tagId: string) =>
   `${responsePath(responseId)}/tags/${encodeURIComponent(tagId)}`;
 
-const reviveResponse = (response: TResponseCardResource): TResponseWithQuotas => ({
+/** A response as the card routes send it, with its timestamps (and its tags') back as `Date`s. */
+export const reviveResponse = (response: TResponseCardResource): TResponseWithQuotas => ({
   ...response,
   createdAt: new Date(response.createdAt),
   updatedAt: new Date(response.updatedAt),
