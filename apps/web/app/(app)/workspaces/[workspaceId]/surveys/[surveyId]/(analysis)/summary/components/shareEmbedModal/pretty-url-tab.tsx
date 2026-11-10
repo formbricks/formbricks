@@ -8,8 +8,8 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { copyToClipboard } from "@/lib/utils/clipboard";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { removeSurveySlugAction, updateSurveySlugAction } from "@/modules/survey/slug/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { removeSurveySlug, updateSurveySlug } from "@/modules/survey/slug/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -66,22 +66,12 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
     setIsSubmitting(true);
     try {
-      const result = await updateSurveySlugAction({
-        surveyId: survey.id,
-        slug: data.slug,
-      });
-
-      const errorMessage = getFormattedErrorMessage(result);
-      if (errorMessage) {
-        toast.error(errorMessage);
-      } else {
-        toast.success(t("workspace.surveys.share.pretty_url.save_success"));
-        router.refresh();
-        setIsEditing(false);
-      }
+      await updateSurveySlug(survey.id, data.slug);
+      toast.success(t("workspace.surveys.share.pretty_url.save_success"));
+      router.refresh();
+      setIsEditing(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("common.something_went_wrong_please_try_again");
-      toast.error(message);
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsSubmitting(false);
     }
@@ -99,21 +89,14 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
   const handleRemove = async () => {
     setIsSubmitting(true);
     try {
-      const result = await removeSurveySlugAction({ surveyId: survey.id });
-
-      const errorMessage = getFormattedErrorMessage(result);
-      if (errorMessage) {
-        toast.error(errorMessage);
-      } else {
-        setShowRemoveDialog(false);
-        reset({ slug: "" });
-        router.refresh();
-        setIsEditing(true);
-        toast.success(t("workspace.surveys.share.pretty_url.remove_success"));
-      }
+      await removeSurveySlug(survey.id);
+      setShowRemoveDialog(false);
+      reset({ slug: "" });
+      router.refresh();
+      setIsEditing(true);
+      toast.success(t("workspace.surveys.share.pretty_url.remove_success"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("common.something_went_wrong_please_try_again");
-      toast.error(message);
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsSubmitting(false);
     }
