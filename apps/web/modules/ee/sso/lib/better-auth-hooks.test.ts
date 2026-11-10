@@ -534,7 +534,7 @@ describe("ssoLicenseGateBefore", () => {
   /**
    * Why SSO recovery needs no entitlement check of its own.
    *
-   * Neither `resendVerificationEmailAction` nor `completeSsoRecovery` calls `getIsSsoEnabled`, which
+   * Neither `POST /api/internal/verification-emails` nor `completeSsoRecovery` calls `getIsSsoEnabled`, which
    * reads like the "EE feature reachable without an entitlement check" that `.coderabbit.yaml` asks
    * reviewers to flag. What makes it safe is upstream: recovery has exactly one producer
    * (`startSsoRecovery`, called only from `ssoRecoveryAfterHandler`), that producer runs in

@@ -294,7 +294,7 @@ describe("SSO recovery intent", () => {
     });
 
     /**
-     * `resendVerificationEmailAction` is unauthenticated, so a plain sliding window would let anyone
+     * `POST /api/internal/verification-emails` is unauthenticated, so a plain sliding window would let anyone
      * holding a state id keep an intent alive forever. `createdAt` never moves, so the slide is capped.
      */
     test("clamps the TTL so a refresh cannot push expiry past the absolute lifetime", async () => {

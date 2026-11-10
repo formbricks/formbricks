@@ -6,7 +6,7 @@ const RELATIVE_URL_BASE = "http://localhost";
  * The two SSO-recovery route paths.
  *
  * They live here, not in `modules/ee/sso/lib/constants.ts`, because OSS code needs them — this file
- * builds the emailed verify link, and `verification-requested/actions.ts` matches an incoming callback
+ * builds the emailed verify link, and `app/api/internal/verification-emails` matches an incoming callback
  * against the completion path — and `.coderabbit.yaml` (`apps/web/modules/ee/**`) forbids OSS importing
  * from `modules/ee` outside the `license-check` gate. Route paths carry no entitlement, so the fix is
  * to own them on this side and let the EE modules import them; that direction is fine. This file is
@@ -64,7 +64,7 @@ export const normalizeRoutePathname = (url: string): string | null => {
  * the keyboard mid-sign-in rather than being something they come back to later.
  *
  * Scope is narrower than the name: `sendVerificationEmail` is the only consumer, and its only callers
- * are `startSsoRecovery` and the SSO-recovery branch of `resendVerificationEmailAction`. Sign-up
+ * are `startSsoRecovery` and the SSO-recovery branch of `POST /api/internal/verification-emails`. Sign-up
  * verification is Better Auth's own flow on `EMAIL_VERIFICATION_TTL_SECONDS` (1 hour) and is untouched.
  * No email copy quotes a duration, so shortening this needs no rewording — the template already offers
  * the resend link for an expired one.

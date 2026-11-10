@@ -110,6 +110,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/users/me/deletion-requests` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/deletion-requests/route.ts` |
 | `/api/internal/users/me/notification-settings` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/notification-settings/route.ts` |
 | `/api/internal/users/me/password-resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/password-resets/route.ts` |
+| `/api/internal/verification-emails` | POST | none | dashboard | `/api/internal` | `app/api/internal/verification-emails/route.ts` |
 | `/api/internal/webhooks` | POST | session | dashboard | `/api/internal` | `app/api/internal/webhooks/route.ts` |
 | `/api/internal/webhooks/{webhookId}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/webhooks/[webhookId]/route.ts` |
 | `/api/internal/webhooks/test-deliveries` | POST | session | dashboard | `/api/internal` | `app/api/internal/webhooks/test-deliveries/route.ts` |

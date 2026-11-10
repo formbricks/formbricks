@@ -38,6 +38,13 @@ export const createSignup = (body: TSignupRequest) =>
 export const requestPasswordReset = (email: string) =>
   sendApiRequest<void>("/api/internal/password-reset-requests", { method: "POST", body: { email } });
 
+/**
+ * Send a new verification email, or an SSO recovery one when `callbackUrl` is a live recovery for this
+ * address. No timeout: it sends the email before answering.
+ */
+export const resendVerificationEmail = (body: { email: string; callbackUrl?: string }) =>
+  sendApiRequest<void>("/api/internal/verification-emails", { method: "POST", body, timeoutMs: null });
+
 /** Set a new password with the token from a reset email. */
 export const completePasswordReset = (body: { token: string; password: string }) =>
   sendApiRequest<void>("/api/internal/password-resets", { method: "POST", body });
