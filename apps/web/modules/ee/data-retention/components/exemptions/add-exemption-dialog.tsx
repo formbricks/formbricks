@@ -186,7 +186,7 @@ export const AddExemptionDialog = ({
                     <div>
                       <DatePicker
                         aria-describedby={error ? untilErrorId : undefined}
-                        aria-invalid={!!error}
+                        isInvalid={!!error}
                         value={field.value}
                         onChange={field.onChange}
                         locale={locale}
