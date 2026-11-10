@@ -16,9 +16,10 @@ import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyI
 import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
-import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { copySurvey } from "@/modules/survey/list/lib/api-client";
 import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { AiGlyph, AiStatusLine } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
@@ -108,18 +109,14 @@ export const SurveyAnalysisCTA = ({
 
   const duplicateSurveyAndRoute = async (surveyId: string) => {
     setLoading(true);
-    const duplicatedSurveyResponse = await copySurveyToOtherWorkspaceAction({
-      surveyId: surveyId,
-      targetWorkspaceId: workspace.id,
-    });
-    if (duplicatedSurveyResponse?.data) {
+    try {
+      const copy = await copySurvey({ surveyId, targetWorkspaceId: workspace.id });
       toast.success(t("workspace.surveys.survey_duplicated_successfully"));
-      const customCssNotice = getCustomCssCopyNotice(duplicatedSurveyResponse.data, t);
+      const customCssNotice = getCustomCssCopyNotice(copy, t);
       if (customCssNotice) toast.error(customCssNotice, { duration: 8000 });
-      router.push(`/workspaces/${workspace?.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
-      toast.error(errorMessage);
+      router.push(`/workspaces/${workspace?.id}/surveys/${copy.id}/edit`);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
     setIsCautionDialogOpen(false);
     setLoading(false);

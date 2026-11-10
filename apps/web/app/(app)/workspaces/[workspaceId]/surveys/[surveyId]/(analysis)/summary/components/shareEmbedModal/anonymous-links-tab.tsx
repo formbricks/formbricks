@@ -13,7 +13,7 @@ import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { useSurveyLinkedCreatives } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
 import { isDestinationSettingLocked, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
-import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
+import { generateSingleUseLinks } from "@/modules/survey/list/lib/api-client";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -175,14 +175,13 @@ export const AnonymousLinksTab = ({
 
   const handleGenerateLinks = async (count: number) => {
     try {
-      const response = await generateSingleUseIdsAction({
+      const singleUseLinkParams = await generateSingleUseLinks({
         surveyId: survey.id,
         isEncrypted: singleUseEncryption,
         count,
       });
 
-      if (!!response?.data?.length) {
-        const singleUseLinkParams = response.data;
+      if (singleUseLinkParams.length) {
         const surveyLinks = singleUseLinkParams.map(({ suId, suToken }) => {
           const url = new URL(surveyUrl);
           url.searchParams.set("suId", suId);
@@ -224,14 +223,13 @@ export const AnonymousLinksTab = ({
     }
 
     try {
-      const response = await generateSingleUseIdsAction({
+      const [singleUseLinkParams] = await generateSingleUseLinks({
         surveyId: survey.id,
         isEncrypted: false,
         count: 1,
         singleUseId: trimmedCustomSingleUseId,
       });
 
-      const singleUseLinkParams = response?.data?.[0];
       if (!singleUseLinkParams) {
         toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
         return;

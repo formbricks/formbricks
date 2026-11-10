@@ -9,10 +9,9 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { QUERY_RETRY } from "@/modules/api/lib/query-client";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { copySurvey } from "@/modules/survey/list/lib/api-client";
 import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -80,22 +79,18 @@ export const CopySurveyModal = ({
 
   const onSubmit = async (data: TCopySurveyFormData) => {
     const settled = await Promise.allSettled(
-      data.workspaceIds.map((targetWorkspaceId) =>
-        copySurveyToOtherWorkspaceAction({ surveyId, targetWorkspaceId })
-      )
+      data.workspaceIds.map((targetWorkspaceId) => copySurvey({ surveyId, targetWorkspaceId }))
     );
 
     let successCount = 0;
     const errorsIndexes: number[] = [];
 
     settled.forEach((outcome, index) => {
-      if (outcome.status === "fulfilled" && outcome.value?.data) {
+      if (outcome.status === "fulfilled") {
         successCount++;
       } else {
         errorsIndexes.push(index);
-        if (outcome.status === "rejected") {
-          logger.error(outcome.reason);
-        }
+        logger.error(outcome.reason);
       }
     });
 
@@ -120,8 +115,8 @@ export const CopySurveyModal = ({
     // A copy can succeed without the source's custom CSS (destination plan, or CSS that no longer
     // passes); say so per workspace instead of letting the success toast imply it came along.
     settled.forEach((outcome, index) => {
-      if (outcome.status !== "fulfilled" || !outcome.value?.data) return;
-      const customCssNotice = getCustomCssCopyNotice(outcome.value.data, t);
+      if (outcome.status !== "fulfilled") return;
+      const customCssNotice = getCustomCssCopyNotice(outcome.value, t);
       if (!customCssNotice) return;
       const targetWorkspaceId = data.workspaceIds[index];
       const workspaceName = workspaces.find((w) => w.id === targetWorkspaceId)?.name ?? targetWorkspaceId;
@@ -133,8 +128,8 @@ export const CopySurveyModal = ({
       const workspaceName = workspaces.find((w) => w.id === targetWorkspaceId)?.name ?? targetWorkspaceId;
       const outcome = settled[index];
       const errorMessage =
-        outcome.status === "fulfilled"
-          ? getFormattedErrorMessage(outcome.value) || t("workspace.surveys.copy_survey_error")
+        outcome.status === "rejected"
+          ? getV3ApiErrorMessage(outcome.reason, t("workspace.surveys.copy_survey_error"))
           : t("workspace.surveys.copy_survey_error");
       toast.error(`[${workspaceName}] - ${errorMessage}`, {
         duration: 2000 + 2000 * idx,
