@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { POST as postSignup } from "@/app/api/internal/signups/route";
-import { postToPreLoginRoute } from "@/integration/pre-login-routes";
+import { postToPreLoginRoute, withoutEmailToken } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { sendVerificationLinkEmail } from "@/modules/email";
 
@@ -71,7 +71,7 @@ describe("verification email send failures during sign-up (real Postgres)", () =
     // Asserting success here pins the behaviour against a future Better Auth version that starts
     // propagating the throw instead of swallowing it — that would leave the account created but the
     // sign-up looking failed, driving the user to retry into a duplicate.
-    expect(result.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(await prisma.user.count({ where: { email: EMAIL } })).toBe(1);
   });
 
@@ -85,7 +85,7 @@ describe("verification email send failures during sign-up (real Postgres)", () =
       vi.clearAllMocks();
       arrange();
       const result = await signUp();
-      responses.push({ status: result.status, data: result.data, error: result.error });
+      responses.push(withoutEmailToken(result));
     }
 
     for (const response of responses) {

@@ -11,7 +11,7 @@ import {
 import { PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { getIsFreshInstance } from "@/lib/instance/service";
-import { verifyInviteToken } from "@/lib/jwt";
+import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
@@ -66,7 +66,7 @@ vi.mock("@/modules/auth/lib/auth", () => ({ auth: { api: { signUpEmail: vi.fn() 
 vi.mock("@/modules/auth/lib/better-auth-hibp", () => ({ isPasswordCompromisedError: vi.fn() }));
 vi.mock("@/lib/user/service", () => ({ getUserByEmail: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ updateUser: vi.fn() }));
-vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn() }));
+vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn(), createEmailToken: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/invite", () => ({
   getInvite: vi.fn(),
   deleteInvite: vi.fn(),
@@ -155,6 +155,9 @@ const signUp = (body: unknown = baseInput, extraHeaders: Record<string, string> 
     {} as never
   );
 
+/** The invariant answer, whichever path the sign-up took. */
+const SUCCESS = { data: { success: true, emailToken: "display-token" } };
+
 const reasonOf = async (response: Response) => (await response.json()).details?.reason;
 const auditEvents = () => vi.mocked(queueAuditEvent).mock.calls.map(([event]) => event);
 
@@ -178,6 +181,7 @@ beforeEach(() => {
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
   vi.mocked(isPasswordCompromisedError).mockReturnValue(false);
   vi.mocked(queueAuditEvent).mockResolvedValue(undefined);
+  vi.mocked(createEmailToken).mockReturnValue("display-token");
   // Real Better Auth resolves with the user it wrote; the route compares that id against the persisted
   // row to tell a creation from a duplicate (ENG-2091). Matching ids => "created".
   vi.mocked(auth.api.signUpEmail).mockResolvedValue({ user: createdUser } as never);
@@ -188,7 +192,37 @@ describe("POST /api/internal/signups — the answer and the guards around it", (
     const response = await signUp();
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: { success: true } });
+    expect(await response.json()).toEqual(SUCCESS);
+  });
+
+  // Replaces `createEmailTokenAction`, which the form called after signing up: it looked the address up
+  // and refused an unknown one, which made it a registration oracle on its own budget.
+  test("carries the display token for the submitted address, minted without looking the user up", async () => {
+    vi.mocked(auth.api.signUpEmail).mockResolvedValue({
+      user: { ...createdUser, id: "synthetic-generated-id" },
+    } as never);
+
+    const response = await signUp();
+
+    expect(await response.json()).toEqual(SUCCESS);
+    expect(createEmailToken).toHaveBeenCalledWith("ada@example.com");
+  });
+
+  test("mints no token for a refused sign-up", async () => {
+    constantsOverrides.SIGNUP_ENABLED = false;
+    vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+
+    expect((await signUp()).status).toBe(422);
+    expect(createEmailToken).not.toHaveBeenCalled();
+  });
+
+  test("creates no account when the token cannot be minted", async () => {
+    vi.mocked(createEmailToken).mockImplementation(() => {
+      throw new Error("ENCRYPTION_KEY is not set");
+    });
+
+    expect((await signUp()).status).toBe(500);
+    expect(auth.api.signUpEmail).not.toHaveBeenCalled();
   });
 
   test("spends the client IP's sign-up budget first, and answers 429 without auditing when it is spent", async () => {
@@ -310,7 +344,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
 
     const response = await signUp({ ...baseInput, inviteToken: "invite-jwt-123" });
 
-    expect(await response.json()).toEqual({ data: { success: true } });
+    expect(await response.json()).toEqual(SUCCESS);
     expect(createMembership).toHaveBeenCalled();
     expect(deleteInvite).toHaveBeenCalledWith("invite-1");
   });
@@ -325,7 +359,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
 
       const response = await signUp({ ...baseInput, inviteToken });
 
-      expect(await response.json()).toEqual({ data: { success: true } });
+      expect(await response.json()).toEqual(SUCCESS);
       expect(auth.api.signUpEmail).toHaveBeenCalled();
       // No invite means no membership grant — the org-creation path handles it instead.
       expect(createMembership).not.toHaveBeenCalled();
@@ -376,7 +410,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
 
     const response = await signUp();
 
-    expect(await response.json()).toEqual({ data: { success: true } }); // same answer as a real signup
+    expect(await response.json()).toEqual(SUCCESS); // same answer as a real signup
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
     expect(updateUser).not.toHaveBeenCalled(); // no locale write on someone else's account
     expect(capturePostHogEvent).not.toHaveBeenCalled();
@@ -408,7 +442,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
 
     const response = await signUp();
 
-    expect(await response.json()).toEqual({ data: { success: true } });
+    expect(await response.json()).toEqual(SUCCESS);
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
     expect(queueAuditEvent).not.toHaveBeenCalled();
   });

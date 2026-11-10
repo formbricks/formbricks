@@ -38,3 +38,13 @@ export const postToPreLoginRoute = async (
   const reason = payload.details?.reason;
   return { status: response.status, error: typeof reason === "string" ? reason : payload.detail };
 };
+
+/**
+ * A sign-up answer with its display token reduced to its presence: the token is encrypted with a fresh IV
+ * on every call, so two answers are never byte-identical, but whether it is there must not vary either.
+ */
+export const withoutEmailToken = ({ status, data, error }: TPreLoginRouteResult) => {
+  if (data === undefined) return { status, error };
+  const { emailToken, ...rest } = data as { emailToken?: unknown };
+  return { status, data: { ...rest, hasEmailToken: typeof emailToken === "string" }, error };
+};

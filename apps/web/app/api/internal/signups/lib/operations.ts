@@ -4,6 +4,7 @@ import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
+import { createEmailToken } from "@/lib/jwt";
 import {
   type TSignupAuditTrail,
   assertSignupAdmissible,
@@ -30,8 +31,9 @@ const recordTrail = (auditLog: TV3AuditLog | undefined, trail: TSignupAuditTrail
  * The answer is deliberately invariant (ENG-2099): it never varies with whether the address already had
  * an account, nor with what happened to the verification email, or it would be a lookup. The
  * verification-requested screen the form lands on is phrased conditionally and carries a log-in link, so
- * the existing-account visitor still has a way out. A refusal the form explains is a 422 whose
- * `details.reason` (and `detail`) is the stable code it translates.
+ * the existing-account visitor still has a way out. It carries the display token for the address that
+ * screen echoes back. A refusal the form explains is a 422 whose `details.reason` (and `detail`) is the
+ * stable code it translates.
  */
 export async function createSignupOperation({
   body,
@@ -46,8 +48,14 @@ export async function createSignupOperation({
   }
 
   const trail: TSignupAuditTrail = {};
+  let emailToken: string;
   try {
     const admission = await assertSignupAdmissible(body);
+    // The token the "check your inbox" screen echoes the address back from: purpose-scoped and short-lived
+    // (`createEmailToken`), minted for the address submitted, with no user lookup, so it is issued
+    // alike whether or not the address already had an account. Minted before the account is written so a
+    // missing key fails the sign-up instead of leaving an account behind a 500.
+    emailToken = createEmailToken(body.email.toLowerCase());
     await createSignup(body, admission, trail);
   } catch (error) {
     recordTrail(auditLog, trail);
@@ -65,5 +73,5 @@ export async function createSignupOperation({
   if (trail.user) recordTrail(auditLog, trail);
   else skipV3AuditLog(auditLog);
 
-  return successResponse({ success: true }, { requestId });
+  return successResponse({ success: true, emailToken }, { requestId });
 }

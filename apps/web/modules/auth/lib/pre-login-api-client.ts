@@ -20,11 +20,16 @@ export type TSignupRequest = {
 };
 
 /**
- * Create a credential account. The answer is the same whether or not the address already had one. No
+ * Create a credential account. The answer is the same whether or not the address already had one, and
+ * carries `emailToken`, the display token the "check your inbox" screen reads the address from. No
  * timeout: it checks the password against a breach corpus and sends the verification email.
  */
 export const createSignup = (body: TSignupRequest) =>
-  sendApiRequest<{ success: true }>("/api/internal/signups", { method: "POST", body, timeoutMs: null });
+  sendApiRequest<{ success: true; emailToken: string }>("/api/internal/signups", {
+    method: "POST",
+    body,
+    timeoutMs: null,
+  });
 
 /** Set a new password with the token from a reset email. */
 export const completePasswordReset = (body: { token: string; password: string }) =>

@@ -15,7 +15,6 @@ import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { createSignup } from "@/modules/auth/lib/pre-login-api-client";
@@ -30,7 +29,6 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
@@ -176,8 +174,9 @@ export const SignupForm = ({
       };
       const normalizedEmail = data.email.toLowerCase();
 
+      let token: string;
       try {
-        await createSignup({
+        ({ emailToken: token } = await createSignup({
           name: data.name,
           email: normalizedEmail,
           password: data.password,
@@ -186,21 +185,10 @@ export const SignupForm = ({
           turnstileToken,
           subscribeToSecurityUpdates,
           subscribeToProductUpdates,
-        });
+        }));
       } catch (error) {
         resetTurnstileIfConfigured();
         surfaceSignupError(error);
-        return;
-      }
-
-      const emailTokenActionResponse = await createEmailTokenAction({ email: normalizedEmail });
-      const token = emailTokenActionResponse?.data;
-
-      if (!token) {
-        resetTurnstileIfConfigured();
-
-        const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-        toast.error(errorMessage);
         return;
       }
 
