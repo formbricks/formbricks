@@ -322,7 +322,7 @@ test.describe("Survey overview", () => {
 
     await page.locator("[data-testid='survey-dropdown-trigger']").click();
     // Duplicate stays visible for users who can manage surveys (works on drafts too —
-    // it creates another draft via copySurveyToOtherWorkspaceAction).
+    // it creates another draft through POST /api/internal/surveys/{id}/copies).
     await expect(page.getByTestId("duplicate-survey")).toBeVisible();
     await expect(page.getByText("Copy...", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Preview", { exact: true })).toHaveCount(0);

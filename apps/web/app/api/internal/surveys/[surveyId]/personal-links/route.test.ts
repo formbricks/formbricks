@@ -109,24 +109,35 @@ describe("POST /api/internal/surveys/{surveyId}/personal-links", () => {
     expect(mocks.generatePersonalLinks).toHaveBeenCalledWith(SURVEY_ID, SEGMENT_ID, memberActor, undefined);
   });
 
-  test("refuses where Contacts isn't licensed, with the reason, before the survey check", async () => {
+  test("refuses where Contacts isn't licensed, with the reason, once the caller may edit the survey", async () => {
     mocks.getIsContactsEnabled.mockResolvedValue(false);
 
     const response = await generate();
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("Contacts are not enabled for this workspace");
-    expect(mocks.can).not.toHaveBeenCalled();
+    expect(mocks.can).toHaveBeenCalled();
     expect(mocks.generatePersonalLinks).not.toHaveBeenCalled();
   });
 
-  test("answers the uniform 403 to a caller who can't edit the survey", async () => {
+  test("answers the uniform 403 to a caller who can't edit the survey, before the licence is asked", async () => {
     mocks.can.mockResolvedValue(false);
+    mocks.getIsContactsEnabled.mockResolvedValue(false);
 
     const response = await generate();
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+    expect(mocks.getIsContactsEnabled).not.toHaveBeenCalled();
+    expect(mocks.generatePersonalLinks).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["a fractional number of days", 1.5],
+    ["zero days", 0],
+    ["more than a century", 36_501],
+  ])("answers 400 for %s", async (_label, expirationDays) => {
+    expect((await generate({ segmentId: SEGMENT_ID, expirationDays })).status).toBe(400);
     expect(mocks.generatePersonalLinks).not.toHaveBeenCalled();
   });
 

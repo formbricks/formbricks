@@ -18,7 +18,8 @@ const CSV_HEADERS = ["Formbricks Contact ID", "User ID", "First Name", "Last Nam
 /**
  * `POST /api/internal/surveys/{surveyId}/personal-links`: a personal link to the survey for every contact
  * in a segment, as a CSV file, the share modal's Personal links tab. The checks of the server action it
- * replaces, in its order: the Contacts licence (403 with the reason), then `survey.write` on the survey.
+ * replaces: `survey.write` on the survey, then the Contacts licence (403 with the reason). The action asked
+ * the licence first, which told a caller who can't see the survey whether its organization has Contacts.
  * The segment is evaluated with the caller's survey visibility (ENG-6870).
  *
  * The refusals the tab translates answer 422 with their error code as the detail: a segment from another
@@ -39,12 +40,6 @@ export async function generatePersonalLinksOperation({
   instance?: string;
 }): Promise<Response> {
   // Each throws `ResourceNotFoundError` for an unknown survey: the wrapper's uniform 403.
-  const organizationId = await getOrganizationIdFromSurveyId(surveyId);
-  const workspaceId = await getWorkspaceIdFromSurveyId(surveyId);
-  if (!(await getIsContactsEnabled(organizationId))) {
-    return problemForbidden(requestId, "Contacts are not enabled for this workspace", instance);
-  }
-
   const access = await requireSurveyActionAccess({
     authentication,
     surveyId,
@@ -53,6 +48,12 @@ export async function generatePersonalLinksOperation({
     instance,
   });
   if (access instanceof Response) return access;
+
+  const organizationId = await getOrganizationIdFromSurveyId(surveyId);
+  const workspaceId = await getWorkspaceIdFromSurveyId(surveyId);
+  if (!(await getIsContactsEnabled(organizationId))) {
+    return problemForbidden(requestId, "Contacts are not enabled for this workspace", instance);
+  }
 
   let contactsResult: Awaited<ReturnType<typeof generatePersonalLinks>>;
   try {

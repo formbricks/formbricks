@@ -130,6 +130,7 @@ describe("POST /api/internal/surveys/{surveyId}/single-use-links", () => {
 
   test.each([
     ["no links", { isEncrypted: false, count: 0 }],
+    ["a fractional count", { isEncrypted: false, count: 1.5 }],
     ["more links than the cap", { isEncrypted: false, count: SINGLE_USE_LINKS_MAX_COUNT + 1 }],
     [
       "a custom id past the cap",

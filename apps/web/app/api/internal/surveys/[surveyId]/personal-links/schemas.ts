@@ -7,7 +7,8 @@ export const ZSurveyPersonalLinksParams = z.object({ surveyId: ZId }).strict();
 export const ZSurveyPersonalLinksBody = z
   .object({
     segmentId: ZId,
-    expirationDays: z.number().optional(),
+    // Whole days, as the dialog sends them; the cap (a century) only bounds the token's lifetime.
+    expirationDays: z.number().int().min(1).max(36_500).optional(),
   })
   .strict();
 

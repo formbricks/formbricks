@@ -14,7 +14,7 @@ export const ZSurveySingleUseLinksParams = z.object({ surveyId: ZId }).strict();
 export const ZSurveySingleUseLinksBody = z
   .object({
     isEncrypted: z.boolean(),
-    count: z.number().min(1).max(SINGLE_USE_LINKS_MAX_COUNT).prefault(1),
+    count: z.number().int().min(1).max(SINGLE_USE_LINKS_MAX_COUNT).prefault(1),
     singleUseId: z.string().trim().min(1).max(SINGLE_USE_ID_MAX_LENGTH).optional(),
   })
   .strict()
