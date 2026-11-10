@@ -1,0 +1,69 @@
+import "server-only";
+import { InvalidInputError } from "@formbricks/types/errors";
+import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
+import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
+import { problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
+import {
+  type TSignupAuditTrail,
+  assertSignupAdmissible,
+  createSignup,
+} from "@/modules/auth/signup/lib/sign-up";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import type { TSignupBody } from "../schemas";
+
+type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3AuditLog };
+
+/** Copy what the sign-up got to into its audit entry, whether it finished or threw partway. */
+const recordTrail = (auditLog: TV3AuditLog | undefined, trail: TSignupAuditTrail) => {
+  if (!auditLog) return;
+  if (trail.organizationId) auditLog.organizationId = trail.organizationId;
+  if (trail.user) {
+    auditLog.targetId = trail.user.id;
+    auditLog.newObject = trail.user;
+  }
+};
+
+/**
+ * `POST /api/internal/signups`: create a credential account (pre-login). Charged to the client's IP.
+ *
+ * The answer is deliberately invariant (ENG-2099): it never varies with whether the address already had
+ * an account, nor with what happened to the verification email, or it would be a lookup. The
+ * verification-requested screen the form lands on is phrased conditionally and carries a log-in link, so
+ * the existing-account visitor still has a way out. A refusal the form explains is a 422 whose
+ * `details.reason` (and `detail`) is the stable code it translates.
+ */
+export async function createSignupOperation({
+  body,
+  ...context
+}: TRequestContext & { body: TSignupBody }): Promise<Response> {
+  const { requestId, instance, auditLog } = context;
+  const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.signup, context);
+  if (limited) {
+    // The limiter logs the refusal; auditing it too would let one address add rows without bound.
+    skipV3AuditLog(auditLog);
+    return limited;
+  }
+
+  const trail: TSignupAuditTrail = {};
+  try {
+    const admission = await assertSignupAdmissible(body);
+    await createSignup(body, admission, trail);
+  } catch (error) {
+    recordTrail(auditLog, trail);
+    if (error instanceof InvalidInputError) {
+      return problemUnprocessableContent(requestId, error.message, {
+        instance,
+        details: { reason: error.message },
+      });
+    }
+    throw error;
+  }
+
+  // No account was created, so no `created` event may be written: the answer below is the same either
+  // way, and only the audit record may tell them apart (ENG-2091).
+  if (trail.user) recordTrail(auditLog, trail);
+  else skipV3AuditLog(auditLog);
+
+  return successResponse({ success: true }, { requestId });
+}

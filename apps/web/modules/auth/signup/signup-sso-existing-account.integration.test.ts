@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postSignup } from "@/app/api/internal/signups/route";
+import { postToPreLoginRoute } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { createInviteToken } from "@/lib/jwt";
-import { createUserAction } from "@/modules/auth/signup/actions";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/email";
 
@@ -47,6 +48,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
+
+/** The sign-up form's request, through the real `POST /api/internal/signups`. */
+const createSignup = (body: Record<string, unknown>) =>
+  postToPreLoginRoute(postSignup, "/api/internal/signups", body);
 
 const SSO_EMAIL = "azure.person@corporate-example.com";
 
@@ -96,7 +101,7 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
     expect(await prisma.account.count({ where: { userId: ssoUser.id } })).toBe(0);
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Azure Person",
       email: SSO_EMAIL,
       password: "SomePassword1!",
@@ -104,7 +109,7 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
     });
 
     // Same indistinguishable response as the credential case (ENG-2099).
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
     // Critically: no credential account may be created for an SSO-only user by an unauthenticated
@@ -129,14 +134,14 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
     const orgsBefore = await prisma.organization.count();
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Impersonator",
       email: SSO_EMAIL,
       password: "AttackerPassword1!",
     });
 
     // Enumeration-safe: no invite, so the generic screen — identical to a brand-new address.
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true });
     expect(await prisma.account.count({ where: { userId: ssoUser.id } })).toBe(0);
     expect(await prisma.organization.count()).toBe(orgsBefore);
     expect(await prisma.membership.count({ where: { userId: ssoUser.id } })).toBe(0);

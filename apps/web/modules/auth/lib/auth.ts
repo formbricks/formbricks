@@ -124,7 +124,7 @@ export const auth = betterAuth({
   // in-process.
   //
   // `/sign-up/email` (ENG-3988) too. Every check a credential sign-up has to pass lives in
-  // `createUserAction`: Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,
+  // the sign-up route (`POST /api/internal/signups`): Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,
   // the app-level IP limit, org provisioning and the audit entry. A raw POST skipped all of them and
   // still created the account. The form, `/setup` included, calls `auth.api.signUpEmail` in-process, so
   // closing the route leaves the action as the only way in. `signupPolicyBeforeHandler` and the
@@ -210,7 +210,7 @@ export const auth = betterAuth({
   },
 
   emailVerification: {
-    // BA sends the verification email on signup (used by the createUserAction signup flow). When
+    // BA sends the verification email on signup (used by the sign-up route's flow). When
     // EMAIL_VERIFICATION_DISABLED the user still receives it but isn't blocked from signing in —
     // requireEmailVerification (above) gates that.
     sendOnSignUp: true,
@@ -378,7 +378,7 @@ export const auth = betterAuth({
       // has disabled password resets (PASSWORD_RESET_DISABLED=1). See better-auth-password-reset-gate.ts.
       await requirePasswordResetEnabledBeforeHandler(ctx, PASSWORD_RESET_DISABLED);
       // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which used
-      // to be served beside createUserAction and bypassed it entirely. The HTTP route is now closed
+      // to be served beside the sign-up route and bypassed it entirely. The HTTP route is now closed
       // (`disabledPaths`, ENG-3988), so this guards in-process callers other than the action. Runs
       // BEFORE the endpoint because a rejection from the create hook would be swallowed into Better
       // Auth's synthetic duplicate-email 200, a fake success. See signup-policy.ts.

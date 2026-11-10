@@ -78,6 +78,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/segments` | POST | session | dashboard | `/api/internal` | `app/api/internal/segments/route.ts` |
 | `/api/internal/segments/{segmentId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/segments/[segmentId]/route.ts` |
 | `/api/internal/segments/{segmentId}/copies` | POST | session | dashboard | `/api/internal` | `app/api/internal/segments/[segmentId]/copies/route.ts` |
+| `/api/internal/signups` | POST | none | dashboard | `/api/internal` | `app/api/internal/signups/route.ts` |
 | `/api/internal/survey-retention/{surveyId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/survey-retention/[surveyId]/route.ts` |
 | `/api/internal/surveys/{surveyId}/content` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/content/route.ts` |
 | `/api/internal/surveys/{surveyId}/copies` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/copies/route.ts` |
