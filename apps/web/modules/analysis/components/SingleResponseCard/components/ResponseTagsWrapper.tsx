@@ -7,12 +7,11 @@ import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
-import { TagError } from "@/modules/workspaces/settings/types/tag";
-import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
+import { addResponseTag, createTag, removeResponseTag } from "../lib/api-client";
 import { SingleResponseCardMetadata } from "./SingleResponseCardMetadata";
 
 interface ResponseTagsWrapperProps {
@@ -22,7 +21,7 @@ interface ResponseTagsWrapperProps {
   }[];
   readonly workspaceId: string;
   readonly responseId: string;
-  readonly environmentTags: TTag[];
+  readonly environmentTags: Pick<TTag, "id" | "name">[];
   readonly updateFetchedResponses: () => void;
   readonly isReadOnly?: boolean;
   readonly response: TResponse;
@@ -48,11 +47,11 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const onDelete = async (tagId: string) => {
     setIsLoadingTagOperation(true);
-    const deleteTagResponse = await deleteTagOnResponseAction({ responseId, tagId });
-    if (deleteTagResponse?.data) {
+    try {
+      await removeResponseTag(responseId, tagId);
       updateFetchedResponses();
-    } else {
-      const errorMessage = getFormattedErrorMessage(deleteTagResponse);
+    } catch (error) {
+      const errorMessage = getV3ApiErrorMessage(error, "");
       logger.error({ errorMessage }, "Error deleting tag");
       toast.error(t("workspace.surveys.responses.an_error_occurred_deleting_the_tag"));
     }
@@ -71,16 +70,12 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const handleCreateTag = async (tagName: string) => {
     setIsLoadingTagOperation(true);
-    const newTagResponse = await createTagAction({ workspaceId, tagName });
-
-    if (!newTagResponse?.data) {
-      toast.error(t("workspace.surveys.responses.an_error_occurred_creating_the_tag"));
-      return;
-    }
-
-    if (!newTagResponse.data.ok) {
-      const errorMessage = newTagResponse.data.error;
-      if (errorMessage?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
+    let newTag: { id: string; name: string };
+    try {
+      newTag = await createTag(workspaceId, tagName);
+    } catch (error) {
+      // A 409 is the one refusal the tag picker words itself: the workspace already has this name.
+      if (error instanceof V3ApiError && error.status === 409) {
         toast.error(t("workspace.surveys.responses.tag_already_exists"), {
           duration: 2000,
         });
@@ -90,16 +85,15 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       return;
     }
 
-    const newTag = newTagResponse.data.data;
-    const createTagToResponseResponse = await createTagToResponseAction({ responseId, tagId: newTag.id });
-    if (createTagToResponseResponse?.data) {
+    try {
+      await addResponseTag(responseId, newTag.id);
       setTagsState((prevTags) => [...prevTags, { tagId: newTag.id, tagName: newTag.name }]);
       setTagIdToHighlight(newTag.id);
       updateFetchedResponses();
       setSearchValue("");
       setOpen(false);
-    } else {
-      const errorMessage = getFormattedErrorMessage(createTagToResponseResponse);
+    } catch (error) {
+      const errorMessage = getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
       logger.error({ errorMessage });
       toast.error(errorMessage);
     }
@@ -117,7 +111,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     ]);
 
     try {
-      await createTagToResponseAction({ responseId, tagId });
+      await addResponseTag(responseId, tagId);
       updateFetchedResponses();
       setSearchValue("");
       setOpen(false);

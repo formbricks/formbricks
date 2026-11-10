@@ -16,10 +16,10 @@ import {
 import { ExportModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/export-modal";
 import { ResponseCardModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { deleteResponse as deleteResponseRequest } from "@/modules/analysis/components/SingleResponseCard/lib/api-client";
 import { BulkOutcomeActions } from "@/modules/analysis/response-outcome/components/bulk-outcome-actions";
 import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
 import { ListTable } from "@/modules/ui/components/table-toolbar";
 import { useColumnSizing } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
@@ -163,12 +163,11 @@ export const ResponseTable = ({
   }, [survey.id, defaultColumnOrder, isOpenedByCreatives]);
 
   const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
-    const result = await deleteResponseAction({
-      responseId,
-      decrementQuotas: params?.decrementQuotas ?? false,
-    });
-    if (result?.serverError) {
-      throw new Error(getFormattedErrorMessage(result));
+    try {
+      await deleteResponseRequest(responseId, { decrementQuotas: params?.decrementQuotas ?? false });
+    } catch (error) {
+      // The bulk delete toasts the error's message, so it carries the server's reason or a fallback.
+      throw new Error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

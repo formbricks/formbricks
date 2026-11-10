@@ -8,15 +8,15 @@ import { getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
 import { SingleResponseCardHeader } from "./components/SingleResponseCardHeader";
+import { deleteResponse, getResponseCard } from "./lib/api-client";
 import { getResponseCardRows } from "./lib/card-rows";
 import { isSubmissionTimeMoreThan5Minutes } from "./util";
 
@@ -29,7 +29,7 @@ interface SingleResponseCardProps {
   survey: TSurvey;
   response: TResponseWithQuotas;
   user?: TUser;
-  environmentTags: TTag[];
+  environmentTags: Pick<TTag, "id" | "name">[];
   updateResponse?: (responseId: string, responses: TResponse) => void;
   updateResponseList?: (responseIds: string[]) => void;
   isReadOnly: boolean;
@@ -78,27 +78,27 @@ export const SingleResponseCard = ({
       if (isReadOnly) {
         throw new Error(t("common.not_authorized"));
       }
-      const result = await deleteResponseAction({ responseId: response.id, decrementQuotas });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await deleteResponse(response.id, { decrementQuotas });
       updateResponseList?.([response.id]);
       if (setSelectedResponseId) setSelectedResponseId(null);
       toast.success(t("workspace.surveys.responses.response_deleted_successfully"));
       setDeleteDialogOpen(false);
     } catch (error) {
-      if (error instanceof Error) toast.error(error.message);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }
   };
 
   const updateFetchedResponses = async () => {
-    const updatedResponse = await getResponseAction({ responseId: response.id });
-    if (updatedResponse?.data && updatedResponse.data !== null && updateResponse) {
-      updateResponse(response.id, updatedResponse.data);
+    let updatedResponse: TResponseWithQuotas;
+    try {
+      updatedResponse = await getResponseCard(response.id);
+    } catch {
+      // The tag change itself went through; the card keeps what it shows until the next read.
+      return;
     }
+    updateResponse?.(response.id, updatedResponse);
   };
 
   const canResponseBeDeleted = response.finished
