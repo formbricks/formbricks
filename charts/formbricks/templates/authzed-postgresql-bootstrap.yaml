@@ -251,10 +251,19 @@ spec:
                 if [ "$admin_capable" != "t" ]; then
                   if [ -n "${FALLBACK_PGUSER:-}" ] && [ -n "${FALLBACK_PGPASSWORD:-}" ]; then
                     echo "PostgreSQL role $PGUSER cannot log in or is not a superuser; connecting as $FALLBACK_PGUSER instead" >&2
+                    first_pguser="$PGUSER"
                     PGUSER="$FALLBACK_PGUSER"
                     PGPASSWORD="$FALLBACK_PGPASSWORD"
                     export PGUSER PGPASSWORD
                     admin_database_url="$FALLBACK_ADMIN_DATABASE_NAME"
+                    # Without this, a wrong password for the first role ends on the fallback's own login
+                    # error, which on the bundled pgvector image (no fallback role) reads like the
+                    # missing-`postgres` failure this fallback exists to avoid.
+                    if ! psql --dbname "$admin_database_url" --no-psqlrc --tuples-only --no-align \
+                      --command "SELECT 1" >/dev/null; then
+                      echo "Neither $first_pguser nor $FALLBACK_PGUSER could log in. $FALLBACK_PGUSER exists only on data a Bitnami image initialised; on the bundled pgvector image, check the password Secret and key for $first_pguser." >&2
+                      exit 1
+                    fi
                   else
                     echo "PostgreSQL role $PGUSER cannot log in or lacks CREATEROLE and CREATEDB, so it cannot create the SpiceDB role and database." >&2
                     echo "Set authzed.bundledPostgresqlBootstrap.adminUsername, adminPasswordSecretName and adminPasswordKey to a role that has them, enable postgresql.auth.enablePostgresUser on a server with a postgres superuser, or set authzed.bundledPostgresqlBootstrap.enabled=false and provision the SpiceDB role and database yourself." >&2

@@ -265,6 +265,23 @@ for version in "${postgres_versions[@]}"; do
     exit 1
   fi
 
+  # 10. A wrong password for the first role with a fallback that cannot log in either (the bundled
+  #     pgvector image has no `postgres`): the error must point at the first role, not end on the
+  #     fallback's login failure.
+  reset_spicedb "${container}"
+  if output="$(run_bootstrap_with_fallback "${container}" fbadmin wrong-password absent_role whatever)"; then
+    printf '%s\n' "Bootstrap must fail when neither role can log in on ${version}." >&2
+    exit 1
+  fi
+  grep --quiet 'Neither fbadmin nor absent_role could log in' <<<"${output}" || {
+    printf '%s\n%s\n' "The failure must name the first role's credentials on ${version}, got:" "${output}" >&2
+    exit 1
+  }
+  if [ -n "$(as_superuser "${container}" "SELECT 1 FROM pg_roles WHERE rolname = 'spicedb'")" ]; then
+    printf '%s\n' "A failed login must stop before any SQL runs on ${version}." >&2
+    exit 1
+  fi
+
   docker rm --force "${container}" >/dev/null 2>&1 || true
 done
 
