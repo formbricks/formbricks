@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 const SINGLE_USE_SIGNATURE_PAYLOAD_PREFIX = "formbricks.single-use.v1";
 
 /**
- * The longest `suId` / `suToken` a link we minted can carry, for the public actions that take them from the
+ * The longest `suId` / `suToken` a link we minted can carry, for the public routes that take them from the
  * client before any of the validation below runs. An id is at most the 255 characters a custom id is
  * accepted at (ZSurveySingleUseLinksBody), where a cuid is 24 and an encrypted id about 115. A token is a
  * hex HMAC-SHA256, always 64.

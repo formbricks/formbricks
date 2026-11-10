@@ -78,7 +78,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string): Promis
 
         // Stored custom CSS (ENG-3552), source included. Server-side input to the compiled CSS the page
         // delivers; every path that hands this survey to the browser removes it first
-        // (`omitCustomCssSource` in survey-renderer.tsx and validateSurveyPinAction).
+        // (`omitCustomCssSource` in survey-renderer.tsx and the PIN check, `app/api/internal/link-survey-pin-verifications`).
         customCss: true,
 
         // Related data

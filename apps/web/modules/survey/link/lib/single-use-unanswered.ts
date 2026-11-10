@@ -11,7 +11,7 @@ import type { TSingleUseLinkSurface } from "@/modules/survey/link/lib/single-use
 /**
  * `getLinkSurveySingleUseAccess`, and a link that has already been answered is refused too.
  *
- * For the surfaces that hand out survey content without rendering a page: the PIN and verify-email actions,
+ * For the surfaces that hand out survey content without rendering a page: the PIN and verify-email routes,
  * and the page metadata. The page itself shows an answered link as "already answered", never the survey, so
  * these must answer for it the way they do for a link that was never valid. A used link stays valid (its
  * response is the one being resumed or shown), so on its own it would keep naming and fetching the survey

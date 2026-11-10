@@ -49,6 +49,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/languages/{languageId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/route.ts` |
 | `/api/internal/languages/{languageId}/surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/surveys/route.ts` |
 | `/api/internal/license-checks` | POST | session | dashboard | `/api/internal` | `app/api/internal/license-checks/route.ts` |
+| `/api/internal/link-survey-pin-verifications` | POST | none | dashboard | `/api/internal` | `app/api/internal/link-survey-pin-verifications/route.ts` |
+| `/api/internal/link-survey-verification-emails` | POST | none | dashboard | `/api/internal` | `app/api/internal/link-survey-verification-emails/route.ts` |
 | `/api/internal/matrix-questions` | GET | session | dashboard | `/api/internal` | `app/api/internal/matrix-questions/route.ts` |
 | `/api/internal/members/{userId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
