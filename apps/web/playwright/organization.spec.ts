@@ -135,6 +135,8 @@ test.describe("Create, update and delete team", async () => {
 
     await page.getByPlaceholder("Team name").fill("E2E Updated");
 
+    // A new team starts with no member rows, so add one first.
+    await page.getByRole("button", { name: "Add member", exact: true }).click();
     await page.locator("#member-select-0").click();
     await page.locator('[data-slot="command-item"]').first().click();
 
