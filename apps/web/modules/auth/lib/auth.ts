@@ -36,7 +36,12 @@ import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gat
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
-import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
+import {
+  auditPasswordReset,
+  auditSignOutOnSessionDelete,
+  betterAuthLogger,
+  signInAuditPlugin,
+} from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
@@ -358,6 +363,10 @@ export const auth = betterAuth({
       },
       update: {
         after: recordActivityOnSessionUpdate,
+      },
+      // The `userSignedOut` audit, for `/sign-out` only (see the hook for the other deletions it skips).
+      delete: {
+        after: auditSignOutOnSessionDelete,
       },
     },
   },

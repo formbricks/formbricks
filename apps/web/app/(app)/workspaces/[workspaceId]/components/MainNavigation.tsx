@@ -628,7 +628,6 @@ export const MainNavigation = ({
 
               <UserDropdown
                 user={user}
-                organizationId={organization.id}
                 isCollapsed={isCollapsed}
                 isTextVisible={isTextVisible}
                 className="rounded-br-xl"

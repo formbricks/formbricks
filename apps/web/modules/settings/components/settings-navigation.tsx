@@ -112,11 +112,7 @@ export const SettingsNavigation = ({
           onOrganizationRetry={organizationSwitcher.retry}
         />
       </div>
-      <UserDropdown
-        user={user}
-        organizationId={organizationId}
-        isFormbricksSurveysConfigured={isFormbricksSurveysConfigured}
-      />
+      <UserDropdown user={user} isFormbricksSurveysConfigured={isFormbricksSurveysConfigured} />
     </aside>
   );
 };

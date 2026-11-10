@@ -39,7 +39,7 @@ export const DeleteAccountModal = ({
   const [inputValue, setInputValue] = useState("");
   const [password, setPassword] = useState("");
   const [ssoEmailSent, setSsoEmailSent] = useState(false);
-  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
+  const { signOut } = useSignOut();
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -80,9 +80,8 @@ export const DeleteAccountModal = ({
     }
 
     try {
-      await signOutWithAudit({
+      await signOut({
         clearWorkspaceId: true,
-        reason: "account_deletion",
         redirect: false,
       });
     } catch (signOutError) {

@@ -107,7 +107,6 @@ export const LandingSidebar = ({
         {/* User Dropdown */}
         <UserDropdown
           user={user}
-          organizationId={organization.id}
           className="rounded-br-xl"
           isFormbricksSurveysConfigured={isFormbricksSurveysConfigured}
         />

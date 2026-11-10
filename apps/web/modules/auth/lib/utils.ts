@@ -5,6 +5,7 @@ import { cache } from "@/lib/cache";
 import { hashSecret, verifySecret } from "@/lib/crypto";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 
 export const hashPassword = async (password: string) => {
   return await hashSecret(password, 12);
@@ -260,32 +261,22 @@ export const shouldLogAuthFailure = async (
 };
 
 /**
- * Logs a user sign out event for audit compliance.
+ * Record a sign-out for audit compliance: the `userSignedOut` event for the user whose session ended.
+ * Called from Better Auth's session-delete hook (`auditSignOutOnSessionDelete`), so every field is the
+ * server's own; nothing the client says about why it signed out is recorded.
  *
- * @param userId - The ID of the user signing out
- * @param userEmail - The email of the user signing out
- * @param context - Additional context about the sign out (reason, redirect URL, etc.)
+ * @param userId - The user whose session the sign-out ended
+ * @param requestMetadata - IP and user agent, captured from the sign-out request while it is live
  */
-export const logSignOut = (
-  userId: string,
-  userEmail: string,
-  context?: {
-    reason?:
-      | "user_initiated"
-      | "account_deletion"
-      | "email_change"
-      | "session_timeout"
-      | "forced_logout"
-      | "password_reset";
-    redirectUrl?: string;
-    organizationId?: string;
-  }
-) => {
-  logAuthEvent("userSignedOut", "success", userId, userEmail, {
-    provider: "session",
-    authMethod: "sign_out",
-    reason: context?.reason || "user_initiated", // NOSONAR // We want to check for empty strings
-    redirectUrl: context?.redirectUrl,
-    organizationId: context?.organizationId,
+export const logSignOut = (userId: string, requestMetadata: TAuditRequestMetadata) =>
+  queueAuditEventBackground({
+    action: "userSignedOut",
+    targetType: "user",
+    userId,
+    targetId: userId,
+    organizationId: UNKNOWN_DATA,
+    status: "success",
+    userType: "user",
+    newObject: { provider: "session", authMethod: "sign_out" },
+    requestMetadata,
   });
-};

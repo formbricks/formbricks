@@ -59,7 +59,7 @@ export const EditProfileDetailsForm = ({
 
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
+  const { signOut } = useSignOut();
 
   const handleConfirmPassword = async (password: string) => {
     const values = form.getValues();
@@ -97,9 +97,7 @@ export const EditProfileDetailsForm = ({
       toast.success(t("auth.verification-requested.new_email_verification_success"));
     } else {
       toast.success(t("workspace.settings.profile.email_change_initiated"));
-      await signOutWithAudit({
-        reason: "email_change",
-        redirectUrl: "/email-change-without-verification-success",
+      await signOut({
         redirect: true,
         callbackUrl: "/email-change-without-verification-success",
         clearWorkspaceId: true,
@@ -133,9 +131,7 @@ export const EditProfileDetailsForm = ({
       await requestPasswordReset();
       toast.success(t("auth.forgot-password.email-sent.heading"));
 
-      await signOutWithAudit({
-        reason: "password_reset",
-        redirectUrl: "/auth/login",
+      await signOut({
         redirect: true,
         callbackUrl: "/auth/login",
         clearWorkspaceId: true,

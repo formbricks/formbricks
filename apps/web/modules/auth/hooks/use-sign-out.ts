@@ -1,61 +1,21 @@
 import { logger } from "@formbricks/logger";
 import { logoutPlainBeforeNavigation } from "@/app/plain/lib/plain-sdk";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
-import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 import { authClient } from "@/modules/auth/lib/auth-client";
 
 interface UseSignOutOptions {
-  reason?:
-    | "user_initiated"
-    | "account_deletion"
-    | "email_change"
-    | "session_timeout"
-    | "forced_logout"
-    | "password_reset";
-  redirectUrl?: string;
-  organizationId?: string;
   redirect?: boolean;
   callbackUrl?: string;
   clearWorkspaceId?: boolean;
 }
 
-interface SessionUser {
-  id: string;
-  email?: string;
-}
-
 /**
- * Custom hook to handle sign out with audit logging
- * @param sessionUser - The current user session data (optional)
- * @returns {Object} - An object containing the signOutWithAudit function
+ * Custom hook to sign out. The `userSignedOut` audit event is recorded by the server when Better Auth's
+ * `/sign-out` ends the session (`auditSignOutOnSessionDelete`), so nothing here reports it.
+ * @returns {Object} - An object containing the signOut function
  */
-export const useSignOut = (sessionUser?: SessionUser | null) => {
-  const signOutWithAudit = async (options?: UseSignOutOptions) => {
-    // Log audit event before signing out (server action). The action reads the user from the session,
-    // so it has to run while the session still exists — and not at all after account deletion, which
-    // has already removed the user and its sessions.
-    if (sessionUser?.id && options?.reason !== "account_deletion") {
-      try {
-        const result = await logSignOutAction({
-          reason: options?.reason || "user_initiated", // NOSONAR // We want to check for empty strings
-          redirectUrl: options?.redirectUrl || options?.callbackUrl, // NOSONAR // We want to check for empty strings
-          organizationId: options?.organizationId,
-        });
-        if (result?.serverError || result?.validationErrors) {
-          logger.error(
-            new Error(result.serverError ?? "Invalid sign out audit input"),
-            "Failed to log signOut event"
-          );
-        }
-      } catch (error) {
-        // Don't block signOut if audit logging fails
-        logger.error(
-          error instanceof Error ? error : new Error(String(error)),
-          "Failed to log signOut event"
-        );
-      }
-    }
-
+export const useSignOut = () => {
+  const signOut = async (options?: UseSignOutOptions) => {
     if (options?.clearWorkspaceId) {
       localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
@@ -69,7 +29,7 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
     // Better Auth sign-out clears the BA session; the redirect is manual (BA's signOut doesn't take
     // redirect/callbackUrl like NextAuth's did). Mirror NextAuth's contract: navigate by default, or
     // return { url } when the caller passes redirect:false so it can navigate itself. Logout must
-    // ALWAYS navigate away even if the BA /sign-out call fails (best-effort + audited above), so
+    // ALWAYS navigate away even if the BA /sign-out call fails (best-effort; audited server-side), so
     // swallow+log and fall through to the redirect/return.
     const url = options?.callbackUrl ?? "/auth/login";
     try {
@@ -87,5 +47,5 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
     globalThis.location.href = url;
   };
 
-  return { signOut: signOutWithAudit };
+  return { signOut };
 };
