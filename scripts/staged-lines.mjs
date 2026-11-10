@@ -18,3 +18,26 @@ export function touchesStagedLines(message, ranges) {
   const end = message.endLine ?? message.line;
   return ranges.some(([start, stop]) => message.line <= stop && end >= start);
 }
+
+/**
+ * A lint message, with the secondary locations sonarjs encodes into its text under
+ * `settings.sonarRuntime` decoded: `{ ...message, message: <text>, secondaryLocations }`.
+ */
+export function decodeSonarMessage(message) {
+  if (message.messageId !== "sonarRuntime") return { ...message, secondaryLocations: [] };
+  try {
+    const decoded = JSON.parse(message.message);
+    return { ...message, message: decoded.message, secondaryLocations: decoded.secondaryLocations ?? [] };
+  } catch {
+    return { ...message, secondaryLocations: [] };
+  }
+}
+
+/**
+ * Whether a decoded message's own lines or any of its secondary locations overlap the ranges. A
+ * function made too complex by a staged `if` is reported at its unstaged header; the `if` is one of
+ * the secondary locations.
+ */
+export function touchesStagedCode(message, ranges) {
+  return [message, ...message.secondaryLocations].some((location) => touchesStagedLines(location, ranges));
+}

@@ -37,6 +37,11 @@ export const sonarParity = (severity = stagedSeverity()) => [
     files: SOURCE_FILES,
     ignores: TEST_FILES,
     plugins: { sonarjs, unicorn },
+    // In the staged-file run only: sonarjs then encodes each finding's secondary locations (for
+    // S3776, every line that adds to the complexity) into its message, so the pre-commit runner can
+    // fail a function made too complex by a staged line other than its header. Editors and the
+    // whole-repo lint keep plain messages.
+    ...(process.env.ESLINT_SONAR_PARITY !== undefined && { settings: { sonarRuntime: true } }),
     rules: {
       // S3776. Sonar's default threshold; eslint-plugin-sonarjs@3 reproduces its exact scores.
       "sonarjs/cognitive-complexity": [severity, 15],

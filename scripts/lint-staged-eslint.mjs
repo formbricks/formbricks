@@ -16,7 +16,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { SONAR_PARITY_RULE_IDS } from "../packages/config-eslint/sonar-parity.mjs";
-import { parseStagedLineRanges, touchesStagedLines } from "./staged-lines.mjs";
+import { decodeSonarMessage, parseStagedLineRanges, touchesStagedCode } from "./staged-lines.mjs";
 
 // ESLint doesn't export ./bin/eslint.js, but package.json is exported, so go
 // through it to get an absolute path to the CLI entry point.
@@ -60,20 +60,18 @@ const isTracked = (file) =>
   spawnSync("git", ["ls-files", "--error-unmatch", "--", file], { stdio: "ignore" }).status === 0;
 
 /**
- * The staged lines of `file`, from the index. A file git does not track is new code throughout.
- * Throws when git can't say: the gate must not pass blind.
+ * The lines of `file` this commit changes, as ESLint sees them. Compared with HEAD's working tree,
+ * not the index: lint-staged hides unstaged changes while its tasks run, so the working tree holds
+ * the staged content after `prettier --write` reflowed it, which is the file ESLint lints. A file git
+ * does not track is new code throughout. Throws when git can't say: the gate must not pass blind.
  */
 function stagedLineRanges(file) {
   if (!isTracked(file)) return [[1, Number.POSITIVE_INFINITY]];
-  const { stdout, stderr, status, error } = spawnSync(
-    "git",
-    ["diff", "--cached", "--unified=0", "--", file],
-    {
-      encoding: "utf8",
-    }
-  );
+  const { stdout, stderr, status, error } = spawnSync("git", ["diff", "HEAD", "--unified=0", "--", file], {
+    encoding: "utf8",
+  });
   if (error || status !== 0) {
-    throw new Error(`git diff --cached failed for ${file}: ${error?.message ?? stderr}`);
+    throw new Error(`git diff HEAD failed for ${file}: ${error?.message ?? stderr}`);
   }
   return parseStagedLineRanges(stdout);
 }
@@ -115,11 +113,11 @@ for (const [pkgDir, relFiles] of groupByPackage(process.argv.slice(2))) {
     const ranges = result.messages.some((message) => SONAR_RULES.has(message.ruleId))
       ? stagedLineRanges(file)
       : [];
-    for (const message of result.messages) {
+    for (const message of result.messages.map(decodeSonarMessage)) {
       if (message.severity === 2) {
         console.log(format(file, message, "error"));
         failed = true;
-      } else if (SONAR_RULES.has(message.ruleId) && touchesStagedLines(message, ranges)) {
+      } else if (SONAR_RULES.has(message.ruleId) && touchesStagedCode(message, ranges)) {
         console.log(format(file, message, "error (SonarCloud, new code)"));
         failed = true;
       }

@@ -158,13 +158,19 @@ loaded.
 cd apps/web && pnpm test:integration <path>
 ```
 
-Before the first run: the `formbricks-postgres-1` and `formbricks-valkey-1` containers (`pnpm db:up`),
-the dev database migrated (`pnpm db:migrate:dev`), the workspace packages built
-(`pnpm build --filter=@formbricks/web^...`, since this command bypasses Turbo), and
+Before the first run: the `formbricks-postgres-1` and `formbricks-valkey-1` containers and the SpiceDB
+at `AUTHZED_ENDPOINT` (`pnpm db:up`), the dev database migrated (`pnpm db:migrate:dev`), the workspace
+packages built (`pnpm build --filter=@formbricks/web^...`, since this command bypasses Turbo), and
 `PASSWORD_RESET_DISABLED=0` in `.env` for the password-reset suites (`.env.example` ships `1`). The harness
 (`apps/web/integration/global-setup.ts`) copies the dev database's schema, without its data, into
-`formbricks_ba_test` and flushes Valkey database 15, so the dev data is safe; it copies whatever schema
-the dev database has.
+`formbricks_ba_test` and flushes Valkey database 15, so the dev Postgres and Valkey data are safe; it
+copies whatever schema the dev database has.
+
+SpiceDB is not redirected. The suites that call `synchronizeAuthzedIntegrationFixture`
+(`apps/web/integration/authzed.ts`) converge the SpiceDB in `.env` with the test database, pruning the
+relationships of your dev data: organizations and surveys then vanish from the dev app's lists. Rebuild
+them from Postgres after the run with `pnpm authzed:backfill --apply` and
+`pnpm authzed:backfill --scope=survey --apply`. CI runs these suites against a disposable SpiceDB.
 
 `packages/database` and `packages/jobs` have integration tests of their own, outside this harness, with
 their own opt-in database and Redis URLs: `.github/workflows/integration-tests.yml` has their commands
