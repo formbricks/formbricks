@@ -10,5 +10,5 @@ A v3 response comes back self-describing (ENG-2868): `answers[]` with each eleme
 ## Consequences
 
 - A response collected under an older headline reads back under today's wording.
-- The read and write shapes are close but not identical, so the round trip is not lossless: the read withholds some stored values and includes entries a write refuses. The OpenAPI spec lists both, and an empty `unresolved[]` doesn't prove nothing was withheld.
+- The read and write shapes are close but not identical. The read withholds some stored values (legacy values outside the published shapes among them) and includes entries a write refuses, and a PATCH of `data` replaces the whole answer map, so sending the read straight back can delete what it withheld. An empty `unresolved[]` doesn't prove nothing was withheld.
 - Composite answers stay nested as one entry, while a Hub feedback record has one row per atom.
