@@ -6,8 +6,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { createOrganizationAction } from "@/modules/organization/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { createAdditionalOrganization } from "@/modules/organization/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -43,14 +43,13 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     if (!data.name) return;
 
     setLoading(true);
-    const createOrganizationResponse = await createOrganizationAction({ organizationName: data.name });
-    if (createOrganizationResponse?.data) {
+    try {
+      const organization = await createAdditionalOrganization(data.name);
       toast.success(t("workspace.settings.general.organization_created_successfully"));
-      router.push(`/organizations/${createOrganizationResponse.data.id}`);
+      router.push(`/organizations/${organization.id}`);
       setOpen(false);
-    } else {
-      const errorMessage = getFormattedErrorMessage(createOrganizationResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setLoading(false);
