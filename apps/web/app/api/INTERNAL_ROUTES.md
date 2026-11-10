@@ -18,6 +18,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/charts/generate` | POST | session | dashboard | `/api/internal` | `app/api/internal/charts/generate/route.ts` |
 | `/api/internal/contact-attribute-keys` | POST | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/route.ts` |
 | `/api/internal/contact-attribute-keys/{contactAttributeKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/[contactAttributeKeyId]/route.ts` |
+| `/api/internal/contact-attribute-keys/{contactAttributeKeyId}/values` | GET | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/[contactAttributeKeyId]/values/route.ts` |
 | `/api/internal/contacts/{contactId}` | DELETE | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/route.ts` |
 | `/api/internal/contacts/{contactId}/attributes` | PUT | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/attributes/route.ts` |
 | `/api/internal/contacts/{contactId}/personal-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/personal-links/route.ts` |
@@ -74,6 +75,9 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/retention-policies` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/retention-policies/route.ts` |
 | `/api/internal/retention-runs` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-runs/route.ts` |
 | `/api/internal/retention-runs/export` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-runs/export/route.ts` |
+| `/api/internal/segments` | POST | session | dashboard | `/api/internal` | `app/api/internal/segments/route.ts` |
+| `/api/internal/segments/{segmentId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/segments/[segmentId]/route.ts` |
+| `/api/internal/segments/{segmentId}/copies` | POST | session | dashboard | `/api/internal` | `app/api/internal/segments/[segmentId]/copies/route.ts` |
 | `/api/internal/survey-retention/{surveyId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/survey-retention/[surveyId]/route.ts` |
 | `/api/internal/surveys/{surveyId}/content` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/content/route.ts` |
 | `/api/internal/surveys/{surveyId}/copies` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/copies/route.ts` |
@@ -83,6 +87,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/surveys/{surveyId}/personal-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/personal-links/route.ts` |
 | `/api/internal/surveys/{surveyId}/preview-emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/preview-emails/route.ts` |
 | `/api/internal/surveys/{surveyId}/resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/resets/route.ts` |
+| `/api/internal/surveys/{surveyId}/segment` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/segment/route.ts` |
+| `/api/internal/surveys/{surveyId}/segment/resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/segment/resets/route.ts` |
 | `/api/internal/surveys/{surveyId}/single-use-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/single-use-links/route.ts` |
 | `/api/internal/surveys/{surveyId}/single-use-settings` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/single-use-settings/route.ts` |
 | `/api/internal/surveys/{surveyId}/slug` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/slug/route.ts` |
@@ -106,6 +112,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/deletions` | POST | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/deletions/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/file-upload-limit` | GET | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/file-upload-limit/route.ts` |
+| `/api/internal/workspaces/{workspaceId}/segment-filter-surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/segment-filter-surveys/route.ts` |
 | `/api/organizations/{organizationId}/usage` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/organizations/[organizationId]/usage/route.ts` |
 | `/api/surveys/{surveyId}/attachment-exports` | POST | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachment-exports/route.ts` |
 | `/api/surveys/{surveyId}/attachment-exports/{exportId}/download` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachment-exports/[exportId]/download/route.ts` |

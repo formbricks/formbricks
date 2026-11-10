@@ -28,7 +28,7 @@ import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TCustomCssValidationStatus } from "@/modules/custom-css/components/lib/validation";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { createSegment } from "@/modules/ee/contacts/segments/lib/api-client";
 import { describeCodeIssueAtPath, describeLockRefusal } from "@/modules/survey/editor/lib/code-messages";
 import {
   getSurveyToAutosave,
@@ -333,16 +333,18 @@ export const SurveyMenuBar = ({
     if (localSurvey.segment && localSurvey.type === "app" && localSurvey.segment?.id === "temp") {
       const { filters } = localSurvey.segment;
 
-      // create a new private segment
-      const newSegment = await createSegmentAction({
-        workspaceId: localSurvey.workspaceId,
-        filters,
-        isPrivate: true,
-        surveyId: localSurvey.id,
-        title: localSurvey.id,
-      });
-
-      return newSegment?.data;
+      // create a new private segment; the save goes on without one when it is refused, as before
+      try {
+        return await createSegment({
+          workspaceId: localSurvey.workspaceId,
+          filters,
+          isPrivate: true,
+          surveyId: localSurvey.id,
+          title: localSurvey.id,
+        });
+      } catch {
+        return undefined;
+      }
     }
   };
 
