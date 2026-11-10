@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "Row {row} was left out: its Type is not a question type or a field such as \"Choice 3\".",
           "sheet_row_skipped_unsupported_type": "Row {row} was left out: picture selection and Cal.com questions can't be added from a sheet. Add them in the editor.",
           "sheet_text_not_imported": "Row {row} ({language}) was too long for one cell when exported, so its edit was left out.",
-          "sheet_text_not_imported_recalls": "Row {row} ({language}) recalls more than 64 different answers, so its edit was left out. Edit it in the survey editor.",
+          "sheet_text_not_imported_recalls": "Row {row} ({language}) recalls more than {max} different answers, so its edit was left out. Edit it in the survey editor.",
           "sheets_skipped": "Only the first sheet was read. Not read: {sheets}.",
           "table_as_matrix": "This question is a table in the file and was imported as a matrix. Check its rows and columns.",
           "targeting_filter_removed": "{count, plural, one {# targeting filter was} other {# targeting filters were}} removed: segments and surveys in filters belong to the workspace the file came from.",

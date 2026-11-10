@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "A linha {row} foi ignorada: o Tipo não é um tipo de pergunta nem um campo como \"Escolha 3\".",
           "sheet_row_skipped_unsupported_type": "A linha {row} foi ignorada: não é possível adicionar a partir de uma folha de cálculo perguntas de seleção de imagem nem do Cal.com. Adicione-as no editor.",
           "sheet_text_not_imported": "A linha {row} ({language}) era demasiado longa para uma célula na exportação, por isso a sua edição foi ignorada.",
-          "sheet_text_not_imported_recalls": "A linha {row} ({language}) recorda mais de 64 respostas diferentes, por isso a respetiva edição foi ignorada. Edita-a no editor de inquéritos.",
+          "sheet_text_not_imported_recalls": "A linha {row} ({language}) recorda mais de {max} respostas diferentes, por isso a sua edição foi deixada de fora. Edite-a no editor de inquéritos.",
           "sheets_skipped": "Só a primeira folha foi lida. Não lidas: {sheets}.",
           "table_as_matrix": "Esta pergunta é uma tabela no ficheiro e foi importada como uma matriz. Verifica as respetivas linhas e colunas.",
           "targeting_filter_removed": "{count, plural, one {# filtro de segmentação foi removido} other {# filtros de segmentação foram removidos}}: os segmentos e os inquéritos nos filtros pertencem ao espaço de trabalho de onde o ficheiro veio.",

@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "第 {row} 列已略過:其「類型」不是題型,也不是像「Choice 3」這樣的欄位。",
           "sheet_row_skipped_unsupported_type": "第 {row} 列已略過:無法透過試算表新增圖片選擇題和 Cal.com 題目,請改在編輯器中新增。",
           "sheet_text_not_imported": "第 {row} 列({language})在匯出時因內容過長,超出單一儲存格的限制,因此其編輯內容已略過。",
-          "sheet_text_not_imported_recalls": "第 {row} 列（{language}）引用了超過 64 種不同的答案，因此這列的編輯內容未匯入。請到問卷編輯器中進行編輯。",
+          "sheet_text_not_imported_recalls": "第 {row} 列（{language}）引用了超過 {max} 個不同的答案，因此未匯入該列的編輯內容。請改在問卷編輯器中進行編輯。",
           "sheets_skipped": "僅讀取了第一個工作表。未讀取：{sheets}。",
           "table_as_matrix": "這個問題在檔案中是表格，已匯入為矩陣題。請檢查其列與欄。",
           "targeting_filter_removed": "{count, plural, other {已移除 # 個目標對象篩選條件}}：篩選條件中的區隔和問卷屬於檔案來源的工作區。",

@@ -235,7 +235,16 @@ describe("getSurveyImportIssueLine", () => {
       );
 
     expect(line("cut_on_export")).toBe('sheet_text_not_imported {"row":"7","language":"de"}');
-    expect(line("too_many_recalls")).toBe('sheet_text_not_imported_recalls {"row":"7","language":"de"}');
+    expect(
+      getSurveyImportIssueLine(
+        {
+          code: "sheet_text_not_imported",
+          severity: "warning",
+          params: { row: 7, language: "de", cause: "too_many_recalls", max: 64 },
+        },
+        t
+      )
+    ).toBe('sheet_text_not_imported_recalls {"row":"7","language":"de","max":"64"}');
   });
 
   test("still renders a line for a code this client does not know yet", () => {

@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "{row}. satır atlandı: Tür değeri bir soru türü ya da \"Seçenek 3\" gibi bir alan değil.",
           "sheet_row_skipped_unsupported_type": "{row}. satır atlandı: görsel seçimi ve Cal.com soruları sayfa üzerinden eklenemez. Bunları düzenleyicide ekleyebilirsin.",
           "sheet_text_not_imported": "{row}. satır ({language}) dışa aktarılırken tek bir hücreye sığmayacak kadar uzundu, bu yüzden yaptığın düzenleme atlandı.",
-          "sheet_text_not_imported_recalls": "{row}. satır ({language}), 64'ten fazla farklı yanıtı geri çağırdığı için yaptığınız düzenleme dahil edilmedi. Bu satırı anket düzenleyicisinde düzenleyebilirsin.",
+          "sheet_text_not_imported_recalls": "{row}. satır ({language}), {max} farklı yanıttan fazlasını çağırıyor, bu yüzden bu satırdaki düzenleme dışarıda bırakıldı. Düzenlemeyi anket düzenleyicisinde yapabilirsin.",
           "sheets_skipped": "Yalnızca ilk sayfa okundu. Okunmayanlar: {sheets}.",
           "table_as_matrix": "Bu soru dosyada tablo olarak yer alıyor ve matris olarak içe aktarıldı. Satırlarını ve sütunlarını kontrol et.",
           "targeting_filter_removed": "{count, plural, one {# hedefleme filtresi kaldırıldı} other {# hedefleme filtresi kaldırıldı}}: filtrelerdeki segmentler ve anketler, dosyanın geldiği çalışma alanına aittir.",

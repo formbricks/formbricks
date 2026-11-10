@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "A linha {row} foi ignorada: o Tipo dela não é um tipo de pergunta nem um campo como \"Opção 3\".",
           "sheet_row_skipped_unsupported_type": "A linha {row} foi ignorada: perguntas de seleção de imagem e do Cal.com não podem ser adicionadas por planilha. Adicione-as no editor.",
           "sheet_text_not_imported": "A linha {row} ({language}) era longa demais para uma célula na exportação, então a edição dela foi ignorada.",
-          "sheet_text_not_imported_recalls": "A linha {row} ({language}) recupera mais de 64 respostas diferentes, então a edição dela foi deixada de fora. Edite-a no editor de pesquisas.",
+          "sheet_text_not_imported_recalls": "A linha {row} ({language}) recupera mais de {max} respostas diferentes, então a edição dela foi deixada de fora. Edite-a no editor de pesquisas.",
           "sheets_skipped": "Apenas a primeira planilha foi lida. Não lidas: {sheets}.",
           "table_as_matrix": "Esta pergunta é uma tabela no arquivo e foi importada como matriz. Confira as linhas e colunas dela.",
           "targeting_filter_removed": "{count, plural, one {# filtro de segmentação foi removido} many {# de filtros de segmentação foram removidos} other {# filtros de segmentação foram removidos}}: segmentos e pesquisas em filtros pertencem ao workspace de onde o arquivo veio.",

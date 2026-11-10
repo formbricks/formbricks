@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "Rij {row} is overgeslagen: het type is geen vraagtype of veld zoals \"Choice 3\".",
           "sheet_row_skipped_unsupported_type": "Rij {row} is overgeslagen: afbeeldingskeuze- en Cal.com-vragen kunnen niet vanuit een spreadsheet worden toegevoegd. Voeg ze toe in de editor.",
           "sheet_text_not_imported": "Rij {row} ({language}) was bij het exporteren te lang voor één cel, dus je bewerking is overgeslagen.",
-          "sheet_text_not_imported_recalls": "Rij {row} ({language}) verwijst naar meer dan 64 verschillende antwoorden, daarom is de bewerking niet meegenomen. Pas de rij aan in de enquête-editor.",
+          "sheet_text_not_imported_recalls": "Rij {row} ({language}) herhaalt meer dan {max} verschillende antwoorden, dus je bewerking is weggelaten. Bewerk de rij in de vragenlijsteditor.",
           "sheets_skipped": "Alleen het eerste werkblad is gelezen. Niet gelezen: {sheets}.",
           "table_as_matrix": "Deze vraag is een tabel in het bestand en is geïmporteerd als matrix. Controleer de rijen en kolommen.",
           "targeting_filter_removed": "{count, plural, one {# targetingfilter is} other {# targetingfilters zijn}} verwijderd: segmenten en enquêtes in filters horen bij de workspace waaruit het bestand afkomstig is.",

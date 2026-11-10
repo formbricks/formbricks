@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "Rad {row} hoppades över: dess typ är varken en frågetyp eller ett fält som till exempel \"Choice 3\".",
           "sheet_row_skipped_unsupported_type": "Rad {row} hoppades över: bildval och Cal.com-frågor kan inte läggas till från ett kalkylblad. Lägg till dem i redigeraren.",
           "sheet_text_not_imported": "Rad {row} ({language}) var för lång för en cell när den exporterades, så ändringen av den hoppades över.",
-          "sheet_text_not_imported_recalls": "Rad {row} ({language}) hänvisar till fler än 64 olika svar, så ändringen har hoppats över. Redigera raden i enkätredigeraren.",
+          "sheet_text_not_imported_recalls": "Rad {row} ({language}) hämtar fler än {max} olika svar, så ändringen av den har lämnats utanför. Redigera den i enkätredigeraren.",
           "sheets_skipped": "Endast det första bladet lästes. Inte lästa: {sheets}.",
           "table_as_matrix": "Den här frågan är en tabell i filen och importerades som en matris. Kontrollera dess rader och kolumner.",
           "targeting_filter_removed": "{count, plural, one {# målgruppsfilter har} other {# målgruppsfilter har}} tagits bort: segment och enkäter i filter tillhör den arbetsyta som filen kom från.",

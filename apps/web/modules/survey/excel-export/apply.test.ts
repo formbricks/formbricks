@@ -175,7 +175,7 @@ describe("applyExcelExport: texts", () => {
     expect(applied.issues).toContainEqual({
       code: "sheet_text_not_imported",
       severity: "warning",
-      params: expect.objectContaining({ language: "en", cause: "too_many_recalls" }),
+      params: expect.objectContaining({ language: "en", cause: "too_many_recalls", max: 64 }),
     });
   });
 

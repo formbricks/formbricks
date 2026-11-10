@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "{row}行目はスキップされました。「タイプ」が質問タイプでも、「選択肢3」などのフィールドでもありません。",
           "sheet_row_skipped_unsupported_type": "{row}行目はスキップされました。画像選択やCal.comの質問は、シートからは追加できません。エディタで追加してください。",
           "sheet_text_not_imported": "{row}行目({language})は、エクスポート時に1つのセルに収まらないほど長かったため、編集内容は反映されませんでした。",
-          "sheet_text_not_imported_recalls": "{row}行目（{language}）には64を超える異なる回答が記録されているため、この行の編集内容は反映されませんでした。アンケートエディタで編集してください。",
+          "sheet_text_not_imported_recalls": "{row}行目（{language}）は{max}個を超える異なる回答を呼び出しているため、この編集は反映されませんでした。アンケートエディタで編集してください。",
           "sheets_skipped": "最初のシートのみ読み込まれました。読み込まれなかったシート: {sheets}",
           "table_as_matrix": "この質問はファイル内ではテーブルでしたが、マトリクスとしてインポートされました。行と列を確認してください。",
           "targeting_filter_removed": "{count, plural, other {ターゲティングフィルター #件を削除しました}}: フィルター内のセグメントとアンケートは、ファイルの元のワークスペースに属しています。",

@@ -435,7 +435,7 @@ class ExcelExportApplication {
       this.issues.push({
         code: "sheet_text_not_imported",
         severity: "warning",
-        params: { ...params, cause: "too_many_recalls" },
+        params: { ...params, cause: "too_many_recalls", max: RECALL_LABELS_MAX },
       });
       return null;
     }

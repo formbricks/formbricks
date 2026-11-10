@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "Zeile {row} wurde übersprungen: Der Typ ist weder ein Fragetyp noch ein Feld wie \"Choice 3\".",
           "sheet_row_skipped_unsupported_type": "Zeile {row} wurde übersprungen: Bildauswahl- und Cal.com-Fragen können nicht über eine Tabelle hinzugefügt werden. Füge sie im Editor hinzu.",
           "sheet_text_not_imported": "Zeile {row} ({language}) war beim Export zu lang für eine Zelle, daher wurde die Änderung übersprungen.",
-          "sheet_text_not_imported_recalls": "Zeile {row} ({language}) enthält mehr als 64 verschiedene Antworten, daher wurde die Änderung nicht übernommen. Bearbeite sie im Umfrage-Editor.",
+          "sheet_text_not_imported_recalls": "Zeile {row} ({language}) greift auf mehr als {max} verschiedene Antworten zurück, daher wurde die Änderung nicht übernommen. Bearbeite sie im Umfrage-Editor.",
           "sheets_skipped": "Es wurde nur das erste Tabellenblatt gelesen. Nicht gelesen: {sheets}.",
           "table_as_matrix": "Diese Frage ist in der Datei eine Tabelle und wurde als Matrix importiert. Überprüfe die Zeilen und Spalten.",
           "targeting_filter_removed": "{count, plural, one {# Targeting-Filter wurde} other {# Targeting-Filter wurden}} entfernt: Segmente und Umfragen in Filtern gehören zu dem Workspace, aus dem die Datei stammt.",

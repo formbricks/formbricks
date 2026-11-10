@@ -5244,7 +5244,7 @@
           "sheet_row_skipped_unknown_type": "La ligne {row} a été ignorée : son Type n'est ni un type de question, ni un champ comme \"Choix 3\".",
           "sheet_row_skipped_unsupported_type": "La ligne {row} a été ignorée : les questions de sélection d'image et Cal.com ne peuvent pas être ajoutées depuis une feuille. Ajoute-les dans l'éditeur.",
           "sheet_text_not_imported": "La ligne {row} ({language}) était trop longue pour une seule cellule lors de l'export, sa modification a donc été ignorée.",
-          "sheet_text_not_imported_recalls": "La ligne {row} ({language}) rappelle plus de 64 réponses différentes, sa modification n'a donc pas été importée. Modifie-la dans l'éditeur de sondage.",
+          "sheet_text_not_imported_recalls": "La ligne {row} ({language}) rappelle plus de {max} réponses différentes, donc sa modification n'a pas été prise en compte. Modifie-la dans l'éditeur d'enquêtes.",
           "sheets_skipped": "Seule la première feuille a été lue. Non lues : {sheets}.",
           "table_as_matrix": "Cette question est un tableau dans le fichier et a été importée sous forme de matrice. Vérifie ses lignes et ses colonnes.",
           "targeting_filter_removed": "{count, plural, one {# filtre de ciblage a été supprimé} many {# de filtres de ciblage ont été supprimés} other {# filtres de ciblage ont été supprimés}} : les segments et les enquêtes dans les filtres appartiennent à l'espace de travail d'où provient le fichier.",
