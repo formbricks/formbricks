@@ -18,10 +18,38 @@ import { subtractTimeUnit } from "../date-utils";
  * and {@link getSurveyInteractionWindowStart}; the in-memory path additionally uses the evaluators below.
  */
 
+/**
+ * ENG-6870: `any` scope means "any **workspace-visible** survey" — a survey every member of the
+ * workspace (and every API key) may read, by `getEffectiveVisibility`. A restricted or pending survey's
+ * displays and responses never count for it, so a segment cannot reveal who interacted with a survey
+ * hidden from whoever reads its members or a targeted survey's responses, while "has not seen any survey
+ * in 7 days" keeps working for every author. `specific` scope is unaffected: naming a survey requires
+ * seeing it, which the write and evaluation guards enforce (`segmentFiltersReadHiddenSurvey`).
+ *
+ * The Prisma path applies `effectivelyWorkspaceVisibleWhere`; the in-memory path reads the same fact off
+ * each row's `countsForAnySurvey`, which the contact sync fills from `effectivelyRestrictedWhere` (the
+ * same rule's complement) only when a segment needs it ({@link hasAnyScopeInteractionFilter}).
+ */
+export const hasAnyScopeInteractionFilter = (filters: TBaseFilters): boolean =>
+  // Stored rows are read as they are: a malformed node simply has no `any` filter.
+  Array.isArray(filters) &&
+  filters.some((filter) => {
+    const resource = filter?.resource;
+    if (!resource) return false;
+    if (Array.isArray(resource)) return hasAnyScopeInteractionFilter(resource);
+    return (
+      isResourceFilter(resource) &&
+      resource.root?.type === "surveyInteraction" &&
+      (resource as TSegmentSurveyInteractionFilter).value?.surveyScope === "any"
+    );
+  });
+
 /** The minimal display row shape needed to evaluate a "seen" interaction in memory. */
 export interface TContactDisplayRow {
   surveyId: string;
   createdAt: Date;
+  /** Whether the row's survey is workspace-visible, so the row counts for `any` scope. */
+  countsForAnySurvey: boolean;
 }
 
 /** The minimal response row shape needed to evaluate "started"/"completed" interactions in memory. */
@@ -29,6 +57,8 @@ export interface TContactResponseRow {
   surveyId: string;
   createdAt: Date;
   finished: boolean;
+  /** Whether the row's survey is workspace-visible, so the row counts for `any` scope. */
+  countsForAnySurvey: boolean;
 }
 
 /**
@@ -77,8 +107,10 @@ export const getSurveyInteractionWindowStart = (
   now: Date
 ): Date => subtractTimeUnit(now, value.within.amount, value.within.unit);
 
-const isSurveyInScope = (surveyId: string, value: TSegmentSurveyInteractionFilterValue): boolean =>
-  value.surveyScope === "any" || value.surveyIds.includes(surveyId);
+const isSurveyInScope = (
+  row: TContactDisplayRow | TContactResponseRow,
+  value: TSegmentSurveyInteractionFilterValue
+): boolean => (value.surveyScope === "any" ? row.countsForAnySurvey : value.surveyIds.includes(row.surveyId));
 
 /**
  * Evaluates a single survey-interaction filter in memory. Mirrors
@@ -97,13 +129,11 @@ export const evaluateSurveyInteractionFilterInMemory = (
 
   const hasMatch =
     semantics.source === "displays"
-      ? data.displays.some(
-          (display) => display.createdAt >= windowStart && isSurveyInScope(display.surveyId, value)
-        )
+      ? data.displays.some((display) => display.createdAt >= windowStart && isSurveyInScope(display, value))
       : data.responses.some(
           (response) =>
             response.createdAt >= windowStart &&
-            isSurveyInScope(response.surveyId, value) &&
+            isSurveyInScope(response, value) &&
             (!semantics.requireFinished || response.finished)
         );
 

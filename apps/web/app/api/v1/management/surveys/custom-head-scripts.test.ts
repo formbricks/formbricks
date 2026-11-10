@@ -112,7 +112,9 @@ describe("PUT /api/v1/management/surveys/[surveyId] custom head scripts", () => 
     const { response } = await put({ name: "Renamed" });
 
     expect(response.status).toBe(200);
-    expect(updateSurvey).toHaveBeenCalledWith(expect.objectContaining({ customHeadScripts: script }));
+    expect(updateSurvey).toHaveBeenCalledWith(expect.objectContaining({ customHeadScripts: script }), {
+      targetingActor: { enforced: true, kind: "apiKey" },
+    });
   });
 
   test("lets a manage API key set survey head scripts", async () => {
@@ -121,7 +123,9 @@ describe("PUT /api/v1/management/surveys/[surveyId] custom head scripts", () => 
     const { response } = await put({ customHeadScripts: script });
 
     expect(response.status).toBe(200);
-    expect(updateSurvey).toHaveBeenCalledWith(expect.objectContaining({ customHeadScripts: script }));
+    expect(updateSurvey).toHaveBeenCalledWith(expect.objectContaining({ customHeadScripts: script }), {
+      targetingActor: { enforced: true, kind: "apiKey" },
+    });
   });
 });
 

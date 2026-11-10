@@ -1,6 +1,11 @@
 import { type CacheKey, type CustomCacheNamespace } from "@/types/keys";
 import { makeCacheKey } from "./utils/key";
 
+const taggedDay = (day: string): string => {
+  if (!day) throw new Error("Invalid Cache key: Parts cannot be empty");
+  return `{${day}}`;
+};
+
 /**
  * Enterprise-grade cache key generator following industry best practices
  * Pattern: fb:\{resource\}:\{identifier\}:\{subResource\}
@@ -33,12 +38,22 @@ export const createCacheKey = {
   // Postgres, and the sets of creatives with totals not yet copied. Counters, not a cache: they carry a
   // TTL of about two days and are never invalidated.
   creativeStats: {
+    // Redis Cluster requires every key in a Lua call to share one hash slot. Each script handles
+    // one UTC day, so keep that day's pending/flushing sets and creative hashes in the same slot.
     devices: (day: string, creativeId: string): CacheKey =>
-      makeCacheKey("creative-stats", day, creativeId, "devices"),
+      makeCacheKey("creative-stats", taggedDay(day), creativeId, "devices"),
     pages: (day: string, creativeId: string): CacheKey =>
+      makeCacheKey("creative-stats", taggedDay(day), creativeId, "pages"),
+    pending: (day: string): CacheKey => makeCacheKey("creative-stats", taggedDay(day), "pending"),
+    flushing: (day: string): CacheKey => makeCacheKey("creative-stats", taggedDay(day), "flushing"),
+    // Read for the two-day counter TTL after upgrading from the untagged format. Old workers may
+    // still write these during a rolling deployment on standalone Redis.
+    legacyDevices: (day: string, creativeId: string): CacheKey =>
+      makeCacheKey("creative-stats", day, creativeId, "devices"),
+    legacyPages: (day: string, creativeId: string): CacheKey =>
       makeCacheKey("creative-stats", day, creativeId, "pages"),
-    pending: (day: string): CacheKey => makeCacheKey("creative-stats", day, "pending"),
-    flushing: (day: string): CacheKey => makeCacheKey("creative-stats", day, "flushing"),
+    legacyPending: (day: string): CacheKey => makeCacheKey("creative-stats", day, "pending"),
+    legacyFlushing: (day: string): CacheKey => makeCacheKey("creative-stats", day, "flushing"),
   },
 
   // Organization-related keys

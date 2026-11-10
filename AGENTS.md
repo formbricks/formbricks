@@ -40,6 +40,7 @@ upgrade requires.
 - Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
 - **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
 - After adding or changing an en-US string, run `pnpm i18n` when `LINGO_API_KEY` is set. Without it (cloud sessions), commit `en-US.json` alone: Lingo.dev auto-translates from en-US on commit.
+- On a merge conflict in `apps/web/locales/`, `packages/surveys/locales/` or their `i18n.lock`, run `pnpm i18n:merge`.
 
 ## Coding Standards
 
@@ -66,6 +67,8 @@ Do not rely on training data for Next.js behavior in this repo. Before any Next.
 
 Versioned skills live in `.agents/skills/`; `.claude/skills/` contains symlinks to them. Review with the
 `code-review` skill, whose Standards pass requires `CODING_STANDARDS.md`.
+When the user names a workflow skill by slash (`/implement`, `/implement-spec`, `/grill-with-docs`, `/to-spec`,
+`/to-tickets`, `/retro`), read `.agents/skills/<name>/SKILL.md` and follow it; they are missing from your skill list.
 
 ### Issue tracker
 

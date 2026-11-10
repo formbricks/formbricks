@@ -26,6 +26,8 @@ Read the outline from top to bottom. That is the order a respondent moves throug
 * **Jumps that land elsewhere.** A jump, or an **Otherwise go to**, into a block whose show-if reads only questions the jump passes gets a warning under it, such as *Block 3 will always be skipped on this path: its show-if reads “services”, which this jump skips.* Those questions have no answer on that path, so the show-if never matches and respondents go to the block after it. Jump to an earlier block, or change the show-if.
 * **Endings.** The endings are listed last, each with a pink icon. A redirect ending shows the address it sends respondents to.
 
+![A rule before the first question that jumps to the Savings block when channel equals savings-campaign, with the warning that Savings will always be skipped on this path because its show-if reads accounts, which the jump skips](/images/surveys/general-features/flow-tab/always-skipped-jump.webp)
+
 The Flow tab opens with every block folded down to its row. Click a block's row to open or fold just that block, or use **Expand** to open them all; once all are open, the same button reads **Collapse**. Switching to another tab and back keeps the blocks you opened. The header also counts your blocks and endings, and its (i) explains how to read the outline.
 
 ## Editing logic

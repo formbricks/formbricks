@@ -21,6 +21,13 @@ import {
 } from "./__mock__/survey.mock";
 import { createSurvey, getSurvey, updateSurvey, updateSurveyInternal } from "./service";
 
+const OWNER_TARGETING_ACTOR = {
+  enforced: true,
+  isOrganizationAdmin: true,
+  kind: "user",
+  userId: "owner",
+} as const;
+
 /**
  * ENG-2949: the editor's save and autosave hand `updateSurveyInternal` the whole survey, custom CSS
  * included in its stored shape. These pin that the shared custom CSS service decides what is written:
@@ -282,7 +289,7 @@ describe("createSurvey custom CSS", () => {
     await createSurvey(
       mockSurveyOutput.workspaceId,
       { ...createSurveyInput, customCss: storedCss } as never,
-      { creationFacts: { ownerId: null, visibility: "workspace" } }
+      { creationFacts: { ownerId: null, visibility: "workspace" }, targetingActor: OWNER_TARGETING_ACTOR }
     );
 
     expect(vi.mocked(prisma.survey.create).mock.calls[0][0].data).not.toHaveProperty("customCss");
@@ -291,6 +298,7 @@ describe("createSurvey custom CSS", () => {
   test("writes only CSS the shared service resolved, handed in through the options", async () => {
     await createSurvey(mockSurveyOutput.workspaceId, createSurveyInput, {
       creationFacts: { ownerId: null, visibility: "workspace" },
+      targetingActor: OWNER_TARGETING_ACTOR,
       customCss: storedCss,
     });
 

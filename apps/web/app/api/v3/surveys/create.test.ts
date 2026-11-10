@@ -61,6 +61,14 @@ vi.mock("@/lib/survey/service", () => ({
   getSurveyWithCustomCss: vi.fn(),
 }));
 
+// ENG-6870: the targeting actor, resolved without the authorization backend.
+vi.mock("@/lib/survey/visibility/actor-context", () => ({
+  resolveSurveyActorContext: vi.fn(async (actor: { type: string; id: string }) =>
+    actor.type === "apiKey"
+      ? { enforced: true, kind: "apiKey" }
+      : { enforced: true, isOrganizationAdmin: false, kind: "user", userId: actor.id }
+  ),
+}));
 vi.mock("@/lib/survey/visibility/limit", () => ({
   WorkspaceSurveyLimitError: class extends Error {},
   assertWorkspaceSurveyLimit: vi.fn(),
@@ -249,7 +257,12 @@ describe("createV3Survey", () => {
           expect.objectContaining({ default: false, enabled: true }),
         ],
       }),
-      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
+      {
+        creationFacts: WORKSPACE_FACTS,
+        privateSegmentFilters: [],
+        customCss: null,
+        targetingActor: expect.anything(),
+      }
     );
     expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
@@ -320,7 +333,12 @@ describe("createV3Survey", () => {
           expect.objectContaining({ language: expect.objectContaining({ code: "fr-FR" }), enabled: false }),
         ]),
       }),
-      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
+      {
+        creationFacts: WORKSPACE_FACTS,
+        privateSegmentFilters: [],
+        customCss: null,
+        targetingActor: expect.anything(),
+      }
     );
   });
 
@@ -949,7 +967,12 @@ describe("createV3Survey", () => {
           delay: 5,
           triggers: [{ actionClass }],
         }),
-        { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
+        {
+          creationFacts: WORKSPACE_FACTS,
+          privateSegmentFilters: [],
+          customCss: null,
+          targetingActor: expect.anything(),
+        }
       );
       // No targeting filters → empty private segment, no entitlement check.
       expect(resolveV3ContactsEntitlement).not.toHaveBeenCalled();
@@ -970,6 +993,7 @@ describe("createV3Survey", () => {
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.objectContaining({ type: "app" }), {
         creationFacts: WORKSPACE_FACTS,
         privateSegmentFilters: attributeFilters,
+        targetingActor: expect.anything(),
         customCss: null,
       });
       expect(getSurveyWithCustomCss).toHaveBeenCalledWith(appSurveyId);
@@ -1039,6 +1063,7 @@ describe("createV3Survey", () => {
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.anything(), {
         creationFacts: { ownerId: "user_1", visibility: "restricted" },
         privateSegmentFilters: [],
+        targetingActor: expect.anything(),
         customCss: null,
       });
     });
@@ -1102,6 +1127,7 @@ describe("createV3Survey custom CSS (ENG-3641)", () => {
       {
         creationFacts: WORKSPACE_FACTS,
         privateSegmentFilters: [],
+        targetingActor: expect.anything(),
         customCss: {
           light: { source: "a{}", compiled: "@layer fb-survey{x}" },
           dark: null,

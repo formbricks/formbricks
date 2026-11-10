@@ -393,13 +393,17 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
     }
   );
 
+  test("accepts a team with no members, which can still hold workspace access", async () => {
+    expect((await update(updateBody({ members: [] }))).status).toBe(200);
+    expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody({ members: [] }));
+  });
+
   test("answers 403 when the team is gone by the time it is written", async () => {
     mocks.updateTeamDetails.mockRejectedValue(new ResourceNotFoundError("Team", TEAM_ID));
     expect((await update(updateBody())).status).toBe(403);
   });
 
   test.each([
-    ["no members", updateBody({ members: [] })],
     ["no workspaces", updateBody({ workspaces: [] })],
     ["a blank name", updateBody({ name: " " })],
     ["an unknown team role", updateBody({ members: [{ userId: USER_ID, role: "owner" }] })],

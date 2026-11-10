@@ -80,10 +80,13 @@ export default defineConfig({
       dependencies: ["chromium"],
     },
 
-    // {
-    //   name: "firefox",
-    //   use: { ...devices["Desktop Firefox"] },
-    // },
+    // Resource hints and CSP enforcement differ by browser; run the SDK journey in Firefox too.
+    {
+      name: "firefox-csp",
+      use: { ...devices["Desktop Firefox"], permissions: [] },
+      testMatch: "**/survey-csp.spec.ts",
+      grep: /SDK setup under a host CSP/,
+    },
 
     // {
     //   name: "webkit",

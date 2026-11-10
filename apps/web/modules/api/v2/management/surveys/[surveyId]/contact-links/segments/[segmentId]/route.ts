@@ -1,6 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -78,6 +79,7 @@ export const GET = async (
       const contactsResult = await getContactsInSegment(
         params.surveyId,
         params.segmentId,
+        await resolveSurveyActorContext({ type: "apiKey", id: authentication.apiKeyId }, organizationId),
         query?.limit || 10,
         query?.skip || 0,
         query?.attributeKeys

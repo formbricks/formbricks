@@ -66,16 +66,12 @@ const ID_MAX = 255;
 
 export const ZTeamSettingsFormSchema = z.object({
   name: z.string().trim().min(1, "Team name is required").max(TEAM_NAME_MAX),
-  members: z
-    .array(
-      z.object({
-        userId: z.string().trim().min(1, "Please select a member").max(ID_MAX),
-        role: ZTeamRole,
-      })
-    )
-    .min(1, {
-      error: "Please add at least one member",
-    }),
+  members: z.array(
+    z.object({
+      userId: z.string().trim().min(1, "Please select a member").max(ID_MAX),
+      role: ZTeamRole,
+    })
+  ),
   workspaces: z
     .array(
       z.object({

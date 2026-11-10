@@ -1651,7 +1651,7 @@ export function Survey({
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
-              shouldFocusOnMount={autoFocusEnabled || hasUserNavigatedRef.current}
+              shouldFocusOnMount={offset === 0 && (autoFocusEnabled || hasUserNavigatedRef.current)}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               isAutoProgressingEnabled={localSurvey.isAutoProgressingEnabled}
               onOpenExternalURL={onOpenExternalURL}
