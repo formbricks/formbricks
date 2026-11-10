@@ -6,19 +6,19 @@ import { useTranslation } from "react-i18next";
 import { TDisplayWithContact } from "@formbricks/types/displays";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import {
-  getDisplaysWithContactAction,
-  getSurveySummaryAction,
-} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
 import { ResponseToolbar } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { useResponseFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
 import ScrollToTop from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { SummaryImpressions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryImpressions";
+import {
+  listSurveyDisplays,
+  querySurveySummary,
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/api-client";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { QuotasSummary } from "@/modules/ee/quotas/components/quotas-summary";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
@@ -80,20 +80,7 @@ export const SummaryPage = ({
   const displaysFetchedRef = useRef(false);
 
   const fetchDisplays = useCallback(
-    async (offset: number) => {
-      const response = await getDisplaysWithContactAction({
-        surveyId,
-        limit: DISPLAYS_PER_PAGE,
-        offset,
-      });
-
-      if (!response?.data) {
-        const errorMessage = getFormattedErrorMessage(response);
-        throw new Error(errorMessage);
-      }
-
-      return response?.data ?? [];
-    },
+    (offset: number) => listSurveyDisplays({ surveyId, limit: DISPLAYS_PER_PAGE, offset }),
     [surveyId]
   );
 
@@ -105,8 +92,7 @@ export const SummaryPage = ({
       setDisplays(data);
       setHasMoreDisplays(data.length === DISPLAYS_PER_PAGE);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
-      setDisplaysError(errorMessage);
+      setDisplaysError(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
       setDisplays([]);
       setHasMoreDisplays(false);
     } finally {
@@ -120,8 +106,7 @@ export const SummaryPage = ({
       setDisplays((prev) => [...prev, ...data]);
       setHasMoreDisplays(data.length === DISPLAYS_PER_PAGE);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
     }
   }, [fetchDisplays, displays.length, t]);
 
@@ -135,16 +120,7 @@ export const SummaryPage = ({
   const fetchSummary = useCallback(async () => {
     // Asked about now: a refresh after midnight must not reuse yesterday's relative date window.
     const currentFilters = filterState.resolveFreshCriteria();
-    const updatedSurveySummary = await getSurveySummaryAction({
-      surveyId,
-      filterCriteria: currentFilters,
-    });
-
-    if (updatedSurveySummary?.serverError) {
-      throw new Error(getFormattedErrorMessage(updatedSurveySummary));
-    }
-
-    setSurveySummary(updatedSurveySummary?.data ?? defaultSurveySummary);
+    setSurveySummary(await querySurveySummary({ surveyId, filterCriteria: currentFilters }));
   }, [filterState.resolveFreshCriteria, surveyId]);
 
   const refreshSummary = useCallback(async () => {
@@ -162,11 +138,10 @@ export const SummaryPage = ({
     return registerAnalysisRefreshHandler(refreshSummary);
   }, [refreshSummary, registerAnalysisRefreshHandler]);
 
-  // Dedupe fetches by the actual filter VALUES. Every authenticated server action re-sets the
-  // Better Auth session cookie, and `cookies().set()` inside an action makes Next.js refresh the
-  // route; that refresh hands this component fresh `survey`/`initialSurveySummary`/`fetchSummary`
-  // references. Without this guard those new references re-fire the fetch effect → another action →
-  // another refresh, i.e. an infinite loop.
+  // Dedupe fetches by the actual filter VALUES. A route refresh (the survey status dropdown, the share
+  // modal, a reset) hands this component fresh `survey`/`initialSurveySummary`/`fetchSummary`
+  // references; without this guard they would re-fire the fetch effect for unchanged filters. (The
+  // server action this page used to call refreshed the route itself, which made that an infinite loop.)
   const lastFetchedFiltersKeyRef = useRef<string | null>(null);
 
   // Only fetch data when filters change or when there's no initial data
@@ -200,8 +175,8 @@ export const SummaryPage = ({
     if (filtersKey === lastFetchedFiltersKeyRef.current) {
       return;
     }
-    // Commit the key BEFORE awaiting so an action-triggered route refresh that re-runs this effect
-    // finds it already set and skips — this is what breaks the loop.
+    // Commit the key BEFORE awaiting so a route refresh that re-runs this effect mid-fetch finds it
+    // already set and skips.
     lastFetchedFiltersKeyRef.current = filtersKey;
 
     const fetchFilteredSummary = async () => {
@@ -213,8 +188,7 @@ export const SummaryPage = ({
         console.error(error);
         // Roll back the key on failure so re-selecting the same filter retries the fetch.
         lastFetchedFiltersKeyRef.current = null;
-        // fetchSummary throws an Error whose message is already the formatted server error.
-        toast.error(error instanceof Error ? error.message : t("common.something_went_wrong"));
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
       } finally {
         setIsLoading(false);
       }

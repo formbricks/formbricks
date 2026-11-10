@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { jsonResponse as json, routeFetch } from "@/modules/api/lib/hook-test-utils";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   generateExampleResponses,
   generatePersonalLinks,
   getSurveyEmailEmbed,
+  listSurveyDisplays,
+  querySurveySummary,
   resetSurvey,
   saveSingleUseSettings,
   sendSurveyPreviewEmail,
@@ -85,5 +88,75 @@ describe("survey summary API client", () => {
     const failure = resetSurvey(SURVEY_ID);
     await expect(failure).rejects.toBeInstanceOf(V3ApiError);
     await expect(failure).rejects.toMatchObject({ status: 403, detail });
+  });
+
+  test("POSTs the summary's filter with no timeout and revives every sample's updatedAt", async () => {
+    const UPDATED_AT = "2026-10-02T10:00:00.000Z";
+    const sample = {
+      id: "clresp1111111111111111111",
+      updatedAt: UPDATED_AT,
+      value: "Great",
+      contact: null,
+      contactAttributes: null,
+    };
+    const rating = { type: TSurveyElementTypeEnum.Rating, element: { id: "q9" }, responseCount: 1 };
+    const cards = [
+      { type: TSurveyElementTypeEnum.OpenText, element: { id: "q1" }, responseCount: 1, samples: [sample] },
+      { type: TSurveyElementTypeEnum.Date, element: { id: "q2" }, responseCount: 1, samples: [sample] },
+      { type: TSurveyElementTypeEnum.Address, element: { id: "q3" }, responseCount: 1, samples: [sample] },
+      {
+        type: TSurveyElementTypeEnum.ContactInfo,
+        element: { id: "q4" },
+        responseCount: 1,
+        samples: [sample],
+      },
+      { type: "hiddenField", id: "ref", label: "ref", responseCount: 1, samples: [sample] },
+      { type: TSurveyElementTypeEnum.FileUpload, element: { id: "q5" }, responseCount: 1, files: [sample] },
+      {
+        type: TSurveyElementTypeEnum.Signature,
+        element: { id: "q6" },
+        responseCount: 1,
+        signatures: [sample],
+      },
+      rating,
+    ];
+    const meta = { displayCount: 1, totalResponses: 1 };
+    routeFetch({
+      [`POST ${BASE}/summary/queries`]: [json({ data: { meta, dropOff: [], quotas: [], summary: cards } })],
+    });
+
+    const summary = await querySurveySummary({
+      surveyId: SURVEY_ID,
+      filterCriteria: { createdAt: { min: new Date("2026-09-01T00:00:00.000Z") } },
+    });
+
+    expect(sentBody()).toEqual({ filterCriteria: { createdAt: { min: "2026-09-01T00:00:00.000Z" } } });
+    expect(init()?.signal).toBeUndefined();
+    expect(summary.meta).toEqual(meta);
+    const revived = { ...sample, updatedAt: new Date(UPDATED_AT) };
+    expect(summary.summary).toEqual([
+      { ...cards[0], samples: [revived] },
+      { ...cards[1], samples: [revived] },
+      { ...cards[2], samples: [revived] },
+      { ...cards[3], samples: [revived] },
+      { ...cards[4], samples: [revived] },
+      { ...cards[5], files: [revived] },
+      { ...cards[6], signatures: [revived] },
+      rating,
+    ]);
+  });
+
+  test("GETs a page of displays and revives their createdAt", async () => {
+    const display = {
+      id: "cldisplay1111111111111111",
+      createdAt: "2026-10-01T10:00:00.000Z",
+      surveyId: SURVEY_ID,
+      contact: null,
+    };
+    routeFetch({ [`GET ${BASE}/displays?limit=15&offset=30`]: [json({ data: [display] })] });
+
+    expect(await listSurveyDisplays({ surveyId: SURVEY_ID, limit: 15, offset: 30 })).toEqual([
+      { ...display, createdAt: new Date("2026-10-01T10:00:00.000Z") },
+    ]);
   });
 });
