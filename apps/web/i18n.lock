@@ -4917,7 +4917,7 @@ checksums:
     workspace/surveys/import/discard_import_body: 6bd5dc5ff8d8901cffbb95ece58fbd54
     workspace/surveys/import/discard_import_title: a350d911d364d17f8ed65052bf596e47
     workspace/surveys/import/dropzone_help: e63ccb85ecba91346a457eef5d81a65b
-    workspace/surveys/import/dropzone_help_json_only: 65d57aa702634a59cf29c06e9fc4c87c
+    workspace/surveys/import/dropzone_help_json_only: cfbd36948a05ab553bef09b5c3cce894
     workspace/surveys/import/dropzone_primary: f5c2147cfaa3c7048d4f35bafcc62c24
     workspace/surveys/import/encodings/utf_16: ae9f3a8e33595dc9506b346599ec4781
     workspace/surveys/import/encodings/utf_8: 7816fd618244062e677e7ad23c0b3e43

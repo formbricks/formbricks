@@ -5080,7 +5080,7 @@
         "discard_import_body": "Het bestand wordt nog geïmporteerd. Als je sluit, stopt de import.",
         "discard_import_title": "Importeren stoppen?",
         "dropzone_help": "Formbricks-bestand (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) of Markdown (.md)",
-        "dropzone_help_json_only": "Formbricks-bestand (.json), tot 15 MB",
+        "dropzone_help_json_only": "Formbricks-bestand (.json)",
         "dropzone_primary": "Sleep een bestand hierheen of klik om er een te kiezen",
         "encodings": {
           "utf_16": "UTF-16",

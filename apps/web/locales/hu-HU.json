@@ -5080,7 +5080,7 @@
         "discard_import_body": "A fájl importálása még folyamatban van. A bezárás leállítja az importálást.",
         "discard_import_title": "Leállítja az importálást?",
         "dropzone_help": "Formbricks-fájl (.json), Qualtrics-exportfájl (.qsf), Word- (.docx), Excel- (.xlsx), CSV- (.csv) vagy Markdown-fájl (.md)",
-        "dropzone_help_json_only": "Formbricks-fájl (.json), legfeljebb 15 MB",
+        "dropzone_help_json_only": "Formbricks-fájl (.json)",
         "dropzone_primary": "Húzza ide a fájlt, vagy kattintson a kiválasztásához",
         "encodings": {
           "utf_16": "UTF-16",

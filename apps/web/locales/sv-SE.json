@@ -5080,7 +5080,7 @@
         "discard_import_body": "Filen håller fortfarande på att importeras. Om du stänger avbryts importen.",
         "discard_import_title": "Vill du avbryta importen?",
         "dropzone_help": "Formbricks-fil (.json), Qualtrics-export (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) eller Markdown (.md)",
-        "dropzone_help_json_only": "Formbricks-fil (.json), upp till 15 MB",
+        "dropzone_help_json_only": "Formbricks-fil (.json)",
         "dropzone_primary": "Släpp en fil här eller klicka för att välja en",
         "encodings": {
           "utf_16": "UTF-16",

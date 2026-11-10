@@ -5080,7 +5080,7 @@
         "discard_import_body": "Dosya hâlâ içe aktarılıyor. Kapatırsan içe aktarma durdurulur.",
         "discard_import_title": "İçe aktarma durdurulsun mu?",
         "dropzone_help": "Formbricks dosyası (.json), Qualtrics dışa aktarımı (.qsf), Word (.docx), Excel (.xlsx), CSV (.csv) veya Markdown (.md)",
-        "dropzone_help_json_only": "Formbricks dosyası (.json), en fazla 15 MB",
+        "dropzone_help_json_only": "Formbricks dosyası (.json)",
         "dropzone_primary": "Bir dosyayı buraya bırak veya seçmek için tıkla",
         "encodings": {
           "utf_16": "UTF-16",

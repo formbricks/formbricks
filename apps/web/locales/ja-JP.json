@@ -5080,7 +5080,7 @@
         "discard_import_body": "ファイルをインポート中です。閉じるとインポートが停止します。",
         "discard_import_title": "インポートを停止しますか?",
         "dropzone_help": "Formbricksファイル(.json)、Qualtricsエクスポート(.qsf)、Word(.docx)、Excel(.xlsx)、CSV(.csv)、またはMarkdown(.md)",
-        "dropzone_help_json_only": "Formbricksファイル(.json)、最大15MB",
+        "dropzone_help_json_only": "Formbricksファイル(.json)",
         "dropzone_primary": "ここにファイルをドロップするか、クリックして選択してください",
         "encodings": {
           "utf_16": "UTF-16",
