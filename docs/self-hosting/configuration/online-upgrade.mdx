@@ -71,7 +71,8 @@ Its `hub-worker` checks the embedding provider before it starts the embedding qu
 check fails. The API and other queues keep running. A successful check stays valid for 120 seconds by default
 (`EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS`), so embedding jobs that run in that window can still use up their
 retries and fail. Those records are only repaired automatically with `EMBEDDING_RECONCILE_ENABLED=true`, which is
-off by default; otherwise re-run `/app/backfill-embeddings` for them.
+off by default. Otherwise, once the provider is back, run `/app/backfill-embeddings` inside a `hub-worker` pod and,
+if taxonomy is enabled, `/app/backfill-embeddings -taxonomy`; both retry records whose attempts ran out.
 While old and new `hub-worker` pods overlap, an old pod can rewrite a vector without updating its source hash, so
 a record edited and then edited back during the rollout can keep a stale vector. Stop the old workers before the
 new ones start. If they already overlapped, clear the hash for vectors written during the rollout with
