@@ -154,7 +154,7 @@ describe("createLinearPatternMatcher", () => {
     expect(match(String.raw`^\\s$`, undefined, " ")).toBe(false);
   });
 
-  test.each([
+  test.each<[pattern: string, flags: string | undefined, reason: string]>([
     ["(?=a)a", undefined, "lookahead"],
     ["(?!a)b", undefined, "negative lookahead"],
     ["(?<=a)b", undefined, "lookbehind"],
