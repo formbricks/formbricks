@@ -5,6 +5,8 @@ import type { TIntegrationAirtableConfigData } from "@formbricks/types/integrati
 import type { TIntegrationGoogleSheetsConfigData } from "@formbricks/types/integration/google-sheet";
 import type { TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import type { TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
+import { checkEntriesMax, isPlainRecord } from "@/app/api/internal/lib/value-bounds";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 
 /** The integrations a workspace connects through OAuth and configures from its settings: all but n8n. */
 export const ZIntegrationTypeParam = ZIntegrationType.exclude(["n8n"]);
@@ -51,9 +53,21 @@ const surveyMappingShape = {
   includeContactAttributes: z.boolean().optional(),
 };
 
+/**
+ * Elements one mapping forwards. A survey has no cap on its questions of its own, so a mapping that
+ * forwards all of them gets the request-wide array cap rather than a smaller one.
+ */
+const INTEGRATION_MAPPING_ELEMENTS_MAX = V3_REQUEST_ARRAY_MAX_ITEMS;
+
+/**
+ * Entries in the PUT envelope's `config`. Only `data` is accepted once the type is known; the envelope
+ * is counted first, so a body of many unknown keys is refused before it is copied.
+ */
+export const INTEGRATION_CONFIG_MAX_ENTRIES = 100;
+
 /** The survey elements a row-shaped destination (a sheet, a table, a channel) receives. */
 const elementSelectionShape = {
-  elementIds: z.array(ZMappingText),
+  elementIds: z.array(ZMappingText).max(INTEGRATION_MAPPING_ELEMENTS_MAX),
   elements: ZMappingText,
 };
 
@@ -82,7 +96,9 @@ export const ZIntegrationMappingBody = {
     ...surveyMappingShape,
     databaseId: ZMappingText,
     databaseName: ZMappingText,
-    mapping: z.array(z.strictObject({ element: ZNotionField, column: ZNotionField })),
+    mapping: z
+      .array(z.strictObject({ element: ZNotionField, column: ZNotionField }))
+      .max(INTEGRATION_MAPPING_ELEMENTS_MAX),
   }),
   slack: z.strictObject({
     ...surveyMappingShape,
@@ -111,7 +127,14 @@ export const ZIntegrationPutBodyByType = {
  * The PUT body's envelope, as the route checks it before the type is known. The operation then parses
  * the whole body with {@link ZIntegrationPutBodyByType} for the type in the path.
  */
-export const ZIntegrationPutBody = z.strictObject({ config: z.record(z.string(), z.unknown()) });
+export const ZIntegrationPutBody = z.strictObject({
+  config: z
+    .unknown()
+    .superRefine((value, ctx) => {
+      if (isPlainRecord(value)) checkEntriesMax(ctx, value, INTEGRATION_CONFIG_MAX_ENTRIES, []);
+    })
+    .pipe(z.record(z.string(), z.unknown())),
+});
 export type TIntegrationPutBody = z.infer<typeof ZIntegrationPutBody>;
 
 /** The mappings the settings pages hold, by type, as the integration types define them. */

@@ -7,6 +7,7 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { V3_INVALID_PARAMS_MAX } from "@/app/api/v3/lib/invalid-params";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { SlackApiError } from "@/lib/slack/errors";
@@ -16,7 +17,7 @@ import { GET as CHANNELS } from "./[type]/channels/route";
 import { GET as CONNECTION } from "./[type]/connection/route";
 import { DELETE, PUT } from "./[type]/route";
 import { GET as SPREADSHEET } from "./[type]/spreadsheets/[spreadsheetId]/route";
-import { INTEGRATION_MAPPING_TEXT_MAX_LENGTH } from "./schemas";
+import { INTEGRATION_CONFIG_MAX_ENTRIES, INTEGRATION_MAPPING_TEXT_MAX_LENGTH } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
@@ -362,6 +363,58 @@ describe("PUT /api/internal/integrations/{type}", () => {
     expect((await call()).status).toBe(400);
     expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
   });
+
+  test(`takes a config of ${INTEGRATION_CONFIG_MAX_ENTRIES} entries to the type's parse, and answers 400 naming a bigger one`, async () => {
+    const config = (n: number) => ({
+      data: [],
+      ...Object.fromEntries(Array.from({ length: n - 1 }, (_, i) => [`k${i}`, 1])),
+    });
+
+    // At the cap the envelope passes, and the type's own schema refuses the unknown keys by name.
+    const tooBig = `Too big: expected object to have <=${INTEGRATION_CONFIG_MAX_ENTRIES} entries`;
+    const atCap = await (await put({ config: config(INTEGRATION_CONFIG_MAX_ENTRIES) })).json();
+    expect(atCap.invalid_params.map((param: { reason: string }) => param.reason)).not.toContain(tooBig);
+
+    const response = await put({ config: config(INTEGRATION_CONFIG_MAX_ENTRIES + 1) });
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([{ name: "config", reason: tooBig }]);
+    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    [
+      "slack",
+      "config.data.0.elementIds",
+      (n: number) => ({ ...slackMapping, elementIds: Array(n).fill("q1") }),
+    ],
+    [
+      "googleSheets",
+      "config.data.0.elementIds",
+      (n: number) => ({ ...sheetsMapping, elementIds: Array(n).fill("q1") }),
+    ],
+    [
+      "notion",
+      "config.data.0.mapping",
+      (n: number) => ({ ...notionMapping, mapping: Array(n).fill(notionMapping.mapping[0]) }),
+    ],
+  ])(
+    `%s takes a mapping of ${V3_REQUEST_ARRAY_MAX_ITEMS} elements and answers 400 naming %s past it`,
+    async (type, field, mapping) => {
+      mocks.getIntegrationByType.mockResolvedValue({
+        id: INTEGRATION_ID,
+        type,
+        workspaceId: WORKSPACE_ID,
+        config: { key: type === "googleSheets" ? GOOGLE_KEY : STORED_KEY, data: [] },
+      });
+      expect((await put({ config: { data: [mapping(V3_REQUEST_ARRAY_MAX_ITEMS)] } }, type)).status).toBe(200);
+
+      mocks.createOrUpdateIntegration.mockClear();
+      const response = await put({ config: { data: [mapping(V3_REQUEST_ARRAY_MAX_ITEMS + 1)] } }, type);
+      expect(response.status).toBe(400);
+      expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
+      expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    }
+  );
 
   test("refuses a cross-site request (CSRF)", async () => {
     const response = await put({ config: { data: [] } }, "slack", {
