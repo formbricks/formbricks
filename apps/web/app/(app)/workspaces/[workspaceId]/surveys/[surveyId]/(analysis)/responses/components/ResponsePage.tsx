@@ -92,7 +92,10 @@ export const ResponsePage = ({
 
   // Rows matching the filters, for the toolbar. Refetched with the list, so a delete or a refresh
   // keeps it honest.
-  const matchCountKey = ["surveys", surveyId, "response-count", filtersKey];
+  const matchCountKey = useMemo(
+    () => ["surveys", surveyId, "response-count", filtersKey],
+    [surveyId, filtersKey]
+  );
   const matchCountQuery = useQuery({
     queryKey: matchCountKey,
     queryFn: async () => (await getResponseCountAction({ surveyId, filterCriteria: filters }))?.data ?? null,
@@ -141,13 +144,15 @@ export const ResponsePage = ({
     () => ({
       applyOutcomes,
       // A response whose new outcome takes it out of the ticked statuses (a restored one, for Low quality) leaves
-      // the list, and the count follows.
+      // the list, and the count follows. Like a refresh, it asks about the window the list was fetched with.
       onSaved: (ids, outcome) => {
         setResponses((prev) => dropRowsOutsideStatuses(prev, ids, outcome, responseStatuses));
-        void refetchMatchCount();
+        void getResponseCountAction({ surveyId, filterCriteria: listCriteriaRef.current }).then((count) =>
+          queryClient.setQueryData(matchCountKey, count?.data ?? null)
+        );
       },
     }),
-    [applyOutcomes, responseStatuses, refetchMatchCount]
+    [applyOutcomes, responseStatuses, surveyId, queryClient, matchCountKey]
   );
 
   const refetchResponses = useCallback(async () => {
