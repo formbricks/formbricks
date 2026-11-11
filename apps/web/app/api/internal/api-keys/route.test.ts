@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { PICKED_ITEMS_MAX } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { GET, POST } from "./route";
 
@@ -258,6 +259,29 @@ describe("POST /api/internal/api-keys", () => {
     const response = await createRequest(body);
 
     expect(response.status).toBe(400);
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  test(`takes ${PICKED_ITEMS_MAX} workspace permissions and answers 400 naming the list past it`, async () => {
+    const permissions = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        workspaceId: `clwork${String(i).padStart(19, "0")}`,
+        permission: "read",
+      }));
+
+    expect(
+      (await createRequest({ ...validBody, workspacePermissions: permissions(PICKED_ITEMS_MAX) })).status
+    ).toBe(201);
+
+    mocks.create.mockClear();
+    const response = await createRequest({
+      ...validBody,
+      workspacePermissions: permissions(PICKED_ITEMS_MAX + 1),
+    });
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      expect.objectContaining({ name: "workspacePermissions" }),
+    ]);
     expect(mocks.create).not.toHaveBeenCalled();
   });
 

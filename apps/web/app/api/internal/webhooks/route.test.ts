@@ -8,6 +8,7 @@ import {
   TooManyRequestsError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { MAX_SEGMENT_SURVEYS } from "@formbricks/types/segment";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { DELETE, PUT } from "./[webhookId]/route";
@@ -261,6 +262,19 @@ describe("POST /api/internal/webhooks", () => {
     ["an over-long secret", { ...settings, secret: "s".repeat(1025) }],
   ])("rejects %s with 400", async (_label, body) => {
     expect((await create(body)).status).toBe(400);
+    expect(mocks.createWebhook).not.toHaveBeenCalled();
+  });
+
+  test(`takes ${MAX_SEGMENT_SURVEYS} surveys and answers 400 naming the list past it`, async () => {
+    const surveyIds = (n: number) =>
+      Array.from({ length: n }, (_, i) => `clsurv${String(i).padStart(19, "0")}`);
+
+    expect((await create({ ...settings, surveyIds: surveyIds(MAX_SEGMENT_SURVEYS) })).status).not.toBe(400);
+
+    mocks.createWebhook.mockClear();
+    const response = await create({ ...settings, surveyIds: surveyIds(MAX_SEGMENT_SURVEYS + 1) });
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: "surveyIds" })]);
     expect(mocks.createWebhook).not.toHaveBeenCalled();
   });
 

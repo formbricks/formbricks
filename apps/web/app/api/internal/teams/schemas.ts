@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { PICKED_ITEMS_MAX } from "@/app/api/internal/lib/limits";
 import { strictDeep } from "@/app/api/internal/lib/strict-schema";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { TEAM_NAME_MAX, ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 
 /** `/api/internal/teams?organizationId=`: the organization the teams are listed or created in. */
@@ -21,5 +23,11 @@ export type TTeamCreateBody = z.infer<typeof ZTeamCreateBody>;
  * are replaced by what is sent, so a client sends the full lists back, changed or not. The form's schema
  * strips unknown keys; this route-local copy rejects them in the list entries too.
  */
-export const ZTeamUpdateBody = strictDeep(ZTeamSettingsFormSchema);
+export const ZTeamUpdateBody = strictDeep(
+  ZTeamSettingsFormSchema.extend({
+    // A team can hold every member of a large organization, so members get the request-wide array cap.
+    members: ZTeamSettingsFormSchema.shape.members.max(V3_REQUEST_ARRAY_MAX_ITEMS),
+    workspaces: ZTeamSettingsFormSchema.shape.workspaces.max(PICKED_ITEMS_MAX),
+  })
+);
 export type TTeamUpdateBody = z.infer<typeof ZTeamUpdateBody>;

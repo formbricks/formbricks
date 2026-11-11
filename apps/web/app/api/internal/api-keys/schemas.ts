@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
 import { ZApiKeyPermission } from "@formbricks/types/auth";
+import { PICKED_ITEMS_MAX } from "@/app/api/internal/lib/limits";
 
 export const ZApiKeysQuery = z.object({ organizationId: z.cuid2() }).strict();
 export type TApiKeysQuery = z.infer<typeof ZApiKeysQuery>;
@@ -23,7 +24,7 @@ const ZWorkspacePermission = z.object({ workspaceId: z.cuid2(), permission: ZApi
 export const ZApiKeyCreateBody = z
   .object({
     label: ZApiKeyLabel,
-    workspacePermissions: z.array(ZWorkspacePermission).optional(),
+    workspacePermissions: z.array(ZWorkspacePermission).max(PICKED_ITEMS_MAX).optional(),
     // The shared schema strips unknown access types; a request body rejects them.
     organizationAccess: ZOrganizationAccess.strict(),
   })

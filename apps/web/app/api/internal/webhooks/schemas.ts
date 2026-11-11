@@ -1,8 +1,12 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { MAX_SEGMENT_SURVEYS } from "@formbricks/types/segment";
 import { ZWebhookInput } from "@/modules/integrations/webhooks/types/webhooks";
 
-/** Caps on what a webhook write carries (CODING_STANDARDS.md "Input Limits"); `surveyIds` has the v3 array cap. */
+/**
+ * Caps on what a webhook write carries (CODING_STANDARDS.md "Input Limits"). `surveyIds` takes as many
+ * surveys as a segment may target (`MAX_SEGMENT_SURVEYS`).
+ */
 export const WEBHOOK_NAME_MAX = 255;
 export const WEBHOOK_URL_MAX = 4096;
 /** A signing secret this API generated (`whsec_` and 44 base64 characters), echoed back by the add modal. */
@@ -18,6 +22,7 @@ export const ZWebhookIdParams = z.object({ webhookId: ZId }).strict();
 const ZWebhookSettings = ZWebhookInput.extend({
   name: ZWebhookInput.shape.name.unwrap().unwrap().max(WEBHOOK_NAME_MAX).nullable().optional(),
   url: ZWebhookInput.shape.url.max(WEBHOOK_URL_MAX),
+  surveyIds: ZWebhookInput.shape.surveyIds.unwrap().max(MAX_SEGMENT_SURVEYS).optional(),
 }).strict();
 
 /**

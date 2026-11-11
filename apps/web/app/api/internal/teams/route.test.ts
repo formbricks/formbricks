@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { PICKED_ITEMS_MAX } from "@/app/api/internal/lib/limits";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import {
   TeamAssignmentOutsideOrganizationError,
@@ -418,6 +420,39 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
     ],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await update(body)).status).toBe(400);
+    expect(mocks.updateTeamDetails).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    [
+      "members",
+      V3_REQUEST_ARRAY_MAX_ITEMS,
+      (n: number) =>
+        updateBody({
+          members: Array.from({ length: n }, (_, i) => ({
+            userId: `cluser${String(i).padStart(19, "0")}`,
+            role: "contributor",
+          })),
+        }),
+    ],
+    [
+      "workspaces",
+      PICKED_ITEMS_MAX,
+      (n: number) =>
+        updateBody({
+          workspaces: Array.from({ length: n }, (_, i) => ({
+            workspaceId: `clwork${String(i).padStart(19, "0")}`,
+            permission: "read",
+          })),
+        }),
+    ],
+  ])("takes %s up to %i entries and answers 400 naming the list past it", async (field, max, build) => {
+    expect((await update(build(max))).status).not.toBe(400);
+
+    mocks.updateTeamDetails.mockClear();
+    const response = await update(build(max + 1));
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
     expect(mocks.updateTeamDetails).not.toHaveBeenCalled();
   });
 

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
-import { ORGANIZATION_NAME_MAX } from "../schemas";
+import { ORGANIZATION_NAME_MAX, ORGANIZATION_TIME_ZONE_MAX } from "../schemas";
 import { DELETE, PATCH } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -225,6 +225,19 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
     const name = "x".repeat(ORGANIZATION_NAME_MAX);
     expect((await patch({ name })).status).toBe(200);
     expect(mocks.updateOrganization).toHaveBeenCalledWith(ORG_ID, { name });
+  });
+
+  test(`answers 400 naming a display time zone longer than ${ORGANIZATION_TIME_ZONE_MAX} characters`, async () => {
+    const response = await patch({ displayTimeZone: "Europe/".padEnd(ORGANIZATION_TIME_ZONE_MAX + 1, "x") });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      {
+        name: "displayTimeZone",
+        reason: `Too big: expected string to have <=${ORGANIZATION_TIME_ZONE_MAX} characters`,
+      },
+    ]);
+    expect(mocks.updateOrganization).not.toHaveBeenCalled();
   });
 
   test("answers 400 for a malformed organization id", async () => {

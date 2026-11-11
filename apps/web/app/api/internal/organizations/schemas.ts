@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
-import { ZOrganization, ZOrganizationUpdateInput } from "@formbricks/types/organizations";
+import { ZId, isValidIanaTimeZone } from "@formbricks/types/common";
+import { ZOrganization } from "@formbricks/types/organizations";
 
 export const ZOrganizationIdParams = z.object({ organizationId: ZId }).strict();
 
@@ -8,6 +8,20 @@ export const ZOrganizationIdParams = z.object({ organizationId: ZId }).strict();
 export const ORGANIZATION_NAME_MAX = 255;
 
 const ZOrganizationName = ZOrganization.shape.name.max(ORGANIZATION_NAME_MAX);
+
+/** Longest display time zone: IANA names run to about 30 characters (`America/Argentina/ComodRivadavia`). */
+export const ORGANIZATION_TIME_ZONE_MAX = 64;
+
+/**
+ * `ZOrganizationUpdateInput.displayTimeZone`, its length checked before the zone lookup reads it; `null`
+ * clears it.
+ */
+const ZDisplayTimeZone = z
+  .string()
+  // `abort` stops there, so the zone lookup never reads an oversized name.
+  .max(ORGANIZATION_TIME_ZONE_MAX, { abort: true })
+  .refine(isValidIanaTimeZone, { error: "Must be a valid IANA time zone" })
+  .nullable();
 
 /** `GET /api/internal/organizations` takes no parameters: it lists the caller's own organizations. */
 export const ZOrganizationsListQuery = z.object({}).strict();
@@ -32,7 +46,7 @@ export const ZOrganizationPatchBody = z
   .object({
     name: ZOrganizationName,
     isAISmartToolsEnabled: z.boolean(),
-    displayTimeZone: ZOrganizationUpdateInput.shape.displayTimeZone.unwrap(),
+    displayTimeZone: ZDisplayTimeZone,
   })
   .partial()
   .strict()
