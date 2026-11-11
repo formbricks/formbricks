@@ -29,6 +29,7 @@ vi.mock("@formbricks/database", () => ({
     invite: {
       updateMany: vi.fn(),
     },
+    $queryRaw: vi.fn(),
     $transaction: vi.fn(),
   },
 }));
@@ -138,9 +139,7 @@ describe("deleteMembership", () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
     const result = await deleteMembership(userId, organizationId);
     expect(result[0].teamId).toBe(teamId);
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
     expect(prisma.teamUser.deleteMany).toHaveBeenCalledWith({
       where: {
         userId,
@@ -206,7 +205,7 @@ describe("deleteMembership", () => {
       vi.useRealTimers();
     }
   });
-  test("retries a serializable transaction conflict up to a successful attempt", async () => {
+  test("retries a transaction conflict up to a successful attempt", async () => {
     const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
       code: PrismaErrorType.TransactionConflict,
       clientVersion: "1.0.0",
@@ -220,7 +219,7 @@ describe("deleteMembership", () => {
     expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(1);
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledTimes(1);
   });
-  test("stops retrying a serializable transaction conflict after three attempts", async () => {
+  test("stops retrying a transaction conflict after three attempts", async () => {
     const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
       code: PrismaErrorType.TransactionConflict,
       clientVersion: "1.0.0",
@@ -261,6 +260,7 @@ describe("deleteMembership", () => {
         },
         teamUser: { findMany: vi.fn(), deleteMany: vi.fn() },
         invite: { updateMany: vi.fn() },
+        $queryRaw: vi.fn(),
       };
       vi.mocked(prisma.$transaction).mockImplementation(async (transaction) =>
         (transaction as (client: unknown) => unknown)(tx)
@@ -273,9 +273,11 @@ describe("deleteMembership", () => {
       expect(tx.membership.count).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ organizationId, role: "owner" }) })
       );
-      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
+      // The owners are locked before the target and the count are read, so a concurrent owner change has
+      // committed by then (proven against real Postgres in last-owner-race.integration.test.ts).
+      expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+        tx.membership.findUnique.mock.invocationCallOrder[0]
+      );
       expect(prisma.membership.delete).not.toHaveBeenCalled();
       expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
     });

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   getOrganizationIdFromInviteId: vi.fn(),
   getInvite: vi.fn(),
   getOrganizationOwnerCount: vi.fn(),
+  lockOrganizationOwners: vi.fn(),
   updateInvite: vi.fn(),
   updateMembership: vi.fn(),
 }));
@@ -26,10 +27,6 @@ vi.mock("@formbricks/database", () => ({
   // The last-owner guard runs the owner-count re-check and the update inside one transaction;
   // the fake just invokes the callback with a stand-in tx so both still hit the mocks below.
   prisma: { $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback({})) },
-}));
-
-vi.mock("@formbricks/database/prisma", () => ({
-  Prisma: { TransactionIsolationLevel: { Serializable: "Serializable" } },
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -87,6 +84,7 @@ vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
 
 vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
   getOrganizationOwnerCount: mocks.getOrganizationOwnerCount,
+  lockOrganizationOwners: mocks.lockOrganizationOwners,
 }));
 
 const organizationId = "cm9gptbhg0000192zceq9ayuc";
@@ -125,6 +123,11 @@ describe("updateMembershipAction", () => {
 
     await expect(callUpdateMembership("member")).rejects.toThrow(ValidationError);
     expect(mocks.updateMembership).not.toHaveBeenCalled();
+    // Counted under the owners' lock, the one every last-owner check takes.
+    expect(mocks.lockOrganizationOwners).toHaveBeenCalledWith(expect.anything(), organizationId);
+    expect(mocks.lockOrganizationOwners.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.getOrganizationOwnerCount.mock.invocationCallOrder[0]
+    );
   });
 
   test("allows demoting an owner when the organization has another owner", async () => {

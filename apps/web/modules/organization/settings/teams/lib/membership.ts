@@ -16,18 +16,6 @@ import { validateInputs } from "@/lib/utils/validate";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 
-/**
- * One serializable transaction, run again when Postgres aborts it over a concurrent one. Both the
- * shared conflict check and the retry live in `prisma-error`, so a driver adapter's own conflict error
- * is retried as well as Prisma's P2034.
- */
-const runSerializableTransactionWithRetry = <T>(
-  transaction: (tx: Prisma.TransactionClient) => Promise<T>
-): Promise<T> =>
-  retryOnTransactionConflict(() =>
-    prisma.$transaction(transaction, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
-  );
-
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
     validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
@@ -111,8 +99,8 @@ const getOrganizationOwnerCountCached = reactCache((organizationId: string) =>
 );
 
 /**
- * Pass `tx` when this must be read inside the same transaction as the mutation it's guarding
- * (see updateMembershipAction) so a Serializable transaction can catch concurrent demotions;
+ * Pass `tx` when this must be read inside the same transaction as the mutation it's guarding, after
+ * `lockOrganizationOwners(tx, organizationId)`, so concurrent owner changes cannot both pass the check;
  * without `tx` the result is request-cached like the rest of this module's reads.
  */
 export const getOrganizationOwnerCount = async (
@@ -125,6 +113,43 @@ export const getOrganizationOwnerCount = async (
 
   return getOrganizationOwnerCountCached(organizationId);
 };
+
+/**
+ * Locks the organization's owner memberships until `tx` ends, in a fixed order. Take it first in any
+ * transaction that can leave an owner deactivated or no longer an owner, then count with
+ * `getOrganizationOwnerCount(organizationId, tx)`: a second such transaction waits here, and at Read
+ * Committed its count then sees the first one's change, so two of them cannot both pass the
+ * last-owner check. Serializable isolation alone does not give this: Postgres only detects the clash
+ * between two Serializable transactions, and the data retention members sweep runs at Read Committed.
+ * Taken before the user row, in the same order as that sweep, so the two never deadlock.
+ */
+export const lockOrganizationOwners = async (
+  tx: Prisma.TransactionClient,
+  organizationId: string
+): Promise<void> => {
+  await tx.$queryRaw`
+    SELECT 1 FROM "Membership"
+    WHERE "organizationId" = ${organizationId} AND "role" = 'owner'
+    ORDER BY "userId"
+    FOR UPDATE
+  `;
+};
+
+/**
+ * One transaction holding the organization's owner lock (`lockOrganizationOwners`), run again when
+ * Postgres aborts it over a deadlock. Both the shared conflict check and the retry live in
+ * `prisma-error`, so a driver adapter's own conflict error is retried as well as Prisma's P2034.
+ */
+const runOwnerLockedTransaction = <T>(
+  organizationId: string,
+  transaction: (tx: Prisma.TransactionClient) => Promise<T>
+): Promise<T> =>
+  retryOnTransactionConflict(() =>
+    prisma.$transaction(async (tx) => {
+      await lockOrganizationOwners(tx, organizationId);
+      return transaction(tx);
+    })
+  );
 
 export const deleteMembership = async (
   userId: string,
@@ -139,9 +164,9 @@ export const deleteMembership = async (
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
-    const deletedTeamMemberships = await runSerializableTransactionWithRetry(async (tx) => {
-      // The last-owner guard is read in the same serializable transaction as the delete, so two owners
-      // removed at once cannot both see "another owner is left" and leave the organization with none.
+    const deletedTeamMemberships = await runOwnerLockedTransaction(organizationId, async (tx) => {
+      // The last-owner guard is read under the owners' lock, in the same transaction as the delete, so two
+      // owners removed at once cannot both see "another owner is left" and leave the organization with none.
       const target = await tx.membership.findUnique({
         where: { userId_organizationId: { organizationId, userId } },
         select: { role: true, user: { select: { isActive: true } } },

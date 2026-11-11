@@ -7,6 +7,7 @@ import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocat
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { sendMemberRetentionNoticeEmail } from "@/modules/email";
+import { lockOrganizationOwners } from "@/modules/organization/settings/teams/lib/membership";
 import { formatRetentionDate } from "../lib/display";
 import {
   type TRetentionTargetState,
@@ -120,12 +121,7 @@ export const deactivateDueMember = async (
   noticeDueAtOrBefore: Date
 ): Promise<TDeactivation> =>
   runSweepTransaction(async (tx) => {
-    await tx.$queryRaw`
-      SELECT 1 FROM "Membership"
-      WHERE "organizationId" = ${context.policy.organizationId} AND "role" = 'owner'
-      ORDER BY "userId"
-      FOR UPDATE
-    `;
+    await lockOrganizationOwners(tx, context.policy.organizationId);
     await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
     await lockUnchangedRetentionPolicy(tx, context.policy);
     const [member] = await readCandidates(tx, context, { userId, noticeDueAtOrBefore });
