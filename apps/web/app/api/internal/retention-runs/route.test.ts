@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { MAX_CURSOR_LENGTH } from "@/app/api/v3/lib/keyset-cursor";
 import { GET } from "./route";
 
 // vitestSetup mocks `createHash`, which would give every cursor fingerprint the same value and let a
@@ -60,6 +61,18 @@ describe("GET /api/internal/retention-runs", () => {
     mockCan.mockResolvedValue(true);
     mockIsEnabled.mockResolvedValue(true);
     mockListPage.mockResolvedValue([run(RUN_B, "2030-01-02T00:00:00Z")]);
+  });
+
+  test(`answers 400 naming a cursor longer than ${MAX_CURSOR_LENGTH} characters, before decoding it`, async () => {
+    const response = await get(`organizationId=${ORG_ID}&cursor=${"a".repeat(MAX_CURSOR_LENGTH + 1)}`);
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "cursor",
+        reason: `Too big: expected string to have <=${MAX_CURSOR_LENGTH} characters`,
+      }),
+    ]);
   });
 
   test("returns a page of History for an owner or manager, empty runs hidden by default", async () => {
