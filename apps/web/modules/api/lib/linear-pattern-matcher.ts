@@ -25,47 +25,62 @@ import type { TPatternMatcher } from "@formbricks/surveys/validation";
 // ECMAScript `\s`: WhiteSpace and LineTerminator (ECMA-262 §22.2.2.9, CharacterClassEscape).
 const JS_WHITESPACE_CLASS_BODY = String.raw`\x{9}-\x{D}\x{20}\x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}`;
 
+interface Token {
+  /** What the token becomes in the rewritten pattern. */
+  text: string;
+  /** How many characters of the source it consumes. */
+  length: number;
+  /** Whether the next token is inside a bracket expression. */
+  inClass: boolean;
+}
+
+/** `\s` becomes JavaScript's whitespace set; every other escape is kept as written. */
+const readEscape = (next: string | undefined, inClass: boolean): Token => {
+  if (next !== "s") return { text: `\\${next ?? ""}`, length: 2, inClass };
+  return {
+    text: inClass ? JS_WHITESPACE_CLASS_BODY : `[${JS_WHITESPACE_CLASS_BODY}]`,
+    length: 2,
+    inClass,
+  };
+};
+
+/** `[`, an optional `^`, and a `]` straight after them, which RE2 reads as a literal. */
+const readClassOpening = (source: string, start: number): Token => {
+  let end = start + 1;
+  if (source[end] === "^") end++;
+  if (source[end] === "]") end++;
+  return { text: source.slice(start, end), length: end - start, inClass: true };
+};
+
+/** Inside a bracket expression: a POSIX class such as `[:alpha:]` ends in its own `]`. */
+const readInClass = (source: string, start: number): Token => {
+  if (source.startsWith("[:", start)) {
+    const end = source.indexOf(":]", start + 2);
+    if (end !== -1) return { text: source.slice(start, end + 2), length: end + 2 - start, inClass: true };
+  }
+  const char = source[start];
+  return { text: char, length: 1, inClass: char !== "]" };
+};
+
+const readToken = (source: string, start: number, inClass: boolean): Token => {
+  const char = source[start];
+  if (char === "\\") return readEscape(source[start + 1], inClass);
+  if (inClass) return readInClass(source, start);
+  if (char === "[") return readClassOpening(source, start);
+  return { text: char, length: 1, inClass: false };
+};
+
 /** Rewrites every `\s` in an RE2 pattern to JavaScript's whitespace set, inside and outside classes. */
 const withJavaScriptWhitespace = (source: string): string => {
   let out = "";
   let inClass = false;
+  let position = 0;
 
-  for (let i = 0; i < source.length; i++) {
-    const char = source[i];
-
-    if (char === "\\") {
-      const next = source[i + 1];
-      if (next === "s") {
-        out += inClass ? JS_WHITESPACE_CLASS_BODY : `[${JS_WHITESPACE_CLASS_BODY}]`;
-      } else {
-        out += char + (next ?? "");
-      }
-      i++;
-      continue;
-    }
-
-    if (inClass) {
-      // A POSIX class such as `[:alpha:]` sits inside a bracket expression and ends in its own `]`.
-      if (source.startsWith("[:", i)) {
-        const end = source.indexOf(":]", i + 2);
-        if (end !== -1) {
-          out += source.slice(i, end + 2);
-          i = end + 1;
-          continue;
-        }
-      }
-      if (char === "]") inClass = false;
-      out += char;
-      continue;
-    }
-
-    out += char;
-    if (char === "[") {
-      inClass = true;
-      // In RE2 a `]` straight after `[` or `[^` is a literal, not the end of the class.
-      if (source[i + 1] === "^") out += source[++i];
-      if (source[i + 1] === "]") out += source[++i];
-    }
+  while (position < source.length) {
+    const token = readToken(source, position, inClass);
+    out += token.text;
+    inClass = token.inClass;
+    position += token.length;
   }
 
   return out;
