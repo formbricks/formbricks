@@ -6,7 +6,7 @@ import { QuotaNameTakenError } from "@/modules/ee/quotas/lib/errors";
 import { GET } from "./[quotaId]/response-count/route";
 import { DELETE, PUT } from "./[quotaId]/route";
 import { POST } from "./route";
-import { QUOTA_NAME_MAX_LENGTH } from "./schemas";
+import { QUOTA_LIMIT_MAX, QUOTA_NAME_MAX_LENGTH, QUOTA_OPERAND_META_MAX_ENTRIES } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   can: vi.fn(),
@@ -327,6 +327,81 @@ describe("PUT /api/internal/quotas/{quotaId}", () => {
 
   test("refuses a cross-site request (CSRF)", async () => {
     expect((await update(quotaBody(), { headers: { "sec-fetch-site": "cross-site" } })).status).toBe(403);
+    expect(mocks.updateQuota).not.toHaveBeenCalled();
+  });
+});
+
+describe("quota input limits", () => {
+  const text = (length: number) => "a".repeat(length);
+  const withCondition = (overrides: Record<string, unknown>) =>
+    quotaBody({
+      logic: { connector: "and", conditions: [{ ...quotaBody().logic.conditions[0], ...overrides }] },
+    });
+  const meta = (entries: number, length = 1) =>
+    Object.fromEntries(Array.from({ length: entries }, (_, i) => [`row${i}`, text(length)]));
+  const CONDITION = "logic.conditions.0";
+
+  test.each([
+    ["limit", 1, 0, (n: number) => quotaBody({ limit: n })],
+    ["limit", QUOTA_LIMIT_MAX, QUOTA_LIMIT_MAX + 1, (n: number) => quotaBody({ limit: n })],
+    ["limit", 2, 2.5, (n: number) => quotaBody({ limit: n })],
+    [
+      `${CONDITION}.leftOperand.value`,
+      255,
+      256,
+      (n: number) => withCondition({ leftOperand: { type: "element", value: text(n) } }),
+    ],
+    [
+      `${CONDITION}.leftOperand.meta`,
+      QUOTA_OPERAND_META_MAX_ENTRIES,
+      QUOTA_OPERAND_META_MAX_ENTRIES + 1,
+      (n: number) => withCondition({ leftOperand: { type: "element", value: "grid", meta: meta(n) } }),
+    ],
+    [
+      `${CONDITION}.leftOperand.meta.row0`,
+      255,
+      256,
+      (n: number) => withCondition({ leftOperand: { type: "element", value: "grid", meta: meta(1, n) } }),
+    ],
+    [
+      `${CONDITION}.rightOperand.value`,
+      5000,
+      5001,
+      (n: number) => withCondition({ operator: "equals", rightOperand: { type: "static", value: text(n) } }),
+    ],
+    [
+      `${CONDITION}.rightOperand.value.1`,
+      5000,
+      5001,
+      (n: number) =>
+        withCondition({ operator: "equalsOneOf", rightOperand: { type: "static", value: ["a", text(n)] } }),
+    ],
+    [
+      `${CONDITION}.rightOperand.columnId`,
+      255,
+      256,
+      (n: number) =>
+        withCondition({ operator: "equals", rightOperand: { type: "static", value: 1, columnId: text(n) } }),
+    ],
+    [
+      `${CONDITION}.rightOperand.value`,
+      255,
+      256,
+      (n: number) =>
+        withCondition({ operator: "equals", rightOperand: { type: "hiddenField", value: text(n) } }),
+    ],
+  ])("takes %s at %d and answers 400 naming it at %d", async (field, accepted, refused, build) => {
+    expect((await create(build(accepted))).status).toBe(201);
+    expect((await update(build(accepted))).status).toBe(200);
+
+    mocks.createQuota.mockClear();
+    mocks.updateQuota.mockClear();
+    for (const write of [create, update]) {
+      const response = await write(build(refused));
+      expect(response.status).toBe(400);
+      expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
+    }
+    expect(mocks.createQuota).not.toHaveBeenCalled();
     expect(mocks.updateQuota).not.toHaveBeenCalled();
   });
 });
