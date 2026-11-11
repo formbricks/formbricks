@@ -3,21 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { V3ApiError, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
+import {
+  type TInviteRefusalState,
+  getInviteRefusalState,
+} from "@/modules/auth/invite/lib/acceptance-refusal";
 import { acceptInvite } from "@/modules/auth/invite/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { ContentLayout } from "./content-layout";
 
-type TAcceptState = "pending" | "accepted" | "alreadyMember" | "expired" | "notFound";
-
-/** The screen a refusal leaves behind, or null for one the pending screen reports itself. */
-const stateForRefusal = (error: unknown): TAcceptState | null => {
-  if (!(error instanceof V3ApiError)) return null;
-  if (error.status === 409) return "alreadyMember";
-  if (error.status === 422 && getV3ApiErrorReason(error, "") === "invite_expired") return "expired";
-  if (error.status === 403) return "notFound";
-  return null;
-};
+type TAcceptState = "pending" | "accepted" | TInviteRefusalState;
 
 /**
  * The invite page for the signed-in user an invite was sent to: nothing is joined until they press "Accept
@@ -36,7 +30,7 @@ export const AcceptInvitation = ({ token }: Readonly<{ token: string }>) => {
       await acceptInvite(token);
       setState("accepted");
     } catch (error) {
-      const refusedState = stateForRefusal(error);
+      const refusedState = getInviteRefusalState(error);
       if (refusedState) setState(refusedState);
       else setHasFailed(true);
     } finally {
