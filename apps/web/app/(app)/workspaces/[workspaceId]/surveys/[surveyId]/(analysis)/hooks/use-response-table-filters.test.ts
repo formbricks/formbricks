@@ -99,7 +99,7 @@ describe("useResponseTableFilters", () => {
     const { result } = render();
 
     await waitFor(() => expect(result.current.isReady).toBe(true));
-    expect(result.current.selectedFilter.responseStatus).toBe("complete");
+    expect(result.current.selectedFilter.responseStatuses).toEqual(["complete"]);
     expect(result.current.selectedFilter.filter).toEqual([
       expect.objectContaining({
         elementType: expect.objectContaining({ id: "plan", type: OptionsType.ELEMENTS }),

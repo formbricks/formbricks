@@ -150,7 +150,7 @@ export const SummaryPage = ({
     // NOT an active filter. Treat filters as active only when the user has actually narrowed the data.
     const hasActiveFilters =
       (selectedFilter?.filter?.length ?? 0) > 0 ||
-      (!!selectedFilter?.responseStatus && selectedFilter.responseStatus !== "all") ||
+      (selectedFilter?.responseStatuses?.length ?? 0) > 0 ||
       Boolean(dateRange?.from);
 
     // A rule in the URL still waiting for the filter data: the summary would answer for every response.

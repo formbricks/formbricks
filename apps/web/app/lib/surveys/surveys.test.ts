@@ -638,7 +638,7 @@ describe("surveys", () => {
 
     test("should return empty filters when no selections", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [],
       };
 
@@ -649,7 +649,7 @@ describe("surveys", () => {
 
     test("should filter by completed responses", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "complete",
+        responseStatuses: ["complete"],
         filter: [],
       };
 
@@ -660,7 +660,7 @@ describe("surveys", () => {
 
     test("should filter by the Low quality outcome without touching finished", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "lowQuality",
+        responseStatuses: ["lowQuality"],
         filter: [],
       };
 
@@ -672,7 +672,7 @@ describe("surveys", () => {
 
     test("should filter by date range", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [],
       };
 
@@ -685,7 +685,7 @@ describe("surveys", () => {
 
     test("should filter by tags", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Tags", label: "Tag 1", id: "tag1" },
@@ -706,7 +706,7 @@ describe("surveys", () => {
 
     test("should filter by open text questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -727,7 +727,7 @@ describe("surveys", () => {
 
     test("should filter by address questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -748,7 +748,7 @@ describe("surveys", () => {
 
     test("should filter by contact info questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -769,7 +769,7 @@ describe("surveys", () => {
 
     test("should filter by ranking questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -790,7 +790,7 @@ describe("surveys", () => {
 
     test("should filter by multiple choice single questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -811,7 +811,7 @@ describe("surveys", () => {
 
     test("should filter by multiple choice multi questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -832,7 +832,7 @@ describe("surveys", () => {
 
     test("should filter by NPS questions with different operations", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -853,7 +853,7 @@ describe("surveys", () => {
 
     test("should filter by rating questions with less than operation", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -874,7 +874,7 @@ describe("surveys", () => {
 
     test("should filter by CTA questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -895,7 +895,7 @@ describe("surveys", () => {
 
     test("should filter by consent questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -916,7 +916,7 @@ describe("surveys", () => {
 
     test("should filter by picture selection questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -937,7 +937,7 @@ describe("surveys", () => {
 
     test("should filter by matrix questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -969,7 +969,7 @@ describe("surveys", () => {
       const result = getFormattedFilters(
         survey,
         {
-          responseStatus: "all",
+          responseStatuses: [],
           filter: [row("Row 1", "Column 1"), row("Row 2", "Column 2")],
         } as SelectedFilterValue,
         {} as DateRange
@@ -983,7 +983,7 @@ describe("surveys", () => {
 
     test("should filter by hidden fields", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Hidden Fields", label: "plan", id: "plan" },
@@ -999,7 +999,7 @@ describe("surveys", () => {
 
     test("should filter by attributes", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Attributes", label: "role", id: "role" },
@@ -1015,7 +1015,7 @@ describe("surveys", () => {
 
     test("should filter by other filters", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Other Filters", label: "Language", id: "language" },
@@ -1031,7 +1031,7 @@ describe("surveys", () => {
 
     test("reserved fields land in the reserved group, keyed by catalog name (ENG-1848)", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "Source", id: "source" },
@@ -1048,7 +1048,7 @@ describe("surveys", () => {
 
     test("number-typed reserved values are sent as numbers, presence ops carry no value", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "Screen Width", id: "screenWidth" },
@@ -1069,7 +1069,7 @@ describe("surveys", () => {
 
     test("fails closed: an unknown or shadowed reserved id emits nothing", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "Nope", id: "notInCatalog" },
@@ -1085,7 +1085,7 @@ describe("surveys", () => {
 
     test("variables land in the variables group keyed by storageKey, coerced to their dataType", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Variables", label: "score", id: "var_score" },
@@ -1129,7 +1129,7 @@ describe("surveys", () => {
 
     const boolFilter = (filterValue: string, filterComboBoxValue: string) => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: OptionsType.HIDDEN_FIELDS, label: "is_pro", id: "is_pro" },
@@ -1145,7 +1145,7 @@ describe("surveys", () => {
       const result = getFormattedFilters(
         typedSurvey,
         {
-          responseStatus: "all",
+          responseStatuses: [],
           filter: [
             {
               elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
@@ -1234,7 +1234,7 @@ describe("surveys", () => {
         getFormattedFilters(
           typedSurvey,
           {
-            responseStatus: "all",
+            responseStatuses: [],
             filter: [
               {
                 elementType: {
@@ -1262,7 +1262,7 @@ describe("surveys", () => {
 
     test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Hidden Fields", label: "plan", id: "plan" },
@@ -1278,7 +1278,7 @@ describe("surveys", () => {
 
     test("should handle multiple filters together", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "complete",
+        responseStatuses: ["complete"],
         filter: [
           {
             elementType: {
@@ -1306,7 +1306,7 @@ describe("surveys", () => {
 
     test("should format URL meta filters with string operations", () => {
       const selectedFilter = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
@@ -1334,7 +1334,7 @@ describe("surveys", () => {
 
       testCases.forEach(({ filterValue, expected }) => {
         const selectedFilter = {
-          responseStatus: "all",
+          responseStatuses: [],
           filter: [
             {
               elementType: { type: "Meta", label: "url", id: "url" },
@@ -1350,7 +1350,7 @@ describe("surveys", () => {
 
     test("should handle URL meta filters with empty string values", () => {
       const selectedFilter = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
@@ -1366,7 +1366,7 @@ describe("surveys", () => {
 
     test("should handle URL meta filters with whitespace-only values", () => {
       const selectedFilter = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
@@ -1383,7 +1383,7 @@ describe("surveys", () => {
 
     test("should still handle existing meta filters with array values", () => {
       const selectedFilter = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "source", id: "source" },
@@ -1399,7 +1399,7 @@ describe("surveys", () => {
 
     test("should handle mixed URL and traditional meta filters", () => {
       const selectedFilter = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
@@ -1420,7 +1420,7 @@ describe("surveys", () => {
 
     test("should filter by quota with screened in status", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
@@ -1436,7 +1436,7 @@ describe("surveys", () => {
 
     test("should filter by quota with screened out status", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
@@ -1452,7 +1452,7 @@ describe("surveys", () => {
 
     test("should filter by quota with not in quota status", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
@@ -1468,7 +1468,7 @@ describe("surveys", () => {
 
     test("should filter by multiple quotas with different statuses", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },

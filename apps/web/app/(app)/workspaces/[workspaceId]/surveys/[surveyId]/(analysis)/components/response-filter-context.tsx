@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useMemo, useRef } from "react";
+import { type TResponseStatusFilter } from "@formbricks/types/responses";
 import { type ElementOption } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { type TShownFilterTarget } from "@/app/lib/surveys/shown-filter-targets";
 import { type TDateRangePreset } from "@/lib/date-ranges";
@@ -18,11 +19,10 @@ export interface FilterValue {
   shownTarget?: TShownFilterTarget;
 }
 
-export type TResponseStatus = "all" | "complete" | "partial" | "lowQuality";
-
 export interface SelectedFilterValue {
   filter: FilterValue[];
-  responseStatus: TResponseStatus;
+  /** The ticked statuses, any of them. Empty means every response. */
+  responseStatuses: TResponseStatusFilter[];
 }
 
 export interface DateRange {

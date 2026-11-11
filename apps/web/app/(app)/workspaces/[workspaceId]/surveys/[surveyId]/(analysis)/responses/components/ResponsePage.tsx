@@ -21,8 +21,8 @@ import { OutcomeQueryClientProvider } from "@/modules/analysis/response-outcome/
 import {
   type TOutcomeActions,
   type TOutcomeChanges,
+  dropRowsOutsideStatuses,
   patchOutcomes,
-  shouldDropAfterOutcome,
 } from "@/modules/analysis/response-outcome/lib/outcome";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
@@ -92,7 +92,10 @@ export const ResponsePage = ({
 
   // Rows matching the filters, for the toolbar. Refetched with the list, so a delete or a refresh
   // keeps it honest.
-  const matchCountKey = ["surveys", surveyId, "response-count", filtersKey];
+  const matchCountKey = useMemo(
+    () => ["surveys", surveyId, "response-count", filtersKey],
+    [surveyId, filtersKey]
+  );
   const matchCountQuery = useQuery({
     queryKey: matchCountKey,
     queryFn: ({ signal }) => countSurveyResponses({ surveyId, filterCriteria: filters, signal }),
@@ -108,7 +111,8 @@ export const ResponsePage = ({
     const newResponses = await querySurveyResponses({
       surveyId,
       limit: responsesPerPage,
-      offset: (newPage - 1) * responsesPerPage,
+      // The rows still listed, not `page * size`: a deleted or restored row has left the server's list too.
+      offset: responses.length,
       filterCriteria: listCriteriaRef.current,
     }).catch((): TResponseWithQuotas[] => []);
 
@@ -138,16 +142,20 @@ export const ResponsePage = ({
     setResponses((prev) => patchOutcomes(prev, changes));
   }, []);
 
-  const responseStatus = selectedFilter.responseStatus;
+  const responseStatuses = selectedFilter.responseStatuses;
   const outcomeActions: TOutcomeActions = useMemo(
     () => ({
       applyOutcomes,
-      // A restored response no longer matches a Low quality filter, so it leaves the list.
+      // A response whose new outcome takes it out of the ticked statuses (a restored one, for Low quality) leaves
+      // the list, and the count follows. Like a refresh, it asks about the window the list was fetched with.
       onSaved: (ids, outcome) => {
-        if (shouldDropAfterOutcome(responseStatus, outcome)) removeResponses(ids);
+        setResponses((prev) => dropRowsOutsideStatuses(prev, ids, outcome, responseStatuses));
+        void countSurveyResponses({ surveyId, filterCriteria: listCriteriaRef.current })
+          .catch(() => null)
+          .then((count) => queryClient.setQueryData(matchCountKey, count));
       },
     }),
-    [applyOutcomes, removeResponses, responseStatus]
+    [applyOutcomes, responseStatuses, surveyId, queryClient, matchCountKey]
   );
 
   const refetchResponses = useCallback(async () => {
@@ -196,7 +204,7 @@ export const ResponsePage = ({
 
   // Only fetch if filters are applied (not on initial mount with no filters)
   const hasFilters =
-    selectedFilter?.responseStatus !== "all" ||
+    selectedFilter.responseStatuses.length > 0 ||
     (selectedFilter?.filter && selectedFilter.filter.length > 0) ||
     (dateRange.from && dateRange.to);
 
