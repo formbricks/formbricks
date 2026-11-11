@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZResponseFilterCriteriaJson } from "@/lib/response/filter-criteria-json";
+import { ZResponseFilterCriteriaBody } from "@/app/api/internal/lib/response-filter-criteria";
 
 /**
  * Most responses one query may ask for. The Responses page asks for 25 at a time; this is the public
@@ -24,11 +24,11 @@ export const ZSurveyResponsesQueryBody = z
   .object({
     limit: z.int().min(1).max(SURVEY_RESPONSES_QUERY_MAX_LIMIT).optional(),
     offset: z.int().min(0).max(SURVEY_RESPONSES_QUERY_MAX_OFFSET).optional(),
-    filterCriteria: ZResponseFilterCriteriaJson.optional(),
+    filterCriteria: ZResponseFilterCriteriaBody.optional(),
   })
   .strict();
 
 /** `POST /api/internal/surveys/{surveyId}/responses/counts` body: how many of its responses match. */
 export const ZSurveyResponseCountBody = z
-  .object({ filterCriteria: ZResponseFilterCriteriaJson.optional() })
+  .object({ filterCriteria: ZResponseFilterCriteriaBody.optional() })
   .strict();

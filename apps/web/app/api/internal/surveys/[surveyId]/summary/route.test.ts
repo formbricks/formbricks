@@ -199,9 +199,28 @@ describe("POST /api/internal/surveys/{surveyId}/summary/queries", () => {
       "a filter with an unknown condition",
       { filterCriteria: { data: { q1: { op: "regex", value: ".*" } } } },
     ],
+    [
+      "a filter key past the identifier cap",
+      { filterCriteria: { data: { ["a".repeat(256)]: { op: "submitted" } } } },
+    ],
+    [
+      "a filter value past the filter-text cap",
+      { filterCriteria: { data: { q1: { op: "contains", value: "a".repeat(5001) } } } },
+    ],
   ])("rejects %s with 400", async (_name, body) => {
     expect((await summaryQuery(body)).status).toBe(400);
     expect(mocks.getSurveySummary).not.toHaveBeenCalled();
+  });
+
+  test("names the filter value past its cap in the 400", async () => {
+    const response = await summaryQuery({
+      filterCriteria: { data: { q1: { op: "contains", value: "a".repeat(5001) } } },
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      expect.objectContaining({ name: "filterCriteria.data.q1.value" }),
+    ]);
   });
 
   test("a failed summary is mapped, not leaked", async () => {

@@ -196,10 +196,29 @@ describe("POST /api/internal/surveys/{surveyId}/responses/queries", () => {
       "a filter with an unknown condition",
       { filterCriteria: { data: { q1: { op: "regex", value: ".*" } } } },
     ],
+    [
+      "a filter key past the identifier cap",
+      { filterCriteria: { data: { ["a".repeat(256)]: { op: "submitted" } } } },
+    ],
+    [
+      "a filter value past the filter-text cap",
+      { filterCriteria: { data: { q1: { op: "contains", value: "a".repeat(5001) } } } },
+    ],
     ["a date window that is not a date", { filterCriteria: { createdAt: { min: "yesterday" } } }],
   ])("rejects %s with 400", async (_name, body) => {
     expect((await queryResponses(body)).status).toBe(400);
     expect(mocks.getResponses).not.toHaveBeenCalled();
+  });
+
+  test("names the filter value past its cap in the 400", async () => {
+    const response = await queryResponses({
+      filterCriteria: { data: { q1: { op: "contains", value: "a".repeat(5001) } } },
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      expect.objectContaining({ name: "filterCriteria.data.q1.value" }),
+    ]);
   });
 
   test("a failed read is mapped, not leaked", async () => {
@@ -246,6 +265,10 @@ describe("POST /api/internal/surveys/{surveyId}/responses/counts", () => {
   test.each([
     ["an unknown body key", { filterCriteria: {}, limit: 25 }],
     ["a filter that is not an object", { filterCriteria: "finished" }],
+    [
+      "a filter value past the filter-text cap",
+      { filterCriteria: { meta: { url: { op: "contains", value: "a".repeat(5001) } } } },
+    ],
   ])("rejects %s with 400", async (_name, body) => {
     expect((await countResponses(body)).status).toBe(400);
     expect(mocks.getResponseCountBySurveyId).not.toHaveBeenCalled();
