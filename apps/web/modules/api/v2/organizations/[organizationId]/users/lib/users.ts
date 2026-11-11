@@ -172,8 +172,13 @@ export const createUser = async (
 };
 
 // Thrown inside updateUser's transaction to carry the last-owner conflict out through the
-// generic catch block below without it being reported as an internal_server_error.
-class LastOwnerConflictError extends Error {}
+// generic catch block below without it being reported as an internal_server_error. `field` is the
+// input that would have removed the last active owner, so the 409 names what the caller sent.
+class LastOwnerConflictError extends Error {
+  constructor(readonly field: "role" | "isActive") {
+    super("Cannot remove the last owner of the organization");
+  }
+}
 
 // Thrown inside updateUser's transaction when the request would change an account-wide field of a
 // user who also belongs to another organization; carried out as a 409, like LastOwnerConflictError:
@@ -277,14 +282,14 @@ export const updateUser = async (
     )?.role;
 
     // Mirrors the last-owner guard in modules/ee/role-management/actions.ts: without it, this
-    // route can demote an organization's only owner with no UI path back into it. Gated on
-    // existingUser.isActive because getOrganizationOwnerCount only counts active owners — demoting
-    // an already-inactive owner doesn't change that count, so guarding it would block a no-op change.
-    const isDemotingOwner =
-      currentRole === OrganizationRole.owner &&
-      existingUser.isActive &&
-      role &&
-      role !== OrganizationRole.owner;
+    // route can demote or deactivate an organization's only active owner with no UI path back into
+    // it. Gated on existingUser.isActive because getOrganizationOwnerCount only counts active owners —
+    // changing an already-inactive owner doesn't change that count, so guarding it would block a
+    // no-op change. Deactivating takes an owner out of that count just as demoting does.
+    const isActiveOwner = currentRole === OrganizationRole.owner && existingUser.isActive;
+    const isDemotingOwner = isActiveOwner && role !== undefined && role !== OrganizationRole.owner;
+    const isDeactivatingOwner = isActiveOwner && isActive === false;
+    const removesActiveOwner = isDemotingOwner || isDeactivatingOwner;
 
     // Capture the existing team names for the user (within the authenticated organization).
     existingTeams = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
@@ -368,10 +373,10 @@ export const updateUser = async (
 
     const touchesAccountFields = name !== undefined || isActive !== undefined;
 
-    if (isDemotingOwner || touchesAccountFields) {
-      // The owner-count re-check and the role write must be one atomic unit: read then act in two
-      // separate statements lets two callers demoting different owners at once both read "more
-      // than one owner" and both writes land, leaving none. Serializable isolation makes Postgres
+    if (removesActiveOwner || touchesAccountFields) {
+      // The owner-count re-check and the write must be one atomic unit: read then act in two
+      // separate statements lets two callers demoting or deactivating different owners at once both
+      // read "more than one owner" and both writes land, leaving none. Serializable isolation makes Postgres
       // abort one side of that race instead, surfaced here as a thrown LastOwnerConflictError.
       //
       // A change to the account's own fields is decided under the user row's lock
@@ -385,15 +390,20 @@ export const updateUser = async (
             ? await lockAndCheckAccountFields(tx, existingUser.id, organizationId, { name, isActive })
             : null;
           const reactivating = isActive === true && account?.wasActive === false;
-          // When an owner is also being demoted this transaction is Serializable, so the membership
-          // read in lockAndCheckAccountFields uses the snapshot taken before the row lock was granted:
-          // a membership another organization was adding while we waited is not seen. That ends the
-          // same as this change landing just before the membership did, which this organization was
-          // entitled to do, so it is accepted rather than splitting the request across transactions.
-          if (isDemotingOwner) {
+          // When an owner is also being demoted or deactivated this transaction is Serializable, so the
+          // membership read in lockAndCheckAccountFields uses the snapshot taken before the row lock was
+          // granted: a membership another organization was adding while we waited is not seen. That
+          // ends the same as this change landing just before the membership did, which this
+          // organization was entitled to do, so it is accepted rather than splitting the request
+          // across transactions.
+          //
+          // A deactivation is re-decided on the active state read under the lock: an owner someone
+          // else deactivated meanwhile is no longer in the count, so deactivating them again is a no-op.
+          if (isDemotingOwner || (isDeactivatingOwner && account?.wasActive)) {
             const ownerCount = await getOrganizationOwnerCount(organizationId, tx);
             if (ownerCount <= 1) {
-              throw new LastOwnerConflictError();
+              // A demotion is reported as such even when the same request also deactivates.
+              throw new LastOwnerConflictError(isDemotingOwner ? "role" : "isActive");
             }
           }
 
@@ -435,7 +445,7 @@ export const updateUser = async (
           if (reactivating) await reactivateLockedUser(tx, existingUser.id);
           return user;
         },
-        isDemotingOwner ? { isolationLevel: Prisma.TransactionIsolationLevel.Serializable } : undefined
+        removesActiveOwner ? { isolationLevel: Prisma.TransactionIsolationLevel.Serializable } : undefined
       );
     } else {
       // Update by id so the mutation is bound to the org-scoped lookup above. Email is
@@ -490,7 +500,7 @@ export const updateUser = async (
     if (error instanceof LastOwnerConflictError) {
       return err({
         type: "conflict",
-        details: [{ field: "role", issue: "Cannot remove the last owner of the organization" }],
+        details: [{ field: error.field, issue: error.message }],
       });
     }
     if (error instanceof AccountFieldsConflictError) {

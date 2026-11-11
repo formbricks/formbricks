@@ -376,6 +376,95 @@ describe("Users Lib", () => {
       expect(result.ok).toBe(true);
       expect(prisma.membership.count).not.toHaveBeenCalled();
     });
+
+    test("reports the role as the rejected field when the request also deactivates the last owner", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "owner" }],
+      } as never);
+      lockedAccount();
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+
+      const result = await updateUser({ email: mockUser.email, role: "member", isActive: false }, "org456");
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: { type: "conflict", details: [{ field: "role" }] },
+      });
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateUser deactivating an owner", () => {
+    const owner = { ...mockUser, memberships: [{ organizationId: "org456", role: "owner" }], teamUsers: [] };
+
+    test("blocks deactivating the organization's last active owner", async () => {
+      const options = runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      lockedAccount();
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result).toEqual({
+        ok: false,
+        error: {
+          type: "conflict",
+          details: [{ field: "isActive", issue: "Cannot remove the last owner of the organization" }],
+        },
+      });
+      // The count runs in the same Serializable transaction as the write, so two concurrent
+      // deactivations of the last two owners cannot both pass it.
+      expect(options).toEqual([{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable }]);
+      expect(prisma.membership.count).toHaveBeenCalledWith({
+        where: { organizationId: "org456", role: "owner", user: { isActive: true } },
+      });
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    });
+
+    test("allows deactivating an owner when the organization has another active owner", async () => {
+      const options = runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      lockedAccount();
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(2);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...owner, isActive: false } as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result).toMatchObject({ ok: true, data: { isActive: false, role: "owner" } });
+      expect(options).toEqual([{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable }]);
+    });
+
+    test("skips the owner count when the owner is already inactive under the lock", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      lockedAccount({ isActive: false });
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...owner, isActive: false } as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result.ok).toBe(true);
+      expect(prisma.membership.count).not.toHaveBeenCalled();
+    });
+
+    test("does not count owners when deactivating a non-owner", async () => {
+      const options = runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "member" }],
+        teamUsers: [],
+      } as never);
+      lockedAccount();
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, isActive: false } as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result.ok).toBe(true);
+      expect(prisma.membership.count).not.toHaveBeenCalled();
+      expect(options).toEqual([undefined]);
+    });
   });
 
   describe("updateUser reactivating a user", () => {
