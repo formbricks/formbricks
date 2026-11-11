@@ -1,5 +1,3 @@
-import { ATTRIBUTE_KEY_MAX_LENGTH } from "@/app/api/internal/contact-attribute-keys/schemas";
-
 /**
  * Limits of a contacts CSV import, the upload dialog's pre-check and `POST /api/internal/contacts/imports`
  * alike. They bound what one import can make the server parse and write, far above a real import: the
@@ -14,7 +12,7 @@ export const CSV_IMPORT_MAX_RECORDS = 10_000;
 export const CSV_IMPORT_MAX_COLUMNS = 160;
 
 /** Longest column name, attribute key or mapped attribute: the cap every attribute key write takes. */
-export const CSV_IMPORT_MAX_KEY_LENGTH = ATTRIBUTE_KEY_MAX_LENGTH;
+export { ATTRIBUTE_KEY_MAX_LENGTH as CSV_IMPORT_MAX_KEY_LENGTH } from "@/app/api/internal/contact-attribute-keys/schemas";
 
 /** Longest cell value. */
 export const CSV_IMPORT_MAX_VALUE_LENGTH = 10_000;
