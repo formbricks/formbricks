@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
+import { ZDeleteFileRequest, ZDownloadFileRequest, getMimeTypeForFileName } from "@formbricks/types/storage";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[workspaceId]/[accessType]/[...filePath]/lib/auth";
@@ -74,12 +74,19 @@ export const GET = async (
     return errorResponse;
   }
 
-  const { body, contentType, contentLength } = streamResult.data;
+  const { body, contentLength } = streamResult.data;
+  const contentType = getMimeTypeForFileName(fileName) ?? "application/octet-stream";
 
   return new Response(body, {
     status: 200,
     headers: {
+      // The type comes from the extension, never from the stored object: objects uploaded before
+      // ENG-7108 may carry a client-chosen type such as `image/png;,text/html`, which browsers render
+      // as HTML on the app origin.
       "Content-Type": contentType,
+      // The sandboxing CSP for these paths lives in next.config.mjs, as the config's CSP replaces any
+      // a route handler sets.
+      "X-Content-Type-Options": "nosniff",
       ...(contentLength > 0 && { "Content-Length": String(contentLength) }),
       "Cache-Control":
         accessType === "private"

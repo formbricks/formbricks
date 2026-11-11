@@ -10,7 +10,7 @@ import {
   getSignedUploadUrl,
 } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { type TAccessType } from "@formbricks/types/storage";
+import { type TAccessType, getMimeTypeForFileName } from "@formbricks/types/storage";
 import { sanitizeFileName } from "./utils";
 
 const SAFE_FILE_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
@@ -43,10 +43,13 @@ const hasTraversalSegmentOrEncodedForm = (fileName: string): boolean =>
   hasTraversalSegment(fileName) ||
   hasTraversalSegment(fileName.replaceAll(/%2e/gi, ".").replaceAll(/%2f/gi, "/"));
 
+/**
+ * Presigns an upload. The object's `Content-Type` is derived from the file's extension and signed into
+ * the policy, so the uploader cannot store (and the storage route cannot later echo) a type of its own.
+ */
 export const getSignedUrlForUpload = async (
   fileName: string,
   workspaceId: string,
-  fileType: string,
   accessType: TAccessType,
   maxFileUploadSize: number = 1024 * 1024 * 10, // 10MB
   filePathSegments: string[] = []
@@ -70,6 +73,11 @@ export const getSignedUrlForUpload = async (
       return err({ code: StorageErrorCode.InvalidInput });
     }
 
+    const contentType = getMimeTypeForFileName(safeFileName);
+    if (!contentType) {
+      return err({ code: StorageErrorCode.InvalidInput });
+    }
+
     const encodedFilePathSegments = filePathSegments.map((segment) => encodeURIComponent(segment));
     const fileNameWithoutExtension = safeFileName.split(".").slice(0, -1).join(".");
     const fileExtension = safeFileName.split(".").pop();
@@ -77,7 +85,12 @@ export const getSignedUrlForUpload = async (
     const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
     const filePath = [workspaceId, accessType, ...filePathSegments].join("/");
 
-    const signedUrlResult = await getSignedUploadUrl(updatedFileName, fileType, filePath, maxFileUploadSize);
+    const signedUrlResult = await getSignedUploadUrl(
+      updatedFileName,
+      contentType,
+      filePath,
+      maxFileUploadSize
+    );
 
     if (!signedUrlResult.ok) {
       return signedUrlResult;

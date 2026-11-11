@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 // Guards ENG-3194. Sentry Session Replay compresses recordings in a `blob:` worker. Without an
@@ -28,25 +29,28 @@ const getWorkerSources = (csp: string): string[] | undefined => {
   return directive?.slice(1);
 };
 
+// A bare `sandbox` (no `allow-scripts`) runs no script at all, so it needs no worker either.
+const isScriptless = (csp: string): boolean => csp.split(";").some((part) => part.trim() === "sandbox");
+
+beforeAll(async () => {
+  for (const [name, value] of Object.entries(REQUIRED_ENV)) {
+    vi.stubEnv(name, value);
+  }
+  nextConfig = (await import("../next.config.mjs")).default;
+}, 30_000);
+
+afterAll(() => {
+  vi.unstubAllEnvs();
+});
+
 describe("CSP lets Sentry Replay start its blob: worker (ENG-3194)", () => {
-  beforeAll(async () => {
-    for (const [name, value] of Object.entries(REQUIRED_ENV)) {
-      vi.stubEnv(name, value);
-    }
-    nextConfig = (await import("../next.config.mjs")).default;
-  }, 30_000);
-
-  afterAll(() => {
-    vi.unstubAllEnvs();
-  });
-
   test.each(["production", "development"])("every CSP allows blob: workers in %s", async (nodeEnv) => {
     vi.stubEnv("NODE_ENV", nodeEnv);
 
     const rules = (await nextConfig.headers?.()) ?? [];
     const policies = rules.flatMap((rule) =>
       rule.headers
-        .filter((header) => header.key === "Content-Security-Policy")
+        .filter((header) => header.key === "Content-Security-Policy" && !isScriptless(header.value))
         .map((header) => ({ source: rule.source, workerSources: getWorkerSources(header.value) }))
     );
 
@@ -55,5 +59,46 @@ describe("CSP lets Sentry Replay start its blob: worker (ENG-3194)", () => {
     for (const { source, workerSources } of policies) {
       expect(workerSources, `CSP for ${source}`).toEqual(expect.arrayContaining(["'self'", "blob:"]));
     }
+  });
+});
+
+// Guards ENG-7108. A route handler cannot set its own CSP (the config's replaces it), so the policy for
+// uploaded files lives in the config, and the last matching rule wins, as it does in Next.
+describe("CSP for uploaded files (ENG-7108)", () => {
+  const effectiveCsp = async (pathname: string): Promise<string | undefined> => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    let csp: string | undefined;
+    for (const rule of rules) {
+      const matches = getPathMatch(rule.source, {
+        strict: true,
+        removeUnnamedParams: true,
+        sensitive: false,
+      });
+      const header = rule.headers.find((h) => h.key === "Content-Security-Policy");
+      if (header && matches(pathname) !== false) csp = header.value;
+    }
+    return csp;
+  };
+
+  test.each([
+    "/storage/ws1/public/photo--fid--1.png",
+    "/storage/ws1/private/surveys/s1/elements/e1/evil--fid--1.png",
+    "/storage/ws1/private/notes--fid--1.txt",
+    "/storage/ws1/private/report.pdf.png",
+  ])("sandboxes %s", async (pathname) => {
+    expect(await effectiveCsp(pathname)).toBe("default-src 'none'; frame-ancestors 'self'; sandbox");
+  });
+
+  test.each(["/storage/ws1/private/report--fid--1.pdf", "/storage/ws1/private/report--fid--1.PDF"])(
+    "leaves %s on the app policy so the browser's PDF viewer still opens it",
+    async (pathname) => {
+      const csp = await effectiveCsp(pathname);
+      expect(csp).toBeDefined();
+      expect(isScriptless(csp ?? "")).toBe(false);
+    }
+  );
+
+  test("does not touch app pages", async () => {
+    expect(isScriptless((await effectiveCsp("/workspaces/ws1/surveys")) ?? "")).toBe(false);
   });
 });

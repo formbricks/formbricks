@@ -251,6 +251,20 @@ const nextConfig = {
         ],
       },
       {
+        // Uploaded files (ENG-7108). A stored file must never act as a page of the app: should one be
+        // rendered as a document anyway, `sandbox` gives it an opaque origin and no scripts. This rule
+        // has to come after the one above, because a route handler cannot set this header itself: the
+        // config's CSP replaces it. PDFs are left out, as a bare `sandbox` stops Chromium's plugin-based
+        // PDF viewer; they are served as `application/pdf` with `nosniff`, so never parsed as HTML.
+        source: "/storage/:path((?!.*\\.[pP][dD][fF]$).*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; frame-ancestors 'self'; sandbox",
+          },
+        ],
+      },
+      {
         // Public client API (JS SDK, surveys): any origin, deliberately without
         // Access-Control-Allow-Credentials — these routes read no session, and browsers
         // reject credentials paired with a wildcard origin anyway (ENG-2784).
