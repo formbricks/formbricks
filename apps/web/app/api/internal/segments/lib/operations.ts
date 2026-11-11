@@ -260,27 +260,17 @@ export async function updateSegmentOperation({
 
     oldObject = await getSegment(segmentId);
     const actor = await resolveSurveyActorContext({ type: "user", id: userId }, organizationId);
-    let data: TSegmentUpdateInput = body;
-    const { filters } = body;
-    if (filters) {
-      // Only the ids the caller sent must be visible to them; the stored ones they could not see are put
-      // back afterwards, since the editor never held them.
-      await assertSurveyInteractionSurveyIds(filters, workspaceId, visibleSurveyWhere);
-      // ENG-6870: and the surveys nested segment filters read, where the edit adds them.
-      await assertAddedSegmentSurveyFiltersVisible(filters, oldObject.filters, workspaceId, actor, segmentId);
-      const merged = isVisibilityScoped
-        ? await restoreHiddenSegmentSurveyIds(filters, oldObject.filters, workspaceId, visibleSurveyWhere)
-        : filters;
-
-      // The merged tree is what gets stored, so it is the one held to the bounds.
-      const parsedFilters = ZSegmentFilters.safeParse(merged);
-      if (!parsedFilters.success) {
-        throw new InvalidInputError(invalidFiltersMessage(parsedFilters.error.issues));
-      }
-
-      await checkForRecursiveSegmentFilter(parsedFilters.data, segmentId);
-      data = { ...body, filters: parsedFilters.data };
-    }
+    const data: TSegmentUpdateInput = body.filters
+      ? {
+          ...body,
+          filters: await prepareEditedFilters(body.filters, oldObject, {
+            segmentId,
+            workspaceId,
+            actor,
+            visibleSurveyWhere,
+          }),
+        }
+      : body;
 
     // ENG-6870: connecting a survey targets it with the whole stored tree, as attaching one does.
     const connectedSurveyIds = new Set(oldObject.surveys);
@@ -307,6 +297,42 @@ export async function updateSegmentOperation({
     auditLog.newObject = updated;
   }
   return successResponse(serializeSegment(updated), { requestId });
+}
+
+/**
+ * The filter tree an edit stores. Only the ids the caller sent must be visible to them; the stored ones they
+ * could not see are put back afterwards, since the editor never held them. The merged tree is what gets
+ * stored, so it is the one held to the bounds and checked for recursion.
+ */
+async function prepareEditedFilters(
+  filters: NonNullable<TSegmentUpdateBody["filters"]>,
+  oldObject: TSegment,
+  {
+    segmentId,
+    workspaceId,
+    actor,
+    visibleSurveyWhere,
+  }: {
+    segmentId: string;
+    workspaceId: string;
+    actor: Awaited<ReturnType<typeof resolveSurveyActorContext>>;
+    visibleSurveyWhere: Awaited<ReturnType<typeof getUserVisibleSurveyWhere>>;
+  }
+): Promise<TSegment["filters"]> {
+  await assertSurveyInteractionSurveyIds(filters, workspaceId, visibleSurveyWhere);
+  // ENG-6870: and the surveys nested segment filters read, where the edit adds them.
+  await assertAddedSegmentSurveyFiltersVisible(filters, oldObject.filters, workspaceId, actor, segmentId);
+  const merged =
+    Object.keys(visibleSurveyWhere).length > 0
+      ? await restoreHiddenSegmentSurveyIds(filters, oldObject.filters, workspaceId, visibleSurveyWhere)
+      : filters;
+
+  const parsedFilters = ZSegmentFilters.safeParse(merged);
+  if (!parsedFilters.success) {
+    throw new InvalidInputError(invalidFiltersMessage(parsedFilters.error.issues));
+  }
+  await checkForRecursiveSegmentFilter(parsedFilters.data, segmentId);
+  return parsedFilters.data;
 }
 
 /**
