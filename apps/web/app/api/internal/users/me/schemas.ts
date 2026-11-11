@@ -1,8 +1,14 @@
 import { z } from "zod";
-import { ZUserPersonalInfoUpdateInput } from "@formbricks/types/user";
+import { ZUserName, ZUserPersonalInfoUpdateInput } from "@formbricks/types/user";
+import { SIGNUP_NAME_MAX } from "@/app/api/internal/signups/schemas";
 
-/** `PATCH /api/internal/users/me` body. A changed email needs the current password (checked by the operation). */
-export const ZProfilePatchBody = ZUserPersonalInfoUpdateInput.strict();
+/**
+ * `PATCH /api/internal/users/me` body. A changed email needs the current password (checked by the
+ * operation). The name gets the cap a sign-up gives it; `ZUserName` has no upper bound of its own.
+ */
+export const ZProfilePatchBody = ZUserPersonalInfoUpdateInput.extend({
+  name: ZUserName.max(SIGNUP_NAME_MAX).optional(),
+}).strict();
 export type TProfilePatchBody = z.infer<typeof ZProfilePatchBody>;
 
 /**

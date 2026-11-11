@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { IDENTIFIER_MAX_LENGTH } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { NO_CONFIG_ERROR } from "@/modules/hub/utils";
@@ -278,5 +279,15 @@ describe("POST /api/internal/feedback-records/contact-lookups", () => {
 
   test("answers 400 for more than 1000 ids", async () => {
     expect((await lookupContacts(Array.from({ length: 1001 }, (_, i) => `user-${i}`))).status).toBe(400);
+  });
+
+  test(`takes a ${IDENTIFIER_MAX_LENGTH}-character id and answers 400 naming one longer`, async () => {
+    expect((await lookupContacts(["a".repeat(IDENTIFIER_MAX_LENGTH)])).status).toBe(200);
+
+    mocks.getContactIdsByUserIds.mockClear();
+    const response = await lookupContacts(["user-a", "a".repeat(IDENTIFIER_MAX_LENGTH + 1)]);
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: "userIds.1" })]);
+    expect(mocks.getContactIdsByUserIds).not.toHaveBeenCalled();
   });
 });

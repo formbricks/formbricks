@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, TooManyRequestsError } from "@formbricks/types/errors";
+import { SIGNUP_NAME_MAX } from "@/app/api/internal/signups/schemas";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST as REQUEST_DELETION } from "./deletion-requests/route";
@@ -272,6 +273,16 @@ describe("PATCH /api/internal/users/me", () => {
     ["a malformed email", { email: "not-an-email", password: "x" }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await patchProfile(body)).status).toBe(400);
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
+  test(`takes a ${SIGNUP_NAME_MAX}-character name and answers 400 naming one longer`, async () => {
+    expect((await patchProfile({ name: "a".repeat(SIGNUP_NAME_MAX) })).status).toBe(204);
+
+    mocks.updateUser.mockClear();
+    const response = await patchProfile({ name: "a".repeat(SIGNUP_NAME_MAX + 1) });
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: "name" })]);
     expect(mocks.updateUser).not.toHaveBeenCalled();
   });
 

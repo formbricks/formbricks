@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, InvalidInputError, TooManyRequestsError } from "@formbricks/types/errors";
+import { INVITEE_NAME_MAX } from "@/app/api/internal/invites/schemas";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
@@ -174,5 +175,15 @@ describe("POST /api/internal/onboarding-invites", () => {
   test("refuses a cross-site request (CSRF)", async () => {
     expect((await invite(BODY, { "sec-fetch-site": "cross-site" })).status).toBe(403);
     expect(mocks.inviteUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/internal/onboarding-invites input limits", () => {
+  test(`takes a ${INVITEE_NAME_MAX}-character name and answers 400 naming one longer`, async () => {
+    expect((await invite({ ...BODY, name: "a".repeat(INVITEE_NAME_MAX) })).status).toBe(201);
+
+    const response = await invite({ ...BODY, name: "a".repeat(INVITEE_NAME_MAX + 1) });
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: "name" })]);
   });
 });
