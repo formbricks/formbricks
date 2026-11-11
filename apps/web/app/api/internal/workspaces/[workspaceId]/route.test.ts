@@ -6,12 +6,13 @@ import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { POST as DELETION } from "./deletions/route";
 import * as workspaceRoute from "./route";
 
-const { PATCH } = workspaceRoute;
+const { GET, PATCH } = workspaceRoute;
 
 const mocks = vi.hoisted(() => ({
   can: vi.fn(),
   getSession: vi.fn(),
   getWorkspace: vi.fn(),
+  getEditorWorkspace: vi.fn(),
   updateWorkspace: vi.fn(),
   deleteWorkspaceIfNotLast: vi.fn(),
   resolvePostWorkspaceDeletionDestination: vi.fn(),
@@ -21,6 +22,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspace: mocks.getWorkspace }));
+vi.mock("@/modules/survey/editor/lib/workspace", () => ({ getWorkspace: mocks.getEditorWorkspace }));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({
   updateWorkspace: mocks.updateWorkspace,
   deleteWorkspaceIfNotLast: mocks.deleteWorkspaceIfNotLast,
@@ -416,5 +418,50 @@ describe("workspace write input limits", () => {
     expect(response.status).toBe(400);
     expect(await invalidParams(response)).toEqual(["confirmationName"]);
     expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/internal/workspaces/{workspaceId}", () => {
+  const get = (id = WORKSPACE_ID) => GET(new NextRequest(url(id)), props(id) as never);
+  const { languages: _languages, ...editorWorkspace } = workspace({ legacyEnvironmentId: null });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
+    mocks.can.mockResolvedValue(true);
+    mocks.applyRateLimit.mockResolvedValue(undefined);
+    mocks.getEditorWorkspace.mockResolvedValue(editorWorkspace);
+  });
+
+  test("answers the workspace the survey editor holds, every column with ISO timestamps", async () => {
+    const response = await get();
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual({
+      ...editorWorkspace,
+      createdAt: "2026-10-01T10:00:00.000Z",
+      updatedAt: "2026-10-01T10:00:00.000Z",
+    });
+    // `workspace.write`, as the refetch action asked: only someone who edits its surveys reads it here.
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "workspace.write", {
+      type: "workspace",
+      id: WORKSPACE_ID,
+    });
+  });
+
+  test("answers 401 without a session, and one the user can't write to like one that does not exist", async () => {
+    mocks.getSession.mockResolvedValue(null);
+    expect((await get()).status).toBe(401);
+
+    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
+    mocks.can.mockResolvedValue(false);
+    const denied = await get();
+    mocks.can.mockResolvedValue(true);
+    mocks.getEditorWorkspace.mockResolvedValue(null);
+    const missing = await get();
+
+    expect(denied.status).toBe(403);
+    expect(missing.status).toBe(403);
+    expect((await denied.json()).detail).toBe((await missing.json()).detail);
   });
 });

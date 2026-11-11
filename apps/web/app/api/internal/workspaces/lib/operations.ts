@@ -12,6 +12,7 @@ import {
 } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import type { TWorkspaceRequestContext } from "@/app/api/internal/lib/types";
+import { requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -35,6 +36,7 @@ import {
   getAccessControlPermission,
   getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
+import { getWorkspace as getEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import { resolvePostWorkspaceDeletionDestination } from "@/modules/workspaces/settings/general/lib/delete-workspace";
 import {
   WORKSPACE_DELETE_CONFIRMATION_ERROR,
@@ -53,6 +55,7 @@ import type {
 } from "../schemas";
 import {
   type TWorkspaceDeletionResource,
+  serializeEditorWorkspace,
   serializeWorkspaceOption,
   serializeWorkspaceSettings,
 } from "../serializers";
@@ -87,6 +90,32 @@ async function authorizeWorkspace(
   if (!allowed) return problemForbidden(requestId, undefined, instance);
 
   return { workspace };
+}
+
+/**
+ * `GET /api/internal/workspaces/{workspaceId}`: the workspace as the survey editor refreshes it, without
+ * its custom CSS. Asks `workspace.write`, as the `refetchWorkspaceAction` it replaces did: only the editor
+ * reads it, and only someone who can edit the workspace's surveys opens the editor. A workspace that does
+ * not exist answers the same 403 as one the caller can't write to.
+ */
+export async function getEditorWorkspaceOperation({
+  authentication,
+  workspaceId,
+  requestId,
+  instance,
+}: Omit<TWorkspaceRequestContext, "auditLog">): Promise<Response> {
+  const access = await requireWorkspaceActionAccess({
+    authentication,
+    workspaceId,
+    action: "workspace.write",
+    requestId,
+    instance,
+  });
+  if (access instanceof Response) return access;
+
+  const workspace = await getEditorWorkspace(workspaceId);
+  if (!workspace) return problemForbidden(requestId, undefined, instance);
+  return successResponse(serializeEditorWorkspace(workspace), { requestId });
 }
 
 /**

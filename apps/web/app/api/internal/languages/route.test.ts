@@ -12,10 +12,12 @@ import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { DELETE, PATCH } from "./[languageId]/route";
 import { GET as SURVEYS } from "./[languageId]/surveys/route";
-import { POST as CREATE } from "./route";
+import { POST as CREATE, GET as LIST } from "./route";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
+  can: vi.fn(),
+  getWorkspaceLanguages: vi.fn(),
   getSession: vi.fn(),
   resolveWorkspace: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
@@ -33,7 +35,10 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan, can: vi.fn() }));
+vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan, can: mocks.can }));
+vi.mock("@/modules/survey/editor/lib/workspace", () => ({
+  getWorkspaceLanguages: mocks.getWorkspaceLanguages,
+}));
 vi.mock("@/app/api/v3/lib/workspace-context", () => ({ resolveV3WorkspaceContext: mocks.resolveWorkspace }));
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
@@ -437,5 +442,72 @@ describe("refusals", () => {
     expect(mocks.language.createLanguage).not.toHaveBeenCalled();
     expect(mocks.language.updateLanguage).not.toHaveBeenCalled();
     expect(mocks.language.deleteLanguage).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/internal/languages?workspaceId=", () => {
+  const list = (workspaceId = WORKSPACE_ID) =>
+    LIST(new NextRequest(`http://localhost/api/internal/languages?workspaceId=${workspaceId}`), {
+      params: Promise.resolve({}),
+    } as never);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
+    mocks.can.mockResolvedValue(true);
+    mocks.applyRateLimit.mockResolvedValue(undefined);
+    mocks.getWorkspaceLanguages.mockResolvedValue([
+      row(),
+      row({ id: "cllang2222222222222222222", code: "fr" }),
+    ]);
+  });
+
+  test("lists the workspace's languages for anyone who can read it, spending no write budget", async () => {
+    const response = await list();
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual([
+      {
+        id: LANGUAGE_ID,
+        code: "de-DE",
+        alias: null,
+        createdAt: CREATED_AT.toISOString(),
+        updatedAt: CREATED_AT.toISOString(),
+      },
+      {
+        id: "cllang2222222222222222222",
+        code: "fr",
+        alias: null,
+        createdAt: CREATED_AT.toISOString(),
+        updatedAt: CREATED_AT.toISOString(),
+      },
+    ]);
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "workspace.read", {
+      type: "workspace",
+      id: WORKSPACE_ID,
+    });
+    expect(mocks.getWorkspaceLanguages).toHaveBeenCalledWith(WORKSPACE_ID);
+    expect(
+      mocks.applyRateLimit.mock.calls.filter(
+        ([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace
+      )
+    ).toEqual([]);
+  });
+
+  test("answers 401 without a session, and a workspace the user can't read like a deleted one", async () => {
+    mocks.getSession.mockResolvedValue(null);
+    expect((await list()).status).toBe(401);
+
+    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
+    mocks.can.mockResolvedValue(false);
+    const denied = await list(OTHER_WORKSPACE_ID);
+    mocks.can.mockResolvedValue(true);
+    mocks.getWorkspaceLanguages.mockRejectedValue(
+      new ResourceNotFoundError("Workspace not found", WORKSPACE_ID)
+    );
+    const deleted = await list();
+
+    expect(denied.status).toBe(403);
+    expect(deleted.status).toBe(403);
   });
 });

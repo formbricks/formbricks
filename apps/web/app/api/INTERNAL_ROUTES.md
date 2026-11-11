@@ -47,7 +47,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/invites/{inviteId}/share-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/[inviteId]/share-links/route.ts` |
 | `/api/internal/invites/acceptances` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/acceptances/route.ts` |
 | `/api/internal/invites/batches` | POST | session | dashboard | `/api/internal` | `app/api/internal/invites/batches/route.ts` |
-| `/api/internal/languages` | POST | session | dashboard | `/api/internal` | `app/api/internal/languages/route.ts` |
+| `/api/internal/languages` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/languages/route.ts` |
 | `/api/internal/languages/{languageId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/route.ts` |
 | `/api/internal/languages/{languageId}/surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/languages/[languageId]/surveys/route.ts` |
 | `/api/internal/license-checks` | POST | session | dashboard | `/api/internal` | `app/api/internal/license-checks/route.ts` |
@@ -98,9 +98,11 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/segments/{segmentId}/copies` | POST | session | dashboard | `/api/internal` | `app/api/internal/segments/[segmentId]/copies/route.ts` |
 | `/api/internal/signups` | POST | none | dashboard | `/api/internal` | `app/api/internal/signups/route.ts` |
 | `/api/internal/survey-retention/{surveyId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/survey-retention/[surveyId]/route.ts` |
+| `/api/internal/surveys/{surveyId}` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/route.ts` |
 | `/api/internal/surveys/{surveyId}/content` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/content/route.ts` |
 | `/api/internal/surveys/{surveyId}/copies` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/copies/route.ts` |
 | `/api/internal/surveys/{surveyId}/displays` | GET | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/displays/route.ts` |
+| `/api/internal/surveys/{surveyId}/draft` | PUT | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/draft/route.ts` |
 | `/api/internal/surveys/{surveyId}/email-embed` | GET | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/email-embed/route.ts` |
 | `/api/internal/surveys/{surveyId}/example-responses` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/example-responses/route.ts` |
 | `/api/internal/surveys/{surveyId}/export` | GET | session | dashboard | `/api/internal` | `app/api/internal/surveys/[surveyId]/export/route.ts` |
@@ -132,7 +134,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/webhooks/{webhookId}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/webhooks/[webhookId]/route.ts` |
 | `/api/internal/webhooks/test-deliveries` | POST | session | dashboard | `/api/internal` | `app/api/internal/webhooks/test-deliveries/route.ts` |
 | `/api/internal/workspaces` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/workspaces/route.ts` |
-| `/api/internal/workspaces/{workspaceId}` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
+| `/api/internal/workspaces/{workspaceId}` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/deletions` | POST | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/deletions/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/file-upload-limit` | GET | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/file-upload-limit/route.ts` |

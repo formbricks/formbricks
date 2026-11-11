@@ -1,4 +1,6 @@
 import type { TWorkspace } from "@formbricks/types/workspace";
+import type { TJsonTimestamps } from "@/modules/api/lib/json-timestamps";
+import type { TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import type { TPostWorkspaceDeletionDestination } from "@/modules/workspaces/settings/general/lib/post-workspace-deletion-redirect";
 
 /**
@@ -55,4 +57,33 @@ export const serializeWorkspaceOption = (workspace: {
 }): TWorkspaceOptionResource => ({
   id: workspace.id,
   name: workspace.name,
+});
+
+/**
+ * A workspace as the survey editor reads it to refresh its state when the tab comes back into view: every
+ * column but the custom CSS (ENG-2949), with ISO timestamps. Field for field the workspace the editor page
+ * renders with, so a refresh that finds nothing changed leaves the editor as it is.
+ */
+export type TEditorWorkspaceResource = TJsonTimestamps<TEditorWorkspace>;
+
+export const serializeEditorWorkspace = (workspace: TEditorWorkspace): TEditorWorkspaceResource => ({
+  id: workspace.id,
+  createdAt: workspace.createdAt.toISOString(),
+  updatedAt: workspace.updatedAt.toISOString(),
+  name: workspace.name,
+  legacyEnvironmentId: workspace.legacyEnvironmentId,
+  organizationId: workspace.organizationId,
+  styling: workspace.styling,
+  config: workspace.config,
+  recontactDays: workspace.recontactDays,
+  linkSurveyBranding: workspace.linkSurveyBranding,
+  inAppSurveyBranding: workspace.inAppSurveyBranding,
+  placement: workspace.placement,
+  clickOutsideClose: workspace.clickOutsideClose,
+  overlay: workspace.overlay,
+  overlayColor: workspace.overlayColor,
+  overlayOpacity: workspace.overlayOpacity,
+  logo: workspace.logo,
+  appSetupCompleted: workspace.appSetupCompleted,
+  customHeadScripts: workspace.customHeadScripts,
 });

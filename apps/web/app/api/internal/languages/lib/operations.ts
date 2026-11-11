@@ -1,6 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import { requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
 import { getV3SessionUserId, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
@@ -24,6 +25,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromLanguageId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
 import type { TLanguageCreateBody, TLanguageUpdateBody } from "../schemas";
 import {
   type TLanguageResource,
@@ -33,11 +35,11 @@ import {
 } from "../serializers";
 
 /**
- * A workspace's languages, for the workspace languages settings page.
+ * A workspace's languages, for the workspace languages settings page and the survey editor.
  *
- * Every operation is `workspace.manage` on the workspace the language belongs to, and every write spends
- * the workspace's shared settings-write budget — the same checks the server actions these replace ran.
- * Single-language routes take a globally unique id and never a workspace, so the scope is read off the
+ * Every operation but the survey editor's list is `workspace.manage` on the workspace the language belongs
+ * to, and every write spends the workspace's shared settings-write budget — the same checks the server
+ * actions these replace ran. Single-language routes take a globally unique id and never a workspace, so the scope is read off the
  * row rather than supplied by the caller.
  */
 
@@ -136,6 +138,36 @@ function mapLanguageError(error: unknown, context: TRequestContext, operation: s
     instance: context.instance,
     operation,
   });
+}
+
+/**
+ * `GET /api/internal/languages?workspaceId=`: the workspace's languages by code, for the survey editor to
+ * refresh its language picker when its tab comes back into view. `workspace.read`, as the
+ * `getWorkspaceLanguagesAction` it replaces asked; a read, so it spends no write budget.
+ */
+export async function listLanguagesOperation({
+  authentication,
+  workspaceId,
+  requestId,
+  instance,
+}: Omit<TRequestContext, "auditLog"> & { workspaceId: string }): Promise<Response> {
+  const access = await requireWorkspaceActionAccess({
+    authentication,
+    workspaceId,
+    action: "workspace.read",
+    requestId,
+    instance,
+  });
+  if (access instanceof Response) return access;
+
+  try {
+    const languages = await getWorkspaceLanguages(workspaceId);
+    return successResponse(languages.map(serializeLanguage), { requestId });
+  } catch (error) {
+    // The workspace was deleted since the check: the same 403 as one the caller can't read.
+    if (error instanceof ResourceNotFoundError) return forbidden({ authentication, requestId, instance });
+    throw error;
+  }
 }
 
 /** `POST /api/internal/languages?workspaceId=`: add a language to the workspace. */
