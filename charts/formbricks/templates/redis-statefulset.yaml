@@ -121,16 +121,28 @@ spec:
           configMap:
             name: {{ include "formbricks.redisName" . }}-configuration
 {{- if .Values.redis.master.persistence.enabled }}
+  {{- /*
+  Kubernetes rejects any change to a StatefulSet's volumeClaimTemplates, so the claim labels never carry a
+  chart or app version. Earlier charts (5.1 onwards) stamped helm.sh/chart here, so an existing StatefulSet
+  keeps the labels its live claim template already has: dropping the old label would itself edit the
+  immutable field. helm template, and so Argo CD, cannot look up the live object and renders the stable labels.
+  */}}
+  {{- $claimLabels := dict "app.kubernetes.io/name" (include "formbricks.redisName" .) "app.kubernetes.io/instance" .Release.Name "app.kubernetes.io/component" "redis" }}
+  {{- $liveStatefulSet := lookup "apps/v1" "StatefulSet" .Release.Namespace (include "formbricks.redisMasterName" .) }}
+  {{- range (dig "spec" "volumeClaimTemplates" (list) $liveStatefulSet) }}
+  {{- if eq (dig "metadata" "name" "" .) "redis-data" }}
+  {{- $claimLabels = dig "metadata" "labels" (dict) . }}
+  {{- end }}
+  {{- end }}
   volumeClaimTemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim
       metadata:
         name: redis-data
+        {{- with $claimLabels }}
         labels:
-          helm.sh/chart: {{ include "formbricks.chart" . }}
-          app.kubernetes.io/name: {{ include "formbricks.redisName" . }}
-          app.kubernetes.io/instance: {{ .Release.Name }}
-          app.kubernetes.io/component: redis
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       spec:
         accessModes:
           {{- toYaml .Values.redis.master.persistence.accessModes | nindent 10 }}
