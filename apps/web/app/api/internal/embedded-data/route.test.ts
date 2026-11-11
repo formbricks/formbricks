@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { EMBEDDED_DATA_KEY_MAX_LENGTH } from "@formbricks/types/embedded-data";
 import {
   AuthorizationError,
   InvalidInputError,
@@ -364,6 +365,26 @@ describe("writes", () => {
       newObject: row(),
     });
   });
+});
+
+describe("key length", () => {
+  test.each([
+    ["create", 201, (key: string) => create({ key, name: "Plan tier", source: "ingested" })],
+    ["promote", 200, (key: string) => promote({ key })],
+  ])(
+    `%s takes a ${EMBEDDED_DATA_KEY_MAX_LENGTH}-character key and answers 400 naming a longer one`,
+    async (_label, ok, write) => {
+      expect((await write("a".repeat(EMBEDDED_DATA_KEY_MAX_LENGTH))).status).toBe(ok);
+
+      mocks.library.createSharedEmbeddedData.mockClear();
+      mocks.library.promoteEmbeddedDataToShared.mockClear();
+      const response = await write("a".repeat(EMBEDDED_DATA_KEY_MAX_LENGTH + 1));
+      expect(response.status).toBe(400);
+      expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: "key" })]);
+      expect(mocks.library.createSharedEmbeddedData).not.toHaveBeenCalled();
+      expect(mocks.library.promoteEmbeddedDataToShared).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("refusals", () => {
