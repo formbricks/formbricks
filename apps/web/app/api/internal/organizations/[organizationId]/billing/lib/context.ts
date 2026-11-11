@@ -134,8 +134,9 @@ export const stripeIntentKey = (operation: string, organizationId: string, inten
   `${operation}:${organizationId}:${intentKey}`;
 
 /**
- * The intent key a Stripe-writing route requires, or the 400 when it is missing or not a UUID. Read before
- * the caller is authorized, like the body the wrapper parses first.
+ * The intent key a Stripe-writing route requires, or the 400 when it is missing or not a UUID. Read after
+ * `requireBillingAccess`, so a caller without access gets the uniform 403 whatever the header, and the audit
+ * entry of a missing key already names the organization.
  */
 export const requireIntentKey = (
   req: Request,

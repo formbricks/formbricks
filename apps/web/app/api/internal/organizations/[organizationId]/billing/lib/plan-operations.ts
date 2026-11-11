@@ -165,14 +165,14 @@ export async function changeBillingPlanOperation({
   ...context
 }: TBillingRequestContext & { req: Request; body: TBillingPlanChangeBody }): Promise<Response> {
   const { organizationId, requestId, auditLog } = context;
-  const intentKey = requireIntentKey(req, context);
-  if (intentKey instanceof Response) return intentKey;
-
   const access = await requireBillingAccess(context, {
     action: "organization.manage_billing",
     chargeStateMutation: true,
   });
   if (access instanceof Response) return access;
+
+  const intentKey = requireIntentKey(req, context);
+  if (intentKey instanceof Response) return intentKey;
 
   return runHoldingBillingLock(context, () =>
     answerRefusals(context, async () => {

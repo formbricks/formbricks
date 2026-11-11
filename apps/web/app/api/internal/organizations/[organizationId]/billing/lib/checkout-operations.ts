@@ -62,14 +62,14 @@ export async function createBillingCheckoutSessionOperation({
   ...context
 }: TIntentRequestContext & { body: TBillingCheckoutSessionBody }): Promise<Response> {
   const { organizationId, requestId, auditLog } = context;
-  const intentKey = requireIntentKey(context.req, context);
-  if (intentKey instanceof Response) return intentKey;
-
   const access = await requireBillingAccess(context, {
     action: "organization.manage_billing",
     chargeStateMutation: true,
   });
   if (access instanceof Response) return access;
+
+  const intentKey = requireIntentKey(context.req, context);
+  if (intentKey instanceof Response) return intentKey;
 
   return answerRefusals(context, async () => {
     const billing = await getBillingCustomerOrRefuse(context);
@@ -106,14 +106,14 @@ export async function createBillingSetupCheckoutSessionOperation({
   ...context
 }: TIntentRequestContext & { body: TBillingSetupCheckoutSessionBody }): Promise<Response> {
   const { organizationId, requestId, instance, auditLog } = context;
-  const intentKey = requireIntentKey(context.req, context);
-  if (intentKey instanceof Response) return intentKey;
-
   const access = await requireBillingAccess(context, {
     action: "organization.manage_billing",
     chargeStateMutation: true,
   });
   if (access instanceof Response) return access;
+
+  const intentKey = requireIntentKey(context.req, context);
+  if (intentKey instanceof Response) return intentKey;
 
   const billing = await getBillingCustomerOrRefuse(context);
   if (billing instanceof Response) return billing;

@@ -108,6 +108,12 @@ describe("POST /api/internal/organizations/{organizationId}/billing/setup-checko
     expect((await send({ intentKey: null })).status).toBe(400);
   });
 
+  test("answers the uniform 403, not the key's 400, to a caller who can't manage billing", async () => {
+    mocks.can.mockResolvedValue(false);
+    expect((await send({ intentKey: null })).status).toBe(403);
+    expect(mocks.createSetupCheckoutSession).not.toHaveBeenCalled();
+  });
+
   test("refuses a caller who can't manage billing", async () => {
     mocks.can.mockResolvedValue(false);
     expect((await send()).status).toBe(403);

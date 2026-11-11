@@ -95,6 +95,12 @@ describe("POST /api/internal/organizations/{organizationId}/billing/checkout-ses
     expect(mocks.createPaidPlanCheckoutSession).not.toHaveBeenCalled();
   });
 
+  test("answers the uniform 403, not the key's 400, to a caller who can't manage billing", async () => {
+    mocks.can.mockResolvedValue(false);
+    expect((await send({ intentKey: null })).status).toBe(403);
+    expect(mocks.createPaidPlanCheckoutSession).not.toHaveBeenCalled();
+  });
+
   test("refuses an organization that already has a subscription, with the reason", async () => {
     mocks.getOrganization.mockResolvedValue(billingOrganization({ subscriptionId: "sub_1" }));
 

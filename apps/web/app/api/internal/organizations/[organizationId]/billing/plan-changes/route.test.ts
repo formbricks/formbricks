@@ -118,7 +118,17 @@ describe("POST /api/internal/organizations/{organizationId}/billing/plan-changes
     expect((await response.json()).invalid_params).toEqual([
       { name: "Idempotency-Key", reason: "Expected a UUID" },
     ]);
-    expect(mocks.can).not.toHaveBeenCalled();
+    expect(mocks.switchOrganizationToCloudPlan).not.toHaveBeenCalled();
+    expect(queuedAudit()).toMatchObject({ organizationId: ORG_ID, targetId: ORG_ID, status: "failure" });
+  });
+
+  test("answers the uniform 403, not the key's 400, to a caller who can't manage billing", async () => {
+    mocks.can.mockResolvedValue(false);
+
+    const response = await send({ intentKey: null });
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You are not authorized to access this resource");
     expect(mocks.switchOrganizationToCloudPlan).not.toHaveBeenCalled();
   });
 
