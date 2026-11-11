@@ -1,10 +1,5 @@
 import "server-only";
-import {
-  InvalidInputError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-  ValidationError,
-} from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 
 /**
@@ -39,15 +34,13 @@ export async function forbidOnRefusal(
 
 /**
  * The answer to a service's refusal, or `null` for an error that isn't one: the 403s of `forbidOnRefusal`,
- * and a 422 with its reason for an `InvalidInputError` or a `ValidationError`, raised by a service for a write
- * it can't take (a survey that fails its own validation, say) — the message the server action this route
- * replaces showed the user as is.
+ * and a 422 with its reason for an `InvalidInputError`, raised by a service for a write it can't take — the
+ * message the server action this route replaces showed the user as is.
  */
 export const refusalResponse = (error: unknown, requestId: string, instance?: string): Response | null => {
   const refused = forbiddenRefusal(error, requestId, instance);
   if (refused) return refused;
-  if (error instanceof InvalidInputError || error instanceof ValidationError) {
+  if (error instanceof InvalidInputError)
     return problemUnprocessableContent(requestId, error.message, { instance });
-  }
   return null;
 };

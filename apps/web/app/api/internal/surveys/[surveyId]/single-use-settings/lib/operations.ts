@@ -11,7 +11,9 @@ import { serializeSurveySingleUseSettings } from "../serializers";
  * `PUT /api/internal/surveys/{surveyId}/single-use-settings`: switch the survey's link between multi-use
  * and single-use, and its single-use ids between plain and encrypted. Needs `survey.write`, and saves the
  * survey through the same update as the server action it replaces, so its validation applies. Not audited
- * and no budget of its own, as before. A refusal from the update keeps its reason (403 or 422).
+ * and no budget of its own, as before. A refusal from the update keeps its reason (403 or 422). A
+ * `ValidationError` from the update is about the stored survey, not this request, so it propagates to the
+ * wrapper: a 500, logged at `error`.
  */
 export async function updateSingleUseSettingsOperation({
   authentication,

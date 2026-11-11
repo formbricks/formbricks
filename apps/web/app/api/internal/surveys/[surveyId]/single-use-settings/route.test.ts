@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { PUT } from "./route";
 
@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getSurvey: vi.fn(),
   updateSurvey: vi.fn(),
+  logError: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
@@ -19,7 +20,10 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })), error: vi.fn() },
+  logger: {
+    withContext: vi.fn(() => ({ error: mocks.logError, warn: vi.fn(), info: vi.fn() })),
+    error: vi.fn(),
+  },
 }));
 vi.mock("server-only", () => ({}));
 
@@ -87,6 +91,20 @@ describe("PUT /api/internal/surveys/{surveyId}/single-use-settings", () => {
 
     expect(response.status).toBe(422);
     expect((await response.json()).detail).toBe("This survey is archived. Restore it before editing.");
+  });
+
+  test("answers 500 and logs at error when the update rejects the stored survey as invalid", async () => {
+    mocks.updateSurvey.mockRejectedValue(new ValidationError("Survey must have at least one block"));
+
+    const response = await put();
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(body)).not.toContain("at least one block");
+    expect(mocks.logError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(ValidationError), statusCode: 500 }),
+      "V3 unexpected error"
+    );
   });
 
   test.each([

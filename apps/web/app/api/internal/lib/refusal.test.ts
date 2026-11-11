@@ -1,10 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import {
-  InvalidInputError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-  ValidationError,
-} from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { forbidOnRefusal, refusalResponse } from "./refusal";
 
 vi.mock("server-only", () => ({}));
@@ -67,13 +62,6 @@ describe("refusalResponse", () => {
 
     expect(response?.status).toBe(422);
     expect((await response?.json()).detail).toBe("Invalid user segment filters");
-  });
-
-  test("answers 422 with a ValidationError's own reason, as for a survey that fails its own checks", async () => {
-    const response = refusalResponse(new ValidationError("Survey must have at least one block"), REQUEST_ID);
-
-    expect(response?.status).toBe(422);
-    expect((await response?.json()).detail).toBe("Survey must have at least one block");
   });
 
   test("answers null for any other error", () => {
