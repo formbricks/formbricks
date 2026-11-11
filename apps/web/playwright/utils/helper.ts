@@ -15,6 +15,15 @@ type MockStorageFileFixture = {
   publicAssetPath?: string;
 };
 
+/**
+ * Sets a Set value action's Expression switch to `on`, reading it first, so a step does what it says
+ * whatever a new Set value starts as (that default has changed before: P73, P74).
+ */
+export const setExpressionMode = async (page: Page, actionIdx: number, on: boolean): Promise<void> => {
+  const toggle = page.locator(`#action-${actionIdx}-formula-toggle`).first();
+  if ((await toggle.getAttribute("aria-checked")) !== String(on)) await toggle.click();
+};
+
 export const PLAYWRIGHT_PICTURE_SELECTION_FILES: MockStorageFileFixture[] = [
   {
     name: "playwright-choice-1.png",
@@ -1232,8 +1241,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
 
   // Adding logic to blocks, on the Flow tab (ENG-6929): one "Add logic" per block, each opening its new rule.
   await page.getByRole("button", { name: "Flow", exact: true }).click();
-  // Switching an action to Set value starts on the one-step Assign (P74), which every Set value below
-  // uses, to keep covering one-step calculations.
+  // Every Set value below uses the one-step operators, to keep covering one-step calculations.
   // Block 1 (Open Text Question)
   await addFlowRule(page, 1);
   await selectConditionLeftOperand(page, "condition-0-0-conditionValue", params.openTextQuestion.question);
@@ -1241,6 +1249,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").first().click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").first().click();
@@ -1257,6 +1266,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 2, false);
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-2-operator").click();
@@ -1281,6 +1291,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1291,6 +1302,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
@@ -1321,6 +1333,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1337,6 +1350,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 2, false);
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-2-operator").click();
@@ -1355,6 +1369,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1365,6 +1380,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
@@ -1382,6 +1398,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "3" }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1392,6 +1409,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
@@ -1450,6 +1468,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1460,6 +1479,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
@@ -1475,6 +1495,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is skipped" }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1485,6 +1506,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
@@ -1504,6 +1526,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByText("Is completely submitted", { exact: true }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1514,6 +1537,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-1-variableId").click();
@@ -1553,6 +1577,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByPlaceholder("Value").fill("test");
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1564,6 +1589,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await addFlowRule(page, 10);
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1575,6 +1601,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await addFlowRule(page, 11);
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1615,6 +1642,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await setConditionDate(page, "condition-0-3-conditionMatchValue", yesterday);
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1630,6 +1658,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is skipped" }).click();
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1641,6 +1670,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await addFlowRule(page, 14);
   await page.locator("#action-0-objective").first().click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
@@ -1651,6 +1681,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-1-operator").click();
@@ -1661,6 +1692,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
   await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 2, false);
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-2-operator").click();
