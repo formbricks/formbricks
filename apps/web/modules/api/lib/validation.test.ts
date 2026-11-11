@@ -9,7 +9,6 @@ import {
   formatValidationErrorsForV2Api,
   validateResponseData,
 } from "@/modules/api/lib/validation";
-import { matchPatternInLinearTime } from "./linear-pattern-matcher";
 
 const mockTransformQuestionsToBlocks = vi.fn();
 const mockGetElementsFromBlocks = vi.fn();
@@ -28,10 +27,22 @@ vi.mock("@formbricks/surveys/validation", () => ({
 }));
 
 // Survey patterns must never reach the backtracking RegExp on the server (ENG-7109).
-const LINEAR_TIME = { matchPattern: matchPatternInLinearTime };
+const LINEAR_TIME = { matchPattern: expect.any(Function) };
 
 describe("validateResponseData", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  test("passes a linear-time matcher that refuses a catastrophic pattern quickly (ENG-7109)", () => {
+    mockGetElementsFromBlocks.mockReturnValue([{ id: "q1" }]);
+    mockValidateBlockResponses.mockReturnValue({});
+
+    validateResponseData([{ id: "b1" }] as unknown as TSurveyBlock[], { q1: "x" }, "en");
+
+    const { matchPattern } = mockValidateBlockResponses.mock.calls[0][3];
+    const started = performance.now();
+    expect(matchPattern("^(a+)+$", undefined, `${"a".repeat(64)}!`)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
 
   const mockBlocks: TSurveyBlock[] = [
     {
