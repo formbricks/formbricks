@@ -26,6 +26,7 @@ const createFakeCanvas = (size = { width: 300, height: 100 }) => {
     textBaseline: "alphabetic",
     setTransform: vi.fn((...a: number[]) => ctxCalls.push(`setTransform ${a.join(",")}`)),
     fillRect: vi.fn(() => ctxCalls.push("fillRect")),
+    clearRect: vi.fn(() => ctxCalls.push("clearRect")),
     beginPath: vi.fn(),
     moveTo: vi.fn(),
     lineTo: vi.fn(),
@@ -329,6 +330,7 @@ describe("createSignaturePad sizing", () => {
   test("paints nothing while the card is hidden and the pad has no size", () => {
     const fake = setup({ size: { width: 0, height: 0 } });
     expect(fake.ctx.fillRect).not.toHaveBeenCalled();
+    expect(fake.ctx.clearRect).not.toHaveBeenCalled();
   });
 
   test("destroy removes the listeners and stops observing", () => {

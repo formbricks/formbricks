@@ -12,6 +12,7 @@ export type SignatureContext2D = Pick<
   | "textAlign"
   | "textBaseline"
   | "fillRect"
+  | "clearRect"
   | "beginPath"
   | "moveTo"
   | "lineTo"
@@ -26,6 +27,21 @@ export type SignatureContext2D = Pick<
 /** The signature image is opaque white with near-black ink, whatever the survey's theme or appearance. */
 export const SIGNATURE_PAPER_COLOR = "#ffffff";
 export const SIGNATURE_INK_COLOR = "#111111";
+
+/**
+ * What a signature is painted with. `paper: null` leaves the background transparent, which is how the
+ * on-screen pad lets the input background of the survey's theme show through.
+ */
+export interface SignaturePalette {
+  paper: string | null;
+  ink: string;
+}
+
+/** The exported PNG's colours: fixed, so every stored signature looks the same. */
+export const SIGNATURE_EXPORT_PALETTE: SignaturePalette = {
+  paper: SIGNATURE_PAPER_COLOR,
+  ink: SIGNATURE_INK_COLOR,
+};
 
 /** The family the typed name is drawn in, with the system cursive font as the fallback. */
 export const SIGNATURE_FONT_FAMILY = "Formbricks Signature Script";
@@ -52,11 +68,12 @@ export const drawStrokes = (
   ctx: SignatureContext2D,
   strokes: readonly SignatureStroke[],
   width: number,
-  height: number
+  height: number,
+  ink: string = SIGNATURE_INK_COLOR
 ): void => {
   const lineWidth = inkWidthFor(width);
-  ctx.strokeStyle = SIGNATURE_INK_COLOR;
-  ctx.fillStyle = SIGNATURE_INK_COLOR;
+  ctx.strokeStyle = ink;
+  ctx.fillStyle = ink;
   ctx.lineWidth = lineWidth;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -100,8 +117,14 @@ export const fitTypedNameFontSize = (
 };
 
 /** Draws a name centred on the pad, auto-fitted to it. The font must be loaded first to get the script face. */
-export const drawTypedName = (ctx: SignatureContext2D, name: string, width: number, height: number): void => {
-  ctx.fillStyle = SIGNATURE_INK_COLOR;
+export const drawTypedName = (
+  ctx: SignatureContext2D,
+  name: string,
+  width: number,
+  height: number,
+  ink: string = SIGNATURE_INK_COLOR
+): void => {
+  ctx.fillStyle = ink;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = `400 ${String(FONT_MEASURE_REFERENCE_SIZE)}px ${SIGNATURE_FONT_STACK}`;
@@ -110,16 +133,24 @@ export const drawTypedName = (ctx: SignatureContext2D, name: string, width: numb
   ctx.fillText(name, width / 2, height / 2);
 };
 
-/** Paints the whole image: an opaque white page, then the signature (or nothing, for an unsigned pad). */
+/**
+ * Paints the whole image: the page (opaque white for the PNG, cleared for the on-screen pad), then the
+ * signature in the palette's ink (or nothing, for an unsigned pad).
+ */
 export const renderSignatureImage = (
   ctx: SignatureContext2D,
   content: SignatureContent | null,
   width: number,
-  height: number
+  height: number,
+  palette: SignaturePalette = SIGNATURE_EXPORT_PALETTE
 ): void => {
-  ctx.fillStyle = SIGNATURE_PAPER_COLOR;
-  ctx.fillRect(0, 0, width, height);
+  if (palette.paper === null) {
+    ctx.clearRect(0, 0, width, height);
+  } else {
+    ctx.fillStyle = palette.paper;
+    ctx.fillRect(0, 0, width, height);
+  }
   if (!content) return;
-  if (content.kind === "name") drawTypedName(ctx, content.name, width, height);
-  else drawStrokes(ctx, content.strokes, width, height);
+  if (content.kind === "name") drawTypedName(ctx, content.name, width, height, palette.ink);
+  else drawStrokes(ctx, content.strokes, width, height, palette.ink);
 };

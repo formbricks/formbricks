@@ -27,6 +27,7 @@ const createRecordingContext = (measuredWidth = 100) => {
     textAlign: "start",
     textBaseline: "alphabetic",
     fillRect: (...a: number[]) => calls.push(["fillRect", ...a]),
+    clearRect: (...a: number[]) => calls.push(["clearRect", ...a]),
     beginPath: () => calls.push(["beginPath"]),
     moveTo: (...a: number[]) => calls.push(["moveTo", ...a]),
     lineTo: (...a: number[]) => calls.push(["lineTo", ...a]),
