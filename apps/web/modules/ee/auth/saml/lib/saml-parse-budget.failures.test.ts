@@ -550,6 +550,41 @@ describe("probeSamlResponseParse failure paths", () => {
     expect(globalThis.samlParsePool!.allowanceMs).toBe(allowance);
   });
 
+  test("lets jackson decide when a worker from before the field leaves `readable` out", async () => {
+    const { probeSamlResponseParse } = await load();
+    const probe = probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    const job = state.workers[0].port.inbox.shift() as { id: number };
+
+    state.workers[0].port.postMessage({ id: job.id, ms: 5, claims: { issuer: ISSUER } });
+    mainPort(state.workers[0]).flush();
+
+    await expect(probe).resolves.toMatchObject({ outcome: "parsed", ms: 5 });
+  });
+
+  // Unreachable from the real worker (an unreadable response names no issuer, so nothing is decrypted), but were it to
+  // happen the pool must not answer on its own after decryption began (ENG-6646).
+  test("fails a job found unreadable after it began decrypting, rather than answering it", async () => {
+    const { probeSamlResponseParse } = await load();
+    const probe = probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    state.workers[0].decrypting();
+    state.workers[0].answerUnreadable();
+    mainPort(state.workers[0]).flush();
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "failed" },
+    });
+  });
+
   test("ignores a stale answer for a job it no longer runs", async () => {
     const { probeSamlResponseParse } = await load();
     const probe = probeSamlResponseParse("PHIvPg==", KEY, null);

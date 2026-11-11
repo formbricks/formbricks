@@ -247,8 +247,16 @@ const takeMessage = (message: WorkerResult | DecryptingNotice): boolean => {
     return true;
   }
   // jackson would throw on it before anything else and spend no more time on it, so it is answered before the
-  // allowance is checked and charges none. It names no issuer, so the worker never began decrypting it.
-  if (!result.readable) {
+  // allowance is checked and charges none. Only an explicit `false`: a worker left running by `next dev` from before
+  // the field existed leaves it out, and its answers go on to jackson as they did.
+  if (result.readable === false) {
+    // It names no issuer, so the worker never began decrypting it. Were it to have, an answer of our own could depend on
+    // the plaintext, so the job fails, as for an unannounced refusal below.
+    if (job.decrypting) {
+      logger.error("SAML parse worker found a response unreadable after it began decrypting");
+      settleRunning({ outcome: "failed" });
+      return true;
+    }
     settleRunning({ outcome: "unreadable" });
     return true;
   }

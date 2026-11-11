@@ -20,8 +20,9 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
  * response, so that call's cost is timed as well (ENG-6648), then saml20's signature check with the connection's own
  * IdP certificates, so that step's cost is timed too (ENG-4108).
  *
- * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
- * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
+ * It answers with whether saml20 could parse the response at all (ENG-7054), the identifying fields only (the claimed
+ * issuer, the response ID and InResponseTo, cut to a length a log line can carry) and how decryption went, with sizes
+ * for a refusal. Nothing else of the response leaves the
  * worker, the decrypted assertion included. Just before it decrypts, it says so, with the issuer as jackson reads it:
  * whatever happens to the job after that point may depend on the plaintext, so the pool must not answer it on its own
  * (ENG-6646, see `refused_encrypted` in `saml-parse-budget.ts`).
@@ -181,8 +182,7 @@ export const parseSamlResponse = (
     if (idpVerification && issuer) checkSignatureAsJackson(xml, undefined, idpVerification);
     return { readable: true, claims };
   }
-  // jackson refuses a response with no issuer, or one saml20 cannot parse, before it decrypts anything, so the worker
-  // does not decrypt it either.
+  // jackson refuses a response with no issuer before it decrypts anything, so the worker does not decrypt it either.
   const key = issuer ? decryptionKey : null;
   if (key && issuer) onDecrypting(issuer);
   const { decryption, decryptedXml, checksSignature } = decryptAsJackson(xml, key);
