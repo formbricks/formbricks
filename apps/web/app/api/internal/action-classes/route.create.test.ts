@@ -4,6 +4,11 @@ import { AuthorizationError, TooManyRequestsError, UniqueConstraintError } from 
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
+import {
+  ACTION_CLASS_ELEMENT_SELECTOR_MAX_LENGTH,
+  ACTION_CLASS_KEY_MAX_LENGTH,
+  ACTION_CLASS_URL_FILTERS_MAX,
+} from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
@@ -245,6 +250,51 @@ describe("POST /api/internal/action-classes", () => {
 
   test("answers 400 for a workspace id that is not an id", async () => {
     expect((await post(noCodeInput(), { workspaceId: "not-an-id" })).status).toBe(400);
+    expect(mocks.createActionClass).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/internal/action-classes input limits", () => {
+  const text = (length: number) => "a".repeat(length);
+  const clickInput = (config: Record<string, unknown>) =>
+    noCodeInput({ noCodeConfig: { ...noCodeInput().noCodeConfig, ...config } });
+  const urlFilter = (value: string) => ({ value, rule: "contains" });
+
+  test.each([
+    ["name", 255, (n: number) => noCodeInput({ name: text(n) })],
+    ["description", 2000, (n: number) => noCodeInput({ description: text(n) })],
+    [
+      "key",
+      ACTION_CLASS_KEY_MAX_LENGTH,
+      (n: number) => ({ name: "Signed up", description: null, type: "code", key: text(n) }),
+    ],
+    [
+      "noCodeConfig.urlFilters.0.value",
+      2048,
+      (n: number) => clickInput({ urlFilters: [urlFilter(text(n))] }),
+    ],
+    [
+      "noCodeConfig.urlFilters",
+      ACTION_CLASS_URL_FILTERS_MAX,
+      (n: number) => clickInput({ urlFilters: Array.from({ length: n }, () => urlFilter("/a")) }),
+    ],
+    [
+      "noCodeConfig.elementSelector.cssSelector",
+      ACTION_CLASS_ELEMENT_SELECTOR_MAX_LENGTH,
+      (n: number) => clickInput({ elementSelector: { cssSelector: text(n) } }),
+    ],
+    [
+      "noCodeConfig.elementSelector.innerHtml",
+      ACTION_CLASS_ELEMENT_SELECTOR_MAX_LENGTH,
+      (n: number) => clickInput({ elementSelector: { innerHtml: text(n) } }),
+    ],
+  ])("takes %s at its cap of %i and answers 400 naming it one past", async (field, max, build) => {
+    expect((await post(build(max))).status).toBe(201);
+
+    mocks.createActionClass.mockClear();
+    const response = await post(build(max + 1));
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
     expect(mocks.createActionClass).not.toHaveBeenCalled();
   });
 });

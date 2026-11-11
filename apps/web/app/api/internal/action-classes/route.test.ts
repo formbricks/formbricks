@@ -4,6 +4,11 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DELETE, PATCH } from "./[actionClassId]/route";
 import { GET as SURVEYS } from "./[actionClassId]/surveys/route";
+import {
+  ACTION_CLASS_ELEMENT_SELECTOR_MAX_LENGTH,
+  ACTION_CLASS_KEY_MAX_LENGTH,
+  ACTION_CLASS_URL_FILTERS_MAX,
+} from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
@@ -218,6 +223,43 @@ describe("PATCH /api/internal/action-classes/{actionClassId}", () => {
 
   test("answers 400 for a code action without a key", async () => {
     expect((await patch(codeInput({ key: undefined }))).status).toBe(400);
+    expect(mocks.updateActionClass).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["name", 255, (n: number) => codeInput({ name: "a".repeat(n) })],
+    ["description", 2000, (n: number) => codeInput({ description: "a".repeat(n) })],
+    ["key", ACTION_CLASS_KEY_MAX_LENGTH, (n: number) => codeInput({ key: "a".repeat(n) })],
+    [
+      "noCodeConfig.urlFilters.0.value",
+      2048,
+      (n: number) => noCodeInput(clickConfig({ urlFilters: [{ value: "a".repeat(n), rule: "contains" }] })),
+    ],
+    [
+      "noCodeConfig.urlFilters",
+      ACTION_CLASS_URL_FILTERS_MAX,
+      (n: number) =>
+        noCodeInput(
+          clickConfig({ urlFilters: Array.from({ length: n }, () => ({ value: "/a", rule: "contains" })) })
+        ),
+    ],
+    [
+      "noCodeConfig.elementSelector.cssSelector",
+      ACTION_CLASS_ELEMENT_SELECTOR_MAX_LENGTH,
+      (n: number) => noCodeInput(clickConfig({ elementSelector: { cssSelector: "a".repeat(n) } })),
+    ],
+    [
+      "noCodeConfig.elementSelector.innerHtml",
+      ACTION_CLASS_ELEMENT_SELECTOR_MAX_LENGTH,
+      (n: number) => noCodeInput(clickConfig({ elementSelector: { innerHtml: "a".repeat(n) } })),
+    ],
+  ])("takes %s at its cap of %i and answers 400 naming it one past", async (field, max, build) => {
+    expect((await patch(build(max))).status).toBe(200);
+
+    mocks.updateActionClass.mockClear();
+    const response = await patch(build(max + 1));
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
     expect(mocks.updateActionClass).not.toHaveBeenCalled();
   });
 });
