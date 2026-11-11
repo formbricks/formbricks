@@ -1,4 +1,4 @@
-import type { TResponseOutcome } from "@formbricks/types/responses";
+import type { TResponseOutcome, TResponseStatusFilter } from "@formbricks/types/responses";
 
 /** The most ids `POST /api/v3/responses/batch-outcome` takes in one call. */
 export const OUTCOME_BATCH_SIZE = 100;
@@ -38,11 +38,37 @@ export const patchOutcomes = <T extends TWithOutcome>(rows: T[], changes: TOutco
   return changed ? next : rows;
 };
 
-/** Restoring while the list is filtered to Low quality takes the row out of what the filter selects. */
-export const shouldDropAfterOutcome = (
-  responseStatus: "all" | "complete" | "partial" | "lowQuality",
-  outcome: TResponseOutcome | null
-): boolean => responseStatus === "lowQuality" && outcome === null;
+/**
+ * Whether a response is in the list the ticked statuses ask for: in any of them. Complete and Partial follow
+ * `finished`, Low quality follows the outcome, so restoring a response can take it out of the list.
+ */
+export const matchesResponseStatuses = (
+  responseStatuses: readonly TResponseStatusFilter[],
+  response: { finished: boolean; outcome: TResponseOutcome | null | undefined }
+): boolean =>
+  responseStatuses.length === 0 ||
+  responseStatuses.some((status) => {
+    if (status === "complete") return response.finished;
+    if (status === "partial") return !response.finished;
+    return response.outcome === "lowQuality";
+  });
+
+/**
+ * The rows left once `ids` have saved `outcome`: a saved row that no longer matches any ticked status leaves
+ * the list. Returns the same array when nothing is dropped.
+ */
+export const dropRowsOutsideStatuses = <T extends { id: string; finished: boolean }>(
+  rows: T[],
+  ids: readonly string[],
+  outcome: TResponseOutcome | null,
+  responseStatuses: readonly TResponseStatusFilter[]
+): T[] => {
+  const kept = rows.filter(
+    (row) =>
+      !ids.includes(row.id) || matchesResponseStatuses(responseStatuses, { finished: row.finished, outcome })
+  );
+  return kept.length === rows.length ? rows : kept;
+};
 
 /** What the responses page hands down so a card or the selection bar can set an outcome. */
 export type TOutcomeActions = {

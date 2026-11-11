@@ -46,7 +46,7 @@ export type TAnalysisResponseFields = {
 
 export type TAnalysisExportInput = {
   surveyId: string;
-  /** The Responses filter. Low quality is left out unless this selects it (`{ outcome: "lowQuality" }`) or `includeLowQuality` is set. */
+  /** The Responses filter. Low quality is left out unless this selects it (`outcome`, or `statuses` that list it) or `includeLowQuality` is set. */
   filter?: TResponseFilterCriteria;
   /** Write the Low quality responses too. Default: they are left out. */
   includeLowQuality?: boolean;
