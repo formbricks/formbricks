@@ -5,6 +5,7 @@ import {
   STYLING_BRIGHTNESS_MAX,
   STYLING_NUMBER_MAX,
   STYLING_TEXT_MAX_LENGTH,
+  WORKSPACE_DEFAULT_LANGUAGE_MAX_LENGTH,
   WORKSPACE_HEAD_SCRIPTS_MAX_LENGTH,
   WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH,
   WORKSPACE_NAME_MAX,
@@ -129,8 +130,10 @@ describe("ZWorkspacePatchBody input limits", () => {
     const issues = (length: number) =>
       parse({ config: { defaultSurveyLanguage: text(length) } }).error?.issues.map((issue) => issue.message);
     // At the cap only the language check refuses it; one past, the cap does.
-    expect(issues(256)).toEqual(["Unsupported default survey language"]);
-    expect(issues(257)).toContain("Too big: expected string to have <=256 characters");
+    expect(issues(WORKSPACE_DEFAULT_LANGUAGE_MAX_LENGTH)).toEqual(["Unsupported default survey language"]);
+    expect(issues(WORKSPACE_DEFAULT_LANGUAGE_MAX_LENGTH + 1)).toContain(
+      `Too big: expected string to have <=${WORKSPACE_DEFAULT_LANGUAGE_MAX_LENGTH} characters`
+    );
   });
 
   test("takes the workspace name back as the deletion confirmation, and refuses a longer one", () => {

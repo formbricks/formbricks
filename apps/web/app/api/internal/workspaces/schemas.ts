@@ -4,7 +4,6 @@ import { ZId } from "@formbricks/types/common";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { strictDeep } from "@/app/api/internal/lib/strict-schema";
 import { checkNumberRange, checkStringMax, isPlainRecord } from "@/app/api/internal/lib/value-bounds";
-import { LINK_SURVEY_LANGUAGE_CODE_MAX_LENGTH } from "@/app/api/internal/link-survey-verification-emails/schemas";
 import { WHITELABEL_IMAGE_URL_MAX_LENGTH } from "@/app/api/internal/organizations/[organizationId]/lib/limits";
 
 export const ZWorkspaceIdParams = z.object({ workspaceId: ZId }).strict();
@@ -29,6 +28,12 @@ export const STYLING_TEXT_MAX_LENGTH = 255;
  * number inputs don't stop a minus sign, so the floor is the ceiling's mirror rather than zero.
  */
 export const STYLING_NUMBER_MAX = 10_000;
+/**
+ * The default survey language: a BCP-47 tag a dozen characters long. Bounded before the runtime-language
+ * check reads it. Its own constant rather than the link-survey language cap, whose module is server-only,
+ * because the create-workspace dialog imports this file.
+ */
+export const WORKSPACE_DEFAULT_LANGUAGE_MAX_LENGTH = 64;
 /** The background brightness slider's range, in percent. */
 export const STYLING_BRIGHTNESS_MAX = 200;
 
@@ -129,7 +134,7 @@ export const ZWorkspacePatchBody = strictDeep(
         defaultSurveyLanguage: ZConfigInput.unwrap()
           .shape.defaultSurveyLanguage.unwrap()
           .unwrap()
-          .max(LINK_SURVEY_LANGUAGE_CODE_MAX_LENGTH)
+          .max(WORKSPACE_DEFAULT_LANGUAGE_MAX_LENGTH)
           .nullish(),
       })
       .optional(),
