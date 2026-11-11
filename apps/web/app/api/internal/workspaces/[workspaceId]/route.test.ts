@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { POST as DELETION } from "./deletions/route";
 import * as workspaceRoute from "./route";
 
@@ -386,6 +387,34 @@ describe("POST /api/internal/workspaces/{workspaceId}/deletions", () => {
 
   test("refuses a cross-site request (CSRF)", async () => {
     expect((await remove(undefined, { headers: { "sec-fetch-site": "cross-site" } })).status).toBe(403);
+    expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
+  });
+});
+
+describe("workspace write input limits", () => {
+  const invalidParams = async (response: Response) =>
+    ((await response.json()) as { invalid_params?: { name: string }[] }).invalid_params?.map(
+      ({ name }) => name
+    );
+
+  test.each([
+    ["customHeadScripts", { customHeadScripts: "a".repeat(65_537) }],
+    ["recontactDays", { recontactDays: 366 }],
+    ["styling.fontFamily", { styling: { ...STYLE_DEFAULTS, fontFamily: "a".repeat(256) } }],
+  ])("PATCH answers 400 naming %s past its cap, before any authorization", async (field, body) => {
+    const response = await patch(body);
+
+    expect(response.status).toBe(400);
+    expect(await invalidParams(response)).toEqual([field]);
+    expect(mocks.can).not.toHaveBeenCalled();
+    expect(mocks.updateWorkspace).not.toHaveBeenCalled();
+  });
+
+  test("a deletion answers 400 naming a confirmation longer than any workspace name", async () => {
+    const response = await remove({ confirmationName: "a".repeat(256) });
+
+    expect(response.status).toBe(400);
+    expect(await invalidParams(response)).toEqual(["confirmationName"]);
     expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
   });
 });

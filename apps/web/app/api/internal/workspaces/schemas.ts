@@ -3,11 +3,72 @@ import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/survey-runtime-l
 import { ZId } from "@formbricks/types/common";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { strictDeep } from "@/app/api/internal/lib/strict-schema";
+import { checkNumberRange, checkStringMax, isPlainRecord } from "@/app/api/internal/lib/value-bounds";
+import { LINK_SURVEY_LANGUAGE_CODE_MAX_LENGTH } from "@/app/api/internal/link-survey-verification-emails/schemas";
+import { WHITELABEL_IMAGE_URL_MAX_LENGTH } from "@/app/api/internal/organizations/[organizationId]/lib/limits";
 
 export const ZWorkspaceIdParams = z.object({ workspaceId: ZId }).strict();
 
 /** Bounds the workspace name a request may carry (ENG-1652). The column itself is unbounded. */
 export const WORKSPACE_NAME_MAX = 255;
+
+/**
+ * Caps on the workspace settings a PATCH carries (CODING_STANDARDS.md "Input Limits"), applied here rather
+ * than in the shared `ZWorkspaceUpdateInput` the public APIs also parse.
+ */
+/** Custom head scripts: a few analytics or consent snippets, a few KB each. */
+export const WORKSPACE_HEAD_SCRIPTS_MAX_LENGTH = 65_536;
+/** The survey cooldown, in days: the bounds the stored `ZWorkspace.recontactDays` already holds. */
+export const WORKSPACE_RECONTACT_DAYS_MAX = 365;
+/** A logo's background color: a CSS color, a handful of characters. */
+export const WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH = 64;
+/** A styling string: a font family, a CSS length such as `1.25rem`, an input shadow. */
+export const STYLING_TEXT_MAX_LENGTH = 255;
+/**
+ * A styling number: a font size or weight, a radius, a height or padding in pixels. The look form's
+ * number inputs don't stop a minus sign, so the floor is the ceiling's mirror rather than zero.
+ */
+export const STYLING_NUMBER_MAX = 10_000;
+/** The background brightness slider's range, in percent. */
+export const STYLING_BRIGHTNESS_MAX = 200;
+
+/** Styling strings with a cap of their own, by their path inside `styling`. Image URLs get the URL cap. */
+const STYLING_TEXT_CAPS: Record<string, number> = {
+  "background.bg": WHITELABEL_IMAGE_URL_MAX_LENGTH,
+  "logo.url": WHITELABEL_IMAGE_URL_MAX_LENGTH,
+  "logo.bgColor": WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH,
+};
+
+/** Styling numbers with a range of their own, by their path inside `styling`. */
+const STYLING_NUMBER_RANGES: Record<string, { min: number; max: number }> = {
+  "background.brightness": { min: 0, max: STYLING_BRIGHTNESS_MAX },
+};
+
+/**
+ * Bounds every string and number in a parsed `styling`. `ZBaseStyling` has some forty fields, most of them
+ * `number | string` unions, so they are checked in one walk rather than rebuilt one by one, and a field the
+ * shared schema gains later is bounded without a change here. `strictDeep` has already refused unknown
+ * keys, and styling nests two levels deep (`background.bg`, `brandColor.light`).
+ */
+const checkStylingValues = (value: unknown, path: string[], ctx: z.RefinementCtx): void => {
+  const key = path.slice(1).join(".");
+  if (typeof value === "string") {
+    checkStringMax(ctx, value, STYLING_TEXT_CAPS[key] ?? STYLING_TEXT_MAX_LENGTH, path);
+  } else if (typeof value === "number") {
+    checkNumberRange(
+      ctx,
+      value,
+      STYLING_NUMBER_RANGES[key] ?? { min: -STYLING_NUMBER_MAX, max: STYLING_NUMBER_MAX },
+      path
+    );
+  } else if (isPlainRecord(value)) {
+    for (const [childKey, child] of Object.entries(value)) {
+      checkStylingValues(child, [...path, childKey], ctx);
+    }
+  }
+};
+
+const { config: ZConfigInput, logo: ZLogoInput } = ZWorkspaceUpdateInput.shape;
 
 /**
  * `GET /api/internal/workspaces?organizationId=&access=`: the caller's workspaces in one organization.
@@ -59,8 +120,30 @@ export const ZWorkspacePatchBody = strictDeep(
     teamIds: true,
     inAppSurveyBranding: true,
     linkSurveyBranding: true,
-  }).extend({ name: ZWorkspaceUpdateInput.shape.name.unwrap().max(WORKSPACE_NAME_MAX).optional() })
+  }).extend({
+    name: ZWorkspaceUpdateInput.shape.name.unwrap().max(WORKSPACE_NAME_MAX).optional(),
+    recontactDays: z.int().min(0).max(WORKSPACE_RECONTACT_DAYS_MAX).optional(),
+    customHeadScripts: z.string().max(WORKSPACE_HEAD_SCRIPTS_MAX_LENGTH).nullish(),
+    config: ZConfigInput.unwrap()
+      .extend({
+        defaultSurveyLanguage: ZConfigInput.unwrap()
+          .shape.defaultSurveyLanguage.unwrap()
+          .unwrap()
+          .max(LINK_SURVEY_LANGUAGE_CODE_MAX_LENGTH)
+          .nullish(),
+      })
+      .optional(),
+    logo: ZLogoInput.unwrap()
+      .extend({
+        url: ZLogoInput.unwrap().shape.url.unwrap().max(WHITELABEL_IMAGE_URL_MAX_LENGTH).optional(),
+        bgColor: z.string().max(WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH).optional(),
+      })
+      .optional(),
+  })
 )
+  .superRefine((body, ctx) => {
+    if (body.styling) checkStylingValues(body.styling, ["styling"], ctx);
+  })
   .refine(
     (body) =>
       body.config?.defaultSurveyLanguage == null ||
@@ -84,7 +167,13 @@ export type TWorkspacePatchBody = z.infer<typeof ZWorkspacePatchBody>;
  * stray request cannot delete one by id alone.
  */
 export const ZWorkspaceDeletionBody = z
-  .object({ confirmationName: z.string().trim().min(1, { error: "Type the workspace name to confirm." }) })
+  .object({
+    confirmationName: z
+      .string()
+      .trim()
+      .min(1, { error: "Type the workspace name to confirm." })
+      .max(WORKSPACE_NAME_MAX),
+  })
   .strict();
 
 export type TWorkspaceDeletionBody = z.infer<typeof ZWorkspaceDeletionBody>;

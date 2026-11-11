@@ -1,7 +1,18 @@
 import { describe, expect, test } from "vitest";
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
-import { ZWorkspaceIdParams, ZWorkspacePatchBody } from "./schemas";
+import {
+  STYLING_BRIGHTNESS_MAX,
+  STYLING_NUMBER_MAX,
+  STYLING_TEXT_MAX_LENGTH,
+  WORKSPACE_HEAD_SCRIPTS_MAX_LENGTH,
+  WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH,
+  WORKSPACE_NAME_MAX,
+  WORKSPACE_RECONTACT_DAYS_MAX,
+  ZWorkspaceDeletionBody,
+  ZWorkspaceIdParams,
+  ZWorkspacePatchBody,
+} from "./schemas";
 
 const parse = (body: unknown) => ZWorkspacePatchBody.safeParse(body);
 
@@ -78,6 +89,84 @@ describe("ZWorkspacePatchBody", () => {
   // `/branding` is the one write path for branding, behind the licence check.
   test.each([["inAppSurveyBranding"], ["linkSurveyBranding"]])("rejects %s", (field) => {
     expect(parse({ [field]: false }).success).toBe(false);
+  });
+});
+
+describe("ZWorkspacePatchBody input limits", () => {
+  const text = (length: number) => "a".repeat(length);
+  const BASELINE = { expectedUpdatedAt: "2026-10-01T10:00:00.000Z" };
+  const styling = (overrides: Record<string, unknown>) => ({ styling: { ...STYLE_DEFAULTS, ...overrides } });
+  const refusedAt = (body: unknown) => parse(body).error?.issues.map((issue) => issue.path.join("."));
+
+  test.each([
+    ["customHeadScripts", WORKSPACE_HEAD_SCRIPTS_MAX_LENGTH, (n: number) => ({ customHeadScripts: text(n) })],
+    ["logo.url", 4096, (n: number) => ({ logo: { url: `/storage/${text(n - 9)}` }, ...BASELINE })],
+    [
+      "logo.bgColor",
+      WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH,
+      (n: number) => ({ logo: { bgColor: text(n) }, ...BASELINE }),
+    ],
+    ["styling.fontFamily", STYLING_TEXT_MAX_LENGTH, (n: number) => styling({ fontFamily: text(n) })],
+    ["styling.inputShadow", STYLING_TEXT_MAX_LENGTH, (n: number) => styling({ inputShadow: text(n) })],
+    ["styling.buttonHeight", STYLING_TEXT_MAX_LENGTH, (n: number) => styling({ buttonHeight: text(n) })],
+    [
+      "styling.background.bg",
+      4096,
+      (n: number) => styling({ background: { bg: text(n), bgType: "image", brightness: 100 } }),
+    ],
+    ["styling.logo.url", 4096, (n: number) => styling({ logo: { url: `/storage/${text(n - 9)}` } })],
+    [
+      "styling.logo.bgColor",
+      WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH,
+      (n: number) => styling({ logo: { bgColor: text(n) } }),
+    ],
+  ])("takes %s at %i characters and refuses one more", (field, max, build) => {
+    expect(refusedAt(build(max))?.filter((path) => path === field) ?? []).toEqual([]);
+    expect(refusedAt(build(max + 1))).toContain(field);
+  });
+
+  test("caps the default survey language before the runtime-language check reads it", () => {
+    const issues = (length: number) =>
+      parse({ config: { defaultSurveyLanguage: text(length) } }).error?.issues.map((issue) => issue.message);
+    // At the cap only the language check refuses it; one past, the cap does.
+    expect(issues(256)).toEqual(["Unsupported default survey language"]);
+    expect(issues(257)).toContain("Too big: expected string to have <=256 characters");
+  });
+
+  test("takes the workspace name back as the deletion confirmation, and refuses a longer one", () => {
+    expect(ZWorkspaceDeletionBody.safeParse({ confirmationName: text(WORKSPACE_NAME_MAX) }).success).toBe(
+      true
+    );
+    expect(
+      ZWorkspaceDeletionBody.safeParse({ confirmationName: text(WORKSPACE_NAME_MAX + 1) }).error?.issues[0]
+        .path
+    ).toEqual(["confirmationName"]);
+  });
+
+  test.each([
+    ["recontactDays", 0, WORKSPACE_RECONTACT_DAYS_MAX, (n: number) => ({ recontactDays: n })],
+    [
+      "styling.buttonFontSize",
+      -STYLING_NUMBER_MAX,
+      STYLING_NUMBER_MAX,
+      (n: number) => styling({ buttonFontSize: n }),
+    ],
+    ["styling.roundness", -STYLING_NUMBER_MAX, STYLING_NUMBER_MAX, (n: number) => styling({ roundness: n })],
+    [
+      "styling.background.brightness",
+      0,
+      STYLING_BRIGHTNESS_MAX,
+      (n: number) => styling({ background: { bg: "#ffffff", bgType: "color", brightness: n } }),
+    ],
+  ])("takes %s from %i to %i and refuses either side", (field, min, max, build) => {
+    expect(parse(build(min)).success).toBe(true);
+    expect(parse(build(max)).success).toBe(true);
+    expect(refusedAt(build(min - 1))).toEqual([field]);
+    expect(refusedAt(build(max + 1))).toEqual([field]);
+  });
+
+  test("refuses a fractional cooldown", () => {
+    expect(refusedAt({ recontactDays: 1.5 })).toEqual(["recontactDays"]);
   });
 });
 
