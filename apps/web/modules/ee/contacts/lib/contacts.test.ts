@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { getSurvey } from "@/lib/survey/service";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
@@ -699,6 +700,59 @@ describe("Contacts Lib", () => {
       const result = await createContactsFromCSV(csvDataWithUserId, mockWorkspaceId, "update", attributeMap);
 
       expect("contacts" in result).toBe(true);
+    });
+  });
+
+  describe("createContactsFromCSV: the workspace's attribute key cap", () => {
+    // The workspace already holds `existing` keys, email first; the CSV adds `adding` new ones.
+    const setup = (existing: number, adding: number) => {
+      const existingKeys = [
+        { key: "email", id: "key-email", dataType: "string" },
+        ...Array.from({ length: existing - 1 }, (_, i) => ({
+          key: `old_${i}`,
+          id: `key-${i}`,
+          dataType: "string",
+        })),
+      ];
+      const newColumns = Object.fromEntries(Array.from({ length: adding }, (_, i) => [`new_${i}`, "x"]));
+      vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany)
+        .mockResolvedValueOnce(existingKeys as never)
+        .mockResolvedValueOnce(Object.keys(newColumns).map((key) => ({ key, id: `id-${key}` })) as never);
+      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: adding });
+      vi.mocked(prisma.contact.create).mockResolvedValue({ id: "new-contact" } as never);
+      return [{ email: "ada@example.com", ...newColumns }];
+    };
+
+    test(`creates keys up to ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} in the workspace`, async () => {
+      const csvData = setup(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT - 5, 5);
+
+      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", {});
+
+      expect("contacts" in result).toBe(true);
+      expect(prisma.contactAttributeKey.createMany).toHaveBeenCalledTimes(1);
+    });
+
+    test("refuses an import that would pass the cap before creating any key, naming the cap", async () => {
+      const csvData = setup(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT - 5, 6);
+
+      await expect(createContactsFromCSV(csvData, mockWorkspaceId, "skip", {})).rejects.toThrow(
+        new ValidationError(
+          `Importing these contacts adds 6 attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a workspace can have`
+        )
+      );
+      expect(prisma.contactAttributeKey.createMany).not.toHaveBeenCalled();
+      expect(prisma.contact.create).not.toHaveBeenCalled();
+    });
+
+    test("counts nothing against the cap for columns that are existing keys", async () => {
+      const csvData = setup(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT, 0);
+
+      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", {});
+
+      expect("contacts" in result).toBe(true);
+      expect(prisma.contactAttributeKey.createMany).not.toHaveBeenCalled();
     });
   });
 
