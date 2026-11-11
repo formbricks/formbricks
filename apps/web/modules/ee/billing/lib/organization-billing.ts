@@ -2313,28 +2313,48 @@ export const syncOrganizationBillingFromStripe = async (
 };
 
 /**
- * `syncOrganizationBillingFromStripe` holding the organization's billing lock (billing-lock.ts), for a
- * caller that polls: while another sync or a plan change holds it, this one doesn't wait for it but
- * answers the stored snapshot, which that holder is about to refresh. Without Redis it syncs unlocked.
- * Never call it while already holding the lock: it would find its own lock taken.
+ * `syncOrganizationBillingFromStripe` holding the organization's billing lock (billing-lock.ts), so it never
+ * runs beside another sync or a plan change and writes an older Stripe snapshot after theirs. It waits up to
+ * `waitMs` for the lock (none by default). While another holder keeps it past that, `whenBusy` decides:
+ * `"readStored"` (the default, for a caller that polls) answers the stored snapshot, which that holder is
+ * about to refresh; `"syncUnlocked"` (the Stripe webhook, whose delivery must never fail or hang on the lock)
+ * syncs anyway and logs at warn that it did. Without Redis it syncs unlocked. Never call it while already
+ * holding the lock: it would find its own lock taken.
  */
 export const syncOrganizationBillingFromStripeExclusively = async (
-  organizationId: string
+  organizationId: string,
+  {
+    event,
+    waitMs = 0,
+    whenBusy = "readStored",
+  }: {
+    event?: { id: string; created: number };
+    waitMs?: number;
+    whenBusy?: "readStored" | "syncUnlocked";
+  } = {}
 ): Promise<TOrganizationBilling | null> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) {
     return null;
   }
 
-  const lock = await acquireOrganizationBillingLock(organizationId, { ttlMs: BILLING_SYNC_LOCK_TTL_MS });
+  const lock = await acquireOrganizationBillingLock(organizationId, {
+    ttlMs: BILLING_SYNC_LOCK_TTL_MS,
+    waitMs,
+  });
   if (lock.status === "busy") {
-    return await getOrganizationBillingFromDatabase(organizationId);
+    if (whenBusy === "readStored") return await getOrganizationBillingFromDatabase(organizationId);
+    logger.warn(
+      { organizationId, eventId: event?.id, waitMs },
+      "Organization billing lock still busy; syncing from Stripe without it"
+    );
+    return await syncOrganizationBillingFromStripe(organizationId, event);
   }
   if (lock.status === "unavailable") {
-    return await syncOrganizationBillingFromStripe(organizationId);
+    return await syncOrganizationBillingFromStripe(organizationId, event);
   }
 
   try {
-    return await syncOrganizationBillingFromStripe(organizationId);
+    return await syncOrganizationBillingFromStripe(organizationId, event);
   } finally {
     await lock.release();
   }

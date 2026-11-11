@@ -5,10 +5,19 @@ import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 
 /**
- * One lock per organization around everything that writes its billing from Stripe: the read-through
- * refresh (`getOrganizationBillingWithReadThroughSync`), an explicit sync, and a plan change. It is the
- * read-through's single-flight `billingSyncLock` (a Redis `SET NX PX`), so two syncs can't interleave and
- * write an older Stripe snapshot last, and two plan changes can't race each other or a sync.
+ * One lock per organization around what writes its billing from Stripe, so two syncs can't interleave and
+ * write an older Stripe snapshot last, and two plan changes can't race each other or a sync. It is the
+ * read-through's single-flight `billingSyncLock` (a Redis `SET NX PX`). Exactly these hold it:
+ *
+ * - the read-through refresh (`getOrganizationBillingWithReadThroughSync`), which skips the refresh when busy;
+ * - `syncOrganizationBillingFromStripeExclusively`: the `plan-waits` and `payment-method-waits` polls (which
+ *   read the stored snapshot when busy) and the Stripe webhook's sync (which waits
+ *   `BILLING_WEBHOOK_SYNC_LOCK_WAIT_MS`, then syncs anyway);
+ * - `runHoldingBillingLock` in the internal billing routes: `plan-changes`, `pending-plan-change`,
+ *   `setup-checkout-upgrades`, `pro-trials`, `hobby-subscriptions` and `stripe-setups` (409 when busy).
+ *
+ * `checkout-sessions` and `setup-checkout-sessions` don't take it: their Stripe writes carry the intent's
+ * idempotency key instead. `payment-issues` takes neither.
  *
  * Each holder writes its own token and gives the lock back when done; the TTL only covers a holder that
  * died. A holder that runs past its TTL can lose the lock to the next one, which then runs beside it, as
@@ -26,6 +35,12 @@ export const BILLING_CHANGE_LOCK_TTL_MS = 2 * 60 * 1000;
  * outlast a read-through refresh that a page render started a moment earlier.
  */
 export const BILLING_CHANGE_LOCK_WAIT_MS = 10 * 1000;
+
+/**
+ * How long the Stripe webhook's sync waits for the lock before syncing without it: enough to outlast a
+ * read-through refresh or a poll's sync, short enough that the delivery still answers fast.
+ */
+export const BILLING_WEBHOOK_SYNC_LOCK_WAIT_MS = 5 * 1000;
 
 const LOCK_RETRY_INTERVAL_MS = 250;
 

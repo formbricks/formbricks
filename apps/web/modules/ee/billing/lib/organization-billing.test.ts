@@ -3572,6 +3572,56 @@ describe("organization-billing", () => {
       expect(await syncOrganizationBillingFromStripeExclusively("org_1")).toBeNull();
       expect(mocks.cacheTryLock).not.toHaveBeenCalled();
     });
+
+    describe("for the Stripe webhook (wait, then sync anyway)", () => {
+      const webhookOptions = {
+        event: { id: "evt_1", created: 1739923200 },
+        waitMs: 5_000,
+        whenBusy: "syncUnlocked" as const,
+      };
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["setTimeout", "Date"] });
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      test("waits for the lock, then syncs holding it and gives it back", async () => {
+        mocks.cacheTryLock
+          .mockResolvedValueOnce({ ok: true, data: false })
+          .mockResolvedValueOnce({ ok: true, data: true });
+
+        const sync = syncOrganizationBillingFromStripeExclusively("org_1", webhookOptions);
+        await vi.advanceTimersByTimeAsync(250);
+        await sync;
+
+        expect(mocks.cacheTryLock).toHaveBeenCalledTimes(2);
+        expect(mocks.subscriptionsList).toHaveBeenCalled();
+        expect(mocks.cacheRunRedisOperation).toHaveBeenCalledTimes(1);
+        expect(mocks.loggerWarn).not.toHaveBeenCalledWith(
+          expect.anything(),
+          "Organization billing lock still busy; syncing from Stripe without it"
+        );
+      });
+
+      test("syncs without the lock and logs at warn when it stays busy past the wait", async () => {
+        mocks.cacheTryLock.mockResolvedValue({ ok: true, data: false });
+
+        const sync = syncOrganizationBillingFromStripeExclusively("org_1", webhookOptions);
+        await vi.advanceTimersByTimeAsync(5_000);
+        await sync;
+
+        expect(mocks.subscriptionsList).toHaveBeenCalled();
+        expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalled();
+        expect(mocks.cacheRunRedisOperation).not.toHaveBeenCalled();
+        expect(mocks.loggerWarn).toHaveBeenCalledWith(
+          { organizationId: "org_1", eventId: "evt_1", waitMs: 5_000 },
+          "Organization billing lock still busy; syncing from Stripe without it"
+        );
+      });
+    });
   });
 
   describe("addOptimisticBillingFeature", () => {
