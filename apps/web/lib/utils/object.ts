@@ -33,9 +33,7 @@ const deepEqual = (left: unknown, right: unknown, ignoreUndefined: boolean): boo
   if (leftKeys.length !== rightKeys.length) return false;
 
   return leftKeys.every(
-    (key) =>
-      Object.prototype.hasOwnProperty.call(rightRecord, key) &&
-      deepEqual(leftRecord[key], rightRecord[key], ignoreUndefined)
+    (key) => Object.hasOwn(rightRecord, key) && deepEqual(leftRecord[key], rightRecord[key], ignoreUndefined)
   );
 };
 
