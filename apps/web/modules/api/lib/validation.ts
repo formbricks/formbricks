@@ -6,6 +6,7 @@ import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { matchPatternInLinearTime } from "@/modules/api/lib/linear-pattern-matcher";
 import { ApiErrorDetails } from "@/modules/api/v2/types/api-error";
 
 /**
@@ -50,7 +51,10 @@ export const validateResponseData = (
   const elementsToValidate = allElements.filter((element) => Object.keys(responseData).includes(element.id));
 
   // Validate selected elements
-  const errorMap = validateBlockResponses(elementsToValidate, responseData, languageCode);
+  // Patterns come from survey authors and values from anonymous respondents: never backtrack here.
+  const errorMap = validateBlockResponses(elementsToValidate, responseData, languageCode, {
+    matchPattern: matchPatternInLinearTime,
+  });
 
   // Return null if no errors (validation passed), otherwise return error map
   return Object.keys(errorMap).length === 0 ? null : errorMap;

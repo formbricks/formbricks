@@ -9,6 +9,7 @@ import {
   formatValidationErrorsForV2Api,
   validateResponseData,
 } from "@/modules/api/lib/validation";
+import { matchPatternInLinearTime } from "./linear-pattern-matcher";
 
 const mockTransformQuestionsToBlocks = vi.fn();
 const mockGetElementsFromBlocks = vi.fn();
@@ -25,6 +26,9 @@ vi.mock("@/lib/survey/utils", () => ({
 vi.mock("@formbricks/surveys/validation", () => ({
   validateBlockResponses: (...args: unknown[]) => mockValidateBlockResponses(...args),
 }));
+
+// Survey patterns must never reach the backtracking RegExp on the server (ENG-7109).
+const LINEAR_TIME = { matchPattern: matchPatternInLinearTime };
 
 describe("validateResponseData", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -75,7 +79,12 @@ describe("validateResponseData", () => {
     const result = validateResponseData(mockBlocks, mockResponseData, "en");
 
     expect(mockGetElementsFromBlocks).toHaveBeenCalledWith(mockBlocks);
-    expect(mockValidateBlockResponses).toHaveBeenCalledWith(mockElements, mockResponseData, "en");
+    expect(mockValidateBlockResponses).toHaveBeenCalledWith(
+      mockElements,
+      mockResponseData,
+      "en",
+      LINEAR_TIME
+    );
     expect(result).toBeNull();
   });
 
@@ -132,7 +141,12 @@ describe("validateResponseData", () => {
 
     validateResponseData(mockBlocks, mockResponseData);
 
-    expect(mockValidateBlockResponses).toHaveBeenCalledWith(mockElements, mockResponseData, "en");
+    expect(mockValidateBlockResponses).toHaveBeenCalledWith(
+      mockElements,
+      mockResponseData,
+      "en",
+      LINEAR_TIME
+    );
   });
 
   test("should validate only fields present in responseData", () => {
@@ -143,7 +157,12 @@ describe("validateResponseData", () => {
 
     validateResponseData(mockBlocks, partialResponseData, "en");
 
-    expect(mockValidateBlockResponses).toHaveBeenCalledWith(elementsToValidate, partialResponseData, "en");
+    expect(mockValidateBlockResponses).toHaveBeenCalledWith(
+      elementsToValidate,
+      partialResponseData,
+      "en",
+      LINEAR_TIME
+    );
   });
 
   test("should never validate elements not in responseData", () => {
@@ -185,7 +204,8 @@ describe("validateResponseData", () => {
     expect(mockValidateBlockResponses).toHaveBeenCalledWith(
       [allElements[0]],
       responseDataWithOnlyElement1,
-      "en"
+      "en",
+      LINEAR_TIME
     );
   });
 });

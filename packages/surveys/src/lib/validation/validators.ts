@@ -80,6 +80,36 @@ const resolveRelativeRange = (
 };
 
 /**
+ * Tests a value against a survey author's `pattern` rule. Returns `undefined` when the engine cannot
+ * evaluate the pattern (invalid, or a feature the engine does not support); the rule then passes, as
+ * an invalid pattern always has.
+ */
+export type TPatternMatcher = (
+  pattern: string,
+  flags: string | undefined,
+  value: string
+) => boolean | undefined;
+
+export interface TValidationOptions {
+  /**
+   * Engine for `pattern` rules. Defaults to the native backtracking `RegExp`, which is fine in a
+   * respondent's own browser tab but not on a server: a pattern such as `^(a+)+$` takes exponential
+   * time on a short input and would block the event loop for every tenant. Servers pass a linear-time
+   * matcher.
+   */
+  matchPattern?: TPatternMatcher;
+}
+
+/** The browser engine: native, backtracking `RegExp`. Only for the respondent's own tab. */
+export const matchPatternWithRegExp: TPatternMatcher = (pattern, flags, value) => {
+  try {
+    return new RegExp(pattern, flags).test(value);
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Generic validator interface
  * Uses type assertions internally to handle the discriminated union params
  */
@@ -87,7 +117,8 @@ export interface TValidator {
   check: (
     value: TResponseDataValue,
     params: TValidationRuleParams,
-    element: TSurveyElement
+    element: TSurveyElement,
+    options?: TValidationOptions
   ) => TValidatorCheckResult;
   getDefaultMessage: (params: TValidationRuleParams, element: TSurveyElement, t: TFunction) => string;
 }
@@ -152,35 +183,39 @@ export const validators: Record<TValidationRuleType, TValidator> = {
   },
 
   pattern: {
-    check: (value: TResponseDataValue, params: TValidationRuleParams): TValidatorCheckResult => {
+    check: (
+      value: TResponseDataValue,
+      params: TValidationRuleParams,
+      _element: TSurveyElement,
+      options?: TValidationOptions
+    ): TValidatorCheckResult => {
       const typedParams = params as TValidationRuleParamsPattern;
       // Skip validation if value is empty
       if (!value || typeof value !== "string" || value === "") {
         return { valid: true };
       }
 
-      // ReDoS protection: cap pattern length to prevent catastrophic backtracking
-      // Patterns longer than 512 chars can cause exponential time complexity
+      // Size caps. They bound the work of a linear-time engine; they do not prevent catastrophic
+      // backtracking in a backtracking one, which is why servers pass `options.matchPattern`.
       if (typedParams.pattern.length > 512) {
-        console.warn(`Pattern too long (${typedParams.pattern.length} chars), rejecting to prevent ReDoS`);
+        console.warn(`Pattern too long (${typedParams.pattern.length} chars), rejecting`);
         return { valid: false };
       }
 
-      // ReDoS protection: cap value length to prevent exponential backtracking
-      // Values longer than 4096 chars can cause main-thread lockup with malicious patterns
       if (value.length > 4096) {
-        console.warn(`Value too long (${value.length} chars), rejecting to prevent ReDoS`);
+        console.warn(`Value too long (${value.length} chars), rejecting`);
         return { valid: false };
       }
 
-      try {
-        const regex = new RegExp(typedParams.pattern, typedParams.flags);
-        return { valid: regex.test(value) };
-      } catch {
-        // If regex is invalid, consider it valid (design-time should catch this)
-        console.warn(`Invalid regex pattern: ${typedParams.pattern}`);
+      const matchPattern = options?.matchPattern ?? matchPatternWithRegExp;
+      const matches = matchPattern(typedParams.pattern, typedParams.flags, value);
+      if (matches === undefined) {
+        // An invalid pattern, or one this engine cannot run: pass (design-time should catch this).
+        console.warn(`Pattern cannot be evaluated: ${typedParams.pattern}`);
         return { valid: true };
       }
+
+      return { valid: matches };
     },
     getDefaultMessage: (_params: TValidationRuleParams, _element: TSurveyElement, t: TFunction): string => {
       return t("errors.invalid_format");
