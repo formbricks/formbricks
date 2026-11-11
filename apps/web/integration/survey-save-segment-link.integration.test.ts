@@ -260,4 +260,56 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
     expect(await segmentIdOf(ids.W)).toBe(ids.shared);
     expect(await segmentIdOf(ids.R)).toBe(ids.shared);
   });
+
+  // A private segment another survey also uses is not the saver's alone, so it is neither written nor
+  // deleted by the saver's survey.
+  test("a private segment another survey also uses is not written, and survives leaving app targeting", async () => {
+    await prisma.survey.update({ where: { id: ids.R }, data: { segmentId: ids.segmentW } });
+    const w = await loadSurvey(ids.W);
+
+    await updateSurvey(
+      { ...w, segment: { ...w.segment!, filters: EMAIL_FILTER } as never },
+      { targetingActor: member() }
+    );
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentW } })).filters).toEqual([]);
+
+    await updateSurvey({ ...(await loadSurvey(ids.W)), type: "link" }, { targetingActor: member() });
+
+    expect(await segmentIdOf(ids.W)).toBeNull();
+    expect(await segmentIdOf(ids.R)).toBe(ids.segmentW);
+    expect(await prisma.segment.findUnique({ where: { id: ids.segmentW } })).not.toBeNull();
+  });
+
+  // ENG-6870 on the link path: the survey is targeted with the shared segment's stored tree, so a member
+  // may not link it to a segment that reads a Restricted survey.
+  test("a member cannot link their survey to a shared segment that reads a Restricted survey", async () => {
+    await prisma.segment.update({
+      where: { id: ids.shared },
+      data: {
+        filters: [
+          {
+            id: "clfilter00000000000006959",
+            connector: null,
+            resource: {
+              id: "clresrc000000000000006959",
+              root: { type: "surveyInteraction" },
+              qualifier: { operator: "haveCompleted" },
+              value: { surveyScope: "specific", surveyIds: [ids.R], within: { amount: 30, unit: "days" } },
+            },
+          },
+        ],
+      },
+    });
+    const w = await loadSurvey(ids.W);
+    const shared = await prisma.segment.findUniqueOrThrow({ where: { id: ids.shared } });
+
+    await expect(
+      updateSurvey(
+        { ...w, segment: { ...shared, description: "", filters: [], surveys: [ids.W] } as never },
+        { targetingActor: member() }
+      )
+    ).rejects.toMatchObject({ name: "InvalidInputError" });
+
+    expect(await segmentIdOf(ids.W)).toBe(ids.segmentW);
+  });
 });

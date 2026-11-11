@@ -769,11 +769,14 @@ describe("Tests for updateSurvey", () => {
       );
 
       expect(prisma.survey.findMany).not.toHaveBeenCalled();
-      expect(prisma.segment.update).toHaveBeenCalledTimes(1);
-      expect(prisma.segment.update).toHaveBeenCalledWith({
-        where: { id: OWN_PRIVATE_SEGMENT.id },
+      expect(prisma.segment.updateMany).toHaveBeenCalledTimes(1);
+      expect(prisma.segment.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: OWN_PRIVATE_SEGMENT.id,
+          isPrivate: true,
+          surveys: { every: { id: updateSurveyInput.id } },
+        },
         data: { filters: [] },
-        select: { id: true },
       });
       expect(prisma.survey.update).not.toHaveBeenCalledWith(
         expect.objectContaining({ data: { segment: expect.anything() } })
@@ -798,7 +801,7 @@ describe("Tests for updateSurvey", () => {
         true
       );
 
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
     });
 
     test("does not write a segment the survey is not on, nor link it unless segment.surveys names it", async () => {
@@ -816,8 +819,30 @@ describe("Tests for updateSurvey", () => {
         true
       );
 
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       expect(prisma.segment.findUnique).toHaveBeenCalledTimes(1); // the workspace guard only
+    });
+
+    test("ignores a segment without an id on a survey that has none", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        status: "draft",
+        segment: null,
+      } as any);
+      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+
+      await updateSurveyInternal(
+        {
+          ...updateSurveyInput,
+          status: "draft",
+          type: "app",
+          segment: { ...OWN_PRIVATE_SEGMENT, id: undefined, surveys: [updateSurveyInput.id] },
+        } as any,
+        true
+      );
+
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      expect(prisma.segment.findUnique).not.toHaveBeenCalled();
     });
 
     test("links the survey to a shared segment that segment.surveys names it on", async () => {
@@ -844,10 +869,10 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.survey.update).toHaveBeenCalledWith({
         where: { id: updateSurveyInput.id },
-        data: { segment: { connect: { id: "clsharedsegment000000001" } } },
+        data: { segment: { connect: { id: "clsharedsegment000000001", isPrivate: false } } },
         select: { id: true },
       });
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
     });
 
     test("refuses to link the survey to another survey's private segment", async () => {
@@ -873,7 +898,7 @@ describe("Tests for updateSurvey", () => {
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.update).not.toHaveBeenCalled();
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
     });
 
     // ENG-6957: leaving app targeting acts on the segment the survey is stored with, not on the one the
@@ -944,7 +969,7 @@ describe("Tests for updateSurvey", () => {
         )
       ).rejects.toThrow(InvalidInputError);
 
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
@@ -970,10 +995,10 @@ describe("Tests for updateSurvey", () => {
         true
       );
 
-      expect(prisma.segment.update).toHaveBeenCalledWith(
+      expect(prisma.segment.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: OWN_PRIVATE_SEGMENT.id },
-          data: expect.objectContaining({ filters: halfBuiltFilters }),
+          where: expect.objectContaining({ id: OWN_PRIVATE_SEGMENT.id }),
+          data: { filters: halfBuiltFilters },
         })
       );
     });
@@ -1014,7 +1039,7 @@ describe("Tests for updateSurvey", () => {
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.findMany).not.toHaveBeenCalled();
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
@@ -1047,7 +1072,7 @@ describe("Tests for updateSurvey", () => {
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.survey.findMany).not.toHaveBeenCalled();
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
@@ -1361,7 +1386,7 @@ describe("Tests for updateSurvey", () => {
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.$transaction).not.toHaveBeenCalled();
-      expect(prisma.segment.update).not.toHaveBeenCalled();
+      expect(prisma.segment.updateMany).not.toHaveBeenCalled();
     });
 
     test("a legacy payload reaches both authoritative rows and the compatible columns", async () => {
@@ -3001,7 +3026,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     expect(prisma.survey.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ id: { in: [restrictedId] } }) })
     );
-    expect(prisma.segment.update).not.toHaveBeenCalled();
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
   });
 
   test("keeps a restricted survey an administrator already targeted when a member saves", async () => {
@@ -3010,7 +3035,9 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     await save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR });
 
     expect(prisma.survey.findFirst).not.toHaveBeenCalled();
-    expect(prisma.segment.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: segmentId } }));
+    expect(prisma.segment.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: segmentId }) })
+    );
   });
 
   // Pointing the survey at another segment targets it with that segment's whole stored tree.
@@ -3023,7 +3050,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
       save([], { targetingActor: MEMBER_TARGETING_ACTOR }, [updateSurveyInput.id])
     ).rejects.toThrow(InvalidInputError);
     expect(prisma.survey.update).not.toHaveBeenCalled();
-    expect(prisma.segment.update).not.toHaveBeenCalled();
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
   });
 
   // ENG-6957: other surveys listed on the segment are not connected, so they add nothing to check.
@@ -3035,8 +3062,11 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     ]);
 
     expect(prisma.survey.findFirst).not.toHaveBeenCalled();
-    expect(prisma.segment.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: segmentId }, data: { filters: interaction([restrictedId]) } })
+    expect(prisma.segment.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: segmentId }),
+        data: { filters: interaction([restrictedId]) },
+      })
     );
   });
 
@@ -3044,7 +3074,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     storeSegment([]);
 
     await expect(save(interaction([restrictedId]), {})).rejects.toThrow(/acting user or API key/);
-    expect(prisma.segment.update).not.toHaveBeenCalled();
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
   });
 
   test("needs no actor when the save leaves the targeting's surveys alone", async () => {
@@ -3052,6 +3082,6 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
 
     await save(interaction([restrictedId]), {});
 
-    expect(prisma.segment.update).toHaveBeenCalled();
+    expect(prisma.segment.updateMany).toHaveBeenCalled();
   });
 });

@@ -780,7 +780,7 @@ export const updateSurveyInternal = async (
 
     // ENG-6957: the save changes this survey's targeting only. An app survey writes its own private
     // segment or links itself to a shared one; any other survey leaves its segment, and its private
-    // segment goes with it.
+    // segment is deleted unless another survey still uses it.
     if (segment) {
       if (type === "app") {
         // ENG-2305: tree bounds are enforced UNCONDITIONALLY — the draft save (skipValidation)
@@ -1176,7 +1176,8 @@ const isOwnPrivateSegment = (
   survey: Pick<TSurvey, "id" | "segment">,
   segmentId: string
 ): survey is Pick<TSurvey, "id"> & { segment: NonNullable<TSurvey["segment"]> } =>
-  survey.segment?.id === segmentId &&
+  !!survey.segment &&
+  survey.segment.id === segmentId &&
   survey.segment.isPrivate &&
   survey.segment.surveys.every((connectedId) => connectedId === survey.id);
 
@@ -1195,6 +1196,9 @@ const saveAppSurveySegment = async (
   segment: NonNullable<TSurvey["segment"]>,
   actor: TSurveyActorContext | undefined
 ): Promise<void> => {
+  // A segment without an id names no stored segment: there is nothing to write or link.
+  if (!segment.id) return;
+
   if (isOwnPrivateSegment(survey, segment.id)) {
     await assertTargetingAddsNoHiddenSurvey(
       survey.workspaceId,
@@ -1205,14 +1209,14 @@ const saveAppSurveySegment = async (
     );
     try {
       // Only the filters: the title names the survey (`connectOrCreate` finds the segment by it), and a
-      // segment is made shared through the segment endpoints.
-      await prisma.segment.update({
-        where: { id: segment.id },
+      // segment is made shared through the segment endpoints. The `where` repeats the ownership check,
+      // so a segment shared since the survey was read is left alone.
+      await prisma.segment.updateMany({
+        where: { id: segment.id, isPrivate: true, surveys: { every: { id: survey.id } } },
         data: { filters: segment.filters },
-        select: { id: true },
       });
     } catch (error) {
-      logger.error(error, "Error updating survey");
+      logger.error(loggableError(error), "Error updating survey");
       throw new Error("Error updating survey");
     }
     return;
@@ -1235,9 +1239,10 @@ const saveAppSurveySegment = async (
     actor,
     segment.id
   );
+  // `isPrivate: false` repeats the check in the write: a segment made private since it was read fails it.
   await prisma.survey.update({
     where: { id: survey.id },
-    data: { segment: { connect: { id: segment.id } } },
+    data: { segment: { connect: { id: segment.id, isPrivate: false } } },
     select: { id: true },
   });
 };
