@@ -8,7 +8,9 @@ jobs:
   build:
     name: Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The web suite alone takes about 12 minutes with the internal API's route tests, plus setup; 15 left
+    # no headroom and cancelled green runs. Still bounds a hung run.
+    timeout-minutes: 25
     permissions:
       contents: read
 
