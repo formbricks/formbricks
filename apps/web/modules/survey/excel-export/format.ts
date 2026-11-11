@@ -6,7 +6,7 @@
  * per language and Logic. The very hidden meta sheet tells an import how to read it back, by header,
  * so columns may be moved:
  *
- * | `format`    | `1`                                                                     |
+ * | `format`    | `2` (`EXCEL_EXPORT_FORMAT`)                                             |
  * | `languages` | each language column's code (`default` for a survey without languages) |
  * | `headers`   | each language column's header, in the same order                       |
  * | `columns`   | the Question ID column's header, then the Type column's                |
