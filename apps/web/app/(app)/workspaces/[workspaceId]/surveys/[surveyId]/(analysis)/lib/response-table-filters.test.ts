@@ -164,6 +164,18 @@ describe("toResponseFilterState → getFormattedFilters", () => {
     });
   });
 
+  test("unknown and repeated ticked values are ignored", () => {
+    expect(criteriaFor(ticked(["archived"]))).toEqual({});
+    expect(criteriaFor(ticked(["complete", "complete", "archived"]))).toEqual({ finished: true });
+  });
+
+  test("the pages get no status filter for Complete + Partial, and the list for all three", () => {
+    const statusesOf = (values: string[]) =>
+      toResponseFilterState(ticked(values), model.fields, "UTC").selectedFilter.responseStatuses;
+    expect(statusesOf(["complete", "partial"])).toEqual([]);
+    expect(statusesOf(["partial", "lowQuality", "complete"])).toEqual(["complete", "partial", "lowQuality"]);
+  });
+
   test("a date preset resolves to whole days in the reporting time zone at request time", () => {
     const now = new Date("2026-10-27T12:00:00.000Z");
     const filters: TTableFilter[] = [{ property: "createdAt", operator: "preset", values: ["last_7_days"] }];
