@@ -59,6 +59,19 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/onboarding-invites` | POST | session | dashboard | `/api/internal` | `app/api/internal/onboarding-invites/route.ts` |
 | `/api/internal/organizations` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/checkout-sessions` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/checkout-sessions/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/hobby-subscriptions` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/hobby-subscriptions/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/payment-issues` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/payment-issues/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/payment-method-waits` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/payment-method-waits/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/pending-plan-change` | DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/pending-plan-change/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/plan-changes` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/plan-changes/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/plan-waits` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/plan-waits/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/portal-sessions` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/portal-sessions/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/pro-trials` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/pro-trials/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/setup-checkout-sessions` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/setup-checkout-sessions/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/setup-checkout-upgrades` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/setup-checkout-upgrades/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/stripe-setups` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/stripe-setups/route.ts` |
+| `/api/internal/organizations/{organizationId}/billing/upgrade-charge-preview` | GET | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/billing/upgrade-charge-preview/route.ts` |
 | `/api/internal/organizations/{organizationId}/email-logo` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/email-logo/route.ts` |
 | `/api/internal/organizations/{organizationId}/favicon` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/favicon/route.ts` |
 | `/api/internal/organizations/{organizationId}/test-emails` | POST | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/test-emails/route.ts` |

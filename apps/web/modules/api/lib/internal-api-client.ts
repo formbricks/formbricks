@@ -83,6 +83,7 @@ export const sendApiRequest = async <T>(
     body,
     timeoutMs = API_MUTATION_TIMEOUT_MS,
     signal,
+    headers,
   }: {
     method: "POST" | "PUT" | "PATCH" | "DELETE";
     body?: unknown;
@@ -90,6 +91,8 @@ export const sendApiRequest = async <T>(
     timeoutMs?: number | null;
     /** The caller's own abort (a query's cancellation, a Stop button), on top of the timeout. */
     signal?: AbortSignal;
+    /** Request headers beside the JSON content type, such as an `Idempotency-Key`. */
+    headers?: Record<string, string>;
   }
 ): Promise<T> => {
   const timeout = timeoutMs === null ? undefined : AbortSignal.timeout(timeoutMs);
@@ -98,9 +101,10 @@ export const sendApiRequest = async <T>(
     await request<{ data: T }>(url, {
       method,
       cache: "no-store",
-      ...(body === undefined
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined && !headers
         ? {}
-        : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+        : { headers: { ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...headers } }),
       ...(combined ? { signal: combined } : {}),
     })
   );

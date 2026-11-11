@@ -28,7 +28,8 @@ const relevantEvents = new Set([
  * Setup-mode Checkout completed: save the provided card as the default on the customer
  * and subscription. We deliberately do NOT apply the upgrade here — the prorated charge
  * may need on-session 3D Secure, which a background webhook can't do; the billing page
- * drives the upgrade (via changeBillingPlanAction) after redirect.
+ * drives the upgrade (POST /api/internal/organizations/{organizationId}/billing/setup-checkout-upgrades)
+ * after redirect.
  */
 const handleSetupCheckoutCompleted = async (
   session: Stripe.Checkout.Session,

@@ -82,6 +82,31 @@ describe("sendApiRequest", () => {
     expect(init).not.toHaveProperty("headers");
   });
 
+  test("sends the caller's headers beside the JSON content type", async () => {
+    fetchMock.mockResolvedValue(json({ data: {} }));
+
+    await sendApiRequest("/api/internal/things", {
+      method: "POST",
+      body: { name: "x" },
+      headers: { "Idempotency-Key": '"k-1"' },
+    });
+
+    expect(fetchMock.mock.calls[0][1].headers).toEqual({
+      "Content-Type": "application/json",
+      "Idempotency-Key": '"k-1"',
+    });
+  });
+
+  test("sends the caller's headers without a content type when there is no body", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await sendApiRequest("/api/internal/things", { method: "POST", headers: { "Idempotency-Key": "k-1" } });
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init).not.toHaveProperty("body");
+    expect(init.headers).toEqual({ "Idempotency-Key": "k-1" });
+  });
+
   test("throws a V3ApiError for a problem response", async () => {
     fetchMock.mockResolvedValue(
       json({ status: 422, detail: "Invalid", invalid_params: [{ name: "label", reason: "x" }] }, 422)
