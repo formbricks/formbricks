@@ -55,9 +55,9 @@ release and the 6.1 online values must name the **same** Hub digest and the **sa
 6.0.x install is blocked with the non-retryable `dependency_image_changed` code for two reasons:
 
 - 6.0.x renders Cube as `repository:tag`, not as a digest reference.
-- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.2.
+- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.3.
 
-Roll the 6.0.x release to Hub 0.14.2 and Cube 1.7.47-1 first and wait for the rollout to finish. Serving
+Roll the 6.0.x release to Hub 0.14.3 and Cube 1.7.47-1 first and wait for the rollout to finish. Serving
 traffic through an upgrade from 6.0.2 was verified with Hub 0.14.0 and Cube 1.7.47-1. Hub 0.14.1 adds the TLS
 fix for the October 2026 eMudhra certificate compromise and request-size limits, and no database migrations.
 Hub 0.14.2 adds a concurrently built index on embedded data and a nullable column on `embeddings`. The column
@@ -66,6 +66,10 @@ reads and writes. Hub 0.14.2 also refuses to start when `TAXONOMY_EMBEDDING_MODE
 same non-empty value. Check the effective values on both `hub` and `hub-worker`: with `hub.embeddings.enabled`
 the chart sets `EMBEDDING_MODEL` itself and ignores `hub.env.EMBEDDING_MODEL`, and `hub.worker.env` can set
 `TAXONOMY_EMBEDDING_MODEL` for the worker alone. Change whichever value collides before rolling it out.
+Hub 0.14.3 adds security fixes (Go 1.27.4, `golang.org/x/net` v0.62.0, zlib 1.4) and no database migrations.
+Its `hub-worker` checks the embedding provider before it starts the embedding queues, and pauses them while the
+check fails. The API and other queues keep running, so a provider that is down or misconfigured now holds
+embedding jobs back instead of failing them.
 While old and new `hub-worker` pods overlap, an old pod can rewrite a vector without updating its source hash, so
 a record edited and then edited back during the rollout can keep a stale vector. Stop the old workers before the
 new ones start. If they already overlapped, clear the hash for vectors written during the rollout with
@@ -75,7 +79,7 @@ the search and the taxonomy embeddings. Then, for each affected tenant, run
 `/app/backfill-embeddings -tenant-id <id> -stale` inside a `hub-worker` pod and, if taxonomy is enabled,
 `/app/backfill-embeddings -taxonomy -tenant-id <id> -stale`. Add `-count-only` first to preview how many records a run
 would re-embed. The Hub
-[Embedding repair](https://github.com/formbricks/hub/blob/0.14.2/docs/src/content/docs/reference/environment-variables.mdx)
+[Embedding repair](https://github.com/formbricks/hub/blob/0.14.3/docs/src/content/docs/reference/environment-variables.mdx)
 section has the details.
 6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
 image: check
@@ -85,7 +89,7 @@ before rolling it out.
 ```yaml
 hub:
   image:
-    digest: "sha256:0049b20fea8023b12dced414c731ba8dbf3d39aa7b3de738d5837222c9c7b2e0" # hub:0.14.2
+    digest: "sha256:63b85da9a0eb4346dd9350cd2bc82e9fe00b195756ad9a4bd50195ba874d10bc" # hub:0.14.3
 cube:
   image:
     repository: ghcr.io/formbricks/cube@sha256
