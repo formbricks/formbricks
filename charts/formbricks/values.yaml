@@ -1212,7 +1212,7 @@ hub:
     # Current digest corresponds to ghcr.io/formbricks/hub:0.14.2.
     digest: "sha256:0049b20fea8023b12dced414c731ba8dbf3d39aa7b3de738d5837222c9c7b2e0"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.14.2"
+    tag: "0.14.3"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
