@@ -70,4 +70,12 @@ describe("ZResponseFilterCriteriaBody", () => {
     expect(refusedAt(isAnyOf(PICKED_ITEMS_MAX))).toEqual([]);
     expect(refusedAt(isAnyOf(PICKED_ITEMS_MAX + 1))).toEqual(["data.q1.value"]);
   });
+
+  // ENG-3984 merge: the Responses quick filter now sends several statuses at once (#9989). The body schema
+  // wraps the shared filter, so the field must survive it rather than be stripped as an unknown key.
+  test("keeps the ticked statuses, and refuses one the quick filter doesn't offer", () => {
+    const statuses = ["complete", "lowQuality"];
+    expect(ZResponseFilterCriteriaBody.parse({ statuses })).toEqual({ statuses });
+    expect(refusedAt({ statuses: ["archived"] })).toEqual(["statuses.0"]);
+  });
 });
