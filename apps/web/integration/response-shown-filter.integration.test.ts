@@ -228,7 +228,7 @@ describe("shown / not shown filters (real Postgres)", () => {
     const criteria = getFormattedFilters(
       survey,
       {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: OptionsType.SHOWN, id: "shown.option.fav.apple", label: "fav · Apple TV+" },
