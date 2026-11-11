@@ -765,7 +765,7 @@
     "forgot_password_email_change_password": "Şifreyi değiştir",
     "forgot_password_email_did_not_request": "Bunu siz istemediyseniz, lütfen bu email'i dikkate almayın.",
     "forgot_password_email_heading": "Şifreyi değiştir",
-    "forgot_password_email_link_valid_for_24_hours": "Bağlantı {minutes} dakika geçerlidir.",
+    "forgot_password_email_link_valid_for_minutes": "Bağlantı {minutes} dakika geçerlidir.",
     "forgot_password_email_subject": "Formbricks şifrenizi sıfırlayın",
     "forgot_password_email_text": "Şifrenizi değiştirmek için bir bağlantı istediniz. Aşağıdaki bağlantıya tıklayarak bunu yapabilirsiniz:",
     "hidden_field": "Gizli alan",
