@@ -1,6 +1,7 @@
 import "server-only";
 import { ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
 import { refusalResponse } from "@/app/api/internal/lib/refusal";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -9,7 +10,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { generateWebhookSecret } from "@/lib/crypto";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
@@ -39,13 +39,6 @@ import { type TWebhookTestDeliveryResource, serializeCreatedWebhook } from "../s
  * workspace, the per-workspace state-mutation budget, the attach-time survey visibility guard and the
  * webhook URL's SSRF validation inside the write.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 /** What a delivery the endpoint didn't answer reports: its transport error stays in the logs. */
 export const WEBHOOK_ENDPOINT_UNREACHABLE = "The webhook endpoint could not be reached.";
@@ -87,8 +80,10 @@ async function resolveWebhook(
   webhookId: string
 ): Promise<{ organizationId: string; workspaceId: string } | null> {
   try {
-    const organizationId = await getOrganizationIdFromWebhookId(webhookId);
-    const workspaceId = await getWorkspaceIdFromWebhookId(webhookId);
+    const [organizationId, workspaceId] = await Promise.all([
+      getOrganizationIdFromWebhookId(webhookId),
+      getWorkspaceIdFromWebhookId(webhookId),
+    ]);
     return { organizationId, workspaceId };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) return null;

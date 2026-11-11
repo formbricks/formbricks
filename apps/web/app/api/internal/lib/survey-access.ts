@@ -1,8 +1,6 @@
 import "server-only";
-import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
-import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
+import { requireActionAccess } from "@/app/api/internal/lib/action-access";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { can } from "@/lib/authorization";
 
 /** What an internal survey route asks of the caller, in the app's authorization vocabulary. */
 export type TSurveyAction = "survey.read" | "survey.write" | "survey.manage" | "survey.response_read";
@@ -25,14 +23,11 @@ export async function requireSurveyActionAccess({
   requestId: string;
   instance?: string;
 }): Promise<Response | { userId: string }> {
-  const actor = getV3AuthorizationActor(authentication);
-  if (actor?.type !== "user") {
-    return problemUnauthorized(requestId, "Session required", instance);
-  }
-
-  if (!(await can(actor, action, { type: "survey", id: surveyId }))) {
-    return problemForbidden(requestId, undefined, instance);
-  }
-
-  return { userId: actor.id };
+  return requireActionAccess({
+    authentication,
+    action,
+    resource: { type: "survey", id: surveyId },
+    requestId,
+    instance,
+  });
 }

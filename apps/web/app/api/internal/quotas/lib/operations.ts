@@ -3,6 +3,7 @@ import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/erro
 import type { TSurveyQuota } from "@formbricks/types/quota";
 import { forbidOnRefusal } from "@/app/api/internal/lib/refusal";
 import { type TSurveyAction, requireSurveyActionAccess } from "@/app/api/internal/lib/survey-access";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import {
   noContentResponse,
   problemConflict,
@@ -10,7 +11,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { QuotaNameTakenError } from "@/modules/ee/quotas/lib/errors";
 import { checkQuotasEnabled } from "@/modules/ee/quotas/lib/permission";
@@ -24,13 +24,6 @@ import { type TQuotaResponseCountResource, serializeQuota } from "../serializers
  * survey, then checks that the organization's plan or licence includes quotas, as the server actions they
  * replace did. Writes are audited on the quota.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 /** A quota the caller may not reach, or that is gone: the uniform 403 either way. */
 const findQuota = async (quotaId: string): Promise<TSurveyQuota | null> => {

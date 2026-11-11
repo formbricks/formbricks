@@ -6,10 +6,10 @@ import {
   SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
+import type { TPreLoginRequestContext } from "@/app/api/internal/lib/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemUnprocessableContent } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { auth } from "@/modules/auth/lib/auth";
@@ -31,8 +31,6 @@ import {
 } from "@/modules/ee/sso/lib/recovery-intent";
 import { sendVerificationEmail } from "@/modules/email";
 import type { TVerificationEmailBody } from "../schemas";
-
-type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3AuditLog };
 
 /**
  * The SSO-recovery intent this resend is for, or null when it is an ordinary verification resend.
@@ -172,7 +170,7 @@ const resendEmailVerification = async (
 };
 
 /** A refusal the page explains: `details.reason` (and `detail`) is the stable code it translates. */
-const refused = ({ requestId, instance }: TRequestContext, reason: string) =>
+const refused = ({ requestId, instance }: TPreLoginRequestContext, reason: string) =>
   problemUnprocessableContent(requestId, reason, { instance, details: { reason } });
 
 /**
@@ -183,7 +181,7 @@ const refused = ({ requestId, instance }: TRequestContext, reason: string) =>
 export async function resendVerificationEmailOperation({
   body,
   ...context
-}: TRequestContext & { body: TVerificationEmailBody }): Promise<Response> {
+}: TPreLoginRequestContext & { body: TVerificationEmailBody }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.verifyEmail, context);
   if (limited) {

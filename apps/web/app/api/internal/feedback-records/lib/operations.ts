@@ -1,4 +1,5 @@
 import "server-only";
+import type { TWorkspaceRequestContext } from "@/app/api/internal/lib/types";
 import { getV3SessionUserId } from "@/app/api/v3/lib/auth";
 import { hubErrorToProblemResponse } from "@/app/api/v3/lib/hub-errors";
 import {
@@ -8,7 +9,6 @@ import {
   problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { assertCan } from "@/lib/authorization";
 import {
   assertFeedbackDirectoryAssignmentAccess,
@@ -26,20 +26,12 @@ import { deleteFeedbackRecord, retrieveFeedbackRecord } from "@/modules/hub/serv
  * cross-organization boundary — a dataset belongs to exactly one organization.
  */
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  workspaceId: string;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
-
 /** The session's user, or the 401 a session-only route answers without one. */
 const requireSessionUser = ({
   authentication,
   requestId,
   instance,
-}: TRequestContext): { userId: string } | Response => {
+}: TWorkspaceRequestContext): { userId: string } | Response => {
   const userId = getV3SessionUserId(authentication);
   return userId ? { userId } : problemUnauthorized(requestId, "Session required", instance);
 };
@@ -51,7 +43,7 @@ const requireSessionUser = ({
  * that could not answer (or refused our credentials) a 502 or 503 — never a claim about the record. The
  * Hub's own text is never relayed beyond what that mapping allows.
  */
-async function getReachableRecord(context: TRequestContext, userId: string, recordId: string) {
+async function getReachableRecord(context: TWorkspaceRequestContext, userId: string, recordId: string) {
   const { workspaceId, requestId, instance } = context;
   const [workspaceDatasetIds, recordResult] = await Promise.all([
     getWorkspaceDirectoryIds(workspaceId),
@@ -73,7 +65,7 @@ async function getReachableRecord(context: TRequestContext, userId: string, reco
 export async function getFeedbackRecordOperation({
   recordId,
   ...context
-}: TRequestContext & { recordId: string }): Promise<Response> {
+}: TWorkspaceRequestContext & { recordId: string }): Promise<Response> {
   const { workspaceId, requestId } = context;
   const session = requireSessionUser(context);
   if (session instanceof Response) return session;
@@ -95,7 +87,7 @@ export async function getFeedbackRecordOperation({
 export async function deleteFeedbackRecordOperation({
   recordId,
   ...context
-}: TRequestContext & { recordId: string }): Promise<Response> {
+}: TWorkspaceRequestContext & { recordId: string }): Promise<Response> {
   const { workspaceId, requestId, instance, auditLog } = context;
   // Set before the access check so a refused or failed attempt is still attributable.
   if (auditLog) auditLog.targetId = recordId;
@@ -147,7 +139,7 @@ export async function deleteFeedbackRecordOperation({
 export async function lookupFeedbackRecordContactsOperation({
   userIds,
   ...context
-}: TRequestContext & { userIds: string[] }): Promise<Response> {
+}: TWorkspaceRequestContext & { userIds: string[] }): Promise<Response> {
   const { workspaceId, requestId } = context;
   const session = requireSessionUser(context);
   if (session instanceof Response) return session;

@@ -2,20 +2,13 @@ import type { ActionClass } from "@formbricks/database/prisma-browser";
 import type { TActionClassCreateBody } from "@/app/api/internal/action-classes/schemas";
 import type { TUnsplashPhotoResource } from "@/app/api/internal/unsplash-photos/serializers";
 import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
+import { type TJsonTimestamps, reviveTimestamps } from "@/modules/api/lib/json-timestamps";
 
 /**
  * The survey editor's calls to `/api/internal/*`. Each throws a `V3ApiError` on a refusal. Timestamps come
  * back as ISO strings and are revived to `Date`s here, so the editor's state keeps the types the page
  * rendered it with.
  */
-
-type TWithJsonDates<T> = Omit<T, "createdAt" | "updatedAt"> & { createdAt: string; updatedAt: string };
-
-const reviveTimestamps = <T extends { createdAt: string; updatedAt: string }>(value: T) => ({
-  ...value,
-  createdAt: new Date(value.createdAt),
-  updatedAt: new Date(value.updatedAt),
-});
 
 /**
  * Create an action in the workspace, from the trigger picker. The workspace travels in the query, so the
@@ -26,7 +19,7 @@ export const createActionClass = async (
   { workspaceId: _workspaceId, ...body }: TActionClassCreateBody & { workspaceId?: string }
 ): Promise<ActionClass> =>
   reviveTimestamps(
-    await sendApiRequest<TWithJsonDates<ActionClass>>(
+    await sendApiRequest<TJsonTimestamps<ActionClass>>(
       buildApiUrl("/api/internal/action-classes", { workspaceId }),
       { method: "POST", body }
     )

@@ -3,9 +3,9 @@ import { z } from "zod";
 import type { TOrganization } from "@formbricks/types/organizations";
 import { type TOrgAction, requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { refusalResponse } from "@/app/api/internal/lib/refusal";
+import type { TOrganizationRequestContext } from "@/app/api/internal/lib/types";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemBadRequest, problemConflict, problemForbidden } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getOrganization } from "@/lib/organization/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
@@ -14,13 +14,7 @@ import {
   withOrganizationBillingLock,
 } from "@/modules/ee/billing/lib/billing-lock";
 
-export type TBillingRequestContext = {
-  authentication: TV3Authentication;
-  organizationId: string;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
+export type TBillingRequestContext = TOrganizationRequestContext;
 
 /**
  * Authorize a billing request on one organization, as the server action it replaces did (`action`:

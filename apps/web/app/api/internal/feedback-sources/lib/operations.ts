@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -11,7 +12,7 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { assertCan } from "@/lib/authorization";
 import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/access";
 import { importHistoricalResponses } from "@/lib/feedback-source/import";
@@ -50,13 +51,6 @@ import type {
  * lives in, never one the caller names — and through the dataset it writes to
  * (`feedbackDirectoryAssignment.*`), so a workspace member can't feed another team's dataset.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 const FORBIDDEN = "You are not authorized to access this resource";
 

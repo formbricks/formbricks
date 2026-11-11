@@ -3,9 +3,9 @@ import { revalidatePath } from "next/cache";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import { type TResponseAction, requireResponseActionAccess } from "@/app/api/internal/lib/response-access";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { deleteResponse, getResponse, getResponseWithQuotas } from "@/lib/response/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
@@ -19,13 +19,6 @@ import { type TResponseTagResource, serializeResponseCard } from "../serializers
  * server actions these replace did, and every write is charged to the workspace's state-mutation budget and
  * marks the survey's page for revalidation.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 /** Where a response lives: its survey, and the survey's workspace and organization. */
 type TResponseScope = { surveyId: string; workspaceId: string; organizationId: string };

@@ -1,17 +1,15 @@
 import "server-only";
 import { JsonWebTokenError } from "jsonwebtoken";
 import { logger } from "@formbricks/logger";
+import type { TPreLoginRequestContext } from "@/app/api/internal/lib/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemUnprocessableContent } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { InvalidEmailChangeTokenError, verifyEmailChangeToken } from "@/lib/jwt";
 import { updateBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUser, updateUser } from "@/modules/auth/lib/user";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TEmailChangeVerificationBody } from "../schemas";
-
-type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3AuditLog };
 
 /**
  * `POST /api/internal/email-change-verifications`: switch an account to the address its token confirms.
@@ -23,7 +21,7 @@ type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3Aud
 export async function verifyEmailChangeOperation({
   body,
   ...context
-}: TRequestContext & { body: TEmailChangeVerificationBody }): Promise<Response> {
+}: TPreLoginRequestContext & { body: TEmailChangeVerificationBody }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.verifyEmail, context);
   if (limited) {

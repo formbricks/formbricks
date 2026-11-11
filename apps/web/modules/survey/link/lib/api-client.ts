@@ -5,6 +5,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import type { TLanguage } from "@formbricks/types/workspace";
 import type { TLinkSurveyPinVerificationResource } from "@/app/api/internal/link-survey-pin-verifications/serializers";
 import { sendApiRequest } from "@/modules/api/lib/internal-api-client";
+import { type TJsonTimestamps, reviveTimestamps } from "@/modules/api/lib/json-timestamps";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 
 /**
@@ -35,8 +36,6 @@ export const sendLinkSurveyVerificationEmail = (body: TLinkSurveyVerificationEma
     body,
     timeoutMs: null,
   });
-
-type TJsonTimestamps<T> = Omit<T, "createdAt" | "updatedAt"> & { createdAt: string; updatedAt: string };
 
 /** The survey as it crosses the wire: every timestamp an ISO string. */
 type TLinkSurveyJson = Omit<
@@ -69,12 +68,6 @@ type TLinkSurveyPinVerificationJson = Omit<TLinkSurveyPinVerificationResource, "
 };
 
 const toDate = (value: string | null | undefined): Date | null => (value ? new Date(value) : null);
-
-const reviveTimestamps = <T extends { createdAt: string; updatedAt: string }>(value: T) => ({
-  ...value,
-  createdAt: new Date(value.createdAt),
-  updatedAt: new Date(value.updatedAt),
-});
 
 /** The survey with its timestamps as `Date`s again, as the server action handed it over. */
 const reviveLinkSurvey = (survey: TLinkSurveyJson): TSurvey => ({

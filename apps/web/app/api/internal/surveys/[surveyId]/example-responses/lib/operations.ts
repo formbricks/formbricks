@@ -57,8 +57,10 @@ export async function generateExampleResponsesOperation({
   if (limited) return limited;
 
   // Each throws `ResourceNotFoundError` for an unknown survey: the wrapper's uniform 403.
-  const organizationId = await getOrganizationIdFromSurveyId(surveyId);
-  const workspaceId = await getWorkspaceIdFromSurveyId(surveyId);
+  const [organizationId, workspaceId] = await Promise.all([
+    getOrganizationIdFromSurveyId(surveyId),
+    getWorkspaceIdFromSurveyId(surveyId),
+  ]);
 
   const access = await requireSurveyActionAccess({
     authentication,

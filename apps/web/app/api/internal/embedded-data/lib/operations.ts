@@ -1,5 +1,6 @@
 import "server-only";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
@@ -12,7 +13,6 @@ import {
   problemServiceUnavailable,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -50,13 +50,6 @@ import {
  * rate, record what happened, and turn the service's refusals into HTTP answers. Embedded Data is core,
  * so there is no entitlement gate.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 export const EMBEDDED_DATA_BASE_PATH = "/api/internal/embedded-data";
 

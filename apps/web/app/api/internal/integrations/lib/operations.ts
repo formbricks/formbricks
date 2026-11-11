@@ -7,6 +7,7 @@ import {
 } from "@formbricks/types/errors";
 import type { TIntegrationInput } from "@formbricks/types/integration";
 import type { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import type { TWorkspaceRequestContext } from "@/app/api/internal/lib/types";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { getV3SessionUserId, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
@@ -20,7 +21,6 @@ import {
   problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
@@ -54,22 +54,14 @@ import {
  * keeps the stored credentials, and answers with the integration's id only (ENG-2292).
  */
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  workspaceId: string;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
-
 const conflict = (
-  { requestId, instance }: TRequestContext,
+  { requestId, instance }: TWorkspaceRequestContext,
   reason: TIntegrationConflictReason,
   detail: string
 ) => problemConflict(requestId, detail, instance, { details: { reason } });
 
 /** Write access to the workspace, for a session user; their id is what the write budgets are keyed by. */
-async function authorize(context: TRequestContext) {
+async function authorize(context: TWorkspaceRequestContext) {
   const access = await requireSessionWorkspaceAccess(
     context.authentication,
     context.workspaceId,
@@ -88,7 +80,7 @@ export async function putIntegrationOperation({
   type,
   body,
   ...context
-}: TRequestContext & { type: TIntegrationTypeParam; body: TIntegrationPutBody }): Promise<Response> {
+}: TWorkspaceRequestContext & { type: TIntegrationTypeParam; body: TIntegrationPutBody }): Promise<Response> {
   const { workspaceId, requestId, instance, auditLog } = context;
   const access = await authorize(context);
   if (access instanceof Response) return access;
@@ -152,7 +144,7 @@ export async function putIntegrationOperation({
 export async function deleteIntegrationOperation({
   type,
   ...context
-}: TRequestContext & { type: TIntegrationTypeParam }): Promise<Response> {
+}: TWorkspaceRequestContext & { type: TIntegrationTypeParam }): Promise<Response> {
   const { workspaceId, requestId, instance, auditLog } = context;
   const access = await authorize(context);
   if (access instanceof Response) return access;
@@ -185,7 +177,9 @@ export async function deleteIntegrationOperation({
  * (Google issues the token for the grant already stored), repeating it changes nothing a caller can
  * observe, and nothing it produces is readable cross-origin.
  */
-export async function getGoogleSheetsConnectionOperation(context: TRequestContext): Promise<Response> {
+export async function getGoogleSheetsConnectionOperation(
+  context: TWorkspaceRequestContext
+): Promise<Response> {
   const access = await authorize(context);
   if (access instanceof Response) return access;
 
@@ -214,7 +208,7 @@ export async function getGoogleSheetsConnectionOperation(context: TRequestContex
 export async function getSpreadsheetOperation({
   spreadsheetId,
   ...context
-}: TRequestContext & { spreadsheetId: string }): Promise<Response> {
+}: TWorkspaceRequestContext & { spreadsheetId: string }): Promise<Response> {
   const access = await authorize(context);
   if (access instanceof Response) return access;
 
@@ -263,7 +257,7 @@ const SLACK_REAUTHORIZATION_ERRORS = new Set([
  * `GET /api/internal/integrations/slack/channels?workspaceId=`: the channels a mapping can post to. A
  * refused grant asks for a reconnect, any other Slack failure is a 502, and anything else is ours: a 500.
  */
-export async function getSlackChannelsOperation(context: TRequestContext): Promise<Response> {
+export async function getSlackChannelsOperation(context: TWorkspaceRequestContext): Promise<Response> {
   const access = await authorize(context);
   if (access instanceof Response) return access;
 

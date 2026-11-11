@@ -1,6 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError, InvalidInputError, TooManyRequestsError } from "@formbricks/types/errors";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -9,7 +10,6 @@ import {
   problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { INVITE_DISABLED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { loggableError } from "@/lib/utils/loggable-error";
@@ -21,13 +21,6 @@ import {
 import { checkSetupInviteAuthorization } from "@/modules/setup/organization/[organizationId]/invite/lib/authorization";
 import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";
 import type { TOnboardingInviteBody } from "../schemas";
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 /**
  * `POST /api/internal/onboarding-invites`: invite a teammate from the onboarding screen. Owner-only — see

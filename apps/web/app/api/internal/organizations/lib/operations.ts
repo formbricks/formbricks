@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
 import { type TOrgAction, requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
+import type { TOrganizationRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -13,7 +14,6 @@ import {
   problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getHasNoOrganizations } from "@/lib/instance/service";
@@ -39,14 +39,6 @@ import {
   serializeOrganizationSettings,
 } from "../serializers";
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  organizationId: string;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
-
 /** What a PATCH asks of the caller: renaming is the owner's; AI and display settings are managers' too. */
 export const requiredOrganizationActions = (body: TOrganizationPatchBody): TOrgAction[] => {
   const actions = new Set<TOrgAction>();
@@ -58,7 +50,7 @@ export const requiredOrganizationActions = (body: TOrganizationPatchBody): TOrgA
 };
 
 /** Name the target before anything can refuse, so a refusal's audit entry says what was attempted. */
-const recordAuditTarget = ({ auditLog, organizationId }: TRequestContext) => {
+const recordAuditTarget = ({ auditLog, organizationId }: TOrganizationRequestContext) => {
   if (!auditLog) return;
   auditLog.organizationId = organizationId;
   auditLog.targetId = organizationId;
@@ -66,7 +58,7 @@ const recordAuditTarget = ({ auditLog, organizationId }: TRequestContext) => {
 
 /** Authorize every action, in order; the first refusal is the answer. */
 async function requireOrgActions(
-  context: TRequestContext,
+  context: TOrganizationRequestContext,
   actions: TOrgAction[]
 ): Promise<Response | { userId: string }> {
   let access: Awaited<ReturnType<typeof requireOrgActionAccess>> | undefined;
@@ -82,7 +74,7 @@ async function requireOrgActions(
 export async function updateOrganizationOperation({
   body,
   ...context
-}: TRequestContext & { body: TOrganizationPatchBody }): Promise<Response> {
+}: TOrganizationRequestContext & { body: TOrganizationPatchBody }): Promise<Response> {
   const { organizationId, requestId, instance, auditLog } = context;
   recordAuditTarget(context);
   const access = await requireOrgActions(context, requiredOrganizationActions(body));
@@ -114,7 +106,7 @@ export async function updateOrganizationOperation({
  * `DELETE /api/internal/organizations/{organizationId}`: delete it, with every workspace in it. Owners only,
  * and only where the licence allows more than one organization.
  */
-export async function deleteOrganizationOperation(context: TRequestContext): Promise<Response> {
+export async function deleteOrganizationOperation(context: TOrganizationRequestContext): Promise<Response> {
   const { organizationId, requestId, instance, auditLog } = context;
   recordAuditTarget(context);
   const access = await requireOrgActions(context, ["organization.write"]);
@@ -142,7 +134,7 @@ export const MULTI_ORG_DISABLED_DETAIL =
  */
 async function refuseOrganizationCreation(
   flow: NonNullable<TOrganizationCreateBody["flow"]>,
-  { requestId, instance }: Pick<TRequestContext, "requestId" | "instance">
+  { requestId, instance }: Pick<TOrganizationRequestContext, "requestId" | "instance">
 ): Promise<{ refused: Response } | { hasNoOrganizations: boolean }> {
   if (flow === "additional") {
     if (!(await getIsMultiOrgEnabled())) {
@@ -175,7 +167,9 @@ export async function createOrganizationOperation({
   requestId,
   instance,
   auditLog,
-}: Omit<TRequestContext, "organizationId"> & { body: TOrganizationCreateBody }): Promise<Response> {
+}: Omit<TOrganizationRequestContext, "organizationId"> & {
+  body: TOrganizationCreateBody;
+}): Promise<Response> {
   const actor = getV3AuthorizationActor(authentication);
   if (actor?.type !== "user") return problemUnauthorized(requestId, "Session required", instance);
   const user = await getUser(actor.id);
@@ -265,7 +259,7 @@ export async function listOrganizationsOperation({
   authentication,
   requestId,
   instance,
-}: Pick<TRequestContext, "authentication" | "requestId" | "instance">): Promise<Response> {
+}: Pick<TOrganizationRequestContext, "authentication" | "requestId" | "instance">): Promise<Response> {
   const actor = getV3AuthorizationActor(authentication);
   if (actor?.type !== "user") return problemUnauthorized(requestId, "Session required", instance);
 

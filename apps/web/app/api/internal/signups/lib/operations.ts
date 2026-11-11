@@ -1,5 +1,6 @@
 import "server-only";
 import { InvalidInputError } from "@formbricks/types/errors";
+import type { TPreLoginRequestContext } from "@/app/api/internal/lib/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
@@ -12,8 +13,6 @@ import {
 } from "@/modules/auth/signup/lib/sign-up";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TSignupBody } from "../schemas";
-
-type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3AuditLog };
 
 /** Copy what the sign-up got to into its audit entry, whether it finished or threw partway. */
 const recordTrail = (auditLog: TV3AuditLog | undefined, trail: TSignupAuditTrail) => {
@@ -38,7 +37,7 @@ const recordTrail = (auditLog: TV3AuditLog | undefined, trail: TSignupAuditTrail
 export async function createSignupOperation({
   body,
   ...context
-}: TRequestContext & { body: TSignupBody }): Promise<Response> {
+}: TPreLoginRequestContext & { body: TSignupBody }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.signup, context);
   if (limited) {

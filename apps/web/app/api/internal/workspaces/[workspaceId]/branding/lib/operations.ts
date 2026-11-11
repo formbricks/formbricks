@@ -1,9 +1,9 @@
 import "server-only";
 import { forbidOnRefusal } from "@/app/api/internal/lib/refusal";
+import type { TWorkspaceRequestContext } from "@/app/api/internal/lib/types";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemForbidden, successResponse } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { assertBrandingChangeAllowed } from "@/modules/ee/whitelabel/remove-branding/lib/permission";
@@ -12,14 +12,7 @@ import { getWorkspace } from "@/modules/survey/editor/lib/workspace";
 import type { TWorkspaceBrandingPatchBody } from "../schemas";
 import { serializeWorkspaceBranding } from "../serializers";
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  workspaceId: string;
-  body: TWorkspaceBrandingPatchBody;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
+type TRequestContext = TWorkspaceRequestContext & { body: TWorkspaceBrandingPatchBody };
 
 /**
  * `PATCH /api/internal/workspaces/{workspaceId}/branding`: show or hide the Formbricks badge on the

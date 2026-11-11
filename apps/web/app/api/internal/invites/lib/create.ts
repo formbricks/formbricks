@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError, TooManyRequestsError, ValidationError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { requireUserManagementAccess } from "@/app/api/internal/lib/organization-access";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -14,7 +15,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -39,13 +39,6 @@ import {
 } from "@/modules/organization/settings/teams/lib/invite-rate-limit";
 import type { TInviteBatchBody, TInviteCreateBody } from "../schemas";
 import type { TCreatedInviteResource } from "../serializers";
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 export const INVITE_DISABLED_DETAIL = "Invite disabled";
 export const BULK_INVITE_NOT_ALLOWED_DETAIL = "Bulk invite is not available on your current plan";

@@ -1,6 +1,7 @@
 import "server-only";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
   createdResponse,
@@ -10,7 +11,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromApiKeyId } from "@/lib/utils/helper";
@@ -23,13 +23,6 @@ import {
 import { assertCanGrantOrganizationAccess } from "@/modules/organization/settings/api-keys/lib/organization-access";
 import type { TApiKeyCreateBody, TApiKeyUpdateBody } from "../schemas";
 import { type TApiKeyResource, type TCreatedApiKeyResource, serializeApiKey } from "../serializers";
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 export const API_KEYS_BASE_PATH = "/api/internal/api-keys";
 

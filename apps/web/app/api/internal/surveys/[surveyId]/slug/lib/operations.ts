@@ -1,6 +1,7 @@
 import "server-only";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { requireSurveyActionAccess } from "@/app/api/internal/lib/survey-access";
+import type { TRequestMeta } from "@/app/api/internal/lib/types";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   noContentResponse,
@@ -16,12 +17,7 @@ import { updateSurveySlug } from "@/modules/survey/lib/slug";
 import type { TSurveySlugPutBody } from "../schemas";
 import { serializeSurveySlug } from "../serializers";
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  surveyId: string;
-  requestId: string;
-  instance?: string;
-};
+type TRequestContext = TRequestMeta & { authentication: TV3Authentication; surveyId: string };
 
 /**
  * Set or clear a survey's slug, with the checks of the server actions this route replaces: self-hosted

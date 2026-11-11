@@ -1,8 +1,8 @@
 import "server-only";
+import { requireActionAccess } from "@/app/api/internal/lib/action-access";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { can } from "@/lib/authorization";
 import { canManageUsers } from "@/lib/membership/user-management";
 
 /**
@@ -47,16 +47,15 @@ export async function requireOrgActionAccess({
   requestId: string;
   instance?: string;
 }): Promise<Response | { organizationId: string; userId: string }> {
-  const actor = getV3AuthorizationActor(authentication);
-  if (actor?.type !== "user") {
-    return problemUnauthorized(requestId, "Session required", instance);
-  }
-
-  if (!(await can(actor, action, { type: "organization", id: organizationId }))) {
-    return problemForbidden(requestId, undefined, instance);
-  }
-
-  return { organizationId, userId: actor.id };
+  const access = await requireActionAccess({
+    authentication,
+    action,
+    resource: { type: "organization", id: organizationId },
+    requestId,
+    instance,
+  });
+  if (access instanceof Response) return access;
+  return { organizationId, userId: access.userId };
 }
 
 export const USER_MANAGEMENT_NOT_ALLOWED_DETAIL = "User management is not allowed for your role";

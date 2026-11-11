@@ -11,6 +11,7 @@ import {
   getNotificationSettingsView,
   updateNotificationSetting,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/lib/notification-settings";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond, rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -20,7 +21,6 @@ import {
   problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { PASSWORD_RESET_DISABLED, WEBAPP_URL } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { requestSsoAccountDeletionEmail } from "@/modules/account/lib/better-auth-account-deletion-request";
@@ -28,13 +28,6 @@ import { auth } from "@/modules/auth/lib/auth";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TNotificationSettingPatchBody, TProfilePatchBody } from "../schemas";
 import { updateOwnProfile } from "./profile";
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 /**
  * The signed-in user, read fresh. Everything under `/api/internal/users/me` acts on the caller's own

@@ -1,4 +1,5 @@
 import "server-only";
+import type { TRequestMeta } from "@/app/api/internal/lib/types";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemNotFound, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -8,8 +9,6 @@ import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/li
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import type { TLinkSurveyPinVerificationBody } from "../schemas";
 import { serializeLinkSurveyPinVerification } from "../serializers";
-
-type TRequestContext = { requestId: string; instance?: string };
 
 /** The code a wrong PIN answers with. The PIN screen shows it only as a red border. */
 export const INVALID_PIN = "INVALID_PIN";
@@ -23,7 +22,7 @@ export const INVALID_PIN = "INVALID_PIN";
 export async function verifyLinkSurveyPinOperation({
   body,
   ...context
-}: TRequestContext & { body: TLinkSurveyPinVerificationBody }): Promise<Response> {
+}: TRequestMeta & { body: TLinkSurveyPinVerificationBody }): Promise<Response> {
   const { requestId, instance } = context;
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.actions.validateSurveyPin, context);
   if (limited) return limited;

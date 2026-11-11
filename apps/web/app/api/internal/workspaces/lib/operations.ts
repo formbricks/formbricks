@@ -11,6 +11,7 @@ import {
   getWritableWorkspacesByUserId,
 } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
+import type { TWorkspaceRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -21,7 +22,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { type TAuthorizationAction, can } from "@/lib/authorization";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -59,14 +59,6 @@ import {
 
 export const WORKSPACES_BASE_PATH = "/api/internal/workspaces";
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  workspaceId: string;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
-
 type TAuthorizedWorkspace = { workspace: TWorkspace };
 
 /**
@@ -75,7 +67,7 @@ type TAuthorizedWorkspace = { workspace: TWorkspace };
  * aimed at. A missing workspace and one the caller may not act on get the same 403, so ids can't be probed.
  */
 async function authorizeWorkspace(
-  { authentication, workspaceId, requestId, instance, auditLog }: TRequestContext,
+  { authentication, workspaceId, requestId, instance, auditLog }: TWorkspaceRequestContext,
   action: Extract<TAuthorizationAction, "workspace.manage" | "organization.manage">
 ): Promise<Response | TAuthorizedWorkspace> {
   if (auditLog) auditLog.targetId = workspaceId;
@@ -104,7 +96,7 @@ async function authorizeWorkspace(
 export async function updateWorkspaceOperation({
   body,
   ...context
-}: TRequestContext & { body: TWorkspacePatchBody }): Promise<Response> {
+}: TWorkspaceRequestContext & { body: TWorkspacePatchBody }): Promise<Response> {
   const { workspaceId, requestId, instance, auditLog } = context;
   const authorized = await authorizeWorkspace(context, "workspace.manage");
   if (authorized instanceof Response) return authorized;
@@ -166,7 +158,7 @@ export async function updateWorkspaceOperation({
 export async function deleteWorkspaceOperation({
   body,
   ...context
-}: TRequestContext & { body: TWorkspaceDeletionBody }): Promise<Response> {
+}: TWorkspaceRequestContext & { body: TWorkspaceDeletionBody }): Promise<Response> {
   const { workspaceId, requestId, instance, auditLog } = context;
   const authorized = await authorizeWorkspace(context, "organization.manage");
   if (authorized instanceof Response) return authorized;
@@ -212,7 +204,7 @@ export async function listWorkspacesOperation({
   access,
   requestId,
   instance,
-}: Omit<TRequestContext, "workspaceId" | "auditLog"> & {
+}: Omit<TWorkspaceRequestContext, "workspaceId" | "auditLog"> & {
   organizationId: string;
   access: TWorkspacesListQuery["access"];
 }): Promise<Response> {
@@ -247,7 +239,7 @@ const TEAM_ASSIGNMENT_NOT_ALLOWED = "You do not have permission to manage roles"
 /** The service's refusals, past the checks this operation makes first, as problems. */
 const createWorkspaceRefusal = (
   error: unknown,
-  { requestId, instance }: Pick<TRequestContext, "requestId" | "instance">
+  { requestId, instance }: Pick<TWorkspaceRequestContext, "requestId" | "instance">
 ) => {
   // The cap, checked again under the organization's lock: a concurrent create got there first (ENG-3921).
   if (error instanceof OperationNotAllowedError) return problemForbidden(requestId, error.message, instance);
@@ -277,7 +269,7 @@ export async function createWorkspaceOperation({
   requestId,
   instance,
   auditLog,
-}: Omit<TRequestContext, "workspaceId"> & {
+}: Omit<TWorkspaceRequestContext, "workspaceId"> & {
   organizationId: string;
   body: TWorkspaceCreateBody;
 }): Promise<Response> {

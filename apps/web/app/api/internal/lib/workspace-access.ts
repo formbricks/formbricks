@@ -1,8 +1,6 @@
 import "server-only";
-import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
-import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
+import { requireActionAccess } from "@/app/api/internal/lib/action-access";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { can } from "@/lib/authorization";
 
 /** What an internal route asks of the caller on a workspace, in the app's authorization vocabulary. */
 export type TWorkspaceAction = "workspace.read" | "workspace.write";
@@ -27,14 +25,11 @@ export async function requireWorkspaceActionAccess({
   requestId: string;
   instance?: string;
 }): Promise<Response | { userId: string }> {
-  const actor = getV3AuthorizationActor(authentication);
-  if (actor?.type !== "user") {
-    return problemUnauthorized(requestId, "Session required", instance);
-  }
-
-  if (!(await can(actor, action, { type: "workspace", id: workspaceId }))) {
-    return problemForbidden(requestId, undefined, instance);
-  }
-
-  return { userId: actor.id };
+  return requireActionAccess({
+    authentication,
+    action,
+    resource: { type: "workspace", id: workspaceId },
+    requestId,
+    instance,
+  });
 }

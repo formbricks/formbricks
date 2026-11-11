@@ -4,16 +4,12 @@ import type {
   TActionClassSurveysResource,
 } from "@/app/api/internal/action-classes/schemas";
 import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
+import { type TJsonTimestamps, reviveTimestamps } from "@/modules/api/lib/json-timestamps";
 
 /** Client fetchers for the app connection settings and the app shell. Each throws a `V3ApiError` on a refusal. */
 
 const actionClassPath = (actionClassId: string) =>
   `/api/internal/action-classes/${encodeURIComponent(actionClassId)}`;
-
-type TActionClassJson = Omit<TActionClass, "createdAt" | "updatedAt"> & {
-  createdAt: string;
-  updatedAt: string;
-};
 
 /**
  * Change an action. The body carries no `workspaceId`: an action stays in its own workspace. Answers with
@@ -24,11 +20,11 @@ export const updateActionClass = async (
   actionClassId: string,
   body: TActionClassPatchBody
 ): Promise<TActionClass> => {
-  const updated = await sendApiRequest<TActionClassJson>(actionClassPath(actionClassId), {
+  const updated = await sendApiRequest<TJsonTimestamps<TActionClass>>(actionClassPath(actionClassId), {
     method: "PATCH",
     body,
   });
-  return { ...updated, createdAt: new Date(updated.createdAt), updatedAt: new Date(updated.updatedAt) };
+  return reviveTimestamps(updated);
 };
 
 export const deleteActionClass = (actionClassId: string) =>

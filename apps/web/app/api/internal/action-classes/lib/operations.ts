@@ -1,6 +1,7 @@
 import "server-only";
 import type { TActionClass } from "@formbricks/types/action-classes";
 import { UniqueConstraintError } from "@formbricks/types/errors";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3SessionUserId, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -10,7 +11,6 @@ import {
   problemForbidden,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getSurveysByActionClassId } from "@/lib/survey/service";
@@ -26,15 +26,9 @@ import type { TActionClassCreateBody, TActionClassPatchBody, TActionClassSurveys
  * can't reach.
  */
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  actionClassId: string;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
+type TActionClassRequestContext = TRequestContext & { actionClassId: string };
 
-async function authorizeActionClass(context: TRequestContext, permission: TTeamPermission) {
+async function authorizeActionClass(context: TActionClassRequestContext, permission: TTeamPermission) {
   const { authentication, actionClassId, requestId, instance, auditLog } = context;
   if (auditLog) auditLog.targetId = actionClassId;
 
@@ -91,7 +85,7 @@ export async function createActionClassOperation({
   requestId,
   instance,
   auditLog,
-}: Omit<TRequestContext, "actionClassId"> & {
+}: TRequestContext & {
   workspaceId: string;
   body: TActionClassCreateBody;
 }): Promise<Response> {
@@ -151,7 +145,7 @@ export async function createActionClassOperation({
 export async function updateActionClassOperation({
   body,
   ...context
-}: TRequestContext & { body: TActionClassPatchBody }): Promise<Response> {
+}: TActionClassRequestContext & { body: TActionClassPatchBody }): Promise<Response> {
   const authorized = await authorizeActionClass(context, "readWrite");
   if (authorized instanceof Response) return authorized;
   const { actionClass } = authorized;
@@ -169,7 +163,7 @@ export async function updateActionClassOperation({
 }
 
 /** `DELETE /api/internal/action-classes/{actionClassId}`: delete an action. */
-export async function deleteActionClassOperation(context: TRequestContext): Promise<Response> {
+export async function deleteActionClassOperation(context: TActionClassRequestContext): Promise<Response> {
   const authorized = await authorizeActionClass(context, "readWrite");
   if (authorized instanceof Response) return authorized;
 
@@ -185,7 +179,7 @@ export async function deleteActionClassOperation(context: TRequestContext): Prom
 export async function getActionClassSurveysOperation({
   excludeSurveyId,
   ...context
-}: TRequestContext & { excludeSurveyId?: string }): Promise<Response> {
+}: TActionClassRequestContext & { excludeSurveyId?: string }): Promise<Response> {
   const authorized = await authorizeActionClass(context, "read");
   if (authorized instanceof Response) return authorized;
   const { actionClass, organizationId } = authorized;

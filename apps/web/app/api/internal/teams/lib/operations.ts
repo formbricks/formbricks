@@ -1,5 +1,6 @@
 import "server-only";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
   createdResponse,
@@ -10,7 +11,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { getTeam } from "@/lib/utils/services";
 import { requireRoleManagementEntitlement } from "@/modules/ee/role-management/lib/api-access";
@@ -34,13 +34,6 @@ import { serializeTeam, serializeTeamOption } from "../serializers";
  * Teams, for the organization's Teams settings page. Enterprise-gated: every operation checks the role
  * management licence after authorizing the caller, as the server actions it replaces did.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 export const TEAMS_BASE_PATH = "/api/internal/teams";
 

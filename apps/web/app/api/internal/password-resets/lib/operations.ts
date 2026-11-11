@@ -6,6 +6,7 @@ import {
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
 } from "@formbricks/types/errors";
+import type { TRequestMeta } from "@/app/api/internal/lib/types";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import { PASSWORD_RESET_DISABLED } from "@/lib/constants";
@@ -15,10 +16,8 @@ import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp"
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TPasswordResetBody } from "../schemas";
 
-type TRequestContext = { requestId: string; instance?: string };
-
 /** A refusal the reset form explains: `details.reason` is the stable code it translates. */
-const refused = ({ requestId, instance }: TRequestContext, reason: string, detail: string) =>
+const refused = ({ requestId, instance }: TRequestMeta, reason: string, detail: string) =>
   problemUnprocessableContent(requestId, detail, { instance, details: { reason } });
 
 /**
@@ -29,7 +28,7 @@ const refused = ({ requestId, instance }: TRequestContext, reason: string, detai
 export async function completePasswordResetOperation({
   body,
   ...context
-}: TRequestContext & { body: TPasswordResetBody }): Promise<Response> {
+}: TRequestMeta & { body: TPasswordResetBody }): Promise<Response> {
   const { requestId, instance } = context;
   if (PASSWORD_RESET_DISABLED) return problemForbidden(requestId, "Password reset is disabled", instance);
 

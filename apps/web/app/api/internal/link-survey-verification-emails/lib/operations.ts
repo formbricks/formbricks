@@ -1,6 +1,7 @@
 import "server-only";
 import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import type { TRequestMeta } from "@/app/api/internal/lib/types";
 import { applyIPRateLimitOrRespond, rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemNotFound, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
@@ -11,8 +12,6 @@ import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { getSurveyOwnerId } from "@/modules/survey/link/lib/data";
 import { getLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/open-for-responses";
 import type { TLinkSurveyVerificationEmailBody } from "../schemas";
-
-type TRequestContext = { requestId: string; instance?: string };
 
 /** The code the verify-email screen shows when the survey no longer asks for email verification. */
 export const EMAIL_VERIFICATION_NOT_ENABLED = "EMAIL_VERIFICATION_NOT_ENABLED";
@@ -26,7 +25,7 @@ export const EMAIL_VERIFICATION_NOT_ENABLED = "EMAIL_VERIFICATION_NOT_ENABLED";
 export async function sendLinkSurveyVerificationEmailOperation({
   body,
   ...context
-}: TRequestContext & { body: TLinkSurveyVerificationEmailBody }): Promise<Response> {
+}: TRequestMeta & { body: TLinkSurveyVerificationEmailBody }): Promise<Response> {
   const { requestId, instance } = context;
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.actions.sendLinkSurveyEmail, context);
   if (limited) return limited;

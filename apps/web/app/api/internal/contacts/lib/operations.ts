@@ -1,5 +1,6 @@
 import "server-only";
 import { forbidOnRefusal, refusalResponse } from "@/app/api/internal/lib/refusal";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -8,7 +9,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import {
@@ -31,13 +31,6 @@ import type { TContactAttributesResource, TContactPersonalLinkResource } from ".
  * the Contacts licence (`ensureContactsEnabled`), in the order of the server actions they replace. Audited
  * on the contact.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 type TContactAccess = { userId: string; organizationId: string; workspaceId: string };
 

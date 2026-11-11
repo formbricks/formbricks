@@ -2,6 +2,7 @@ import "server-only";
 import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { forbidOnRefusal } from "@/app/api/internal/lib/refusal";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3SessionUserId, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -10,7 +11,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
@@ -29,13 +29,6 @@ import { serializeContactAttributeKey } from "../serializers";
  * licence (`ensureContactsEnabled`, the gate every contacts write shares), in the server actions' order.
  * Audited on the key, as the actions were.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 /**
  * Authorize a write in the workspace, charge its budget, then check the Contacts licence. The organization

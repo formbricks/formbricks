@@ -1,18 +1,12 @@
 import "server-only";
 import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { forbidOnRefusal } from "@/app/api/internal/lib/refusal";
+import type { TOrganizationRequestContext } from "@/app/api/internal/lib/types";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/lib/permission";
 
-export type TWhiteLabelRequestContext = {
-  authentication: TV3Authentication;
-  organizationId: string;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
+export type TWhiteLabelRequestContext = TOrganizationRequestContext;
 
 /** Name the target before anything can refuse, so a refusal's audit entry says what was attempted. */
 export const recordOrganizationAuditTarget = ({ auditLog, organizationId }: TWhiteLabelRequestContext) => {

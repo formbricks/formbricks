@@ -6,6 +6,7 @@ import {
   requireUserManagementAccess,
 } from "@/app/api/internal/lib/organization-access";
 import { forbidOnRefusal, refusalResponse } from "@/app/api/internal/lib/refusal";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { applyRateLimitOrRespond, rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -40,13 +41,6 @@ import {
 } from "@/modules/organization/settings/teams/lib/invite-rate-limit";
 import type { TInviteUpdateBody } from "../schemas";
 import { type TInviteShareLinkResource, serializeInviteRole } from "../serializers";
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 export const INVITES_DISABLED_DETAIL = "Invite are disabled";
 

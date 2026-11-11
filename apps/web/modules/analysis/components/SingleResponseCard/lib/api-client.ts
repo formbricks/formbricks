@@ -2,6 +2,7 @@ import type { TResponseWithQuotas } from "@formbricks/types/responses";
 import type { TResponseCardResource, TResponseTagResource } from "@/app/api/internal/responses/serializers";
 import type { TTagResource } from "@/app/api/internal/tags/serializers";
 import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
+import { reviveTimestamps } from "@/modules/api/lib/json-timestamps";
 
 /**
  * The response card's calls to `/api/internal/*`: read and delete a response, create a tag, and put tags on
@@ -16,14 +17,8 @@ const responseTagPath = (responseId: string, tagId: string) =>
 
 /** A response as the card routes send it, with its timestamps (and its tags') back as `Date`s. */
 export const reviveResponse = (response: TResponseCardResource): TResponseWithQuotas => ({
-  ...response,
-  createdAt: new Date(response.createdAt),
-  updatedAt: new Date(response.updatedAt),
-  tags: response.tags.map((tag) => ({
-    ...tag,
-    createdAt: new Date(tag.createdAt),
-    updatedAt: new Date(tag.updatedAt),
-  })),
+  ...reviveTimestamps(response),
+  tags: response.tags.map(reviveTimestamps),
 });
 
 /** A response as the card renders it, with its screened-in quotas. */

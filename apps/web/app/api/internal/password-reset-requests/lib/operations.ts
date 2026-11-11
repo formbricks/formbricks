@@ -1,10 +1,10 @@
 import "server-only";
 import { headers } from "next/headers";
 import { after } from "next/server";
+import type { TPreLoginRequestContext } from "@/app/api/internal/lib/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemForbidden } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { AUDIT_LOG_ENABLED, PASSWORD_RESET_DISABLED } from "@/lib/constants";
 import { processPasswordResetRequest } from "@/modules/auth/forgot-password/lib/password-reset-request";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -13,8 +13,6 @@ import {
   getAuditRequestMetadata,
 } from "@/modules/ee/audit-logs/lib/request-metadata";
 import type { TPasswordResetRequestBody } from "../schemas";
-
-type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3AuditLog };
 
 /**
  * `POST /api/internal/password-reset-requests`: request a password reset (pre-login). Enumeration-safe by
@@ -26,7 +24,7 @@ type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3Aud
 export async function requestPasswordResetOperation({
   body,
   ...context
-}: TRequestContext & { body: TPasswordResetRequestBody }): Promise<Response> {
+}: TPreLoginRequestContext & { body: TPasswordResetRequestBody }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
   // The IP limit comes first, as in the action: it bounds the audit rows the kill switch's refusal writes.
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.forgotPassword, context);

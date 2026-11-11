@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { type TSegment, type TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { forbidOnRefusal, refusalResponse } from "@/app/api/internal/lib/refusal";
+import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { type TWorkspaceAction, requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
@@ -12,7 +13,6 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
@@ -65,13 +65,6 @@ import {
  * survey the caller can't see, a survey from another workspace, a recursive filter), and a segment or
  * survey that is gone the uniform 403.
  */
-
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-  auditLog?: TV3AuditLog;
-};
 
 const SAME_WORKSPACE_MESSAGE = "Survey and segment are not in the same workspace";
 

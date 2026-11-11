@@ -1,9 +1,9 @@
 import "server-only";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { getV3AuthorizationActor, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { problemForbidden, problemUnauthorized } from "@/app/api/v3/lib/response";
+import { requireSurveyActionAccess } from "@/app/api/internal/lib/survey-access";
+import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { can } from "@/lib/authorization";
 import { getSurvey } from "@/lib/survey/service";
 
 export type TSurveyResponseScope = {
@@ -34,14 +34,14 @@ export async function authorizeSurveyResponseAccess({
   requestId: string;
   instance: string;
 }): Promise<Response | TSurveyResponseScope> {
-  const actor = getV3AuthorizationActor(authentication);
-  if (actor?.type !== "user") {
-    return problemUnauthorized(requestId, "Session required", instance);
-  }
-
-  if (!(await can(actor, "survey.response_read", { type: "survey", id: surveyId }))) {
-    return problemForbidden(requestId, undefined, instance);
-  }
+  const responseAccess = await requireSurveyActionAccess({
+    authentication,
+    surveyId,
+    action: "survey.response_read",
+    requestId,
+    instance,
+  });
+  if (responseAccess instanceof Response) return responseAccess;
 
   const survey = await getSurvey(surveyId);
   // Deleted between the check and the read.
@@ -60,6 +60,6 @@ export async function authorizeSurveyResponseAccess({
     survey,
     workspaceId: access.workspaceId,
     organizationId: access.organizationId,
-    userId: actor.id,
+    userId: responseAccess.userId,
   };
 }
