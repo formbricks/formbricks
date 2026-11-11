@@ -68,8 +68,10 @@ the chart sets `EMBEDDING_MODEL` itself and ignores `hub.env.EMBEDDING_MODEL`, a
 `TAXONOMY_EMBEDDING_MODEL` for the worker alone. Change whichever value collides before rolling it out.
 Hub 0.14.3 adds security fixes (Go 1.27.4, `golang.org/x/net` v0.62.0, zlib 1.4) and no database migrations.
 Its `hub-worker` checks the embedding provider before it starts the embedding queues, and pauses them while the
-check fails. The API and other queues keep running, so a provider that is down or misconfigured now holds
-embedding jobs back instead of failing them.
+check fails. The API and other queues keep running. A successful check stays valid for 120 seconds by default
+(`EMBEDDING_PREFLIGHT_SUCCESS_TTL_SECONDS`), so embedding jobs that run in that window can still use up their
+retries and fail. Those records are only repaired automatically with `EMBEDDING_RECONCILE_ENABLED=true`, which is
+off by default; otherwise re-run `/app/backfill-embeddings` for them.
 While old and new `hub-worker` pods overlap, an old pod can rewrite a vector without updating its source hash, so
 a record edited and then edited back during the rollout can keep a stale vector. Stop the old workers before the
 new ones start. If they already overlapped, clear the hash for vectors written during the rollout with
