@@ -35,7 +35,7 @@ interface CustomHtmlFormData {
 export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: Readonly<CustomHtmlTabProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { survey } = useSurvey();
+  const { survey, replaceSurvey } = useSurvey();
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<CustomHtmlFormData>({
@@ -67,7 +67,7 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: Readonly<C
     };
 
     try {
-      await saveSurvey(updatedSurvey);
+      replaceSurvey(await saveSurvey(updatedSurvey));
       toast.success(t("workspace.surveys.share.custom_html.saved_successfully"));
       reset(data);
       // The save route only marks the page for revalidation; the server action it replaced also

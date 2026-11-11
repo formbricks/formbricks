@@ -20,7 +20,7 @@ import {
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 
 export const SurveyStatusDropdown = () => {
-  const { survey } = useSurvey();
+  const { survey, replaceSurvey } = useSurvey();
   const { t } = useTranslation();
   const router = useRouter();
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
@@ -33,6 +33,7 @@ export const SurveyStatusDropdown = () => {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       return;
     }
+    replaceSurvey(saved);
 
     const { publishOn, status: resultingStatus } = saved;
     const isResultScheduled = resultingStatus === "paused" && publishOn !== null;

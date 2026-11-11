@@ -46,7 +46,7 @@ interface LinkSettingsFormData {
 export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: LinkSettingsTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { survey } = useSurvey();
+  const { survey, replaceSurvey } = useSurvey();
   const enabledLanguages = getEnabledLanguages(survey.languages);
   const hasMultipleLanguages = enabledLanguages.length > 1;
 
@@ -133,7 +133,7 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
     };
 
     try {
-      await saveSurvey(updatedSurvey);
+      replaceSurvey(await saveSurvey(updatedSurvey));
       toast.success(t("workspace.surveys.edit.settings_saved_successfully"));
       reset(data);
       // The save route only marks the page for revalidation; the server action it replaced also

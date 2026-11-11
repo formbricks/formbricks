@@ -34,7 +34,7 @@ interface PrettyUrlFormData {
 export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { survey } = useSurvey();
+  const { survey, replaceSurvey } = useSurvey();
   const [isEditing, setIsEditing] = useState(!survey.slug);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +66,9 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
     setIsSubmitting(true);
     try {
-      await updateSurveySlug(survey.id, data.slug);
+      const { slug } = await updateSurveySlug(survey.id, data.slug);
+      // A survey save from another tab sends the whole survey, slug included, so it must carry this one.
+      replaceSurvey({ ...survey, slug });
       toast.success(t("workspace.surveys.share.pretty_url.save_success"));
       router.refresh();
       setIsEditing(false);
@@ -90,6 +92,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
     setIsSubmitting(true);
     try {
       await removeSurveySlug(survey.id);
+      replaceSurvey({ ...survey, slug: null });
       setShowRemoveDialog(false);
       reset({ slug: "" });
       router.refresh();
