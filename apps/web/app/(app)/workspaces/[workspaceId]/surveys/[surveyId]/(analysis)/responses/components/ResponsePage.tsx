@@ -22,8 +22,8 @@ import { OutcomeQueryClientProvider } from "@/modules/analysis/response-outcome/
 import {
   type TOutcomeActions,
   type TOutcomeChanges,
+  dropRowsOutsideStatuses,
   patchOutcomes,
-  shouldDropAfterOutcome,
 } from "@/modules/analysis/response-outcome/lib/outcome";
 import { Button } from "@/modules/ui/components/button";
 
@@ -139,11 +139,9 @@ export const ResponsePage = ({
   const outcomeActions: TOutcomeActions = useMemo(
     () => ({
       applyOutcomes,
-      // A restored response no longer matches a Low quality filter, so it leaves the list.
+      // A response whose new outcome takes it out of the ticked statuses (a restored one, for Low quality) leaves the list.
       onSaved: (ids, outcome) => {
-        if (shouldDropAfterOutcome(responseStatuses, outcome)) {
-          setResponses((prev) => prev.filter((r) => !ids.includes(r.id)));
-        }
+        setResponses((prev) => dropRowsOutsideStatuses(prev, ids, outcome, responseStatuses));
       },
     }),
     [applyOutcomes, responseStatuses]
