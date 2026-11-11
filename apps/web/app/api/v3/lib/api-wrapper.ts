@@ -23,6 +23,8 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
+  type TArrayBudget,
+  V3_REQUEST_ARRAY_BUDGET,
   arrayBudgetInvalidParam,
   findArrayBudgetViolation,
   findRawArrayBudgetViolation,
@@ -102,6 +104,14 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    */
   bodyLimitBytes?: number;
   /**
+   * The array limits this route's JSON body is held to, in place of `V3_REQUEST_ARRAY_BUDGET` (1,000
+   * items per array, 50,000 elements in all). Only for a route whose body is, by design, one long list
+   * — a contacts CSV import of up to 10,000 records — and sized from that route's own caps, never
+   * "big enough". The depth cap and `bodyLimitBytes` still hold, and the route's schema still bounds
+   * every array it declares; this only lets the pre-schema walk reach that schema.
+   */
+  arrayBudget?: TArrayBudget;
+  /**
    * Caps how many requests to this route one server process handles at once; the next one gets a 503
    * `capacity_reached` with `Retry-After`. The slot is taken after authentication, rate limiting and
    * **once the body has been read** within `bodyLimitBytes`: it bounds the work, not the transfer, so a
@@ -134,6 +144,7 @@ type TV3ParseContext = {
   requestId: string;
   instance: string;
   bodyLimitBytes: number;
+  arrayBudget: TArrayBudget;
 };
 
 function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
@@ -348,12 +359,11 @@ function bodyTooLargeFailure(
  */
 function arrayBudgetFailure(
   bodyData: unknown,
-  requestId: string,
-  instance: string
+  { requestId, instance, arrayBudget }: TV3ParseContext
 ): TV3InputParseFailure | null {
-  const violation = findArrayBudgetViolation(bodyData);
+  const violation = findArrayBudgetViolation(bodyData, arrayBudget);
   return violation
-    ? invalidBodyFailure([arrayBudgetInvalidParam(violation, "body")], requestId, instance)
+    ? invalidBodyFailure([arrayBudgetInvalidParam(violation, "body", arrayBudget)], requestId, instance)
     : null;
 }
 
@@ -370,7 +380,7 @@ type TV3JsonBodyRead =
  */
 async function readV3JsonBody(
   req: Request,
-  { requestId, instance, bodyLimitBytes }: TV3ParseContext
+  { requestId, instance, bodyLimitBytes, arrayBudget }: TV3ParseContext
 ): Promise<TV3JsonBodyRead> {
   let text: string;
   try {
@@ -381,11 +391,15 @@ async function readV3JsonBody(
       : { kind: "malformed" };
   }
 
-  const violation = findRawArrayBudgetViolation(text);
+  const violation = findRawArrayBudgetViolation(text, arrayBudget);
   if (violation) {
     return {
       kind: "refused",
-      failure: invalidBodyFailure([arrayBudgetInvalidParam(violation, "body")], requestId, instance),
+      failure: invalidBodyFailure(
+        [arrayBudgetInvalidParam(violation, "body", arrayBudget)],
+        requestId,
+        instance
+      ),
     };
   }
 
@@ -416,7 +430,7 @@ async function parseV3Body(
   }
 
   const bodyData = read.data;
-  const budgetFailure = arrayBudgetFailure(bodyData, requestId, instance);
+  const budgetFailure = arrayBudgetFailure(bodyData, context);
   if (budgetFailure) {
     return budgetFailure;
   }
@@ -452,7 +466,7 @@ async function preflightUndeclaredBody(
     return null;
   }
 
-  return arrayBudgetFailure(read.data, context.requestId, context.instance);
+  return arrayBudgetFailure(read.data, context);
 }
 
 const MULTIPART_FORM_DATA = "multipart/form-data";
@@ -807,6 +821,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     rateLimit = true,
     customRateLimitConfig,
     bodyLimitBytes = DEFAULT_REQUEST_BODY_LIMIT_BYTES,
+    arrayBudget = V3_REQUEST_ARRAY_BUDGET,
     concurrency,
     handler,
     action,
@@ -818,6 +833,12 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
   // or negative limit would refuse every request with a body.
   if (!Number.isSafeInteger(bodyLimitBytes) || bodyLimitBytes <= 0) {
     throw new Error(`withV3ApiWrapper: bodyLimitBytes must be a positive integer, got ${bodyLimitBytes}`);
+  }
+
+  for (const [name, limit] of Object.entries(arrayBudget)) {
+    if (!Number.isSafeInteger(limit) || limit <= 0) {
+      throw new Error(`withV3ApiWrapper: arrayBudget.${name} must be a positive integer, got ${limit}`);
+    }
   }
 
   if (schemas?.body && schemas.formData) {
@@ -883,6 +904,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         requestId,
         instance,
         bodyLimitBytes,
+        arrayBudget,
       });
       if (!parsedInputResult.ok) {
         // The count and the first few names, never the array: it is as long as the caller made it,

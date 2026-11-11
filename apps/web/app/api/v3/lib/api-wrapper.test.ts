@@ -1180,6 +1180,101 @@ describe("request array budget (ENG-3384)", () => {
   });
 });
 
+describe("per-route array budget (arrayBudget)", () => {
+  const ROUTE_BUDGET = { maxItems: 5000, maxTotalElements: 6000 };
+  const post = (body: unknown) =>
+    new NextRequest("http://localhost/api/internal/contacts/imports", {
+      method: "POST",
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  const zeros = (length: number) => Array.from({ length }, () => 0);
+  const echo = vi.fn(async () => Response.json({ ok: true }));
+  const withBudget = (schemas?: { body: z.ZodTypeAny }) =>
+    withV3ApiWrapper({ auth: "none", schemas, arrayBudget: ROUTE_BUDGET, handler: echo });
+
+  test("lets an array up to the route's own cap through, and names that cap past it", async () => {
+    const route = withBudget({ body: z.unknown() });
+
+    const accepted = await route(post({ records: zeros(ROUTE_BUDGET.maxItems) }), {} as never);
+    const refused = await route(post({ records: zeros(ROUTE_BUDGET.maxItems + 1) }), {} as never);
+
+    expect(accepted.status).toBe(200);
+    expect(refused.status).toBe(400);
+    await expect(refused.json()).resolves.toMatchObject({
+      invalid_params: [
+        { name: "records", reason: `Too big: expected array to have <=${ROUTE_BUDGET.maxItems} items` },
+      ],
+    });
+  });
+
+  test("holds the whole body to the route's own element total", async () => {
+    const route = withBudget({ body: z.unknown() });
+    const half = ROUTE_BUDGET.maxTotalElements / 2;
+
+    const accepted = await route(post({ a: zeros(half), b: zeros(half) }), {} as never);
+    const refused = await route(post({ a: zeros(half), b: zeros(half + 1) }), {} as never);
+
+    expect(accepted.status).toBe(200);
+    expect(refused.status).toBe(400);
+    await expect(refused.json()).resolves.toMatchObject({
+      invalid_params: [
+        {
+          name: "b",
+          reason: `Too big: expected the request to carry <=${ROUTE_BUDGET.maxTotalElements} array elements in total`,
+        },
+      ],
+    });
+  });
+
+  test("applies to that route only: one without it keeps the default budget", async () => {
+    const body = { records: zeros(V3_REQUEST_ARRAY_MAX_ITEMS + 1) };
+    const defaultRoute = withV3ApiWrapper({ auth: "none", schemas: { body: z.unknown() }, handler: echo });
+
+    expect((await withBudget({ body: z.unknown() })(post(body), {} as never)).status).toBe(200);
+    const refused = await defaultRoute(post(body), {} as never);
+    expect(refused.status).toBe(400);
+    await expect(refused.json()).resolves.toMatchObject({
+      invalid_params: [
+        { name: "records", reason: `Too big: expected array to have <=${V3_REQUEST_ARRAY_MAX_ITEMS} items` },
+      ],
+    });
+  });
+
+  test("covers a route without a body schema too", async () => {
+    const route = withBudget();
+
+    expect((await route(post({ records: zeros(ROUTE_BUDGET.maxItems) }), {} as never)).status).toBe(200);
+    expect((await route(post({ records: zeros(ROUTE_BUDGET.maxItems + 1) }), {} as never)).status).toBe(400);
+  });
+
+  test("never lifts the depth cap", async () => {
+    const deep = `{"a":${"[".repeat(V3_REQUEST_MAX_DEPTH)}0${"]".repeat(V3_REQUEST_MAX_DEPTH)}}`;
+
+    const response = await withBudget({ body: z.unknown() })(
+      new NextRequest("http://localhost/api/internal/contacts/imports", {
+        method: "POST",
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
+        body: deep,
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  test.each([
+    { maxItems: 0, maxTotalElements: 10 },
+    { maxItems: 10, maxTotalElements: -1 },
+    { maxItems: 1.5, maxTotalElements: 10 },
+    { maxItems: 10, maxTotalElements: Number.POSITIVE_INFINITY },
+  ])("refuses to build a route with arrayBudget %o", (arrayBudget) => {
+    expect(() =>
+      withV3ApiWrapper({ auth: "none", arrayBudget, handler: async () => new Response(null) })
+    ).toThrow(/arrayBudget\.\w+ must be a positive integer/);
+  });
+});
+
 describe("per-route body limit (bodyLimitBytes)", () => {
   const ROUTE_LIMIT = DEFAULT_REQUEST_BODY_LIMIT_BYTES * 2;
 
