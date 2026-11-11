@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { PICKED_ITEMS_MAX } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { GET, PATCH } from "./[datasetId]/route";
@@ -260,6 +261,32 @@ describe("PATCH /api/internal/feedback-datasets/{datasetId}", () => {
     expect((await update(body)).status).toBe(400);
     expect(mocks.updateFeedbackDirectory).not.toHaveBeenCalled();
   });
+});
+
+describe("dataset input limits", () => {
+  const workspaceIds = (n: number) =>
+    Array.from({ length: n }, (_, i) => `clwork${String(i).padStart(19, "0")}`);
+
+  test.each([
+    ["create", 201, (body: unknown) => create(body)],
+    ["update", 200, (body: unknown) => update(body)],
+  ])(
+    "%s: takes a 255-character name and 500 workspaces, and answers 400 naming the field one past either",
+    async (_label, ok, send) => {
+      expect(
+        (await send({ name: "a".repeat(255), workspaceIds: workspaceIds(PICKED_ITEMS_MAX) })).status
+      ).toBe(ok);
+
+      for (const [field, body] of [
+        ["name", { name: "a".repeat(256) }],
+        ["workspaceIds", { name: "Support", workspaceIds: workspaceIds(PICKED_ITEMS_MAX + 1) }],
+      ] as const) {
+        const response = await send(body);
+        expect(response.status).toBe(400);
+        expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
+      }
+    }
+  );
 });
 
 describe("every dataset route", () => {

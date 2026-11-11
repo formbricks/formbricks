@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { PICKED_ITEMS_MAX } from "@/app/api/internal/lib/limits";
+import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import {
   ZFeedbackDirectoryCreateInput,
   ZFeedbackDirectoryUpdateInput,
@@ -23,10 +25,16 @@ export const ZDatasetPathParams = z
 export const ZDatasetCreateQuery = z.object({ organizationId: ZId }).strict();
 
 /** A new dataset: its name and, optionally, the workspaces it is assigned to. */
-export const ZDatasetCreateBody = ZFeedbackDirectoryCreateInput.strict();
+export const ZDatasetCreateBody = ZFeedbackDirectoryCreateInput.extend({
+  name: ZFeedbackDirectoryCreateInput.shape.name.max(V3_NAME_MAX_LENGTH),
+  workspaceIds: z.array(ZId).max(PICKED_ITEMS_MAX).optional(),
+}).strict();
 
 /** A change to a dataset: rename it, reassign its workspaces, or archive and unarchive it. */
-export const ZDatasetUpdateBody = ZFeedbackDirectoryUpdateInput.strict();
+export const ZDatasetUpdateBody = ZFeedbackDirectoryUpdateInput.extend({
+  name: ZFeedbackDirectoryUpdateInput.shape.name.unwrap().max(V3_NAME_MAX_LENGTH).optional(),
+  workspaceIds: z.array(ZId).max(PICKED_ITEMS_MAX).optional(),
+}).strict();
 
 export type TDatasetCreateBody = z.infer<typeof ZDatasetCreateBody>;
 export type TDatasetUpdateBody = z.infer<typeof ZDatasetUpdateBody>;

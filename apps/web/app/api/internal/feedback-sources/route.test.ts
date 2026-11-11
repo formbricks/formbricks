@@ -1,12 +1,16 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { INTEGRATION_MAPPING_TEXT_MAX_LENGTH } from "@/app/api/internal/integrations/schemas";
+import { IDENTIFIER_MAX_LENGTH, PICKED_ITEMS_MAX } from "@/app/api/internal/lib/limits";
+import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE } from "@/lib/survey/visibility/outbound";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST as IMPORT } from "./[feedbackSourceId]/imports/route";
 import { DELETE, PATCH } from "./[feedbackSourceId]/route";
 import { POST as CREATE } from "./route";
+import { FEEDBACK_SOURCE_FIELD_ID_MAX_LENGTH } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
@@ -349,6 +353,72 @@ describe("PATCH /api/internal/feedback-sources/{feedbackSourceId}", () => {
   ])("answers 400 for an unknown key in %s", async (_label, body) => {
     expect((await update(body)).status).toBe(400);
     expect(mocks.updateFeedbackSourceWithMappings).not.toHaveBeenCalled();
+  });
+});
+
+describe("feedback source input limits", () => {
+  const text = (length: number) => "a".repeat(length);
+  const surveyMapping = (elementIds: string[]) => ({ surveyId: SURVEY_ID, elementIds });
+  const fieldMapping = (overrides: Record<string, unknown> = {}) => ({
+    sourceFieldId: "comment",
+    targetFieldId: "value_text",
+    ...overrides,
+  });
+
+  const expectCap = async (
+    send: (body: unknown) => Promise<Response>,
+    accepted: number,
+    field: string,
+    max: number,
+    build: (n: number) => unknown
+  ) => {
+    expect((await send(build(max))).status).toBe(accepted);
+    const response = await send(build(max + 1));
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
+  };
+
+  test("a new source's name: 255 characters", async () => {
+    await expectCap(create, 201, "source.name", 255, (n) => ({
+      ...formbricksSource,
+      source: { ...formbricksSource.source, name: text(n) },
+    }));
+  });
+
+  test.each([
+    ["source.name", 255, (n: number) => ({ source: { name: text(n) } })],
+    [
+      "formbricksMappings",
+      PICKED_ITEMS_MAX,
+      (n: number) => ({ formbricksMappings: Array.from({ length: n }, () => surveyMapping(["q1"])) }),
+    ],
+    [
+      "formbricksMappings.0.elementIds",
+      V3_REQUEST_ARRAY_MAX_ITEMS,
+      (n: number) => ({ formbricksMappings: [surveyMapping(Array.from({ length: n }, (_, i) => `q${i}`))] }),
+    ],
+    [
+      "formbricksMappings.0.elementIds.0",
+      IDENTIFIER_MAX_LENGTH,
+      (n: number) => ({ formbricksMappings: [surveyMapping([text(n)])] }),
+    ],
+    [
+      "fieldMappings",
+      PICKED_ITEMS_MAX,
+      (n: number) => ({ fieldMappings: Array.from({ length: n }, () => fieldMapping()) }),
+    ],
+    [
+      "fieldMappings.0.sourceFieldId",
+      FEEDBACK_SOURCE_FIELD_ID_MAX_LENGTH,
+      (n: number) => ({ fieldMappings: [fieldMapping({ sourceFieldId: text(n) })] }),
+    ],
+    [
+      "fieldMappings.0.staticValue",
+      INTEGRATION_MAPPING_TEXT_MAX_LENGTH,
+      (n: number) => ({ fieldMappings: [fieldMapping({ staticValue: text(n) })] }),
+    ],
+  ])("an update's %s: takes %i, answers 400 naming it one past", async (field, max, build) => {
+    await expectCap(update, 200, field, max, build);
   });
 });
 
