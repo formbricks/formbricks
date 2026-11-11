@@ -19,7 +19,7 @@ type TRequestContext = { requestId: string; instance?: string; auditLog?: TV3Aud
 /**
  * `POST /api/internal/password-reset-requests`: request a password reset (pre-login). Enumeration-safe by
  * construction (ENG-3639): before it answers it does only what is the same for every address — the
- * operator's kill switch and the IP limit — and hands the rest (lookup, reset link or SSO hint,
+ * IP limit and the operator's kill switch — and hands the rest (lookup, reset link or SSO hint,
  * per-account limit, audit) to `after()`. So neither the answer nor how long it takes depends on whether
  * the address is registered, has a password, or was just throttled. Answers 204 either way.
  */
@@ -28,15 +28,16 @@ export async function requestPasswordResetOperation({
   ...context
 }: TRequestContext & { body: TPasswordResetRequestBody }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
-  // Audited as a refused reset, as before: it says nothing about the address.
-  if (PASSWORD_RESET_DISABLED) return problemForbidden(requestId, "Password reset is disabled", instance);
-
+  // The IP limit comes first, as in the action: it bounds the audit rows the kill switch's refusal writes.
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.forgotPassword, context);
   if (limited) {
     // The limiter logs the refusal; auditing it too would let one address add rows without bound.
     skipV3AuditLog(auditLog);
     return limited;
   }
+
+  // Audited as a refused reset, as before: it says nothing about the address.
+  if (PASSWORD_RESET_DISABLED) return problemForbidden(requestId, "Password reset is disabled", instance);
 
   // The success event is recorded by `processPasswordResetRequest`, and only when a reset was really
   // requested; this request cannot know that by the time it answers.

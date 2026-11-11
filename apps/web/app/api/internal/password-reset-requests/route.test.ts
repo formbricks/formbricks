@@ -142,18 +142,31 @@ describe("POST /api/internal/password-reset-requests", () => {
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
-  test("answers 403 when password reset is disabled, before spending any budget, and audits the refusal", async () => {
+  test("answers 403 when password reset is disabled, after spending the IP budget, and audits the refusal", async () => {
     mocks.constants.PASSWORD_RESET_DISABLED = true;
 
     const response = await request();
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("Password reset is disabled");
-    expect(mocks.applyIPRateLimit).not.toHaveBeenCalled();
+    expect(mocks.applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.forgotPassword);
     expect(mocks.afterCallbacks).toHaveLength(0);
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ action: "passwordReset", targetType: "user", status: "failure" })
     );
+  });
+
+  test("answers 429 and audits nothing past the IP budget even when password reset is disabled", async () => {
+    mocks.constants.PASSWORD_RESET_DISABLED = true;
+    mocks.applyIPRateLimit.mockRejectedValue(
+      new TooManyRequestsError("Maximum number of requests reached.", 60)
+    );
+
+    const response = await request();
+
+    expect(response.status).toBe(429);
+    expect(mocks.afterCallbacks).toHaveLength(0);
+    expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
   test("leaves the success event to the deferred work, which alone knows if a reset was requested", async () => {
