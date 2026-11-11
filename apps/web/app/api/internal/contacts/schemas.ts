@@ -2,6 +2,11 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ATTRIBUTE_KEY_MAX_LENGTH } from "@/app/api/internal/contact-attribute-keys/schemas";
 import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
+import {
+  ZContactCSVAttributeMap,
+  ZContactCSVDuplicateAction,
+  ZContactCSVUploadResponse,
+} from "@/modules/ee/contacts/types/contact";
 
 /**
  * Longest attribute value an edit may set. Far above any value the contact page shows, and generous
@@ -45,3 +50,22 @@ export const ZContactPersonalLinkBody = z
   .strict();
 
 export type TContactPersonalLinkBody = z.infer<typeof ZContactPersonalLinkBody>;
+
+/** The workspace a CSV import goes into: the query's, authorized, never the body's. */
+export const ZContactImportQuery = z.object({ workspaceId: ZId }).strict();
+
+/**
+ * `POST /api/internal/contacts/imports` body: the CSV's records with their columns renamed to attribute keys,
+ * what to do with a contact whose email exists, and the dialog's column-to-attribute map. The record and map
+ * schemas carry the import's caps (`modules/ee/contacts/lib/csv-import-limits.ts`): records, columns, key and
+ * value lengths, no NUL; an email in every record and no repeated email or userId; no attribute mapped twice.
+ */
+export const ZContactImportBody = z
+  .object({
+    csvData: ZContactCSVUploadResponse,
+    duplicateContactsAction: ZContactCSVDuplicateAction,
+    attributeMap: ZContactCSVAttributeMap,
+  })
+  .strict();
+
+export type TContactImportBody = z.infer<typeof ZContactImportBody>;
