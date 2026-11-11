@@ -1,5 +1,6 @@
 import "server-only";
-import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { prisma } from "@formbricks/database";
+import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { type TSegment, type TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { forbidOnRefusal, refusalResponse } from "@/app/api/internal/lib/refusal";
 import { type TWorkspaceAction, requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
@@ -79,6 +80,27 @@ const invalidFiltersMessage = (issues: { code: string; message: string }[]) =>
   issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
 
 /** A service's refusal as its 403 or 422 (see `refusalResponse`); any other error is rethrown. */
+export const SEGMENT_TITLE_TAKEN = "A segment with this title already exists in this workspace.";
+
+/**
+ * Whether a failed create or rename lost to the workspace's unique title: the service reports the unique-key
+ * clash as a generic database error, so the route looks for the other segment holding the title.
+ */
+const isSegmentTitleTaken = async (
+  error: unknown,
+  workspaceId: string,
+  title: string | undefined,
+  exceptSegmentId?: string
+): Promise<boolean> =>
+  error instanceof DatabaseError &&
+  title !== undefined &&
+  (await prisma.segment.count({
+    where: { workspaceId, title, ...(exceptSegmentId ? { id: { not: exceptSegmentId } } : {}) },
+  })) > 0;
+
+const segmentTitleTaken = ({ requestId, instance }: TRequestContext): Response =>
+  problemConflict(requestId, SEGMENT_TITLE_TAKEN, instance);
+
 const refusalOrThrow = (error: unknown, { requestId, instance }: TRequestContext): Response => {
   const refused = refusalResponse(error, requestId, instance);
   if (refused) return refused;
@@ -183,6 +205,7 @@ export async function createSegmentOperation({
 
     segment = await createSegment({ ...body, surveyId: body.surveyId ?? "" });
   } catch (error) {
+    if (await isSegmentTitleTaken(error, workspaceId, body.title)) return segmentTitleTaken(context);
     return refusalOrThrow(error, context);
   }
 
@@ -279,6 +302,8 @@ export async function updateSegmentOperation({
 
     updated = await updateSegment(segmentId, data);
   } catch (error) {
+    if (await isSegmentTitleTaken(error, workspaceId, body.title, segmentId))
+      return segmentTitleTaken(context);
     return refusalOrThrow(error, context);
   }
 

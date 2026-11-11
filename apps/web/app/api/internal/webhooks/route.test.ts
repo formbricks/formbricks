@@ -236,6 +236,14 @@ describe("POST /api/internal/webhooks", () => {
     );
   });
 
+  test("refuses a Discord webhook URL with 422 naming the URL, and creates nothing", async () => {
+    const response = await create({ ...settings, url: "https://discord.com/api/webhooks/123/abc" });
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).detail).toBe("Discord webhooks are currently not supported.");
+    expect(mocks.createWebhook).not.toHaveBeenCalled();
+  });
+
   test("keeps a database failure's message out of the response", async () => {
     mocks.createWebhook.mockRejectedValue(new DatabaseError("relation webhook constraint xyz"));
 
@@ -421,13 +429,28 @@ describe("POST /api/internal/webhooks/test-deliveries", () => {
     expect((await response.json()).detail).toBe(reason);
   });
 
-  test("keeps a transport failure's text out of the response, as the action did", async () => {
-    mocks.testEndpoint.mockRejectedValue(new UnknownError("Request timed out after 5 seconds"));
+  test("answers an endpoint that didn't answer with 422 and a fixed message, keeping the transport's text out", async () => {
+    mocks.testEndpoint.mockRejectedValue(
+      new UnknownError("Error while fetching the URL: connect ECONNREFUSED 10.0.0.5:8080")
+    );
 
     const response = await testDelivery({ url });
+    const body = await response.json();
 
-    expect(response.status).toBe(500);
-    expect(JSON.stringify(await response.json())).not.toContain("timed out");
+    expect(response.status).toBe(422);
+    expect(body.detail).toBe("The webhook endpoint could not be reached.");
+    expect(JSON.stringify(body)).not.toContain("ECONNREFUSED");
+  });
+
+  test("refuses a Discord webhook URL with 422 naming the URL, before calling it", async () => {
+    const response = await testDelivery({ url: "https://discord.com/api/webhooks/123/abc" });
+    const body = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(body.invalid_params).toEqual([
+      { name: "url", reason: "Discord webhooks are currently not supported." },
+    ]);
+    expect(mocks.testEndpoint).not.toHaveBeenCalled();
   });
 
   test("rejects a missing URL or an unknown key with 400", async () => {

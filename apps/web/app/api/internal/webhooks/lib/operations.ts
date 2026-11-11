@@ -1,9 +1,14 @@
 import "server-only";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
 import { refusalResponse } from "@/app/api/internal/lib/refusal";
 import { requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
-import { noContentResponse, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
+import {
+  noContentResponse,
+  problemForbidden,
+  problemUnprocessableContent,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { generateWebhookSecret } from "@/lib/crypto";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -18,6 +23,7 @@ import {
   getWebhookWithSecret,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import {
   createWebhook,
   deleteWebhook,
@@ -41,7 +47,25 @@ type TRequestContext = {
   auditLog?: TV3AuditLog;
 };
 
-/** Run a step whose refusals the forms show (an SSRF-rejected URL, a restricted survey); other errors propagate. */
+/** What a delivery the endpoint didn't answer reports: its transport error stays in the logs. */
+export const WEBHOOK_ENDPOINT_UNREACHABLE = "The webhook endpoint could not be reached.";
+
+/** The service refuses Discord webhook URLs: their own message, as a 422 naming the URL. */
+const refuseDiscordUrl = (url: string, { requestId, instance }: TRequestContext): Response | null => {
+  if (!isDiscordWebhook(url)) return null;
+  const reason = "Discord webhooks are currently not supported.";
+  return problemUnprocessableContent(requestId, reason, {
+    instance,
+    invalid_params: [{ name: "url", reason }],
+  });
+};
+
+/**
+ * Run a step whose refusals the forms show (an SSRF-rejected URL, a restricted survey); other errors
+ * propagate. The webhook service reports an endpoint that didn't answer (a timeout, a refused connection) as
+ * `UnknownError`. That is about the caller's URL, so it answers 422, not 500, with a fixed message: the
+ * transport error's own text (addresses, socket codes) is not the caller's to see, as with the action.
+ */
 async function runRefusable<T>(
   { requestId, instance }: TRequestContext,
   step: () => Promise<T>
@@ -51,6 +75,9 @@ async function runRefusable<T>(
   } catch (error) {
     const refused = refusalResponse(error, requestId, instance);
     if (refused) return refused;
+    if (error instanceof UnknownError) {
+      return problemUnprocessableContent(requestId, WEBHOOK_ENDPOINT_UNREACHABLE, { instance });
+    }
     throw error;
   }
 }
@@ -125,6 +152,9 @@ export async function createWebhookOperation({
 
   const access = await requireWorkspaceWrite(context, workspaceId);
   if (access instanceof Response) return access;
+
+  const discord = refuseDiscordUrl(body.url, context);
+  if (discord) return discord;
 
   const { secret, ...webhookInput } = body;
   const webhook = await runRefusable(context, async () => {
@@ -237,6 +267,9 @@ export async function testWebhookDeliveryOperation({
     if (access instanceof Response) return access;
     secret = body.secret ?? generateWebhookSecret();
   }
+
+  const discord = refuseDiscordUrl(body.url, context);
+  if (discord) return discord;
 
   const tested = await runRefusable(context, () => testEndpoint(body.url, secret));
   if (tested instanceof Response) return tested;

@@ -162,7 +162,7 @@ export async function acceptInviteOperation({
   if (!tokenData) return problemForbidden(requestId, undefined, instance);
 
   const [invite, user] = await Promise.all([getInvite(tokenData.inviteId), getUser(actor.id)]);
-  if (!invite || !user || user.email.toLowerCase() !== tokenData.email.toLowerCase()) {
+  if (!invite || user?.email.toLowerCase() !== tokenData.email.toLowerCase()) {
     return problemForbidden(requestId, undefined, instance);
   }
 

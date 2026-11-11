@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  DatabaseError,
   InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
@@ -19,6 +20,7 @@ import { POST } from "./route";
 import { SEGMENT_DESCRIPTION_MAX_LENGTH, SEGMENT_TITLE_MAX_LENGTH } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
+  countSegments: vi.fn(),
   can: vi.fn(),
   getSession: vi.fn(),
   applyRateLimit: vi.fn(),
@@ -52,6 +54,7 @@ const mocks = vi.hoisted(() => ({
   checkForRecursiveSegmentFilter: vi.fn(),
 }));
 
+vi.mock("@formbricks/database", () => ({ prisma: { segment: { count: mocks.countSegments } } }));
 vi.mock("@/lib/authorization", () => ({ can: mocks.can, assertCan: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromSegmentId: mocks.getOrganizationIdFromSegmentId,
@@ -213,6 +216,7 @@ const actAs = (surveyAllowed: boolean) =>
   );
 
 beforeEach(() => {
+  mocks.countSegments.mockResolvedValue(0);
   vi.clearAllMocks();
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.can.mockResolvedValue(true);
@@ -386,6 +390,26 @@ describe("POST /api/internal/segments", () => {
     expect((await response.json()).detail).toBe("Survey and segment are not in the same workspace");
     expect(mocks.can).toHaveBeenCalled();
     expect(mocks.createSegment).not.toHaveBeenCalled();
+  });
+
+  test("answers 409 when the workspace already has a segment with that title", async () => {
+    mocks.createSegment.mockRejectedValue(
+      new DatabaseError("Unique constraint failed on the fields: (`workspaceId`,`title`)")
+    );
+    mocks.countSegments.mockResolvedValue(1);
+
+    const response = await create(createBody());
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.detail).toBe("A segment with this title already exists in this workspace.");
+    expect(JSON.stringify(body)).not.toContain("Unique constraint");
+  });
+
+  test("lets any other database failure through as a 500", async () => {
+    mocks.createSegment.mockRejectedValue(new DatabaseError("connection reset"));
+
+    expect((await create(createBody())).status).toBe(500);
   });
 
   test("answers the uniform 403, not the workspace comparison, to a caller who can't write to the survey", async () => {
