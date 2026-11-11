@@ -109,7 +109,8 @@ export const ResponsePage = ({
     const getResponsesActionResponse = await getResponsesAction({
       surveyId,
       limit: responsesPerPage,
-      offset: (newPage - 1) * responsesPerPage,
+      // The rows still listed, not `page * size`: a deleted or restored row has left the server's list too.
+      offset: responses.length,
       filterCriteria: listCriteriaRef.current,
     });
     newResponses = getResponsesActionResponse?.data || [];
@@ -139,12 +140,14 @@ export const ResponsePage = ({
   const outcomeActions: TOutcomeActions = useMemo(
     () => ({
       applyOutcomes,
-      // A response whose new outcome takes it out of the ticked statuses (a restored one, for Low quality) leaves the list.
+      // A response whose new outcome takes it out of the ticked statuses (a restored one, for Low quality) leaves
+      // the list, and the count follows.
       onSaved: (ids, outcome) => {
         setResponses((prev) => dropRowsOutsideStatuses(prev, ids, outcome, responseStatuses));
+        void refetchMatchCount();
       },
     }),
-    [applyOutcomes, responseStatuses]
+    [applyOutcomes, responseStatuses, refetchMatchCount]
   );
 
   const refetchResponses = useCallback(async () => {
