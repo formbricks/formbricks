@@ -31,7 +31,8 @@ export async function requestPasswordResetOperation({
   // The IP limit comes first, as in the action: it bounds the audit rows the kill switch's refusal writes.
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.forgotPassword, context);
   if (limited) {
-    // The limiter logs the refusal; auditing it too would let one address add rows without bound.
+    // Not audited, unlike the action: the IP budget is what bounds this pre-login route's audit rows, and
+    // auditing every refusal past it would be unbounded (the limiter logs it instead).
     skipV3AuditLog(auditLog);
     return limited;
   }
