@@ -135,18 +135,18 @@ export const ResponsePage = ({
     setResponses((prev) => patchOutcomes(prev, changes));
   }, []);
 
-  const responseStatus = selectedFilter.responseStatus;
+  const responseStatuses = selectedFilter.responseStatuses;
   const outcomeActions: TOutcomeActions = useMemo(
     () => ({
       applyOutcomes,
       // A restored response no longer matches a Low quality filter, so it leaves the list.
       onSaved: (ids, outcome) => {
-        if (shouldDropAfterOutcome(responseStatus, outcome)) {
+        if (shouldDropAfterOutcome(responseStatuses, outcome)) {
           setResponses((prev) => prev.filter((r) => !ids.includes(r.id)));
         }
       },
     }),
-    [applyOutcomes, responseStatus]
+    [applyOutcomes, responseStatuses]
   );
 
   const refetchResponses = useCallback(async () => {
@@ -190,7 +190,7 @@ export const ResponsePage = ({
 
   // Only fetch if filters are applied (not on initial mount with no filters)
   const hasFilters =
-    selectedFilter?.responseStatus !== "all" ||
+    selectedFilter.responseStatuses.length > 0 ||
     (selectedFilter?.filter && selectedFilter.filter.length > 0) ||
     (dateRange.from && dateRange.to);
 

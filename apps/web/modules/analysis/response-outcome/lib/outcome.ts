@@ -1,4 +1,4 @@
-import type { TResponseOutcome } from "@formbricks/types/responses";
+import type { TResponseOutcome, TResponseStatusFilter } from "@formbricks/types/responses";
 
 /** The most ids `POST /api/v3/responses/batch-outcome` takes in one call. */
 export const OUTCOME_BATCH_SIZE = 100;
@@ -38,11 +38,15 @@ export const patchOutcomes = <T extends TWithOutcome>(rows: T[], changes: TOutco
   return changed ? next : rows;
 };
 
-/** Restoring while the list is filtered to Low quality takes the row out of what the filter selects. */
+/**
+ * Restoring while the list is filtered to Low quality alone takes the row out of what the filter selects.
+ * With another status ticked too, whether the row still matches depends on the row, so it stays until the
+ * list is next fetched.
+ */
 export const shouldDropAfterOutcome = (
-  responseStatus: "all" | "complete" | "partial" | "lowQuality",
+  responseStatuses: readonly TResponseStatusFilter[],
   outcome: TResponseOutcome | null
-): boolean => responseStatus === "lowQuality" && outcome === null;
+): boolean => outcome === null && responseStatuses.length === 1 && responseStatuses[0] === "lowQuality";
 
 /** What the responses page hands down so a card or the selection bar can set an outcome. */
 export type TOutcomeActions = {

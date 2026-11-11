@@ -102,6 +102,7 @@ const criteriaFor = (filters: TTableFilter[], now = new Date("2026-10-27T12:00:0
   const { selectedFilter, dateRange } = toResponseFilterState(filters, model.fields, "UTC", now);
   return getFormattedFilters(survey, selectedFilter, dateRange);
 };
+const ticked = (values: string[]): TTableFilter[] => [{ property: "status", operator: "in", values }];
 
 describe("buildResponseFilterModel", () => {
   test("offers Status, Date, Tags and Language as quick filters and nothing else", () => {
@@ -144,6 +145,23 @@ describe("toResponseFilterState → getFormattedFilters", () => {
     expect(criteriaFor([{ property: "status", operator: "in", values: ["complete", "partial"] }])).toEqual(
       {}
     );
+  });
+
+  test("one ticked Low quality narrows by outcome", () => {
+    expect(criteriaFor([{ property: "status", operator: "in", values: ["lowQuality"] }])).toEqual({
+      outcome: "lowQuality",
+    });
+  });
+
+  test("two ticked statuses that narrow the list mean either of them, in a fixed order (ENG-7078)", () => {
+    expect(criteriaFor(ticked(["lowQuality", "complete"]))).toEqual({ statuses: ["complete", "lowQuality"] });
+    expect(criteriaFor(ticked(["partial", "lowQuality"]))).toEqual({ statuses: ["partial", "lowQuality"] });
+  });
+
+  test("all three ticked keep the list, so the Analysis export still sees Low quality ticked", () => {
+    expect(criteriaFor(ticked(["complete", "partial", "lowQuality"]))).toEqual({
+      statuses: ["complete", "partial", "lowQuality"],
+    });
   });
 
   test("a date preset resolves to whole days in the reporting time zone at request time", () => {
@@ -259,7 +277,7 @@ describe("filterValueToTableFilter", () => {
     const click = row(TSurveyElementTypeEnum.MultipleChoiceMulti, "plan", "Includes either", ["Free"]);
     const fromClick = getFormattedFilters(
       survey,
-      { filter: [click], responseStatus: "all" },
+      { filter: [click], responseStatuses: [] },
       { from: undefined }
     );
     const rule = filterValueToTableFilter(click, survey)!;

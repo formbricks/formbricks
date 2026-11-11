@@ -53,10 +53,15 @@ describe("patchOutcomes", () => {
 
 describe("shouldDropAfterOutcome", () => {
   test("a restored row leaves a Low quality filtered list; nothing else does", () => {
-    expect(shouldDropAfterOutcome("lowQuality", null)).toBe(true);
-    expect(shouldDropAfterOutcome("lowQuality", "lowQuality")).toBe(false);
-    expect(shouldDropAfterOutcome("all", null)).toBe(false);
-    expect(shouldDropAfterOutcome("complete", "lowQuality")).toBe(false);
+    expect(shouldDropAfterOutcome(["lowQuality"], null)).toBe(true);
+    expect(shouldDropAfterOutcome(["lowQuality"], "lowQuality")).toBe(false);
+    expect(shouldDropAfterOutcome([], null)).toBe(false);
+    expect(shouldDropAfterOutcome(["complete"], "lowQuality")).toBe(false);
+  });
+
+  test("with another status ticked too, the row may still match it, so it stays", () => {
+    expect(shouldDropAfterOutcome(["complete", "lowQuality"], null)).toBe(false);
+    expect(shouldDropAfterOutcome(["partial", "lowQuality"], null)).toBe(false);
   });
 });
 
