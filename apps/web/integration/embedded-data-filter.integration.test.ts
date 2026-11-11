@@ -97,7 +97,7 @@ const filterCriteria = (
   getFormattedFilters(
     survey,
     {
-      responseStatus: "all",
+      responseStatuses: [],
       filter: [
         {
           elementType: { type: "Hidden Fields", label: "Flag", id: STORAGE_KEY },

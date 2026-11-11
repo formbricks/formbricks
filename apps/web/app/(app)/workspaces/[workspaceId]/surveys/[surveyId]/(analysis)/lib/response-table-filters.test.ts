@@ -259,7 +259,7 @@ describe("filterValueToTableFilter", () => {
     const click = row(TSurveyElementTypeEnum.MultipleChoiceMulti, "plan", "Includes either", ["Free"]);
     const fromClick = getFormattedFilters(
       survey,
-      { filter: [click], responseStatus: "all" },
+      { filter: [click], responseStatuses: [] },
       { from: undefined }
     );
     const rule = filterValueToTableFilter(click, survey)!;

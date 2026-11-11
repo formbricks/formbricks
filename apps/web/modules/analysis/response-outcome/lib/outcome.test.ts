@@ -2,9 +2,9 @@ import { describe, expect, test } from "vitest";
 import {
   OUTCOME_BATCH_SIZE,
   chunkIds,
+  matchesResponseStatuses,
   patchOutcomes,
   responseStatus,
-  shouldDropAfterOutcome,
   snapshotOutcomes,
 } from "./outcome";
 
@@ -51,12 +51,12 @@ describe("patchOutcomes", () => {
   });
 });
 
-describe("shouldDropAfterOutcome", () => {
+describe("matchesResponseStatuses", () => {
   test("a restored row leaves a Low quality filtered list; nothing else does", () => {
-    expect(shouldDropAfterOutcome("lowQuality", null)).toBe(true);
-    expect(shouldDropAfterOutcome("lowQuality", "lowQuality")).toBe(false);
-    expect(shouldDropAfterOutcome("all", null)).toBe(false);
-    expect(shouldDropAfterOutcome("complete", "lowQuality")).toBe(false);
+    expect(matchesResponseStatuses(["lowQuality"], { finished: true, outcome: null })).toBe(false);
+    expect(matchesResponseStatuses(["lowQuality"], { finished: true, outcome: "lowQuality" })).toBe(true);
+    expect(matchesResponseStatuses([], { finished: true, outcome: null })).toBe(true);
+    expect(matchesResponseStatuses(["complete"], { finished: true, outcome: "lowQuality" })).toBe(true);
   });
 });
 
