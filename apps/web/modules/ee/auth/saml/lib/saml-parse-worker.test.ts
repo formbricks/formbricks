@@ -1,3 +1,4 @@
+import { parseIssuer } from "@boxyhq/saml20/dist/response.js";
 import { createRequire } from "node:module";
 import { describe, expect, test, vi } from "vitest";
 import { dropInsecureAlgorithmWarnings, parseSamlResponse } from "./saml-parse-worker";
@@ -37,6 +38,7 @@ const encrypted = encryptedWith(assertion);
 describe("parseSamlResponse", () => {
   test("decrypts a signed assertion of 150 groups as jackson will, and it passes the bounds", () => {
     expect(parseSamlResponse(encrypted, sp.privateKey, IDP)).toEqual({
+      readable: true,
       claims: CLAIMS,
       decryption: { decrypted: true, refusal: null },
     });
@@ -68,7 +70,11 @@ describe("parseSamlResponse", () => {
     // saml20 parses the plaintext strictly and gives up on a DOCTYPE, as jackson will.
     ["holding a DOCTYPE", encryptedWith(`<!DOCTYPE r SYSTEM "x">${assertion}`), sp.privateKey],
   ])("reports an encrypted assertion it cannot decrypt (%s), keeping the claims", (_name, xml, key) => {
-    expect(parseSamlResponse(xml, key, IDP)).toEqual({ claims: CLAIMS, decryption: { decrypted: false } });
+    expect(parseSamlResponse(xml, key, IDP)).toEqual({
+      readable: true,
+      claims: CLAIMS,
+      decryption: { decrypted: false },
+    });
   });
 
   test.each([
@@ -137,8 +143,30 @@ describe("parseSamlResponse", () => {
     expect(validateSignatureSpy).not.toHaveBeenCalled();
   });
 
-  test("returns no claims for a document without a root", () => {
-    expect(parseSamlResponse("", sp.privateKey, IDP)).toEqual({ claims: {} });
+  // ENG-7054: jackson throws on these at its first step (saml20's `parseIssuer`) with an error that carries no status,
+  // so the route has to know them before jackson sees them, and the worker must agree with saml20 exactly.
+  test.each([
+    ["not XML", "not-xml"],
+    ["empty, as a SAMLResponse that is not base64 decodes", ""],
+    ["XML with a parse error xmldom recovers from", "<a><b></a>"],
+    ["XML with two roots", "<a/><b/>"],
+  ])("reports a response saml20 cannot read (%s), and does nothing more with it", (_name, xml) => {
+    validateSignatureSpy.mockClear();
+    const onDecrypting = vi.fn();
+
+    expect(() => parseIssuer(xml)).toThrow();
+    expect(parseSamlResponse(xml, sp.privateKey, IDP, onDecrypting)).toEqual({ readable: false, claims: {} });
+    expect(onDecrypting).not.toHaveBeenCalled();
+    expect(validateSignatureSpy).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["a real response", samlResponseWith(assertion)],
+    // Junk, but readable: jackson answers it itself, with a status (no issuer, so "Issuer not found.").
+    ["well-formed XML naming no issuer", "<a/>"],
+  ])("reports %s as readable", (_name, xml) => {
+    expect(() => parseIssuer(xml)).not.toThrow();
+    expect(parseSamlResponse(xml, null, IDP).readable).toBe(true);
   });
 });
 
