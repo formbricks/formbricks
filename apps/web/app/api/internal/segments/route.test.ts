@@ -17,7 +17,12 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST as copySegment } from "./[segmentId]/copies/route";
 import { DELETE, PATCH } from "./[segmentId]/route";
 import { POST } from "./route";
-import { SEGMENT_DESCRIPTION_MAX_LENGTH, SEGMENT_TITLE_MAX_LENGTH } from "./schemas";
+import {
+  SEGMENT_DESCRIPTION_MAX_LENGTH,
+  SEGMENT_FILTER_NUMBER_MAX,
+  SEGMENT_RELATIVE_DATE_AMOUNT_MAX,
+  SEGMENT_TITLE_MAX_LENGTH,
+} from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   countSegments: vi.fn(),
@@ -630,6 +635,97 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   ])("answers 400 for %s", async (_label, body) => {
     expect((await update(body)).status).toBe(400);
     expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+});
+
+describe("segment filter input limits", () => {
+  const text = (length: number) => "a".repeat(length);
+  /** One leaf, nested a level down so the walk's recursion is what reaches it. */
+  const nested = (resource: Record<string, unknown>) => [
+    {
+      id: "clgroup00000000000000001",
+      connector: null,
+      resource: [{ id: "clfilter0000000000000002", connector: null, resource }],
+    },
+  ];
+  const leaf = (overrides: Record<string, unknown>) => nested({ ...FILTERS[0].resource, ...overrides });
+  const LEAF_PATH = "filters.0.resource.0.resource";
+
+  const writes = [
+    ["create", 201, (filters: unknown) => create(createBody({ filters }))],
+    ["update", 200, (filters: unknown) => update({ filters })],
+  ] as const;
+
+  const invalidParams = async (response: Response) =>
+    ((await response.json()) as { invalid_params?: { name: string }[] }).invalid_params?.map(
+      ({ name }) => name
+    );
+
+  describe.each(writes)("%s", (_label, ok, write) => {
+    test.each([
+      ["value", 5000, 5001, (n: number) => leaf({ value: text(n) })],
+      [
+        "value.1",
+        5000,
+        5001,
+        (n: number) => leaf({ qualifier: { operator: "isBetween" }, value: ["2026-01-01", text(n)] }),
+      ],
+      [
+        "root.contactAttributeKey",
+        255,
+        256,
+        (n: number) => leaf({ root: { type: "attribute", contactAttributeKey: text(n) } }),
+      ],
+      [
+        "root.personIdentifier",
+        255,
+        256,
+        (n: number) => leaf({ root: { type: "person", personIdentifier: text(n) } }),
+      ],
+      ["root.deviceType", 255, 256, (n: number) => leaf({ root: { type: "device", deviceType: text(n) } })],
+      [
+        "value",
+        SEGMENT_FILTER_NUMBER_MAX,
+        SEGMENT_FILTER_NUMBER_MAX * 10,
+        (n: number) => leaf({ qualifier: { operator: "greaterThan" }, value: n }),
+      ],
+      [
+        "value",
+        -SEGMENT_FILTER_NUMBER_MAX,
+        -SEGMENT_FILTER_NUMBER_MAX * 10,
+        (n: number) => leaf({ qualifier: { operator: "lessThan" }, value: n }),
+      ],
+      [
+        "value.amount",
+        SEGMENT_RELATIVE_DATE_AMOUNT_MAX,
+        SEGMENT_RELATIVE_DATE_AMOUNT_MAX + 1,
+        (n: number) => leaf({ qualifier: { operator: "isOlderThan" }, value: { amount: n, unit: "days" } }),
+      ],
+      [
+        "value.amount",
+        1,
+        1.5,
+        (n: number) => leaf({ qualifier: { operator: "isNewerThan" }, value: { amount: n, unit: "days" } }),
+      ],
+    ])("takes %s at %d and answers 400 naming it at %d", async (field, accepted, refused, build) => {
+      expect((await write(build(accepted))).status).toBe(ok);
+
+      const response = await write(build(refused));
+      expect(response.status).toBe(400);
+      expect(await invalidParams(response)).toEqual([`${LEAF_PATH}.${field}`]);
+    });
+
+    test("answers 400 naming a segment filter whose segment isn't an id", async () => {
+      const response = await write(
+        leaf({
+          root: { type: "segment", segmentId: "not an id" },
+          qualifier: { operator: "userIsIn" },
+          value: "x",
+        })
+      );
+      expect(response.status).toBe(400);
+      expect(await invalidParams(response)).toEqual([`${LEAF_PATH}.root.segmentId`]);
+    });
   });
 });
 
