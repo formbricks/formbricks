@@ -10,8 +10,9 @@ Use root `package.json` scripts for commands. Run tests and typechecking through
 so their workspace dependencies rebuild first.
 
 Read `docs/agents/monorepo-builds.md` before changing workspace packages, shared dependencies, build
-configuration, workspace CSS, or adding tests outside a workspace. Also read it when a package change
-is missing from the running app or a direct test command fails after switching branches.
+configuration, workspace CSS, adding tests outside a workspace, or running integration tests. Also read
+it after pulling or merging main, or when a package change is missing from the running app or a direct
+test command fails after switching branches.
 
 ## Architecture & Patterns
 
