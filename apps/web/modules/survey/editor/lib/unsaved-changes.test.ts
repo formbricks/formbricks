@@ -1,7 +1,9 @@
+import { buildSavedSurvey } from "./__mocks__/saved-survey.mock";
 import { describe, expect, test } from "vitest";
 import { withMatrixConditionIdsInBlocks } from "@formbricks/types/surveys/matrix-conditions";
 import { surveyFlowFixture } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { reviveSurveyDates } from "./survey-json";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "./unsaved-changes";
 
 const baseSurvey = {
@@ -177,6 +179,18 @@ describe("hasUnsavedSurveyChanges", () => {
     expect(saved.blocks).not.toEqual(local.blocks);
     expect(hasUnsavedSurveyChanges(local, [saved])).toBe(false);
     expect(hasUnsavedSurveyChanges(local, [surveyFlowFixture])).toBe(true);
+  });
+
+  // The save routes answer in JSON, which drops keys that hold `undefined` and turns dates into strings.
+  // Read back as not dirty, or the autosave saves the same survey every 10 seconds forever.
+  test("a survey saved and read back over JSON reads clean", () => {
+    const local = buildSavedSurvey();
+    expect(Object.hasOwn(local, "keepEndingCardOpen")).toBe(true);
+    const saved = reviveSurveyDates(JSON.parse(JSON.stringify(local)));
+    expect(Object.hasOwn(saved, "keepEndingCardOpen")).toBe(false);
+
+    expect(hasUnsavedSurveyChanges(local, [null, saved])).toBe(false);
+    expect(hasUnsavedSurveyChanges({ ...local, name: "Renamed" }, [null, saved])).toBe(true);
   });
 
   test("skips persisted states that are not there yet", () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -9,7 +10,7 @@ import { TI18nString } from "@formbricks/types/i18n";
 import { TSurvey, TSurveyMetadata } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { createI18nString, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
-import { updateSurveyAction } from "@/modules/survey/editor/actions";
+import { saveSurvey } from "@/modules/survey/editor/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import {
@@ -44,6 +45,7 @@ interface LinkSettingsFormData {
 
 export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: LinkSettingsTabProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const { survey } = useSurvey();
   const enabledLanguages = getEnabledLanguages(survey.languages);
   const hasMultipleLanguages = enabledLanguages.length > 1;
@@ -130,12 +132,14 @@ export const LinkSettingsTab = ({ isReadOnly, locale, isStorageConfigured }: Lin
       metadata: updatedSurveyMetadata,
     };
 
-    const result = await updateSurveyAction(updatedSurvey);
-
-    if (result?.data) {
+    try {
+      await saveSurvey(updatedSurvey);
       toast.success(t("workspace.surveys.edit.settings_saved_successfully"));
       reset(data);
-    } else {
+      // The save route only marks the page for revalidation; the server action it replaced also
+      // re-rendered it, which is what refreshes the survey this tab and the others save from.
+      router.refresh();
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
 

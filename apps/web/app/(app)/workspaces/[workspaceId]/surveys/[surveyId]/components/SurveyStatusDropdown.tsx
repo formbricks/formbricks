@@ -6,10 +6,10 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SurveyStatusChangeDialog } from "@/modules/ee/creatives/components/survey-side/survey-status-change-dialog";
 import { useSurveyStatusChangeWithCreatives } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
-import { updateSurveyAction } from "@/modules/survey/editor/actions";
+import { saveSurvey } from "@/modules/survey/editor/lib/api-client";
 import {
   Select,
   SelectContent,
@@ -26,27 +26,28 @@ export const SurveyStatusDropdown = () => {
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
 
   const handleStatusChange = async (status: TSurvey["status"]) => {
-    const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
-
-    if (updateSurveyActionResponse?.data) {
-      const { publishOn, status: resultingStatus } = updateSurveyActionResponse.data;
-      const isResultScheduled = resultingStatus === "paused" && publishOn !== null;
-      const statusToToastMessage: Partial<Record<TSurvey["status"], string>> = {
-        inProgress: t("common.survey_live"),
-        paused: isResultScheduled ? t("common.survey_scheduled") : t("common.survey_paused"),
-        completed: t("common.survey_completed"),
-      };
-
-      const toastMessage = statusToToastMessage[resultingStatus];
-      if (toastMessage) {
-        toast.success(toastMessage);
-      }
-
-      router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(updateSurveyActionResponse);
-      toast.error(errorMessage);
+    let saved: TSurvey;
+    try {
+      saved = await saveSurvey({ ...survey, status });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return;
     }
+
+    const { publishOn, status: resultingStatus } = saved;
+    const isResultScheduled = resultingStatus === "paused" && publishOn !== null;
+    const statusToToastMessage: Partial<Record<TSurvey["status"], string>> = {
+      inProgress: t("common.survey_live"),
+      paused: isResultScheduled ? t("common.survey_scheduled") : t("common.survey_paused"),
+      completed: t("common.survey_completed"),
+    };
+
+    const toastMessage = statusToToastMessage[resultingStatus];
+    if (toastMessage) {
+      toast.success(toastMessage);
+    }
+
+    router.refresh();
   };
 
   // Pausing, closing or resuming names the creatives that open the survey first.
