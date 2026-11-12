@@ -128,7 +128,7 @@ export const MCP_SCOPE_FAMILIES = [
   "dashboards",
 ] as const;
 
-type TMcpScopeFamily = (typeof MCP_SCOPE_FAMILIES)[number];
+export type TMcpScopeFamily = (typeof MCP_SCOPE_FAMILIES)[number];
 export type TMcpReadScope = `${TMcpScopeFamily}:read`;
 export type TMcpWriteScope = `${TMcpScopeFamily}:write`;
 
