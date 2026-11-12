@@ -97,6 +97,18 @@ export type TMcpPermissionRequirement = {
 }[TMcpPermission];
 
 /**
+ * What a permission needs beside itself to be any use: its tools also return another permission's data,
+ * so they declare that permission too and are refused without it. Chart reads return feedback records,
+ * so they need Charts and Feedback records: Read (spec, user story 27). The consent screen shows these
+ * as hints; the tool declarations stay what enforces them.
+ */
+export const MCP_PERMISSION_DEPENDENCIES: Partial<
+  Record<TMcpPermission, readonly TMcpPermissionRequirement[]>
+> = {
+  charts: [{ permission: "feedbackRecords", level: "read" }],
+};
+
+/**
  * The scope a token needs for a requirement: the permission's scope family at the required level
  * (`surveys:read`, `dashboards:write`). The scope caps the grant (ADR-0041), so the tool guard checks it
  * before the connection's grant; for an API key, which has no grant, it is the whole check.
