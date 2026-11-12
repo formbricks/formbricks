@@ -443,8 +443,10 @@ commands above, and one warning when it clears. If the guard stays armed:
    not running. Dead letters mean specific events could not be delivered.
 2. Run `formbricks-authzed health` to confirm SpiceDB is reachable.
 3. For dead letters, read each one's `lastErrorCode` first, with the query under
-   [Audit and repair surveys](#audit-and-repair-surveys). SpiceDB may have rejected the event, or Formbricks
-   may not recognise its target type (`authzed_projection_invalid_event`). Fix the cause, then run
+   [Audit and repair surveys](#audit-and-repair-surveys). SpiceDB may have rejected the event, or a container
+   of an earlier version may not have recognised its target type (`authzed_projection_invalid_event`). From
+   this version on, a container leaves a target type it doesn't know pending for a newer one instead of
+   dead-lettering it. Fix the cause, then run
    `formbricks-authzed outbox replay`; replaying without a fix only dead-letters the event again. `drain`
    never claims a dead letter.
 4. Run `formbricks-authzed outbox drain`, then `formbricks-authzed upgrade check`, and expect `status: ready`.

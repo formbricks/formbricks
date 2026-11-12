@@ -503,6 +503,32 @@ const releaseState = async (id: string): Promise<TReleaseState> => {
   return row;
 };
 
+describe("AuthZed projection outbox claim", () => {
+  // self-hosting-config.md: a new outbox type must not dead-letter on old workers. A target type this
+  // release doesn't know is left exactly as it was, for a worker of the release that wrote it.
+  test("claims the types this release knows and leaves an unknown one untouched for a newer worker", async () => {
+    await prisma.authzedProjectionOutbox.createMany({
+      data: [
+        { id: "known", targetType: "membership", primaryId: "p1", isRevocation: true },
+        { id: "newer", targetType: "a_type_from_a_newer_release", primaryId: "p2", isRevocation: true },
+      ],
+    });
+
+    const claimed = await claimAuthzedOutboxEvents("lease");
+
+    expect(claimed.map(({ id }) => id)).toEqual(["known"]);
+    const newer = await prisma.authzedProjectionOutbox.findUniqueOrThrow({ where: { id: "newer" } });
+    expect(newer).toMatchObject({
+      attempts: 0,
+      leaseOwner: null,
+      leasedAt: null,
+      deadLetteredAt: null,
+      processedAt: null,
+      lastErrorCode: null,
+    });
+  });
+});
+
 describe("AuthZed projection outbox failure release", () => {
   test("dead-letters only after enough failures attributable to one event", async () => {
     await insertClaimedEvent("solo", { permanentFailures: AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES - 2 });

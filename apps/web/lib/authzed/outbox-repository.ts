@@ -36,25 +36,34 @@ export const AUTHZED_OUTBOX_BATCH_SIZE = 200;
 export const AUTHZED_OUTBOX_HISTORY_RETENTION_DAYS = 7;
 export const AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE = 10_000;
 export const AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES = 100;
-const INVALID_EVENT_ERROR_CODE = "authzed_projection_invalid_event";
-
-type TClaimedRow = Omit<TAuthzedOutboxEvent, "targetType"> & { targetType: string };
-
-const isTargetType = (value: string): value is TAuthzedOutboxEvent["targetType"] =>
-  (AUTHZED_OUTBOX_TARGET_TYPES as readonly string[]).includes(value);
-
 export const createAuthzedOutboxLeaseOwner = (): string => randomUUID();
 
+/**
+ * Leases up to `limit` deliverable events of the target types this release projects.
+ *
+ * A row of any other type is not claimed: it stays pending, unleased and unattempted, for a worker of
+ * the release that wrote it (`docs/agents/self-hosting-config.md`: a new outbox type must not
+ * dead-letter on old workers). During a rolling upgrade, or after a rollback, an old worker would
+ * otherwise dead-letter the new release's events, and a dead-lettered revocation arms the freshness
+ * guard for the whole deployment until an operator replays it.
+ *
+ * The trade-off: from the row alone, a type from a newer release and a corrupt or hand-inserted one
+ * look the same, so neither is dead-lettered here any more. Both stay pending. A grant then waits
+ * harmlessly; a revocation arms the freshness guard once it is overdue (fail closed, as an unknown
+ * revocation should), and `getAuthzedOutboxStatus` counts it as pending, so it shows in
+ * `pnpm authzed:outbox status`. An operator who knows no newer worker is coming deletes the row.
+ */
 export const claimAuthzedOutboxEvents = async (
   leaseOwner: string,
   limit = AUTHZED_OUTBOX_BATCH_SIZE
-): Promise<ReadonlyArray<TAuthzedOutboxEvent>> => {
-  const rows = await prisma.$queryRaw<TClaimedRow[]>`
+): Promise<ReadonlyArray<TAuthzedOutboxEvent>> =>
+  prisma.$queryRaw<TAuthzedOutboxEvent[]>`
     WITH claimable AS (
       SELECT "id"
       FROM "AuthzedProjectionOutbox"
       WHERE "processedAt" IS NULL
         AND "deadLetteredAt" IS NULL
+        AND "targetType" = ANY(${[...AUTHZED_OUTBOX_TARGET_TYPES]}::text[])
         AND "availableAt" <= NOW()
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
       ORDER BY "isRevocation" DESC, "createdAt" ASC
@@ -73,27 +82,6 @@ export const claimAuthzedOutboxEvents = async (
     RETURNING outbox."id", outbox."targetType", outbox."primaryId", outbox."secondaryId",
               outbox."isRevocation", outbox."attempts", outbox."createdAt"
   `;
-
-  const invalidIds = rows.filter(({ targetType }) => !isTargetType(targetType)).map(({ id }) => id);
-  if (invalidIds.length > 0) {
-    // A manually inserted or corrupted event must not remain silently leased forever. Dead-letter it
-    // without logging its identifiers; an invalid revocation will then activate the freshness guard.
-    await prisma.authzedProjectionOutbox.updateMany({
-      where: { id: { in: invalidIds }, leaseOwner, processedAt: null },
-      data: {
-        deadLetteredAt: new Date(),
-        lastErrorCode: INVALID_EVENT_ERROR_CODE,
-        leaseExpiresAt: null,
-        leasedAt: null,
-        leaseOwner: null,
-      },
-    });
-  }
-
-  return rows.flatMap((row) =>
-    isTargetType(row.targetType) ? [{ ...row, targetType: row.targetType }] : []
-  );
-};
 
 export const markAuthzedOutboxEventsDelivered = async (
   leaseOwner: string,
