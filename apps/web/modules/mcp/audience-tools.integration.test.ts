@@ -309,8 +309,8 @@ describe("a client connected before audience:read existed", () => {
     expect(toolText(capped)).toContain("audience:read");
 
     // The release's migrations, then the client reconnects asking for what the metadata advertises.
-    await grantAudienceScope.run!({ prisma, tx: prisma as never });
-    await grantAudienceScopeToClients.run!({ prisma, tx: prisma as never });
+    await grantAudienceScope.run!({ prisma: prisma as never, tx: prisma as never });
+    await grantAudienceScopeToClients.run!({ prisma: prisma as never, tx: prisma as never });
     const after = await grant(setup.cookie, setup.clientId, EVERYTHING);
 
     expect(after.scope.split(" ")).toContain("audience:read");
