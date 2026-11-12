@@ -19,9 +19,12 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  * count only for the scopes every one of them holds, as `consentBound` in
  * `apps/web/modules/auth/lib/oauth-grant-revocation.ts` reads them.
  *
- * One statement, set-based, inside the runner's transaction; memory stays in Postgres. Idempotent through
- * `ON CONFLICT DO NOTHING` on the (user, client) key, so a re-run, or a grant written by a new pod after
- * the schema migration, is left alone. No-op on a fresh database.
+ * One statement inside the runner's transaction; memory stays in Postgres. Set-based throughout: each
+ * step aggregates once over the whole table and the next joins its result, with no subquery that runs
+ * once per connection, so the time grows with the number of consent rows, not with its square (50k
+ * connections take seconds). Idempotent through `ON CONFLICT DO NOTHING` on the (user, client) key, so a
+ * re-run, or a grant written by a new pod after the schema migration, is left alone. No-op on a fresh
+ * database.
  *
  * Rolling upgrade: a consent an old pod writes after this runs has no grant. Its client is refused, and
  * its next refresh is refused and ends the connection, so the client goes back through the consent
@@ -60,53 +63,48 @@ export const backfillMcpGrants: MigrationScript = {
         SELECT * FROM unnest(${permissions}::TEXT[], ${families}::TEXT[], ${maxLevels}::TEXT[])
           AS c("permission", "family", "maxLevel")
       ),
-      latest AS (
-        SELECT "userId", "clientId", MAX("updatedAt") AS "at"
+      ranked AS (
+        SELECT "userId", "clientId", "scopes", "updatedAt",
+          MAX("updatedAt") OVER (PARTITION BY "userId", "clientId") AS "at"
         FROM "oauthConsent"
         WHERE "userId" IS NOT NULL
-        GROUP BY "userId", "clientId"
       ),
       tied AS (
-        SELECT c."id", c."userId", c."clientId", c."scopes"
-        FROM "oauthConsent" c
-        JOIN latest l ON l."userId" = c."userId" AND l."clientId" = c."clientId" AND l."at" = c."updatedAt"
+        SELECT "userId", "clientId", "scopes",
+          COUNT(*) OVER (PARTITION BY "userId", "clientId") AS "rows"
+        FROM ranked
+        WHERE "updatedAt" = "at"
       ),
       held AS (
         SELECT t."userId", t."clientId", s."scope"
         FROM tied t
         CROSS JOIN LATERAL (SELECT DISTINCT unnest(t."scopes") AS "scope") s
-        GROUP BY t."userId", t."clientId", s."scope"
-        HAVING COUNT(*) = (
-          SELECT COUNT(*) FROM tied t2 WHERE t2."userId" = t."userId" AND t2."clientId" = t."clientId"
-        )
+        GROUP BY t."userId", t."clientId", t."rows", s."scope"
+        HAVING COUNT(*) = t."rows"
+      ),
+      levels AS (
+        SELECT h."userId", h."clientId", c."permission",
+          CASE
+            WHEN c."maxLevel" = 'write' AND bool_or(h."scope" = c."family" || ':write') THEN 'write'
+            ELSE 'read'
+          END AS "level"
+        FROM held h
+        JOIN catalogue c ON h."scope" IN (c."family" || ':read', c."family" || ':write')
+        GROUP BY h."userId", h."clientId", c."permission", c."maxLevel"
+      ),
+      granted AS (
+        SELECT "userId", "clientId", jsonb_object_agg("permission", "level") AS "permissions"
+        FROM levels
+        GROUP BY "userId", "clientId"
       ),
       connections AS (
         SELECT DISTINCT "userId", "clientId" FROM tied
-      ),
-      levels AS (
-        SELECT n."userId", n."clientId", c."permission",
-          CASE
-            WHEN c."maxLevel" = 'write' AND EXISTS (
-              SELECT 1 FROM held h
-              WHERE h."userId" = n."userId" AND h."clientId" = n."clientId"
-                AND h."scope" = c."family" || ':write'
-            ) THEN 'write'
-            WHEN EXISTS (
-              SELECT 1 FROM held h
-              WHERE h."userId" = n."userId" AND h."clientId" = n."clientId"
-                AND h."scope" IN (c."family" || ':read', c."family" || ':write')
-            ) THEN 'read'
-          END AS "level"
-        FROM connections n CROSS JOIN catalogue c
       )
       INSERT INTO "McpGrant" ("id", "created_at", "updated_at", "userId", "clientId", "access", "permissions")
       SELECT gen_random_uuid()::TEXT, NOW(), NOW(), n."userId", n."clientId", 'all',
-        COALESCE(
-          (SELECT jsonb_object_agg(l."permission", l."level") FROM levels l
-           WHERE l."userId" = n."userId" AND l."clientId" = n."clientId" AND l."level" IS NOT NULL),
-          '{}'::JSONB
-        )
+        COALESCE(g."permissions", '{}'::JSONB)
       FROM connections n
+      LEFT JOIN granted g ON g."userId" = n."userId" AND g."clientId" = n."clientId"
       ON CONFLICT ("userId", "clientId") DO NOTHING
     `;
 
