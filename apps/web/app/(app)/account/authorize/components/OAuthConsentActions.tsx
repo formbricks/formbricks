@@ -4,7 +4,8 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/modules/auth/lib/auth-client";
-import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
+import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
 import { Button } from "@/modules/ui/components/button";
 import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 
@@ -13,12 +14,15 @@ interface OAuthConsentActionsProps {
   readonly grantedScope?: string;
   /** The levels the user chose in the permission matrix, sent with Allow as the connection's grant. */
   readonly permissions: TMcpGrantPermissions;
+  /** The organization & workspace access chosen with it; `null` while nothing is picked (Allow is off). */
+  readonly access: TMcpGrantAccessSelection | null;
   readonly isAllowDisabled?: boolean;
 }
 
 export const OAuthConsentActions = ({
   grantedScope,
   permissions,
+  access,
   isAllowDisabled = false,
 }: OAuthConsentActionsProps) => {
   const { t } = useTranslation();
@@ -35,7 +39,11 @@ export const OAuthConsentActions = ({
       const response = await authClient.$fetch<unknown>("/oauth2/consent", {
         method: "POST",
         body: accept
-          ? { accept, ...(grantedScope ? { scope: grantedScope } : {}), mcp_grant: { permissions } }
+          ? {
+              accept,
+              ...(grantedScope ? { scope: grantedScope } : {}),
+              mcp_grant: { permissions, ...(access ? toMcpGrantAccessRequest(access) : {}) },
+            }
           : { accept },
       });
       if (response.error) {

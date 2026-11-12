@@ -11,7 +11,9 @@ import {
 } from "@/modules/auth/lib/oauth-client-metadata";
 import { getSession } from "@/modules/auth/lib/session";
 import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
+import { listMcpGrantAccessOptions } from "@/modules/mcp/access-options";
 import { getMcpGrantPermissionsForScopes } from "@/modules/mcp/grant";
+import { initialMcpGrantAccessDraft } from "@/modules/mcp/grant-access";
 import { getInitialMcpGrantPermissions } from "@/modules/mcp/grant-editor";
 import { getMcpGrant } from "@/modules/mcp/grant-store";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -114,11 +116,15 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
   // The permission matrix (ENG-7150): capped by what the client asks for, and opening with the
   // connection's existing grant when it has one, so a reconnect doesn't undo a narrower choice.
   const cap = getMcpGrantPermissionsForScopes(requestedScopes);
-  const existingGrant = session?.user ? await getMcpGrant(session.user.id, clientId) : null;
+  // Organization & workspace access (ENG-7153) opens the same way: the existing grant's, else All access.
+  const [existingGrant, accessOptions] = session?.user
+    ? await Promise.all([getMcpGrant(session.user.id, clientId), listMcpGrantAccessOptions(session.user.id)])
+    : [null, { organizations: [], workspaces: [] }];
   const initialPermissions = getInitialMcpGrantPermissions({
     existing: existingGrant?.permissions ?? null,
     cap,
   });
+  const initialAccess = initialMcpGrantAccessDraft(existingGrant);
   const identityAccess = [
     ...(requestedScopes.includes("profile") || requestedScopes.includes("email")
       ? [t("auth.oauth.grant.identity_name_and_email")]
@@ -194,6 +200,8 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
         <div className="mt-6">
           <OAuthConsentForm
             initialPermissions={initialPermissions}
+            initialAccess={initialAccess}
+            accessOptions={accessOptions}
             cap={cap}
             isDashboardViewer={isViewer}
             grantedScope={isViewer ? requestedScopes.join(" ") : undefined}

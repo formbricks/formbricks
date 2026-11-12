@@ -84,6 +84,7 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
                 <TableCell>
                   <McpGrantSummary
                     permissions={connection.permissions ?? {}}
+                    access={connection.access ? { ...connection, access: connection.access } : null}
                     isDashboardViewer={data.isDashboardViewer}
                   />
                 </TableCell>
@@ -113,9 +114,10 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
           })}
         </TableBody>
       </Table>
-      {editing?.permissions && (
+      {editing?.permissions && editing.access && (
         <EditMcpGrantDialog
-          connection={{ ...editing, permissions: editing.permissions }}
+          connection={{ ...editing, permissions: editing.permissions, access: editing.access }}
+          accessOptions={data.accessOptions}
           clientName={clientNameOf(editing)}
           isDashboardViewer={data.isDashboardViewer}
           onClose={() => setEditingClientId(null)}

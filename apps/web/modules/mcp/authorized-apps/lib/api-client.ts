@@ -1,6 +1,7 @@
 import type { TMcpConnectionList, TMcpGrantResource } from "@/app/api/internal/mcp-grants/lib/serializers";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
-import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
+import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
 
 /**
  * Client fetchers for Authorized apps' grant routes. Reads forward the TanStack `signal`; every call throws
@@ -24,11 +25,16 @@ export async function getMcpConnections(signal?: AbortSignal): Promise<TMcpConne
 export async function updateMcpGrant(params: {
   clientId: string;
   permissions: TMcpGrantPermissions;
+  /** The organization & workspace access to set; omitted keeps the grant's. */
+  access?: TMcpGrantAccessSelection;
 }): Promise<TMcpGrantResource> {
   return request<TMcpGrantResource>(`${BASE_PATH}/${encodeURIComponent(params.clientId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ permissions: params.permissions }),
+    body: JSON.stringify({
+      permissions: params.permissions,
+      ...(params.access ? toMcpGrantAccessRequest(params.access) : {}),
+    }),
     signal: AbortSignal.timeout(15_000),
   });
 }
