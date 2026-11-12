@@ -41,17 +41,9 @@ const getTenantIds = async (userId: string): Promise<string[]> => {
  * letters are skipped because they will never be delivered.
  */
 export const waitForAuthzedProjection = async (userId: string): Promise<void> => {
-  await waitForAuthzedOutbox(await getTenantIds(userId));
-};
-
-/**
- * Waits until every outbox row enqueued so far that names one of `ids` has been delivered. For rows
- * keyed by something outside a user's tenant, such as an MCP grant (whose relationships the outbox
- * projects under the grant's id).
- */
-export const waitForAuthzedOutbox = async (ids: string[]): Promise<void> => {
   // The column default is the database's local CURRENT_TIMESTAMP, so take the cutoff from the same clock.
   const [{ cutoff }] = await prisma.$queryRaw<{ cutoff: Date }[]>`SELECT LOCALTIMESTAMP(3) AS cutoff`;
+  const ids = await getTenantIds(userId);
   const deadline = Date.now() + TIMEOUT_MS;
 
   for (;;) {

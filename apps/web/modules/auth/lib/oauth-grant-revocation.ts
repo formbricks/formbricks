@@ -15,6 +15,7 @@ import {
   type TStoredMcpGrant,
   deleteMcpGrants,
   hasMcpGrant,
+  projectMcpGrants,
   queueMcpGrantAudit,
   saveMcpGrant,
 } from "@/modules/mcp/grant-store";
@@ -384,8 +385,8 @@ export const revokeOAuthConsentGrant = async ({
 }: {
   userId: string;
   consentId: string;
-}): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> =>
-  prisma.$transaction(async (tx) => {
+}): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> => {
+  const revoked = await prisma.$transaction(async (tx) => {
     const consent = await tx.oauthConsent.findFirst({
       where: { id: consentId, userId },
       select: { clientId: true },
@@ -398,6 +399,10 @@ export const revokeOAuthConsentGrant = async ({
     await lockConsents(tx, userId, { clientId: consent.clientId }, "update");
     return await endConnection(tx, userId, consent.clientId);
   });
+  // The deleted grant's relationships go now rather than when the outbox delivers (ENG-7153).
+  if (revoked) await projectMcpGrants(revoked.grants.map(({ id }) => id));
+  return revoked;
+};
 
 /**
  * `hooks.before` for `POST /oauth2/delete-consent`. Performs the whole revocation and short-circuits
@@ -550,6 +555,8 @@ export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext
     ids.clientId = ended.clientId;
     const { savedGrant, ...counts } = ended;
     if (savedGrant) {
+      // The access Allow chose applies on the client's first call, not when the outbox delivers (ENG-7153).
+      await projectMcpGrants([savedGrant.after.id]);
       await queueMcpGrantAudit({
         action: savedGrant.before ? "updated" : "created",
         actorUserId: userId,

@@ -15,7 +15,7 @@ import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-ur
 import { DEFAULT_CREATIVE_STYLING } from "@/modules/ee/creatives/lib/creative";
 import { editMcpGrant } from "./connections";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "./grant";
-import { getMcpGrant, saveMcpGrant } from "./grant-store";
+import { getMcpGrant } from "./grant-store";
 
 /**
  * ENG-7153 (ADR-0042) against the real Better Auth instance, Postgres and SpiceDB: a grant's organization
@@ -24,8 +24,9 @@ import { getMcpGrant, saveMcpGrant } from "./grant-store";
  *
  * Layout: the user owns organization "Acme" (workspaces "In" and "Out") and organization "Globex"
  * (workspace "Elsewhere"), each holding one of every resource a tool can name by id. The grant's
- * selection is saved through `saveMcpGrant` (what consent and Edit write) and projected through the
- * outbox before the next call, as the delivery job does.
+ * selection is saved through Edit (`editMcpGrant`), which writes it to SpiceDB before it returns, so no
+ * test projects it by hand before the next call. Fixture writes that bypass the product (a seeded
+ * workspace, a deleted organization) still converge through the outbox.
  */
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => ({
@@ -211,16 +212,23 @@ const setUp = async (): Promise<TSetup> => {
   };
 };
 
-/** Saves the grant's access, then projects it, as the outbox delivery job would before the next call. */
+/**
+ * Sets the grant's access through Edit, as Authorized apps does. Nothing projects it afterwards: the
+ * next call has to see it because the save itself wrote it to SpiceDB (spec story 32), not the outbox.
+ */
 const setAccess = async (
   setup: TSetup,
   access: TMcpGrantAccessSelection,
   permissions: TMcpGrantPermissions = READ_ALL
 ) => {
-  await prisma.$transaction((tx) =>
-    saveMcpGrant(tx, { userId: setup.userId, clientId: setup.clientId, permissions, access })
-  );
-  await synchronizeAuthzedIntegrationFixture();
+  const edited = await editMcpGrant({
+    userId: setup.userId,
+    clientId: setup.clientId,
+    permissions,
+    access,
+    isDashboardViewer: false,
+  });
+  expect(edited.status).toBe("saved");
 };
 
 /** One read per way a tool finds its workspace: an explicit `workspaceId`, or a resource's id. */
@@ -344,6 +352,12 @@ describe("organization & workspace access on MCP calls", () => {
   });
 
   test("an edit narrowing the access applies on the next call with the same token", async () => {
+    // Starts from a selection, not All access: removing a workspace has to drop its relationship
+    // before the next call, which All access (no relationships at all) would not show.
+    await setAccess(setup, {
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+    });
     const before = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
       surveyId: setup.outside.surveyId,
     });
@@ -357,13 +371,32 @@ describe("organization & workspace access on MCP calls", () => {
       isDashboardViewer: false,
     });
     expect(edited.status).toBe("saved");
-    await synchronizeAuthzedIntegrationFixture();
 
     expectNotFound(
       await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
         surveyId: setup.outside.surveyId,
       })
     );
+    const kept = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+      surveyId: setup.inside.surveyId,
+    });
+    expect(succeeded(kept), toolText(kept)).toBe(true);
+  });
+
+  test("an edit widening the access applies on the next call with the same token", async () => {
+    await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
+    expectNotFound(
+      await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+        surveyId: setup.outside.surveyId,
+      })
+    );
+
+    await setAccess(setup, { access: "organizations", organizationIds: [setup.acmeId] });
+
+    const after = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+      surveyId: setup.outside.surveyId,
+    });
+    expect(succeeded(after), toolText(after)).toBe(true);
   });
 
   test("a grant whose workspaces were deleted stays, reaches nothing, and every call is not found", async () => {

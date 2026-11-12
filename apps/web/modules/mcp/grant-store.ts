@@ -2,6 +2,8 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { reconcileMcpGrantRelationships } from "@/lib/authzed/mcp-grant";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
@@ -20,7 +22,9 @@ import {
  * The organization & workspace selections (`McpGrantOrganization`, `McpGrantWorkspace`) are written in the
  * same transaction. Their triggers queue the grant for the SpiceDB projection (`lib/authzed/mcp-grant.ts`,
  * ADR-0042), so the relationships follow the rows through the outbox, and a cascade from a deleted
- * workspace, organization or grant drops them too.
+ * workspace, organization or grant drops them too. Saving, editing and revoking also call
+ * {@link projectMcpGrants} once their transaction commits, so a change applies on the client's next call
+ * rather than when the outbox delivers.
  */
 
 /** A grant as stored, with what an audit entry names it by and what it selects. */
@@ -198,6 +202,22 @@ export const deleteMcpGrants = async (
   if (rows.length === 0) return [];
   await tx.mcpGrant.deleteMany({ where: { id: { in: rows.map((row) => row.id) } } });
   return rows.map(toStoredGrant);
+};
+
+/**
+ * Writes the grants' organization & workspace access to SpiceDB now, after the transaction that changed
+ * them has committed: a narrowed grant must not keep its old reach until the outbox delivers (spec story
+ * 32), and a widened one should not wait for it either. Call it after the commit, never inside the
+ * transaction, or SpiceDB could hold a selection that then rolls back.
+ *
+ * Never throws: the change is committed, and the outbox event its rows queued is the durable repair.
+ * Reconciling is idempotent, so that later delivery is harmless. A failure is logged by the projection.
+ */
+export const projectMcpGrants = async (grantIds: ReadonlyArray<string>): Promise<void> => {
+  if (grantIds.length === 0) return;
+  await runPostCommitProjection("mcp_grant_post_commit_reconciliation", () =>
+    reconcileMcpGrantRelationships({ grantIds })
+  );
 };
 
 /** What an audit entry records of a grant: the client and the grant itself, not its row ids. */

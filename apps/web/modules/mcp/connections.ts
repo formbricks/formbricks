@@ -11,7 +11,7 @@ import {
   isMcpGrantWithinCap,
   parseMcpGrantPermissions,
 } from "./grant";
-import { type TStoredMcpGrant, hasMcpGrant, saveMcpGrant } from "./grant-store";
+import { type TStoredMcpGrant, hasMcpGrant, projectMcpGrants, saveMcpGrant } from "./grant-store";
 
 /**
  * A user's MCP connections as Authorized apps shows and edits them (ENG-7152): one per MCP client the user
@@ -122,9 +122,10 @@ export type TEditMcpGrantResult =
  * has no consent and grant for the client, and when `permissions` go above what the consented scopes ask
  * for (and, for a Dashboard viewer, what a viewer may give). The consent rows are read `FOR SHARE`, so a
  * revoke in flight is waited on and the edit then finds nothing, rather than writing a grant back after
- * it. `/api/mcp` reads the grant on every call, so the change applies from the client's next call.
+ * it. `/api/mcp` reads the grant on every call and the access is written to SpiceDB once the transaction
+ * commits, so the change applies from the client's next call.
  */
-export const editMcpGrant = ({
+export const editMcpGrant = async ({
   userId,
   clientId,
   permissions,
@@ -137,8 +138,8 @@ export const editMcpGrant = ({
   /** The organization & workspace access to set; omitted keeps the grant's (ENG-7153). */
   access?: TMcpGrantAccessSelection;
   isDashboardViewer: boolean;
-}): Promise<TEditMcpGrantResult> =>
-  prisma.$transaction(async (tx): Promise<TEditMcpGrantResult> => {
+}): Promise<TEditMcpGrantResult> => {
+  const result = await prisma.$transaction(async (tx): Promise<TEditMcpGrantResult> => {
     const scopes = await readConsentedScopes(tx, userId, clientId);
     if (!scopes || !(await hasMcpGrant(tx, { userId, clientId }))) return { status: "not_found" };
     if (!isMcpGrantWithinCap(permissions, capForScopes(scopes, isDashboardViewer))) {
@@ -149,3 +150,6 @@ export const editMcpGrant = ({
     if (!before) throw new Error("MCP grant disappeared while its consent was locked");
     return { status: "saved", before, after };
   });
+  if (result.status === "saved") await projectMcpGrants([result.after.id]);
+  return result;
+};

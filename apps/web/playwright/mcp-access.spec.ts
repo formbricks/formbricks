@@ -1,7 +1,6 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
-import { waitForAuthzedOutbox } from "./utils/authzed";
 import {
   MCP_CLIENT_REDIRECT_URI,
   callMcpTool,
@@ -98,15 +97,9 @@ test.describe("MCP access", () => {
       const callbackUrl = new URL((await redirect).url());
       const code = callbackUrl.searchParams.get("code");
       expect(code, callbackUrl.href).toBeTruthy();
+      // No wait for the outbox: Allow writes the workspace selection to SpiceDB before it redirects
+      // (ENG-7153), so the first call already sees it.
       tokens = await exchangeMcpCode(request, client, code as string, verifier);
-
-      // The workspace selection reaches SpiceDB through the outbox (ADR-0042); wait for that state, as a
-      // client would see it a delivery cycle after Allow.
-      const grant = await prisma.mcpGrant.findFirstOrThrow({
-        where: { userId: user.id, clientId: client.clientId },
-        select: { id: true },
-      });
-      await waitForAuthzedOutbox([grant.id]);
     });
 
     await test.step("the token reads in the picked workspace only, and a write is not permitted", async () => {
