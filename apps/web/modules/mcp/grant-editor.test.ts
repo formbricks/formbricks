@@ -212,6 +212,16 @@ describe("getUnmetMcpPermissionDependencies", () => {
     });
   });
 
+  test("names what Workflow runs, Contacts and Segments need for the data their tools return", () => {
+    expect(
+      getUnmetMcpPermissionDependencies({ workflowRuns: "read", contacts: "read", segments: "read" })
+    ).toEqual({
+      workflowRuns: [{ permission: "responses", level: "read" }],
+      contacts: [{ permission: "contactAttributes", level: "read" }],
+      segments: [{ permission: "contactAttributes", level: "read" }],
+    });
+  });
+
   test("names nothing once the dependency is given, or when the dependent permission is off", () => {
     expect(getUnmetMcpPermissionDependencies({ charts: "write", feedbackRecords: "read" })).toEqual({});
     expect(getUnmetMcpPermissionDependencies({ feedbackRecords: "read" })).toEqual({});

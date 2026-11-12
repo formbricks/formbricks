@@ -105,6 +105,11 @@ export const MCP_PERMISSION_DEPENDENCIES: Partial<
   Record<TMcpPermission, readonly TMcpPermissionRequirement[]>
 > = {
   charts: [{ permission: "feedbackRecords", level: "read" }],
+  // `get_workflow_run` returns the trigger payload and each step's input and output: respondents' answers.
+  workflowRuns: [{ permission: "responses", level: "read" }],
+  // `list_contacts` returns each contact's attribute values; `list_segments`, filters naming literal ones.
+  contacts: [{ permission: "contactAttributes", level: "read" }],
+  segments: [{ permission: "contactAttributes", level: "read" }],
 };
 
 /**

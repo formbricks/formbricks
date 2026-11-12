@@ -115,7 +115,11 @@ export function registerAudienceTools(server: McpServer): void {
       inputSchema: ZMcpListContactsInput,
       annotations: READ_ANNOTATIONS,
     },
-    [{ permission: "contacts", level: "read" }],
+    // Each contact carries its attribute values.
+    [
+      { permission: "contacts", level: "read" },
+      { permission: "contactAttributes", level: "read" },
+    ],
     async (input: TMcpListContactsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Contacts({
@@ -197,7 +201,11 @@ export function registerAudienceTools(server: McpServer): void {
       inputSchema: ZMcpListSegmentsInput,
       annotations: READ_ANNOTATIONS,
     },
-    [{ permission: "segments", level: "read" }],
+    // A segment's filters carry literal attribute values.
+    [
+      { permission: "segments", level: "read" },
+      { permission: "contactAttributes", level: "read" },
+    ],
     async (input: TMcpListSegmentsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Segments({

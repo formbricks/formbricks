@@ -112,7 +112,7 @@ Supported scopes:
 | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
 | `surveys:write` | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run` (also `responses:read`), `test_workflow` |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
@@ -1425,7 +1425,9 @@ Only `workspaceId` is required. Omit `filter.isDryRun` to return both real and d
 
 #### get_workflow_run
 
-Gets one workflow run with its ordered step logs. Read-only and idempotent.
+Gets one workflow run with its ordered step logs. Read-only and idempotent. Declares Workflow runs: Read and
+Responses: Read, because the run carries its trigger payload, its data and each step's input and output, which
+include respondents' answers.
 
 ```json
 { "runId": "clrn1234567890123456789012" }
@@ -1665,10 +1667,10 @@ and the Contacts entitlement (all but action classes), exactly as over REST.
 
 | Tool | REST operation | Permission |
 | --- | --- | --- |
-| `list_contacts` | `GET /api/v3/contacts` | Contacts: Read |
+| `list_contacts` | `GET /api/v3/contacts` | Contacts: Read and Contact attributes: Read (each contact carries its attribute values) |
 | `list_contact_attribute_keys` | `GET /api/v3/contact-attribute-keys` | Contact attributes: Read |
 | `list_contact_attribute_values` | `GET /api/v3/contacts/attribute-values` | Contact attributes: Read |
-| `list_segments` | `GET /api/v3/segments` | Segments: Read |
+| `list_segments` | `GET /api/v3/segments` | Segments: Read and Contact attributes: Read (filters carry literal attribute values) |
 | `list_action_classes` | `GET /api/v3/action-classes` | Action classes: Read |
 
 - **Smaller pages.** `list_contacts` and `list_segments` default to 20 and cap at 50 (the API allows 250): a

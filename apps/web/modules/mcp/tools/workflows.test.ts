@@ -257,7 +257,13 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: RUN_ID }, { requestId: "req_tool" })
     );
 
-    await tools.get("get_workflow_run")!.handler({ runId: RUN_ID }, { http: { authInfo } });
+    // A run also needs responses:read: it carries respondents' answers.
+    await tools
+      .get("get_workflow_run")!
+      .handler(
+        { runId: RUN_ID },
+        { http: { authInfo: { ...authInfo, scopes: [...authInfo.scopes, "responses:read"] } } }
+      );
 
     expect(workflowsHandlers.getRun).toHaveBeenCalledWith({
       ctx: { __ctx: true },

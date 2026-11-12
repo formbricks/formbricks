@@ -227,7 +227,11 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    [{ permission: "workflowRuns", level: "read" }],
+    // A run carries the trigger payload, its data and each step's input and output: respondents' answers.
+    [
+      { permission: "workflowRuns", level: "read" },
+      { permission: "responses", level: "read" },
+    ],
     async (input: TMcpGetWorkflowRunInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
