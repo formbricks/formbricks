@@ -105,6 +105,9 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.cube.port | quote }}
+            {{- with include "formbricks.cubeBundledDatabaseEnv" . }}
+            {{- . | trim | nindent 12 }}
+            {{- end }}
             {{- range $key, $value := omit (.Values.cube.env | default dict) "PORT" }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}

@@ -226,18 +226,77 @@ render_bootstrap() {
     --show-only templates/authzed-postgresql-bootstrap.yaml
 }
 
-# The default is unchanged: the bundled `postgres` superuser on the `postgres` database.
-default_bootstrap="$(render_bootstrap authzed-bootstrap-default)"
-grep --quiet 'value: "postgres"' <<<"${default_bootstrap}"
+bootstrap_env_value() {
+  awk -v target="$2" '
+    $0 ~ "^[[:space:]]*-[[:space:]]+name:[[:space:]]+" target "$" {
+      getline
+      if ($1 == "value:") {
+        gsub(/^"|"$/, "", $2)
+        print $2
+      }
+      exit
+    }
+  ' <<<"$1"
+}
 
-# The regression itself. Without an override this still refuses, but it must name the way out
-# rather than simply asserting that enablePostgresUser is required.
-if bootstrap_refusal="$(render_bootstrap authzed-bootstrap-no-superuser \
+# ENG-7044: the bundled pgvector/pgvector image is the official PostgreSQL image. It makes
+# postgresql.auth.username its superuser and creates no `postgres` role, so by default the Job connects
+# as that role, on its database, and keeps `postgres` only as the fallback for a server a Bitnami image
+# initialised.
+default_bootstrap="$(render_bootstrap authzed-bootstrap-default)"
+[ "$(bootstrap_env_value "${default_bootstrap}" PGUSER)" = formbricks ] || {
+  printf '%s\n' "Bootstrap must connect as the bundled PostgreSQL user by default." >&2
+  exit 1
+}
+[ "$(bootstrap_env_value "${default_bootstrap}" ADMIN_DATABASE_NAME)" = formbricks ] || {
+  printf '%s\n' "Bootstrap must attach to the bundled PostgreSQL database by default." >&2
+  exit 1
+}
+grep --quiet --fixed-strings 'key: POSTGRES_USER_PASSWORD' <<<"${default_bootstrap}"
+[ "$(bootstrap_env_value "${default_bootstrap}" FALLBACK_PGUSER)" = postgres ] || {
+  printf '%s\n' "Bootstrap must keep the postgres superuser as the default fallback." >&2
+  exit 1
+}
+
+# ENG-2390 without an override: a server installed without the `postgres` role no longer needs one,
+# and without that role there is nothing to fall back to.
+no_superuser_bootstrap="$(render_bootstrap authzed-bootstrap-no-superuser \
+  --set postgresql.auth.enablePostgresUser=false)"
+[ "$(bootstrap_env_value "${no_superuser_bootstrap}" PGUSER)" = formbricks ] || {
+  printf '%s\n' "Bootstrap must connect as the bundled user when enablePostgresUser=false." >&2
+  exit 1
+}
+if grep --quiet --extended-regexp '^[[:space:]]*- name: FALLBACK_PGUSER$' <<<"${no_superuser_bootstrap}"; then
+  printf '%s\n' "Bootstrap must not fall back to a postgres role that was never enabled." >&2
+  exit 1
+fi
+
+# The previous default, set explicitly (a values file copied from an older chart), keeps its exact
+# meaning and its refusal, and gains the bundled user as its fallback, since the bundled image has no
+# `postgres` role.
+if bootstrap_refusal="$(render_bootstrap authzed-bootstrap-explicit-postgres-no-superuser \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=postgres \
   --set postgresql.auth.enablePostgresUser=false 2>&1)"; then
-  printf '%s\n' "Bootstrap must refuse a missing postgres superuser when no admin role is configured." >&2
+  printf '%s\n' "Bootstrap must refuse an explicit postgres administrator that was never enabled." >&2
   exit 1
 fi
 grep --quiet 'adminUsername' <<<"${bootstrap_refusal}"
+legacy_default_bootstrap="$(render_bootstrap authzed-bootstrap-legacy-default \
+  --set authzed.bundledPostgresqlBootstrap.adminUsername=postgres \
+  --set authzed.bundledPostgresqlBootstrap.adminDatabase=postgres)"
+[ "$(bootstrap_env_value "${legacy_default_bootstrap}" PGUSER)" = postgres ] || {
+  printf '%s\n' "An explicit adminUsername=postgres must still connect as postgres first." >&2
+  exit 1
+}
+[ "$(bootstrap_env_value "${legacy_default_bootstrap}" ADMIN_DATABASE_NAME)" = postgres ] || {
+  printf '%s\n' "An explicit adminDatabase=postgres must be kept." >&2
+  exit 1
+}
+grep --quiet --fixed-strings 'key: POSTGRES_ADMIN_PASSWORD' <<<"${legacy_default_bootstrap}"
+[ "$(bootstrap_env_value "${legacy_default_bootstrap}" FALLBACK_PGUSER)" = formbricks ] || {
+  printf '%s\n' "An explicit adminUsername=postgres on the bundled Secret must fall back to the bundled user." >&2
+  exit 1
+}
 
 # ...and configuring an existing administrative role is what unblocks it.
 existing_admin_bootstrap="$(render_bootstrap authzed-bootstrap-existing-admin \
