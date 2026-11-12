@@ -81,6 +81,46 @@ checksums:
     auth/oauth/dashboard_viewer_scope_title: 409c50e64b51dad16a9f8728d654aa5a
     auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
     auth/oauth/formbricks_website: 95c2f69c6b6428e1aa6c26f4dd427e22
+    auth/oauth/grant/access_level_for: f0e2c7d6e8259dbd79cb765aeceebd69
+    auth/oauth/grant/always_granted: bddfa5068a8d61304aec2db81e814abd
+    auth/oauth/grant/capped_hint: 99ad19f29d4570ea40abb82b3f0dd91e
+    auth/oauth/grant/capped_hint_label: 1b3e3d4681a450350ce2bc0d0a0c35b7
+    auth/oauth/grant/categories/audience: a4d9fab4214a641e2d358fbb28f010e0
+    auth/oauth/grant/categories/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
+    auth/oauth/grant/categories/feedback: 6fac88806e0c269a30777b283988c61c
+    auth/oauth/grant/categories/responses: 14bb6c69f906d7bbd1359f7ef1bb3c28
+    auth/oauth/grant/categories/surveys: 33f68ad4111b32a6361beb9d5c184533
+    auth/oauth/grant/categories/workflows: b0c9c8615a9ba7d9cb73e767290a7f72
+    auth/oauth/grant/collapse_category: 3c188f3e40adecd519d82da5ee07a3dc
+    auth/oauth/grant/deselect_all: facf8871b2e84a454c6bfe40c2821922
+    auth/oauth/grant/empty_grant_hint: 1f8b65ca52be70e0db9ec4f9c897c625
+    auth/oauth/grant/expand_category: cd0dd34dcf2e7b109d0b249a8942e2dc
+    auth/oauth/grant/identity_name_and_email: 75c9d441f76c18938640d9f0a50bce31
+    auth/oauth/grant/identity_stay_signed_in: 0f439b9579c71a3b256905b1293165bd
+    auth/oauth/grant/levels/no_access: cdb44adb343d96f0a793f0ef31946d96
+    auth/oauth/grant/levels/read: 2494ca23d10e5b6381eb271aceeb5270
+    auth/oauth/grant/levels/write: 0c8cd5e85bbf4a4ef271c6df37736df3
+    auth/oauth/grant/needs_permission: 3710e1b356dee91e6edee25ba873bc58
+    auth/oauth/grant/permissions/action_classes: d39a46cfc678e85ff2fe52cfc2aa5912
+    auth/oauth/grant/permissions/charts: 1da4564d89264c89de4ed28d7451b43e
+    auth/oauth/grant/permissions/contact_attributes: 9bf860a864dbfc4d63c44d0d00bb90a7
+    auth/oauth/grant/permissions/contacts: d5b6c3f890b3904eaf5754081945c03d
+    auth/oauth/grant/permissions/creatives: e94aee9424bcb3e5fb5884184f510639
+    auth/oauth/grant/permissions/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
+    auth/oauth/grant/permissions/feedback_datasets: 231c23b7f5dfefb852191b8d0ed5939e
+    auth/oauth/grant/permissions/feedback_records: cbf2df8d1e609331329398c45f33b873
+    auth/oauth/grant/permissions/responses: 14bb6c69f906d7bbd1359f7ef1bb3c28
+    auth/oauth/grant/permissions/segments: 271db72d5b973fbc5fadab216177eaae
+    auth/oauth/grant/permissions/survey_styling: 7f96d6563e934e65687b74374a33b1dc
+    auth/oauth/grant/permissions/surveys: 33f68ad4111b32a6361beb9d5c184533
+    auth/oauth/grant/permissions/tags: 97813c8ae67d69575fd04e35a88aed0c
+    auth/oauth/grant/permissions/workflow_runs: 05f81ce9a771ab3ee1aa541211dca0ee
+    auth/oauth/grant/permissions/workflows: b0c9c8615a9ba7d9cb73e767290a7f72
+    auth/oauth/grant/permissions_description: 010ec2550e9c19183d111d0e9cd0d565
+    auth/oauth/grant/permissions_title: 2160be68b1d6b6577e64634e9feba2ed
+    auth/oauth/grant/presets: db7616c227f9759fe2e4a4cba59e8f9f
+    auth/oauth/grant/read_only: 9109fd6e72125af271d41181f1f35dd2
+    auth/oauth/grant/select_all: eedc7cdb02de467c15dc418a066a77f2
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900
     auth/oauth/invalid_oauth_request_description: 39322e962c0c20c766ae82d0b8917ebb
     auth/oauth/localhost_redirect_warning: e0368262d25dc98ea02158eebd0066c1
@@ -89,7 +129,6 @@ checksums:
     auth/oauth/no_authorized_apps: 123853646aab89b3077d604b7ca8313c
     auth/oauth/permissions: 2160be68b1d6b6577e64634e9feba2ed
     auth/oauth/redirect_host: de1344fc555eea56791de81a90295bf5
-    auth/oauth/requested_permissions: 7cd285529a4e57f46975b2623ec87681
     auth/oauth/revoke: be57685a85b6dfeaeb6eab4e9560b520
     auth/oauth/revoke_confirmation: 04bce52d76968647a8c2ba8c8db4c7a9
     auth/oauth/scopes/audience_read: 234ec05eedb255d0a030610bba0a7acd
