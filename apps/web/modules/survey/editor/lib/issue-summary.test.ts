@@ -4,6 +4,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import {
   blockOwnsTarget,
   findIssueOwnerBlock,
+  findRuleId,
   getElementToOpen,
   getIssueLocationDetail,
   getIssueSummaryLabel,
@@ -48,6 +49,25 @@ describe("issue summary helpers", () => {
     ]);
   });
 
+  test("keeps the same message on two different rules as two entries", () => {
+    const first = issue({
+      key: "a",
+      tab: "flow",
+      targetId: "rule1",
+      location: null,
+      message: "Pick a value",
+    });
+    const second = issue({
+      key: "b",
+      tab: "flow",
+      targetId: "rule2",
+      location: null,
+      message: "Pick a value",
+    });
+
+    expect(mergeRepeatedIssues([first, second]).map(({ count }) => count)).toEqual([1, 1]);
+  });
+
   test("labels a repeated entry with its count and a single one with its message", () => {
     expect(getIssueSummaryLabel(issue({}), 1, t)).toBe("Enter an option");
     expect(getIssueSummaryLabel(issue({}), 3, t)).toContain('"count":3');
@@ -64,6 +84,11 @@ describe("issue summary helpers", () => {
     expect(blockOwnsTarget(survey.blocks[0], "q2")).toBe(false);
     expect(findIssueOwnerBlock(survey, "q2")?.id).toBe("b2");
     expect(findIssueOwnerBlock(survey, "nope")).toBeUndefined();
+  });
+
+  test("knows which targets are rules", () => {
+    expect(findRuleId(survey, "rule1")).toBe("rule1");
+    expect(findRuleId(survey, "q1")).toBeNull();
   });
 
   test("opens a block's first question for the block's own issue, and the question itself otherwise", () => {

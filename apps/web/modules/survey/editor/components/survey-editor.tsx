@@ -60,6 +60,7 @@ import { hasSeenFlowTab, markFlowTabSeen } from "@/modules/survey/editor/lib/flo
 import { focusActiveTab, focusIssueTarget } from "@/modules/survey/editor/lib/focus-issue";
 import {
   findIssueOwnerBlock,
+  findRuleId,
   getElementToOpen,
   getIssueLocationDetail,
   getIssueSummaryLabel,
@@ -241,6 +242,8 @@ export const SurveyEditor = ({
   const [reviewFilter, setReviewFilter] = useState<TIssueTab | null>(null);
   // The Flow tab's open blocks, kept here because the tab unmounts on every switch: coming back keeps
   // what was opened and closed. It opens with every block collapsed.
+  // The rule a Review entry points at: the Flow tab opens it, so its fields exist when focus goes there.
+  const [flowRuleToOpen, setFlowRuleToOpen] = useState<{ id: string; request: number } | null>(null);
   const [flowExpandedBlockIds, setFlowExpandedBlockIds] = useState<Set<string>>(() => new Set());
   const flowHandledInvalidRef = useRef<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
@@ -444,6 +447,8 @@ export const SurveyEditor = ({
   useEffect(() => {
     const report = issueReportRef.current;
     if (!report || !debouncedSurveyForIssues) return;
+    // The custom CSS check is still running: its problem stays until it answers, and this runs again then.
+    if (surveyCustomCssValidation.status === "pending") return;
 
     const next = reconcileIssues(report.issues, collectFor(debouncedSurveyForIssues, report.targetStatus));
     setIssueReport((current) => {
@@ -452,7 +457,7 @@ export const SurveyEditor = ({
       return areIssueListsEqual(current.issues, next) ? current : { ...current, issues: next };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see the comment above
-  }, [debouncedSurveyForIssues]);
+  }, [debouncedSurveyForIssues, surveyCustomCssValidation.status]);
 
   if (!localSurvey) {
     return <LoadingSkeleton />;
@@ -465,7 +470,6 @@ export const SurveyEditor = ({
     const targetStatus = issueReport?.targetStatus ?? getPublishTargetStatus(localSurvey);
     const found = collectFor(localSurvey, targetStatus);
     setIssueReport(found.length > 0 ? { issues: found, targetStatus } : null);
-    setSystemError(null);
     setActiveView("review");
   };
 
@@ -486,6 +490,8 @@ export const SurveyEditor = ({
     // The Flow tab opens the block that holds the rule, the show-if's question, or is the show-if's own block.
     const owner = issue.tab === "flow" ? findIssueOwnerBlock(localSurvey, issue.targetId) : undefined;
     if (owner) setFlowExpandedBlockIds((current) => new Set(current).add(owner.id));
+    const ruleId = issue.tab === "flow" ? findRuleId(localSurvey, issue.targetId) : null;
+    if (ruleId) setFlowRuleToOpen((previous) => ({ id: ruleId, request: (previous?.request ?? 0) + 1 }));
     focusIssueTarget(issue);
   };
 
@@ -616,6 +622,7 @@ export const SurveyEditor = ({
               setLocalSurvey={setLocalSurveyNonNull}
               invalidElements={invalidFlowIds}
               expandedBlockIds={flowExpandedBlockIds}
+              ruleToOpen={flowRuleToOpen}
               handledInvalidRef={flowHandledInvalidRef}
               onAddCalculatedField={openEmbeddedDataCard}
               setExpandedBlockIds={setFlowExpandedBlockIds}

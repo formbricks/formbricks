@@ -103,6 +103,8 @@ const splitFieldPath = (fieldPath: TPath): { field: string | null; languageCode?
 const ABSENT_TRANSLATION_PATTERN = /is not present for the following languages: (.+)$/;
 
 const getInvalidLanguageCodes = (issue: TDescribableIssue & { params?: unknown }): string[] => {
+  // "Choice labels are duplicated in German" names languages too, but it is about duplicates, not translations.
+  if (/duplicate/i.test(issue.message)) return [];
   const codes = (issue.params as { invalidLanguageCodes?: unknown } | undefined)?.invalidLanguageCodes;
   if (Array.isArray(codes)) return codes.filter((code): code is string => typeof code === "string");
   const absent = ABSENT_TRANSLATION_PATTERN.exec(issue.message)?.[1];
@@ -207,6 +209,7 @@ const mapRuleIssue = (
 ): TEditorIssue[] => {
   const message =
     getLogicDestinationErrorMessage(issue as never, survey.blocks, t) ??
+    getConditionMessage(issue.message, t) ??
     toFlowTabMessage(issue.message, t("workspace.surveys.edit.flow.tab"));
 
   const targets = ruleIds.length ? ruleIds : [null];
@@ -221,12 +224,17 @@ const getShowIfItemLabel = (collection: string, n: number, t: TFunction): string
   return t("common.choice_n", { n });
 };
 
-/** A show-if the schema rejects, in the author's words: the schema talks about "operands" and "operators". */
-const getShowIfMessage = (schemaMessage: string, t: TFunction): string => {
+/** A condition the schema rejects, in the author's words: the schema talks about "operands" and "operators". */
+const getConditionMessage = (schemaMessage: string, t: TFunction): string | null => {
+  // An operator that takes no value was given one: asking for a value would say the opposite of what to fix.
+  if (/should not be (present|defined)/i.test(schemaMessage)) return null;
   if (/left operand/i.test(schemaMessage)) return t("workspace.surveys.edit.issue_show_if_question");
   if (/right operand/i.test(schemaMessage)) return t("workspace.surveys.edit.issue_show_if_value");
-  return withoutFlowPrefix(schemaMessage);
+  return null;
 };
+
+const getShowIfMessage = (schemaMessage: string, t: TFunction): string =>
+  getConditionMessage(schemaMessage, t) ?? withoutFlowPrefix(schemaMessage);
 
 /**
  * A show-if that does not hold together: the condition of a block, a question or one of its options. These
@@ -361,6 +369,19 @@ const mapBlockIssue = (
 
   if (path[2] === "elements" && typeof path[3] === "number") {
     return mapElementIssue(issue, survey, path, [blockIndex, path[3]], t);
+  }
+
+  if ((path[2] === "buttonLabel" || path[2] === "backButtonLabel") && block) {
+    return [
+      withKey({
+        tab: "elements",
+        targetId: block.id,
+        level: "field",
+        field: path[2],
+        message: getFieldIssueMessage(issue, path[2], { isCard: false }, t),
+        location: t("workspace.surveys.edit.block_n", { blockNumber: blockIndex + 1 }),
+      }),
+    ];
   }
 
   if (path[2] === "name" && block) {

@@ -118,6 +118,8 @@ interface FlowViewProps {
   readonly localSurvey: TSurvey;
   readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   readonly invalidElements: string[] | null;
+  /** A rule to open, when something outside the tab points at it; a new `request` opens it again. */
+  readonly ruleToOpen?: { id: string; request: number } | null;
   /**
    * The blocks open on the Flow tab. Kept by the survey editor: this tab unmounts on every tab switch,
    * and coming back keeps what the person opened and closed. Empty at first: every block collapsed.
@@ -160,6 +162,7 @@ export const FlowView = ({
   setLocalSurvey,
   invalidElements,
   expandedBlockIds,
+  ruleToOpen,
   setExpandedBlockIds,
   handledInvalidRef,
   onAddCalculatedField,
@@ -176,6 +179,9 @@ export const FlowView = ({
   const [popoverBoundary, setPopoverBoundary] = useState<HTMLDivElement | null>(null);
   // One row's settings open at a time, as in the UI mock.
   const [openRowId, setOpenRowId] = useState<string | null>(null);
+  useEffect(() => {
+    if (ruleToOpen) setOpenRowId(ruleToOpen.id);
+  }, [ruleToOpen]);
   const toggleRow = (rowId: string) => setOpenRowId((current) => (current === rowId ? null : rowId));
   // The show-if popover open, keyed by what carries it: `block:<id>`, `element:<id>` or `options:<id>`.
   const [openShowIfKey, setOpenShowIfKey] = useState<string | null>(null);
@@ -541,7 +547,8 @@ export const FlowView = ({
                 {...SHOW_IF_ANCHOR_PROPS}
                 className={cn(
                   "col-span-3 grid min-h-8 scroll-mt-20 grid-cols-subgrid items-center border-b border-slate-100 last:border-b-0",
-                  showIfIssues.length > 0 && "rounded-md ring-1 ring-red-400"
+                  // An offset outline and a margin: room around the row without moving the table's columns.
+                  showIfIssues.length > 0 && "my-2 rounded-md outline-1 outline-offset-[6px] outline-red-400"
                 )}>
                 <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-700">
                   <span className="shrink-0 text-slate-400 [&>svg]:size-3.5" aria-hidden="true">
@@ -564,7 +571,7 @@ export const FlowView = ({
                   <FieldError
                     key={showIfIssue.key}
                     message={showIfIssue.message}
-                    className="col-span-3 px-2 pb-1"
+                    className="col-span-3 pt-1 [&>p]:mb-0"
                   />
                 ))}
               </li>

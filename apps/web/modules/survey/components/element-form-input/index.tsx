@@ -53,6 +53,8 @@ interface ElementFormInputProps {
   readonly value: TI18nString | undefined;
   readonly localSurvey: TSurvey;
   readonly elementIdx: number;
+  /** The id the problem was reported against, when it is not the question at `elementIdx` (a block's own field). */
+  readonly issueTargetId?: string;
   readonly updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
   readonly updateSurvey?: (
     data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
@@ -84,6 +86,7 @@ export const ElementFormInput = ({
   value,
   localSurvey,
   elementIdx,
+  issueTargetId,
   updateElement,
   updateSurvey,
   updateChoice,
@@ -135,9 +138,10 @@ export const ElementFormInput = ({
 
   // The problem the last save attempt found on this very field, shown next to it.
   const issueField = toIssueFieldKey(id);
-  const fieldIssue = useFieldIssue(elementId, issueField);
-  const errorId = `${elementId}-${issueField}-error`;
-  const issueFieldAttribute = getIssueFieldKey(elementId, issueField);
+  const issueTarget = issueTargetId ?? elementId;
+  const fieldIssue = useFieldIssue(issueTarget, issueField);
+  const errorId = `${issueTarget}-${issueField}-error`;
+  const issueFieldAttribute = getIssueFieldKey(issueTarget, issueField);
 
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),

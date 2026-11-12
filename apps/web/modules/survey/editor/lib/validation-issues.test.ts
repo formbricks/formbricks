@@ -405,6 +405,120 @@ describe("getSchemaIssues", () => {
     ]);
   });
 
+  test("says a rule's unfinished condition in the author's words, against the rule", () => {
+    const survey = buildSurvey([
+      {
+        id: "block1",
+        name: "Block 1",
+        elements: [openText({ default: "Name?", de: "Name?" })],
+        logic: [
+          {
+            id: "rule1",
+            conditions: {
+              id: "cl9dsxhzt0000qz0h5z6z6c01",
+              connector: "and",
+              conditions: [
+                {
+                  id: "cl9dsxhzt0000qz0h5z6z6c02",
+                  leftOperand: { type: "element", value: "q1" },
+                  operator: "equals",
+                },
+              ],
+            },
+            actions: [{ id: "cl9dsxhzt0000qz0h5z6z6c03", objective: "jumpToBlock", target: "block2" }],
+          },
+        ],
+      },
+      {
+        id: "block2",
+        name: "Block 2",
+        elements: [{ ...openText({ default: "Age?", de: "Alter?" }), id: "q2" }],
+      },
+    ]);
+
+    expect(getSchemaIssues(survey, t, "en-US")).toEqual([
+      expect.objectContaining({
+        tab: "flow",
+        targetId: "rule1",
+        message: "workspace.surveys.edit.issue_show_if_value",
+      }),
+    ]);
+  });
+
+  test("keeps duplicate choice labels out of the missing-translation count", () => {
+    const survey = buildSurvey([
+      block([
+        {
+          id: "q1",
+          type: "multipleChoiceSingle",
+          headline: { default: "Pick one", de: "Wähle eins" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            { id: "c1", label: { default: "A", de: "Gleich" } },
+            { id: "c2", label: { default: "B", de: "Gleich" } },
+          ],
+        },
+      ]),
+    ]);
+
+    const issues = getSchemaIssues(survey, t, "en-US");
+
+    expect(issues.length).toBeGreaterThan(0);
+    expect(issues.some((found) => found.tab === "language")).toBe(false);
+    expect(issues[0]).toMatchObject({ tab: "elements", targetId: "q1" });
+  });
+
+  test("does not ask for a value when the operator takes none", () => {
+    const survey = buildSurvey([
+      {
+        id: "block1",
+        name: "Block 1",
+        elements: [openText({ default: "Name?", de: "Name?" })],
+      },
+      {
+        id: "block2",
+        name: "Block 2",
+        elements: [
+          {
+            ...openText({ default: "Age?", de: "Alter?" }),
+            id: "q2",
+            showIf: {
+              id: "cl9dsxhzt0000qz0h5z6z6c01",
+              connector: "and",
+              conditions: [
+                {
+                  id: "cl9dsxhzt0000qz0h5z6z6c02",
+                  leftOperand: { type: "element", value: "q1" },
+                  operator: "isSubmitted",
+                  rightOperand: { type: "static", value: "x" },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ]);
+
+    const found = getSchemaIssues(survey, t, "en-US").filter((entry) => entry.tab === "flow");
+
+    expect(found.length).toBeGreaterThan(0);
+    expect(found.some((entry) => entry.message.includes("issue_show_if_value"))).toBe(false);
+  });
+
+  test("puts a block's own button label problem on the block, against the label's field", () => {
+    const survey = buildSurvey([
+      {
+        ...block([openText({ default: "Name?", de: "Name?" })]),
+        buttonLabel: { default: 5, de: "Weiter" },
+      },
+    ]);
+
+    expect(getSchemaIssues(survey, t, "en-US")).toEqual([
+      expect.objectContaining({ tab: "elements", targetId: "block1", field: "buttonLabel" }),
+    ]);
+  });
+
   test("flags an empty block name on the block, not on a question", () => {
     const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })], "")]);
 

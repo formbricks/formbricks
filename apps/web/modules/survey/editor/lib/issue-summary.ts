@@ -11,7 +11,7 @@ import { TEditorIssue, sortIssuesForSummary } from "./validation-issues";
 export const mergeRepeatedIssues = (issues: TEditorIssue[]): { issue: TEditorIssue; count: number }[] => {
   const repeats = new Map<string, { issue: TEditorIssue; count: number }>();
   for (const issue of sortIssuesForSummary(issues)) {
-    const repeatKey = [issue.tab, issue.location, issue.message].join("|");
+    const repeatKey = [issue.tab, issue.targetId, issue.location, issue.message].join("|");
     const seen = repeats.get(repeatKey);
     if (seen) seen.count += 1;
     else repeats.set(repeatKey, { issue, count: 1 });
@@ -45,6 +45,14 @@ export const blockOwnsTarget = (block: TBlock, targetId: string): boolean =>
 
 export const findIssueOwnerBlock = (survey: TSurvey, targetId: string): TBlock | undefined =>
   survey.blocks.find((block) => blockOwnsTarget(block, targetId));
+
+/** The target, when it is one of the survey's rules (a block's, or one before the first question). */
+export const findRuleId = (survey: TSurvey, targetId: string): string | null => {
+  const isRule =
+    survey.blocks.some((block) => block.logic?.some((rule) => rule.id === targetId)) ||
+    !!survey.startLogic?.some((rule) => rule.id === targetId);
+  return isRule ? targetId : null;
+};
 
 /**
  * The question to open for an issue on the Questions tab: a block's own issue (its name) opens its first

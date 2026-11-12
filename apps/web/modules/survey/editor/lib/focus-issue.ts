@@ -73,7 +73,10 @@ export const focusIssueTarget = ({ targetId, field }: Pick<TEditorIssue, "target
       const focusable = findFieldControl(node);
       focusable?.focus({ preventScroll: true });
       if (focusable) keepFocusOutOfPreview(focusable);
-      (focusable ?? node).scrollIntoView({ behavior: "smooth", block: "center" });
+      (focusable ?? node).scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
       return;
     }
 

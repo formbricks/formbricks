@@ -1155,30 +1155,23 @@ test.describe("Publishing a survey with problems", () => {
     const summary = page.getByRole("region", { name: helper.EDITOR_PROBLEMS_NAME });
     const goToFirstProblem = summary.getByRole("button", { name: "Go to first" });
 
-    // The live preview re-renders after an edit and moves focus to its own first control when it is done,
-    // which can land after the editor has focused something. Each focus check below therefore repeats the
-    // action that should leave focus there, instead of waiting a fixed time for the preview to settle.
     await test.step("an emptied question headline stops the publish and is listed", async () => {
       await expect(headline).toBeVisible();
       await headline.fill("");
-      // The editor reads the survey as it was when the edit settled; publishing before that would publish it.
+      // The live preview re-renders after the edit, and may move focus to its own first control when it is
+      // done. Waiting for it to show the empty headline settles that before anything below is clicked, and
+      // the editor reads the survey as it was when the edit settled.
       await expect(page.getByText("What would you like to know?")).toBeHidden();
 
-      await expect(async () => {
-        await page.getByRole("button", { name: "Activate", exact: true }).click();
-        await expect(summary.getByRole("heading", { name: helper.EDITOR_PROBLEMS_NAME })).toBeFocused({
-          timeout: 2000,
-        });
-      }).toPass({ timeout: 20_000 });
+      await page.getByRole("button", { name: "Activate", exact: true }).click();
+      await expect(summary.getByRole("heading", { name: helper.EDITOR_PROBLEMS_NAME })).toBeFocused();
       await expect(summary).toContainText("There is a problem");
       await expect(goToFirstProblem).toBeVisible();
     });
 
     await test.step("the bar goes to the field", async () => {
-      await expect(async () => {
-        await goToFirstProblem.click();
-        await expect(headline).toBeFocused({ timeout: 2000 });
-      }).toPass({ timeout: 20_000 });
+      await goToFirstProblem.click();
+      await expect(headline).toBeFocused();
     });
 
     await test.step("fixing it clears the problem and the survey publishes", async () => {
