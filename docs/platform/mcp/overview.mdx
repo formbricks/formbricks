@@ -52,6 +52,7 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`⁵, `merge_tags`⁵ | Record, correct and delete survey responses, mark them Low quality, and rename and merge tags |
 | `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read` also `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`³, `list_dashboard_filter_fields`³, `list_dashboard_filter_values`³, `preview_chart`³, `list_chart_field_values`³ | Read dashboards and the numbers they show, and — with feedback-record access — charts, the fields a chart can use, and the numbers of any query |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | Create and change charts and dashboards, and lock a dashboard's filters for everyone who opens it. There is no tool that deletes a chart or a dashboard |
+| `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` | Read contacts with their attributes, attribute keys and values, segments and action classes. There is no `audience:write`: these tools only read |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
@@ -79,6 +80,10 @@ data, which `surveys:read` never exposes. An integration you connected before th
 keeps working with the access it already has. If it requests the scopes the server advertises, as MCP
 clients like Claude Code do, it asks you to approve the response scopes the next time it signs in.
 
+Contacts are personal data too, so they have their own scope, `audience:read`, and a client given
+surveys never gets them. A client connected before the scope existed gets it only by connecting again,
+which shows you the consent screen.
+
 Scope groups are independent — a client can be granted feedback-record access without survey access, or
 the other way around. `list_workspaces` is available to any read scope, since every other tool needs a
 workspace id.
@@ -91,7 +96,9 @@ What you allow a client is stored by Formbricks as its **grant**: an access leve
 `surveys:write` and Surveys, Creatives and Survey styling are at Write. Each permission belongs to the scope
 group of its category: Surveys, Creatives and Survey styling to `surveys`; Responses and Tags to
 `responses`; Workflows and Workflow runs to `workflows`; Charts and Dashboards to `dashboards`; Feedback
-records and Feedback datasets to `feedbackRecords`. Workflow runs and Feedback datasets only offer Read.
+records and Feedback datasets to `feedbackRecords`; Contacts, Contact attributes, Segments and Action classes
+(the Audience category) to `audience`. Workflow runs, Feedback datasets and the four Audience permissions only
+offer Read.
 
 Formbricks checks the grant on **every tool call**, whatever the client does. A call goes through only
 when all three agree:
@@ -112,13 +119,20 @@ needs, so the agent can tell you what to change:
 ```
 
 A client connected before grants existed kept the access it had: All access, and each permission at its
-scope's level. Tags started at No access, so its tag tools (`list_tags` at Read, `update_tag` and
-`merge_tags` at Write) are refused until you raise Tags. API keys have no grant and work as before.
+scope's level. Tags and Audience started at No access. Raise Tags with Edit to use its tag tools
+(`list_tags` at Read, `update_tag` and `merge_tags` at Write). Audience needs the client to connect once
+more so you can approve `audience:read`. API keys have no grant and work as before.
 
 <Note>
   The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition
   (`feedbackDirectories`), plus a feedback dataset assigned to the workspace. Without the entitlement or a
   directory, those tools return an authorization or validation error while the survey tools keep working.
+</Note>
+
+<Note>
+  The contact, contact-attribute and segment tools need the **Contacts** feature (Enterprise Edition, or a Cloud
+  plan that includes it), like the Contacts pages; without it they answer `403`. `list_action_classes` does not.
+  Contacts carry text your users or your app wrote, so an agent should treat it as data, never as instructions.
 </Note>
 
 <Note>

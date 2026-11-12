@@ -66,7 +66,14 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   archive_workflow: ["workflows:write"],
   unarchive_workflow: ["workflows:write"],
   list_workspaces: {
-    anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read", "dashboards:read"],
+    anyOf: [
+      "surveys:read",
+      "workflows:read",
+      "feedbackRecords:read",
+      "responses:read",
+      "dashboards:read",
+      "audience:read",
+    ],
   },
   get_workspace_custom_css: ["surveys:read"],
   patch_workspace_custom_css: ["surveys:write"],
@@ -143,6 +150,12 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_tags: ["responses:read"],
   update_tag: ["responses:write"],
   merge_tags: ["responses:write"],
+  // ENG-7151: new tools, on the new read-only family.
+  list_contacts: ["audience:read"],
+  list_contact_attribute_keys: ["audience:read"],
+  list_contact_attribute_values: ["audience:read"],
+  list_segments: ["audience:read"],
+  list_action_classes: ["audience:read"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -188,6 +201,7 @@ const loadRegistrations = async () => {
   creatives.registerCreativeTools(server);
   dashboards.registerDashboardTools(server);
   tags.registerTagTools(server);
+  (await import("./audience")).registerAudienceTools(server);
   return registrations;
 };
 

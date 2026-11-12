@@ -11,6 +11,7 @@ import {
   V3_SURVEY_MAX_VARIABLES,
 } from "@/app/api/v3/surveys/schemas";
 import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/lib/creative-texts";
+import * as audienceSchemas from "./audience-schemas";
 import * as creativeSchemas from "./creative-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as tagSchemas from "./tag-schemas";
@@ -136,6 +137,7 @@ const allExports: [string, unknown][] = Object.entries({
   ...workflowSchemas,
   ...creativeSchemas,
   ...tagSchemas,
+  ...audienceSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);

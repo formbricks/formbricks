@@ -20,11 +20,10 @@ import type { TMcpScopeFamily } from "@/modules/auth/lib/oauth-urls";
 export type TMcpAccessLevel = "none" | "read" | "write";
 
 /**
- * A scope family that caps a permission. `audience` is in the catalogue before it is an OAuth scope:
- * ENG-7151 adds `audience:read` to `MCP_SCOPE_FAMILIES` with its migrations. Until then no token holds it,
- * so a tool declaring an Audience permission is refused for every OAuth token — it fails closed.
+ * A scope family that caps a permission. `audience` is read-only (`MCP_READ_ONLY_SCOPE_FAMILIES`): it has
+ * `audience:read` and no write scope, so its permissions offer No access and Read only.
  */
-export type TMcpPermissionScopeFamily = TMcpScopeFamily | "audience";
+export type TMcpPermissionScopeFamily = TMcpScopeFamily;
 
 export const MCP_PERMISSION_CATEGORIES = [
   "surveys",

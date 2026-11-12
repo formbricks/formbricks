@@ -120,6 +120,7 @@ Supported scopes:
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`, `merge_tags` |
 | `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
+| `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` (read-only family: there is no `audience:write`) |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
 | `email` | User email claim |
@@ -180,8 +181,8 @@ own memberships and key grants, so admitting any read scope exposes nothing extr
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
 needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, `feedbackRecords:read`,
-`feedbackRecords:write`, `responses:read`, `responses:write`, `dashboards:read`, `dashboards:write`, and
-`offline_access`. Clients derive their Dynamic Client Registration scopes
+`feedbackRecords:write`, `responses:read`, `responses:write`, `dashboards:read`, `dashboards:write`,
+`audience:read`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
 from that list, so `offline_access` must be advertised there for clients to be issued refresh tokens
 (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
@@ -287,9 +288,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `list_dashboard_filter_values` | `read`, and read access to each feedback dataset its charts read |
 | `create_chart`, `duplicate_chart` | `write` or `manage`, and write access to the feedback dataset |
 | `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
+| `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` | `read`; all but `list_action_classes` also need the Contacts entitlement |
 
 Synthesized MCP scopes for an API key: every `:read` scope always (`surveys`, `workflows`,
-`feedbackRecords`, `responses`, `dashboards`); the matching `:write` scopes when the key has `write` or
+`feedbackRecords`, `responses`, `dashboards`, `audience`); the matching `:write` scopes when the key has `write` or
 `manage` on any workspace — so every existing write key can manage charts and dashboards. The scope
 gate and the per-workspace access check above are independent — a `:write` tool requires **both** the
 `:write` scope on the token and write/manage on the target workspace.
@@ -778,6 +780,10 @@ Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resourc
    hold a read scope) and skip `skipConsent` clients, as `20261005130000_eng_3470_grant_responses_scopes_to_clients`
    does. Without it, every client registered before the scope existed requests it and gets `invalid_scope`
    at its next sign-in (see [Authentication](#authentication)).
+
+A family whose tools only read goes in `MCP_READ_ONLY_SCOPE_FAMILIES` instead of `MCP_SCOPE_FAMILIES`: it gets
+`<family>:read` and no write scope, its permissions offer only No access and Read, and both migrations grant only
+the read scope (`audience`, ENG-7151: 20261112130000 and 20261112130001).
 
 ### What makes a tool good
 
@@ -1646,6 +1652,30 @@ writes the chart query itself.
   stale `expectedUpdatedAt` `409`. Locked filters are ANDed; there are no OR groups.
 
 Every write runs through `runMcpMutation`, so it leaves the same audit event as the REST call.
+
+### Audience tools
+
+Five read-only, idempotent tools over the v3 Audience list operations (`modules/mcp/tools/audience.ts`), one per
+operation, with no write tools. Each declares its Audience permission at Read — Contacts, Contact attributes
+(keys and values), Segments, Action classes — capped by `audience:read`. The operations own the workspace check
+and the Contacts entitlement (all but action classes), exactly as over REST.
+
+| Tool | REST operation | Permission |
+| --- | --- | --- |
+| `list_contacts` | `GET /api/v3/contacts` | Contacts: Read |
+| `list_contact_attribute_keys` | `GET /api/v3/contact-attribute-keys` | Contact attributes: Read |
+| `list_contact_attribute_values` | `GET /api/v3/contacts/attribute-values` | Contact attributes: Read |
+| `list_segments` | `GET /api/v3/segments` | Segments: Read |
+| `list_action_classes` | `GET /api/v3/action-classes` | Action classes: Read |
+
+- **Smaller pages.** `list_contacts` and `list_segments` default to 20 and cap at 50 (the API allows 250): a
+  contact carries every attribute it has, a segment its filter tree. The key and value lists cap at 100.
+- **Filters in the query's own terms.** `list_contacts` takes `filter.attributes: [{ key, operator, values }]`,
+  sent as `filter[attribute.<key>][<operator>]`; the operation types each against the key's `dataType` and answers
+  `invalid_params` for a wrong operator or value. An operator that compares needs `values`; only `isSet` and
+  `isNotSet` take none, so a filter is never dropped silently.
+- **Untrusted text.** Contact attribute values are written by end users and SDK calls. The descriptions tell the
+  agent to treat them as data; nothing on our side acts on them.
 
 ### list_feedback_datasets
 

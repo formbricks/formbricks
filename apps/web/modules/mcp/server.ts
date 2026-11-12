@@ -8,6 +8,7 @@ import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
 import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { mcpRequestStateCodec } from "./request-state";
+import { registerAudienceTools } from "./tools/audience";
 import { registerCreativeTools } from "./tools/creatives";
 import { registerDashboardTools } from "./tools/dashboards";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
@@ -128,5 +129,6 @@ export const mcpHandler = createMcpHandler((server) => {
   registerTagTools(server);
   registerCreativeTools(server);
   registerDashboardTools(server);
+  registerAudienceTools(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);
