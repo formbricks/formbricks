@@ -27,6 +27,7 @@ vi.mock("./guard-permissions", () => ({
 // declarations under test do not depend on them.
 vi.mock("@/app/api/v3/responses/lib/operations", () => ({}));
 vi.mock("@/app/api/v3/responses/lib/validate-operations", () => ({}));
+vi.mock("@/app/api/v3/tags/lib/operations", () => ({}));
 
 type TScopeGate =
   | string[]
@@ -86,6 +87,7 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   update_response: ["responses:write"],
   delete_response: ["responses:write"],
   batch_delete_responses: ["responses:write"],
+  set_responses_outcome: ["responses:write"],
   list_creatives: ["surveys:read"],
   get_creative: ["surveys:read"],
   get_creative_stats: ["surveys:read"],
@@ -137,6 +139,9 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   update_dashboard_layout: ["dashboards:write"],
   set_dashboard_filters: ["dashboards:write"],
   duplicate_chart: ["dashboards:write"],
+  list_tags: ["responses:read"],
+  update_tag: ["responses:write"],
+  merge_tags: ["responses:write"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -162,7 +167,7 @@ const toScopeGate = (permissions: TDeclared): TScopeGate => {
 };
 
 const loadRegistrations = async () => {
-  const [surveys, workflows, workspaces, feedbackRecords, responses, creatives, dashboards] =
+  const [surveys, workflows, workspaces, feedbackRecords, responses, creatives, dashboards, tags] =
     await Promise.all([
       import("./surveys"),
       import("./workflows"),
@@ -171,6 +176,7 @@ const loadRegistrations = async () => {
       import("./responses"),
       import("./creatives"),
       import("./dashboards"),
+      import("./tags"),
     ]);
   const server = { registerTool: vi.fn() } as unknown as Parameters<typeof surveys.registerSurveyTools>[0];
   surveys.registerSurveyTools(server);
@@ -180,6 +186,7 @@ const loadRegistrations = async () => {
   responses.registerResponseTools(server);
   creatives.registerCreativeTools(server);
   dashboards.registerDashboardTools(server);
+  tags.registerTagTools(server);
   return registrations;
 };
 

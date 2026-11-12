@@ -10,6 +10,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
   batchDeleteV3Responses,
+  batchSetV3ResponsesOutcome,
   countV3ResponsesOperation,
   createV3ResponseFromRawInput,
   deleteV3Response,
@@ -30,6 +31,7 @@ import {
   type TMcpDeleteResponseInput,
   type TMcpGetResponseInput,
   type TMcpListResponsesInput,
+  type TMcpSetResponsesOutcomeInput,
   type TMcpUpdateResponseInput,
   type TMcpValidateResponseInput,
   ZMcpBatchDeleteResponsesInput,
@@ -39,11 +41,13 @@ import {
   ZMcpGetResponseInput,
   ZMcpListResponsesInput,
   ZMcpResponseBatchDeleteOutput,
+  ZMcpResponseBatchOutcomeOutput,
   ZMcpResponseCountOutput,
   ZMcpResponseDeleteOutput,
   ZMcpResponseListOutput,
   ZMcpResponseOutput,
   ZMcpResponseValidationOutput,
+  ZMcpSetResponsesOutcomeInput,
   ZMcpUpdateResponseInput,
   ZMcpValidateResponseInput,
 } from "./response-schemas";
@@ -51,7 +55,8 @@ import { runMcpMutation } from "./run-mcp-mutation";
 import { READ_ANNOTATIONS, toolContext } from "./tool-context";
 
 /**
- * MCP tools over the v3 Responses API — one per documented operation, and no more.
+ * MCP tools over the v3 Responses API — one per documented operation, and no more. Tags have their own
+ * module (`tags.ts`), though they share the `responses` scope family.
  *
  * **The tool set mirrors the API deliberately.** Every tool here is one v3 operation, so what an
  * agent can do through MCP is exactly what an API key can do over HTTP, and the answer to "can the
@@ -316,6 +321,51 @@ export function registerResponseTools(server: McpServer): void {
           updateV3ResponseFromRawInput({
             responseId: input.responseId,
             body: input.data,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          })
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "set_responses_outcome",
+    {
+      title: "Mark responses Low quality",
+      description: [
+        "Mark up to 100 survey responses Low quality, or restore them with outcome: null, in one",
+        "transaction. Ids outside the workspace are ignored; `updated` counts the responses in scope.",
+        "Fires the response pipeline for each response that changed.",
+        FEEDBACK_RECORD_BOUNDARY_SHORT,
+      ].join(" "),
+      inputSchema: ZMcpSetResponsesOutcomeInput,
+      outputSchema: ZMcpResponseBatchOutcomeOutput,
+      audit: { action: "updated", targetType: "response" },
+      annotations: {
+        readOnlyHint: false,
+        // The previous outcome is one of two values and restoring it is the same call with the other,
+        // so nothing is lost. Repeating a call converges: `updated` counts responses already marked.
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "responses", level: "write" }],
+    async (input: TMcpSetResponsesOutcomeInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        {
+          action: "updated",
+          resource: "response",
+          logContext: { workspaceId: input.workspaceId, count: input.ids.length },
+        },
+        ({ authentication, requestId, auditLog }) =>
+          batchSetV3ResponsesOutcome({
+            workspaceId: input.workspaceId,
+            ids: input.ids,
+            outcome: input.outcome,
             authentication,
             requestId,
             instance: MCP_API_ROUTE,

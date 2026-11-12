@@ -13,6 +13,7 @@ import { registerDashboardTools } from "./tools/dashboards";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
 import { registerResponseTools } from "./tools/responses";
 import { registerSurveyTools } from "./tools/surveys";
+import { registerTagTools } from "./tools/tags";
 import { registerWorkflowTools } from "./tools/workflows";
 import { registerWorkspaceTools } from "./tools/workspaces";
 
@@ -124,6 +125,7 @@ export const mcpHandler = createMcpHandler((server) => {
   registerWorkspaceTools(server);
   registerFeedbackRecordTools(server);
   registerResponseTools(server);
+  registerTagTools(server);
   registerCreativeTools(server);
   registerDashboardTools(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);

@@ -18,6 +18,7 @@ vi.mock("./tools/creatives", () => ({ registerCreativeTools: vi.fn() }));
 vi.mock("./tools/feedback-records", () => ({ registerFeedbackRecordTools: vi.fn() }));
 vi.mock("./tools/responses", () => ({ registerResponseTools: vi.fn() }));
 vi.mock("./tools/surveys", () => ({ registerSurveyTools: vi.fn() }));
+vi.mock("./tools/tags", () => ({ registerTagTools: vi.fn() }));
 vi.mock("./tools/workflows", () => ({ registerWorkflowTools: vi.fn() }));
 vi.mock("./tools/workspaces", () => ({ registerWorkspaceTools: vi.fn() }));
 
