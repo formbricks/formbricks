@@ -6,7 +6,11 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
-import { getMcpGrantPermissionsForScopes } from "@/modules/mcp/grant";
+import {
+  type TMcpGrantPermissions,
+  capMcpGrantPermissions,
+  getMcpGrantPermissionsForScopes,
+} from "@/modules/mcp/grant";
 import {
   type TStoredMcpGrant,
   deleteMcpGrants,
@@ -14,6 +18,7 @@ import {
   queueMcpGrantAudit,
   saveMcpGrant,
 } from "@/modules/mcp/grant-store";
+import { getApprovedMcpGrantPermissions } from "./mcp-grant-consent";
 import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
 
 /**
@@ -438,6 +443,11 @@ type TConsentChange = {
    * the grant out of it, and the token check bounds the consent's scopes anyway.
    */
   savesGrant: boolean;
+  /**
+   * The levels the user chose in the consent screen's matrix (ENG-7150), saved capped by the consent's
+   * scopes; `null` saves what the scopes give.
+   */
+  chosenPermissions: TMcpGrantPermissions | null;
   target: TConsentTarget;
   isLatestWrite: (consent: TConsentRow) => boolean;
 };
@@ -468,6 +478,7 @@ const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | nul
     const approved = (typeof bodyScope === "string" ? bodyScope : query.get("scope"))?.split(" ") ?? [];
     return {
       savesGrant: accepted,
+      chosenPermissions: getApprovedMcpGrantPermissions(ctx),
       target: { clientId },
       isLatestWrite: (consent) => wrote(consent) && sameScopes(consent.scopes, approved),
     };
@@ -477,6 +488,7 @@ const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | nul
     if (typeof consentId !== "string") return null;
     return {
       savesGrant: false,
+      chosenPermissions: null,
       target: { consentId },
       isLatestWrite: (consent) => wrote(consent) && consent.id === consentId,
     };
@@ -486,8 +498,9 @@ const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | nul
 
 /**
  * `hooks.after` for `POST /oauth2/consent` and `POST /oauth2/update-consent`. Once the provider has
- * written the consent, saves the grant an approval gives (ENG-7149: the levels its scopes give, All
- * access, replacing any earlier grant of the connection, and audited), and ends the client's tokens for
+ * written the consent, saves the grant an approval gives (ENG-7149/7150: the levels the user chose in the
+ * consent screen's matrix, capped by the consent's scopes, or the levels the scopes give when the
+ * approval chose none; All access, replacing any earlier grant of the connection, and audited), and ends the client's tokens for
  * the user that reach past the consent, so a narrowed approval takes effect now rather than at each
  * token's next refresh.
  *
@@ -564,11 +577,12 @@ const endTokensBeyondChangedConsent = (userId: string, change: TConsentChange) =
     const consent = await settleConsent(tx, userId, change);
     if (!consent) return null;
     const { clientId, scopes: consentedScopes } = consent;
+    const cap = getMcpGrantPermissionsForScopes(consentedScopes);
     const savedGrant = change.savesGrant
       ? await saveMcpGrant(tx, {
           userId,
           clientId,
-          permissions: getMcpGrantPermissionsForScopes(consentedScopes),
+          permissions: change.chosenPermissions ? capMcpGrantPermissions(change.chosenPermissions, cap) : cap,
         })
       : null;
     return {

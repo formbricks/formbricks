@@ -1,0 +1,49 @@
+import { describe, expect, test } from "vitest";
+import { capMcpGrantPermissions, getMcpGrantPermissionsForScopes, parseRequestedMcpGrant } from "./grant";
+
+describe("capMcpGrantPermissions", () => {
+  test("keeps each level the scopes allow and lowers the ones above them", () => {
+    const cap = getMcpGrantPermissionsForScopes(["surveys:read", "responses:write"]);
+
+    expect(
+      capMcpGrantPermissions({ surveys: "write", creatives: "read", responses: "write", tags: "read" }, cap)
+    ).toEqual({ surveys: "read", creatives: "read", responses: "write", tags: "read" });
+  });
+
+  test("drops a permission whose scope family the client did not ask for", () => {
+    const cap = getMcpGrantPermissionsForScopes(["surveys:write"]);
+
+    expect(capMcpGrantPermissions({ surveys: "write", workflows: "write", contacts: "read" }, cap)).toEqual({
+      surveys: "write",
+    });
+  });
+
+  test("gives nothing when the client asked for no MCP scope", () => {
+    const cap = getMcpGrantPermissionsForScopes(["openid", "profile", "email", "offline_access"]);
+
+    expect(capMcpGrantPermissions({ surveys: "write", dashboards: "read" }, cap)).toEqual({});
+  });
+});
+
+describe("parseRequestedMcpGrant", () => {
+  test("reads the permissions a consent request chose", () => {
+    expect(parseRequestedMcpGrant({ permissions: { surveys: "write", workflowRuns: "read" } })).toEqual({
+      surveys: "write",
+      workflowRuns: "read",
+    });
+  });
+
+  test.each([
+    ["no permission given", { permissions: {} }],
+    ["an unknown permission", { permissions: { surveys: "read", everything: "write" } }],
+    ["a level the permission doesn't offer", { permissions: { workflowRuns: "write" } }],
+    ["No access spelled out", { permissions: { surveys: "none" } }],
+    ["an inherited key", { permissions: JSON.parse('{"__proto__": "write", "surveys": "read"}') as object }],
+    ["an extra field", { permissions: { surveys: "read" }, access: "all" }],
+    ["no permissions field", {}],
+    ["a string", "surveys:write"],
+    ["null", null],
+  ])("refuses %s", (_case, value) => {
+    expect(parseRequestedMcpGrant(value)).toBeNull();
+  });
+});

@@ -3,6 +3,7 @@ import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 import {
   MCP_PERMISSIONS,
   MCP_PERMISSION_CATEGORIES,
+  MCP_PERMISSION_DEPENDENCIES,
   getMcpPermissionScope,
   isMcpPermissionRequirement,
 } from "./permissions";
@@ -108,6 +109,22 @@ describe("MCP permission registry", () => {
   test("every permission belongs to a listed category, and every category has a permission", () => {
     const used = new Set(Object.values(MCP_PERMISSIONS).map(({ category }) => category));
     expect([...used].sort()).toEqual([...MCP_PERMISSION_CATEGORIES].sort());
+  });
+});
+
+describe("MCP_PERMISSION_DEPENDENCIES", () => {
+  test("names, for each permission, other registered permissions at levels they offer", () => {
+    for (const [permission, requirements] of Object.entries(MCP_PERMISSION_DEPENDENCIES)) {
+      expect(Object.hasOwn(MCP_PERMISSIONS, permission)).toBe(true);
+      for (const requirement of requirements ?? []) {
+        expect(isMcpPermissionRequirement(requirement)).toBe(true);
+        expect(requirement.permission).not.toBe(permission);
+      }
+    }
+  });
+
+  test("Charts needs Feedback records: Read", () => {
+    expect(MCP_PERMISSION_DEPENDENCIES.charts).toEqual([{ permission: "feedbackRecords", level: "read" }]);
   });
 });
 
