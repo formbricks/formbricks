@@ -75,6 +75,37 @@ Scope groups are independent — a client can be granted feedback-record access 
 the other way around. `list_workspaces` is available to any read scope, since every other tool needs a
 workspace id.
 
+### Grants
+
+What you allow a client is stored by Formbricks as its **grant**: an access level for each permission —
+**No access**, **Read** or **Write** — where Write also lets the client read and delete. When you click
+**Allow**, the grant gives each permission the level of the scope the client asked for: approve
+`surveys:write` and Surveys, Creatives and Survey styling are at Write. Each permission belongs to the scope
+group of its category: Surveys, Creatives and Survey styling to `surveys`; Responses and Tags to
+`responses`; Workflows and Workflow runs to `workflows`; Charts and Dashboards to `dashboards`; Feedback
+records and Feedback datasets to `feedbackRecords`. Workflow runs and Feedback datasets only offer Read.
+
+Formbricks checks the grant on **every tool call**, whatever the client does. A call goes through only
+when all three agree:
+
+- the client's scopes reach the permission (scopes cap the grant; a higher level needs a reconnect);
+- the grant gives the permission at the level the tool needs;
+- your own role allows it — a client never does more than you can, and loses what you lose.
+
+A tool the grant doesn't cover is refused with a `403` whose `detail` names the permission and level it
+needs, so the agent can tell you what to change:
+
+```json
+{
+  "status": 403,
+  "code": "forbidden",
+  "detail": "Not permitted: the user's grant to this MCP client does not give Surveys: Write. Ask the user to give the client this access."
+}
+```
+
+A client connected before grants existed kept the access it had: All access, and each permission at its
+scope's level. Tags started at No access. API keys have no grant and work as before.
+
 <Note>
   The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition
   (`feedbackDirectories`), plus a feedback dataset assigned to the workspace. Without the entitlement or a
