@@ -98,7 +98,8 @@ export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/u
  * The MCP resource scope families, each one a `<family>:read` / `<family>:write` pair. Every list of
  * resource scopes below, the API-key scope mapping (`getMcpScopes`) and the `list_workspaces` gate derive
  * from this one array, so a new family is one entry here plus what this array cannot do for it: its
- * consent labels (`getOAuthScopeLabel`) and its two repair migrations.
+ * permissions in the MCP permission catalogue (`MCP_PERMISSIONS`, their `scopeFamily`) and its two repair
+ * migrations.
  *
  * ENG-2862: responses got their own pair rather than riding on `surveys:*`, which would silently widen
  * every token an integrator already holds to include respondent PII — the survey document is

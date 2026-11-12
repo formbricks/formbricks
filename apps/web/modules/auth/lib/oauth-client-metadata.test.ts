@@ -1,9 +1,6 @@
 import { describe, expect, test } from "vitest";
-import enUS from "@/locales/en-US.json";
-import { getHostFromUrl, getOAuthScopeLabel, isLocalhostHost } from "./oauth-client-metadata";
+import { getHostFromUrl, isLocalhostHost } from "./oauth-client-metadata";
 import { MCP_OAUTH_SCOPES, MCP_PROTECTED_RESOURCE_SCOPES, MCP_RESOURCE_SCOPES } from "./oauth-urls";
-
-const t = (key: string) => `translated:${key}`;
 
 describe("OAuth client metadata helpers", () => {
   test("extracts hosts from valid URLs", () => {
@@ -25,45 +22,6 @@ describe("OAuth client metadata helpers", () => {
     expect(isLocalhostHost("127.0.0.1.example.com")).toBe(false);
     expect(isLocalhostHost("[::1].example.com")).toBe(false);
     expect(isLocalhostHost(null)).toBe(false);
-  });
-
-  // Derived from MCP_OAUTH_SCOPES rather than listed by hand: the hand-written enumeration below used
-  // to be the only check, so adding a scope without a label left `getOAuthScopeLabel` falling through
-  // to `default: return scope` and the consent screen showing a raw `responses:write` — with every test
-  // still green. Proven by adding the two ENG-2862 scopes and watching nothing fail.
-  test("gives every grantable scope a label, and every label a translation", () => {
-    const missingLabel = MCP_OAUTH_SCOPES.filter((scope) => getOAuthScopeLabel(scope, t) === scope);
-    expect(missingLabel).toEqual([]);
-
-    // The key has to exist in en-US too, or the label is the key rendered verbatim.
-    const missingTranslation = MCP_OAUTH_SCOPES.map((scope) => getOAuthScopeLabel(scope, t))
-      .map((label) => label.replace("translated:auth.oauth.scopes.", ""))
-      .filter((key) => !(key in enUS.auth.oauth.scopes));
-    expect(missingTranslation).toEqual([]);
-  });
-
-  test("maps known OAuth scopes to localized labels", () => {
-    expect(getOAuthScopeLabel("openid", t)).toBe("translated:auth.oauth.scopes.openid");
-    expect(getOAuthScopeLabel("profile", t)).toBe("translated:auth.oauth.scopes.profile");
-    expect(getOAuthScopeLabel("email", t)).toBe("translated:auth.oauth.scopes.email");
-    expect(getOAuthScopeLabel("offline_access", t)).toBe("translated:auth.oauth.scopes.offline_access");
-    expect(getOAuthScopeLabel("surveys:read", t)).toBe("translated:auth.oauth.scopes.surveys_read");
-    expect(getOAuthScopeLabel("surveys:write", t)).toBe("translated:auth.oauth.scopes.surveys_write");
-    expect(getOAuthScopeLabel("workflows:read", t)).toBe("translated:auth.oauth.scopes.workflows_read");
-    expect(getOAuthScopeLabel("workflows:write", t)).toBe("translated:auth.oauth.scopes.workflows_write");
-    expect(getOAuthScopeLabel("feedbackRecords:read", t)).toBe(
-      "translated:auth.oauth.scopes.feedback_records_read"
-    );
-    expect(getOAuthScopeLabel("feedbackRecords:write", t)).toBe(
-      "translated:auth.oauth.scopes.feedback_records_write"
-    );
-    expect(getOAuthScopeLabel("responses:read", t)).toBe("translated:auth.oauth.scopes.responses_read");
-    expect(getOAuthScopeLabel("responses:write", t)).toBe("translated:auth.oauth.scopes.responses_write");
-    expect(getOAuthScopeLabel("audience:read", t)).toBe("translated:auth.oauth.scopes.audience_read");
-  });
-
-  test("keeps unknown OAuth scopes readable", () => {
-    expect(getOAuthScopeLabel("custom:scope", t)).toBe("custom:scope");
   });
 });
 
