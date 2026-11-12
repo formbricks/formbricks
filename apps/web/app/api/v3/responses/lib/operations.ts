@@ -6,6 +6,7 @@ import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
+import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   type InvalidParam,
   createdResponse,
@@ -20,6 +21,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { validateResponseData } from "@/modules/api/lib/validation";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getSurveyUploadElementConfigs } from "@/modules/storage/survey-upload-elements";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { buildAnswerPlan } from "./answers";
@@ -276,6 +278,10 @@ type TBatchOutcomeParams = {
  *
  * `updated` counts responses in scope that now carry the outcome, including ones that already did, so a
  * retry reports what the first call did. Only the responses that actually changed send `responseUpdated`.
+ *
+ * It charges the state-mutation budget (120 per minute per user or API key) itself, because one call fans
+ * out to up to a hundred pipeline events and the route wrapper's limit never sees an MCP call. REST and
+ * the `set_responses_outcome` tool charge the same principal, so they spend from one bucket.
  */
 export async function batchSetV3ResponsesOutcome({
   workspaceId,
@@ -287,6 +293,14 @@ export async function batchSetV3ResponsesOutcome({
   auditLog,
 }: TBatchOutcomeParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId });
+
+  const limited = await applyV3OperationRateLimit({
+    config: rateLimitConfigs.api.v3StateMutation,
+    authentication,
+    requestId,
+    instance: instance ?? "",
+  });
+  if (limited) return limited;
 
   try {
     const access = await requireV3WorkspaceAccess(
