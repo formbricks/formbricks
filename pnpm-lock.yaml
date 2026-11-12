@@ -1374,6 +1374,9 @@ importers:
         specifier: 3.0.0
         version: 3.0.0
     devDependencies:
+      '@formatjs/icu-messageformat-parser':
+        specifier: 2.11.4
+        version: 2.11.4
       '@formbricks/config-eslint':
         specifier: workspace:*
         version: link:../config-eslint
