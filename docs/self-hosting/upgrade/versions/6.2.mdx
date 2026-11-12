@@ -12,8 +12,10 @@ icon: "arrow-up-right-dots"
 - The permission schema changes for the new [Dashboard viewer role](/self-hosting/upgrade/versions/dashboard-viewer), so permission preparation is needed.
 - Published surveys are locked, and every question and answer option gets a code during the migration. See [question codes](/self-hosting/upgrade/versions/question-codes).
 - Charts and dashboards get an API and MCP tools, and the Cube model files change. See [charts and dashboards API](/self-hosting/upgrade/versions/charts-dashboards).
-- Attachment exports build in the background and need a new bucket permission and two new job queues. See [attachment exports](/self-hosting/upgrade/versions/attachment-exports).
-- The bundled Valkey moves to 9.1.2, and Docker setups add Cube and PostgreSQL memory settings by hand.
+- Attachment exports build in the background and need a new bucket permission, and four jobs move to dedicated queues. See [attachment exports](/self-hosting/upgrade/versions/attachment-exports).
+- The bundled Valkey moves to 9.1.2 on Docker Compose and Helm. One-click keeps the 8.1.9 image from 6.1 until
+  you change it by hand; see [Valkey 9](/self-hosting/upgrade/versions/valkey-9).
+- Docker setups add Cube and PostgreSQL memory settings by hand.
 - Self-hosted audit logging now needs an Enterprise licence that includes audit logs.
 
 ## Before you upgrade
@@ -25,9 +27,16 @@ icon: "arrow-up-right-dots"
 | Docker Compose and one-click | Add the Cube query timeout and PostgreSQL shared memory, and use the 6.2 Cube image and model files. See [Cube memory](/self-hosting/upgrade/versions/cube-memory). |
 | Bundled Valkey | Back up the Valkey volume before the image changes. See [Valkey 9](/self-hosting/upgrade/versions/valkey-9). |
 | Helm with the bundled PostgreSQL | Move any Cube database settings from `cube.envFrom` or the app Secret to `cube.env`. See [Helm and the bundled database](/self-hosting/upgrade/versions/helm-bundled-database). |
-| Your own S3 bucket or job consumer | Add `s3:AbortMultipartUpload` and serve the new queues. See [attachment exports](/self-hosting/upgrade/versions/attachment-exports). |
+| Your own S3 bucket or job consumer | Add `s3:AbortMultipartUpload` and serve the four dedicated queues. See [attachment exports](/self-hosting/upgrade/versions/attachment-exports). |
 | API and MCP clients | Check the [integration changes](#integration-changes-requiring-action) below. |
 | Audit logging with `AUDIT_LOG_ENABLED=1` | Check that your Enterprise licence includes audit logs. Without it, audit events stop as soon as you upgrade. The 3-day grace period only covers a licence that lapses later. |
+
+### Patch actions
+
+Check each patch you cross. You can go straight to the latest 6.2 patch.
+
+| Patch | Upgrade impact |
+| --- | --- |
 
 <span id="during" />
 
@@ -43,7 +52,10 @@ Because the permission schema changes, permission preparation asks you to confir
   refreshes the Cube model files, rewrites the RustFS setup script and, where Docker supports it, turns on IPv6 for
   the app network (backup: `docker-compose.yml.before-ipv6-network`; opt out with `enable_ipv6: false`).
 - **Kubernetes:** existing installs with the bundled Valkey keep their storage labels, so `helm upgrade` doesn't
-  need the StatefulSet recreated. Wait for all schema and data migrations to finish before you reopen traffic.
+  need the StatefulSet recreated. Argo CD and other tools that render with `helm template` can't read the live
+  labels, so their first sync to 6.2 fails once; see
+  [Upgrade fails on the Valkey StatefulSet](/self-hosting/upgrade/kubernetes#valkey-statefulset-forbidden) for the
+  one-time step. Wait for all schema and data migrations to finish before you reopen traffic.
 
 <span id="after" />
 
@@ -70,13 +82,15 @@ migrations.
 
 ## Integration changes requiring action
 
-6.2 is a minor release, but these changes can affect existing integrations. They are documented exceptions to the
-[integration compatibility](/self-hosting/advanced/release-maintenance-policy#integration-compatibility) commitment.
+6.2 is a minor release, but these changes can affect existing integrations. They were merged before the
+[integration compatibility](/self-hosting/advanced/release-maintenance-policy#integration-compatibility)
+commitment was adopted, so 6.2 is the one release it names as an exception.
 
 **API**
 
-* **Published surveys are locked.** Changing a question code, answer code, question type or option text on a survey that has left draft returns `422` on v3 and MCP, and `400` with `published_survey_locked:` on v1. See [question codes](/self-hosting/upgrade/versions/question-codes)
+* **Published surveys are locked.** Changing a question code, answer code, question type or option text, or deleting an option that existed at launch, on a survey that has left draft returns `422` on v3 and MCP, and `400` with `published_survey_locked:` on v1. See [question codes](/self-hosting/upgrade/versions/question-codes)
 * **New organization role.** `GET /api/v2/organizations/{organizationId}/users` can return `dashboard_viewer`. A client that checks roles against a fixed list must accept it
+* **v2 user updates.** `PATCH /api/v2/organizations/{organizationId}/users` returns `409` and applies nothing when it changes `name` or `isActive` for a user who also belongs to another organization. Change those fields from an organization the user alone belongs to ([#9683](https://github.com/formbricks/formbricks/pull/9683))
 * **v3 survey create errors.** A duplicate question ID in one block now names `blocks.N.elements.M.id` with the code `duplicate_identifier`. A create whose after-commit work fails now returns `201` (v3) or `200` (v1) with the saved survey: treat it as created and don't retry ([#9878](https://github.com/formbricks/formbricks/pull/9878))
 * **Standard export sheet name.** The Excel file names its sheet `Response Data` instead of `Sheet1`
 * **Webhook payloads** gain `dataByQuestionCode` and `outcome`. Existing keys stay

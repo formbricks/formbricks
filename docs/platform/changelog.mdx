@@ -34,8 +34,9 @@ Formbricks 6.2 receives bug fixes and security fixes until **TBD: three months a
 | --- | --- |
 | Every self-hosted deployment | Permission preparation in a maintenance window for the [Dashboard viewer role](/self-hosting/upgrade/versions/dashboard-viewer). Online upgrades from 6.1 are refused |
 | Docker Compose and one-click | Cube query timeout, PostgreSQL shared memory and the 6.2 Cube image: [Cube memory](/self-hosting/upgrade/versions/cube-memory) |
-| Helm with the bundled PostgreSQL and Cube settings in `cube.envFrom` | Move them to `cube.env`: [Helm and the bundled database](/self-hosting/upgrade/versions/helm-bundled-database) |
-| Your own S3 bucket or job consumer | `s3:AbortMultipartUpload` and two new queues: [attachment exports](/self-hosting/upgrade/versions/attachment-exports) |
+| Bundled Valkey | Back up the Valkey volume before the image changes to 9.1.2: [Valkey 9](/self-hosting/upgrade/versions/valkey-9) |
+| Helm with the bundled PostgreSQL and Cube database settings in `cube.envFrom` or the app Secret | Move them to `cube.env`: [Helm and the bundled database](/self-hosting/upgrade/versions/helm-bundled-database) |
+| Your own S3 bucket or job consumer | `s3:AbortMultipartUpload` and four dedicated job queues: [attachment exports](/self-hosting/upgrade/versions/attachment-exports) |
 | Self-hosted audit logging | Needs an Enterprise licence that includes audit logs; without one, audit events stop after the upgrade |
 | API and MCP integrations | [Published-survey lock, MCP confirmation and other changes](/self-hosting/upgrade/versions/6.2#integration-changes-requiring-action) |
 

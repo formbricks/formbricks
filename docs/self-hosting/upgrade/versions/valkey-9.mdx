@@ -28,7 +28,9 @@ one-click 8.1.1 pin, → 9.1.2). Part of the
       docker compose up -d --no-deps --force-recreate redis
     ```
 
-    One-click updates replace the legacy amd64-only 8.1.1 pin automatically, but keep custom pins.
+    One-click updates replace only the legacy amd64-only 8.1.1 pin, with 9.1.2. They keep the 8.1.9 pin from 6.1
+    and custom pins, so a one-click install stays on 8.1.9 until you copy the `redis` image reference into
+    `formbricks/docker-compose.yml` as above.
     The Compose backup still uses the historical `.before-valkey-8.1.9` suffix.
   </Tab>
   <Tab title="Kubernetes">
