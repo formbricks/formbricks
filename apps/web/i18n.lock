@@ -780,7 +780,7 @@ checksums:
     emails/forgot_password_email_change_password: fe6d4ba303b82f4833b3293f0c4e88c0
     emails/forgot_password_email_did_not_request: 79d35c3800e23e9d4c95bf33f250104f
     emails/forgot_password_email_heading: fe6d4ba303b82f4833b3293f0c4e88c0
-    emails/forgot_password_email_link_valid_for_24_hours: 962358a7f9674f13f49278afa15d14d3
+    emails/forgot_password_email_link_valid_for_minutes: 962358a7f9674f13f49278afa15d14d3
     emails/forgot_password_email_subject: bd7a2b22e7b480c29f512532fd2b7e2b
     emails/forgot_password_email_text: 5100fa2fe2180ded9cb2d89b4f77d2e0
     emails/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
