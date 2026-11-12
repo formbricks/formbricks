@@ -24,7 +24,9 @@ installations that use the bundled PostgreSQL (`postgresql.enabled: true`):
   your own administrator, set `adminUsername`, `adminPasswordSecretName` and `adminPasswordKey` together;
   `adminDatabase` is optional and defaults to `postgres`. A username without the Secret name, or a Secret
   name without the key, fails when Helm renders the chart. Setting only `adminDatabase` or `adminPasswordKey`
-  keeps the previous `postgres` administrator from the bundled Secret.
+  keeps the previous `postgres` administrator from the bundled Secret, which needs
+  `postgresql.auth.enablePostgresUser: true` (the default). With it `false`, clear every `admin*` value to
+  connect as the bundled user.
 
 <Warning>
   This changes which database role Cube uses. Kubernetes gives a container's `env` precedence over its
