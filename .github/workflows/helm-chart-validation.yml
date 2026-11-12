@@ -290,7 +290,6 @@ jobs:
             --set formbricks.webappUrl=https://qa.example.com \
             --set hub.embeddings.enabled=true \
             --set hub.worker.embeddingReadiness.enabled=true \
-            --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
             --set hub.worker.embeddingPreflight.timeoutSeconds=10 \
             --show-only templates/hub-worker-deployment.yaml > "$render_dir/hub-embedding-readiness.yaml"
           grep -A5 '^          readinessProbe:$' "$render_dir/hub-embedding-readiness.yaml" | grep -q '^            exec:$'
@@ -416,8 +415,20 @@ jobs:
             --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
             --set 'hub.extraVolumeMounts[0].name=existing' \
             --set 'hub.extraVolumeMounts[0].mountPath=/run/hub'
-          expect_embedding_render_failure old-readiness-image 'pinned 0.14.1 image does not support it' \
-            --set hub.worker.embeddingReadiness.enabled=true
+          expect_embedding_render_failure old-readiness-0141-digest 'Hub 0.14.1 and 0.14.2 do not support it' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest=sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745
+          expect_embedding_render_failure old-readiness-0142-digest 'Hub 0.14.1 and 0.14.2 do not support it' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest=sha256:0049b20fea8023b12dced414c731ba8dbf3d39aa7b3de738d5837222c9c7b2e0
+          expect_embedding_render_failure old-readiness-0141-tag 'Hub 0.14.1 and 0.14.2 do not support it' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest= \
+            --set hub.image.tag=0.14.1
+          expect_embedding_render_failure old-readiness-0142-tag 'Hub 0.14.1 and 0.14.2 do not support it' \
+            --set hub.worker.embeddingReadiness.enabled=true \
+            --set hub.image.digest= \
+            --set hub.image.tag=0.14.2
           expect_embedding_render_failure relative-readiness-path 'path must be absolute' \
             --set hub.worker.embeddingReadiness.enabled=true \
             --set hub.image.digest=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \

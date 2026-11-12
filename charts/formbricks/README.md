@@ -480,9 +480,9 @@ refresh interval, last-success validity, and degraded-job snooze are 10, 60, 120
 `hub.worker.embeddingPreflight` can override each value; omitted values use the Hub defaults or
 values supplied by the Hub Secret. `hub.worker.embeddingReadiness.enabled` adds a local exec probe
 and writable marker volume; it requires a Hub release containing
-[formbricks/hub#161](https://github.com/formbricks/hub/pull/161). The chart's pinned Hub 0.14.1 image
-does not support that command and is rejected when this probe is enabled. Update `hub.image.digest`
-to a compatible release before enabling it. The marker path must be an absolute path below `/`,
+[formbricks/hub#161](https://github.com/formbricks/hub/pull/161). The chart's pinned Hub 0.14.3
+image supports that command; explicit 0.14.1 and 0.14.2 digests or tags are rejected.
+The marker path must be an absolute path below `/`,
 configured only through `hub.worker.embeddingReadiness.path`.
 
 For sustained background throughput, enable the worker-only TEI pool. Hub API and semantic-search

@@ -4,9 +4,11 @@
   {{- if or (not (hasPrefix "/" $readinessPath)) (eq (dir $readinessPath) "/") -}}
     {{- fail "hub.worker.embeddingReadiness.path must be absolute with a directory below /" -}}
   {{- end -}}
-  {{- /* Remove the pinned-image guard when values.yaml moves to a Hub release containing hub#161. */ -}}
-  {{- if or (eq .Values.hub.image.digest "sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745") (and (not .Values.hub.image.digest) (eq .Values.hub.image.tag "0.14.1")) -}}
-    {{- fail "hub.worker.embeddingReadiness.enabled requires a Hub image containing --check-embedding-readiness (hub#161); the pinned 0.14.1 image does not support it" -}}
+  {{- /* Reject the known legacy Hub images when explicitly selected. */ -}}
+  {{- $legacyDigests := list "sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745" "sha256:0049b20fea8023b12dced414c731ba8dbf3d39aa7b3de738d5837222c9c7b2e0" -}}
+  {{- $legacyTags := list "0.14.1" "0.14.2" -}}
+  {{- if or (has .Values.hub.image.digest $legacyDigests) (and (not .Values.hub.image.digest) (has .Values.hub.image.tag $legacyTags)) -}}
+    {{- fail "hub.worker.embeddingReadiness.enabled requires a Hub image containing --check-embedding-readiness (hub#161); Hub 0.14.1 and 0.14.2 do not support it" -}}
   {{- end -}}
   {{- if or (hasKey .Values.hub.env "HUB_EMBEDDING_READINESS_FILE") (hasKey .Values.hub.worker.env "HUB_EMBEDDING_READINESS_FILE") -}}
     {{- fail "HUB_EMBEDDING_READINESS_FILE is managed by hub.worker.embeddingReadiness.path when readiness is enabled" -}}
