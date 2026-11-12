@@ -82,6 +82,27 @@
       "use_a_backup_code": "Visszaszerzési kód használata"
     },
     "oauth": {
+      "access": {
+        "all": "Teljes hozzáférés",
+        "all_hint": "Minden szervezet és munkaterület, amelyet Ön elérhet, beleértve azokat is, amelyekhez később csatlakozik.",
+        "description": "Kérjük, válassza ki, mely szervezetekhez és munkaterületekhez férhet hozzá az alkalmazás. Minden más számára nem létezik.",
+        "mode_label": "Szervezeti és munkaterület-hozzáférés",
+        "no_options": "Ön jelenleg még egyetlen szervezethez vagy munkaterülethez sem tartozik.",
+        "none_picked_hint": "A hozzáférés engedélyezéséhez kérjük, válasszon ki legalább egyet.",
+        "organizations": "Kizárólag a kiválasztott szervezetek",
+        "organizations_hint": "A kiválasztott szervezetek valamennyi munkaterülete, beleértve a később ott létrehozottakat is.",
+        "pick_organizations": "Szervezetek kiválasztása",
+        "pick_workspaces": "Munkaterületek kiválasztása",
+        "summary_all": "Teljes hozzáférés",
+        "summary_none": "Nincs munkaterület",
+        "summary_one_organization": "1 szervezet",
+        "summary_one_workspace": "1 munkaterület",
+        "summary_organizations": "{count} szervezet",
+        "summary_workspaces": "{count} munkaterület",
+        "title": "Szervezeti és munkaterület-hozzáférés",
+        "workspaces": "Kizárólag a kiválasztott munkaterületek",
+        "workspaces_hint": "Kizárólag az Ön által kiválasztott munkaterületek. A később létrehozott munkaterületek mindaddig kívül maradnak, amíg Ön hozzá nem adja azokat."
+      },
       "allow_access": "Hozzáférés engedélyezése",
       "authorization_request": "Felhatalmazási kérés",
       "authorize_description": "Ez az MCP-ügyfél a Formbricks-fiókja használatát kéri. A munkaterülethez való hozzáférés továbbra is ellenőrizésre kerül minden eszközhíváskor.",

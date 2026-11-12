@@ -82,6 +82,27 @@
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
     "oauth": {
+      "access": {
+        "all": "Voller Zugriff",
+        "all_hint": "Alle Organisationen und Workspaces, auf die Du zugreifen kannst, einschließlich solcher, denen Du später beitrittst.",
+        "description": "Wähle aus, auf welche Organisationen und Workspaces die App zugreifen darf. Alles andere existiert für sie nicht.",
+        "mode_label": "Zugriff auf Organisationen & Workspaces",
+        "no_options": "Du gehörst noch keiner Organisation und keinem Workspace an.",
+        "none_picked_hint": "Wähle mindestens eine Option aus, um den Zugriff zu erlauben.",
+        "organizations": "Nur ausgewählte Organisationen",
+        "organizations_hint": "Alle Workspaces in den ausgewählten Organisationen, auch solche, die dort später erstellt werden.",
+        "pick_organizations": "Organisationen auswählen",
+        "pick_workspaces": "Workspaces auswählen",
+        "summary_all": "Voller Zugriff",
+        "summary_none": "Keine Workspaces",
+        "summary_one_organization": "1 Organisation",
+        "summary_one_workspace": "1 Workspace",
+        "summary_organizations": "{count} Organisationen",
+        "summary_workspaces": "{count} Workspaces",
+        "title": "Zugriff auf Organisationen & Workspaces",
+        "workspaces": "Nur ausgewählte Workspaces",
+        "workspaces_hint": "Nur die Workspaces, die Du auswählst. Später erstellte Workspaces bleiben außen vor, bis Du sie hinzufügst."
+      },
       "allow_access": "Zugriff erlauben",
       "authorization_request": "Autorisierungsanfrage",
       "authorize_description": "Dieser MCP-Client möchte dein Formbricks-Konto verwenden. Der Workspace-Zugriff wird weiterhin bei jedem Tool-Aufruf überprüft.",

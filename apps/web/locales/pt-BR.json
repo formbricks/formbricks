@@ -82,6 +82,27 @@
       "use_a_backup_code": "Usar um código de backup"
     },
     "oauth": {
+      "access": {
+        "all": "Acesso total",
+        "all_hint": "Todas as organizações e todos os workspaces que você pode acessar, incluindo os que você entrar depois.",
+        "description": "Escolha quais organizações e workspaces o app pode acessar. Todo o resto simplesmente não existe para ele.",
+        "mode_label": "Acesso a organizações e workspaces",
+        "no_options": "Você ainda não faz parte de nenhuma organização ou workspace.",
+        "none_picked_hint": "Selecione pelo menos um para permitir o acesso.",
+        "organizations": "Somente organizações selecionadas",
+        "organizations_hint": "Todos os workspaces das organizações que você escolher, incluindo os que forem criados nelas depois.",
+        "pick_organizations": "Selecionar organizações",
+        "pick_workspaces": "Selecionar workspaces",
+        "summary_all": "Acesso total",
+        "summary_none": "Nenhum workspace",
+        "summary_one_organization": "1 organização",
+        "summary_one_workspace": "1 workspace",
+        "summary_organizations": "{count} organizações",
+        "summary_workspaces": "{count} workspaces",
+        "title": "Acesso a organizações e workspaces",
+        "workspaces": "Somente workspaces selecionados",
+        "workspaces_hint": "Somente os workspaces que você escolher. Os workspaces criados depois ficam de fora até você adicioná-los."
+      },
       "allow_access": "Permitir acesso",
       "authorization_request": "Solicitação de autorização",
       "authorize_description": "Este cliente MCP está solicitando usar sua conta Formbricks. O acesso ao workspace ainda é verificado para cada chamada de ferramenta.",

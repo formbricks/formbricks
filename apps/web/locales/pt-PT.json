@@ -82,6 +82,27 @@
       "use_a_backup_code": "Usa um código de backup"
     },
     "oauth": {
+      "access": {
+        "all": "Acesso total",
+        "all_hint": "Todas as organizações e todos os espaços de trabalho a que tens acesso, incluindo aqueles a que te juntares mais tarde.",
+        "description": "Escolhe a que organizações e espaços de trabalho a aplicação pode aceder. Tudo o resto não existe para ela.",
+        "mode_label": "Acesso a organizações e espaços de trabalho",
+        "no_options": "Ainda não pertences a nenhuma organização nem espaço de trabalho.",
+        "none_picked_hint": "Seleciona pelo menos um para permitir o acesso.",
+        "organizations": "Apenas organizações selecionadas",
+        "organizations_hint": "Todos os espaços de trabalho das organizações que selecionares, incluindo os que forem criados nelas mais tarde.",
+        "pick_organizations": "Selecionar organizações",
+        "pick_workspaces": "Selecionar espaços de trabalho",
+        "summary_all": "Acesso total",
+        "summary_none": "Nenhum espaço de trabalho",
+        "summary_one_organization": "1 organização",
+        "summary_one_workspace": "1 espaço de trabalho",
+        "summary_organizations": "{count} organizações",
+        "summary_workspaces": "{count} espaços de trabalho",
+        "title": "Acesso a organizações e espaços de trabalho",
+        "workspaces": "Apenas espaços de trabalho selecionados",
+        "workspaces_hint": "Apenas os espaços de trabalho que selecionares. Os espaços de trabalho criados mais tarde ficam de fora até os adicionares."
+      },
       "allow_access": "Permitir acesso",
       "authorization_request": "Pedido de autorização",
       "authorize_description": "Este cliente MCP está a pedir para usar a tua conta Formbricks. O acesso ao espaço de trabalho continua a ser verificado em cada chamada de ferramenta.",

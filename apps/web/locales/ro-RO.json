@@ -82,6 +82,27 @@
       "use_a_backup_code": "Folosiți un cod de rezervă"
     },
     "oauth": {
+      "access": {
+        "all": "Acces complet",
+        "all_hint": "Toate organizațiile și spațiile de lucru la care ai acces, inclusiv cele la care te alături ulterior.",
+        "description": "Alege la ce organizații și spații de lucru poate avea acces aplicația. Pentru ea, nimic altceva nu există.",
+        "mode_label": "Acces la organizații și spații de lucru",
+        "no_options": "Încă nu faci parte din nicio organizație sau niciun spațiu de lucru.",
+        "none_picked_hint": "Alege cel puțin unul pentru a permite accesul.",
+        "organizations": "Doar organizațiile selectate",
+        "organizations_hint": "Toate spațiile de lucru din organizațiile alese, inclusiv cele create ulterior în ele.",
+        "pick_organizations": "Alege organizații",
+        "pick_workspaces": "Alege spații de lucru",
+        "summary_all": "Acces complet",
+        "summary_none": "Niciun spațiu de lucru",
+        "summary_one_organization": "1 organizație",
+        "summary_one_workspace": "1 spațiu de lucru",
+        "summary_organizations": "{count} organizații",
+        "summary_workspaces": "{count} spații de lucru",
+        "title": "Acces la organizații și spații de lucru",
+        "workspaces": "Doar spațiile de lucru selectate",
+        "workspaces_hint": "Doar spațiile de lucru alese de tine. Cele create ulterior rămân excluse până când le adaugi."
+      },
       "allow_access": "Permite accesul",
       "authorization_request": "Solicitare de autorizare",
       "authorize_description": "Acest client MCP solicită să folosească contul tău Formbricks. Accesul la workspace este în continuare verificat pentru fiecare apel de instrument.",

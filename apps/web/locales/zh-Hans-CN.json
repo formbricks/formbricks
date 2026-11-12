@@ -82,6 +82,27 @@
       "use_a_backup_code": "使用 备用代码"
     },
     "oauth": {
+      "access": {
+        "all": "全部访问权限",
+        "all_hint": "你可以访问的所有组织和工作区,包括之后加入的。",
+        "description": "选择该应用可以访问哪些组织和工作区。其他内容对它而言都不存在。",
+        "mode_label": "组织和工作区访问权限",
+        "no_options": "你还没有加入任何组织或工作区。",
+        "none_picked_hint": "请至少选择一项以允许访问。",
+        "organizations": "仅限所选组织",
+        "organizations_hint": "你所选组织中的所有工作区,包括之后在其中创建的。",
+        "pick_organizations": "选择组织",
+        "pick_workspaces": "选择工作区",
+        "summary_all": "全部访问权限",
+        "summary_none": "无工作区",
+        "summary_one_organization": "1 个组织",
+        "summary_one_workspace": "1 个工作区",
+        "summary_organizations": "{count} 个组织",
+        "summary_workspaces": "{count} 个工作区",
+        "title": "组织和工作区访问权限",
+        "workspaces": "仅限所选工作区",
+        "workspaces_hint": "仅限你所选的工作区。之后创建的工作区在你添加之前不会被包含在内。"
+      },
       "allow_access": "允许访问",
       "authorization_request": "授权请求",
       "authorize_description": "此 MCP 客户端正在请求使用你的 Formbricks 账户。每次工具调用仍会检查工作空间访问权限。",

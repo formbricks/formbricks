@@ -82,6 +82,27 @@
       "use_a_backup_code": "バックアップコードを使用"
     },
     "oauth": {
+      "access": {
+        "all": "すべてにアクセスを許可",
+        "all_hint": "あなたがアクセスできるすべての組織とワークスペースが対象です。今後参加するものも含まれます。",
+        "description": "アプリがアクセスできる組織とワークスペースを選択してください。それ以外はアプリからは見えません。",
+        "mode_label": "組織とワークスペースへのアクセス",
+        "no_options": "まだどの組織やワークスペースにも所属していません。",
+        "none_picked_hint": "アクセスを許可するには、1つ以上選択してください。",
+        "organizations": "選択した組織のみ",
+        "organizations_hint": "選択した組織内のすべてのワークスペースが対象です。今後そこで作成されるものも含まれます。",
+        "pick_organizations": "組織を選択",
+        "pick_workspaces": "ワークスペースを選択",
+        "summary_all": "すべてにアクセスを許可",
+        "summary_none": "ワークスペースなし",
+        "summary_one_organization": "1つの組織",
+        "summary_one_workspace": "1つのワークスペース",
+        "summary_organizations": "{count}件の組織",
+        "summary_workspaces": "{count}件のワークスペース",
+        "title": "組織とワークスペースへのアクセス",
+        "workspaces": "選択したワークスペースのみ",
+        "workspaces_hint": "選択したワークスペースのみが対象です。今後作成されるワークスペースは、追加するまで対象外となります。"
+      },
       "allow_access": "アクセスを許可",
       "authorization_request": "認可リクエスト",
       "authorize_description": "このMCPクライアントがFormbricksアカウントの使用を求めています。ワークスペースへのアクセス権は、ツール呼び出しごとに引き続き確認されます。",

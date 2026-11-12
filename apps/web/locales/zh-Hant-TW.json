@@ -82,6 +82,27 @@
       "use_a_backup_code": "使用備份碼"
     },
     "oauth": {
+      "access": {
+        "all": "完整存取權限",
+        "all_hint": "你能存取的所有組織和工作區,包括之後加入的。",
+        "description": "選擇這個應用程式可以存取哪些組織和工作區,其他的對它來說都不存在。",
+        "mode_label": "組織與工作區存取權限",
+        "no_options": "你目前還沒有加入任何組織或工作區。",
+        "none_picked_hint": "請至少選擇一項以允許存取。",
+        "organizations": "僅限選取的組織",
+        "organizations_hint": "你所選組織中的所有工作區,包括之後在其中建立的。",
+        "pick_organizations": "選擇組織",
+        "pick_workspaces": "選擇工作區",
+        "summary_all": "完整存取權限",
+        "summary_none": "沒有工作區",
+        "summary_one_organization": "1 個組織",
+        "summary_one_workspace": "1 個工作區",
+        "summary_organizations": "{count} 個組織",
+        "summary_workspaces": "{count} 個工作區",
+        "title": "組織與工作區存取權限",
+        "workspaces": "僅限選取的工作區",
+        "workspaces_hint": "僅限你所選的工作區。之後建立的工作區在你新增之前不會納入。"
+      },
       "allow_access": "允許存取",
       "authorization_request": "授權請求",
       "authorize_description": "此 MCP 客戶端正在請求使用你的 Formbricks 帳號。每次工具呼叫仍會檢查工作區存取權限。",

@@ -82,6 +82,27 @@
       "use_a_backup_code": "Gebruik een back-upcode"
     },
     "oauth": {
+      "access": {
+        "all": "Volledige toegang",
+        "all_hint": "Alle organisaties en workspaces waar je toegang toe hebt, inclusief die waar je later lid van wordt.",
+        "description": "Kies tot welke organisaties en workspaces de app toegang heeft. Al het andere bestaat voor de app niet.",
+        "mode_label": "Toegang tot organisaties en workspaces",
+        "no_options": "Je maakt nog geen deel uit van een organisatie of workspace.",
+        "none_picked_hint": "Kies er minimaal één om toegang te geven.",
+        "organizations": "Alleen geselecteerde organisaties",
+        "organizations_hint": "Alle workspaces in de organisaties die je kiest, inclusief workspaces die daar later worden aangemaakt.",
+        "pick_organizations": "Kies organisaties",
+        "pick_workspaces": "Kies workspaces",
+        "summary_all": "Volledige toegang",
+        "summary_none": "Geen workspaces",
+        "summary_one_organization": "1 organisatie",
+        "summary_one_workspace": "1 workspace",
+        "summary_organizations": "{count} organisaties",
+        "summary_workspaces": "{count} workspaces",
+        "title": "Toegang tot organisaties en workspaces",
+        "workspaces": "Alleen geselecteerde workspaces",
+        "workspaces_hint": "Alleen de workspaces die je kiest. Workspaces die later worden aangemaakt blijven buiten bereik totdat je ze toevoegt."
+      },
       "allow_access": "Toegang toestaan",
       "authorization_request": "Autorisatieverzoek",
       "authorize_description": "Deze MCP-client vraagt om je Formbricks-account te gebruiken. Workspacetoegang wordt nog steeds gecontroleerd bij elke toolaanroep.",

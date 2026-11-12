@@ -66,6 +66,25 @@ checksums:
     auth/login/oauth_signup_not_allowed_title: 8afe5de3881de0b4c5d8893ac9ff4a87
     auth/login/please_verify_your_email_to_continue: 2ac048d93a4ec24950404a0c5fbfcd3a
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
+    auth/oauth/access/all: b818d4def14a915a46730e6326127e1e
+    auth/oauth/access/all_hint: da6d3676f97cf2b028c7b286ef91d19a
+    auth/oauth/access/description: 3eee4a41fbc07bb86c188ada5fd0ee9e
+    auth/oauth/access/mode_label: c2cd07e2a86a4a6d080d9d4af5b73213
+    auth/oauth/access/no_options: 8bc823d3445feec86041498c4d632d2f
+    auth/oauth/access/none_picked_hint: 389f45efbb8fb409616ed286bfc4d9f9
+    auth/oauth/access/organizations: 0b95ed03ebb83ef4b918aa4a3145ca06
+    auth/oauth/access/organizations_hint: 1609d607f2234de7d8c0ab7ad7a7a1d6
+    auth/oauth/access/pick_organizations: 9e2a0e59a461816eb5c4ec17b5d91f29
+    auth/oauth/access/pick_workspaces: 610d39d73bb4f510f408119750cfb5e9
+    auth/oauth/access/summary_all: b818d4def14a915a46730e6326127e1e
+    auth/oauth/access/summary_none: bf75f619a14e6e1c98b49a19ca1815e8
+    auth/oauth/access/summary_one_organization: feb0b35932eb8f0602c0fab2d40a7585
+    auth/oauth/access/summary_one_workspace: 02a34669419ed7f30f728980f54d42ef
+    auth/oauth/access/summary_organizations: b7ce11824d10d74df9e94987337a741a
+    auth/oauth/access/summary_workspaces: 60f9931e316ffe0ead179131ec112d1c
+    auth/oauth/access/title: c2cd07e2a86a4a6d080d9d4af5b73213
+    auth/oauth/access/workspaces: 7a37d88472a59ea6a4a685c46f018c91
+    auth/oauth/access/workspaces_hint: 67b41a3b8d389a26f4fcf32033c33d4e
     auth/oauth/allow_access: 5eec574c92b23a33fa6e938ae55754ef
     auth/oauth/authorization_request: 6d8eb57099973efaa1c9a7a77e494d7f
     auth/oauth/authorize_description: 7f444eb5f25da4be3f051801c9a79cf5

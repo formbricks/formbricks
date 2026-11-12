@@ -82,6 +82,27 @@
       "use_a_backup_code": "Använd en reservkod"
     },
     "oauth": {
+      "access": {
+        "all": "Full åtkomst",
+        "all_hint": "Alla organisationer och arbetsytor du kan nå, inklusive sådana du går med i senare.",
+        "description": "Välj vilka organisationer och arbetsytor appen kan komma åt. Allt annat finns inte för den.",
+        "mode_label": "Åtkomst till organisationer och arbetsytor",
+        "no_options": "Du tillhör ingen organisation eller arbetsyta ännu.",
+        "none_picked_hint": "Välj minst en för att tillåta åtkomst.",
+        "organizations": "Endast valda organisationer",
+        "organizations_hint": "Alla arbetsytor i de organisationer du väljer, inklusive sådana som skapas där senare.",
+        "pick_organizations": "Välj organisationer",
+        "pick_workspaces": "Välj arbetsytor",
+        "summary_all": "Full åtkomst",
+        "summary_none": "Inga arbetsytor",
+        "summary_one_organization": "1 organisation",
+        "summary_one_workspace": "1 arbetsyta",
+        "summary_organizations": "{count} organisationer",
+        "summary_workspaces": "{count} arbetsytor",
+        "title": "Åtkomst till organisationer och arbetsytor",
+        "workspaces": "Endast valda arbetsytor",
+        "workspaces_hint": "Endast de arbetsytor du väljer. Arbetsytor som skapas senare förblir utanför tills du lägger till dem."
+      },
       "allow_access": "Tillåt åtkomst",
       "authorization_request": "Auktorisationsbegäran",
       "authorize_description": "Denna MCP-klient begär att få använda ditt Formbricks-konto. Arbetsytans åtkomst kontrolleras fortfarande för varje verktygsanrop.",

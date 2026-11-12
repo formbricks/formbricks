@@ -82,6 +82,27 @@
       "use_a_backup_code": "Yedek kod kullan"
     },
     "oauth": {
+      "access": {
+        "all": "Tam erişim",
+        "all_hint": "Sonradan katılacaklarınız dahil, ulaşabildiğin tüm kuruluşlar ve çalışma alanları.",
+        "description": "Uygulamanın hangi kuruluşlara ve çalışma alanlarına erişebileceğini seç. Geri kalan her şey uygulama için yok hükmündedir.",
+        "mode_label": "Kuruluş ve çalışma alanı erişimi",
+        "no_options": "Henüz hiçbir kuruluşa veya çalışma alanına ait değilsin.",
+        "none_picked_hint": "Erişime izin vermek için en az birini seç.",
+        "organizations": "Yalnızca seçili kuruluşlar",
+        "organizations_hint": "Seçtiğin kuruluşlardaki tüm çalışma alanları, sonradan oluşturulanlar dahil.",
+        "pick_organizations": "Kuruluş seç",
+        "pick_workspaces": "Çalışma alanı seç",
+        "summary_all": "Tam erişim",
+        "summary_none": "Çalışma alanı yok",
+        "summary_one_organization": "1 kuruluş",
+        "summary_one_workspace": "1 çalışma alanı",
+        "summary_organizations": "{count} kuruluş",
+        "summary_workspaces": "{count} çalışma alanı",
+        "title": "Kuruluş ve çalışma alanı erişimi",
+        "workspaces": "Yalnızca seçili çalışma alanları",
+        "workspaces_hint": "Yalnızca seçtiğin çalışma alanları. Sonradan oluşturulan çalışma alanları, sen ekleyene kadar dışarıda kalır."
+      },
       "allow_access": "Erişime izin ver",
       "authorization_request": "Yetkilendirme isteği",
       "authorize_description": "Bu MCP istemcisi Formbricks hesabını kullanmak istiyor. Çalışma alanı erişimi her araç çağrısı için kontrol edilmeye devam edecek.",
