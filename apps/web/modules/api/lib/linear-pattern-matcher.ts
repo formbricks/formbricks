@@ -16,7 +16,7 @@ import type { TPatternMatcher } from "@formbricks/surveys/validation";
  * its run.
  *
  * A pattern RE2 cannot run the way JavaScript would (lookarounds, backreferences, escapes the two read
- * differently), or not cheaply, is not evaluated here: the rule passes on the server and is still
+ * differently, the `v` flag's set syntax), or not cheaply, is not evaluated here: the rule passes on the server and is still
  * enforced in the respondent's browser, as an invalid pattern always has been.
  *
  * The server must never be stricter than the browser, or it refuses answers the survey accepted. So the
@@ -67,7 +67,8 @@ interface Atom {
   codePoint?: number;
 }
 
-const CONTROL_ESCAPES: Record<string, number> = { t: 0x9, n: 0xa, v: 0xb, f: 0xc, r: 0xd };
+// `\0` is NUL in both engines; `hasDivergentEscape` refuses it when another digit follows.
+const CONTROL_ESCAPES: Record<string, number> = { "0": 0x0, t: 0x9, n: 0xa, v: 0xb, f: 0xc, r: 0xd };
 const HEX_ESCAPE = /^\\x(?:\{([0-9A-Fa-f]{1,6})\}|([0-9A-Fa-f]{2}))/;
 
 const readAtom = (source: string, start: number): Atom => {
@@ -122,13 +123,13 @@ const readClassOpening = (source: string, start: number): Token => {
   return { text: source.slice(start, end), length: end - start, inClass: true };
 };
 
-/** Inside a bracket expression: a POSIX class such as `[:alpha:]`, a range, or one atom. */
+/**
+ * Inside a bracket expression. A `[` there is a literal in JavaScript (outside `v` mode), but RE2 would
+ * read `[:alpha:]` as a POSIX class, so it is escaped.
+ */
 const readInClass = (source: string, start: number, codeUnits: boolean): Token => {
-  if (source.startsWith("[:", start)) {
-    const end = source.indexOf(":]", start + 2);
-    if (end !== -1) return { text: source.slice(start, end + 2), length: end + 2 - start, inClass: true };
-  }
   if (source[start] === "]") return { text: "]", length: 1, inClass: false };
+  if (source[start] === "[") return { text: "\\[", length: 1, inClass: true };
 
   const first = readAtom(source, start);
   const dash = start + first.length;
@@ -178,14 +179,23 @@ const isUnicodeAware = (flags: string | undefined): boolean => /[uv]/.test(flags
 
 // Escapes RE2 would read differently from JavaScript. `\k<name>` is a backreference, which RE2 lacks
 // (and re2js translates into the literal "k<name>"). Without `u`, JavaScript reads `\a`, `\A`, `\z`,
-// `\Q`, `\E`, `\C`, `\p` and `\P` as the plain letter; RE2 gives each a meaning of its own.
+// `\Q`, `\E`, `\C`, `\p` and `\P` as the plain letter and `\u{41}` as "u" repeated 41 times; RE2
+// gives each a meaning of its own. A digit after `\` is a backreference or a legacy octal escape in
+// JavaScript, whose rules RE2's octal escapes do not follow; only a lone `\0` (NUL) means the same.
 const BACKREFERENCE_ESCAPES = new Set(["k"]);
 const NON_UNICODE_DIVERGENT_ESCAPES = new Set(["k", "a", "A", "z", "Q", "E", "C", "p", "P"]);
+const DIGIT = /[0-9]/;
+
+const isDivergentEscape = (pattern: string, at: number, unicode: boolean): boolean => {
+  const next = pattern[at + 1] ?? "";
+  if ((unicode ? BACKREFERENCE_ESCAPES : NON_UNICODE_DIVERGENT_ESCAPES).has(next)) return true;
+  if (!unicode && next === "u" && pattern[at + 2] === "{") return true;
+  return DIGIT.test(next) && (next !== "0" || DIGIT.test(pattern[at + 2] ?? ""));
+};
 
 const hasDivergentEscape = (pattern: string, unicode: boolean): boolean => {
-  const divergent = unicode ? BACKREFERENCE_ESCAPES : NON_UNICODE_DIVERGENT_ESCAPES;
   for (let i = pattern.indexOf("\\"); i !== -1; i = pattern.indexOf("\\", i + 2)) {
-    if (divergent.has(pattern[i + 1])) return true;
+    if (isDivergentEscape(pattern, i, unicode)) return true;
   }
   return false;
 };
@@ -216,6 +226,9 @@ const compile = (pattern: string, flags: string | undefined): TCompiled => {
   } catch {
     return { program: null, cost: 0 };
   }
+
+  // `v` adds nested classes and set operations, which the rewrite below does not read.
+  if (native.unicodeSets) return { program: null, cost: 0 };
 
   const unicode = isUnicodeAware(flags);
   if (hasDivergentEscape(pattern, unicode)) {

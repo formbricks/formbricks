@@ -195,6 +195,27 @@ describe("createLinearPatternMatcher", () => {
     expect(match(pattern, flags, "a")).toBeUndefined();
   });
 
+  test.each<[pattern: string, flags: string | undefined, reason: string]>([
+    ["^[\\01-\\uDFFF]$", undefined, "legacy octal escape"],
+    ["^\\12$", undefined, "octal or backreference"],
+    ["^[\\u{41}]$", undefined, "\\u{41} is u repeated 41 times without u"],
+    ["^[a]$", "v", "v flag"],
+  ])("does not evaluate %s (flags %s): %s", (pattern, flags) => {
+    expect(match(pattern, flags, "a")).toBeUndefined();
+  });
+
+  test.each([
+    // JavaScript reads `[[:alpha:]` as a class holding "[", ":", "a", "l", "p", "h", then a literal "]".
+    ["^[[:alpha:]]$", "a]", true],
+    ["^[[:alpha:]]$", "b]", false],
+    ["^[[:alpha:]]$", "[]", true],
+    ["^a\\0$", "a\u0000", true],
+    ["^[\\0-\\x1F]$", "\u001f", true],
+  ])("reads %s against %j as RegExp does (%s)", (pattern, value, expected) => {
+    expect(native(pattern, undefined, value)).toBe(expected);
+    expect(match(pattern, undefined, value)).toBe(expected);
+  });
+
   test("does not evaluate a multiline pattern against an answer with a line break RE2 does not see", () => {
     for (const lineBreak of ["\r", "\u2028", "\u2029"]) {
       expect(match("^b", "m", `a${lineBreak}b`)).toBeUndefined();
