@@ -141,7 +141,10 @@ call to the connection's **grant** (ADR-0041): each declared permission must be 
 level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
 connection without one (that is what makes Revoke immediate); API keys have no grant and are gated on
-scopes alone. Tools that more than one permission
+scopes alone. Allow on the consent screen saves the grant; a client registered with `skipConsent` never
+sees that screen, so the token endpoint's after-hook (`modules/auth/lib/skip-consent-mcp-grant.ts`) gives
+its connection one when it issues a token, by the migration's rule: All access, each permission at its
+scope family's level, Tags and Audience at No access. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
 gate.

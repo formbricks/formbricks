@@ -11,6 +11,7 @@ import {
   requireOAuthConsentOnRefreshAfterHandler,
   revokeTokensBeyondConsentAfterHandler,
 } from "./oauth-grant-revocation";
+import { grantSkipConsentClientAfterHandler } from "./skip-consent-mcp-grant";
 
 /**
  * Composed Better Auth `hooks.after` chain. Ordering rationale: `auditFailedAuthAfter` runs before
@@ -38,5 +39,8 @@ export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<void> => 
   // with respect to the SSO redirect below.
   await requireOAuthConsentOnRefreshAfterHandler(ctx);
   await revokeTokensBeyondConsentAfterHandler(ctx);
+  // ENG-7149: a `skipConsent` client never passes the consent hook, so its tokens bring its grant. Only
+  // touches `/oauth2/token` and never throws.
+  await grantSkipConsentClientAfterHandler(ctx);
   await blockedSignupDomainRedirectAfterHandler(ctx);
 };

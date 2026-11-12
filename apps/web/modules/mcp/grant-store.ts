@@ -237,6 +237,27 @@ export const saveMcpGrant = async (
 };
 
 /**
+ * Gives the connection a grant with All access and `permissions`, unless it has one: a grant the user
+ * already has, or narrowed, is never reset. Returns the grant when this created it, `null` otherwise.
+ * One insert that skips an existing (user, client) row, so two tokens issued at once create one grant.
+ */
+export const createMcpGrantIfMissing = async ({
+  userId,
+  clientId,
+  permissions,
+}: {
+  userId: string;
+  clientId: string;
+  permissions: TMcpGrantPermissions;
+}): Promise<TStoredMcpGrant | null> => {
+  const { count } = await prisma.mcpGrant.createMany({
+    data: [{ userId, clientId, access: "all", permissions }],
+    skipDuplicates: true,
+  });
+  return count === 1 ? getMcpGrant(userId, clientId) : null;
+};
+
+/**
  * Deletes the user's grants: the one for `clientId`, or every one the user holds when it is omitted.
  * Returns what was deleted, for the audit entries.
  */

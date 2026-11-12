@@ -81,6 +81,31 @@ export const getMcpGrantPermissionsForScopes = (scopes: readonly string[]): TMcp
   return permissions;
 };
 
+/**
+ * The permissions that came with grants (Tags, and the Audience category). A grant nobody chose on a
+ * consent screen never gives them, whatever the scopes (spec stories 40-41): the migration's grants for
+ * connections made before grants, and the grants of `skipConsent` clients, which are never shown one.
+ */
+const PERMISSIONS_ONLY_A_USER_GIVES: ReadonlySet<TMcpPermission> = new Set([
+  "tags",
+  "contacts",
+  "contactAttributes",
+  "segments",
+  "actionClasses",
+]);
+
+/**
+ * The grant a connection gets without a consent screen: what its scopes give
+ * ({@link getMcpGrantPermissionsForScopes}), with Tags and Audience at No access. The rule the grant
+ * migration applied to every connection made before grants.
+ */
+export const getUnconsentedMcpGrantPermissions = (scopes: readonly string[]): TMcpGrantPermissions =>
+  Object.fromEntries(
+    Object.entries(getMcpGrantPermissionsForScopes(scopes)).filter(
+      ([permission]) => !PERMISSIONS_ONLY_A_USER_GIVES.has(permission as TMcpPermission)
+    )
+  );
+
 const readPermissions = (requested: unknown): TMcpGrantPermissions | null => {
   if (typeof requested !== "object" || requested === null || Array.isArray(requested)) return null;
   const entries = Object.entries(requested);
