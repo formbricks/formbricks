@@ -199,6 +199,7 @@ describe("createLinearPatternMatcher", () => {
     ["^[\\01-\\uDFFF]$", undefined, "legacy octal escape"],
     ["^\\12$", undefined, "octal or backreference"],
     ["^[\\u{41}]$", undefined, "\\u{41} is u repeated 41 times without u"],
+    ["^\\x{41}$", undefined, "\\x{41} is x repeated 41 times without u"],
     ["^[a]$", "v", "v flag"],
   ])("does not evaluate %s (flags %s): %s", (pattern, flags) => {
     expect(match(pattern, flags, "a")).toBeUndefined();

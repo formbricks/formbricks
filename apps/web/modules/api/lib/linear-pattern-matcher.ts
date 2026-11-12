@@ -58,7 +58,8 @@ const standIn = (codeUnit: number): number => SURROGATE_STAND_IN + codeUnit - SU
 const withSurrogateStandIns = (value: string): string =>
   value.replace(SURROGATE_CODE_UNIT, (unit) => String.fromCodePoint(standIn(unit.charCodeAt(0))));
 
-const escapeCodePoint = (codePoint: number): string => `\\x{${codePoint.toString(16).toUpperCase()}}`;
+const escapeCodePoint = (codePoint: number): string =>
+  String.raw`\x{${codePoint.toString(16).toUpperCase()}}`;
 
 /** One character of an RE2 pattern, and the code point it stands for when it is a single one. */
 interface Atom {
@@ -129,7 +130,7 @@ const readClassOpening = (source: string, start: number): Token => {
  */
 const readInClass = (source: string, start: number, codeUnits: boolean): Token => {
   if (source[start] === "]") return { text: "]", length: 1, inClass: false };
-  if (source[start] === "[") return { text: "\\[", length: 1, inClass: true };
+  if (source[start] === "[") return { text: String.raw`\[`, length: 1, inClass: true };
 
   const first = readAtom(source, start);
   const dash = start + first.length;
@@ -179,17 +180,17 @@ const isUnicodeAware = (flags: string | undefined): boolean => /[uv]/.test(flags
 
 // Escapes RE2 would read differently from JavaScript. `\k<name>` is a backreference, which RE2 lacks
 // (and re2js translates into the literal "k<name>"). Without `u`, JavaScript reads `\a`, `\A`, `\z`,
-// `\Q`, `\E`, `\C`, `\p` and `\P` as the plain letter and `\u{41}` as "u" repeated 41 times; RE2
-// gives each a meaning of its own. A digit after `\` is a backreference or a legacy octal escape in
+// `\Q`, `\E`, `\C`, `\p` and `\P` as the plain letter, and `\u{41}` and `\x{41}` as the letter repeated 41
+// times; RE2 gives each a meaning of its own. A digit after `\` is a backreference or a legacy octal escape in
 // JavaScript, whose rules RE2's octal escapes do not follow; only a lone `\0` (NUL) means the same.
 const BACKREFERENCE_ESCAPES = new Set(["k"]);
 const NON_UNICODE_DIVERGENT_ESCAPES = new Set(["k", "a", "A", "z", "Q", "E", "C", "p", "P"]);
-const DIGIT = /[0-9]/;
+const DIGIT = /\d/;
 
 const isDivergentEscape = (pattern: string, at: number, unicode: boolean): boolean => {
   const next = pattern[at + 1] ?? "";
   if ((unicode ? BACKREFERENCE_ESCAPES : NON_UNICODE_DIVERGENT_ESCAPES).has(next)) return true;
-  if (!unicode && next === "u" && pattern[at + 2] === "{") return true;
+  if (!unicode && (next === "u" || next === "x") && pattern[at + 2] === "{") return true;
   return DIGIT.test(next) && (next !== "0" || DIGIT.test(pattern[at + 2] ?? ""));
 };
 
