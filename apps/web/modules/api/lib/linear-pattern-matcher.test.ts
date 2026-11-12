@@ -200,6 +200,10 @@ describe("createLinearPatternMatcher", () => {
     ["^\\12$", undefined, "octal or backreference"],
     ["^[\\u{41}]$", undefined, "\\u{41} is u repeated 41 times without u"],
     ["^\\x{41}$", undefined, "\\x{41} is x repeated 41 times without u"],
+    ["^(?m:^b)$", undefined, "a (?m: modifier group sees CR as a line break"],
+    ["^(?-s:.)$", "s", "a (?-s: modifier group changes what . matches"],
+    ["^\\uD83D\\uDE00$", "u", "with u, a surrogate pair escape is one code point"],
+    ["^\\u{D83D}$", "u", "with u, a lone surrogate escape"],
     ["^[a]$", "v", "v flag"],
   ])("does not evaluate %s (flags %s): %s", (pattern, flags) => {
     expect(match(pattern, flags, "a")).toBeUndefined();
@@ -222,6 +226,32 @@ describe("createLinearPatternMatcher", () => {
       expect(match("^b", "m", `a${lineBreak}b`)).toBeUndefined();
     }
     expect(match("^b", "m", "a\nb")).toBe(true);
+  });
+
+  test.each<[pattern: string, flags: string | undefined, value: string]>([
+    ["^.$", undefined, "\r"],
+    ["^.$", undefined, "\u2028"],
+    ["^.$", "u", "\u2029"],
+    ["^.$", "s", "\r"],
+    ["^.{2}$", undefined, "\uD83D\uDE00"],
+    ["^.$", "u", "\uD83D\uDE00"],
+    ["^[.]$", undefined, "\r"],
+    ["^\\.$", undefined, "."],
+    ["^(?i:a)$", undefined, "A"],
+  ])("matches %s with flags %s as RegExp does on %j", (pattern, flags, value) => {
+    expect(match(pattern, flags, value)).toBe(native(pattern, flags, value));
+  });
+
+  test.each<[pattern: string, flags: string, value: string]>([
+    ["a", "y", "xa"],
+    ["a", "y", "ax"],
+    ["b|ab", "y", "ab"],
+    ["\\B", "y", "xx"],
+    ["^a", "my", "x\na"],
+    ["x", "uy", "\u{1F600}x"],
+    ["x", "y", "\u{1F600}x"],
+  ])("matches %s with flags %s only at the start of %j, as a sticky RegExp does", (pattern, flags, value) => {
+    expect(match(pattern, flags, value)).toBe(native(pattern, flags, value));
   });
 
   test("agrees with RegExp on printable ASCII answers", () => {

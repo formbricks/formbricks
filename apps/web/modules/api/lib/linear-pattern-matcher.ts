@@ -16,8 +16,9 @@ import type { TPatternMatcher } from "@formbricks/surveys/validation";
  * its run.
  *
  * A pattern RE2 cannot run the way JavaScript would (lookarounds, backreferences, escapes the two read
- * differently, the `v` flag's set syntax), or not cheaply, is not evaluated here: the rule passes on the server and is still
- * enforced in the respondent's browser, as an invalid pattern always has been.
+ * differently, the `v` flag's set syntax, `(?m:` and `(?s:` modifier groups), or not cheaply, is not
+ * evaluated here: the rule passes on the server and is still enforced in the respondent's browser, as an
+ * invalid pattern always has been.
  *
  * The server must never be stricter than the browser, or it refuses answers the survey accepted. So the
  * pattern is rewritten where RE2 reads it differently:
@@ -26,11 +27,12 @@ import type { TPatternMatcher } from "@formbricks/surveys/validation";
  * - without `u`, JavaScript matches UTF-16 code units, so an emoji is two characters (`^.{2}$` accepts
  *   one). RE2 matches code points, so each surrogate code unit is handed to it as a stand-in code point
  *   of its own, in the answer and in the pattern alike;
+ * - RE2's `.` also matches CR, U+2028 and U+2029, so without `s` it becomes JavaScript's set;
  * - with `m`, RE2's `^` and `$` see only `\n` as a line break, so such a pattern is not evaluated
- *   against an answer holding CR, U+2028 or U+2029.
- * What remains makes RE2 more lenient (its `.` also matches CR, U+2028 and U+2029), except with `i` for a
- * few letters whose case pairs are newer than re2js's Unicode tables (U+0277/U+A7DD, U+027C/U+A7E2,
- * U+AB4B/U+AB6C and a few more), which match their pair only in the browser.
+ *   against an answer holding CR, U+2028 or U+2029;
+ * - `y` (sticky) is applied as a match at the start of the answer, which RE2's translation leaves out.
+ * What remains: with `i`, a few letters whose case pairs are newer than re2js's Unicode tables
+ * (U+0277/U+A7DD, U+027C/U+A7E2, U+AB4B/U+AB6C and a few more) match their pair only in the browser.
  */
 
 // ECMAScript `\s`: WhiteSpace and LineTerminator (ECMA-262 §22.2.2.9, CharacterClassEscape), and its
@@ -56,7 +58,8 @@ const standIn = (codeUnit: number): number => SURROGATE_STAND_IN + codeUnit - SU
 
 /** The answer as RE2 should see it under JavaScript's code-unit matching. */
 const withSurrogateStandIns = (value: string): string =>
-  value.replace(SURROGATE_CODE_UNIT, (unit) => String.fromCodePoint(standIn(unit.charCodeAt(0))));
+  // UTF-16 code units on purpose: `unit` is a single surrogate.
+  value.replace(SURROGATE_CODE_UNIT, (unit) => String.fromCodePoint(standIn(unit.charCodeAt(0)))); // NOSONAR
 
 const escapeCodePoint = (codePoint: number): string =>
   String.raw`\x{${codePoint.toString(16).toUpperCase()}}`;
@@ -72,9 +75,11 @@ interface Atom {
 const CONTROL_ESCAPES: Record<string, number> = { "0": 0x0, t: 0x9, n: 0xa, v: 0xb, f: 0xc, r: 0xd };
 const HEX_ESCAPE = /^\\x(?:\{([0-9A-Fa-f]{1,6})\}|([0-9A-Fa-f]{2}))/;
 
+// The tokenizer reads UTF-16 code units on purpose (each surrogate is an atom of its own), so it uses
+// `charCodeAt`, not `codePointAt`.
 const readAtom = (source: string, start: number): Atom => {
   const char = source[start];
-  if (char !== "\\") return { text: char, length: 1, codePoint: char.charCodeAt(0) };
+  if (char !== "\\") return { text: char, length: 1, codePoint: char.charCodeAt(0) }; // NOSONAR
 
   const next = source[start + 1] ?? "";
   const hex = next === "x" ? HEX_ESCAPE.exec(source.slice(start, start + 12)) : null;
@@ -82,7 +87,7 @@ const readAtom = (source: string, start: number): Atom => {
   if (next in CONTROL_ESCAPES) return { text: `\\${next}`, length: 2, codePoint: CONTROL_ESCAPES[next] };
   // An escaped punctuation character (`\.`, `\-`, `\]`, `\\`) is that character; a letter is a class.
   if (next && !/[0-9A-Za-z]/.test(next))
-    return { text: `\\${next}`, length: 2, codePoint: next.charCodeAt(0) };
+    return { text: `\\${next}`, length: 2, codePoint: next.charCodeAt(0) }; // NOSONAR
   return { text: `\\${next}`, length: 2 };
 };
 
@@ -106,6 +111,13 @@ const renderClassRange = (first: Atom, last: Atom, codeUnits: boolean): string =
   out += renderRange(standIn(Math.max(from, SURROGATE_FIRST)), standIn(Math.min(to, SURROGATE_LAST)));
   return out;
 };
+
+interface TRewrite {
+  /** No `u` flag: JavaScript matches UTF-16 code units. */
+  codeUnits: boolean;
+  /** The `s` flag: `.` matches line terminators too. */
+  dotAll: boolean;
+}
 
 interface Token {
   /** What the token becomes in the rewritten pattern. */
@@ -147,27 +159,32 @@ const readInClass = (source: string, start: number, codeUnits: boolean): Token =
   return { text: renderAtom(first, codeUnits), length: first.length, inClass: true };
 };
 
-const readToken = (source: string, start: number, inClass: boolean, codeUnits: boolean): Token => {
+// ECMAScript `.` without `s`: anything but a LineTerminator (ECMA-262 §22.2.2.7). RE2's excludes only `\n`.
+const JS_DOT = String.raw`[^\n\r\x{2028}\x{2029}]`;
+
+const readToken = (source: string, start: number, inClass: boolean, rewrite: TRewrite): Token => {
+  const { codeUnits, dotAll } = rewrite;
   const body = source[start] === "\\" ? JS_CLASS_BODIES[source[start + 1]] : undefined;
   if (body !== undefined) return { text: inClass ? body : `[${body}]`, length: 2, inClass };
   if (inClass) return readInClass(source, start, codeUnits);
   if (source[start] === "[") return readClassOpening(source, start);
+  if (source[start] === "." && !dotAll) return { text: JS_DOT, length: 1, inClass: false };
 
   const atom = readAtom(source, start);
   return { text: renderAtom(atom, codeUnits), length: atom.length, inClass: false };
 };
 
 /**
- * Rewrites an RE2 pattern to JavaScript's `\s` and `\S`, inside and outside classes, and, when
- * `codeUnits` (no `u` flag), each surrogate to its stand-in.
+ * Rewrites an RE2 pattern to JavaScript's `\s` and `\S`, inside and outside classes, to JavaScript's `.`
+ * unless `dotAll`, and, when `codeUnits` (no `u` flag), each surrogate to its stand-in.
  */
-const toJavaScriptSemantics = (source: string, codeUnits: boolean): string => {
+const toJavaScriptSemantics = (source: string, rewrite: TRewrite): string => {
   let out = "";
   let inClass = false;
   let position = 0;
 
   while (position < source.length) {
-    const token = readToken(source, position, inClass, codeUnits);
+    const token = readToken(source, position, inClass, rewrite);
     out += token.text;
     inClass = token.inClass;
     position += token.length;
@@ -186,11 +203,16 @@ const isUnicodeAware = (flags: string | undefined): boolean => /[uv]/.test(flags
 const BACKREFERENCE_ESCAPES = new Set(["k"]);
 const NON_UNICODE_DIVERGENT_ESCAPES = new Set(["k", "a", "A", "z", "Q", "E", "C", "p", "P"]);
 const DIGIT = /\d/;
+// With `u`, JavaScript joins `\uD83D\uDE00` into one code point; RE2 reads two lone surrogates.
+const SURROGATE_ESCAPE = /^u(?:\{0*[Dd][89A-Fa-f][\dA-Fa-f]{2}\}|[Dd][89A-Fa-f][\dA-Fa-f]{2})/;
+// `(?m:...)`, `(?-s:...)`, `(?is:...)` and the like; `(?:` and `(?i:` do not match.
+const LINE_MODIFIER_GROUP = /\(\?[ims-]*[ms][ims-]*:/;
 
 const isDivergentEscape = (pattern: string, at: number, unicode: boolean): boolean => {
   const next = pattern[at + 1] ?? "";
   if ((unicode ? BACKREFERENCE_ESCAPES : NON_UNICODE_DIVERGENT_ESCAPES).has(next)) return true;
   if (!unicode && (next === "u" || next === "x") && pattern[at + 2] === "{") return true;
+  if (unicode && SURROGATE_ESCAPE.test(pattern.slice(at + 1, at + 12))) return true;
   return DIGIT.test(next) && (next !== "0" || DIGIT.test(pattern[at + 2] ?? ""));
 };
 
@@ -228,8 +250,10 @@ const compile = (pattern: string, flags: string | undefined): TCompiled => {
     return { program: null, cost: 0 };
   }
 
-  // `v` adds nested classes and set operations, which the rewrite below does not read.
-  if (native.unicodeSets) return { program: null, cost: 0 };
+  // `v` adds nested classes and set operations, which the rewrite below does not read. A `(?m:` or `(?s:`
+  // modifier group changes what `^`, `$` and `.` treat as a line break inside it, which neither the
+  // rewrite nor the matcher's `m` check follows.
+  if (native.unicodeSets || LINE_MODIFIER_GROUP.test(pattern)) return { program: null, cost: 0 };
 
   const unicode = isUnicodeAware(flags);
   if (hasDivergentEscape(pattern, unicode)) {
@@ -238,7 +262,9 @@ const compile = (pattern: string, flags: string | undefined): TCompiled => {
 
   let program: RE2JS;
   try {
-    program = RE2JS.compile(toJavaScriptSemantics(RE2JS.translateRegExp(native), !unicode));
+    program = RE2JS.compile(
+      toJavaScriptSemantics(RE2JS.translateRegExp(native), { codeUnits: !unicode, dotAll: native.dotAll })
+    );
   } catch {
     return { program: null, cost: 0 };
   }
@@ -287,6 +313,9 @@ export const createLinearPatternMatcher = (budget: number = MAX_PATTERN_WORK_PER
     spent += program.programSize() * Math.max(value.length, 1);
     if (spent > budget) return false;
 
-    return program.test(isUnicodeAware(flags) ? value : withSurrogateStandIns(value));
+    const input = isUnicodeAware(flags) ? value : withSurrogateStandIns(value);
+    // `y` (sticky): a fresh RegExp only matches at index 0, which RE2 calls a prefix match. RE2's
+    // translation of the pattern drops the flag, so it is applied here.
+    return flags?.includes("y") ? program.matcher(input).lookingAt() : program.test(input);
   };
 };
