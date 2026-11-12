@@ -60,6 +60,10 @@ export const getMcpPermissionLabel = (permission: TMcpPermission, t: TTranslate)
 export const getMcpAccessLevelLabel = (level: Exclude<TMcpCategoryLevel, "mixed">, t: TTranslate): string =>
   LEVEL_LABELS[level](t);
 
+/** A category's level on Authorized apps' summary: "Custom" where its permissions differ. */
+export const getMcpCategoryLevelLabel = (level: TMcpCategoryLevel, t: TTranslate): string =>
+  level === "mixed" ? t("auth.oauth.grant.levels.custom") : getMcpAccessLevelLabel(level, t);
+
 /** "Needs Feedback records: Read.", the hint next to a permission that needs another one. */
 export const getMcpDependencyHint = (requirement: TMcpPermissionRequirement, t: TTranslate): string =>
   t("auth.oauth.grant.needs_permission", {

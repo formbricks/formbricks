@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { getMcpCategoryLabel, getMcpDependencyHint, getMcpPermissionLabel } from "./grant-editor-labels";
+import {
+  getMcpCategoryLabel,
+  getMcpCategoryLevelLabel,
+  getMcpDependencyHint,
+  getMcpPermissionLabel,
+} from "./grant-editor-labels";
 import { MCP_PERMISSIONS, MCP_PERMISSION_CATEGORIES, type TMcpPermission } from "./permissions";
 
 /** Echoes the key, and the values it was given, so a test sees which string was asked for. */
@@ -20,5 +25,10 @@ describe("grant editor labels", () => {
     expect(getMcpDependencyHint({ permission: "feedbackRecords", level: "read" }, t)).toBe(
       'auth.oauth.grant.needs_permission {"permission":"auth.oauth.grant.permissions.feedback_records","level":"auth.oauth.grant.levels.read"}'
     );
+  });
+
+  test("a category whose permissions differ reads as a custom level, the others as their level", () => {
+    expect(getMcpCategoryLevelLabel("mixed", t)).toBe("auth.oauth.grant.levels.custom");
+    expect(getMcpCategoryLevelLabel("none", t)).toBe("auth.oauth.grant.levels.no_access");
   });
 });

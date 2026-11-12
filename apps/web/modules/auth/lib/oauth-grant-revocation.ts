@@ -222,7 +222,7 @@ const consentBound = (
  * The scopes the user has consented to for the client, or `null` without a consent. Read `FOR SHARE`,
  * so a consent delete or narrowing that is still in flight is waited on rather than read around.
  */
-const readConsentedScopes = async (
+export const readConsentedScopes = async (
   tx: Prisma.TransactionClient,
   userId: string,
   clientId: string

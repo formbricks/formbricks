@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { mcpConnectionKeys } from "@/modules/mcp/authorized-apps/lib/query";
 import { Button } from "@/modules/ui/components/button";
 import { revokeOAuthConsentAction } from "../actions";
 
@@ -14,6 +16,7 @@ interface RevokeOAuthConsentButtonProps {
 export const RevokeOAuthConsentButton = ({ consentId }: Readonly<RevokeOAuthConsentButtonProps>) => {
   const { t } = useTranslation();
   const [isPending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
 
   const handleRevoke = () => {
     if (!window.confirm(t("auth.oauth.revoke_confirmation"))) {
@@ -24,6 +27,7 @@ export const RevokeOAuthConsentButton = ({ consentId }: Readonly<RevokeOAuthCons
       const result = await revokeOAuthConsentAction({ id: consentId });
 
       if (result?.data?.success) {
+        await queryClient.invalidateQueries({ queryKey: mcpConnectionKeys.list() });
         toast.success(t("auth.oauth.consent_revoked"));
         return;
       }

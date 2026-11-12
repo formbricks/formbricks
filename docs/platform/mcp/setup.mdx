@@ -141,9 +141,21 @@ oauth_resource = "https://app.formbricks.com/api/mcp"
 ## Manage and revoke access
 
 Every client you authorize appears under **Settings → Account → Authorized Apps**
-(`/account/settings/authorized-apps`), showing the client name, granted scopes, and when it was
-approved. Click **Revoke** to cut off a client's access: revoking deletes its grant, so its next call is
+(`/account/settings/authorized-apps`), showing the client name, its access level per category (such as
+**Surveys · Write** or **Responses · Read**; **Custom** when the permissions in a category differ), and
+when it was connected and last changed. A client connected twice, for example from two machines, is
+listed twice, and each connection is edited and revoked on its own.
+
+Click **Edit** to change what a client may do. It opens the same permission matrix as the consent screen,
+filled in with the client's current grant: set each permission to **No access**, **Read** or **Write**, or
+use **Read-only**, **Select all** or **Deselect all**. Levels above what the client asked for when you
+connected it can't be chosen; to give more, reconnect it so it asks again. **Save changes** applies from
+the client's next tool call, with the token it already holds, so there is no need to reconnect. Save stays
+disabled while every permission is at No access: to end a client's access, use Revoke.
+
+Click **Revoke** to cut off a client's access: revoking deletes its grant, so its next call is
 refused, even with an access token it still holds. It will need to be re-authorized to connect again.
+Editing and revoking are both recorded in the audit log.
 
 Approving a client again with fewer scopes replaces what it was granted. Every earlier grant that
 included a dropped scope stops refreshing, all of its tokens together, even ones the client had
@@ -202,7 +214,8 @@ re-confirmed periodically for safety.
   </Accordion>
   <Accordion title="A tool call is refused with “Not permitted”">
     The client's grant doesn't give the permission at the level the tool needs; the error names both,
-    such as `Surveys: Write`. Reconnect the client and approve the matching scope.
+    such as `Surveys: Write`. Raise it with **Edit** under **Authorized Apps**; if that level can't be
+    chosen there, reconnect the client and approve the matching scope.
   </Accordion>
   <Accordion title="Self-hosted: the browser can't complete sign-in / redirects fail">
     OAuth discovery and redirects are built from your configured base URL. Serve Formbricks from a

@@ -179,3 +179,33 @@ export const getInitialMcpGrantPermissions = ({
   existing: TMcpGrantPermissions | null;
   cap: TMcpGrantPermissions;
 }): TMcpGrantPermissions => (existing ? capMcpGrantPermissions(existing, cap) : cap);
+
+/**
+ * Authorized apps' summary of a grant (ENG-7152): one level chip per category the editor shows, `mixed`
+ * where the category's permissions differ.
+ */
+export const getMcpGrantSummary = (
+  permissions: TMcpGrantPermissions,
+  { isDashboardViewer }: { isDashboardViewer: boolean }
+): { category: TMcpPermissionCategory; level: TMcpCategoryLevel }[] =>
+  getMcpGrantEditorCategories({ isDashboardViewer }).map(
+    ({ category, permissions: categoryPermissions }) => ({
+      category,
+      level: getMcpCategoryLevel(permissions, categoryPermissions),
+    })
+  );
+
+const isSameMcpGrant = (a: TMcpGrantPermissions, b: TMcpGrantPermissions): boolean =>
+  ALL_PERMISSIONS.every((permission) => levelOf(a, permission) === levelOf(b, permission));
+
+/**
+ * Whether Edit's Save is enabled for `draft`, against the grant it opened with: not while nothing changed,
+ * and not for a grant that gives nothing (`isEmpty`, shown as a hint to use Revoke instead).
+ */
+export const getMcpGrantEditSaveState = (
+  draft: TMcpGrantPermissions,
+  saved: TMcpGrantPermissions
+): { canSave: boolean; isEmpty: boolean } => {
+  const isEmpty = isMcpGrantEmpty(draft);
+  return { canSave: !isEmpty && !isSameMcpGrant(draft, saved), isEmpty };
+};
