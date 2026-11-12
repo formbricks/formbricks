@@ -412,6 +412,18 @@ rejected credential or internal error — produces one, and a dead letter always
 genuinely disagree. The six-hour audit
 replays dead letters on its own after a clean run, which bounds a fail-closed denial at six hours.
 
+`status` also reports `unknownType`: undelivered events of a type this version doesn't know. A container never
+claims them, and they never make authorization fail closed or count toward the other numbers. During a rolling
+upgrade they are the newer version's events, and its containers deliver them. If `unknownType` stays above zero
+when every container runs the same version, the rows are corrupt and nothing will deliver them; `status` then
+exits `2` with a warning and `upgrade check` isn't `ready`. List the undelivered types, then delete the rows of
+the one this version doesn't know:
+
+```sql
+SELECT "targetType", COUNT(*) FROM "AuthzedProjectionOutbox" WHERE "processedAt" IS NULL GROUP BY 1;
+DELETE FROM "AuthzedProjectionOutbox" WHERE "targetType" = '<type>' AND "processedAt" IS NULL;
+```
+
 These results contain no source IDs, relationship strings, credentials, or raw errors. This is different from
 the detailed backfill report below, which intentionally contains operational identifiers.
 
@@ -445,8 +457,8 @@ commands above, and one warning when it clears. If the guard stays armed:
 3. For dead letters, read each one's `lastErrorCode` first, with the query under
    [Audit and repair surveys](#audit-and-repair-surveys). SpiceDB may have rejected the event, or a container
    of an earlier version may not have recognised its target type (`authzed_projection_invalid_event`). From
-   this version on, a container leaves a target type it doesn't know pending for a newer one instead of
-   dead-lettering it. Fix the cause, then run
+   this version on, a container leaves a target type it doesn't know pending for a newer one instead
+   (`unknownType` in `status`). Fix the cause, then run
    `formbricks-authzed outbox replay`; replaying without a fix only dead-letters the event again. `drain`
    never claims a dead letter.
 4. Run `formbricks-authzed outbox drain`, then `formbricks-authzed upgrade check`, and expect `status: ready`.

@@ -137,6 +137,7 @@ describe("AuthZed projection outbox repository", () => {
         pending: 11n,
         revocations_past_critical: 3n,
         revocations_past_warning: 5n,
+        unknown_type: 4n,
       },
     ]);
 
@@ -147,6 +148,7 @@ describe("AuthZed projection outbox repository", () => {
       pending: 11,
       revocationsPastCritical: 3,
       revocationsPastWarning: 5,
+      unknownType: 4,
     });
   });
 

@@ -272,6 +272,8 @@ export const observeAuthzedOutboxStatus = (readStatus: () => Promise<TAuthzedOut
       result.observe(outboxStatus, status.deadLettered, { state: "dead_lettered" });
       result.observe(outboxStatus, status.revocationsPastWarning, { state: "revocation_warning" });
       result.observe(outboxStatus, status.revocationsPastCritical, { state: "revocation_critical" });
+      // Rows of a target type this release doesn't know: a newer release's, or corrupt ones.
+      result.observe(outboxStatus, status.unknownType, { state: "unknown_type" });
       result.observe(outboxOldestPendingAge, status.oldestPendingAgeSeconds ?? 0);
       result.observe(outboxStatusLastRead, Date.now() / 1_000);
     },

@@ -20,11 +20,12 @@ describe("AuthZed outbox CLI", () => {
       pending: 2,
       revocationsPastCritical: 0,
       revocationsPastWarning: 0,
+      unknownType: 0,
     });
 
     await expect(runAuthzedOutboxCli({ action: "status" }, dependencies)).resolves.toBe(0);
     expect(dependencies.writeOutput).toHaveBeenCalledWith(
-      '{"deadLettered":0,"oldestPendingAgeSeconds":4,"overdueRevocations":0,"pending":2,"revocationsPastCritical":0,"revocationsPastWarning":0,"status":"healthy"}\n'
+      '{"deadLettered":0,"oldestPendingAgeSeconds":4,"overdueRevocations":0,"pending":2,"revocationsPastCritical":0,"revocationsPastWarning":0,"unknownType":0,"status":"healthy"}\n'
     );
     expect(dependencies.closeClient).toHaveBeenCalledOnce();
   });
@@ -37,6 +38,7 @@ describe("AuthZed outbox CLI", () => {
       pending: 1,
       revocationsPastCritical: 1,
       revocationsPastWarning: 1,
+      unknownType: 0,
     });
 
     await expect(runAuthzedOutboxCli({ action: "status" }, dependencies)).resolves.toBe(2);
@@ -48,6 +50,7 @@ describe("AuthZed outbox CLI", () => {
       pending: 1,
       revocationsPastCritical: 1,
       revocationsPastWarning: 1,
+      unknownType: 0,
       status: "critical",
     });
     expect(output).not.toContain("primaryId");
@@ -62,10 +65,29 @@ describe("AuthZed outbox CLI", () => {
       pending: 1,
       revocationsPastCritical: 0,
       revocationsPastWarning: 1,
+      unknownType: 0,
     });
 
     await expect(runAuthzedOutboxCli({ action: "status" }, dependencies)).resolves.toBe(2);
     expect(JSON.parse(dependencies.writeOutput.mock.calls[0][0])).toMatchObject({ status: "warning" });
+  });
+
+  test("warns about rows of a target type this release doesn't know, without failing authorization", async () => {
+    dependencies.status.mockResolvedValue({
+      deadLettered: 0,
+      oldestPendingAgeSeconds: null,
+      overdueRevocations: 0,
+      pending: 0,
+      revocationsPastCritical: 0,
+      revocationsPastWarning: 0,
+      unknownType: 1,
+    });
+
+    await expect(runAuthzedOutboxCli({ action: "status" }, dependencies)).resolves.toBe(2);
+    expect(JSON.parse(dependencies.writeOutput.mock.calls[0][0])).toMatchObject({
+      status: "warning",
+      unknownType: 1,
+    });
   });
 
   test("drains and replays with stable exit codes", async () => {

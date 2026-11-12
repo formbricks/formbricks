@@ -36,23 +36,31 @@ export const AUTHZED_OUTBOX_BATCH_SIZE = 200;
 export const AUTHZED_OUTBOX_HISTORY_RETENTION_DAYS = 7;
 export const AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE = 10_000;
 export const AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES = 100;
+/**
+ * The target types this release projects, as the bound array every query below filters on.
+ *
+ * A row of any other type was written by a newer release's trigger (during a rolling upgrade, or before
+ * a rollback) or by hand. This release can't deliver it and doesn't read the relationships it projects,
+ * so it is out of every question this module answers for this release: it is never claimed (it stays
+ * pending, unleased and unattempted, for a worker that knows it), never arms the freshness guard, never
+ * trips the safety net and never counts as pending, overdue or dead-lettered. It is counted on its own
+ * instead (`unknownType` in {@link getAuthzedOutboxStatus}), which the status CLI, the upgrade check and
+ * the outbox metric report, so a row no release will ever deliver (a corrupt one) surfaces there.
+ *
+ * Nothing dead-letters such a row. A type from a newer release and a corrupt one look the same from the
+ * row, and no worker can know every type a later release adds, so dead-lettering would hit the newer
+ * release's events too (`docs/agents/self-hosting-config.md`: a new outbox type must not dead-letter on
+ * old workers). An operator deletes a corrupt row once the status names it.
+ *
+ * This holds only while a new type projects relationships that releases before it don't read, which is
+ * the rule for adding one: otherwise an old release would authorize from a graph its guard can't see is
+ * stale.
+ */
+const KNOWN_TARGET_TYPES: string[] = [...AUTHZED_OUTBOX_TARGET_TYPES];
+
 export const createAuthzedOutboxLeaseOwner = (): string => randomUUID();
 
-/**
- * Leases up to `limit` deliverable events of the target types this release projects.
- *
- * A row of any other type is not claimed: it stays pending, unleased and unattempted, for a worker of
- * the release that wrote it (`docs/agents/self-hosting-config.md`: a new outbox type must not
- * dead-letter on old workers). During a rolling upgrade, or after a rollback, an old worker would
- * otherwise dead-letter the new release's events, and a dead-lettered revocation arms the freshness
- * guard for the whole deployment until an operator replays it.
- *
- * The trade-off: from the row alone, a type from a newer release and a corrupt or hand-inserted one
- * look the same, so neither is dead-lettered here any more. Both stay pending. A grant then waits
- * harmlessly; a revocation arms the freshness guard once it is overdue (fail closed, as an unknown
- * revocation should), and `getAuthzedOutboxStatus` counts it as pending, so it shows in
- * `pnpm authzed:outbox status`. An operator who knows no newer worker is coming deletes the row.
- */
+/** Leases up to `limit` deliverable events of the target types this release projects. */
 export const claimAuthzedOutboxEvents = async (
   leaseOwner: string,
   limit = AUTHZED_OUTBOX_BATCH_SIZE
@@ -63,7 +71,7 @@ export const claimAuthzedOutboxEvents = async (
       FROM "AuthzedProjectionOutbox"
       WHERE "processedAt" IS NULL
         AND "deadLetteredAt" IS NULL
-        AND "targetType" = ANY(${[...AUTHZED_OUTBOX_TARGET_TYPES]}::text[])
+        AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
         AND "availableAt" <= NOW()
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
       ORDER BY "isRevocation" DESC, "createdAt" ASC
@@ -165,6 +173,7 @@ type TStatusRow = Readonly<{
   pending: bigint;
   revocations_past_critical: bigint;
   revocations_past_warning: bigint;
+  unknown_type: bigint;
 }>;
 
 type TStaleRevocationRow = Readonly<{ stale: boolean }>;
@@ -175,7 +184,8 @@ type TStaleRevocationRow = Readonly<{ stale: boolean }>;
  * Two `EXISTS` rather than one with an `OR`, because the two halves live in different partial
  * indexes: `_claim_idx` covers `deadLetteredAt IS NULL` and `_undelivered_idx` covers the complement,
  * and no single index can serve both sides of that disjunction. Split, each branch is an index probe
- * and the second is skipped whenever the first already answered.
+ * and the second is skipped whenever the first already answered. Only the target types this release
+ * knows count ({@link KNOWN_TARGET_TYPES}): an old release never fails closed over a newer one's event.
  */
 export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
   const [row] = await prisma.$queryRaw<TStaleRevocationRow[]>`
@@ -187,6 +197,7 @@ export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
           AND "processedAt" IS NULL
           AND "deadLetteredAt" IS NULL
           AND "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS} * INTERVAL '1 millisecond')
+          AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
       )
       OR EXISTS (
         SELECT 1
@@ -194,6 +205,7 @@ export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
         WHERE "isRevocation" = true
           AND "processedAt" IS NULL
           AND "deadLetteredAt" IS NOT NULL
+          AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
       )
     ) AS stale
   `;
@@ -219,6 +231,7 @@ export const hasUnclaimedAuthzedOutboxEvent = async (unclaimedForMs: number): Pr
         AND "deadLetteredAt" IS NULL
         AND "availableAt" <= NOW() - (${unclaimedForMs} * INTERVAL '1 millisecond')
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
+        AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
     ) AS unclaimed
   `;
 
@@ -233,38 +246,45 @@ export const hasUnclaimedAuthzedOutboxEvent = async (unclaimedForMs: number): Pr
  * full-table scan twelve times a minute. `dead_lettered` is unaffected by the scoping — a
  * dead-lettered row always has a NULL `processedAt`, because the claim skips dead letters and
  * `replayAuthzedOutboxDeadLetters` clears `deadLetteredAt` before delivery is possible again.
+ *
+ * Every count but `unknownType` covers only the target types this release knows; `unknownType` counts
+ * the undelivered rows of any other type, dead-lettered or not ({@link KNOWN_TARGET_TYPES}).
  */
 export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> => {
   const [row] = await prisma.$queryRaw<TStatusRow[]>`
     SELECT
-      COUNT(*) FILTER (WHERE "deadLetteredAt" IS NULL) AS pending,
-      COUNT(*) FILTER (WHERE "deadLetteredAt" IS NOT NULL) AS dead_lettered,
+      COUNT(*) FILTER (WHERE NOT known) AS unknown_type,
+      COUNT(*) FILTER (WHERE known AND "deadLetteredAt" IS NULL) AS pending,
+      COUNT(*) FILTER (WHERE known AND "deadLetteredAt" IS NOT NULL) AS dead_lettered,
       COUNT(*) FILTER (
-        WHERE "isRevocation" = true
+        WHERE known AND "isRevocation" = true
           AND (
             "deadLetteredAt" IS NOT NULL
             OR "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS} * INTERVAL '1 millisecond')
           )
       ) AS overdue_revocations,
       COUNT(*) FILTER (
-        WHERE "isRevocation" = true
+        WHERE known AND "isRevocation" = true
           AND (
             "deadLetteredAt" IS NOT NULL
             OR "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_CRITICAL_MS} * INTERVAL '1 millisecond')
           )
       ) AS revocations_past_critical,
       COUNT(*) FILTER (
-        WHERE "isRevocation" = true
+        WHERE known AND "isRevocation" = true
           AND (
             "deadLetteredAt" IS NOT NULL
             OR "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_WARNING_MS} * INTERVAL '1 millisecond')
           )
       ) AS revocations_past_warning,
       EXTRACT(EPOCH FROM NOW() - MIN("createdAt") FILTER (
-        WHERE "deadLetteredAt" IS NULL
+        WHERE known AND "deadLetteredAt" IS NULL
       ))::double precision AS oldest_pending_age_seconds
-    FROM "AuthzedProjectionOutbox"
-    WHERE "processedAt" IS NULL
+    FROM (
+      SELECT *, "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[]) AS known
+      FROM "AuthzedProjectionOutbox"
+      WHERE "processedAt" IS NULL
+    ) AS undelivered
   `;
 
   return {
@@ -277,6 +297,7 @@ export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> =>
     pending: Number(row?.pending ?? 0),
     revocationsPastCritical: Number(row?.revocations_past_critical ?? 0),
     revocationsPastWarning: Number(row?.revocations_past_warning ?? 0),
+    unknownType: Number(row?.unknown_type ?? 0),
   };
 };
 

@@ -35,6 +35,11 @@ export type TAuthzedOutboxStatus = Readonly<{
   pending: number;
   revocationsPastCritical: number;
   revocationsPastWarning: number;
+  /**
+   * Undelivered rows of a target type this release doesn't know: a newer release's events this release
+   * leaves to it, or corrupt rows no release will deliver. Excluded from every other count.
+   */
+  unknownType: number;
 }>;
 
 export type TAuthzedOutboxDrainResult = Readonly<{

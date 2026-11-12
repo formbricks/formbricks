@@ -8,6 +8,7 @@ import {
   AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES,
   AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS,
   claimAuthzedOutboxEvents,
+  getAuthzedOutboxStatus,
   hasStaleAuthzedRevocation,
   hasUnclaimedAuthzedOutboxEvent,
   markAuthzedOutboxEventsDelivered,
@@ -526,6 +527,82 @@ describe("AuthZed projection outbox claim", () => {
       processedAt: null,
       lastErrorCode: null,
     });
+  });
+});
+
+/**
+ * A target type this release doesn't know: written by a newer release's trigger during a rolling upgrade
+ * or after a rollback, or hand-inserted. This release neither delivers it nor reads the relationships it
+ * projects, so it must not fail this release closed; it is surfaced instead.
+ */
+describe("AuthZed projection outbox: a target type this release doesn't know", () => {
+  const twoMinutesAgo = () => new Date(Date.now() - 120_000);
+
+  test("an overdue revocation of it doesn't arm the freshness guard, one of a known type does", async () => {
+    await prisma.authzedProjectionOutbox.create({
+      data: {
+        targetType: "a_type_from_a_newer_release",
+        primaryId: "p1",
+        isRevocation: true,
+        createdAt: twoMinutesAgo(),
+        availableAt: twoMinutesAgo(),
+      },
+    });
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(false);
+
+    await prisma.authzedProjectionOutbox.create({
+      data: {
+        targetType: "membership",
+        primaryId: "p2",
+        isRevocation: true,
+        createdAt: twoMinutesAgo(),
+        availableAt: twoMinutesAgo(),
+      },
+    });
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(true);
+  });
+
+  test("a dead-lettered revocation of it doesn't arm the guard either", async () => {
+    await prisma.authzedProjectionOutbox.create({
+      data: {
+        targetType: "a_type_from_a_newer_release",
+        primaryId: "p1",
+        isRevocation: true,
+        deadLetteredAt: new Date(),
+      },
+    });
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(false);
+  });
+
+  test("is counted on its own in the outbox status, never as pending, overdue or dead-lettered", async () => {
+    await prisma.authzedProjectionOutbox.createMany({
+      data: [
+        {
+          targetType: "a_type_from_a_newer_release",
+          primaryId: "p1",
+          isRevocation: true,
+          createdAt: twoMinutesAgo(),
+        },
+        { targetType: "corrupt type", primaryId: "p2", isRevocation: false },
+      ],
+    });
+
+    await expect(getAuthzedOutboxStatus()).resolves.toMatchObject({
+      unknownType: 2,
+      pending: 0,
+      deadLettered: 0,
+      overdueRevocations: 0,
+      revocationsPastCritical: 0,
+      revocationsPastWarning: 0,
+      oldestPendingAgeSeconds: null,
+    });
+  });
+
+  test("doesn't make the safety net think delivery stopped", async () => {
+    await prisma.authzedProjectionOutbox.create({
+      data: { targetType: "a_type_from_a_newer_release", primaryId: "p1", availableAt: twoMinutesAgo() },
+    });
+    await expect(hasUnclaimedAuthzedOutboxEvent(60_000)).resolves.toBe(false);
   });
 });
 

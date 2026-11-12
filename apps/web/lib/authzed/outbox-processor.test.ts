@@ -135,6 +135,7 @@ describe("AuthZed projection outbox processor", () => {
       pending: 0,
       revocationsPastCritical: 0,
       revocationsPastWarning: 0,
+      unknownType: 0,
     });
   });
 
