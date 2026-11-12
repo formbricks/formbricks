@@ -8,6 +8,7 @@ import type {
 } from "@modelcontextprotocol/server";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { type TMcpReachOutcome, runRecordingMcpReach } from "@/lib/authorization/context";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import type { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
@@ -19,7 +20,7 @@ import {
   getMcpRequestId,
   getMcpToolAuthInfo,
 } from "../auth";
-import { hideOutsideMcpGrant, responseToMcpToolResult } from "../errors";
+import { mcpOutsideGrantResult, responseToMcpToolResult } from "../errors";
 import { describeMcpPermissionRequirement, mcpGrantAllows } from "../grant";
 import {
   type TMcpPermissionRequirement,
@@ -189,10 +190,28 @@ const guardGrant = async (
   );
 };
 
-/** True when the request's grant selects organizations or workspaces rather than giving All access. */
-const limitsMcpGrantReach = (authInfo: AuthInfo | undefined): boolean => {
+/** The statuses an id outside the grant could otherwise be told apart from a made-up one by. */
+const HIDDEN_STATUSES: ReadonlySet<unknown> = new Set([403, 404]);
+
+/**
+ * Whether a tool's error answer is about something its grant doesn't reach, and so becomes not found
+ * (ADR-0042). Only under a grant that selects organizations or workspaces, and then when the call was
+ * denied something on the grant's reach, or when it answered 403 or 404 without any check confirming the
+ * grant reaches what it asked about. That second case is an id the operation refused before checking
+ * anything, which is how v3 answers an id that doesn't exist: left alone, it would tell an id that
+ * doesn't exist from one outside the grant. Everything answered after the grant was confirmed to reach
+ * the resource (a refusal by the user's role, a plan refusal, a confirmation) passes through unchanged.
+ */
+const isOutsideMcpGrant = (
+  result: CallToolResult,
+  authInfo: AuthInfo | undefined,
+  reach: TMcpReachOutcome
+): boolean => {
   const access = (authInfo as TMcpAuthInfo | undefined)?.extra?.grant?.access;
-  return access !== undefined && access !== "all";
+  if (!result.isError || access === undefined || access === "all") return false;
+  if (reach.denied) return true;
+  const status = (result.structuredContent as { error?: { status?: unknown } } | undefined)?.error?.status;
+  return !reach.confirmed && HIDDEN_STATUSES.has(status);
 };
 
 const guardPermissions = async (
@@ -299,10 +318,12 @@ export function registerMcpTool<
     // inputSchema BEFORE invoking guardedHandler, and we forward the exact same `input`/`ctx` through
     // unchanged — so the runtime value already conforms to the handler's declared type; nothing is
     // reshaped.
-    const result = await (handler as (input: unknown, ctx: unknown) => Promise<CallToolResult>)(input, ctx);
-    // ADR-0042: under a grant that limits organization & workspace access, what the grant doesn't reach
-    // doesn't exist. The guard's own "Not permitted" above is about levels, not reach, and stays.
-    return limitsMcpGrantReach(authInfo) ? hideOutsideMcpGrant(result, requestId) : result;
+    const { result, reach } = await runRecordingMcpReach(() =>
+      (handler as (input: unknown, ctx: unknown) => Promise<CallToolResult>)(input, ctx)
+    );
+    // ADR-0042: what the grant doesn't reach doesn't exist. The guard's "Not permitted" above is about
+    // levels, not reach, and stays.
+    return isOutsideMcpGrant(result, authInfo, reach) ? mcpOutsideGrantResult(requestId) : result;
   }) as ToolCallback<InputSchema>;
 
   server.registerTool(name, audit ? toolConfig : config, guardedHandler);

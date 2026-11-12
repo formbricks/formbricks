@@ -1,15 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  problemConflict,
-  problemContactsNotEntitled,
-  problemCreativesNotEntitled,
-  problemDashboardsPlanRequired,
-  problemForbidden,
-  problemUnprocessableContent,
-  problemWorkflowsNotEntitled,
-  successResponse,
-} from "@/app/api/v3/lib/response";
-import { hideOutsideMcpGrant, responseToMcpToolResult } from "./errors";
+import { problemConflict, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import { mcpOutsideGrantResult, responseToMcpToolResult } from "./errors";
 
 describe("responseToMcpToolResult", () => {
   test("returns structured success content with the resolved requestId", async () => {
@@ -67,64 +58,18 @@ describe("responseToMcpToolResult", () => {
   });
 });
 
-describe("hideOutsideMcpGrant", () => {
-  const refusal = (status: number, code: string, detail: string) =>
-    responseToMcpToolResult(
-      new Response(JSON.stringify({ status, title: "x", detail, code, requestId: "req_1" }), { status }),
-      "req_1"
-    );
-  const NOT_FOUND = {
-    status: 404,
-    title: "Not Found",
-    code: "not_found",
-    detail: "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it.",
-    requestId: "req_1",
-  };
-
-  test.each([
-    ["a refusal by the user's role or an unknown id", 403, "forbidden", "You are not authorized"],
-    ["an operation's own not found", 404, "not_found", "Chart not found"],
-  ])("answers %s with one not found", async (_case, status, code, detail) => {
-    const hidden = hideOutsideMcpGrant(await refusal(status, code, detail), "req_1");
+describe("mcpOutsideGrantResult", () => {
+  test("is one not found that names nothing beyond the request id", () => {
+    const NOT_FOUND = {
+      status: 404,
+      title: "Not Found",
+      code: "not_found",
+      detail: "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it.",
+      requestId: "req_1",
+    };
+    const hidden = mcpOutsideGrantResult("req_1");
     expect(hidden.isError).toBe(true);
     expect(hidden.structuredContent).toEqual({ error: NOT_FOUND });
     expect(JSON.parse((hidden.content?.[0] as { text: string }).text)).toEqual({ error: NOT_FOUND });
-  });
-
-  test.each([
-    ["a success", 200, undefined, undefined],
-    [
-      "a refusal for a plan the organization lacks",
-      403,
-      "dashboards_plan_required",
-      "Dashboards are not enabled",
-    ],
-    ["a validation error", 422, "unprocessable_content", "Bad input"],
-    ["a rate limit", 429, "too_many_requests", "Slow down"],
-  ])("leaves %s as it is", async (_case, status, code, detail) => {
-    const result =
-      status === 200
-        ? await responseToMcpToolResult(new Response(JSON.stringify({ data: [] }), { status }), "req_1")
-        : await refusal(status, code as string, detail as string);
-    expect(hideOutsideMcpGrant(result, "req_1")).toEqual(result);
-  });
-
-  // Every plan or entitlement refusal the v3 operations answer, built by the helper that answers it.
-  test.each([
-    ["Contacts", () => problemContactsNotEntitled("req_1"), "forbidden"],
-    ["Workflows", () => problemWorkflowsNotEntitled("req_1"), "forbidden"],
-    ["Dashboards", () => problemDashboardsPlanRequired("req_1"), "dashboards_plan_required"],
-    ["Creatives", () => problemCreativesNotEntitled("req_1", { windDown: false }), "creatives_not_entitled"],
-  ])("passes the %s entitlement refusal through with its own code", async (_feature, refuse, code) => {
-    const result = await responseToMcpToolResult(refuse(), "req_1");
-    expect(hideOutsideMcpGrant(result, "req_1")).toEqual(result);
-    expect(result.structuredContent).toMatchObject({ error: { status: 403, code } });
-  });
-
-  test("still hides a plain forbidden with the same detail as an entitlement refusal", async () => {
-    // The mark, not the body, is what passes a refusal through: a role refusal can't borrow it.
-    const lookalike = problemForbidden("req_1", "Workflows are not enabled for this organization");
-    const hidden = hideOutsideMcpGrant(await responseToMcpToolResult(lookalike, "req_1"), "req_1");
-    expect(hidden.structuredContent).toEqual({ error: NOT_FOUND });
   });
 });

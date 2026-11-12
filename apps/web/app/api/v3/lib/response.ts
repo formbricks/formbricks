@@ -380,41 +380,14 @@ export function problemDashboardsPlanRequired(requestId: string, instance?: stri
   );
 }
 
-const ENTITLEMENT_REFUSALS = new WeakSet<Response>();
-
-/**
- * A `403 forbidden` for a plan or license the organization lacks, told apart from a refusal by the
- * caller's role without changing what the API returns: the mark lives beside the response, never in it,
- * so the body and headers are exactly `problemForbidden`'s. The MCP layer reads it
- * ({@link isV3EntitlementRefusal}) so a grant limited to selected organizations or workspaces doesn't
- * turn the refusal into "not found" (ADR-0042). Only for checks made after the caller's own access, so
- * the refusal reveals nothing about a resource the caller can't see.
- *
- * Creatives and Dashboards have published codes of their own (`creatives_not_entitled`,
- * `dashboards_plan_required`); these predate that and keep `forbidden`, since a new code for an
- * existing case would change the public contract.
- */
-const problemEntitlementRefused = (requestId: string, detail: string, instance?: string): Response => {
-  const response = problemForbidden(requestId, detail, instance);
-  ENTITLEMENT_REFUSALS.add(response);
-  return response;
-};
-
-/** Whether `response` is a plan or license refusal from {@link problemEntitlementRefused}. */
-export const isV3EntitlementRefusal = (response: Response): boolean => ENTITLEMENT_REFUSALS.has(response);
-
 /** The organization isn't entitled to Contacts (the enterprise Contacts, Attributes and Segments feature). */
 export function problemContactsNotEntitled(requestId: string, instance?: string): Response {
-  return problemEntitlementRefused(
-    requestId,
-    "The contacts feature is not enabled for this organization.",
-    instance
-  );
+  return problemForbidden(requestId, "The contacts feature is not enabled for this organization.", instance);
 }
 
 /** The organization isn't entitled to Workflows (a Cloud plan or a self-hosted license that includes them). */
 export function problemWorkflowsNotEntitled(requestId: string, instance?: string): Response {
-  return problemEntitlementRefused(requestId, "Workflows are not enabled for this organization", instance);
+  return problemForbidden(requestId, "Workflows are not enabled for this organization", instance);
 }
 
 /**

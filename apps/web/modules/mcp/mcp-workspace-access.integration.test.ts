@@ -13,7 +13,11 @@ import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { DEFAULT_CREATIVE_STYLING } from "@/modules/ee/creatives/lib/creative";
-import { getIsContactsEnabled, getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsContactsEnabled,
+  getIsFeedbackDirectoriesEnabled,
+  getIsWorkflowsEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { editMcpGrant } from "./connections";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "./grant";
 import { getMcpGrant } from "./grant-store";
@@ -40,6 +44,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   getIsCreativesEnabled: vi.fn(async () => true),
   getIsWorkflowsEnabled: vi.fn(async () => true),
   getIsContactsEnabled: vi.fn(async () => true),
+  getIsFeedbackDirectoriesEnabled: vi.fn(async () => true),
 }));
 
 const BLOCKS = [
@@ -418,6 +423,14 @@ describe("organization & workspace access on MCP calls", () => {
       detail: "The contacts feature is not enabled for this organization.",
       permissions: { contactAttributes: "read" },
     },
+    {
+      feature: "Unify Feedback",
+      unentitle: () => vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(false),
+      tool: "list_feedback_datasets",
+      detail:
+        "Unify Feedback is not enabled for this organization. It requires an Enterprise plan or license — an organization owner can enable it from the organization's billing or license settings.",
+      permissions: READ_ALL,
+    },
   ] satisfies {
     feature: string;
     unentitle: () => unknown;
@@ -440,9 +453,112 @@ describe("organization & workspace access on MCP calls", () => {
       } finally {
         vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(true);
         vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
+        vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
       }
     }
   );
+
+  // Only what `can()` or a list lookup denied because of the grant's reach becomes not found. Every other
+  // answer of an in-grant call reaches the agent exactly as the operation gave it.
+  describe("answers of an in-grant call pass through unchanged", () => {
+    const WRITE_SURVEYS: TMcpGrantPermissions = { ...READ_ALL, surveys: "write" };
+
+    const answered = (outcome: TMcpToolCallOutcome) =>
+      (JSON.parse(toolText(outcome)) as { error: { status: number; code?: string; detail: string } }).error;
+
+    test("the 428 asking to confirm a change to a survey with responses", async () => {
+      await setAccess(
+        setup,
+        { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+        WRITE_SURVEYS
+      );
+      await prisma.survey.update({ where: { id: setup.inside.surveyId }, data: { status: "inProgress" } });
+
+      const outcome = await callMcpTool({ accessToken: setup.accessToken }, "patch_survey", {
+        surveyId: setup.inside.surveyId,
+        data: { name: "Renamed" },
+      });
+
+      expect(outcome.result?.isError, toolText(outcome)).toBe(true);
+      expect(answered(outcome)).toMatchObject({ status: 428 });
+      expect(answered(outcome).detail).toContain("Pass confirm: true after the user agrees.");
+    });
+
+    test("the plan refusal of contact targeting", async () => {
+      await setAccess(
+        setup,
+        { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+        WRITE_SURVEYS
+      );
+      const appSurvey = await prisma.survey.create({
+        data: {
+          name: "App survey",
+          type: "app",
+          workspaceId: setup.inside.workspaceId,
+          blocks: BLOCKS as never,
+        },
+      });
+      await synchronizeAuthzedIntegrationFixture();
+      vi.mocked(getIsContactsEnabled).mockResolvedValue(false);
+      try {
+        const outcome = await callMcpTool({ accessToken: setup.accessToken }, "patch_survey", {
+          surveyId: appSurvey.id,
+          data: {
+            targeting: {
+              filters: [
+                {
+                  id: "f1",
+                  connector: null,
+                  resource: {
+                    id: "r1",
+                    root: { type: "attribute", contactAttributeKey: "plan" },
+                    qualifier: { operator: "equals" },
+                    value: "pro",
+                  },
+                },
+              ],
+            },
+          },
+        });
+
+        expect(outcome.result?.isError, toolText(outcome)).toBe(true);
+        expect(answered(outcome)).toMatchObject({ status: 403, code: "forbidden" });
+        expect(answered(outcome).detail).toContain("Contact targeting (segments) is not enabled");
+      } finally {
+        vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
+      }
+    });
+
+    test("a refusal by the user's own role in a workspace the grant reaches", async () => {
+      await setAccess(setup, { access: "organizations", organizationIds: [setup.acmeId] }, WRITE_SURVEYS);
+      // Down to a member who only reads "In", through a team.
+      await prisma.membership.update({
+        where: { userId_organizationId: { userId: setup.userId, organizationId: setup.acmeId } },
+        data: { role: "member" },
+      });
+      const team = await prisma.team.create({ data: { name: "Readers", organizationId: setup.acmeId } });
+      await prisma.teamUser.create({ data: { role: "contributor", teamId: team.id, userId: setup.userId } });
+      await prisma.workspaceTeam.create({
+        data: { permission: "read", teamId: team.id, workspaceId: setup.inside.workspaceId },
+      });
+      await synchronizeAuthzedIntegrationFixture();
+
+      const outcome = await callMcpTool({ accessToken: setup.accessToken }, "patch_survey", {
+        surveyId: setup.inside.surveyId,
+        data: { name: "Renamed" },
+      });
+
+      expect(outcome.result?.isError, toolText(outcome)).toBe(true);
+      expect(answered(outcome)).toMatchObject({ status: 403, code: "forbidden" });
+      // Still not found outside the grant, whatever the role there.
+      expectNotFound(
+        await callMcpTool({ accessToken: setup.accessToken }, "patch_survey", {
+          surveyId: setup.elsewhere.surveyId,
+          data: { name: "Renamed" },
+        })
+      );
+    });
+  });
 
   test("a grant whose workspaces were deleted stays, reaches nothing, and every call is not found", async () => {
     await setAccess(setup, { access: "workspaces", workspaceIds: [setup.outside.workspaceId] });

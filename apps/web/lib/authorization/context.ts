@@ -62,15 +62,27 @@ type TAuthorizationContext = {
 
 type TPageSurfaceSlot = { context: TAuthorizationContext | null };
 
+/**
+ * What an MCP tool call learned about its grant's reach (`mcp_reach`): whether a check was denied on it,
+ * and whether one confirmed it reaches the resource checked.
+ */
+export type TMcpReachOutcome = { denied: boolean; confirmed: boolean };
+
 const globalForAuthorization = globalThis as unknown as {
   formbricksAuthorizationContext: AsyncLocalStorage<TAuthorizationContext> | undefined;
   formbricksAuthorizationPageSurfaceSlot: (() => TPageSurfaceSlot) | undefined;
+  formbricksMcpReachOutcomes: AsyncLocalStorage<TMcpReachOutcome> | undefined;
 };
 
 const authorizationContext =
   globalForAuthorization.formbricksAuthorizationContext ?? new AsyncLocalStorage<TAuthorizationContext>();
 
 globalForAuthorization.formbricksAuthorizationContext = authorizationContext;
+
+const mcpReachOutcomes =
+  globalForAuthorization.formbricksMcpReachOutcomes ?? new AsyncLocalStorage<TMcpReachOutcome>();
+
+globalForAuthorization.formbricksMcpReachOutcomes = mcpReachOutcomes;
 
 /**
  * One slot per React request scope. In an RSC render that is the whole render pass, so a layout and
@@ -210,3 +222,44 @@ export const getMcpGrantForActor = (
 /** The current bounded request surface, or `unscoped` for scripts and non-request authorization calls. */
 export const getAuthorizationSurface = (): TAuthorizationSurface | "unscoped" =>
   getActiveContext()?.surface ?? "unscoped";
+
+/**
+ * Runs one MCP tool call and reports what it learned about the grant's reach (ADR-0042): `denied` when a
+ * `can()` failed its `mcp_reach` check (or had nothing to check, an id that doesn't exist) or a list
+ * lookup dropped an id the user holds; `confirmed` when a `can()` found the grant reaches the resource.
+ * The MCP layer turns an error answer into "not found" from these, so an id outside the grant reads like
+ * one that doesn't exist, while an answer given about something the grant reaches (a plan refusal, a
+ * confirmation, a refusal by the user's own role) reaches the agent unchanged.
+ *
+ * Per tool call, not per request: a legacy JSON-RPC batch runs several calls in one request, and one
+ * call's outcome must not rewrite another's answer. Kept apart from the authorization surface, which
+ * counts the whole request's checks.
+ */
+export const runRecordingMcpReach = async <T>(
+  callback: () => Promise<T>
+): Promise<{ result: T; reach: TMcpReachOutcome }> => {
+  const reach: TMcpReachOutcome = { denied: false, confirmed: false };
+  const result = await mcpReachOutcomes.run(reach, callback);
+  return { result, reach };
+};
+
+/**
+ * Runs `callback` without recording what it learns about the grant's reach. For a check that only probes
+ * a capability to shape the answer (whether the user administers the organization, say), not one that
+ * decides whether the caller may have the resource it asked for: a grant limited to workspaces never
+ * reaches the organization node, and that must not turn the call's answer into not found.
+ */
+export const ignoringMcpReachDenials = <T>(callback: () => Promise<T>): Promise<T> =>
+  mcpReachOutcomes.run({ denied: false, confirmed: false }, callback);
+
+/** Records that the current MCP tool call was denied something its grant doesn't reach. No-op outside one. */
+export const recordMcpReachDenied = (): void => {
+  const reach = mcpReachOutcomes.getStore();
+  if (reach) reach.denied = true;
+};
+
+/** Records that a check of the current MCP tool call found its grant reaches the resource. */
+export const recordMcpReachConfirmed = (): void => {
+  const reach = mcpReachOutcomes.getStore();
+  if (reach) reach.confirmed = true;
+};

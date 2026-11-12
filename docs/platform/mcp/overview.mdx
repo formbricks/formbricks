@@ -161,9 +161,9 @@ that doesn't exist, so the client can't learn what else is there:
 }
 ```
 
-A refusal by your own role answers the same way for such a client. A refusal for a plan or license your
-organization lacks still answers as it does without the limit (`403`), since it says nothing about what else
-exists. A grant whose workspaces or organizations
+Everything else about a workspace the client does reach answers as it would without the limit: a refusal by
+your own role there, a refusal for a plan or license your organization lacks, or a request to confirm a change,
+since none of them says anything about what else exists. A grant whose workspaces or organizations
 were all deleted, or that you lost access to, stays connected and listed as **No workspaces**: every call
 answers not found until you edit or revoke it.
 

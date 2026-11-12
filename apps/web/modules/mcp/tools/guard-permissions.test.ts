@@ -1,6 +1,7 @@
 import type { AuthInfo, CallToolResult } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { recordMcpReachConfirmed, recordMcpReachDenied } from "@/lib/authorization/context";
 import { registerMcpTool } from "./guard-permissions";
 import { FULL_MCP_GRANT } from "./test-utils";
 
@@ -540,6 +541,102 @@ describe("registerMcpTool — the connection's grant", () => {
     await tools.get("list")!.handler({}, { http: { authInfo: withGrant(null, API_KEY_AUTH) } });
 
     expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("registerMcpTool — what the grant doesn't reach (ADR-0042)", () => {
+  const error = (status: number, code: string) =>
+    ({
+      isError: true,
+      structuredContent: { error: { status, code, detail: "Denied", requestId: "req_guard" } },
+      content: [{ type: "text", text: "{}" }],
+    }) as CallToolResult;
+  const NOT_FOUND = {
+    error: {
+      status: 404,
+      title: "Not Found",
+      code: "not_found",
+      detail: "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it.",
+      requestId: "req_guard",
+    },
+  };
+
+  const register = (
+    handler: (...args: unknown[]) => Promise<CallToolResult>,
+    access: "all" | "workspaces" = "workspaces"
+  ) => {
+    const { server, tools } = createToolServer();
+    registerMcpTool(
+      server as any,
+      "read_thing",
+      CONFIG,
+      [{ permission: "surveys", level: "read" }],
+      handler as any
+    );
+    const authInfo = authInfoWithScopes(["surveys:read"]);
+    (authInfo.extra as { grant: unknown }).grant = { ...FULL_MCP_GRANT, access };
+    return () => tools.get("read_thing")!.handler({}, { http: { authInfo } });
+  };
+
+  test("answers not found when the call was denied something on the grant's reach", async () => {
+    const call = register(async () => {
+      recordMcpReachConfirmed();
+      recordMcpReachDenied();
+      return error(403, "forbidden");
+    });
+
+    expect((await call()).structuredContent).toEqual(NOT_FOUND);
+  });
+
+  test("answers not found for a 403 or 404 given before any check confirmed the grant's reach", async () => {
+    expect((await register(async () => error(403, "forbidden"))()).structuredContent).toEqual(NOT_FOUND);
+    expect((await register(async () => error(404, "not_found"))()).structuredContent).toEqual(NOT_FOUND);
+  });
+
+  test("passes an answer about something the grant reaches through unchanged", async () => {
+    for (const result of [error(403, "forbidden"), error(404, "not_found"), error(428, "")]) {
+      expect(
+        await register(async () => {
+          recordMcpReachConfirmed();
+          return result;
+        })()
+      ).toBe(result);
+    }
+  });
+
+  test("passes any other error through, and every answer under All access", async () => {
+    const invalid = error(422, "unprocessable_content");
+    expect(await register(async () => invalid)()).toBe(invalid);
+    const refused = error(403, "forbidden");
+    expect(
+      await register(async () => {
+        recordMcpReachDenied();
+        return refused;
+      }, "all")()
+    ).toBe(refused);
+  });
+
+  test("passes a success through even when something along the way was out of reach", async () => {
+    const result = { structuredContent: { data: [] }, content: [] } as CallToolResult;
+    expect(
+      await register(async () => {
+        recordMcpReachDenied();
+        return result;
+      })()
+    ).toBe(result);
+  });
+
+  test("counts what a call learns only against that call", async () => {
+    let calls = 0;
+    const call = register(async () => {
+      calls += 1;
+      if (calls === 1) recordMcpReachDenied();
+      else recordMcpReachConfirmed();
+      return error(403, "forbidden");
+    });
+
+    expect((await call()).structuredContent).toEqual(NOT_FOUND);
+    expect((await call()).structuredContent).toMatchObject({ error: { status: 403 } });
   });
 });
 

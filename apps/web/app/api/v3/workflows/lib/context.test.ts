@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { isV3EntitlementRefusal, problemForbidden } from "@/app/api/v3/lib/response";
+import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
@@ -128,9 +128,6 @@ describe("buildWorkflowApiContext", () => {
     expect(result.status).toBe(plain.status);
     expect([...result.headers]).toEqual([...plain.headers]);
     expect(await result.text()).toBe(await plain.text());
-    // Told apart only beside the response, for the MCP layer (ADR-0042).
-    expect(isV3EntitlementRefusal(result)).toBe(true);
-    expect(isV3EntitlementRefusal(plain)).toBe(false);
   });
 
   test("authorize short-circuits on a workspace-access failure without checking the entitlement", async () => {

@@ -6,7 +6,12 @@ import { getAuthzedClient } from "@/lib/authzed/client";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { MCP_REACH_PERMISSION } from "@/lib/authzed/relationship-map";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
-import { getAuthorizationSurface, getMcpGrantForActor, recordAuthorizationCheckIssued } from "./context";
+import {
+  getAuthorizationSurface,
+  getMcpGrantForActor,
+  recordAuthorizationCheckIssued,
+  recordMcpReachDenied,
+} from "./context";
 import type { TAuthorizationAction, TAuthorizationActor } from "./contract";
 import { isMcpReachMissingFromSchema, toMcpGrantSubject } from "./mcp-reach";
 import { recordAuthorizationDecision } from "./metrics";
@@ -115,7 +120,9 @@ const withinMcpGrant = async (
   const grant = getMcpGrantForActor(actor);
   if (!grant) return ids;
   const [held, reached] = await Promise.all([ids, lookupMcpGrantReachIds(grant.id, resourceType)]);
-  return held.filter((id) => reached.has(id));
+  const within = held.filter((id) => reached.has(id));
+  if (within.length < held.length) recordMcpReachDenied();
+  return within;
 };
 
 export const lookupAuthorizedOrganizationIds = (actor: TAuthorizationActor): Promise<ReadonlyArray<string>> =>

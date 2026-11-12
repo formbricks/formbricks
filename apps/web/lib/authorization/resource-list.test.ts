@@ -18,6 +18,7 @@ vi.mock("./context", () => ({
   getAuthorizationSurface: vi.fn(() => "unscoped"),
   getMcpGrantForActor: vi.fn(() => null),
   recordAuthorizationCheckIssued: vi.fn(),
+  recordMcpReachDenied: vi.fn(),
 }));
 vi.mock("./metrics", () => ({ recordAuthorizationDecision: vi.fn() }));
 

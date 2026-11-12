@@ -5,7 +5,12 @@ import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { MCP_REACH_PERMISSION } from "@/lib/authzed/relationship-map";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
-import { type TAuthorizationMcpGrant, getMcpGrantForActor } from "./context";
+import {
+  type TAuthorizationMcpGrant,
+  getMcpGrantForActor,
+  recordMcpReachConfirmed,
+  recordMcpReachDenied,
+} from "./context";
 import {
   AUTHORIZATION_PERMISSION_MAP,
   type TAuthorizationAction,
@@ -14,7 +19,7 @@ import {
   type TAuthorizationResourceType,
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
-import { toMcpGrantSubject } from "./mcp-reach";
+import { isMcpReachMissingFromSchema, toMcpGrantSubject } from "./mcp-reach";
 import { getSpicedbObjectType } from "./object-type";
 import { isPermissionMissingFromSchema } from "./schema-drift";
 import {
@@ -222,12 +227,17 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
           })
         ).allowed;
   } catch (error) {
-    const missing = [check.permission, MCP_REACH_PERMISSION].find((permission) =>
-      isPermissionMissingFromSchema(error, permission)
-    );
-    if (!missing) throw error;
+    // The previous release's schema lacks `mcp_reach`: the grant reaches nothing until it is applied,
+    // exactly as the list lookups treat it.
+    const reachMissing = mcpGrant !== null && isMcpReachMissingFromSchema(error);
+    if (!reachMissing && !isPermissionMissingFromSchema(error, check.permission)) throw error;
+    if (reachMissing) recordMcpReachDenied();
     logger.warn(
-      { component: "authzed", permission: missing, resourceType: check.resource.type },
+      {
+        component: "authzed",
+        permission: reachMissing ? MCP_REACH_PERMISSION : check.permission,
+        resourceType: check.resource.type,
+      },
       "AuthZed schema lacks this permission; apply the release's schema. Denying the check"
     );
     return false;
@@ -262,6 +272,8 @@ const checkWithinMcpGrant = async (
       subject: toMcpGrantSubject(mcpGrant.id),
     },
   ]);
+  if (grantReaches === true) recordMcpReachConfirmed();
+  else recordMcpReachDenied();
   return userAllowed === true && grantReaches === true;
 };
 
@@ -272,7 +284,11 @@ export const spicedbEvaluator: AuthorizationEvaluator = {
     resource: TAuthorizationResourceForAction<NoInfer<TAction>>
   ): Promise<boolean> {
     const scope = await resolveAuthorizationScope(actor, resource);
-    return scope ? checkSpicedbPermissionAtScope(actor, action, resource, scope) : false;
+    if (scope) return checkSpicedbPermissionAtScope(actor, action, resource, scope);
+    // Nothing to check against (an id that doesn't exist): under a grant it must read like an id outside
+    // the grant, or the difference would tell a client what exists beyond it.
+    if (getMcpGrantForActor(actor)) recordMcpReachDenied();
+    return false;
   },
 };
 
