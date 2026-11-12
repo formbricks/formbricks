@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
 import type { TMcpGrantAccessDraft } from "@/modules/mcp/grant-access";
 import {
+  type TMcpGrantDraft,
   type TMcpGrantDraftState,
   type TMcpSavedGrant,
   getMcpGrantDraftState,
@@ -22,7 +23,7 @@ export type TMcpGrantDraftControls = TMcpGrantDraftState & {
  * opened with, so an unchanged draft can't be saved; the consent screen passes `null`.
  */
 export const useMcpGrantDraft = (
-  initial: { permissions: TMcpGrantPermissions; access: TMcpGrantAccessDraft },
+  initial: TMcpGrantDraft,
   saved: TMcpSavedGrant | null
 ): TMcpGrantDraftControls => {
   const [permissions, setPermissions] = useState<TMcpGrantPermissions>(initial.permissions);

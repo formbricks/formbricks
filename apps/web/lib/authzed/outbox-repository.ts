@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import {
   AUTHZED_OUTBOX_TARGET_TYPES,
   type TAuthzedOutboxEvent,
@@ -58,6 +59,12 @@ export const AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES = 100;
  */
 const KNOWN_TARGET_TYPES: string[] = [...AUTHZED_OUTBOX_TARGET_TYPES];
 
+/**
+ * The one condition every query here uses to keep to the types this release knows. A query that reads
+ * events outside the claim, the freshness guard or the status uses it too, so none can forget the filter.
+ */
+const isKnownTargetType = (): Prisma.Sql => Prisma.sql`"targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])`;
+
 export const createAuthzedOutboxLeaseOwner = (): string => randomUUID();
 
 /** Leases up to `limit` deliverable events of the target types this release projects. */
@@ -71,7 +78,7 @@ export const claimAuthzedOutboxEvents = async (
       FROM "AuthzedProjectionOutbox"
       WHERE "processedAt" IS NULL
         AND "deadLetteredAt" IS NULL
-        AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
+        AND ${isKnownTargetType()}
         AND "availableAt" <= NOW()
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
       ORDER BY "isRevocation" DESC, "createdAt" ASC
@@ -197,7 +204,7 @@ export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
           AND "processedAt" IS NULL
           AND "deadLetteredAt" IS NULL
           AND "createdAt" <= NOW() - (${AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS} * INTERVAL '1 millisecond')
-          AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
+          AND ${isKnownTargetType()}
       )
       OR EXISTS (
         SELECT 1
@@ -205,7 +212,7 @@ export const hasStaleAuthzedRevocation = async (): Promise<boolean> => {
         WHERE "isRevocation" = true
           AND "processedAt" IS NULL
           AND "deadLetteredAt" IS NOT NULL
-          AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
+          AND ${isKnownTargetType()}
       )
     ) AS stale
   `;
@@ -231,7 +238,7 @@ export const hasUnclaimedAuthzedOutboxEvent = async (unclaimedForMs: number): Pr
         AND "deadLetteredAt" IS NULL
         AND "availableAt" <= NOW() - (${unclaimedForMs} * INTERVAL '1 millisecond')
         AND ("leaseExpiresAt" IS NULL OR "leaseExpiresAt" <= NOW())
-        AND "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[])
+        AND ${isKnownTargetType()}
     ) AS unclaimed
   `;
 
@@ -281,7 +288,7 @@ export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> =>
         WHERE known AND "deadLetteredAt" IS NULL
       ))::double precision AS oldest_pending_age_seconds
     FROM (
-      SELECT *, "targetType" = ANY(${KNOWN_TARGET_TYPES}::text[]) AS known
+      SELECT *, ${isKnownTargetType()} AS known
       FROM "AuthzedProjectionOutbox"
       WHERE "processedAt" IS NULL
     ) AS undelivered
