@@ -4,7 +4,6 @@ import {
   applyMcpGrantPreset,
   getInitialMcpGrantPermissions,
   getMcpCategoryLevel,
-  getMcpGrantEditSaveState,
   getMcpGrantEditorCategories,
   getMcpGrantSummary,
   getMcpLevelOptions,
@@ -274,27 +273,5 @@ describe("getMcpGrantSummary", () => {
     expect(getMcpGrantSummary({ charts: "read", dashboards: "read" }, { isDashboardViewer: true })).toEqual([
       { category: "dashboards", level: "read" },
     ]);
-  });
-});
-
-describe("getMcpGrantEditSaveState", () => {
-  const saved = { surveys: "write", responses: "read" } as const;
-
-  test("lets a changed, non-empty grant be saved", () => {
-    expect(getMcpGrantEditSaveState({ surveys: "read", responses: "read" }, saved)).toEqual({
-      canSave: true,
-      isEmpty: false,
-    });
-  });
-
-  test("disables Save on an empty grant and says so, since Revoke is how access ends", () => {
-    expect(getMcpGrantEditSaveState({}, saved)).toEqual({ canSave: false, isEmpty: true });
-  });
-
-  test("disables Save while nothing changed, whatever order the levels were set in", () => {
-    expect(getMcpGrantEditSaveState({ responses: "read", surveys: "write" }, saved)).toEqual({
-      canSave: false,
-      isEmpty: false,
-    });
   });
 });

@@ -1,16 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { McpGrantAccessSelector } from "@/modules/mcp/components/mcp-grant-access-selector";
-import { McpGrantEditor } from "@/modules/mcp/components/mcp-grant-editor";
+import { McpGrantDraftFields } from "@/modules/mcp/components/mcp-grant-draft-fields";
 import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
-import {
-  type TMcpGrantAccessDraft,
-  type TMcpGrantAccessOptions,
-  toMcpGrantAccessSelection,
-} from "@/modules/mcp/grant-access";
-import { isMcpGrantEmpty } from "@/modules/mcp/grant-editor";
+import type { TMcpGrantAccessDraft, TMcpGrantAccessOptions } from "@/modules/mcp/grant-access";
+import { useMcpGrantDraft } from "@/modules/mcp/hooks/use-mcp-grant-draft";
 import { OAuthConsentActions } from "./OAuthConsentActions";
 
 interface OAuthConsentFormProps {
@@ -37,34 +31,23 @@ export const OAuthConsentForm = ({
   grantedScope,
 }: OAuthConsentFormProps) => {
   const { t } = useTranslation();
-  const [permissions, setPermissions] = useState<TMcpGrantPermissions>(initialPermissions);
-  const [access, setAccess] = useState<TMcpGrantAccessDraft>(initialAccess);
-  const isEmpty = isMcpGrantEmpty(permissions);
-  const accessSelection = toMcpGrantAccessSelection(access);
+  const draft = useMcpGrantDraft({ permissions: initialPermissions, access: initialAccess }, null);
 
   return (
     <div className="space-y-6">
-      <McpGrantAccessSelector
-        id="mcp-consent-access"
-        value={access}
-        options={accessOptions}
-        onChange={setAccess}
-      />
-      <McpGrantEditor
-        id="mcp-consent-grant"
-        permissions={permissions}
+      <McpGrantDraftFields
+        id="mcp-consent"
+        draft={draft}
+        accessOptions={accessOptions}
         cap={cap}
         isDashboardViewer={isDashboardViewer}
-        onChange={setPermissions}
+        emptyHint={t("auth.oauth.grant.empty_grant_hint")}
       />
-      {isEmpty && (
-        <output className="block text-sm text-slate-600">{t("auth.oauth.grant.empty_grant_hint")}</output>
-      )}
       <OAuthConsentActions
         grantedScope={grantedScope}
-        permissions={permissions}
-        access={accessSelection}
-        isAllowDisabled={isEmpty || accessSelection === null}
+        permissions={draft.permissions}
+        access={draft.accessSelection}
+        isAllowDisabled={!draft.canSubmit}
       />
     </div>
   );

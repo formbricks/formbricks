@@ -1,21 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TMcpConnectionResource } from "@/app/api/internal/mcp-grants/lib/serializers";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { McpGrantAccessSelector } from "@/modules/mcp/components/mcp-grant-access-selector";
-import { McpGrantEditor } from "@/modules/mcp/components/mcp-grant-editor";
+import { McpGrantDraftFields } from "@/modules/mcp/components/mcp-grant-draft-fields";
 import type { TMcpGrantAccess, TMcpGrantPermissions } from "@/modules/mcp/grant";
-import {
-  type TMcpGrantAccessDraft,
-  type TMcpGrantAccessOptions,
-  initialMcpGrantAccessDraft,
-  isSameMcpGrantAccess,
-  toMcpGrantAccessSelection,
-} from "@/modules/mcp/grant-access";
-import { getMcpGrantEditSaveState } from "@/modules/mcp/grant-editor";
+import { type TMcpGrantAccessOptions, initialMcpGrantAccessDraft } from "@/modules/mcp/grant-access";
+import { useMcpGrantDraft } from "@/modules/mcp/hooks/use-mcp-grant-draft";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -51,23 +43,20 @@ export const EditMcpGrantDialog = ({
   onClose,
 }: Readonly<EditMcpGrantDialogProps>) => {
   const { t } = useTranslation();
-  const [draft, setDraft] = useState<TMcpGrantPermissions>(connection.permissions);
-  const [access, setAccess] = useState<TMcpGrantAccessDraft>(() => initialMcpGrantAccessDraft(connection));
+  const draft = useMcpGrantDraft(
+    { permissions: connection.permissions, access: initialMcpGrantAccessDraft(connection) },
+    { permissions: connection.permissions, access: connection }
+  );
   const updateGrant = useUpdateMcpGrant();
-  const permissionsState = getMcpGrantEditSaveState(draft, connection.permissions);
-  const { isEmpty } = permissionsState;
-  const accessSelection = toMcpGrantAccessSelection(access);
-  const accessChanged = accessSelection !== null && !isSameMcpGrantAccess(accessSelection, connection);
-  const canSave = !isEmpty && accessSelection !== null && (permissionsState.canSave || accessChanged);
 
   const handleOpenChange = (open: boolean) => {
     if (!open && !updateGrant.isPending) onClose();
   };
 
   const handleSave = () => {
-    if (!accessSelection) return;
+    if (!draft.accessSelection) return;
     updateGrant.mutate(
-      { clientId: connection.clientId, permissions: draft, access: accessSelection },
+      { clientId: connection.clientId, permissions: draft.permissions, access: draft.accessSelection },
       {
         onSuccess: () => {
           toast.success(t("auth.oauth.grant_updated"));
@@ -86,30 +75,25 @@ export const EditMcpGrantDialog = ({
           <DialogDescription>{t("auth.oauth.edit_access_description", { clientName })}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-6 overflow-y-auto px-1 py-4">
-          <McpGrantAccessSelector
-            id={`mcp-access-${connection.consentId}`}
-            value={access}
-            options={accessOptions}
-            onChange={setAccess}
-            disabled={updateGrant.isPending}
-          />
-          <McpGrantEditor
-            id={`mcp-grant-${connection.consentId}`}
-            permissions={draft}
+          <McpGrantDraftFields
+            id={`mcp-edit-${connection.consentId}`}
+            draft={draft}
+            accessOptions={accessOptions}
             cap={connection.cap}
             isDashboardViewer={isDashboardViewer}
-            onChange={setDraft}
+            emptyHint={t("auth.oauth.edit_empty_grant_hint")}
             disabled={updateGrant.isPending}
           />
-          {isEmpty && (
-            <output className="block text-sm text-slate-600">{t("auth.oauth.edit_empty_grant_hint")}</output>
-          )}
         </DialogBody>
         <DialogFooter>
           <Button type="button" variant="secondary" disabled={updateGrant.isPending} onClick={onClose}>
             {t("common.cancel")}
           </Button>
-          <Button type="button" disabled={!canSave} loading={updateGrant.isPending} onClick={handleSave}>
+          <Button
+            type="button"
+            disabled={!draft.canSubmit}
+            loading={updateGrant.isPending}
+            onClick={handleSave}>
             {t("common.save_changes")}
           </Button>
         </DialogFooter>

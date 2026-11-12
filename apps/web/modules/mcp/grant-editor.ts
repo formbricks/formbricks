@@ -195,17 +195,6 @@ export const getMcpGrantSummary = (
     })
   );
 
-const isSameMcpGrant = (a: TMcpGrantPermissions, b: TMcpGrantPermissions): boolean =>
+/** True when both give every permission at the same level, whatever order the levels were set in. */
+export const isSameMcpGrant = (a: TMcpGrantPermissions, b: TMcpGrantPermissions): boolean =>
   ALL_PERMISSIONS.every((permission) => levelOf(a, permission) === levelOf(b, permission));
-
-/**
- * Whether Edit's Save is enabled for `draft`, against the grant it opened with: not while nothing changed,
- * and not for a grant that gives nothing (`isEmpty`, shown as a hint to use Revoke instead).
- */
-export const getMcpGrantEditSaveState = (
-  draft: TMcpGrantPermissions,
-  saved: TMcpGrantPermissions
-): { canSave: boolean; isEmpty: boolean } => {
-  const isEmpty = isMcpGrantEmpty(draft);
-  return { canSave: !isEmpty && !isSameMcpGrant(draft, saved), isEmpty };
-};
