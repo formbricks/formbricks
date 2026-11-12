@@ -143,6 +143,11 @@ describe("sso-recovery", () => {
     oauthConsent: {
       deleteMany: txOauthConsentDeleteMany,
     },
+    // The squatter's MCP grants go with its consents (ENG-7149); it held none here.
+    mcpGrant: {
+      findMany: vi.fn(async () => []),
+      deleteMany: vi.fn(async () => ({ count: 0 })),
+    },
     apiKey: {
       findMany: txApiKeyFindMany,
       deleteMany: txApiKeyDeleteMany,
