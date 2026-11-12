@@ -41,12 +41,14 @@ const put = (body: unknown = { enabled: true, isEncrypted: true }) =>
     { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
   );
 
+const SAVED_AT = new Date("2026-11-12T10:00:00.000Z");
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.can.mockResolvedValue(true);
   mocks.getSurvey.mockResolvedValue(survey);
-  mocks.updateSurvey.mockImplementation(async (input: typeof survey) => input);
+  mocks.updateSurvey.mockImplementation(async (input: typeof survey) => ({ ...input, updatedAt: SAVED_AT }));
 });
 
 describe("PUT /api/internal/surveys/{surveyId}/single-use-settings", () => {
@@ -54,7 +56,13 @@ describe("PUT /api/internal/surveys/{surveyId}/single-use-settings", () => {
     const response = await put();
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual({ surveyId: SURVEY_ID, enabled: true, isEncrypted: true });
+    // The survey's `updatedAt` after the write, so the page can hold these settings over an older render.
+    expect((await response.json()).data).toEqual({
+      surveyId: SURVEY_ID,
+      enabled: true,
+      isEncrypted: true,
+      updatedAt: SAVED_AT.toISOString(),
+    });
     expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "survey.write", {
       type: "survey",
       id: SURVEY_ID,

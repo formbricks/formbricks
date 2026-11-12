@@ -13,6 +13,7 @@ import type {
   TSurveySummaryResource,
 } from "@/app/api/internal/surveys/[surveyId]/summary/serializers";
 import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
+import { type TJsonUpdatedAt, reviveUpdatedAt } from "@/modules/api/lib/json-timestamps";
 
 /**
  * The survey summary's and its share modal's calls to `/api/internal/surveys/{surveyId}/…`. Each throws a
@@ -125,15 +126,17 @@ export const generatePersonalLinks = ({
   });
 
 /** Switch the survey's link between multi-use and single-use, and its single-use ids' encryption. */
-export const saveSingleUseSettings = ({
+export const saveSingleUseSettings = async ({
   surveyId,
   ...body
 }: {
   surveyId: string;
   enabled: boolean;
   isEncrypted: boolean;
-}) =>
-  sendApiRequest<TSurveySingleUseSettingsResource>(surveyPath(surveyId, "single-use-settings"), {
-    method: "PUT",
-    body,
-  });
+}): Promise<TSurveySingleUseSettingsResource> =>
+  reviveUpdatedAt(
+    await sendApiRequest<TJsonUpdatedAt<TSurveySingleUseSettingsResource>>(
+      surveyPath(surveyId, "single-use-settings"),
+      { method: "PUT", body }
+    )
+  );

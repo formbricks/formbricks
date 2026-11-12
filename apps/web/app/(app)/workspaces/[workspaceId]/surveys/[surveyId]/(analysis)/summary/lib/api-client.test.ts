@@ -73,11 +73,13 @@ describe("survey summary API client", () => {
 
   test("PUTs the single-use settings", async () => {
     const settings = { surveyId: SURVEY_ID, enabled: true, isEncrypted: false };
-    routeFetch({ [`PUT ${BASE}/single-use-settings`]: [json({ data: settings })] });
+    const updatedAt = "2026-11-12T10:00:00.000Z";
+    routeFetch({ [`PUT ${BASE}/single-use-settings`]: [json({ data: { ...settings, updatedAt } })] });
 
-    expect(await saveSingleUseSettings({ surveyId: SURVEY_ID, enabled: true, isEncrypted: false })).toEqual(
-      settings
-    );
+    expect(await saveSingleUseSettings({ surveyId: SURVEY_ID, enabled: true, isEncrypted: false })).toEqual({
+      ...settings,
+      updatedAt: new Date(updatedAt),
+    });
     expect(sentBody()).toEqual({ enabled: true, isEncrypted: false });
   });
 

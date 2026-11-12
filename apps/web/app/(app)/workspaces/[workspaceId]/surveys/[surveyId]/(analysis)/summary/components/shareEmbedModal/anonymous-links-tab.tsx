@@ -10,6 +10,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { DisableLinkModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { saveSingleUseSettings } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/api-client";
+import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { useSurveyLinkedCreatives } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
 import { isDestinationSettingLocked, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
@@ -38,6 +39,7 @@ export const AnonymousLinksTab = ({
 }: AnonymousLinksTabProps) => {
   const router = useRouter();
   const { t } = useTranslation();
+  const { replaceSurvey } = useSurvey();
 
   const [isMultiUseLink, setIsMultiUseLink] = useState(!survey.singleUse?.enabled);
   const [isSingleUseLink, setIsSingleUseLink] = useState(survey.singleUse?.enabled ?? false);
@@ -69,11 +71,13 @@ export const AnonymousLinksTab = ({
     isSingleUseEncryption: boolean
   ): Promise<void> => {
     try {
-      await saveSingleUseSettings({
+      const { enabled, isEncrypted, updatedAt } = await saveSingleUseSettings({
         surveyId: survey.id,
         enabled: isSingleUse,
         isEncrypted: isSingleUseEncryption,
       });
+      // A survey save from another tab sends the whole survey, these settings included, so it must carry them.
+      replaceSurvey({ ...survey, singleUse: { ...survey.singleUse, enabled, isEncrypted }, updatedAt });
       router.refresh();
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));

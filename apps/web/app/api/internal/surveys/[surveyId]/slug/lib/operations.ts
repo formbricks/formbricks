@@ -3,12 +3,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { requireSurveyActionAccess } from "@/app/api/internal/lib/survey-access";
 import type { TRequestMeta } from "@/app/api/internal/lib/types";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
-import {
-  noContentResponse,
-  problemConflict,
-  problemForbidden,
-  successResponse,
-} from "@/app/api/v3/lib/response";
+import { problemConflict, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
@@ -26,7 +21,7 @@ type TRequestContext = TRequestMeta & { authentication: TV3Authentication; surve
 async function writeSurveySlug(
   { authentication, surveyId, requestId, instance }: TRequestContext,
   slug: string | null
-): Promise<Response | { id: string; slug: string | null }> {
+): Promise<Response | Awaited<ReturnType<typeof updateSurveySlug>>> {
   if (IS_FORMBRICKS_CLOUD) {
     return problemForbidden(requestId, "Pretty URLs are only available on self-hosted instances", instance);
   }
@@ -71,5 +66,6 @@ export async function updateSurveySlugOperation({
 export async function removeSurveySlugOperation(context: TRequestContext): Promise<Response> {
   const result = await writeSurveySlug(context, null);
   if (result instanceof Response) return result;
-  return noContentResponse({ requestId: context.requestId });
+  // Answers the survey's new `updatedAt` rather than 204, for the same reason as the PUT.
+  return successResponse(serializeSurveySlug(result), { requestId: context.requestId });
 }

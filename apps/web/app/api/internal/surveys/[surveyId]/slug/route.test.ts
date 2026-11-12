@@ -65,6 +65,8 @@ const operationLimits = () =>
     .filter(([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace)
     .map(([config, identifier]) => [config.namespace, identifier]);
 
+const SAVED_AT = new Date("2026-11-12T10:00:00.000Z");
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.constants.IS_FORMBRICKS_CLOUD = false;
@@ -72,7 +74,11 @@ beforeEach(() => {
   mocks.can.mockResolvedValue(true);
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.getWorkspaceIdFromSurveyId.mockResolvedValue(WORKSPACE_ID);
-  mocks.updateSurveySlug.mockImplementation(async (id: string, slug: string | null) => ({ id, slug }));
+  mocks.updateSurveySlug.mockImplementation(async (id: string, slug: string | null) => ({
+    id,
+    slug,
+    updatedAt: SAVED_AT,
+  }));
 });
 
 describe("PUT /api/internal/surveys/{surveyId}/slug", () => {
@@ -80,7 +86,12 @@ describe("PUT /api/internal/surveys/{surveyId}/slug", () => {
     const response = await put({ slug: "summer-feedback" });
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual({ surveyId: SURVEY_ID, slug: "summer-feedback" });
+    // The survey's `updatedAt` after the write, so the page can hold the slug over an older render.
+    expect((await response.json()).data).toEqual({
+      surveyId: SURVEY_ID,
+      slug: "summer-feedback",
+      updatedAt: SAVED_AT.toISOString(),
+    });
     expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "survey.write", {
       type: "survey",
       id: SURVEY_ID,
@@ -180,7 +191,12 @@ describe("DELETE /api/internal/surveys/{surveyId}/slug", () => {
   test("clears the slug with the same checks", async () => {
     const response = await remove();
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual({
+      surveyId: SURVEY_ID,
+      slug: null,
+      updatedAt: SAVED_AT.toISOString(),
+    });
     expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "survey.write", {
       type: "survey",
       id: SURVEY_ID,

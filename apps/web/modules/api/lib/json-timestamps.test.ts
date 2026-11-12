@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { reviveDates, reviveTimestamps } from "./json-timestamps";
+import { reviveDates, reviveTimestamps, reviveUpdatedAt } from "./json-timestamps";
 
 describe("reviveTimestamps", () => {
   test("turns createdAt and updatedAt back into Dates and keeps every other field", () => {
@@ -17,6 +17,14 @@ describe("reviveTimestamps", () => {
       updatedAt: new Date("2026-02-03T04:05:06.000Z"),
     });
     expect(revived.createdAt).toBeInstanceOf(Date);
+  });
+});
+
+describe("reviveUpdatedAt", () => {
+  test("turns only `updatedAt` back into a Date and keeps the rest", () => {
+    const revived = reviveUpdatedAt({ surveyId: "s1", slug: "a", updatedAt: "2026-11-12T10:00:00.000Z" });
+    expect(revived).toEqual({ surveyId: "s1", slug: "a", updatedAt: new Date("2026-11-12T10:00:00.000Z") });
+    expect(revived.updatedAt).toBeInstanceOf(Date);
   });
 });
 

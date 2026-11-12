@@ -66,9 +66,9 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
     setIsSubmitting(true);
     try {
-      const { slug } = await updateSurveySlug(survey.id, data.slug);
+      const { slug, updatedAt } = await updateSurveySlug(survey.id, data.slug);
       // A survey save from another tab sends the whole survey, slug included, so it must carry this one.
-      replaceSurvey({ ...survey, slug });
+      replaceSurvey({ ...survey, slug, updatedAt });
       toast.success(t("workspace.surveys.share.pretty_url.save_success"));
       router.refresh();
       setIsEditing(false);
@@ -91,8 +91,8 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
   const handleRemove = async () => {
     setIsSubmitting(true);
     try {
-      await removeSurveySlug(survey.id);
-      replaceSurvey({ ...survey, slug: null });
+      const { slug, updatedAt } = await removeSurveySlug(survey.id);
+      replaceSurvey({ ...survey, slug, updatedAt });
       setShowRemoveDialog(false);
       reset({ slug: "" });
       router.refresh();

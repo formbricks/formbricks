@@ -123,7 +123,7 @@ export const ResponsePage = ({
     setPage(newPage);
   }, [isReady, page, responses, responsesPerPage, surveyId]);
 
-  // Takes rows off the page's own list. Stable, so the outcome actions below keep their identity.
+  // Takes rows off the page's own list, after a delete.
   const removeResponses = useCallback((responseIds: string[]) => {
     setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
   }, []);

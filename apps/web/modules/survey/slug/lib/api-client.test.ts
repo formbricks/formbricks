@@ -5,6 +5,7 @@ import { removeSurveySlug, updateSurveySlug } from "./api-client";
 
 const SURVEY_ID = "clsurvey11111111111111111";
 const URL = `/api/internal/surveys/${SURVEY_ID}/slug`;
+const SAVED_AT = "2026-11-12T10:00:00.000Z";
 
 describe("survey slug API client", () => {
   beforeEach(() => {
@@ -16,15 +17,27 @@ describe("survey slug API client", () => {
   });
 
   test("PUTs the slug", async () => {
-    routeFetch({ [`PUT ${URL}`]: [json({ data: { surveyId: SURVEY_ID, slug: "summer" } })] });
+    routeFetch({
+      [`PUT ${URL}`]: [json({ data: { surveyId: SURVEY_ID, slug: "summer", updatedAt: SAVED_AT } })],
+    });
 
-    expect(await updateSurveySlug(SURVEY_ID, "summer")).toEqual({ surveyId: SURVEY_ID, slug: "summer" });
+    expect(await updateSurveySlug(SURVEY_ID, "summer")).toEqual({
+      surveyId: SURVEY_ID,
+      slug: "summer",
+      updatedAt: new Date(SAVED_AT),
+    });
     expect(JSON.parse(String(vi.mocked(global.fetch).mock.calls[0][1]?.body))).toEqual({ slug: "summer" });
   });
 
   test("DELETEs the slug", async () => {
-    routeFetch({ [`DELETE ${URL}`]: [new Response(null, { status: 204 })] });
-    await expect(removeSurveySlug(SURVEY_ID)).resolves.toBeUndefined();
+    routeFetch({
+      [`DELETE ${URL}`]: [json({ data: { surveyId: SURVEY_ID, slug: null, updatedAt: SAVED_AT } })],
+    });
+    await expect(removeSurveySlug(SURVEY_ID)).resolves.toEqual({
+      surveyId: SURVEY_ID,
+      slug: null,
+      updatedAt: new Date(SAVED_AT),
+    });
   });
 
   test("surfaces a taken slug as the server's message", async () => {

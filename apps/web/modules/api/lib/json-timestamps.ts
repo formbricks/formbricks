@@ -16,6 +16,15 @@ export const reviveTimestamps = <T extends { createdAt: string; updatedAt: strin
   updatedAt: new Date(value.updatedAt),
 });
 
+/** `T` as an internal route sends it when only `updatedAt` is a date: as an ISO string. */
+export type TJsonUpdatedAt<T> = Omit<T, "updatedAt"> & { updatedAt: string };
+
+/** `value` with its `updatedAt` back as a `Date`. */
+export const reviveUpdatedAt = <T extends { updatedAt: string }>(value: T) => ({
+  ...value,
+  updatedAt: new Date(value.updatedAt),
+});
+
 /**
  * Where the dates sit in a nested JSON value, for `reviveDates`: `true` marks a date, an object names the
  * keys to look under, and a one-element array applies its shape to every element of an array. A survey's
