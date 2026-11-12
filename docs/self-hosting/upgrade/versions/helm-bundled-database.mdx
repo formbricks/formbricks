@@ -20,8 +20,11 @@ installations that use the bundled PostgreSQL (`postgresql.enabled: true`):
 - **The SpiceDB bootstrap Job connects as the bundled user.** With every
   `authzed.bundledPostgresqlBootstrap.admin*` value empty, it connects as `postgresql.auth.username` on
   `postgresql.auth.database` with that user's password. The bundled `pgvector/pgvector` image has no `postgres`
-  role, so the previous default failed with `password authentication failed for user "postgres"`. Set any
-  `admin*` value to keep an explicit administrator; the values you leave empty keep the previous defaults.
+  role, so the previous default failed with `password authentication failed for user "postgres"`. To use
+  your own administrator, set `adminUsername`, `adminPasswordSecretName` and `adminPasswordKey` together;
+  `adminDatabase` is optional and defaults to `postgres`. A username without the Secret name, or a Secret
+  name without the key, fails when Helm renders the chart. Setting only `adminDatabase` or `adminPasswordKey`
+  keeps the previous `postgres` administrator from the bundled Secret.
 
 <Warning>
   This changes which database role Cube uses. Kubernetes gives a container's `env` precedence over its
