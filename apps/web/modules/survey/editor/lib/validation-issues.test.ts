@@ -519,6 +519,112 @@ describe("getSchemaIssues", () => {
     ]);
   });
 
+  test("words an empty matrix row and an empty column as what to enter", () => {
+    const survey = buildSurvey([
+      block([
+        {
+          id: "q1",
+          type: "matrix",
+          headline: { default: "Rate", de: "Bewerte" },
+          required: true,
+          shuffleOption: "none",
+          rows: [{ id: "r1", label: { default: "", de: "Zeile" } }],
+          columns: [{ id: "c1", label: { default: "", de: "Spalte" } }],
+        },
+      ]),
+    ]);
+
+    const messages = getSchemaIssues(survey, t, "en-US").map((found) => found.message);
+
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        "workspace.surveys.edit.issue_enter_row",
+        "workspace.surveys.edit.issue_enter_column",
+      ])
+    );
+  });
+
+  test("asks for more images when a picture question has too few", () => {
+    const survey = buildSurvey([
+      block([
+        {
+          id: "q1",
+          type: "pictureSelection",
+          headline: { default: "Pick", de: "Wähle" },
+          required: true,
+          allowMulti: false,
+          choices: [{ id: "c1", imageUrl: "https://example.com/a.png" }],
+        },
+      ]),
+    ]);
+
+    expect(getSchemaIssues(survey, t, "en-US")).toEqual([
+      expect.objectContaining({
+        targetId: "q1",
+        message: expect.stringContaining("issue_add_at_least_images"),
+      }),
+    ]);
+  });
+
+  test("tells a question code another question already uses", () => {
+    const survey = buildSurvey([
+      block([{ ...openText({ default: "A?", de: "A?" }), code: "same" }]),
+      {
+        id: "block2",
+        name: "Block 2",
+        elements: [{ ...openText({ default: "B?", de: "B?" }), id: "q2", code: "same" }],
+      },
+    ]);
+
+    expect(getSchemaIssues(survey, t, "en-US")).toEqual([
+      expect.objectContaining({ tab: "elements", field: "code" }),
+    ]);
+  });
+
+  test("puts a problem about the survey as a whole on the tab it most likely lives on", () => {
+    const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {
+      followUps: "not a list",
+    });
+
+    const found = getSchemaIssues(survey, t, "en-US");
+
+    expect(found).toEqual([
+      expect.objectContaining({ tab: "followUps", targetId: null, field: "followUps" }),
+    ]);
+  });
+
+  test("lists an unfinished rule before the first question on the Flow tab, against the rule", () => {
+    const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {
+      startLogic: [
+        {
+          id: "start1",
+          conditions: {
+            id: "cl9dsxhzt0000qz0h5z6z6c01",
+            connector: "and",
+            conditions: [
+              {
+                id: "cl9dsxhzt0000qz0h5z6z6c02",
+                leftOperand: { type: "element", value: "q1" },
+                operator: "equals",
+              },
+            ],
+          },
+          actions: [{ id: "cl9dsxhzt0000qz0h5z6z6c03", objective: "jumpToBlock", target: "block1" }],
+        },
+      ],
+    });
+
+    expect(getSchemaIssues(survey, t, "en-US")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tab: "flow",
+          targetId: "start1",
+          message: "workspace.surveys.edit.issue_show_if_value",
+        }),
+      ])
+    );
+  });
+
   test("flags an empty block name on the block, not on a question", () => {
     const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })], "")]);
 
