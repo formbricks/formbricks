@@ -104,7 +104,10 @@ export const revokeAllUserOAuthGrants = async (
   grantAudits: TMcpGrantAuditRecord[];
 }> => {
   // Consents first, as `revokeOAuthConsentBeforeHandler` does: a refresh in flight that lands between
-  // the two then fails its consent check instead of minting a token after the revocation.
+  // the two then fails its consent check instead of minting a token after the revocation. Locked in id
+  // order before the delete, as every other multi-row path here locks them, so a concurrent narrowing or
+  // refresh of a user with duplicate consent rows waits rather than deadlocks.
+  await tx.$queryRaw`SELECT "id" FROM "oauthConsent" WHERE "userId" = ${userId} ORDER BY "id" FOR UPDATE`;
   const consentRows = await tx.oauthConsent.deleteMany({ where: { userId } });
   const grants = await deleteMcpGrants(tx, { userId });
   // Read in the transaction, so the entries name the organizations as they stood when the grants ended.
