@@ -1,7 +1,7 @@
 import type { TMcpConnection } from "@/modules/mcp/connections";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import type { TMcpGrantAccessOptions } from "@/modules/mcp/grant-access";
-import type { TStoredMcpGrant } from "@/modules/mcp/grant-store";
+import { type TStoredMcpGrant, getMcpGrantAccessSelection } from "@/modules/mcp/grant-store";
 
 /** A connection as Authorized apps reads it: dates as ISO strings. */
 export type TMcpConnectionResource = Omit<TMcpConnection, "connectedAt" | "updatedAt"> & {
@@ -36,7 +36,8 @@ export const serializeMcpConnection = (connection: TMcpConnection): TMcpConnecti
   cap: connection.cap,
 });
 
-export const serializeMcpGrant = (grant: TStoredMcpGrant): TMcpGrantResource => {
-  const { id: _id, userId: _userId, clientId, permissions, ...access } = grant;
-  return { clientId, permissions, access };
-};
+export const serializeMcpGrant = (grant: TStoredMcpGrant): TMcpGrantResource => ({
+  clientId: grant.clientId,
+  permissions: grant.permissions,
+  access: getMcpGrantAccessSelection(grant),
+});

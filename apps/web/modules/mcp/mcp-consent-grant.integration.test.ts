@@ -113,7 +113,12 @@ describe("Allow on the consent screen", () => {
       expect.objectContaining({
         action: "created",
         targetType: "mcpGrant",
-        newObject: expect.objectContaining({ permissions: { surveys: "read", responses: "write" } }),
+        newObject: {
+          before: null,
+          after: expect.objectContaining({
+            permissions: expect.objectContaining({ surveys: "read", responses: "write", workflows: "none" }),
+          }),
+        },
       })
     );
   });
@@ -138,7 +143,10 @@ describe("Allow on the consent screen", () => {
     expect(queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "created",
-        newObject: expect.objectContaining({ access: "workspaces", workspaceIds: [setup.workspaceId] }),
+        newObject: {
+          before: null,
+          after: expect.objectContaining({ access: "workspaces", workspaceIds: [setup.workspaceId] }),
+        },
       })
     );
 

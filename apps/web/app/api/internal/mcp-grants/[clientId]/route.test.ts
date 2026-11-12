@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   isDashboardViewerOnly: vi.fn(),
   editMcpGrant: vi.fn(),
+  queueMcpGrantAudit: vi.fn(),
   queueAuditEvent: vi.fn(),
 }));
 
@@ -14,6 +15,10 @@ vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
   isDashboardViewerOnly: mocks.isDashboardViewerOnly,
 }));
 vi.mock("@/modules/mcp/connections", () => ({ editMcpGrant: mocks.editMcpGrant }));
+vi.mock("@/modules/mcp/grant-store", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/mcp/grant-store")>()),
+  queueMcpGrantAudit: mocks.queueMcpGrantAudit,
+}));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
@@ -83,22 +88,15 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
       permissions: { surveys: "read" },
       isDashboardViewer: false,
     });
-    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "updated",
-        targetType: "mcpGrant",
-        targetId: GRANT_ID,
-        userId: USER_ID,
-        userType: "user",
-        status: "success",
-        oldObject: {
-          clientId: CLIENT_ID,
-          access: "all",
-          permissions: { surveys: "write", responses: "read" },
-        },
-        newObject: { clientId: CLIENT_ID, access: "all", permissions: { surveys: "read" } },
-      })
-    );
+    // The grant store writes the entries (one per organization the grant reaches, both snapshots
+    // whole); the wrapper's single diffed entry is skipped.
+    expect(mocks.queueMcpGrantAudit).toHaveBeenCalledWith({
+      action: "updated",
+      actorUserId: USER_ID,
+      before: stored({ surveys: "write", responses: "read" }),
+      after: stored({ surveys: "read" }),
+    });
+    expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
   test("saves organization & workspace access with the permissions, and audits the selection", async () => {
@@ -121,15 +119,8 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     expect(mocks.editMcpGrant).toHaveBeenCalledWith(
       expect.objectContaining({ access: { access: "workspaces", workspaceIds: ["ws_1"] } })
     );
-    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        newObject: {
-          clientId: CLIENT_ID,
-          access: "workspaces",
-          workspaceIds: ["ws_1"],
-          permissions: { surveys: "read" },
-        },
-      })
+    expect(mocks.queueMcpGrantAudit).toHaveBeenCalledWith(
+      expect.objectContaining({ after: stored({ surveys: "read" }, ["ws_1"]) })
     );
   });
 

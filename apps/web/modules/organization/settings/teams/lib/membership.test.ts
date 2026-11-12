@@ -42,7 +42,10 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeAllUserOAuthGrants: vi.fn() }));
+vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
+  revokeAllUserOAuthGrants: vi.fn(),
+  queueRevokedMcpGrantAudits: vi.fn(),
+}));
 
 const organizationId = "org-1";
 const userId = "user-1";
@@ -179,6 +182,7 @@ describe("deleteMembership", () => {
       vi.mocked(prisma.membership.findMany).mockResolvedValue(
         remainingRoles.map((role) => ({ role })) as never
       );
+      vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits: [] } as never);
 
       await deleteMembership(userId, organizationId);
 

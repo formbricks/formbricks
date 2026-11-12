@@ -159,7 +159,10 @@ access, use Revoke.
 
 Click **Revoke** to cut off a client's access: revoking deletes its grant, so its next call is
 refused, even with an access token it still holds. It will need to be re-authorized to connect again.
-Editing and revoking are both recorded in the audit log.
+Connecting, editing and revoking are all recorded in the audit log, with the whole grant before and after, under
+each organization the grant reaches (every organization you belong to, for All access), so an owner of those
+organizations finds them among their organization's entries. A grant that ends because your role or account
+changed is recorded too, by the system.
 
 Approving a client again with fewer scopes replaces what it was granted. Every earlier grant that
 included a dropped scope stops refreshing, all of its tokens together, even ones the client had

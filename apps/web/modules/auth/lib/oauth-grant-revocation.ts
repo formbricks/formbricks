@@ -12,11 +12,15 @@ import {
   getMcpGrantPermissionsForScopes,
 } from "@/modules/mcp/grant";
 import {
+  MCP_GRANT_SYSTEM_ACTOR,
+  type TMcpGrantAuditRecord,
   type TStoredMcpGrant,
   deleteMcpGrants,
   hasMcpGrant,
+  prepareMcpGrantAudits,
   projectMcpGrants,
   queueMcpGrantAudit,
+  queueMcpGrantAudits,
   saveMcpGrant,
 } from "@/modules/mcp/grant-store";
 import { getApprovedMcpGrant } from "./mcp-grant-consent";
@@ -83,7 +87,9 @@ import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
  * Consent goes too: `/authorize` skips the consent screen when a matching `oauthConsent` row exists, so
  * leaving it would let a still-cookie-cached session (see session-revocation.ts) silently mint a fresh
  * 30-day refresh token and undo the revocation. The user's MCP grants go with it (ENG-7149), which is what
- * refuses their clients' access tokens on the next call.
+ * refuses their clients' access tokens on the next call. Each deleted grant is returned ready to audit: the
+ * caller queues the entries (`queueMcpGrantAudits`, by the system) once its transaction commits, so a
+ * rolled-back revocation records nothing.
  */
 export const revokeAllUserOAuthGrants = async (
   tx: Prisma.TransactionClient,
@@ -94,11 +100,18 @@ export const revokeAllUserOAuthGrants = async (
   refreshTokensRevoked: number;
   consentsDeleted: number;
   grantsDeleted: number;
+  /** One per deleted grant: pass to `queueMcpGrantAudits` once the caller's transaction commits. */
+  grantAudits: TMcpGrantAuditRecord[];
 }> => {
   // Consents first, as `revokeOAuthConsentBeforeHandler` does: a refresh in flight that lands between
   // the two then fails its consent check instead of minting a token after the revocation.
   const consentRows = await tx.oauthConsent.deleteMany({ where: { userId } });
   const grants = await deleteMcpGrants(tx, { userId });
+  // Read in the transaction, so the entries name the organizations as they stood when the grants ended.
+  const grantAudits = await prepareMcpGrantAudits(
+    tx,
+    grants.map((grant) => ({ action: "deleted" as const, before: grant, after: null }))
+  );
   const accessRows = await tx.oauthAccessToken.updateMany({
     where: { userId, revoked: null },
     data: { revoked: revokedAt },
@@ -112,8 +125,17 @@ export const revokeAllUserOAuthGrants = async (
     refreshTokensRevoked: refreshRows.count,
     consentsDeleted: consentRows.count,
     grantsDeleted: grants.length,
+    grantAudits,
   };
 };
+
+/**
+ * Audits the grants a {@link revokeAllUserOAuthGrants} ended, by the system: they end as a consequence of
+ * something else (a role lost, an account switched off or recovered). Call it once the transaction that
+ * ended them has committed. Never throws.
+ */
+export const queueRevokedMcpGrantAudits = (records: ReadonlyArray<TMcpGrantAuditRecord>): Promise<void> =>
+  queueMcpGrantAudits(MCP_GRANT_SYSTEM_ACTOR, records);
 
 const CONSENT_PATH = "/oauth2/consent";
 const CONSENT_UPDATE_PATH = "/oauth2/update-consent";
@@ -678,8 +700,13 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
       // commits while this waits is seen here rather than its connection ended.
       const consents = await lockConsents(tx, userId, { clientId }, "update");
       if (consents.length > 0 && !(await hasMcpGrant(tx, { userId, clientId }))) {
-        const { grants: _grants, ...ended } = await endConnection(tx, userId, clientId);
-        return { reason: "grant_missing", ...ended };
+        const { grants, ...ended } = await endConnection(tx, userId, clientId);
+        // Audited like any other ended grant, though one is only here if it was written meanwhile.
+        const grantAudits = await prepareMcpGrantAudits(
+          tx,
+          grants.map((grant) => ({ action: "deleted" as const, before: grant, after: null }))
+        );
+        return { reason: "grant_missing", ...ended, grantsDeleted: grants.length, grantAudits };
       }
     }
     const consentedScopes = await readConsentedScopes(tx, userId, clientId);
@@ -708,8 +735,10 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
   });
   if (!refused) return;
 
+  const { grantAudits, ...counts } = { grantAudits: [], ...refused };
+  await queueRevokedMcpGrantAudits(grantAudits);
   logger.warn(
-    { userId, clientId, ...refused },
+    { userId, clientId, ...counts },
     "OAuth refresh refused: its consent or grant no longer covers it"
   );
   throw invalidGrant();

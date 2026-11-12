@@ -9,7 +9,7 @@ import {
 } from "@/lib/authzed/mcp-grant";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { type TActor, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   type TMcpGrantAccess,
   type TMcpGrantAccessSelection,
@@ -17,6 +17,7 @@ import {
   parseMcpGrantPermissions,
 } from "./grant";
 import { getMcpGrantSelectedIds } from "./grant-access";
+import { MCP_PERMISSIONS, type TMcpPermission } from "./permissions";
 
 /**
  * Where grants live (ADR-0041): one `McpGrant` row per MCP connection (user + client). Saving and
@@ -293,46 +294,147 @@ export const projectMcpGrants = async (grantIds: ReadonlyArray<string>): Promise
   );
 };
 
-/**
- * What an audit entry records of a grant: the client and the grant itself (its access with what that
- * selects, and its permissions), not its row ids.
- */
-export const getMcpGrantAuditSnapshot = (grant: TStoredMcpGrant) => {
-  const { id: _id, userId: _userId, clientId, permissions, ...access } = grant;
-  return { clientId, ...access, permissions };
+/** A stored grant's organization & workspace access with what it selects, apart from its other fields. */
+export const getMcpGrantAccessSelection = (grant: TStoredMcpGrant): TMcpGrantAccessSelection => {
+  const { id: _id, userId: _userId, clientId: _clientId, permissions: _permissions, ...access } = grant;
+  return access;
 };
 
 /**
- * Writes the audit entry for a grant that was created, changed or deleted: the acting user, the client
- * and the grant before and after. A grant belongs to a user, not an organization, so the entry carries
- * no organization. Never throws: the change it records is already committed.
+ * What an audit entry records of a grant: the client, its organization & workspace access with what that
+ * selects, and every permission's level, No access included. Every permission is spelled out so that a
+ * permission taken away shows as a change to `none`, not as a key that silently disappeared.
  */
+export const getMcpGrantAuditSnapshot = (grant: TStoredMcpGrant) => ({
+  clientId: grant.clientId,
+  ...getMcpGrantAccessSelection(grant),
+  permissions: Object.fromEntries(
+    (Object.keys(MCP_PERMISSIONS) as TMcpPermission[]).map((permission) => [
+      permission,
+      grant.permissions[permission] ?? "none",
+    ])
+  ),
+});
+
+type TMcpGrantAuditAction = "created" | "updated" | "deleted";
+
+/** One grant change, ready to audit: what changed and the organizations its entries are filed under. */
+export type TMcpGrantAuditRecord = {
+  action: TMcpGrantAuditAction;
+  before: TStoredMcpGrant | null;
+  after: TStoredMcpGrant | null;
+  organizationIds: string[];
+};
+
+type TAuditReader = Pick<Prisma.TransactionClient, "membership" | "workspace">;
+
+/**
+ * The organizations each change's audit entries are filed under, so an organization owner finds them
+ * among their organization's entries (spec story 39): those the grant reaches before or after the
+ * change. Only selected organizations reaches its organizations; Only selected workspaces, their
+ * organizations; All access, every organization the user belongs to. Two reads whatever the count.
+ */
+export const prepareMcpGrantAudits = async (
+  db: TAuditReader,
+  changes: ReadonlyArray<Omit<TMcpGrantAuditRecord, "organizationIds">>
+): Promise<TMcpGrantAuditRecord[]> => {
+  const grants = changes.flatMap(({ before, after }) => [before, after]).filter((grant) => grant !== null);
+  const allAccessUserIds = [
+    ...new Set(grants.filter(({ access }) => access === "all").map(({ userId }) => userId)),
+  ];
+  const workspaceIds = [
+    ...new Set(grants.flatMap((grant) => (grant.access === "workspaces" ? grant.workspaceIds : []))),
+  ];
+  const [memberships, workspaces] = await Promise.all([
+    allAccessUserIds.length > 0
+      ? db.membership.findMany({
+          where: { userId: { in: allAccessUserIds } },
+          select: { userId: true, organizationId: true },
+        })
+      : [],
+    workspaceIds.length > 0
+      ? db.workspace.findMany({
+          where: { id: { in: workspaceIds } },
+          select: { id: true, organizationId: true },
+        })
+      : [],
+  ]);
+  const organizationOf = new Map(workspaces.map(({ id, organizationId }) => [id, organizationId]));
+  const reached = (grant: TStoredMcpGrant): string[] => {
+    switch (grant.access) {
+      case "all":
+        return memberships.filter(({ userId }) => userId === grant.userId).map((m) => m.organizationId);
+      case "organizations":
+        return grant.organizationIds;
+      case "workspaces":
+        return grant.workspaceIds.flatMap((id) => organizationOf.get(id) ?? []);
+    }
+  };
+  return changes.map((change) => ({
+    ...change,
+    organizationIds: [
+      ...new Set([change.before, change.after].flatMap((grant) => (grant ? reached(grant) : []))),
+    ].sort((a, b) => a.localeCompare(b)),
+  }));
+};
+
+/**
+ * Writes the audit entries of prepared grant changes: one per organization each reaches (or one without
+ * an organization, for a grant that reaches none), with the actor, the client and the whole grant before
+ * and after. Both snapshots are recorded as they are, never diffed, so a narrowing that removes a
+ * workspace or a permission is as visible as one that adds it. Call it once the change has committed.
+ * Never throws: the change it records is already committed.
+ */
+export const queueMcpGrantAudits = async (
+  actor: { userId: string; userType: TActor },
+  records: ReadonlyArray<TMcpGrantAuditRecord>
+): Promise<void> => {
+  for (const { action, before, after, organizationIds } of records) {
+    const grant = after ?? before;
+    if (!grant) continue;
+    const snapshots = {
+      before: before ? getMcpGrantAuditSnapshot(before) : null,
+      after: after ? getMcpGrantAuditSnapshot(after) : null,
+    };
+    for (const organizationId of organizationIds.length > 0 ? organizationIds : [UNKNOWN_DATA]) {
+      try {
+        await queueAuditEventBackground({
+          action,
+          targetType: "mcpGrant",
+          targetId: grant.id,
+          userId: actor.userId,
+          userType: actor.userType,
+          organizationId,
+          status: "success",
+          oldObject: null,
+          newObject: snapshots,
+        });
+      } catch (error) {
+        logger.error({ error, grantId: grant.id, action }, "Failed to queue MCP grant audit event");
+      }
+    }
+  }
+};
+
+/** Audits one grant change by the signed-in user who made it, once it has committed. Never throws. */
 export const queueMcpGrantAudit = async ({
   action,
   actorUserId,
   before,
   after,
 }: {
-  action: "created" | "updated" | "deleted";
+  action: TMcpGrantAuditAction;
   actorUserId: string;
   before: TStoredMcpGrant | null;
   after: TStoredMcpGrant | null;
 }): Promise<void> => {
-  const grant = after ?? before;
-  if (!grant) return;
   try {
-    await queueAuditEventBackground({
-      action,
-      targetType: "mcpGrant",
-      targetId: grant.id,
-      userId: actorUserId,
-      userType: "user",
-      organizationId: UNKNOWN_DATA,
-      status: "success",
-      oldObject: before ? getMcpGrantAuditSnapshot(before) : null,
-      newObject: after ? getMcpGrantAuditSnapshot(after) : null,
-    });
+    const records = await prepareMcpGrantAudits(prisma, [{ action, before, after }]);
+    await queueMcpGrantAudits({ userId: actorUserId, userType: "user" }, records);
   } catch (error) {
-    logger.error({ error, grantId: grant.id, action }, "Failed to queue MCP grant audit event");
+    logger.error({ error, grantId: (after ?? before)?.id, action }, "Failed to queue MCP grant audit event");
   }
 };
+
+/** The system actor of a grant ended as a consequence of something else (a role lost, an account switched off). */
+export const MCP_GRANT_SYSTEM_ACTOR = { userId: "system", userType: "system" } as const;

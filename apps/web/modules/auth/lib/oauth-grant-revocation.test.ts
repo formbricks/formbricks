@@ -46,6 +46,9 @@ vi.mock("@formbricks/database", () => ({
     $transaction: vi.fn((run: (tx: typeof mocks.tx) => unknown) => run(mocks.tx)),
     oauthRefreshToken: { findUnique: vi.fn() },
     oauthConsent: { findFirst: vi.fn() },
+    // Where a grant's audit entries are filed (the user's organizations); none here.
+    membership: { findMany: async () => [] },
+    workspace: { findMany: async () => [] },
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));

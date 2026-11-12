@@ -15,8 +15,9 @@ import { createUser, grant, registerClient, signIn } from "@/integration/oauth-f
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { queueAuditEvent, queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { getMcpGrant } from "./grant-store";
+import { MCP_PERMISSIONS } from "./permissions";
 
 /**
  * ENG-7152 against the real Better Auth instance, Postgres and SpiceDB: Authorized apps' Edit, through the
@@ -56,7 +57,14 @@ const BLOCKS = [
 const PASSWORD = "Correct-Horse1";
 const EVERYTHING = MCP_OAUTH_SCOPES.join(" ");
 
-type TSetup = { cookie: string; userId: string; workspaceId: string; surveyId: string; clientId: string };
+type TSetup = {
+  cookie: string;
+  userId: string;
+  organizationId: string;
+  workspaceId: string;
+  surveyId: string;
+  clientId: string;
+};
 
 const setUp = async (): Promise<TSetup> => {
   await resetDb();
@@ -79,7 +87,14 @@ const setUp = async (): Promise<TSetup> => {
   await synchronizeAuthzedIntegrationFixture();
   const clientId = await registerClient("edit client");
   session.userId = userId;
-  return { cookie, userId, workspaceId: workspace.id, surveyId: survey.id, clientId };
+  return {
+    cookie,
+    userId,
+    organizationId: organization.id,
+    workspaceId: workspace.id,
+    surveyId: survey.id,
+    clientId,
+  };
 };
 
 const listConnections = async () => {
@@ -161,16 +176,33 @@ describe("Authorized apps' Edit", () => {
     });
     expect(succeeded(await listSurveys(access_token, setup))).toBe(true);
     expectNotPermitted(await renameSurvey(access_token, setup), "Surveys: Write");
-    expect(queueAuditEvent).toHaveBeenCalledWith(
+    // Filed under the organization the grant reaches, with both grants whole: every permission the
+    // edit took away reads as a change to "none", not as a key that vanished from a diff.
+    const NO_ACCESS = Object.fromEntries(
+      Object.keys(MCP_PERMISSIONS).map((permission) => [permission, "none"])
+    );
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "updated",
         targetType: "mcpGrant",
         targetId: before?.id,
         userId: setup.userId,
+        userType: "user",
+        organizationId: setup.organizationId,
         status: "success",
-        oldObject: { clientId: setup.clientId, access: "all", permissions: before?.permissions },
-        newObject: { clientId: setup.clientId, access: "all", permissions: { surveys: "read" } },
+        oldObject: null,
+        newObject: {
+          before: {
+            clientId: setup.clientId,
+            access: "all",
+            permissions: { ...NO_ACCESS, ...before?.permissions },
+          },
+          after: { clientId: setup.clientId, access: "all", permissions: { ...NO_ACCESS, surveys: "read" } },
+        },
       })
+    );
+    expect(queueAuditEvent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ targetType: "mcpGrant", status: "success" })
     );
   });
 

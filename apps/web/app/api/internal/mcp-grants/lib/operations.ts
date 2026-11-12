@@ -1,4 +1,5 @@
 import "server-only";
+import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   problemForbidden,
   problemUnauthorized,
@@ -11,7 +12,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { listMcpGrantAccessOptions } from "@/modules/mcp/access-options";
 import { editMcpGrant, listMcpConnections } from "@/modules/mcp/connections";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
-import { getMcpGrantAuditSnapshot } from "@/modules/mcp/grant-store";
+import { queueMcpGrantAudit } from "@/modules/mcp/grant-store";
 import { serializeMcpConnection, serializeMcpGrant } from "./serializers";
 
 /**
@@ -64,7 +65,7 @@ export async function updateMcpGrantOperation({
 }): Promise<Response> {
   const userId = getSessionUserId(authentication);
   if (!userId) return problemUnauthorized(requestId, "Session required", instance);
-  // A grant belongs to a user, not an organization, as the consent hook's entries record it.
+  // A refusal's entry: the grant store files a saved edit's entries under each organization it reaches.
   if (auditLog) auditLog.organizationId = UNKNOWN_DATA;
 
   const result = await editMcpGrant({
@@ -91,11 +92,16 @@ export async function updateMcpGrantOperation({
       });
     }
     case "saved":
-      if (auditLog) {
-        auditLog.targetId = result.after.id;
-        auditLog.oldObject = getMcpGrantAuditSnapshot(result.before);
-        auditLog.newObject = getMcpGrantAuditSnapshot(result.after);
-      }
+      // Audited by the grant store, one entry per organization the grant reaches before or after, with
+      // both snapshots whole: the wrapper's single entry can name one organization and records a diff,
+      // which hides what a narrowing removed. A refusal above keeps the wrapper's failure entry.
+      skipV3AuditLog(auditLog);
+      await queueMcpGrantAudit({
+        action: "updated",
+        actorUserId: userId,
+        before: result.before,
+        after: result.after,
+      });
       return successResponse(serializeMcpGrant(result.after), { requestId });
   }
 }

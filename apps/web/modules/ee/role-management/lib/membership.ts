@@ -10,7 +10,11 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { validateInputs } from "@/lib/utils/validate";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import {
+  queueRevokedMcpGrantAudits,
+  revokeAllUserOAuthGrants,
+} from "@/modules/auth/lib/oauth-grant-revocation";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
 
 export const updateMembership = async (
   userId: string,
@@ -22,6 +26,7 @@ export const updateMembership = async (
   const client = tx ?? prisma;
   let affectedTeamIds: string[] = [];
   let membershipUpdated = false;
+  let revokedMcpGrantAudits: TMcpGrantAuditRecord[] = [];
 
   try {
     const membership = await client.membership.update({
@@ -62,7 +67,7 @@ export const updateMembership = async (
       // consents go and their refresh tokens are revoked, so the next authorization passes through a
       // consent that offers only dashboards:read, and no refresh mints a wider token.
       if (await isOnlyDashboardViewer(client, userId)) {
-        await revokeAllUserOAuthGrants(client, userId);
+        ({ grantAudits: revokedMcpGrantAudits } = await revokeAllUserOAuthGrants(client, userId));
       }
     }
 
@@ -99,6 +104,9 @@ export const updateMembership = async (
 
     throw error;
   } finally {
+    // Within a caller's transaction this runs before that transaction commits: the role update is the
+    // last write there, so only a failed commit could leave these entries recording grants that stayed.
+    await queueRevokedMcpGrantAudits(revokedMcpGrantAudits);
     // A transaction-scoped call is projected by the durable PostgreSQL outbox only after the outer
     // transaction commits. Reading through the global client here could observe the pre-commit role
     // and would publish stale relationships.

@@ -14,6 +14,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { revokeCredentials } from "@/modules/ee/data-retention/sweep/members-sweeper";
 import { createApiKey } from "@/modules/organization/settings/api-keys/lib/api-key";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { backfillMcpGrants } from "../../../../packages/database/migration/20261112120001_backfill_mcp_grants/migration";
@@ -179,8 +180,18 @@ describe("a connection's grant", () => {
         targetType: "mcpGrant",
         targetId: stored?.id,
         userId: setup.userId,
+        organizationId: setup.organizationId,
         status: "success",
-        newObject: expect.objectContaining({ clientId: setup.clientId, access: "all" }),
+        oldObject: null,
+        newObject: {
+          before: null,
+          after: expect.objectContaining({
+            clientId: setup.clientId,
+            access: "all",
+            // Every permission is spelled out, No access included.
+            permissions: expect.objectContaining({ surveys: "read", tags: "write", contacts: "none" }),
+          }),
+        },
       })
     );
   });
@@ -256,7 +267,8 @@ describe("a connection's grant", () => {
         targetType: "mcpGrant",
         targetId: grantId,
         userId: setup.userId,
-        oldObject: expect.objectContaining({ clientId: setup.clientId }),
+        organizationId: setup.organizationId,
+        newObject: { before: expect.objectContaining({ clientId: setup.clientId }), after: null },
       })
     );
   });
@@ -268,6 +280,32 @@ describe("a connection's grant", () => {
 
     expect(revoked.grantsDeleted).toBe(1);
     expectUnauthenticated(await listSurveys(access_token, setup));
+  });
+
+  test("a deactivated member's grants end with one audit entry each, by the system, under their organization", async () => {
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    const grantId = (await getMcpGrant(setup.userId, setup.clientId))?.id;
+    await prisma.user.update({ where: { id: setup.userId }, data: { isActive: false } });
+    vi.mocked(queueAuditEventBackground).mockClear();
+
+    await revokeCredentials(setup.userId);
+
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetType: "mcpGrant",
+        targetId: grantId,
+        userId: "system",
+        userType: "system",
+        organizationId: setup.organizationId,
+        newObject: {
+          before: expect.objectContaining({ clientId: setup.clientId, access: "all" }),
+          after: null,
+        },
+      })
+    );
   });
 
   test("a connection with no grant is refused, and its refresh ends it", async () => {

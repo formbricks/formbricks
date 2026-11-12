@@ -25,7 +25,10 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
 }));
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeAllUserOAuthGrants: vi.fn() }));
+vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
+  revokeAllUserOAuthGrants: vi.fn(),
+  queueRevokedMcpGrantAudits: vi.fn(),
+}));
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
@@ -151,6 +154,7 @@ describe("updateMembership", () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
     vi.mocked(prisma.membership.findMany).mockImplementation(((args: { select?: { role?: boolean } }) =>
       Promise.resolve(args.select?.role ? roles.map((role) => ({ role })) : [])) as never);
+    vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits: [] } as never);
 
     await updateMembership("user1", "org1", { role: "dashboard_viewer" });
 

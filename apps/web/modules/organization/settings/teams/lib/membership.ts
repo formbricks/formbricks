@@ -13,8 +13,12 @@ import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { isTransactionConflictError, retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import {
+  queueRevokedMcpGrantAudits,
+  revokeAllUserOAuthGrants,
+} from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
 
 /**
  * One serializable transaction, run again when Postgres aborts it over a concurrent one. Both the
@@ -139,7 +143,10 @@ export const deleteMembership = async (
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
+    // Set by the attempt that commits: a retried attempt starts over.
+    let revokedMcpGrantAudits: TMcpGrantAuditRecord[] = [];
     const deletedTeamMemberships = await runSerializableTransactionWithRetry(async (tx) => {
+      revokedMcpGrantAudits = [];
       // The last-owner guard is read in the same serializable transaction as the delete, so two owners
       // removed at once cannot both see "another owner is left" and leave the organization with none.
       const target = await tx.membership.findUnique({
@@ -186,7 +193,7 @@ export const deleteMembership = async (
       // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025).
       if (removed.role !== "dashboard_viewer") {
         if (await isOnlyDashboardViewer(tx, userId)) {
-          await revokeAllUserOAuthGrants(tx, userId);
+          ({ grantAudits: revokedMcpGrantAudits } = await revokeAllUserOAuthGrants(tx, userId));
         }
       }
 
@@ -202,6 +209,7 @@ export const deleteMembership = async (
       return teamMemberships;
     });
 
+    await queueRevokedMcpGrantAudits(revokedMcpGrantAudits);
     await reconcileOrganizationMembership(organizationId, userId);
     await runPostCommitProjection("organization_membership_team_cleanup", () =>
       reconcileTeamWorkspaceRelationships({
