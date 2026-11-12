@@ -5,6 +5,7 @@ export const AUTHZED_OUTBOX_TARGET_TYPES = [
   "api_key_workspace",
   "feedback_directory",
   "feedback_directory_assignment",
+  "mcp_grant",
   "membership",
   "organization",
   "survey",

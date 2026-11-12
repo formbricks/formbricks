@@ -9,6 +9,8 @@ import {
 } from "./constants";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
 import {
+  MCP_GRANT_RELATION,
+  MCP_GRANT_SUBJECT_TYPE,
   ORGANIZATION_ACCESS_RELATIONS,
   ORGANIZATION_RELATIONS,
   TEAM_RELATIONS,
@@ -41,6 +43,12 @@ export type TAuthzedMembershipTarget = Readonly<{ organizationId: string; userId
 export type TAuthzedTeamMembershipTarget = Readonly<{ teamId: string; userId: string }>;
 export type TAuthzedWorkspaceTeamTarget = Readonly<{ teamId: string; workspaceId: string }>;
 export type TAuthzedApiKeyWorkspaceTarget = Readonly<{ apiKeyId: string; workspaceId: string }>;
+/** One selection of an MCP grant (ENG-7153): the organization or workspace it names. */
+export type TAuthzedMcpGrantSelectionTarget = Readonly<{
+  grantId: string;
+  resourceId: string;
+  resourceType: "organization" | "workspace";
+}>;
 export type TAuthzedFeedbackDirectoryAssignmentTarget = Readonly<{
   feedbackDirectoryId: string;
   workspaceId: string;
@@ -74,6 +82,8 @@ export type TAuthzedOrganizationSource = Readonly<{
    * and then left strictly alone — neither projected nor pruned.
    */
   invalidWorkspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
+  /** MCP grant selections of this organization and of its workspaces, for grants in the matching mode. */
+  mcpGrantSelections: ReadonlyArray<TAuthzedMcpGrantSelectionTarget>;
   memberships: ReadonlyArray<TAuthzedMembershipTarget>;
   teamIds: ReadonlyArray<string>;
   teamMemberships: ReadonlyArray<TAuthzedTeamMembershipTarget>;
@@ -99,6 +109,8 @@ export type TAuthzedWorkspaceSource = Readonly<{
   invalidApiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
   invalidFeedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
   invalidWorkspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
+  /** The MCP grants with Only selected workspaces that select this workspace. */
+  mcpGrantSelections: ReadonlyArray<TAuthzedMcpGrantSelectionTarget>;
   /**
    * The owning organization, or `null` when the workspace has no row.
    *
@@ -169,6 +181,28 @@ const toApiKeyWorkspaceTarget = ({
   apiKeyId,
   workspaceId,
 });
+
+const toMcpGrantSelectionRelationship = ({
+  grantId,
+  resourceId,
+  resourceType,
+}: TAuthzedMcpGrantSelectionTarget): TAuthzedRelationship => ({
+  relation: MCP_GRANT_RELATION,
+  resource: { objectId: resourceId, objectType: resourceType },
+  subject: { objectId: grantId, objectType: MCP_GRANT_SUBJECT_TYPE },
+});
+
+/** The selection rows that project: only those of a grant whose access selects that kind. */
+const readMcpGrantWorkspaceSelections = async (
+  where: Readonly<{ workspaceId: string } | { workspace: Readonly<{ organizationId: string }> }>
+): Promise<TAuthzedMcpGrantSelectionTarget[]> =>
+  (
+    await prisma.mcpGrantWorkspace.findMany({
+      where: { ...where, grant: { access: "workspaces" } },
+      select: { grantId: true, workspaceId: true },
+      orderBy: [{ workspaceId: "asc" }, { grantId: "asc" }],
+    })
+  ).map(({ grantId, workspaceId }) => ({ grantId, resourceId: workspaceId, resourceType: "workspace" }));
 
 const getApiKeyRelationships = (
   apiKey: Readonly<{ id: string; organizationAccess: unknown; organizationId: string }>
@@ -328,45 +362,47 @@ export const organizationExists = async (organizationId: string): Promise<boolea
  * organization ID is not needed to reach them, because the caller supplies the workspace ID directly.
  */
 export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzedWorkspaceSource> => {
-  const [workspace, workspaceTeams, apiKeyWorkspaces, directoryAssignments, surveys] = await Promise.all([
-    prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
-    prisma.workspaceTeam.findMany({
-      where: { workspaceId },
-      // The principal's organization is read so a cross-organization grant can be partitioned out
-      // rather than projected, matching what the organization scope already does.
-      select: {
-        permission: true,
-        team: { select: { organizationId: true } },
-        teamId: true,
-        workspaceId: true,
-      },
-      orderBy: { teamId: "asc" },
-    }),
-    prisma.apiKeyWorkspace.findMany({
-      where: { workspaceId },
-      select: {
-        apiKey: { select: { organizationId: true } },
-        apiKeyId: true,
-        permission: true,
-        workspaceId: true,
-      },
-      orderBy: { apiKeyId: "asc" },
-    }),
-    prisma.feedbackDirectoryWorkspace.findMany({
-      where: { workspaceId },
-      select: {
-        feedbackDirectory: { select: { isArchived: true, organizationId: true } },
-        feedbackDirectoryId: true,
-        workspaceId: true,
-      },
-      orderBy: { feedbackDirectoryId: "asc" },
-    }),
-    prisma.survey.findMany({
-      where: { workspaceId },
-      select: surveyProjectionSelect,
-      orderBy: { id: "asc" },
-    }),
-  ]);
+  const [workspace, workspaceTeams, apiKeyWorkspaces, directoryAssignments, surveys, mcpGrantSelections] =
+    await Promise.all([
+      prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
+      prisma.workspaceTeam.findMany({
+        where: { workspaceId },
+        // The principal's organization is read so a cross-organization grant can be partitioned out
+        // rather than projected, matching what the organization scope already does.
+        select: {
+          permission: true,
+          team: { select: { organizationId: true } },
+          teamId: true,
+          workspaceId: true,
+        },
+        orderBy: { teamId: "asc" },
+      }),
+      prisma.apiKeyWorkspace.findMany({
+        where: { workspaceId },
+        select: {
+          apiKey: { select: { organizationId: true } },
+          apiKeyId: true,
+          permission: true,
+          workspaceId: true,
+        },
+        orderBy: { apiKeyId: "asc" },
+      }),
+      prisma.feedbackDirectoryWorkspace.findMany({
+        where: { workspaceId },
+        select: {
+          feedbackDirectory: { select: { isArchived: true, organizationId: true } },
+          feedbackDirectoryId: true,
+          workspaceId: true,
+        },
+        orderBy: { feedbackDirectoryId: "asc" },
+      }),
+      prisma.survey.findMany({
+        where: { workspaceId },
+        select: surveyProjectionSelect,
+        orderBy: { id: "asc" },
+      }),
+      readMcpGrantWorkspaceSelections({ workspaceId }),
+    ]);
 
   const organizationId = workspace?.organizationId ?? null;
 
@@ -444,6 +480,7 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
 
   if (organizationId !== null) {
     expectedRelationships.push(...surveys.flatMap(expectedSurveyRelationships));
+    expectedRelationships.push(...mcpGrantSelections.map(toMcpGrantSelectionRelationship));
   }
 
   return {
@@ -456,6 +493,7 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
       workspaceId,
     })),
     invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
+    mcpGrantSelections: organizationId === null ? [] : mcpGrantSelections,
     organizationId,
     surveyIds: surveys.map(({ id }) => id),
     // Truthiness rather than `!== null`, so a row is required to claim existence rather than merely the
@@ -476,6 +514,8 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     workspaceTeams,
     apiKeyWorkspaces,
     feedbackDirectories,
+    mcpGrantOrganizationSelections,
+    mcpGrantWorkspaceSelections,
   ] = await Promise.all([
     prisma.membership.findMany({
       where: { organizationId },
@@ -539,7 +579,22 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       },
       orderBy: { id: "asc" },
     }),
+    prisma.mcpGrantOrganization.findMany({
+      where: { organizationId, grant: { access: "organizations" } },
+      select: { grantId: true },
+      orderBy: { grantId: "asc" },
+    }),
+    readMcpGrantWorkspaceSelections({ workspace: { organizationId } }),
   ]);
+
+  const mcpGrantSelections: TAuthzedMcpGrantSelectionTarget[] = [
+    ...mcpGrantOrganizationSelections.map(({ grantId }) => ({
+      grantId,
+      resourceId: organizationId,
+      resourceType: "organization" as const,
+    })),
+    ...mcpGrantWorkspaceSelections,
+  ];
 
   const teamGrants = partitionByOrganization(
     workspaceTeams,
@@ -591,6 +646,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       subject: { objectId: apiKeyId, objectType: "api_key" },
     })),
     ...directorySource.relationships,
+    ...mcpGrantSelections.map(toMcpGrantSelectionRelationship),
   ];
 
   return {
@@ -602,6 +658,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
     invalidFeedbackDirectoryAssignments: directorySource.invalidAssignments,
     invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
+    mcpGrantSelections,
     memberships: memberships.map(({ userId }) => ({ organizationId, userId })),
     teamIds: teams.map(({ id }) => id),
     teamMemberships: teamMemberships.map(({ teamId, userId }) => ({ teamId, userId })),
@@ -747,6 +804,13 @@ export const findMissingSourceRefs = async (
   const feedbackDirectoryRefs = byKind(refs, "feedbackDirectory");
   const feedbackDirectoryAssignmentRefs = byKind(refs, "feedbackDirectoryAssignment");
   const surveyRefs = byKind(refs, "survey");
+  const mcpGrantSelectionRefs = byKind(refs, "mcpGrantSelection");
+  const mcpGrantOrganizationRefs = mcpGrantSelectionRefs.filter(
+    ({ resourceType }) => resourceType === "organization"
+  );
+  const mcpGrantWorkspaceRefs = mcpGrantSelectionRefs.filter(
+    ({ resourceType }) => resourceType === "workspace"
+  );
 
   const [
     apiKeys,
@@ -759,6 +823,8 @@ export const findMissingSourceRefs = async (
     feedbackDirectories,
     feedbackDirectoryAssignments,
     surveys,
+    mcpGrantOrganizations,
+    mcpGrantWorkspaces,
   ] = await Promise.all([
     apiKeyRefs.length === 0
       ? []
@@ -832,6 +898,31 @@ export const findMissingSourceRefs = async (
           where: { id: { in: surveyRefs.map(({ surveyId }) => surveyId) } },
           select: { id: true },
         }),
+    // A selection row only sources its relationship while its grant's access selects that kind.
+    mcpGrantOrganizationRefs.length === 0
+      ? []
+      : prisma.mcpGrantOrganization.findMany({
+          where: {
+            grant: { access: "organizations" },
+            OR: mcpGrantOrganizationRefs.map(({ grantId, resourceId }) => ({
+              grantId,
+              organizationId: resourceId,
+            })),
+          },
+          select: { grantId: true, organizationId: true },
+        }),
+    mcpGrantWorkspaceRefs.length === 0
+      ? []
+      : prisma.mcpGrantWorkspace.findMany({
+          where: {
+            grant: { access: "workspaces" },
+            OR: mcpGrantWorkspaceRefs.map(({ grantId, resourceId }) => ({
+              grantId,
+              workspaceId: resourceId,
+            })),
+          },
+          select: { grantId: true, workspaceId: true },
+        }),
   ]);
 
   const existingApiKeyIds = new Set(apiKeys.map(({ id }) => id));
@@ -851,6 +942,12 @@ export const findMissingSourceRefs = async (
   );
   const existingFeedbackDirectoryIds = new Set(feedbackDirectories.map(({ id }) => id));
   const existingSurveyIds = new Set(surveys.map(({ id }) => id));
+  const existingMcpGrantSelections = new Set([
+    ...mcpGrantOrganizations.map(({ grantId, organizationId }) =>
+      pairKey(grantId, `organization:${organizationId}`)
+    ),
+    ...mcpGrantWorkspaces.map(({ grantId, workspaceId }) => pairKey(grantId, `workspace:${workspaceId}`)),
+  ]);
   const existingFeedbackDirectoryAssignments = new Set(
     feedbackDirectoryAssignments.map(({ feedbackDirectoryId, workspaceId }) =>
       getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, workspaceId)
@@ -867,6 +964,8 @@ export const findMissingSourceRefs = async (
         return existingFeedbackDirectoryIds.has(ref.feedbackDirectoryId);
       case "feedbackDirectoryAssignment":
         return existingFeedbackDirectoryAssignments.has(ref.assignmentId);
+      case "mcpGrantSelection":
+        return existingMcpGrantSelections.has(pairKey(ref.grantId, `${ref.resourceType}:${ref.resourceId}`));
       case "membership":
         return existingMemberships.has(pairKey(ref.organizationId, ref.userId));
       case "survey":

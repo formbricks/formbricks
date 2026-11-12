@@ -26,6 +26,7 @@ const apply = {
   deleteFeedbackDirectoryAssignmentResources: vi.fn(),
   reconcileApiKeys: vi.fn(),
   reconcileFeedbackDirectories: vi.fn(),
+  reconcileMcpGrants: vi.fn(),
   reconcileMemberships: vi.fn(),
   reconcileSurveys: vi.fn(),
   reconcileTeamWorkspace: vi.fn(),
@@ -46,6 +47,7 @@ const emptySource: TAuthzedOrganizationSource = {
   invalidApiKeyWorkspaceGrants: [],
   invalidFeedbackDirectoryAssignments: [],
   invalidWorkspaceTeamGrants: [],
+  mcpGrantSelections: [],
   memberships: [],
   teamIds: [],
   teamMemberships: [],
@@ -68,6 +70,7 @@ beforeEach(() => {
   apply.reconcileApiKeys.mockResolvedValue(PROJECTED);
   apply.deleteFeedbackDirectoryAssignmentResources.mockResolvedValue(PROJECTED);
   apply.reconcileFeedbackDirectories.mockResolvedValue(PROJECTED);
+  apply.reconcileMcpGrants.mockResolvedValue(PROJECTED);
   apply.reconcileMemberships.mockResolvedValue(PROJECTED);
   apply.reconcileSurveys.mockResolvedValue(PROJECTED);
   apply.reconcileTeamWorkspace.mockResolvedValue(PROJECTED);
@@ -85,6 +88,7 @@ beforeEach(() => {
     invalidApiKeyWorkspaceGrants: [],
     invalidFeedbackDirectoryAssignments: [],
     invalidWorkspaceTeamGrants: [],
+    mcpGrantSelections: [],
     organizationId: "org-1",
     surveyIds: [],
     workspaceExists: true,
@@ -840,6 +844,7 @@ describe("workspace scope", () => {
       invalidApiKeyWorkspaceGrants: [],
       invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
+      mcpGrantSelections: [],
       organizationId: null,
       surveyIds: [],
       workspaceExists: false,

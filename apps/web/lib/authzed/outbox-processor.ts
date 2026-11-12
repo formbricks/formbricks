@@ -6,6 +6,7 @@ import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES } from "./errors";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
+import { reconcileMcpGrantRelationships } from "./mcp-grant";
 import {
   observeAuthzedOutboxStatus,
   recordAuthzedOutboxDelivery,
@@ -249,6 +250,13 @@ const buildDeliveryGroups = (grouped: TGroupedEvents): ReadonlyArray<TDeliveryGr
             ({ primaryId, secondaryId }) => ({ feedbackDirectoryId: primaryId, workspaceId: secondaryId })
           ),
           feedbackDirectoryIds: byType(events, "feedback_directory").map(({ primaryId }) => primaryId),
+        }),
+    },
+    {
+      events: collect("mcp_grant"),
+      run: (events) =>
+        runChunkedProjection(reconcileMcpGrantRelationships, {
+          grantIds: events.map(({ primaryId }) => primaryId),
         }),
     },
     {

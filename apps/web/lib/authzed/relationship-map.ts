@@ -106,3 +106,14 @@ export const normalizeOrganizationAccess = (value: unknown): TOrganizationAccess
     write: value.accessControl.write === true,
   };
 };
+
+/**
+ * An MCP grant's organization & workspace access (ENG-7153, ADR-0042): `organization#mcp_grant@mcp_grant`
+ * for each organization an Only selected organizations grant selects, `workspace#mcp_grant@mcp_grant`
+ * for each workspace an Only selected workspaces grant selects. The grant is the subject, never a
+ * principal: `can()` asks `<resource>#mcp_reach@mcp_grant` beside the user's own check.
+ */
+export const MCP_GRANT_RELATION = "mcp_grant";
+
+/** The SpiceDB definition an MCP grant is written as (`McpGrant.id`). */
+export const MCP_GRANT_SUBJECT_TYPE = "mcp_grant";

@@ -5,6 +5,7 @@ import {
   deleteFeedbackDirectoryAssignmentRelationships,
   reconcileFeedbackDirectoryRelationships,
 } from "./feedback-directory";
+import { reconcileMcpGrantRelationships } from "./mcp-grant";
 import { reconcileOrganizationMemberships } from "./organization-membership";
 import { reconcileSurveyRelationships } from "./survey";
 import { reconcileTeamWorkspaceRelationships } from "./team-workspace";
@@ -17,6 +18,7 @@ export const createAuthzedBackfillNoopApply = (): TAuthzedBackfillApply => ({
   deleteFeedbackDirectoryAssignmentResources: inert,
   reconcileApiKeys: inert,
   reconcileFeedbackDirectories: inert,
+  reconcileMcpGrants: inert,
   reconcileMemberships: inert,
   reconcileSurveys: inert,
   reconcileTeamWorkspace: inert,
@@ -27,6 +29,7 @@ export const createAuthzedBackfillApply = (): TAuthzedBackfillApply => ({
   deleteFeedbackDirectoryAssignmentResources: deleteFeedbackDirectoryAssignmentRelationships,
   reconcileApiKeys: reconcileApiKeyRelationships,
   reconcileFeedbackDirectories: reconcileFeedbackDirectoryRelationships,
+  reconcileMcpGrants: reconcileMcpGrantRelationships,
   reconcileMemberships: reconcileOrganizationMemberships,
   reconcileSurveys: reconcileSurveyRelationships,
   reconcileTeamWorkspace: reconcileTeamWorkspaceRelationships,

@@ -28,6 +28,8 @@ const migration = readMigration("20260818120000_add_authzed_projection_outbox");
 // Re-declares both trigger functions with the survey case (ENG-3282). Replaying the outbox migration
 // alone would roll them back to the pre-survey classifier, so the convergence test replays both.
 const surveyMigration = readMigration("20261002120002_add_survey_projection_trigger");
+// ENG-7153: the three MCP grant triggers, on the functions above unchanged.
+const mcpGrantMigration = readMigration("20261112140000_add_mcp_grant_projection_trigger");
 
 /**
  * The durable outbox against a real PostgreSQL (ENG-2408).
@@ -75,6 +77,7 @@ describe("AuthZed projection outbox triggers", () => {
     for (let run = 0; run < 2; run++) {
       await prisma.$executeRawUnsafe(migration);
       await prisma.$executeRawUnsafe(surveyMigration);
+      await prisma.$executeRawUnsafe(mcpGrantMigration);
     }
 
     const [catalog] = await prisma.$queryRaw<Array<{ indexes: bigint; triggers: bigint }>>`
@@ -87,7 +90,7 @@ describe("AuthZed projection outbox triggers", () => {
            AND NOT tgisinternal) AS triggers
     `;
     expect(Number(catalog?.indexes)).toBe(3);
-    expect(Number(catalog?.triggers)).toBe(12);
+    expect(Number(catalog?.triggers)).toBe(15);
   });
 
   test("does not classify an accepted invite as a revocation", async () => {
@@ -246,6 +249,53 @@ describe("AuthZed projection outbox triggers", () => {
     expect(await outboxRows()).toEqual([
       { isRevocation: true, primaryId: organization.id, secondaryId: user.id, targetType: "membership" },
     ]);
+  });
+});
+
+describe("AuthZed projection outbox triggers: MCP grants (ENG-7153)", () => {
+  const grantEvents = async () => (await outboxRows()).filter((row) => row.targetType === "mcp_grant");
+
+  test("queues the grant on every selection change, and only a narrowing as a revocation", async () => {
+    const [user, organization] = await Promise.all([
+      seedUser("grant@integration.test"),
+      seedOrganization("G"),
+    ]);
+    const [inside, outside] = await Promise.all(
+      ["In", "Out"].map((name) =>
+        prisma.workspace.create({ data: { name, organizationId: organization.id } })
+      )
+    );
+    await prisma.oauthClient.create({ data: { clientId: "grant-client", redirectUris: [] } });
+    const grant = await prisma.mcpGrant.create({
+      data: { userId: user.id, clientId: "grant-client", access: "workspaces", permissions: {} },
+    });
+    await clearOutbox();
+
+    await prisma.mcpGrantWorkspace.create({ data: { grantId: grant.id, workspaceId: inside.id } });
+    expect(await grantEvents()).toEqual([
+      { isRevocation: false, primaryId: grant.id, secondaryId: null, targetType: "mcp_grant" },
+    ]);
+
+    await clearOutbox();
+    await prisma.mcpGrantWorkspace.create({ data: { grantId: grant.id, workspaceId: outside.id } });
+    await prisma.workspace.delete({ where: { id: outside.id } });
+    // The cascade from a deleted workspace queues the grant like any delete.
+    expect((await grantEvents()).at(0)).toEqual({
+      isRevocation: true,
+      primaryId: grant.id,
+      secondaryId: null,
+      targetType: "mcp_grant",
+    });
+
+    await clearOutbox();
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "all" } });
+    expect(await grantEvents()).toEqual([
+      { isRevocation: true, primaryId: grant.id, secondaryId: null, targetType: "mcp_grant" },
+    ]);
+
+    await clearOutbox();
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { permissions: { surveys: "read" } } });
+    expect(await grantEvents()).toEqual([]);
   });
 });
 

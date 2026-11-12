@@ -31,7 +31,23 @@ definition api_key {
 
     /** Who may update or delete this API key: organization owners and managers. */
     permission manage: user = organization->manage_api_keys
+
+    /** MCP grants that reach the key: those reaching its whole organization. */
+    permission mcp_reach: mcp_grant = organization->mcp_reach
 }
+
+/**
+ * An MCP client's grant (ENG-7153, ADR-0042), identified by the Prisma `McpGrant.id`.
+ *
+ * Never a principal: it holds no permission of its own and is never checked on
+ * behalf of anyone. It names what a grant with Only selected organizations or
+ * Only selected workspaces reaches: `organization#mcp_grant` or
+ * `workspace#mcp_grant`, one relationship per selection
+ * (`McpGrantOrganization`, `McpGrantWorkspace`). A grant with All access has
+ * none. On an MCP call `can()` asks `mcp_reach` of the grant next to the
+ * user's own check, so a client reaches the intersection of both.
+ */
+definition mcp_grant {}
 
 /**
  * The billing and membership boundary, identified by the Prisma
@@ -73,6 +89,16 @@ definition organization {
 
     /** API key with `organizationAccess.accessControl.write` — may manage org-level access-control resources. */
     relation api_key_writer: api_key
+
+    /** MCP grants with Only selected organizations that select this organization (`McpGrantOrganization`). */
+    relation mcp_grant: mcp_grant
+
+    /**
+     * The MCP grants that reach the organization as a whole, and so every
+     * workspace in it, later ones included (ADR-0042). A grant selecting some of
+     * its workspaces does not reach the organization itself.
+     */
+    permission mcp_reach: mcp_grant = mcp_grant
 
     /** Who can see the organization exists (any membership role or org-scoped API key). */
     permission read: user | api_key = owner + manager + member + billing + api_key_reader + api_key_writer
@@ -185,6 +211,9 @@ definition team {
      * to organization owners/managers and `accessControl.write` API keys.
      */
     permission delete: user | api_key = organization->manage_access
+
+    /** MCP grants that reach the team: those reaching its whole organization. */
+    permission mcp_reach: mcp_grant = organization->mcp_reach
 }
 
 /**
@@ -253,6 +282,15 @@ definition workspace {
      * reachable by the organization's administrators.
      */
     permission administer: user = organization->manage
+
+    /** MCP grants with Only selected workspaces that select this workspace (`McpGrantWorkspace`). */
+    relation mcp_grant: mcp_grant
+
+    /**
+     * The MCP grants that reach the workspace and everything in it: those
+     * selecting it, and those selecting its organization (ADR-0042).
+     */
+    permission mcp_reach: mcp_grant = mcp_grant + organization->mcp_reach
 }
 
 /**
@@ -269,6 +307,9 @@ definition feedback_directory {
     permission read: user | api_key = administrator + assignment->read
     permission write: user | api_key = administrator + assignment->write
     permission manage: user | api_key = administrator + assignment->manage
+
+    /** MCP grants that reach the dataset: its whole organization, or a workspace it is assigned to. */
+    permission mcp_reach: mcp_grant = organization->mcp_reach + assignment->mcp_reach
 }
 
 /**
@@ -290,6 +331,9 @@ definition feedback_directory_assignment {
      * field-value lookups keep `read`, which viewers never hold.
      */
     permission dashboard_read: user | api_key = directory->administrator + workspace->dashboard_read
+
+    /** MCP grants that reach the assignment's workspace. */
+    permission mcp_reach: mcp_grant = workspace->mcp_reach
 }
 
 /**
@@ -377,6 +421,9 @@ definition survey {
      * which `schema-validation.yaml` asserts.
      */
     permission change_visibility: user | api_key = (owner & workspace->read) + workspace->administer
+
+    /** MCP grants that reach the survey's workspace. */
+    permission mcp_reach: mcp_grant = workspace->mcp_reach
 }
 
 /**
@@ -397,6 +444,9 @@ definition dashboard {
      * Every dashboard mutation currently uses the workspace readWrite gate.
      */
     permission write: user | api_key = workspace->write
+
+    /** MCP grants that reach the dashboard's workspace. */
+    permission mcp_reach: mcp_grant = workspace->mcp_reach
 }
 
 /**
@@ -431,4 +481,6 @@ definition response {
     permission manage_v2: user | api_key = survey->manage_v2
     permission export_v2: user | api_key = survey->response_export_v2
 
+    /** MCP grants that reach the response's survey. */
+    permission mcp_reach: mcp_grant = survey->mcp_reach
 }
