@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { RE2JS } from "re2js";
 import { describe, expect, test, vi } from "vitest";
 import { validateBlockResponses } from "@formbricks/surveys/validation";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -64,6 +65,26 @@ const COMMON_PATTERNS: Array<[string, string | undefined]> = [
   [String.raw`[^]`, undefined],
 ];
 
+// Patterns whose answer depends on counting or classing UTF-16 code units.
+const CODE_UNIT_PATTERNS: Array<[string, string | undefined]> = [
+  ["^.{2}$", undefined],
+  ["^.{1,3}$", undefined],
+  ["^[^x]{2}$", undefined],
+  [String.raw`^\S{2}$`, undefined],
+  [String.raw`^\W+$`, undefined],
+  [String.raw`^[\u0000-\uFFFF]+$`, undefined],
+  [String.raw`^[\u0080-\uFFFF]+$`, undefined],
+  [String.raw`^[\uD800-\uDBFF][\uDC00-\uDFFF]$`, undefined],
+  [String.raw`^\uD83D\uDE00$`, undefined],
+  [String.raw`^\uD83D`, undefined],
+  // A literal emoji in the pattern: two code units, and `+` repeats only the second.
+  ["^\u{1F600}+$", undefined],
+  ["[\u{1F600}]", undefined],
+  [String.raw`^[a\uD83D]+$`, undefined],
+  ["^.{2}$", "u"],
+  [String.raw`^\p{Extended_Pictographic}$`, "u"],
+];
+
 describe("createLinearPatternMatcher", () => {
   test.each(CATASTROPHIC_PATTERNS)("returns quickly on a 4096-character answer to %s", (pattern) => {
     const { result, ms } = timed(() => match(pattern, undefined, `${"ab".repeat(2047)}a!`));
@@ -77,12 +98,13 @@ describe("createLinearPatternMatcher", () => {
     const run = createLinearPatternMatcher(10_000);
     const value = "a".repeat(100);
 
-    expect(run("^a+$", undefined, value)).toBe(true);
-    let refusedAfter = 0;
-    while (run("^a+$", undefined, value) === true) refusedAfter++;
+    // Each call costs well over 1% of this budget, so 100 calls must exhaust it.
+    const results = Array.from({ length: 100 }, () => run("^a+$", undefined, value));
 
-    expect(refusedAfter).toBeGreaterThan(0);
-    expect(run("^a+$", undefined, value)).toBe(false);
+    expect(results[0]).toBe(true);
+    expect(results.at(-1)).toBe(false);
+    // Once refused, every later rule in the run is refused too.
+    expect(results.slice(results.indexOf(false))).not.toContain(true);
     // A new run starts with a full budget.
     expect(createLinearPatternMatcher(10_000)("^a+$", undefined, value)).toBe(true);
   });
@@ -103,13 +125,15 @@ describe("createLinearPatternMatcher", () => {
   test("does not run a pattern that compiles past the program cap, and remembers it", () => {
     const pattern = ".{1000}".repeat(72);
 
-    const first = timed(() => match(pattern, undefined, "a"));
-    const second = timed(() => match(pattern, undefined, "a"));
-
-    expect(first.result).toBeUndefined();
-    expect(second.result).toBeUndefined();
-    // The second response skips the ~60 ms compile.
-    expect(second.ms).toBeLessThan(5);
+    const compileSpy = vi.spyOn(RE2JS, "compile");
+    try {
+      expect(match(pattern, undefined, "a")).toBeUndefined();
+      expect(match(pattern, undefined, "a")).toBeUndefined();
+      // Compiled (~60 ms) for the first response only.
+      expect(compileSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      compileSpy.mockRestore();
+    }
     expect(MAX_PROGRAM_SIZE).toBeLessThan(72_000);
   });
 
@@ -196,22 +220,49 @@ describe("createLinearPatternMatcher", () => {
     const anyAnswer = fc.string({
       unit: fc.constantFrom(
         ..."aAbB1 \t\n\r\u000b\u00a0\u2028\u2029\u3000\ufeff\u00e9\u017f\u212a-.".split(""),
-        "\u{1F600}"
+        "\u{1F600}",
+        "\uD83D",
+        "\uDE00"
       ),
       maxLength: 12,
     });
     fc.assert(
-      fc.property(fc.constantFrom(...COMMON_PATTERNS), anyAnswer, ([pattern, flags], value) => {
-        if (/\p{Extended_Pictographic}/u.test(value) && !flags?.includes("u") && pattern.includes(".")) {
-          // Documented exception: without `u` the browser counts an emoji as two characters.
-          return;
+      fc.property(
+        fc.constantFrom(...COMMON_PATTERNS, ...CODE_UNIT_PATTERNS),
+        anyAnswer,
+        ([pattern, flags], value) => {
+          if (native(pattern, flags, value)) {
+            expect(match(pattern, flags, value)).not.toBe(false);
+          }
         }
-        if (native(pattern, flags, value)) {
-          expect(match(pattern, flags, value)).not.toBe(false);
-        }
+      ),
+      { numRuns: 5000 }
+    );
+  });
+
+  // Without `u` the browser matches UTF-16 code units: an emoji is two characters, and a lone
+  // surrogate is one.
+  test("matches emoji and lone surrogates code unit by code unit, as RegExp does without u", () => {
+    const answer = fc.string({
+      unit: fc.constantFrom("a", "x", " ", "\u00e9", "\uFFFF", "\u{1F600}", "\u{10FFFF}", "\uD83D", "\uDE00"),
+      maxLength: 8,
+    });
+    fc.assert(
+      fc.property(fc.constantFrom(...CODE_UNIT_PATTERNS), answer, ([pattern, flags], value) => {
+        expect(match(pattern, flags, value)).toBe(native(pattern, flags, value));
       }),
       { numRuns: 5000 }
     );
+  });
+
+  test.each([
+    ["^.{2}$", "\u{1F600}", true],
+    ["^.{10}$", "\u{1F600}".repeat(5), true],
+    ["^.$", "\u{1F600}", false],
+    ["^[\u0080-\uFFFF]+$", "\u{1F600}", true],
+  ])("without u, %s against %j is %s, as in the browser", (pattern, value, expected) => {
+    expect(native(pattern, undefined, value)).toBe(expected);
+    expect(match(pattern, undefined, value)).toBe(expected);
   });
 });
 

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import { mimeTypes } from "@formbricks/types/storage";
 
 // Guards ENG-3194. Sentry Session Replay compresses recordings in a `blob:` worker. Without an
 // explicit `worker-src`, browsers fall back to `script-src`, which has no `blob:`, so the worker is
@@ -29,8 +30,15 @@ const getWorkerSources = (csp: string): string[] | undefined => {
   return directive?.slice(1);
 };
 
-// A bare `sandbox` (no `allow-scripts`) runs no script at all, so it needs no worker either.
-const isScriptless = (csp: string): boolean => csp.split(";").some((part) => part.trim() === "sandbox");
+// A policy that runs no script at all needs no worker either: a bare `sandbox` (no `allow-scripts`),
+// or `default-src 'none'` with no `script-src` to override it.
+const isScriptless = (csp: string): boolean => {
+  const directives = csp.split(";").map((part) => part.trim());
+  return (
+    directives.includes("sandbox") ||
+    (directives.includes("default-src 'none'") && !directives.some((d) => d.startsWith("script-src")))
+  );
+};
 
 beforeAll(async () => {
   for (const [name, value] of Object.entries(REQUIRED_ENV)) {
@@ -95,6 +103,28 @@ describe("CSP for uploaded files (ENG-7108)", () => {
       const csp = await effectiveCsp(pathname);
       expect(csp).toBeDefined();
       expect(isScriptless(csp ?? "")).toBe(false);
+    }
+  );
+
+  // Chromium's media viewer runs script, so `sandbox` stops a directly opened video or song from
+  // playing; `default-src 'none'` still blocks every script of the file's own.
+  const MEDIA_CSP = "default-src 'none'; media-src 'self'; frame-ancestors 'self'";
+  const SANDBOX_CSP = "default-src 'none'; frame-ancestors 'self'; sandbox";
+  const expectedCsp = (type: string): string | "app" =>
+    type === "application/pdf" ? "app" : /^(audio|video)\//.test(type) ? MEDIA_CSP : SANDBOX_CSP;
+
+  test.each(Object.entries(mimeTypes))(
+    "serves an uploaded .%s (%s) under the policy for its type",
+    async (extension, type) => {
+      for (const name of [`file--fid--1.${extension}`, `FILE--fid--1.${extension.toUpperCase()}`]) {
+        const csp = await effectiveCsp(`/storage/ws1/private/surveys/s1/elements/e1/${name}`);
+        const expected = expectedCsp(type);
+        if (expected === "app") {
+          expect(isScriptless(csp ?? ""), name).toBe(false);
+        } else {
+          expect(csp, name).toBe(expected);
+        }
+      }
     }
   );
 

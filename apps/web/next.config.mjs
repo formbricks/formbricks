@@ -222,6 +222,15 @@ const nextConfig = {
 
     // `worker-src` must stay explicit: without it browsers fall back to `script-src`, which has no
     // `blob:`, and blocks the `blob:` worker Sentry Session Replay compresses recordings in (ENG-3194).
+    // Upload extensions whose browser viewer needs `sandbox` off (see the `/storage` rules below). The
+    // media list must match the audio/video types in `mimeTypes` (packages/types/storage.ts), which
+    // lib/next-config-csp.test.ts checks. Header sources are case-sensitive, so each letter matches
+    // either case.
+    const anyCase = (extension) =>
+      extension.replace(/[a-z]/g, (letter) => `[${letter}${letter.toUpperCase()}]`);
+    const UPLOADED_MEDIA_EXTENSIONS = ["mp4", "mov", "avi", "mkv", "webm", "mp3"].map(anyCase).join("|");
+    const UPLOADED_FILE_UNSANDBOXED_EXTENSIONS = `${anyCase("pdf")}|${UPLOADED_MEDIA_EXTENSIONS}`;
+
     const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data:${devLoopbackSourceList} https:; font-src 'self' data: https:; connect-src 'self'${devLoopbackSourceList} https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
 
     return [
@@ -252,15 +261,26 @@ const nextConfig = {
       },
       {
         // Uploaded files (ENG-7108). A stored file must never act as a page of the app: should one be
-        // rendered as a document anyway, `sandbox` gives it an opaque origin and no scripts. This rule
-        // has to come after the one above, because a route handler cannot set this header itself: the
-        // config's CSP replaces it. PDFs are left out, as a bare `sandbox` stops Chromium's plugin-based
-        // PDF viewer; they are served as `application/pdf` with `nosniff`, so never parsed as HTML.
-        source: String.raw`/storage/:path((?!.*\.[pP][dD][fF]$).*)`,
+        // rendered as a document anyway, `sandbox` gives it an opaque origin and no scripts. These rules
+        // have to come after the one above, because a route handler cannot set this header itself: the
+        // config's CSP replaces it. Two kinds are left out of `sandbox`, as it stops the browser's own
+        // viewer for them; both are served with their real type and `nosniff`, so never parsed as HTML:
+        // PDFs (a bare `sandbox` blocks Chromium's plugin-based viewer) and audio/video (Chromium's media
+        // viewer runs script). Media still gets `default-src 'none'`, which blocks every script.
+        source: String.raw`/storage/:path((?!.*\.(?:${UPLOADED_FILE_UNSANDBOXED_EXTENSIONS})$).*)`,
         headers: [
           {
             key: "Content-Security-Policy",
             value: "default-src 'none'; frame-ancestors 'self'; sandbox",
+          },
+        ],
+      },
+      {
+        source: String.raw`/storage/:path(.*\.(?:${UPLOADED_MEDIA_EXTENSIONS})$)`,
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; media-src 'self'; frame-ancestors 'self'",
           },
         ],
       },

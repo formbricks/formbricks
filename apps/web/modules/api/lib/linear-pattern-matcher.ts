@@ -19,24 +19,90 @@ import type { TPatternMatcher } from "@formbricks/surveys/validation";
  * differently), or not cheaply, is not evaluated here: the rule passes on the server and is still
  * enforced in the respondent's browser, as an invalid pattern always has been.
  *
- * The server must never be stricter than the browser, or it refuses answers the survey accepted. RE2's
- * `\s` and `\S` split whitespace at ASCII, JavaScript's at every Unicode space (a pasted no-break
- * space, for one), so both are rewritten to the JavaScript sets; with `m`, RE2's `^` and `$` see only
- * `\n` as a line break, so such a pattern is not evaluated against an answer holding another one. The
- * remaining differences make RE2 more lenient (its `.` also matches CR, U+2028 and U+2029), except two:
- * - without the `u` flag JavaScript counts a character outside the BMP (an emoji) as two, RE2 as one,
- *   so `^.{10,}$` accepts five emoji in the browser and refuses them here;
- * - with `i`, a few letters whose case pairs are newer than re2js's Unicode tables (U+0277/U+A7DD,
- *   U+027C/U+A7E2, U+AB4B/U+AB6C and a few more) match their pair only in the browser.
+ * The server must never be stricter than the browser, or it refuses answers the survey accepted. So the
+ * pattern is rewritten where RE2 reads it differently:
+ * - RE2's `\s` and `\S` split whitespace at ASCII, JavaScript's at every Unicode space (a pasted
+ *   no-break space, for one), so both become the JavaScript sets;
+ * - without `u`, JavaScript matches UTF-16 code units, so an emoji is two characters (`^.{2}$` accepts
+ *   one). RE2 matches code points, so each surrogate code unit is handed to it as a stand-in code point
+ *   of its own, in the answer and in the pattern alike;
+ * - with `m`, RE2's `^` and `$` see only `\n` as a line break, so such a pattern is not evaluated
+ *   against an answer holding CR, U+2028 or U+2029.
+ * What remains makes RE2 more lenient (its `.` also matches CR, U+2028 and U+2029), except with `i` for a
+ * few letters whose case pairs are newer than re2js's Unicode tables (U+0277/U+A7DD, U+027C/U+A7E2,
+ * U+AB4B/U+AB6C and a few more), which match their pair only in the browser.
  */
 
 // ECMAScript `\s`: WhiteSpace and LineTerminator (ECMA-262 §22.2.2.9, CharacterClassEscape), and its
-// complement for `\S`, spelled as ranges so it also works inside a bracket expression.
+// complement for `\S`, spelled as ranges so it also works inside a bracket expression. The complement
+// covers the surrogate stand-ins below, as JavaScript's `\S` covers a lone surrogate.
 const JS_WHITESPACE_CLASS_BODY = String.raw`\x{9}-\x{D}\x{20}\x{A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}`;
 const JS_NON_WHITESPACE_CLASS_BODY = String.raw`\x{0}-\x{8}\x{E}-\x{1F}\x{21}-\x{9F}\x{A1}-\x{167F}\x{1681}-\x{1FFF}\x{200B}-\x{2027}\x{202A}-\x{202E}\x{2030}-\x{205E}\x{2060}-\x{2FFF}\x{3001}-\x{FEFE}\x{FF00}-\x{10FFFF}`;
 const JS_CLASS_BODIES: Record<string, string> = {
   s: JS_WHITESPACE_CLASS_BODY,
   S: JS_NON_WHITESPACE_CLASS_BODY,
+};
+
+// Each UTF-16 surrogate code unit maps to its own code point in Supplementary Private Use Area-A. Once
+// every surrogate in the answer is replaced, no character there can be one of these, so they never
+// collide with real input.
+const SURROGATE_FIRST = 0xd800;
+const SURROGATE_LAST = 0xdfff;
+const SURROGATE_STAND_IN = 0xf0000;
+const SURROGATE_CODE_UNIT = /[\uD800-\uDFFF]/g;
+
+const isSurrogate = (codeUnit: number): boolean => codeUnit >= SURROGATE_FIRST && codeUnit <= SURROGATE_LAST;
+const standIn = (codeUnit: number): number => SURROGATE_STAND_IN + codeUnit - SURROGATE_FIRST;
+
+/** The answer as RE2 should see it under JavaScript's code-unit matching. */
+const withSurrogateStandIns = (value: string): string =>
+  value.replace(SURROGATE_CODE_UNIT, (unit) => String.fromCodePoint(standIn(unit.charCodeAt(0))));
+
+const escapeCodePoint = (codePoint: number): string => `\\x{${codePoint.toString(16).toUpperCase()}}`;
+
+/** One character of an RE2 pattern, and the code point it stands for when it is a single one. */
+interface Atom {
+  text: string;
+  length: number;
+  codePoint?: number;
+}
+
+const CONTROL_ESCAPES: Record<string, number> = { t: 0x9, n: 0xa, v: 0xb, f: 0xc, r: 0xd };
+const HEX_ESCAPE = /^\\x(?:\{([0-9A-Fa-f]{1,6})\}|([0-9A-Fa-f]{2}))/;
+
+const readAtom = (source: string, start: number): Atom => {
+  const char = source[start];
+  if (char !== "\\") return { text: char, length: 1, codePoint: char.charCodeAt(0) };
+
+  const next = source[start + 1] ?? "";
+  const hex = next === "x" ? HEX_ESCAPE.exec(source.slice(start, start + 12)) : null;
+  if (hex) return { text: hex[0], length: hex[0].length, codePoint: Number.parseInt(hex[1] ?? hex[2], 16) };
+  if (next in CONTROL_ESCAPES) return { text: `\\${next}`, length: 2, codePoint: CONTROL_ESCAPES[next] };
+  // An escaped punctuation character (`\.`, `\-`, `\]`, `\\`) is that character; a letter is a class.
+  if (next && !/[0-9A-Za-z]/.test(next))
+    return { text: `\\${next}`, length: 2, codePoint: next.charCodeAt(0) };
+  return { text: `\\${next}`, length: 2 };
+};
+
+const renderAtom = (atom: Atom, codeUnits: boolean): string =>
+  codeUnits && atom.codePoint !== undefined && isSurrogate(atom.codePoint)
+    ? escapeCodePoint(standIn(atom.codePoint))
+    : atom.text;
+
+const renderRange = (from: number, to: number): string =>
+  from === to ? escapeCodePoint(from) : `${escapeCodePoint(from)}-${escapeCodePoint(to)}`;
+
+/** A class range; under code-unit matching, the part inside the surrogate block maps to stand-ins. */
+const renderClassRange = (first: Atom, last: Atom, codeUnits: boolean): string => {
+  const from = first.codePoint as number;
+  const to = last.codePoint as number;
+  if (!codeUnits || to < SURROGATE_FIRST || from > SURROGATE_LAST) return `${first.text}-${last.text}`;
+
+  let out = "";
+  if (from < SURROGATE_FIRST) out += renderRange(from, SURROGATE_FIRST - 1);
+  if (to > SURROGATE_LAST) out += renderRange(SURROGATE_LAST + 1, to);
+  out += renderRange(standIn(Math.max(from, SURROGATE_FIRST)), standIn(Math.min(to, SURROGATE_LAST)));
+  return out;
 };
 
 interface Token {
@@ -48,13 +114,6 @@ interface Token {
   inClass: boolean;
 }
 
-/** `\s` and `\S` become JavaScript's sets; every other escape is kept as written. */
-const readEscape = (next: string | undefined, inClass: boolean): Token => {
-  const body = next === undefined ? undefined : JS_CLASS_BODIES[next];
-  if (body === undefined) return { text: `\\${next ?? ""}`, length: 2, inClass };
-  return { text: inClass ? body : `[${body}]`, length: 2, inClass };
-};
-
 /** `[`, an optional `^`, and a `]` straight after them, which RE2 reads as a literal. */
 const readClassOpening = (source: string, start: number): Token => {
   let end = start + 1;
@@ -63,32 +122,50 @@ const readClassOpening = (source: string, start: number): Token => {
   return { text: source.slice(start, end), length: end - start, inClass: true };
 };
 
-/** Inside a bracket expression: a POSIX class such as `[:alpha:]` ends in its own `]`. */
-const readInClass = (source: string, start: number): Token => {
+/** Inside a bracket expression: a POSIX class such as `[:alpha:]`, a range, or one atom. */
+const readInClass = (source: string, start: number, codeUnits: boolean): Token => {
   if (source.startsWith("[:", start)) {
     const end = source.indexOf(":]", start + 2);
     if (end !== -1) return { text: source.slice(start, end + 2), length: end + 2 - start, inClass: true };
   }
-  const char = source[start];
-  return { text: char, length: 1, inClass: char !== "]" };
+  if (source[start] === "]") return { text: "]", length: 1, inClass: false };
+
+  const first = readAtom(source, start);
+  const dash = start + first.length;
+  if (first.codePoint !== undefined && source[dash] === "-" && source[dash + 1] !== "]") {
+    const last = readAtom(source, dash + 1);
+    if (last.codePoint !== undefined) {
+      return {
+        text: renderClassRange(first, last, codeUnits),
+        length: first.length + 1 + last.length,
+        inClass: true,
+      };
+    }
+  }
+  return { text: renderAtom(first, codeUnits), length: first.length, inClass: true };
 };
 
-const readToken = (source: string, start: number, inClass: boolean): Token => {
-  const char = source[start];
-  if (char === "\\") return readEscape(source[start + 1], inClass);
-  if (inClass) return readInClass(source, start);
-  if (char === "[") return readClassOpening(source, start);
-  return { text: char, length: 1, inClass: false };
+const readToken = (source: string, start: number, inClass: boolean, codeUnits: boolean): Token => {
+  const body = source[start] === "\\" ? JS_CLASS_BODIES[source[start + 1]] : undefined;
+  if (body !== undefined) return { text: inClass ? body : `[${body}]`, length: 2, inClass };
+  if (inClass) return readInClass(source, start, codeUnits);
+  if (source[start] === "[") return readClassOpening(source, start);
+
+  const atom = readAtom(source, start);
+  return { text: renderAtom(atom, codeUnits), length: atom.length, inClass: false };
 };
 
-/** Rewrites every `\s` and `\S` in an RE2 pattern to JavaScript's sets, inside and outside classes. */
-const withJavaScriptWhitespace = (source: string): string => {
+/**
+ * Rewrites an RE2 pattern to JavaScript's `\s` and `\S`, inside and outside classes, and, when
+ * `codeUnits` (no `u` flag), each surrogate to its stand-in.
+ */
+const toJavaScriptSemantics = (source: string, codeUnits: boolean): string => {
   let out = "";
   let inClass = false;
   let position = 0;
 
   while (position < source.length) {
-    const token = readToken(source, position, inClass);
+    const token = readToken(source, position, inClass, codeUnits);
     out += token.text;
     inClass = token.inClass;
     position += token.length;
@@ -96,6 +173,8 @@ const withJavaScriptWhitespace = (source: string): string => {
 
   return out;
 };
+
+const isUnicodeAware = (flags: string | undefined): boolean => /[uv]/.test(flags ?? "");
 
 // Escapes RE2 would read differently from JavaScript. `\k<name>` is a backreference, which RE2 lacks
 // (and re2js translates into the literal "k<name>"). Without `u`, JavaScript reads `\a`, `\A`, `\z`,
@@ -138,13 +217,14 @@ const compile = (pattern: string, flags: string | undefined): TCompiled => {
     return { program: null, cost: 0 };
   }
 
-  if (hasDivergentEscape(pattern, native.unicode || (flags ?? "").includes("v"))) {
+  const unicode = isUnicodeAware(flags);
+  if (hasDivergentEscape(pattern, unicode)) {
     return { program: null, cost: 0 };
   }
 
   let program: RE2JS;
   try {
-    program = RE2JS.compile(withJavaScriptWhitespace(RE2JS.translateRegExp(native)));
+    program = RE2JS.compile(toJavaScriptSemantics(RE2JS.translateRegExp(native), !unicode));
   } catch {
     return { program: null, cost: 0 };
   }
@@ -193,6 +273,6 @@ export const createLinearPatternMatcher = (budget: number = MAX_PATTERN_WORK_PER
     spent += program.programSize() * Math.max(value.length, 1);
     if (spent > budget) return false;
 
-    return program.test(value);
+    return program.test(isUnicodeAware(flags) ? value : withSurrogateStandIns(value));
   };
 };
