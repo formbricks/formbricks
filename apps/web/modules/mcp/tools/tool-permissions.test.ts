@@ -144,6 +144,12 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   update_dashboard_layout: ["dashboards:write"],
   set_dashboard_filters: ["dashboards:write"],
   duplicate_chart: ["dashboards:write"],
+  // ENG-7151: new tools, on the new read-only family.
+  list_contacts: ["audience:read"],
+  list_contact_attribute_keys: ["audience:read"],
+  list_contact_attribute_values: ["audience:read"],
+  list_segments: ["audience:read"],
+  list_action_classes: ["audience:read"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -187,6 +193,7 @@ const loadRegistrations = async () => {
   responses.registerResponseTools(server);
   creatives.registerCreativeTools(server);
   dashboards.registerDashboardTools(server);
+  (await import("./audience")).registerAudienceTools(server);
   return registrations;
 };
 

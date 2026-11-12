@@ -78,6 +78,7 @@ const loadRegistrations = async (): Promise<TRegistration[]> => {
   responses.registerResponseTools(server);
   creatives.registerCreativeTools(server);
   dashboards.registerDashboardTools(server);
+  (await import("./audience")).registerAudienceTools(server);
   return registrations;
 };
 
