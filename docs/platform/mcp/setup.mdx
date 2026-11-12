@@ -141,17 +141,21 @@ oauth_resource = "https://app.formbricks.com/api/mcp"
 ## Manage and revoke access
 
 Every client you authorize appears under **Settings → Account → Authorized Apps**
-(`/account/settings/authorized-apps`), showing the client name, its access level per category (such as
-**Surveys · Write** or **Responses · Read**; **Custom** when the permissions in a category differ), and
-when it was connected and last changed. A client connected twice, for example from two machines, is
+(`/account/settings/authorized-apps`), showing the client name, its organization & workspace access
+(**All access**, **2 organizations**, **3 workspaces**, or **No workspaces** when everything it was
+limited to is gone), its access level per category (such as **Surveys · Write** or **Responses · Read**;
+**Custom** when the permissions in a category differ), and when it was connected and last changed. A client connected twice, for example from two machines, is
 listed twice, and each connection is edited and revoked on its own.
 
-Click **Edit** to change what a client may do. It opens the same permission matrix as the consent screen,
-filled in with the client's current grant: set each permission to **No access**, **Read** or **Write**, or
+Click **Edit** to change what a client may do. It opens the same editor as the consent screen, filled in
+with the client's current grant: choose **All access**, **Only selected organizations** or **Only selected
+workspaces** (see [Organization & workspace access](/platform/mcp/overview#organization-workspace-access)),
+and set each permission to **No access**, **Read** or **Write**, or
 use **Read-only**, **Select all** or **Deselect all**. Levels above what the client asked for when you
 connected it can't be chosen; to give more, reconnect it so it asks again. **Save changes** applies from
 the client's next tool call, with the token it already holds, so there is no need to reconnect. Save stays
-disabled while every permission is at No access: to end a client's access, use Revoke.
+disabled while every permission is at No access, or while a selection has nothing picked: to end a client's
+access, use Revoke.
 
 Click **Revoke** to cut off a client's access: revoking deletes its grant, so its next call is
 refused, even with an access token it still holds. It will need to be re-authorized to connect again.

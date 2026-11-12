@@ -85,8 +85,8 @@ surveys never gets them. A client connected before the scope existed gets it onl
 which shows you the consent screen.
 
 Scope groups are independent — a client can be granted feedback-record access without survey access, or
-the other way around. `list_workspaces` is available to any read scope, since every other tool needs a
-workspace id.
+the other way around. `list_workspaces` is available to any permission at Read, since every other tool
+needs a workspace id.
 
 ### Grants
 
@@ -121,6 +121,37 @@ needs, so the agent can tell you what to change:
   "detail": "Not permitted: the user's grant to this MCP client does not give Surveys: Write. Ask the user to give the client this access."
 }
 ```
+
+### Organization & workspace access
+
+A grant also says **which organizations and workspaces** the client reaches. You choose it on the consent
+screen and in **Edit**:
+
+- **All access**: every organization and workspace you can reach, including organizations you join later.
+- **Only selected organizations**: every workspace in the organizations you pick, including workspaces
+  created there later.
+- **Only selected workspaces**: only the workspaces you pick, across your organizations. A workspace created
+  later stays out until you add it.
+
+Anything outside them **doesn't exist for the client**. Every tool is held to it, including the ones that
+find their workspace through a survey, response, chart, dashboard, creative, workflow or workflow run id,
+and `list_workspaces` lists only what the client reaches. Organization-level data, such as changing a
+feedback record or a feedback dataset not assigned to a picked workspace, needs the whole organization.
+
+For a client limited to selected organizations or workspaces, an id outside them answers exactly like an id
+that doesn't exist, so the client can't learn what else is there:
+
+```json
+{
+  "status": 404,
+  "code": "not_found",
+  "detail": "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it."
+}
+```
+
+A refusal by your own role answers the same way for such a client. A grant whose workspaces or organizations
+were all deleted, or that you lost access to, stays connected and listed as **No workspaces**: every call
+answers not found until you edit or revoke it.
 
 A client connected before grants existed kept the access it had: All access, and each permission at its
 scope's level. Tags and Audience started at No access. Raise Tags with Edit to use its tag tools
