@@ -40,15 +40,20 @@ export const renderSurveyInline = (props: SurveyContainerProps) => {
  * depend on the survey's tree being unmounted — a host that drops the container without unmounting it
  * (js-core's `closeSurvey`) would otherwise keep the stylesheet. Guarded by the render's generation, so
  * a survey that closes after a newer one rendered leaves that one's CSS alone.
+ *
+ * An app survey always gets the handler, host callback or not: RenderSurvey closes through its own
+ * handler either way and only calls this one afterwards, so its presence changes nothing on screen. A
+ * link survey keeps its own contract and gets one only when the host passed one.
  */
 const withCustomCssRelease = (
   onClose: SurveyContainerProps["onClose"],
-  owner: number
+  owner: number,
+  isLinkSurvey: boolean
 ): SurveyContainerProps["onClose"] => {
-  if (!onClose) return onClose;
+  if (!onClose && isLinkSurvey) return onClose;
   return () => {
     releaseCustomCss(owner);
-    onClose();
+    onClose?.();
   };
 };
 
@@ -77,7 +82,7 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
   const customCssOwner = getCustomCssGeneration();
   const props: SurveyContainerProps = {
     ...renderProps,
-    onClose: withCustomCssRelease(renderProps.onClose, customCssOwner),
+    onClose: withCustomCssRelease(renderProps.onClose, customCssOwner, renderProps.survey.type === "link"),
   };
   const withCustomCssOwner = (child: ComponentChild) =>
     h(CustomCssOwnerContext.Provider, { value: customCssOwner }, child);
