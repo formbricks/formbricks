@@ -103,7 +103,8 @@ export const deleteMcpGrants = async (
   return rows.map(toStoredGrant);
 };
 
-const auditSnapshot = (grant: TStoredMcpGrant) => ({
+/** What an audit entry records of a grant: the client and the grant itself, not its row ids. */
+export const getMcpGrantAuditSnapshot = (grant: TStoredMcpGrant) => ({
   clientId: grant.clientId,
   access: grant.access,
   permissions: grant.permissions,
@@ -136,8 +137,8 @@ export const queueMcpGrantAudit = async ({
       userType: "user",
       organizationId: UNKNOWN_DATA,
       status: "success",
-      oldObject: before ? auditSnapshot(before) : null,
-      newObject: after ? auditSnapshot(after) : null,
+      oldObject: before ? getMcpGrantAuditSnapshot(before) : null,
+      newObject: after ? getMcpGrantAuditSnapshot(after) : null,
     });
   } catch (error) {
     logger.error({ error, grantId: grant.id, action }, "Failed to queue MCP grant audit event");
