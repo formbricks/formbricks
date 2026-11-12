@@ -1,6 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { sessionOf } from "@/integration/dashboards-fixture";
 import {
   type TMcpToolCallOutcome,
   callMcpTool,
@@ -558,6 +560,28 @@ describe("organization & workspace access on MCP calls", () => {
         })
       );
     });
+  });
+
+  // A dashboard-bound read decision is kept 30 seconds per user. The user's own REST read, or a client
+  // with All access, must not hand a narrowed client the allow it doesn't have.
+  test("a dashboard read the user made over REST doesn't reach a client the grant keeps out", async () => {
+    await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
+    const readFilterFields = () =>
+      callMcpTool({ accessToken: setup.accessToken }, "list_dashboard_filter_fields", {
+        dashboardId: setup.outside.dashboardId,
+      });
+
+    expectNotFound(await readFilterFields());
+
+    const rest = await listV3DashboardFilterFields({
+      dashboardId: setup.outside.dashboardId,
+      authentication: sessionOf(setup.userId),
+      requestId: "req_rest",
+      instance: "/api/v3",
+    });
+    expect(rest.status).toBe(200);
+
+    expectNotFound(await readFilterFields());
   });
 
   test("a grant whose workspaces were deleted stays, reaches nothing, and every call is not found", async () => {
