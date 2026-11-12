@@ -276,7 +276,7 @@ describe("the Audience tools", () => {
       expect(outcome.result?.isError, tool).toBe(true);
       expect(problemOf(outcome), tool).toMatchObject({
         status: 403,
-        code: "contacts_not_entitled",
+        code: "forbidden",
         detail: "The contacts feature is not enabled for this organization.",
       });
     }

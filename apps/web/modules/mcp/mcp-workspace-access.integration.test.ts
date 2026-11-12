@@ -401,32 +401,32 @@ describe("organization & workspace access on MCP calls", () => {
     expect(succeeded(after), toolText(after)).toBe(true);
   });
 
-  // A plan refusal comes after authorization, so it reveals nothing outside the grant: it keeps its own
-  // code rather than turning into not found, which would tell the agent the resource is gone.
+  // A plan refusal comes after authorization, so it reveals nothing outside the grant: it stays the 403
+  // it is rather than turning into not found, which would tell the agent the resource is gone.
   test.each([
     {
       feature: "Workflows",
       unentitle: () => vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(false),
       tool: "list_workflows",
-      code: "workflows_not_entitled",
+      detail: "Workflows are not enabled for this organization",
       permissions: READ_ALL,
     },
     {
       feature: "Contacts",
       unentitle: () => vi.mocked(getIsContactsEnabled).mockResolvedValue(false),
       tool: "list_contact_attribute_keys",
-      code: "contacts_not_entitled",
+      detail: "The contacts feature is not enabled for this organization.",
       permissions: { contactAttributes: "read" },
     },
   ] satisfies {
     feature: string;
     unentitle: () => unknown;
     tool: string;
-    code: string;
+    detail: string;
     permissions: TMcpGrantPermissions;
   }[])(
     "without $feature, the plan refusal passes through a narrowed grant",
-    async ({ unentitle, tool, code, permissions }) => {
+    async ({ unentitle, tool, detail, permissions }) => {
       await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] }, permissions);
       unentitle();
       try {
@@ -434,7 +434,9 @@ describe("organization & workspace access on MCP calls", () => {
           workspaceId: setup.inside.workspaceId,
         });
         expect(outcome.result?.isError, toolText(outcome)).toBe(true);
-        expect(problemOf(outcome)).toMatchObject({ status: 403, code });
+        // The same 403 the REST API answers, not the not found an id outside the grant gets.
+        expect(problemOf(outcome)).toMatchObject({ status: 403, code: "forbidden" });
+        expect(JSON.parse(toolText(outcome)).error.detail).toBe(detail);
       } finally {
         vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(true);
         vi.mocked(getIsContactsEnabled).mockResolvedValue(true);

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { isV3EntitlementRefusal, problemForbidden } from "@/app/api/v3/lib/response";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listV3ContactAttributeKeys } from "./operations";
@@ -142,11 +143,16 @@ describe("listV3ContactAttributeKeys", () => {
     const response = await listV3ContactAttributeKeys(params);
 
     expect(response.status).toBe(403);
-    expect(await response.json()).toMatchObject({
-      title: "Forbidden",
-      code: "contacts_not_entitled",
-      detail: "The contacts feature is not enabled for this organization.",
-    });
+    // Byte for byte the plain forbidden the REST API has always answered; only a mark beside the
+    // response tells the MCP layer it is an entitlement refusal (ADR-0042).
+    const plain = problemForbidden(
+      params.requestId,
+      "The contacts feature is not enabled for this organization.",
+      params.instance
+    );
+    expect([...response.headers]).toEqual([...plain.headers]);
+    expect(await response.text()).toBe(await plain.text());
+    expect(isV3EntitlementRefusal(response)).toBe(true);
     expect(getContactAttributeKeys).not.toHaveBeenCalled();
   });
 

@@ -1,5 +1,5 @@
 import type { CallToolResult } from "@modelcontextprotocol/server";
-import type { ProblemBody } from "@/app/api/v3/lib/response";
+import { type ProblemBody, isV3EntitlementRefusal } from "@/app/api/v3/lib/response";
 
 type TMcpSuccessPayload = Record<string, unknown> & {
   requestId: string;
@@ -46,7 +46,20 @@ async function readJsonResponse(response: Response): Promise<Record<string, unkn
   }
 }
 
+/** Tool results that carry a plan or license refusal, which {@link hideOutsideMcpGrant} passes through. */
+const ENTITLEMENT_REFUSAL_RESULTS = new WeakSet<CallToolResult>();
+
 export async function responseToMcpToolResult(
+  response: Response,
+  fallbackRequestId: string
+): Promise<CallToolResult> {
+  const result = await convertResponseToMcpToolResult(response, fallbackRequestId);
+  // Carried beside the result, never in it: the client sees the same `forbidden` the REST API answers.
+  if (isV3EntitlementRefusal(response)) ENTITLEMENT_REFUSAL_RESULTS.add(result);
+  return result;
+}
+
+async function convertResponseToMcpToolResult(
   response: Response,
   fallbackRequestId: string
 ): Promise<CallToolResult> {
@@ -80,10 +93,7 @@ export async function responseToMcpToolResult(
   );
 }
 
-/**
- * The problem codes an id outside a grant could otherwise be told apart by. Only these two exact pairs:
- * every other code, a 403 included, passes through.
- */
+/** The problem codes an id outside a grant could otherwise be told apart by. */
 const HIDDEN_STATUSES: ReadonlyMap<number, string> = new Map([
   [403, "forbidden"],
   [404, "not_found"],
@@ -98,13 +108,14 @@ const HIDDEN_STATUSES: ReadonlyMap<number, string> = new Map([
  * learn what else exists.
  *
  * Every other answer passes through unchanged: a validation error, a rate limit, and a plan or
- * entitlement refusal. The latter each carry their own code (`contacts_not_entitled`,
- * `creatives_not_entitled`, `dashboards_plan_required`, `workflows_not_entitled`, …), never plain
- * `forbidden`, and an operation checks them after authorization, so they reveal nothing outside the
- * grant. A new entitlement check must answer with its own code too, or it reads here as not found.
+ * entitlement refusal. Those are checked after authorization, so they reveal nothing outside the grant.
+ * Creatives and Dashboards answer with codes of their own; Contacts and Workflows answer a plain
+ * `forbidden` that their v3 helper marks as an entitlement refusal (`isV3EntitlementRefusal`), read here
+ * through {@link responseToMcpToolResult}. A new entitlement check must do one or the other, or it reads
+ * here as not found.
  */
 export function hideOutsideMcpGrant(result: CallToolResult, requestId: string): CallToolResult {
-  if (!result.isError) return result;
+  if (!result.isError || ENTITLEMENT_REFUSAL_RESULTS.has(result)) return result;
   const error = (result.structuredContent as Partial<TMcpErrorPayload> | undefined)?.error;
   if (!error || HIDDEN_STATUSES.get(error.status) !== error.code) return result;
   return toTextResult(

@@ -4,6 +4,7 @@ import {
   problemContactsNotEntitled,
   problemCreativesNotEntitled,
   problemDashboardsPlanRequired,
+  problemForbidden,
   problemUnprocessableContent,
   problemWorkflowsNotEntitled,
   successResponse,
@@ -110,13 +111,20 @@ describe("hideOutsideMcpGrant", () => {
 
   // Every plan or entitlement refusal the v3 operations answer, built by the helper that answers it.
   test.each([
-    ["Contacts", () => problemContactsNotEntitled("req_1"), "contacts_not_entitled"],
-    ["Workflows", () => problemWorkflowsNotEntitled("req_1"), "workflows_not_entitled"],
+    ["Contacts", () => problemContactsNotEntitled("req_1"), "forbidden"],
+    ["Workflows", () => problemWorkflowsNotEntitled("req_1"), "forbidden"],
     ["Dashboards", () => problemDashboardsPlanRequired("req_1"), "dashboards_plan_required"],
     ["Creatives", () => problemCreativesNotEntitled("req_1", { windDown: false }), "creatives_not_entitled"],
   ])("passes the %s entitlement refusal through with its own code", async (_feature, refuse, code) => {
     const result = await responseToMcpToolResult(refuse(), "req_1");
     expect(hideOutsideMcpGrant(result, "req_1")).toEqual(result);
     expect(result.structuredContent).toMatchObject({ error: { status: 403, code } });
+  });
+
+  test("still hides a plain forbidden with the same detail as an entitlement refusal", async () => {
+    // The mark, not the body, is what passes a refusal through: a role refusal can't borrow it.
+    const lookalike = problemForbidden("req_1", "Workflows are not enabled for this organization");
+    const hidden = hideOutsideMcpGrant(await responseToMcpToolResult(lookalike, "req_1"), "req_1");
+    expect(hidden.structuredContent).toEqual({ error: NOT_FOUND });
   });
 });

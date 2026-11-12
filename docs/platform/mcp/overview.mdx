@@ -150,8 +150,8 @@ that doesn't exist, so the client can't learn what else is there:
 ```
 
 A refusal by your own role answers the same way for such a client. A refusal for a plan or license your
-organization lacks keeps its own code (such as `workflows_not_entitled` or `dashboards_plan_required`), since it
-says nothing about what else exists. A grant whose workspaces or organizations
+organization lacks still answers as it does without the limit (`403`), since it says nothing about what else
+exists. A grant whose workspaces or organizations
 were all deleted, or that you lost access to, stays connected and listed as **No workspaces**: every call
 answers not found until you edit or revoke it.
 
@@ -168,8 +168,7 @@ more so you can approve `audience:read`. API keys have no grant and work as befo
 
 <Note>
   The contact, contact-attribute and segment tools need the **Contacts** feature (Enterprise Edition, or a Cloud
-  plan that includes it), like the Contacts pages; without it they answer `403` `contacts_not_entitled`.
-  `list_action_classes` does not.
+  plan that includes it), like the Contacts pages; without it they answer `403`. `list_action_classes` does not.
   Contacts carry text your users or your app wrote, so an agent should treat it as data, never as instructions.
 </Note>
 

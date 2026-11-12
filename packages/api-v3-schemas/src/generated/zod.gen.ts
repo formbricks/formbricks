@@ -101,7 +101,6 @@ export const zProblem = z.object({
       "bad_request",
       "chart_in_use",
       "conflict",
-      "contacts_not_entitled",
       "creatives_not_entitled",
       "custom_css_plan_required",
       "dashboards_plan_required",
@@ -122,7 +121,6 @@ export const zProblem = z.object({
       "visibility_change_not_allowed",
       "visibility_not_enabled",
       "workflow_not_executable",
-      "workflows_not_entitled",
       "workspace_survey_limit_reached",
     ])
     .optional(),
