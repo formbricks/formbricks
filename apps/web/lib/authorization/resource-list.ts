@@ -4,9 +4,11 @@ import { cache as reactCache } from "react";
 import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
+import { MCP_REACH_PERMISSION } from "@/lib/authzed/relationship-map";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getAuthorizationSurface, getMcpGrantForActor, recordAuthorizationCheckIssued } from "./context";
 import type { TAuthorizationAction, TAuthorizationActor } from "./contract";
+import { isMcpReachMissingFromSchema, toMcpGrantSubject } from "./mcp-reach";
 import { recordAuthorizationDecision } from "./metrics";
 import { getSpicedbObjectType } from "./object-type";
 import { normalizeAuthorizationOperationalError } from "./operational-error";
@@ -89,18 +91,16 @@ const lookupMcpGrantReachIds = reactCache(
       const result = await getAuthzedClient().lookupResources({
         permission: MCP_REACH_PERMISSION,
         resourceType: getSpicedbObjectType(resourceType),
-        subject: { objectId: grantId, objectType: "mcp_grant" },
+        subject: toMcpGrantSubject(grantId),
       });
       return new Set(result.resourceIds);
     } catch (error) {
       // On the previous release's schema nothing is reached, exactly as a check of it is denied.
-      if (isPermissionMissingFromSchema(error, MCP_REACH_PERMISSION)) return new Set();
+      if (isMcpReachMissingFromSchema(error)) return new Set();
       throw normalizeAuthorizationOperationalError(error, "authorization_list");
     }
   }
 );
-
-const MCP_REACH_PERMISSION = "mcp_reach";
 
 /**
  * Of the ids `actor` holds, those the request's MCP grant also reaches. A no-op without a grant that

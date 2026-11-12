@@ -117,3 +117,6 @@ export const MCP_GRANT_RELATION = "mcp_grant";
 
 /** The SpiceDB definition an MCP grant is written as (`McpGrant.id`). */
 export const MCP_GRANT_SUBJECT_TYPE = "mcp_grant";
+
+/** The permission every resource answers for an MCP grant: whether the grant's selection reaches it. */
+export const MCP_REACH_PERMISSION = "mcp_reach";

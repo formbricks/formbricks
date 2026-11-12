@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { type TAuthzedPermissionCheck, getAuthzedClient } from "@/lib/authzed/client";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
+import { MCP_REACH_PERMISSION } from "@/lib/authzed/relationship-map";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { type TAuthorizationMcpGrant, getMcpGrantForActor } from "./context";
 import {
@@ -13,6 +14,7 @@ import {
   type TAuthorizationResourceType,
 } from "./contract";
 import type { AuthorizationEvaluator } from "./evaluator";
+import { toMcpGrantSubject } from "./mcp-reach";
 import { getSpicedbObjectType } from "./object-type";
 import { isPermissionMissingFromSchema } from "./schema-drift";
 import {
@@ -232,9 +234,6 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
   }
 };
 
-/** The permission every resource a check lands on answers for an MCP grant (ADR-0042). */
-const MCP_REACH_PERMISSION = "mcp_reach";
-
 const toObjectReference = (resource: TSpicedbCheck["resource"]) => ({
   objectId: resource.id,
   objectType: getSpicedbObjectType(resource.type),
@@ -260,7 +259,7 @@ const checkWithinMcpGrant = async (
     {
       permission: MCP_REACH_PERMISSION,
       resource,
-      subject: { objectId: mcpGrant.id, objectType: "mcp_grant" },
+      subject: toMcpGrantSubject(mcpGrant.id),
     },
   ]);
   return userAllowed === true && grantReaches === true;
