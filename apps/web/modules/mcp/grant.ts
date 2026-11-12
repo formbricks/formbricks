@@ -111,6 +111,15 @@ export const capMcpGrantPermissions = (
   return capped;
 };
 
+/**
+ * True when no permission in `permissions` goes above `cap`. Authorized apps' Edit refuses a grant that
+ * fails this rather than capping it, since the editor never offers a level above the cap (ADR-0041).
+ */
+export const isMcpGrantWithinCap = (permissions: TMcpGrantPermissions, cap: TMcpGrantPermissions): boolean =>
+  (Object.entries(permissions) as [TMcpPermission, Exclude<TMcpAccessLevel, "none">][]).every(
+    ([permission, level]) => RANK[level] <= RANK[cap[permission] ?? "none"]
+  );
+
 /** True when the grant gives the requirement's permission at least the level it needs. */
 export const mcpGrantAllows = (grant: TMcpGrant, { permission, level }: TMcpPermissionRequirement): boolean =>
   RANK[grant.permissions[permission] ?? "none"] >= RANK[level];

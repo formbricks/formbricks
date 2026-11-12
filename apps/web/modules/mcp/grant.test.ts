@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { capMcpGrantPermissions, getMcpGrantPermissionsForScopes, parseRequestedMcpGrant } from "./grant";
+import {
+  capMcpGrantPermissions,
+  getMcpGrantPermissionsForScopes,
+  isMcpGrantWithinCap,
+  parseRequestedMcpGrant,
+} from "./grant";
 
 describe("capMcpGrantPermissions", () => {
   test("keeps each level the scopes allow and lowers the ones above them", () => {
@@ -22,6 +27,22 @@ describe("capMcpGrantPermissions", () => {
     const cap = getMcpGrantPermissionsForScopes(["openid", "profile", "email", "offline_access"]);
 
     expect(capMcpGrantPermissions({ surveys: "write", dashboards: "read" }, cap)).toEqual({});
+  });
+});
+
+describe("isMcpGrantWithinCap", () => {
+  const cap = getMcpGrantPermissionsForScopes(["surveys:read", "responses:write"]);
+
+  test("accepts a grant at or below every level the scopes allow", () => {
+    expect(isMcpGrantWithinCap({ surveys: "read", responses: "write", tags: "read" }, cap)).toBe(true);
+  });
+
+  test("refuses a level above what the scopes allow", () => {
+    expect(isMcpGrantWithinCap({ surveys: "write" }, cap)).toBe(false);
+  });
+
+  test("refuses a permission whose scope family the client did not ask for", () => {
+    expect(isMcpGrantWithinCap({ responses: "read", workflows: "read" }, cap)).toBe(false);
   });
 });
 
