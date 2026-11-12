@@ -1,5 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { problemConflict, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import {
+  problemConflict,
+  problemContactsNotEntitled,
+  problemCreativesNotEntitled,
+  problemDashboardsPlanRequired,
+  problemUnprocessableContent,
+  problemWorkflowsNotEntitled,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import { hideOutsideMcpGrant, responseToMcpToolResult } from "./errors";
 
 describe("responseToMcpToolResult", () => {
@@ -98,5 +106,17 @@ describe("hideOutsideMcpGrant", () => {
         ? await responseToMcpToolResult(new Response(JSON.stringify({ data: [] }), { status }), "req_1")
         : await refusal(status, code as string, detail as string);
     expect(hideOutsideMcpGrant(result, "req_1")).toEqual(result);
+  });
+
+  // Every plan or entitlement refusal the v3 operations answer, built by the helper that answers it.
+  test.each([
+    ["Contacts", () => problemContactsNotEntitled("req_1"), "contacts_not_entitled"],
+    ["Workflows", () => problemWorkflowsNotEntitled("req_1"), "workflows_not_entitled"],
+    ["Dashboards", () => problemDashboardsPlanRequired("req_1"), "dashboards_plan_required"],
+    ["Creatives", () => problemCreativesNotEntitled("req_1", { windDown: false }), "creatives_not_entitled"],
+  ])("passes the %s entitlement refusal through with its own code", async (_feature, refuse, code) => {
+    const result = await responseToMcpToolResult(refuse(), "req_1");
+    expect(hideOutsideMcpGrant(result, "req_1")).toEqual(result);
+    expect(result.structuredContent).toMatchObject({ error: { status: 403, code } });
   });
 });

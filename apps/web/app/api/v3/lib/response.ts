@@ -66,6 +66,7 @@ export const V3_PROBLEM_CODES = [
   "bad_request",
   "chart_in_use",
   "conflict",
+  "contacts_not_entitled",
   "creatives_not_entitled",
   "custom_css_plan_required",
   "dashboards_plan_required",
@@ -86,6 +87,7 @@ export const V3_PROBLEM_CODES = [
   "visibility_change_not_allowed",
   "visibility_not_enabled",
   "workflow_not_executable",
+  "workflows_not_entitled",
   "workspace_survey_limit_reached",
 ] as const;
 
@@ -378,6 +380,34 @@ export function problemDashboardsPlanRequired(requestId: string, instance?: stri
     requestId,
     { code: "dashboards_plan_required", instance }
   );
+}
+
+/**
+ * The organization isn't entitled to Contacts (the enterprise Contacts, Attributes and Segments feature).
+ * Checked after the caller's access to the workspace, so it reveals nothing to a caller without it. Its
+ * own code lets a client, and the MCP layer that hides what a grant doesn't reach (ADR-0042), tell it
+ * from a refusal by the caller's role. Status, title and detail are those it had as a plain `forbidden`.
+ */
+export function problemContactsNotEntitled(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "The contacts feature is not enabled for this organization.",
+    requestId,
+    { code: "contacts_not_entitled", instance }
+  );
+}
+
+/**
+ * The organization isn't entitled to Workflows (a Cloud plan or a self-hosted license that includes
+ * them). Checked after the caller's access to the workspace, as {@link problemContactsNotEntitled} is,
+ * and coded for the same reason. Status, title and detail are those it had as a plain `forbidden`.
+ */
+export function problemWorkflowsNotEntitled(requestId: string, instance?: string): Response {
+  return problemResponse(403, "Forbidden", "Workflows are not enabled for this organization", requestId, {
+    code: "workflows_not_entitled",
+    instance,
+  });
 }
 
 /**

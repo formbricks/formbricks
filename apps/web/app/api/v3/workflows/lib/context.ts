@@ -8,7 +8,7 @@ import {
   createWorkflowsService,
 } from "@formbricks/workflows/server";
 import { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { problemForbidden } from "@/app/api/v3/lib/response";
+import { problemWorkflowsNotEntitled } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
@@ -164,7 +164,7 @@ export const buildWorkflowApiContext = (
     }
     const isWorkflowsEnabled = await getIsWorkflowsEnabled(authorized.organizationId);
     if (!isWorkflowsEnabled) {
-      return problemForbidden(requestId, "Workflows are not enabled for this organization", instance);
+      return problemWorkflowsNotEntitled(requestId, instance);
     }
     return authorized;
   },

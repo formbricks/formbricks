@@ -142,6 +142,11 @@ describe("listV3ContactAttributeKeys", () => {
     const response = await listV3ContactAttributeKeys(params);
 
     expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({
+      title: "Forbidden",
+      code: "contacts_not_entitled",
+      detail: "The contacts feature is not enabled for this organization.",
+    });
     expect(getContactAttributeKeys).not.toHaveBeenCalled();
   });
 

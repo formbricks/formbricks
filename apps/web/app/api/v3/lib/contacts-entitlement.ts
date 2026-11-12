@@ -1,5 +1,5 @@
 import "server-only";
-import { problemForbidden } from "@/app/api/v3/lib/response";
+import { problemContactsNotEntitled } from "@/app/api/v3/lib/response";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
@@ -17,5 +17,5 @@ export async function assertV3ContactsEnabled(
     return null;
   }
 
-  return problemForbidden(requestId, "The contacts feature is not enabled for this organization.", instance);
+  return problemContactsNotEntitled(requestId, instance);
 }

@@ -109,6 +109,8 @@ describe("buildWorkflowApiContext", () => {
     const body = await response.json();
     expect(body).toMatchObject({
       status: 403,
+      title: "Forbidden",
+      code: "workflows_not_entitled",
       detail: "Workflows are not enabled for this organization",
     });
   });

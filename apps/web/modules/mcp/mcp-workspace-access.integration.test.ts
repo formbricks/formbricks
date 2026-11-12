@@ -13,6 +13,7 @@ import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { DEFAULT_CREATIVE_STYLING } from "@/modules/ee/creatives/lib/creative";
+import { getIsContactsEnabled, getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { editMcpGrant } from "./connections";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "./grant";
 import { getMcpGrant } from "./grant-store";
@@ -38,6 +39,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   getIsDashboardsEnabled: vi.fn(async () => true),
   getIsCreativesEnabled: vi.fn(async () => true),
   getIsWorkflowsEnabled: vi.fn(async () => true),
+  getIsContactsEnabled: vi.fn(async () => true),
 }));
 
 const BLOCKS = [
@@ -398,6 +400,47 @@ describe("organization & workspace access on MCP calls", () => {
     });
     expect(succeeded(after), toolText(after)).toBe(true);
   });
+
+  // A plan refusal comes after authorization, so it reveals nothing outside the grant: it keeps its own
+  // code rather than turning into not found, which would tell the agent the resource is gone.
+  test.each([
+    {
+      feature: "Workflows",
+      unentitle: () => vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(false),
+      tool: "list_workflows",
+      code: "workflows_not_entitled",
+      permissions: READ_ALL,
+    },
+    {
+      feature: "Contacts",
+      unentitle: () => vi.mocked(getIsContactsEnabled).mockResolvedValue(false),
+      tool: "list_contact_attribute_keys",
+      code: "contacts_not_entitled",
+      permissions: { contactAttributes: "read" },
+    },
+  ] satisfies {
+    feature: string;
+    unentitle: () => unknown;
+    tool: string;
+    code: string;
+    permissions: TMcpGrantPermissions;
+  }[])(
+    "without $feature, the plan refusal passes through a narrowed grant",
+    async ({ unentitle, tool, code, permissions }) => {
+      await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] }, permissions);
+      unentitle();
+      try {
+        const outcome = await callMcpTool({ accessToken: setup.accessToken }, tool, {
+          workspaceId: setup.inside.workspaceId,
+        });
+        expect(outcome.result?.isError, toolText(outcome)).toBe(true);
+        expect(problemOf(outcome)).toMatchObject({ status: 403, code });
+      } finally {
+        vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(true);
+        vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
+      }
+    }
+  );
 
   test("a grant whose workspaces were deleted stays, reaches nothing, and every call is not found", async () => {
     await setAccess(setup, { access: "workspaces", workspaceIds: [setup.outside.workspaceId] });

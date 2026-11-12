@@ -80,7 +80,10 @@ export async function responseToMcpToolResult(
   );
 }
 
-/** The problem codes an id outside a grant could otherwise be told apart by. */
+/**
+ * The problem codes an id outside a grant could otherwise be told apart by. Only these two exact pairs:
+ * every other code, a 403 included, passes through.
+ */
 const HIDDEN_STATUSES: ReadonlyMap<number, string> = new Map([
   [403, "forbidden"],
   [404, "not_found"],
@@ -89,11 +92,16 @@ const HIDDEN_STATUSES: ReadonlyMap<number, string> = new Map([
 /**
  * For a request whose grant limits organization & workspace access (ADR-0042): anything outside the grant
  * does not exist for the client. `can()` denies such a resource, and the v3 operation then answers as it
- * does for a role it refuses (403) or an id it can't find (404), each with its own body. So every such
- * answer becomes one not found, with nothing taken from the operation's body: an id outside the grant,
- * an unknown id and a refusal by the user's own role read alike, and the client can't learn what else
- * exists. Other refusals (a plan the organization lacks, a validation error) pass through: an operation
- * checks those after authorization, so they reveal nothing outside the grant.
+ * does for a role it refuses (`403 forbidden`) or an id it can't find (`404 not_found`), each with its own
+ * body. So every such answer becomes one not found, with nothing taken from the operation's body: an id
+ * outside the grant, an unknown id and a refusal by the user's own role read alike, and the client can't
+ * learn what else exists.
+ *
+ * Every other answer passes through unchanged: a validation error, a rate limit, and a plan or
+ * entitlement refusal. The latter each carry their own code (`contacts_not_entitled`,
+ * `creatives_not_entitled`, `dashboards_plan_required`, `workflows_not_entitled`, …), never plain
+ * `forbidden`, and an operation checks them after authorization, so they reveal nothing outside the
+ * grant. A new entitlement check must answer with its own code too, or it reads here as not found.
  */
 export function hideOutsideMcpGrant(result: CallToolResult, requestId: string): CallToolResult {
   if (!result.isError) return result;
