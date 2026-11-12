@@ -531,6 +531,7 @@ describe("POST /api/mcp", () => {
       "list_surveys",
       "get_survey",
       "create_survey",
+      "generate_survey",
       "validate_survey",
       "patch_survey",
       "edit_survey_blocks",
@@ -568,8 +569,12 @@ describe("POST /api/mcp", () => {
       "validate_response",
       "create_response",
       "update_response",
+      "set_responses_outcome",
       "delete_response",
       "batch_delete_responses",
+      "list_tags",
+      "update_tag",
+      "merge_tags",
       "list_creatives",
       "get_creative",
       "get_creative_stats",
@@ -600,6 +605,11 @@ describe("POST /api/mcp", () => {
       "update_dashboard_layout",
       "set_dashboard_filters",
       "duplicate_chart",
+      "list_contacts",
+      "list_contact_attribute_keys",
+      "list_contact_attribute_values",
+      "list_segments",
+      "list_action_classes",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

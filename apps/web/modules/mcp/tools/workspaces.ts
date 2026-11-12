@@ -40,7 +40,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     {
       title: "List workspaces",
       description:
-        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow, feedback-record, response, chart and dashboard tools.",
+        "List the Formbricks workspaces the authenticated user can access. Use this to discover the workspaceId required by the survey, workflow, feedback-record, response, chart, dashboard and audience tools.",
       inputSchema: ZMcpListWorkspacesInput,
       annotations: {
         readOnlyHint: true,
@@ -59,6 +59,11 @@ export function registerWorkspaceTools(server: McpServer): void {
         { permission: "feedbackRecords", level: "read" },
         { permission: "responses", level: "read" },
         { permission: "dashboards", level: "read" },
+        // Audience: all four, because each is a usable grant on its own (ENG-7151).
+        { permission: "contacts", level: "read" },
+        { permission: "contactAttributes", level: "read" },
+        { permission: "segments", level: "read" },
+        { permission: "actionClasses", level: "read" },
       ],
     },
     async (_input: TMcpListWorkspacesInput, ctx) => {

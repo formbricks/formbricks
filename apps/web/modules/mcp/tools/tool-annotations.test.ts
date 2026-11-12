@@ -39,6 +39,7 @@ vi.mock("./guard-permissions", () => ({
 // annotations under test do not depend on them.
 vi.mock("@/app/api/v3/responses/lib/operations", () => ({}));
 vi.mock("@/app/api/v3/responses/lib/validate-operations", () => ({}));
+vi.mock("@/app/api/v3/tags/lib/operations", () => ({}));
 
 /** A tool named with one of these verbs overwrites or removes something. */
 const DESTRUCTIVE_VERBS = [
@@ -57,10 +58,11 @@ const READ_VERBS = ["list_", "get_", "count_", "search_", "find_", "preview_"];
 /** Destructive-sounding tools whose previous value stays recoverable, so they are not destructive. */
 const RECOVERABLE: Record<string, string> = {
   patch_workspace_custom_css: "the replaced CSS stays recoverable as `previous` until the next change",
+  set_responses_outcome: "the outcome is Low quality or none, and the same call with the other restores it",
 };
 
 const loadRegistrations = async (): Promise<TRegistration[]> => {
-  const [surveys, workflows, workspaces, feedbackRecords, responses, creatives, dashboards] =
+  const [surveys, workflows, workspaces, feedbackRecords, responses, creatives, dashboards, tags] =
     await Promise.all([
       import("./surveys"),
       import("./workflows"),
@@ -69,6 +71,7 @@ const loadRegistrations = async (): Promise<TRegistration[]> => {
       import("./responses"),
       import("./creatives"),
       import("./dashboards"),
+      import("./tags"),
     ]);
   const server = { registerTool: vi.fn() } as unknown as Parameters<typeof surveys.registerSurveyTools>[0];
   surveys.registerSurveyTools(server);
@@ -78,6 +81,8 @@ const loadRegistrations = async (): Promise<TRegistration[]> => {
   responses.registerResponseTools(server);
   creatives.registerCreativeTools(server);
   dashboards.registerDashboardTools(server);
+  tags.registerTagTools(server);
+  (await import("./audience")).registerAudienceTools(server);
   return registrations;
 };
 

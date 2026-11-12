@@ -27,6 +27,7 @@ vi.mock("./guard-permissions", () => ({
 // declarations under test do not depend on them.
 vi.mock("@/app/api/v3/responses/lib/operations", () => ({}));
 vi.mock("@/app/api/v3/responses/lib/validate-operations", () => ({}));
+vi.mock("@/app/api/v3/tags/lib/operations", () => ({}));
 
 type TScopeGate =
   | string[]
@@ -45,6 +46,7 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_surveys: ["surveys:read"],
   get_survey: ["surveys:read"],
   create_survey: ["surveys:write"],
+  generate_survey: ["surveys:write"],
   validate_survey: ["surveys:read"],
   patch_survey: ["surveys:write"],
   edit_survey_blocks: ["surveys:write"],
@@ -64,7 +66,14 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   archive_workflow: ["workflows:write"],
   unarchive_workflow: ["workflows:write"],
   list_workspaces: {
-    anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read", "dashboards:read"],
+    anyOf: [
+      "surveys:read",
+      "workflows:read",
+      "feedbackRecords:read",
+      "responses:read",
+      "dashboards:read",
+      "audience:read",
+    ],
   },
   get_workspace_custom_css: ["surveys:read"],
   patch_workspace_custom_css: ["surveys:write"],
@@ -86,6 +95,7 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   update_response: ["responses:write"],
   delete_response: ["responses:write"],
   batch_delete_responses: ["responses:write"],
+  set_responses_outcome: ["responses:write"],
   list_creatives: ["surveys:read"],
   get_creative: ["surveys:read"],
   get_creative_stats: ["surveys:read"],
@@ -137,6 +147,15 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   update_dashboard_layout: ["dashboards:write"],
   set_dashboard_filters: ["dashboards:write"],
   duplicate_chart: ["dashboards:write"],
+  list_tags: ["responses:read"],
+  update_tag: ["responses:write"],
+  merge_tags: ["responses:write"],
+  // ENG-7151: new tools, on the new read-only family.
+  list_contacts: ["audience:read"],
+  list_contact_attribute_keys: ["audience:read"],
+  list_contact_attribute_values: ["audience:read"],
+  list_segments: ["audience:read"],
+  list_action_classes: ["audience:read"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -162,7 +181,7 @@ const toScopeGate = (permissions: TDeclared): TScopeGate => {
 };
 
 const loadRegistrations = async () => {
-  const [surveys, workflows, workspaces, feedbackRecords, responses, creatives, dashboards] =
+  const [surveys, workflows, workspaces, feedbackRecords, responses, creatives, dashboards, tags] =
     await Promise.all([
       import("./surveys"),
       import("./workflows"),
@@ -171,6 +190,7 @@ const loadRegistrations = async () => {
       import("./responses"),
       import("./creatives"),
       import("./dashboards"),
+      import("./tags"),
     ]);
   const server = { registerTool: vi.fn() } as unknown as Parameters<typeof surveys.registerSurveyTools>[0];
   surveys.registerSurveyTools(server);
@@ -180,6 +200,8 @@ const loadRegistrations = async () => {
   responses.registerResponseTools(server);
   creatives.registerCreativeTools(server);
   dashboards.registerDashboardTools(server);
+  tags.registerTagTools(server);
+  (await import("./audience")).registerAudienceTools(server);
   return registrations;
 };
 

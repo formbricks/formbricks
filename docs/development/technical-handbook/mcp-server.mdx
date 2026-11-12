@@ -111,15 +111,16 @@ Supported scopes:
 | Scope | Use |
 | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
+| `surveys:write` | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
-| `responses:read` | `list_responses`, `count_responses`, `get_response` |
-| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` |
+| `responses:read` | `list_responses`, `count_responses`, `get_response`, `list_tags` |
+| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`, `merge_tags` |
 | `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
+| `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` (read-only family: there is no `audience:write`) |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
 | `email` | User email claim |
@@ -180,8 +181,8 @@ own memberships and key grants, so admitting any read scope exposes nothing extr
 The authorization server supports all of the above, but the MCP protected-resource metadata
 (`/.well-known/oauth-protected-resource/api/mcp`) advertises only the resource scopes an MCP client
 needs — `surveys:read`, `surveys:write`, `workflows:read`, `workflows:write`, `feedbackRecords:read`,
-`feedbackRecords:write`, `responses:read`, `responses:write`, `dashboards:read`, `dashboards:write`, and
-`offline_access`. Clients derive their Dynamic Client Registration scopes
+`feedbackRecords:write`, `responses:read`, `responses:write`, `dashboards:read`, `dashboards:write`,
+`audience:read`, and `offline_access`. Clients derive their Dynamic Client Registration scopes
 from that list, so `offline_access` must be advertised there for clients to be issued refresh tokens
 (`openid`/`profile`/`email` are OIDC scopes the MCP resource does not require).
 
@@ -236,9 +237,12 @@ API key permissions are enforced through the same workspace access checks as the
 | `update_response` | `write` or `manage` |
 | `delete_response` | `manage` |
 | `batch_delete_responses` | `manage` |
+| `set_responses_outcome` | `write` or `manage` |
+| `list_tags`, `update_tag`, `merge_tags` | not available: `/api/v3/tags` is session-only, so the tag tools refuse API keys and answer only OAuth connections |
 | `list_surveys` | `read` |
 | `get_survey` | `read` |
 | `create_survey` | `write` or `manage` |
+| `generate_survey` | `write` or `manage` — saves nothing, but spends the organization's AI budget |
 | `validate_survey` | `read` — a dry run; it validates a create or patch payload without writing |
 | `patch_survey` | `write` or `manage` |
 | `edit_survey_blocks` | `write` or `manage` |
@@ -284,9 +288,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `list_dashboard_filter_values` | `read`, and read access to each feedback dataset its charts read |
 | `create_chart`, `duplicate_chart` | `write` or `manage`, and write access to the feedback dataset |
 | `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
+| `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` | `read`; all but `list_action_classes` also need the Contacts entitlement |
 
 Synthesized MCP scopes for an API key: every `:read` scope always (`surveys`, `workflows`,
-`feedbackRecords`, `responses`, `dashboards`); the matching `:write` scopes when the key has `write` or
+`feedbackRecords`, `responses`, `dashboards`, `audience`); the matching `:write` scopes when the key has `write` or
 `manage` on any workspace — so every existing write key can manage charts and dashboards. The scope
 gate and the per-workspace access check above are independent — a `:write` tool requires **both** the
 `:write` scope on the token and write/manage on the target workspace.
@@ -776,6 +781,10 @@ Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resourc
    does. Without it, every client registered before the scope existed requests it and gets `invalid_scope`
    at its next sign-in (see [Authentication](#authentication)).
 
+A family whose tools only read goes in `MCP_READ_ONLY_SCOPE_FAMILIES` instead of `MCP_SCOPE_FAMILIES`: it gets
+`<family>:read` and no write scope, its permissions offer only No access and Read, and both migrations grant only
+the read scope (`audience`, ENG-7151: 20261112130000 and 20261112130001).
+
 ### What makes a tool good
 
 - **One tool per operation.** An MCP-only convenience tool is a second surface to document, test and keep in
@@ -1069,6 +1078,25 @@ Custom CSS validation input — processes CSS alone, for a preview, without savi
 `workspaceId`. A valid result carries the compiled `customCss` and `warnings` (removed constructs, each with
 a stable `code`, `appearance`, `line`, `column` and `reason`); an invalid one carries `errors` and no compiled
 output. A create or patch payload that includes `customCss` is processed the same way, additively.
+
+### generate_survey
+
+Drafts a survey from a plain-language `prompt` with the organization's AI and **saves nothing**: it returns
+the draft as a v3 create body (`payload`), the draft's `language`, and `validation`, which says whether
+`create_survey` would accept the payload as is. The agent reviews the draft and saves it with
+`create_survey`. The input is the `POST /api/v3/surveys/generate` body: `workspaceId`, `prompt` (4 to 1200
+characters), `type` (`link` or `app`), and the optional `language` (preferred) and `surveyLanguage`
+(required) codes.
+
+It declares Surveys: Write, as the REST route needs `readWrite`, because every call runs a model on the
+organization's budget. Both paths go through `generateV3Survey`
+(`apps/web/app/api/v3/surveys/generate/operations.ts`), which charges the same 10-per-minute budget
+(`v3SurveyGenerate`, per user or API key) and checks the organization's AI toggle, the license entitlement
+and the provider configuration. An organization without AI gets the AI error code, never a draft.
+
+```json
+{ "prompt": "Ask new users what slowed them down during onboarding", "workspaceId": "clxx1234567890123456789012" }
+```
 
 ### patch_survey
 
@@ -1478,7 +1506,7 @@ each take only a workflow id:
 
 ### Response tools
 
-Eight tools, one per documented v3 response operation. The set mirrors the API deliberately: what an
+Nine tools, one per documented v3 response operation. The set mirrors the API deliberately: what an
 agent can do through MCP is what an API key can do over HTTP, read off one list rather than two.
 
 Every tool description states the boundary against the feedback-record tools, because
@@ -1546,6 +1574,38 @@ carry over to a third.
 Both are `idempotentHint: true`: a response that is already gone answers the same `403` as one that was
 never this caller's, so repeating the call converges rather than compounding.
 
+#### set_responses_outcome
+
+Marks up to 100 responses Low quality (`outcome: "lowQuality"`), or restores them (`outcome: null`), in one
+transaction, over `POST /api/v3/responses/batch-outcome`. `outcome` is required, so leaving it out is never
+read as a restore. Ids outside `workspaceId` are ignored, and `updated` counts the responses in scope,
+including ones that already carried the outcome, so a retry reports what the first call did. Each response
+that changed fires the response pipeline. It asks for no confirmation: the change is undone by the same
+call with the other outcome.
+
+The operation charges the state-mutation budget (`v3StateMutation`, 120 per minute per user or API key),
+so the REST route and the tool spend from one bucket.
+
+```json
+{ "ids": ["clrs1234567890123456789012"], "outcome": "lowQuality", "workspaceId": "clxx1234567890123456789012" }
+```
+
+### Tag tools
+
+`list_tags` (Tags: Read), `update_tag` and `merge_tags` (Tags: Write), over `GET /api/v3/tags`,
+`PATCH /api/v3/tags/{tagId}` and `POST /api/v3/tags/{tagId}/merge`. Tags is its own permission in the
+Responses category, capped by the `responses` scopes.
+
+- `list_tags` returns each tag with `count`, the responses carrying it that the caller may read.
+- `update_tag` renames a tag; a name already taken in the workspace is a `422`.
+- `merge_tags` moves every response tagged `tagId` onto `newTagId`, then removes `tagId`. It is the one
+  tool that removes something for good outside the confirmed deletes, allowed because no tagging is lost:
+  it fixes a duplicate or a misspelling. There is no `delete_tag`.
+
+The edit and merge tools take no workspace: the operation resolves it from the tag, and refuses a merge
+across workspaces. The tag tools answer **OAuth connections only**. `/api/v3/tags` is session-only, so an
+API key has never had tag access, and the tools refuse one with a `403` rather than widen what a key can do.
+
 ### Chart and dashboard tools
 
 Twenty-one tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
@@ -1592,6 +1652,30 @@ writes the chart query itself.
   stale `expectedUpdatedAt` `409`. Locked filters are ANDed; there are no OR groups.
 
 Every write runs through `runMcpMutation`, so it leaves the same audit event as the REST call.
+
+### Audience tools
+
+Five read-only, idempotent tools over the v3 Audience list operations (`modules/mcp/tools/audience.ts`), one per
+operation, with no write tools. Each declares its Audience permission at Read — Contacts, Contact attributes
+(keys and values), Segments, Action classes — capped by `audience:read`. The operations own the workspace check
+and the Contacts entitlement (all but action classes), exactly as over REST.
+
+| Tool | REST operation | Permission |
+| --- | --- | --- |
+| `list_contacts` | `GET /api/v3/contacts` | Contacts: Read |
+| `list_contact_attribute_keys` | `GET /api/v3/contact-attribute-keys` | Contact attributes: Read |
+| `list_contact_attribute_values` | `GET /api/v3/contacts/attribute-values` | Contact attributes: Read |
+| `list_segments` | `GET /api/v3/segments` | Segments: Read |
+| `list_action_classes` | `GET /api/v3/action-classes` | Action classes: Read |
+
+- **Smaller pages.** `list_contacts` and `list_segments` default to 20 and cap at 50 (the API allows 250): a
+  contact carries every attribute it has, a segment its filter tree. The key and value lists cap at 100.
+- **Filters in the query's own terms.** `list_contacts` takes `filter.attributes: [{ key, operator, values }]`,
+  sent as `filter[attribute.<key>][<operator>]`; the operation types each against the key's `dataType` and answers
+  `invalid_params` for a wrong operator or value. An operator that compares needs `values`; only `isSet` and
+  `isNotSet` take none, so a filter is never dropped silently.
+- **Untrusted text.** Contact attribute values are written by end users and SDK calls. The descriptions tell the
+  agent to treat them as data; nothing on our side acts on them.
 
 ### list_feedback_datasets
 
@@ -2109,6 +2193,7 @@ survey operations used by the REST routes:
 | `get_survey`                 | `GET /api/v3/surveys/{surveyId}`                    |
 | `create_survey`              | `POST /api/v3/surveys`                              |
 | `validate_survey`            | `POST /api/v3/surveys/validate`                     |
+| `generate_survey`            | `POST /api/v3/surveys/generate`                     |
 | `patch_survey`               | `PATCH /api/v3/surveys/{surveyId}`                  |
 | `edit_survey_blocks`         | `PATCH /api/v3/surveys/{surveyId}/blocks`           |
 | `set_survey_block_order`     | `PUT /api/v3/surveys/{surveyId}/blocks/order`       |
@@ -2234,6 +2319,9 @@ query, like `create_feedback_record`.
 - `apps/web/modules/mcp/tools/workflows.ts`
 - `apps/web/modules/mcp/tools/workflow-schemas.ts`
 - `apps/web/modules/mcp/tools/creatives.ts`
+- `apps/web/modules/mcp/tools/tags.ts`, `tag-schemas.ts` and `tag-output-schemas.ts`
+- `apps/web/app/api/v3/tags/lib/operations.ts`
+- `apps/web/app/api/v3/surveys/generate/operations.ts` (survey generation, shared by the REST route and `generate_survey`)
 - `apps/web/modules/mcp/tools/creative-schemas.ts` and `creative-output-schemas.ts`
 - `apps/web/app/api/v3/creatives/lib/operations.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`

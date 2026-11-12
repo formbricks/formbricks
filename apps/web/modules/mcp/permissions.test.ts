@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 import {
   MCP_PERMISSIONS,
   MCP_PERMISSION_CATEGORIES,
@@ -138,6 +139,25 @@ describe("getMcpPermissionScope", () => {
   test("maps a permission at Write to its scope family's write scope", () => {
     expect(getMcpPermissionScope({ permission: "charts", level: "write" })).toBe("dashboards:write");
     expect(getMcpPermissionScope({ permission: "tags", level: "write" })).toBe("responses:write");
+  });
+
+  test("maps an Audience permission to audience:read (ENG-7151)", () => {
+    expect(getMcpPermissionScope({ permission: "contacts", level: "read" })).toBe("audience:read");
+    expect(getMcpPermissionScope({ permission: "actionClasses", level: "read" })).toBe("audience:read");
+  });
+
+  // A level whose scope no client can be granted would make that level unreachable for every OAuth token.
+  test("every level a permission offers maps to a scope an OAuth client can be granted", () => {
+    const grantable = new Set<string>(MCP_OAUTH_SCOPES);
+    const unreachable = Object.entries(MCP_PERMISSIONS).flatMap(([permission, { levels }]) =>
+      levels
+        .filter((level) => level !== "none")
+        .map((level) =>
+          getMcpPermissionScope({ permission, level } as Parameters<typeof getMcpPermissionScope>[0])
+        )
+        .filter((scope) => !grantable.has(scope))
+    );
+    expect(unreachable).toEqual([]);
   });
 });
 

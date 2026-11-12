@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { problemForbidden } from "@/app/api/v3/lib/response";
+import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
+import { problemForbidden, problemTooManyRequests } from "@/app/api/v3/lib/response";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   batchDeleteV3Responses,
   batchSetV3ResponsesOutcome,
@@ -55,6 +57,7 @@ const {
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
+vi.mock("@/app/api/v3/lib/operation-rate-limit", () => ({ applyV3OperationRateLimit: vi.fn() }));
 vi.mock("./service", () => ({
   getResponseWorkspaceId: mockGetWorkspaceId,
   deleteScopedResponse: mockDelete,
@@ -384,6 +387,33 @@ describe("batchSetV3ResponsesOutcome", () => {
     mockListRefs.mockResolvedValue(refs);
     mockSetOutcome.mockResolvedValue({ matched: 3, changes, rows });
     mockDispatch.mockResolvedValue(undefined);
+  });
+
+  /**
+   * The state-mutation budget, not the shared v3 default: one call fans out to a hundred pipeline
+   * events. Charged by the operation, so the `set_responses_outcome` MCP tool spends from it as well.
+   */
+  test("charges the v3 state-mutation budget", async () => {
+    await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(applyV3OperationRateLimit).toHaveBeenCalledWith({
+      config: rateLimitConfigs.api.v3StateMutation,
+      authentication: batchParams.authentication,
+      requestId: batchParams.requestId,
+      instance: batchParams.instance,
+    });
+  });
+
+  test("answers 429 and writes nothing when the budget is spent", async () => {
+    vi.mocked(applyV3OperationRateLimit).mockResolvedValueOnce(
+      problemTooManyRequests("req_1", "Rate limit exceeded", 30, batchParams.instance)
+    );
+
+    const response = await batchSetV3ResponsesOutcome(batchParams);
+
+    expect(response.status).toBe(429);
+    expect(mockRequireAccess).not.toHaveBeenCalled();
+    expect(mockSetOutcome).not.toHaveBeenCalled();
   });
 
   /** `readWrite`, like the single PATCH — not the `manage` a batch delete needs. */
