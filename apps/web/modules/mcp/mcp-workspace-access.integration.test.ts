@@ -36,6 +36,24 @@ import { getMcpGrant } from "./grant-store";
  * workspace, a deleted organization) still converge through the outbox.
  */
 
+/** Set to make every SpiceDB relationship write fail, as during an outage; reads keep working. */
+const spicedbWrites = vi.hoisted(() => ({ failing: false }));
+vi.mock("@/lib/authzed/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/authzed/client")>();
+  return {
+    ...actual,
+    getAuthzedClient: () => {
+      const client = actual.getAuthzedClient();
+      return {
+        ...client,
+        writeRelationships: async (...args: Parameters<typeof client.writeRelationships>) => {
+          if (spicedbWrites.failing) throw new Error("SpiceDB is down");
+          return client.writeRelationships(...args);
+        },
+      };
+    },
+  };
+});
 vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>()),
   queueAuditEventBackground: vi.fn(async () => undefined),
@@ -390,6 +408,83 @@ describe("organization & workspace access on MCP calls", () => {
       surveyId: setup.inside.surveyId,
     });
     expect(succeeded(kept), toolText(kept)).toBe(true);
+  });
+
+  // The safe direction always wins (spec story 32): a narrowing removes the relationships before it
+  // commits, or not at all; a widening commits and adds them after, best-effort.
+  test("an edit narrowing the access is refused, and changes nothing, when SpiceDB can't drop the reach", async () => {
+    await setAccess(setup, {
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+    });
+    spicedbWrites.failing = true;
+    try {
+      await expect(
+        editMcpGrant({
+          userId: setup.userId,
+          clientId: setup.clientId,
+          permissions: READ_ALL,
+          access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+          isDashboardViewer: false,
+        })
+      ).rejects.toThrow();
+    } finally {
+      spicedbWrites.failing = false;
+    }
+
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      access: "workspaces",
+      workspaceIds: sorted(setup.inside.workspaceId, setup.outside.workspaceId),
+    });
+    const still = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+      surveyId: setup.outside.surveyId,
+    });
+    expect(succeeded(still), toolText(still)).toBe(true);
+  });
+
+  test("an edit widening the access is saved when SpiceDB is down, and the outbox adds the reach", async () => {
+    await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
+    spicedbWrites.failing = true;
+    try {
+      await setAccess(setup, {
+        access: "workspaces",
+        workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+      });
+    } finally {
+      spicedbWrites.failing = false;
+    }
+    // Saved, but not reached until the relationship is written.
+    expectNotFound(
+      await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+        surveyId: setup.outside.surveyId,
+      })
+    );
+
+    await synchronizeAuthzedIntegrationFixture();
+    const after = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+      surveyId: setup.outside.surveyId,
+    });
+    expect(succeeded(after), toolText(after)).toBe(true);
+  });
+
+  test("Revoke is refused, and the grant kept, when SpiceDB can't drop its reach", async () => {
+    await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
+    const consent = await prisma.oauthConsent.findFirstOrThrow({
+      where: { userId: setup.userId, clientId: setup.clientId },
+    });
+    spicedbWrites.failing = true;
+    try {
+      await expect(
+        auth.api.deleteOAuthConsent({
+          body: { id: consent.id },
+          headers: new Headers({ cookie: setup.cookie }),
+        })
+      ).rejects.toThrow();
+    } finally {
+      spicedbWrites.failing = false;
+    }
+
+    expect(await getMcpGrant(setup.userId, setup.clientId)).not.toBeNull();
   });
 
   test("an edit widening the access applies on the next call with the same token", async () => {

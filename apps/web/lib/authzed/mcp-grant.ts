@@ -4,6 +4,7 @@ import type { McpGrantAccess } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isRelationMissingFromSchema } from "@/lib/authorization/schema-drift";
 import { type TAuthzedRelationship, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
+import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
@@ -30,14 +31,15 @@ import { readAllRelationships } from "./relationship-reads";
 
 export type TMcpGrantProjectionTargets = Readonly<{ grantIds?: ReadonlyArray<string> }>;
 
-type TGrantSnapshot = ReadonlyArray<
-  Readonly<{
-    access: McpGrantAccess;
-    id: string;
-    organizationIds: ReadonlyArray<string>;
-    workspaceIds: ReadonlyArray<string>;
-  }>
->;
+/** What a grant's relationships follow from: its id, its access and the selection that access reads. */
+export type TMcpGrantReach = Readonly<{
+  access: McpGrantAccess;
+  id: string;
+  organizationIds: ReadonlyArray<string>;
+  workspaceIds: ReadonlyArray<string>;
+}>;
+
+type TGrantSnapshot = ReadonlyArray<TMcpGrantReach>;
 
 const readSnapshot = async (grantIds: ReadonlyArray<string>): Promise<TGrantSnapshot> => {
   const grants = await prisma.mcpGrant.findMany({
@@ -163,3 +165,40 @@ export const reconcileMcpGrantRelationships = async (
 
     throw new AuthzedProjectionUnstableError();
   });
+
+/**
+ * Deletes, now, the relationships `before` implies and `after` doesn't (`after` `null` for a grant being
+ * deleted), for a caller about to commit that change (ENG-7153). Call it inside the transaction, before
+ * it commits: a narrowing or a revoke then applies in SpiceDB first or not at all, and a failure throws,
+ * which rolls the change back and fails the request rather than leaving the client its old reach until
+ * the outbox delivers. Additions are never made here: they go after the commit, best-effort
+ * (`projectMcpGrants`), with the outbox as the repair, so a widening never shows before it is saved.
+ *
+ * Nothing to do for a grant whose access is All access before (it holds no relationships), or with AuthZed
+ * off. On the previous release's schema, which has no `mcp_grant` relation, nothing was ever projected.
+ * Should the transaction then fail to commit, the grant reaches less than its rows say until it is next
+ * reconciled: the safe direction.
+ */
+export const deleteMcpGrantRelationshipsBeforeCommit = async (
+  changes: ReadonlyArray<Readonly<{ before: TMcpGrantReach; after: TMcpGrantReach | null }>>
+): Promise<void> => {
+  if (!isAuthzedEnabled()) return;
+  const groups: TAuthzedRelationshipUpdate[][] = [];
+  for (const { before, after } of changes) {
+    const kept = new Set((after ? expectedMcpGrantRelationships(after) : []).map(relationshipKey));
+    for (const relationship of expectedMcpGrantRelationships(before)) {
+      if (!kept.has(relationshipKey(relationship))) groups.push([{ operation: "delete", relationship }]);
+    }
+  }
+  if (groups.length === 0) return;
+
+  const client = getAuthzedClient();
+  try {
+    for (const batch of packRelationshipUpdateGroups(groups)) {
+      await client.writeRelationships(batch);
+    }
+  } catch (error) {
+    if (isRelationMissingFromSchema(error, MCP_GRANT_RELATION)) return;
+    throw error;
+  }
+};

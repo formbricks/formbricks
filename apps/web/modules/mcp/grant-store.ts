@@ -2,7 +2,11 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { reconcileMcpGrantRelationships } from "@/lib/authzed/mcp-grant";
+import {
+  type TMcpGrantReach,
+  deleteMcpGrantRelationshipsBeforeCommit,
+  reconcileMcpGrantRelationships,
+} from "@/lib/authzed/mcp-grant";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -22,9 +26,11 @@ import { getMcpGrantSelectedIds } from "./grant-access";
  * The organization & workspace selections (`McpGrantOrganization`, `McpGrantWorkspace`) are written in the
  * same transaction. Their triggers queue the grant for the SpiceDB projection (`lib/authzed/mcp-grant.ts`,
  * ADR-0042), so the relationships follow the rows through the outbox, and a cascade from a deleted
- * workspace, organization or grant drops them too. Saving, editing and revoking also call
- * {@link projectMcpGrants} once their transaction commits, so a change applies on the client's next call
- * rather than when the outbox delivers.
+ * workspace, organization or grant drops them too. The synchronous write is ordered so the safe direction
+ * wins: what a save or a delete takes away leaves SpiceDB inside the transaction, before it commits, and
+ * a failure fails the change; what a save adds is written once it has committed ({@link projectMcpGrants}),
+ * best-effort, with the outbox event as the repair. Either way the change applies on the client's next
+ * call rather than when the outbox delivers.
  */
 
 /**
@@ -91,8 +97,15 @@ const withAccess = (
   ...access,
 });
 
-const toStoredGrant = (row: TGrantRow): TStoredMcpGrant =>
-  withAccess({ ...row, permissions: parseMcpGrantPermissions(row.permissions) }, readMcpGrantAccess(row));
+const toStoredGrant = (row: TGrantRow, access: TMcpGrantAccessSelection = readMcpGrantAccess(row)) =>
+  withAccess({ ...row, permissions: parseMcpGrantPermissions(row.permissions) }, access);
+
+/** What a stored grant's SpiceDB relationships follow from. */
+const toReach = (grant: TStoredMcpGrant): TMcpGrantReach => ({
+  id: grant.id,
+  access: grant.access,
+  ...getMcpGrantSelectedIds(grant),
+});
 
 /** The connection's grant, or `null` when it has none. */
 export const getMcpGrant = async (userId: string, clientId: string): Promise<TStoredMcpGrant | null> => {
@@ -216,7 +229,11 @@ export const saveMcpGrant = async (
 
   const selected = await ownSelection(tx, userId, access);
   await replaceSelection(tx, row.id, selected);
-  return { before, after: withAccess(toStoredGrant(row), selected) };
+  const after = toStoredGrant(row, selected);
+  // What the grant no longer reaches leaves SpiceDB before this commits, or the save fails (ENG-7153).
+  if (before)
+    await deleteMcpGrantRelationshipsBeforeCommit([{ before: toReach(before), after: toReach(after) }]);
+  return { before, after };
 };
 
 /**
@@ -231,7 +248,12 @@ export const deleteMcpGrants = async (
   const rows = await tx.mcpGrant.findMany({ where, select: GRANT_SELECT, orderBy: { id: "asc" } });
   if (rows.length === 0) return [];
   await tx.mcpGrant.deleteMany({ where: { id: { in: rows.map((row) => row.id) } } });
-  return rows.map(toStoredGrant);
+  const grants = rows.map((row) => toStoredGrant(row));
+  // A revoked grant's reach leaves SpiceDB before the delete commits, or the revoke fails (ENG-7153).
+  await deleteMcpGrantRelationshipsBeforeCommit(
+    grants.map((grant) => ({ before: toReach(grant), after: null }))
+  );
+  return grants;
 };
 
 /**
