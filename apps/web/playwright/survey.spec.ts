@@ -1161,7 +1161,9 @@ test.describe("Publishing a survey with problems", () => {
       // The live preview re-renders after the edit, and may move focus to its own first control when it is
       // done. Waiting for it to show the empty headline settles that before anything below is clicked, and
       // the editor reads the survey as it was when the edit settled.
-      await expect(page.getByText("What would you like to know?")).toBeHidden();
+      await expect(
+        page.getByTestId("fb__surveys__auto-close-wrapper-test").getByText("What would you like to know?")
+      ).toBeHidden();
 
       await page.getByRole("button", { name: "Activate", exact: true }).click();
       await expect(summary.getByRole("heading", { name: helper.EDITOR_PROBLEMS_NAME })).toBeFocused();

@@ -21,7 +21,7 @@ const findFieldControl = (node: HTMLElement): HTMLElement | null =>
 const PREVIEW_REFOCUS_WINDOW_MS = 1500;
 const PREVIEW_CONTAINER_ID = "formbricks-survey-container";
 
-const keepFocusOutOfPreview = (control: HTMLElement) => {
+export const keepFocusOutOfPreview = (control: HTMLElement) => {
   const preview = document.getElementById(PREVIEW_CONTAINER_ID);
   if (!preview) return;
 

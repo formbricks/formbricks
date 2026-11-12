@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { keepFocusOutOfPreview } from "@/modules/survey/editor/lib/focus-issue";
 import {
   ErrorSummary,
   type TErrorSummaryGroup,
@@ -45,7 +46,11 @@ export const EditorIssueBar = ({
       reviewAllLabel={t("workspace.surveys.edit.issue_summary_review_all")}
       onReviewAll={onReviewAll}
       shouldFocus={shouldFocus}
-      onFocused={onFocused}
+      // The preview can take focus when the editor scrolls to the first problem: hand it back to the heading.
+      onFocused={(heading) => {
+        onFocused();
+        keepFocusOutOfPreview(heading);
+      }}
     />
   );
 };

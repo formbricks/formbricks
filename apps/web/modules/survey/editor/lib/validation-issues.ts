@@ -134,7 +134,7 @@ const getMissingTextMessage = (field: string, isCard: boolean, t: TFunction): st
 
 // The schema words an empty translated field as "... is missing" (see validateElementLabels).
 const isMissingTextIssue = (issue: TDescribableIssue): boolean =>
-  (issue.code === "custom" && / is missing$/.test(issue.message)) ||
+  (issue.code === "custom" && issue.message.endsWith(" is missing")) ||
   issue.code === "invalid_type" ||
   (issue.code === "too_small" && issue.origin === "string");
 

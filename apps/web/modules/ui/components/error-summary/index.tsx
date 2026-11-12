@@ -31,7 +31,7 @@ interface ErrorSummaryProps {
   /** Set when a failed attempt has just shown the bar: focus moves to the heading, so a screen reader reads it. */
   readonly shouldFocus?: boolean;
   /** Called once the heading has the focus, so a later remount of the bar does not take it again. */
-  readonly onFocused?: () => void;
+  readonly onFocused?: (heading: HTMLElement) => void;
   readonly className?: string;
 }
 
@@ -57,8 +57,10 @@ export const ErrorSummary = ({
 
   useEffect(() => {
     if (!shouldFocus) return;
-    headingRef.current?.focus();
-    onFocused?.();
+    const heading = headingRef.current;
+    if (!heading) return;
+    heading.focus();
+    onFocused?.(heading);
   }, [shouldFocus, onFocused]);
 
   return (
