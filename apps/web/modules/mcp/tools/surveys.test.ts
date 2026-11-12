@@ -14,6 +14,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
+import { generateV3Survey } from "@/app/api/v3/surveys/generate/operations";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -52,6 +53,8 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
     ),
   validateV3SurveyFromRawInput: vi.fn(),
 }));
+
+vi.mock("@/app/api/v3/surveys/generate/operations", () => ({ generateV3Survey: vi.fn() }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
@@ -179,7 +182,7 @@ describe("registerSurveyTools", () => {
   test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(8);
+    expect(server.registerTool).toHaveBeenCalledTimes(9);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
       annotations: {
@@ -269,6 +272,53 @@ describe("registerSurveyTools", () => {
         idempotentHint: false,
       },
     });
+  });
+
+  /**
+   * Generation persists nothing, so it is read-only to a client, but it is never idempotent: each call
+   * is a fresh model run that spends from the caller's AI budget.
+   */
+  test("generate_survey is a non-idempotent read that takes the v3 generate body", () => {
+    const { tools } = createToolServer();
+
+    expect(tools.get("generate_survey")?.config).toMatchObject({
+      title: "Generate survey draft",
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    });
+    expect(
+      Object.keys(
+        (tools.get("generate_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape
+      ).sort()
+    ).toEqual(["language", "prompt", "surveyLanguage", "type", "workspaceId"]);
+    expect(tools.get("generate_survey")?.config.outputSchema).toBeDefined();
+  });
+
+  test("generate_survey calls the shared generate operation and returns the draft", async () => {
+    const { tools } = createToolServer();
+    const draft = {
+      language: "en-US",
+      payload: { workspaceId: "clxx1234567890123456789012", name: "Onboarding" },
+      validation: { valid: true, invalid_params: [], languages: [] },
+    };
+    vi.mocked(generateV3Survey).mockResolvedValue(successResponse(draft, { requestId: "req_tool" }));
+    const input = {
+      workspaceId: "clxx1234567890123456789012",
+      prompt: "Ask new users what slowed them down during onboarding",
+      type: "link",
+    };
+
+    const result = await tools.get("generate_survey")!.handler(input, {
+      http: { authInfo: writeOnlyOAuthAuthInfo },
+    });
+
+    expect(generateV3Survey).toHaveBeenCalledWith({
+      body: input,
+      authentication: writeOnlyOAuthAuthInfo.extra.formbricksAuthentication,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({ data: draft, requestId: "req_tool" });
   });
 
   test("list_surveys calls the shared v3 list operation and returns structured content", async () => {
@@ -694,6 +744,8 @@ describe("registerSurveyTools", () => {
       ["delete_survey", { surveyId }, deleteV3Survey],
       ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
       ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
+      // Writes nothing, but spends AI budget on the caller's behalf: Surveys: Write, like the REST route.
+      ["generate_survey", { workspaceId: surveyId, prompt: "A survey about onboarding" }, generateV3Survey],
     ];
 
     for (const [name, input, operation] of cases) {

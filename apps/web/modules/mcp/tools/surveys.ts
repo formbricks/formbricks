@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { generateV3Survey } from "@/app/api/v3/surveys/generate/operations";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -19,6 +20,7 @@ import {
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
   type TMcpEditSurveyBlocksInput,
+  type TMcpGenerateSurveyInput,
   type TMcpGetSurveyInput,
   type TMcpListSurveysInput,
   type TMcpPatchSurveyInput,
@@ -27,12 +29,14 @@ import {
   ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
   ZMcpEditSurveyBlocksInput,
+  ZMcpGenerateSurveyInput,
   ZMcpGetSurveyInput,
   ZMcpListSurveysInput,
   ZMcpPatchSurveyInput,
   ZMcpSetSurveyBlockOrderInput,
   ZMcpValidateSurveyInput,
 } from "./schemas";
+import { ZMcpGeneratedSurveyOutput } from "./survey-output-schemas";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
   const searchParams = new URLSearchParams();
@@ -192,6 +196,43 @@ export function registerSurveyTools(server: McpServer): void {
             auditLog,
           })
       )
+  );
+
+  // Persists nothing, but declares Surveys: Write like the REST route (`readWrite` on the workspace):
+  // each call runs a model on the organization's AI budget, which a read-only connection must not spend.
+  // The operation charges the same 10/min budget the route does and checks the AI toggle and entitlement.
+  registerMcpTool(
+    server,
+    "generate_survey",
+    {
+      title: "Generate survey draft",
+      description: [
+        "Draft a survey from a plain-language prompt with the workspace organization's AI. Saves nothing:",
+        "review the returned `payload`, then pass it to create_survey to save it. `validation` says whether",
+        "create_survey would accept it as is. Limited to 10 calls a minute; needs AI enabled for the organization.",
+      ].join(" "),
+      inputSchema: ZMcpGenerateSurveyInput,
+      outputSchema: ZMcpGeneratedSurveyOutput,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "surveys", level: "write" }],
+    async (input: TMcpGenerateSurveyInput, ctx) => {
+      const authInfo = getMcpToolAuthInfo(ctx);
+      const requestId = getMcpRequestId(authInfo);
+      const response = await generateV3Survey({
+        body: input,
+        authentication: getMcpAuthentication(authInfo),
+        requestId,
+        instance: MCP_API_ROUTE,
+      });
+
+      return await responseToMcpToolResult(response, requestId);
+    }
   );
 
   registerMcpTool(

@@ -3,6 +3,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { noContentResponse, successResponse } from "@/app/api/v3/lib/response";
 import {
   batchDeleteV3Responses,
+  batchSetV3ResponsesOutcome,
   countV3ResponsesOperation,
   createV3ResponseFromRawInput,
   deleteV3Response,
@@ -39,6 +40,7 @@ vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("
 
 vi.mock("@/app/api/v3/responses/lib/operations", () => ({
   batchDeleteV3Responses: vi.fn(),
+  batchSetV3ResponsesOutcome: vi.fn(),
   countV3ResponsesOperation: vi.fn(),
   createV3ResponseFromRawInput: vi.fn(),
   deleteV3Response: vi.fn(),
@@ -131,6 +133,9 @@ beforeEach(() => {
   vi.mocked(batchDeleteV3Responses).mockResolvedValue(
     successResponse({ data: { deleted: 2 } }, { requestId: "req" })
   );
+  vi.mocked(batchSetV3ResponsesOutcome).mockResolvedValue(
+    successResponse({ updated: 2 }, { requestId: "req" })
+  );
 });
 
 /**
@@ -147,6 +152,7 @@ describe("the registered surface", () => {
         "delete_response",
         "get_response",
         "list_responses",
+        "set_responses_outcome",
         "update_response",
         "validate_response",
       ].sort()
@@ -215,6 +221,7 @@ describe("the scope gate", () => {
       "validate_response",
       "delete_response",
       "batch_delete_responses",
+      "set_responses_outcome",
     ]) {
       const result = await call(name, { responseId: RESPONSE_ID, confirm: true }, readOnly);
       expect(result.isError, `${name} answered a read-only token`).toBe(true);
@@ -225,6 +232,7 @@ describe("the scope gate", () => {
     expect(validateV3ResponseFromRawInput).not.toHaveBeenCalled();
     expect(deleteV3Response).not.toHaveBeenCalled();
     expect(batchDeleteV3Responses).not.toHaveBeenCalled();
+    expect(batchSetV3ResponsesOutcome).not.toHaveBeenCalled();
   });
 });
 
@@ -581,6 +589,29 @@ describe("the tools reach the operations", () => {
 
     expect(validateV3ResponseFromRawInput).toHaveBeenCalledWith(
       expect.objectContaining({ body: { operation: "create", data: { surveyId: "s" } } })
+    );
+  });
+
+  /** Marking Low quality is reversible (`outcome: null` restores), so it asks nothing and deletes nothing. */
+  test("the outcome tool hands the operation the workspace, the ids and the outcome", async () => {
+    const ids = [RESPONSE_ID, "clrs000000000000000000002"];
+
+    const result = await call("set_responses_outcome", {
+      workspaceId: WORKSPACE_ID,
+      ids,
+      outcome: "lowQuality",
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ data: { updated: 2 } });
+    expect(batchSetV3ResponsesOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        ids,
+        outcome: "lowQuality",
+        requestId: "req_tool",
+        instance: "/api/mcp",
+      })
     );
   });
 });
