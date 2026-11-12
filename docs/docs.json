@@ -379,7 +379,15 @@
                       "self-hosting/upgrade/versions/6.1",
                       "self-hosting/upgrade/versions/6.1-runtime",
                       "self-hosting/upgrade/versions/6.1-single-use-links",
-                      "self-hosting/upgrade/versions/6.1-visibility"
+                      "self-hosting/upgrade/versions/6.1-visibility",
+                      "self-hosting/upgrade/versions/6.2",
+                      "self-hosting/upgrade/versions/dashboard-viewer",
+                      "self-hosting/upgrade/versions/charts-dashboards",
+                      "self-hosting/upgrade/versions/question-codes",
+                      "self-hosting/upgrade/versions/attachment-exports",
+                      "self-hosting/upgrade/versions/valkey-9",
+                      "self-hosting/upgrade/versions/cube-memory",
+                      "self-hosting/upgrade/versions/helm-bundled-database"
                     ]
                   },
                   {
@@ -410,17 +418,6 @@
                       "self-hosting/upgrade/versions/2026-10-27-patches",
                       "self-hosting/upgrade/versions/2026-10-security-patches",
                       "self-hosting/upgrade/versions/cube"
-                    ]
-                  },
-                  {
-                    "group": "Upcoming changes",
-                    "pages": [
-                      "self-hosting/upgrade/versions/charts-dashboards",
-                      "self-hosting/upgrade/versions/valkey-9",
-                      "self-hosting/upgrade/versions/question-codes",
-                      "self-hosting/upgrade/versions/attachment-exports",
-                      "self-hosting/upgrade/versions/dashboard-viewer",
-                      "self-hosting/upgrade/versions/cube-memory"
                     ]
                   }
                 ]
