@@ -151,9 +151,12 @@ when it is absent, so re-running it against an already initialised database is s
 password is reconciled to the chart's Secret on every run. Rotate that password outside Helm and the next
 upgrade will set it back, so update the Secret alongside it.
 
-By default it connects as the `postgres` superuser the bundled PostgreSQL subchart creates. **An existing
-PostgreSQL installed with `postgresql.auth.enablePostgresUser=false` has no such role**, and the upgrade fails
-until the Job is told which role to use instead:
+By default it connects as the bundled database user (`postgresql.auth.username`, `formbricks` unless changed)
+on its database, with that user's password. The bundled `pgvector/pgvector` image makes that user a superuser and
+creates no `postgres` role. When a Bitnami image initialised the data directory instead, that user is not a
+superuser, and the Job switches to the `postgres` superuser and the bundled admin password.
+
+To connect as another role, for example on an existing PostgreSQL server, configure it explicitly:
 
 ```yaml
 authzed:
@@ -186,11 +189,14 @@ as the role's owner — or run the bootstrap as a superuser once. PostgreSQL 15 
 
 </Note>
 
-Rendering fails fast with the three available remedies named — configure an administrative role, enable
-`postgresql.auth.enablePostgresUser`, or set `authzed.bundledPostgresqlBootstrap.enabled=false` — rather than
-letting the Job fail inside the cluster. Disabling bootstrap remains the correct choice when the role and
-database are provisioned by hand or by a platform team; the SpiceDB `datastore_uri` must then already point at
-them.
+Setting any `admin*` value selects this explicit mode, and the values you leave empty keep the previous
+defaults: `postgres` on the `postgres` database with the bundled admin password. An explicit `postgres`
+administrator with `postgresql.auth.enablePostgresUser=false` fails the render with the three available
+remedies named — configure an administrative role, enable `postgresql.auth.enablePostgresUser`, or set
+`authzed.bundledPostgresqlBootstrap.enabled=false` — rather than letting the Job fail inside the cluster. A
+role that cannot log in or lacks `CREATEROLE` and `CREATEDB` stops the Job before any SQL runs, with the same
+remedies in its log. Disabling bootstrap remains the correct choice when the role and database are provisioned
+by hand or by a platform team; the SpiceDB `datastore_uri` must then already point at them.
 
 For an externally managed PostgreSQL server, use `authzed.externalPostgresqlBootstrap` instead, which takes a
 full administrator URL from a Secret and enforces TLS on it.

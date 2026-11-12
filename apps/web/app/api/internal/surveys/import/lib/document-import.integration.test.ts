@@ -109,7 +109,14 @@ type TDone = {
   report: {
     source: { kind: string; fileName: string };
     summary: Record<string, unknown>;
-    issues: { code: string; severity: string; questionTag?: string; params?: Record<string, unknown> }[];
+    issues: {
+      code: string;
+      severity: string;
+      questionTag?: string;
+      place?: Record<string, unknown>;
+      questionText?: string;
+      params?: Record<string, unknown>;
+    }[];
   };
 };
 
@@ -324,9 +331,11 @@ describe("Sample_Survey_2's types", () => {
     // The text to agree to is the consent's checkbox, once.
     expect(byId.get("15")).toMatchObject({ label: { "en-US": "I agree to the terms and conditions." } });
     expect(byId.get("15")).not.toHaveProperty("subheader");
-    expect(
-      report.issues.filter((issue) => issue.code === "question_skipped").map((issue) => issue.questionTag)
-    ).toEqual(["R6", "R14", "R17", "R18"]);
+    // Named by the row they are on and what the row says, not by the import's own key (ENG-7070).
+    const skipped = report.issues.filter((issue) => issue.code === "question_skipped");
+    expect(skipped.map((issue) => issue.place)).toEqual([6, 14, 17, 18].map((row) => ({ kind: "row", row })));
+    expect(skipped.map((issue) => issue.questionTag)).toEqual([undefined, undefined, undefined, undefined]);
+    expect(skipped.every((issue) => (issue.questionText ?? "").length > 0)).toBe(true);
   });
 });
 
@@ -889,7 +898,13 @@ describe("Word questionnaires (ENG-6853)", () => {
     expect(
       (matrix.columns as { label: Record<string, string> }[]).map((column) => column.label["en-US"])
     ).toEqual(["Poor", "OK", "Good"]);
-    expect(report.issues).toContainEqual({ code: "table_as_matrix", severity: "warning", questionTag: "P2" });
+    expect(report.issues).toContainEqual(
+      expect.objectContaining({
+        code: "table_as_matrix",
+        severity: "warning",
+        place: { kind: "paragraph", paragraph: 2 },
+      })
+    );
 
     const sample = await previewFixture("sample-survey-2-word.docx");
     expect(sample.payload.blocks.flatMap((block) => block.elements).map((element) => element.type)).toContain(

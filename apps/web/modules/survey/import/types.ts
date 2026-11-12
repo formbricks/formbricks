@@ -315,6 +315,12 @@ export type TSurveyImportSheetRowSkipCause =
   | "invalid_question"
   | "survey_full";
 
+/** A sheet's row, a paragraph of a Word or Markdown file, or a row of one of its tables; all from 1. */
+export type TSurveyImportIssuePlace =
+  | { kind: "row"; row: number }
+  | { kind: "paragraph"; paragraph: number }
+  | { kind: "table_row"; table: number; row: number };
+
 export interface TSurveyImportIssue {
   code: TSurveyImportIssueCode;
   /** `warning` when something the user had is missing or changed; `info` for expected differences. */
@@ -324,6 +330,16 @@ export interface TSurveyImportIssue {
    * e.g. `Q12`), when there is one.
    */
   questionTag?: string;
+  /**
+   * Where the question starts in a document (ENG-7070), so a line reads "Row 5" rather than the
+   * import's own key for it. Only the document lane sends it.
+   */
+  place?: TSurveyImportIssuePlace;
+  /**
+   * The question's text in the default language, cut short, when the file has one (ENG-7070). Text from
+   * the file: rendered as plain text, like `questionTag`.
+   */
+  questionText?: string;
   /**
    * Values the dialog interpolates into the translated line, e.g.
    * `{ from: "Customer ID", to: "customer_id" }`.

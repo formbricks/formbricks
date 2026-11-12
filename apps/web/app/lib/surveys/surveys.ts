@@ -10,6 +10,7 @@ import {
   TResponseFilterCriteria,
   TResponseFilterCriteriaShown,
   TResponseHiddenFieldsFilter,
+  TResponseStatusFilter,
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
@@ -849,6 +850,23 @@ const processShownFilters = (rows: FilterValue[], filters: TResponseFilterCriter
   }
 };
 
+/** One status narrows by `finished` or `outcome`; several mean any of them. */
+const applyResponseStatuses = (
+  statuses: readonly TResponseStatusFilter[],
+  filters: TResponseFilterCriteria
+): void => {
+  if (statuses.length === 0) return;
+  if (statuses.length > 1) {
+    filters.statuses = [...statuses];
+  } else if (statuses[0] === "complete") {
+    filters.finished = true;
+  } else if (statuses[0] === "partial") {
+    filters.finished = false;
+  } else {
+    filters.outcome = "lowQuality";
+  }
+};
+
 // get the formatted filter expression to fetch filtered responses
 export const getFormattedFilters = (
   survey: TSurvey,
@@ -889,14 +907,7 @@ export const getFormattedFilters = (
     }
   });
 
-  // for completed responses
-  if (selectedFilter.responseStatus === "complete") {
-    filters["finished"] = true;
-  } else if (selectedFilter.responseStatus === "partial") {
-    filters["finished"] = false;
-  } else if (selectedFilter.responseStatus === "lowQuality") {
-    filters["outcome"] = "lowQuality";
-  }
+  applyResponseStatuses(selectedFilter.responseStatuses, filters);
 
   // for date range responses
   if (dateRange.from && dateRange.to) {

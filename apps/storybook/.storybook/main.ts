@@ -35,14 +35,14 @@ const config: StorybookConfig = {
     const rootPath = resolve(__dirname, "../../../");
 
     // Configure server to allow files from outside the storybook directory
-    config.server = config.server || {};
+    config.server ??= {};
     config.server.fs = {
       ...config.server.fs,
-      allow: [...(config.server.fs?.allow || []), rootPath],
+      allow: [...(config.server.fs?.allow ?? []), rootPath],
     };
 
     // Configure simple alias resolution
-    config.resolve = config.resolve || {};
+    config.resolve ??= {};
     config.resolve.alias = {
       ...config.resolve.alias,
       "@": surveyUiPath,

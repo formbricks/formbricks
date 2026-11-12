@@ -136,6 +136,27 @@ describe("link-survey metadata", () => {
     });
   });
 
+  test.each([
+    ["the link page", () => getMetadataForLinkSurvey({ surveyId: mockSurveyId })],
+    ["the contact page", () => getMetadataForContactSurvey({ surveyId: mockSurveyId })],
+  ])("drops the Formbricks title template on %s when Remove Branding is on", async (_, getMetadata) => {
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue({
+      id: mockSurveyId,
+      name: mockSurveyName,
+      type: "link",
+      status: "published",
+    } as any);
+    const context = await getWorkspaceContextForLinkSurvey("workspace-123");
+    vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({
+      ...context,
+      workspace: { ...context.workspace, linkSurveyBranding: false },
+    });
+
+    const result = await getMetadata();
+
+    expect(result.title).toEqual({ absolute: mockSurveyName });
+  });
+
   test("returns correct metadata with custom ogImage", async () => {
     const mockSurvey = {
       id: mockSurveyId,

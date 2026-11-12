@@ -156,6 +156,70 @@ consumer follows the same override and global-value precedence as the rendered S
 {{- include "postgresql.v1.database" .Subcharts.postgresql -}}
 {{- end }}
 
+{{- /*
+The Secret and keys the bundled server itself reads its passwords from (the subchart's
+POSTGRES_PASSWORD and POSTGRES_POSTGRES_PASSWORD), so a consumer that references them authenticates
+with whatever the server was initialised with, including under postgresql.auth.existingSecret and
+global.postgresql overrides. userPasswordKey already resolves to the admin key when the bundled
+username is `postgres`.
+*/ -}}
+{{- define "formbricks.postgresqlSecretName" -}}
+{{- include "postgresql.v1.secretName" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlUserPasswordKey" -}}
+{{- /* Without existingSecret the subchart's userPasswordKey is always `password`, but its generated
+      Secret only carries that key for a custom user; `postgres` lives under the admin key. */ -}}
+{{- if eq (include "formbricks.postgresqlUsername" .) "postgres" -}}
+{{- include "formbricks.postgresqlAdminPasswordKey" . -}}
+{{- else -}}
+{{- include "postgresql.v1.userPasswordKey" .Subcharts.postgresql -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.postgresqlAdminPasswordKey" -}}
+{{- include "postgresql.v1.adminPasswordKey" .Subcharts.postgresql -}}
+{{- end }}
+
+{{- /*
+Cube's connection to the bundled PostgreSQL, rendered ahead of cube.env so Cube reaches the database
+the app uses without extra values. Cube 1.8's Postgres driver reads only the discrete CUBEJS_DB_HOST,
+_PORT, _NAME, _USER and _PASS variables; it has no URL form.
+
+A name set in cube.env replaces the default for that name, so no env name renders twice. The bundled
+user and password are a pair, and both are left out when cube.env sets either of them or points
+CUBEJS_DB_HOST elsewhere: the chart never pairs the bundled password with a user or host you chose.
+Values supplied through cube.envFrom or the app Secret cannot override these, because Kubernetes gives
+env precedence over envFrom; set them in cube.env instead (a valueFrom map is accepted).
+*/ -}}
+{{- define "formbricks.cubeBundledDatabaseEnv" -}}
+{{- if .Values.postgresql.enabled -}}
+{{- $userEnv := .Values.cube.env | default dict -}}
+{{- $userCredentials := or (hasKey $userEnv "CUBEJS_DB_HOST") (hasKey $userEnv "CUBEJS_DB_USER") (hasKey $userEnv "CUBEJS_DB_PASS") -}}
+{{- if not (hasKey $userEnv "CUBEJS_DB_HOST") }}
+- name: CUBEJS_DB_HOST
+  value: {{ include "formbricks.postgresqlPrimaryHost" . | quote }}
+{{- end }}
+{{- if not (hasKey $userEnv "CUBEJS_DB_PORT") }}
+- name: CUBEJS_DB_PORT
+  value: {{ include "formbricks.postgresqlServicePort" . | quote }}
+{{- end }}
+{{- if not (hasKey $userEnv "CUBEJS_DB_NAME") }}
+- name: CUBEJS_DB_NAME
+  value: {{ include "formbricks.postgresqlDatabase" . | default "postgres" | quote }}
+{{- end }}
+{{- if not $userCredentials }}
+- name: CUBEJS_DB_USER
+  value: {{ include "formbricks.postgresqlUsername" . | quote }}
+- name: CUBEJS_DB_PASS
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.postgresqlSecretName" . }}
+      key: {{ include "formbricks.postgresqlUserPasswordKey" . }}
+{{- end }}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.postgresqlAppPasswordKey" -}}
 {{- if eq (include "formbricks.postgresqlUsername" .) "postgres" -}}
 {{- "POSTGRES_ADMIN_PASSWORD" -}}

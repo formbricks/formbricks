@@ -10,8 +10,9 @@ import tseslint from "typescript-eslint";
  *
  * Rollout: existing code violates several of these rules, so the whole-repo lint (`pnpm lint`, the
  * CI lint job) leaves them off. `scripts/lint-staged-eslint.mjs`, which the pre-commit hook runs
- * on the staged files only, sets ESLINT_SONAR_PARITY=error, so a NEW violation fails the commit
- * while old ones stay untouched. Setting the variable to `warn` reports them without failing.
+ * on the staged files only, sets ESLINT_SONAR_PARITY=warn and fails the commit on a rule in
+ * `SONAR_PARITY_RULE_IDS` only inside the staged lines, as Sonar judges a PR's new code: a NEW
+ * violation fails the commit while old ones stay untouched, even in the same file.
  *
  * To widen: change `DEFAULT_SEVERITY` below to "error" once the backlog is fixed (or "warn" to
  * surface it in editors and CI first). Every consumer tier picks it up through `base.mjs`.
@@ -36,9 +37,16 @@ export const sonarParity = (severity = stagedSeverity()) => [
     files: SOURCE_FILES,
     ignores: TEST_FILES,
     plugins: { sonarjs, unicorn },
+    // In the staged-file run only: sonarjs then encodes each finding's secondary locations (for
+    // S3776, every line that adds to the complexity) into its message, so the pre-commit runner can
+    // fail a function made too complex by a staged line other than its header. Editors and the
+    // whole-repo lint keep plain messages.
+    ...(process.env.ESLINT_SONAR_PARITY !== undefined && { settings: { sonarRuntime: true } }),
     rules: {
       // S3776. Sonar's default threshold; eslint-plugin-sonarjs@3 reproduces its exact scores.
       "sonarjs/cognitive-complexity": [severity, 15],
+      // S5843. Sonar's default threshold.
+      "sonarjs/regex-complexity": [severity, { threshold: 20 }],
       // S2004. Sonar flags functions nested more than four levels deep.
       "sonarjs/no-nested-functions": [severity, { threshold: 4 }],
       // S3358.
@@ -87,6 +95,10 @@ export const sonarParityTyped = ({ severity = stagedSeverity(), ownProject = fal
   ...(ownProject && severity !== "off" && { languageOptions: { parserOptions: { projectService: true } } }),
   rules: {
     "@typescript-eslint/prefer-optional-chain": severity,
+    // S1874.
+    "@typescript-eslint/no-deprecated": severity,
+    // S6606.
+    "@typescript-eslint/prefer-nullish-coalescing": severity,
   },
 });
 
@@ -107,3 +119,10 @@ export const a11yParity = (severity = "error") => ({
 });
 
 export const stagedSeverity = () => resolveSeverity(process.env.ESLINT_SONAR_PARITY);
+
+/** Every rule above, by id: what the pre-commit runner holds the staged lines to. */
+export const SONAR_PARITY_RULE_IDS = [
+  ...sonarParity("off").flatMap((entry) => Object.keys(entry.rules)),
+  ...Object.keys(sonarParityTyped({ severity: "off" }).rules),
+  ...Object.keys(a11yParity("off").rules),
+];

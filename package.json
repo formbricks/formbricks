@@ -43,6 +43,7 @@
     "test:root": "vitest run --config vitest.root.config.mts",
     "test:coverage": "turbo run test:coverage --no-cache",
     "test:e2e": "playwright test",
+    "test:e2e:local": "node scripts/e2e-local-preflight.mjs && dotenv -e .env -- playwright test -c playwright.local.config.ts",
     "prepare": "husky",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm --filter @formbricks/database generate",
