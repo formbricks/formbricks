@@ -1,10 +1,10 @@
 ---
-title: "Unreleased: Cube memory and PostgreSQL shared memory"
-description: "New Cube and PostgreSQL settings that Docker installations add by hand in the next release."
+title: "6.2: Cube memory and PostgreSQL shared memory"
+description: "New Cube and PostgreSQL settings that Docker installations add by hand when they upgrade to 6.2."
 icon: "memory"
 ---
 
-**Applies to:** the next release after 6.1. This change is on `main` and not in any 6.1 patch.
+**Applies to:** the upgrade to 6.2. Part of the [6.2 upgrade guide](/self-hosting/upgrade/versions/6.2).
 **Upgrade impact: Action required** for Docker Compose and one-click installations. Helm gets the settings with the chart.
 
 ## What changes
@@ -27,7 +27,7 @@ file and Helm chart change three settings:
 | Who | What to do |
 | --- | --- |
 | Docker Compose and one-click | Add `CUBEJS_DB_QUERY_TIMEOUT: 60s` to the `cube` service's `environment`, and `shm_size: 512mb` to the `postgres` service. Updates keep your local `docker-compose.yml`, so these aren't added for you. |
-| Docker Compose and one-click | Set the `cube` service's image to the tag in the release's Compose file (on `main`: `ghcr.io/formbricks/cube:1.8.8-3`), and install the release's Cube model files. The new models and the new image belong together. |
+| Docker Compose and one-click | Set the `cube` service's image to the tag in the release's Compose file (6.2: `ghcr.io/formbricks/cube:1.8.8-3`), and install the release's Cube model files. The new models and the new image belong together. |
 | External PostgreSQL | Give it enough shared memory for parallel queries. Managed databases already have it. |
 | Kubernetes | Nothing. The chart sets the Cube values. |
 
