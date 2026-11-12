@@ -7,14 +7,16 @@ import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewe
 import {
   type TOAuthPublicClient,
   getHostFromUrl,
-  getOAuthScopeLabel,
   isLocalhostHost,
 } from "@/modules/auth/lib/oauth-client-metadata";
 import { getSession } from "@/modules/auth/lib/session";
 import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
+import { getMcpGrantPermissionsForScopes } from "@/modules/mcp/grant";
+import { getInitialMcpGrantPermissions } from "@/modules/mcp/grant-editor";
+import { getMcpGrant } from "@/modules/mcp/grant-store";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Logo } from "@/modules/ui/components/logo";
-import { OAuthConsentActions } from "./components/OAuthConsentActions";
+import { OAuthConsentForm } from "./components/OAuthConsentForm";
 
 type TSearchParams = Record<string, string | string[] | undefined>;
 
@@ -109,6 +111,20 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
   }
 
   const clientName = client.client_name ?? t("auth.oauth.unknown_client");
+  // The permission matrix (ENG-7150): capped by what the client asks for, and opening with the
+  // connection's existing grant when it has one, so a reconnect doesn't undo a narrower choice.
+  const cap = getMcpGrantPermissionsForScopes(requestedScopes);
+  const existingGrant = session?.user ? await getMcpGrant(session.user.id, clientId) : null;
+  const initialPermissions = getInitialMcpGrantPermissions({
+    existing: existingGrant?.permissions ?? null,
+    cap,
+  });
+  const identityAccess = [
+    ...(requestedScopes.includes("profile") || requestedScopes.includes("email")
+      ? [t("auth.oauth.grant.identity_name_and_email")]
+      : []),
+    ...(requestedScopes.includes("offline_access") ? [t("auth.oauth.grant.identity_stay_signed_in")] : []),
+  ];
   const clientUriHost = getHostFromUrl(client.client_uri ?? null);
 
   return (
@@ -143,17 +159,15 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
             </div>
           )}
 
-          {requestedScopes.length > 0 && (
+          {identityAccess.length > 0 && (
             <div>
-              <dt className="font-medium text-slate-900">{t("auth.oauth.requested_permissions")}</dt>
-              <dd className="mt-2 flex flex-wrap gap-2">
-                {requestedScopes.map((requestedScope) => (
-                  <span
-                    key={requestedScope}
-                    className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">
-                    {getOAuthScopeLabel(requestedScope, t)}
-                  </span>
-                ))}
+              <dt className="font-medium text-slate-900">{t("auth.oauth.grant.always_granted")}</dt>
+              <dd className="mt-1 text-slate-600">
+                <ul className="list-inside list-disc">
+                  {identityAccess.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
               </dd>
             </div>
           )}
@@ -178,9 +192,11 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
         )}
 
         <div className="mt-6">
-          <OAuthConsentActions
+          <OAuthConsentForm
+            initialPermissions={initialPermissions}
+            cap={cap}
+            isDashboardViewer={isViewer}
             grantedScope={isViewer ? requestedScopes.join(" ") : undefined}
-            isAllowDisabled={isViewerGrantEmpty}
           />
         </div>
       </div>
