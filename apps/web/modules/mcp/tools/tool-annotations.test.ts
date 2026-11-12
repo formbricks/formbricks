@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 /**
- * Every MCP tool's annotations agree with its name and its scopes.
+ * Every MCP tool's annotations agree with its name and its permissions.
  *
  * Annotations are hand-set on each registration, and "Honest annotations" in
  * `docs/development/technical-handbook/mcp-server.mdx` did not hold them: new write tools shipped with
@@ -10,25 +10,28 @@ import { describe, expect, test, vi } from "vitest";
  * across the tool modules, so a new tool is checked without anyone adding it to a list.
  */
 
+type TPermission = { permission: string; level: string };
+
 type TRegistration = {
   name: string;
   annotations: { readOnlyHint?: unknown; destructiveHint?: unknown } | undefined;
-  scopes: string[];
+  permissions: TPermission[];
 };
 
 const registrations = vi.hoisted((): TRegistration[] => []);
 
-vi.mock("./guard-scopes", () => ({
-  registerScopedTool: (
+vi.mock("./guard-permissions", () => ({
+  registerMcpTool: (
     _server: unknown,
     name: string,
     config: { annotations?: TRegistration["annotations"] },
-    scopes: string[] | { anyOf: string[] }
+    permissions: TPermission[] | { anyOf: TPermission[] } | { byInput: unknown }
   ) => {
     registrations.push({
       name,
       annotations: config.annotations,
-      scopes: Array.isArray(scopes) ? scopes : scopes.anyOf,
+      // An input-dependent declaration only ever reads (chart data, dashboard filters).
+      permissions: Array.isArray(permissions) ? permissions : "anyOf" in permissions ? permissions.anyOf : [],
     });
   },
 }));
@@ -81,11 +84,11 @@ const loadRegistrations = async (): Promise<TRegistration[]> => {
 const startsWithAny = (name: string, prefixes: string[]): boolean => prefixes.some((p) => name.startsWith(p));
 
 describe("MCP tool annotations", () => {
-  test("agree with each tool's name and scopes", { timeout: 120_000 }, async () => {
+  test("agree with each tool's name and permissions", { timeout: 120_000 }, async () => {
     const tools = await loadRegistrations();
     expect(tools.length).toBeGreaterThan(50);
 
-    const problems = tools.flatMap(({ name, annotations, scopes }) => {
+    const problems = tools.flatMap(({ name, annotations, permissions }) => {
       const readOnly = annotations?.readOnlyHint;
       const destructive = annotations?.destructiveHint;
       const found: string[] = [];
@@ -93,8 +96,8 @@ describe("MCP tool annotations", () => {
         found.push(`${name}: readOnlyHint and destructiveHint must both be set`);
         return found;
       }
-      if (!readOnly && !scopes.some((scope) => scope.endsWith(":write"))) {
-        found.push(`${name}: writes but is not gated by a :write scope`);
+      if (!readOnly && !permissions.some(({ level }) => level === "write")) {
+        found.push(`${name}: writes but declares no permission at Write`);
       }
       if (readOnly && destructive) {
         found.push(`${name}: cannot be both read-only and destructive`);

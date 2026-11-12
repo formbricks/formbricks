@@ -13,7 +13,7 @@ import {
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
@@ -102,7 +102,7 @@ async function conciseSurveyResponse(
 }
 
 export function registerSurveyTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_surveys",
     {
@@ -116,7 +116,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:read"],
+    [{ permission: "surveys", level: "read" }],
     async (input: TMcpListSurveysInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -131,7 +131,7 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_survey",
     {
@@ -146,7 +146,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:read"],
+    [{ permission: "surveys", level: "read" }],
     async (input: TMcpGetSurveyInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -162,7 +162,7 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_survey",
     {
@@ -178,7 +178,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpCreateSurveyInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -194,7 +194,7 @@ export function registerSurveyTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "validate_survey",
     {
@@ -209,7 +209,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:read"],
+    [{ permission: "surveys", level: "read" }],
     async (input: TMcpValidateSurveyInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -227,7 +227,7 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "patch_survey",
     {
@@ -249,7 +249,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpPatchSurveyInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -267,7 +267,7 @@ export function registerSurveyTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "edit_survey_blocks",
     {
@@ -291,7 +291,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpEditSurveyBlocksInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -322,7 +322,7 @@ export function registerSurveyTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "set_survey_block_order",
     {
@@ -346,7 +346,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpSetSurveyBlockOrderInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -370,7 +370,7 @@ export function registerSurveyTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "delete_survey",
     {
@@ -386,7 +386,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpDeleteSurveyInput, ctx) =>
       runMcpMutation(
         ctx,

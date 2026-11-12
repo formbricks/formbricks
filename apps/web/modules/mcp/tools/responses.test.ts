@@ -182,8 +182,8 @@ describe("the registered surface", () => {
 });
 
 /**
- * The gate is structural — `registerScopedTool` runs it before the handler — so these prove the
- * scope each tool declares rather than that a gate exists at all.
+ * The gate is structural — `registerMcpTool` runs it before the handler — so these prove the
+ * scope each tool's permissions map to rather than that a gate exists at all.
  */
 describe("the scope gate", () => {
   const withScopes = (scopes: string[]) =>

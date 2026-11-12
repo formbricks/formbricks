@@ -5,11 +5,10 @@ import {
   ZV3WorkspaceCustomCssResource,
 } from "@/app/api/v3/workspaces/lib/custom-css-schemas";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
-import { MCP_READ_SCOPES } from "@/modules/auth/lib/oauth-urls";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { mcpToolOutput } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
@@ -31,11 +30,11 @@ export const ZMcpWorkspaceCustomCssOutput = mcpToolOutput(ZV3WorkspaceCustomCssR
 
 export function registerWorkspaceTools(server: McpServer): void {
   // list_workspaces is the workspaceId-discovery prerequisite for every other tool group, so it gates on
-  // ANY resource read scope rather than a single one. auth.ts's baseline is "at least one resource scope"
+  // ANY permission at Read rather than a single one. auth.ts's baseline is "at least one resource scope"
   // (MCP_RESOURCE_SCOPES), so a token holding only one family's read scope — `dashboards:read`, say — is a
   // legitimate client and must still be able to discover its workspaceId. The result is derived from the
-  // caller's own memberships/key grants, so admitting any read scope exposes nothing extra.
-  registerScopedTool(
+  // caller's own memberships/key grants, so admitting any read permission exposes nothing extra.
+  registerMcpTool(
     server,
     "list_workspaces",
     {
@@ -50,9 +49,18 @@ export function registerWorkspaceTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    // Derived from the scope registry, so a new family's read scope reaches discovery without an edit
-    // here — the gap that once left a responses-only token unable to find its workspace.
-    { anyOf: [...MCP_READ_SCOPES] },
+    // One permission per scope family. `workspaces.test.ts` drives this with every family's read scope,
+    // so a new family fails there until its permission is added here — the gap that once left a
+    // responses-only token unable to find its workspace.
+    {
+      anyOf: [
+        { permission: "surveys", level: "read" },
+        { permission: "workflows", level: "read" },
+        { permission: "feedbackRecords", level: "read" },
+        { permission: "responses", level: "read" },
+        { permission: "dashboards", level: "read" },
+      ],
+    },
     async (_input: TMcpListWorkspacesInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -69,7 +77,7 @@ export function registerWorkspaceTools(server: McpServer): void {
   // ENG-3641. `surveys:read` covers reading shared survey CSS, like any survey content. The write is
   // gated on `surveys:write`, but the scope is only the first gate: the operation still requires an
   // organization owner or manager (OAuth / session user) or a `manage` grant (API key) on the workspace.
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_workspace_custom_css",
     {
@@ -80,7 +88,7 @@ export function registerWorkspaceTools(server: McpServer): void {
       outputSchema: ZMcpWorkspaceCustomCssOutput,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    ["surveys:read"],
+    [{ permission: "surveyStyling", level: "read" }],
     async (input: TMcpGetWorkspaceCustomCssInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -95,7 +103,7 @@ export function registerWorkspaceTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "patch_workspace_custom_css",
     {
@@ -112,7 +120,7 @@ export function registerWorkspaceTools(server: McpServer): void {
       audit: { action: "updated", targetType: "workspace", targetIdArg: "workspaceId" },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    ["surveys:write"],
+    [{ permission: "surveyStyling", level: "write" }],
     async (input: TMcpPatchWorkspaceCustomCssInput, ctx) =>
       runMcpMutation(
         ctx,

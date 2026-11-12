@@ -3,6 +3,7 @@ import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemForbidden, successListResponse, successResponse } from "@/app/api/v3/lib/response";
 import { getV3WorkspaceCustomCss, patchV3WorkspaceCustomCss } from "@/app/api/v3/workspaces/lib/custom-css";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
+import { MCP_READ_SCOPES } from "@/modules/auth/lib/oauth-urls";
 import { ZMcpPatchWorkspaceCustomCssInput } from "./schemas";
 import { ZMcpWorkspaceCustomCssOutput, registerWorkspaceTools } from "./workspaces";
 
@@ -144,6 +145,22 @@ describe("registerWorkspaceTools", () => {
     const result = await tools
       .get("list_workspaces")!
       .handler({}, { http: { authInfo: dashboardsReadAuthInfo } });
+
+    expect(listV3Workspaces).toHaveBeenCalled();
+    expect(result.isError).toBeUndefined();
+  });
+
+  // list_workspaces declares one permission per scope family by hand. This walks every family's read
+  // scope, so a new family fails here until discovery declares a permission for it.
+  test.each([...MCP_READ_SCOPES])("allows a token holding only %s to discover workspaces", async (scope) => {
+    const { tools } = createToolServer();
+    vi.mocked(listV3Workspaces).mockResolvedValue(
+      successListResponse([], { nextCursor: null, totalCount: 0 }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("list_workspaces")!
+      .handler({}, { http: { authInfo: { ...readAuthInfo, scopes: [scope] } } });
 
     expect(listV3Workspaces).toHaveBeenCalled();
     expect(result.isError).toBeUndefined();

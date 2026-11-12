@@ -78,7 +78,7 @@ import {
   ZMcpUpdateWidgetInput,
   ZMcpWidgetOutput,
 } from "./dashboard-schemas";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { ZMcpAcknowledgement } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
@@ -115,10 +115,10 @@ const runMutation = (
  * like "clean up old charts" cannot remove anything permanently. There is no generate tool either; AI
  * chart generation is the app's, not the API's.
  *
- * Definitions and the field catalog need `dashboards:read`. Reading a chart's numbers also needs
- * `feedbackRecords:read`, so a dashboards grant never becomes a way into respondents' answers. The one
- * exception is a Dashboard viewer's token reading a chart through its dashboard (ADR-0025): that token is
- * trimmed to `dashboards:read`, and the dashboard is exactly what the role may see.
+ * Chart reads declare Charts and Feedback records, both at Read, so a dashboards grant never becomes a
+ * way into respondents' answers. Dashboard reads declare Dashboards. The one exception is a Dashboard viewer's token reading a
+ * chart through its dashboard (ADR-0025): that token is trimmed to `dashboards:read`, so the read declares
+ * Dashboards alone, and the dashboard is exactly what the role may see.
  */
 const hasDashboardId = (input: unknown): boolean =>
   typeof input === "object" &&
@@ -126,7 +126,7 @@ const hasDashboardId = (input: unknown): boolean =>
   typeof (input as { dashboardId?: unknown }).dashboardId === "string";
 
 export function registerDashboardTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_chart_fields",
     {
@@ -142,7 +142,10 @@ export function registerDashboardTools(server: McpServer): void {
     // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
     // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
     // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
-    ["dashboards:read", "feedbackRecords:read"],
+    [
+      { permission: "charts", level: "read" },
+      { permission: "feedbackRecords", level: "read" },
+    ],
     async (input: TMcpListChartFieldsInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -152,7 +155,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_charts",
     {
@@ -166,7 +169,10 @@ export function registerDashboardTools(server: McpServer): void {
     // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
     // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
     // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
-    ["dashboards:read", "feedbackRecords:read"],
+    [
+      { permission: "charts", level: "read" },
+      { permission: "feedbackRecords", level: "read" },
+    ],
     async (input: TMcpListChartsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Charts({
@@ -183,7 +189,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_chart",
     {
@@ -197,7 +203,10 @@ export function registerDashboardTools(server: McpServer): void {
     // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
     // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
     // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
-    ["dashboards:read", "feedbackRecords:read"],
+    [
+      { permission: "charts", level: "read" },
+      { permission: "feedbackRecords", level: "read" },
+    ],
     async (input: TMcpChartIdInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -207,7 +216,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "preview_chart",
     {
@@ -219,7 +228,10 @@ export function registerDashboardTools(server: McpServer): void {
       annotations: READ_ANNOTATIONS,
     },
     // The rows are respondents' answers in aggregate, so reading them also needs feedback-record access.
-    ["dashboards:read", "feedbackRecords:read"],
+    [
+      { permission: "charts", level: "read" },
+      { permission: "feedbackRecords", level: "read" },
+    ],
     async (input: TMcpPreviewChartInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -229,7 +241,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_chart",
     {
@@ -241,12 +253,12 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "chart" },
       annotations: WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "charts", level: "write" }],
     async (input: TMcpCreateChartInput, ctx) =>
       runMutation(ctx, "created", "chart", (context) => createV3Chart({ body: input, ...context }))
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "update_chart",
     {
@@ -258,12 +270,12 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "chart", targetIdArg: "chartId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "charts", level: "write" }],
     async ({ chartId, ...body }: TMcpUpdateChartInput, ctx) =>
       runMutation(ctx, "updated", "chart", (context) => updateV3Chart({ chartId, body, ...context }))
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_chart_data",
     {
@@ -280,8 +292,11 @@ export function registerDashboardTools(server: McpServer): void {
     {
       byInput: (input, authInfo) =>
         hasDashboardId(input) && isMcpDashboardViewerOnly(authInfo)
-          ? ["dashboards:read"]
-          : ["dashboards:read", "feedbackRecords:read"],
+          ? [{ permission: "dashboards", level: "read" }]
+          : [
+              { permission: "charts", level: "read" },
+              { permission: "feedbackRecords", level: "read" },
+            ],
     },
     async ({ dashboardId, chartId, dateRange, filters }: TMcpGetChartDataInput, ctx) => {
       const context = toolContext(ctx);
@@ -298,7 +313,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_dashboard_filter_fields",
     {
@@ -314,8 +329,11 @@ export function registerDashboardTools(server: McpServer): void {
     {
       byInput: (_input, authInfo) =>
         isMcpDashboardViewerOnly(authInfo)
-          ? ["dashboards:read"]
-          : ["dashboards:read", "feedbackRecords:read"],
+          ? [{ permission: "dashboards", level: "read" }]
+          : [
+              { permission: "dashboards", level: "read" },
+              { permission: "feedbackRecords", level: "read" },
+            ],
     },
     async ({ dashboardId }: TMcpDashboardIdInput, ctx) => {
       const context = toolContext(ctx);
@@ -326,7 +344,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_dashboard_filter_values",
     {
@@ -342,8 +360,11 @@ export function registerDashboardTools(server: McpServer): void {
     {
       byInput: (_input, authInfo) =>
         isMcpDashboardViewerOnly(authInfo)
-          ? ["dashboards:read"]
-          : ["dashboards:read", "feedbackRecords:read"],
+          ? [{ permission: "dashboards", level: "read" }]
+          : [
+              { permission: "dashboards", level: "read" },
+              { permission: "feedbackRecords", level: "read" },
+            ],
     },
     async (
       { dashboardId, field, operator, dateRange, filters, search }: TMcpListDashboardFilterValuesInput,
@@ -368,7 +389,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_chart_field_values",
     {
@@ -380,7 +401,10 @@ export function registerDashboardTools(server: McpServer): void {
       annotations: READ_ANNOTATIONS,
     },
     // The values are what respondents answered, so looking them up also needs feedback-record access.
-    ["dashboards:read", "feedbackRecords:read"],
+    [
+      { permission: "charts", level: "read" },
+      { permission: "feedbackRecords", level: "read" },
+    ],
     async ({ field, ...query }: TMcpListChartFieldValuesInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -390,7 +414,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_dashboards",
     {
@@ -401,7 +425,7 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpDashboardListOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    [{ permission: "dashboards", level: "read" }],
     async (input: TMcpListDashboardsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Dashboards({
@@ -418,7 +442,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_dashboard",
     {
@@ -429,7 +453,7 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpDashboardOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["dashboards:read"],
+    [{ permission: "dashboards", level: "read" }],
     async ({ dashboardId }: TMcpDashboardIdInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -439,7 +463,7 @@ export function registerDashboardTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_dashboard",
     {
@@ -451,12 +475,12 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "dashboard" },
       annotations: WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async (input: TMcpCreateDashboardInput, ctx) =>
       runMutation(ctx, "created", "dashboard", (context) => createV3Dashboard({ body: input, ...context }))
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "update_dashboard",
     {
@@ -468,14 +492,14 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async ({ dashboardId, ...body }: TMcpUpdateDashboardInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         renameV3Dashboard({ dashboardId, body, ...context })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "duplicate_dashboard",
     {
@@ -487,14 +511,14 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "dashboard" },
       annotations: WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async ({ dashboardId, ...body }: TMcpDuplicateDashboardInput, ctx) =>
       runMutation(ctx, "created", "dashboard", (context) =>
         duplicateV3Dashboard({ dashboardId, body, ...context })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "add_chart_to_dashboard",
     {
@@ -506,14 +530,14 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "dashboardWidget" },
       annotations: WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async ({ dashboardId, ...body }: TMcpAddChartToDashboardInput, ctx) =>
       runMutation(ctx, "created", "dashboardWidget", (context) =>
         addV3DashboardWidget({ dashboardId, body, ...context })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "update_widget",
     {
@@ -525,14 +549,14 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboardWidget", targetIdArg: "widgetId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async ({ dashboardId, widgetId, ...body }: TMcpUpdateWidgetInput, ctx) =>
       runMutation(ctx, "updated", "dashboardWidget", (context) =>
         updateV3DashboardWidget({ dashboardId, widgetId, body, ...context })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "remove_chart_from_dashboard",
     {
@@ -544,14 +568,14 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "deleted", targetType: "dashboardWidget", targetIdArg: "widgetId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async ({ dashboardId, widgetId }: TMcpRemoveChartFromDashboardInput, ctx) =>
       runMutation(ctx, "deleted", "dashboardWidget", (context) =>
         removeV3DashboardWidget({ dashboardId, widgetId, ...context })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "update_dashboard_layout",
     {
@@ -563,14 +587,14 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async ({ dashboardId, ...body }: TMcpUpdateDashboardLayoutInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         updateV3DashboardLayout({ dashboardId, body, ...context })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "set_dashboard_filters",
     {
@@ -582,7 +606,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "dashboards", level: "write" }],
     async ({ dashboardId, expectedUpdatedAt, filters }: TMcpSetDashboardFiltersInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         setV3DashboardFilters({
@@ -597,7 +621,7 @@ export function registerDashboardTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "duplicate_chart",
     {
@@ -609,7 +633,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "chart" },
       annotations: WRITE_ANNOTATIONS,
     },
-    ["dashboards:write"],
+    [{ permission: "charts", level: "write" }],
     async ({ chartId, ...body }: TMcpDuplicateChartInput, ctx) =>
       runMutation(ctx, "created", "chart", (context) => duplicateV3Chart({ chartId, body, ...context }))
   );

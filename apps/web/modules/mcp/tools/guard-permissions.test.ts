@@ -1,7 +1,7 @@
 import type { AuthInfo, CallToolResult } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) },
@@ -20,7 +20,7 @@ type ScopeErrorContent = {
   error: { status: number; code: string; detail: string; requestId: string };
 };
 
-// A minimal stand-in for McpServer that captures what registerScopedTool registers.
+// A minimal stand-in for McpServer that captures what registerMcpTool registers.
 function createToolServer() {
   const tools = new Map<
     string,
@@ -63,11 +63,17 @@ beforeEach(() => {
   vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
 });
 
-describe("registerScopedTool", () => {
+describe("registerMcpTool", () => {
   test("registers the tool under its name with the config untouched", () => {
     const { server, tools } = createToolServer();
 
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:write"], vi.fn() as any);
+    registerMcpTool(
+      server as any,
+      "do_thing",
+      CONFIG,
+      [{ permission: "surveys", level: "write" }],
+      vi.fn() as any
+    );
 
     expect(server.registerTool).toHaveBeenCalledTimes(1);
     expect(server.registerTool.mock.calls[0][0]).toBe("do_thing");
@@ -78,7 +84,16 @@ describe("registerScopedTool", () => {
     const { server, tools } = createToolServer();
     const handlerResult = { structuredContent: { ok: true } } as unknown as CallToolResult;
     const handler = vi.fn().mockResolvedValue(handlerResult);
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:read", "surveys:write"], handler as any);
+    registerMcpTool(
+      server as any,
+      "do_thing",
+      CONFIG,
+      [
+        { permission: "surveys", level: "read" },
+        { permission: "creatives", level: "write" },
+      ],
+      handler as any
+    );
 
     const input = { a: 1 };
     const ctx = { http: { authInfo: authInfoWithScopes(["surveys:read", "surveys:write"]) } };
@@ -91,7 +106,13 @@ describe("registerScopedTool", () => {
   test("blocks the handler with a 403 insufficient-scope result when a required scope is missing", async () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:write"], handler as any);
+    registerMcpTool(
+      server as any,
+      "do_thing",
+      CONFIG,
+      [{ permission: "surveys", level: "write" }],
+      handler as any
+    );
 
     const result = await tools
       .get("do_thing")!
@@ -109,21 +130,156 @@ describe("registerScopedTool", () => {
     });
   });
 
-  test("denies when the token holds only some of several required scopes", async () => {
+  test("denies when the token holds the scope of only some of the declared permissions", async () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:read", "surveys:write"], handler as any);
+    registerMcpTool(
+      server as any,
+      "read_chart",
+      CONFIG,
+      [
+        { permission: "charts", level: "read" },
+        { permission: "feedbackRecords", level: "read" },
+      ],
+      handler as any
+    );
 
     const result = await tools
-      .get("do_thing")!
-      .handler({}, { http: { authInfo: authInfoWithScopes(["surveys:read"]) } });
+      .get("read_chart")!
+      .handler({}, { http: { authInfo: authInfoWithScopes(["dashboards:read"]) } });
 
     expect(handler).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
     // Every required scope is listed, not just the first one that failed.
-    expect((result.structuredContent as ScopeErrorContent).error.detail).toContain(
-      "surveys:read surveys:write"
+    expect((result.structuredContent as ScopeErrorContent).error.detail).toBe(
+      "OAuth token does not include the required MCP scope: dashboards:read feedbackRecords:read"
     );
+  });
+
+  test("names a scope once when two declared permissions share a scope family", async () => {
+    const { server, tools } = createToolServer();
+    registerMcpTool(
+      server as any,
+      "do_thing",
+      CONFIG,
+      [
+        { permission: "surveys", level: "read" },
+        { permission: "surveyStyling", level: "read" },
+      ],
+      vi.fn() as any
+    );
+
+    const result = await tools
+      .get("do_thing")!
+      .handler({}, { http: { authInfo: authInfoWithScopes(["responses:read"]) } });
+
+    expect((result.structuredContent as ScopeErrorContent).error.detail).toBe(
+      "OAuth token does not include the required MCP scope: surveys:read"
+    );
+  });
+
+  test("allows an any-of tool when the token holds the scope of one listed permission", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
+    registerMcpTool(
+      server as any,
+      "discover",
+      CONFIG,
+      {
+        anyOf: [
+          { permission: "surveys", level: "read" },
+          { permission: "dashboards", level: "read" },
+        ],
+      },
+      handler as any
+    );
+
+    await tools.get("discover")!.handler({}, { http: { authInfo: authInfoWithScopes(["dashboards:read"]) } });
+    const refused = await tools
+      .get("discover")!
+      .handler({}, { http: { authInfo: authInfoWithScopes(["responses:read"]) } });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(refused.isError).toBe(true);
+    expect((refused.structuredContent as ScopeErrorContent).error.detail).toBe(
+      "OAuth token does not include the required MCP scope: surveys:read dashboards:read"
+    );
+  });
+
+  test("gates an input-dependent tool on the permissions its input selects", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
+    registerMcpTool(
+      server as any,
+      "read_data",
+      CONFIG,
+      {
+        byInput: (input) =>
+          (input as { viaDashboard?: boolean }).viaDashboard
+            ? [{ permission: "dashboards", level: "read" }]
+            : [
+                { permission: "charts", level: "read" },
+                { permission: "feedbackRecords", level: "read" },
+              ],
+      },
+      handler as any
+    );
+    const ctx = { http: { authInfo: authInfoWithScopes(["dashboards:read"]) } };
+
+    await tools.get("read_data")!.handler({ viaDashboard: true }, ctx);
+    const refused = await tools.get("read_data")!.handler({ viaDashboard: false }, ctx);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(refused.isError).toBe(true);
+  });
+
+  test("refuses an input-dependent tool whose input selects no permission — it never gates on nothing", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn();
+    registerMcpTool(
+      server as any,
+      "read_data",
+      CONFIG,
+      { byInput: () => [] as unknown as [{ permission: "charts"; level: "read" }] },
+      handler as any
+    );
+
+    const result = await tools
+      .get("read_data")!
+      .handler({}, { http: { authInfo: authInfoWithScopes(["dashboards:read", "feedbackRecords:read"]) } });
+
+    expect(handler).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect((result.structuredContent as ScopeErrorContent).error).toMatchObject({ status: 403 });
+  });
+});
+
+/**
+ * A tool joins the grant through the permissions it declares, so a tool that declares none — or one the
+ * registry does not offer — must not register at all. The types already refuse these; the casts below
+ * stand for what the types cannot see (a computed list, an `as` at the call site).
+ */
+describe("registerMcpTool — refusing a tool without a valid permission", () => {
+  test.each([
+    ["no permission", []],
+    ["an empty any-of", { anyOf: [] }],
+    ["No access as the minimum level", [{ permission: "surveys", level: "none" }]],
+    ["a level the permission does not offer", [{ permission: "workflowRuns", level: "write" }]],
+    ["an unknown permission", [{ permission: "everything", level: "read" }]],
+    [
+      "one invalid permission among valid ones",
+      [
+        { permission: "surveys", level: "read" },
+        { permission: "feedbackDatasets", level: "write" },
+      ],
+    ],
+  ])("throws on %s and registers nothing", (_case, permissions) => {
+    const { server } = createToolServer();
+
+    expect(() =>
+      registerMcpTool(server as any, "bad_tool", CONFIG, permissions as never, vi.fn() as any)
+    ).toThrow(/bad_tool/);
+    expect(server.registerTool).not.toHaveBeenCalled();
   });
 });
 
@@ -132,7 +288,7 @@ describe("registerScopedTool", () => {
  * mutation used to leave no trace — the one attempt an audit trail exists to show. These pin that a
  * refused mutation is written down as a failure attributed to the caller, and that nothing else is.
  */
-describe("registerScopedTool — auditing refused mutations", () => {
+describe("registerMcpTool — auditing refused mutations", () => {
   const AUDITED = {
     ...CONFIG,
     audit: { action: "deleted", targetType: "response", targetIdArg: "responseId" },
@@ -140,7 +296,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
 
   test("audits a refused mutation as a failed attempt by the actor, against the id it named", async () => {
     const { server, tools } = createToolServer();
-    registerScopedTool(server as any, "delete_response", AUDITED, ["responses:write"], vi.fn() as any);
+    registerMcpTool(
+      server as any,
+      "delete_response",
+      AUDITED,
+      [{ permission: "responses", level: "write" }],
+      vi.fn() as any
+    );
 
     const result = await tools
       .get("delete_response")!
@@ -167,7 +329,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
   test("records no target for a refused creation, even when the input names an existing id", async () => {
     const { server, tools } = createToolServer();
     const created = { ...CONFIG, audit: { action: "created", targetType: "workflow" } } as const;
-    registerScopedTool(server as any, "duplicate_workflow", created, ["workflows:write"], vi.fn() as any);
+    registerMcpTool(
+      server as any,
+      "duplicate_workflow",
+      created,
+      [{ permission: "workflows", level: "write" }],
+      vi.fn() as any
+    );
 
     await tools
       .get("duplicate_workflow")!
@@ -183,7 +351,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
 
   test("audits nothing when the refused tool declares no audit — reads are not attempts", async () => {
     const { server, tools } = createToolServer();
-    registerScopedTool(server as any, "list_responses", CONFIG, ["responses:read"], vi.fn() as any);
+    registerMcpTool(
+      server as any,
+      "list_responses",
+      CONFIG,
+      [{ permission: "responses", level: "read" }],
+      vi.fn() as any
+    );
 
     await tools
       .get("list_responses")!
@@ -196,7 +370,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
   test("audits nothing when the scope check passes — the tool's own runner records the outcome", async () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
-    registerScopedTool(server as any, "delete_response", AUDITED, ["responses:write"], handler as any);
+    registerMcpTool(
+      server as any,
+      "delete_response",
+      AUDITED,
+      [{ permission: "responses", level: "write" }],
+      handler as any
+    );
 
     await tools
       .get("delete_response")!
@@ -212,7 +392,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
   test("keeps `audit` out of the config it hands the SDK", () => {
     const { server, tools } = createToolServer();
 
-    registerScopedTool(server as any, "delete_response", AUDITED, ["responses:write"], vi.fn() as any);
+    registerMcpTool(
+      server as any,
+      "delete_response",
+      AUDITED,
+      [{ permission: "responses", level: "write" }],
+      vi.fn() as any
+    );
 
     expect(tools.get("delete_response")?.config).toEqual(CONFIG);
     expect(tools.get("delete_response")?.config).not.toHaveProperty("audit");
@@ -223,8 +409,8 @@ describe("registerScopedTool — auditing refused mutations", () => {
 /**
  * The ENG-2119 invariant, as a test rather than a convention.
  *
- * `registerScopedTool` takes the scope as a required argument, so the compiler already stops a tool
- * being registered without one — verified separately, and `tsc` reports `Expected 5 arguments, but
+ * `registerMcpTool` takes the permissions as a required argument, so the compiler already stops a tool
+ * being registered without them — verified separately, and `tsc` reports `Expected 5 arguments, but
  * got 4`. What the compiler cannot stop is someone re-exporting the raw guards and gating by hand
  * inside a handler again, which is exactly how the guarantee was lost the first time: the
  * feedback-record tools did that for ten tools, and nothing failed.
@@ -232,10 +418,10 @@ describe("registerScopedTool — auditing refused mutations", () => {
  * So this pins the module's public surface. If a guard is exported again, this is the test that says
  * the structural gate just became conventional.
  */
-describe("the scope guards stay private (ENG-2119)", () => {
-  test("registerScopedTool is the only export", async () => {
-    const guardScopes = await import("./guard-scopes");
+describe("the guards stay private (ENG-2119)", () => {
+  test("registerMcpTool is the only export", async () => {
+    const guard = await import("./guard-permissions");
 
-    expect(Object.keys(guardScopes).sort()).toEqual(["registerScopedTool"]);
+    expect(Object.keys(guard).sort()).toEqual(["registerMcpTool"]);
   });
 });

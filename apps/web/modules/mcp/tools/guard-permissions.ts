@@ -20,6 +20,11 @@ import {
   hasMcpScopes,
 } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import {
+  type TMcpPermissionRequirement,
+  getMcpPermissionScope,
+  isMcpPermissionRequirement,
+} from "../permissions";
 
 /**
  * Shared MCP scope gate: returns `null` when the caller holds all `requiredScopes`, otherwise an
@@ -28,14 +33,15 @@ import { responseToMcpToolResult } from "../errors";
  * Private on purpose (ENG-2119). It was briefly exported so the feedback-record tools could gate
  * inside their own handler factories, which made the guarantee conventional rather than structural —
  * a tool added outside those factories would have registered unguarded. Those tools are on
- * `registerScopedTool` now, so this goes back to being reachable only through it.
+ * `registerMcpTool` now, so this goes back to being reachable only through it.
  *
  * What that buys is narrower than it looks, and an earlier version of this comment claimed too much.
  * Privacy removes the *hand-rolled gate* — a module can no longer check scopes itself and diverge from
  * the shared behaviour. It does not make an unguarded registration impossible: `server` is an argument
  * to every tool module, so `server.registerTool(...)` is always one call away. Nothing in the type
- * system prevents that, and nothing can. Tests are what catch it — `feedback-records.test.ts` drives
- * all ten tools with the opposite scope, which fails if any of them stops being gated.
+ * system prevents that, and nothing can. Tests are what catch it — `tool-permissions.test.ts` pins every
+ * registered tool's permissions, and `feedback-records.test.ts` drives all ten tools with the opposite
+ * scope, which fails if any of them stops being gated.
  */
 async function guardMcpScopes(
   authInfo: AuthInfo | undefined,
@@ -53,12 +59,12 @@ async function guardMcpScopes(
 }
 
 /**
- * Any-of variant for tools that more than one scope group legitimately depends on — currently the
+ * Any-of variant for tools that more than one permission legitimately reaches — currently the
  * workspace discovery tool, which the survey, workflow and feedback-record tools all need to resolve a
  * `workspaceId`. Returns `null` when the caller holds at least one of `allowedScopes`. The challenge
  * still advertises the full list, since RFC 6750 has no way to express "any one of these".
  *
- * Private for the same reason as its sibling: reachable only through `registerScopedTool`'s
+ * Private for the same reason as its sibling: reachable only through `registerMcpTool`'s
  * `{ anyOf: [...] }` form.
  */
 async function guardMcpAnyScope(
@@ -122,29 +128,68 @@ async function auditRefusedMutation(
   await queueV3AuditLog(auditLog, requestId, logger.withContext({ requestId, tool: toolName }));
 }
 
-/**
- * The scopes a tool needs. Usually a fixed all-of tuple; `{ anyOf }` for a tool several scope groups
- * reach; `{ byInput }` for the rare tool whose input picks between two reads with different grants
- * (`get_chart_data`: a chart alone, or a chart through its dashboard). `byInput` still gates here, before
- * the handler, and always returns a non-empty list, so it cannot gate on nothing.
- */
-type TMcpScopeRequirement =
-  | [string, ...string[]]
-  | { anyOf: [string, ...string[]] }
-  | { byInput: (input: unknown, authInfo: AuthInfo | undefined) => [string, ...string[]] };
+type TNonEmpty<T> = readonly [T, ...T[]];
 
-const guardRequirement = async (
-  requirement: TMcpScopeRequirement,
+/**
+ * The permissions a tool needs, each at a minimum access level (`GLOSSARY.md`, "MCP access"). Usually a
+ * fixed all-of list; `{ anyOf }` for a tool several permissions reach (workspace discovery); `{ byInput }`
+ * for the rare tool whose input picks between two reads with different needs (`get_chart_data`: a chart
+ * alone, or a chart through its dashboard, which a Dashboard viewer may read without Feedback records).
+ * A tool declares every permission whose data it returns, not only the one it is named after.
+ */
+type TMcpToolPermissions =
+  | TNonEmpty<TMcpPermissionRequirement>
+  | { anyOf: TNonEmpty<TMcpPermissionRequirement> }
+  | {
+      byInput: (input: unknown, authInfo: AuthInfo | undefined) => TNonEmpty<TMcpPermissionRequirement>;
+    };
+
+/**
+ * The scopes the requirements map to, in declaration order and each once — Surveys and Survey styling
+ * both need `surveys:read`. Until grants exist (ENG-7149) the token's scopes are the whole check.
+ */
+const toScopes = (requirements: readonly TMcpPermissionRequirement[]): string[] => [
+  ...new Set(requirements.map(getMcpPermissionScope)),
+];
+
+/** True for a non-empty list of valid requirements — what registration and `byInput` must produce. */
+const isValidPermissionList = (value: unknown): value is TNonEmpty<TMcpPermissionRequirement> =>
+  Array.isArray(value) && value.length > 0 && value.every(isMcpPermissionRequirement);
+
+/**
+ * A tool that declares no permission, or one the registry does not offer, would join no grant, so it
+ * must not register. The types already refuse this; the check covers a cast or a computed list. A
+ * `byInput` tool can only be checked per call, where an invalid list is refused (`guardPermissions`).
+ */
+const assertDeclaresPermissions = (name: string, permissions: TMcpToolPermissions): void => {
+  if ("byInput" in permissions && typeof permissions.byInput === "function") return;
+  const list = "anyOf" in permissions ? permissions.anyOf : permissions;
+  if (!isValidPermissionList(list)) {
+    throw new Error(
+      `MCP tool "${name}" must declare at least one permission from the registry, each at a level it offers`
+    );
+  }
+};
+
+const guardPermissions = async (
+  permissions: TMcpToolPermissions,
   input: unknown,
   authInfo: AuthInfo | undefined,
   requestId: string
 ): Promise<CallToolResult | null> => {
-  if (Array.isArray(requirement)) return await guardMcpScopes(authInfo, requirement, requestId);
-  if ("anyOf" in requirement) return await guardMcpAnyScope(authInfo, requirement.anyOf, requestId);
-  return await guardMcpScopes(authInfo, requirement.byInput(input, authInfo), requestId);
+  if ("anyOf" in permissions) return await guardMcpAnyScope(authInfo, toScopes(permissions.anyOf), requestId);
+  if ("byInput" in permissions) {
+    const selected: unknown = permissions.byInput(input, authInfo);
+    // Fail closed: an empty or invalid list would otherwise gate on nothing.
+    if (!isValidPermissionList(selected)) {
+      return await responseToMcpToolResult(createMcpInsufficientScopeResponse(requestId, []), requestId);
+    }
+    return await guardMcpScopes(authInfo, toScopes(selected), requestId);
+  }
+  return await guardMcpScopes(authInfo, toScopes(permissions), requestId);
 };
 
-type ScopedToolConfig<
+type McpToolConfig<
   InputSchema extends StandardSchemaWithJSON,
   OutputSchema extends StandardSchemaWithJSON,
 > = {
@@ -170,36 +215,38 @@ type ScopedToolConfig<
 };
 
 /**
- * Register an MCP tool with a MANDATORY OAuth scope gate. `requiredScopes` is a required argument, so a
- * tool cannot be registered without declaring the scope it needs — the gate always runs (returning a
- * 403 insufficient-scope result) BEFORE the handler, so no tool can reach a v3 operation unguarded.
+ * Register an MCP tool with a MANDATORY permission gate. `permissions` is a required argument, and a
+ * tool whose declaration is empty or names a permission or level the registry (`../permissions.ts`) does
+ * not offer throws at registration — so every tool joins the grant a user sets, and none reaches a v3
+ * operation unguarded. The gate always runs BEFORE the handler and answers a refusal with a 403 tool
+ * result.
  *
- * This is the single registration path for every MCP tool — true again as of ENG-2119, and now
- * enforced rather than asserted: the guards below are private, so a tool module cannot gate by hand
- * even if it wanted to. Read tools pass `["<resource>:read"]`, mutating tools pass
- * `["<resource>:write"]`. Enforcing scope structurally (vs. a per-tool call that is easy to forget)
- * is what prevents the ENG-1967 class of gap from recurring as new tools are added.
+ * This is the single registration path for every MCP tool (ENG-2119): the guards below are private, so
+ * a tool module cannot gate by hand even if it wanted to. Read tools declare their permissions at
+ * `read`, mutating tools at `write`. Until grants are enforced (ENG-7149) each permission maps to its
+ * scope family at that level (`getMcpPermissionScope`), so a tool is allowed and refused for exactly the
+ * scopes it was before permissions replaced scopes here.
  *
- * Pass `{ anyOf: [...] }` instead of a plain tuple for the rare tool that more than one scope group
- * legitimately reaches (workspace discovery). That keeps such tools on this registration path rather
- * than dropping them to a raw `server.registerTool` with a hand-rolled gate.
+ * Pass `{ anyOf: [...] }` for the rare tool that several permissions legitimately reach (workspace
+ * discovery), and `{ byInput }` for a tool whose input decides what it reads.
  *
  * A mutating tool also declares `audit`, and a refusal on it is written to the audit log as a failed
  * attempt before the 403 goes back (ENG-2872).
  *
- * Adding a tool or a scope family: docs/development/technical-handbook/mcp-server.mdx ("Adding a tool").
+ * Adding a tool: docs/development/technical-handbook/mcp-server.mdx ("Adding a tool").
  */
-export function registerScopedTool<
+export function registerMcpTool<
   InputSchema extends StandardSchemaWithJSON,
   OutputSchema extends StandardSchemaWithJSON,
 >(
   server: McpServer,
   name: string,
-  config: ScopedToolConfig<InputSchema, OutputSchema>,
-  // Non-empty tuple: a tool cannot be registered with `[]`, which would gate on nothing.
-  requiredScopes: TMcpScopeRequirement,
+  config: McpToolConfig<InputSchema, OutputSchema>,
+  permissions: TMcpToolPermissions,
   handler: ToolCallback<InputSchema>
 ): void {
+  assertDeclaresPermissions(name, permissions);
+
   // `audit` is the guard's, not the SDK's. Stripped only when present, so a plain config still reaches
   // `registerTool` as the very object the caller built.
   const { audit, ...toolConfig } = config;
@@ -207,7 +254,7 @@ export function registerScopedTool<
   const guardedHandler = (async (input: unknown, ctx: TMcpToolContext) => {
     const authInfo = getMcpToolAuthInfo(ctx);
     const requestId = getMcpRequestId(authInfo);
-    const scopeError = await guardRequirement(requiredScopes, input, authInfo, requestId);
+    const scopeError = await guardPermissions(permissions, input, authInfo, requestId);
     if (scopeError) {
       if (audit) {
         await auditRefusedMutation(name, audit, input, authInfo, requestId);

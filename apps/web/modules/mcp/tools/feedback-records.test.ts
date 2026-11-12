@@ -848,7 +848,7 @@ describe("update_feedback_record round-trip", () => {
 });
 
 /**
- * ENG-2119 moved the scope gate out of the two shared handler factories and into `registerScopedTool`,
+ * ENG-2119 moved the scope gate out of the two shared handler factories and into `registerMcpTool`,
  * which turned one gate shared by all ten tools into ten independent per-tool arguments. Nothing pinned
  * those arguments: reverting a tool to a raw `server.registerTool` left the suite green, and so did
  * gating a read tool on the write scope. Both are exactly the mistakes the refactor makes easy.

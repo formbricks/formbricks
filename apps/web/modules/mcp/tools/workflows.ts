@@ -4,7 +4,7 @@ import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflo
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateWorkflowInput,
@@ -130,7 +130,7 @@ async function runWorkflowMutation(
 }
 
 export function registerWorkflowTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_workflows",
     {
@@ -144,7 +144,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    [{ permission: "workflows", level: "read" }],
     async (input: TMcpListWorkflowsInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -158,7 +158,7 @@ export function registerWorkflowTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_workflow",
     {
@@ -172,7 +172,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    [{ permission: "workflows", level: "read" }],
     async (input: TMcpGetWorkflowInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -183,7 +183,7 @@ export function registerWorkflowTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_workflow_runs",
     {
@@ -198,7 +198,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    [{ permission: "workflowRuns", level: "read" }],
     async (input: TMcpListWorkflowRunsInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -212,7 +212,7 @@ export function registerWorkflowTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_workflow_run",
     {
@@ -227,7 +227,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    [{ permission: "workflowRuns", level: "read" }],
     async (input: TMcpGetWorkflowRunInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -238,7 +238,7 @@ export function registerWorkflowTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "test_workflow",
     {
@@ -259,7 +259,7 @@ export function registerWorkflowTools(server: McpServer): void {
       },
       inputSchema: ZMcpTestWorkflowInput,
     },
-    ["workflows:read"],
+    [{ permission: "workflows", level: "read" }],
     async (input: TMcpTestWorkflowInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -273,7 +273,7 @@ export function registerWorkflowTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_workflow",
     {
@@ -288,14 +288,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpCreateWorkflowInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "created", (ctx) =>
         workflowsHandlers.create({ req: buildWorkflowsBodyRequest(input), ctx })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "patch_workflow",
     {
@@ -313,7 +313,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpPatchWorkflowInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.patch({
@@ -324,7 +324,7 @@ export function registerWorkflowTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "duplicate_workflow",
     {
@@ -340,7 +340,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpDuplicateWorkflowInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "created", (ctx) =>
         workflowsHandlers.duplicate({
@@ -351,7 +351,7 @@ export function registerWorkflowTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "delete_workflow",
     {
@@ -366,14 +366,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "deleted", (ctx) =>
         workflowsHandlers.delete({ ctx, params: { workflowId: input.workflowId } })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "enable_workflow",
     {
@@ -393,14 +393,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.enable({ ctx, params: { workflowId: input.workflowId } })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "disable_workflow",
     {
@@ -416,14 +416,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.disable({ ctx, params: { workflowId: input.workflowId } })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "archive_workflow",
     {
@@ -439,14 +439,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.archive({ ctx, params: { workflowId: input.workflowId } })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "unarchive_workflow",
     {
@@ -461,7 +461,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.unarchive({ ctx, params: { workflowId: input.workflowId } })
