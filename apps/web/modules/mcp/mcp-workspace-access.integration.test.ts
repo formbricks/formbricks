@@ -502,6 +502,9 @@ describe("organization & workspace access on MCP calls", () => {
     const stranger = await prisma.organization.create({ data: { name: "Stranger" } });
     await setAccess(setup, { access: "organizations", organizationIds: [setup.acmeId, stranger.id] });
 
-    expect((await getMcpGrant(setup.userId, setup.clientId))?.organizationIds).toEqual([setup.acmeId]);
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      access: "organizations",
+      organizationIds: [setup.acmeId],
+    });
   });
 });

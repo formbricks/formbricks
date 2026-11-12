@@ -157,9 +157,7 @@ describe("Authorized apps' Edit", () => {
     expect(edited.body.data).toEqual({
       clientId: setup.clientId,
       permissions: { surveys: "read" },
-      access: "all",
-      organizationIds: [],
-      workspaceIds: [],
+      access: { access: "all" },
     });
     expect(succeeded(await listSurveys(access_token, setup))).toBe(true);
     expectNotPermitted(await renameSurvey(access_token, setup), "Surveys: Write");

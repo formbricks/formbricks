@@ -37,14 +37,12 @@ const USER_ID = "cluser1111111111111111111";
 const CLIENT_ID = "QhXbTnRZsWzKfLpAeVcMdYuJ";
 const GRANT_ID = "clgrant111111111111111111";
 
-const stored = (permissions: Record<string, string>, access = "all", workspaceIds: string[] = []) => ({
+const stored = (permissions: Record<string, string>, workspaceIds?: string[]) => ({
   id: GRANT_ID,
   userId: USER_ID,
   clientId: CLIENT_ID,
-  access,
   permissions,
-  organizationIds: [],
-  workspaceIds,
+  ...(workspaceIds ? { access: "workspaces", workspaceIds } : { access: "all" }),
 });
 
 const edit = (body: unknown, clientId = CLIENT_ID) =>
@@ -77,9 +75,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     expect((await response.json()).data).toEqual({
       clientId: CLIENT_ID,
       permissions: { surveys: "read" },
-      access: "all",
-      organizationIds: [],
-      workspaceIds: [],
+      access: { access: "all" },
     });
     expect(mocks.editMcpGrant).toHaveBeenCalledWith({
       userId: USER_ID,
@@ -109,7 +105,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     mocks.editMcpGrant.mockResolvedValueOnce({
       status: "saved",
       before: stored({ surveys: "read" }),
-      after: stored({ surveys: "read" }, "workspaces", ["ws_1"]),
+      after: stored({ surveys: "read" }, ["ws_1"]),
     });
 
     const response = await edit({
@@ -119,7 +115,9 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     });
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toMatchObject({ access: "workspaces", workspaceIds: ["ws_1"] });
+    expect((await response.json()).data).toMatchObject({
+      access: { access: "workspaces", workspaceIds: ["ws_1"] },
+    });
     expect(mocks.editMcpGrant).toHaveBeenCalledWith(
       expect.objectContaining({ access: { access: "workspaces", workspaceIds: ["ws_1"] } })
     );

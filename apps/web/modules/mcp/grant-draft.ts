@@ -1,10 +1,5 @@
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "./grant";
-import {
-  type TMcpGrantAccessDraft,
-  type TMcpStoredGrantAccess,
-  isSameMcpGrantAccess,
-  toMcpGrantAccessSelection,
-} from "./grant-access";
+import { type TMcpGrantAccessDraft, isSameMcpGrantAccess, toMcpGrantAccessSelection } from "./grant-access";
 import { isMcpGrantEmpty, isSameMcpGrant } from "./grant-editor";
 
 /**
@@ -16,7 +11,7 @@ import { isMcpGrantEmpty, isSameMcpGrant } from "./grant-editor";
 export type TMcpGrantDraft = { permissions: TMcpGrantPermissions; access: TMcpGrantAccessDraft };
 
 /** The grant Edit opened with; the consent screen has none to compare against. */
-export type TMcpSavedGrant = { permissions: TMcpGrantPermissions; access: TMcpStoredGrantAccess };
+export type TMcpSavedGrant = { permissions: TMcpGrantPermissions; access: TMcpGrantAccessSelection };
 
 export type TMcpGrantDraftState = {
   /** The draft gives no permission: shown as a hint, and it can't be submitted. */

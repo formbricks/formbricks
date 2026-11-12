@@ -7,12 +7,12 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
-  type TMcpGrant,
   type TMcpGrantAccess,
   type TMcpGrantAccessSelection,
   type TMcpGrantPermissions,
   parseMcpGrantPermissions,
 } from "./grant";
+import { getMcpGrantSelectedIds } from "./grant-access";
 
 /**
  * Where grants live (ADR-0041): one `McpGrant` row per MCP connection (user + client). Saving and
@@ -27,15 +27,16 @@ import {
  * rather than when the outbox delivers.
  */
 
-/** A grant as stored, with what an audit entry names it by and what it selects. */
-export type TStoredMcpGrant = TMcpGrant & {
+/**
+ * A grant as stored, with what an audit entry names it by, and its organization & workspace access with
+ * what that selects: organizations for Only selected organizations, workspaces for Only selected
+ * workspaces, nothing for All access.
+ */
+export type TStoredMcpGrant = TMcpGrantAccessSelection & {
   id: string;
   userId: string;
   clientId: string;
-  /** The selected organizations (Only selected organizations), else empty. */
-  organizationIds: string[];
-  /** The selected workspaces (Only selected workspaces), else empty. */
-  workspaceIds: string[];
+  permissions: TMcpGrantPermissions;
 };
 
 const GRANT_SELECT = {
@@ -59,17 +60,39 @@ type TGrantRow = {
   workspaces: { workspaceId: string }[];
 };
 
-const toStoredGrant = (row: TGrantRow): TStoredMcpGrant => ({
-  id: row.id,
-  userId: row.userId,
-  clientId: row.clientId,
-  access: row.access,
-  permissions: parseMcpGrantPermissions(row.permissions),
-  // Only the selection the mode reads: a stray row of the other kind reaches nothing (ADR-0042).
-  organizationIds:
-    row.access === "organizations" ? row.organizations.map(({ organizationId }) => organizationId) : [],
-  workspaceIds: row.access === "workspaces" ? row.workspaces.map(({ workspaceId }) => workspaceId) : [],
+/**
+ * A grant row's organization & workspace access. Only the selection its mode reads: a stray row of the
+ * other kind reaches nothing (ADR-0042), so it is not shown or audited either.
+ */
+export const readMcpGrantAccess = (
+  row: Pick<TGrantRow, "access" | "organizations" | "workspaces">
+): TMcpGrantAccessSelection => {
+  switch (row.access) {
+    case "all":
+      return { access: "all" };
+    case "organizations":
+      return {
+        access: "organizations",
+        organizationIds: row.organizations.map(({ organizationId }) => organizationId),
+      };
+    case "workspaces":
+      return { access: "workspaces", workspaceIds: row.workspaces.map(({ workspaceId }) => workspaceId) };
+  }
+};
+
+const withAccess = (
+  grant: Pick<TStoredMcpGrant, "id" | "userId" | "clientId" | "permissions">,
+  access: TMcpGrantAccessSelection
+): TStoredMcpGrant => ({
+  id: grant.id,
+  userId: grant.userId,
+  clientId: grant.clientId,
+  permissions: grant.permissions,
+  ...access,
 });
+
+const toStoredGrant = (row: TGrantRow): TStoredMcpGrant =>
+  withAccess({ ...row, permissions: parseMcpGrantPermissions(row.permissions) }, readMcpGrantAccess(row));
 
 /** The connection's grant, or `null` when it has none. */
 export const getMcpGrant = async (userId: string, clientId: string): Promise<TStoredMcpGrant | null> => {
@@ -99,36 +122,43 @@ const ownSelection = async (
   tx: Prisma.TransactionClient,
   userId: string,
   selection: TMcpGrantAccessSelection
-): Promise<{ organizationIds: string[]; workspaceIds: string[] }> => {
+): Promise<TMcpGrantAccessSelection> => {
   switch (selection.access) {
     case "all":
-      return { organizationIds: [], workspaceIds: [] };
+      return selection;
     case "organizations": {
       const memberships = await tx.membership.findMany({
         where: { userId, organizationId: { in: selection.organizationIds } },
         select: { organizationId: true },
+        orderBy: { organizationId: "asc" },
       });
-      return { organizationIds: memberships.map(({ organizationId }) => organizationId), workspaceIds: [] };
+      return {
+        access: "organizations",
+        organizationIds: memberships.map(({ organizationId }) => organizationId),
+      };
     }
     case "workspaces": {
       const workspaces = await tx.workspace.findMany({
         where: { id: { in: selection.workspaceIds }, organization: { memberships: { some: { userId } } } },
         select: { id: true },
+        orderBy: { id: "asc" },
       });
-      return { organizationIds: [], workspaceIds: workspaces.map(({ id }) => id) };
+      return { access: "workspaces", workspaceIds: workspaces.map(({ id }) => id) };
     }
   }
 };
 
 /**
- * Replaces the grant's selection rows with `selected`: deletes the rows no longer selected and inserts
- * the new ones, so an unchanged selection writes nothing and queues no projection.
+ * Replaces the grant's selection rows with what `access` selects: deletes the rows no longer selected
+ * (every row of the other kind included) and inserts the new ones, so an unchanged selection writes
+ * nothing and queues no projection.
  */
 const replaceSelection = async (
   tx: Prisma.TransactionClient,
   grantId: string,
-  selected: { organizationIds: string[]; workspaceIds: string[] }
+  access: TMcpGrantAccessSelection
 ): Promise<void> => {
+  const selected = getMcpGrantSelectedIds(access);
   await tx.mcpGrantOrganization.deleteMany({
     where: { grantId, organizationId: { notIn: selected.organizationIds } },
   });
@@ -186,7 +216,7 @@ export const saveMcpGrant = async (
 
   const selected = await ownSelection(tx, userId, access);
   await replaceSelection(tx, row.id, selected);
-  return { before, after: { ...toStoredGrant(row), ...selected } };
+  return { before, after: withAccess(toStoredGrant(row), selected) };
 };
 
 /**
@@ -220,14 +250,14 @@ export const projectMcpGrants = async (grantIds: ReadonlyArray<string>): Promise
   );
 };
 
-/** What an audit entry records of a grant: the client and the grant itself, not its row ids. */
-export const getMcpGrantAuditSnapshot = (grant: TStoredMcpGrant) => ({
-  clientId: grant.clientId,
-  access: grant.access,
-  ...(grant.access === "organizations" ? { organizationIds: grant.organizationIds } : {}),
-  ...(grant.access === "workspaces" ? { workspaceIds: grant.workspaceIds } : {}),
-  permissions: grant.permissions,
-});
+/**
+ * What an audit entry records of a grant: the client and the grant itself (its access with what that
+ * selects, and its permissions), not its row ids.
+ */
+export const getMcpGrantAuditSnapshot = (grant: TStoredMcpGrant) => {
+  const { id: _id, userId: _userId, clientId, permissions, ...access } = grant;
+  return { clientId, ...access, permissions };
+};
 
 /**
  * Writes the audit entry for a grant that was created, changed or deleted: the acting user, the client

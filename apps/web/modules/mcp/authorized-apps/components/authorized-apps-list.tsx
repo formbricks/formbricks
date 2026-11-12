@@ -84,7 +84,7 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
                 <TableCell>
                   <McpGrantSummary
                     permissions={connection.permissions ?? {}}
-                    access={connection.access ? { ...connection, access: connection.access } : null}
+                    access={connection.access}
                     isDashboardViewer={data.isDashboardViewer}
                   />
                 </TableCell>

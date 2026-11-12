@@ -4,14 +4,19 @@ import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewe
 import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MAX_LISTED_MCP_CONNECTIONS } from "./constants";
 import {
-  type TMcpGrantAccess,
   type TMcpGrantAccessSelection,
   type TMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
   isMcpGrantWithinCap,
   parseMcpGrantPermissions,
 } from "./grant";
-import { type TStoredMcpGrant, hasMcpGrant, projectMcpGrants, saveMcpGrant } from "./grant-store";
+import {
+  type TStoredMcpGrant,
+  hasMcpGrant,
+  projectMcpGrants,
+  readMcpGrantAccess,
+  saveMcpGrant,
+} from "./grant-store";
 
 /**
  * A user's MCP connections as Authorized apps shows and edits them (ENG-7152): one per MCP client the user
@@ -30,11 +35,10 @@ export type TMcpConnection = {
   updatedAt: Date;
   /** `null` for a consent left without a grant, which `/api/mcp` refuses and the next refresh ends. */
   permissions: TMcpGrantPermissions | null;
-  /** The grant's organization & workspace access (ENG-7153), `null` without a grant. */
-  access: TMcpGrantAccess | null;
-  /** What it selects: organizations for Only selected organizations, workspaces for Only selected workspaces. */
-  organizationIds: string[];
-  workspaceIds: string[];
+  /**
+   * The grant's organization & workspace access with what it selects (ENG-7153), `null` without a grant.
+   */
+  access: TMcpGrantAccessSelection | null;
   /** What the client's consented scopes ask for: Edit can't give more (ADR-0041). */
   cap: TMcpGrantPermissions;
 };
@@ -98,14 +102,7 @@ export const listMcpConnections = async (
       connectedAt: consent.createdAt,
       updatedAt: grant ? latest(consent.updatedAt, grant.updatedAt) : consent.updatedAt,
       permissions: grant ? parseMcpGrantPermissions(grant.permissions) : null,
-      access: grant?.access ?? null,
-      // Only the selection the mode reads, as `can()` does (ADR-0042).
-      organizationIds:
-        grant?.access === "organizations"
-          ? grant.organizations.map(({ organizationId }) => organizationId)
-          : [],
-      workspaceIds:
-        grant?.access === "workspaces" ? grant.workspaces.map(({ workspaceId }) => workspaceId) : [],
+      access: grant ? readMcpGrantAccess(grant) : null,
       cap: capForScopes(consent.scopes, isDashboardViewer),
     });
   }

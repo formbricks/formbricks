@@ -2,15 +2,15 @@
 
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
-import { type TMcpStoredGrantAccess, getMcpGrantAccessSummary } from "@/modules/mcp/grant-access";
+import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import { getMcpGrantAccessSummary } from "@/modules/mcp/grant-access";
 import { getMcpGrantSummary } from "@/modules/mcp/grant-editor";
 import { getMcpCategoryLabel, getMcpCategoryLevelLabel } from "@/modules/mcp/grant-editor-labels";
 
 interface McpGrantSummaryProps {
   permissions: TMcpGrantPermissions;
   /** The grant's organization & workspace access; `null` for a connection without a grant. */
-  access: TMcpStoredGrantAccess | null;
+  access: TMcpGrantAccessSelection | null;
   isDashboardViewer: boolean;
 }
 

@@ -21,19 +21,24 @@ export type TMcpGrantAccessOptions = {
   workspaces: { id: string; name: string; organizationId: string; organizationName: string }[];
 };
 
-/** A saved grant's access, as Authorized apps lists it (the picks of its own mode only). */
-export type TMcpStoredGrantAccess = TMcpGrantAccessDraft;
-
 type TTranslate = (key: string, values?: Record<string, string>) => string;
 
+/**
+ * The ids `selection` picks, as two lists: the organizations of Only selected organizations, the
+ * workspaces of Only selected workspaces, and nothing else. For what keeps both lists side by side (the
+ * draft, the selection rows); everything else reads the selection itself.
+ */
+export const getMcpGrantSelectedIds = (
+  selection: TMcpGrantAccessSelection
+): { organizationIds: string[]; workspaceIds: string[] } => ({
+  organizationIds: selection.access === "organizations" ? [...selection.organizationIds] : [],
+  workspaceIds: selection.access === "workspaces" ? [...selection.workspaceIds] : [],
+});
+
 /** What the editor opens with: the grant's own access, or All access for a client with none yet. */
-export const initialMcpGrantAccessDraft = (stored: TMcpStoredGrantAccess | null): TMcpGrantAccessDraft =>
+export const initialMcpGrantAccessDraft = (stored: TMcpGrantAccessSelection | null): TMcpGrantAccessDraft =>
   stored
-    ? {
-        access: stored.access,
-        organizationIds: [...stored.organizationIds],
-        workspaceIds: [...stored.workspaceIds],
-      }
+    ? { access: stored.access, ...getMcpGrantSelectedIds(stored) }
     : { access: "all", organizationIds: [], workspaceIds: [] };
 
 /**
@@ -67,17 +72,15 @@ const sameIds = (a: readonly string[], b: readonly string[]): boolean =>
 /** True when `selection` saves exactly what the grant already has, so Edit has nothing to save. */
 export const isSameMcpGrantAccess = (
   selection: TMcpGrantAccessSelection,
-  saved: TMcpStoredGrantAccess
+  saved: TMcpGrantAccessSelection
 ): boolean => {
-  if (selection.access !== saved.access) return false;
-  switch (selection.access) {
-    case "all":
-      return true;
-    case "organizations":
-      return sameIds(selection.organizationIds, saved.organizationIds);
-    case "workspaces":
-      return sameIds(selection.workspaceIds, saved.workspaceIds);
-  }
+  const picked = getMcpGrantSelectedIds(selection);
+  const kept = getMcpGrantSelectedIds(saved);
+  return (
+    selection.access === saved.access &&
+    sameIds(picked.organizationIds, kept.organizationIds) &&
+    sameIds(picked.workspaceIds, kept.workspaceIds)
+  );
 };
 
 /**
@@ -85,21 +88,23 @@ export const isSameMcpGrantAccess = (
  * (its workspaces or organizations were deleted, or the user lost them): the grant stays listed so the
  * user can edit or revoke it.
  */
-export const getMcpGrantAccessSummary = (grant: TMcpStoredGrantAccess, t: TTranslate): string => {
-  const organizations = grant.organizationIds.length;
-  const workspaces = grant.workspaceIds.length;
+export const getMcpGrantAccessSummary = (grant: TMcpGrantAccessSelection, t: TTranslate): string => {
   switch (grant.access) {
     case "all":
       return t("auth.oauth.access.summary_all");
-    case "organizations":
+    case "organizations": {
+      const organizations = grant.organizationIds.length;
       if (organizations === 0) return t("auth.oauth.access.summary_none");
       return organizations === 1
         ? t("auth.oauth.access.summary_one_organization")
         : t("auth.oauth.access.summary_organizations", { count: String(organizations) });
-    case "workspaces":
+    }
+    case "workspaces": {
+      const workspaces = grant.workspaceIds.length;
       if (workspaces === 0) return t("auth.oauth.access.summary_none");
       return workspaces === 1
         ? t("auth.oauth.access.summary_one_workspace")
         : t("auth.oauth.access.summary_workspaces", { count: String(workspaces) });
+    }
   }
 };

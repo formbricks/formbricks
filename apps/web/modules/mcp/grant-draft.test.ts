@@ -1,9 +1,18 @@
 import { describe, expect, test } from "vitest";
-import { getMcpGrantDraftState } from "./grant-draft";
+import type { TMcpGrantAccessDraft } from "./grant-access";
+import { type TMcpSavedGrant, getMcpGrantDraftState } from "./grant-draft";
 
-const ALL = { access: "all", organizationIds: [], workspaceIds: [] } as const;
-const ONE_WORKSPACE = { access: "workspaces", organizationIds: [], workspaceIds: ["ws_1"] } as const;
-const NOTHING_PICKED = { access: "workspaces", organizationIds: ["org_1"], workspaceIds: [] } as const;
+const ALL: TMcpGrantAccessDraft = { access: "all", organizationIds: [], workspaceIds: [] };
+const ONE_WORKSPACE: TMcpGrantAccessDraft = {
+  access: "workspaces",
+  organizationIds: [],
+  workspaceIds: ["ws_1"],
+};
+const NOTHING_PICKED: TMcpGrantAccessDraft = {
+  access: "workspaces",
+  organizationIds: ["org_1"],
+  workspaceIds: [],
+};
 
 describe("getMcpGrantDraftState on the consent screen (no saved grant)", () => {
   test("allows a grant that gives something, with the access it saves", () => {
@@ -29,7 +38,10 @@ describe("getMcpGrantDraftState on the consent screen (no saved grant)", () => {
 });
 
 describe("getMcpGrantDraftState on Edit (against the saved grant)", () => {
-  const saved = { permissions: { surveys: "write", responses: "read" }, access: ONE_WORKSPACE } as const;
+  const saved: TMcpSavedGrant = {
+    permissions: { surveys: "write", responses: "read" },
+    access: { access: "workspaces", workspaceIds: ["ws_1"] },
+  };
 
   test("disables Save while nothing changed, whatever order the levels were set in", () => {
     expect(

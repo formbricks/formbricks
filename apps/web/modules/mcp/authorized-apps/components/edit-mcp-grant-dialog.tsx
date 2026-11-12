@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { TMcpConnectionResource } from "@/app/api/internal/mcp-grants/lib/serializers";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { McpGrantDraftFields } from "@/modules/mcp/components/mcp-grant-draft-fields";
-import type { TMcpGrantAccess, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { type TMcpGrantAccessOptions, initialMcpGrantAccessDraft } from "@/modules/mcp/grant-access";
 import { useMcpGrantDraft } from "@/modules/mcp/hooks/use-mcp-grant-draft";
 import { Button } from "@/modules/ui/components/button";
@@ -21,7 +21,10 @@ import {
 import { useUpdateMcpGrant } from "../hooks/use-update-mcp-grant";
 
 interface EditMcpGrantDialogProps {
-  connection: TMcpConnectionResource & { permissions: TMcpGrantPermissions; access: TMcpGrantAccess };
+  connection: TMcpConnectionResource & {
+    permissions: TMcpGrantPermissions;
+    access: TMcpGrantAccessSelection;
+  };
   /** The organizations and workspaces the access picker offers. */
   accessOptions: TMcpGrantAccessOptions;
   clientName: string;
@@ -44,8 +47,8 @@ export const EditMcpGrantDialog = ({
 }: Readonly<EditMcpGrantDialogProps>) => {
   const { t } = useTranslation();
   const draft = useMcpGrantDraft(
-    { permissions: connection.permissions, access: initialMcpGrantAccessDraft(connection) },
-    { permissions: connection.permissions, access: connection }
+    { permissions: connection.permissions, access: initialMcpGrantAccessDraft(connection.access) },
+    { permissions: connection.permissions, access: connection.access }
   );
   const updateGrant = useUpdateMcpGrant();
 
