@@ -857,7 +857,7 @@ describe("POST /api/mcp", () => {
       code: "forbidden",
       // Names the scope this specific call needed, not just that some scope was missing — that is
       // the only thing the client can act on.
-      detail: "OAuth token does not include the required MCP scope: surveys:write",
+      detail: expect.stringContaining("its OAuth token lacks the scope surveys:write."),
       requestId: "req_read_only",
     });
   });
@@ -905,7 +905,7 @@ describe("POST /api/mcp", () => {
       code: "forbidden",
       // The refusal names the scope the client must obtain, since a JSON-RPC tool result carries no
       // WWW-Authenticate header for it to read.
-      detail: "OAuth token does not include the required MCP scope: workflows:write",
+      detail: expect.stringContaining("its OAuth token lacks the scope workflows:write."),
       requestId: "req_wf_read_only",
     });
     // The scope gate fires BEFORE any mutation side effect — the workflow handler never runs — but the

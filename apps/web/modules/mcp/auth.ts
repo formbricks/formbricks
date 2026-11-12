@@ -689,20 +689,34 @@ export function hasAnyMcpScope(authInfo: AuthInfo | undefined, allowedScopes: re
 }
 
 /**
- * The scopes are named in `detail`, not only in the `WWW-Authenticate` challenge, because the tool path
- * cannot carry a header: `guardMcpScopes` hands this Response to `responseToMcpToolResult`, which
- * serializes the JSON body into a JSON-RPC result and drops every header. Without them in the body a
- * client that is refused a tool call learns only "some scope is missing" and cannot re-authorize for the
- * right one. The challenge is still set for the transport-level 403, where the header does reach clients.
+ * The refusal for a tool whose permissions the token's scopes don't reach: the scopes cap the grant
+ * (ADR-0041), so this is the grant-style "Not permitted", naming the permissions (`needs`), and saying the
+ * client must be reconnected, since only a new consent gives the token more scopes. The scopes the token
+ * lacks are named in `detail` too, not only in the `WWW-Authenticate` challenge, because the tool path
+ * cannot carry a header: the guard hands this Response to `responseToMcpToolResult`, which serializes the
+ * JSON body into a JSON-RPC result and drops every header. The challenge (every scope the tool needs) is
+ * still set for the transport-level 403, where the header does reach clients.
  */
-export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
+export function createMcpScopeNotPermittedResponse(
+  requestId: string,
+  {
+    needs,
+    missingScopes,
+    challengeScopes,
+    anyOf = false,
+  }: { needs: string; missingScopes: string[]; challengeScopes: string[]; anyOf?: boolean }
+): Response {
+  const scopes = missingScopes.join(" ");
+  let lacks = `lacks the scope ${scopes}`;
+  if (anyOf) lacks = `lacks every one of the scopes ${scopes}`;
+  else if (missingScopes.length > 1) lacks = `lacks the scopes ${scopes}`;
   return withInsufficientScopeChallenge(
     problemForbidden(
       requestId,
-      `OAuth token does not include the required MCP scope: ${scopes.join(" ")}`,
+      `Not permitted: the user's connection of this MCP client does not include ${needs}, because its OAuth token ${lacks}. Ask the user to reconnect the client and give it this access.`,
       "/api/mcp"
     ),
-    scopes
+    challengeScopes
   );
 }
 

@@ -492,7 +492,7 @@ describe("MCP scope enforcement (ENG-1967)", () => {
   const insufficientScope = (scope: string) => ({
     status: 403,
     code: "forbidden",
-    detail: `OAuth token does not include the required MCP scope: ${scope}`,
+    detail: expect.stringContaining(`its OAuth token lacks the scope ${scope}.`),
   });
 
   // Every mutating tool + a representative valid input for it.

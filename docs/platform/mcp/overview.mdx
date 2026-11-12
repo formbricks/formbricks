@@ -122,6 +122,18 @@ needs, so the agent can tell you what to change:
 }
 ```
 
+When the client's scopes are what stop it (it connected without asking for that access), the `detail` says
+so, names the scope it lacks, and asks for a reconnect, since **Edit** can't give more than the client asked
+for:
+
+```json
+{
+  "status": 403,
+  "code": "forbidden",
+  "detail": "Not permitted: the user's connection of this MCP client does not include Contacts: Read, because its OAuth token lacks the scope audience:read. Ask the user to reconnect the client and give it this access."
+}
+```
+
 ### Organization & workspace access
 
 A grant also says **which organizations and workspaces** the client reaches. You choose it on the consent

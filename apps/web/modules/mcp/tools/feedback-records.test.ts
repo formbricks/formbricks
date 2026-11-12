@@ -894,8 +894,8 @@ describe("every feedback-record tool is gated on its own scope", () => {
       .handler({ workspaceId }, { http: { authInfo: { ...authInfo, scopes: [other] } } });
 
     expect(result.isError).toBe(true);
-    expect((result.structuredContent as { error: { detail: string } }).error.detail).toBe(
-      `OAuth token does not include the required MCP scope: feedbackRecords:${kind}`
+    expect((result.structuredContent as { error: { detail: string } }).error.detail).toContain(
+      `its OAuth token lacks the scope feedbackRecords:${kind}.`
     );
   });
 });

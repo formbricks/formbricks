@@ -218,8 +218,9 @@ re-confirmed periodically for safety.
   </Accordion>
   <Accordion title="A tool call is refused with “Not permitted”">
     The client's grant doesn't give the permission at the level the tool needs; the error names both,
-    such as `Surveys: Write`. Raise it with **Edit** under **Authorized Apps**; if that level can't be
-    chosen there, reconnect the client and approve the matching scope.
+    such as `Surveys: Write`. Raise it with **Edit** under **Authorized Apps**. When the error also says
+    the client's OAuth token lacks a scope, the client didn't ask for that access when it connected:
+    reconnect the client and approve the matching scope.
   </Accordion>
   <Accordion title="Self-hosted: the browser can't complete sign-in / redirects fail">
     OAuth discovery and redirects are built from your configured base URL. Serve Formbricks from a

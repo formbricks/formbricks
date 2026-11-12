@@ -134,8 +134,9 @@ a scope family, and the gate maps it to that family's scope at the declared leve
 needs `surveys:read`, Charts at `write` needs `dashboards:write` — so the table above still says which
 scope opens each tool. A tool cannot be registered without a permission: the type refuses an empty list,
 and a list that is empty or names a permission or level the registry does not offer throws at
-registration. A new tool inherits enforcement by construction — the gate returns a
-`403 insufficient_scope` before the handler touches a v3 operation. The same gate then holds an OAuth
+registration. A new tool inherits enforcement by construction — the gate refuses a token whose scopes
+don't reach a declared permission before the handler touches a v3 operation, with a 403 that names the
+permission, the missing scope and that the client must reconnect (and an `insufficient_scope` challenge). The same gate then holds an OAuth
 call to the connection's **grant** (ADR-0041): each declared permission must be at least the declared
 level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
@@ -772,8 +773,10 @@ Reusing `<resource>:read` / `<resource>:write` needs nothing more. A new resourc
    migration is listed in its `REPAIR_MIGRATIONS`. Without it, on every instance that already upgraded, a
    client asking only for the new scope gets `invalid_scope`, and one asking for it alongside others is
    silently granted less than it asked for. Neither logs.
-2. API-key scopes in `getMcpScopes` (`modules/mcp/auth.ts`), the consent label in `getOAuthScopeLabel` plus its
-   en-US string (then `pnpm i18n`), and the `anyOf` list on `list_workspaces`.
+2. API-key scopes in `getMcpScopes` (`modules/mcp/auth.ts`), the new category and its permissions in the
+   permission registry (`modules/mcp/permissions.ts`), which is what the consent screen and Authorized apps
+   show, their labels in `grant-editor-labels.ts` plus the en-US strings (then `pnpm i18n`), and the `anyOf`
+   list on `list_workspaces`.
 3. `registerXTools(server)` in `modules/mcp/server.ts`, before the final `instrumentMcpServerWithTracing`.
 4. Last, `MCP_RESOURCE_SCOPES`, which advertises the scope, in the same release as a data migration that
    appends the pair to existing `oauthClient.scopes` rows. Mirror read/write (`:read` only for clients that

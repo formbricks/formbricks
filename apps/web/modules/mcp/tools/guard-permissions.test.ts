@@ -128,9 +128,11 @@ describe("registerMcpTool", () => {
     expect((result.structuredContent as ScopeErrorContent).error).toMatchObject({
       status: 403,
       code: "forbidden",
-      // The missing scope must be in the body: this result reaches the client as a JSON-RPC payload
-      // with no headers, so the WWW-Authenticate challenge cannot tell it what to re-authorize for.
-      detail: "OAuth token does not include the required MCP scope: surveys:write",
+      // The permission and the missing scope must be in the body: this result reaches the client as a
+      // JSON-RPC payload with no headers, so the WWW-Authenticate challenge cannot tell it what to
+      // re-authorize for.
+      detail:
+        "Not permitted: the user's connection of this MCP client does not include Surveys: Write, because its OAuth token lacks the scope surveys:write. Ask the user to reconnect the client and give it this access.",
       requestId: "req_denied",
     });
   });
@@ -155,9 +157,9 @@ describe("registerMcpTool", () => {
 
     expect(handler).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    // Every required scope is listed, not just the first one that failed.
+    // Names what the token lacks, not what it already holds.
     expect((result.structuredContent as ScopeErrorContent).error.detail).toBe(
-      "OAuth token does not include the required MCP scope: dashboards:read feedbackRecords:read"
+      "Not permitted: the user's connection of this MCP client does not include Feedback records: Read, because its OAuth token lacks the scope feedbackRecords:read. Ask the user to reconnect the client and give it this access."
     );
   });
 
@@ -179,7 +181,7 @@ describe("registerMcpTool", () => {
       .handler({}, { http: { authInfo: authInfoWithScopes(["responses:read"]) } });
 
     expect((result.structuredContent as ScopeErrorContent).error.detail).toBe(
-      "OAuth token does not include the required MCP scope: surveys:read"
+      "Not permitted: the user's connection of this MCP client does not include Surveys: Read and Survey styling: Read, because its OAuth token lacks the scope surveys:read. Ask the user to reconnect the client and give it this access."
     );
   });
 
@@ -207,7 +209,7 @@ describe("registerMcpTool", () => {
     expect(handler).toHaveBeenCalledTimes(1);
     expect(refused.isError).toBe(true);
     expect((refused.structuredContent as ScopeErrorContent).error.detail).toBe(
-      "OAuth token does not include the required MCP scope: surveys:read dashboards:read"
+      "Not permitted: the user's connection of this MCP client does not include any of Surveys: Read, Dashboards: Read, because its OAuth token lacks every one of the scopes surveys:read dashboards:read. Ask the user to reconnect the client and give it this access."
     );
   });
 
