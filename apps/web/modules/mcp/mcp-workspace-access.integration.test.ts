@@ -640,13 +640,32 @@ describe("organization & workspace access on MCP calls", () => {
     expect(await listedWorkspaceIds(setup)).toEqual([setup.inside.workspaceId]);
   });
 
-  test("a selection the user doesn't belong to is not stored", async () => {
+  test("Edit refuses an organization or workspace the user can't pick, and keeps the grant as it was", async () => {
+    await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
     const stranger = await prisma.organization.create({ data: { name: "Stranger" } });
-    await setAccess(setup, { access: "organizations", organizationIds: [setup.acmeId, stranger.id] });
+    const strangerWorkspace = await prisma.workspace.create({
+      data: { name: "Not mine", organizationId: stranger.id },
+    });
 
+    for (const access of [
+      { access: "organizations", organizationIds: [setup.acmeId, stranger.id] },
+      { access: "workspaces", workspaceIds: [setup.inside.workspaceId, strangerWorkspace.id] },
+    ] satisfies TMcpGrantAccessSelection[]) {
+      const edited = await editMcpGrant({
+        userId: setup.userId,
+        clientId: setup.clientId,
+        permissions: READ_ALL,
+        access,
+        isDashboardViewer: false,
+      });
+      expect(edited).toEqual({
+        status: "selection_unreachable",
+        field: access.access === "organizations" ? "organizationIds" : "workspaceIds",
+      });
+    }
     expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
-      access: "organizations",
-      organizationIds: [setup.acmeId],
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId],
     });
   });
 });

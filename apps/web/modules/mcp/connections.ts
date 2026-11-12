@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
+import { listMcpGrantAccessOptions } from "./access-options";
 import { MAX_LISTED_MCP_CONNECTIONS } from "./constants";
 import {
   type TMcpGrantAccessSelection,
@@ -112,12 +113,33 @@ export const listMcpConnections = async (
 export type TEditMcpGrantResult =
   | { status: "not_found" }
   | { status: "beyond_scopes" }
+  | { status: "selection_unreachable"; field: "organizationIds" | "workspaceIds" }
   | { status: "saved"; before: TStoredMcpGrant; after: TStoredMcpGrant };
 
 /**
+ * The field of `access` naming an organization or workspace the picker wouldn't offer the user
+ * (`listMcpGrantAccessOptions`), or `null` when it names none. Edit refuses such a selection rather than
+ * dropping what it can't keep and saving the rest, which could silently leave a grant reaching nothing.
+ */
+const findUnreachableSelection = async (
+  userId: string,
+  access: TMcpGrantAccessSelection | undefined
+): Promise<"organizationIds" | "workspaceIds" | null> => {
+  if (!access || access.access === "all") return null;
+  const options = await listMcpGrantAccessOptions(userId);
+  if (access.access === "organizations") {
+    const offered = new Set(options.organizations.map(({ id }) => id));
+    return access.organizationIds.every((id) => offered.has(id)) ? null : "organizationIds";
+  }
+  const offered = new Set(options.workspaces.map(({ id }) => id));
+  return access.workspaceIds.every((id) => offered.has(id)) ? null : "workspaceIds";
+};
+
+/**
  * Sets the permissions of the user's grant to `clientId` (Authorized apps' Edit). Refused when the user
- * has no consent and grant for the client, and when `permissions` go above what the consented scopes ask
- * for (and, for a Dashboard viewer, what a viewer may give). The consent rows are read `FOR SHARE`, so a
+ * has no consent and grant for the client, when `permissions` go above what the consented scopes ask
+ * for (and, for a Dashboard viewer, what a viewer may give), and when `access` selects an organization
+ * or workspace the user couldn't pick. The consent rows are read `FOR SHARE`, so a
  * revoke in flight is waited on and the edit then finds nothing, rather than writing a grant back after
  * it. `/api/mcp` reads the grant on every call and the access is written to SpiceDB once the transaction
  * commits, so the change applies from the client's next call.
@@ -136,6 +158,9 @@ export const editMcpGrant = async ({
   access?: TMcpGrantAccessSelection;
   isDashboardViewer: boolean;
 }): Promise<TEditMcpGrantResult> => {
+  const unreachable = await findUnreachableSelection(userId, access);
+  if (unreachable) return { status: "selection_unreachable", field: unreachable };
+
   const result = await prisma.$transaction(async (tx): Promise<TEditMcpGrantResult> => {
     const scopes = await readConsentedScopes(tx, userId, clientId);
     if (!scopes || !(await hasMcpGrant(tx, { userId, clientId }))) return { status: "not_found" };

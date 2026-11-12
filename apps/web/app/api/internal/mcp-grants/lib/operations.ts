@@ -83,6 +83,13 @@ export async function updateMcpGrantOperation({
         "This app didn't ask for that much access. Reconnect it so it asks again.",
         { instance, code: "mcp_grant_beyond_scopes" }
       );
+    case "selection_unreachable": {
+      const kind = result.field === "organizationIds" ? "organizations" : "workspaces";
+      return problemUnprocessableContent(requestId, `Pick only ${kind} you can reach.`, {
+        instance,
+        invalid_params: [{ name: result.field, reason: `Pick only ${kind} you can reach` }],
+      });
+    }
     case "saved":
       if (auditLog) {
         auditLog.targetId = result.after.id;

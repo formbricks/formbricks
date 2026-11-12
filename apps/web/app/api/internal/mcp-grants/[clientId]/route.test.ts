@@ -159,6 +159,23 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     expect((await response.json()).code).toBe("mcp_grant_beyond_scopes");
   });
 
+  test("refuses with 422 an organization or workspace the user can't pick, rather than saving it as none", async () => {
+    mocks.editMcpGrant.mockResolvedValueOnce({ status: "selection_unreachable", field: "workspaceIds" });
+
+    const response = await edit({
+      permissions: { surveys: "read" },
+      access: "workspaces",
+      workspaceIds: ["clstranger11111111111111"],
+    });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.code).toBe("unprocessable_content");
+    expect(body.invalid_params).toEqual([
+      { name: "workspaceIds", reason: "Pick only workspaces you can reach" },
+    ]);
+  });
+
   test.each([
     ["an empty grant, which Revoke is for", { permissions: {} }],
     ["an unknown permission", { permissions: { everything: "write" } }],
