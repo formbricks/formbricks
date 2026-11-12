@@ -76,8 +76,9 @@ export const AnonymousLinksTab = ({
         enabled: isSingleUse,
         isEncrypted: isSingleUseEncryption,
       });
-      // A survey save from another tab sends the whole survey, these settings included, so it must carry them.
-      replaceSurvey({ ...survey, singleUse: { ...survey.singleUse, enabled, isEncrypted }, updatedAt });
+      // A survey save from another tab sends the whole survey, these settings included, so it must carry them,
+      // exactly as the route stored them.
+      replaceSurvey({ ...survey, singleUse: { enabled, isEncrypted }, updatedAt });
       router.refresh();
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
