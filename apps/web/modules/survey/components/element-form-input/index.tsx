@@ -26,9 +26,12 @@ import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { ImageAltTextButton } from "@/modules/survey/components/element-form-input/components/image-alt-text-button";
 import { RecallWrapper } from "@/modules/survey/components/element-form-input/components/recall-wrapper";
+import { useFieldIssue } from "@/modules/survey/editor/components/editor-issues-context";
+import { getIssueFieldKey, toIssueFieldKey } from "@/modules/survey/editor/lib/validation-issues";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { LocalizedEditor } from "@/modules/survey/multi-language-surveys/components/localized-editor";
 import { Button } from "@/modules/ui/components/button";
+import { FieldError, getFieldErrorAria } from "@/modules/ui/components/field-error";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -129,6 +132,12 @@ export const ElementFormInput = ({
         : currentElement.id;
   }, [isWelcomeCard, isEndingCard, currentElement?.id, elementIdx, elements.length, localSurvey.endings]);
   const endingCard = localSurvey.endings.find((ending) => ending.id === elementId);
+
+  // The problem the last save attempt found on this very field, shown next to it.
+  const issueField = toIssueFieldKey(id);
+  const fieldIssue = useFieldIssue(elementId, issueField);
+  const errorId = `${elementId}-${issueField}-error`;
+  const issueFieldAttribute = getIssueFieldKey(elementId, issueField);
 
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -421,7 +430,7 @@ export const ElementFormInput = ({
 
   if (useRichTextEditor) {
     return (
-      <div className="w-full">
+      <div className="w-full" data-issue-field={issueFieldAttribute}>
         {label && (
           <div className={cn("mt-3 mb-2 flex items-center justify-between", labelClassName)}>
             <Label htmlFor={id}>{label}</Label>
@@ -442,6 +451,7 @@ export const ElementFormInput = ({
             )}
           </div>
         )}
+        <FieldError id={errorId} message={fieldIssue?.message} />
         <div className="flex flex-col gap-4" ref={animationParent}>
           {showImageUploader && id === "headline" && (
             <FileInput
@@ -513,7 +523,8 @@ export const ElementFormInput = ({
                 value={value}
                 localSurvey={localSurvey}
                 elementIdx={elementIdx}
-                isInvalid={isInvalid}
+                isInvalid={Boolean(fieldIssue)}
+                errorId={errorId}
                 updateElement={(isWelcomeCard || isEndingCard ? updateSurvey : updateElement)!}
                 selectedLanguageCode={selectedLanguageCode}
                 firstRender={firstRender}
@@ -586,12 +597,13 @@ export const ElementFormInput = ({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-issue-field={issueFieldAttribute}>
       {label && (
         <div className={cn("mt-3 mb-2 flex items-center justify-between", labelClassName)}>
           <Label htmlFor={id}>{label}</Label>
         </div>
       )}
+      <FieldError id={errorId} message={fieldIssue?.message} />
       <RecallWrapper
         localSurvey={localSurvey}
         elementId={elementId}
@@ -642,11 +654,13 @@ export const ElementFormInput = ({
                     onBlur={onBlur}
                     className={`absolute top-0 text-black caret-black ${className}`}
                     isInvalid={
-                      isInvalid &&
-                      text[usedLanguageCode]?.trim() === "" &&
-                      localSurvey.languages?.length > 1 &&
-                      isTranslationIncomplete
+                      Boolean(fieldIssue) ||
+                      (isInvalid &&
+                        text[usedLanguageCode]?.trim() === "" &&
+                        localSurvey.languages?.length > 1 &&
+                        isTranslationIncomplete)
                     }
+                    {...getFieldErrorAria(errorId, fieldIssue?.message)}
                     autoComplete={isRecallSelectVisible ? "off" : "on"}
                     autoFocus={false}
                     disabled={disabled}

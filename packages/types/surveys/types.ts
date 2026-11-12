@@ -4601,7 +4601,14 @@ export interface TSurveyDates {
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
-export type TSurveyEditorTabs = "elements" | "flow" | "styling" | "language" | "settings" | "followUps";
+export type TSurveyEditorTabs =
+  | "elements"
+  | "flow"
+  | "styling"
+  | "language"
+  | "settings"
+  | "followUps"
+  | "review";
 
 export const ZSurveyElementSummaryOpenText = z.object({
   type: z.literal(TSurveyElementTypeEnum.OpenText),

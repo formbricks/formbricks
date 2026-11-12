@@ -3,6 +3,7 @@
 import { ChevronDownIcon, ChevronRightIcon, LockIcon } from "lucide-react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { FieldError } from "@/modules/ui/components/field-error";
 
 /**
  * FlowOutline (ENG-3749): a survey's whole flow on one spine, read top to bottom in the order a
@@ -148,6 +149,8 @@ interface FlowOutlineRowProps {
   readonly body?: ReactNode;
   /** Flagged by validation: a red border. */
   readonly isInvalid?: boolean;
+  /** What is wrong and what to do, shown under the header of a flagged row. */
+  readonly errorMessage?: string;
   /** Shown but not editable here (written through the API with something this editor can't edit yet). */
   readonly readOnlyLabel?: string;
   /** Controls at the right of the header (move, duplicate, delete), as on a question card's header. */
@@ -169,6 +172,7 @@ export const FlowOutlineRow = ({
   details,
   body,
   isInvalid = false,
+  errorMessage,
   readOnlyLabel,
   actions,
   showChevron = false,
@@ -243,6 +247,9 @@ export const FlowOutlineRow = ({
             </div>
           )}
         </div>
+        {errorMessage ? (
+          <FieldError id={id ? `${id}-error` : undefined} message={errorMessage} className="px-3" />
+        ) : null}
         {body && <div className="px-3 pb-2">{body}</div>}
         {/* Rounded to the card's inner corner (its radius less its border) rather than clipped by the
             card: overflow-hidden would also cut the focus rings at the card's edges. */}

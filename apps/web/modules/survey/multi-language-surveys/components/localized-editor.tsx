@@ -13,6 +13,8 @@ interface LocalizedEditorProps {
   value: TI18nString | undefined;
   localSurvey: TSurvey;
   isInvalid: boolean;
+  /** Id of the inline error message, so the editor announces it. */
+  errorId?: string;
   updateElement: any;
   selectedLanguageCode?: string;
   setSelectedLanguageCode?: (languageCode: string) => void;
@@ -31,6 +33,8 @@ export function LocalizedEditor({
   id,
   value,
   localSurvey,
+  isInvalid,
+  errorId,
   updateElement,
   selectedLanguageCode = "default",
   elementIdx,
@@ -50,6 +54,8 @@ export function LocalizedEditor({
     <div className="relative w-full">
       <Editor
         id={id}
+        isInvalid={isInvalid}
+        ariaDescribedBy={isInvalid ? errorId : undefined}
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
