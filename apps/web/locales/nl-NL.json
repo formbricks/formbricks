@@ -184,23 +184,6 @@
       "redirect_host": "Redirect-host",
       "revoke": "Intrekken",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
-      "scopes": {
-        "audience_read": "Contacten, contactkenmerken, segmenten en actieklassen lezen",
-        "dashboards_read": "Grafieken en dashboards bekijken",
-        "dashboards_write": "Grafieken en dashboards maken en bewerken",
-        "email": "Je e-mailadres bekijken",
-        "feedback_records_read": "Feedbackrecords lezen",
-        "feedback_records_write": "Feedbackrecords aanmaken, bijwerken en verwijderen",
-        "offline_access": "Toegang behouden met vernieuwingstokens",
-        "openid": "Je identificeren met OpenID Connect",
-        "profile": "Je profiel bekijken",
-        "responses_read": "Enquêterespons lezen, inclusief antwoorden van respondenten",
-        "responses_write": "Enquêteresultaten aanmaken, bijwerken en verwijderen",
-        "surveys_read": "Enquêtes en creatives bekijken",
-        "surveys_write": "Enquêtes en creatives maken, bijwerken en verwijderen",
-        "workflows_read": "Workflows lezen",
-        "workflows_write": "Workflows aanmaken, bewerken en verwijderen"
-      },
       "unknown_client": "Onbekende client"
     },
     "password_compromised": "Dit wachtwoord is aangetroffen in een datalek. Kies een ander wachtwoord.",

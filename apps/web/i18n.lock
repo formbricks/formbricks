@@ -158,21 +158,6 @@ checksums:
     auth/oauth/redirect_host: de1344fc555eea56791de81a90295bf5
     auth/oauth/revoke: be57685a85b6dfeaeb6eab4e9560b520
     auth/oauth/revoke_confirmation: 04bce52d76968647a8c2ba8c8db4c7a9
-    auth/oauth/scopes/audience_read: 234ec05eedb255d0a030610bba0a7acd
-    auth/oauth/scopes/dashboards_read: 523d6321fd81f3cc4d9fa16b29110ada
-    auth/oauth/scopes/dashboards_write: 562ea89a51ebd328e6cc0ad4bb51fa38
-    auth/oauth/scopes/email: c28cf6b6c6221b0045539a5f7712230f
-    auth/oauth/scopes/feedback_records_read: 720898c950af227bb3be529a64e3bc38
-    auth/oauth/scopes/feedback_records_write: a929a6212367549f904d78362e56006c
-    auth/oauth/scopes/offline_access: 5086c8bd3685a21f691d81d50dc0a4e0
-    auth/oauth/scopes/openid: 557e91a8b41497cf95b1434aefcb72ea
-    auth/oauth/scopes/profile: ea073dc28851ee1a00365047be103d50
-    auth/oauth/scopes/responses_read: 195bca5c351667fc5710087d19263b41
-    auth/oauth/scopes/responses_write: a331bf6eba152ba441d07fffc76db3a2
-    auth/oauth/scopes/surveys_read: c9e573fad395442eb3c0e1013848fdaa
-    auth/oauth/scopes/surveys_write: 337d4afb69e8b039fae01879c1bcb5bc
-    auth/oauth/scopes/workflows_read: b3b216cd6e77b26500068bdf7afad004
-    auth/oauth/scopes/workflows_write: c9ce0488b4188718bf4c235855ca5c5a
     auth/oauth/unknown_client: 561bc5afdb90606fbc1ed97f20698ead
     auth/password_compromised: d4ab0f66aaed039f956c2515328ed1c9
     auth/saml_connection_error: 03c69c534e7eaafcb2c22b7daf9f3efc

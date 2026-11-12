@@ -184,23 +184,6 @@
       "redirect_host": "Omdirigeringsvärd",
       "revoke": "Återkalla",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
-      "scopes": {
-        "audience_read": "Läsa kontakter, kontaktattribut, segment och åtgärdsklasser",
-        "dashboards_read": "Läsa diagram och instrumentpaneler",
-        "dashboards_write": "Skapa och redigera diagram och instrumentpaneler",
-        "email": "Se din e-postadress",
-        "feedback_records_read": "Läs feedbackposter",
-        "feedback_records_write": "Skapa, uppdatera och ta bort återkopplingsposter",
-        "offline_access": "Behåll åtkomst med refresh tokens",
-        "openid": "Identifiera dig med OpenID Connect",
-        "profile": "Se din profil",
-        "responses_read": "Läs enkätsvar, inklusive respondenternas svar",
-        "responses_write": "Skapa, uppdatera och ta bort enkätsvar",
-        "surveys_read": "Läsa enkäter och kreativ",
-        "surveys_write": "Skapa, uppdatera och ta bort enkäter och kreativ",
-        "workflows_read": "Läs arbetsflöden",
-        "workflows_write": "Skapa, uppdatera och ta bort arbetsflöden"
-      },
       "unknown_client": "Okänd klient"
     },
     "password_compromised": "Det här lösenordet har förekommit i en dataläcka. Välj ett annat.",

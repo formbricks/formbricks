@@ -184,23 +184,6 @@
       "redirect_host": "Host de redirecionamento",
       "revoke": "Revogar",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
-      "scopes": {
-        "audience_read": "Ler contatos, atributos de contatos, segmentos e classes de ação",
-        "dashboards_read": "Ler gráficos e painéis",
-        "dashboards_write": "Criar e editar gráficos e painéis",
-        "email": "Ver seu endereço de e-mail",
-        "feedback_records_read": "Ler registros de feedback",
-        "feedback_records_write": "Criar, atualizar e excluir registros de feedback",
-        "offline_access": "Manter acesso com tokens de atualização",
-        "openid": "Identificar você com OpenID Connect",
-        "profile": "Ver seu perfil",
-        "responses_read": "Ler respostas da pesquisa, incluindo as respostas dos respondentes",
-        "responses_write": "Criar, atualizar e excluir respostas de pesquisas",
-        "surveys_read": "Ler pesquisas e criativos",
-        "surveys_write": "Criar, atualizar e excluir pesquisas e criativos",
-        "workflows_read": "Ler fluxos de trabalho",
-        "workflows_write": "Criar, atualizar e excluir fluxos de trabalho"
-      },
       "unknown_client": "Cliente desconhecido"
     },
     "password_compromised": "Esta senha apareceu em um vazamento de dados. Escolha outra.",

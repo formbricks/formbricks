@@ -184,23 +184,6 @@
       "redirect_host": "Weiterleitungs-Host",
       "revoke": "Widerrufen",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
-      "scopes": {
-        "audience_read": "Kontakte, Kontaktattribute, Segmente und Aktionsklassen lesen",
-        "dashboards_read": "Diagramme und Dashboards lesen",
-        "dashboards_write": "Diagramme und Dashboards erstellen und bearbeiten",
-        "email": "Deine E-Mail-Adresse einsehen",
-        "feedback_records_read": "Feedback-Einträge lesen",
-        "feedback_records_write": "Feedback-Einträge erstellen, aktualisieren und löschen",
-        "offline_access": "Zugriff mit Refresh-Tokens beibehalten",
-        "openid": "Dich mit OpenID Connect identifizieren",
-        "profile": "Dein Profil einsehen",
-        "responses_read": "Umfrageantworten lesen, einschließlich der Antworten der Teilnehmer",
-        "responses_write": "Umfrageantworten erstellen, aktualisieren und löschen",
-        "surveys_read": "Umfragen und Creatives lesen",
-        "surveys_write": "Umfragen und Creatives erstellen, aktualisieren und löschen",
-        "workflows_read": "Workflows lesen",
-        "workflows_write": "Workflows erstellen, aktualisieren und löschen"
-      },
       "unknown_client": "Unbekannter Client"
     },
     "password_compromised": "Dieses Passwort ist in einem Datenleck aufgetaucht. Bitte wähle ein anderes.",

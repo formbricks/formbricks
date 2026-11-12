@@ -184,23 +184,6 @@
       "redirect_host": "重新導向主機",
       "revoke": "撤銷",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
-      "scopes": {
-        "audience_read": "讀取聯絡人、聯絡人屬性、客群區隔和動作類別",
-        "dashboards_read": "讀取圖表和儀表板",
-        "dashboards_write": "建立及編輯圖表和儀表板",
-        "email": "查看你的電子郵件地址",
-        "feedback_records_read": "讀取意見回饋記錄",
-        "feedback_records_write": "建立、更新和刪除意見回饋記錄",
-        "offline_access": "透過刷新權杖保持存取權限",
-        "openid": "透過 OpenID Connect 識別你的身分",
-        "profile": "查看你的個人資料",
-        "responses_read": "讀取問卷回覆，包括受訪者的答案",
-        "responses_write": "建立、更新和刪除問卷回覆",
-        "surveys_read": "讀取問卷與素材",
-        "surveys_write": "建立、更新及刪除問卷與素材",
-        "workflows_read": "讀取工作流程",
-        "workflows_write": "建立、更新和刪除工作流程"
-      },
       "unknown_client": "未知的客戶端"
     },
     "password_compromised": "此密碼曾出現在資料外洩事件中，請選擇其他密碼。",

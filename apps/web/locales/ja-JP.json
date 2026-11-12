@@ -184,23 +184,6 @@
       "redirect_host": "リダイレクト先ホスト",
       "revoke": "取り消す",
       "revoke_confirmation": "このアプリのFormbricksアカウントへのアクセス権を取り消しますか？",
-      "scopes": {
-        "audience_read": "コンタクト、コンタクト属性、セグメント、アクションクラスの読み取り",
-        "dashboards_read": "チャートとダッシュボードの閲覧",
-        "dashboards_write": "チャートとダッシュボードの作成と編集",
-        "email": "メールアドレスの参照",
-        "feedback_records_read": "フィードバックレコードの参照",
-        "feedback_records_write": "フィードバック記録の作成、更新、削除",
-        "offline_access": "リフレッシュトークンによるアクセスの維持",
-        "openid": "OpenID Connectによる本人確認",
-        "profile": "プロフィールの参照",
-        "responses_read": "回答者の回答を含むアンケートの回答を閲覧する",
-        "responses_write": "アンケート回答を作成、更新、削除",
-        "surveys_read": "アンケートとクリエイティブを読み取る",
-        "surveys_write": "アンケートとクリエイティブを作成、更新、削除する",
-        "workflows_read": "ワークフローの参照",
-        "workflows_write": "ワークフローの作成・更新・削除"
-      },
       "unknown_client": "不明なクライアント"
     },
     "password_compromised": "このパスワードはデータ漏洩で見つかりました。別のパスワードを選択してください。",

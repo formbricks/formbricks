@@ -184,23 +184,6 @@
       "redirect_host": "Yönlendirme sunucusu",
       "revoke": "İptal Et",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
-      "scopes": {
-        "audience_read": "Kişileri, kişi özniteliklerini, segmentleri ve eylem sınıflarını okuma",
-        "dashboards_read": "Grafikleri ve panoları okuma",
-        "dashboards_write": "Grafik ve pano oluşturma ve düzenleme",
-        "email": "E-posta adresini görüntüle",
-        "feedback_records_read": "Geri bildirim kayıtlarını oku",
-        "feedback_records_write": "Geri bildirim kayıtlarını oluştur, güncelle ve sil",
-        "offline_access": "Yenileme token'ları ile erişimi sürdür",
-        "openid": "OpenID Connect ile kimliğini doğrula",
-        "profile": "Profilini görüntüle",
-        "responses_read": "Yanıtlayanların cevapları dahil olmak üzere anket yanıtlarını oku",
-        "responses_write": "Anket yanıtlarını oluştur, güncelle ve sil",
-        "surveys_read": "Anketleri ve kreatifleri oku",
-        "surveys_write": "Anketleri ve kreatifleri oluştur, güncelle ve sil",
-        "workflows_read": "İş akışlarını oku",
-        "workflows_write": "İş akışlarını oluştur, güncelle ve sil"
-      },
       "unknown_client": "Bilinmeyen istemci"
     },
     "password_compromised": "Bu parola bir veri ihlalinde görülmüş. Lütfen farklı bir parola seçin.",

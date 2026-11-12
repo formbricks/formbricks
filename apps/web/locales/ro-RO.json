@@ -184,23 +184,6 @@
       "redirect_host": "Gazdă de redirecționare",
       "revoke": "Revocă",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
-      "scopes": {
-        "audience_read": "Citește contacte, atribute de contact, segmente și clase de acțiuni",
-        "dashboards_read": "Vizualizează diagrame și tablouri de bord",
-        "dashboards_write": "Creează și editează diagrame și tablouri de bord",
-        "email": "Vizualizează adresa ta de email",
-        "feedback_records_read": "Citește înregistrările de feedback",
-        "feedback_records_write": "Creează, actualizează și șterge înregistrările de feedback",
-        "offline_access": "Menține accesul cu token-uri de reîmprospătare",
-        "openid": "Te identifică cu OpenID Connect",
-        "profile": "Vizualizează profilul tău",
-        "responses_read": "Citește răspunsurile la sondaj, inclusiv răspunsurile respondenților",
-        "responses_write": "Creează, actualizează și șterge răspunsurile la sondaj",
-        "surveys_read": "Citește sondajele și materialele creative",
-        "surveys_write": "Creează, actualizează și șterge sondaje și materiale creative",
-        "workflows_read": "Citește fluxurile de lucru",
-        "workflows_write": "Creează, actualizează și șterge fluxuri de lucru"
-      },
       "unknown_client": "Client necunoscut"
     },
     "password_compromised": "Această parolă a apărut într-o breșă de date. Te rugăm să alegi alta.",
