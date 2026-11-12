@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
-import {
-  deleteMembership,
-  lockOrganizationOwners,
-} from "@/modules/organization/settings/teams/lib/membership";
+import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
+import { lockOrganizationOwners } from "@/modules/organization/settings/teams/lib/owner-guard";
 import type { TUserInput } from "../../types/users";
 import { createUser, updateUser } from "../users";
 

@@ -17,9 +17,9 @@ import {
 import { ApiErrorDetails, ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import {
-  getOrganizationOwnerCount,
   lockOrganizationOwners,
-} from "@/modules/organization/settings/teams/lib/membership";
+  wouldRemoveLastActiveOwner,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 
 export const getUsers = async (
   organizationId: string,
@@ -240,34 +240,6 @@ const lockAndCheckAccountFields = async (
   return { wasActive: account.isActive };
 };
 
-/**
- * Refuses a change that would leave the organization with no active owner: demoting or deactivating its
- * last one. Call it under `lockOrganizationOwners`, so the target's role and active state, and the count,
- * are read after any other owner change has committed. An owner who is already inactive is not in the
- * count, so changing them is allowed. A demotion is reported as such even when the same request also
- * deactivates.
- */
-const assertNotLastActiveOwner = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  organizationId: string,
-  { role, isActive }: Pick<TUserInputPatch, "role" | "isActive">
-): Promise<void> => {
-  const target = await tx.membership.findUnique({
-    where: { userId_organizationId: { userId, organizationId } },
-    select: { role: true, user: { select: { isActive: true } } },
-  });
-  if (target?.role !== OrganizationRole.owner || !target.user.isActive) return;
-
-  const demoting = role !== undefined && role !== OrganizationRole.owner;
-  const deactivating = isActive === false;
-  if (!demoting && !deactivating) return;
-
-  if ((await getOrganizationOwnerCount(organizationId, tx)) <= 1) {
-    throw new LastOwnerConflictError(demoting ? "role" : "isActive");
-  }
-};
-
 export const updateUser = async (
   userInput: TUserInputPatch,
   organizationId: string
@@ -311,8 +283,9 @@ export const updateUser = async (
 
     // Whether this request could take an active owner out of the organization: demoting them or
     // deactivating them. Decided from the request alone; whether the user is an active owner is read
-    // inside the transaction, under the owners' lock (`assertNotLastActiveOwner`).
-    const mayRemoveOwner = (role !== undefined && role !== OrganizationRole.owner) || isActive === false;
+    // inside the transaction, under the owners' lock (`wouldRemoveLastActiveOwner`).
+    const demoting = role !== undefined && role !== OrganizationRole.owner;
+    const mayRemoveOwner = demoting || isActive === false;
 
     // Capture the existing team names for the user (within the authenticated organization).
     existingTeams = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
@@ -417,8 +390,9 @@ export const updateUser = async (
             ? await lockAndCheckAccountFields(tx, existingUser.id, organizationId, { name, isActive })
             : null;
           const reactivating = isActive === true && account?.wasActive === false;
-          if (mayRemoveOwner) {
-            await assertNotLastActiveOwner(tx, existingUser.id, organizationId, { role, isActive });
+          if (mayRemoveOwner && (await wouldRemoveLastActiveOwner(tx, organizationId, existingUser.id))) {
+            // A demotion is reported as such even when the same request also deactivates.
+            throw new LastOwnerConflictError(demoting ? "role" : "isActive");
           }
 
           // Re-run against `tx` rather than reusing deleteTeamOps/createTeamOps below: those are

@@ -490,14 +490,17 @@ describe("Users Lib", () => {
         code: PrismaErrorType.TransactionConflict,
         clientVersion: "1.0.0",
       });
-      vi.mocked(prisma.$transaction).mockRejectedValue(deadlock);
+      // Once per attempt, so nothing carries over to the next test if an assertion below fails.
+      vi.mocked(prisma.$transaction)
+        .mockRejectedValueOnce(deadlock)
+        .mockRejectedValueOnce(deadlock)
+        .mockRejectedValueOnce(deadlock);
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
 
       const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
 
       expect(result).toMatchObject({ ok: false, error: { type: "internal_server_error" } });
       expect(prisma.$transaction).toHaveBeenCalledTimes(3);
-      vi.mocked(prisma.$transaction).mockReset();
     });
   });
 

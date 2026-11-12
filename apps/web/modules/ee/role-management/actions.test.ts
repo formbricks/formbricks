@@ -12,8 +12,10 @@ const mocks = vi.hoisted(() => ({
   getOrganization: vi.fn(),
   getOrganizationIdFromInviteId: vi.fn(),
   getInvite: vi.fn(),
-  getOrganizationOwnerCount: vi.fn(),
-  lockOrganizationOwners: vi.fn(),
+  wouldRemoveLastActiveOwner: vi.fn(),
+  runOwnerLockedTransaction: vi.fn((_organizationId: string, transaction: (tx: unknown) => unknown) =>
+    transaction({ stand: "tx" })
+  ),
   updateInvite: vi.fn(),
   updateMembership: vi.fn(),
 }));
@@ -23,11 +25,7 @@ vi.mock("@/lib/authorization", () => ({
   can: mocks.can,
 }));
 
-vi.mock("@formbricks/database", () => ({
-  // The last-owner guard runs the owner-count re-check and the update inside one transaction;
-  // the fake just invokes the callback with a stand-in tx so both still hit the mocks below.
-  prisma: { $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback({})) },
-}));
+vi.mock("@formbricks/database", () => ({ prisma: {} }));
 
 vi.mock("@/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
@@ -82,9 +80,9 @@ vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
   getInvite: mocks.getInvite,
 }));
 
-vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
-  getOrganizationOwnerCount: mocks.getOrganizationOwnerCount,
-  lockOrganizationOwners: mocks.lockOrganizationOwners,
+vi.mock("@/modules/organization/settings/teams/lib/owner-guard", () => ({
+  runOwnerLockedTransaction: mocks.runOwnerLockedTransaction,
+  wouldRemoveLastActiveOwner: mocks.wouldRemoveLastActiveOwner,
 }));
 
 const organizationId = "cm9gptbhg0000192zceq9ayuc";
@@ -112,35 +110,45 @@ describe("updateMembershipAction", () => {
     mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
       membership(userId, "owner")
     );
-    mocks.getOrganizationOwnerCount.mockResolvedValue(2);
+    mocks.wouldRemoveLastActiveOwner.mockResolvedValue(false);
     mocks.updateMembership.mockImplementation(async (userId: string, _orgId: string, data: any) =>
       membership(userId, data.role)
     );
   });
 
   test("rejects demoting the last owner of the organization", async () => {
-    mocks.getOrganizationOwnerCount.mockResolvedValue(1);
+    mocks.wouldRemoveLastActiveOwner.mockResolvedValue(true);
 
     await expect(callUpdateMembership("member")).rejects.toThrow(ValidationError);
     expect(mocks.updateMembership).not.toHaveBeenCalled();
-    // Counted under the owners' lock, the one every last-owner check takes.
-    expect(mocks.lockOrganizationOwners).toHaveBeenCalledWith(expect.anything(), organizationId);
-    expect(mocks.lockOrganizationOwners.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.getOrganizationOwnerCount.mock.invocationCallOrder[0]
+    // Decided under the owners' lock, the one every last-owner check takes.
+    expect(mocks.runOwnerLockedTransaction).toHaveBeenCalledWith(organizationId, expect.any(Function));
+    expect(mocks.wouldRemoveLastActiveOwner).toHaveBeenCalledWith(
+      { stand: "tx" },
+      organizationId,
+      targetUserId
     );
   });
 
   test("allows demoting an owner when the organization has another owner", async () => {
-    mocks.getOrganizationOwnerCount.mockResolvedValue(2);
-
     await expect(callUpdateMembership("member")).resolves.toMatchObject({ role: "member" });
-    expect(mocks.getOrganizationOwnerCount).toHaveBeenCalledWith(organizationId, expect.anything());
     expect(mocks.updateMembership).toHaveBeenCalledWith(
       targetUserId,
       organizationId,
       { role: "member" },
-      expect.anything()
+      { stand: "tx" }
     );
+  });
+
+  test("checks the last owner for any role but owner, whatever the lookup before the lock said", async () => {
+    // Looked up as a member; it is the read under the lock that decides whether this is a demotion.
+    mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
+      membership(userId, userId === currentUserId ? "owner" : "member")
+    );
+    mocks.wouldRemoveLastActiveOwner.mockResolvedValue(true);
+
+    await expect(callUpdateMembership("manager")).rejects.toThrow(ValidationError);
+    expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 
   test("allows changing a non-owner's role", async () => {
@@ -151,8 +159,9 @@ describe("updateMembershipAction", () => {
     await expect(callUpdateMembership("manager")).resolves.toMatchObject({ role: "manager" });
   });
 
-  test("allows keeping an owner's role unchanged", async () => {
+  test("allows keeping an owner's role unchanged, without the owners' lock", async () => {
     await expect(callUpdateMembership("owner")).resolves.toMatchObject({ role: "owner" });
+    expect(mocks.runOwnerLockedTransaction).not.toHaveBeenCalled();
   });
 
   test("still rejects a manager demoting an owner before the owner count is read", async () => {

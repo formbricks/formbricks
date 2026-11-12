@@ -1,7 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
@@ -22,9 +21,9 @@ import {
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 import {
-  getOrganizationOwnerCount,
-  lockOrganizationOwners,
-} from "@/modules/organization/settings/teams/lib/membership";
+  runOwnerLockedTransaction,
+  wouldRemoveLastActiveOwner,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 
 const ZUpdateInviteAction = z.object({
   inviteId: ZUuid,
@@ -110,24 +109,19 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
     ctx.auditLoggingCtx.oldObject = targetMembership;
 
-    const isDemotingOwner = targetMembership?.role === "owner" && parsedInput.data.role !== "owner";
-
-    // The owner count and the role update must be one atomic unit: read then act, in two separate
-    // statements, lets two owners demoting each other concurrently both read "more than one owner"
-    // and both writes land, leaving zero owners. The owners' lock makes the second one wait, then count
-    // what the first committed.
-    const result = isDemotingOwner
-      ? await prisma.$transaction(async (tx) => {
-          await lockOrganizationOwners(tx, parsedInput.organizationId);
-          const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId, tx);
-
-          if (ownerCount <= 1) {
-            throw new ValidationError("You cannot demote the last owner of the organization");
-          }
-
-          return updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, tx);
-        })
-      : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
+    // Any role but owner may be a demotion. Whether the target is an active owner is read inside the
+    // transaction, under the owners' lock, not from the lookup above: two owners demoting each other at
+    // once must not both read "more than one owner" and both land, leaving none. The lock makes the second
+    // one wait, then read what the first committed.
+    const result =
+      parsedInput.data.role === "owner"
+        ? await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data)
+        : await runOwnerLockedTransaction(parsedInput.organizationId, async (tx) => {
+            if (await wouldRemoveLastActiveOwner(tx, parsedInput.organizationId, parsedInput.userId)) {
+              throw new ValidationError("You cannot demote the last owner of the organization");
+            }
+            return updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, tx);
+          });
 
     ctx.auditLoggingCtx.newObject = result;
     return result;

@@ -11,10 +11,11 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
-import { isTransactionConflictError, retryOnTransactionConflict } from "@/lib/utils/prisma-error";
+import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
+import { countActiveOwners, runOwnerLockedTransaction, wouldRemoveLastActiveOwner } from "./owner-guard";
 
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
@@ -71,18 +72,7 @@ const getOrganizationOwnerCountUncached = async (
   validateInputs([organizationId, ZString]);
 
   try {
-    const ownersCount = await (tx ?? prisma).membership.count({
-      where: {
-        organizationId,
-        role: "owner",
-        // A deactivated user can never sign in again (see modules/auth/lib/session.ts and
-        // better-auth-active-user-gate.ts), so counting them as "another owner" would let a
-        // guard pass while leaving the organization with no owner who can actually log in.
-        user: { isActive: true },
-      },
-    });
-
-    return ownersCount;
+    return await countActiveOwners(tx ?? prisma, organizationId);
   } catch (error) {
     // Inside a transaction the error belongs to the transaction's owner: wrapping a serialization
     // conflict (P2034) here would hide it from the retry that re-runs the whole transaction.
@@ -99,9 +89,8 @@ const getOrganizationOwnerCountCached = reactCache((organizationId: string) =>
 );
 
 /**
- * Pass `tx` when this must be read inside the same transaction as the mutation it's guarding, after
- * `lockOrganizationOwners(tx, organizationId)`, so concurrent owner changes cannot both pass the check;
- * without `tx` the result is request-cached like the rest of this module's reads.
+ * Pass `tx` to read inside a transaction; without it the result is request-cached like the rest of this
+ * module's reads. A write that must keep an active owner uses `owner-guard.ts` instead.
  */
 export const getOrganizationOwnerCount = async (
   organizationId: string,
@@ -113,43 +102,6 @@ export const getOrganizationOwnerCount = async (
 
   return getOrganizationOwnerCountCached(organizationId);
 };
-
-/**
- * Locks the organization's owner memberships until `tx` ends, in a fixed order. Take it first in any
- * transaction that can leave an owner deactivated or no longer an owner, then count with
- * `getOrganizationOwnerCount(organizationId, tx)`: a second such transaction waits here, and at Read
- * Committed its count then sees the first one's change, so two of them cannot both pass the
- * last-owner check. Serializable isolation alone does not give this: Postgres only detects the clash
- * between two Serializable transactions, and the data retention members sweep runs at Read Committed.
- * Taken before the user row, in the same order as that sweep, so the two never deadlock.
- */
-export const lockOrganizationOwners = async (
-  tx: Prisma.TransactionClient,
-  organizationId: string
-): Promise<void> => {
-  await tx.$queryRaw`
-    SELECT 1 FROM "Membership"
-    WHERE "organizationId" = ${organizationId} AND "role" = 'owner'
-    ORDER BY "userId"
-    FOR UPDATE
-  `;
-};
-
-/**
- * One transaction holding the organization's owner lock (`lockOrganizationOwners`), run again when
- * Postgres aborts it over a deadlock. Both the shared conflict check and the retry live in
- * `prisma-error`, so a driver adapter's own conflict error is retried as well as Prisma's P2034.
- */
-const runOwnerLockedTransaction = <T>(
-  organizationId: string,
-  transaction: (tx: Prisma.TransactionClient) => Promise<T>
-): Promise<T> =>
-  retryOnTransactionConflict(() =>
-    prisma.$transaction(async (tx) => {
-      await lockOrganizationOwners(tx, organizationId);
-      return transaction(tx);
-    })
-  );
 
 export const deleteMembership = async (
   userId: string,
@@ -167,16 +119,8 @@ export const deleteMembership = async (
     const deletedTeamMemberships = await runOwnerLockedTransaction(organizationId, async (tx) => {
       // The last-owner guard is read under the owners' lock, in the same transaction as the delete, so two
       // owners removed at once cannot both see "another owner is left" and leave the organization with none.
-      const target = await tx.membership.findUnique({
-        where: { userId_organizationId: { organizationId, userId } },
-        select: { role: true, user: { select: { isActive: true } } },
-      });
-      if (target?.role === "owner") {
-        const activeOwners = await getOrganizationOwnerCount(organizationId, tx);
-        const activeOwnersLeft = activeOwners - (target.user.isActive ? 1 : 0);
-        if (activeOwnersLeft < 1) {
-          throw new ValidationError("You cannot delete the last owner of the organization");
-        }
+      if (await wouldRemoveLastActiveOwner(tx, organizationId, userId)) {
+        throw new ValidationError("You cannot delete the last owner of the organization");
       }
 
       const teamMemberships = await tx.teamUser.findMany({

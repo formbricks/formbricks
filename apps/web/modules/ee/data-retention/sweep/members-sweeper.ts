@@ -7,7 +7,11 @@ import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocat
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { sendMemberRetentionNoticeEmail } from "@/modules/email";
-import { lockOrganizationOwners } from "@/modules/organization/settings/teams/lib/membership";
+import {
+  countActiveOwners,
+  lockOrganizationOwners,
+  wouldRemoveLastActiveOwner,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 import { formatRetentionDate } from "../lib/display";
 import {
   type TRetentionTargetState,
@@ -129,17 +133,7 @@ export const deactivateDueMember = async (
       return null;
     }
     if (member.organizationCount > 1) return "otherOrganization";
-    if (member.role === "owner") {
-      const otherActiveOwners = await tx.membership.count({
-        where: {
-          organizationId: context.policy.organizationId,
-          role: "owner",
-          userId: { not: userId },
-          user: { isActive: true },
-        },
-      });
-      if (otherActiveOwners === 0) return "lastOwner";
-    }
+    if (await wouldRemoveLastActiveOwner(tx, context.policy.organizationId, userId)) return "lastOwner";
 
     await tx.user.update({ where: { id: userId }, data: { isActive: false } });
     await recordRetentionRunActions(tx, context.runId, [
@@ -263,9 +257,7 @@ export const createMembersSweeper = (): TRetentionSweeper => async (context) => 
   const skips: TRetentionRunSkip[] = [];
   // The last active owner is never deactivated, so they aren't told they will be.
   const activeOwners = await runSweepTransaction((tx) =>
-    tx.membership.count({
-      where: { organizationId: context.policy.organizationId, role: "owner", user: { isActive: true } },
-    })
+    countActiveOwners(tx, context.policy.organizationId)
   );
   const { notify, act } = await collectDueTargets(context, {
     readPage: (tx, afterId) =>
