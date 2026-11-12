@@ -59,6 +59,7 @@ describe("OAuth client metadata helpers", () => {
     );
     expect(getOAuthScopeLabel("responses:read", t)).toBe("translated:auth.oauth.scopes.responses_read");
     expect(getOAuthScopeLabel("responses:write", t)).toBe("translated:auth.oauth.scopes.responses_write");
+    expect(getOAuthScopeLabel("audience:read", t)).toBe("translated:auth.oauth.scopes.audience_read");
   });
 
   test("keeps unknown OAuth scopes readable", () => {
@@ -100,6 +101,13 @@ describe("advertised scopes and grantable scopes agree", () => {
 
     expect(advertised.has("responses:read")).toBe(true);
     expect(advertised.has("responses:write")).toBe(true);
+  });
+
+  test("audience is read-only: audience:read is advertised and audience:write exists nowhere", () => {
+    // ENG-7151: contacts, segments and action classes have only read tools, so a write scope would be a
+    // level that does nothing (and a 15-minute write token for no reason).
+    expect(MCP_PROTECTED_RESOURCE_SCOPES).toContain("audience:read");
+    expect([...MCP_OAUTH_SCOPES, ...MCP_PROTECTED_RESOURCE_SCOPES]).not.toContain("audience:write");
   });
 
   test("the baseline MCP gate lists exactly the advertised resource scopes", () => {

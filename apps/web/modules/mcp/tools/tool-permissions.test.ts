@@ -64,7 +64,14 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   archive_workflow: ["workflows:write"],
   unarchive_workflow: ["workflows:write"],
   list_workspaces: {
-    anyOf: ["surveys:read", "workflows:read", "feedbackRecords:read", "responses:read", "dashboards:read"],
+    anyOf: [
+      "surveys:read",
+      "workflows:read",
+      "feedbackRecords:read",
+      "responses:read",
+      "dashboards:read",
+      "audience:read",
+    ],
   },
   get_workspace_custom_css: ["surveys:read"],
   patch_workspace_custom_css: ["surveys:write"],

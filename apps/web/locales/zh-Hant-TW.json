@@ -109,6 +109,7 @@
       "revoke": "撤銷",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
+        "audience_read": "讀取聯絡人、聯絡人屬性、客群區隔和動作類別",
         "dashboards_read": "讀取圖表和儀表板",
         "dashboards_write": "建立及編輯圖表和儀表板",
         "email": "查看你的電子郵件地址",

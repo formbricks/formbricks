@@ -109,6 +109,7 @@
       "revoke": "Visszavonás",
       "revoke_confirmation": "Visszavonja ennek az alkalmazásnak a Formbricks-fiókjához való hozzáférését?",
       "scopes": {
+        "audience_read": "Kapcsolatok, kapcsolattartási attribútumok, szegmensek és műveletosztályok olvasása",
         "dashboards_read": "Diagramok és irányítópultok megtekintése",
         "dashboards_write": "Diagramok és irányítópultok létrehozása és szerkesztése",
         "email": "Az e-mail-címe megtekintése",

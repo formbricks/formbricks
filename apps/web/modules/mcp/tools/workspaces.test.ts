@@ -171,6 +171,28 @@ describe("registerWorkspaceTools", () => {
     expect(listV3Workspaces).toHaveBeenCalled();
     expect(result.isError).toBeUndefined();
   });
+
+  // ENG-7151: each Audience permission is a usable grant on its own (an agent given only Segments: Read
+  // still needs a workspaceId), so discovery lists all four, not one per family.
+  test.each(["contacts", "contactAttributes", "segments", "actionClasses"] as const)(
+    "allows a grant giving only %s: Read to discover workspaces",
+    async (permission) => {
+      const { tools } = createToolServer();
+      vi.mocked(listV3Workspaces).mockResolvedValue(
+        successListResponse([], { nextCursor: null, totalCount: 0 }, { requestId: "req_tool" })
+      );
+      const authInfo = {
+        ...readAuthInfo,
+        scopes: ["audience:read"],
+        extra: { ...readAuthInfo.extra, grant: { access: "all", permissions: { [permission]: "read" } } },
+      };
+
+      const result = await tools.get("list_workspaces")!.handler({}, { http: { authInfo } });
+
+      expect(listV3Workspaces).toHaveBeenCalled();
+      expect(result.isError).toBeUndefined();
+    }
+  );
 });
 
 describe("workspace custom CSS tools (ENG-3641)", () => {

@@ -109,6 +109,7 @@
       "revoke": "取り消す",
       "revoke_confirmation": "このアプリのFormbricksアカウントへのアクセス権を取り消しますか？",
       "scopes": {
+        "audience_read": "コンタクト、コンタクト属性、セグメント、アクションクラスの読み取り",
         "dashboards_read": "チャートとダッシュボードの閲覧",
         "dashboards_write": "チャートとダッシュボードの作成と編集",
         "email": "メールアドレスの参照",

@@ -115,7 +115,7 @@ export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/u
  * protected-resource metadata advertises, so without it every integration registered before the family
  * existed gets `invalid_scope` as its connection re-authorizes. Responses took both steps (ENG-2862,
  * 20260915120000; ENG-3470, 20261005130000), dashboards too (ENG-6581, 20261022120000 and
- * 20261022120001).
+ * 20261022120001), and the read-only `audience` family (ENG-7151, 20261112130000 and 20261112130001).
  *
  * Never by editing the 20260812110001 seed migration. That one has already run everywhere, so widening
  * its literal repairs nothing and only makes it claim something it never did.
@@ -128,15 +128,25 @@ export const MCP_SCOPE_FAMILIES = [
   "dashboards",
 ] as const;
 
-export type TMcpScopeFamily = (typeof MCP_SCOPE_FAMILIES)[number];
+/**
+ * Families with a `<family>:read` scope and no write scope, because every tool they open only reads.
+ * Added by the same rules and the same two migrations as `MCP_SCOPE_FAMILIES`, with only the read scope
+ * in them. ENG-7151: `audience` (contacts, contact attributes, segments, action classes), which holds
+ * personal data, so it is its own family rather than riding on another one's consent.
+ */
+export const MCP_READ_ONLY_SCOPE_FAMILIES = ["audience"] as const;
+
+export type TMcpScopeFamily =
+  | (typeof MCP_SCOPE_FAMILIES)[number]
+  | (typeof MCP_READ_ONLY_SCOPE_FAMILIES)[number];
 export type TMcpReadScope = `${TMcpScopeFamily}:read`;
-export type TMcpWriteScope = `${TMcpScopeFamily}:write`;
+export type TMcpWriteScope = `${(typeof MCP_SCOPE_FAMILIES)[number]}:write`;
 
 type TNonEmpty<T> = readonly [T, ...T[]];
 
 // Non-empty by construction (the family list is a non-empty literal), which is what lets a scope gate
 // that refuses `[]` take these lists directly.
-export const MCP_READ_SCOPES = MCP_SCOPE_FAMILIES.map(
+export const MCP_READ_SCOPES = [...MCP_SCOPE_FAMILIES, ...MCP_READ_ONLY_SCOPE_FAMILIES].map(
   (family) => `${family}:read` as const
 ) as unknown as TNonEmpty<TMcpReadScope>;
 
@@ -144,10 +154,14 @@ export const MCP_WRITE_SCOPES = MCP_SCOPE_FAMILIES.map(
   (family) => `${family}:write` as const
 ) as unknown as TNonEmpty<TMcpWriteScope>;
 
-/** The resource scopes MCP clients are told about, as read/write pairs in family order. */
-export const MCP_RESOURCE_SCOPES: readonly (TMcpReadScope | TMcpWriteScope)[] = MCP_SCOPE_FAMILIES.flatMap(
-  (family) => [`${family}:read`, `${family}:write`] as const
-);
+/**
+ * The resource scopes MCP clients are told about: the read/write pairs in family order, then the
+ * read-only families' read scopes.
+ */
+export const MCP_RESOURCE_SCOPES: readonly (TMcpReadScope | TMcpWriteScope)[] = [
+  ...MCP_SCOPE_FAMILIES.flatMap((family) => [`${family}:read`, `${family}:write`] as const),
+  ...MCP_READ_ONLY_SCOPE_FAMILIES.map((family) => `${family}:read` as const),
+];
 
 export const MCP_OAUTH_SCOPES = [
   "openid",

@@ -109,6 +109,7 @@
       "revoke": "Revogar",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
+        "audience_read": "Ler contatos, atributos de contatos, segmentos e classes de ação",
         "dashboards_read": "Ler gráficos e painéis",
         "dashboards_write": "Criar e editar gráficos e painéis",
         "email": "Ver seu endereço de e-mail",
