@@ -822,6 +822,7 @@ model Workspace {
   feedbackSources      FeedbackSource[]
   workflows            Workflow[]
   workflowRuns         WorkflowRun[]
+  mcpGrants            McpGrantWorkspace[]
 
   @@unique([organizationId, name])
 }
@@ -839,17 +840,17 @@ model Workspace {
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
 /// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations) and for the calendar days behind the analytics date filters (survey summary, charts, dashboards); null means UTC
 model Organization {
-  id                    String               @id @default(cuid())
-  createdAt             DateTime             @default(now()) @map(name: "created_at")
-  updatedAt             DateTime             @updatedAt @map(name: "updated_at")
+  id                    String                 @id @default(cuid())
+  createdAt             DateTime               @default(now()) @map(name: "created_at")
+  updatedAt             DateTime               @updatedAt @map(name: "updated_at")
   name                  String
   memberships           Membership[]
   workspaces            Workspace[]
   billing               OrganizationBilling?
   /// [OrganizationWhitelabel]
-  whitelabel            Json                 @default("{}")
+  whitelabel            Json                   @default("{}")
   invites               Invite[]
-  isAISmartToolsEnabled Boolean              @default(false)
+  isAISmartToolsEnabled Boolean                @default(false)
   displayTimeZone       String?
   teams                 Team[]
   apiKeys               ApiKey[]
@@ -858,6 +859,7 @@ model Organization {
   retentionExemptions   RetentionExemption[]
   retentionRuns         RetentionRun[]
   retentionNotices      RetentionNotice[]
+  mcpGrants             McpGrantOrganization[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.
@@ -1194,6 +1196,7 @@ model oauthClient {
   refreshTokens oauthRefreshToken[]
   consents      oauthConsent[]
   resources     oauthClientResource[]
+  mcpGrants     McpGrant[]
 
   @@index([userId])
 }
@@ -1290,6 +1293,61 @@ model oauthConsent {
 /// its own token lifetimes, scope allow-list and claims. Replaces the flat `validAudiences` option —
 /// a token is now bound to the resource it was approved for instead of to a static allow-list.
 /// `identifier` is the RFC 8707 `resource` value and is the natural key other rows point at.
+/// What one user allows one MCP client to do (GLOSSARY.md "Grant", ADR-0041): its organization & workspace
+/// access and an access level per permission. One per OAuth connection, keyed by user and client rather
+/// than by `oauthConsent` row, because the provider can write duplicate consent rows for one connection
+/// and settles them later. Every MCP request reads it; without one the request is refused. The client's
+/// OAuth scopes stay on the consent and cap it.
+model McpGrant {
+  id            String                 @id @default(cuid())
+  createdAt     DateTime               @default(now()) @map(name: "created_at")
+  updatedAt     DateTime               @updatedAt @map(name: "updated_at")
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        oauthClient            @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  /// Which organizations and workspaces the grant reaches. Only `all` is enforced until ENG-7153; any
+  /// other value is refused on every call rather than read as All access.
+  access        McpGrantAccess         @default(all)
+  /// The access level per permission of `apps/web/modules/mcp/permissions.ts`: `{ "surveys": "write" }`.
+  /// A permission that is absent has No access.
+  permissions   Json                   @default("{}")
+  /// The selections behind `organizations` and `workspaces` access (ENG-7153).
+  organizations McpGrantOrganization[]
+  workspaces    McpGrantWorkspace[]
+
+  @@unique([userId, clientId])
+  @@index([clientId])
+}
+
+enum McpGrantAccess {
+  all
+  organizations
+  workspaces
+}
+
+/// An organization a grant with `organizations` access reaches, workspaces created there later included.
+model McpGrantOrganization {
+  grantId        String
+  grant          McpGrant     @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([grantId, organizationId])
+  @@index([organizationId])
+}
+
+/// A workspace a grant with `workspaces` access reaches.
+model McpGrantWorkspace {
+  grantId     String
+  grant       McpGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@id([grantId, workspaceId])
+  @@index([workspaceId])
+}
+
 model oauthResource {
   id                            String                @id @default(cuid())
   identifier                    String                @unique
@@ -1386,6 +1444,7 @@ model User {
   oauthAccessTokens         oauthAccessToken[]   @relation("OAuthAccessTokenUser")
   oauthRefreshTokens        oauthRefreshToken[]  @relation("OAuthRefreshTokenUser")
   oauthConsents             oauthConsent[]       @relation("OAuthConsentUser")
+  mcpGrants                 McpGrant[]
   passwordResetToken        PasswordResetToken?
   groupId                   String?
   invitesCreated            Invite[]             @relation("inviteCreatedBy")
