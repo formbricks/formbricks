@@ -9,6 +9,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
+import { FULL_MCP_GRANT } from "./test-utils";
 import {
   buildListWorkflowRunsSearchParams,
   buildListWorkflowsSearchParams,
@@ -81,7 +82,7 @@ const readOnlyAuthInfo = {
   token: "oauth:user_1:client_1",
   clientId: "client_1",
   scopes: ["workflows:read"],
-  extra: { ...authInfo.extra, authMethod: "oauth" },
+  extra: { ...authInfo.extra, authMethod: "oauth", grant: FULL_MCP_GRANT },
 };
 const noScopeAuthInfo = { ...readOnlyAuthInfo, scopes: [] as string[] };
 

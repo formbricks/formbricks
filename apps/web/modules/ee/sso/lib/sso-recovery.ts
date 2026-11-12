@@ -269,8 +269,8 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // MCP OAuth grants the account minted while its address was unproven. Without this the sweep is
   // incomplete in the one direction that outlives it: `oauthProvider` is registered unconditionally
   // (auth.ts) with open dynamic client registration, so a holder of a live session can bank a refresh
-  // token good for 30 days — far longer than the session revoked below. What revoking covers, and the
-  // 15-minute JWT access-token residual it leaves, is on `revokeAllUserOAuthGrants`.
+  // token good for 30 days — far longer than the session revoked below. What revoking covers, MCP grants
+  // and so the live JWT access tokens included (ENG-7149), is on `revokeAllUserOAuthGrants`.
   const oauth = await revokeAllUserOAuthGrants(tx, user.id);
 
   // The keys this user minted (ENG-2634). Ids first: `deleteMany` reports only a count, and the caller

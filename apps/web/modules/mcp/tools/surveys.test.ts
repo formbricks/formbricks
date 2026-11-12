@@ -25,7 +25,7 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
-import { type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
+import { FULL_MCP_GRANT, type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
@@ -108,6 +108,7 @@ const readOnlyOAuthAuthInfo = {
     },
     requestId: "req_tool",
     authMethod: "oauth",
+    grant: FULL_MCP_GRANT,
   },
 };
 

@@ -134,7 +134,12 @@ needs `surveys:read`, Charts at `write` needs `dashboards:write` — so the tabl
 scope opens each tool. A tool cannot be registered without a permission: the type refuses an empty list,
 and a list that is empty or names a permission or level the registry does not offer throws at
 registration. A new tool inherits enforcement by construction — the gate returns a
-`403 insufficient_scope` before the handler touches a v3 operation. Tools that more than one permission
+`403 insufficient_scope` before the handler touches a v3 operation. The same gate then holds an OAuth
+call to the connection's **grant** (ADR-0041): each declared permission must be at least the declared
+level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
+permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
+connection without one (that is what makes Revoke immediate); API keys have no grant and are gated on
+scopes alone. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
 gate.
@@ -192,9 +197,11 @@ from that list, so `offline_access` must be advertised there for clients to be i
   `claude mcp add …`).
 </Warning>
 
-OAuth scopes gate MCP tool categories at the token layer. Actual workspace access is still evaluated
-at tool execution through the existing v3 authorization checks for the signed-in Formbricks user, so
-a token scope and a workspace role are independent gates — a call must satisfy both.
+OAuth scopes gate MCP tool categories at the token layer, and the connection's grant
+(`modules/mcp/grant.ts`, stored by `grant-store.ts`) narrows each permission below them. Actual workspace
+access is still evaluated at tool execution through the existing v3 authorization checks for the
+signed-in Formbricks user, so scope, grant and workspace role are independent gates — a call must satisfy
+all three.
 
 Scope groups are **independent**: a token authenticates as long as it holds at least one resource
 scope, so a `feedbackRecords:read`-only grant is valid and simply can't reach the survey tools.
@@ -353,8 +360,13 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
   first connect with `invalid_scope` and only succeeded on retry.
 </Note>
 
-The consent screen is served at `/account/authorize`. Users can revoke approved MCP clients from
-`/account/settings/authorized-apps`.
+The consent screen is served at `/account/authorize`; Allow saves the connection's grant at the levels
+the approved scopes give. Users can revoke approved MCP clients from `/account/settings/authorized-apps`,
+which deletes the consent and the grant together, so the client's next call is refused.
+
+Integration tests that call `/api/mcp` as a client does use `apps/web/integration/mcp-client.ts`
+(`callMcpTool`, with a token from `integration/oauth-flow.ts` `grant()`); see
+`modules/mcp/mcp-grants.integration.test.ts`.
 
 For API-key fallback, create an API key in the Formbricks app with access to the target workspace.
 Use the least privileged permission needed by the agent workflow.

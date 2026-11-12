@@ -2,6 +2,7 @@ import type { AuthInfo, CallToolResult } from "@modelcontextprotocol/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { registerMcpTool } from "./guard-permissions";
+import { FULL_MCP_GRANT } from "./test-utils";
 
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) },
@@ -42,7 +43,11 @@ function authInfoWithScopes(scopes: string[], requestId = "req_guard", authentic
     token: "tok",
     clientId: "client",
     scopes,
-    extra: { requestId, ...(authentication ? { formbricksAuthentication: authentication } : {}) },
+    extra: {
+      requestId,
+      grant: FULL_MCP_GRANT,
+      ...(authentication ? { formbricksAuthentication: authentication } : {}),
+    },
   } as unknown as AuthInfo;
 }
 
@@ -403,6 +408,136 @@ describe("registerMcpTool — auditing refused mutations", () => {
     expect(tools.get("delete_response")?.config).toEqual(CONFIG);
     expect(tools.get("delete_response")?.config).not.toHaveProperty("audit");
     expect(server.registerTool.mock.calls[0][1]).not.toHaveProperty("audit");
+  });
+});
+
+/**
+ * ENG-7149. The connection's grant is the second half of the gate: a tool runs only when the token's
+ * scopes reach its permissions and the grant gives them at the level it needs. The integration suite
+ * (`mcp-grants.integration.test.ts`) drives this through `/api/mcp`; these pin the forms it doesn't reach.
+ */
+describe("registerMcpTool — the connection's grant", () => {
+  const SESSION = { user: { id: "user_1" }, expires: "2099-01-01" };
+  const EVERY_SCOPE = ["surveys:read", "surveys:write", "dashboards:read", "responses:read"];
+
+  const withGrant = (permissions: Record<string, string> | null, authentication: unknown = SESSION) =>
+    ({
+      token: "tok",
+      clientId: "client",
+      scopes: EVERY_SCOPE,
+      extra: {
+        requestId: "req_grant",
+        formbricksAuthentication: authentication,
+        ...(permissions ? { grant: { access: "all", permissions } } : {}),
+      },
+    }) as unknown as AuthInfo;
+
+  test("refuses a tool the grant doesn't give, naming the permission and level, and audits a mutation", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn();
+    registerMcpTool(
+      server as any,
+      "delete_survey",
+      { ...CONFIG, audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" } },
+      [{ permission: "surveys", level: "write" }],
+      handler as any
+    );
+
+    const result = await tools
+      .get("delete_survey")!
+      .handler(
+        { surveyId: "clsur00000000000000000001" },
+        { http: { authInfo: withGrant({ surveys: "read" }) } }
+      );
+
+    expect(handler).not.toHaveBeenCalled();
+    expect((result.structuredContent as ScopeErrorContent).error).toMatchObject({
+      status: 403,
+      code: "forbidden",
+      detail:
+        "Not permitted: the user's grant to this MCP client does not give Surveys: Write. Ask the user to give the client this access.",
+    });
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+  });
+
+  test("names every permission an all-of tool lacks", async () => {
+    const { server, tools } = createToolServer();
+    registerMcpTool(
+      server as any,
+      "read_chart",
+      CONFIG,
+      [
+        { permission: "charts", level: "read" },
+        { permission: "feedbackRecords", level: "read" },
+      ],
+      vi.fn() as any
+    );
+    const authInfo = withGrant({ charts: "write" });
+    (authInfo.scopes as string[]).push("feedbackRecords:read");
+
+    const result = await tools.get("read_chart")!.handler({}, { http: { authInfo } });
+
+    expect((result.structuredContent as ScopeErrorContent).error.detail).toContain(
+      "does not give Feedback records: Read."
+    );
+  });
+
+  test("runs an any-of tool when the grant gives one listed permission, and names them all when none", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
+    registerMcpTool(
+      server as any,
+      "discover",
+      CONFIG,
+      {
+        anyOf: [
+          { permission: "surveys", level: "read" },
+          { permission: "dashboards", level: "read" },
+        ],
+      },
+      handler as any
+    );
+
+    await tools.get("discover")!.handler({}, { http: { authInfo: withGrant({ dashboards: "read" }) } });
+    const refused = await tools.get("discover")!.handler({}, { http: { authInfo: withGrant({}) } });
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect((refused.structuredContent as ScopeErrorContent).error.detail).toContain(
+      "does not give any of Surveys: Read, Dashboards: Read."
+    );
+  });
+
+  test("refuses a user's call that carries no grant at all", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn();
+    registerMcpTool(
+      server as any,
+      "list",
+      CONFIG,
+      [{ permission: "surveys", level: "read" }],
+      handler as any
+    );
+
+    const result = await tools.get("list")!.handler({}, { http: { authInfo: withGrant(null) } });
+
+    expect(handler).not.toHaveBeenCalled();
+    expect((result.structuredContent as ScopeErrorContent).error.detail).toMatch(/^Not permitted: /);
+  });
+
+  test("gates an API key, which has no grant, on its scopes alone", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
+    registerMcpTool(
+      server as any,
+      "list",
+      CONFIG,
+      [{ permission: "surveys", level: "read" }],
+      handler as any
+    );
+
+    await tools.get("list")!.handler({}, { http: { authInfo: withGrant(null, API_KEY_AUTH) } });
+
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 });
 

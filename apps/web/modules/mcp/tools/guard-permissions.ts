@@ -11,8 +11,10 @@ import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import type { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
+  type TMcpAuthInfo,
   type TMcpToolContext,
   createMcpInsufficientScopeResponse,
+  createMcpNotPermittedResponse,
   getMcpAuthentication,
   getMcpRequestId,
   getMcpToolAuthInfo,
@@ -20,6 +22,7 @@ import {
   hasMcpScopes,
 } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import { describeMcpPermissionRequirement, mcpGrantAllows } from "../grant";
 import {
   type TMcpPermissionRequirement,
   getMcpPermissionScope,
@@ -146,7 +149,7 @@ type TMcpToolPermissions =
 
 /**
  * The scopes the requirements map to, in declaration order and each once — Surveys and Survey styling
- * both need `surveys:read`. Until grants exist (ENG-7149) the token's scopes are the whole check.
+ * both need `surveys:read`. The token's scopes cap the grant: they are checked first, then the grant.
  */
 const toScopes = (requirements: readonly TMcpPermissionRequirement[]): string[] => [
   ...new Set(requirements.map(getMcpPermissionScope)),
@@ -171,22 +174,57 @@ const assertDeclaresPermissions = (name: string, permissions: TMcpToolPermission
   }
 };
 
+/**
+ * The grant half of the gate (ADR-0041): the requirements the connection's grant does not cover, after
+ * the scope half has passed. The effective level of a permission is the lower of the grant's and the
+ * token's scopes, so both halves must pass; the user's own role is then checked by the v3 operation.
+ *
+ * An API key has no grant and skips this, exactly as before grants. Every other principal needs one, and
+ * one without is refused: authentication never lets an OAuth request through without a grant, so this
+ * only fails closed should that ever change.
+ */
+const guardGrant = async (
+  requirements: readonly TMcpPermissionRequirement[],
+  mode: "allOf" | "anyOf",
+  authInfo: AuthInfo | undefined,
+  requestId: string
+): Promise<CallToolResult | null> => {
+  const authentication = getMcpAuthentication(authInfo);
+  if (authentication && "apiKeyId" in authentication) return null;
+
+  const grant = (authInfo as TMcpAuthInfo | undefined)?.extra?.grant;
+  const missing = grant
+    ? requirements.filter((requirement) => !mcpGrantAllows(grant, requirement))
+    : requirements;
+  const refused = mode === "allOf" ? missing.length > 0 : missing.length === requirements.length;
+  if (!refused) return null;
+
+  const named = missing.map(describeMcpPermissionRequirement);
+  const needs = mode === "anyOf" && named.length > 1 ? `any of ${named.join(", ")}` : named.join(" and ");
+  return await responseToMcpToolResult(createMcpNotPermittedResponse(requestId, needs), requestId);
+};
+
 const guardPermissions = async (
   permissions: TMcpToolPermissions,
   input: unknown,
   authInfo: AuthInfo | undefined,
   requestId: string
 ): Promise<CallToolResult | null> => {
-  if ("anyOf" in permissions) return await guardMcpAnyScope(authInfo, toScopes(permissions.anyOf), requestId);
-  if ("byInput" in permissions) {
-    const selected: unknown = permissions.byInput(input, authInfo);
-    // Fail closed: an empty or invalid list would otherwise gate on nothing.
-    if (!isValidPermissionList(selected)) {
-      return await responseToMcpToolResult(createMcpInsufficientScopeResponse(requestId, []), requestId);
-    }
-    return await guardMcpScopes(authInfo, toScopes(selected), requestId);
+  if ("anyOf" in permissions) {
+    return (
+      (await guardMcpAnyScope(authInfo, toScopes(permissions.anyOf), requestId)) ??
+      (await guardGrant(permissions.anyOf, "anyOf", authInfo, requestId))
+    );
   }
-  return await guardMcpScopes(authInfo, toScopes(permissions), requestId);
+  const selected: unknown = "byInput" in permissions ? permissions.byInput(input, authInfo) : permissions;
+  // Fail closed: an empty or invalid list would otherwise gate on nothing.
+  if (!isValidPermissionList(selected)) {
+    return await responseToMcpToolResult(createMcpInsufficientScopeResponse(requestId, []), requestId);
+  }
+  return (
+    (await guardMcpScopes(authInfo, toScopes(selected), requestId)) ??
+    (await guardGrant(selected, "allOf", authInfo, requestId))
+  );
 };
 
 type McpToolConfig<
@@ -219,13 +257,14 @@ type McpToolConfig<
  * tool whose declaration is empty or names a permission or level the registry (`../permissions.ts`) does
  * not offer throws at registration — so every tool joins the grant a user sets, and none reaches a v3
  * operation unguarded. The gate always runs BEFORE the handler and answers a refusal with a 403 tool
- * result.
+ * result: an insufficient scope when the token's scopes don't reach the permission, "Not permitted"
+ * naming the permission and level when the connection's grant doesn't (ADR-0041).
  *
  * This is the single registration path for every MCP tool (ENG-2119): the guards below are private, so
  * a tool module cannot gate by hand even if it wanted to. Read tools declare their permissions at
- * `read`, mutating tools at `write`. Until grants are enforced (ENG-7149) each permission maps to its
- * scope family at that level (`getMcpPermissionScope`), so a tool is allowed and refused for exactly the
- * scopes it was before permissions replaced scopes here.
+ * `read`, mutating tools at `write`. Each permission maps to its scope family at that level
+ * (`getMcpPermissionScope`) for the scope half, and the grant must give it at that level for the other.
+ * API-key calls have no grant and are gated on scopes alone, as before grants.
  *
  * Pass `{ anyOf: [...] }` for the rare tool that several permissions legitimately reach (workspace
  * discovery), and `{ byInput }` for a tool whose input decides what it reads.

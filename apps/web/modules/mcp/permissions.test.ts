@@ -11,25 +11,81 @@ import {
  * hand so the registry is checked against the spec rather than against itself.
  */
 const SPEC_CATALOGUE = {
-  surveys: { category: "surveys", scopeFamily: "surveys", levels: ["none", "read", "write"] },
-  creatives: { category: "surveys", scopeFamily: "surveys", levels: ["none", "read", "write"] },
-  surveyStyling: { category: "surveys", scopeFamily: "surveys", levels: ["none", "read", "write"] },
-  responses: { category: "responses", scopeFamily: "responses", levels: ["none", "read", "write"] },
-  tags: { category: "responses", scopeFamily: "responses", levels: ["none", "read", "write"] },
-  workflows: { category: "workflows", scopeFamily: "workflows", levels: ["none", "read", "write"] },
-  workflowRuns: { category: "workflows", scopeFamily: "workflows", levels: ["none", "read"] },
-  charts: { category: "dashboards", scopeFamily: "dashboards", levels: ["none", "read", "write"] },
-  dashboards: { category: "dashboards", scopeFamily: "dashboards", levels: ["none", "read", "write"] },
+  surveys: {
+    name: "Surveys",
+    category: "surveys",
+    scopeFamily: "surveys",
+    levels: ["none", "read", "write"],
+  },
+  creatives: {
+    name: "Creatives",
+    category: "surveys",
+    scopeFamily: "surveys",
+    levels: ["none", "read", "write"],
+  },
+  surveyStyling: {
+    name: "Survey styling",
+    category: "surveys",
+    scopeFamily: "surveys",
+    levels: ["none", "read", "write"],
+  },
+  responses: {
+    name: "Responses",
+    category: "responses",
+    scopeFamily: "responses",
+    levels: ["none", "read", "write"],
+  },
+  tags: { name: "Tags", category: "responses", scopeFamily: "responses", levels: ["none", "read", "write"] },
+  workflows: {
+    name: "Workflows",
+    category: "workflows",
+    scopeFamily: "workflows",
+    levels: ["none", "read", "write"],
+  },
+  workflowRuns: {
+    name: "Workflow runs",
+    category: "workflows",
+    scopeFamily: "workflows",
+    levels: ["none", "read"],
+  },
+  charts: {
+    name: "Charts",
+    category: "dashboards",
+    scopeFamily: "dashboards",
+    levels: ["none", "read", "write"],
+  },
+  dashboards: {
+    name: "Dashboards",
+    category: "dashboards",
+    scopeFamily: "dashboards",
+    levels: ["none", "read", "write"],
+  },
   feedbackRecords: {
+    name: "Feedback records",
     category: "feedback",
     scopeFamily: "feedbackRecords",
     levels: ["none", "read", "write"],
   },
-  feedbackDatasets: { category: "feedback", scopeFamily: "feedbackRecords", levels: ["none", "read"] },
-  contacts: { category: "audience", scopeFamily: "audience", levels: ["none", "read"] },
-  contactAttributes: { category: "audience", scopeFamily: "audience", levels: ["none", "read"] },
-  segments: { category: "audience", scopeFamily: "audience", levels: ["none", "read"] },
-  actionClasses: { category: "audience", scopeFamily: "audience", levels: ["none", "read"] },
+  feedbackDatasets: {
+    name: "Feedback datasets",
+    category: "feedback",
+    scopeFamily: "feedbackRecords",
+    levels: ["none", "read"],
+  },
+  contacts: { name: "Contacts", category: "audience", scopeFamily: "audience", levels: ["none", "read"] },
+  contactAttributes: {
+    name: "Contact attributes",
+    category: "audience",
+    scopeFamily: "audience",
+    levels: ["none", "read"],
+  },
+  segments: { name: "Segments", category: "audience", scopeFamily: "audience", levels: ["none", "read"] },
+  actionClasses: {
+    name: "Action classes",
+    category: "audience",
+    scopeFamily: "audience",
+    levels: ["none", "read"],
+  },
 };
 
 describe("MCP permission registry", () => {

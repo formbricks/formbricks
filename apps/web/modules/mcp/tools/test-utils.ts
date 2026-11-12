@@ -1,4 +1,6 @@
 import { type AuthInfo, McpServer, createMcpHandler } from "@modelcontextprotocol/server";
+import type { TMcpGrant, TMcpGrantPermissions } from "../grant";
+import { MCP_PERMISSIONS } from "../permissions";
 
 /** The slice of a `tools/call` JSON-RPC response the tool tests assert on. */
 export type ToolCallOutcome = {
@@ -85,3 +87,14 @@ export const callToolOverHttp = async ({
 /** The text of a tool result's content blocks, which is where a tool error's message lands. */
 export const errorText = (outcome: ToolCallOutcome) =>
   outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
+
+/**
+ * A grant giving every permission at the highest level it offers, for tool tests about something other
+ * than the grant: with it, an OAuth caller is gated on its scopes alone, as before grants (ENG-7149).
+ */
+export const FULL_MCP_GRANT: TMcpGrant = {
+  access: "all",
+  permissions: Object.fromEntries(
+    Object.entries(MCP_PERMISSIONS).map(([permission, { levels }]) => [permission, levels.at(-1)])
+  ) as TMcpGrantPermissions,
+};

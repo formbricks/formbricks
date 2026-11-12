@@ -5,6 +5,7 @@ import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
+import { getMcpGrantPermissionsForScopes } from "./grant";
 import { registerCreativeTools } from "./tools/creatives";
 import { registerDashboardTools } from "./tools/dashboards";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
@@ -61,6 +62,10 @@ const FILTER_ID = "clfi000000000000000000001";
 let fixture: TDashboardsFixture;
 const ids = { viewer: "", dashboard: "", chart: "", survey: "" };
 
+/** What the viewer's consent narrowed the token to, and the grant Allow saved from it (ENG-7149). */
+const VIEWER_SCOPES = trimScopesForDashboardViewer([...MCP_OAUTH_SCOPES]);
+const VIEWER_GRANT = { access: "all", permissions: getMcpGrantPermissionsForScopes(VIEWER_SCOPES) } as const;
+
 const call = (name: string, input: Record<string, unknown>) => {
   const handler = tools.get(name);
   if (!handler) throw new Error(`no tool ${name}`);
@@ -69,12 +74,13 @@ const call = (name: string, input: Record<string, unknown>) => {
       authInfo: {
         token: "oauth:viewer",
         clientId: "client",
-        scopes: trimScopesForDashboardViewer([...MCP_OAUTH_SCOPES]),
+        scopes: VIEWER_SCOPES,
         extra: {
           formbricksAuthentication: sessionOf(ids.viewer),
           requestId: "req",
           authMethod: "oauth",
           dashboardViewerOnly: true,
+          grant: VIEWER_GRANT,
         },
       },
     },

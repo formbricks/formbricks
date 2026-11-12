@@ -36,6 +36,7 @@ import {
 } from "@/modules/auth/lib/oauth-urls";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { type TMcpGrant, parseMcpGrantPermissions } from "./grant";
 
 const QUERY_CREDENTIAL_PARAMS = new Set([
   "api_key",
@@ -121,6 +122,11 @@ export type TMcpAuthInfo = AuthInfo & {
      * trimmed to `dashboards:read`, and the dashboard-bound chart read accepts it on that scope alone.
      */
     dashboardViewerOnly?: boolean;
+    /**
+     * The connection's grant (ADR-0041), read with the user on every OAuth request. Every tool call is
+     * held to it on top of the token's scopes. Absent on the API-key path, which has no grant.
+     */
+    grant?: TMcpGrant;
   };
 };
 
@@ -285,20 +291,28 @@ function createOAuthMcpAuthInfo(payload: JWTPayload, requestId: string): TMcpAut
 }
 
 /**
- * What every OAuth request needs to know about its user, in one read: whether the user is active, and
- * whether every membership they hold is the Dashboard viewer role (`hasOnlyDashboardViewerRoles`).
+ * What every OAuth request needs to know about its user, in one read: whether the user is active, whether
+ * every membership they hold is the Dashboard viewer role (`hasOnlyDashboardViewerRoles`), and the grant
+ * the user gave this client (ADR-0041), `null` without one.
  */
 async function getOAuthUserStanding(
-  userId: string
-): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean }> {
+  userId: string,
+  clientId: string
+): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean; grant: TMcpGrant | null }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isActive: true, memberships: { select: { role: true } } },
+    select: {
+      isActive: true,
+      memberships: { select: { role: true } },
+      mcpGrants: { where: { clientId }, select: { access: true, permissions: true } },
+    },
   });
+  const grant = user?.mcpGrants[0];
 
   return {
     isActive: user?.isActive === true,
     isDashboardViewerOnly: hasOnlyDashboardViewerRoles(user?.memberships ?? []),
+    grant: grant ? { access: grant.access, permissions: parseMcpGrantPermissions(grant.permissions) } : null,
   };
 }
 
@@ -565,7 +579,7 @@ async function authenticateMcpOAuthBearer(
   }
 
   const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
-  const standing = await getOAuthUserStanding(sessionAuthentication.user.id);
+  const standing = await getOAuthUserStanding(sessionAuthentication.user.id, authInfo.clientId);
   if (!standing.isActive) {
     return await rejectUnauthenticatedMcpRequest({
       requestId,
@@ -575,6 +589,33 @@ async function authenticateMcpOAuthBearer(
       logContext: { clientId: authInfo.clientId },
     });
   }
+
+  // ADR-0041: the grant is the connection's liveness check. Revoke deletes it with the consent, so a token
+  // minted before the revoke is refused here on its next call rather than living out its 15 minutes. A
+  // 401 like any dead token: the client refreshes, the refresh is refused for the same reason
+  // (`requireOAuthConsentOnRefreshAfterHandler`), and it goes back through the consent screen.
+  if (!standing.grant) {
+    return await rejectUnauthenticatedMcpRequest({
+      requestId,
+      instance,
+      log,
+      logMessage: "MCP OAuth connection has no grant",
+      logContext: { clientId: authInfo.clientId },
+    });
+  }
+
+  // Only All access is enforced before ENG-7153 checks organization & workspace access in SpiceDB. A
+  // grant that selects organizations or workspaces is refused outright rather than read as All access.
+  if (standing.grant.access !== "all") {
+    return await rejectUnauthenticatedMcpRequest({
+      requestId,
+      instance,
+      log,
+      logMessage: "MCP OAuth grant limits organization & workspace access, which is not enforced yet",
+      logContext: { clientId: authInfo.clientId, access: standing.grant.access },
+    });
+  }
+  authInfo.extra.grant = standing.grant;
 
   // ADR-0025: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the token
   // carries. Consent already narrows new grants; this bounds a token minted before the user became a
@@ -665,6 +706,21 @@ export function createMcpInsufficientScopeResponse(requestId: string, scopes: st
       "/api/mcp"
     ),
     scopes
+  );
+}
+
+/**
+ * The refusal for a tool the grant does not cover (ADR-0041). Unlike an insufficient scope, it carries no
+ * `WWW-Authenticate` challenge: re-authorizing for more scopes would not help, the user has to change the
+ * grant. `detail` names what the grant would have to give, so an agent can tell the user what to change.
+ * The `code` stays `forbidden`, from the published vocabulary; `detail` starting "Not permitted" is what
+ * tells it apart from a refusal by the user's own role.
+ */
+export function createMcpNotPermittedResponse(requestId: string, needs: string): Response {
+  return problemForbidden(
+    requestId,
+    `Not permitted: the user's grant to this MCP client does not give ${needs}. Ask the user to give the client this access.`,
+    "/api/mcp"
   );
 }
 

@@ -190,7 +190,10 @@ describe("POST /api/mcp", () => {
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-    userFindUniqueMock.mockResolvedValue({ isActive: true });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      mcpGrants: [{ access: "all", permissions: { surveys: "write", workflows: "write" } }],
+    });
     getJwksMock.mockResolvedValue({ keys: [] });
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,

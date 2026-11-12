@@ -14,6 +14,8 @@ import {
   handleAuthenticatedMcpRequest,
 } from "./auth";
 
+/** What the user read returns for a connection with a grant (ENG-7149); its content is the guard's. */
+const GRANT_ROWS = [{ access: "all", permissions: {} }];
 const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock, warnMock } = vi.hoisted(() => ({
   getJwksMock: vi.fn(),
   verifyBearerTokenMock: vi.fn(),
@@ -138,7 +140,11 @@ describe("authenticateMcpRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     verifyBearerTokenMock.mockReset();
-    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }] });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      mcpGrants: GRANT_ROWS,
+    });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   });
@@ -335,6 +341,7 @@ describe("authenticateMcpRequest", () => {
     userFindUniqueMock.mockResolvedValueOnce({
       isActive: true,
       memberships: [{ role: "dashboard_viewer" }, { role: "dashboard_viewer" }],
+      mcpGrants: GRANT_ROWS,
     });
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
@@ -362,6 +369,7 @@ describe("authenticateMcpRequest", () => {
     userFindUniqueMock.mockResolvedValueOnce({
       isActive: true,
       memberships: [{ role: "dashboard_viewer" }, { role: "member" }],
+      mcpGrants: GRANT_ROWS,
     });
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
@@ -383,7 +391,11 @@ describe("authenticateMcpRequest", () => {
   });
 
   test("refuses a Dashboard viewer's token that carries no dashboards:read", async () => {
-    userFindUniqueMock.mockResolvedValueOnce({ isActive: true, memberships: [{ role: "dashboard_viewer" }] });
+    userFindUniqueMock.mockResolvedValueOnce({
+      isActive: true,
+      memberships: [{ role: "dashboard_viewer" }],
+      mcpGrants: GRANT_ROWS,
+    });
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
       sub: "viewer_1",
@@ -442,11 +454,16 @@ describe("authenticateMcpRequest", () => {
       },
       jwksUrl: "http://formbricks:3000/api/auth/jwks",
     });
-    // One read answers both whether the user is active and whether they are only a Dashboard viewer.
+    // One read answers whether the user is active, whether they are only a Dashboard viewer, and the
+    // connection's grant.
     expect(userFindUniqueMock).toHaveBeenCalledTimes(1);
     expect(userFindUniqueMock).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      select: { isActive: true, memberships: { select: { role: true } } },
+      select: {
+        isActive: true,
+        memberships: { select: { role: true } },
+        mcpGrants: { where: { clientId: "client_1" }, select: { access: true, permissions: true } },
+      },
     });
     expect(applyRateLimit).toHaveBeenCalledWith(
       expect.objectContaining({ namespace: "api:v3" }),
@@ -461,7 +478,7 @@ describe("authenticateMcpRequest", () => {
       azp: "client_1",
       scope: "surveys:read surveys:write",
     });
-    userFindUniqueMock.mockResolvedValue({ isActive: false });
+    userFindUniqueMock.mockResolvedValue({ isActive: false, memberships: [], mcpGrants: GRANT_ROWS });
 
     const result = await authenticateMcpRequest(
       createRequest("http://localhost/api/mcp", {
@@ -485,14 +502,73 @@ describe("authenticateMcpRequest", () => {
         detail: "Invalid OAuth access token",
       });
     }
-    // One read answers both whether the user is active and whether they are only a Dashboard viewer.
+    // One read answers whether the user is active, whether they are only a Dashboard viewer, and the
+    // connection's grant.
     expect(userFindUniqueMock).toHaveBeenCalledTimes(1);
     expect(userFindUniqueMock).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      select: { isActive: true, memberships: { select: { role: true } } },
+      select: {
+        isActive: true,
+        memberships: { select: { role: true } },
+        mcpGrants: { where: { clientId: "client_1" }, select: { access: true, permissions: true } },
+      },
     });
     expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
     expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["has no grant (revoked, or never written)", []],
+    [
+      "has a grant limited to selected workspaces, which is not enforced yet",
+      [{ access: "workspaces", permissions: { surveys: "write" } }],
+    ],
+  ])("rejects an OAuth bearer token whose connection %s", async (_case, mcpGrants) => {
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read surveys:write",
+    });
+    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }], mcpGrants });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(401);
+      expect(await result.response.json()).toMatchObject({ detail: "Invalid OAuth access token" });
+    }
+    expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("attaches the connection's grant, read with the user, to an OAuth request", async () => {
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read surveys:write",
+    });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      // A level the permission does not offer, and an unknown permission, read as No access.
+      mcpGrants: [
+        { access: "all", permissions: { surveys: "read", workflowRuns: "write", everything: "write" } },
+      ],
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.authInfo.extra.grant).toEqual({ access: "all", permissions: { surveys: "read" } });
+    }
+    expect(userFindUniqueMock).toHaveBeenCalledTimes(1);
   });
 
   test("rejects OAuth bearer tokens holding no MCP resource scope at all", async () => {
@@ -748,7 +824,11 @@ describe("MCP OAuth access token audience binding", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }] });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      mcpGrants: GRANT_ROWS,
+    });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
@@ -914,7 +994,11 @@ describe("MCP OAuth JWKS loading against the real Better Auth verifier", () => {
     // Set per test: the global setup resets every mock before each one.
     getJwksMock.mockImplementation(realOAuth2.getJwks);
     verifyBearerTokenMock.mockImplementation(realOAuth2.verifyBearerToken);
-    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }] });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      mcpGrants: GRANT_ROWS,
+    });
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   });

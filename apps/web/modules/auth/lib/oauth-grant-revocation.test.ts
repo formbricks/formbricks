@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
     oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
     oauthRefreshToken: { updateMany: vi.fn() },
     oauthAccessToken: { updateMany: vi.fn() },
+    mcpGrant: { findUnique: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn(), upsert: vi.fn() },
     $queryRaw: vi.fn(),
     $executeRaw: vi.fn(),
   },
@@ -49,6 +50,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("./mcp-oauth-provider-options", () => ({ MCP_OAUTH_REFRESH_TOKEN_PREFIX: "fbor_" }));
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 
 type TCtx = Parameters<typeof revokeOAuthConsentBeforeHandler>[0];
 const ctx = (path: string, body: unknown, returned?: unknown): TCtx =>
@@ -81,6 +83,17 @@ beforeEach(() => {
   });
   mocks.consents = [];
   mocks.grantBeyond = false;
+  // The connection has a grant (ENG-7149) unless a test says otherwise; saving one returns what it saved.
+  mocks.tx.mcpGrant.findUnique.mockResolvedValue({ id: "grant-1" });
+  mocks.tx.mcpGrant.findMany.mockResolvedValue([]);
+  mocks.tx.mcpGrant.deleteMany.mockImplementation(async () => {
+    mocks.calls.push("delete grant");
+    return { count: 1 };
+  });
+  mocks.tx.mcpGrant.upsert.mockImplementation(async ({ create }: { create: Record<string, unknown> }) => {
+    mocks.calls.push("save grant");
+    return { id: "grant-1", ...create };
+  });
   // Two raw reads steer a decision, the consent rows and the grant check; the token queries find nothing.
   mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray, ...values: unknown[]) => {
     const text = sql.join("?");
@@ -123,12 +136,22 @@ const consentRow = (id: string, scopes: string[], updatedAt: Date, skipConsent =
 const endedTokensBeyondConsent = (): boolean => mocks.tx.$executeRaw.mock.calls.length > 0;
 
 describe("revokeOAuthConsentGrant", () => {
-  test("deletes the client's consents before revoking its tokens, scoped to the user", async () => {
+  test("deletes the client's consents and grant before revoking its tokens, scoped to the user", async () => {
     mocks.tx.oauthConsent.findFirst.mockResolvedValue({ clientId: "client-1" });
+    const grant = { id: "grant-1", userId: "user-1", clientId: "client-1", access: "all", permissions: {} };
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([grant]);
 
     const result = await revokeOAuthConsentGrant({ userId: "user-1", consentId: "consent-1" });
 
-    expect(result).toEqual({ consentsDeleted: 1, refreshTokensRevoked: 2, accessTokensRevoked: 0 });
+    expect(result).toEqual({
+      consentsDeleted: 1,
+      refreshTokensRevoked: 2,
+      accessTokensRevoked: 0,
+      grants: [grant],
+    });
+    expect(mocks.tx.mcpGrant.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: "user-1", clientId: "client-1" } })
+    );
     expect(mocks.tx.oauthConsent.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "consent-1", userId: "user-1" } })
     );
@@ -142,7 +165,12 @@ describe("revokeOAuthConsentGrant", () => {
       });
     }
     // The delete takes the row locks a racing refresh's FOR SHARE read waits on, so it must come first.
-    expect(mocks.calls).toEqual(["delete consent", "revoke refresh tokens", "revoke access tokens"]);
+    expect(mocks.calls).toEqual([
+      "delete consent",
+      "delete grant",
+      "revoke refresh tokens",
+      "revoke access tokens",
+    ]);
   });
 
   test("returns null and writes nothing for a consent the user doesn't own", async () => {

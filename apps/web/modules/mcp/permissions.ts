@@ -38,6 +38,8 @@ export const MCP_PERMISSION_CATEGORIES = [
 export type TMcpPermissionCategory = (typeof MCP_PERMISSION_CATEGORIES)[number];
 
 type TMcpPermissionDefinition = {
+  /** The permission's English name, as the spec's catalogue and the "not permitted" error give it. */
+  name: string;
   category: TMcpPermissionCategory;
   scopeFamily: TMcpPermissionScopeFamily;
   levels: readonly TMcpAccessLevel[];
@@ -48,21 +50,36 @@ const READ_ONLY = ["none", "read"] as const;
 
 /** Keyed by permission, in the order the matrix lists them inside each category. */
 export const MCP_PERMISSIONS = {
-  surveys: { category: "surveys", scopeFamily: "surveys", levels: READ_WRITE },
-  creatives: { category: "surveys", scopeFamily: "surveys", levels: READ_WRITE },
-  surveyStyling: { category: "surveys", scopeFamily: "surveys", levels: READ_WRITE },
-  responses: { category: "responses", scopeFamily: "responses", levels: READ_WRITE },
-  tags: { category: "responses", scopeFamily: "responses", levels: READ_WRITE },
-  workflows: { category: "workflows", scopeFamily: "workflows", levels: READ_WRITE },
-  workflowRuns: { category: "workflows", scopeFamily: "workflows", levels: READ_ONLY },
-  charts: { category: "dashboards", scopeFamily: "dashboards", levels: READ_WRITE },
-  dashboards: { category: "dashboards", scopeFamily: "dashboards", levels: READ_WRITE },
-  feedbackRecords: { category: "feedback", scopeFamily: "feedbackRecords", levels: READ_WRITE },
-  feedbackDatasets: { category: "feedback", scopeFamily: "feedbackRecords", levels: READ_ONLY },
-  contacts: { category: "audience", scopeFamily: "audience", levels: READ_ONLY },
-  contactAttributes: { category: "audience", scopeFamily: "audience", levels: READ_ONLY },
-  segments: { category: "audience", scopeFamily: "audience", levels: READ_ONLY },
-  actionClasses: { category: "audience", scopeFamily: "audience", levels: READ_ONLY },
+  surveys: { name: "Surveys", category: "surveys", scopeFamily: "surveys", levels: READ_WRITE },
+  creatives: { name: "Creatives", category: "surveys", scopeFamily: "surveys", levels: READ_WRITE },
+  surveyStyling: { name: "Survey styling", category: "surveys", scopeFamily: "surveys", levels: READ_WRITE },
+  responses: { name: "Responses", category: "responses", scopeFamily: "responses", levels: READ_WRITE },
+  tags: { name: "Tags", category: "responses", scopeFamily: "responses", levels: READ_WRITE },
+  workflows: { name: "Workflows", category: "workflows", scopeFamily: "workflows", levels: READ_WRITE },
+  workflowRuns: { name: "Workflow runs", category: "workflows", scopeFamily: "workflows", levels: READ_ONLY },
+  charts: { name: "Charts", category: "dashboards", scopeFamily: "dashboards", levels: READ_WRITE },
+  dashboards: { name: "Dashboards", category: "dashboards", scopeFamily: "dashboards", levels: READ_WRITE },
+  feedbackRecords: {
+    name: "Feedback records",
+    category: "feedback",
+    scopeFamily: "feedbackRecords",
+    levels: READ_WRITE,
+  },
+  feedbackDatasets: {
+    name: "Feedback datasets",
+    category: "feedback",
+    scopeFamily: "feedbackRecords",
+    levels: READ_ONLY,
+  },
+  contacts: { name: "Contacts", category: "audience", scopeFamily: "audience", levels: READ_ONLY },
+  contactAttributes: {
+    name: "Contact attributes",
+    category: "audience",
+    scopeFamily: "audience",
+    levels: READ_ONLY,
+  },
+  segments: { name: "Segments", category: "audience", scopeFamily: "audience", levels: READ_ONLY },
+  actionClasses: { name: "Action classes", category: "audience", scopeFamily: "audience", levels: READ_ONLY },
 } as const satisfies Record<string, TMcpPermissionDefinition>;
 
 export type TMcpPermission = keyof typeof MCP_PERMISSIONS;
@@ -80,9 +97,9 @@ export type TMcpPermissionRequirement = {
 }[TMcpPermission];
 
 /**
- * The scope a token needs for a requirement today: the permission's scope family at the required level
- * (`surveys:read`, `dashboards:write`). Until grants exist (ENG-7149) this is the whole check, which is
- * what keeps every tool allowed and refused exactly as it was when tools declared scopes.
+ * The scope a token needs for a requirement: the permission's scope family at the required level
+ * (`surveys:read`, `dashboards:write`). The scope caps the grant (ADR-0041), so the tool guard checks it
+ * before the connection's grant; for an API key, which has no grant, it is the whole check.
  */
 export const getMcpPermissionScope = ({ permission, level }: TMcpPermissionRequirement): string =>
   `${MCP_PERMISSIONS[permission].scopeFamily}:${level}`;

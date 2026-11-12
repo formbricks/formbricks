@@ -5,6 +5,7 @@ import { getV3WorkspaceCustomCss, patchV3WorkspaceCustomCss } from "@/app/api/v3
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
 import { MCP_READ_SCOPES } from "@/modules/auth/lib/oauth-urls";
 import { ZMcpPatchWorkspaceCustomCssInput } from "./schemas";
+import { FULL_MCP_GRANT } from "./test-utils";
 import { ZMcpWorkspaceCustomCssOutput, registerWorkspaceTools } from "./workspaces";
 
 vi.mock("@/app/api/v3/workspaces/lib/operations", () => ({
@@ -34,7 +35,12 @@ const readAuthInfo = {
   token: "oauth:user_1:client_1",
   clientId: "client_1",
   scopes: ["surveys:read"],
-  extra: { formbricksAuthentication: oauthSession, requestId: "req_tool", authMethod: "oauth" },
+  extra: {
+    formbricksAuthentication: oauthSession,
+    requestId: "req_tool",
+    authMethod: "oauth",
+    grant: FULL_MCP_GRANT,
+  },
 };
 
 const writeOnlyAuthInfo = { ...readAuthInfo, scopes: ["surveys:write"] };
