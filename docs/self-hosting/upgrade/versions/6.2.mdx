@@ -48,7 +48,9 @@ Because the permission schema changes, permission preparation asks you to confir
 [schema changes](/self-hosting/upgrade/prepare).
 
 - **One-click:** download `formbricks.sh` from the 6.2 release before you run `./formbricks.sh update`. The update
-  stops with a schema drift (exit `2`) until preparation has run, before it stops or migrates anything. It also
+  stops with a schema drift (exit `2`) until preparation has run, before it stops the stack or runs migrations.
+  By then it has pulled the 6.2 images and, on the legacy Valkey 8.1.1 pin, rewritten `docker-compose.yml`
+  (backup: `docker-compose.yml.before-valkey-8.1.9`). Once preparation has run, the update also
   refreshes the Cube model files, rewrites the RustFS setup script and, where Docker supports it, turns on IPv6 for
   the app network (backup: `docker-compose.yml.before-ipv6-network`; opt out with `enable_ipv6: false`).
 - **Kubernetes:** existing installs with the bundled Valkey keep their storage labels, so `helm upgrade` doesn't
