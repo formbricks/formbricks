@@ -470,7 +470,7 @@ describe("authenticateMcpRequest", () => {
       select: {
         isActive: true,
         memberships: { select: { role: true } },
-        mcpGrants: { where: { clientId: "client_1" }, select: { access: true, permissions: true } },
+        mcpGrants: { where: { clientId: "client_1" }, select: { id: true, access: true, permissions: true } },
       },
     });
     expect(applyRateLimit).toHaveBeenCalledWith(
@@ -518,39 +518,36 @@ describe("authenticateMcpRequest", () => {
       select: {
         isActive: true,
         memberships: { select: { role: true } },
-        mcpGrants: { where: { clientId: "client_1" }, select: { access: true, permissions: true } },
+        mcpGrants: { where: { clientId: "client_1" }, select: { id: true, access: true, permissions: true } },
       },
     });
     expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
     expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
-  test.each([
-    ["has no grant (revoked, or never written)", []],
-    [
-      "has a grant limited to selected workspaces, which is not enforced yet",
-      [{ access: "workspaces", permissions: { surveys: "write" } }],
-    ],
-  ])("rejects an OAuth bearer token whose connection %s", async (_case, mcpGrants) => {
-    verifyBearerTokenMock.mockResolvedValue({
-      aud: MCP_AUDIENCE,
-      sub: "user_1",
-      azp: "client_1",
-      scope: "surveys:read surveys:write",
-    });
-    userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }], mcpGrants });
+  test.each([["has no grant (revoked, or never written)", []]])(
+    "rejects an OAuth bearer token whose connection %s",
+    async (_case, mcpGrants) => {
+      verifyBearerTokenMock.mockResolvedValue({
+        aud: MCP_AUDIENCE,
+        sub: "user_1",
+        azp: "client_1",
+        scope: "surveys:read surveys:write",
+      });
+      userFindUniqueMock.mockResolvedValue({ isActive: true, memberships: [{ role: "member" }], mcpGrants });
 
-    const result = await authenticateMcpRequest(
-      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
-    );
+      const result = await authenticateMcpRequest(
+        createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+      );
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.response.status).toBe(401);
-      expect(await result.response.json()).toMatchObject({ detail: "Invalid OAuth access token" });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.response.status).toBe(401);
+        expect(await result.response.json()).toMatchObject({ detail: "Invalid OAuth access token" });
+      }
+      expect(applyRateLimit).not.toHaveBeenCalled();
     }
-    expect(applyRateLimit).not.toHaveBeenCalled();
-  });
+  );
 
   test("attaches the connection's grant, read with the user, to an OAuth request", async () => {
     verifyBearerTokenMock.mockResolvedValue({
@@ -564,7 +561,11 @@ describe("authenticateMcpRequest", () => {
       memberships: [{ role: "member" }],
       // A level the permission does not offer, and an unknown permission, read as No access.
       mcpGrants: [
-        { access: "all", permissions: { surveys: "read", workflowRuns: "write", everything: "write" } },
+        {
+          id: "grant_1",
+          access: "all",
+          permissions: { surveys: "read", workflowRuns: "write", everything: "write" },
+        },
       ],
     });
 
@@ -574,9 +575,41 @@ describe("authenticateMcpRequest", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.authInfo.extra.grant).toEqual({ access: "all", permissions: { surveys: "read" } });
+      expect(result.authInfo.extra.grant).toEqual({
+        id: "grant_1",
+        access: "all",
+        permissions: { surveys: "read" },
+      });
     }
     expect(userFindUniqueMock).toHaveBeenCalledTimes(1);
+  });
+
+  // ENG-7153: organization & workspace access is enforced by `can()`, so such a grant authenticates.
+  test("accepts a connection whose grant selects workspaces, carrying the grant for can()", async () => {
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read surveys:write",
+    });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      mcpGrants: [{ id: "grant_1", access: "workspaces", permissions: { surveys: "write" } }],
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.authInfo.extra.grant).toEqual({
+        id: "grant_1",
+        access: "workspaces",
+        permissions: { surveys: "write" },
+      });
+    }
   });
 
   test("rejects OAuth bearer tokens holding no MCP resource scope at all", async () => {

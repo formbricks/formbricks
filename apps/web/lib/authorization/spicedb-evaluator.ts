@@ -4,6 +4,7 @@ import { type TAuthzedPermissionCheck, getAuthzedClient } from "@/lib/authzed/cl
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
+import { type TAuthorizationMcpGrant, getMcpGrantForActor } from "./context";
 import {
   AUTHORIZATION_PERMISSION_MAP,
   type TAuthorizationAction,
@@ -207,28 +208,62 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
   const check = getCheck(actor, action, resource.type, scope);
   if (!check) return false;
 
+  const mcpGrant = getMcpGrantForActor(actor);
   try {
-    const decision = await getAuthzedClient().checkPermission({
-      permission: check.permission,
-      resource: {
-        objectId: check.resource.id,
-        objectType: getSpicedbObjectType(check.resource.type),
-      },
-      subject: {
-        objectId: actor.id,
-        objectType: getSpicedbObjectType(actor.type),
-      },
-    });
-
-    return decision.allowed;
+    return mcpGrant
+      ? await checkWithinMcpGrant(actor, check, mcpGrant)
+      : (
+          await getAuthzedClient().checkPermission({
+            permission: check.permission,
+            resource: toObjectReference(check.resource),
+            subject: { objectId: actor.id, objectType: getSpicedbObjectType(actor.type) },
+          })
+        ).allowed;
   } catch (error) {
-    if (!isPermissionMissingFromSchema(error, check.permission)) throw error;
+    const missing = [check.permission, MCP_REACH_PERMISSION].find((permission) =>
+      isPermissionMissingFromSchema(error, permission)
+    );
+    if (!missing) throw error;
     logger.warn(
-      { component: "authzed", permission: check.permission, resourceType: check.resource.type },
+      { component: "authzed", permission: missing, resourceType: check.resource.type },
       "AuthZed schema lacks this permission; apply the release's schema. Denying the check"
     );
     return false;
   }
+};
+
+/** The permission every resource a check lands on answers for an MCP grant (ADR-0042). */
+const MCP_REACH_PERMISSION = "mcp_reach";
+
+const toObjectReference = (resource: TSpicedbCheck["resource"]) => ({
+  objectId: resource.id,
+  objectType: getSpicedbObjectType(resource.type),
+});
+
+/**
+ * An MCP call whose grant limits organization & workspace access (ENG-7153, ADR-0042): the user's own
+ * check and the grant's `mcp_reach` on the same node, in one `CheckBulkPermissions` round trip. Both must
+ * allow, so the client reaches the intersection of what the user may do and what the grant selects.
+ */
+const checkWithinMcpGrant = async (
+  actor: TAuthorizationActor,
+  check: TSpicedbCheck,
+  mcpGrant: TAuthorizationMcpGrant
+): Promise<boolean> => {
+  const resource = toObjectReference(check.resource);
+  const [userAllowed, grantReaches] = await getAuthzedClient().checkPermissionBatch([
+    {
+      permission: check.permission,
+      resource,
+      subject: { objectId: actor.id, objectType: getSpicedbObjectType(actor.type) },
+    },
+    {
+      permission: MCP_REACH_PERMISSION,
+      resource,
+      subject: { objectId: mcpGrant.id, objectType: "mcp_grant" },
+    },
+  ]);
+  return userAllowed === true && grantReaches === true;
 };
 
 export const spicedbEvaluator: AuthorizationEvaluator = {

@@ -21,7 +21,7 @@ import {
   hasAnyMcpScope,
   hasMcpScopes,
 } from "../auth";
-import { responseToMcpToolResult } from "../errors";
+import { hideOutsideMcpGrant, responseToMcpToolResult } from "../errors";
 import { describeMcpPermissionRequirement, mcpGrantAllows } from "../grant";
 import {
   type TMcpPermissionRequirement,
@@ -204,6 +204,12 @@ const guardGrant = async (
   return await responseToMcpToolResult(createMcpNotPermittedResponse(requestId, needs), requestId);
 };
 
+/** True when the request's grant selects organizations or workspaces rather than giving All access. */
+const limitsMcpGrantReach = (authInfo: AuthInfo | undefined): boolean => {
+  const access = (authInfo as TMcpAuthInfo | undefined)?.extra?.grant?.access;
+  return access !== undefined && access !== "all";
+};
+
 const guardPermissions = async (
   permissions: TMcpToolPermissions,
   input: unknown,
@@ -305,7 +311,10 @@ export function registerMcpTool<
     // inputSchema BEFORE invoking guardedHandler, and we forward the exact same `input`/`ctx` through
     // unchanged — so the runtime value already conforms to the handler's declared type; nothing is
     // reshaped.
-    return (handler as (input: unknown, ctx: unknown) => Promise<CallToolResult>)(input, ctx);
+    const result = await (handler as (input: unknown, ctx: unknown) => Promise<CallToolResult>)(input, ctx);
+    // ADR-0042: under a grant that limits organization & workspace access, what the grant doesn't reach
+    // doesn't exist. The guard's own "Not permitted" above is about levels, not reach, and stays.
+    return limitsMcpGrantReach(authInfo) ? hideOutsideMcpGrant(result, requestId) : result;
   }) as ToolCallback<InputSchema>;
 
   server.registerTool(name, audit ? toolConfig : config, guardedHandler);

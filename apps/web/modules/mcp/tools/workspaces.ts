@@ -8,6 +8,7 @@ import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import { MCP_PERMISSIONS, type TMcpPermission, type TMcpPermissionRequirement } from "../permissions";
 import { registerMcpTool } from "./guard-permissions";
 import { mcpToolOutput } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
@@ -28,12 +29,17 @@ export const ZMcpWorkspaceCustomCssOutput = mcpToolOutput(ZV3WorkspaceCustomCssR
   .extend({ warnings: ZV3CustomCssWarnings.optional() })
   .strict();
 
+/** Every permission in the registry at Read: what `list_workspaces` accepts any one of. */
+const ANY_PERMISSION_AT_READ = Object.keys(MCP_PERMISSIONS).map(
+  (permission): TMcpPermissionRequirement => ({ permission: permission as TMcpPermission, level: "read" })
+) as [TMcpPermissionRequirement, ...TMcpPermissionRequirement[]];
+
 export function registerWorkspaceTools(server: McpServer): void {
   // list_workspaces is the workspaceId-discovery prerequisite for every other tool group, so it gates on
-  // ANY permission at Read rather than a single one. auth.ts's baseline is "at least one resource scope"
-  // (MCP_RESOURCE_SCOPES), so a token holding only one family's read scope — `dashboards:read`, say — is a
-  // legitimate client and must still be able to discover its workspaceId. The result is derived from the
-  // caller's own memberships/key grants, so admitting any read permission exposes nothing extra.
+  // ANY permission at Read: every grant that gives anything can find the workspaces it reaches (ENG-7153),
+  // whichever permission that is (Creatives or Survey styling alone included). The result is derived
+  // from the caller's own memberships or key grants, narrowed to the grant's organization & workspace
+  // access, so admitting any read permission exposes nothing extra.
   registerMcpTool(
     server,
     "list_workspaces",
@@ -49,23 +55,7 @@ export function registerWorkspaceTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    // One permission per scope family. `workspaces.test.ts` drives this with every family's read scope,
-    // so a new family fails there until its permission is added here — the gap that once left a
-    // responses-only token unable to find its workspace.
-    {
-      anyOf: [
-        { permission: "surveys", level: "read" },
-        { permission: "workflows", level: "read" },
-        { permission: "feedbackRecords", level: "read" },
-        { permission: "responses", level: "read" },
-        { permission: "dashboards", level: "read" },
-        // Audience: all four, because each is a usable grant on its own (ENG-7151).
-        { permission: "contacts", level: "read" },
-        { permission: "contactAttributes", level: "read" },
-        { permission: "segments", level: "read" },
-        { permission: "actionClasses", level: "read" },
-      ],
-    },
+    { anyOf: ANY_PERMISSION_AT_READ },
     async (_input: TMcpListWorkspacesInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);

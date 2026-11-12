@@ -65,13 +65,14 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   disable_workflow: ["workflows:write"],
   archive_workflow: ["workflows:write"],
   unarchive_workflow: ["workflows:write"],
+  // ENG-7153: any permission at Read, in registry order; the same six scopes as before.
   list_workspaces: {
     anyOf: [
       "surveys:read",
-      "workflows:read",
-      "feedbackRecords:read",
       "responses:read",
+      "workflows:read",
       "dashboards:read",
+      "feedbackRecords:read",
       "audience:read",
     ],
   },

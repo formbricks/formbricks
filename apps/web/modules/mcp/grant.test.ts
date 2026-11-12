@@ -47,10 +47,28 @@ describe("isMcpGrantWithinCap", () => {
 });
 
 describe("parseRequestedMcpGrant", () => {
-  test("reads the permissions a consent request chose", () => {
+  test("reads the permissions a consent request chose, leaving organization & workspace access unsaid", () => {
     expect(parseRequestedMcpGrant({ permissions: { surveys: "write", workflowRuns: "read" } })).toEqual({
-      surveys: "write",
-      workflowRuns: "read",
+      permissions: { surveys: "write", workflowRuns: "read" },
+    });
+  });
+
+  test.each([
+    ["All access", { access: "all" }, { access: "all" }],
+    [
+      "Only selected organizations",
+      { access: "organizations", organizationIds: ["org_b", "org_a", "org_b"] },
+      { access: "organizations", organizationIds: ["org_a", "org_b"] },
+    ],
+    [
+      "Only selected workspaces",
+      { access: "workspaces", workspaceIds: ["ws_1"] },
+      { access: "workspaces", workspaceIds: ["ws_1"] },
+    ],
+  ])("reads %s", (_case, access, expected) => {
+    expect(parseRequestedMcpGrant({ permissions: { surveys: "read" }, ...access })).toEqual({
+      permissions: { surveys: "read" },
+      access: expected,
     });
   });
 
@@ -60,7 +78,31 @@ describe("parseRequestedMcpGrant", () => {
     ["a level the permission doesn't offer", { permissions: { workflowRuns: "write" } }],
     ["No access spelled out", { permissions: { surveys: "none" } }],
     ["an inherited key", { permissions: JSON.parse('{"__proto__": "write", "surveys": "read"}') as object }],
-    ["an extra field", { permissions: { surveys: "read" }, access: "all" }],
+    ["an extra field", { permissions: { surveys: "read" }, scopes: "all" }],
+    ["an unknown access", { permissions: { surveys: "read" }, access: "everything" }],
+    ["no workspace picked", { permissions: { surveys: "read" }, access: "workspaces", workspaceIds: [] }],
+    [
+      "no organization picked",
+      { permissions: { surveys: "read" }, access: "organizations", organizationIds: [] },
+    ],
+    [
+      "workspaces sent with organizations access",
+      { permissions: { surveys: "read" }, access: "organizations", workspaceIds: ["ws_1"] },
+    ],
+    ["ids sent with All access", { permissions: { surveys: "read" }, access: "all", workspaceIds: ["ws_1"] }],
+    ["ids without an access", { permissions: { surveys: "read" }, workspaceIds: ["ws_1"] }],
+    [
+      "an id that is not a string",
+      { permissions: { surveys: "read" }, access: "workspaces", workspaceIds: [42] },
+    ],
+    [
+      "more selections than a grant holds",
+      {
+        permissions: { surveys: "read" },
+        access: "workspaces",
+        workspaceIds: Array.from({ length: 501 }, (_, i) => `ws_${i}`),
+      },
+    ],
     ["no permissions field", {}],
     ["a string", "surveys:write"],
     ["null", null],

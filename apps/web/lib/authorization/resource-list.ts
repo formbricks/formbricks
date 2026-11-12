@@ -5,7 +5,7 @@ import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
-import { getAuthorizationSurface, recordAuthorizationCheckIssued } from "./context";
+import { getAuthorizationSurface, getMcpGrantForActor, recordAuthorizationCheckIssued } from "./context";
 import type { TAuthorizationAction, TAuthorizationActor } from "./contract";
 import { recordAuthorizationDecision } from "./metrics";
 import { getSpicedbObjectType } from "./object-type";
@@ -79,14 +79,61 @@ const lookupAuthorizationResourceIds = reactCache(
   }
 );
 
+/**
+ * The organizations or workspaces an MCP grant reaches (ENG-7153, ADR-0042): one `LookupResources` of
+ * `mcp_reach` with the grant as subject. Cached per request like the actor's own lookup.
+ */
+const lookupMcpGrantReachIds = reactCache(
+  async (grantId: string, resourceType: TCurrentListResource): Promise<ReadonlySet<string>> => {
+    try {
+      const result = await getAuthzedClient().lookupResources({
+        permission: MCP_REACH_PERMISSION,
+        resourceType: getSpicedbObjectType(resourceType),
+        subject: { objectId: grantId, objectType: "mcp_grant" },
+      });
+      return new Set(result.resourceIds);
+    } catch (error) {
+      // On the previous release's schema nothing is reached, exactly as a check of it is denied.
+      if (isPermissionMissingFromSchema(error, MCP_REACH_PERMISSION)) return new Set();
+      throw normalizeAuthorizationOperationalError(error, "authorization_list");
+    }
+  }
+);
+
+const MCP_REACH_PERMISSION = "mcp_reach";
+
+/**
+ * Of the ids `actor` holds, those the request's MCP grant also reaches. A no-op without a grant that
+ * limits organization & workspace access, so every other caller lists exactly as before. Two lookups
+ * whatever the count, never one per id.
+ */
+const withinMcpGrant = async (
+  actor: TAuthorizationActor,
+  resourceType: TCurrentListResource,
+  ids: Promise<ReadonlyArray<string>>
+): Promise<ReadonlyArray<string>> => {
+  const grant = getMcpGrantForActor(actor);
+  if (!grant) return ids;
+  const [held, reached] = await Promise.all([ids, lookupMcpGrantReachIds(grant.id, resourceType)]);
+  return held.filter((id) => reached.has(id));
+};
+
 export const lookupAuthorizedOrganizationIds = (actor: TAuthorizationActor): Promise<ReadonlyArray<string>> =>
-  lookupAuthorizationResourceIds(actor.type, actor.id, "organization", "read");
+  withinMcpGrant(
+    actor,
+    "organization",
+    lookupAuthorizationResourceIds(actor.type, actor.id, "organization", "read")
+  );
 
 export const lookupAuthorizedWorkspaceIds = (
   actor: TAuthorizationActor,
   permission: TCurrentListPermission = "read"
 ): Promise<ReadonlyArray<string>> =>
-  lookupAuthorizationResourceIds(actor.type, actor.id, "workspace", permission);
+  withinMcpGrant(
+    actor,
+    "workspace",
+    lookupAuthorizationResourceIds(actor.type, actor.id, "workspace", permission)
+  );
 
 /**
  * ENG-3282: of the survey IDs a list page is about to return, the ones the graph also lets `actor`

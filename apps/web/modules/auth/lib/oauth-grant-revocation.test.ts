@@ -147,7 +147,7 @@ describe("revokeOAuthConsentGrant", () => {
       consentsDeleted: 1,
       refreshTokensRevoked: 2,
       accessTokensRevoked: 0,
-      grants: [grant],
+      grants: [{ ...grant, organizationIds: [], workspaceIds: [] }],
     });
     expect(mocks.tx.mcpGrant.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { userId: "user-1", clientId: "client-1" } })

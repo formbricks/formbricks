@@ -79,3 +79,36 @@ export async function responseToMcpToolResult(
     true
   );
 }
+
+/** The problem codes an id outside a grant could otherwise be told apart by. */
+const HIDDEN_STATUSES: ReadonlyMap<number, string> = new Map([
+  [403, "forbidden"],
+  [404, "not_found"],
+]);
+
+/**
+ * For a request whose grant limits organization & workspace access (ADR-0042): anything outside the grant
+ * does not exist for the client. `can()` denies such a resource, and the v3 operation then answers as it
+ * does for a role it refuses (403) or an id it can't find (404), each with its own body. So every such
+ * answer becomes one not found, with nothing taken from the operation's body: an id outside the grant,
+ * an unknown id and a refusal by the user's own role read alike, and the client can't learn what else
+ * exists. Other refusals (a plan the organization lacks, a validation error) pass through: an operation
+ * checks those after authorization, so they reveal nothing outside the grant.
+ */
+export function hideOutsideMcpGrant(result: CallToolResult, requestId: string): CallToolResult {
+  if (!result.isError) return result;
+  const error = (result.structuredContent as Partial<TMcpErrorPayload> | undefined)?.error;
+  if (!error || HIDDEN_STATUSES.get(error.status) !== error.code) return result;
+  return toTextResult(
+    {
+      error: {
+        status: 404,
+        title: "Not Found",
+        code: "not_found",
+        detail: "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it.",
+        requestId,
+      },
+    },
+    true
+  );
+}

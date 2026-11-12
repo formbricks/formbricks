@@ -16,7 +16,7 @@ import {
   problemUnauthorized,
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { type TAuthorizationMcpGrant, withAuthorizationSurface } from "@/lib/authorization/context";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
@@ -124,11 +124,15 @@ export type TMcpAuthInfo = AuthInfo & {
     dashboardViewerOnly?: boolean;
     /**
      * The connection's grant (ADR-0041), read with the user on every OAuth request. Every tool call is
-     * held to it on top of the token's scopes. Absent on the API-key path, which has no grant.
+     * held to its permissions on top of the token's scopes, and every authorization decision to its
+     * organization & workspace access (ADR-0042). Absent on the API-key path, which has no grant.
      */
-    grant?: TMcpGrant;
+    grant?: TMcpRequestGrant;
   };
 };
+
+/** A request's grant: what the tool guard reads, and its id, the subject `can()` checks it as. */
+export type TMcpRequestGrant = TMcpGrant & { id: string };
 
 type TMcpAuthenticationResult =
   | {
@@ -298,13 +302,13 @@ function createOAuthMcpAuthInfo(payload: JWTPayload, requestId: string): TMcpAut
 async function getOAuthUserStanding(
   userId: string,
   clientId: string
-): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean; grant: TMcpGrant | null }> {
+): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean; grant: TMcpRequestGrant | null }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       isActive: true,
       memberships: { select: { role: true } },
-      mcpGrants: { where: { clientId }, select: { access: true, permissions: true } },
+      mcpGrants: { where: { clientId }, select: { id: true, access: true, permissions: true } },
     },
   });
   const grant = user?.mcpGrants[0];
@@ -312,7 +316,9 @@ async function getOAuthUserStanding(
   return {
     isActive: user?.isActive === true,
     isDashboardViewerOnly: hasOnlyDashboardViewerRoles(user?.memberships ?? []),
-    grant: grant ? { access: grant.access, permissions: parseMcpGrantPermissions(grant.permissions) } : null,
+    grant: grant
+      ? { id: grant.id, access: grant.access, permissions: parseMcpGrantPermissions(grant.permissions) }
+      : null,
   };
 }
 
@@ -604,17 +610,8 @@ async function authenticateMcpOAuthBearer(
     });
   }
 
-  // Only All access is enforced before ENG-7153 checks organization & workspace access in SpiceDB. A
-  // grant that selects organizations or workspaces is refused outright rather than read as All access.
-  if (standing.grant.access !== "all") {
-    return await rejectUnauthenticatedMcpRequest({
-      requestId,
-      instance,
-      log,
-      logMessage: "MCP OAuth grant limits organization & workspace access, which is not enforced yet",
-      logContext: { clientId: authInfo.clientId, access: standing.grant.access },
-    });
-  }
+  // Its organization & workspace access is enforced by `can()` for the whole request
+  // (`handleAuthenticatedMcpRequest`, ADR-0042).
   authInfo.extra.grant = standing.grant;
 
   // ADR-0025: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the token
@@ -787,6 +784,21 @@ export async function authenticateMcpRequest(request: NextRequest): Promise<TMcp
   }
 }
 
+/**
+ * What `can()` holds the request to (ADR-0042): the grant, when it limits organization & workspace
+ * access. All access needs no second check, and an API key has no grant.
+ */
+const getAuthorizationMcpGrant = (authInfo: TMcpAuthInfo): TAuthorizationMcpGrant | undefined => {
+  const { grant, formbricksAuthentication } = authInfo.extra;
+  if (!grant || grant.access === "all") return undefined;
+  const userId =
+    formbricksAuthentication && "user" in formbricksAuthentication
+      ? formbricksAuthentication.user?.id
+      : undefined;
+  if (!userId) throw new Error("An MCP grant must belong to a signed-in user");
+  return { id: grant.id, userId };
+};
+
 export async function handleAuthenticatedMcpRequest(
   request: NextRequest,
   handler: (request: Request) => Promise<Response>
@@ -797,6 +809,8 @@ export async function handleAuthenticatedMcpRequest(
   }
 
   (request as Request & { auth?: AuthInfo }).auth = authResult.authInfo;
-  const response = await withAuthorizationSurface("mcp", () => handler(request));
+  const response = await withAuthorizationSurface("mcp", () => handler(request), {
+    mcpGrant: getAuthorizationMcpGrant(authResult.authInfo),
+  });
   return withMcpResponseHeaders(response, authResult.requestId);
 }

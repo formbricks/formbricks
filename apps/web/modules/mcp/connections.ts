@@ -4,6 +4,8 @@ import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewe
 import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MAX_LISTED_MCP_CONNECTIONS } from "./constants";
 import {
+  type TMcpGrantAccess,
+  type TMcpGrantAccessSelection,
   type TMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
   isMcpGrantWithinCap,
@@ -28,6 +30,11 @@ export type TMcpConnection = {
   updatedAt: Date;
   /** `null` for a consent left without a grant, which `/api/mcp` refuses and the next refresh ends. */
   permissions: TMcpGrantPermissions | null;
+  /** The grant's organization & workspace access (ENG-7153), `null` without a grant. */
+  access: TMcpGrantAccess | null;
+  /** What it selects: organizations for Only selected organizations, workspaces for Only selected workspaces. */
+  organizationIds: string[];
+  workspaceIds: string[];
   /** What the client's consented scopes ask for: Edit can't give more (ADR-0041). */
   cap: TMcpGrantPermissions;
 };
@@ -61,7 +68,14 @@ export const listMcpConnections = async (
     }),
     prisma.mcpGrant.findMany({
       where: { userId },
-      select: { clientId: true, permissions: true, updatedAt: true },
+      select: {
+        clientId: true,
+        permissions: true,
+        updatedAt: true,
+        access: true,
+        organizations: { select: { organizationId: true }, orderBy: { organizationId: "asc" } },
+        workspaces: { select: { workspaceId: true }, orderBy: { workspaceId: "asc" } },
+      },
       take: MAX_LISTED_MCP_CONNECTIONS,
     }),
   ]);
@@ -84,6 +98,14 @@ export const listMcpConnections = async (
       connectedAt: consent.createdAt,
       updatedAt: grant ? latest(consent.updatedAt, grant.updatedAt) : consent.updatedAt,
       permissions: grant ? parseMcpGrantPermissions(grant.permissions) : null,
+      access: grant?.access ?? null,
+      // Only the selection the mode reads, as `can()` does (ADR-0042).
+      organizationIds:
+        grant?.access === "organizations"
+          ? grant.organizations.map(({ organizationId }) => organizationId)
+          : [],
+      workspaceIds:
+        grant?.access === "workspaces" ? grant.workspaces.map(({ workspaceId }) => workspaceId) : [],
       cap: capForScopes(consent.scopes, isDashboardViewer),
     });
   }
@@ -106,11 +128,14 @@ export const editMcpGrant = ({
   userId,
   clientId,
   permissions,
+  access,
   isDashboardViewer,
 }: {
   userId: string;
   clientId: string;
   permissions: TMcpGrantPermissions;
+  /** The organization & workspace access to set; omitted keeps the grant's (ENG-7153). */
+  access?: TMcpGrantAccessSelection;
   isDashboardViewer: boolean;
 }): Promise<TEditMcpGrantResult> =>
   prisma.$transaction(async (tx): Promise<TEditMcpGrantResult> => {
@@ -119,7 +144,7 @@ export const editMcpGrant = ({
     if (!isMcpGrantWithinCap(permissions, capForScopes(scopes, isDashboardViewer))) {
       return { status: "beyond_scopes" };
     }
-    const { before, after } = await saveMcpGrant(tx, { userId, clientId, permissions });
+    const { before, after } = await saveMcpGrant(tx, { userId, clientId, permissions, access });
     // A grant is only deleted with its consent rows, which this transaction holds `FOR SHARE`.
     if (!before) throw new Error("MCP grant disappeared while its consent was locked");
     return { status: "saved", before, after };

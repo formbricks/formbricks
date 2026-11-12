@@ -153,7 +153,14 @@ describe("Authorized apps' Edit", () => {
     const edited = await editGrant(setup.clientId, { surveys: "read" });
 
     expect(edited.status, JSON.stringify(edited.body)).toBe(200);
-    expect(edited.body.data).toEqual({ clientId: setup.clientId, permissions: { surveys: "read" } });
+    // An Edit that names no organization & workspace access keeps the grant's (All access here).
+    expect(edited.body.data).toEqual({
+      clientId: setup.clientId,
+      permissions: { surveys: "read" },
+      access: "all",
+      organizationIds: [],
+      workspaceIds: [],
+    });
     expect(succeeded(await listSurveys(access_token, setup))).toBe(true);
     expectNotPermitted(await renameSurvey(access_token, setup), "Surveys: Write");
     expect(queueAuditEvent).toHaveBeenCalledWith(

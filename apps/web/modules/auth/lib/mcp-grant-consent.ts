@@ -1,11 +1,12 @@
 import "server-only";
 import { APIError } from "better-auth/api";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
-import { type TMcpGrantPermissions, parseRequestedMcpGrant } from "@/modules/mcp/grant";
+import { type TRequestedMcpGrant, parseRequestedMcpGrant } from "@/modules/mcp/grant";
 
 /**
  * The grant the consent screen's Allow sends with the approval (ENG-7150): `POST /oauth2/consent` with
- * `mcp_grant: { permissions }` beside `accept`. The provider's own body schema ignores the field; these
+ * `mcp_grant: { permissions, access, organizationIds | workspaceIds }` beside `accept` (ENG-7153 adds the
+ * organization & workspace access). The provider's own body schema ignores the field; these
  * hooks own it. The before-hook refuses a malformed one before the provider writes the consent, and the
  * consent after-hook (`oauth-grant-revocation.ts`) saves it, capped by the scopes the consent holds.
  *
@@ -23,10 +24,10 @@ const approvalBody = (ctx: AuthHookContext): Record<string, unknown> | null => {
 };
 
 /**
- * The permissions an approval chose, or `null` when it chose none (the field is absent, or it is not an
+ * The grant an approval chose, or `null` when it chose none (the field is absent, or it is not an
  * approval). Only call after {@link requireValidMcpGrantOnConsentBeforeHandler} has run on the request.
  */
-export const getApprovedMcpGrantPermissions = (ctx: AuthHookContext): TMcpGrantPermissions | null => {
+export const getApprovedMcpGrant = (ctx: AuthHookContext): TRequestedMcpGrant | null => {
   const body = approvalBody(ctx);
   if (!body || !Object.hasOwn(body, FIELD)) return null;
   return parseRequestedMcpGrant(body[FIELD]);
@@ -43,6 +44,7 @@ export const requireValidMcpGrantOnConsentBeforeHandler = (ctx: AuthHookContext)
   if (parseRequestedMcpGrant(body[FIELD])) return;
   throw new APIError("BAD_REQUEST", {
     error: "invalid_request",
-    error_description: "mcp_grant must give at least one permission a level it offers",
+    error_description:
+      "mcp_grant must give at least one permission a level it offers, and pick at least one organization or workspace when it selects them",
   });
 };

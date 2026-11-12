@@ -7,6 +7,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   type TMcpGrant,
   type TMcpGrantAccess,
+  type TMcpGrantAccessSelection,
   type TMcpGrantPermissions,
   parseMcpGrantPermissions,
 } from "./grant";
@@ -16,12 +17,22 @@ import {
  * deleting take the caller's transaction, so a grant is written and removed together with the consent
  * it belongs to.
  *
- * Organization & workspace selections (`McpGrantOrganization`, `McpGrantWorkspace`) are ENG-7153's; a
- * grant saved here has All access and no selection.
+ * The organization & workspace selections (`McpGrantOrganization`, `McpGrantWorkspace`) are written in the
+ * same transaction. Their triggers queue the grant for the SpiceDB projection (`lib/authzed/mcp-grant.ts`,
+ * ADR-0042), so the relationships follow the rows through the outbox, and a cascade from a deleted
+ * workspace, organization or grant drops them too.
  */
 
-/** A grant as stored, with what an audit entry names it by. */
-export type TStoredMcpGrant = TMcpGrant & { id: string; userId: string; clientId: string };
+/** A grant as stored, with what an audit entry names it by and what it selects. */
+export type TStoredMcpGrant = TMcpGrant & {
+  id: string;
+  userId: string;
+  clientId: string;
+  /** The selected organizations (Only selected organizations), else empty. */
+  organizationIds: string[];
+  /** The selected workspaces (Only selected workspaces), else empty. */
+  workspaceIds: string[];
+};
 
 const GRANT_SELECT = {
   id: true,
@@ -29,6 +40,8 @@ const GRANT_SELECT = {
   clientId: true,
   access: true,
   permissions: true,
+  organizations: { select: { organizationId: true }, orderBy: { organizationId: "asc" } },
+  workspaces: { select: { workspaceId: true }, orderBy: { workspaceId: "asc" } },
 } as const;
 
 /** A row as `GRANT_SELECT` reads it. */
@@ -38,6 +51,8 @@ type TGrantRow = {
   clientId: string;
   access: TMcpGrantAccess;
   permissions: unknown;
+  organizations: { organizationId: string }[];
+  workspaces: { workspaceId: string }[];
 };
 
 const toStoredGrant = (row: TGrantRow): TStoredMcpGrant => ({
@@ -46,6 +61,10 @@ const toStoredGrant = (row: TGrantRow): TStoredMcpGrant => ({
   clientId: row.clientId,
   access: row.access,
   permissions: parseMcpGrantPermissions(row.permissions),
+  // Only the selection the mode reads: a stray row of the other kind reaches nothing (ADR-0042).
+  organizationIds:
+    row.access === "organizations" ? row.organizations.map(({ organizationId }) => organizationId) : [],
+  workspaceIds: row.access === "workspaces" ? row.workspaces.map(({ workspaceId }) => workspaceId) : [],
 });
 
 /** The connection's grant, or `null` when it has none. */
@@ -68,24 +87,102 @@ export const hasMcpGrant = async (
   })) !== null;
 
 /**
- * Sets the connection's grant to `permissions` with All access, creating it when the connection has none.
- * Returns the grant before (`null` when created) and after, for the audit entry.
+ * The part of `selection` the user may pick: organizations they belong to, and workspaces of those
+ * organizations. Anything else is dropped rather than stored. It would reach nothing anyway (`can()`
+ * checks the user too), but a stored id must name something the user could have seen in the picker.
+ */
+const ownSelection = async (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  selection: TMcpGrantAccessSelection
+): Promise<{ organizationIds: string[]; workspaceIds: string[] }> => {
+  switch (selection.access) {
+    case "all":
+      return { organizationIds: [], workspaceIds: [] };
+    case "organizations": {
+      const memberships = await tx.membership.findMany({
+        where: { userId, organizationId: { in: selection.organizationIds } },
+        select: { organizationId: true },
+      });
+      return { organizationIds: memberships.map(({ organizationId }) => organizationId), workspaceIds: [] };
+    }
+    case "workspaces": {
+      const workspaces = await tx.workspace.findMany({
+        where: { id: { in: selection.workspaceIds }, organization: { memberships: { some: { userId } } } },
+        select: { id: true },
+      });
+      return { organizationIds: [], workspaceIds: workspaces.map(({ id }) => id) };
+    }
+  }
+};
+
+/**
+ * Replaces the grant's selection rows with `selected`: deletes the rows no longer selected and inserts
+ * the new ones, so an unchanged selection writes nothing and queues no projection.
+ */
+const replaceSelection = async (
+  tx: Prisma.TransactionClient,
+  grantId: string,
+  selected: { organizationIds: string[]; workspaceIds: string[] }
+): Promise<void> => {
+  await tx.mcpGrantOrganization.deleteMany({
+    where: { grantId, organizationId: { notIn: selected.organizationIds } },
+  });
+  await tx.mcpGrantWorkspace.deleteMany({
+    where: { grantId, workspaceId: { notIn: selected.workspaceIds } },
+  });
+  if (selected.organizationIds.length > 0) {
+    await tx.mcpGrantOrganization.createMany({
+      data: selected.organizationIds.map((organizationId) => ({ grantId, organizationId })),
+      skipDuplicates: true,
+    });
+  }
+  if (selected.workspaceIds.length > 0) {
+    await tx.mcpGrantWorkspace.createMany({
+      data: selected.workspaceIds.map((workspaceId) => ({ grantId, workspaceId })),
+      skipDuplicates: true,
+    });
+  }
+};
+
+/**
+ * Sets the connection's grant: `permissions`, and the organization & workspace access `access` names.
+ * Without `access` an existing grant keeps the access it has and a new one gets All access, so a request
+ * that says nothing about it never widens it. Returns the grant before (`null` when created) and after,
+ * for the audit entry.
  */
 export const saveMcpGrant = async (
   tx: Prisma.TransactionClient,
-  { userId, clientId, permissions }: { userId: string; clientId: string; permissions: TMcpGrantPermissions }
+  {
+    userId,
+    clientId,
+    permissions,
+    access,
+  }: {
+    userId: string;
+    clientId: string;
+    permissions: TMcpGrantPermissions;
+    access?: TMcpGrantAccessSelection;
+  }
 ): Promise<{ before: TStoredMcpGrant | null; after: TStoredMcpGrant }> => {
   const existing = await tx.mcpGrant.findUnique({
     where: { userId_clientId: { userId, clientId } },
     select: GRANT_SELECT,
   });
+  const mode = access?.access ?? existing?.access ?? "all";
   const row = await tx.mcpGrant.upsert({
     where: { userId_clientId: { userId, clientId } },
-    create: { userId, clientId, access: "all", permissions },
-    update: { access: "all", permissions },
+    create: { userId, clientId, access: mode, permissions },
+    // `access` only when it changes: the column's trigger queues a projection, and a no-op does not.
+    update: { permissions, ...(existing?.access === mode ? {} : { access: mode }) },
     select: GRANT_SELECT,
   });
-  return { before: existing ? toStoredGrant(existing) : null, after: toStoredGrant(row) };
+  const before = existing ? toStoredGrant(existing) : null;
+  if (!access) return { before, after: toStoredGrant(row) };
+
+  const selected = await ownSelection(tx, userId, access);
+  await replaceSelection(tx, row.id, selected);
+  return { before, after: { ...toStoredGrant(row), ...selected } };
 };
 
 /**
@@ -107,6 +204,8 @@ export const deleteMcpGrants = async (
 export const getMcpGrantAuditSnapshot = (grant: TStoredMcpGrant) => ({
   clientId: grant.clientId,
   access: grant.access,
+  ...(grant.access === "organizations" ? { organizationIds: grant.organizationIds } : {}),
+  ...(grant.access === "workspaces" ? { workspaceIds: grant.workspaceIds } : {}),
   permissions: grant.permissions,
 });
 

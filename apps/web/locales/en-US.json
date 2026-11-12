@@ -82,6 +82,27 @@
       "use_a_backup_code": "Use a backup code"
     },
     "oauth": {
+      "access": {
+        "all": "All access",
+        "all_hint": "Every organization and workspace you can reach, including ones you join later.",
+        "description": "Choose which organizations and workspaces the app can reach. Everything else doesn't exist for it.",
+        "mode_label": "Organization & workspace access",
+        "no_options": "You don't belong to any organization or workspace yet.",
+        "none_picked_hint": "Pick at least one to allow access.",
+        "organizations": "Only selected organizations",
+        "organizations_hint": "Every workspace in the organizations you pick, including ones created there later.",
+        "pick_organizations": "Pick organizations",
+        "pick_workspaces": "Pick workspaces",
+        "summary_all": "All access",
+        "summary_none": "No workspaces",
+        "summary_one_organization": "1 organization",
+        "summary_one_workspace": "1 workspace",
+        "summary_organizations": "{count} organizations",
+        "summary_workspaces": "{count} workspaces",
+        "title": "Organization & workspace access",
+        "workspaces": "Only selected workspaces",
+        "workspaces_hint": "Only the workspaces you pick. Workspaces created later stay out until you add them."
+      },
       "allow_access": "Allow access",
       "authorization_request": "Authorization request",
       "authorize_description": "This MCP client is asking to use your Formbricks account. Workspace access is still checked for every tool call.",

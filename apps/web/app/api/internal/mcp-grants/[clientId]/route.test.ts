@@ -37,12 +37,14 @@ const USER_ID = "cluser1111111111111111111";
 const CLIENT_ID = "QhXbTnRZsWzKfLpAeVcMdYuJ";
 const GRANT_ID = "clgrant111111111111111111";
 
-const stored = (permissions: Record<string, string>) => ({
+const stored = (permissions: Record<string, string>, access = "all", workspaceIds: string[] = []) => ({
   id: GRANT_ID,
   userId: USER_ID,
   clientId: CLIENT_ID,
-  access: "all",
+  access,
   permissions,
+  organizationIds: [],
+  workspaceIds,
 });
 
 const edit = (body: unknown, clientId = CLIENT_ID) =>
@@ -72,7 +74,13 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     const response = await edit({ permissions: { surveys: "read" } });
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual({ clientId: CLIENT_ID, permissions: { surveys: "read" } });
+    expect((await response.json()).data).toEqual({
+      clientId: CLIENT_ID,
+      permissions: { surveys: "read" },
+      access: "all",
+      organizationIds: [],
+      workspaceIds: [],
+    });
     expect(mocks.editMcpGrant).toHaveBeenCalledWith({
       userId: USER_ID,
       clientId: CLIENT_ID,
@@ -93,6 +101,36 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
           permissions: { surveys: "write", responses: "read" },
         },
         newObject: { clientId: CLIENT_ID, access: "all", permissions: { surveys: "read" } },
+      })
+    );
+  });
+
+  test("saves organization & workspace access with the permissions, and audits the selection", async () => {
+    mocks.editMcpGrant.mockResolvedValueOnce({
+      status: "saved",
+      before: stored({ surveys: "read" }),
+      after: stored({ surveys: "read" }, "workspaces", ["ws_1"]),
+    });
+
+    const response = await edit({
+      permissions: { surveys: "read" },
+      access: "workspaces",
+      workspaceIds: ["ws_1"],
+    });
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toMatchObject({ access: "workspaces", workspaceIds: ["ws_1"] });
+    expect(mocks.editMcpGrant).toHaveBeenCalledWith(
+      expect.objectContaining({ access: { access: "workspaces", workspaceIds: ["ws_1"] } })
+    );
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        newObject: {
+          clientId: CLIENT_ID,
+          access: "workspaces",
+          workspaceIds: ["ws_1"],
+          permissions: { surveys: "read" },
+        },
       })
     );
   });
@@ -128,7 +166,8 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     ["an unknown permission", { permissions: { everything: "write" } }],
     ["a level the permission doesn't offer", { permissions: { workflowRuns: "write" } }],
     ["No access spelled out", { permissions: { surveys: "none" } }],
-    ["organization & workspace access", { permissions: { surveys: "read" }, access: "workspaces" }],
+    ["a selection with nothing picked", { permissions: { surveys: "read" }, access: "workspaces" }],
+    ["an unknown access", { permissions: { surveys: "read" }, access: "everything" }],
     ["no permissions", {}],
   ])("returns 400 for %s and saves nothing", async (_case, body) => {
     expect((await edit(body)).status).toBe(400);

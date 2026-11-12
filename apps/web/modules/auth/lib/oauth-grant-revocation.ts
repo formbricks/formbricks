@@ -7,7 +7,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import {
-  type TMcpGrantPermissions,
+  type TRequestedMcpGrant,
   capMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
 } from "@/modules/mcp/grant";
@@ -18,7 +18,7 @@ import {
   queueMcpGrantAudit,
   saveMcpGrant,
 } from "@/modules/mcp/grant-store";
-import { getApprovedMcpGrantPermissions } from "./mcp-grant-consent";
+import { getApprovedMcpGrant } from "./mcp-grant-consent";
 import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
 
 /**
@@ -444,10 +444,11 @@ type TConsentChange = {
    */
   savesGrant: boolean;
   /**
-   * The levels the user chose in the consent screen's matrix (ENG-7150), saved capped by the consent's
-   * scopes; `null` saves what the scopes give.
+   * The grant the user chose on the consent screen: the levels of its matrix (ENG-7150), saved capped by
+   * the consent's scopes, and its organization & workspace access (ENG-7153). `null` saves what the
+   * scopes give, keeping the access an existing grant has.
    */
-  chosenPermissions: TMcpGrantPermissions | null;
+  chosenGrant: TRequestedMcpGrant | null;
   target: TConsentTarget;
   isLatestWrite: (consent: TConsentRow) => boolean;
 };
@@ -478,7 +479,7 @@ const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | nul
     const approved = (typeof bodyScope === "string" ? bodyScope : query.get("scope"))?.split(" ") ?? [];
     return {
       savesGrant: accepted,
-      chosenPermissions: getApprovedMcpGrantPermissions(ctx),
+      chosenGrant: getApprovedMcpGrant(ctx),
       target: { clientId },
       isLatestWrite: (consent) => wrote(consent) && sameScopes(consent.scopes, approved),
     };
@@ -488,7 +489,7 @@ const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | nul
     if (typeof consentId !== "string") return null;
     return {
       savesGrant: false,
-      chosenPermissions: null,
+      chosenGrant: null,
       target: { consentId },
       isLatestWrite: (consent) => wrote(consent) && consent.id === consentId,
     };
@@ -582,7 +583,8 @@ const endTokensBeyondChangedConsent = (userId: string, change: TConsentChange) =
       ? await saveMcpGrant(tx, {
           userId,
           clientId,
-          permissions: change.chosenPermissions ? capMcpGrantPermissions(change.chosenPermissions, cap) : cap,
+          permissions: change.chosenGrant ? capMcpGrantPermissions(change.chosenGrant.permissions, cap) : cap,
+          access: change.chosenGrant?.access,
         })
       : null;
     return {

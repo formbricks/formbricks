@@ -3,8 +3,9 @@ import { updateMcpGrantOperation } from "../lib/operations";
 import { ZMcpGrantPathParams, ZMcpGrantUpdateBody } from "../lib/schemas";
 
 /**
- * `PATCH /api/internal/mcp-grants/{clientId}`: Authorized apps' Edit (ENG-7152). Replaces the permissions
- * of the session user's grant to the client, within its scopes; applies from the client's next MCP call.
+ * `PATCH /api/internal/mcp-grants/{clientId}`: Authorized apps' Edit (ENG-7152, ENG-7153). Replaces the
+ * permissions of the session user's grant to the client, within its scopes, and its organization &
+ * workspace access when given; applies from the client's next MCP call.
  * Internal and session-only; audited with the grant before and after.
  */
 export const PATCH = withV3ApiWrapper({
@@ -17,6 +18,7 @@ export const PATCH = withV3ApiWrapper({
       authentication,
       clientId: parsedInput.params.clientId,
       permissions: parsedInput.body.permissions,
+      access: parsedInput.body.access,
       requestId,
       instance,
       auditLog,

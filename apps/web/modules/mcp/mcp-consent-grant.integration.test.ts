@@ -118,6 +118,46 @@ describe("Allow on the consent screen", () => {
     );
   });
 
+  test("saves the organization & workspace access the user chose, and a reconnect that names none keeps it", async () => {
+    const other = await prisma.workspace.create({
+      data: {
+        name: "Other",
+        organizationId: (await prisma.workspace.findUniqueOrThrow({ where: { id: setup.workspaceId } }))
+          .organizationId,
+      },
+    });
+    await synchronizeAuthzedIntegrationFixture();
+
+    await grant(setup.cookie, setup.clientId, EVERYTHING, {
+      mcpGrant: { permissions: { surveys: "read" }, access: "workspaces", workspaceIds: [setup.workspaceId] },
+    });
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      access: "workspaces",
+      workspaceIds: [setup.workspaceId],
+    });
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "created",
+        newObject: expect.objectContaining({ access: "workspaces", workspaceIds: [setup.workspaceId] }),
+      })
+    );
+
+    await synchronizeAuthzedIntegrationFixture();
+    const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING, {
+      prompt: "consent",
+      mcpGrant: { permissions: { surveys: "read" } },
+    });
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      access: "workspaces",
+      workspaceIds: [setup.workspaceId],
+    });
+    expect(succeeded(await listSurveys(access_token, setup))).toBe(true);
+    const outside = await callMcpTool({ accessToken: access_token }, "list_surveys", {
+      workspaceId: other.id,
+    });
+    expect(JSON.parse(toolText(outside))).toMatchObject({ error: { status: 404, code: "not_found" } });
+  });
+
   test("never saves more than the client asked for", async () => {
     await grant(setup.cookie, setup.clientId, "openid offline_access surveys:read", {
       mcpGrant: { permissions: { surveys: "write", workflows: "write" } },
@@ -149,6 +189,7 @@ describe("Allow on the consent screen", () => {
     ["No access spelled out", { permissions: { surveys: "none" } }],
     ["no permissions at all", {}],
     ["not an object", "surveys:write"],
+    ["Only selected workspaces with none picked", { permissions: { surveys: "read" }, access: "workspaces" }],
   ])("refuses a grant with %s, and writes neither consent nor grant", async (_case, mcpGrant) => {
     const { target } = await authorize(setup.cookie, setup.clientId, EVERYTHING);
 

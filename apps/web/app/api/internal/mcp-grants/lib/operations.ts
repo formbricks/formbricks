@@ -8,8 +8,9 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { listMcpGrantAccessOptions } from "@/modules/mcp/access-options";
 import { editMcpGrant, listMcpConnections } from "@/modules/mcp/connections";
-import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
+import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { getMcpGrantAuditSnapshot } from "@/modules/mcp/grant-store";
 import { serializeMcpConnection, serializeMcpGrant } from "./serializers";
 
@@ -34,9 +35,12 @@ export async function listMcpGrantsOperation({
   if (!userId) return problemUnauthorized(requestId, "Session required", instance);
 
   const isDashboardViewer = await isDashboardViewerOnly(userId);
-  const connections = await listMcpConnections(userId, { isDashboardViewer });
+  const [connections, accessOptions] = await Promise.all([
+    listMcpConnections(userId, { isDashboardViewer }),
+    listMcpGrantAccessOptions(userId),
+  ]);
   return successResponse(
-    { isDashboardViewer, connections: connections.map(serializeMcpConnection) },
+    { isDashboardViewer, accessOptions, connections: connections.map(serializeMcpConnection) },
     { requestId }
   );
 }
@@ -45,6 +49,7 @@ export async function updateMcpGrantOperation({
   authentication,
   clientId,
   permissions,
+  access,
   requestId,
   instance,
   auditLog,
@@ -52,6 +57,7 @@ export async function updateMcpGrantOperation({
   authentication: TV3Authentication;
   clientId: string;
   permissions: TMcpGrantPermissions;
+  access?: TMcpGrantAccessSelection;
   requestId: string;
   instance?: string;
   auditLog?: TV3AuditLog;
@@ -65,6 +71,7 @@ export async function updateMcpGrantOperation({
     userId,
     clientId,
     permissions,
+    access,
     isDashboardViewer: await isDashboardViewerOnly(userId),
   });
   switch (result.status) {

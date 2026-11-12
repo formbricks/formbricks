@@ -6,22 +6,32 @@ export const ZMcpGrantPathParams = z.object({ clientId: z.string().min(1).max(25
 
 /**
  * `PATCH /api/internal/mcp-grants/{clientId}` body: the grant's permissions, `{ <permission>: "read" |
- * "write" }`, replacing the current ones. Read with the consent screen's own parser, so an unknown
- * permission, a level the permission doesn't offer and an empty grant (Revoke ends access) are refused.
- * Organization & workspace access is not editable here yet (ENG-7153).
+ * "write" }`, replacing the current ones, and optionally its organization & workspace access
+ * (`access`: `all`, `organizations` with `organizationIds`, or `workspaces` with `workspaceIds`), which
+ * otherwise stays as it is. Read with the consent screen's own parser, so an unknown permission, a level
+ * the permission doesn't offer, an empty grant (Revoke ends access) and a selection with nothing picked
+ * are refused.
  */
 export const ZMcpGrantUpdateBody = z
-  .object({ permissions: z.record(z.string(), z.unknown()) })
+  .object({
+    permissions: z.record(z.string(), z.unknown()),
+    access: z.string().optional(),
+    organizationIds: z.array(z.string()).optional(),
+    workspaceIds: z.array(z.string()).optional(),
+  })
   .strict()
   .transform((body, ctx) => {
-    const permissions = parseRequestedMcpGrant(body);
-    if (!permissions) {
+    const grant = parseRequestedMcpGrant(
+      Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined))
+    );
+    if (!grant) {
       ctx.addIssue({
         code: "custom",
         path: ["permissions"],
-        message: "Give at least one permission, each at a level it offers",
+        message:
+          "Give at least one permission, each at a level it offers, and pick at least one organization or workspace when access selects them",
       });
       return z.NEVER;
     }
-    return { permissions };
+    return grant;
   });

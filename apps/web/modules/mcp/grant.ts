@@ -14,8 +14,24 @@ import {
  * definition.
  */
 
-/** Which organizations and workspaces a grant reaches. Only `all` is enforced before ENG-7153. */
+/**
+ * Which organizations and workspaces a grant reaches (GLOSSARY.md "Organization & workspace access"):
+ * All access, Only selected organizations (and every workspace in them, later ones included), or Only
+ * selected workspaces. Enforced in SpiceDB through `can()` (ADR-0042).
+ */
 export type TMcpGrantAccess = "all" | "organizations" | "workspaces";
+
+/** A grant's organization & workspace access with what it selects. */
+export type TMcpGrantAccessSelection =
+  | { access: "all" }
+  | { access: "organizations"; organizationIds: string[] }
+  | { access: "workspaces"; workspaceIds: string[] };
+
+/** The most organizations or workspaces one grant selects: far above a person's own memberships. */
+export const MAX_MCP_GRANT_SELECTIONS = 500;
+
+/** What a consent request or an Edit chose: the permissions, and the access when it names one. */
+export type TRequestedMcpGrant = { permissions: TMcpGrantPermissions; access?: TMcpGrantAccessSelection };
 
 /** An access level per permission. A permission that is absent has No access. */
 export type TMcpGrantPermissions = Partial<Record<TMcpPermission, Exclude<TMcpAccessLevel, "none">>>;
@@ -65,19 +81,8 @@ export const getMcpGrantPermissionsForScopes = (scopes: readonly string[]): TMcp
   return permissions;
 };
 
-/**
- * Reads the grant a consent request chose (`mcp_grant` beside `accept` on `POST /oauth2/consent`), as
- * `{ permissions: { <permission>: "read" | "write" } }`. Unlike {@link parseMcpGrantPermissions}, which
- * reads a stored row and drops what it doesn't know, this refuses the whole request (`null`) on anything
- * it doesn't expect: an unknown field or permission, a level the permission doesn't offer, or a grant
- * that gives nothing, which the consent screen never sends.
- */
-export const parseRequestedMcpGrant = (value: unknown): TMcpGrantPermissions | null => {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
-  if (Object.keys(value).some((key) => key !== "permissions")) return null;
-  const requested = (value as { permissions?: unknown }).permissions;
+const readPermissions = (requested: unknown): TMcpGrantPermissions | null => {
   if (typeof requested !== "object" || requested === null || Array.isArray(requested)) return null;
-
   const entries = Object.entries(requested);
   if (entries.length === 0) return null;
   const permissions: TMcpGrantPermissions = {};
@@ -87,6 +92,67 @@ export const parseRequestedMcpGrant = (value: unknown): TMcpGrantPermissions | n
     permissions[permission as TMcpPermission] = level;
   }
   return permissions;
+};
+
+/** A non-empty, bounded list of ids, deduplicated and sorted; `null` for anything else. */
+const readSelection = (ids: unknown): string[] | null => {
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > MAX_MCP_GRANT_SELECTIONS) return null;
+  if (!ids.every((id): id is string => typeof id === "string" && id.length > 0 && id.length <= 255)) {
+    return null;
+  }
+  return [...new Set(ids)].sort((a, b) => a.localeCompare(b));
+};
+
+const ACCESS_FIELDS = ["access", "organizationIds", "workspaceIds"] as const;
+
+/**
+ * Reads the organization & workspace access a request names: `access` and, for a selection, the
+ * matching non-empty id list and no other. `undefined` when the request names none, `null` when what it
+ * names is not one the editor could have sent.
+ */
+const readAccess = (value: Record<string, unknown>): TMcpGrantAccessSelection | null | undefined => {
+  if (!ACCESS_FIELDS.some((field) => Object.hasOwn(value, field))) return undefined;
+  const { access, organizationIds, workspaceIds } = value;
+  switch (access) {
+    case "all":
+      return organizationIds === undefined && workspaceIds === undefined ? { access } : null;
+    case "organizations": {
+      const ids = workspaceIds === undefined ? readSelection(organizationIds) : null;
+      return ids ? { access, organizationIds: ids } : null;
+    }
+    case "workspaces": {
+      const ids = organizationIds === undefined ? readSelection(workspaceIds) : null;
+      return ids ? { access, workspaceIds: ids } : null;
+    }
+    default:
+      return null;
+  }
+};
+
+/**
+ * Reads the grant a consent request or an Edit chose (`mcp_grant` beside `accept` on
+ * `POST /oauth2/consent`, the body of `PATCH /api/internal/mcp-grants/{clientId}`):
+ * `{ permissions: { <permission>: "read" | "write" }, access?, organizationIds? | workspaceIds? }`.
+ * Unlike {@link parseMcpGrantPermissions}, which reads a stored row and drops what it doesn't know, this
+ * refuses the whole request (`null`) on anything it doesn't expect: an unknown field or permission, a
+ * level the permission doesn't offer, a grant that gives nothing, or a selection with nothing picked,
+ * none of which the editor sends.
+ */
+export const parseRequestedMcpGrant = (value: unknown): TRequestedMcpGrant | null => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const fields = value as Record<string, unknown>;
+  if (
+    Object.keys(fields).some(
+      (key) => key !== "permissions" && !(ACCESS_FIELDS as readonly string[]).includes(key)
+    )
+  ) {
+    return null;
+  }
+  const permissions = readPermissions(fields.permissions);
+  if (!permissions) return null;
+  const access = readAccess(fields);
+  if (access === null) return null;
+  return access ? { permissions, access } : { permissions };
 };
 
 /**

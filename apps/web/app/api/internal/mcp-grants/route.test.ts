@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   isDashboardViewerOnly: vi.fn(),
   listMcpConnections: vi.fn(),
+  listMcpGrantAccessOptions: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
@@ -13,6 +14,9 @@ vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
   isDashboardViewerOnly: mocks.isDashboardViewerOnly,
 }));
 vi.mock("@/modules/mcp/connections", () => ({ listMcpConnections: mocks.listMcpConnections }));
+vi.mock("@/modules/mcp/access-options", () => ({
+  listMcpGrantAccessOptions: mocks.listMcpGrantAccessOptions,
+}));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
@@ -23,6 +27,10 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("server-only", () => ({}));
 
 const USER_ID = "cluser1111111111111111111";
+const ACCESS_OPTIONS = {
+  organizations: [{ id: "org_1", name: "Acme" }],
+  workspaces: [{ id: "ws_1", name: "Web", organizationId: "org_1", organizationName: "Acme" }],
+};
 
 const list = () =>
   GET(new NextRequest("http://localhost/api/internal/mcp-grants", { headers: { "x-request-id": "req_1" } }), {
@@ -43,18 +51,24 @@ describe("GET /api/internal/mcp-grants", () => {
         connectedAt: new Date("2030-01-01T00:00:00.000Z"),
         updatedAt: new Date("2030-02-01T00:00:00.000Z"),
         permissions: { surveys: "read" },
+        access: "workspaces",
+        organizationIds: [],
+        workspaceIds: ["ws_1"],
         cap: { surveys: "write" },
       },
     ]);
+    mocks.listMcpGrantAccessOptions.mockResolvedValue(ACCESS_OPTIONS);
   });
 
-  test("lists only the session user's connections, with each grant and the cap Edit is held to", async () => {
+  test("lists only the session user's connections, with each grant, the cap Edit is held to and what access it can pick", async () => {
     const response = await list();
 
     expect(response.status).toBe(200);
     expect(mocks.listMcpConnections).toHaveBeenCalledWith(USER_ID, { isDashboardViewer: false });
+    expect(mocks.listMcpGrantAccessOptions).toHaveBeenCalledWith(USER_ID);
     expect((await response.json()).data).toEqual({
       isDashboardViewer: false,
+      accessOptions: ACCESS_OPTIONS,
       connections: [
         {
           clientId: "client_a",
@@ -64,6 +78,9 @@ describe("GET /api/internal/mcp-grants", () => {
           connectedAt: "2030-01-01T00:00:00.000Z",
           updatedAt: "2030-02-01T00:00:00.000Z",
           permissions: { surveys: "read" },
+          access: "workspaces",
+          organizationIds: [],
+          workspaceIds: ["ws_1"],
           cap: { surveys: "write" },
         },
       ],
