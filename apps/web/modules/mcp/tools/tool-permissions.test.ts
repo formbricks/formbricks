@@ -46,6 +46,7 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_surveys: ["surveys:read"],
   get_survey: ["surveys:read"],
   create_survey: ["surveys:write"],
+  generate_survey: ["surveys:write"],
   validate_survey: ["surveys:read"],
   patch_survey: ["surveys:write"],
   edit_survey_blocks: ["surveys:write"],

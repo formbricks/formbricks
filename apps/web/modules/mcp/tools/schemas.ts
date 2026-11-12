@@ -17,6 +17,7 @@ import {
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
 import { ZV3SurveyEmbeddedField } from "@/app/api/v3/surveys/embedded-fields";
+import { ZV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
 import {
   V3_SURVEY_MAX_BLOCKS,
   V3_SURVEY_MAX_EMBEDDED_FIELDS,
@@ -491,6 +492,24 @@ export const ZMcpValidateSurveyInput = z
   })
   .strict();
 
+/**
+ * The v3 generate body, extended only to describe each field: the prompt bounds and the language rules
+ * are the route's own.
+ */
+export const ZMcpGenerateSurveyInput = ZV3SurveyGenerateBody.extend({
+  workspaceId: ZV3SurveyGenerateBody.shape.workspaceId.describe("Workspace the draft is for."),
+  prompt: ZV3SurveyGenerateBody.shape.prompt.describe(
+    "What the survey should ask, in plain words (4 to 1200 characters). Say who it is for and what you want to learn."
+  ),
+  type: ZV3SurveyGenerateBody.shape.type.describe("`link` (default) or `app` (in-app widget)."),
+  language: ZV3SurveyGenerateBody.shape.language.describe(
+    "Preferred language code, used only when the prompt's own language is unclear."
+  ),
+  surveyLanguage: ZV3SurveyGenerateBody.shape.surveyLanguage.describe(
+    "Required language code: the draft is written in it whatever language the prompt is in."
+  ),
+}).strict();
+
 export const ZMcpGetWorkspaceCustomCssInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID whose shared survey CSS should be read."),
@@ -628,6 +647,7 @@ export type TMcpPatchSurveyInput = z.infer<typeof ZMcpPatchSurveyInput>;
 export type TMcpEditSurveyBlocksInput = z.infer<typeof ZMcpEditSurveyBlocksInput>;
 export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrderInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
+export type TMcpGenerateSurveyInput = z.infer<typeof ZMcpGenerateSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
 export type TMcpGetWorkspaceCustomCssInput = z.infer<typeof ZMcpGetWorkspaceCustomCssInput>;
 export type TMcpPatchWorkspaceCustomCssInput = z.infer<typeof ZMcpPatchWorkspaceCustomCssInput>;
