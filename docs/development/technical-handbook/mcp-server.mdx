@@ -125,26 +125,34 @@ Supported scopes:
 | `email` | User email claim |
 | `offline_access` | Refresh tokens for MCP clients |
 
-**The rule:** every MCP tool is registered through `registerScopedTool`, which takes the required
-scope(s) as a mandatory argument and runs the gate before the handler. Read tools declare
-`<resource>:read`; every mutating tool declares `<resource>:write`. A tool cannot be registered
-without declaring a scope, so a new tool inherits enforcement by construction — the gate returns a
-`403 insufficient_scope` before the handler touches a v3 operation. Tools that more than one scope
-group legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, which keeps them on the
-same registration path rather than a hand-rolled gate.
+**The rule:** every MCP tool is registered through `registerMcpTool`, which takes the permissions the
+tool needs as a mandatory argument and runs the gate before the handler. A permission comes from the
+registry in `apps/web/modules/mcp/permissions.ts` (`GLOSSARY.md`, "MCP access") and carries a minimum
+access level: read tools declare `read`, every mutating tool declares `write`. Each permission belongs to
+a scope family, and the gate maps it to that family's scope at the declared level — Creatives at `read`
+needs `surveys:read`, Charts at `write` needs `dashboards:write` — so the table above still says which
+scope opens each tool. A tool cannot be registered without a permission: the type refuses an empty list,
+and a list that is empty or names a permission or level the registry does not offer throws at
+registration. A new tool inherits enforcement by construction — the gate returns a
+`403 insufficient_scope` before the handler touches a v3 operation. Tools that more than one permission
+legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
+it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
+gate.
 
 **There are no exceptions, and tests are what keep it that way.** The feedback-record tools were one
 for a while — they gated inside their own handler factories and registered through
 `server.registerTool` directly, which meant every handler was checked but a _new_ tool added outside
-those factories would have registered unguarded. ENG-2119 moved all ten onto `registerScopedTool` and
+those factories would have registered unguarded. ENG-2119 moved all ten onto the shared registration
+function (`registerMcpTool` today) and
 made `guardMcpScopes` / `guardMcpAnyScope` private again, so the guards are no longer reachable from a
 tool module.
 
 Be precise about what that guarantees. Privacy removes the hand-rolled gate, and the compiler stops you
-forgetting `registerScopedTool`'s scope argument — but it cannot stop a module calling
+forgetting `registerMcpTool`'s permissions argument — but it cannot stop a module calling
 `server.registerTool(...)` directly, because `server` is an argument to every tool module. No type
-system reaches that. The checks that do: a test pins `registerScopedTool` as the only export of
-`guard-scopes.ts`, and `feedback-records.test.ts` drives all ten tools with the opposite scope, which
+system reaches that. The checks that do: a test pins `registerMcpTool` as the only export of
+`guard-permissions.ts`, `tool-permissions.test.ts` pins every registered tool's permissions and the
+scopes they map to, and `feedback-records.test.ts` drives all ten tools with the opposite scope, which
 goes red if a tool is registered unguarded _or_ wired to the wrong scope.
 
 **A new scope is advertised only together with a migration that grants it to existing clients.**
@@ -683,11 +691,11 @@ operation owns both — so the MCP surface follows the v3 API rather than growin
     that drifts fails every call that would otherwise have succeeded.
   </Step>
   <Step title="Register it">
-    In `tools/<resource>.ts`, through `registerScopedTool` — the only registration path, which runs the scope
-    gate before the handler. Reads call the operation directly:
+    In `tools/<resource>.ts`, through `registerMcpTool` — the only registration path, which runs the
+    permission gate before the handler. Reads call the operation directly:
 
     ```ts
-    registerScopedTool(
+    registerMcpTool(
       server,
       "get_response",
       {
@@ -697,7 +705,7 @@ operation owns both — so the MCP surface follows the v3 API rather than growin
         outputSchema: ZMcpResponseOutput,
         annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
-      ["responses:read"],
+      [{ permission: "responses", level: "read" }],
       async (input: TMcpGetResponseInput, ctx) => {
         const authInfo = getMcpToolAuthInfo(ctx);
         const requestId = getMcpRequestId(authInfo);
@@ -713,22 +721,24 @@ operation owns both — so the MCP surface follows the v3 API rather than growin
     ```
 
     A mutation differs in two places, and both are needed: `audit: { action, targetType, targetIdArg? }` in
-    the config (records a call the scope gate refused) and `runMcpMutation(ctx, { action, resource }, ({
-    authentication, requestId, auditLog }) => operation(...))` in the handler (records the outcome). Gate
-    writes on `<resource>:write`. A dry run is `read` only if it is a pure function of its input
+    the config (records a call the gate refused) and `runMcpMutation(ctx, { action, resource }, ({
+    authentication, requestId, auditLog }) => operation(...))` in the handler (records the outcome). Declare
+    writes at `write`. A dry run is `read` only if it is a pure function of its input
     (`validate_survey`); one that resolves references is `write` (`validate_response`).
 
     The permissions a tool declares, each with its access level, are how it joins the grant a user sets
-    on the consent screen and on Authorized apps (see `GLOSSARY.md`, "MCP access"). Declare every
-    permission whose data the tool returns, not just the one it is named after: chart tools that read
-    Feedback Records declare Charts and Feedback records. A tool with no declared permission can't be
-    registered.
+    on the consent screen and on Authorized apps (see `GLOSSARY.md`, "MCP access"). Pick them from the
+    registry in `modules/mcp/permissions.ts`; a permission the registry lacks is added there, in the
+    category it belongs to, never inline. Declare every permission whose data the tool returns, not just
+    the one it is named after: chart tools that read Feedback Records declare Charts and Feedback records.
+    A tool with no declared permission can't be registered.
 
   </Step>
   <Step title="Test it">
     Next to the tool, in `tools/<resource>.test.ts`: drive the handler with the opposite scope and assert the
     403 detail, and assert the roster of registered names (see `responses.test.ts` and
-    `feedback-records.test.ts`). Run `pnpm test`; restart the dev server to see the tool in `tools/list`.
+    `feedback-records.test.ts`). Add the tool to `tools/tool-permissions.test.ts`, which pins the scopes
+    every tool's permissions map to. Run `pnpm test`; restart the dev server to see the tool in `tools/list`.
   </Step>
   <Step title="Document it">
     Add its section under [Available Tools](#available-tools), a row in the scope, permission and REST-mapping
@@ -1535,11 +1545,12 @@ writes the chart query itself.
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved
   chart so an agent can check it before `create_chart` saves it.
 - **Free-form numbers need feedback access.** `preview_chart` and `list_chart_field_values` run a caller's own
-  query over respondents' answers, so they declare `dashboards:read` **and** `feedbackRecords:read`.
-  `get_chart_data` declares the same two, with one exception through `registerScopedTool`'s `{ byInput }` form:
+  query over respondents' answers, so they declare Charts **and** Feedback records at `read`, which need
+  `dashboards:read` and `feedbackRecords:read`.
+  `get_chart_data` declares the same two, with one exception through `registerMcpTool`'s `{ byInput }` form:
   given a `dashboardId` it reads the chart as that dashboard shows it, and a Dashboard viewer's token (trimmed to
-  `dashboards:read`, flagged `dashboardViewerOnly` at authentication) may do that on `dashboards:read` alone
-  (ADR-0025). Without `dashboardId` it is the chart-only read it always was. Each operation also checks read
+  `dashboards:read`, flagged `dashboardViewerOnly` at authentication) may do that on Dashboards at `read`
+  alone, which needs `dashboards:read` (ADR-0025). Without `dashboardId` it is the chart-only read it always was. Each operation also checks read
   access to the chart's feedback dataset, the dashboard-bound one through `dashboard_read` for a viewer. They spend from
   the same 600/min budget as the REST data routes, and share their limit of 20 queries running at once, both
   charged inside the operation.
@@ -2202,6 +2213,8 @@ query, like `create_feedback_record`.
 - `apps/web/app/api/mcp/route.ts`
 - `apps/web/modules/mcp/auth.ts`
 - `apps/web/modules/mcp/server.ts`
+- `apps/web/modules/mcp/permissions.ts` (the permission registry: categories, permissions, scope families, access levels)
+- `apps/web/modules/mcp/tools/guard-permissions.ts` (`registerMcpTool`, the permission gate)
 - `apps/web/modules/mcp/tools/surveys.ts`
 - `apps/web/modules/mcp/tools/workspaces.ts` (workspace discovery and the workspace custom CSS tools)
 - `apps/web/modules/mcp/tools/feedback-records.ts`
