@@ -7,6 +7,24 @@ that is not listed here.
 
 **Workspace** — The tenant unit inside an organization: surveys, contacts, API key permissions and stored files belong to exactly one. Until Formbricks 5 it was split into a project and its environments; `environmentId` survives only as the legacy id that the client API, old SDKs and old storage keys still accept. _Avoid_: environment, project.
 
+## MCP access
+
+**MCP client** — An app that connects to Formbricks over MCP on a user's behalf, such as Claude or ChatGPT. Product prose may call it an agent; UI copy and code say MCP client. _Avoid_: OAuth app, integration, connection.
+
+**Grant** — What one user allows one MCP client to do: its organization & workspace access and an access level per permission. The user sets it on the consent screen and edits it on Authorized apps; a change applies to the client's next call, and Revoke ends it. It only ever narrows what the user may do, never widens it, so an MCP client also loses what the user loses. _Avoid_: authorization (that means permission checks), consent (the screen, not the record), access grant, connection.
+
+**Organization & workspace access** — Which organizations and workspaces a grant reaches: **All access** (every organization the user belongs to, now or later), **Only selected organizations** (including workspaces created in them later) or **Only selected workspaces** (exactly those). Anything outside it does not exist for the MCP client. _Avoid_: scope, reach, resource access.
+
+**Permission** — One row of a grant: a kind of data, such as Surveys or Responses, with its access level. _Avoid_: scope (the OAuth string), data model, resource.
+
+**Access level** — How far a permission goes: **No access**, **Read** or **Write**. Write includes Read, and includes deleting. A permission with only read tools offers No access and Read. _Avoid_: role, privilege.
+
+**Category** — A group of permissions shown as one expandable row, such as Surveys (Surveys, Creatives, Survey styling). _Avoid_: area, permission group.
+
+**Preset** — A one-click setting for every permission at once: Read-only, Select all (the highest level each permission offers) or Deselect all. _Avoid_: shortcut, template.
+
+**Scope** — The OAuth string an MCP client requests, such as `surveys:write`. It caps what a grant can give that client; it is not the grant itself. _Avoid_ (in UI copy): scope, for anything the user picks.
+
 ## Survey runtime
 
 **Block** — One card of a survey holding one or more elements. Logic rules and a `logicFallback` hang off a block.

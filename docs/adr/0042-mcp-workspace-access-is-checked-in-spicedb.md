@@ -1,0 +1,18 @@
+---
+status: proposed
+---
+
+# A grant's organization & workspace access is checked in SpiceDB, through `can()`
+
+The organizations and workspaces an MCP client's grant reaches are written to SpiceDB as relationships of the grant, and for MCP calls `can()` checks the grant alongside the user (ENG-7125). Most MCP tools never receive a workspace id: they derive it from a survey, response, chart, dashboard, creative or workflow id, and several read paths skip `requireV3WorkspaceAccess`. Every decision does pass through `can()`, and SpiceDB already knows which workspace and organization each resource belongs to (ADR 0018). Checking there covers every resource type without a second resolver.
+
+## Considered options
+
+- **An allow-list of organization and workspace ids in the request context, checked in `can()`.** Rejected: for every resource that isn't a workspace, `can()` would have to look up its workspace outside SpiceDB, making a second evaluator that drifts from the first.
+
+## Consequences
+
+- With Only selected organizations, the grant relates to the organization, so workspaces created there later are reached through the hierarchy. With Only selected workspaces, it relates to each workspace. A grant with All access writes no relationships.
+- A resource outside the grant is reported as not found, never as forbidden. `list_workspaces` filters through the same relationship.
+- An MCP decision costs a second check, which can be bulk-checked with the user's own. Saving or revoking a grant writes and deletes its relationships with the grant row, and deleting a workspace or organization drops them.
+- A grant left reaching nothing, because its workspaces were deleted or the user lost them, stays listed until the user edits or revokes it.

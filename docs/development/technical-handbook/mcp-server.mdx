@@ -718,6 +718,12 @@ operation owns both — so the MCP surface follows the v3 API rather than growin
     writes on `<resource>:write`. A dry run is `read` only if it is a pure function of its input
     (`validate_survey`); one that resolves references is `write` (`validate_response`).
 
+    The permissions a tool declares, each with its access level, are how it joins the grant a user sets
+    on the consent screen and on Authorized apps (see `GLOSSARY.md`, "MCP access"). Declare every
+    permission whose data the tool returns, not just the one it is named after: chart tools that read
+    Feedback Records declare Charts and Feedback records. A tool with no declared permission can't be
+    registered.
+
   </Step>
   <Step title="Test it">
     Next to the tool, in `tools/<resource>.test.ts`: drive the handler with the opposite scope and assert the
