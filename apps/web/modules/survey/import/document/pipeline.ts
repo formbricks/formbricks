@@ -16,6 +16,7 @@ import { sanitizeName } from "../core/sanitize-text";
 import { SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS, SURVEY_IMPORT_MAX_QUESTIONS } from "../limits";
 import { planDocumentImport } from "./ai-plan";
 import { assembleDocumentDraft } from "./assemble";
+import { describeDocumentQuestion } from "./issue-subject";
 import {
   type DocumentPlanContext,
   type TDocumentPlannedEntry,
@@ -230,6 +231,20 @@ export async function runDocumentImport(
     signal
   );
   const labelOf = (ref: string) => entries.find((entry) => entry.ref === ref)?.label ?? ref;
+  // A line about a question names it by the ID the file gives it, where it is and what it says, never
+  // by the import's own key for it (`R5`), which is what an issue carries until here (ENG-7070).
+  const nameQuestion = ({
+    questionTag,
+    ...issue
+  }: TSurveyImportPipelineIssue): TSurveyImportPipelineIssue => {
+    if (issue.questionRef === undefined) return questionTag === undefined ? issue : { ...issue, questionTag };
+    const { label, ...subject } = describeDocumentQuestion(issue.questionRef, {
+      entries,
+      model: prepared.model,
+      defaultLanguage: languages.codes[0],
+    });
+    return { ...issue, ...(label ? { questionTag: label } : {}), ...subject };
+  };
   // The dialog sends the draft to the create, whose body has a size limit: past it, languages and then
   // trailing questions are cut, and the cut draft is checked again.
   await yieldToOthers(signal);
@@ -285,11 +300,7 @@ export async function runDocumentImport(
     ),
     ...dropped,
     ...assembly.issues,
-  ].map((issue) =>
-    issue.questionRef !== undefined && issue.questionTag === issue.questionRef
-      ? { ...issue, questionTag: labelOf(issue.questionRef) }
-      : issue
-  );
+  ];
 
   return {
     // No `references`: a document points at nothing outside itself, so the dialog creates it through
@@ -298,7 +309,7 @@ export async function runDocumentImport(
     report: buildSurveyImportReport({
       source: { kind: prepared.model.kind, fileName: prepared.fileName },
       document: assembly.document,
-      issues: [...issues.filter(fitted.keepIssue), ...fitted.dropped],
+      issues: [...issues.filter(fitted.keepIssue), ...fitted.dropped].map(nameQuestion),
     }),
     ...(planned.calls > 0 ? { usage: planned.usage } : {}),
   };

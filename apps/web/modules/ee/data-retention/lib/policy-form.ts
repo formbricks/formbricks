@@ -13,7 +13,7 @@ import { RETENTION_PERIOD_DAYS, RETENTION_WARN_DAYS } from "./policy-rules";
 
 /** The period presets the edit dialog offers (ENG-3610), in days; anything else is "Custom". */
 export const RETENTION_PERIOD_PRESETS = [30, 90, 365, 1095, 1825] as const;
-/** The notice presets; anything else is behind "Customise". */
+/** The notice presets; anything else is "Custom". */
 export const RETENTION_WARN_PRESETS = [14, 30, 60, 90] as const;
 export const CUSTOM = "custom";
 
@@ -79,23 +79,36 @@ export const getPolicyFormSchema = (t: TFunction, policy: TRetentionPolicyKind) 
 
 export type TPolicyFormValues = z.infer<ReturnType<typeof getPolicyFormSchema>>;
 
-/** The period in days, or null when the custom amount isn't a positive whole number. */
+/**
+ * The period in days, or null when the custom amount isn't a positive number. A decimal amount is the
+ * nearest whole day (ENG-7038): "2.5 years" is 913 days.
+ *
+ * With `saved`, a custom period that still reads as the saved one keeps the saved days. The dialog shows
+ * a period no unit divides in years to two decimals (403 days as "1.1 years"), which converts back to a
+ * different day count (402): saving the dialog untouched must not shorten the period, since a shorter
+ * period restarts every warning.
+ */
 export const getPolicyFormPeriodDays = (
-  values: Pick<TPolicyFormValues, "periodPreset" | "customPeriodAmount" | "customPeriodUnit">
+  values: Pick<TPolicyFormValues, "periodPreset" | "customPeriodAmount" | "customPeriodUnit">,
+  saved?: Pick<TRetentionPolicySettings, "periodDays">
 ): number | null => {
   if (values.periodPreset !== CUSTOM) return Number(values.periodPreset);
   const amount = values.customPeriodAmount;
-  if (amount === null || !Number.isSafeInteger(amount) || amount <= 0) return null;
+  if (amount === null || !Number.isFinite(amount) || amount <= 0) return null;
+  if (saved) {
+    const shown = daysToRetentionPeriod(saved.periodDays);
+    if (shown.amount === amount && shown.unit === values.customPeriodUnit) return saved.periodDays;
+  }
   return retentionPeriodToDays({ amount, unit: values.customPeriodUnit });
 };
 
-/** The notice in days, or null when the custom value isn't a whole number. */
+/** The notice in days, or null when the custom value isn't a number. A decimal is the nearest whole day. */
 export const getPolicyFormWarnDays = (
   values: Pick<TPolicyFormValues, "warnPreset" | "customWarnDays">
 ): number | null => {
   if (values.warnPreset !== CUSTOM) return Number(values.warnPreset);
   const days = values.customWarnDays;
-  return days !== null && Number.isSafeInteger(days) ? days : null;
+  return days !== null && Number.isFinite(days) ? Math.round(days) : null;
 };
 
 /** The dialog's starting values for a policy's settings, picking the preset that matches when one does. */
@@ -116,12 +129,16 @@ export const toPolicyFormValues = (settings: TRetentionPolicySettings): TPolicyF
   };
 };
 
-/** The settings a valid form describes, for the one policy the dialog edits. */
+/**
+ * The settings a valid form describes, for the one policy the dialog edits. `saved` are the settings
+ * the dialog opened with (see `getPolicyFormPeriodDays`).
+ */
 export const toPolicyPatch = (
   policy: TRetentionPolicyKind,
-  values: TPolicyFormValues
+  values: TPolicyFormValues,
+  saved?: Pick<TRetentionPolicySettings, "periodDays">
 ): Partial<TRetentionPolicySettings> => {
-  const periodDays = getPolicyFormPeriodDays(values);
+  const periodDays = getPolicyFormPeriodDays(values, saved);
   const warnDays = getPolicyFormWarnDays(values);
   if (periodDays === null || warnDays === null) throw new Error("The policy form was submitted invalid");
 
@@ -149,7 +166,7 @@ export const toPoliciesPatch = (
   values: TPolicyFormValues,
   saved: TRetentionPolicySettings
 ): TRetentionPoliciesPatch | null => {
-  const edited = toPolicyPatch(policy, values);
+  const edited = toPolicyPatch(policy, values, saved);
   const changed = Object.fromEntries(
     Object.entries(edited).filter(([field, value]) => {
       const before = saved[field as keyof TRetentionPolicySettings];

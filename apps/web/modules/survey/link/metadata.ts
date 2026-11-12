@@ -55,7 +55,9 @@ const getServableSurveyMetadata = async (
   }
 
   return {
-    title,
+    // With Remove Branding on, `absolute` skips the root layout's "%s | Formbricks" template, so the
+    // tab shows only the survey's own title (ENG-7138).
+    title: workspaceContext.workspace.linkSurveyBranding ? title : { absolute: title },
     description,
     ...baseMetadata,
     ...(customFaviconUrl && { icons: customFaviconUrl }),
