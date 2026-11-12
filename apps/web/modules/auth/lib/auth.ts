@@ -40,6 +40,7 @@ import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./bette
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
+import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { revokeOAuthConsentBeforeHandler } from "./oauth-grant-revocation";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
@@ -391,6 +392,9 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
+      // ENG-7150: an approval carrying the consent screen's grant must carry a valid one, refused before
+      // the provider writes the consent. See mcp-grant-consent.ts.
+      requireValidMcpGrantOnConsentBeforeHandler(ctx);
       // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);

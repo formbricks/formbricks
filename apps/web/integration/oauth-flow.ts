@@ -108,22 +108,35 @@ export const token = async (
 
 export type TTokens = { access_token: string; refresh_token: string; scope: string };
 
-/** authorize → consent (when asked for) → code exchange, as the signed-in user. */
+/**
+ * `POST /oauth2/consent` for the consent page `target` that `authorize` landed on, as the consent page
+ * sends it: `accept`, the signed `oauth_query`, and whatever else is in `body` (the chosen grant).
+ */
+export const consent = (cookie: string, target: URL, body: Record<string, unknown>): Promise<Response> =>
+  handle("/oauth2/consent", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
+    body: JSON.stringify({ ...body, oauth_query: target.search.slice(1) }),
+  });
+
+/**
+ * authorize → consent (when asked for) → code exchange, as the signed-in user. `mcpGrant` is what the
+ * consent screen's Allow sends with the approval; without it the grant gets what the scopes give.
+ */
 export const grant = async (
   cookie: string,
   clientId: string,
   scope: string,
-  options: { prompt?: "consent" } = {}
+  { mcpGrant, ...options }: { prompt?: "consent"; mcpGrant?: unknown } = {}
 ): Promise<TTokens> => {
   const { verifier, target: authorizeTarget } = await authorize(cookie, clientId, scope, options);
   let target = authorizeTarget;
   if (!target.searchParams.get("code")) {
     expect(target.pathname).toBe("/account/authorize");
     target = await redirectTarget(
-      await handle("/oauth2/consent", {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
-        body: JSON.stringify({ accept: true, oauth_query: target.search.slice(1) }),
+      await consent(cookie, target, {
+        accept: true,
+        ...(mcpGrant === undefined ? {} : { mcp_grant: mcpGrant }),
       })
     );
   }
