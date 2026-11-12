@@ -43,13 +43,13 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | Scope | Tools | What it allows |
 | --- | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` | Read surveys, creatives and their counts, and surveys' custom CSS, and validate survey documents and CSS |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, and delete surveys and creatives, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
+| `surveys:write` | `create_survey`, `generate_survey`⁴, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, and delete surveys and creatives, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹ | Read workflows and their runs |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
-| `responses:read` | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
-| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` | Record, correct and delete survey responses |
+| `responses:read` | `list_responses`, `count_responses`, `get_response`, `list_tags`⁵ | Read and count survey responses, and list response tags |
+| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`⁵, `merge_tags`⁵ | Record, correct and delete survey responses, mark them Low quality, and rename and merge tags |
 | `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read` also `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`³, `list_dashboard_filter_fields`³, `list_dashboard_filter_values`³, `preview_chart`³, `list_chart_field_values`³ | Read dashboards and the numbers they show, and — with feedback-record access — charts, the fields a chart can use, and the numbers of any query |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | Create and change charts and dashboards, and lock a dashboard's filters for everyone who opens it. There is no tool that deletes a chart or a dashboard |
 
@@ -65,6 +65,14 @@ own, as before. `list_dashboard_filter_fields` lists the embedded-data fields a 
 charts, filter fields and filter values through their dashboards with that alone. Running a query of your own (`preview_chart`) or listing a field's stored values (`list_chart_field_values`) always needs
 `feedbackRecords:read` — a dashboards grant alone never runs arbitrary queries over feedback. All three also need
 read access to the chart's feedback dataset.
+
+⁴ `generate_survey` drafts a survey from a prompt with your organization's AI and saves nothing; the
+agent saves the draft with `create_survey`. It needs AI to be on for the organization, and shares the
+10-per-minute limit of AI survey creation in the app.
+
+⁵ The tag tools work over OAuth only, as tag management in the app needs a signed-in user; an API key
+can't use them. `merge_tags` moves a tag's responses onto another tag and removes it, for duplicates and
+misspellings. No tool deletes a tag.
 
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed
@@ -104,7 +112,8 @@ needs, so the agent can tell you what to change:
 ```
 
 A client connected before grants existed kept the access it had: All access, and each permission at its
-scope's level. Tags started at No access. API keys have no grant and work as before.
+scope's level. Tags started at No access, so its tag tools (`list_tags` at Read, `update_tag` and
+`merge_tags` at Write) are refused until you raise Tags. API keys have no grant and work as before.
 
 <Note>
   The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition
