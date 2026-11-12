@@ -91,7 +91,7 @@ describe("AuthZed projection outbox triggers", () => {
            AND NOT tgisinternal) AS triggers
     `;
     expect(Number(catalog?.indexes)).toBe(3);
-    expect(Number(catalog?.triggers)).toBe(15);
+    expect(Number(catalog?.triggers)).toBe(16);
   });
 
   test("does not classify an accepted invite as a revocation", async () => {
@@ -297,6 +297,46 @@ describe("AuthZed projection outbox triggers: MCP grants (ENG-7153)", () => {
     await clearOutbox();
     await prisma.mcpGrant.update({ where: { id: grant.id }, data: { permissions: { surveys: "read" } } });
     expect(await grantEvents()).toEqual([]);
+  });
+
+  test("queues nothing for a grant that has All access before and after, so deleting its user doesn't", async () => {
+    const user = await seedUser("all-access@integration.test");
+    await prisma.oauthClient.create({ data: { clientId: "all-access-client", redirectUris: [] } });
+    const grant = await prisma.mcpGrant.create({
+      data: { userId: user.id, clientId: "all-access-client", access: "all", permissions: {} },
+    });
+    await clearOutbox();
+
+    // A rewrite of `access` to the same value, and the cascade a deleted user or client brings.
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "all" } });
+    await prisma.user.delete({ where: { id: user.id } });
+    expect(await grantEvents()).toEqual([]);
+
+    // A grant that selects (No workspaces here: no selection rows) queues its delete, as it may hold
+    // relationships that must go.
+    const other = await seedUser("selecting@integration.test");
+    const selecting = await prisma.mcpGrant.create({
+      data: { userId: other.id, clientId: "all-access-client", access: "organizations", permissions: {} },
+    });
+    await clearOutbox();
+    await prisma.oauthClient.delete({ where: { clientId: "all-access-client" } });
+    expect(await grantEvents()).toEqual([
+      { isRevocation: true, primaryId: selecting.id, secondaryId: null, targetType: "mcp_grant" },
+    ]);
+  });
+
+  test("queues a change between All access and a selection, in either direction", async () => {
+    const user = await seedUser("switch@integration.test");
+    await prisma.oauthClient.create({ data: { clientId: "switch-client", redirectUris: [] } });
+    const grant = await prisma.mcpGrant.create({
+      data: { userId: user.id, clientId: "switch-client", access: "all", permissions: {} },
+    });
+    await clearOutbox();
+
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "workspaces" } });
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "organizations" } });
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "all" } });
+    expect((await grantEvents()).map(({ primaryId }) => primaryId)).toEqual([grant.id, grant.id, grant.id]);
   });
 });
 

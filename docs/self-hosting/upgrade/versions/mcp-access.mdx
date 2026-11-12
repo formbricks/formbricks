@@ -37,10 +37,14 @@ Ask anyone who connected an MCP client during the rollout and now sees `401` to 
 
 The database migration adds the `mcp_grant` triggers while containers of the previous version may still be
 delivering outbox events. Those don't know the type and dead-letter its events on the spot instead of retrying.
-An event queued when a grant loses access (an Edit that removes a workspace, a revoked connection, a deleted
-workspace) is a revocation, and a dead-lettered revocation makes every enforced authorization check in the
-deployment fail closed until it is replayed. The scheduled audit replays dead letters only after six hours, so
-don't wait for it.
+An event queued when a grant loses access is a revocation, and a dead-lettered revocation makes every enforced
+authorization check in the deployment fail closed until it is replayed. The scheduled audit replays dead
+letters only after six hours, so don't wait for it.
+
+Only grants that select organizations or workspaces queue events. Every grant the data migration creates has
+All access, so deleting a user, an MCP client or an organization during the rollout queues nothing for them.
+The risk is limited to grants made on a new container during the rollout with Only selected organizations or
+Only selected workspaces: editing or revoking one, or deleting a workspace or organization it selects.
 
 You recognise it by:
 
@@ -57,7 +61,7 @@ WHERE "deadLetteredAt" IS NOT NULL AND "processedAt" IS NULL GROUP BY 1, 2;
 
 Expect `mcp_grant` rows with `authzed_projection_invalid_event`; investigate anything else before replaying,
 as described in [AuthZed operations](/self-hosting/configuration/authzed-operations). Then replay and deliver
-them:
+them, running each command in a container of the **new** version:
 
 ```bash
 formbricks-authzed outbox replay
@@ -65,9 +69,12 @@ formbricks-authzed outbox drain
 formbricks-authzed upgrade check
 ```
 
-Expect `status: ready`. Run `replay` only after the rollout has finished: a container of the previous version
-would dead-letter the event again. `replay` resets every unresolved dead letter, which is why you check them
-first.
+Expect `status: ready`. Run `replay` only after the rollout has finished, and never from the previous version's
+image: its `drain` dead-letters the replayed `mcp_grant` events again on the spot, yet prints
+`deadLettered: 0`, because it dead-letters an event of a type it doesn't know while claiming it, before it
+counts anything. Trust `upgrade check`
+or `outbox status` from the new image, not that count. `replay` resets every unresolved dead letter, which is
+why you check them first.
 
 From this release on, a container leaves an outbox event of a type it doesn't know pending for a newer
 container instead of dead-lettering it, so the next new type can't cause this.
