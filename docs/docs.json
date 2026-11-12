@@ -421,7 +421,8 @@
                       "self-hosting/upgrade/versions/attachment-exports",
                       "self-hosting/upgrade/versions/dashboard-viewer",
                       "self-hosting/upgrade/versions/cube-memory",
-                      "self-hosting/upgrade/versions/helm-bundled-database"
+                      "self-hosting/upgrade/versions/helm-bundled-database",
+                      "self-hosting/upgrade/versions/mcp-access"
                     ]
                   }
                 ]
