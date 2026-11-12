@@ -16,6 +16,8 @@ export class SurveyImportRequestError extends V3ApiError {
       code: error.code,
       requestId: error.requestId,
       invalid_params: error.invalid_params,
+      // What the dialog builds its sentence from, e.g. the line and column a JSON file breaks at.
+      details: error.details,
     });
     this.name = "SurveyImportRequestError";
     this.retryAfterSeconds = retryAfterSeconds;
