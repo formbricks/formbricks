@@ -3,8 +3,11 @@ import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { deleteMcpGrantRelationshipsBeforeCommit } from "@/lib/authzed/mcp-grant";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import {
   requireOAuthConsentOnRefreshAfterHandler,
+  revokeAllUserOAuthGrants,
   revokeOAuthConsentBeforeHandler,
   revokeOAuthConsentGrant,
   revokeTokensBeyondConsentAfterHandler,
@@ -54,6 +57,21 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("./mcp-oauth-provider-options", () => ({ MCP_OAUTH_REFRESH_TOKEN_PREFIX: "fbor_" }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
+vi.mock("@/lib/authzed/mcp-grant", () => ({
+  deleteMcpGrantRelationshipsBeforeCommit: vi.fn(),
+  reconcileMcpGrantRelationships: vi.fn(),
+}));
+
+/** A stored grant row with Only selected organizations, so its audit entries need no lookup. */
+const ORG_GRANT = {
+  id: "grant-1",
+  userId: "user-1",
+  clientId: "client-1",
+  access: "organizations",
+  permissions: {},
+  organizations: [{ organizationId: "org-1" }],
+  workspaces: [],
+};
 
 type TCtx = Parameters<typeof revokeOAuthConsentBeforeHandler>[0];
 const ctx = (path: string, body: unknown, returned?: unknown): TCtx =>
@@ -399,6 +417,124 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
       requireOAuthConsentOnRefreshAfterHandler(refreshCtx(token)),
       "BAD_REQUEST",
       "invalid_grant"
+    );
+  });
+
+  test("ends a grantless connection like a revoke, audits a grant written meanwhile, and refuses", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith(WIDE);
+    mocks.tx.mcpGrant.findUnique.mockResolvedValue(null);
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
+    // Checked before and again after the consent rows are locked.
+    expect(mocks.tx.mcpGrant.findUnique).toHaveBeenCalledTimes(2);
+    expect(mocks.calls).toEqual([
+      "delete consent",
+      "delete grant",
+      "revoke refresh tokens",
+      "revoke access tokens",
+    ]);
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1" },
+    });
+    // The grant's reach leaves SpiceDB before the transaction commits.
+    expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith([
+      { before: expect.objectContaining({ id: "grant-1", organizationIds: ["org-1"] }), after: null },
+    ]);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetId: "grant-1",
+        organizationId: "org-1",
+        userId: "system",
+        userType: "system",
+      })
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "grant_missing", grantsDeleted: 1, consentsDeleted: 1 }),
+      expect.any(String)
+    );
+  });
+
+  test("lets the refresh through when an approval saved the grant while the consent rows were locked", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith(WIDE);
+    mocks.tx.mcpGrant.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: "grant-1" });
+
+    await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
+    expect(mocks.calls).toEqual([]);
+  });
+
+  test("treats a grantless refresh with no consent row left as a revoked consent", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith();
+    mocks.tx.mcpGrant.findUnique.mockResolvedValue(null);
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
+    // No second grant read and no consent delete: there is nothing to end but the tokens.
+    expect(mocks.tx.mcpGrant.findUnique).toHaveBeenCalledTimes(1);
+    expect(mocks.calls).toEqual(["revoke refresh tokens", "revoke access tokens"]);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "consent_revoked" }),
+      expect.any(String)
+    );
+  });
+});
+
+describe("revokeAllUserOAuthGrants", () => {
+  test("deletes consents, then grants, then revokes tokens, returning each grant ready to audit", async () => {
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+
+    const result = await revokeAllUserOAuthGrants(mocks.tx as never, "user-1");
+
+    expect(mocks.calls).toEqual([
+      "delete consent",
+      "delete grant",
+      "revoke access tokens",
+      "revoke refresh tokens",
+    ]);
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({ where: { userId: "user-1" } });
+    expect(result).toMatchObject({ consentsDeleted: 1, grantsDeleted: 1 });
+    expect(result.grantAudits).toEqual([
+      {
+        action: "deleted",
+        before: expect.objectContaining({ id: "grant-1", access: "organizations" }),
+        after: null,
+        organizationIds: ["org-1"],
+      },
+    ]);
+    // Audits are the caller's job once it commits.
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
+  });
+});
+
+describe("revokeOAuthConsentBeforeHandler audit", () => {
+  test("audits each grant the revoke deleted, as the signed-in user", async () => {
+    mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.tx.oauthConsent.findFirst.mockResolvedValue({ clientId: "client-1" });
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+
+    await revokeOAuthConsentBeforeHandler(ctx("/oauth2/delete-consent", { id: "consent-1" }));
+
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetId: "grant-1",
+        organizationId: "org-1",
+        userId: "user-1",
+        userType: "user",
+        newObject: expect.objectContaining({ after: null }),
+      })
     );
   });
 });
