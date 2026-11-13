@@ -7,6 +7,10 @@ import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocat
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { sendMemberRetentionNoticeEmail } from "@/modules/email";
+import {
+  countActiveOwners,
+  lockOwnersAndCheckRemoval,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 import { formatRetentionDate } from "../lib/display";
 import {
   type TRetentionTargetState,
@@ -120,12 +124,9 @@ export const deactivateDueMember = async (
   noticeDueAtOrBefore: Date
 ): Promise<TDeactivation> =>
   runSweepTransaction(async (tx) => {
-    await tx.$queryRaw`
-      SELECT 1 FROM "Membership"
-      WHERE "organizationId" = ${context.policy.organizationId} AND "role" = 'owner'
-      ORDER BY "userId"
-      FOR UPDATE
-    `;
+    // Read first, with the owners locked, so it is taken before the user row; acted on below, once the
+    // member is known to be due.
+    const isLastActiveOwner = await lockOwnersAndCheckRemoval(tx, context.policy.organizationId, userId);
     await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
     await lockUnchangedRetentionPolicy(tx, context.policy);
     const [member] = await readCandidates(tx, context, { userId, noticeDueAtOrBefore });
@@ -133,17 +134,7 @@ export const deactivateDueMember = async (
       return null;
     }
     if (member.organizationCount > 1) return "otherOrganization";
-    if (member.role === "owner") {
-      const otherActiveOwners = await tx.membership.count({
-        where: {
-          organizationId: context.policy.organizationId,
-          role: "owner",
-          userId: { not: userId },
-          user: { isActive: true },
-        },
-      });
-      if (otherActiveOwners === 0) return "lastOwner";
-    }
+    if (isLastActiveOwner) return "lastOwner";
 
     await tx.user.update({ where: { id: userId }, data: { isActive: false } });
     await recordRetentionRunActions(tx, context.runId, [
@@ -267,9 +258,7 @@ export const createMembersSweeper = (): TRetentionSweeper => async (context) => 
   const skips: TRetentionRunSkip[] = [];
   // The last active owner is never deactivated, so they aren't told they will be.
   const activeOwners = await runSweepTransaction((tx) =>
-    tx.membership.count({
-      where: { organizationId: context.policy.organizationId, role: "owner", user: { isActive: true } },
-    })
+    countActiveOwners(tx, context.policy.organizationId)
   );
   const { notify, act } = await collectDueTargets(context, {
     readPage: (tx, afterId) =>
