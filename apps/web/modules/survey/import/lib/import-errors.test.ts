@@ -278,6 +278,9 @@ describe("getSurveyImportErrorMessage", () => {
     ["import_timed_out", "workspace.surveys.import.errors.timed_out"],
     ["ai_quota_exceeded", "workspace.surveys.ai_create.ai_rate_limited"],
     ["something_new", "common.something_went_wrong_please_try_again"],
+    // Names every object carries find no message of their own.
+    ["constructor", "common.something_went_wrong_please_try_again"],
+    ["__proto__", "common.something_went_wrong_please_try_again"],
   ])("words %s", (code, message) => {
     expect(getSurveyImportErrorMessage(code, t)).toBe(message);
   });
