@@ -50,6 +50,8 @@ const flattenConditions = (group: TWorkflowConditionGroup): TWorkflowCondition[]
   group.conditions.flatMap((item) => (isConditionGroup(item) ? flattenConditions(item) : [item]));
 
 const toValueText = (value: TWorkflowConditionValue): string => {
+  // A list operator compares against a list of texts (ENG-7176).
+  if (Array.isArray(value)) return value.join(", ");
   if (value !== null && typeof value === "object") return getVariableDisplayName(value.path);
   return String(value);
 };
