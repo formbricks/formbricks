@@ -123,6 +123,7 @@ describe("rateLimitConfigs", () => {
         "v3StateMutation",
         "mcpAuth",
         "v3WorkflowWebhook",
+        "v3WorkflowTestRequests",
         "v3SurveyGenerate",
         "v3SurveyVisibility",
         "v3SurveysFullList",

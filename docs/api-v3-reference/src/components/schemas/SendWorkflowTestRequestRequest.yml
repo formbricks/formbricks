@@ -1,0 +1,27 @@
+type: object
+description: >-
+  What to send. Both fields are optional: an empty object sends the saved step with the workflow's
+  Sample payload and each HTTP request step's last Test request response as Variables.
+properties:
+  config:
+    $ref: ./WorkflowHttpRequestActionConfig.yml
+    description: >-
+      The step's draft settings; defaults to the saved step. A secret header without a value uses
+      the saved secret of that name; one with a value uses it for this call only and stores nothing.
+  variables:
+    type: object
+    properties:
+      payload:
+        type: object
+        additionalProperties: true
+        description: The test payload for `payload.<path>` Variables; defaults to the Sample payload.
+      steps:
+        type: object
+        additionalProperties:
+          type: object
+          additionalProperties: true
+        description: >-
+          Earlier step outputs for `steps.<id>.<path>` Variables; defaults to each HTTP request
+          step's last Test request response.
+    additionalProperties: false
+additionalProperties: false

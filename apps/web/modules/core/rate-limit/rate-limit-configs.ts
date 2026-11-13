@@ -61,6 +61,13 @@ export const rateLimitConfigs = {
       allowedPerInterval: 100,
       namespace: "api:v3:workflow-webhook",
     }, // 100 per minute per workflow
+    // "Send test request" on a workflow HTTP request step (ENG-7179): each one is a real outbound call,
+    // so a principal gets 30 a minute, REST and MCP together.
+    v3WorkflowTestRequests: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:workflow-test-request",
+    }, // 30 per minute per user or API key
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,

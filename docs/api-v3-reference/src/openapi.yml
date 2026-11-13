@@ -58,7 +58,8 @@ info:
     **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET
     /api/v3/workflows/{workflowId}/webhook**, **POST
     /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT
-    /api/v3/workflows/{workflowId}/sample**, and the public Webhook Secret URL
+    /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST
+    /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, and the public Webhook Secret URL
     **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no
     login: the token in its path is the credential.
 
@@ -454,6 +455,8 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_webhook_{token}.yml
   /api/v3/workflows/{workflowId}/sample:
     $ref: paths/api_v3_workflows_{workflowId}_sample.yml
+  /api/v3/workflows/{workflowId}/steps/{stepId}/test-request:
+    $ref: paths/api_v3_workflows_{workflowId}_steps_{stepId}_test-request.yml
   /api/v3/charts:
     $ref: paths/api_v3_charts.yml
   /api/v3/charts/fields:

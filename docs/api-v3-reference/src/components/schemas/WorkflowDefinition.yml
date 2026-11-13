@@ -47,6 +47,7 @@ properties:
     items:
       oneOf:
         - $ref: ./WorkflowSendEmailActionNode.yml
+        - $ref: ./WorkflowHttpRequestActionNode.yml
         - $ref: ./WorkflowIfElseNode.yml
     description: >-
       Steps of the graph. The trigger lives in `trigger`, not in this array.

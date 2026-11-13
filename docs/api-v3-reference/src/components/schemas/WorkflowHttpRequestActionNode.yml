@@ -1,0 +1,31 @@
+type: object
+description: >-
+  HTTP request action node: calls an outside URL and passes the response to later steps as
+  `steps.<id>.status` and `steps.<id>.body.<path>`.
+required:
+  - id
+  - type
+  - actionType
+  - config
+properties:
+  id:
+    type: string
+    minLength: 1
+  type:
+    type: string
+    enum:
+      - action
+  actionType:
+    type: string
+    enum:
+      - http_request
+  label:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Optional display label shown in the builder.
+  config:
+    $ref: ./WorkflowHttpRequestActionConfig.yml
+  ui:
+    $ref: ./WorkflowNodeUi.yml
+additionalProperties: false
