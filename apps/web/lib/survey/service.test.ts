@@ -824,6 +824,7 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       expect(prisma.segment.findUnique).toHaveBeenCalledTimes(1); // the workspace guard only
+      expect(prisma.segment.findFirst).not.toHaveBeenCalled();
     });
 
     test("ignores a segment without an id, even one that names the survey", async () => {
@@ -842,6 +843,7 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       expect(prisma.segment.findUnique).not.toHaveBeenCalled();
+      expect(prisma.segment.findFirst).not.toHaveBeenCalled();
     });
 
     test("refuses the save when the own segment changed since it was read", async () => {
@@ -891,6 +893,11 @@ describe("Tests for updateSurvey", () => {
           },
         },
         select: { id: true },
+      });
+      // The target is looked up inside the survey's workspace.
+      expect(prisma.segment.findFirst).toHaveBeenCalledWith({
+        where: { id: "clsharedsegment000000001", workspaceId: updateSurveyInput.workspaceId },
+        select: { isPrivate: true, filters: true },
       });
       expect(prisma.segment.updateMany).not.toHaveBeenCalled();
     });
