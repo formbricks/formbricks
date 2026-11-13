@@ -36,11 +36,11 @@ upgrade requires.
 
 ## i18n (Internationalization)
 
-- All user-facing text must use the `t()` function from `react-i18next`.
+- All user-facing text must use the `t()` function from `react-i18next`, and its wording uses the terms defined in `GLOSSARY.md`.
 - Key naming: use lowercase with dots for nesting (e.g., `common.welcome`).
 - Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
 - **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
-- After adding or changing an en-US string, run `pnpm i18n` when `LINGO_API_KEY` is set. Without it (cloud sessions), commit `en-US.json` alone: Lingo.dev auto-translates from en-US on commit.
+- After adding or changing an en-US string, run `pnpm i18n` (it needs `LINGO_API_KEY` in `.env`) and commit the generated locale files with it. Nothing translates on commit: CI's `Translation Validation` workflow only runs `pnpm scan-translations`, so a PR that changes `en-US.json` alone stays red. Without a key (cloud sessions), commit `en-US.json` and say in the PR that `pnpm i18n` still has to run.
 - On a merge conflict in `apps/web/locales/`, `packages/surveys/locales/` or their `i18n.lock`, run `pnpm i18n:merge`.
 
 ## Coding Standards
