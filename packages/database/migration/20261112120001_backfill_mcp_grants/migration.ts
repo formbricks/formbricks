@@ -13,6 +13,11 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  *    Workflow runs and Feedback datasets stop at Read;
  *  - Tags and the Audience permissions at No access (absent), so an upgrade never hands an agent data it
  *    did not have before, though Tags shares the `responses` family.
+ *  - for a Dashboard viewer (every membership the Dashboard viewer role, the rule of
+ *    `isOnlyDashboardViewer`), only what the consent screen offers one: `dashboards:read`, so Charts and
+ *    Dashboards at Read, whatever wider scopes a consent from before the role holds. A viewer's token is
+ *    trimmed to `dashboards:read` on every MCP request anyway (ADR-0025), so this keeps the access the
+ *    connection had, and Edit then offers no level the grant already exceeds.
  *
  * One grant per connection (user + client). The provider can hold duplicate consent rows for one
  * connection; the grant follows the most recently written row, and rows written in the same second
@@ -45,6 +50,9 @@ const CATALOGUE: readonly (readonly [permission: string, family: string, maxLeve
   ["feedbackDatasets", "feedbackRecords", "read"],
 ];
 
+/** Frozen as of this migration: the only resource scope a Dashboard viewer can grant (ADR-0025). */
+const DASHBOARD_VIEWER_SCOPE = "dashboards:read";
+
 export const backfillMcpGrants: MigrationScript = {
   type: "data",
   id: "tniq2ibbij0x2rjgydhyu3dh",
@@ -75,10 +83,17 @@ export const backfillMcpGrants: MigrationScript = {
         FROM ranked
         WHERE "updatedAt" = "at"
       ),
+      viewers AS (
+        SELECT "userId" FROM "Membership"
+        GROUP BY "userId"
+        HAVING bool_and("role" = 'dashboard_viewer')
+      ),
       held AS (
         SELECT t."userId", t."clientId", s."scope"
         FROM tied t
         CROSS JOIN LATERAL (SELECT DISTINCT unnest(t."scopes") AS "scope") s
+        LEFT JOIN viewers v ON v."userId" = t."userId"
+        WHERE v."userId" IS NULL OR s."scope" = ${DASHBOARD_VIEWER_SCOPE}
         GROUP BY t."userId", t."clientId", t."rows", s."scope"
         HAVING COUNT(*) = t."rows"
       ),
