@@ -1,4 +1,4 @@
-import { isCalBooked } from "@formbricks/types/cal-booking";
+import { type TCalBookingsByQuestionId, sanitizeCalBooking } from "@formbricks/types/cal-booking";
 import { listReadableFields } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
@@ -514,8 +514,8 @@ const serializeOne = (
     }
 
     case "cal": {
-      if (typeof raw !== "string" && !isStringRecord(raw)) return mismatch;
-      return { answer: { ...base, elementType: "cal", booked: isCalBooked(raw), rawValue: raw } };
+      if (typeof raw !== "string") return mismatch;
+      return { answer: { ...base, elementType: "cal", booked: raw === "booked", rawValue: raw } };
     }
 
     case "date": {
@@ -580,10 +580,16 @@ export const isPublishableDataKey = (plan: TV3AnswerPlan, key: string): boolean 
   return !LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key);
 };
 
+/**
+ * `calBookings` is `Response.calBookings`: what a Cal.com element reported, by Question ID. It decorates the
+ * `cal` answer with `booking` and nothing else; the answer itself (`booked`, `rawValue`) still comes from
+ * `data`, where the string "booked" is what is stored.
+ */
 export const serializeAnswers = (
   plan: TV3AnswerPlan,
   data: TResponseData,
-  ttc: TResponseTtc | undefined
+  ttc: TResponseTtc | undefined,
+  calBookings?: TCalBookingsByQuestionId | null
 ): { answers: TV3ResponseAnswer[]; unresolved: TV3ResponseUnresolvedEntry[] } => {
   const answers: TV3ResponseAnswer[] = [];
   const unresolved: TV3ResponseUnresolvedEntry[] = [];
@@ -660,7 +666,12 @@ export const serializeAnswers = (
       continue;
     }
 
-    answers.push(result.answer);
+    // Read back through the same sanitizer the write used, so a row that was edited by hand can never
+    // produce a body the published schema rejects.
+    const booking = result.answer.elementType === "cal" ? sanitizeCalBooking(calBookings?.[key]) : null;
+    answers.push(
+      booking && result.answer.elementType === "cal" ? { ...result.answer, booking } : result.answer
+    );
   }
 
   answers.sort((a, b) => a.position - b.position);

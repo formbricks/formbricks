@@ -2,6 +2,7 @@
 import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import type { TChartConfig, TChartQuery, TWidgetLayout } from "@formbricks/types/analysis";
 import type { TOrganizationAccess } from "@formbricks/types/api-key";
+import { type TCalBookingsByQuestionId } from "@formbricks/types/cal-booking";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { type TEmbeddedDataDefaultValue } from "@formbricks/types/embedded-data";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
@@ -57,6 +58,7 @@ declare global {
     export type WorkspaceConfig = TWorkspaceConfig;
     export type ResponseData = TResponseData;
     export type ResponseIngestFlags = TIngestFlag[];
+    export type ResponseCalBookings = TCalBookingsByQuestionId;
     export type ResponseVariables = TResponseVariables;
     export type ResponseTtc = TResponseTtc;
     export type ResponseMeta = TResponseMeta;

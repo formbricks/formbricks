@@ -318,7 +318,7 @@ export const zResponseAnswerSignature = z.strictObject({
 export type ResponseAnswerSignatureZodType = z.infer<typeof zResponseAnswerSignature>;
 
 /**
- * Scheduling answer for a `cal` element. The response records that the booking happened and the details Cal reported at that moment; the meeting itself lives in the scheduling provider, so a later change there is not reflected.
+ * Scheduling answer for a `cal` element. The answer itself is the fact of the booking; the details Cal.com reported at that moment are in `booking`. The meeting lives in the scheduling provider, so a later change there is not reflected.
  */
 export const zResponseAnswerBooking = z.strictObject({
   position: z.int().gte(1),
@@ -327,7 +327,21 @@ export const zResponseAnswerBooking = z.strictObject({
   elementLabel: z.string(),
   durationSeconds: z.number().gte(0).lte(86400).optional(),
   booked: z.boolean(),
-  rawValue: z.union([z.string(), z.record(z.string(), z.string())]),
+  rawValue: z.string(),
+  booking: z
+    .strictObject({
+      status: z.enum(["booked"]),
+      uid: z.string().optional(),
+      title: z.string().optional(),
+      startTime: z.string().optional(),
+      endTime: z.string().optional(),
+      eventTypeId: z.string().optional(),
+      bookingStatus: z.string().optional(),
+      paymentRequired: z.string().optional(),
+      isRecurring: z.string().optional(),
+      videoCallUrl: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type ResponseAnswerBookingZodType = z.infer<typeof zResponseAnswerBooking>;

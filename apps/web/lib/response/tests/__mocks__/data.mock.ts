@@ -79,6 +79,7 @@ export const mockResponse: ResponseMock = {
   endingId: null,
   displayId: null,
   ingestFlags: null,
+  calBookings: null,
   outcome: null,
 };
 
@@ -153,6 +154,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    calBookings: null,
     outcome: null,
   },
   {
@@ -181,6 +183,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    calBookings: null,
     outcome: null,
   },
   {
@@ -208,6 +211,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    calBookings: null,
     outcome: null,
   },
   {
@@ -235,6 +239,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    calBookings: null,
     outcome: null,
   },
   {
@@ -262,6 +267,7 @@ export const mockResponses: ResponseMock[] = [
     endingId: null,
     displayId: null,
     ingestFlags: null,
+    calBookings: null,
     outcome: null,
   },
 ];

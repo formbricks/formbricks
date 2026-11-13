@@ -177,6 +177,7 @@ describe("Quota Evaluation Service", () => {
     ttc: null,
     contactAttributes: {},
     ingestFlags: null,
+    calBookings: null,
     outcome: null,
     variables: mockVariablesData,
     meta: {},

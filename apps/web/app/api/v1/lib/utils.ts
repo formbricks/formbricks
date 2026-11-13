@@ -27,6 +27,7 @@ export const buildPrismaResponseData = (
     meta,
     singleUseId,
     variables,
+    calBookings,
     createdAt,
     updatedAt,
   } = responseInput;
@@ -58,6 +59,9 @@ export const buildPrismaResponseData = (
     // is already `NULL` — so collapsing `[]` to `null` would make a checked-and-clean response
     // indistinguishable from a legacy one.
     ...(ingestFlags !== undefined && { ingestFlags: [...ingestFlags] }),
+    // Set by the client routes only (`splitCalBookingsFromInput`): the management routes parse their body
+    // with a schema that has no such key, so they never write it.
+    ...(calBookings && Object.keys(calBookings).length > 0 && { calBookings }),
     ttc: ttc,
     createdAt,
     updatedAt,

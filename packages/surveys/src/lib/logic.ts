@@ -1,4 +1,3 @@
-import { isCalBooked } from "@formbricks/types/cal-booking";
 import {
   findComputedEmbeddedField,
   getComputedEmbeddedFields,
@@ -423,7 +422,7 @@ const evaluateSingleCondition = (
       case "isBefore":
         return new Date(String(leftValue)) < new Date(String(rightValue));
       case "isBooked":
-        return isCalBooked(leftValue) || !!(leftValue && leftValue !== "");
+        return leftValue === "booked" || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":
         if (typeof leftValue === "object") {
           return Object.values(leftValue).includes("");

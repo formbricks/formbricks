@@ -425,25 +425,9 @@ describe("Response Utils", () => {
       expect(JSON.stringify(res2)).toMatch(/"equals":{}/);
     });
 
-    test("booked matches the legacy string and the booking record", () => {
-      const res = buildWhereClause(textSurvey as TSurvey, { data: { qText: { op: "booked" } } });
-      expect(res.AND).toEqual([
-        {
-          AND: [
-            {
-              OR: [
-                { data: { path: ["qText"], equals: "booked" } },
-                { data: { path: ["qText", "status"], equals: "booked" } },
-              ],
-            },
-          ],
-        },
-      ]);
-    });
-
-    test("clicked & accepted", () => {
-      ["clicked", "accepted"].forEach((status) => {
-        const key = status as "clicked" | "accepted";
+    test("clicked, accepted & booked", () => {
+      ["clicked", "accepted", "booked"].forEach((status) => {
+        const key = status as "clicked" | "accepted" | "booked";
         const res = buildWhereClause(textSurvey as TSurvey, { data: { qText: { op: key } } });
         expect(res.AND).toEqual([{ AND: [{ data: { path: ["qText"], equals: status } }] }]);
       });

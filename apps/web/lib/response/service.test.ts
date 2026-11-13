@@ -99,8 +99,8 @@ const mockResponseId = "response-123";
  * instantiation, so the `select` at the call site is invisible to it and it asks for the **whole**
  * `Response` model — every scalar, not just the fourteen `responseSelection` names. That is what the
  * `as any` casts here were hiding, and it is why this is spelled as the selection plus the two
- * scalars it deliberately leaves out: `contactId`, and `ingestFlags`, which only `updateResponse`'s
- * pre-read selects (keeping it off every response the module returns). Together those are all
+ * scalars it deliberately leaves out: `contactId`, and `ingestFlags` and `calBookings`, which only
+ * `updateResponse`'s pre-read selects (keeping it off every response the module returns). Together those are all
  * sixteen columns, and `responseSelection` carries the `contact` and `tags` relations the code under
  * test reads.
  *
@@ -108,7 +108,7 @@ const mockResponseId = "response-123";
  * these tests stop compiling, instead of a cast quietly supplying `undefined` for it.
  */
 type MockCurrentResponse = Prisma.ResponseGetPayload<{
-  select: typeof responseSelection & { contactId: true; ingestFlags: true };
+  select: typeof responseSelection & { contactId: true; ingestFlags: true; calBookings: true };
 }>;
 
 const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {}): MockCurrentResponse => ({
@@ -131,6 +131,7 @@ const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {})
   tags: [],
   contactId: null,
   ingestFlags: null,
+  calBookings: null,
   ...overrides,
 });
 
@@ -717,5 +718,56 @@ describe("getResponseDownloadFile", () => {
     expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
     expect(exportedIds).toHaveLength(rows.length);
     expect(new Set(exportedIds).size).toBe(rows.length);
+  });
+});
+
+/**
+ * The details a Cal.com element reported live in `Response.calBookings`, by Question ID. An update merges
+ * them the way it merges `data`: a booking in the payload replaces that question's stored one, and the
+ * other questions' bookings stay.
+ */
+describe("updateResponse — Cal.com booking details", () => {
+  const first = { status: "booked", startTime: "2026-11-05T10:00:00.000Z" } as const;
+  const second = { status: "booked", startTime: "2026-11-06T09:00:00.000Z" } as const;
+  const updateArgs = () => vi.mocked(prisma.response.update).mock.calls[0][0] as { data: unknown };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const run = async (stored: Record<string, typeof first> | null, input: TResponseUpdateInput) => {
+    const currentResponse = createMockCurrentResponse({ calBookings: stored });
+    vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+    vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
+    await updateResponse(mockResponseId, input);
+  };
+
+  test("reads the stored column for the merge, and does not return it", async () => {
+    await run(null, createMockResponseInput());
+
+    expect(vi.mocked(prisma.response.findUnique).mock.calls[0][0]).toMatchObject({
+      select: { calBookings: true },
+    });
+    expect(vi.mocked(prisma.response.update).mock.calls[0][0]).toMatchObject({
+      select: expect.not.objectContaining({ calBookings: true }),
+    });
+  });
+
+  test("keeps the stored bookings of other questions and adds the new one", async () => {
+    await run({ cal1: first }, createMockResponseInput({ calBookings: { cal2: second } }));
+
+    expect(updateArgs().data).toMatchObject({ calBookings: { cal1: first, cal2: second } });
+  });
+
+  test("a new booking for the same question replaces the stored one", async () => {
+    await run({ cal1: first }, createMockResponseInput({ calBookings: { cal1: second } }));
+
+    expect(updateArgs().data).toMatchObject({ calBookings: { cal1: second } });
+  });
+
+  test("leaves the column untouched when the payload carries no booking", async () => {
+    await run({ cal1: first }, createMockResponseInput({ data: { q1: "answer" } }));
+
+    expect(updateArgs().data).not.toHaveProperty("calBookings");
   });
 });

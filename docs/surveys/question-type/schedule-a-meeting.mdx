@@ -40,7 +40,12 @@ Enable an input box for adding a custom hostname, which is necessary if using a 
 
 ## Response data
 
-When a respondent books a slot, the response stores the booking Cal.com reported, so a webhook, export or API consumer knows when the meeting is. In a webhook payload, `data` holds this for the question's ID:
+The answer to a Schedule a meeting question is the string `booked`. It is the same in the response `data`, in webhooks, in exports and in the v1 and v2 APIs, so nothing that reads it needs to change. A respondent who skips the question has no value for it.
+
+When the respondent booked, the details Cal.com reported are kept beside the answer:
+
+- In a webhook, they are under `calBookingsByQuestionId`, keyed by Question ID. See [Cal.com booking details](/platform/features/integrations/webhooks#cal-com-booking-details).
+- In the [v3 responses API](/api-v3-reference/introduction), the `cal` answer carries an optional `booking` object.
 
 ```json
 {
@@ -57,8 +62,12 @@ When a respondent books a slot, the response stores the booking Cal.com reported
 }
 ```
 
-All values are strings. A field is left out when Cal.com did not send it, and `status` is always `booked`. A respondent who skips the question has no value for it. Responses recorded before this change hold the plain string `booked` instead; treat both forms as a booking.
+All values are strings. A field is left out when Cal.com did not send it. `status` is always `booked`: Cal.com's own state, such as `PENDING`, is in `bookingStatus`, and `paymentRequired` says whether a payment is still open.
 
-The record reflects the booking at the moment it was made. A later reschedule or cancellation in Cal.com is not reflected on the response.
+<Note>
+  The booking is reported by the respondent's browser and is not verified. Check the `uid` with Cal.com before you act on it.
+</Note>
 
-A self-hosted Cal.com that predates the current embed only reports the start time and duration, so `startTime` and `endTime` are all you get from it.
+<Note>
+  The details show the booking at the moment it was made. A reschedule or cancellation in Cal.com later is not reflected. A recurring booking holds its first occurrence. A self-hosted Cal.com that predates the current embed only reports the start time and duration, so `startTime` and `endTime` are all you get from it. A response recorded before the details were kept, or by an older survey renderer, has the answer `booked` and no details.
+</Note>

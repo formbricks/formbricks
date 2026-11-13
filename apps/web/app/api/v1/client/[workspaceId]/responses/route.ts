@@ -16,6 +16,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { splitCalBookingsFromInput } from "@/lib/response/cal-bookings";
 import { applyIngestContractToResponseData } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -170,6 +171,9 @@ export const POST = withV1ApiWrapper({
     // and the contract would drop it.
     const ingestResult = applyIngestContractToResponseData(survey, responseInputData.data);
     responseInputData.data = ingestResult.data;
+    // A Cal element's booking record moves out of `data`, which keeps the string "booked" (see
+    // `extractCalBookings`). Same position as the contract: before validation, the duplicate fold and quotas.
+    splitCalBookingsFromInput(survey, responseInputData);
 
     // Email verification, like the PIN above, has to be enforced here and not only in the renderer:
     // this endpoint is public, so a caller could otherwise submit with any `verifiedEmail` they like.

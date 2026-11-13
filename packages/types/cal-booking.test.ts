@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { buildCalBooking, buildCalBookingFromLegacyEvent, isCalBooked } from "./cal-booking";
+import {
+  MAX_CAL_BOOKING_VALUE_LENGTH,
+  buildCalBooking,
+  buildCalBookingFromLegacyEvent,
+  sanitizeCalBooking,
+} from "./cal-booking";
 
 describe("buildCalBooking", () => {
   test("stringifies every field Cal reports and marks the booking as booked", () => {
@@ -62,18 +67,49 @@ describe("buildCalBookingFromLegacyEvent", () => {
   });
 });
 
-describe("isCalBooked", () => {
+describe("sanitizeCalBooking", () => {
+  test("keeps a booking record and its known string fields", () => {
+    const booking = {
+      status: "booked",
+      uid: "abc",
+      title: "Intro call",
+      startTime: "2026-11-05T10:00:00.000Z",
+      endTime: "2026-11-05T10:30:00.000Z",
+      eventTypeId: "42",
+      bookingStatus: "ACCEPTED",
+      paymentRequired: "false",
+      isRecurring: "false",
+      videoCallUrl: "https://cal.com/video/abc",
+    };
+
+    expect(sanitizeCalBooking(booking)).toEqual(booking);
+  });
+
+  test("drops unknown keys, non-string values and empty strings", () => {
+    expect(sanitizeCalBooking({ status: "booked", extra: "x", uid: 5, title: "", startTime: "t" })).toEqual({
+      status: "booked",
+      startTime: "t",
+    });
+  });
+
+  test("cuts a value past the cap instead of refusing the booking", () => {
+    const result = sanitizeCalBooking({
+      status: "booked",
+      title: "t".repeat(MAX_CAL_BOOKING_VALUE_LENGTH + 1),
+    });
+
+    expect(result?.title).toHaveLength(MAX_CAL_BOOKING_VALUE_LENGTH);
+  });
+
   test.each([
-    ["booked", true],
-    [{ status: "booked", startTime: "2026-11-05T10:00:00.000Z" }, true],
-    [{ status: "cancelled" }, false],
-    [{ startTime: "2026-11-05T10:00:00.000Z" }, false],
-    ["skipped", false],
-    ["", false],
-    [["booked"], false],
-    [null, false],
-    [undefined, false],
-  ])("%j -> %s", (value, expected) => {
-    expect(isCalBooked(value)).toBe(expected);
+    ["the legacy string", "booked"],
+    ["a record that is not booked", { status: "cancelled" }],
+    ["a record without a status", { startTime: "2026-11-05T10:00:00.000Z" }],
+    ["an array", ["booked"]],
+    ["an empty string", ""],
+    ["null", null],
+    ["undefined", undefined],
+  ])("is not a booking: %s", (_label, value) => {
+    expect(sanitizeCalBooking(value)).toBeNull();
   });
 });

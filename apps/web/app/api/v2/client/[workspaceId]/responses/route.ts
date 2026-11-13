@@ -11,6 +11,7 @@ import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-
 import { responses } from "@/app/lib/api/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { splitCalBookingsFromInput } from "@/lib/response/cal-bookings";
 import { applyIngestContractToResponseData } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -265,6 +266,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
     // than after it.
     const ingestResult = applyIngestContractToResponseData(survey, responseInputData.data);
     responseInputData.data = ingestResult.data;
+    // A Cal element's booking record moves out of `data`, which keeps the string "booked" (see
+    // `extractCalBookings`), so the stored answer is what it always was.
+    splitCalBookingsFromInput(survey, responseInputData);
 
     const validationResponse = await validateResponseSubmission(workspaceId, responseInputData, survey);
     if (validationResponse) {

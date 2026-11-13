@@ -130,7 +130,9 @@ export const ZResponse = z.object({
   // (`PRISMA_GLOBAL_OMIT`, ENG-2955) — so a payload built from a whole row matches this shape exactly.
   // Documenting it would advertise a field the API never returns; exposing it belongs to the release
   // that surfaces coercion failures in the UI.
-}) satisfies z.ZodType<Omit<Response, "ingestFlags">>;
+  // `calBookings` is left out for the same reason: the Prisma client omits it from every read without a
+  // `select`, so the v1 and v2 management payloads never carry it.
+}) satisfies z.ZodType<Omit<Response, "ingestFlags" | "calBookings">>;
 
 ZResponse.meta({
   id: "response",

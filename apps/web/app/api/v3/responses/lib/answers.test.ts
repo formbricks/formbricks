@@ -116,11 +116,53 @@ describe("serializeAnswers — one branch per element type", () => {
     expect(answer([el], { q1: raw })).toMatchObject({ booked: expected, rawValue: raw });
   });
 
-  test("cal booking record reports booked=true and the record verbatim", () => {
-    const el = element({ id: "q1", type: "cal", calUserName: "someone" });
-    const raw = { status: "booked", startTime: "2026-11-05T10:00:00.000Z", title: "Intro call" };
+  describe("cal booking details", () => {
+    const calEl = element({ id: "q1", type: "cal", calUserName: "someone" });
+    const booking = { status: "booked", startTime: "2026-11-05T10:00:00.000Z", title: "Intro call" };
+    const serialize = (el: TSurveyElement, data: Record<string, unknown>, calBookings: unknown) => {
+      const { answers, unresolved } = serializeAnswers(
+        planFor([el]),
+        data as never,
+        undefined,
+        calBookings as never
+      );
+      expect(unresolved).toEqual([]);
+      return answers[0];
+    };
 
-    expect(answer([el], { q1: raw })).toMatchObject({ booked: true, rawValue: raw });
+    test("the stored booking rides on the answer, and rawValue stays the stored string", () => {
+      expect(serialize(calEl, { q1: "booked" }, { q1: booking })).toMatchObject({
+        elementType: "cal",
+        booked: true,
+        rawValue: "booked",
+        booking,
+      });
+    });
+
+    test("an answer without stored details has no booking key", () => {
+      expect(serialize(calEl, { q1: "booked" }, undefined)).not.toHaveProperty("booking");
+      expect(serialize(calEl, { q1: "booked" }, null)).not.toHaveProperty("booking");
+      expect(serialize(calEl, { q1: "booked" }, { other: booking })).not.toHaveProperty("booking");
+    });
+
+    test("a stored value that is not a booking is not published", () => {
+      expect(serialize(calEl, { q1: "booked" }, { q1: { status: "cancelled" } })).not.toHaveProperty(
+        "booking"
+      );
+    });
+
+    test("fields outside the published booking are cut before they reach the body", () => {
+      const result = serialize(calEl, { q1: "booked" }, { q1: { ...booking, injected: "x" } });
+
+      expect(result).toMatchObject({ booking });
+      expect((result as { booking: object }).booking).not.toHaveProperty("injected");
+    });
+
+    test("only a cal element carries a booking", () => {
+      const text = element({ id: "q1", type: "openText" });
+
+      expect(serialize(text, { q1: "hello" }, { q1: booking })).not.toHaveProperty("booking");
+    });
   });
 
   /** Older clients wrote the element's display format; reformatting without knowing which moves the date. */

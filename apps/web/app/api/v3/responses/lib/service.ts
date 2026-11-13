@@ -335,6 +335,8 @@ export const v3ResponseReadSelect = {
   language: true,
   outcome: true,
   data: true,
+  // Omitted from every read by default (`PRISMA_GLOBAL_OMIT`); v3 is one of the two readers.
+  calBookings: true,
   variables: true,
   ttc: true,
   meta: true,

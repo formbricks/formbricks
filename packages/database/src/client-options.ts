@@ -12,8 +12,12 @@ import { DEFAULT_POOL_ACQUIRE_TIMEOUT_MS, createPrismaPgAdapter } from "./prisma
  * responses routes and the pipeline payload served an internal column that no OpenAPI bundle describes
  * (ENG-2955). Omitted at the client rather than per query so the next internal column is one line here,
  * not a hunt through every route that forgot a `select`.
+ *
+ * `Response.calBookings` (the details a Cal.com element reported) is omitted for the opposite reason: it is
+ * a public field, but only the webhook body and `/api/v3/responses` carry it, so the v1 and v2 payloads
+ * stay exactly what they were. Those two readers select it explicitly.
  */
-export const PRISMA_GLOBAL_OMIT = { response: { ingestFlags: true } } as const;
+export const PRISMA_GLOBAL_OMIT = { response: { ingestFlags: true, calBookings: true } } as const;
 
 /**
  * Execution budget for the app client's `$transaction` calls, interactive and batch alike; a call that
