@@ -2,17 +2,16 @@ import { TFunction } from "i18next";
 import { SignatureIcon } from "lucide-react";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum, ZSurveySignatureElement } from "@formbricks/types/surveys/elements";
+import { getElementDefaults, universalElementPresets } from "./element-presets";
 import {
   TElementCategory,
   getCXElementTypes,
-  getElementDefaults,
   getElementIcon,
   getElementIconMap,
   getElementNameMap,
   getElementTypes,
   getGroupedElementTypes,
   getTSurveyElementTypeEnumName,
-  universalElementPresets,
 } from "./elements";
 
 const t = ((key: string) => key) as unknown as TFunction;

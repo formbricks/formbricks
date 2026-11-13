@@ -7,11 +7,15 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * matrix rows and columns, address and contact sub-fields, and both kinds of ending. Shared by the
  * text walker's tests and the Excel export's, which must agree on what a survey's texts are.
  *
- * Only the fields the walkers read are filled; the rest of `TSurvey` is irrelevant to them.
+ * Only the fields the walkers and the Excel export read are filled; the rest of `TSurvey` is irrelevant
+ * to them.
  */
 export const EVERY_TEXT_SURVEY = {
   id: "clsurvey0000000000000001",
   name: "Every text",
+  type: "link",
+  status: "draft",
+  updatedAt: new Date("2026-10-30T12:00:00.000Z"),
   welcomeCard: {
     enabled: true,
     headline: { default: "Welcome", de: "Willkommen" },

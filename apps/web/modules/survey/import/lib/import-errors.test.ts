@@ -161,6 +161,7 @@ describe("getSurveyImportErrorMessage for a question list past a limit", () => {
     "tables",
     "table_cells",
     "source_size",
+    "text_size",
   ])("says which limit for %s", (limit) => {
     expect(getSurveyImportErrorMessage(`document_limit_exceeded:${limit}`, t)).toBe(
       `workspace.surveys.import.errors.document_limits.${limit}`
@@ -214,6 +215,7 @@ describe("getSurveyImportErrorMessage for each refusal and stream error", () => 
     ["file_too_large", "file_too_large"],
     ["qsf_not_recognized", "not_a_qsf"],
     ["file_needs_ai", "needs_ai"],
+    ["file_earlier_excel_export", "earlier_excel_export"],
     ["file_type_unsupported", "file_type_unsupported"],
     ["survey_too_large", "survey_too_large"],
     ["formbricks_file_invalid", "formbricks_file_invalid"],
@@ -276,6 +278,9 @@ describe("getSurveyImportErrorMessage", () => {
     ["import_timed_out", "workspace.surveys.import.errors.timed_out"],
     ["ai_quota_exceeded", "workspace.surveys.ai_create.ai_rate_limited"],
     ["something_new", "common.something_went_wrong_please_try_again"],
+    // Names every object carries find no message of their own.
+    ["constructor", "common.something_went_wrong_please_try_again"],
+    ["__proto__", "common.something_went_wrong_please_try_again"],
   ])("words %s", (code, message) => {
     expect(getSurveyImportErrorMessage(code, t)).toBe(message);
   });
@@ -312,5 +317,29 @@ describe("getSurveyImportFieldProblemHeadline", () => {
   test("says a field without a code, or with one it does not know, is not valid", () => {
     expect(getSurveyImportFieldProblemHeadline(undefined, english)).toBe("This field isn’t valid");
     expect(getSurveyImportFieldProblemHeadline("something_new", english)).toBe("This field isn’t valid");
+  });
+});
+
+describe("an Excel export whose rows are another survey's (ENG-6809)", () => {
+  test("is named and said in its own words", () => {
+    const errorCode = getSurveyImportRequestErrorCode(fileRefusal(422, "excel_export_other_survey"));
+    expect(errorCode).toBe("excel_export_other_survey");
+    expect(getSurveyImportErrorMessage(errorCode, t)).toBe(
+      "workspace.surveys.import.errors.excel_export_other_survey"
+    );
+  });
+});
+
+describe("getSurveyImportFieldProblemHeadline for the published lock", () => {
+  test.each([
+    "immutable_question_code",
+    "immutable_answer_code",
+    "immutable_question_type",
+    "immutable_option_text",
+    "immutable_option_deletion",
+  ] as const)("says %s can’t change once the survey is published", (code) => {
+    expect(getSurveyImportFieldProblemHeadline(code, t)).toBe(
+      "workspace.surveys.import.errors.field_problems.immutable_published"
+    );
   });
 });

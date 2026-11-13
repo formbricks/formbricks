@@ -4,7 +4,8 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
 import { walkSurveyTexts } from "@/modules/survey/lib/survey-texts";
 import { createIcuTranslate } from "./__fixtures__/translate";
-import { EXCEL_EXPORT_META_SHEET, writeExcelExport } from "./write";
+import { EXCEL_EXPORT_META_SHEET } from "./format";
+import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
 const UPDATED_AT = new Date("2026-10-30T12:34:56.000Z");
@@ -50,12 +51,12 @@ const export_ = (survey: TSurvey = SURVEY) => readBack(writeExcelExport({ survey
 
 describe("writeExcelExport", () => {
   test("writes a header of key, Question ID, Type, one column per language with the default first, and Logic", () => {
-    const [header] = rowsOf(export_().Sheets.Survey);
+    const [header] = rowsOf(export_().Sheets.Questions);
     expect(header).toEqual(["key", "Question ID", "Type", "English (en) — default", "German (de)", "Logic"]);
   });
 
   test("writes one row per text with content, keyed by the walker's id-built key, in survey order", () => {
-    const [, ...rows] = rowsOf(export_().Sheets.Survey);
+    const [, ...rows] = rowsOf(export_().Sheets.Questions);
     const keys = rows.map((row) => row[0]);
 
     expect(keys).toEqual(
@@ -68,7 +69,7 @@ describe("writeExcelExport", () => {
   });
 
   test("names each row's question and what the row is, and puts each language's text in its column", () => {
-    const rows = new Map(rowsOf(export_().Sheets.Survey).map((row) => [row[0], row.slice(1)]));
+    const rows = new Map(rowsOf(export_().Sheets.Questions).map((row) => [row[0], row.slice(1)]));
 
     expect(rows.get("welcomeCard.headline")).toEqual([
       "",
@@ -138,7 +139,7 @@ describe("writeExcelExport", () => {
   });
 
   test("puts a block's logic in plain words on its first question's row", () => {
-    const rows = rowsOf(export_().Sheets.Survey);
+    const rows = rowsOf(export_().Sheets.Questions);
     const withLogic = rows.filter((row) => row[5] !== "" && row[0] !== "key");
 
     expect(withLogic.map((row) => [row[0], row[5]])).toEqual([
@@ -174,7 +175,7 @@ describe("writeExcelExport", () => {
       }
     }
 
-    const rows = new Map(rowsOf(workbook.Sheets.Survey).map((row) => [row[0], row]));
+    const rows = new Map(rowsOf(workbook.Sheets.Questions).map((row) => [row[0], row]));
     expect(rows.get("welcomeCard.headline")?.slice(3, 5)).toEqual([
       '=HYPERLINK("https://evil.example","Click")',
       "+1",
@@ -196,17 +197,63 @@ describe("writeExcelExport", () => {
     }
   });
 
-  test("hides the key column and keeps the survey id, updatedAt and format on a very hidden sheet", () => {
+  test("hides the key column, and says how to read the sheet back on a very hidden sheet that names the survey", () => {
     const workbook = export_();
 
-    expect(workbook.SheetNames).toEqual(["Survey", EXCEL_EXPORT_META_SHEET]);
-    expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 2]);
-    expect(workbook.Sheets.Survey["!cols"]?.[0]?.hidden).toBe(true);
-    expect(workbook.Sheets.Survey["!cols"]?.slice(1).some((column) => column.hidden)).toBe(false);
+    expect(workbook.SheetNames).toEqual(["Questions", "Survey", EXCEL_EXPORT_META_SHEET]);
+    expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 0, 2]);
+    expect(workbook.Sheets.Questions["!cols"]?.[0]?.hidden).toBe(true);
+    expect(workbook.Sheets.Questions["!cols"]?.slice(1).some((column) => column.hidden)).toBe(false);
+    const [, , ...languageHeaders] = rowsOf(workbook.Sheets.Questions)[0].slice(0, -1);
     expect(rowsOf(workbook.Sheets[EXCEL_EXPORT_META_SHEET])).toEqual([
-      ["surveyId", SURVEY.id],
-      ["updatedAt", UPDATED_AT.toISOString()],
-      ["format", "1"],
+      ["format", "2", ""],
+      ["languages", "en", "de"],
+      ["headers", ...languageHeaders.slice(1)],
+      ["columns", "Question ID", "Type"],
+      ["locale", "en-US", ""],
+      // New survey › Import matches the file with this survey by it, and checks an Update against the
+      // survey as exported (ENG-6809).
+      ["surveyId", SURVEY.id, ""],
+      ["updatedAt", UPDATED_AT.toISOString(), ""],
+    ]);
+  });
+
+  test("states what the survey is on a Survey sheet, one property per row, naming no one", () => {
+    const workbook = readBack(
+      writeExcelExport({
+        survey: { ...SURVEY, status: "inProgress" } as TSurvey,
+        t,
+        locale: "en-US",
+        exportedAt: new Date("2026-11-06T09:05:59.999Z"),
+      })
+    );
+
+    expect(rowsOf(workbook.Sheets.Survey)).toEqual([
+      ["Property", "Value"],
+      ["Survey ID", SURVEY.id],
+      ["Name", "Every text"],
+      ["Type", "Link"],
+      ["Status", "Active"],
+      ["Default language", "English (en)"],
+      ["Languages", "English (en), German (de)"],
+      ["Questions", String(SURVEY.blocks.reduce((count, block) => count + block.elements.length, 0))],
+      ["Exported", "2026-11-06 09:05 UTC"],
+    ]);
+    // File › Info shows the survey's name.
+    expect(workbook.Props?.Title).toBe("Every text");
+  });
+
+  test("leaves the languages out of the Survey sheet for a survey without languages", () => {
+    const rows = rowsOf(export_({ ...SURVEY, languages: [] } as TSurvey).Sheets.Survey);
+
+    expect(rows.map(([property]) => property)).toEqual([
+      "Property",
+      "Survey ID",
+      "Name",
+      "Type",
+      "Status",
+      "Questions",
+      "Exported",
     ]);
   });
 
@@ -215,7 +262,7 @@ describe("writeExcelExport", () => {
       ...SURVEY,
       welcomeCard: { ...SURVEY.welcomeCard, headline: { default: "x".repeat(40_000), de: "Kurz" } },
     } as TSurvey;
-    const row = rowsOf(export_(survey).Sheets.Survey).find((cells) => cells[0] === "welcomeCard.headline");
+    const row = rowsOf(export_(survey).Sheets.Questions).find((cells) => cells[0] === "welcomeCard.headline");
 
     expect(row?.[3]).toHaveLength(32_767);
     expect(row?.[3].endsWith("x… [truncated]")).toBe(true);
@@ -235,7 +282,7 @@ describe("writeExcelExport", () => {
         },
       ],
     } as TSurvey;
-    const row = rowsOf(export_(survey).Sheets.Survey).find(
+    const row = rowsOf(export_(survey).Sheets.Questions).find(
       (cells) => cells[0] === "ending.ending-thanks.headline"
     );
 
@@ -248,7 +295,7 @@ describe("writeExcelExport", () => {
     const language = (code: string) => ({ ...german, language: { ...german.language, code, alias: null } });
     const shuffled = { ...SURVEY, languages: [language("ja"), german, language("fr"), english] } as TSurvey;
 
-    const [header] = rowsOf(export_(shuffled).Sheets.Survey);
+    const [header] = rowsOf(export_(shuffled).Sheets.Questions);
 
     expect(header).toEqual([
       "key",
@@ -263,7 +310,7 @@ describe("writeExcelExport", () => {
   });
 
   test("writes one Text column for a survey without languages", () => {
-    const [header, firstRow] = rowsOf(export_({ ...SURVEY, languages: [] } as TSurvey).Sheets.Survey);
+    const [header, firstRow] = rowsOf(export_({ ...SURVEY, languages: [] } as TSurvey).Sheets.Questions);
 
     expect(header).toEqual(["key", "Question ID", "Type", "Text", "Logic"]);
     expect(firstRow).toEqual(["welcomeCard.headline", "", "Welcome card: Headline", "Welcome", ""]);
