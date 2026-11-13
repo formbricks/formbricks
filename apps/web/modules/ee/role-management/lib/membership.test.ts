@@ -53,7 +53,7 @@ describe("updateMembership", () => {
     vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue(mockTeamMemberships as any);
 
-    const result = await updateMembership("user1", "org1", { role: "owner" });
+    const result = await updateMembership("user1", "org1", { role: "owner" }, "owner-1");
 
     expect(result).toEqual(mockMembership);
     expect(prisma.membership.update).toHaveBeenCalledWith({
@@ -82,7 +82,7 @@ describe("updateMembership", () => {
 
     vi.mocked(prisma.membership.update).mockRejectedValue(error);
 
-    await expect(updateMembership("user1", "org1", { role: "owner" })).rejects.toThrow(
+    await expect(updateMembership("user1", "org1", { role: "owner" }, "owner-1")).rejects.toThrow(
       new ResourceNotFoundError("Membership", "userId: user1, organizationId: org1")
     );
   });
@@ -102,7 +102,7 @@ describe("updateMembership", () => {
     vi.mocked(prisma.membership.update).mockResolvedValue(mockMembership);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue(mockTeamMemberships as any);
 
-    const result = await updateMembership("user1", "org1", { role: "manager" });
+    const result = await updateMembership("user1", "org1", { role: "manager" }, "owner-1");
 
     expect(result).toEqual(mockMembership);
     expect(prisma.teamUser.updateMany).toHaveBeenCalledWith({
@@ -134,7 +134,7 @@ describe("updateMembership", () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([{ teamId: "team1" }] as never);
     vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
 
-    await updateMembership("user1", "org1", { role: "dashboard_viewer" });
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1");
 
     expect(prisma.teamUser.updateMany).toHaveBeenCalledTimes(1);
     expect(prisma.teamUser.updateMany).toHaveBeenCalledWith({
@@ -156,7 +156,7 @@ describe("updateMembership", () => {
       Promise.resolve(args.select?.role ? roles.map((role) => ({ role })) : [])) as never);
     vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits: [] } as never);
 
-    await updateMembership("user1", "org1", { role: "dashboard_viewer" });
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1");
 
     if (revoked) expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, "user1");
     else expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
@@ -173,9 +173,13 @@ describe("updateMembership", () => {
       Promise.resolve(args.select?.role ? [{ role: "dashboard_viewer" }] : [])) as never);
     vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits } as never);
 
-    await updateMembership("user1", "org1", { role: "dashboard_viewer" }, tx as never);
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1", tx as never);
 
-    expect(finishRevokedMcpGrants).toHaveBeenCalledWith(grantAudits, { removeRelationships: removes });
+    // Audited by the owner who changed the role, not the system.
+    expect(finishRevokedMcpGrants).toHaveBeenCalledWith(grantAudits, {
+      removeRelationships: removes,
+      actorUserId: "owner-1",
+    });
   });
 
   test("includes memberships added while team roles are being updated in reconciliation", async () => {
@@ -197,7 +201,7 @@ describe("updateMembership", () => {
     vi.mocked(prisma.teamUser.findMany).mockImplementation((() =>
       Promise.resolve(roleUpdateCompleted ? [{ teamId: "team1" }, { teamId: "team2" }] : [])) as never);
 
-    await updateMembership("user1", "org1", { role: "manager" });
+    await updateMembership("user1", "org1", { role: "manager" }, "owner-1");
 
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamMemberships: [
@@ -227,7 +231,9 @@ describe("updateMembership", () => {
       },
     } as unknown as Prisma.TransactionClient;
 
-    await expect(updateMembership("user1", "org1", { role: "member" }, tx)).resolves.toEqual(mockMembership);
+    await expect(updateMembership("user1", "org1", { role: "member" }, "owner-1", tx)).resolves.toEqual(
+      mockMembership
+    );
 
     expect(tx.membership.update).toHaveBeenCalled();
     expect(prisma.membership.update).not.toHaveBeenCalled();

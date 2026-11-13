@@ -127,9 +127,14 @@ export const getOrganizationOwnerCount = async (
   return getOrganizationOwnerCountCached(organizationId);
 };
 
+/**
+ * Removes a member from the organization. `actorUserId` is the user who removes them (the member themselves
+ * when leaving): the actor of the audit entries of any MCP grant the removal ends.
+ */
 export const deleteMembership = async (
   userId: string,
-  organizationId: string
+  organizationId: string,
+  actorUserId: string
 ): Promise<
   {
     userId: string;
@@ -211,7 +216,7 @@ export const deleteMembership = async (
       return teamMemberships;
     });
 
-    await finishRevokedMcpGrants(revokedMcpGrantAudits);
+    await finishRevokedMcpGrants(revokedMcpGrantAudits, { actorUserId });
     await reconcileOrganizationMembership(organizationId, userId);
     await runPostCommitProjection("organization_membership_team_cleanup", () =>
       reconcileTeamWorkspaceRelationships({

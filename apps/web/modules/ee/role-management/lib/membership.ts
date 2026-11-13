@@ -13,10 +13,15 @@ import { validateInputs } from "@/lib/utils/validate";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
 
+/**
+ * Sets a member's role. `actorUserId` is the user making the change: the actor of the audit entries of any
+ * MCP grant the change ends.
+ */
 export const updateMembership = async (
   userId: string,
   organizationId: string,
   data: TMembershipUpdateInput,
+  actorUserId: string,
   tx?: Prisma.TransactionClient
 ): Promise<TMembership> => {
   validateInputs([userId, ZString], [organizationId, ZString], [data, ZMembershipUpdateInput]);
@@ -105,7 +110,7 @@ export const updateMembership = async (
     // last write there, so only a failed commit could leave these entries recording grants that stayed.
     // The grants' SpiceDB relationships are then left to the outbox event their delete queues, which is
     // delivered only once it commits; removing them now could outlive a rollback.
-    await finishRevokedMcpGrants(revokedMcpGrantAudits, { removeRelationships: !tx });
+    await finishRevokedMcpGrants(revokedMcpGrantAudits, { removeRelationships: !tx, actorUserId });
     // A transaction-scoped call is projected by the durable PostgreSQL outbox only after the outer
     // transaction commits. Reading through the global client here could observe the pre-commit role
     // and would publish stale relationships.
