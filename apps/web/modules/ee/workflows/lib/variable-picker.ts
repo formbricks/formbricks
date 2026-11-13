@@ -105,14 +105,34 @@ export type TWorkflowStepVariableProviders = {
 const noVariables = () => [];
 
 /**
+ * An HTTP request gives later steps `steps.<id>.status` and `steps.<id>.body…`, and only in "Wait and
+ * use it" mode: with "Don't wait" the run moves on before any answer. The status is always there; the
+ * body's fields are known from the step's sample, its last Test request response (ENG-7179).
+ */
+const getHttpRequestVariables: TWorkflowStepVariableProvider<"http_request">["getVariables"] = (
+  node,
+  { stepSamples }
+) => {
+  if (node.config.responseMode !== "wait") return [];
+  const sample = stepSamples[node.id];
+  if (!sample) {
+    return [{ path: `steps.${node.id}.status`, label: "status", typeHint: "number", isPickable: true }];
+  }
+  return getStepOutputOptionsFromSample(node.id, { status: sample.status, body: sample.body });
+};
+
+/**
  * One provider per step type, so a new step type fails to compile until it says what later steps
  * can read from it. Send email's output (`messageId`, `provider`) and If/else's branch are
- * bookkeeping, not values to insert. ENG-7179 adds `http_request`: its response Variables, only in
- * "Wait and use it" mode (`getStepOutputOptionsFromSample` turns a test response into them).
+ * bookkeeping, not values to insert.
  */
 export const WORKFLOW_STEP_VARIABLE_PROVIDERS: TWorkflowStepVariableProviders = {
   send_email: { getTypeLabel: (t) => t("workspace.workflows.send_email"), getVariables: noVariables },
   if_else: { getTypeLabel: (t) => t("workspace.workflows.if_else"), getVariables: noVariables },
+  http_request: {
+    getTypeLabel: (t) => t("workspace.workflows.http_request"),
+    getVariables: getHttpRequestVariables,
+  },
 };
 
 export interface TBuildWorkflowVariableGroupsInput {

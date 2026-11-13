@@ -194,6 +194,82 @@ describe("buildWorkflowVariableGroups", () => {
   });
 });
 
+describe("an HTTP request's Variables", () => {
+  const httpNode = (responseMode: "wait" | "dont_wait") => ({
+    id: "lookup",
+    type: "action" as const,
+    actionType: "http_request" as const,
+    label: "Get customer tier",
+    config: {
+      method: "GET" as const,
+      url: "https://crm.example.com/customers",
+      queryParameters: [],
+      headers: [],
+      responseMode,
+      continueOnError: false,
+    },
+  });
+
+  const definitionWith = (responseMode: "wait" | "dont_wait"): TWorkflowDefinition => ({
+    schemaVersion: 1,
+    trigger: webhookTrigger,
+    nodes: [httpNode(responseMode), emailNode("email")],
+    edges: [
+      { id: "e1", source: "trigger", target: "lookup" },
+      { id: "e2", source: "lookup", target: "email" },
+    ],
+    entryNodeId: "trigger",
+  });
+
+  const testResponse = { status: 200, contentType: "application/json", body: { tier: "gold" } };
+
+  test("in Wait and use it mode, offer the status and the fields of its last Test request response", () => {
+    const groups = buildWorkflowVariableGroups({
+      definition: definitionWith("wait"),
+      nodeId: "email",
+      sampleVariables: null,
+      survey: null,
+      stepContext: { stepSamples: { lookup: testResponse } },
+    });
+
+    expect(groups.find((group) => group.kind === "step")).toEqual({
+      kind: "step",
+      stepId: "lookup",
+      stepType: "http_request",
+      stepLabel: "Get customer tier",
+      options: [
+        { path: "steps.lookup.status", label: "status", typeHint: "number", isPickable: true },
+        { path: "steps.lookup.body.tier", label: "body.tier", typeHint: "text", isPickable: true },
+      ],
+    });
+  });
+
+  test("before any Test request, offer the status, the one Variable known without a response", () => {
+    const groups = buildWorkflowVariableGroups({
+      definition: definitionWith("wait"),
+      nodeId: "email",
+      sampleVariables: null,
+      survey: null,
+    });
+
+    expect(groups.find((group) => group.kind === "step")?.options).toEqual([
+      { path: "steps.lookup.status", label: "status", typeHint: "number", isPickable: true },
+    ]);
+  });
+
+  test("in Don't wait mode, offer nothing: the run moves on before the answer", () => {
+    const groups = buildWorkflowVariableGroups({
+      definition: definitionWith("dont_wait"),
+      nodeId: "email",
+      sampleVariables: null,
+      survey: null,
+      stepContext: { stepSamples: { lookup: testResponse } },
+    });
+
+    expect(groups.some((group) => group.kind === "step")).toBe(false);
+  });
+});
+
 describe("getStepOutputOptionsFromSample", () => {
   test("names a step's sample output as steps.<id>.… Variables, scalars pickable and lists not", () => {
     expect(
