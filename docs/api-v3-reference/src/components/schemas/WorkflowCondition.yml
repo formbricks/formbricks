@@ -24,7 +24,7 @@ properties:
         maxLength: 1000
       - type: number
       - type: boolean
-      - type: 'null'
+      - type: "null"
       - type: array
         minItems: 1
         maxItems: 100
