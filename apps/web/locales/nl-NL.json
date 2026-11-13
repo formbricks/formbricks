@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Kan de workflow niet inschakelen: de trigger-enquête is beperkt. Maak de enquête eerst zichtbaar voor de workspace.",
       "enable_success": "Workflow ingeschakeld.",
       "expand_inspector": "Inspector uitklappen",
+      "http_request": "HTTP-verzoek",
       "if_else": "Als / Anders",
       "if_else_operator_contains": "{variable} bevat {value}",
       "if_else_operator_equals": "{variable} is {value}",

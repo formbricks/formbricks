@@ -136,15 +136,31 @@ const resultFromLogRow = (log: StepLogRow, status: TWorkflowStepResult["status"]
   finishedAt: log.finishedAt?.toISOString() ?? new Date().toISOString(),
 });
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+/** A step taken from its log row: its Variables rebuilt from the stored output (≤64 KB of a response). */
+const resumedStep = (
+  executor: WorkflowStepExecutor<TWorkflowStepType>,
+  result: TWorkflowStepResult
+): StepRunResult =>
+  executor.variablesFromOutput
+    ? { ...result, variables: executor.variablesFromOutput(result.output ?? {}) }
+    : result;
+
 const isUniqueConstraintError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   error.code === PrismaErrorType.UniqueConstraintViolation;
 
 /**
  * A step's result as this attempt saw it: `retryable: false` marks a failure another attempt can't
- * fix (ENG-7180), so the run fails now instead of going back to the queue. Never persisted.
+ * fix (ENG-7180), so the run fails now instead of going back to the queue. `variables` is what later
+ * steps read under its id when that differs from the stored output (an HTTP response kept whole in
+ * memory, ENG-7179). Neither is persisted: `ZWorkflowRunData` drops both from `data.steps`.
  */
-type StepRunResult = TWorkflowStepResult & { retryable?: false };
+type StepRunResult = TWorkflowStepResult & { retryable?: false; variables?: Record<string, unknown> };
 
 /** Everything one step needs from the run it belongs to. */
 interface StepRunInput {
@@ -168,7 +184,7 @@ interface StepRunInput {
  * accepted policy: never send the same step twice.
  */
 const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
-  const { status, error, output, retryable } = await step.executor.execute({
+  const { status, error, output, retryable, variables } = await step.executor.execute({
     node: step.node,
     context: step.context,
     environment: step.environment,
@@ -190,6 +206,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
     ...(error ? { error } : {}),
     startedAt: finishedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
+    ...(variables ? { variables } : {}),
     ...(retryable === false ? { retryable } : {}),
   };
 };
@@ -271,7 +288,13 @@ const runStep = async (
   });
 
   if (existing?.status === "succeeded") {
-    return resultFromLogRow(existing, "succeeded");
+    return resumedStep(step.executor, resultFromLogRow(existing, "succeeded"));
+  }
+
+  // A "Don't wait" call handed to its own job (ENG-7179): that job owns the row now. Never run it again,
+  // whatever state the job left it in; the walk just goes on.
+  if (existing && step.executor.handedOff?.(toRecord(existing.output))) {
+    return resumedStep(step.executor, resultFromLogRow(existing, existing.status));
   }
 
   if (existing?.status === "running" && step.executor.hasEffects) {
@@ -365,13 +388,14 @@ const walkRun = async (
 
     const { retryable, ...result } = stepRun;
     stepResults.push(result);
-    if (result.status === "failed") {
+    const output = result.output ?? {};
+    // A handed-off step's final outcome belongs to its job and never fails the run.
+    if (result.status === "failed" && !executor.handedOff?.(output)) {
       failure = { message: result.error ?? "Workflow step failed", retryable: retryable !== false };
       return { next: "stop" };
     }
 
-    const output = result.output ?? {};
-    context.steps[node.id] = output;
+    context.steps[node.id] = result.variables ?? output;
     // A rate-limited (skipped) step has no result to branch on; only a succeeded one decides.
     return result.status === "succeeded" && executor.decide ? executor.decide(output) : { next: "continue" };
   });

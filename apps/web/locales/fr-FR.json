@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Impossible d'activer le workflow : son enquête déclencheur est restreinte. Rends d'abord l'enquête visible pour son espace de travail.",
       "enable_success": "Workflow activé.",
       "expand_inspector": "Développer l'inspecteur",
+      "http_request": "Requête HTTP",
       "if_else": "Si / Sinon",
       "if_else_operator_contains": "{variable} contient {value}",
       "if_else_operator_equals": "{variable} est {value}",

@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TWorkflowRunJobData } from "@formbricks/jobs";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { processWorkflowRunJob } from "./process-workflow-run-job";
+import type { WorkflowRunEffects } from "./effects";
+import { createWorkflowRunJobHandler, processWorkflowRunJob } from "./process-workflow-run-job";
 
 const {
   mockSendEmail,
@@ -42,6 +43,8 @@ const {
 
 // Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
+// The live effects enqueue "Don't wait" HTTP calls (ENG-7179); no test here reaches the queue.
+vi.mock("@formbricks/jobs", () => ({ enqueueWorkflowHttpRequestDeliveryJob: vi.fn() }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workflowRun: {
@@ -1244,4 +1247,122 @@ describe("processWorkflowRunJob", () => {
       });
     });
   });
+});
+
+describe("HTTP request steps in a run (ENG-7179)", () => {
+  // trigger → call (HTTP request) → send-email, whose body reads the call's response.
+  const httpDefinition = (responseMode: "wait" | "dont_wait") => {
+    const base = makeDefinition("email", {
+      body: "<p>Customer #recall:steps.call.body.id/fallback:none#</p>",
+    });
+    return {
+      ...base,
+      nodes: [
+        {
+          id: "call",
+          type: "action",
+          actionType: "http_request",
+          config: {
+            method: "GET",
+            url: "https://api.example.com/customers",
+            queryParameters: [],
+            headers: [],
+            responseMode,
+            continueOnError: false,
+          },
+        },
+        ...base.nodes,
+      ],
+      edges: [
+        { id: "e1", source: "trigger", target: "call" },
+        { id: "e2", source: "call", target: "send-email" },
+      ],
+    };
+  };
+
+  const effects = {
+    sendEmail: mockSendEmail,
+    sendHttpRequest: vi.fn<WorkflowRunEffects["sendHttpRequest"]>(),
+    enqueueHttpRequestDelivery: vi.fn<WorkflowRunEffects["enqueueHttpRequestDelivery"]>(),
+  };
+  const handler = createWorkflowRunJobHandler(effects);
+
+  const runWith = (definition: unknown) =>
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition },
+      workflow: { definition, createdBy: "creator-1" },
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 1 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(null);
+    mockWorkflowRunLogCreate.mockResolvedValue(undefined);
+    mockWorkflowRunLogUpdate.mockResolvedValue(undefined);
+    mockWorkflowRunLogUpdateMany.mockResolvedValue({ count: 1 });
+    mockSendEmail.mockResolvedValue(true);
+    mockBuildHtml.mockResolvedValue("<html>branded</html>");
+    mockGetResponse.mockResolvedValue(mockResponse);
+    mockGetSurvey.mockResolvedValue(mockSurvey);
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: null });
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set());
+    effects.enqueueHttpRequestDelivery.mockResolvedValue(undefined);
+  });
+
+  test("a later step reads the whole response, even past what the run log keeps", async () => {
+    runWith(httpDefinition("wait"));
+    // Larger than the 64 KB the log keeps, so only the in-memory copy still has `id` as a field.
+    const body = JSON.stringify({ id: "c_42", padding: "x".repeat(70 * 1024) });
+    effects.sendHttpRequest.mockResolvedValue({
+      response: { status: 200, contentType: "application/json", bodyText: body, truncated: false },
+      error: null,
+      attempts: 1,
+    });
+
+    await handler(data, baseContext);
+
+    expect(mockBuildHtml).toHaveBeenCalledWith(expect.objectContaining({ body: "<p>Customer c_42</p>" }));
+    expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+  });
+
+  test("Don't wait: the run goes on and completes while the call is still sending", async () => {
+    runWith(httpDefinition("dont_wait"));
+
+    await handler(data, baseContext);
+
+    expect(effects.sendHttpRequest).not.toHaveBeenCalled();
+    expect(effects.enqueueHttpRequestDelivery).toHaveBeenCalledTimes(1);
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+  });
+
+  test.each(["running", "failed"])(
+    "a resumed run never re-sends a Don't wait call its job owns (%s), and its outcome doesn't fail the run",
+    async (status) => {
+      runWith(httpDefinition("dont_wait"));
+      mockWorkflowRunLogFindFirst.mockImplementation(({ where }: { where: { stepId: string } }) =>
+        Promise.resolve(
+          where.stepId === "call"
+            ? {
+                stepId: "call",
+                stepType: "http_request",
+                status,
+                input: {},
+                output: { mode: "dont_wait", delivery: status === "failed" ? "failed" : "sending" },
+                error: status === "failed" ? "The request timed out after 10 s" : null,
+                startedAt: new Date("2026-06-09T12:01:00.000Z"),
+                finishedAt: null,
+              }
+            : null
+        )
+      );
+
+      await handler(data, baseContext);
+
+      expect(effects.enqueueHttpRequestDelivery).not.toHaveBeenCalled();
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+    }
+  );
 });

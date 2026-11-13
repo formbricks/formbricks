@@ -152,3 +152,29 @@ describe("redactWorkflowDefinitionPII", () => {
     expect(redactWorkflowDefinitionPII("nope")).toBe("nope");
   });
 });
+
+describe("redactWorkflowDefinitionPII on http_request", () => {
+  const httpNode = (headers: unknown[]): Record<string, unknown> => ({
+    id: "call",
+    type: "action",
+    actionType: "http_request",
+    config: { method: "POST", url: "https://api.example.com/hook", queryParameters: [], headers, body: "{}" },
+  });
+
+  test("a secret header keeps only its name and whether it is set, even if a value slipped in", () => {
+    const config = redactConfig([
+      httpNode([{ name: "Authorization", secret: true, value: "Bearer leak", secretId: "sec_1" }]),
+    ]);
+
+    expect(config.headers).toEqual([{ name: "Authorization", secret: true, isSet: true }]);
+  });
+
+  test("plain header values are masked with a marker; the URL and names stay readable", () => {
+    const config = redactConfig([httpNode([{ name: "X-Team", value: "growth" }])]);
+
+    expect(config.url).toBe("https://api.example.com/hook");
+    const [header] = config.headers as { name: string; value: string }[];
+    expect(header.name).toBe("X-Team");
+    expect(header.value).toMatch(MARKER);
+  });
+});

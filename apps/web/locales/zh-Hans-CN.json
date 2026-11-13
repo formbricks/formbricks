@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "无法启用工作流:其触发调查已受限。请先将该调查设为对其工作区可见。",
       "enable_success": "工作流已启用。",
       "expand_inspector": "展开检查器",
+      "http_request": "HTTP 请求",
       "if_else": "条件分支",
       "if_else_operator_contains": "{variable} 包含 {value}",
       "if_else_operator_equals": "{variable} 等于 {value}",

@@ -774,7 +774,9 @@ describe("workflowValidityAtom", () => {
         ? {
             ...current,
             nodes: current.nodes.map((node) =>
-              node.type === "action" ? { ...node, config: { ...node.config, to: "" } } : node
+              node.type === "action" && node.actionType === "send_email"
+                ? { ...node, config: { ...node.config, to: "" } }
+                : node
             ),
           }
         : current

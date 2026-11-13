@@ -1,0 +1,68 @@
+type: object
+description: >-
+  The outcome of one Test request. When an answer came, it is also saved as the step's sample
+  (status, content type and up to 64 KB of body), which the editor offers as that step's Variables.
+required:
+  - request
+  - response
+  - error
+properties:
+  request:
+    type: object
+    description: The request that was sent, with secret header values shown as `••••••`.
+    required:
+      - method
+      - url
+      - headers
+    properties:
+      method:
+        type: string
+        enum:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+      url:
+        type: string
+      headers:
+        type: array
+        items:
+          type: object
+          required:
+            - name
+            - value
+          properties:
+            name:
+              type: string
+            value:
+              type: string
+      body:
+        type: string
+      bodyTruncated:
+        type: boolean
+  response:
+    type:
+      - object
+      - "null"
+    description: Null when no answer came (timeout, network error, refused address).
+    required:
+      - status
+      - contentType
+      - body
+    properties:
+      status:
+        type: integer
+      contentType:
+        type:
+          - string
+          - "null"
+      body:
+        description: Parsed JSON when the response is JSON and fits in 64 KB, else up to 64 KB of text.
+      bodyTruncated:
+        type: boolean
+  error:
+    type:
+      - string
+      - "null"
+    description: Why the call got no answer, or null.

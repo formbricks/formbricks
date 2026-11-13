@@ -142,7 +142,7 @@ export const getWorkflowValidationProblemFocusTarget = (
   if (nodeIndex !== null) {
     const node = definition.nodes[nodeIndex];
     // Covers an out-of-range index too: `undefined?.type` is undefined, which is not "action".
-    if (node?.type !== "action") return null;
+    if (node?.type !== "action" || node.actionType !== "send_email") return null;
     const [firstBlankField] = getBlankSendEmailContentFields(node.config);
     return firstBlankField ? { nodeId: node.id, field: firstBlankField } : null;
   }

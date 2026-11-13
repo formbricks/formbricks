@@ -6,6 +6,7 @@ import type {
   TWorkflowRunResource,
   TWorkflowRunSummary,
 } from "../contracts";
+import { maskWorkflowSecretHeaders } from "../secrets/headers";
 import type {
   WorkflowRowWithLastRun,
   WorkflowRunListRow,
@@ -93,7 +94,8 @@ export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListIt
   };
 };
 
+/** Secret headers read as `{name, secret: true, isSet}`: never a value or a stored secret id. */
 export const toWorkflowResource = (row: WorkflowRowWithLastRun): TWorkflowResource => ({
   ...toWorkflowListItem(row),
-  definition: row.definition,
+  definition: maskWorkflowSecretHeaders(row.definition),
 });

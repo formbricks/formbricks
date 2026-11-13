@@ -1,18 +1,22 @@
 import { mockCaptureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/__mocks__/run-failure";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { reconcileStuckRunningWorkflowRuns } from "./reconcile-stuck-running-runs";
+import {
+  failStuckSendingHttpRequests,
+  reconcileStuckRunningWorkflowRuns,
+} from "./reconcile-stuck-running-runs";
 
-const { runFindMany, runUpdateMany, logUpdateMany } = vi.hoisted(() => ({
+const { runFindMany, runUpdateMany, logUpdateMany, logFindMany } = vi.hoisted(() => ({
   runFindMany: vi.fn(),
   runUpdateMany: vi.fn(),
   logUpdateMany: vi.fn(),
+  logFindMany: vi.fn(),
 }));
 const { warn, error } = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn() }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workflowRun: { findMany: runFindMany, updateMany: runUpdateMany },
-    workflowRunLog: { updateMany: logUpdateMany },
+    workflowRunLog: { updateMany: logUpdateMany, findMany: logFindMany },
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn, error } }));
@@ -135,5 +139,48 @@ describe("reconcileStuckRunningWorkflowRuns", () => {
     expect(runUpdateMany).not.toHaveBeenCalled();
     expect(logUpdateMany).not.toHaveBeenCalled();
     expect(result).toEqual({ scanned: 0, recovered: 0, stepsSkipped: 0 });
+  });
+});
+
+describe("failStuckSendingHttpRequests", () => {
+  const sendingRow = (id: string) => ({
+    id,
+    runId: `run_${id}`,
+    stepId: "call",
+    output: { mode: "dont_wait", delivery: "sending", request: { method: "POST", url: "https://x.example" } },
+  });
+
+  test("finds Don't wait HTTP requests still sending after an hour, oldest first and bounded", async () => {
+    logFindMany.mockResolvedValue([]);
+
+    await failStuckSendingHttpRequests({ now: NOW });
+
+    const args = logFindMany.mock.calls[0][0];
+    expect(args.where).toMatchObject({
+      status: "running",
+      stepType: "http_request",
+      output: { path: ["delivery"], equals: "sending" },
+    });
+    expect(args.where.startedAt.lt).toEqual(new Date(NOW.getTime() - 60 * 60 * 1000));
+    expect(args.orderBy).toEqual({ startedAt: "asc" });
+    expect(args.take).toBe(250);
+  });
+
+  test("marks each one failed, keeping what it recorded and guarded on still running", async () => {
+    logFindMany.mockResolvedValue([sendingRow("log1")]);
+    logUpdateMany.mockResolvedValue({ count: 1 });
+
+    const result = await failStuckSendingHttpRequests({ now: NOW });
+
+    expect(logUpdateMany).toHaveBeenCalledWith({
+      where: { id: "log1", status: "running" },
+      data: {
+        status: "failed",
+        error: expect.stringMatching(/hour/),
+        finishedAt: NOW,
+        output: { ...sendingRow("log1").output, delivery: "failed" },
+      },
+    });
+    expect(result).toEqual({ scanned: 1, failed: 1 });
   });
 });

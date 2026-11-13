@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "İş akışı etkinleştirilemedi: tetikleyici anketi kısıtlanmış. Önce anketi çalışma alanına görünür yap.",
       "enable_success": "İş akışı etkinleştirildi.",
       "expand_inspector": "Denetçiyi genişlet",
+      "http_request": "HTTP isteği",
       "if_else": "Eğer / Değilse",
       "if_else_operator_contains": "{variable}, {value} içeriyor",
       "if_else_operator_equals": "{variable}, {value} değerine eşit",

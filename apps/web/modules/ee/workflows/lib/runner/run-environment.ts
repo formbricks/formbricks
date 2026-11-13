@@ -5,6 +5,7 @@ import {
   type TWorkflowExecutableDefinition,
   type TWorkflowRunContext,
   type TWorkflowTriggerRunPayload,
+  collectWorkflowSecretIds,
   isLiteralEmailRecipient,
 } from "@formbricks/workflows";
 import type { SurveyLinkSurveyCheck } from "@formbricks/workflows/server";
@@ -14,6 +15,7 @@ import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { isSurveyOutboundAllowed } from "@/lib/survey/visibility/outbound";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
+import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
 import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
 import { getWorkflowSurveyLinkSurveys } from "../survey-link-surveys";
@@ -50,6 +52,12 @@ export interface WorkflowRunEnvironment {
    * otherwise, which fails closed.
    */
   allowedRecipientEmails: Set<string>;
+  /**
+   * Plaintext secret header values by secret id, for this run's HTTP request steps (ENG-7179). Loaded
+   * only when a step has a secret header; scoped to this workflow, so another workflow's id resolves to
+   * nothing.
+   */
+  secretValues: ReadonlyMap<string, string>;
   /** The organization and workflow owner the run's emails are rate-limited by (ENG-3823). */
   rateLimit: { organizationId?: string; actorUserId: string | null };
   /** Where survey links point: `<public domain>/s/<surveyId>`. */
@@ -163,10 +171,11 @@ export const loadWorkflowRunEnvironment = async ({
   definition: TWorkflowExecutableDefinition;
   actorUserId: string | null;
 }): Promise<WorkflowRunEnvironment> => {
-  const [surveyResponse, organization, surveyLinkSurveys] = await Promise.all([
+  const [surveyResponse, organization, surveyLinkSurveys, secretValues] = await Promise.all([
     loadTriggerSurveyResponse(trigger, workspaceId),
     getOrganizationByWorkspaceId(workspaceId),
     loadSurveyLinkSurveys(definition, workspaceId),
+    loadWorkflowSecretValues({ workflowId, workspaceId, secretIds: collectWorkflowSecretIds(definition) }),
   ]);
 
   const [allowedRecipientEmails, rateLimitActorUserId] = await Promise.all([
@@ -183,6 +192,7 @@ export const loadWorkflowRunEnvironment = async ({
     ...(trigger.type === "webhook" ? { payload: trigger.payload } : {}),
     logoUrl: organization?.whitelabel?.logoUrl ?? "",
     allowedRecipientEmails,
+    secretValues,
     rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },
     publicDomain: getPublicDomain(),
     surveyLinkSurveys,

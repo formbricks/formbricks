@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Kunde inte aktivera arbetsflödet: dess utlösande undersökning är begränsad. Gör undersökningen synlig för dess arbetsyta först.",
       "enable_success": "Arbetsflöde aktiverat.",
       "expand_inspector": "Visa inspektör",
+      "http_request": "HTTP-begäran",
       "if_else": "Om / Annars",
       "if_else_operator_contains": "{variable} innehåller {value}",
       "if_else_operator_equals": "{variable} är {value}",

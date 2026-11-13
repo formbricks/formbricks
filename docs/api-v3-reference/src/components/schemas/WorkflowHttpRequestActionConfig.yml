@@ -1,0 +1,84 @@
+type: object
+description: >-
+  HTTP request action. The URL is fixed: it takes no Variables, and saving refuses one in it, so a
+  payload can change what is sent but never where it goes. Variables (`#recall:<path>/fallback:<text>#`)
+  go in query parameter values (URL-encoded), header values (line breaks removed) and the JSON body
+  (a string that is exactly one Variable keeps the Variable's type).
+
+
+  Sending: HTTPS only, unless a self-hosted instance sets `DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP=1`;
+  private and internal addresses only with `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1` (both ignored
+  on Formbricks Cloud). Redirects are not followed: a 3xx is the response. 10 s timeout, at most 1 MB
+  of response read; timeouts, network errors, 429 and 5xx are retried 3 times with backoff. A 4xx or
+  5xx answer, or none, fails the step and the run unless `continueOnError` is true.
+
+
+  Limits on save: at most 30 headers, a URL of at most 2 KB and a body template of at most 100 KB.
+  Enabling needs an absolute http(s) URL, a body only for POST, PUT and PATCH (valid JSON), and a
+  stored value for every secret header (**422** `workflow_not_executable` otherwise).
+required:
+  - method
+  - url
+properties:
+  method:
+    type: string
+    enum:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+  url:
+    type: string
+    maxLength: 2048
+    description: Fixed URL. May be empty in a draft. Never contains a Variable.
+  queryParameters:
+    type: array
+    default: []
+    maxItems: 30
+    items:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        value:
+          type: string
+          maxLength: 2048
+          description: May use Variables; URL-encoded when sent.
+      additionalProperties: false
+    description: Appended to the URL's own query string.
+  headers:
+    type: array
+    default: []
+    maxItems: 30
+    items:
+      $ref: ./WorkflowHttpHeader.yml
+    description: >-
+      Header names are unique (case-insensitive). `Host`, `Content-Length`, `Transfer-Encoding`,
+      `Connection`, `Keep-Alive`, `Upgrade`, `TE`, `Trailer` and `Expect` are set by Formbricks and
+      refused. `Content-Type: application/json` is added when a body is sent and none is set.
+  body:
+    type:
+      - string
+      - "null"
+    description: JSON body template for POST, PUT and PATCH, at most 100 KB.
+  responseMode:
+    type: string
+    enum:
+      - wait
+      - dont_wait
+    default: wait
+    description: >-
+      `wait` ("Wait and use it"): later steps can read the response. `dont_wait` ("Don't wait"):
+      the call is sent in the background with the same retries and the run moves on; its outcome
+      shows on the step and never fails the run. A call still sending after an hour is marked failed.
+  continueOnError:
+    type: boolean
+    default: false
+    description: When true, a failed call does not fail the run; later steps read its status.
+additionalProperties: false

@@ -30,6 +30,11 @@ import type {
   TWorkflowTestResult,
 } from "./resources";
 import {
+  ZSendWorkflowTestRequestInput,
+  ZWorkflowTestRequestParams,
+  ZWorkflowTestRequestResult,
+} from "./test-request";
+import {
   ZSetWorkflowSampleInput,
   ZWorkflowSampleResource,
   ZWorkflowWebhookCallParams,
@@ -129,6 +134,11 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowWebhookCallParams,
     input: ZWorkflowWebhookPayloadInput,
     output: ZWorkflowWebhookCallResult,
+  },
+  sendWorkflowTestRequestV3: {
+    params: ZWorkflowTestRequestParams,
+    input: ZSendWorkflowTestRequestInput,
+    output: ZWorkflowTestRequestResult,
   },
 } as const satisfies Record<
   string,

@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "無法啟用工作流程:其觸發問卷已受限。請先將問卷設為工作區可見。",
       "enable_success": "工作流程已啟用。",
       "expand_inspector": "展開檢查器",
+      "http_request": "HTTP 請求",
       "if_else": "如果 / 否則",
       "if_else_operator_contains": "{variable} 包含 {value}",
       "if_else_operator_equals": "{variable} 等於 {value}",

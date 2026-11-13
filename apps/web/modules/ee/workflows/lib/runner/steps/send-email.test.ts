@@ -58,6 +58,7 @@ const environment = (overrides: Partial<WorkflowRunEnvironment> = {}): WorkflowR
   surveyResponse: null,
   logoUrl: "",
   allowedRecipientEmails: new Set(["team@example.com"]),
+  secretValues: new Map(),
   rateLimit: { organizationId: "org_1", actorUserId: "creator-1" },
   publicDomain: "https://surveys.example.com",
   surveyLinkSurveys: new Map([
@@ -67,7 +68,11 @@ const environment = (overrides: Partial<WorkflowRunEnvironment> = {}): WorkflowR
 });
 
 const sendEmail = vi.fn<WorkflowRunEffects["sendEmail"]>();
-const effects: WorkflowRunEffects = { sendEmail };
+const effects: WorkflowRunEffects = {
+  sendEmail,
+  sendHttpRequest: vi.fn(),
+  enqueueHttpRequestDelivery: vi.fn(),
+};
 
 const run = (
   stepNode: TWorkflowSendEmailActionNode,

@@ -28,6 +28,13 @@ import {
 } from "../errors";
 import { isLiteralEmailRecipient } from "../recipients";
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
+import {
+  applyWorkflowSecretHeaderWrites,
+  collectWorkflowSecretIds,
+  dropWorkflowSecretIds,
+  hasWorkflowSecretHeaderValues,
+  withoutWorkflowSecretHeaderValues,
+} from "../secrets/headers";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
 import {
@@ -37,6 +44,7 @@ import {
 } from "../types/document";
 import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type {
+  TWorkflowSecretHeaderChange,
   TriggerSurveyCheck,
   WorkflowAnalyticsDetail,
   WorkflowAnalyticsOperation,
@@ -55,6 +63,48 @@ import { type WebhookHandlers, createWebhookHandlers } from "./webhook.handlers"
 
 const ZWorkflowListPage = zWorkflowListPage(ZWorkflowListItem);
 const ZWorkflowRunListPage = zCursorPage(ZWorkflowRunListItem);
+
+/** Refuses up front a write whose secret values could only be kept by storing them in the definition. */
+const assertSecretStoreFor = (ctx: WorkflowApiContext, definition: TWorkflowDefinition): void => {
+  if (!ctx.secrets && hasWorkflowSecretHeaderValues(definition)) {
+    throw new Error("Secret header values can't be stored: no secret store is configured");
+  }
+};
+
+/** "Secret set" / "secret replaced" audit events, header names only; never fails the write. */
+const recordSecretHeaderChangesSafely = async (
+  ctx: WorkflowApiContext,
+  scope: { workflowId: string; workspaceId: string },
+  changes: TWorkflowSecretHeaderChange[]
+): Promise<void> => {
+  if (changes.length === 0 || !ctx.recordSecretHeaderChanges) return;
+  try {
+    await ctx.recordSecretHeaderChanges({ ...scope, changes });
+  } catch (error) {
+    ctx.logger.error({ error, workflowId: scope.workflowId }, "Failed to record workflow secret audit");
+  }
+};
+
+/**
+ * After Enable, deletes the workflow's secret rows that nothing references any more. Best effort: a
+ * left-over row is harmless (unreachable and encrypted), so a failure here never fails the Enable.
+ */
+const deleteUnreferencedSecretsSafely = async (
+  ctx: WorkflowApiContext,
+  row: WorkflowRowWithLastRun,
+  definition: TWorkflowExecutableDefinition
+): Promise<void> => {
+  if (!ctx.secrets) return;
+  try {
+    await ctx.secrets.deleteUnreferenced({
+      workflowId: row.id,
+      workspaceId: row.workspaceId,
+      referencedSecretIds: collectWorkflowSecretIds(definition),
+    });
+  } catch (error) {
+    ctx.logger.warn({ error, workflowId: row.id }, "Failed to delete unreferenced workflow secrets");
+  }
+};
 
 /** Same contract as `recordAuditSafely`, for the product-analytics sink. */
 const recordAnalyticsSafely = async (
@@ -96,9 +146,7 @@ const toAnalyticsDetail = (
 const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition): string[] => {
   const emails = new Set<string>();
   for (const node of definition.nodes) {
-    // `send_email` is the only action type today, so `type === "action"` already narrows to its
-    // config (which carries `to`); revisit this guard if another action type is added.
-    if (node.type === "action") {
+    if (node.type === "action" && node.actionType === "send_email") {
       const { to } = node.config;
       if (typeof to === "string" && isLiteralEmailRecipient(to)) {
         emails.add(to);
@@ -303,11 +351,30 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const authorized = await ctx.authorize(input.workspaceId, "readWrite");
       if (authorized instanceof Response) return authorized;
       await assertTriggerSurveyAttachable(ctx, authorized.workspaceId, input.definition);
+      assertSecretStoreFor(ctx, input.definition);
 
-      const created = await service.createWorkflow(
-        { ...input, workspaceId: authorized.workspaceId },
+      // A secret value needs the workflow's id to be stored, so the workflow is created without its
+      // secret values first, then pointed at the stored rows. If that second write fails, the copy
+      // that exists just has unset secret headers, which block Enable.
+      let created = await service.createWorkflow(
+        {
+          ...input,
+          workspaceId: authorized.workspaceId,
+          definition: withoutWorkflowSecretHeaderValues(input.definition),
+        },
         { createdBy: ctx.userId }
       );
+      if (hasWorkflowSecretHeaderValues(input.definition)) {
+        const scope = { workflowId: created.id, workspaceId: created.workspaceId };
+        const secrets = await applyWorkflowSecretHeaderWrites({
+          definition: input.definition,
+          stored: null,
+          store: ctx.secrets,
+          ...scope,
+        });
+        created = await service.updateWorkflow(scope, { definition: secrets.definition });
+        await recordSecretHeaderChangesSafely(ctx, scope, secrets.changes);
+      }
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
 
@@ -352,17 +419,29 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       }
       if (input.definition !== undefined) {
         await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, input.definition, loaded.definition);
+        assertSecretStoreFor(ctx, input.definition);
       }
 
+      const scope = { workflowId: params.workflowId, workspaceId: loaded.workspaceId };
+      const secrets =
+        input.definition === undefined
+          ? null
+          : await applyWorkflowSecretHeaderWrites({
+              definition: input.definition,
+              stored: loaded.definition,
+              store: ctx.secrets,
+              ...scope,
+            });
       // The Secret URL token is created on the first save of a Webhook trigger and kept afterwards,
       // even if the trigger changes, so switching back keeps the same URL.
       const issueWebhookToken =
         input.definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK && !loaded.webhookTokenHash;
-
-      const updated = await service.updateWorkflow(
-        { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
-        { ...input, issueWebhookToken }
-      );
+      const updated = await service.updateWorkflow(scope, {
+        ...input,
+        ...(secrets ? { definition: secrets.definition } : {}),
+        issueWebhookToken,
+      });
+      if (secrets) await recordSecretHeaderChangesSafely(ctx, scope, secrets.changes);
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
@@ -385,7 +464,12 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const input = ZDuplicateWorkflowInput.parse(await readJsonBody(req, { allowEmpty: true }));
       // The copy is a new binding of the same survey, so it is refused like a new workflow would be.
       await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, loaded.definition);
-      const created = await service.duplicateWorkflow(loaded, { name: input.name, createdBy: ctx.userId });
+      // The copy keeps its secret headers' names but not their values (ADR 0043): sharing the rows
+      // would let a Replace on the copy change the original's secret.
+      const created = await service.duplicateWorkflow(
+        { ...loaded, definition: dropWorkflowSecretIds(loaded.definition) },
+        { name: input.name, createdBy: ctx.userId }
+      );
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
 
@@ -552,6 +636,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
         { definition: executable.data, publishedBy: ctx.userId }
       );
+      await deleteUnreferencedSecretsSafely(ctx, updated, executable.data);
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,

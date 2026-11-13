@@ -9,6 +9,7 @@ import {
   type TRecurringJobKey,
   type TResponsePipelineJobData,
   type TWebhookDeliveryJobData,
+  type TWorkflowHttpRequestDeliveryJobData,
   type TWorkflowRunJobData,
   recurringJobs,
 } from "@formbricks/jobs";
@@ -35,6 +36,7 @@ import {
   WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
 } from "@/modules/ee/workflows/lib/analytics/constants";
 import { processWorkflowsUsageSnapshotJob } from "@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-job";
+import { processWorkflowHttpRequestDeliveryJob } from "@/modules/ee/workflows/lib/runner/deliver-http-request-job";
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
 import { WORKFLOW_RUN_RECONCILE_INTERVAL_MS } from "@/modules/ee/workflows/lib/runner/reconcile-constants";
@@ -230,6 +232,9 @@ export const getJobHandlerOverrides = (): JobHandlerOverrides => ({
   [ONE_SHOT_JOB_NAMES.webhookDelivery]:
     toJobHandlerOverride<TWebhookDeliveryJobData>(processWebhookDeliveryJob),
   [ONE_SHOT_JOB_NAMES.workflowRun]: toJobHandlerOverride<TWorkflowRunJobData>(processWorkflowRunJob),
+  [ONE_SHOT_JOB_NAMES.workflowHttpRequestDelivery]: toJobHandlerOverride<TWorkflowHttpRequestDeliveryJobData>(
+    processWorkflowHttpRequestDeliveryJob
+  ),
   ...Object.fromEntries(
     RECURRING_JOB_REGISTRATIONS.map((registration) => [
       registration.job.name,

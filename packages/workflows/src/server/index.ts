@@ -23,6 +23,8 @@ export type {
   WorkflowAnalyticsDetail,
   WorkflowAnalyticsOperation,
   WorkflowAuditDetail,
+  WorkflowSecretStore,
+  TWorkflowSecretHeaderChange,
   SurveyLinkSurveyCheck,
 } from "../handlers/context";
 

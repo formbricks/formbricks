@@ -113,7 +113,7 @@ Supported scopes:
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
 | `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
-| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and the Webhook trigger tools `get_webhook_url`, `regenerate_webhook_url`, `set_sample_payload` |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and the Webhook trigger tools `get_webhook_url`, `regenerate_webhook_url`, `set_sample_payload`, and `send_test_request` |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
@@ -256,6 +256,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `get_webhook_url` | `write` or `manage` — the Webhook Secret URL is a credential, so reading it needs write access |
 | `regenerate_webhook_url` | `write` or `manage` |
 | `set_sample_payload` | `write` or `manage` |
+| `send_test_request` | `write` or `manage` |
 | `list_feedback_datasets` | `read` |
 | `list_feedback_records` | `read` |
 | `count_feedback_records` | `read` |
@@ -1472,6 +1473,17 @@ agent's context. The tools return nothing beyond the one workflow the caller can
 permit nothing beyond what the caller's `workflows:write` scope and v3 authorization already allow, so
 hostile text in a payload cannot cross a workspace or user boundary.
 
+- `send_test_request` — `{ "workflowId", "stepId", "config"?, "variables"? }`. Makes one real call of an
+  HTTP request step (saved settings, or the draft `config`) and returns the request, with secret header
+  values masked, and the response. Not a run. Saves the response as the step's sample. Shares the
+  30-per-minute budget of `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` and is
+  audited as `testRequestSent` (host and status).
+
+Injection assessment for `send_test_request`: the response body comes from an outside server and reaches
+the agent's context as untrusted text; the tool description says so. A hostile body cannot widen what
+the tool does: the URL is fixed by the step (ADR 0042), secrets go only to that URL and come back
+masked, and the call needs `workflows:write` on that workflow.
+
 ### Response tools
 
 Eight tools, one per documented v3 response operation. The set mirrors the API deliberately: what an
@@ -2076,6 +2088,7 @@ framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
 | `get_webhook_url` | `GET /api/v3/workflows/{workflowId}/webhook` |
 | `regenerate_webhook_url` | `POST /api/v3/workflows/{workflowId}/webhook/regenerate` |
 | `set_sample_payload` | `PUT /api/v3/workflows/{workflowId}/sample` |
+| `send_test_request` | `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` |
 
 ## Relationship to V3 Creatives API
 

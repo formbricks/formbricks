@@ -68,6 +68,7 @@ export const JOB_NAMES = {
   workflowsUsageSnapshot: "workflows-usage.snapshot",
   workflowRun: "workflow-run.process",
   workflowRunReconcile: "workflow-run.reconcile",
+  workflowHttpRequestDelivery: "workflow-http-request.deliver",
 } as const;
 
 /**

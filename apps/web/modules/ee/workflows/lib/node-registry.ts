@@ -88,10 +88,24 @@ const webhookTriggerEntry: TWorkflowNodeRegistryEntry = {
   ConfigForm: null,
 };
 
+// Minimal entry so an HTTP request step renders; its panel is ENG-7182's.
+const httpRequestActionEntry: TWorkflowNodeRegistryEntry = {
+  kind: `action:${WORKFLOW_ACTIONS.HTTP_REQUEST}`,
+  category: "action",
+  icon: "trigger",
+  title: (node, t) => node.label ?? t("workspace.workflows.http_request"),
+  summary: (node) =>
+    node.type === "action" && node.actionType === WORKFLOW_ACTIONS.HTTP_REQUEST
+      ? `${node.config.method} ${node.config.url}`.trim()
+      : "",
+  ConfigForm: null,
+};
+
 const REGISTRY: Record<TWorkflowNodeRegistryKind, TWorkflowNodeRegistryEntry> = {
   "trigger:response.completed": responseCompletedTriggerEntry,
   "trigger:webhook": webhookTriggerEntry,
   "action:send_email": sendEmailActionEntry,
+  "action:http_request": httpRequestActionEntry,
   if_else: ifElseEntry,
 };
 
