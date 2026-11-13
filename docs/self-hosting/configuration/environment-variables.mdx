@@ -46,13 +46,14 @@ For the `AI_*` variables, see [AI Features](/self-hosting/configuration/ai-featu
 | PASSWORD_RESET_TOKEN_LIFETIME_MINUTES   | Configures how long password reset links remain valid in minutes. Accepted values are integers from 5 to 120.                                                                                   | optional                                                                                 | 30                                                                        |
 | EMAIL_VERIFICATION_DISABLED             | Disables email verification if set to 1.                                                                                                                                                        | optional                                                                                 |                                                                           |
 | RATE_LIMITING_DISABLED                  | Disables only the application-level rate limiter if set to 1. It does not disable Envoy or an equivalent edge rate limiter.                                                                   | optional                                                                                 |                                                                           |
+| TRUSTED_PROXY_HOP_COUNT | Number of trusted reverse proxies (CDN, load balancer, ingress, Envoy) that append to `X-Forwarded-For` before a request reaches Formbricks. Formbricks reads the client IP from that position, for IP-based rate limits, audit logs and the caller IP of a workflow's Webhook trigger. `0` trusts no forwarding header. See [Configure trusted proxy hops](/self-hosting/advanced/enterprise-features/audit-logging#configure-trusted-proxy-hops). | optional | 1 |
 | INVITE_RATE_LIMIT_PER_24_HOURS          | Maximum invite recipients one organization, and separately one inviting user across all of their organizations, may target across single, bulk, onboarding, and resend flows within 24 hours.                                                                     | optional                                                                                 | 50                                                                        |
 | EMAIL_RATE_LIMIT_MULTIPLIER             | Multiplies the per-organization, per-sender and per-deployment email caps listed in [Email Limits](/self-hosting/configuration/rate-limiting#email-limits). Any number above 0, up to 100; per-recipient caps are not affected. | optional                                                                                 | 1                                                                         |
 | ENTERPRISE_LICENSE_KEY                  | License key for the Formbricks Enterprise Edition. Unlocks Enterprise-only features; the instance validates it against the Formbricks license server, so it needs outbound network access (or `HTTP_PROXY`/`HTTPS_PROXY`). See [License Activation](/self-hosting/advanced/license-activation). | optional (required for Enterprise Edition features)                                      |                                                                           |
 | TELEMETRY_DISABLED                      | Disables telemetry reporting if set to 1. Ignored when an Enterprise License is active.                                                                                                         | optional                                                                                 |                                                                           |
 | DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS | Allows webhook URLs to point to internal/private network addresses (e.g. localhost, 192.168.x.x) if set to 1. Useful for self-hosted instances that need to send webhooks (and workflow HTTP requests) to internal services. Ignored on Formbricks Cloud. | optional                                                                                 |                                                                           |
-| DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP | Accepts plain HTTP calls to a workflow's Webhook Secret URL if set to 1, and lets workflow HTTP request steps call plain-HTTP URLs. HTTPS is required otherwise, read from `X-Forwarded-Proto`; `localhost` always works. Only for fully private networks or proxies that do not forward `X-Forwarded-Proto`: the Secret URL is a credential. Ignored on Formbricks Cloud. | optional | |
-| WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT | Runs one workflow's Webhook Secret URL may start per day. Calls over it answer 429. | optional | 10000 |
+| DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP | Accepts plain HTTP calls to a workflow's Webhook Secret URL if set to 1, and lets workflow HTTP request steps (and their test requests) call plain-HTTP URLs. HTTPS is required otherwise; for the Secret URL it is read from `X-Forwarded-Proto`, and calls to `localhost` always work. An HTTP request step calling `localhost` or another internal address also needs `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS`. Only for fully private networks or proxies that do not forward `X-Forwarded-Proto`: the Secret URL is a credential. See [Workflow Webhook trigger behind a reverse proxy](#workflow-webhook-trigger-behind-a-reverse-proxy). Ignored on Formbricks Cloud. | optional | |
+| WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT | Runs one workflow's Webhook Secret URL may start per day (UTC). Only calls that start a run count; calls over the limit answer 429. | optional | 10000 |
 | WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE | Webhook Secret URL calls per minute across all of one organization's workflows. Calls over it answer 429; each workflow is also limited to 100 calls per minute. | optional | 300 |
 | WEBHOOK_DELIVERY_TIMEOUT_MS             | Milliseconds a webhook delivery (and the "test endpoint" button) waits for the receiver to respond before failing the attempt. Between 1000 and 30000. A longer timeout holds a Job Runner slot longer. | optional                                                                                 | 5000                                                                      |
 | INVITE_DISABLED                         | Disables the ability for invited users to create an account if set to 1.                                                                                                                        | optional                                                                                 |                                                                           |
@@ -291,6 +292,27 @@ answer filters on large datasets: the shipped `postgres` service sets `shm_size:
 For Helm deployments, the chart deploys Cube by default (`cube.enabled: true`). To use an external Cube
 cluster instead, set `cube.enabled: false`, point `CUBEJS_API_URL` at your endpoint, and supply
 `CUBEJS_API_SECRET` through your existing secret management setup.
+
+#### Workflow Webhook trigger behind a reverse proxy
+
+A workflow's [Webhook Secret URL](/workflows/webhook-trigger) is served on `WEBAPP_URL`, not `PUBLIC_URL`, at
+`/api/v3/workflows/<workflowId>/webhook/<token>`. If your admin domain is private, the outside systems that call
+the URL must still be able to reach that path.
+
+Configure the proxy in front of Formbricks to:
+
+- **Set `X-Forwarded-Proto`.** Formbricks refuses Secret URL calls that didn't use HTTPS and reads the scheme from
+  the first value of `X-Forwarded-Proto`. A proxy that ends TLS and doesn't send the header makes every call
+  answer `403`. Set the header to the scheme the client used, replacing any value the client sent. Only if your
+  proxy can't do this, and the network is fully private, set `DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP=1`.
+- **Append the client IP to `X-Forwarded-For`,** and set `TRUSTED_PROXY_HOP_COUNT` to the number of proxies that
+  append to it. Formbricks records the caller's IP for each Webhook call and shows it in the trigger and in run
+  detail. When it can't trust the header, no IP is recorded. The Webhook rate limits count calls per workflow and
+  per organization, not per IP, so this setting doesn't change them.
+- **Keep the token out of access logs.** The token in the path is a credential. Formbricks redacts it from its own
+  logs and error reports, but your proxy, load balancer or CDN may log full request paths. Redact the last path
+  segment of `/api/v3/workflows/*/webhook/*`, or don't log those paths.
+- **Accept request bodies of at least 100 KB,** the largest payload a Secret URL accepts.
 
 {/* prettier-ignore-end */}
 

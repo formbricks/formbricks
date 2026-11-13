@@ -1,0 +1,39 @@
+---
+title: "Webhooks vs workflows"
+description: "When to use the Webhooks integration, a workflow's Webhook trigger, or its HTTP request action."
+icon: "scale-balanced"
+---
+
+Formbricks has three features with "webhook" or "HTTP" in their name. They move data in different directions:
+
+- The [Webhooks integration](/platform/features/integrations/webhooks) **sends** every response event of the
+  selected surveys to your endpoint.
+- A workflow's [Webhook trigger](/workflows/webhook-trigger) **receives** calls from another system and starts a
+  run.
+- A workflow's [HTTP request](/workflows/http-request) action **sends** a request you design to an API, as one step
+  of a run.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+## Compare them
+
+|                          | Webhooks integration                                     | Workflow with a Webhook trigger                                 | Workflow with an HTTP request                                         |
+| ------------------------ | -------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Direction**            | Formbricks → your endpoint                               | Another system → Formbricks                                     | Formbricks → an API                                                   |
+| **Starts on**            | A response is created, updated or finished               | A `POST` to the Webhook Secret URL                              | The run reaching the step, after any trigger                          |
+| **What is sent**         | The response, in a fixed Formbricks format               | Any JSON object the caller chooses                              | The method, headers and JSON body you write, with Variables           |
+| **Conditions**           | Survey and event type only                               | Any [If/else](/workflows/if-else) on the payload                | Any If/else before the step                                           |
+| **Authentication**       | Formbricks signs each request (Standard Webhooks)        | The secret token in the URL                                     | Your secret headers, such as `Authorization`                          |
+| **Retries**              | Up to 5 attempts over a few minutes                      | The caller's job; use `Idempotency-Key` to resend safely        | Up to 3 retries within about 50 seconds                               |
+| **Uses the answer**      | No                                                       | Not applicable                                                  | Yes, with **Wait and use it**                                         |
+
+## Which one to use
+
+- **Copy every response into another system** with no changes: use the Webhooks integration. It needs no
+  workflow, and its signature lets your endpoint verify that a request came from Formbricks.
+- **Send a survey when something happens elsewhere**, such as a closed ticket or a delivered order: use a workflow
+  with a Webhook trigger and a [Send email](/workflows/email-payload-address) action.
+- **Call an API with its own format**, only for some responses or events, or use what it answers in a later
+  step: use a workflow with an HTTP request.
+
+You can combine them: a Webhook trigger can start a workflow whose HTTP request updates the system that called it.

@@ -1,0 +1,89 @@
+---
+title: "Email an address from the payload"
+description: "Send an email to an address the Webhook payload carries, with a survey link that records where the answer came from."
+icon: "envelope"
+---
+
+A workflow with a [Webhook trigger](/workflows/webhook-trigger) can send its **Send email** action to an address
+from the payload, such as the customer in a closed support ticket. Add a link to a survey with Embedded Data, and
+each answer is tied to the event that sent the email.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+{/* SCREENSHOT PLACEHOLDER: email-payload-address.webp. The Send email panel with Send to set to the Variable
+payload.customer.email, a fixed subject and body, and a survey link chip with two Embedded Data rows
+(customer_id and channel). Save to /images/platform/workflows/email-payload-address.webp and replace this
+comment with a <Frame>. */}
+
+## Example
+
+A helpdesk calls the Webhook Secret URL when a ticket is closed:
+
+```json
+{ "customer": { "email": "dana@example.com", "id": "CUST-48213" }, "channel": "phone" }
+```
+
+The workflow emails `dana@example.com` a link like
+`https://surveys.example.com/s/<surveyId>?customer_id=CUST-48213&channel=phone`. When Dana answers, the response
+stores `customer_id` and `channel` as Embedded Data.
+
+## Set up the email
+
+<Steps>
+  <Step title="Pick the recipient">
+    In **Send to**, type `@` and pick the payload Variable that holds the address, such as
+    `payload.customer.email`.
+  </Step>
+
+  <Step title="Write a fixed subject and body">
+    Write the subject and body as plain text. With a recipient from a Variable, neither can insert Variables or
+    survey answers, and response data can't be attached. See [Why the message is fixed](#why-the-message-is-fixed).
+  </Step>
+
+  <Step title="Insert the survey link">
+    Select **Insert survey link**, choose a link survey in the same workspace, and place the link in the body.
+  </Step>
+
+  <Step title="Add Embedded Data">
+    Add a row for each value the response should store. The key must be a
+    [passed-in Embedded Data field](/surveys/embedded-data/overview#declaring-a-field) of that survey. The value can
+    be text, a Variable, or both, such as `@payload.customer.id`.
+  </Step>
+</Steps>
+
+### Why the message is fixed
+
+Whoever calls the Webhook Secret URL chooses the recipient. If they could also choose the text, a leaked URL would
+let anyone send any message, links included, from your sender address. So when the recipient comes from a
+Variable, the payload decides who gets the email but never what it says. Only the survey link's Embedded Data can
+use Variables, and their values are URL-encoded into the link.
+
+Enabling the workflow fails while the subject or body inserts a Variable or a survey answer, or while **Attach
+response data** is on.
+
+### Survey link rules
+
+- **A link survey in the same workspace.** Enabling fails for any other survey. The survey's status isn't checked,
+  so make sure it is published and open while the workflow sends emails.
+- **Only declared keys.** A key the survey doesn't declare as a passed-in Embedded Data field is left off the link.
+  So are the keys a link survey reads for itself, such as `lang` and `userId`, so a payload can't change how the
+  survey behaves.
+- **Keys are matched without case,** so the same key can't be used twice with different spelling.
+- **Up to 30 Embedded Data rows,** each value at most 2 KB.
+
+## Sending limits
+
+An address from a Variable isn't checked against your workspace members, so it has its own limits:
+
+- **50 emails per hour per workflow.** This limit doesn't change with `EMAIL_RATE_LIMIT_MULTIPLIER`.
+- **Your organization's limits** for email to outside addresses also apply. See
+  [Email limits](/self-hosting/configuration/rate-limiting#email-limits).
+
+When a limit is reached, or the run's address is empty or not a valid email address, the step and the run fail
+at once, without a retry, and run detail shows the reason. An address that isn't valid is named by its Variable,
+not by its value.
+
+## Test it
+
+A [Test run](/workflows/test-runs) of this workflow sends no email: run detail shows the address and the survey
+link the email would have used, so you can check both before you enable.

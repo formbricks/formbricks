@@ -117,15 +117,17 @@ describe("probeSamlResponseParse", () => {
     expect(performance.now() - started).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
   });
 
-  test("returns no claims for malformed input, without failing", async () => {
-    await expect(probeSamlResponseParse(b64("<a><b></a>"), KEY, IDP)).resolves.toMatchObject({
-      outcome: "parsed",
-      claims: {},
-    });
-    await expect(probeSamlResponseParse("%%% not base64 %%%", KEY, IDP)).resolves.toMatchObject({
-      outcome: "parsed",
-    });
-  });
+  // ENG-7054: jackson throws on these with no status, so they must come back as their own outcome, not as parsed.
+  test.each([
+    ["not XML", b64("not-xml")],
+    ["malformed XML", b64("<a><b></a>")],
+    ["not base64 at all", "%%% not base64 %%%"],
+  ])(
+    "answers unreadable for a response saml20 cannot parse (%s), without failing",
+    async (_name, response) => {
+      await expect(probeSamlResponseParse(response, KEY, IDP)).resolves.toEqual({ outcome: "unreadable" });
+    }
+  );
 
   test("refuses at once when the queue is full, and serves everything it accepted", async () => {
     // One job runs while the rest wait; the queue holds SAML_PARSE_QUEUE_LIMIT more.

@@ -6,7 +6,7 @@ import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { getContentDispositionFileName } from "@/lib/utils/file-download";
-import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/write";
+import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/format";
 import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
 import { ZFormbricksFileV1 } from "@/modules/survey/formbricks-file/envelope";
 import { exportSurveyOperation } from "./operations";
@@ -222,9 +222,9 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
     expect(response.headers.get("Content-Length")).toBe(String(bytes.byteLength));
 
     const workbook = XLSX.read(bytes, { type: "array", cellFormula: true, cellNF: true });
-    const [sheetName, metaName] = workbook.SheetNames;
-    expect(metaName).toBe(EXCEL_EXPORT_META_SHEET);
-    expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 2]);
+    const [sheetName, surveySheetName, metaName] = workbook.SheetNames;
+    expect([sheetName, surveySheetName, metaName]).toEqual(["Questions", "Survey", EXCEL_EXPORT_META_SHEET]);
+    expect(workbook.Workbook?.Sheets?.map((sheet) => sheet.Hidden)).toEqual([0, 0, 2]);
 
     const rows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[sheetName], { header: 1, defval: "" });
     expect(rows.map((row) => [row[0], row[1], row[3]])).toEqual([
@@ -243,20 +243,29 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
       }
     }
 
-    const { updatedAt } = await prisma.survey.findUniqueOrThrow({
-      where: { id: draftSurveyId },
-      select: { updatedAt: true },
-    });
-    expect(XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[metaName], { header: 1 })).toEqual([
-      ["surveyId", draftSurveyId],
-      ["updatedAt", updatedAt.toISOString()],
-      ["format", "1"],
+    // How to read the sheet back, and the survey New survey › Import matches it with (ENG-6809).
+    const meta = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[metaName], { header: 1 });
+    expect(meta.map((row) => row[0])).toEqual([
+      "format",
+      "languages",
+      "headers",
+      "columns",
+      "locale",
+      "surveyId",
+      "updatedAt",
+    ]);
+    expect(meta[0][1]).toBe("2");
+    expect(meta[5][1]).toBe(draftSurveyId);
+    const properties = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[surveySheetName], { header: 1 });
+    expect(properties.slice(1, 3)).toEqual([
+      ["Survey ID", draftSurveyId],
+      ["Name", "Größe NPS / Q4"],
     ]);
 
     expect(auditLog).toMatchObject({
       organizationId: fixture.organizationId,
       targetId: draftSurveyId,
-      newObject: { format: "xlsx", fileFormat: 1, workspaceId: fixture.workspaceId },
+      newObject: { format: "xlsx", fileFormat: 2, workspaceId: fixture.workspaceId },
     });
   });
 
