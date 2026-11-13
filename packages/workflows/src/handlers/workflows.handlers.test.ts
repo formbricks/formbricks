@@ -72,6 +72,10 @@ const service = {
   disableWorkflow: vi.fn<WorkflowsService["disableWorkflow"]>(),
   listWorkflowRuns: vi.fn<WorkflowsService["listWorkflowRuns"]>(),
   getWorkflowRun: vi.fn<WorkflowsService["getWorkflowRun"]>(),
+  regenerateWebhookToken: vi.fn<WorkflowsService["regenerateWebhookToken"]>(),
+  revealWebhookToken: vi.fn<WorkflowsService["revealWebhookToken"]>(),
+  getTriggerSample: vi.fn<WorkflowsService["getTriggerSample"]>(),
+  setTriggerSample: vi.fn<WorkflowsService["setTriggerSample"]>(),
 };
 const handlers = createWorkflowsHandlers(service);
 
@@ -380,7 +384,10 @@ describe("patch", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(service.updateWorkflow).toHaveBeenCalledWith({ workflowId, workspaceId }, { name: "Renamed" });
+    expect(service.updateWorkflow).toHaveBeenCalledWith(
+      { workflowId, workspaceId },
+      { name: "Renamed", issueWebhookToken: false }
+    );
   });
 
   test("allows name/description edits on an enabled workflow", async () => {

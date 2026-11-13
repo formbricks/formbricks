@@ -16,7 +16,7 @@ info:
 
     Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused (a PATCH that sets nothing but `status`, or **POST /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
 
-    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
+    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
 
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
@@ -3998,6 +3998,284 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/webhook:
+    get:
+      operationId: getWorkflowWebhookV3
+      summary: Get a workflow's Webhook Secret URL
+      description: |
+        Returns the Webhook Secret URL of a workflow with a Webhook trigger, when it was last called and from which IP, and its Sample payload with the Variables it offers.
+
+        The URL is a credential: anyone holding it can start runs. It is therefore returned only to callers with **write** access to the workspace (`readWrite` or `manage`); read-only callers get **403**. Do not log or share it; if it leaks, call `POST /api/v3/workflows/{workflowId}/webhook/regenerate`.
+
+        A workflow whose trigger is not a Webhook trigger answers **422** `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          description: The Webhook Secret URL, last call and Sample payload.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowWebhookResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/webhook/regenerate:
+    post:
+      operationId: regenerateWorkflowWebhookV3
+      summary: Regenerate a workflow's Webhook Secret URL
+      description: |
+        Replaces the workflow's Webhook Secret URL with a new one and returns it. The old URL stops working at once: its next call answers **404**. The workflow itself, its status and its runs are unchanged. Recorded in the audit log as `webhookUrlRegenerated`.
+
+        Requires **write** access. A workflow whose trigger is not a Webhook trigger, or an archived workflow, answers **422** `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          description: The new Webhook Secret URL, last call and Sample payload.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowWebhookResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/webhook/{token}:
+    post:
+      operationId: callWorkflowWebhookV3
+      summary: Call a Webhook Secret URL
+      description: |
+        Starts a run of a workflow with a Webhook trigger. This is the Webhook Secret URL itself: it needs no login or API key, because the token in the path is the credential. Send a JSON object as the body with `Content-Type: application/json`. Use the URL exactly as returned, with no trailing slash (a trailing slash answers a redirect some clients will not follow on a POST).
+
+        - **202** `{"runId": "…"}`: the workflow is enabled and a run is queued. The payload also becomes the workflow's Sample payload.
+        - **202** `{"runId": null}`: the workflow is a draft or disabled. The payload is saved as the Sample payload; no run starts.
+        - **200** `{"runId": "…"}`: an `Idempotency-Key` this workflow has already seen; nothing new starts and the earlier run's id is returned.
+        - **404**: the workflow is archived, does not exist, or the token is wrong or was regenerated. The answer is identical in every case.
+        - **400** / **413** / **415**: the body is not a JSON object or is nested more than 10 levels / is over 100 KB / is not `application/json`. Errors never echo the payload.
+        - **429** with `Retry-After`: over 100 calls a minute for this workflow, over the organization's calls per minute across its Webhook workflows (default 300), or over the workflow's runs per day (default 10,000).
+        - **403**: the organization's plan no longer includes workflows, or the call used plain HTTP where HTTPS is required.
+
+        Runs started here are billed like other workflow runs.
+      tags:
+        - V3 Workflows
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Workflow identifier.
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: The secret token of the Webhook Secret URL.
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Optional. A repeated key for the same workflow returns the run it started (200) instead of starting another.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Any JSON object of at most 100 KB, nested at most 10 levels.
+            examples:
+              order:
+                value:
+                  customer:
+                    email: jane@example.com
+                  order:
+                    id: 1042
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowWebhookCallResponse'
+        '202':
+          $ref: '#/components/responses/WorkflowWebhookCallResponse'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          description: Unknown workflow, archived workflow, or a wrong or regenerated token. Identical in every case.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '413':
+          description: The body is over 100 KB.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '415':
+          description: The body is not `application/json`.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security: []
+  /api/v3/workflows/{workflowId}/sample:
+    put:
+      operationId: setWorkflowSampleV3
+      summary: Set a workflow's Sample payload
+      description: |
+        Replaces the Sample payload of a workflow with a Webhook trigger, e.g. with one pasted in the editor, and returns it with the Variables it offers. A call to the Webhook Secret URL replaces it too. The payload must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**. Writing a sample does not change the workflow's `updatedAt`.
+
+        Requires **write** access. A workflow whose trigger is not a Webhook trigger, or an archived workflow, answers **422** `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetWorkflowSampleRequest'
+            examples:
+              order:
+                value:
+                  payload:
+                    customer:
+                      email: jane@example.com
+                    order:
+                      id: 1042
+                      total: 59.9
+      responses:
+        '200':
+          description: The stored Sample payload and its Variables.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowSampleResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: The sample payload is over 100 KB.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
         '429':
@@ -10748,6 +11026,7 @@ components:
             - survey_not_workspace_visible
             - too_many_requests
             - unprocessable_content
+            - unsupported_media_type
             - visibility_blocked_by_connections
             - visibility_change_not_allowed
             - visibility_not_enabled
@@ -13542,6 +13821,39 @@ components:
         ui:
           $ref: '#/components/schemas/WorkflowNodeUi'
       additionalProperties: false
+    WorkflowWebhookTriggerNode:
+      type: object
+      description: |
+        A Webhook trigger: the workflow starts a run when an outside system POSTs a JSON object to its Webhook Secret URL. It has nothing to configure; the Secret URL's token is stored with the workflow, never in the definition, and is read with `GET /api/v3/workflows/{workflowId}/webhook`.
+      required:
+        - id
+        - type
+        - triggerType
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - trigger
+        triggerType:
+          type: string
+          enum:
+            - webhook
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          type: object
+          default: {}
+          additionalProperties: false
+          description: Always empty. Optional on writes; always present in responses.
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
     WorkflowVariableEmailRecipient:
       type: object
       description: |
@@ -13889,7 +14201,10 @@ components:
           default: 1
           description: Definition schema version. Optional on writes (defaults to the current version); always present in responses.
         trigger:
-          $ref: '#/components/schemas/WorkflowResponseCompletedTriggerNode'
+          oneOf:
+            - $ref: '#/components/schemas/WorkflowResponseCompletedTriggerNode'
+            - $ref: '#/components/schemas/WorkflowWebhookTriggerNode'
+          description: 'The workflow''s one trigger: Response completed (`response.completed`) or a call to its Webhook Secret URL (`webhook`).'
         nodes:
           type: array
           default: []
@@ -13972,7 +14287,7 @@ components:
         A list `meta` carrying pagination and nothing else — the shape for collections that do not report a total and have no domain context to echo.
 
         Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing operation bounds its own requests through its `limit` query parameter, which is why this shape states no cap of its own.
-    WorkflowTriggerPayload:
+    WorkflowResponseCompletedTriggerPayload:
       type: object
       description: |
         Trigger payload snapshot captured when a run is created, mirroring
@@ -14009,6 +14324,38 @@ components:
           type: string
           format: date-time
       additionalProperties: true
+    WorkflowWebhookTriggerPayload:
+      type: object
+      description: Trigger payload of a run started by a Webhook Secret URL call.
+      required:
+        - type
+        - workspaceId
+        - payload
+        - triggeredAt
+      properties:
+        type:
+          type: string
+          enum:
+            - webhook
+        workspaceId:
+          type: string
+          format: cuid2
+        payload:
+          type: object
+          additionalProperties: true
+          description: The JSON object the call delivered (the Payload).
+        triggeredAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    WorkflowTriggerPayload:
+      description: |
+        Trigger payload snapshot captured when a run is created, mirroring
+        `ZWorkflowTriggerRunPayload`: a completed survey response, or the JSON object a
+        Webhook Secret URL call delivered. `type` says which.
+      oneOf:
+        - $ref: '#/components/schemas/WorkflowResponseCompletedTriggerPayload'
+        - $ref: '#/components/schemas/WorkflowWebhookTriggerPayload'
     WorkflowRunLogStatus:
       type: string
       enum:
@@ -14266,6 +14613,131 @@ components:
             Things that do not stop the workflow from running but probably need a look. They never make `ok` false.
           items:
             $ref: '#/components/schemas/WorkflowWarning'
+    WorkflowSampleResource:
+      type: object
+      description: |
+        A workflow's Sample payload — the last payload its Webhook Secret URL received, or one pasted in — and the Variables it offers. Variables are detected for the first 500 paths; lists are reported as not supported yet.
+      required:
+        - workflowId
+        - source
+        - payload
+        - variables
+        - updatedAt
+      properties:
+        workflowId:
+          type: string
+          format: cuid2
+        source:
+          type: string
+          enum:
+            - trigger
+        payload:
+          type: object
+          additionalProperties: true
+          description: The Sample payload, a JSON object.
+        variables:
+          type: object
+          required:
+            - variables
+            - notSupported
+            - truncated
+          properties:
+            variables:
+              type: array
+              description: Variables the Sample payload offers, in document order.
+              items:
+                type: object
+                required:
+                  - path
+                  - valueType
+                properties:
+                  path:
+                    type: string
+                    minLength: 1
+                    example: payload.customer.email
+                  valueType:
+                    type: string
+                    enum:
+                      - object
+                      - string
+                      - number
+                      - boolean
+                      - 'null'
+                additionalProperties: false
+            notSupported:
+              type: array
+              description: 'Paths that cannot be used as Variables: `list` (lists are not supported yet), `unsafe_segment` (`__proto__`, `prototype` or `constructor`) or `unreachable_key` (a key with characters other than letters, digits, `-` and `_`, such as a dot or a space, which a Variable path cannot carry).'
+              items:
+                type: object
+                required:
+                  - path
+                  - reason
+                properties:
+                  path:
+                    type: string
+                    minLength: 1
+                  reason:
+                    type: string
+                    enum:
+                      - list
+                      - unsafe_segment
+                      - unreachable_key
+                additionalProperties: false
+            truncated:
+              type: boolean
+              description: True when only the first 500 paths were read.
+          additionalProperties: false
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    WorkflowWebhookResource:
+      type: object
+      description: |
+        A workflow's Webhook Secret URL, its last call, and its Sample payload. The URL is a credential: anyone holding it can start runs, so treat it like an API key and regenerate it if it leaks.
+      required:
+        - workflowId
+        - url
+        - lastCalledAt
+        - lastCallerIp
+        - sample
+      properties:
+        workflowId:
+          type: string
+          format: cuid2
+        url:
+          type: string
+          format: uri
+          description: The Webhook Secret URL.
+          example: https://app.formbricks.com/api/v3/workflows/clworkflow00000000000000/webhook/q8Zk3vT1xN2yR5wP7mC4bA
+        lastCalledAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the Secret URL was last called. Null if never.
+        lastCallerIp:
+          type:
+            - string
+            - 'null'
+          description: IP of the last call. Null if never called.
+        sample:
+          anyOf:
+            - $ref: '#/components/schemas/WorkflowSampleResource'
+            - type: 'null'
+          description: Null until a call arrives or a sample is set.
+      additionalProperties: false
+    SetWorkflowSampleRequest:
+      type: object
+      description: Replaces the workflow's Sample payload, e.g. with one pasted in the editor.
+      required:
+        - payload
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+          description: A JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels).
+      additionalProperties: false
     ChartDateRange:
       description: |-
         A date range on a time dimension: a named preset from the field catalog's `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's display time zone; a `timezone` cannot be supplied.
@@ -17737,6 +18209,26 @@ components:
             properties:
               data:
                 $ref: '#/components/schemas/WorkflowResource'
+    WorkflowWebhookCallResponse:
+      description: The call was accepted. `runId` is the run it started (202), the run an earlier call with the same `Idempotency-Key` started (200), or null when the workflow is a draft or disabled (202).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - runId
+            properties:
+              runId:
+                type:
+                  - string
+                  - 'null'
+                format: cuid2
+            additionalProperties: false
     V3DashboardsForbidden:
       description: 'Forbidden. `code: forbidden` when the caller has no access to the workspace, the Feedback Dataset or the resource (which may also not exist; 404 is not used, to avoid leaking existence). `code: dashboards_plan_required` when the caller is authorized but the organization does not have the Dashboards add-on or a license that includes it — checked after authorization, so a caller without access never learns the organization''s plan.'
       headers:

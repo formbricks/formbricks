@@ -1,0 +1,22 @@
+description: >-
+  The call was accepted. `runId` is the run it started (202), the run an earlier
+  call with the same `Idempotency-Key` started (200), or null when the workflow
+  is a draft or disabled (202).
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - runId
+      properties:
+        runId:
+          type:
+            - string
+            - "null"
+          format: cuid2
+      additionalProperties: false

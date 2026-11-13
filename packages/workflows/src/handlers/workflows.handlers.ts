@@ -20,7 +20,6 @@ import {
 } from "../contracts";
 import {
   WorkflowForbiddenError,
-  WorkflowInvalidInputError,
   type WorkflowInvalidParam,
   WorkflowInvalidStateError,
   WorkflowNotExecutableError,
@@ -36,12 +35,11 @@ import {
   type TWorkflowExecutableDefinition,
   ZWorkflowExecutableDefinition,
 } from "../types/document";
-import { redactWorkflowDefinitionPII } from "./audit-redaction";
+import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type {
   TriggerSurveyCheck,
   WorkflowAnalyticsDetail,
   WorkflowAnalyticsOperation,
-  WorkflowApiAccess,
   WorkflowApiContext,
 } from "./context";
 import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-list-query";
@@ -51,91 +49,12 @@ import {
   toWorkflowRunListItem,
   toWorkflowRunResource,
 } from "./serializers";
+import { loadAndAuthorize, readJsonBody, recordAuditSafely, toAuditSnapshot } from "./shared";
 import { checkWorkflowSurveyLinks } from "./survey-link-checks";
-
-// Matches the v3 API's default request-body limit (apps/web `request-body.ts`) for consistency.
-const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
+import { type WebhookHandlers, createWebhookHandlers } from "./webhook.handlers";
 
 const ZWorkflowListPage = zWorkflowListPage(ZWorkflowListItem);
 const ZWorkflowRunListPage = zCursorPage(ZWorkflowRunListItem);
-
-const readJsonBody = async (req: Request, options?: { allowEmpty?: boolean }): Promise<unknown> => {
-  // Reject oversized payloads up front via Content-Length so we never buffer them into memory.
-  const contentLength = req.headers.get("content-length");
-  if (contentLength && Number(contentLength) > MAX_REQUEST_BODY_BYTES) {
-    throw new WorkflowInvalidInputError("Request body is too large.");
-  }
-
-  const text = await req.text();
-  // Defense in depth: Content-Length may be absent (chunked) or understated.
-  if (Buffer.byteLength(text, "utf8") > MAX_REQUEST_BODY_BYTES) {
-    throw new WorkflowInvalidInputError("Request body is too large.");
-  }
-
-  // Optional-body operations (e.g. duplicate) treat an empty body as `{}`.
-  if (text.trim() === "") {
-    if (options?.allowEmpty) return {};
-    throw new WorkflowInvalidInputError("Malformed JSON body.");
-  }
-
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    throw new WorkflowInvalidInputError("Malformed JSON body.");
-  }
-};
-
-/**
- * Load a workflow by id and authorize the caller against its workspace. Returns the row on success,
- * or a ready-to-return denial `Response`; throws `WorkflowForbiddenError` (→ 403) for unknown ids so
- * existence is never leaked. Shared by every by-id operation (get, patch, duplicate, delete,
- * archive, unarchive) — load once, authorize once, no double round-trip.
- */
-const loadAndAuthorize = async (
-  service: WorkflowsService,
-  ctx: WorkflowApiContext,
-  workflowId: string,
-  access: WorkflowApiAccess
-): Promise<WorkflowRowWithLastRun | Response> => {
-  const row = await service.getWorkflowById(workflowId);
-  if (!row) throw new WorkflowForbiddenError();
-
-  const authorized = await ctx.authorize(row.workspaceId, access);
-  if (authorized instanceof Response) return authorized;
-
-  return row;
-};
-
-/**
- * Plain before/after snapshot for the audit sink. Reuses the serialized resource shape (the same
- * plain object the response carries), so the adapter's diff surfaces `name` / `description` /
- * `definition` and the `status` transition. Returned as a `Record` because the audit port's
- * snapshots are intentionally untyped, app-agnostic plain objects.
- *
- * The definition's `send_email` PII (recipient/sender addresses, subject, body) is redacted here —
- * the shared audit redactor keys off field names it does not recognize on the workflow definition,
- * so masking at this seam guarantees those values never reach the audit `changes`.
- */
-const toAuditSnapshot = (row: WorkflowRowWithLastRun, redactionKey?: string): Record<string, unknown> => {
-  const resource = toWorkflowResource(row);
-  return { ...resource, definition: redactWorkflowDefinitionPII(resource.definition, redactionKey) };
-};
-
-/**
- * Invoke the injected audit sink, swallowing any rejection. The handlers call this only AFTER the
- * mutation has already succeeded, so an audit problem must never turn a successful mutation into an
- * error response — the package guarantees this regardless of how the adapter implements the port.
- */
-const recordAuditSafely = async (
-  ctx: WorkflowApiContext,
-  detail: Parameters<NonNullable<WorkflowApiContext["recordAudit"]>>[0]
-): Promise<void> => {
-  try {
-    await ctx.recordAudit?.(detail);
-  } catch (error) {
-    ctx.logger.error({ error }, "Failed to record workflow audit detail");
-  }
-};
 
 /** Same contract as `recordAuditSafely`, for the product-analytics sink. */
 const recordAnalyticsSafely = async (
@@ -236,6 +155,51 @@ const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidPar
 };
 
 /**
+ * The dry run's trigger-reference problems: the bound survey and ending cards of a Response completed
+ * trigger. A Webhook trigger references nothing, so it has none.
+ */
+const collectTriggerSurveyProblems = async (
+  ctx: WorkflowApiContext,
+  workspaceId: string,
+  definition: TWorkflowExecutableDefinition
+): Promise<TWorkflowTestProblem[]> => {
+  const { trigger } = definition;
+  if (trigger.triggerType !== WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) return [];
+
+  const { surveyId, endingCardIds } = trigger.config;
+  const surveyCheck = await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds });
+  const problems: TWorkflowTestProblem[] = [];
+  if (!surveyCheck.surveyExists) {
+    problems.push({
+      code: "survey_not_found",
+      field: "definition.trigger.config.surveyId",
+      message: "The referenced survey does not exist in this workspace.",
+    });
+  }
+  if (surveyCheck.surveyNotWorkspaceVisible) {
+    problems.push({
+      code: "survey_not_workspace_visible",
+      field: "definition.trigger.config.surveyId",
+      message: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
+    });
+  }
+  for (const endingCardId of surveyCheck.missingEndingCardIds) {
+    problems.push({
+      code: "ending_card_not_found",
+      field: "definition.trigger.config.endingCardIds",
+      message: `Ending card ${endingCardId} does not exist on the survey.`,
+    });
+  }
+  return problems;
+};
+
+/** The survey a Response completed trigger is bound to; a Webhook trigger (or none) has no survey. */
+const getTriggerSurveyId = (definition?: TWorkflowDefinition): string | undefined =>
+  definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED
+    ? definition.trigger.config.surveyId
+    : undefined;
+
+/**
  * Attach-time guard (ENG-3283): a workflow forwards its trigger survey's responses out of the app, so it
  * may only be bound to a survey the whole workspace can see. Checked when a binding is created — create,
  * duplicate, and a patch that points the trigger at another survey — so the refusal is immediate; enable
@@ -248,8 +212,8 @@ const assertTriggerSurveyAttachable = async (
   definition: TWorkflowDefinition,
   previous?: TWorkflowDefinition
 ): Promise<void> => {
-  const surveyId = definition.trigger?.config.surveyId;
-  if (!surveyId || surveyId === previous?.trigger?.config.surveyId) return;
+  const surveyId = getTriggerSurveyId(definition);
+  if (!surveyId || surveyId === getTriggerSurveyId(previous)) return;
 
   const check = await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds: [] });
   if (check.surveyNotWorkspaceVisible) {
@@ -282,7 +246,7 @@ interface WorkflowRunResourceArgs {
   params: TWorkflowRunIdInput;
 }
 
-export interface WorkflowsHandlers {
+export interface WorkflowsHandlers extends WebhookHandlers {
   list: (args: WorkflowRequestArgs) => Promise<Response>;
   create: (args: WorkflowRequestArgs) => Promise<Response>;
   get: (args: WorkflowResourceArgs) => Promise<Response>;
@@ -306,6 +270,8 @@ export interface WorkflowsHandlers {
  * `toProblemResponse`, so handlers never leak or swallow.
  */
 export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHandlers => ({
+  ...createWebhookHandlers(service),
+
   async list({ req, ctx }) {
     try {
       const input = parseListWorkflowsQuery(new URL(req.url).searchParams);
@@ -388,9 +354,14 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, input.definition, loaded.definition);
       }
 
+      // The Secret URL token is created on the first save of a Webhook trigger and kept afterwards,
+      // even if the trigger changes, so switching back keeps the same URL.
+      const issueWebhookToken =
+        input.definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK && !loaded.webhookTokenHash;
+
       const updated = await service.updateWorkflow(
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
-        input
+        { ...input, issueWebhookToken }
       );
 
       await recordAuditSafely(ctx, {
@@ -528,18 +499,22 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
       if (!executable.success) throw WorkflowNotExecutableError.fromZodError(executable.error);
 
-      const { surveyId, endingCardIds } = executable.data.trigger.config;
-      const surveyCheck = await ctx.verifyTriggerSurvey({
-        workspaceId: loaded.workspaceId,
-        surveyId,
-        endingCardIds,
-      });
-      if (
-        !surveyCheck.surveyExists ||
-        surveyCheck.surveyNotWorkspaceVisible ||
-        surveyCheck.missingEndingCardIds.length > 0
-      ) {
-        throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
+      // Only a Response completed trigger references a survey; a Webhook trigger has nothing to resolve.
+      const { trigger } = executable.data;
+      if (trigger.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
+        const { surveyId, endingCardIds } = trigger.config;
+        const surveyCheck = await ctx.verifyTriggerSurvey({
+          workspaceId: loaded.workspaceId,
+          surveyId,
+          endingCardIds,
+        });
+        if (
+          !surveyCheck.surveyExists ||
+          surveyCheck.surveyNotWorkspaceVisible ||
+          surveyCheck.missingEndingCardIds.length > 0
+        ) {
+          throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
+        }
       }
 
       // Recipient allowlist: a send_email action addressing a literal email may only target someone
@@ -673,33 +648,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       // `definition_not_executable` above, and dereferencing its unparsed config here would throw and
       // turn the dry-run into a 500 — the opposite of the collected-problems contract. Mirrors `enable`.
       if (executable.success) {
-        const { surveyId, endingCardIds } = executable.data.trigger.config;
-        const surveyCheck = await ctx.verifyTriggerSurvey({
-          workspaceId: loaded.workspaceId,
-          surveyId,
-          endingCardIds,
-        });
-        if (!surveyCheck.surveyExists) {
-          problems.push({
-            code: "survey_not_found",
-            field: "definition.trigger.config.surveyId",
-            message: "The referenced survey does not exist in this workspace.",
-          });
-        }
-        if (surveyCheck.surveyNotWorkspaceVisible) {
-          problems.push({
-            code: "survey_not_workspace_visible",
-            field: "definition.trigger.config.surveyId",
-            message: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
-          });
-        }
-        for (const endingCardId of surveyCheck.missingEndingCardIds) {
-          problems.push({
-            code: "ending_card_not_found",
-            field: "definition.trigger.config.endingCardIds",
-            message: `Ending card ${endingCardId} does not exist on the survey.`,
-          });
-        }
+        problems.push(...(await collectTriggerSurveyProblems(ctx, loaded.workspaceId, executable.data)));
 
         // Recipient allowlist (ENG-2029): the same gate `enable` enforces, collected here as a
         // problem instead of thrown. The dry run exists to surface exactly this before going live —

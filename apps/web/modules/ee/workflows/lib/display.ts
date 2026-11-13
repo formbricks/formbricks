@@ -74,6 +74,7 @@ export const getWorkflowRunLogStatusBadge = (status: TWorkflowRunLogStatus, t: T
 export const getWorkflowTriggerTypeLabel = (triggerType: TWorkflowTriggerType, t: TFunction): string => {
   const labels: Record<TWorkflowTriggerType, string> = {
     "response.completed": t("common.response_completed"),
+    webhook: t("common.webhook"),
   };
 
   return labels[triggerType];

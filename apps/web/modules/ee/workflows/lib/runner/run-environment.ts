@@ -41,6 +41,8 @@ export interface WorkflowRunEnvironment {
   configuredByUserId?: string;
   /** Only for Response completed runs; a run started any other way has none. */
   surveyResponse: WorkflowRunSurveyResponse | null;
+  /** Only for Webhook runs: the JSON object the Webhook Secret URL call delivered (ENG-7177). */
+  payload?: Record<string, unknown>;
   logoUrl: string;
   /**
    * Lowercased emails of everyone who can access this run's workspace. A literal `to` recipient must
@@ -178,6 +180,7 @@ export const loadWorkflowRunEnvironment = async ({
     workspaceId,
     configuredByUserId: actorUserId ?? undefined,
     surveyResponse,
+    ...(trigger.type === "webhook" ? { payload: trigger.payload } : {}),
     logoUrl: organization?.whitelabel?.logoUrl ?? "",
     allowedRecipientEmails,
     rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },
@@ -188,13 +191,14 @@ export const loadWorkflowRunEnvironment = async ({
 
 /**
  * The run context a run starts with (ADR 0045): the response's answers for `response.<questionId>`
- * (variables win over answers on a shared id, as in survey recall) and no step outputs yet. The
- * Webhook trigger (ENG-7177) fills `payload` here from its trigger payload.
+ * (variables win over answers on a shared id, as in survey recall), a Webhook run's payload for
+ * `payload.<path>` (ENG-7177), and no step outputs yet.
  */
 export const createInitialRunContext = (environment: WorkflowRunEnvironment): TWorkflowRunContext => {
   const response = environment.surveyResponse?.response;
   return {
     steps: {},
     ...(response ? { response: { data: { ...response.data, ...response.variables } } } : {}),
+    ...(environment.payload ? { payload: environment.payload } : {}),
   };
 };

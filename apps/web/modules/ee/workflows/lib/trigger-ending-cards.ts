@@ -1,4 +1,4 @@
-import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { type TWorkflowDefinition, isResponseCompletedTrigger } from "@formbricks/workflows";
 
 export interface TEndingCardReconciliation {
   /** Stored ids that still resolve to a survey ending, de-duplicated, order preserved. */
@@ -45,7 +45,7 @@ export const reconcileDefinitionEndingCardIds = (
   surveyEndingIds: readonly string[]
 ): { definition: TWorkflowDefinition; removedEndingCardIds: string[] } | null => {
   const trigger = definition?.trigger;
-  if (!definition || !trigger) return null;
+  if (!definition || !isResponseCompletedTrigger(trigger)) return null;
 
   const { endingCardIds, removedEndingCardIds } = reconcileEndingCardIds(
     trigger.config.endingCardIds,

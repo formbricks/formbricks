@@ -36,6 +36,12 @@ model Workflow {
   definition  Json
   versions    WorkflowVersion[]
   runs        WorkflowRun[]
+  samples     WorkflowSample[]
+
+  /// Webhook Secret URL token (ADR 0041, 0048): SHA-256 hash to check calls, and an encrypted copy so
+  /// the editor can show the URL again. Never part of the definition, its versions or its copies.
+  webhookTokenHash      String?
+  webhookTokenEncrypted String?
 
   @@unique([id, workspaceId])
   @@index([workspaceId, status])
@@ -89,6 +95,8 @@ model WorkflowRun {
   startedAt         DateTime?
   finishedAt        DateTime?
   logs              WorkflowRunLog[]
+  /// The caller's IP for a run started by a Webhook Secret URL call; shown in run detail.
+  callerIp          String?
 
   @@unique([workflowId, idempotencyKey])
   @@index([workspaceId, createdAt])
@@ -97,6 +105,27 @@ model WorkflowRun {
   @@index([responseId])
   @@index([isDryRun])
   @@index([nextAttemptAt])
+}
+
+/// Per-call data kept beside a workflow (ADR 0048): one row per source, `trigger` for the Webhook
+/// trigger's last payload (plus the last call's time and IP), or an HTTP request step id for its last
+/// Test request response. Written on every call, so it lives here and never bumps `Workflow.updatedAt`.
+model WorkflowSample {
+  id           String    @id @default(cuid(2))
+  createdAt    DateTime  @default(now()) @map(name: "created_at")
+  updatedAt    DateTime  @updatedAt @map(name: "updated_at")
+  workflow     Workflow  @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId   String
+  workspaceId  String
+  source       String
+  /// [WorkflowSampleData]
+  sample       Json
+  lastCalledAt DateTime?
+  lastCallerIp String?
+
+  @@unique([workflowId, source])
+  @@index([workflowId, workspaceId])
+  @@index([updatedAt])
 }
 
 model WorkflowRunLog {

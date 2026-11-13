@@ -1,0 +1,38 @@
+type: object
+description: |
+  Trigger payload snapshot captured when a run is created, mirroring
+  `ZWorkflowTriggerRunPayload`. Additional runner keys may be present.
+required:
+  - type
+  - workspaceId
+  - surveyId
+  - responseId
+  - triggeredAt
+properties:
+  type:
+    type: string
+    enum:
+      - response.completed
+  workspaceId:
+    type: string
+    format: cuid2
+  surveyId:
+    type: string
+    format: cuid2
+  responseId:
+    type: string
+    format: cuid2
+    description: >-
+      For dry runs without a `responseId` input, this references the synthesized
+      sample response.
+  endingCardId:
+    type: string
+    format: cuid2
+    description: Ending card the respondent reached, when the survey uses ending cards.
+  data:
+    type: object
+    description: Response data snapshot used by the runner.
+  triggeredAt:
+    type: string
+    format: date-time
+additionalProperties: true

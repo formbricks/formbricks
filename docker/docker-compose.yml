@@ -123,6 +123,16 @@ x-environment: &environment
     # Maximum number of invite recipients an organization may target within 24 hours
     # INVITE_RATE_LIMIT_PER_24_HOURS: 50
 
+    # Workflows Webhook trigger: accept plain HTTP calls as well as HTTPS (set to 1 only on a fully
+    # private network; the Secret URL is a credential)
+    # DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP:
+
+    # Runs one workflow's Webhook Secret URL may start per day
+    # WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: 10000
+
+    # Webhook Secret URL calls per minute across one organization's workflows
+    # WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: 300
+
     # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
     # ASSET_PREFIX_URL:
 

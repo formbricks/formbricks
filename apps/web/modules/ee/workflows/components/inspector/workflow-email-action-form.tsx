@@ -8,6 +8,7 @@ import {
   type TWorkflowSendEmailActionNode,
   type TWorkflowSendEmailContentField,
   getBlankSendEmailContentFields,
+  getTriggerSurveyId,
 } from "@formbricks/workflows";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
 import {
@@ -131,7 +132,7 @@ export const WorkflowEmailActionForm = ({
         : document.getElementById(FIELD_INPUT_IDS[field as keyof typeof FIELD_INPUT_IDS]),
   });
 
-  const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
+  const triggerSurveyId = getTriggerSurveyId(definition?.trigger);
   const survey = resolveBoundTriggerSurvey(authoringContext, definition);
 
   // Clear the recipient + body when the trigger's bound survey changes: `config.to` is an element/

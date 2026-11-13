@@ -53,6 +53,14 @@ export const rateLimitConfigs = {
       namespace: "api:v3:state-mutation",
     }, // 120 per minute per principal — the API twin of `actions.stateMutation`, for batch writes that fan out to the response pipeline
     mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth", failClosed: true }, // 30 per minute
+    // Calls to one workflow's Webhook Secret URL (ENG-7167), keyed by workflow id and checked before the
+    // database is read. The default API number, in a namespace of its own. The organization-wide and
+    // daily-run quotas are configurable and live in `modules/ee/workflows/lib/webhook/limits.ts`.
+    v3WorkflowWebhook: {
+      interval: 60,
+      allowedPerInterval: 100,
+      namespace: "api:v3:workflow-webhook",
+    }, // 100 per minute per workflow
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,

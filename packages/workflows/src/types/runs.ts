@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZWorkflowExecutableDefinition } from "./document";
-import { ZWorkflowResponseCompletedTriggerPayload } from "./triggers";
+import { ZWorkflowResponseCompletedTriggerPayload, ZWorkflowWebhookTriggerPayload } from "./triggers";
 
 const ZIsoDateTime = z.iso.datetime({ offset: true });
 
@@ -14,7 +14,10 @@ const ZTriggeredAt = { triggeredAt: ZIsoDateTime };
 
 /** `ZWorkflowTriggerPayload` with the time the trigger fired; one member per trigger type. */
 export const ZWorkflowTriggerRunPayload = z
-  .discriminatedUnion("type", [ZWorkflowResponseCompletedTriggerPayload.extend(ZTriggeredAt)])
+  .discriminatedUnion("type", [
+    ZWorkflowResponseCompletedTriggerPayload.extend(ZTriggeredAt),
+    ZWorkflowWebhookTriggerPayload.extend(ZTriggeredAt),
+  ])
   .describe("Trigger payload snapshot stored with a workflow run.");
 export type TWorkflowTriggerRunPayload = z.infer<typeof ZWorkflowTriggerRunPayload>;
 

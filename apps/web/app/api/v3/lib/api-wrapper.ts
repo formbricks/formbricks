@@ -117,6 +117,20 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
     retryAfterSeconds: number;
     appliesTo?: (req: NextRequest) => boolean;
   };
+  /**
+   * Rewrites the request path before anything records it, for a route whose path carries a secret (the
+   * Webhook Secret URL token, ENG-7177). The result is what the log context, every problem response's
+   * `instance`, the handler's `instance`, the audit URL and the Sentry report see; the raw path is only
+   * in `req`, for the handler to read.
+   */
+  redactPath?: (pathname: string) => string;
+  /**
+   * Skip the shared byte-limit and array-budget pre-read of an undeclared body. Only for a route whose
+   * handler reads and bounds the body itself and must decide what to answer first: the public webhook
+   * route answers an unknown token with 404 whatever the body, and its errors never echo the payload,
+   * which the array-budget 400 would (it names the offending path).
+   */
+  handlerReadsBody?: boolean;
   action?: TAuditAction;
   targetType?: TAuditTarget;
   handler: (params: TV3HandlerParams<TV3ParsedInput<S>, TProps>) => MaybePromise<Response>;
@@ -127,6 +141,7 @@ type TV3ParseContext = {
   requestId: string;
   instance: string;
   bodyLimitBytes: number;
+  handlerReadsBody?: boolean;
 };
 
 function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
@@ -530,7 +545,7 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
     }
 
     parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
-  } else {
+  } else if (!context.handlerReadsBody) {
     const preflightFailure = await preflightUndeclaredBody(req, context);
     if (preflightFailure) {
       return preflightFailure;
@@ -676,7 +691,11 @@ async function applyV3RateLimitOrRespond(params: {
  * belongs to the shared reporter, not to this wrapper. Nothing is lost locally either — the Hub paths
  * that produce most 503s already log at `warn` with a hint in `@/modules/hub/service`.
  */
-const reportServerError = (req: NextRequest, response: Response, error?: unknown): void => {
+const reportServerError = (
+  req: Pick<Request, "method" | "url" | "headers">,
+  response: Response,
+  error?: unknown
+): void => {
   if (response.status < 500 || response.status === 503) {
     return;
   }
@@ -772,6 +791,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     handler,
     action,
     targetType,
+    redactPath,
+    handlerReadsBody,
   } = params;
 
   // A misconfigured limit is a programming error in the route module, so fail when the module loads
@@ -796,7 +817,11 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
 
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
-    const instance = req.nextUrl.pathname;
+    const instance = redactPath ? redactPath(req.nextUrl.pathname) : req.nextUrl.pathname;
+    // What the audit log and the error reporter record of the request: its URL, redacted like `instance`.
+    const recordedRequest = redactPath
+      ? { method: req.method, headers: req.headers, url: redactPath(req.url) }
+      : req;
     const log = logger.withContext({
       requestId,
       method: req.method,
@@ -832,6 +857,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         requestId,
         instance,
         bodyLimitBytes,
+        handlerReadsBody,
       });
       if (!parsedInputResult.ok) {
         // The count and the first few names, never the array: it is as long as the caller made it,
@@ -864,7 +890,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
       // resource — is raised by the operation below and is audited as a failure. MCP's scope gate
       // audits its own refusals in `registerScopedTool`.
-      auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);
+      auditLog = buildV3AuditLog(authResult.authentication, action, targetType, recordedRequest.url);
 
       const execute = () =>
         handler({
@@ -883,7 +909,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       recordAuditOutcome(auditLog, response, requestId);
 
       await queueV3AuditLog(auditLog, requestId, log);
-      reportServerError(req, response);
+      reportServerError(recordedRequest, response);
       const finalResponse = ensureRequestIdHeader(response, requestId);
 
       if (!releaseSlot) {
@@ -905,7 +931,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // because the MCP tools call them directly, without this wrapper. Anything reaching here escaped
       // that, so it is mapped by the same rules rather than being flattened into a blanket 500.
       const mapped = mapV3ThrownError(error, { log, requestId, instance });
-      reportServerError(req, mapped, error);
+      reportServerError(recordedRequest, mapped, error);
       return ensureRequestIdHeader(mapped, requestId);
     } finally {
       releaseSlot?.();
