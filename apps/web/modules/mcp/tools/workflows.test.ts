@@ -267,20 +267,34 @@ describe("registerWorkflowTools", () => {
   });
 
   describe("get_workflow_run respondent-derived fields", () => {
+    // A failure's text can quote what a step sent: an SMTP rejection names the respondent's address.
     const run = {
       id: RUN_ID,
-      status: "succeeded",
+      status: "failed",
+      error: "550 mailbox a@b.c unavailable",
       triggerPayload: { responseId: "resp_1", answers: { q1: "my email is a@b.c" } },
       data: { q1: "my email is a@b.c" },
       logs: [
         { id: "log_1", stepId: "s1", status: "succeeded", input: { q1: "secret" }, output: { sent: true } },
+        {
+          id: "log_2",
+          stepId: "s2",
+          status: "failed",
+          input: { to: "a@b.c" },
+          output: null,
+          error: "550 mailbox a@b.c unavailable",
+        },
       ],
     };
     const redacted = {
       ...run,
+      error: null,
       triggerPayload: null,
       data: null,
-      logs: [{ id: "log_1", stepId: "s1", status: "succeeded", input: null, output: null }],
+      logs: [
+        { id: "log_1", stepId: "s1", status: "succeeded", input: null, output: null, error: null },
+        { id: "log_2", stepId: "s2", status: "failed", input: null, output: null, error: null },
+      ],
     };
     const callWith = async (callerAuthInfo: unknown) => {
       const { tools } = createToolServer();
@@ -714,8 +728,12 @@ describe("withoutRespondentData", () => {
 
   test("keeps logs it can't read as they are, and a queued run's missing logs", () => {
     const result = withoutRespondentData(text({ data: { logs: ["odd"], data: { a: 1 } } }) as never);
-    expect(result.structuredContent).toEqual({ data: { logs: ["odd"], data: null, triggerPayload: null } });
+    expect(result.structuredContent).toEqual({
+      data: { logs: ["odd"], data: null, triggerPayload: null, error: null },
+    });
     const queued = withoutRespondentData(text({ data: { triggerPayload: { a: 1 } } }) as never);
-    expect(queued.structuredContent).toEqual({ data: { triggerPayload: null, data: null, logs: undefined } });
+    expect(queued.structuredContent).toEqual({
+      data: { triggerPayload: null, data: null, logs: undefined, error: null },
+    });
   });
 });

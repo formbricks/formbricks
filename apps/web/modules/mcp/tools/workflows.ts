@@ -137,9 +137,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 /**
  * A `get_workflow_run` result without what is derived from respondents' answers: the trigger payload,
- * the run's data, and each step's input and output, set to `null`. For a caller without Responses: Read,
- * whom the run's other fields (status, timing, errors, step order) don't tell anything a response says.
- * An error result passes through.
+ * the run's data, and each step's input and output, set to `null`. The run's and each step's error text
+ * go too: a failed step's error can quote what it sent, such as an SMTP rejection naming the respondent's
+ * address. For a caller without Responses: Read, whom the run's other fields (status, timing, step
+ * order) don't tell anything a response says; a failed run still shows as failed. An error result passes
+ * through.
  */
 export const withoutRespondentData = (result: CallToolResult): CallToolResult => {
   const payload = result.structuredContent;
@@ -149,10 +151,13 @@ export const withoutRespondentData = (result: CallToolResult): CallToolResult =>
     ...payload,
     data: {
       ...run,
+      error: null,
       triggerPayload: null,
       data: null,
       logs: Array.isArray(run.logs)
-        ? run.logs.map((log: unknown) => (isRecord(log) ? { ...log, input: null, output: null } : log))
+        ? run.logs.map((log: unknown) =>
+            isRecord(log) ? { ...log, input: null, output: null, error: null } : log
+          )
         : run.logs,
     },
   };
@@ -252,7 +257,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Get workflow run",
       description:
-        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. Without Responses: Read in the user's grant, triggerPayload, data and each log's input and output are null: they carry respondents' answers.",
+        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. Without Responses: Read in the user's grant, triggerPayload, data, error and each log's input, output and error are null: they carry respondents' answers.",
       inputSchema: ZMcpGetWorkflowRunInput,
       annotations: {
         readOnlyHint: true,
