@@ -4,6 +4,7 @@ import type { JobHandler, TWorkflowHttpRequestDeliveryJobData } from "@formbrick
 import { logger } from "@formbricks/logger";
 import {
   type TWorkflowHttpRequestActionNode,
+  WORKFLOW_HTTP_RUN_LIMITS,
   WORKFLOW_SECRET_MASK,
   ZWorkflowHttpRequestActionNode,
 } from "@formbricks/workflows";
@@ -15,7 +16,6 @@ import {
   summarizeWorkflowHttpResponse,
 } from "../http-request/request";
 import {
-  WORKFLOW_HTTP_RETRIES,
   type WorkflowHttpCall,
   type WorkflowHttpCallResult,
   sendWorkflowHttpRequest,
@@ -110,7 +110,7 @@ const failureMessage = (result: WorkflowHttpCallResult): string | null => {
  */
 export const createWorkflowHttpRequestDeliveryJobHandler =
   ({
-    send = (call) => sendWorkflowHttpRequest(call, { retries: WORKFLOW_HTTP_RETRIES }),
+    send = (call) => sendWorkflowHttpRequest(call, { retries: WORKFLOW_HTTP_RUN_LIMITS.retries }),
   }: {
     send?: (call: WorkflowHttpCall) => Promise<WorkflowHttpCallResult>;
   } = {}): JobHandler<TWorkflowHttpRequestDeliveryJobData> =>

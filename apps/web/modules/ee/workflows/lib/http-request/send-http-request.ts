@@ -1,7 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
-import type { TWorkflowHttpMethod } from "@formbricks/workflows";
+import { type TWorkflowHttpMethod, WORKFLOW_HTTP_RUN_LIMITS } from "@formbricks/workflows";
 import { ALLOW_WORKFLOW_PLAIN_HTTP, WORKFLOW_ALLOW_INTERNAL_URLS } from "@/lib/constants";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
@@ -18,7 +18,7 @@ export interface WorkflowHttpCall {
 export interface WorkflowHttpResponse {
   status: number;
   contentType: string | null;
-  /** At most `WORKFLOW_HTTP_MAX_RESPONSE_BYTES` of the body, decoded as UTF-8. */
+  /** At most `WORKFLOW_HTTP_RUN_LIMITS.maxResponseBytes` of the body, decoded as UTF-8. */
   bodyText: string;
   truncated: boolean;
 }
@@ -31,10 +31,6 @@ export interface WorkflowHttpCallResult {
   attempts: number;
 }
 
-/** Spec §10: 10 s per attempt, 1 MB read, 3 retries. */
-export const WORKFLOW_HTTP_TIMEOUT_MS = 10_000;
-export const WORKFLOW_HTTP_MAX_RESPONSE_BYTES = 1024 * 1024;
-export const WORKFLOW_HTTP_RETRIES = 3;
 /** Wait before retry n (1-based): 1 s, 2 s, 4 s. With 10 s attempts a step holds a worker ≲ 50 s (ADR 0047). */
 const RETRY_BASE_DELAY_MS = 1_000;
 
@@ -78,7 +74,7 @@ const readCappedBody = async (response: Response): Promise<{ text: string; trunc
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
-    const room = WORKFLOW_HTTP_MAX_RESPONSE_BYTES - received;
+    const room = WORKFLOW_HTTP_RUN_LIMITS.maxResponseBytes - received;
     if (value.byteLength >= room) {
       chunks.push(value.subarray(0, room));
       received += room;
@@ -176,7 +172,7 @@ export const sendWorkflowHttpRequest = async (
   call: WorkflowHttpCall,
   {
     retries,
-    timeoutMs = WORKFLOW_HTTP_TIMEOUT_MS,
+    timeoutMs = WORKFLOW_HTTP_RUN_LIMITS.timeoutMs,
     sleep = defaultSleep,
   }: { retries: number; timeoutMs?: number; sleep?: (ms: number) => Promise<void> }
 ): Promise<WorkflowHttpCallResult> => {

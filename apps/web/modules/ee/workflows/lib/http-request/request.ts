@@ -4,6 +4,7 @@ import {
   type TWorkflowHttpRequestActionConfig,
   type TWorkflowRunContext,
   WORKFLOW_HTTP_METHODS_WITH_BODY,
+  WORKFLOW_HTTP_RUN_LIMITS,
   WORKFLOW_SECRET_MASK,
   WorkflowTemplateError,
   buildWorkflowQueryString,
@@ -13,7 +14,7 @@ import {
 import type { WorkflowHttpCall, WorkflowHttpResponse } from "./send-http-request";
 
 /** How much of a request or response body run detail and samples keep (ENG-7168). */
-export const WORKFLOW_HTTP_LOGGED_BODY_BYTES = 64 * 1024;
+const WORKFLOW_HTTP_LOGGED_BODY_BYTES = WORKFLOW_HTTP_RUN_LIMITS.loggedBodyBytes;
 
 /** A request as run detail shows it: secret header values masked, the body capped unless kept for sending. */
 export interface TWorkflowHttpRequestRecord {

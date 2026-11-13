@@ -1,3 +1,5 @@
+import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW } from "@formbricks/workflows";
+
 /**
  * `failClosed: true` marks the abuse limits: email-sending, account and organization creation, and the
  * brute-force guards. They refuse while Redis is unavailable instead of letting everything through; every
@@ -58,9 +60,9 @@ export const rateLimitConfigs = {
     // daily-run quotas are configurable and live in `modules/ee/workflows/lib/webhook/limits.ts`.
     v3WorkflowWebhook: {
       interval: 60,
-      allowedPerInterval: 100,
+      allowedPerInterval: WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW,
       namespace: "api:v3:workflow-webhook",
-    }, // 100 per minute per workflow
+    }, // 100 per minute per workflow, the number the trigger panel shows
     // "Send test request" on a workflow HTTP request step (ENG-7179): each one is a real outbound call,
     // so a principal gets 30 a minute, REST and MCP together.
     v3WorkflowTestRequests: {

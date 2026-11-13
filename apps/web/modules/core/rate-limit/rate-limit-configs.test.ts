@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW } from "@formbricks/workflows";
 import { ZRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
@@ -55,6 +56,12 @@ describe("rateLimitConfigs", () => {
     vi.clearAllMocks();
     // Reset the mock to return our mock client (async)
     mockGetRedisClient.mockResolvedValue(mockRedisClient);
+  });
+
+  test("the Webhook per-workflow limit is the number the trigger panel shows", () => {
+    expect(rateLimitConfigs.api.v3WorkflowWebhook.allowedPerInterval).toBe(
+      WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW
+    );
   });
 
   describe("Configuration Structure", () => {

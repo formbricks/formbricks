@@ -16,11 +16,8 @@ export const WEBHOOK_VARIABLE_MAX_PATHS = 500;
 /** Longest `Idempotency-Key` header a call may send. */
 export const WEBHOOK_IDEMPOTENCY_KEY_MAX_LENGTH = 255;
 
-/** Calls per minute one workflow's Webhook Secret URL accepts (the default v3 API number). */
+/**
+ * Calls per minute one workflow's Webhook Secret URL accepts (the default v3 API number). Enforced by
+ * `rateLimitConfigs.api.v3WorkflowWebhook` and shown in the trigger panel, both from this constant.
+ */
 export const WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW = 100;
-
-/** Default for `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE`: calls per minute across an organization's Webhook workflows. */
-export const WEBHOOK_DEFAULT_ORG_CALLS_PER_MINUTE = 300;
-
-/** Default for `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`: runs one Webhook workflow may start per day. */
-export const WEBHOOK_DEFAULT_DAILY_RUN_LIMIT = 10_000;

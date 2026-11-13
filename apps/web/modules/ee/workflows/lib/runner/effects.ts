@@ -3,9 +3,9 @@ import {
   type TWorkflowHttpRequestDeliveryJobData,
   enqueueWorkflowHttpRequestDeliveryJob,
 } from "@formbricks/jobs";
+import { WORKFLOW_HTTP_RUN_LIMITS } from "@formbricks/workflows";
 import { sendEmail } from "@/modules/email";
 import {
-  WORKFLOW_HTTP_RETRIES,
   type WorkflowHttpCall,
   type WorkflowHttpCallResult,
   sendWorkflowHttpRequest,
@@ -42,7 +42,7 @@ export interface WorkflowRunEffects {
 
 export const liveWorkflowRunEffects: WorkflowRunEffects = {
   sendEmail,
-  sendHttpRequest: (call) => sendWorkflowHttpRequest(call, { retries: WORKFLOW_HTTP_RETRIES }),
+  sendHttpRequest: (call) => sendWorkflowHttpRequest(call, { retries: WORKFLOW_HTTP_RUN_LIMITS.retries }),
   enqueueHttpRequestDelivery: async (data) => {
     await enqueueWorkflowHttpRequestDeliveryJob(data);
     return { handedOff: true };

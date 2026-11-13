@@ -51,7 +51,6 @@ vi.mock("@formbricks/logger", () => {
 vi.mock("@/modules/email", () => ({ sendEmail: mocks.sendEmail }));
 vi.mock("@/modules/ee/workflows/lib/http-request/send-http-request", () => ({
   sendWorkflowHttpRequest: mocks.sendHttp,
-  WORKFLOW_HTTP_RETRIES: 3,
 }));
 vi.mock("@formbricks/jobs", () => ({
   enqueueWorkflowHttpRequestDeliveryJob: mocks.enqueueDelivery,
