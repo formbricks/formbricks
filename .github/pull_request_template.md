@@ -1,10 +1,10 @@
 <!-- Title: Conventional Commits — https://www.conventionalcommits.org/en/v1.0.0/#summary -->
 
 <!-- BUDGET: ≤350 words outside `<details>` folds — one screen. Lists are ≤3 bullets of ≤20 words,
-one idea each; the Coverage table is ≤6 rows. Short sentences, plain words, present tense, written
+one idea each; the Evidence table is ≤6 rows. Short sentences, plain words, present tense, written
 for a colleague who has not read the ticket: user-visible effect first, mechanism second. Overflow
-folds rather than being dropped. Coverage, Open gaps and Breaking changes stay visible; only long
-command logs and Coverage rows past the sixth fold. -->
+folds rather than being dropped. Evidence, Open gaps, Merge Danger and Breaking changes stay visible;
+only long command logs, media past the first pair, and Evidence rows past the sixth fold. -->
 
 <!-- NEVER WRITE — each of these reads as diligence and costs the reviewer a paragraph: blame
 archaeology (which commit introduced it, who touched what); a defence of a choice nobody questioned,
@@ -21,21 +21,58 @@ More: https://linear.app/docs/github -->
 
 Fixes ENG-
 
-## What & why
+## Summary
 
-<!-- One sentence each, read off the diff rather than the commit titles. Up to 3 bullets after
-them, only for what they cannot carry. -->
+<!-- Skill: `pr`. One sentence each for Was and Now, read off the diff rather than the commit titles.
+Then the smallest picture that carries the point: pseudocode for logic, a call tree for runtime
+flow, a component tree for UI, a file tree for a refactor, a `diff` sketch when the shape already
+exists. Link the 1–3 lines carrying the risk (link plus ≤10 words). No picture helps? Skip it. -->
 
 **Was:** `<what was broken, or how it behaved before>`
 
 **Now:** `<what happens after this PR>`
 
-## Where to look
+```text
+<pseudocode, call tree, component tree, or diff sketch>
+```
 
-<!-- 1–3 links to the lines carrying the risk, so a reviewer can spot-check the code without
-reading all of it: link plus ≤10 words, no prose. Nothing risky? Say so in a line. -->
+## Evidence
 
--
+<!-- REQUIRED. All QA for this change happens here, before review — there is no separate release QA
+pass. `Rerun:` carries the command once, so no row below repeats it. -->
+
+Rerun: `<one command covering the table below>`
+
+<!-- ≤6 rows, one per behaviour the diff changes. `How` is one of `unit (red on main)`,
+`unit (mutation)`, `unit (guard)`, `e2e`, `manual` — CODING_STANDARDS.md defines them and says how to
+pick the cheapest level that can fail. `Before → After` is what you observed, ≤15 words, naming the
+account, plan or flag state where it matters. For a test row, show the test as pseudocode: the
+assertion that fails on main and passes now. Every `unit` and `e2e` row names the test or spec it
+rests on, in the row or in the `Rerun:` line. A `red on main` row names its own command where that
+differs from `Rerun:`; a `mutation` row names the mutated `file:line`. UI work: attach the before and
+after screenshots or the clip here, fold anything past the first pair. -->
+
+| Behaviour | How | Before → After |
+| --- | --- | --- |
+|  |  |  |
+
+**Open gaps**
+
+<!-- ≤3 bullets: what you could not verify, and why. The reviewer's job is to challenge this list,
+so "none" is a claim rather than a formality. -->
+
+- none
+
+## Merge Danger
+
+<!-- One-way door: hard to walk back — a destructive migration, a published API or SDK shape, data
+rewritten in place. Two-way door: revert the PR and nothing is left behind. Blast radius is one
+word for how far it reaches (a screen, a flow, every self-hoster, SDK consumers). One or two lines
+on what nearby behaviour could break, and what to re-check, are optional. -->
+
+**Door:** `<one-way | two-way>`
+
+**Blast radius:** `<one word>`
 
 ## Breaking changes
 
@@ -87,40 +124,6 @@ None
 
 <!-- New or changed env vars, DB migrations, cutover steps — including non-breaking ones, since a
 deployer acts on them. Write "none". -->
-
-- none
-
-## How this was tested
-
-<!-- REQUIRED. All QA for this change happens here, before review — there is no separate release QA
-pass. `Rerun:` carries the command once, so no row below repeats it. -->
-
-Rerun: `<one command covering the table below>`
-
-**Coverage**
-
-<!-- ≤6 rows, one per behaviour the diff changes; Outcome ≤15 words of what you observed, naming the
-account, plan or flag state where it matters. `How` is one of `unit (red on main)`,
-`unit (mutation)`, `unit (guard)`, `e2e`, `manual` — CODING_STANDARDS.md defines them and says how to pick
-the cheapest level that can fail. Every `unit` and `e2e` row names the test or spec it rests on, in the
-row or in a `Rerun:` line that names it. A `red on main` row names its own command where that
-differs from `Rerun:`; a `mutation` row names the mutated `file:line`. The table stays visible —
-fold long command logs, and rows past the sixth. -->
-
-| Behaviour | How | Outcome |
-| --- | --- | --- |
-|  |  |  |
-
-**Open gaps**
-
-<!-- ≤3 bullets: what you could not verify, and why. The reviewer's job is to challenge this list,
-so "none" is a claim rather than a formality. -->
-
-- none
-
-**Risks**
-
-<!-- ≤3 bullets: what nearby behaviour could break, and what to re-check if it does. -->
 
 - none
 

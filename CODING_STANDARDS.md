@@ -231,7 +231,7 @@ where the behavior only exists once browser, survey bundle, and server are wired
 The spec filenames in `apps/web/playwright/` are the inventory of covered areas — check there before
 concluding an area has no spec.
 
-The PR's Coverage table names each row's level with one of five words, and the first three are claims a
+The PR's Evidence table names each row's level with one of five words, and the first three are claims a
 reviewer can check: `unit (red on main)` fails against the old code, so it proves the bug existed;
 `unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)`
 passes either way, protecting against a future regression; `e2e` and `manual` say where the check ran. Every
@@ -271,7 +271,7 @@ Do:
   re-test. For UI detail below the journey level, manual verification plus a screenshot in the PR is the
   expected answer, not a new spec.
 - Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows.
-- Merging, narrowing, or deleting an E2E spec is legitimate work — record it in the PR's Coverage table
+- Merging, narrowing, or deleting an E2E spec is legitimate work — record it in the PR's Evidence table
   like any other change.
 
 Do not:
