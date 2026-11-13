@@ -146,6 +146,32 @@ describe("a Dashboard viewer's OAuth grant", () => {
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
   });
 
+  test("removing them from their last two wider organizations at once still ends the wide grant", async () => {
+    // Each removal decides "only viewer memberships left?" on its own; without the user-row lock both can
+    // still see the other's membership, and neither revokes. A race, so several rounds.
+    const { cookie, userId } = await userWithRole("dashboard_viewer");
+    for (let round = 0; round < 5; round++) {
+      const [first, second] = await Promise.all(
+        [1, 2].map((n) => prisma.organization.create({ data: { name: `Member org ${round}-${n}` } }))
+      );
+      await prisma.membership.createMany({
+        data: [first, second].map(({ id }) => ({
+          userId,
+          organizationId: id,
+          role: "member",
+          accepted: true,
+        })),
+      });
+      const tokens = await grant(cookie, clientId, EVERYTHING);
+      expect(scopesOf(tokens.scope)).toContain("surveys:read");
+
+      await Promise.all([deleteMembership(userId, first.id), deleteMembership(userId, second.id)]);
+
+      expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
+      expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+    }
+  });
+
   test("a Member is unaffected", async () => {
     const { cookie } = await userWithRole("member");
 

@@ -11,6 +11,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
+import { lockUserActiveState } from "@/lib/user/reactivation";
 import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
@@ -81,6 +82,12 @@ export const deleteMembership = async (
     // The last-owner guard is read under the owners' lock, in the same transaction as the delete, so two
     // owners removed at once cannot both see "another owner is left" and leave the organization with none.
     const deletedTeamMemberships = await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
+      // The user's row, so that removals of the same user from different organizations run one after the
+      // other: each decides whether only Dashboard viewer memberships remain (below) from what the other
+      // committed, instead of both still counting the other's membership and neither revoking the grants.
+      // Taken after the owners' lock, the order every guarded path takes them in.
+      await lockUserActiveState(tx, userId);
+
       const teamMemberships = await tx.teamUser.findMany({
         where: {
           userId,

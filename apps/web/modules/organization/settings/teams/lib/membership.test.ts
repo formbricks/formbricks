@@ -5,6 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { lockUserActiveState } from "@/lib/user/reactivation";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import {
   deleteMembership,
@@ -43,6 +44,7 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeAllUserOAuthGrants: vi.fn() }));
+vi.mock("@/lib/user/reactivation", () => ({ lockUserActiveState: vi.fn() }));
 
 const organizationId = "org-1";
 const userId = "user-1";
@@ -148,6 +150,15 @@ describe("deleteMembership", () => {
       );
 
       await deleteMembership(userId, organizationId);
+
+      // Decided under the user's row lock, so a removal from another organization at the same moment has
+      // committed by then (proven in dashboard-viewer-oauth.integration.test.ts).
+      expect(lockUserActiveState).toHaveBeenCalledWith(prisma, userId);
+      if (removedRole !== "dashboard_viewer") {
+        expect(vi.mocked(lockUserActiveState).mock.invocationCallOrder[0]).toBeLessThan(
+          vi.mocked(prisma.membership.findMany).mock.invocationCallOrder[0]
+        );
+      }
 
       if (revokes) {
         expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, userId);

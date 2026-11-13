@@ -42,10 +42,14 @@ describe("lockOwnersAndCheckRemoval", () => {
 
     await lockOwnersAndCheckRemoval(tx as never, organizationId, userId);
 
-    expect(lockStatement(tx)).toEqual({
-      text: 'SELECT 1 FROM "Membership" WHERE "organizationId" = ? AND "role" = \'owner\' ORDER BY "userId" FOR UPDATE',
-      values: [organizationId],
-    });
+    // The contract, not the exact SQL: this organization's owner rows, locked, in a fixed order.
+    const { text, values } = lockStatement(tx);
+    expect(values).toEqual([organizationId]);
+    expect(text).toMatch(/FROM "Membership"/);
+    expect(text).toMatch(/"organizationId" = \?/);
+    expect(text).toMatch(/"role" = 'owner'/);
+    expect(text).toMatch(/ORDER BY "userId"/);
+    expect(text).toMatch(/FOR UPDATE$/);
     expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
       tx.membership.findUnique.mock.invocationCallOrder[0]
     );
