@@ -2,7 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TWorkflowHttpMethod } from "@formbricks/workflows";
-import { ALLOW_WORKFLOW_PLAIN_HTTP } from "@/lib/constants";
+import { ALLOW_WORKFLOW_PLAIN_HTTP, WORKFLOW_ALLOW_INTERNAL_URLS } from "@/lib/constants";
 import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 
 /** One outbound call, fully rendered: Variables inserted, secret header values decrypted. */
@@ -106,8 +106,11 @@ const attempt = async (call: WorkflowHttpCall, timeoutMs: number): Promise<Attem
   try {
     assertAllowedScheme(call.url);
     // The Webhooks integration's SSRF check: private addresses only behind
-    // DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS (ignored on Cloud), and the IP it checked is the one used.
-    address = await validateAndResolveWebhookUrl(call.url);
+    // DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, which workflows ignore on Cloud, and the IP it checked is
+    // the one used.
+    address = await validateAndResolveWebhookUrl(call.url, {
+      allowInternalUrls: WORKFLOW_ALLOW_INTERNAL_URLS,
+    });
   } catch (error) {
     // A refused URL never becomes deliverable, so it is not retried.
     return {

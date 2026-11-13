@@ -28,10 +28,14 @@ export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
 export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
-// Ignored on Formbricks Cloud (hard guard, ENG-7179).
-export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = isSelfHostedSwitchOn(
+export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS === "1";
+// The same switch for workflow HTTP requests, ignored on Formbricks Cloud (hard guard, ENG-7179). The
+// Webhooks integration keeps reading DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS unchanged.
+export const WORKFLOW_ALLOW_INTERNAL_URLS = isSelfHostedSwitchOn(
   env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
-  { isCloud: IS_FORMBRICKS_CLOUD }
+  {
+    isCloud: IS_FORMBRICKS_CLOUD,
+  }
 );
 export const WEBHOOK_DELIVERY_TIMEOUT_MS = env.WEBHOOK_DELIVERY_TIMEOUT_MS ?? 5_000;
 export const DEBUG_SHOW_RESET_LINK = !IS_PRODUCTION && env.DEBUG_SHOW_RESET_LINK === "1";
@@ -76,8 +80,9 @@ export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 export const INVITE_RATE_LIMIT_PER_24_HOURS = env.INVITE_RATE_LIMIT_PER_24_HOURS;
 // Workflows, both directions (ENG-7167): Webhook trigger calls in, HTTP request steps out. Plain HTTP is a self-hosting escape hatch for fully private
 // networks; Formbricks Cloud ignores the switch, so HTTPS is always required there.
-export const ALLOW_WORKFLOW_PLAIN_HTTP =
-  !IS_FORMBRICKS_CLOUD && env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP === "1";
+export const ALLOW_WORKFLOW_PLAIN_HTTP = isSelfHostedSwitchOn(env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP, {
+  isCloud: IS_FORMBRICKS_CLOUD,
+});
 export const WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT = env.WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT;
 export const WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE = env.WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE;
 export const EMAIL_RATE_LIMIT_MULTIPLIER = env.EMAIL_RATE_LIMIT_MULTIPLIER;

@@ -1,10 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { type WorkflowHttpCall, sendWorkflowHttpRequest } from "./send-http-request";
 
-const flags = vi.hoisted(() => ({ allowInternal: false, allowPlainHttp: false }));
+const flags = vi.hoisted(() => ({
+  allowInternal: false,
+  allowWebhooksInternal: false,
+  allowPlainHttp: false,
+}));
 
 vi.mock("@/lib/constants", () => ({
+  // The Webhooks integration's switch, which Cloud keeps; workflows read their own.
   get DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS() {
+    return flags.allowWebhooksInternal;
+  },
+  get WORKFLOW_ALLOW_INTERNAL_URLS() {
     return flags.allowInternal;
   },
   get ALLOW_WORKFLOW_PLAIN_HTTP() {
@@ -46,6 +54,7 @@ const sleep = vi.fn(async (_ms: number) => undefined);
 
 beforeEach(() => {
   flags.allowInternal = false;
+  flags.allowWebhooksInternal = false;
   flags.allowPlainHttp = false;
   sleep.mockClear();
 });
@@ -134,6 +143,20 @@ describe("sendWorkflowHttpRequest", () => {
       sleep,
     });
     expect(allowed.response?.status).toBe(200);
+  });
+
+  test("the Webhooks integration's switch alone does not open private addresses to workflows", async () => {
+    // On Cloud the Webhooks integration may still allow internal URLs; workflows never follow it there.
+    const fetchMock = stubFetch(response(200));
+    flags.allowWebhooksInternal = true;
+
+    const refused = await sendWorkflowHttpRequest(call({ url: "https://10.0.0.5/hook" }), {
+      retries: 0,
+      sleep,
+    });
+
+    expect(refused.error).toMatch(/private or internal/);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   test("refuses plain HTTP unless the instance allows it", async () => {
