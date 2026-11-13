@@ -57,7 +57,9 @@ that is not listed here.
 
 **Field catalog** — The published list of fields a chart query may use, with each field's kind, type, label and filter options. It is the contract: a field not in the catalog is refused.
 
-**Date range** — The window of `collectedAt` a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data replaces the one saved on the chart.
+**Date range** — The window of `collectedAt` a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data narrows the one saved on the chart; it never widens it.
+
+**Answer filter** — A chart filter rule on how the same submission answered another question in the chart's Feedback Dataset, such as "NPS where Delivery is Late". A submission that skipped that question never matches, not even an "is not" rule. _Avoid_: sibling filter, response-wide filter.
 
 **Answer filter** — A chart filter rule on how the same submission answered another question in the chart's Feedback Dataset, such as "NPS where Delivery is Late". A submission that skipped that question never matches, not even an "is not" rule. _Avoid_: sibling filter, response-wide filter.
 
