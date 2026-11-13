@@ -93,6 +93,20 @@ step includes its error to help you identify the configuration or delivery probl
 An HTTP request set to **Don't wait** shows **Sending…** while its request is on the way, and then whether it was
 sent or failed. Its outcome never changes the run's status. See [HTTP request](/workflows/http-request#dont-wait).
 
+### Run data retention
+
+A run's details are deleted 90 days after it finished, whatever its trigger: the trigger payload, each step's
+input, output and errors, the run's error and the caller's IP address. The run itself stays until you delete its
+workflow, with its status, trigger, version, and start and finish times, so run counts and usage for past dates
+don't change. Its details drawer then shows **Details deleted after 90 days** in place of its steps.
+
+- [Test runs](/workflows/test-runs) are deleted entirely 7 days after they started.
+- A saved [Sample payload](/workflows/webhook-trigger) or Test request response is deleted after 90 days without
+  an update.
+
+Self-hosted instances can change the period with `WORKFLOW_RUN_DATA_RETENTION_DAYS`. See
+[Environment variables](/self-hosting/configuration/environment-variables).
+
 ## Permissions
 
 | Workspace access    | Available workflow operations                                                                                                  |

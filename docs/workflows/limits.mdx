@@ -6,7 +6,7 @@ icon: "gauge-high"
 ---
 
 These limits keep one workflow, or one leaked Webhook Secret URL, from slowing down or spending the budget of a
-whole organization. Self-hosters can change the two marked with an environment variable; every other limit is
+whole organization. Self-hosters can change the ones marked with an environment variable; every other limit is
 fixed.
 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
@@ -73,3 +73,13 @@ A call over a rate limit answers `429` with a `Retry-After` header. See
 | Test requests                          | 30 per minute per user or API key       |
 | Test request timeout                   | 10 seconds, no retry                    |
 | Test response kept                     | 64 KB                                   |
+
+## Run data
+
+| Limit                                             | Value                     | Environment variable               |
+| ------------------------------------------------- | ------------------------- | ---------------------------------- |
+| Run details kept after the run finished           | 90 days                   | `WORKFLOW_RUN_DATA_RETENTION_DAYS` |
+| Sample payload and Test request response kept     | 90 days without an update | `WORKFLOW_RUN_DATA_RETENTION_DAYS` |
+| Test runs kept                                    | 7 days                    | —                                  |
+
+See [Run data retention](/workflows/manage-and-monitor#run-data-retention).
