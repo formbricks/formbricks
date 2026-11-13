@@ -102,6 +102,21 @@ export const mimeTypes: Record<TAllowedFileExtension, string> = {
   tar: "application/x-tar",
 };
 
+/**
+ * The media type Formbricks stores and serves for a file, derived from its extension alone.
+ *
+ * A stored object's `Content-Type` must never come from the uploader: a browser reads a list such as
+ * `image/png;,text/html` as its last valid type, so an echoed client string can turn an allowed `.png`
+ * into HTML on the app origin. Returns `undefined` for an extension outside the upload allowlist.
+ */
+export const getMimeTypeForFileName = (fileName: string): string | undefined => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  if (!extension || extension === fileName.toLowerCase()) return undefined;
+
+  const { success, data } = ZAllowedFileExtension.safeParse(extension);
+  return success ? mimeTypes[data] : undefined;
+};
+
 export const ZAccessType = z.enum(["public", "private"]);
 export type TAccessType = z.infer<typeof ZAccessType>;
 
@@ -276,8 +291,11 @@ const refineFileUploadInput = ({
     return;
   }
 
-  const normalizedFileType = data.fileType.toLowerCase().split(";")[0]; // removes parameters from fileType like "image/jpeg; charset=binary"
-  if (normalizedFileType !== mimeTypes[fileExtension]) {
+  // Parameters are tolerated ("image/jpeg; charset=binary"), a list of types is not: browsers act on the
+  // last type in "image/png;,text/html". The server stores and serves the type derived from the
+  // extension either way, so this only refuses a declared type that disagrees with the file name.
+  const normalizedFileType = data.fileType.toLowerCase().split(";")[0].trim();
+  if (data.fileType.includes(",") || normalizedFileType !== mimeTypes[fileExtension]) {
     ctx.addIssue({
       code: "custom",
       message: "File type doesn't match the file extension",

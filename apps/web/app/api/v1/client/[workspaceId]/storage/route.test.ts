@@ -201,7 +201,7 @@ describe("POST /api/v1/client/[workspaceId]/storage", () => {
       ],
       questions: [],
     };
-    const maxSizeOfIssuedUpload = () => mocks.getSignedUrlForUpload.mock.calls[0][4];
+    const maxSizeOfIssuedUpload = () => mocks.getSignedUrlForUpload.mock.calls[0][3];
 
     beforeEach(() => {
       mocks.getSurvey.mockResolvedValue(surveyWithUploads);
@@ -370,7 +370,6 @@ describe("POST /api/v1/client/[workspaceId]/storage — survey lifecycle gates (
     expect(mocks.getSignedUrlForUpload).toHaveBeenCalledWith(
       uploadBody.fileName,
       workspaceId,
-      uploadBody.fileType,
       "private",
       MAX_FILE_UPLOAD_SIZES.standard,
       ["surveys", surveyId, "elements", elementId]

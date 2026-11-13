@@ -69,8 +69,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, surveyId, elementId, pinAuthToken, singleUseId, url } =
-      parsedInputResult.data;
+    const { fileName, surveyId, elementId, pinAuthToken, singleUseId, url } = parsedInputResult.data;
 
     const [survey, organizationId] = await Promise.all([
       getSurvey(surveyId),
@@ -184,7 +183,6 @@ export const POST = withV1ApiWrapper({
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,
       workspaceId,
-      fileType,
       "private",
       maxFileUploadSize,
       ["surveys", surveyId, "elements", elementId]
